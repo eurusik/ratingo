@@ -509,4 +509,46 @@ export class IngestionController {
       force: isForce,
     };
   }
+
+  /**
+   * Queues backfill job for items missing Rotten Tomatoes ratings.
+   * Fetches RT critics + audience scores from MDBList for items where
+   * OMDb returned null.
+   */
+  @Post('backfill/mdblist-ratings')
+  @ApiOperation({
+    summary: 'Backfill Rotten Tomatoes ratings from MDBList',
+    description:
+      'Finds all media items missing Rotten Tomatoes critics score and fetches ' +
+      'critics + audience ratings from MDBList. Complements OMDb, which frequently ' +
+      'omits RT values. Item jobs run on a dedicated rate-limited queue to fit the ' +
+      'MDBList free-tier budget (1000 req/day; limiter caps execution at ~40/hour).',
+  })
+  @ApiQuery({
+    name: 'force',
+    required: false,
+    type: String,
+    description: 'Bypass daily deduplication (allows re-running within the same UTC day)',
+  })
+  @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async backfillMdblistRatings(@Query('force') force?: string) {
+    const isForce = force === 'true';
+    const today = formatUtcDayId();
+    const window = isForce ? Date.now().toString() : today;
+    const jobId = `backfill_mdblist_ratings_${window}`;
+
+    const job = await this.ingestionQueue.add(
+      IngestionJob.BACKFILL_MDBLIST_RATINGS_DISPATCHER,
+      {},
+      { jobId },
+    );
+
+    return {
+      status: 'queued',
+      jobId: job.id,
+      jobType: IngestionJob.BACKFILL_MDBLIST_RATINGS_DISPATCHER,
+      force: isForce,
+    };
+  }
 }

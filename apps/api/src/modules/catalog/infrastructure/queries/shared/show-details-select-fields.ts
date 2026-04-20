@@ -36,6 +36,7 @@ export const SHOW_DETAILS_SELECT_FIELDS = {
   voteCountTrakt: schema.mediaItems.voteCountTrakt,
   ratingMetacritic: schema.mediaItems.ratingMetacritic,
   ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+  ratingRottenTomatoesAudience: schema.mediaItems.ratingRottenTomatoesAudience,
 
   // Show-specific fields (6)
   totalSeasons: schema.shows.totalSeasons,

@@ -30,6 +30,7 @@ export interface ShowSelectRow {
   vote_count_trakt: number | null;
   rating_metacritic: number | null;
   rating_rotten_tomatoes: number | null;
+  rating_rotten_tomatoes_audience: number | null;
   popularity: number;
   ratingo_score: number | null;
   quality_score: number | null;

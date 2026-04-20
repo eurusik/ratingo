@@ -70,6 +70,24 @@ export const WORKER_CONFIG = {
   },
 
   /**
+   * Ratings backfill queue worker config.
+   * Jobs: backfill-mdblist-ratings-item (MDBList only).
+   * Duration: 300-1500ms (single MDBList API call + DB update).
+   *
+   * Strict limiter: MDBList free tier is 1000 requests/day. Cap at 40/hour
+   * (~960/day with a safety margin) so overall daily budget is not exhausted
+   * before reset at 00:00 UTC. Concurrency=1 because there is no parallel
+   * throughput benefit — every job consumes a scarce quota unit.
+   */
+  ratingsBackfill: {
+    lockDuration: 30_000, // 30 seconds
+    limiter: {
+      max: 40, // 40 jobs per hour
+      duration: 3_600_000, // 1 hour window
+    },
+  },
+
+  /**
    * Catalog policy queue worker config.
    * Jobs: re-evaluate-all, evaluate-catalog-item, watchdog
    * Duration: 100ms-30s (policy evaluation + DB writes)

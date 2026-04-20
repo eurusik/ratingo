@@ -298,6 +298,9 @@ export class SyncMediaService {
       imdbId ? this.omdbAdapter.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
     ]);
 
+    // NOTE: per-field null-guard is critical. OMDb often returns `null` for RT/Metacritic
+    // even on successful calls. Spreading those nulls would clobber values filled by
+    // other sources (e.g. MDBList backfill) on subsequent re-syncs.
     return {
       ...media,
       ...(traktRating && {
@@ -306,10 +309,10 @@ export class SyncMediaService {
         watchersCount: traktRating.watchers,
         totalWatchers: traktRating.totalWatchers,
       }),
-      ...(omdbRatings && {
-        ratingImdb: omdbRatings.imdbRating,
-        voteCountImdb: omdbRatings.imdbVotes,
-        ratingMetacritic: omdbRatings.metacritic,
+      ...(omdbRatings?.imdbRating != null && { ratingImdb: omdbRatings.imdbRating }),
+      ...(omdbRatings?.imdbVotes != null && { voteCountImdb: omdbRatings.imdbVotes }),
+      ...(omdbRatings?.metacritic != null && { ratingMetacritic: omdbRatings.metacritic }),
+      ...(omdbRatings?.rottenTomatoes != null && {
         ratingRottenTomatoes: omdbRatings.rottenTomatoes,
       }),
     };

@@ -77,6 +77,7 @@ describe('WatchingNowMediaQuery', () => {
         voteCountTrakt: 3000,
         ratingMetacritic: 75,
         ratingRottenTomatoes: 88,
+        ratingRottenTomatoesAudience: 82,
       };
 
       mockDb.select.mockReturnValue(createMockQueryBuilder([mockRow]));
@@ -196,6 +197,7 @@ describe('WatchingNowMediaQuery', () => {
             voteCountTrakt: null,
             ratingMetacritic: null,
             ratingRottenTomatoes: null,
+            ratingRottenTomatoesAudience: null,
           },
           {
             id: '2',
@@ -221,6 +223,7 @@ describe('WatchingNowMediaQuery', () => {
             voteCountTrakt: null,
             ratingMetacritic: null,
             ratingRottenTomatoes: null,
+            ratingRottenTomatoesAudience: null,
           },
         ];
 

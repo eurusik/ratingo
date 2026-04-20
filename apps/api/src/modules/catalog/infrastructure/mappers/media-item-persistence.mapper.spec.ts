@@ -27,6 +27,7 @@ const createBaseMedia = (overrides = {}) => ({
   voteCountTrakt: 5000,
   ratingMetacritic: 75,
   ratingRottenTomatoes: 85,
+  ratingRottenTomatoesAudience: 80,
   releaseDate: new Date('2024-03-15'),
   originCountries: ['US', 'UK'],
   originalLanguage: 'en',
@@ -70,6 +71,7 @@ describe('MediaItemPersistenceMapper', () => {
         voteCountTrakt: 5000,
         ratingMetacritic: 75,
         ratingRottenTomatoes: 85,
+        ratingRottenTomatoesAudience: 80,
         originCountries: ['US', 'UK'],
         originalLanguage: 'en',
       });
@@ -260,6 +262,44 @@ describe('MediaItemPersistenceMapper', () => {
       const result = MediaItemPersistenceMapper.toMediaItemUpdate(media as any);
 
       expect(result.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('should NOT overwrite external ratings with null (preserve values filled by other sources)', () => {
+      const media = createBaseMedia({
+        ratingImdb: null,
+        voteCountImdb: null,
+        ratingTrakt: null,
+        voteCountTrakt: null,
+        ratingMetacritic: null,
+        ratingRottenTomatoes: null,
+        ratingRottenTomatoesAudience: null,
+      });
+
+      const result = MediaItemPersistenceMapper.toMediaItemUpdate(media as any);
+
+      expect(result).not.toHaveProperty('ratingImdb');
+      expect(result).not.toHaveProperty('voteCountImdb');
+      expect(result).not.toHaveProperty('ratingTrakt');
+      expect(result).not.toHaveProperty('voteCountTrakt');
+      expect(result).not.toHaveProperty('ratingMetacritic');
+      expect(result).not.toHaveProperty('ratingRottenTomatoes');
+      expect(result).not.toHaveProperty('ratingRottenTomatoesAudience');
+    });
+
+    it('should include external ratings when non-null values provided', () => {
+      const media = createBaseMedia({
+        ratingImdb: 8.2,
+        ratingRottenTomatoes: 78,
+        ratingRottenTomatoesAudience: 76,
+        ratingMetacritic: 70,
+      });
+
+      const result = MediaItemPersistenceMapper.toMediaItemUpdate(media as any);
+
+      expect(result.ratingImdb).toBe(8.2);
+      expect(result.ratingRottenTomatoes).toBe(78);
+      expect(result.ratingRottenTomatoesAudience).toBe(76);
+      expect(result.ratingMetacritic).toBe(70);
     });
   });
 

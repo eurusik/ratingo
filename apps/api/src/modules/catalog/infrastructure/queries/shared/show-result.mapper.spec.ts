@@ -48,6 +48,7 @@ describe('ShowResultMapper', () => {
     vote_count_trakt: 1200,
     rating_metacritic: 75,
     rating_rotten_tomatoes: 85,
+    rating_rotten_tomatoes_audience: 80,
     popularity: 100,
     ratingo_score: 82,
     quality_score: 80,
@@ -273,6 +274,22 @@ describe('ShowResultMapper', () => {
       const result = ShowResultMapper.toTrendingItem(row);
 
       expect(result.externalRatings.rottenTomatoes).toBeNull();
+    });
+
+    it('should map Rotten Tomatoes audience rating when available', () => {
+      const row = createMockRow({ rating_rotten_tomatoes_audience: 76 });
+
+      const result = ShowResultMapper.toTrendingItem(row);
+
+      expect(result.externalRatings.rottenTomatoesAudience).toEqual({ rating: 76 });
+    });
+
+    it('should return null for Rotten Tomatoes audience rating when not available', () => {
+      const row = createMockRow({ rating_rotten_tomatoes_audience: null });
+
+      const result = ShowResultMapper.toTrendingItem(row);
+
+      expect(result.externalRatings.rottenTomatoesAudience).toBeNull();
     });
 
     it('should handle null release_date', () => {

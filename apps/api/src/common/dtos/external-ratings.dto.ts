@@ -28,6 +28,19 @@ export class ExternalRatingsDto {
   @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
   metacritic?: ExternalRatingItemDto | null;
 
-  @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
+  @ApiProperty({
+    type: ExternalRatingItemDto,
+    required: false,
+    nullable: true,
+    description: 'Rotten Tomatoes critics score (Tomatometer, 0-100)',
+  })
   rottenTomatoes?: ExternalRatingItemDto | null;
+
+  @ApiProperty({
+    type: ExternalRatingItemDto,
+    required: false,
+    nullable: true,
+    description: 'Rotten Tomatoes audience score (Popcornmeter, 0-100)',
+  })
+  rottenTomatoesAudience?: ExternalRatingItemDto | null;
 }

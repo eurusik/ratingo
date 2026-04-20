@@ -1,0 +1,1 @@
+ALTER TABLE "media_items" ADD COLUMN "rating_rotten_tomatoes_audience" integer;

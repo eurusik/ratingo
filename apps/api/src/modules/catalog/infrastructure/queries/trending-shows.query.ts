@@ -127,6 +127,7 @@ export class TrendingShowsQuery {
           mi.vote_count_trakt,
           mi.rating_metacritic,
           mi.rating_rotten_tomatoes,
+          mi.rating_rotten_tomatoes_audience,
           mi.popularity,
 
           ms.ratingo_score,

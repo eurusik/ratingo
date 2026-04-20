@@ -4,16 +4,24 @@
  */
 
 interface RatingBadgeProps {
-  source: 'IMDb' | 'TMDB' | 'Trakt' | 'RT';
+  source: 'IMDb' | 'TMDB' | 'Trakt' | 'RT' | 'RT Audience';
   rating: number;
   isPercentage?: boolean;
 }
 
+// Full literal Tailwind class strings — required so the Tailwind JIT scanner
+// actually emits these classes. Dynamic construction like `text-${variable}`
+// is invisible to the scanner and produces bundles missing the colours.
+//
+// RT (Tomatometer) stays green — matches Ratingo's existing critics-centric display.
+// RT Audience (Popcornmeter) gets orange — visually distinct and aligned with the
+// popcorn colour used on rottentomatoes.com for audience scores.
 const SOURCE_CONFIG = {
-  IMDb: { color: 'yellow-400', bgColor: 'yellow-400/20' },
-  TMDB: { color: 'blue-400', bgColor: 'blue-400/20' },
-  Trakt: { color: 'red-400', bgColor: 'red-400/20' },
-  RT: { color: 'green-400', bgColor: 'green-400/20' },
+  IMDb: { text: 'text-yellow-400', bg: 'bg-yellow-400/20' },
+  TMDB: { text: 'text-blue-400', bg: 'bg-blue-400/20' },
+  Trakt: { text: 'text-red-400', bg: 'bg-red-400/20' },
+  RT: { text: 'text-green-400', bg: 'bg-green-400/20' },
+  'RT Audience': { text: 'text-orange-400', bg: 'bg-orange-400/20' },
 } as const;
 
 export function RatingBadge({ source, rating, isPercentage = false }: RatingBadgeProps) {
@@ -23,7 +31,7 @@ export function RatingBadge({ source, rating, isPercentage = false }: RatingBadg
   return (
     <div className="flex items-center gap-1.5 bg-cinema-card/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
       <span
-        className={`text-[10px] font-bold text-${config.color} bg-${config.bgColor} px-1 py-0.5 rounded`}
+        className={`text-[10px] font-bold ${config.text} ${config.bg} px-1 py-0.5 rounded`}
       >
         {source}
       </span>

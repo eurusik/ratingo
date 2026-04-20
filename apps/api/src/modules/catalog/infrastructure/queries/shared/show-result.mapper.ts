@@ -92,6 +92,9 @@ export class ShowResultMapper {
           : null,
         metacritic: row.rating_metacritic ? { rating: row.rating_metacritic } : null,
         rottenTomatoes: row.rating_rotten_tomatoes ? { rating: row.rating_rotten_tomatoes } : null,
+        rottenTomatoesAudience: row.rating_rotten_tomatoes_audience
+          ? { rating: row.rating_rotten_tomatoes_audience }
+          : null,
       },
 
       showProgress: this.buildShowProgress(row),

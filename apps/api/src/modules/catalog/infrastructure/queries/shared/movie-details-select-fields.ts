@@ -36,6 +36,7 @@ export const MOVIE_DETAILS_SELECT_FIELDS = {
   voteCountTrakt: schema.mediaItems.voteCountTrakt,
   ratingMetacritic: schema.mediaItems.ratingMetacritic,
   ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+  ratingRottenTomatoesAudience: schema.mediaItems.ratingRottenTomatoesAudience,
 
   // Movie-specific fields from movies table
   runtime: schema.movies.runtime,

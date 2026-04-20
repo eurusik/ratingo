@@ -45,6 +45,15 @@ export class OmdbApiException extends ExternalApiException {
 }
 
 /**
+ * Exception for MDBList API errors.
+ */
+export class MdblistApiException extends ExternalApiException {
+  constructor(message: string, statusCode?: number) {
+    super(ErrorCode.MDBLIST_API_ERROR, `MDBList API: ${message}`, { statusCode });
+  }
+}
+
+/**
  * Exception for TVMaze API errors.
  */
 export class TvMazeApiException extends ExternalApiException {

@@ -38,6 +38,7 @@ export interface MovieDetailsQueryRow {
   voteCountTrakt: number | null;
   ratingMetacritic: number | null;
   ratingRottenTomatoes: number | null;
+  ratingRottenTomatoesAudience: number | null;
 
   // Movie-specific fields
   runtime: number | null;
@@ -67,6 +68,9 @@ export function mapExternalRatings(row: MovieDetailsQueryRow) {
     trakt: row.ratingTrakt ? { rating: row.ratingTrakt, voteCount: row.voteCountTrakt } : null,
     metacritic: row.ratingMetacritic ? { rating: row.ratingMetacritic } : null,
     rottenTomatoes: row.ratingRottenTomatoes ? { rating: row.ratingRottenTomatoes } : null,
+    rottenTomatoesAudience: row.ratingRottenTomatoesAudience
+      ? { rating: row.ratingRottenTomatoesAudience }
+      : null,
   };
 }
 

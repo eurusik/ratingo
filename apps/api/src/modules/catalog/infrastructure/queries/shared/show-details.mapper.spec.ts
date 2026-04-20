@@ -54,6 +54,7 @@ describe('show-details.mapper', () => {
     voteCountTrakt: 1200,
     ratingMetacritic: 75,
     ratingRottenTomatoes: 85,
+    ratingRottenTomatoesAudience: 80,
     totalSeasons: 3,
     totalEpisodes: 30,
     status: 'Returning Series',
@@ -233,6 +234,22 @@ describe('show-details.mapper', () => {
       expect(result.externalRatings.rottenTomatoes).toBeNull();
     });
 
+    it('should map Rotten Tomatoes audience rating when available', () => {
+      const row = createMockRow({ ratingRottenTomatoesAudience: 76 });
+
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
+
+      expect(result.externalRatings.rottenTomatoesAudience).toEqual({ rating: 76 });
+    });
+
+    it('should return null for Rotten Tomatoes audience rating when not available', () => {
+      const row = createMockRow({ ratingRottenTomatoesAudience: null });
+
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
+
+      expect(result.externalRatings.rottenTomatoesAudience).toBeNull();
+    });
+
     it('should extract primary trailer from videos array', () => {
       const row = createMockRow({ videos: [{ key: 'trailer1' }, { key: 'trailer2' }] });
 
@@ -359,6 +376,7 @@ describe('show-details.mapper', () => {
         voteCountTrakt: null,
         ratingMetacritic: null,
         ratingRottenTomatoes: null,
+        ratingRottenTomatoesAudience: null,
         totalSeasons: null,
         totalEpisodes: null,
         status: null,

@@ -1,0 +1,1 @@
+ALTER TABLE "media_items" ADD COLUMN "rt_fetched_at" timestamp;

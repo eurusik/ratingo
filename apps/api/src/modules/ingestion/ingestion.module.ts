@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import mdblistConfig from '../../config/mdblist.config';
 import omdbConfig from '../../config/omdb.config';
 import schedulerConfig from '../../config/scheduler.config';
 import traktConfig from '../../config/trakt.config';
@@ -17,6 +18,7 @@ import { UserMediaModule } from '../user-media/user-media.module';
 
 import { BackfillAltTitlesPipeline } from './application/pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from './application/pipelines/backfill-imdb.pipeline';
+import { BackfillMdblistRatingsPipeline } from './application/pipelines/backfill-mdblist-ratings.pipeline';
 import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
 import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline';
 import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
@@ -29,10 +31,12 @@ import { SyncMediaService } from './application/services/sync-media.service';
 import { TrackedSyncService } from './application/services/tracked-sync.service';
 import { TvMazeEnrichmentService } from './application/services/tvmaze-enrichment.service';
 import { BackfillWorker } from './application/workers/backfill.worker';
+import { RatingsBackfillWorker } from './application/workers/ratings-backfill.worker';
 import { SyncWorker } from './application/workers/sync.worker';
 import { TRAKT_LISTS_PORT } from './domain/ports/trakt-lists.port';
 import { TRAKT_RATINGS_PORT } from './domain/ports/trakt-ratings.port';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
+import { MdblistAdapter } from './infrastructure/adapters/mdblist/mdblist.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
 import { TraktListsAdapter } from './infrastructure/adapters/trakt/trakt-lists.adapter';
 import { TraktRatingsAdapter } from './infrastructure/adapters/trakt/trakt-ratings.adapter';
@@ -42,6 +46,7 @@ import {
   BACKFILL_QUEUE,
   DEFAULT_INGESTION_JOB_OPTIONS,
   INGESTION_QUEUE,
+  RATINGS_BACKFILL_QUEUE,
 } from './ingestion.constants';
 import { IngestionController } from './presentation/controllers/ingestion.controller';
 
@@ -60,6 +65,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     ScoreCalculatorModule,
     ConfigModule.forFeature(traktConfig),
     ConfigModule.forFeature(omdbConfig),
+    ConfigModule.forFeature(mdblistConfig),
     ConfigModule.forFeature(tvmazeConfig),
     ConfigModule.forFeature(schedulerConfig),
     BullModule.registerQueue({
@@ -71,6 +77,14 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       defaultJobOptions: {
         ...DEFAULT_INGESTION_JOB_OPTIONS,
         removeOnComplete: { age: 3600, count: 1000 }, // higher for fast queue observability
+      },
+    }),
+    BullModule.registerQueue({
+      name: RATINGS_BACKFILL_QUEUE,
+      defaultJobOptions: {
+        ...DEFAULT_INGESTION_JOB_OPTIONS,
+        // Keep failed jobs longer to diagnose quota/429 issues after overnight drains.
+        removeOnFail: { age: 24 * 3600, count: 500 },
       },
     }),
   ],
@@ -94,6 +108,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     TraktRatingsAdapter,
     TraktListsAdapter,
     OmdbAdapter,
+    MdblistAdapter,
     TvMazeAdapter,
     TvMazeEnrichmentService,
     BulkJobService,
@@ -101,6 +116,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     TrackedSyncService,
     SyncWorker,
     BackfillWorker,
+    RatingsBackfillWorker,
     SnapshotsService,
     IngestionSchedulerService,
     // Pipeline classes
@@ -111,6 +127,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     NewReleasesPipeline,
     BackfillImdbPipeline,
     BackfillAltTitlesPipeline,
+    BackfillMdblistRatingsPipeline,
   ],
   exports: [SyncMediaService, TRAKT_RATINGS_PORT, TRAKT_LISTS_PORT, SnapshotsService],
 })

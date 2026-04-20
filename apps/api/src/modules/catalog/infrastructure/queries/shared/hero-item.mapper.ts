@@ -38,6 +38,7 @@ export interface HeroQueryRow {
   voteCountTrakt: number | null;
   ratingMetacritic: number | null;
   ratingRottenTomatoes: number | null;
+  ratingRottenTomatoesAudience: number | null;
 }
 
 /**
@@ -99,6 +100,9 @@ export function mapHeroResults(
           : null,
         metacritic: item.ratingMetacritic ? { rating: item.ratingMetacritic } : null,
         rottenTomatoes: item.ratingRottenTomatoes ? { rating: item.ratingRottenTomatoes } : null,
+        rottenTomatoesAudience: item.ratingRottenTomatoesAudience
+          ? { rating: item.ratingRottenTomatoesAudience }
+          : null,
       },
     };
 

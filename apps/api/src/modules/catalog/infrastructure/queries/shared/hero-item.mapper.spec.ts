@@ -56,6 +56,7 @@ describe('hero-item.mapper', () => {
       voteCountTrakt: 5000,
       ratingMetacritic: 75,
       ratingRottenTomatoes: 90,
+      ratingRottenTomatoesAudience: 85,
     };
 
     it('should map movie row to HeroMediaItem', () => {
@@ -140,6 +141,7 @@ describe('hero-item.mapper', () => {
         trakt: { rating: 85, voteCount: 5000 },
         metacritic: { rating: 75 },
         rottenTomatoes: { rating: 90 },
+        rottenTomatoesAudience: { rating: 85 },
       });
     });
 
@@ -151,6 +153,7 @@ describe('hero-item.mapper', () => {
         ratingTrakt: null,
         ratingMetacritic: null,
         ratingRottenTomatoes: null,
+        ratingRottenTomatoesAudience: null,
       };
 
       const results = mapHeroResults([row], new Map(), now);

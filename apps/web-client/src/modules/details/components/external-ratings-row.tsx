@@ -23,7 +23,8 @@ export function ExternalRatingsRow({ externalRatings, excludeRating }: ExternalR
     isValidRating(externalRatings.imdb?.rating) ||
     isValidRating(externalRatings.tmdb?.rating) ||
     isValidRating(externalRatings.trakt?.rating) ||
-    isValidRating(externalRatings.rottenTomatoes?.rating);
+    isValidRating(externalRatings.rottenTomatoes?.rating) ||
+    isValidRating(externalRatings.rottenTomatoesAudience?.rating);
 
   if (!hasAnyRating) return null;
 
@@ -43,6 +44,14 @@ export function ExternalRatingsRow({ externalRatings, excludeRating }: ExternalR
 
       {isValidRating(externalRatings.rottenTomatoes?.rating) && (
         <RatingBadge source="RT" rating={externalRatings.rottenTomatoes!.rating} isPercentage />
+      )}
+
+      {isValidRating(externalRatings.rottenTomatoesAudience?.rating) && (
+        <RatingBadge
+          source="RT Audience"
+          rating={externalRatings.rottenTomatoesAudience!.rating}
+          isPercentage
+        />
       )}
     </div>
   );

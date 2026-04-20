@@ -1435,6 +1435,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ingestion/backfill/mdblist-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill Rotten Tomatoes ratings from MDBList
+         * @description Finds all media items missing Rotten Tomatoes critics score and fetches critics + audience ratings from MDBList. Complements OMDb, which frequently omits RT values. Item jobs run on a dedicated rate-limited queue to fit the MDBList free-tier budget (1000 req/day; limiter caps execution at ~40/hour).
+         */
+        post: operations["IngestionController_backfillMdblistRatings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/catalog-policies": {
         parameters: {
             query?: never;
@@ -2530,7 +2550,10 @@ export interface components {
             imdb?: components["schemas"]["ExternalRatingItemDto"] | null;
             trakt?: components["schemas"]["ExternalRatingItemDto"] | null;
             metacritic?: components["schemas"]["ExternalRatingItemDto"] | null;
+            /** @description Rotten Tomatoes critics score (Tomatometer, 0-100) */
             rottenTomatoes?: components["schemas"]["ExternalRatingItemDto"] | null;
+            /** @description Rotten Tomatoes audience score (Popcornmeter, 0-100) */
+            rottenTomatoesAudience?: components["schemas"]["ExternalRatingItemDto"] | null;
         };
         GenreDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
@@ -8688,6 +8711,33 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Re-fetch alt titles for items that already have them */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Backfill job queued */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    IngestionController_backfillMdblistRatings: {
+        parameters: {
+            query?: {
+                /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
                 force?: string;
             };
             header?: never;
