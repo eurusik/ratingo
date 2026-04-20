@@ -25,6 +25,7 @@ export const movieSelectFields = {
   voteCountTrakt: schema.mediaItems.voteCountTrakt,
   ratingMetacritic: schema.mediaItems.ratingMetacritic,
   ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+  ratingRottenTomatoesAudience: schema.mediaItems.ratingRottenTomatoesAudience,
 
   theatricalReleaseDate: schema.movies.theatricalReleaseDate,
   digitalReleaseDate: schema.movies.digitalReleaseDate,
@@ -59,6 +60,7 @@ export type MovieSelectRow = {
   voteCountTrakt: number | null;
   ratingMetacritic: number | null;
   ratingRottenTomatoes: number | null;
+  ratingRottenTomatoesAudience: number | null;
   theatricalReleaseDate: Date | null;
   digitalReleaseDate: Date | null;
   runtime: number | null;

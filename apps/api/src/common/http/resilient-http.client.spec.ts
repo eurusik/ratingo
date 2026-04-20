@@ -5,6 +5,7 @@ import {
   parseRetryAfter,
   HttpError,
   DEFAULT_RETRY_CONFIG,
+  redactSensitiveUrlParams,
 } from './resilient-http.client';
 
 // Mock global fetch
@@ -104,6 +105,43 @@ describe('ResilientHttpClient', () => {
     it('should return null for invalid format', () => {
       const headers = new Headers({ 'retry-after': 'invalid' });
       expect(parseRetryAfter(headers)).toBeNull();
+    });
+  });
+
+  describe('redactSensitiveUrlParams', () => {
+    it('redacts apikey query parameter', () => {
+      const result = redactSensitiveUrlParams('https://www.omdbapi.com/?i=tt123&apikey=secret');
+      expect(result).not.toContain('secret');
+      expect(result).toContain('apikey=REDACTED');
+    });
+
+    it('redacts multiple sensitive params and preserves others', () => {
+      const result = redactSensitiveUrlParams(
+        'https://example.com/path?token=xyz&id=42&api_key=abc&q=movies',
+      );
+      expect(result).not.toContain('xyz');
+      expect(result).not.toContain('abc');
+      expect(result).toContain('token=REDACTED');
+      expect(result).toContain('api_key=REDACTED');
+      expect(result).toContain('id=42');
+      expect(result).toContain('q=movies');
+    });
+
+    it('is case-insensitive for param names', () => {
+      const result = redactSensitiveUrlParams('https://example.com/?ApiKey=secret&AUTH=x');
+      expect(result).not.toContain('secret');
+      expect(result).not.toContain('AUTH=x');
+      expect(result).toContain('ApiKey=REDACTED');
+      expect(result).toContain('AUTH=REDACTED');
+    });
+
+    it('returns URL unchanged when there are no sensitive params', () => {
+      const url = 'https://example.com/path?page=1&limit=20';
+      expect(redactSensitiveUrlParams(url)).toBe(url);
+    });
+
+    it('returns placeholder for unparseable input (never leaks raw)', () => {
+      expect(redactSensitiveUrlParams('not a url')).toBe('<unparseable-url>');
     });
   });
 

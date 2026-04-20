@@ -26,6 +26,7 @@ describe('ShowSelectRow', () => {
         'vote_count_trakt',
         'rating_metacritic',
         'rating_rotten_tomatoes',
+        'rating_rotten_tomatoes_audience',
         'popularity',
         // Stats
         'ratingo_score',
@@ -42,8 +43,8 @@ describe('ShowSelectRow', () => {
 
       // This test validates the interface structure
       // It won't compile if any expected field is missing from ShowSelectRow
-      // 11 core + 9 ratings + 5 stats + 4 show-specific = 29 fields
-      expect(expectedKeys).toHaveLength(29);
+      // 11 core + 10 ratings + 5 stats + 4 show-specific = 30 fields
+      expect(expectedKeys).toHaveLength(30);
     });
   });
 
@@ -76,10 +77,11 @@ describe('ShowSelectRow', () => {
         'vote_count_trakt',
         'rating_metacritic',
         'rating_rotten_tomatoes',
+        'rating_rotten_tomatoes_audience',
         'popularity',
       ];
 
-      expect(ratingFields).toHaveLength(9);
+      expect(ratingFields).toHaveLength(10);
     });
 
     it('should include all stats fields', () => {
@@ -129,6 +131,7 @@ describe('ShowSelectRow', () => {
         vote_count_trakt: null,
         rating_metacritic: null,
         rating_rotten_tomatoes: null,
+        rating_rotten_tomatoes_audience: null,
         popularity: 50,
         ratingo_score: null,
         quality_score: null,
@@ -166,6 +169,7 @@ describe('ShowSelectRow', () => {
         vote_count_trakt: 1200,
         rating_metacritic: 75,
         rating_rotten_tomatoes: 85,
+        rating_rotten_tomatoes_audience: 80,
         popularity: 100,
         ratingo_score: 82,
         quality_score: 80,

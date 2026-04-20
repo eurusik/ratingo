@@ -1,0 +1,1 @@
+CREATE INDEX "media_mdblist_pending_idx" ON "media_items" USING btree ("id") WHERE "media_items"."rt_fetched_at" IS NULL AND "media_items"."tmdb_id" IS NOT NULL AND "media_items"."deleted_at" IS NULL;

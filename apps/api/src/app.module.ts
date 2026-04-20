@@ -96,6 +96,11 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
         // OMDb
         OMDB_API_KEY: Joi.string().required(),
 
+        // MDBList (optional — used only for Rotten Tomatoes ratings backfill;
+        // pipeline no-ops when key is absent)
+        MDBLIST_API_KEY: Joi.string().optional(),
+        MDBLIST_API_URL: Joi.string().uri().optional(),
+
         // Auth (REQUIRED for security)
         ACCESS_TOKEN_SECRET: Joi.string().min(32).required(),
         REFRESH_TOKEN_SECRET: Joi.string().min(32).required(),

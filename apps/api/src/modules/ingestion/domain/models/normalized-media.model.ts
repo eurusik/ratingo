@@ -140,7 +140,10 @@ export interface NormalizedMedia {
   ratingImdb?: number | null;
   voteCountImdb?: number | null;
   ratingMetacritic?: number | null;
+  /** Rotten Tomatoes critics score (Tomatometer) — 0-100 */
   ratingRottenTomatoes?: number | null;
+  /** Rotten Tomatoes audience score (Popcornmeter) — 0-100 */
+  ratingRottenTomatoesAudience?: number | null;
   ratingTrakt?: number | null;
   voteCountTrakt?: number | null;
 

@@ -44,6 +44,9 @@ describe('movie-select.fields', () => {
       expect(movieSelectFields.voteCountTrakt).toBe(schema.mediaItems.voteCountTrakt);
       expect(movieSelectFields.ratingMetacritic).toBe(schema.mediaItems.ratingMetacritic);
       expect(movieSelectFields.ratingRottenTomatoes).toBe(schema.mediaItems.ratingRottenTomatoes);
+      expect(movieSelectFields.ratingRottenTomatoesAudience).toBe(
+        schema.mediaItems.ratingRottenTomatoesAudience,
+      );
     });
 
     it('should map common media fields to mediaItems table', () => {
@@ -59,9 +62,9 @@ describe('movie-select.fields', () => {
   });
 
   describe('movieSelectFields - completeness', () => {
-    it('should have exactly 27 fields', () => {
+    it('should have exactly 28 fields', () => {
       // Ensures no fields are accidentally added or removed
-      expect(Object.keys(movieSelectFields)).toHaveLength(27);
+      expect(Object.keys(movieSelectFields)).toHaveLength(28);
     });
 
     it('should define all required fields', () => {
@@ -85,6 +88,7 @@ describe('movie-select.fields', () => {
         'voteCountTrakt',
         'ratingMetacritic',
         'ratingRottenTomatoes',
+        'ratingRottenTomatoesAudience',
         'theatricalReleaseDate',
         'digitalReleaseDate',
         'runtime',
@@ -123,6 +127,7 @@ describe('movie-select.fields', () => {
         voteCountTrakt: 5000,
         ratingMetacritic: 75,
         ratingRottenTomatoes: 90,
+        ratingRottenTomatoesAudience: 85,
         theatricalReleaseDate: new Date(),
         digitalReleaseDate: new Date(),
         runtime: 120,
@@ -158,6 +163,7 @@ describe('movie-select.fields', () => {
         voteCountTrakt: null,
         ratingMetacritic: null,
         ratingRottenTomatoes: null,
+        ratingRottenTomatoesAudience: null,
         theatricalReleaseDate: null,
         digitalReleaseDate: null,
         runtime: null,

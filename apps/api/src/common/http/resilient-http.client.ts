@@ -134,6 +134,55 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Query parameter names whose values must be redacted from log output.
+ *
+ * External providers (OMDb, MDBList, legacy TMDB v3, etc.) accept API keys
+ * as query parameters. The full request URL — including the secret — would
+ * otherwise leak into every retry/timeout warn log and end up in log
+ * aggregators with broader read access than the env file.
+ *
+ * Names are matched case-insensitively.
+ */
+const SENSITIVE_QUERY_PARAMS: ReadonlySet<string> = new Set([
+  'apikey',
+  'api_key',
+  'api-key',
+  'key',
+  'token',
+  'access_token',
+  'accesstoken',
+  'client_secret',
+  'clientsecret',
+  'secret',
+  'password',
+  'auth',
+]);
+
+/**
+ * Redacts sensitive query parameters from a URL before logging.
+ *
+ * Returns a best-effort sanitised form. If the input is not a parseable URL
+ * we fall back to returning a fixed placeholder rather than the raw string —
+ * that way an accidentally passed key never reaches the log sink.
+ */
+export function redactSensitiveUrlParams(url: string): string {
+  try {
+    const parsed = new URL(url);
+    // Snapshot the entries first. Per WHATWG URL spec, URLSearchParams
+    // iterators are live — mutating via `.set()` during iteration can
+    // skip entries, which would leave sensitive params un-redacted.
+    for (const [name] of Array.from(parsed.searchParams)) {
+      if (SENSITIVE_QUERY_PARAMS.has(name.toLowerCase())) {
+        parsed.searchParams.set(name, 'REDACTED');
+      }
+    }
+    return parsed.toString();
+  } catch {
+    return '<unparseable-url>';
+  }
+}
+
+/**
  * Custom error class for HTTP errors with status code.
  */
 export class HttpError extends Error {
@@ -185,7 +234,7 @@ export class ResilientHttpClient {
       const elapsed = Date.now() - startTime;
       if (elapsed >= this.config.maxTotalTimeMs) {
         this.logger.warn(
-          `Time budget exhausted after ${elapsed}ms and ${attempts} attempts: ${url}`,
+          `Time budget exhausted after ${elapsed}ms and ${attempts} attempts: ${redactSensitiveUrlParams(url)}`,
         );
         break;
       }
@@ -202,7 +251,7 @@ export class ResilientHttpClient {
         // Don't retry non-retryable errors
         if (!canRetry) {
           this.logger.debug(
-            `Non-retryable error (${retryableError.status || retryableError.name}): ${url}`,
+            `Non-retryable error (${retryableError.status || retryableError.name}): ${redactSensitiveUrlParams(url)}`,
           );
           return {
             data: null,
@@ -215,7 +264,9 @@ export class ResilientHttpClient {
 
         // Don't retry if we've exhausted attempts
         if (attempt >= this.config.maxRetries) {
-          this.logger.warn(`Max retries (${this.config.maxRetries}) exhausted: ${url}`);
+          this.logger.warn(
+            `Max retries (${this.config.maxRetries}) exhausted: ${redactSensitiveUrlParams(url)}`,
+          );
           break;
         }
 
@@ -226,13 +277,13 @@ export class ResilientHttpClient {
         const remainingTime = this.config.maxTotalTimeMs - (Date.now() - startTime);
         if (delayMs >= remainingTime) {
           this.logger.warn(
-            `Delay ${delayMs}ms would exceed time budget (${remainingTime}ms remaining): ${url}`,
+            `Delay ${delayMs}ms would exceed time budget (${remainingTime}ms remaining): ${redactSensitiveUrlParams(url)}`,
           );
           break;
         }
 
         this.logger.debug(
-          `Retry ${attempt + 1}/${this.config.maxRetries} after ${delayMs}ms (${retryableError.status || retryableError.name}): ${url}`,
+          `Retry ${attempt + 1}/${this.config.maxRetries} after ${delayMs}ms (${retryableError.status || retryableError.name}): ${redactSensitiveUrlParams(url)}`,
         );
 
         await sleep(delayMs);

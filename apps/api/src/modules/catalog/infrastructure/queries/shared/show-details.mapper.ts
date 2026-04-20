@@ -34,13 +34,14 @@ export interface ShowDetailsQueryRow {
   voteCount: number;
   releaseDate: Date | null;
 
-  // External ratings (6)
+  // External ratings (7)
   ratingImdb: number | null;
   voteCountImdb: number | null;
   ratingTrakt: number | null;
   voteCountTrakt: number | null;
   ratingMetacritic: number | null;
   ratingRottenTomatoes: number | null;
+  ratingRottenTomatoesAudience: number | null;
 
   // Show-specific fields (6)
   totalSeasons: number | null;
@@ -68,8 +69,12 @@ function mapExternalRatings(row: ShowDetailsQueryRow) {
     tmdb: { rating: row.rating, voteCount: row.voteCount },
     imdb: row.ratingImdb ? { rating: row.ratingImdb, voteCount: row.voteCountImdb } : null,
     trakt: row.ratingTrakt ? { rating: row.ratingTrakt, voteCount: row.voteCountTrakt } : null,
-    metacritic: row.ratingMetacritic ? { rating: row.ratingMetacritic } : null,
-    rottenTomatoes: row.ratingRottenTomatoes ? { rating: row.ratingRottenTomatoes } : null,
+    metacritic: row.ratingMetacritic != null ? { rating: row.ratingMetacritic } : null,
+    rottenTomatoes: row.ratingRottenTomatoes != null ? { rating: row.ratingRottenTomatoes } : null,
+    rottenTomatoesAudience:
+      row.ratingRottenTomatoesAudience != null
+        ? { rating: row.ratingRottenTomatoesAudience }
+        : null,
   };
 }
 

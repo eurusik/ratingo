@@ -90,8 +90,13 @@ export class ShowResultMapper {
         trakt: row.rating_trakt
           ? { rating: row.rating_trakt, voteCount: row.vote_count_trakt }
           : null,
-        metacritic: row.rating_metacritic ? { rating: row.rating_metacritic } : null,
-        rottenTomatoes: row.rating_rotten_tomatoes ? { rating: row.rating_rotten_tomatoes } : null,
+        metacritic: row.rating_metacritic != null ? { rating: row.rating_metacritic } : null,
+        rottenTomatoes:
+          row.rating_rotten_tomatoes != null ? { rating: row.rating_rotten_tomatoes } : null,
+        rottenTomatoesAudience:
+          row.rating_rotten_tomatoes_audience != null
+            ? { rating: row.rating_rotten_tomatoes_audience }
+            : null,
       },
 
       showProgress: this.buildShowProgress(row),

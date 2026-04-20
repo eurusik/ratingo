@@ -41,6 +41,7 @@ export const HERO_SELECT_FIELDS = {
   voteCountTrakt: schema.mediaItems.voteCountTrakt,
   ratingMetacritic: schema.mediaItems.ratingMetacritic,
   ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+  ratingRottenTomatoesAudience: schema.mediaItems.ratingRottenTomatoesAudience,
 } as const;
 
 /**

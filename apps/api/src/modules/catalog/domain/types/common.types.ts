@@ -35,7 +35,10 @@ export interface ExternalRatings {
   imdb: ExternalRating | null;
   trakt: ExternalRating | null;
   metacritic: { rating: number } | null;
+  /** Rotten Tomatoes critics score (Tomatometer, 0-100). */
   rottenTomatoes: { rating: number } | null;
+  /** Rotten Tomatoes audience score (Popcornmeter, 0-100). */
+  rottenTomatoesAudience: { rating: number } | null;
 }
 
 /**

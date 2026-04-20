@@ -207,6 +207,27 @@ describe('SyncMediaService', () => {
       );
     });
 
+    it('should NOT pass null external ratings from OMDb (preserve existing values filled by other sources)', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      // OMDb-like partial response: imdb present, but RT/MC/votes missing
+      omdbAdapter.getAggregatedRatings.mockResolvedValue({
+        imdbRating: 8.2,
+        imdbVotes: null,
+        metacritic: null,
+        metascore: null,
+        rottenTomatoes: null,
+      });
+
+      await service.syncMovie(550);
+
+      const payload = mediaRepository.upsert.mock.calls[0][0];
+      expect(payload).toEqual(expect.objectContaining({ ratingImdb: 8.2 }));
+      expect(payload).not.toHaveProperty('voteCountImdb');
+      expect(payload).not.toHaveProperty('ratingMetacritic');
+      expect(payload).not.toHaveProperty('ratingRottenTomatoes');
+    });
+
     it('should throw error on failure for BullMQ retry', async () => {
       tmdbAdapter.getMovie.mockRejectedValue(new Error('TMDB API Error'));
 

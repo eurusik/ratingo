@@ -23,6 +23,7 @@ describe('MovieResultMapper', () => {
     voteCountTrakt: 5000,
     ratingMetacritic: 75,
     ratingRottenTomatoes: 90,
+    ratingRottenTomatoesAudience: 85,
     theatricalReleaseDate: new Date('2024-05-15'),
     digitalReleaseDate: new Date('2024-08-01'),
     runtime: 120,
@@ -82,6 +83,7 @@ describe('MovieResultMapper', () => {
         trakt: { rating: 85, voteCount: 5000 },
         metacritic: { rating: 75 },
         rottenTomatoes: { rating: 90 },
+        rottenTomatoesAudience: { rating: 85 },
       });
     });
 
@@ -93,6 +95,7 @@ describe('MovieResultMapper', () => {
         ratingTrakt: null,
         ratingMetacritic: null,
         ratingRottenTomatoes: null,
+        ratingRottenTomatoesAudience: null,
       };
 
       const result = MovieResultMapper.toMovieWithMedia(row, genres);
@@ -101,6 +104,7 @@ describe('MovieResultMapper', () => {
       expect(result.externalRatings.trakt).toBeNull();
       expect(result.externalRatings.metacritic).toBeNull();
       expect(result.externalRatings.rottenTomatoes).toBeNull();
+      expect(result.externalRatings.rottenTomatoesAudience).toBeNull();
     });
 
     it('should map images using ImageMapper', () => {

@@ -5407,6 +5407,65 @@
         ]
       }
     },
+    "/api/ingestion/backfill/mdblist-ratings": {
+      "post": {
+        "operationId": "IngestionController_backfillMdblistRatings",
+        "summary": "Backfill Rotten Tomatoes ratings from MDBList (admin-only)",
+        "description": "Admin-only. Finds media items where either Rotten Tomatoes critics score or audience score is missing, or whose last MDBList check is older than the refresh window (rtFetchedAt > 90 days), and fetches critics + audience ratings from MDBList. Complements OMDb, which frequently omits RT values. Item jobs run on a dedicated rate-limited queue; dispatcher enforces an app-side daily cap of 900 items per run to fit the MDBList free-tier budget (1000 req/day; worker limiter ~40/hour).",
+        "parameters": [
+          {
+            "name": "force",
+            "required": false,
+            "in": "query",
+            "description": "Bypass daily deduplication (allows re-running within the same UTC day)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Backfill job queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/IngestionJobResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token"
+          },
+          "403": {
+            "description": "Authenticated user does not have admin role"
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/admin/catalog-policies": {
       "get": {
         "operationId": "PolicyController_getPolicies",
@@ -8728,6 +8787,16 @@
           },
           "rottenTomatoes": {
             "nullable": true,
+            "description": "Rotten Tomatoes critics score (Tomatometer, 0-100)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingItemDto"
+              }
+            ]
+          },
+          "rottenTomatoesAudience": {
+            "nullable": true,
+            "description": "Rotten Tomatoes audience score (Popcornmeter, 0-100)",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalRatingItemDto"

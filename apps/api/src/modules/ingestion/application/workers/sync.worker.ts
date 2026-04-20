@@ -9,6 +9,7 @@ import { WORKER_CONFIG } from '@/config/queue.config';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
+import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
 import { SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
@@ -45,6 +46,7 @@ export class SyncWorker extends WorkerHost {
     private readonly newReleasesPipeline: NewReleasesPipeline,
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
+    private readonly backfillMdblistRatingsPipeline: BackfillMdblistRatingsPipeline,
   ) {
     super();
   }
@@ -150,6 +152,11 @@ export class SyncWorker extends WorkerHost {
         // Alternative titles backfill dispatcher (stays here — single job)
         case IngestionJob.BACKFILL_ALT_TITLES_DISPATCHER:
           await this.backfillAltTitlesPipeline.dispatch();
+          break;
+
+        // MDBList RT ratings backfill dispatcher (item jobs run on RatingsBackfillWorker)
+        case IngestionJob.BACKFILL_MDBLIST_RATINGS_DISPATCHER:
+          await this.backfillMdblistRatingsPipeline.dispatch();
           break;
 
         default:

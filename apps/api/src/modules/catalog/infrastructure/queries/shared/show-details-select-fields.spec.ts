@@ -3,10 +3,10 @@ import { SHOW_DETAILS_SELECT_FIELDS } from './show-details-select-fields';
 
 describe('SHOW_DETAILS_SELECT_FIELDS', () => {
   describe('Field count validation', () => {
-    it('should have exactly 34 fields', () => {
+    it('should have exactly 35 fields', () => {
       const fieldCount = Object.keys(SHOW_DETAILS_SELECT_FIELDS).length;
-      // 15 core + 6 external ratings + 6 show-specific + 7 stats = 34
-      expect(fieldCount).toBe(34);
+      // 15 core + 7 external ratings + 6 show-specific + 7 stats = 35
+      expect(fieldCount).toBe(35);
     });
   });
 
@@ -36,7 +36,7 @@ describe('SHOW_DETAILS_SELECT_FIELDS', () => {
       }
     });
 
-    it('should include all external rating fields (6)', () => {
+    it('should include all external rating fields (7)', () => {
       const ratingFields: (keyof typeof SHOW_DETAILS_SELECT_FIELDS)[] = [
         'ratingImdb',
         'voteCountImdb',
@@ -44,9 +44,10 @@ describe('SHOW_DETAILS_SELECT_FIELDS', () => {
         'voteCountTrakt',
         'ratingMetacritic',
         'ratingRottenTomatoes',
+        'ratingRottenTomatoesAudience',
       ];
 
-      expect(ratingFields).toHaveLength(6);
+      expect(ratingFields).toHaveLength(7);
       for (const field of ratingFields) {
         expect(SHOW_DETAILS_SELECT_FIELDS).toHaveProperty(field);
       }
@@ -118,6 +119,7 @@ describe('SHOW_DETAILS_SELECT_FIELDS', () => {
         'voteCountTrakt',
         'ratingMetacritic',
         'ratingRottenTomatoes',
+        'ratingRottenTomatoesAudience',
         // Show-specific
         'totalSeasons',
         'totalEpisodes',

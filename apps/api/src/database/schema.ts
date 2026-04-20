@@ -152,7 +152,12 @@ export const mediaItems = pgTable(
     ratingImdb: doublePrecision('rating_imdb'),
     voteCountImdb: integer('vote_count_imdb'),
     ratingMetacritic: integer('rating_metacritic'), // 0-100
-    ratingRottenTomatoes: integer('rating_rotten_tomatoes'), // 0-100
+    ratingRottenTomatoes: integer('rating_rotten_tomatoes'), // 0-100 (critics / Tomatometer)
+    ratingRottenTomatoesAudience: integer('rating_rotten_tomatoes_audience'), // 0-100 (audience / Popcornmeter)
+    /** Last attempt to fetch RT ratings from MDBList — used by backfill dispatcher
+     * to skip items already checked recently, so the free-tier daily quota is not
+     * wasted re-polling titles MDBList has no data for. */
+    rtFetchedAt: timestamp('rt_fetched_at'),
     ratingTrakt: doublePrecision('rating_trakt'),
     voteCountTrakt: integer('vote_count_trakt'),
 
@@ -193,6 +198,13 @@ export const mediaItems = pgTable(
     searchIdx: index('media_search_idx').on(t.searchVector),
     // Index for content class filtering
     contentClassIdx: index('media_content_class_idx').on(t.contentClass),
+    // Partial index for MDBList RT backfill dispatcher. Targets the initial
+    // drain phase (rt_fetched_at IS NULL) — the hot path covering ~50k rows.
+    // Predicate cannot reference NOW(), so post-90-day refresh falls back
+    // to seq scan, which is acceptable because by then the pool is small.
+    mdblistPendingIdx: index('media_mdblist_pending_idx')
+      .on(t.id)
+      .where(sql`${t.rtFetchedAt} IS NULL AND ${t.tmdbId} IS NOT NULL AND ${t.deletedAt} IS NULL`),
   }),
 );
 

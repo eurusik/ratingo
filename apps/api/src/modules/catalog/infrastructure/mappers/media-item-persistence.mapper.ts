@@ -8,6 +8,22 @@ type MediaItemInsert = InferInsertModel<typeof schema.mediaItems>;
 type MediaStatsInsert = InferInsertModel<typeof schema.mediaStats>;
 
 /**
+ * External-rating fields must never be overwritten with `null` on update.
+ * Different sources (OMDb, MDBList, Trakt) fill overlapping fields; a sync pass
+ * that happens not to receive a value should leave the existing value alone.
+ * Explicit erase is rare and should be handled by a dedicated repository method.
+ */
+const EXTERNAL_RATING_FIELDS = [
+  'ratingImdb',
+  'voteCountImdb',
+  'ratingTrakt',
+  'voteCountTrakt',
+  'ratingMetacritic',
+  'ratingRottenTomatoes',
+  'ratingRottenTomatoesAudience',
+] as const satisfies ReadonlyArray<keyof MediaItemInsert>;
+
+/**
  * Maps NormalizedMedia to Drizzle insert/update payloads for media_items and media_stats.
  */
 export class MediaItemPersistenceMapper {
@@ -46,6 +62,7 @@ export class MediaItemPersistenceMapper {
       voteCountTrakt: media.voteCountTrakt,
       ratingMetacritic: media.ratingMetacritic,
       ratingRottenTomatoes: media.ratingRottenTomatoes,
+      ratingRottenTomatoesAudience: media.ratingRottenTomatoesAudience,
 
       releaseDate: toDateOrNull(media.releaseDate),
 
@@ -82,6 +99,7 @@ export class MediaItemPersistenceMapper {
       voteCountTrakt: media.voteCountTrakt,
       ratingMetacritic: media.ratingMetacritic,
       ratingRottenTomatoes: media.ratingRottenTomatoes,
+      ratingRottenTomatoesAudience: media.ratingRottenTomatoesAudience,
       posterPath: media.posterPath,
       backdropPath: media.backdropPath,
       videos: media.videos || null,
@@ -108,6 +126,11 @@ export class MediaItemPersistenceMapper {
     const filtered = Object.fromEntries(
       Object.entries(update).filter(([, v]) => v !== undefined),
     ) as Partial<MediaItemInsert>;
+
+    // Defensive: never clobber existing external ratings with null on update.
+    for (const key of EXTERNAL_RATING_FIELDS) {
+      if (filtered[key] === null) delete filtered[key];
+    }
 
     // Always ensure updatedAt is present to prevent "No values to set" error
     filtered.updatedAt = new Date();

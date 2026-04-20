@@ -51,6 +51,7 @@ describe('movie-details.mapper', () => {
     voteCountTrakt: 800,
     ratingMetacritic: 75,
     ratingRottenTomatoes: 85,
+    ratingRottenTomatoesAudience: 80,
     runtime: 120,
     budget: 1000000,
     revenue: 5000000,
@@ -77,6 +78,7 @@ describe('movie-details.mapper', () => {
       expect(result.trakt).toEqual({ rating: 8.2, voteCount: 800 });
       expect(result.metacritic).toEqual({ rating: 75 });
       expect(result.rottenTomatoes).toEqual({ rating: 85 });
+      expect(result.rottenTomatoesAudience).toEqual({ rating: 80 });
     });
 
     it('should return null for missing ratings', () => {
@@ -85,6 +87,7 @@ describe('movie-details.mapper', () => {
         ratingTrakt: null,
         ratingMetacritic: null,
         ratingRottenTomatoes: null,
+        ratingRottenTomatoesAudience: null,
       });
       const result = mapExternalRatings(row);
 
@@ -93,6 +96,7 @@ describe('movie-details.mapper', () => {
       expect(result.trakt).toBeNull();
       expect(result.metacritic).toBeNull();
       expect(result.rottenTomatoes).toBeNull();
+      expect(result.rottenTomatoesAudience).toBeNull();
     });
   });
 

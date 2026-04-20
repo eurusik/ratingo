@@ -1435,6 +1435,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ingestion/backfill/mdblist-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill Rotten Tomatoes ratings from MDBList (admin-only)
+         * @description Admin-only. Finds media items where either Rotten Tomatoes critics score or audience score is missing, or whose last MDBList check is older than the refresh window (rtFetchedAt > 90 days), and fetches critics + audience ratings from MDBList. Complements OMDb, which frequently omits RT values. Item jobs run on a dedicated rate-limited queue; dispatcher enforces an app-side daily cap of 900 items per run to fit the MDBList free-tier budget (1000 req/day; worker limiter ~40/hour).
+         */
+        post: operations["IngestionController_backfillMdblistRatings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/catalog-policies": {
         parameters: {
             query?: never;
@@ -2530,7 +2550,10 @@ export interface components {
             imdb?: components["schemas"]["ExternalRatingItemDto"] | null;
             trakt?: components["schemas"]["ExternalRatingItemDto"] | null;
             metacritic?: components["schemas"]["ExternalRatingItemDto"] | null;
+            /** @description Rotten Tomatoes critics score (Tomatometer, 0-100) */
             rottenTomatoes?: components["schemas"]["ExternalRatingItemDto"] | null;
+            /** @description Rotten Tomatoes audience score (Popcornmeter, 0-100) */
+            rottenTomatoesAudience?: components["schemas"]["ExternalRatingItemDto"] | null;
         };
         GenreDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
@@ -8708,6 +8731,47 @@ export interface operations {
                         data: components["schemas"]["IngestionJobResponseDto"];
                     };
                 };
+            };
+        };
+    };
+    IngestionController_backfillMdblistRatings: {
+        parameters: {
+            query?: {
+                /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Backfill job queued */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authenticated user does not have admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

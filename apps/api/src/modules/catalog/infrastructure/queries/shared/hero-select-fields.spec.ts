@@ -31,14 +31,15 @@ describe('HERO_SELECT_FIELDS', () => {
         'voteCountTrakt',
         'ratingMetacritic',
         'ratingRottenTomatoes',
+        'ratingRottenTomatoesAudience',
       ];
 
       expect(selectFieldKeys).toEqual(expectedKeys.sort());
     });
 
-    it('should have exactly 23 fields', () => {
+    it('should have exactly 24 fields', () => {
       const fieldCount = Object.keys(HERO_SELECT_FIELDS).length;
-      expect(fieldCount).toBe(23);
+      expect(fieldCount).toBe(24);
     });
   });
 
@@ -86,6 +87,7 @@ describe('HERO_SELECT_FIELDS', () => {
         'voteCountTrakt',
         'ratingMetacritic',
         'ratingRottenTomatoes',
+        'ratingRottenTomatoesAudience',
       ];
 
       ratingFields.forEach((field) => {

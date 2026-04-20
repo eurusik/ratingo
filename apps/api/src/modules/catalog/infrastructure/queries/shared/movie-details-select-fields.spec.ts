@@ -31,6 +31,7 @@ describe('MOVIE_DETAILS_SELECT_FIELDS', () => {
         'voteCountTrakt',
         'ratingMetacritic',
         'ratingRottenTomatoes',
+        'ratingRottenTomatoesAudience',
         // Movie-specific fields
         'runtime',
         'budget',
@@ -51,9 +52,9 @@ describe('MOVIE_DETAILS_SELECT_FIELDS', () => {
       expect(selectFieldKeys).toEqual(expectedKeys.sort());
     });
 
-    it('should have exactly 34 fields', () => {
+    it('should have exactly 35 fields', () => {
       const fieldCount = Object.keys(MOVIE_DETAILS_SELECT_FIELDS).length;
-      expect(fieldCount).toBe(34);
+      expect(fieldCount).toBe(35);
     });
   });
 
@@ -90,6 +91,7 @@ describe('MOVIE_DETAILS_SELECT_FIELDS', () => {
         'voteCountTrakt',
         'ratingMetacritic',
         'ratingRottenTomatoes',
+        'ratingRottenTomatoesAudience',
       ];
 
       ratingFields.forEach((field) => {
