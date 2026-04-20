@@ -118,7 +118,9 @@ export class MdblistAdapter {
       this.logger.warn(`MDBList skipped: invalid tmdbId=${tmdbId}`);
       return { rottenTomatoesCritics: null, rottenTomatoesAudience: null };
     }
-    if (!(type in TYPE_PATH)) {
+    // Own-property check only — bare `in` would also match prototype keys
+    // like 'toString'/'constructor', defeating the purpose of this guard.
+    if (!Object.prototype.hasOwnProperty.call(TYPE_PATH, type)) {
       this.logger.warn(`MDBList skipped: invalid type=${type}`);
       return { rottenTomatoesCritics: null, rottenTomatoesAudience: null };
     }

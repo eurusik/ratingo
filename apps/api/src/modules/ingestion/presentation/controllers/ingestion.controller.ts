@@ -12,7 +12,15 @@ import {
   BadRequestException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiQuery,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+} from '@nestjs/swagger';
 
 import { type Queue } from 'bullmq';
 
@@ -517,12 +525,15 @@ export class IngestionController {
    */
   @Post('backfill/mdblist-ratings')
   @ApiOperation({
-    summary: 'Backfill Rotten Tomatoes ratings from MDBList',
+    summary: 'Backfill Rotten Tomatoes ratings from MDBList (admin-only)',
     description:
-      'Finds all media items missing Rotten Tomatoes critics score and fetches ' +
-      'critics + audience ratings from MDBList. Complements OMDb, which frequently ' +
-      'omits RT values. Item jobs run on a dedicated rate-limited queue to fit the ' +
-      'MDBList free-tier budget (1000 req/day; limiter caps execution at ~40/hour).',
+      'Admin-only. Finds media items where either Rotten Tomatoes critics score ' +
+      'or audience score is missing, or whose last MDBList check is older than the ' +
+      'refresh window (rtFetchedAt > 90 days), and fetches critics + audience ' +
+      'ratings from MDBList. Complements OMDb, which frequently omits RT values. ' +
+      'Item jobs run on a dedicated rate-limited queue; dispatcher enforces an ' +
+      'app-side daily cap of 900 items per run to fit the MDBList free-tier ' +
+      'budget (1000 req/day; worker limiter ~40/hour).',
   })
   @ApiQuery({
     name: 'force',
@@ -531,6 +542,8 @@ export class IngestionController {
     description: 'Bypass daily deduplication (allows re-running within the same UTC day)',
   })
   @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid bearer token' })
+  @ApiForbiddenResponse({ description: 'Authenticated user does not have admin role' })
   @HttpCode(HttpStatus.ACCEPTED)
   async backfillMdblistRatings(@Query('force') force?: string) {
     const isForce = force === 'true';

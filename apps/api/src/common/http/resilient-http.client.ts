@@ -168,7 +168,10 @@ const SENSITIVE_QUERY_PARAMS: ReadonlySet<string> = new Set([
 export function redactSensitiveUrlParams(url: string): string {
   try {
     const parsed = new URL(url);
-    for (const [name] of parsed.searchParams) {
+    // Snapshot the entries first. Per WHATWG URL spec, URLSearchParams
+    // iterators are live — mutating via `.set()` during iteration can
+    // skip entries, which would leave sensitive params un-redacted.
+    for (const [name] of Array.from(parsed.searchParams)) {
       if (SENSITIVE_QUERY_PARAMS.has(name.toLowerCase())) {
         parsed.searchParams.set(name, 'REDACTED');
       }

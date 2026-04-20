@@ -1445,8 +1445,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Backfill Rotten Tomatoes ratings from MDBList
-         * @description Finds all media items missing Rotten Tomatoes critics score and fetches critics + audience ratings from MDBList. Complements OMDb, which frequently omits RT values. Item jobs run on a dedicated rate-limited queue to fit the MDBList free-tier budget (1000 req/day; limiter caps execution at ~40/hour).
+         * Backfill Rotten Tomatoes ratings from MDBList (admin-only)
+         * @description Admin-only. Finds media items where either Rotten Tomatoes critics score or audience score is missing, or whose last MDBList check is older than the refresh window (rtFetchedAt > 90 days), and fetches critics + audience ratings from MDBList. Complements OMDb, which frequently omits RT values. Item jobs run on a dedicated rate-limited queue; dispatcher enforces an app-side daily cap of 900 items per run to fit the MDBList free-tier budget (1000 req/day; worker limiter ~40/hour).
          */
         post: operations["IngestionController_backfillMdblistRatings"];
         delete?: never;
@@ -8758,6 +8758,20 @@ export interface operations {
                         data: components["schemas"]["IngestionJobResponseDto"];
                     };
                 };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authenticated user does not have admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

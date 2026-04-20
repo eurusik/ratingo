@@ -98,11 +98,13 @@ export function mapHeroResults(
         trakt: item.ratingTrakt
           ? { rating: item.ratingTrakt, voteCount: item.voteCountTrakt }
           : null,
-        metacritic: item.ratingMetacritic ? { rating: item.ratingMetacritic } : null,
-        rottenTomatoes: item.ratingRottenTomatoes ? { rating: item.ratingRottenTomatoes } : null,
-        rottenTomatoesAudience: item.ratingRottenTomatoesAudience
-          ? { rating: item.ratingRottenTomatoesAudience }
-          : null,
+        metacritic: item.ratingMetacritic != null ? { rating: item.ratingMetacritic } : null,
+        rottenTomatoes:
+          item.ratingRottenTomatoes != null ? { rating: item.ratingRottenTomatoes } : null,
+        rottenTomatoesAudience:
+          item.ratingRottenTomatoesAudience != null
+            ? { rating: item.ratingRottenTomatoesAudience }
+            : null,
       },
     };
 

@@ -77,9 +77,15 @@ export class BackfillMdblistRatingsPipeline {
     // suffix one bad job could block a row indefinitely.
     const day = formatUtcDayId();
     let cursor: string | undefined;
-    let totalQueued = 0;
+    // NOTE: `totalAttempted` counts jobs sent to `addBulk`, NOT uniquely
+    // accepted jobs. BullMQ silently dedupes by jobId within the same UTC day,
+    // so when an admin triggers the dispatcher twice with `force=true` on the
+    // same day, the second run will appear to "reach daily budget" while in
+    // fact enqueueing nothing new. MDBList quota is preserved (dedup means no
+    // duplicate work), so observability — not correctness — is the concern.
+    let totalAttempted = 0;
 
-    while (totalQueued < MDBLIST_DAILY_BUDGET) {
+    while (totalAttempted < MDBLIST_DAILY_BUDGET) {
       const conditions = [
         isNotNull(schema.mediaItems.tmdbId),
         isNull(schema.mediaItems.deletedAt),
@@ -96,7 +102,7 @@ export class BackfillMdblistRatingsPipeline {
 
       // Shrink the batch so we never overshoot the daily budget by more
       // than BACKFILL_MDBLIST_RATINGS_BATCH_SIZE - 1.
-      const remaining = MDBLIST_DAILY_BUDGET - totalQueued;
+      const remaining = MDBLIST_DAILY_BUDGET - totalAttempted;
       const batchSize = Math.min(BACKFILL_MDBLIST_RATINGS_BATCH_SIZE, remaining);
 
       const rows = await withDbError('find MDBList backfill candidates', this.logger, () =>
@@ -130,20 +136,22 @@ export class BackfillMdblistRatingsPipeline {
 
       if (jobs.length > 0) {
         await this.queue.addBulk(jobs);
-        totalQueued += jobs.length;
+        totalAttempted += jobs.length;
       }
 
       cursor = rows[rows.length - 1].id;
 
-      this.logger.debug(`Queued ${jobs.length} MDBList jobs (total: ${totalQueued})`);
+      this.logger.debug(`Queued ${jobs.length} MDBList jobs (total: ${totalAttempted})`);
     }
 
-    if (totalQueued >= MDBLIST_DAILY_BUDGET) {
+    if (totalAttempted >= MDBLIST_DAILY_BUDGET) {
       this.logger.log(
-        `MDBList ratings backfill dispatcher reached daily budget (${MDBLIST_DAILY_BUDGET} items); remaining work will be picked up on next run`,
+        `MDBList ratings backfill dispatcher reached daily budget (attempted=${MDBLIST_DAILY_BUDGET}; actual new-vs-deduped count depends on same-day previous runs). Remaining work will be picked up on next run.`,
       );
     } else {
-      this.logger.log(`MDBList ratings backfill dispatcher complete: queued=${totalQueued} items`);
+      this.logger.log(
+        `MDBList ratings backfill dispatcher complete: attempted=${totalAttempted} items`,
+      );
     }
   }
 

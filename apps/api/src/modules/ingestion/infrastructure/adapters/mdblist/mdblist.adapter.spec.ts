@@ -224,7 +224,18 @@ describe('MdblistAdapter', () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it('throws if API key is not configured', async () => {
+    it('rejects prototype keys as media type (prototype-pollution defence)', async () => {
+      // Without hasOwnProperty check, `'toString' in TYPE_PATH` returns true
+      // and TYPE_PATH['toString'] would template a native function into the URL.
+      for (const key of ['toString', 'constructor', 'hasOwnProperty']) {
+        mockFetch.mockReset();
+        const result = await adapter.getRottenTomatoesRatings(1, key as unknown as MediaType);
+        expect(result).toEqual({ rottenTomatoesCritics: null, rottenTomatoesAudience: null });
+        expect(mockFetch).not.toHaveBeenCalled();
+      }
+    });
+
+    it('returns null fields and does not fetch when API key is not configured', async () => {
       const moduleWithoutKey: TestingModule = await Test.createTestingModule({
         providers: [
           MdblistAdapter,
