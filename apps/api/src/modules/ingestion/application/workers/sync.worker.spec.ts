@@ -11,6 +11,7 @@ import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
 import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
+import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
 
 afterAll(() => {
@@ -27,6 +28,7 @@ describe('SyncWorker', () => {
   let newReleasesPipeline: any;
   let backfillImdbPipeline: any;
   let backfillAltTitlesPipeline: any;
+  let backfillMdblistRatingsPipeline: any;
 
   beforeEach(async () => {
     syncService = {
@@ -70,6 +72,11 @@ describe('SyncWorker', () => {
       processItem: jest.fn().mockResolvedValue(undefined),
     };
 
+    backfillMdblistRatingsPipeline = {
+      dispatch: jest.fn().mockResolvedValue(undefined),
+      processItem: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SyncWorker,
@@ -81,6 +88,7 @@ describe('SyncWorker', () => {
         { provide: NewReleasesPipeline, useValue: newReleasesPipeline },
         { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
+        { provide: BackfillMdblistRatingsPipeline, useValue: backfillMdblistRatingsPipeline },
       ],
     }).compile();
 

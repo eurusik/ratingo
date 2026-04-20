@@ -1,6 +1,6 @@
 import { registerAs } from '@nestjs/config';
 
-const DEFAULT_API_URL = 'https://api.mdblist.com';
+export const DEFAULT_API_URL = 'https://api.mdblist.com';
 
 /**
  * Allowed hostnames for MDBList API calls.
@@ -10,14 +10,16 @@ const DEFAULT_API_URL = 'https://api.mdblist.com';
  * or internal host would otherwise leak the API key to that endpoint and
  * write attacker-controlled data into our DB.
  */
-const ALLOWED_HOSTNAMES: ReadonlySet<string> = new Set(['api.mdblist.com']);
+export const ALLOWED_HOSTNAMES: ReadonlySet<string> = new Set(['api.mdblist.com']);
 
 /**
  * Validates MDBList base URL. Enforces HTTPS and an allow-list of hosts.
  * Falls back to the default when the override is invalid — never throws at
  * config-load time so the app still boots (MDBList is optional).
+ *
+ * Exported for direct unit testing.
  */
-function resolveApiUrl(raw: string | undefined): string {
+export function resolveApiUrl(raw: string | undefined): string {
   if (!raw) return DEFAULT_API_URL;
   try {
     const parsed = new URL(raw);

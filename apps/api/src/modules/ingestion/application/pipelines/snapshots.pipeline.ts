@@ -3,7 +3,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { formatUtcDayId, utcDateFromDayId } from '@/common/utils/date.util';
 
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { SNAPSHOTS_BATCH_SIZE } from '../../ingestion.constants';
+import { SNAPSHOTS_BATCH_SIZE, SNAPSHOTS_RUN_CAP } from '../../ingestion.constants';
 import { normalizeRegion } from '../helpers/queue.helpers';
 import { SnapshotsService } from '../services/snapshots.service';
 
@@ -39,14 +39,18 @@ export class SnapshotsPipeline {
     );
 
     let cursor: string | undefined;
+    let totalProcessed = 0;
     let totalSynced = 0;
     let totalSkipped = 0;
     let totalErrors = 0;
     let batchCount = 0;
 
-    while (true) {
+    while (totalProcessed < SNAPSHOTS_RUN_CAP) {
+      const remaining = SNAPSHOTS_RUN_CAP - totalProcessed;
+      const batchLimit = Math.min(SNAPSHOTS_BATCH_SIZE, remaining);
+
       const candidates = await this.mediaRepository.findSnapshotCandidates({
-        limit: SNAPSHOTS_BATCH_SIZE,
+        limit: batchLimit,
         cursor,
       });
 
@@ -54,6 +58,7 @@ export class SnapshotsPipeline {
 
       cursor = candidates[candidates.length - 1].id;
       batchCount++;
+      totalProcessed += candidates.length;
 
       const result = await this.snapshotsService.syncSnapshotBatch(
         candidates,
@@ -71,9 +76,17 @@ export class SnapshotsPipeline {
       );
     }
 
-    this.logger.log(
-      `Snapshots dispatcher complete: batches=${batchCount}, ` +
-        `synced=${totalSynced}, skipped=${totalSkipped}, errors=${totalErrors}`,
-    );
+    if (totalProcessed >= SNAPSHOTS_RUN_CAP) {
+      this.logger.log(
+        `Snapshots dispatcher hit run cap (${SNAPSHOTS_RUN_CAP}); ` +
+          `batches=${batchCount}, synced=${totalSynced}, skipped=${totalSkipped}, errors=${totalErrors}. ` +
+          `Remaining candidates will be picked up on next run.`,
+      );
+    } else {
+      this.logger.log(
+        `Snapshots dispatcher complete: batches=${batchCount}, ` +
+          `synced=${totalSynced}, skipped=${totalSkipped}, errors=${totalErrors}`,
+      );
+    }
   }
 }

@@ -9,7 +9,7 @@ import { WORKER_CONFIG } from '@/config/queue.config';
 import { IngestionJob, RATINGS_BACKFILL_QUEUE } from '../../ingestion.constants';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 
-interface MdblistItemPayload {
+export interface MdblistItemPayload {
   mediaItemId: string;
   tmdbId: number;
   type: MediaType;
@@ -20,8 +20,10 @@ interface MdblistItemPayload {
  * survive JSON serialisation, so a renamed field or a manual re-queue via
  * BullMQ UI could otherwise reach the pipeline and trigger non-null
  * assertion crashes or pathological URL construction.
+ *
+ * Exported for direct unit testing.
  */
-function isValidMdblistItemPayload(data: unknown): data is MdblistItemPayload {
+export function isValidMdblistItemPayload(data: unknown): data is MdblistItemPayload {
   if (!data || typeof data !== 'object') return false;
   const { mediaItemId, tmdbId, type } = data as Record<string, unknown>;
   return (

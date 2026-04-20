@@ -14,6 +14,7 @@ import { MdblistAdapter } from '../../infrastructure/adapters/mdblist/mdblist.ad
 import {
   BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
   IngestionJob,
+  MDBLIST_DAILY_BUDGET,
   MDBLIST_RATINGS_REFRESH_DAYS,
   RATINGS_BACKFILL_QUEUE,
 } from '../../ingestion.constants';
@@ -77,7 +78,7 @@ export class BackfillMdblistRatingsPipeline {
     let cursor: string | undefined;
     let totalQueued = 0;
 
-    while (true) {
+    while (totalQueued < MDBLIST_DAILY_BUDGET) {
       const conditions = [
         isNotNull(schema.mediaItems.tmdbId),
         isNull(schema.mediaItems.deletedAt),
@@ -92,6 +93,11 @@ export class BackfillMdblistRatingsPipeline {
         conditions.push(gt(schema.mediaItems.id, cursor));
       }
 
+      // Shrink the batch so we never overshoot the daily budget by more
+      // than BACKFILL_MDBLIST_RATINGS_BATCH_SIZE - 1.
+      const remaining = MDBLIST_DAILY_BUDGET - totalQueued;
+      const batchSize = Math.min(BACKFILL_MDBLIST_RATINGS_BATCH_SIZE, remaining);
+
       const rows = await this.db
         .select({
           id: schema.mediaItems.id,
@@ -101,7 +107,7 @@ export class BackfillMdblistRatingsPipeline {
         .from(schema.mediaItems)
         .where(and(...conditions))
         .orderBy(schema.mediaItems.id)
-        .limit(BACKFILL_MDBLIST_RATINGS_BATCH_SIZE);
+        .limit(batchSize);
 
       if (rows.length === 0) break;
 
@@ -129,15 +135,27 @@ export class BackfillMdblistRatingsPipeline {
       this.logger.debug(`Queued ${jobs.length} MDBList jobs (total: ${totalQueued})`);
     }
 
-    this.logger.log(`MDBList ratings backfill dispatcher complete: queued=${totalQueued} items`);
+    if (totalQueued >= MDBLIST_DAILY_BUDGET) {
+      this.logger.log(
+        `MDBList ratings backfill dispatcher reached daily budget (${MDBLIST_DAILY_BUDGET} items); remaining work will be picked up on next run`,
+      );
+    } else {
+      this.logger.log(`MDBList ratings backfill dispatcher complete: queued=${totalQueued} items`);
+    }
   }
 
   /**
    * Item job: fetches RT ratings from MDBList and updates DB directly.
    *
-   * ALWAYS stamps `rtFetchedAt` (even when MDBList returns no data) so the
-   * dispatcher skips this row for the next refresh window — preventing
-   * endless re-polling for titles MDBList has no coverage for.
+   * ALWAYS stamps `rtFetchedAt` on a real fetch (even when MDBList returns
+   * no data) so the dispatcher skips this row for the next refresh window —
+   * preventing endless re-polling for titles MDBList has no coverage for.
+   *
+   * Before fetching, re-reads `rtFetchedAt` from the DB and short-circuits
+   * if the row was already processed within the refresh window. This is
+   * belt-and-braces defence: the dispatcher's budget cap is the primary
+   * protection, but a duplicate job can still arrive (admin force=true,
+   * BullMQ retries, worker restarts) and would otherwise burn a quota unit.
    *
    * Best-effort on the network side: if MDBList is unreachable, the
    * adapter returns nulls and this method no-ops on ratings but still
@@ -145,6 +163,24 @@ export class BackfillMdblistRatingsPipeline {
    * forever on a MDBList outage) burns more quota than the ~90-day delay.
    */
   async processItem(data: { mediaItemId: string; tmdbId: number; type: MediaType }): Promise<void> {
+    // Pre-check: skip if this row was already processed within the refresh
+    // window. Saves an MDBList quota unit per redundant job.
+    const [existing] = await this.db
+      .select({ rtFetchedAt: schema.mediaItems.rtFetchedAt })
+      .from(schema.mediaItems)
+      .where(eq(schema.mediaItems.id, data.mediaItemId))
+      .limit(1);
+
+    if (existing?.rtFetchedAt) {
+      const staleBefore = new Date(Date.now() - MDBLIST_RATINGS_REFRESH_DAYS * MS_PER_DAY);
+      if (existing.rtFetchedAt >= staleBefore) {
+        this.logger.debug(
+          `Skipping tmdbId=${data.tmdbId}: rtFetchedAt within refresh window (quota preserved)`,
+        );
+        return;
+      }
+    }
+
     const ratings = await this.mdblistAdapter.getRottenTomatoesRatings(data.tmdbId, data.type);
 
     const update: Partial<typeof schema.mediaItems.$inferInsert> = {

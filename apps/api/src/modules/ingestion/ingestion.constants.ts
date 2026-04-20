@@ -100,6 +100,19 @@ export const TMDB_REQUEST_DELAY_MS = 300;
 export const SNAPSHOTS_BATCH_SIZE = 500;
 
 /**
+ * Hard cap on items the snapshots dispatcher may process per run.
+ *
+ * Prevents the dispatcher from running for many hours on a fresh or grown
+ * catalog. With Trakt rate limit ~30/min, 5000 items ≈ 3h per run. Daily
+ * cron fires again next day and picks up the remainder via cursor.
+ *
+ * Without this cap, a single run could hold the ingestion worker for 24h+
+ * on catalogs of 50k+ ELIGIBLE items, preventing any other ingestion jobs
+ * from executing in that time window.
+ */
+export const SNAPSHOTS_RUN_CAP = 5_000;
+
+/**
  * Bulk limit for tracked shows job enqueueing.
  */
 export const TRACKED_SHOWS_BULK_LIMIT = 10;
@@ -192,3 +205,30 @@ export const BACKFILL_MDBLIST_RATINGS_BATCH_SIZE = 100;
  * that users see updates within a season.
  */
 export const MDBLIST_RATINGS_REFRESH_DAYS = 90;
+
+/**
+ * Hard cap on jobs the MDBList dispatcher may enqueue per run.
+ *
+ * MUST stay below the daily processing capacity (worker limiter is 40/hour
+ * = 960/day). Without this cap, a single dispatcher run would enqueue the
+ * full candidate set (~50k items) into Redis, bloat memory, and then on
+ * the next run it would enqueue duplicates (day-scoped jobIds), doubling
+ * backlog each day. The worker would still burn quota on those duplicates
+ * unless processItem also re-checks freshness — which it does, but the
+ * cap is the primary defence.
+ *
+ * Value matches the free-tier daily throughput with a small retry margin.
+ */
+export const MDBLIST_DAILY_BUDGET = 900;
+
+/**
+ * Hard cap on jobs the IMDb / alt-titles backfill dispatchers may enqueue
+ * per run.
+ *
+ * TMDB allows ~40 req/s (worker limiter: 600/min = 36k/hour), so throughput
+ * is not the constraint — Redis memory is. A one-shot run on a fresh DB
+ * could otherwise enqueue 100k+ items at once. At 20k per run the dispatcher
+ * drains in ~35 minutes, then next run picks up the remainder. Repeat
+ * daily triggers until fully drained.
+ */
+export const TMDB_BACKFILL_RUN_CAP = 20_000;

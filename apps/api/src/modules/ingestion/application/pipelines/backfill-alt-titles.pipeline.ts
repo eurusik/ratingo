@@ -6,6 +6,7 @@ import { and, gt, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
+import { formatUtcDayId } from '@/common/utils/date.util';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 
@@ -16,6 +17,7 @@ import {
   BACKFILL_ALT_TITLES_BATCH_SIZE,
   BACKFILL_QUEUE,
   IngestionJob,
+  TMDB_BACKFILL_RUN_CAP,
 } from '../../ingestion.constants';
 
 /**
@@ -47,10 +49,11 @@ export class BackfillAltTitlesPipeline {
   async dispatch(): Promise<void> {
     this.logger.log('Starting alt titles backfill dispatcher...');
 
+    const day = formatUtcDayId();
     let cursor: string | undefined;
     let totalQueued = 0;
 
-    while (true) {
+    while (totalQueued < TMDB_BACKFILL_RUN_CAP) {
       const conditions = [
         isNull(schema.mediaItems.alternativeTitles),
         isNull(schema.mediaItems.deletedAt),
@@ -59,6 +62,9 @@ export class BackfillAltTitlesPipeline {
       if (cursor) {
         conditions.push(gt(schema.mediaItems.id, cursor));
       }
+
+      const remaining = TMDB_BACKFILL_RUN_CAP - totalQueued;
+      const batchSize = Math.min(BACKFILL_ALT_TITLES_BATCH_SIZE, remaining);
 
       const rows = await this.db
         .select({
@@ -71,10 +77,12 @@ export class BackfillAltTitlesPipeline {
         .from(schema.mediaItems)
         .where(and(...conditions))
         .orderBy(schema.mediaItems.id)
-        .limit(BACKFILL_ALT_TITLES_BATCH_SIZE);
+        .limit(batchSize);
 
       if (rows.length === 0) break;
 
+      // Queue item jobs — jobId scoped by UTC day so a failed job from
+      // yesterday never blocks today's dispatcher.
       const jobs = rows
         .filter((r) => r.tmdbId !== null)
         .map((r) => ({
@@ -86,7 +94,7 @@ export class BackfillAltTitlesPipeline {
             title: r.title,
             originalTitle: r.originalTitle,
           },
-          opts: { jobId: `backfill-alt_${r.tmdbId}` },
+          opts: { jobId: `backfill-alt_${r.tmdbId}_${day}` },
         }));
 
       if (jobs.length > 0) {
@@ -99,7 +107,13 @@ export class BackfillAltTitlesPipeline {
       this.logger.debug(`Queued ${jobs.length} alt title jobs (total: ${totalQueued})`);
     }
 
-    this.logger.log(`Alt titles backfill dispatcher complete: queued=${totalQueued} items`);
+    if (totalQueued >= TMDB_BACKFILL_RUN_CAP) {
+      this.logger.log(
+        `Alt titles backfill dispatcher hit run cap (${TMDB_BACKFILL_RUN_CAP}); remaining items will be picked up on next run`,
+      );
+    } else {
+      this.logger.log(`Alt titles backfill dispatcher complete: queued=${totalQueued} items`);
+    }
   }
 
   /**

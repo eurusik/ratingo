@@ -6,11 +6,12 @@ import { and, eq, gt, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
+import { formatUtcDayId } from '@/common/utils/date.util';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 
 import { TmdbAdapter } from '../../../tmdb/public';
-import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { BACKFILL_QUEUE, IngestionJob, TMDB_BACKFILL_RUN_CAP } from '../../ingestion.constants';
 
 /**
  * Batch size for backfill dispatcher pagination.
@@ -47,11 +48,15 @@ export class BackfillImdbPipeline {
   async dispatch(): Promise<void> {
     this.logger.log('Starting IMDb backfill dispatcher...');
 
+    const day = formatUtcDayId();
     let cursor: string | undefined;
     let totalQueued = 0;
 
-    // Paginate through all shows without imdb_id
-    while (true) {
+    // Paginate with a hard cap on queued jobs. Without the cap, a fresh
+    // DB with many ID-less shows would dump 100k+ entries into Redis in a
+    // single run and duplicate them on the next manual trigger because
+    // the day-scoped jobId would differ.
+    while (totalQueued < TMDB_BACKFILL_RUN_CAP) {
       const conditions = [
         eq(schema.mediaItems.type, MediaType.SHOW),
         isNull(schema.mediaItems.imdbId),
@@ -62,6 +67,9 @@ export class BackfillImdbPipeline {
         conditions.push(gt(schema.mediaItems.id, cursor));
       }
 
+      const remaining = TMDB_BACKFILL_RUN_CAP - totalQueued;
+      const batchSize = Math.min(BACKFILL_BATCH_SIZE, remaining);
+
       const rows = await this.db
         .select({
           id: schema.mediaItems.id,
@@ -70,17 +78,18 @@ export class BackfillImdbPipeline {
         .from(schema.mediaItems)
         .where(and(...conditions))
         .orderBy(schema.mediaItems.id)
-        .limit(BACKFILL_BATCH_SIZE);
+        .limit(batchSize);
 
       if (rows.length === 0) break;
 
-      // Queue item jobs
+      // Queue item jobs — jobId scoped by UTC day so a failed job from
+      // yesterday never blocks today's dispatcher.
       const jobs = rows
         .filter((r) => r.tmdbId !== null)
         .map((r) => ({
           name: IngestionJob.BACKFILL_IMDB_ITEM,
           data: { tmdbId: r.tmdbId },
-          opts: { jobId: `backfill-imdb_${r.tmdbId}` },
+          opts: { jobId: `backfill-imdb_${r.tmdbId}_${day}` },
         }));
 
       if (jobs.length > 0) {
@@ -93,7 +102,13 @@ export class BackfillImdbPipeline {
       this.logger.debug(`Queued ${jobs.length} backfill jobs (total: ${totalQueued})`);
     }
 
-    this.logger.log(`IMDb backfill dispatcher complete: queued=${totalQueued} shows`);
+    if (totalQueued >= TMDB_BACKFILL_RUN_CAP) {
+      this.logger.log(
+        `IMDb backfill dispatcher hit run cap (${TMDB_BACKFILL_RUN_CAP}); remaining shows will be picked up on next run`,
+      );
+    } else {
+      this.logger.log(`IMDb backfill dispatcher complete: queued=${totalQueued} shows`);
+    }
   }
 
   /**

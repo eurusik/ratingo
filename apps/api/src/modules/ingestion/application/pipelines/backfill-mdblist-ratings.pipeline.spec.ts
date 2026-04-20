@@ -5,14 +5,20 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 
 import { MdblistAdapter } from '../../infrastructure/adapters/mdblist/mdblist.adapter';
-import { IngestionJob, RATINGS_BACKFILL_QUEUE } from '../../ingestion.constants';
+import {
+  IngestionJob,
+  MDBLIST_DAILY_BUDGET,
+  MDBLIST_RATINGS_REFRESH_DAYS,
+  RATINGS_BACKFILL_QUEUE,
+} from '../../ingestion.constants';
 
 import { BackfillMdblistRatingsPipeline } from './backfill-mdblist-ratings.pipeline';
 
 /**
- * Lightweight Drizzle mock: `db.select().from().where().orderBy().limit()`
- * is a thenable chain whose terminal `limit()` is awaited. We intercept at
- * `limit()` (the leaf) to return test fixtures.
+ * Lightweight Drizzle mock for the two chains used by this pipeline:
+ *   dispatcher:  db.select().from().where().orderBy().limit()
+ *   processItem: db.select().from().where().limit()
+ * Both terminate at `.limit()`, which we intercept to return fixtures.
  */
 function buildDbMock(options: { selectBatches?: Array<Array<Record<string, unknown>>> }) {
   const { selectBatches = [[]] } = options;
@@ -24,7 +30,10 @@ function buildDbMock(options: { selectBatches?: Array<Array<Record<string, unkno
     return Promise.resolve(batch);
   });
   const orderBy = jest.fn().mockReturnValue({ limit });
-  const where = jest.fn().mockReturnValue({ orderBy });
+  // `where` returns an object exposing both `orderBy` (for dispatcher) and
+  // `limit` directly (for processItem pre-check) so both chains terminate
+  // at the same leaf.
+  const where = jest.fn().mockReturnValue({ orderBy, limit });
   const from = jest.fn().mockReturnValue({ where });
   const select = jest.fn().mockReturnValue({ from });
 
@@ -157,6 +166,30 @@ describe('BackfillMdblistRatingsPipeline', () => {
       expect(jobs).toHaveLength(1);
       expect(jobs[0].data.tmdbId).toBe(101);
     });
+
+    it('stops queueing once daily budget is reached (Redis bloat protection)', async () => {
+      // Mock returns the same 100-item batch on every call — dispatcher
+      // should stop looping once totalQueued hits MDBLIST_DAILY_BUDGET (900),
+      // not drain indefinitely.
+      const batch = Array.from({ length: 100 }, (_, i) => ({
+        id: `media-${Math.random()}-${i}`,
+        tmdbId: 1000 + i,
+        type: MediaType.MOVIE,
+      }));
+      const manyBatches = Array.from({ length: 20 }, () => batch);
+      await setupPipeline({ selectBatches: manyBatches });
+
+      await pipeline.dispatch();
+
+      const totalQueued = queueAddBulk.mock.calls.reduce(
+        (acc, [jobs]) => acc + (jobs as unknown[]).length,
+        0,
+      );
+      expect(totalQueued).toBeLessThanOrEqual(MDBLIST_DAILY_BUDGET);
+      // Must still queue a meaningful amount — confirms the loop ran, not
+      // that it bailed on first iteration.
+      expect(totalQueued).toBeGreaterThanOrEqual(MDBLIST_DAILY_BUDGET - 100);
+    });
   });
 
   describe('processItem', () => {
@@ -267,6 +300,35 @@ describe('BackfillMdblistRatingsPipeline', () => {
       });
 
       expect(mdblistAdapter.getRottenTomatoesRatings).toHaveBeenCalledWith(42, MediaType.SHOW);
+    });
+
+    it('skips MDBList call when rtFetchedAt is within refresh window (duplicate quota protection)', async () => {
+      // Seed the select mock with a "fresh" rt_fetched_at row so the
+      // pre-check short-circuits before the adapter is called.
+      const freshDate = new Date();
+      await setupPipeline({ selectBatches: [[{ rtFetchedAt: freshDate }]] });
+
+      await pipeline.processItem(payload);
+
+      expect(mdblistAdapter.getRottenTomatoesRatings).not.toHaveBeenCalled();
+      // Pre-check should NOT issue an UPDATE either.
+      expect(dbSpies.update).not.toHaveBeenCalled();
+    });
+
+    it('proceeds with MDBList call when rtFetchedAt is older than refresh window', async () => {
+      const staleDate = new Date(
+        Date.now() - (MDBLIST_RATINGS_REFRESH_DAYS + 1) * 24 * 60 * 60 * 1000,
+      );
+      await setupPipeline({ selectBatches: [[{ rtFetchedAt: staleDate }]] });
+      mdblistAdapter.getRottenTomatoesRatings.mockResolvedValue({
+        rottenTomatoesCritics: 80,
+        rottenTomatoesAudience: 75,
+      });
+
+      await pipeline.processItem(payload);
+
+      expect(mdblistAdapter.getRottenTomatoesRatings).toHaveBeenCalledTimes(1);
+      expect(dbSpies.update).toHaveBeenCalled();
     });
   });
 });
