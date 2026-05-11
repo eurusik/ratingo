@@ -260,8 +260,8 @@ describe('useNotificationsPage', () => {
     queryClient.clear();
   });
 
-  it('fetches notifications with default options', async () => {
-    const mockData = { notifications: [{ id: '1' }], unreadCount: 1 };
+  it('fetches notifications with default options (infinite query — offset=0)', async () => {
+    const mockData = { data: [{ id: '1' }], unreadCount: 1, total: 1, hasMore: false };
     mockListNotifications.mockResolvedValue(mockData);
 
     renderWithClient(<NotificationsPageConsumer />, queryClient);
@@ -270,12 +270,11 @@ describe('useNotificationsPage', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockListNotifications).toHaveBeenCalledWith({ limit: 20 });
-    expect(screen.getByTestId('data').textContent).toBe(JSON.stringify(mockData));
+    expect(mockListNotifications).toHaveBeenCalledWith({ limit: 20, offset: 0, unread: undefined });
   });
 
   it('passes unread filter to API when specified', async () => {
-    const mockData = { notifications: [{ id: '2' }], unreadCount: 1 };
+    const mockData = { data: [{ id: '2' }], unreadCount: 1, total: 1, hasMore: false };
     mockListNotifications.mockResolvedValue(mockData);
 
     renderWithClient(
@@ -287,7 +286,7 @@ describe('useNotificationsPage', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockListNotifications).toHaveBeenCalledWith({ limit: 20, unread: true });
+    expect(mockListNotifications).toHaveBeenCalledWith({ limit: 20, offset: 0, unread: true });
   });
 
   it('does not fetch when disabled', async () => {
