@@ -89,21 +89,30 @@ export function NotificationsList() {
     const previousAll = queryClient.getQueryData(allKey);
     const previousUnreadCount = queryClient.getQueryData(unreadCountKey);
 
-    // Optimistic update — both filter caches (walk all pages)
-    for (const key of [unreadKey, allKey]) {
-      queryClient.setQueryData(key, (old: unknown) => {
-        if (!old || typeof old !== 'object') return old;
-        const typed = old as InfiniteData<NotificationPage>;
-        return {
-          ...typed,
-          pages: typed.pages.map((page) => ({
-            ...page,
-            unreadCount: 0,
-            data: page.data.map((n) => ({ ...n, isRead: true })),
-          })),
-        };
-      });
-    }
+    // Optimistic update — unread cache empties (filter expects isRead=false),
+    // all-tab cache keeps items but marks each as read.
+    queryClient.setQueryData(unreadKey, (old: unknown) => {
+      if (!old || typeof old !== 'object') return old;
+      const typed = old as InfiniteData<NotificationPage>;
+      return {
+        ...typed,
+        // Collapse to a single empty page — no items match unread=true anymore.
+        pages: [{ data: [], unreadCount: 0, total: 0, hasMore: false }],
+        pageParams: [0],
+      };
+    });
+    queryClient.setQueryData(allKey, (old: unknown) => {
+      if (!old || typeof old !== 'object') return old;
+      const typed = old as InfiniteData<NotificationPage>;
+      return {
+        ...typed,
+        pages: typed.pages.map((page) => ({
+          ...page,
+          unreadCount: 0,
+          data: page.data.map((n) => ({ ...n, isRead: true })),
+        })),
+      };
+    });
     queryClient.setQueryData(unreadCountKey, () => ({ unreadCount: 0 }));
 
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);

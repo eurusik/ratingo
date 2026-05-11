@@ -32,7 +32,9 @@ export function useSavedForLater({ type = 'all', enabled = true }: UseSavedListO
       userActionsApi.listForLater({ type: apiType, limit: PAGE_SIZE, offset: pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
-      lastPage.meta?.hasMore ? lastPage.meta.offset + lastPage.meta.limit : undefined,
+      lastPage.meta?.hasMore
+        ? (lastPage.meta.offset ?? 0) + (lastPage.meta.limit ?? PAGE_SIZE)
+        : undefined,
     enabled,
     staleTime: STALE_5_MIN,
   });
@@ -46,7 +48,9 @@ export function useSavedConsidering({ type = 'all', enabled = true }: UseSavedLi
       userActionsApi.listConsidering({ type: apiType, limit: PAGE_SIZE, offset: pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
-      lastPage.meta?.hasMore ? lastPage.meta.offset + lastPage.meta.limit : undefined,
+      lastPage.meta?.hasMore
+        ? (lastPage.meta.offset ?? 0) + (lastPage.meta.limit ?? PAGE_SIZE)
+        : undefined,
     enabled,
     staleTime: STALE_5_MIN,
   });
