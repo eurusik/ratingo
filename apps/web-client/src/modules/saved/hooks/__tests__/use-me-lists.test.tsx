@@ -102,7 +102,7 @@ function WatchingConsumer({ enabled }: { enabled?: boolean }) {
     <div>
       <span data-testid="status">{query.status}</span>
       <span data-testid="data">{JSON.stringify(query.data ?? null)}</span>
-      <span data-testid="count">{String(query.data?.data.length ?? 'none')}</span>
+      <span data-testid="count">{String(query.data?.pages.flatMap((p) => p.data).length ?? 'none')}</span>
     </div>
   );
 }
@@ -114,7 +114,7 @@ function CompletedConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 're
     <div>
       <span data-testid="status">{query.status}</span>
       <span data-testid="data">{JSON.stringify(query.data ?? null)}</span>
-      <span data-testid="count">{String(query.data?.data.length ?? 'none')}</span>
+      <span data-testid="count">{String(query.data?.pages.flatMap((p) => p.data).length ?? 'none')}</span>
     </div>
   );
 }
@@ -277,8 +277,8 @@ describe('useWatching', () => {
     expect(screen.getByTestId('count').textContent).toBe('2');
 
     const data = JSON.parse(screen.getByTestId('data').textContent!);
-    expect(data.data).toHaveLength(2);
-    expect(data.data.every((item: { state: string }) => item.state === 'watching')).toBe(true);
+    expect(data.pages[0].data).toHaveLength(2);
+    expect(data.pages[0].data.every((item: { state: string }) => item.state === 'watching')).toBe(true);
   });
 
   it('returns empty array when server returns no watching items', async () => {
@@ -341,9 +341,21 @@ describe('useCompleted', () => {
     queryClient.clear();
   });
 
-  it('filters history items to only completed state', async () => {
+  it('passes state=completed to the API (server-side filter)', async () => {
+    mockGetHistory.mockResolvedValue(makeHistoryResponse([]));
+
+    renderWithClient(<CompletedConsumer />, queryClient);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status').textContent).toBe('success');
+    });
+
+    expect(mockGetHistory).toHaveBeenCalledWith(expect.objectContaining({ state: 'completed' }));
+  });
+
+  it('returns the items the server provides without client-side filtering', async () => {
+    // Server is the source of truth — hook trusts state=completed filter applied upstream.
     const items = [
-      makeHistoryItem({ mediaItemId: 'w1', state: 'watching' }),
       makeHistoryItem({ mediaItemId: 'c1', state: 'completed' }),
       makeHistoryItem({ mediaItemId: 'c2', state: 'completed' }),
     ];
@@ -356,25 +368,6 @@ describe('useCompleted', () => {
     });
 
     expect(screen.getByTestId('count').textContent).toBe('2');
-
-    const data = JSON.parse(screen.getByTestId('data').textContent!);
-    expect(data.data).toHaveLength(2);
-    expect(data.data.every((item: { state: string }) => item.state === 'completed')).toBe(true);
-  });
-
-  it('returns empty array when no completed items exist', async () => {
-    const items = [
-      makeHistoryItem({ mediaItemId: 'w1', state: 'watching' }),
-    ];
-    mockGetHistory.mockResolvedValue(makeHistoryResponse(items));
-
-    renderWithClient(<CompletedConsumer />, queryClient);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('status').textContent).toBe('success');
-    });
-
-    expect(screen.getByTestId('count').textContent).toBe('0');
   });
 
   it('passes sort parameter to the API call', async () => {
@@ -426,7 +419,7 @@ describe('usePaused', () => {
     });
 
     const data = JSON.parse(screen.getByTestId('data').textContent!);
-    expect(data.data).toHaveLength(1);
+    expect(data.pages[0].data).toHaveLength(1);
   });
 
   it('passes sort parameter to the API call', async () => {
@@ -490,7 +483,7 @@ describe('useDropped', () => {
     });
 
     const data = JSON.parse(screen.getByTestId('data').textContent!);
-    expect(data.data).toHaveLength(1);
+    expect(data.pages[0].data).toHaveLength(1);
   });
 
   it('passes sort parameter to the API call', async () => {

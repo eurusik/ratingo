@@ -727,6 +727,14 @@
     "emptyState": {
       "importHint": "Є оцінки на іншому сервісі?",
       "importButton": "Імпортувати з Кінобази"
+    },
+    "filter": {
+      "showingCount": "{hidden} {hiddenItem} приховано",
+      "showAll": "Показати всі",
+      "items": {
+        "movie": { "one": "фільм", "few": "фільми", "many": "фільмів" },
+        "show": { "one": "серіал", "few": "серіали", "many": "серіалів" }
+      }
     }
   },
   "activity": {
@@ -785,6 +793,14 @@
       "resumed": "Продовжено перегляд",
       "dropped": "Покинуто",
       "restored": "Повернено до списку"
+    },
+    "filter": {
+      "showingCount": "{hidden} {hiddenItem} приховано",
+      "showAll": "Показати всі",
+      "items": {
+        "movie": { "one": "фільм", "few": "фільми", "many": "фільмів" },
+        "show": { "one": "серіал", "few": "серіали", "many": "серіалів" }
+      }
     }
   },
   "notifications": {

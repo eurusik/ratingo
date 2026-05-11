@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { userActionsApi } from '../api';
 import { queryKeys } from './keys';
 import { retryUnlessUnauthorized } from './utils';
@@ -38,15 +38,20 @@ export function useMarkNotificationAsRead() {
 
 export interface UseNotificationsPageOptions {
   unread?: boolean;
-  limit?: number;
   enabled?: boolean;
 }
 
+const NOTIFICATIONS_PAGE_SIZE = 20;
+
 export function useNotificationsPage(options: UseNotificationsPageOptions = {}) {
-  const { unread, limit = 20, enabled = true } = options;
-  return useQuery({
-    queryKey: queryKeys.userActions.notifications.list(unread ?? null, limit),
-    queryFn: () => userActionsApi.listNotifications({ limit, unread }),
+  const { unread, enabled = true } = options;
+  return useInfiniteQuery({
+    queryKey: queryKeys.userActions.notifications.list(unread ?? null),
+    queryFn: ({ pageParam = 0 }) =>
+      userActionsApi.listNotifications({ limit: NOTIFICATIONS_PAGE_SIZE, offset: pageParam, unread }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.hasMore ? allPages.reduce((sum, p) => sum + p.data.length, 0) : undefined,
     enabled,
     staleTime: 1000 * 60,
     retry: retryUnlessUnauthorized,

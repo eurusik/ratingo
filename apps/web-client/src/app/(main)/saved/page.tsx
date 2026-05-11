@@ -39,7 +39,7 @@ function SavedPageContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-24 pb-12">
+      <div className="min-h-screen pt-6 md:pt-12 pb-12">
         <div className="container mx-auto px-4">
           <div className="h-8 w-48 bg-cinema-elevated rounded animate-pulse mb-8" />
           <div className="h-10 w-96 bg-cinema-elevated rounded animate-pulse" />
@@ -50,7 +50,7 @@ function SavedPageContent() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen pt-24 pb-12">
+      <div className="min-h-screen pt-6 md:pt-12 pb-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <h1 className="text-2xl font-bold text-cinema-text-primary mb-4">{dict.saved.title}</h1>
@@ -62,12 +62,12 @@ function SavedPageContent() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    <div className="min-h-screen pt-6 md:pt-12 pb-12">
       <div className="container mx-auto px-4">
-        <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.saved.title}</h1>
+        <h1 className="text-2xl font-bold text-cinema-text-primary mb-4 md:mb-8">{dict.saved.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-full">
+          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-4 md:mb-6 h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-full">
             <TabsTrigger value={TAB_VALUES.FOR_LATER} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.saved.tabs.forLater}
               {forLaterTotal > 0 && <Badge as="span" variant="count">{forLaterTotal}</Badge>}
@@ -79,11 +79,11 @@ function SavedPageContent() {
           </TabsList>
 
           <TabsContent value={TAB_VALUES.FOR_LATER} className="mt-0">
-            <SavedList list="for_later" />
+            <SavedList list="for_later" totalAcrossTypes={forLaterTotal} />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.CONSIDERING} className="mt-0">
-            <SavedList list="considering" />
+            <SavedList list="considering" totalAcrossTypes={consideringTotal} />
           </TabsContent>
         </Tabs>
       </div>
@@ -95,7 +95,7 @@ export default function SavedPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen pt-24 pb-12">
+        <div className="min-h-screen pt-6 md:pt-12 pb-12">
           <div className="container mx-auto px-4">
             <div className="h-8 w-48 bg-cinema-elevated rounded animate-pulse mb-8" />
           </div>
