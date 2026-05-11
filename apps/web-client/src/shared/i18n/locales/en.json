@@ -727,6 +727,14 @@
     "emptyState": {
       "importHint": "Have ratings on another service?",
       "importButton": "Import from Kinobaza"
+    },
+    "filter": {
+      "showingCount": "{hidden} {hiddenItem} hidden",
+      "showAll": "Show all",
+      "items": {
+        "movie": { "one": "movie", "few": "movies", "many": "movies" },
+        "show": { "one": "show", "few": "shows", "many": "shows" }
+      }
     }
   },
   "activity": {
@@ -785,6 +793,14 @@
       "resumed": "Resumed watching",
       "dropped": "Dropped",
       "restored": "Restored to watchlist"
+    },
+    "filter": {
+      "showingCount": "{hidden} {hiddenItem} hidden",
+      "showAll": "Show all",
+      "items": {
+        "movie": { "one": "movie", "few": "movies", "many": "movies" },
+        "show": { "one": "show", "few": "shows", "many": "shows" }
+      }
     }
   },
   "notifications": {

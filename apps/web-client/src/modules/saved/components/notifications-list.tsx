@@ -5,13 +5,14 @@
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { Button, Skeleton, ToggleGroup, ToggleGroupItem } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
+import { InfiniteScrollLoader } from '@/shared/components/infinite-scroll-loader';
 import {
   useNotificationsPage,
   useMarkAllNotificationsAsRead,
@@ -19,6 +20,13 @@ import {
 import { queryKeys } from '@/core/query/keys';
 import { NotificationCard } from './notification-card';
 import { NotificationsEmptyState } from './notifications-empty-state';
+
+interface NotificationPage {
+  data: Array<{ id: string; isRead: boolean; trigger: unknown; payload: unknown; createdAt: string; mediaSummary: unknown }>;
+  unreadCount: number;
+  total: number;
+  hasMore: boolean;
+}
 
 function NotificationsListSkeleton() {
   return (
@@ -44,10 +52,15 @@ export function NotificationsList() {
   const [readFilter, setReadFilter] = useState<'unread' | 'all'>('unread');
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data, isLoading, isError } = useNotificationsPage({
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, isError } = useNotificationsPage({
     ...(readFilter === 'unread' && { unread: true }),
     enabled: isAuthenticated,
   });
+
+  const handleReadFilterChange = useCallback((value: 'unread' | 'all') => {
+    setReadFilter(value);
+  }, []);
+
   const markAllAsRead = useMarkAllNotificationsAsRead();
   const markAllAsReadRef = useRef(markAllAsRead.mutate);
   markAllAsReadRef.current = markAllAsRead.mutate;
@@ -61,15 +74,14 @@ export function NotificationsList() {
     };
   }, []);
 
-  const notifications = data?.data ?? [];
-  const unreadCount = data?.unreadCount ?? 0;
+  const notifications = data?.pages.flatMap((p) => p.data) ?? [];
+  const unreadCount = data?.pages[0]?.unreadCount ?? 0;
 
   const handleMarkAllAsRead = () => {
     if (undoTimeoutRef.current) return;
 
-    const limit = 20; // Must match useNotificationsPage default
-    const unreadKey = queryKeys.userActions.notifications.list(true, limit);
-    const allKey = queryKeys.userActions.notifications.list(null, limit);
+    const unreadKey = queryKeys.userActions.notifications.list(true);
+    const allKey = queryKeys.userActions.notifications.list(null);
     const unreadCountKey = queryKeys.userActions.notifications.unreadCount();
 
     // Snapshots for rollback
@@ -77,24 +89,25 @@ export function NotificationsList() {
     const previousAll = queryClient.getQueryData(allKey);
     const previousUnreadCount = queryClient.getQueryData(unreadCountKey);
 
-    // Optimistic update — both filter caches
+    // Optimistic update — both filter caches (walk all pages)
     for (const key of [unreadKey, allKey]) {
       queryClient.setQueryData(key, (old: unknown) => {
         if (!old || typeof old !== 'object') return old;
-        const typed = old as { data: { isRead: boolean }[]; unreadCount: number };
+        const typed = old as InfiniteData<NotificationPage>;
         return {
           ...typed,
-          unreadCount: 0,
-          data: typed.data.map((n) => ({ ...n, isRead: true })),
+          pages: typed.pages.map((page) => ({
+            ...page,
+            unreadCount: 0,
+            data: page.data.map((n) => ({ ...n, isRead: true })),
+          })),
         };
       });
     }
     queryClient.setQueryData(unreadCountKey, () => ({ unreadCount: 0 }));
 
-    // Clear any pending undo timeout
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
 
-    // Delayed API call
     undoTimeoutRef.current = setTimeout(() => {
       markAllAsRead.mutate();
       undoTimeoutRef.current = null;
@@ -108,7 +121,6 @@ export function NotificationsList() {
             clearTimeout(undoTimeoutRef.current);
             undoTimeoutRef.current = null;
           }
-          // Restore all snapshots
           queryClient.setQueryData(unreadKey, previousUnread);
           queryClient.setQueryData(allKey, previousAll);
           queryClient.setQueryData(unreadCountKey, previousUnreadCount);
@@ -129,7 +141,7 @@ export function NotificationsList() {
         <ToggleGroup
           type="single"
           value={readFilter}
-          onValueChange={(v) => v && setReadFilter(v as 'unread' | 'all')}
+          onValueChange={(v) => v && handleReadFilterChange(v as 'unread' | 'all')}
           className="gap-1"
         >
           <ToggleGroupItem
@@ -173,18 +185,26 @@ export function NotificationsList() {
           variant={readFilter === 'unread' ? 'all-read' : 'no-notifications'}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {notifications.map((item) => (
-            <NotificationCard
-              key={item.id}
-              trigger={item.trigger}
-              payload={item.payload}
-              isRead={item.isRead}
-              createdAt={item.createdAt}
-              mediaSummary={item.mediaSummary}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {notifications.map((item) => (
+              <NotificationCard
+                key={item.id}
+                trigger={item.trigger}
+                payload={item.payload}
+                isRead={item.isRead}
+                createdAt={item.createdAt}
+                mediaSummary={item.mediaSummary}
+              />
+            ))}
+          </div>
+          <InfiniteScrollLoader
+            onLoadMore={() => fetchNextPage()}
+            isLoading={isFetchingNextPage}
+            hasMore={hasNextPage ?? false}
+            loadingText={dict.common?.loading ?? 'Завантаження...'}
+          />
+        </>
       )}
     </div>
   );

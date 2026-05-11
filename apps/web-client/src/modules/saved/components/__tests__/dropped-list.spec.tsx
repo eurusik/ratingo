@@ -39,6 +39,14 @@ jest.mock('@/shared/i18n', () => ({
           dropped: 'Покинуто',
           restored: 'Повернено до списку',
         },
+        filter: {
+          showingCount: '{hidden} {hiddenItem} приховано',
+          showAll: 'Показати всі',
+          items: {
+            movie: { one: 'фільм', few: 'фільми', many: 'фільмів' },
+            show: { one: 'серіал', few: 'серіали', many: 'серіалів' },
+          },
+        },
       },
       saved: {
         states: {
@@ -128,17 +136,14 @@ jest.mock('../../hooks/use-me-lists', () => ({
   useResumeMedia: () => ({ mutate: jest.fn(), isPending: false }),
   useDropMedia: () => ({ mutate: jest.fn(), isPending: false }),
   useRestoreMedia: () => ({ mutate: jest.fn(), isPending: false }),
-  MAX_LIST_LIMIT: 100,
 }));
 
 jest.mock('../../hooks/use-me-list-state', () => ({
   useMeListState: () => ({
     sort: 'recent',
     mediaType: 'all',
-    limit: 20,
     handleSortChange: jest.fn(),
     handleMediaTypeChange: jest.fn(),
-    handleLoadMore: jest.fn(),
   }),
 }));
 
@@ -188,7 +193,7 @@ describe('DroppedList', () => {
 
   it('renders empty state when no items', () => {
     mockUseDropped.mockReturnValue({
-      data: { data: [], meta: { total: 0 } },
+      data: { pages: [{ data: [], meta: { total: 0 } }], pageParams: [0] },
       isLoading: false,
     });
 
@@ -215,7 +220,7 @@ describe('DroppedList', () => {
     ];
 
     mockUseDropped.mockReturnValue({
-      data: { data: items, meta: { total: 2 } },
+      data: { pages: [{ data: items, meta: { total: 2 } }], pageParams: [0] },
       isLoading: false,
     });
 
@@ -227,7 +232,7 @@ describe('DroppedList', () => {
 
   it('shows restore button for dropped items', () => {
     mockUseDropped.mockReturnValue({
-      data: { data: [makeItem()], meta: { total: 1 } },
+      data: { pages: [{ data: [makeItem()], meta: { total: 1 } }], pageParams: [0] },
       isLoading: false,
     });
 
@@ -240,7 +245,7 @@ describe('DroppedList', () => {
 
   it('passes default sort "recent" to useDropped', () => {
     mockUseDropped.mockReturnValue({
-      data: { data: [], meta: { total: 0 } },
+      data: { pages: [{ data: [], meta: { total: 0 } }], pageParams: [0] },
       isLoading: false,
     });
 

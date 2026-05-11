@@ -1,15 +1,16 @@
 /**
- * Hook for managing saved items (for_later and considering lists).
- * Uses React Query for caching and mutations.
+ * Hooks for managing saved items (for_later and considering lists).
+ * Uses TanStack Query infinite-query so the list grows page-by-page
+ * with no client-side cap.
  */
 
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userActionsApi, type SavedItemList } from '@/core/api/user-actions.client';
 import { queryKeys } from '@/core/query/keys';
 import type { MediaTypeFilter } from './use-me-lists';
-import { useFilterAwarePlaceholder } from './use-filter-aware-placeholder';
+import { PAGE_SIZE } from './use-me-lists';
 
 const STALE_5_MIN = 1000 * 60 * 5;
 
@@ -18,27 +19,36 @@ const QUERY_KEYS = {
   considering: (type?: string) => ['saved-items', 'considering', type ?? null] as const,
 };
 
-export function useSavedForLater({ type = 'all', enabled = true }: { type?: MediaTypeFilter; enabled?: boolean } = {}) {
+interface UseSavedListOptions {
+  type?: MediaTypeFilter;
+  enabled?: boolean;
+}
+
+export function useSavedForLater({ type = 'all', enabled = true }: UseSavedListOptions = {}) {
   const apiType = type === 'all' ? undefined : type;
-  const placeholderData = useFilterAwarePlaceholder(type);
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: QUERY_KEYS.forLater(apiType),
-    queryFn: () => userActionsApi.listForLater({ type: apiType }),
+    queryFn: ({ pageParam = 0 }) =>
+      userActionsApi.listForLater({ type: apiType, limit: PAGE_SIZE, offset: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta?.hasMore ? lastPage.meta.offset + lastPage.meta.limit : undefined,
     enabled,
     staleTime: STALE_5_MIN,
-    placeholderData,
   });
 }
 
-export function useSavedConsidering({ type = 'all', enabled = true }: { type?: MediaTypeFilter; enabled?: boolean } = {}) {
+export function useSavedConsidering({ type = 'all', enabled = true }: UseSavedListOptions = {}) {
   const apiType = type === 'all' ? undefined : type;
-  const placeholderData = useFilterAwarePlaceholder(type);
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: QUERY_KEYS.considering(apiType),
-    queryFn: () => userActionsApi.listConsidering({ type: apiType }),
+    queryFn: ({ pageParam = 0 }) =>
+      userActionsApi.listConsidering({ type: apiType, limit: PAGE_SIZE, offset: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta?.hasMore ? lastPage.meta.offset + lastPage.meta.limit : undefined,
     enabled,
     staleTime: STALE_5_MIN,
-    placeholderData,
   });
 }
 

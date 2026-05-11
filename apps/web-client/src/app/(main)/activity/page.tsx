@@ -76,7 +76,7 @@ function ActivityPageContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-24 pb-12">
+      <div className="min-h-screen pt-6 md:pt-12 pb-12">
         <div className="container mx-auto px-4">
           <div className="h-8 w-48 bg-cinema-elevated rounded animate-pulse mb-8" />
           <div className="h-10 w-96 bg-cinema-elevated rounded animate-pulse" />
@@ -87,7 +87,7 @@ function ActivityPageContent() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen pt-24 pb-12">
+      <div className="min-h-screen pt-6 md:pt-12 pb-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <h1 className="text-2xl font-bold text-cinema-text-primary mb-4">{dict.activity.title}</h1>
@@ -99,12 +99,12 @@ function ActivityPageContent() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    <div className="min-h-screen pt-6 md:pt-12 pb-12">
       <div className="container mx-auto px-4">
-        <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.activity.title}</h1>
+        <h1 className="text-2xl font-bold text-cinema-text-primary mb-4 md:mb-8">{dict.activity.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <div className="overflow-x-auto scrollbar-none mb-6" onClick={handleTabClick}>
+          <div className="overflow-x-auto scrollbar-none mb-4 md:mb-6" onClick={handleTabClick}>
             <TabsList className="bg-cinema-card border border-cinema-borderSoft h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-max">
               <TabsTrigger value={TAB_VALUES.WATCHING} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
                 {dict.activity.tabs.watching}
@@ -130,24 +130,24 @@ function ActivityPageContent() {
           </div>
 
           <TabsContent value={TAB_VALUES.WATCHING} className="mt-0">
-            <Watchlist />
+            <Watchlist totalAcrossTypes={watchingTotal} />
             <FavoriteUpdates />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.CAUGHT_UP} className="mt-0">
-            <CaughtUpList />
+            <CaughtUpList totalAcrossTypes={caughtUpTotal} />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.PAUSED} className="mt-0">
-            <PausedList />
+            <PausedList totalAcrossTypes={pausedTotal} />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.DROPPED} className="mt-0">
-            <DroppedList />
+            <DroppedList totalAcrossTypes={droppedTotal} />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.HISTORY} className="mt-0">
-            <HistoryList />
+            <HistoryList totalAcrossTypes={historyTotal} />
           </TabsContent>
         </Tabs>
 
@@ -161,7 +161,7 @@ export default function ActivityPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen pt-24 pb-12">
+        <div className="min-h-screen pt-6 md:pt-12 pb-12">
           <div className="container mx-auto px-4">
             <div className="h-8 w-48 bg-cinema-elevated rounded animate-pulse mb-8" />
           </div>

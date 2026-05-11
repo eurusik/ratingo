@@ -2,25 +2,30 @@
 
 import { useTranslation } from '@/shared/i18n';
 import { InfiniteScrollLoader } from '@/shared/components/infinite-scroll-loader';
-import { useCaughtUp, MAX_LIST_LIMIT } from '../hooks/use-me-lists';
+import { useCaughtUp } from '../hooks/use-me-lists';
 import { useMeListState } from '../hooks/use-me-list-state';
 import { MeListItemCard } from './me-list-item-card';
 import { EmptyState } from './empty-state';
 import { ListSortSelect } from './list-sort-select';
 import { MediaTypeFilter } from './media-type-filter';
 import { MeListSkeleton } from './me-list-skeleton';
+import { ActivityFilterIndicator } from './activity-filter-indicator';
 
-export function CaughtUpList() {
+interface CaughtUpListProps {
+  totalAcrossTypes?: number;
+}
+
+export function CaughtUpList({ totalAcrossTypes = 0 }: CaughtUpListProps = {}) {
   const { dict } = useTranslation();
-  const { sort, mediaType, limit, handleSortChange, handleMediaTypeChange, handleLoadMore } = useMeListState();
-  const { data, isLoading, isFetching } = useCaughtUp({ sort, type: mediaType, limit });
+  const { sort, mediaType, handleSortChange, handleMediaTypeChange } = useMeListState();
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useCaughtUp({ sort, type: mediaType });
+  const filteredTotal = data?.pages[0]?.meta?.total ?? 0;
 
   if (isLoading) {
     return <MeListSkeleton />;
   }
 
-  const items = data?.data ?? [];
-  const hasMore = (data?.meta?.hasMore ?? false) && limit < MAX_LIST_LIMIT;
+  const items = data?.pages.flatMap((p) => p.data) ?? [];
 
   const emptyTitle = mediaType === 'movie'
     ? (dict.activity?.empty?.noMovies ?? 'Немає фільмів')
@@ -47,6 +52,12 @@ export function CaughtUpList() {
         <MediaTypeFilter value={mediaType} onChange={handleMediaTypeChange} />
         <ListSortSelect value={sort} onChange={handleSortChange} />
       </div>
+      <ActivityFilterIndicator
+        mediaType={mediaType}
+        filteredTotal={filteredTotal}
+        totalAcrossTypes={totalAcrossTypes}
+        onReset={() => handleMediaTypeChange('all')}
+      />
       {items.length === 0 && emptyTitle ? (
         <p className="text-cinema-text-muted text-center py-16">{emptyTitle}</p>
       ) : (
@@ -57,9 +68,9 @@ export function CaughtUpList() {
             ))}
           </div>
           <InfiniteScrollLoader
-            onLoadMore={handleLoadMore}
-            isLoading={isFetching && items.length > 0}
-            hasMore={hasMore}
+            onLoadMore={() => fetchNextPage()}
+            isLoading={isFetchingNextPage}
+            hasMore={hasNextPage ?? false}
             loadingText={dict.common?.loading ?? 'Завантаження...'}
           />
         </>
