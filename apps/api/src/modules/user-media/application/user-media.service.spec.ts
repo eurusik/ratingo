@@ -1,5 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 
+import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { AppException } from '../../../common/exceptions/app.exception';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
 import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';
@@ -794,12 +796,60 @@ describe('UserMediaService', () => {
           },
           MediaType.SHOW,
         ),
-      ).rejects.toBeInstanceOf(BadRequestException);
+      ).rejects.toBeInstanceOf(AppException);
 
       expect(repo.upsert).not.toHaveBeenCalled();
     });
 
-    it('allows drop for a show in watching state with rating but NO progress', async () => {
+    it('rejects drop bypass via paused state (rating + progress preserved)', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.PAUSED,
+        rating: 80,
+        progress: { seasons: { 1: 3 } },
+      } as any);
+
+      await expect(
+        service.setState(
+          { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.DROPPED },
+          MediaType.SHOW,
+        ),
+      ).rejects.toBeInstanceOf(AppException);
+    });
+
+    it('rejects drop bypass via caught_up state', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.CAUGHT_UP,
+        rating: 80,
+        progress: { seasons: { 1: 3 } },
+      } as any);
+
+      await expect(
+        service.setState(
+          { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.DROPPED },
+          MediaType.SHOW,
+        ),
+      ).rejects.toBeInstanceOf(AppException);
+    });
+
+    it('exposes a stable CANNOT_DROP_PARTIAL_RATING code on the error', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 80,
+        progress: { seasons: { 1: 3 } },
+      } as any);
+
+      await expect(
+        service.setState(
+          { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.DROPPED },
+          MediaType.SHOW,
+        ),
+      ).rejects.toMatchObject({ code: ErrorCode.CANNOT_DROP_PARTIAL_RATING });
+    });
+
+    it('allows drop for a show with rating but NO progress (whole-show rating)', async () => {
       repo.findOne.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.WATCHING,
@@ -809,11 +859,7 @@ describe('UserMediaService', () => {
       repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.DROPPED } as any);
 
       await service.setState(
-        {
-          userId: 'u1',
-          mediaItemId: 'm1',
-          state: USER_MEDIA_STATE.DROPPED,
-        },
+        { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.DROPPED },
         MediaType.SHOW,
       );
 
@@ -822,7 +868,7 @@ describe('UserMediaService', () => {
       );
     });
 
-    it('allows drop for a show in watching state without a rating', async () => {
+    it('allows drop for a show without a rating', async () => {
       repo.findOne.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.WATCHING,
@@ -832,11 +878,7 @@ describe('UserMediaService', () => {
       repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.DROPPED } as any);
 
       await service.setState(
-        {
-          userId: 'u1',
-          mediaItemId: 'm1',
-          state: USER_MEDIA_STATE.DROPPED,
-        },
+        { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.DROPPED },
         MediaType.SHOW,
       );
 
@@ -845,28 +887,7 @@ describe('UserMediaService', () => {
       );
     });
 
-    it('allows drop for a show in caught_up state with a rating', async () => {
-      repo.findOne.mockResolvedValue({
-        id: 's1',
-        state: USER_MEDIA_STATE.CAUGHT_UP,
-        rating: 80,
-        progress: { seasons: { 1: 10 } },
-      } as any);
-      repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.DROPPED } as any);
-
-      await service.setState(
-        {
-          userId: 'u1',
-          mediaItemId: 'm1',
-          state: USER_MEDIA_STATE.DROPPED,
-        },
-        MediaType.SHOW,
-      );
-
-      expect(repo.upsert).toHaveBeenCalled();
-    });
-
-    it('allows drop for a movie in watching state with a rating', async () => {
+    it('allows drop for a movie even with rating + progress', async () => {
       repo.findOne.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.WATCHING,
@@ -876,11 +897,7 @@ describe('UserMediaService', () => {
       repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.DROPPED } as any);
 
       await service.setState(
-        {
-          userId: 'u1',
-          mediaItemId: 'm1',
-          state: USER_MEDIA_STATE.DROPPED,
-        },
+        { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.DROPPED },
         MediaType.MOVIE,
       );
 

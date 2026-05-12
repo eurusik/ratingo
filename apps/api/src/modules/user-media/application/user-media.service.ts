@@ -1,8 +1,10 @@
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { ErrorCode } from '@/common/enums/error-code.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { AppException } from '@/common/exceptions/app.exception';
 
 import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
@@ -60,15 +62,19 @@ export class UserMediaService implements IRatingSyncPort {
     // "Mid-season" = there is partial episode progress (user started watching
     // but didn't finish). If `progress` is null, the user is not tracking
     // episodes — rating applies to the whole show and drop is allowed.
-    // Frontend mirrors this with a disabled drop button + sr-only reason.
+    // The check is state-agnostic: pause/caught_up preserve rating + progress,
+    // so guarding only WATCHING would let the rule be bypassed via a detour.
     if (
       resolvedState === USER_MEDIA_STATE.DROPPED &&
-      existing?.state === USER_MEDIA_STATE.WATCHING &&
       existing?.rating != null &&
       existing?.progress != null &&
       mediaType === MediaType.SHOW
     ) {
-      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_DROP_PARTIAL_RATING);
+      throw new AppException(
+        ErrorCode.CANNOT_DROP_PARTIAL_RATING,
+        USER_MEDIA_STATE_ERRORS.CANNOT_DROP_PARTIAL_RATING,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     if (data.progress != null) {

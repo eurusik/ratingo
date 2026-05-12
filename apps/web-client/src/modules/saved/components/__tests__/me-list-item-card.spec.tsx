@@ -93,11 +93,12 @@ const mockPauseMutate = jest.fn();
 const mockResumeMutate = jest.fn();
 const mockDropMutate = jest.fn();
 const mockRestoreMutate = jest.fn();
+let mockDropPending = false;
 
 jest.mock('../../hooks/use-me-lists', () => ({
   usePauseMedia: () => ({ mutate: mockPauseMutate, isPending: false }),
   useResumeMedia: () => ({ mutate: mockResumeMutate, isPending: false }),
-  useDropMedia: () => ({ mutate: mockDropMutate, isPending: false }),
+  useDropMedia: () => ({ mutate: mockDropMutate, isPending: mockDropPending }),
   useRestoreMedia: () => ({ mutate: mockRestoreMutate, isPending: false }),
 }));
 
@@ -154,6 +155,7 @@ function makeItem(overrides: Record<string, unknown> = {}) {
 describe('MeListItemCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockDropPending = false;
   });
 
   /* ---- Rendering ---- */
@@ -289,6 +291,18 @@ describe('MeListItemCard', () => {
       expect(mockDropMutate).not.toHaveBeenCalled();
     });
 
+    it('does not open drop dialog while mutation is pending (prevents duplicate clicks)', () => {
+      mockDropPending = true;
+      render(<MeListItemCard item={makeItem({ state: 'watching' }) as never} />);
+
+      const dropButton = screen.getByText('Покинути').closest('button');
+      expect(dropButton).toHaveAttribute('aria-disabled', 'true');
+
+      fireEvent.click(screen.getByText('Покинути'));
+      expect(screen.queryByTestId('alert-dialog')).not.toBeInTheDocument();
+      expect(mockDropMutate).not.toHaveBeenCalled();
+    });
+
     it('keeps drop button focusable when blocked (aria-disabled, not native disabled)', () => {
       render(
         <MeListItemCard
@@ -335,11 +349,38 @@ describe('MeListItemCard', () => {
       expect(dropButton).not.toHaveAttribute('aria-disabled', 'true');
     });
 
-    it('enables drop button for show in caught_up state with a rating', () => {
-      render(<MeListItemCard item={makeItem({ state: 'caught_up', rating: 80 }) as never} />);
+    it('enables drop button for show in caught_up state with rating but full progress', () => {
+      render(
+        <MeListItemCard
+          item={
+            makeItem({
+              state: 'caught_up',
+              rating: 80,
+              progressSummary: { watched: 10, total: 10 },
+            }) as never
+          }
+        />,
+      );
 
       const dropButton = screen.getByText('Покинути').closest('button');
       expect(dropButton).not.toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('disables drop button for show in paused state with rating + partial progress (bypass prevention)', () => {
+      render(
+        <MeListItemCard
+          item={
+            makeItem({
+              state: 'paused',
+              rating: 80,
+              progressSummary: { watched: 3, total: 10 },
+            }) as never
+          }
+        />,
+      );
+
+      const dropButton = screen.getByText('Покинути').closest('button');
+      expect(dropButton).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('enables drop button for movie in watching state with a rating', () => {

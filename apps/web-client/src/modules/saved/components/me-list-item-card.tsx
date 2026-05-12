@@ -25,6 +25,8 @@ import {
 } from '@/shared/ui';
 import type { MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import { USER_MEDIA_STATE } from '@/core/api/me-lists.client';
+import { ApiError } from '@/core/api/error';
+import { ErrorCode } from '@/core/api/error-codes';
 import { usePauseMedia, useResumeMedia, useDropMedia, useRestoreMedia } from '../hooks/use-me-lists';
 import { useEpisodeSheetStore } from '../stores/episode-sheet.store';
 
@@ -122,6 +124,8 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
     item.state === USER_MEDIA_STATE.PLANNED;
   // Issue #94: when a show is rated mid-season (rating + watched < total),
   // require the user to finish the season or clear the rating first.
+  // State-agnostic: pause/caught_up preserve rating + progress, so checking
+  // only WATCHING would let the rule be bypassed via a detour.
   const dropBlockedByPartialRating = isShow && hasRating && hasPartialProgress;
   const canRestore = item.state === USER_MEDIA_STATE.DROPPED;
   const hasAction = canPause || canResume || canDrop || canRestore;
@@ -180,8 +184,8 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
           setShowDropConfirm(false);
         },
         onError: (error) => {
-          const message = error instanceof Error ? error.message : '';
-          const isPartialRating = message.toLowerCase().includes('clear the rating');
+          const isPartialRating =
+            error instanceof ApiError && error.code === ErrorCode.CANNOT_DROP_PARTIAL_RATING;
           toast.error(
             isPartialRating
               ? dict.saved?.dropBlocked?.partialRating ??
@@ -295,7 +299,11 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
               <>
                 <button
                   type="button"
-                  onClick={dropBlockedByPartialRating ? undefined : handleDropClick}
+                  onClick={
+                    dropBlockedByPartialRating || dropMutation.isPending
+                      ? undefined
+                      : handleDropClick
+                  }
                   aria-disabled={
                     dropBlockedByPartialRating || dropMutation.isPending || undefined
                   }

@@ -22,6 +22,7 @@ export const ErrorCode = {
 
   // Business rule violations (400)
   REPLY_MAX_DEPTH_EXCEEDED: 'REPLY_MAX_DEPTH_EXCEEDED',
+  CANNOT_DROP_PARTIAL_RATING: 'CANNOT_DROP_PARTIAL_RATING',
 
   // Rate limiting (429)
   RATE_LIMITED: 'RATE_LIMITED',
