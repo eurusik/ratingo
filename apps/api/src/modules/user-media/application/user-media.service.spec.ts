@@ -10,6 +10,7 @@ import { UserMediaService } from './user-media.service';
 describe('UserMediaService', () => {
   const repo = {
     upsert: jest.fn(),
+    updateStateIfIn: jest.fn(),
     findOne: jest.fn(),
     findOneWithMedia: jest.fn(),
     listByUser: jest.fn(),
@@ -524,38 +525,71 @@ describe('UserMediaService', () => {
 
   describe('pauseMedia', () => {
     it('should pause a watching media item', async () => {
-      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
-      repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.PAUSED } as any);
+      repo.updateStateIfIn.mockResolvedValue({
+        previous: USER_MEDIA_STATE.WATCHING,
+        current: { id: 's1', state: USER_MEDIA_STATE.PAUSED },
+      } as any);
 
       const result = await service.pauseMedia('u1', 'm1');
 
-      expect(repo.upsert).toHaveBeenCalledWith({
-        userId: 'u1',
-        mediaItemId: 'm1',
-        state: USER_MEDIA_STATE.PAUSED,
-      });
+      expect(repo.updateStateIfIn).toHaveBeenCalledWith(
+        'u1',
+        'm1',
+        [USER_MEDIA_STATE.WATCHING, USER_MEDIA_STATE.CAUGHT_UP],
+        USER_MEDIA_STATE.PAUSED,
+      );
+      expect(result.state).toBe(USER_MEDIA_STATE.PAUSED);
+    });
+
+    it('should pause a caught_up media item', async () => {
+      repo.updateStateIfIn.mockResolvedValue({
+        previous: USER_MEDIA_STATE.CAUGHT_UP,
+        current: { id: 's1', state: USER_MEDIA_STATE.PAUSED },
+      } as any);
+
+      const result = await service.pauseMedia('u1', 'm1');
+
       expect(result.state).toBe(USER_MEDIA_STATE.PAUSED);
     });
 
     it('should throw BadRequestException when no state exists', async () => {
+      repo.updateStateIfIn.mockResolvedValue(null);
       repo.findOne.mockResolvedValue(null);
 
       await expect(service.pauseMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
-      expect(repo.upsert).not.toHaveBeenCalled();
     });
 
-    it('should throw BadRequestException when item is not watching', async () => {
+    it('should throw BadRequestException when item is in invalid state for pause', async () => {
+      repo.updateStateIfIn.mockResolvedValue(null);
       repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.COMPLETED } as any);
 
       await expect(service.pauseMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
-      expect(repo.upsert).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when item is already paused', async () => {
+      repo.updateStateIfIn.mockResolvedValue(null);
       repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.PAUSED } as any);
 
       await expect(service.pauseMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
-      expect(repo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should emit state changed event with real previous state', async () => {
+      repo.updateStateIfIn.mockResolvedValue({
+        previous: USER_MEDIA_STATE.CAUGHT_UP,
+        current: { id: 's1', state: USER_MEDIA_STATE.PAUSED },
+      } as any);
+
+      await service.pauseMedia('u1', 'm1');
+
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        UserMediaStateChangedEvent.eventName,
+        expect.objectContaining({
+          userId: 'u1',
+          mediaItemId: 'm1',
+          newState: USER_MEDIA_STATE.PAUSED,
+          previousState: USER_MEDIA_STATE.CAUGHT_UP,
+        }),
+      );
     });
   });
 
@@ -678,31 +712,179 @@ describe('UserMediaService', () => {
 
   describe('resumeMedia', () => {
     it('should resume a paused media item', async () => {
-      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.PAUSED } as any);
-      repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
+      repo.updateStateIfIn.mockResolvedValue({
+        previous: USER_MEDIA_STATE.PAUSED,
+        current: { id: 's1', state: USER_MEDIA_STATE.WATCHING },
+      } as any);
 
       const result = await service.resumeMedia('u1', 'm1');
 
-      expect(repo.upsert).toHaveBeenCalledWith({
-        userId: 'u1',
-        mediaItemId: 'm1',
-        state: USER_MEDIA_STATE.WATCHING,
-      });
+      expect(repo.updateStateIfIn).toHaveBeenCalledWith(
+        'u1',
+        'm1',
+        [USER_MEDIA_STATE.PAUSED],
+        USER_MEDIA_STATE.WATCHING,
+      );
       expect(result.state).toBe(USER_MEDIA_STATE.WATCHING);
     });
 
     it('should throw BadRequestException when no state exists', async () => {
+      repo.updateStateIfIn.mockResolvedValue(null);
       repo.findOne.mockResolvedValue(null);
 
       await expect(service.resumeMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
-      expect(repo.upsert).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when item is not paused', async () => {
+      repo.updateStateIfIn.mockResolvedValue(null);
       repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
 
       await expect(service.resumeMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('should emit state changed event when resuming', async () => {
+      repo.updateStateIfIn.mockResolvedValue({
+        previous: USER_MEDIA_STATE.PAUSED,
+        current: { id: 's1', state: USER_MEDIA_STATE.WATCHING },
+      } as any);
+
+      await service.resumeMedia('u1', 'm1');
+
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        UserMediaStateChangedEvent.eventName,
+        expect.objectContaining({
+          userId: 'u1',
+          mediaItemId: 'm1',
+          newState: USER_MEDIA_STATE.WATCHING,
+          previousState: USER_MEDIA_STATE.PAUSED,
+        }),
+      );
+    });
+
+    // S-2 pinning test: documents the known limitation that resume from
+    // PAUSED on an ended/100%-watched show returns WATCHING (not COMPLETED).
+    // Self-corrects on the next mark-watched via EpisodeProgressService.
+    it('pins resume always returns WATCHING regardless of show end-state', async () => {
+      repo.updateStateIfIn.mockResolvedValue({
+        previous: USER_MEDIA_STATE.PAUSED,
+        current: { id: 's1', state: USER_MEDIA_STATE.WATCHING },
+      } as any);
+
+      const result = await service.resumeMedia('u1', 'm1');
+
+      expect(result.state).toBe(USER_MEDIA_STATE.WATCHING);
+    });
+  });
+
+  describe('setState — issue #94 drop guard', () => {
+    it('rejects drop for a show in watching state with rating AND partial progress', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 80,
+        progress: { seasons: { 1: 3 } },
+      } as any);
+
+      await expect(
+        service.setState(
+          {
+            userId: 'u1',
+            mediaItemId: 'm1',
+            state: USER_MEDIA_STATE.DROPPED,
+          },
+          MediaType.SHOW,
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
       expect(repo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('allows drop for a show in watching state with rating but NO progress', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 80,
+        progress: null,
+      } as any);
+      repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.DROPPED } as any);
+
+      await service.setState(
+        {
+          userId: 'u1',
+          mediaItemId: 'm1',
+          state: USER_MEDIA_STATE.DROPPED,
+        },
+        MediaType.SHOW,
+      );
+
+      expect(repo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ state: USER_MEDIA_STATE.DROPPED }),
+      );
+    });
+
+    it('allows drop for a show in watching state without a rating', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: null,
+        progress: { seasons: { 1: 3 } },
+      } as any);
+      repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.DROPPED } as any);
+
+      await service.setState(
+        {
+          userId: 'u1',
+          mediaItemId: 'm1',
+          state: USER_MEDIA_STATE.DROPPED,
+        },
+        MediaType.SHOW,
+      );
+
+      expect(repo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ state: USER_MEDIA_STATE.DROPPED }),
+      );
+    });
+
+    it('allows drop for a show in caught_up state with a rating', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.CAUGHT_UP,
+        rating: 80,
+        progress: { seasons: { 1: 10 } },
+      } as any);
+      repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.DROPPED } as any);
+
+      await service.setState(
+        {
+          userId: 'u1',
+          mediaItemId: 'm1',
+          state: USER_MEDIA_STATE.DROPPED,
+        },
+        MediaType.SHOW,
+      );
+
+      expect(repo.upsert).toHaveBeenCalled();
+    });
+
+    it('allows drop for a movie in watching state with a rating', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 80,
+        progress: null,
+      } as any);
+      repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.DROPPED } as any);
+
+      await service.setState(
+        {
+          userId: 'u1',
+          mediaItemId: 'm1',
+          state: USER_MEDIA_STATE.DROPPED,
+        },
+        MediaType.MOVIE,
+      );
+
+      expect(repo.upsert).toHaveBeenCalled();
     });
   });
 });

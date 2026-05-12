@@ -227,7 +227,7 @@ function DropMediaConsumer() {
       <span data-testid="mutation-status">{mutation.status}</span>
       <button
         data-testid="drop"
-        onClick={() => mutation.mutate(MEDIA_ITEM_ID)}
+        onClick={() => mutation.mutate({ mediaItemId: MEDIA_ITEM_ID, mediaType: 'show' })}
       />
     </div>
   );
@@ -1134,10 +1134,10 @@ describe('useDropMedia', () => {
       expect(screen.getByTestId('mutation-status').textContent).toBe('success');
     });
 
-    expect(mockDropMedia).toHaveBeenCalledWith(MEDIA_ITEM_ID);
+    expect(mockDropMedia).toHaveBeenCalledWith(MEDIA_ITEM_ID, 'show');
   });
 
-  it('invalidates historyAll, pausedAll, watchlistAll, and droppedAll on success', async () => {
+  it('invalidates activityAll, historyAll, pausedAll, watchlistAll, and droppedAll on success', async () => {
     mockDropMedia.mockResolvedValue(makeHistoryItem({ state: 'dropped' }));
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
@@ -1151,6 +1151,11 @@ describe('useDropMedia', () => {
       expect(screen.getByTestId('mutation-status').textContent).toBe('success');
     });
 
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.activityAll,
+      }),
+    );
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         queryKey: queryKeys.meLists.historyAll,
@@ -1223,7 +1228,7 @@ describe('useRestoreMedia', () => {
     expect(mockRestoreMedia).toHaveBeenCalledWith(MEDIA_ITEM_ID);
   });
 
-  it('invalidates historyAll, watchlistAll, and droppedAll on success', async () => {
+  it('invalidates activityAll, historyAll, pausedAll, watchlistAll, and droppedAll on success', async () => {
     mockRestoreMedia.mockResolvedValue(makeHistoryItem({ state: 'watching' }));
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
@@ -1239,7 +1244,17 @@ describe('useRestoreMedia', () => {
 
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
+        queryKey: queryKeys.meLists.activityAll,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
         queryKey: queryKeys.meLists.historyAll,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.pausedAll,
       }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(

@@ -79,6 +79,9 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   async upsert(): Promise<any> {
     throw new Error('Not implemented');
   }
+  async updateStateIfIn(): Promise<any> {
+    return null;
+  }
   async findOne(): Promise<any> {
     return null;
   }

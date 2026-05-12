@@ -16,6 +16,7 @@ jest.mock('@/core/api/me-lists.client', () => ({
     PLANNED: 'planned',
     DROPPED: 'dropped',
     PAUSED: 'paused',
+    CAUGHT_UP: 'caught_up',
   },
 }));
 
@@ -35,6 +36,7 @@ jest.mock('@/shared/i18n', () => ({
           planned: 'Заплановано',
           paused: 'На паузі',
           dropped: 'Покинуто',
+          caught_up: 'Наздогнав',
         },
         actions: {
           pause: 'На паузу',
@@ -45,6 +47,9 @@ jest.mock('@/shared/i18n', () => ({
         dropConfirm: {
           title: 'Покинути перегляд?',
           message: 'Підписки на сповіщення будуть скасовані.',
+        },
+        dropBlocked: {
+          partialRating: 'Завершіть перегляд сезону або зніміть оцінку, щоб покинути серіал',
         },
       },
       activity: {
@@ -234,6 +239,127 @@ describe('MeListItemCard', () => {
       expect(screen.queryByText('Покинути')).not.toBeInTheDocument();
       expect(screen.queryByText('Повернути')).not.toBeInTheDocument();
     });
+
+    it('shows pause and drop buttons for caught_up state', () => {
+      render(<MeListItemCard item={makeItem({ state: 'caught_up' }) as never} />);
+
+      expect(screen.getByText('На паузу')).toBeInTheDocument();
+      expect(screen.getByText('Покинути')).toBeInTheDocument();
+    });
+
+    it('marks drop button as aria-disabled for show with rating AND partial progress', () => {
+      render(
+        <MeListItemCard
+          item={
+            makeItem({
+              state: 'watching',
+              rating: 80,
+              progressSummary: { watched: 3, total: 10 },
+            }) as never
+          }
+        />,
+      );
+
+      const dropButton = screen.getByText('Покинути').closest('button');
+      expect(dropButton).toHaveAttribute('aria-disabled', 'true');
+      const reasonId = dropButton?.getAttribute('aria-describedby');
+      expect(reasonId).toBeTruthy();
+      const reason = document.getElementById(reasonId as string);
+      expect(reason).toHaveTextContent(
+        'Завершіть перегляд сезону або зніміть оцінку, щоб покинути серіал',
+      );
+    });
+
+    it('does not open drop dialog when drop is blocked by partial rating', () => {
+      render(
+        <MeListItemCard
+          item={
+            makeItem({
+              state: 'watching',
+              rating: 80,
+              progressSummary: { watched: 3, total: 10 },
+            }) as never
+          }
+        />,
+      );
+
+      fireEvent.click(screen.getByText('Покинути'));
+
+      expect(screen.queryByTestId('alert-dialog')).not.toBeInTheDocument();
+      expect(mockDropMutate).not.toHaveBeenCalled();
+    });
+
+    it('keeps drop button focusable when blocked (aria-disabled, not native disabled)', () => {
+      render(
+        <MeListItemCard
+          item={
+            makeItem({
+              state: 'watching',
+              rating: 80,
+              progressSummary: { watched: 3, total: 10 },
+            }) as never
+          }
+        />,
+      );
+
+      const dropButton = screen.getByText('Покинути').closest('button');
+      // aria-disabled keeps the button in tab order for screen readers
+      expect(dropButton).not.toBeDisabled();
+    });
+
+    it('enables drop button for show with rating but NO episode progress (whole-show rating)', () => {
+      render(
+        <MeListItemCard
+          item={makeItem({ state: 'watching', rating: 80, progressSummary: null }) as never}
+        />,
+      );
+
+      const dropButton = screen.getByText('Покинути').closest('button');
+      expect(dropButton).not.toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('enables drop button for show in watching state without a rating', () => {
+      render(
+        <MeListItemCard
+          item={
+            makeItem({
+              state: 'watching',
+              rating: null,
+              progressSummary: { watched: 3, total: 10 },
+            }) as never
+          }
+        />,
+      );
+
+      const dropButton = screen.getByText('Покинути').closest('button');
+      expect(dropButton).not.toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('enables drop button for show in caught_up state with a rating', () => {
+      render(<MeListItemCard item={makeItem({ state: 'caught_up', rating: 80 }) as never} />);
+
+      const dropButton = screen.getByText('Покинути').closest('button');
+      expect(dropButton).not.toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('enables drop button for movie in watching state with a rating', () => {
+      const item = makeItem({
+        state: 'watching',
+        rating: 80,
+        mediaSummary: {
+          title: 'Тест фільм',
+          slug: 'test-movie',
+          type: 'movie',
+          releaseDate: '2024-01-15',
+          poster: { small: '/poster.jpg' },
+        },
+      });
+
+      render(<MeListItemCard item={item as never} />);
+
+      const dropButton = screen.getByText('Покинути').closest('button');
+      expect(dropButton).not.toHaveAttribute('aria-disabled', 'true');
+    });
   });
 
   /* ---- Drop confirmation dialog ---- */
@@ -261,7 +387,10 @@ describe('MeListItemCard', () => {
       const confirmButton = confirmButtons[confirmButtons.length - 1];
       fireEvent.click(confirmButton);
 
-      expect(mockDropMutate).toHaveBeenCalledWith('media-1', expect.any(Object));
+      expect(mockDropMutate).toHaveBeenCalledWith(
+        { mediaItemId: 'media-1', mediaType: 'show' },
+        expect.any(Object),
+      );
     });
 
     it('does not call dropMutation on cancel', () => {

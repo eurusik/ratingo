@@ -159,6 +159,19 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     this.states.push(created);
     return created;
   }
+  async updateStateIfIn(
+    userId: string,
+    mediaItemId: string,
+    fromStates: ReadonlyArray<UserMediaState['state']>,
+    toState: UserMediaState['state'],
+  ): Promise<{ previous: UserMediaState['state']; current: UserMediaState } | null> {
+    const row = this.states.find((s) => s.userId === userId && s.mediaItemId === mediaItemId);
+    if (!row || !fromStates.includes(row.state)) return null;
+    const previous = row.state;
+    row.state = toState;
+    row.updatedAt = new Date();
+    return { previous, current: row };
+  }
   async findOne(userId: string, mediaItemId: string): Promise<UserMediaState | null> {
     return this.states.find((s) => s.userId === userId && s.mediaItemId === mediaItemId) ?? null;
   }

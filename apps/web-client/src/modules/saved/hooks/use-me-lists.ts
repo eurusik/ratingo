@@ -154,8 +154,10 @@ export function useDropMedia() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (mediaItemId: string) => meListsApi.dropMedia(mediaItemId),
-    onSuccess: (_data, mediaItemId) => {
+    mutationFn: ({ mediaItemId, mediaType }: { mediaItemId: string; mediaType: MediaType }) =>
+      meListsApi.dropMedia(mediaItemId, mediaType),
+    onSuccess: (_data, { mediaItemId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
@@ -175,8 +177,10 @@ export function useRestoreMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.restoreMedia(mediaItemId),
     onSuccess: (_data, mediaItemId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });

@@ -101,6 +101,20 @@ export interface FavoriteUpdateItem {
 export interface IUserMediaStateRepository {
   upsert(data: UpsertUserMediaStateData): Promise<UserMediaState>;
 
+  /**
+   * Conditional update used to prevent TOCTOU races (issue #94, S-1).
+   * Performs `UPDATE … WHERE state IN (fromStates) RETURNING *` atomically.
+   *
+   * @returns `{ previous, current }` on success, or `null` if the row does
+   *   not exist or its state is not in `fromStates`.
+   */
+  updateStateIfIn(
+    userId: string,
+    mediaItemId: string,
+    fromStates: ReadonlyArray<UserMediaState['state']>,
+    toState: UserMediaState['state'],
+  ): Promise<{ previous: UserMediaState['state']; current: UserMediaState } | null>;
+
   findOne(userId: string, mediaItemId: string): Promise<UserMediaState | null>;
 
   delete(userId: string, mediaItemId: string): Promise<void>;

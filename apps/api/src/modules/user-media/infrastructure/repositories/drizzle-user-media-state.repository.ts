@@ -75,6 +75,51 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     );
   }
 
+  async updateStateIfIn(
+    userId: string,
+    mediaItemId: string,
+    fromStates: ReadonlyArray<UserMediaState['state']>,
+    toState: UserMediaState['state'],
+  ): Promise<{ previous: UserMediaState['state']; current: UserMediaState } | null> {
+    return withDbError(
+      'conditional update user media state',
+      this.logger,
+      async () => {
+        return this.db.transaction(async (tx) => {
+          const [current] = await tx
+            .select({ state: schema.userMediaState.state })
+            .from(schema.userMediaState)
+            .where(
+              and(
+                eq(schema.userMediaState.userId, userId),
+                eq(schema.userMediaState.mediaItemId, mediaItemId),
+              ),
+            )
+            .for('update');
+
+          if (!current || !fromStates.includes(current.state as UserMediaState['state'])) {
+            return null;
+          }
+
+          const previous = current.state as UserMediaState['state'];
+          const [updated] = await tx
+            .update(schema.userMediaState)
+            .set({ state: toState, updatedAt: new Date() })
+            .where(
+              and(
+                eq(schema.userMediaState.userId, userId),
+                eq(schema.userMediaState.mediaItemId, mediaItemId),
+              ),
+            )
+            .returning();
+
+          return { previous, current: this.mapRow(updated) };
+        });
+      },
+      { userId, mediaItemId },
+    );
+  }
+
   async delete(userId: string, mediaItemId: string): Promise<void> {
     return withDbError(
       'delete user media state',
