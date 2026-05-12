@@ -667,6 +667,9 @@
       "title": "Drop this show?",
       "message": "Notification subscriptions will be cancelled."
     },
+    "dropBlocked": {
+      "partialRating": "Finish watching the season or clear your rating to drop this show"
+    },
     "toast": {
       "saved": "Saved",
       "unsaved": "Removed from saved",

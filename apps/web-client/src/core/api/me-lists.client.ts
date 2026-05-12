@@ -176,11 +176,14 @@ export const meListsApi = {
    * Drop a media item.
    *
    * @param mediaItemId - Media item ID to drop
+   * @param mediaType - Media type (required so backend can enforce the
+   *   show-specific "no drop while rated mid-season" rule from issue #94)
    * @returns Updated user media state
    */
-  async dropMedia(mediaItemId: string): Promise<MeUserMediaListItemDto> {
+  async dropMedia(mediaItemId: string, mediaType: MediaType): Promise<MeUserMediaListItemDto> {
     return apiPatch<MeUserMediaListItemDto>(`user-media/${mediaItemId}`, {
       state: 'dropped',
+      mediaType,
     } satisfies Partial<SetUserMediaStateDto>);
   },
 

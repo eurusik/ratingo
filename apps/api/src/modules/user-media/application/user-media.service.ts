@@ -1,8 +1,10 @@
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { ErrorCode } from '@/common/enums/error-code.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { AppException } from '@/common/exceptions/app.exception';
 
 import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
@@ -55,6 +57,25 @@ export class UserMediaService implements IRatingSyncPort {
     }
 
     const resolvedState = data.state ?? this.resolveDefaultState(existing, mediaType);
+
+    // Issue #94: block dropping a show that the user rated mid-season.
+    // "Mid-season" = there is partial episode progress (user started watching
+    // but didn't finish). If `progress` is null, the user is not tracking
+    // episodes — rating applies to the whole show and drop is allowed.
+    // The check is state-agnostic: pause/caught_up preserve rating + progress,
+    // so guarding only WATCHING would let the rule be bypassed via a detour.
+    if (
+      resolvedState === USER_MEDIA_STATE.DROPPED &&
+      existing?.rating != null &&
+      existing?.progress != null &&
+      mediaType === MediaType.SHOW
+    ) {
+      throw new AppException(
+        ErrorCode.CANNOT_DROP_PARTIAL_RATING,
+        USER_MEDIA_STATE_ERRORS.CANNOT_DROP_PARTIAL_RATING,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     if (data.progress != null) {
       if (
@@ -317,24 +338,24 @@ export class UserMediaService implements IRatingSyncPort {
    * @throws {BadRequestException} When item has no progress or is not in watching state
    */
   async pauseMedia(userId: string, mediaItemId: string): Promise<UserMediaState> {
-    const currentState = await this.repo.findOne(userId, mediaItemId);
-
-    if (!currentState) {
-      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_NO_STATE);
-    }
-
-    if (
-      currentState.state !== USER_MEDIA_STATE.WATCHING &&
-      currentState.state !== USER_MEDIA_STATE.CAUGHT_UP
-    ) {
-      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_NOT_WATCHING);
-    }
-
-    return this.repo.upsert({
+    const updated = await this.repo.updateStateIfIn(
       userId,
       mediaItemId,
-      state: USER_MEDIA_STATE.PAUSED,
-    });
+      [USER_MEDIA_STATE.WATCHING, USER_MEDIA_STATE.CAUGHT_UP],
+      USER_MEDIA_STATE.PAUSED,
+    );
+
+    if (!updated) {
+      const existing = await this.repo.findOne(userId, mediaItemId);
+      if (!existing) {
+        throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_NO_STATE);
+      }
+      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_INVALID_STATE);
+    }
+
+    await this.emitStateChanged(userId, mediaItemId, USER_MEDIA_STATE.PAUSED, updated.previous);
+
+    return updated.current;
   }
 
   /**
@@ -346,21 +367,33 @@ export class UserMediaService implements IRatingSyncPort {
    * @throws {BadRequestException} When item is not paused
    */
   async resumeMedia(userId: string, mediaItemId: string): Promise<UserMediaState> {
-    const currentState = await this.repo.findOne(userId, mediaItemId);
+    // TODO(issue-#94 follow-up): for an ended show with 100% watched episodes,
+    // resume returns WATCHING even though COMPLETED would be semantically correct.
+    // Self-corrects on the next mark-watched call via syncStateAfterWatch.
+    // Proper fix requires injecting ShowStatusPort + episode progress lookup.
+    const updated = await this.repo.updateStateIfIn(
+      userId,
+      mediaItemId,
+      [USER_MEDIA_STATE.PAUSED],
+      USER_MEDIA_STATE.WATCHING,
+    );
 
-    if (!currentState) {
-      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_RESUME_NO_STATE);
-    }
-
-    if (currentState.state !== USER_MEDIA_STATE.PAUSED) {
+    if (!updated) {
+      const existing = await this.repo.findOne(userId, mediaItemId);
+      if (!existing) {
+        throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_RESUME_NO_STATE);
+      }
       throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_RESUME_NOT_PAUSED);
     }
 
-    return this.repo.upsert({
+    await this.emitStateChanged(
       userId,
       mediaItemId,
-      state: USER_MEDIA_STATE.WATCHING,
-    });
+      USER_MEDIA_STATE.WATCHING,
+      USER_MEDIA_STATE.PAUSED,
+    );
+
+    return updated.current;
   }
 
   /**

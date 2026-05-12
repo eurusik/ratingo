@@ -210,7 +210,9 @@ export class UserMediaController {
 
   @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })
   @ApiOkResponse({ description: 'Media item paused', type: UserMediaStateDto })
-  @ApiBadRequestResponse({ description: 'Cannot pause: item is not currently being watched' })
+  @ApiBadRequestResponse({
+    description: 'Cannot pause: item must be in watching or caught_up state',
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'Pause a media item (auth: Bearer)' })
   @Post(':mediaItemId/pause')

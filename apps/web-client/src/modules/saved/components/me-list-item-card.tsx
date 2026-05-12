@@ -25,6 +25,8 @@ import {
 } from '@/shared/ui';
 import type { MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import { USER_MEDIA_STATE } from '@/core/api/me-lists.client';
+import { ApiError } from '@/core/api/error';
+import { ErrorCode } from '@/core/api/error-codes';
 import { usePauseMedia, useResumeMedia, useDropMedia, useRestoreMedia } from '../hooks/use-me-lists';
 import { useEpisodeSheetStore } from '../stores/episode-sheet.store';
 
@@ -102,13 +104,29 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
   const total = item.progressSummary?.total ?? 0;
   const progressPercent = total > 0 ? (watched / total) * 100 : 0;
 
-  const canPause = item.state === USER_MEDIA_STATE.WATCHING || item.state === USER_MEDIA_STATE.CAUGHT_UP;
+  const isShow = media.type === 'show';
+  const hasRating = item.rating !== null;
+  // Partial progress: user started marking episodes but did not finish.
+  // Empty/null progressSummary means the user does not track episodes at all
+  // — rating in that case applies to the whole show, not "mid-season".
+  const hasPartialProgress =
+    item.progressSummary != null &&
+    item.progressSummary.watched > 0 &&
+    item.progressSummary.watched < item.progressSummary.total;
+
+  const canPause =
+    item.state === USER_MEDIA_STATE.WATCHING || item.state === USER_MEDIA_STATE.CAUGHT_UP;
   const canResume = item.state === USER_MEDIA_STATE.PAUSED;
   const canDrop =
     item.state === USER_MEDIA_STATE.WATCHING ||
     item.state === USER_MEDIA_STATE.CAUGHT_UP ||
     item.state === USER_MEDIA_STATE.PAUSED ||
     item.state === USER_MEDIA_STATE.PLANNED;
+  // Issue #94: when a show is rated mid-season (rating + watched < total),
+  // require the user to finish the season or clear the rating first.
+  // State-agnostic: pause/caught_up preserve rating + progress, so checking
+  // only WATCHING would let the rule be bypassed via a detour.
+  const dropBlockedByPartialRating = isShow && hasRating && hasPartialProgress;
   const canRestore = item.state === USER_MEDIA_STATE.DROPPED;
   const hasAction = canPause || canResume || canDrop || canRestore;
 
@@ -158,16 +176,26 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
   };
 
   const handleDropConfirm = () => {
-    dropMutation.mutate(item.mediaItemId, {
-      onSuccess: () => {
-        toast.success(dict.activity?.toast?.dropped ?? 'Покинуто');
-        setShowDropConfirm(false);
+    dropMutation.mutate(
+      { mediaItemId: item.mediaItemId, mediaType: media.type },
+      {
+        onSuccess: () => {
+          toast.success(dict.activity?.toast?.dropped ?? 'Покинуто');
+          setShowDropConfirm(false);
+        },
+        onError: (error) => {
+          const isPartialRating =
+            error instanceof ApiError && error.code === ErrorCode.CANNOT_DROP_PARTIAL_RATING;
+          toast.error(
+            isPartialRating
+              ? dict.saved?.dropBlocked?.partialRating ??
+                  'Завершіть перегляд сезону або зніміть оцінку, щоб покинути серіал'
+              : dict.common?.error ?? 'Помилка',
+          );
+          setShowDropConfirm(false);
+        },
       },
-      onError: () => {
-        toast.error(dict.common?.error ?? 'Помилка');
-        setShowDropConfirm(false);
-      },
-    });
+    );
   };
 
   const handleRestore = (e: React.MouseEvent) => {
@@ -268,14 +296,40 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
             )}
 
             {canDrop && (
-              <button
-                onClick={handleDropClick}
-                disabled={dropMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-              >
-                <XCircle className="w-3.5 h-3.5" />
-                {dict.saved?.actions?.drop ?? 'Покинути'}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={
+                    dropBlockedByPartialRating || dropMutation.isPending
+                      ? undefined
+                      : handleDropClick
+                  }
+                  aria-disabled={
+                    dropBlockedByPartialRating || dropMutation.isPending || undefined
+                  }
+                  aria-describedby={
+                    dropBlockedByPartialRating
+                      ? `drop-blocked-reason-${item.mediaItemId}`
+                      : undefined
+                  }
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                    dropBlockedByPartialRating
+                      ? 'text-red-400/30 cursor-not-allowed'
+                      : 'text-red-400/70 hover:text-red-400 hover:bg-red-500/10',
+                    dropMutation.isPending && 'opacity-50',
+                  )}
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  {dict.saved?.actions?.drop ?? 'Покинути'}
+                </button>
+                {dropBlockedByPartialRating && (
+                  <span id={`drop-blocked-reason-${item.mediaItemId}`} className="sr-only">
+                    {dict.saved?.dropBlocked?.partialRating ??
+                      'Завершіть перегляд сезону або зніміть оцінку, щоб покинути серіал'}
+                  </span>
+                )}
+              </>
             )}
 
             {canRestore && (
