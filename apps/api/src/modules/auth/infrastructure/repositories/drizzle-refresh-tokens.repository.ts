@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gte, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { type RefreshToken } from '../../domain/entities/refresh-token.entity';
@@ -28,24 +28,26 @@ export class DrizzleRefreshTokensRepository implements IRefreshTokensRepository 
    * @returns {Promise<RefreshToken>} Persisted token
    */
   async issue(token: Omit<RefreshToken, 'createdAt'>): Promise<RefreshToken> {
-    try {
-      const [row] = await this.db
-        .insert(schema.refreshTokens)
-        .values({
-          id: token.id,
-          userId: token.userId,
-          tokenHash: token.tokenHash,
-          userAgent: token.userAgent ?? null,
-          ip: token.ip ?? null,
-          expiresAt: token.expiresAt,
-          revokedAt: token.revokedAt ?? null,
-        })
-        .returning();
-      return this.mapRow(row);
-    } catch (error) {
-      this.logger.error(`issue failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to issue refresh token', { userId: token.userId });
-    }
+    return withDbError(
+      'issue refresh token',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .insert(schema.refreshTokens)
+          .values({
+            id: token.id,
+            userId: token.userId,
+            tokenHash: token.tokenHash,
+            userAgent: token.userAgent ?? null,
+            ip: token.ip ?? null,
+            expiresAt: token.expiresAt,
+            revokedAt: token.revokedAt ?? null,
+          })
+          .returning();
+        return this.mapRow(row);
+      },
+      { userId: token.userId },
+    );
   }
 
   /**
@@ -55,16 +57,18 @@ export class DrizzleRefreshTokensRepository implements IRefreshTokensRepository 
    * @returns {Promise<RefreshToken | null>} Token or null
    */
   async findById(id: string): Promise<RefreshToken | null> {
-    try {
-      const [row] = await this.db
-        .select()
-        .from(schema.refreshTokens)
-        .where(eq(schema.refreshTokens.id, id));
-      return row ? this.mapRow(row) : null;
-    } catch (error) {
-      this.logger.error(`findById failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch refresh token', { id });
-    }
+    return withDbError(
+      'fetch refresh token',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select()
+          .from(schema.refreshTokens)
+          .where(eq(schema.refreshTokens.id, id));
+        return row ? this.mapRow(row) : null;
+      },
+      { id },
+    );
   }
 
   /**
@@ -74,23 +78,25 @@ export class DrizzleRefreshTokensRepository implements IRefreshTokensRepository 
    * @returns {Promise<RefreshToken[]>} Active tokens
    */
   async findValidByUser(userId: string): Promise<RefreshToken[]> {
-    try {
-      const now = new Date();
-      const rows = await this.db
-        .select()
-        .from(schema.refreshTokens)
-        .where(
-          and(
-            eq(schema.refreshTokens.userId, userId),
-            isNull(schema.refreshTokens.revokedAt),
-            gte(schema.refreshTokens.expiresAt, now),
-          ),
-        );
-      return rows.map((r) => this.mapRow(r));
-    } catch (error) {
-      this.logger.error(`findValidByUser failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to list refresh tokens', { userId });
-    }
+    return withDbError(
+      'list refresh tokens',
+      this.logger,
+      async () => {
+        const now = new Date();
+        const rows = await this.db
+          .select()
+          .from(schema.refreshTokens)
+          .where(
+            and(
+              eq(schema.refreshTokens.userId, userId),
+              isNull(schema.refreshTokens.revokedAt),
+              gte(schema.refreshTokens.expiresAt, now),
+            ),
+          );
+        return rows.map((r) => this.mapRow(r));
+      },
+      { userId },
+    );
   }
 
   /**
@@ -100,15 +106,17 @@ export class DrizzleRefreshTokensRepository implements IRefreshTokensRepository 
    * @returns {Promise<void>} Nothing
    */
   async revoke(id: string): Promise<void> {
-    try {
-      await this.db
-        .update(schema.refreshTokens)
-        .set({ revokedAt: new Date() })
-        .where(eq(schema.refreshTokens.id, id));
-    } catch (error) {
-      this.logger.error(`revoke failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to revoke refresh token', { id });
-    }
+    return withDbError(
+      'revoke refresh token',
+      this.logger,
+      () =>
+        this.db
+          .update(schema.refreshTokens)
+          .set({ revokedAt: new Date() })
+          .where(eq(schema.refreshTokens.id, id))
+          .then(() => undefined),
+      { id },
+    );
   }
 
   /**
@@ -118,15 +126,17 @@ export class DrizzleRefreshTokensRepository implements IRefreshTokensRepository 
    * @returns {Promise<void>} Nothing
    */
   async revokeAllForUser(userId: string): Promise<void> {
-    try {
-      await this.db
-        .update(schema.refreshTokens)
-        .set({ revokedAt: new Date() })
-        .where(eq(schema.refreshTokens.userId, userId));
-    } catch (error) {
-      this.logger.error(`revokeAllForUser failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to revoke user refresh tokens', { userId });
-    }
+    return withDbError(
+      'revoke user refresh tokens',
+      this.logger,
+      () =>
+        this.db
+          .update(schema.refreshTokens)
+          .set({ revokedAt: new Date() })
+          .where(eq(schema.refreshTokens.userId, userId))
+          .then(() => undefined),
+      { userId },
+    );
   }
 
   private mapRow(row: typeof schema.refreshTokens.$inferSelect): RefreshToken {

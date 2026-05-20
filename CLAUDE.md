@@ -59,6 +59,10 @@ module/
 ### BullMQ
 Design all jobs as idempotent. Define job types in `*.constants.ts`.
 
+### Database Migrations
+- Use `CREATE INDEX CONCURRENTLY` for new indexes on existing tables (avoids table locks)
+- Follow expand/contract pattern for breaking schema changes: add nullable column first, backfill, then add constraint
+
 ## Frontend Architecture
 
 - **Types**: Use `import type { components } from '@ratingo/api-contract'` for all API types

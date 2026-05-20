@@ -65,15 +65,8 @@ export class ReviewVotesService {
       action = 'added';
     }
 
-    // Upsert vote
-    const newVote = await this.voteRepo.upsert({
-      userId,
-      reviewId,
-      voteType,
-    });
-
-    // Update denormalized counts
-    await this.updateReviewVoteCounts(reviewId);
+    // Atomically upsert vote and recount (prevents race conditions)
+    const { vote: newVote } = await this.voteRepo.upsertAndRecount({ userId, reviewId, voteType });
 
     this.logger.log(`User ${userId} ${action} vote on review ${reviewId}: ${voteType}`);
 
@@ -90,11 +83,9 @@ export class ReviewVotesService {
       throw new NotFoundException(ErrorCode.REVIEW_NOT_FOUND, 'Review not found', { reviewId });
     }
 
-    const removed = await this.voteRepo.remove(userId, reviewId);
+    const { removed } = await this.voteRepo.removeAndRecount(userId, reviewId);
 
     if (removed) {
-      // Update denormalized counts
-      await this.updateReviewVoteCounts(reviewId);
       this.logger.log(`User ${userId} removed vote from review ${reviewId}`);
     }
 
@@ -120,16 +111,5 @@ export class ReviewVotesService {
     reviewIds: string[],
   ): Promise<Map<string, ReviewVote>> {
     return this.voteRepo.findUserVotesForReviews(userId, reviewIds);
-  }
-
-  /**
-   * Updates the denormalized vote counts on a review.
-   */
-  private async updateReviewVoteCounts(reviewId: string): Promise<void> {
-    const counts = await this.voteRepo.countByReview(reviewId);
-    await this.reviewRepo.updateVoteCounts(reviewId, {
-      likesCount: counts.likes,
-      dislikesCount: counts.dislikes,
-    });
   }
 }

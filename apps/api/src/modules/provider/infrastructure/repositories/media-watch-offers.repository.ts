@@ -86,9 +86,36 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
       offersByRegion.set(offer.region, regionOffers);
     }
 
-    // Upsert each region
-    for (const [region, regionOffers] of offersByRegion) {
-      await this.upsertMany(mediaItemId, region, regionOffers);
+    try {
+      // All regions in a single atomic transaction
+      await this.db.transaction(async (tx) => {
+        for (const [region, regionOffers] of offersByRegion) {
+          await tx
+            .delete(mediaWatchOffers)
+            .where(
+              and(
+                eq(mediaWatchOffers.mediaItemId, mediaItemId),
+                eq(mediaWatchOffers.region, region),
+              ),
+            );
+
+          await tx.insert(mediaWatchOffers).values(
+            regionOffers.map((offer) => ({
+              mediaItemId: offer.mediaItemId,
+              providerId: offer.providerId,
+              variantId: offer.variantId,
+              distributionChannel: offer.distributionChannel,
+              offerType: offer.offerType,
+              region: offer.region,
+              link: offer.link,
+              tmdbProviderId: offer.tmdbProviderId,
+            })),
+          );
+        }
+      });
+    } catch (error) {
+      this.logger.error(`Failed to upsert offers for media=${mediaItemId}`, error);
+      throw error;
     }
   }
 

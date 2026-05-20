@@ -152,8 +152,8 @@ describe('MediaWatchOffersRepository', () => {
       // Act
       await repository.upsertManyByRegions('media-123', offers);
 
-      // Assert - should have 2 transactions (one per region)
-      expect(mockDb.transaction).toHaveBeenCalledTimes(2);
+      // Assert - all regions in a single atomic transaction
+      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
     });
   });
 

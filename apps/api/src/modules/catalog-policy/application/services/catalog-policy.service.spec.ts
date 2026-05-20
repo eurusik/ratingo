@@ -78,7 +78,7 @@ describe('CatalogPolicyService', () => {
 
       const result = await service.getActiveOrThrow();
 
-      expect(result).toBe(policy);
+      expect(result).toStrictEqual(policy);
       expect(mockPolicyRepository.findActive).toHaveBeenCalled();
     });
 
@@ -96,7 +96,7 @@ describe('CatalogPolicyService', () => {
 
       const result = await service.getActive();
 
-      expect(result).toBe(policy);
+      expect(result).toStrictEqual(policy);
     });
 
     it('should return null when no active policy', async () => {

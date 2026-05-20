@@ -30,4 +30,19 @@ export interface IReviewVoteRepository {
    * Find user's vote for multiple reviews (batch).
    */
   findUserVotesForReviews(userId: string, reviewIds: string[]): Promise<Map<string, ReviewVote>>;
+
+  /**
+   * Atomically upsert a vote and recount like/dislike totals in one transaction.
+   */
+  upsertAndRecount(
+    input: UpsertVoteInput,
+  ): Promise<{ vote: ReviewVote; counts: { likes: number; dislikes: number } }>;
+
+  /**
+   * Atomically remove a vote and recount like/dislike totals in one transaction.
+   */
+  removeAndRecount(
+    userId: string,
+    reviewId: string,
+  ): Promise<{ removed: boolean; counts: { likes: number; dislikes: number } }>;
 }
