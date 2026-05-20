@@ -72,7 +72,10 @@ export class DrizzleReviewRepository implements IReviewRepository {
           .from(schema.reviews)
           .innerJoin(schema.users, eq(schema.users.id, schema.reviews.userId))
           .where(and(...conditions))
-          .orderBy(orderBy)
+          .orderBy(
+            orderBy,
+            sort === REVIEW_SORT.OLDEST ? asc(schema.reviews.id) : desc(schema.reviews.id),
+          )
           .limit(limit)
           .offset(offset);
 

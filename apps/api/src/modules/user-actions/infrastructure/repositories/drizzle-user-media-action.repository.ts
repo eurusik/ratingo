@@ -74,7 +74,7 @@ export class DrizzleUserMediaActionRepository implements IUserMediaActionReposit
           .select()
           .from(schema.userMediaActions)
           .where(eq(schema.userMediaActions.userId, userId))
-          .orderBy(desc(schema.userMediaActions.createdAt))
+          .orderBy(desc(schema.userMediaActions.createdAt), desc(schema.userMediaActions.id))
           .limit(limit)
           .offset(offset);
         return rows.map((r) => this.mapRow(r));

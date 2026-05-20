@@ -227,7 +227,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
               eq(schema.userSubscriptions.isActive, true),
             ),
           )
-          .orderBy(desc(schema.userSubscriptions.createdAt))
+          .orderBy(desc(schema.userSubscriptions.createdAt), desc(schema.userSubscriptions.id))
           .limit(limit)
           .offset(offset);
 

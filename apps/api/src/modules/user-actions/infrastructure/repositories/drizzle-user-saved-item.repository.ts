@@ -221,7 +221,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
               ...(type ? [eq(schema.mediaItems.type, type)] : []),
             ),
           )
-          .orderBy(desc(schema.userSavedItems.createdAt))
+          .orderBy(desc(schema.userSavedItems.createdAt), desc(schema.userSavedItems.id))
           .limit(limit)
           .offset(offset);
 
