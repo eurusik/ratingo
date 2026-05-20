@@ -170,24 +170,21 @@ export class TrackedSyncService {
         const airDate =
           formatDateToIso(snapshot.lastEpisodeAirDate) ?? formatDateToIso(snapshot.nextAirDate);
 
-        // Skip if no real air date is available — don't fabricate a timestamp
-        if (!airDate) {
-          return diff;
+        if (airDate) {
+          diff.hasChanges = true;
+          diff.changes.newEpisode = {
+            season: seasonNumber,
+            episode: episodeNumber,
+            airDate,
+            key: snapshot.lastEpisodeKey,
+          };
+
+          diff.changes.newSeason = {
+            seasonNumber,
+            airDate,
+            key: formatSeasonKey(seasonNumber),
+          };
         }
-
-        diff.hasChanges = true;
-        diff.changes.newEpisode = {
-          season: seasonNumber,
-          episode: episodeNumber,
-          airDate,
-          key: snapshot.lastEpisodeKey,
-        };
-
-        diff.changes.newSeason = {
-          seasonNumber,
-          airDate,
-          key: formatSeasonKey(seasonNumber),
-        };
       }
     }
 

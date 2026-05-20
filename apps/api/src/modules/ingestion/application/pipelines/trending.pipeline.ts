@@ -77,7 +77,10 @@ export class TrendingPipeline {
 
     const rawItems = await this.syncService.getTrending(page, type);
     const items = rawItems.filter(
-      (item) => typeof item.tmdbId === 'number' && item.tmdbId > 0 && item.type,
+      (item): item is { tmdbId: number; type: MediaType } =>
+        typeof item.tmdbId === 'number' &&
+        item.tmdbId > 0 &&
+        (item.type === MediaType.MOVIE || item.type === MediaType.SHOW),
     );
 
     if (items.length === 0) {
