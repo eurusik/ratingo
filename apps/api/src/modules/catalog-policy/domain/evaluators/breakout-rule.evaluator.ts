@@ -67,8 +67,9 @@ export function matchesBreakoutRule(input: PolicyEngineInput, rule: BreakoutRule
 }
 
 /**
- * Finds the first matching breakout rule by priority.
- * Rules are sorted by priority (lowest number = highest priority) before evaluation.
+ * Finds the first matching breakout rule by priority (lowest number = highest priority).
+ * CatalogPolicyService pre-sorts rules on load, so this sort is typically O(n) on
+ * an already-sorted array. Kept defensive for callers that bypass the service.
  *
  * @param input - Media item data and stats
  * @param policy - Policy configuration
@@ -78,10 +79,9 @@ export function findMatchingBreakoutRule(
   input: PolicyEngineInput,
   policy: PolicyConfig,
 ): BreakoutRule | null {
-  // Defensive sort: ensure priority order regardless of input array order
-  const sortedRules = [...policy.breakoutRules].sort((a, b) => a.priority - b.priority);
+  const rules = [...policy.breakoutRules].sort((a, b) => a.priority - b.priority);
 
-  for (const rule of sortedRules) {
+  for (const rule of rules) {
     if (matchesBreakoutRule(input, rule)) {
       return rule;
     }

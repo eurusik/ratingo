@@ -44,6 +44,12 @@ describe('ReviewVotesService', () => {
       remove: jest.fn().mockResolvedValue(true),
       countByReview: jest.fn().mockResolvedValue({ likes: 10, dislikes: 2 }),
       findUserVotesForReviews: jest.fn().mockResolvedValue(new Map()),
+      upsertAndRecount: jest
+        .fn()
+        .mockResolvedValue({ vote: mockVote, counts: { likes: 11, dislikes: 2 } }),
+      removeAndRecount: jest
+        .fn()
+        .mockResolvedValue({ removed: true, counts: { likes: 10, dislikes: 2 } }),
     };
 
     reviewRepo = {
@@ -68,14 +74,10 @@ describe('ReviewVotesService', () => {
 
       expect(result.action).toBe('added');
       expect(result.newVote).toEqual(mockVote);
-      expect(voteRepo.upsert).toHaveBeenCalledWith({
+      expect(voteRepo.upsertAndRecount).toHaveBeenCalledWith({
         userId: 'voter-id',
         reviewId: 'review-id-1',
         voteType: VOTE_TYPE.LIKE,
-      });
-      expect(reviewRepo.updateVoteCounts).toHaveBeenCalledWith('review-id-1', {
-        likesCount: 10,
-        dislikesCount: 2,
       });
     });
 
@@ -85,7 +87,10 @@ describe('ReviewVotesService', () => {
         voteType: VOTE_TYPE.LIKE,
       });
       const newVote = { ...mockVote, voteType: VOTE_TYPE.DISLIKE };
-      voteRepo.upsert.mockResolvedValue(newVote);
+      voteRepo.upsertAndRecount.mockResolvedValue({
+        vote: newVote,
+        counts: { likes: 10, dislikes: 3 },
+      });
 
       const result = await service.vote('voter-id', 'review-id-1', VOTE_TYPE.DISLIKE);
 
@@ -126,12 +131,14 @@ describe('ReviewVotesService', () => {
 
       expect(result.action).toBe('removed');
       expect(result.newVote).toBeNull();
-      expect(voteRepo.remove).toHaveBeenCalledWith('voter-id', 'review-id-1');
-      expect(reviewRepo.updateVoteCounts).toHaveBeenCalled();
+      expect(voteRepo.removeAndRecount).toHaveBeenCalledWith('voter-id', 'review-id-1');
     });
 
     it('should still return removed action when vote did not exist', async () => {
-      voteRepo.remove.mockResolvedValue(false);
+      voteRepo.removeAndRecount.mockResolvedValue({
+        removed: false,
+        counts: { likes: 10, dislikes: 2 },
+      });
 
       const result = await service.unvote('voter-id', 'review-id-1');
 
@@ -191,7 +198,10 @@ describe('ReviewVotesService', () => {
         voteType: VOTE_TYPE.LIKE,
       });
       const dislikeVote = { ...mockVote, voteType: VOTE_TYPE.DISLIKE };
-      voteRepo.upsert.mockResolvedValue(dislikeVote);
+      voteRepo.upsertAndRecount.mockResolvedValue({
+        vote: dislikeVote,
+        counts: { likes: 10, dislikes: 3 },
+      });
 
       const result = await service.vote('voter-id', 'review-id-1', VOTE_TYPE.DISLIKE);
 
@@ -206,7 +216,10 @@ describe('ReviewVotesService', () => {
         voteType: VOTE_TYPE.DISLIKE,
       });
       const likeVote = { ...mockVote, voteType: VOTE_TYPE.LIKE };
-      voteRepo.upsert.mockResolvedValue(likeVote);
+      voteRepo.upsertAndRecount.mockResolvedValue({
+        vote: likeVote,
+        counts: { likes: 11, dislikes: 2 },
+      });
 
       const result = await service.vote('voter-id', 'review-id-1', VOTE_TYPE.LIKE);
 
@@ -219,14 +232,19 @@ describe('ReviewVotesService', () => {
         ...mockVote,
         voteType: VOTE_TYPE.LIKE,
       });
-      voteRepo.countByReview.mockResolvedValue({ likes: 9, dislikes: 3 });
-      voteRepo.upsert.mockResolvedValue({ ...mockVote, voteType: VOTE_TYPE.DISLIKE });
+      const dislikeVote = { ...mockVote, voteType: VOTE_TYPE.DISLIKE };
+      voteRepo.upsertAndRecount.mockResolvedValue({
+        vote: dislikeVote,
+        counts: { likes: 9, dislikes: 3 },
+      });
 
       await service.vote('voter-id', 'review-id-1', VOTE_TYPE.DISLIKE);
 
-      expect(reviewRepo.updateVoteCounts).toHaveBeenCalledWith('review-id-1', {
-        likesCount: 9,
-        dislikesCount: 3,
+      // Counts are now updated atomically in the repository — service just calls upsertAndRecount
+      expect(voteRepo.upsertAndRecount).toHaveBeenCalledWith({
+        userId: 'voter-id',
+        reviewId: 'review-id-1',
+        voteType: VOTE_TYPE.DISLIKE,
       });
     });
   });

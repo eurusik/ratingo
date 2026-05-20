@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 
+import { AppException } from '../exceptions/app.exception';
 import { DatabaseException } from '../exceptions/database.exception';
 
 /**
@@ -66,6 +67,9 @@ export async function withDbError<T>(
   try {
     return await fn();
   } catch (error) {
+    // Re-throw application exceptions (NotFoundException, ForbiddenException, etc.) as-is
+    if (error instanceof AppException) throw error;
+
     const msg = error instanceof Error ? error.message : String(error);
     const pgDetails = extractPgErrorDetails(error);
     const stack = error instanceof Error ? error.stack : undefined;

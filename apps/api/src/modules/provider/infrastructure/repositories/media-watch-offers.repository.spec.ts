@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import {
   CreateWatchOfferInput,
@@ -119,7 +120,7 @@ describe('MediaWatchOffersRepository', () => {
 
       // Act & Assert
       await expect(repository.upsertMany('media-123', 'US', [createOfferInput()])).rejects.toThrow(
-        'DB Error',
+        DatabaseException,
       );
     });
   });
@@ -152,8 +153,8 @@ describe('MediaWatchOffersRepository', () => {
       // Act
       await repository.upsertManyByRegions('media-123', offers);
 
-      // Assert - should have 2 transactions (one per region)
-      expect(mockDb.transaction).toHaveBeenCalledTimes(2);
+      // Assert - all regions in a single atomic transaction
+      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -224,7 +225,7 @@ describe('MediaWatchOffersRepository', () => {
       mockDb.where.mockRejectedValue(new Error('DB Error'));
 
       // Act & Assert
-      await expect(repository.findByMediaItemId('media-123')).rejects.toThrow('DB Error');
+      await expect(repository.findByMediaItemId('media-123')).rejects.toThrow(DatabaseException);
     });
   });
 
@@ -261,7 +262,7 @@ describe('MediaWatchOffersRepository', () => {
       mockDb.where.mockRejectedValue(new Error('DB Error'));
 
       // Act & Assert
-      await expect(repository.findByTmdbProviderId(8)).rejects.toThrow('DB Error');
+      await expect(repository.findByTmdbProviderId(8)).rejects.toThrow(DatabaseException);
     });
   });
 
@@ -313,7 +314,7 @@ describe('MediaWatchOffersRepository', () => {
       mockDb.where.mockRejectedValue(new Error('DB Error'));
 
       // Act & Assert
-      await expect(repository.findByMediaItemIds(['media-1'])).rejects.toThrow('DB Error');
+      await expect(repository.findByMediaItemIds(['media-1'])).rejects.toThrow(DatabaseException);
     });
   });
 
@@ -335,7 +336,7 @@ describe('MediaWatchOffersRepository', () => {
       mockDb.where.mockRejectedValue(new Error('DB Error'));
 
       // Act & Assert
-      await expect(repository.deleteByMediaItemId('media-123')).rejects.toThrow('DB Error');
+      await expect(repository.deleteByMediaItemId('media-123')).rejects.toThrow(DatabaseException);
     });
   });
 
@@ -358,7 +359,7 @@ describe('MediaWatchOffersRepository', () => {
 
       // Act & Assert
       await expect(repository.deleteByMediaItemIdAndRegion('media-123', 'US')).rejects.toThrow(
-        'DB Error',
+        DatabaseException,
       );
     });
   });
@@ -497,7 +498,9 @@ describe('MediaWatchOffersRepository', () => {
       mockDb.where.mockRejectedValue(new Error('DB Error'));
 
       // Act & Assert
-      await expect(repository.getOffersForMediaBatch(['media-1'])).rejects.toThrow('DB Error');
+      await expect(repository.getOffersForMediaBatch(['media-1'])).rejects.toThrow(
+        DatabaseException,
+      );
     });
   });
 });

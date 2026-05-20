@@ -196,7 +196,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
           COALESCE(popularity_score, 0) * 0.20 +
           (COALESCE(watchers_count, 0)::float / (COALESCE(watchers_count, 0) + 100)) * 100 * 0.25 +
           COALESCE(trending_score, 0) / 100.0 * 0.05
-        ) DESC NULLS LAST
+        ) DESC NULLS LAST, id DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
 
@@ -230,7 +230,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
       }
 
       sqlQuery = sql`${sqlQuery}
-        ORDER BY rank DESC, trending_score DESC NULLS LAST
+        ORDER BY rank DESC, trending_score DESC NULLS LAST, id DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
 

@@ -9,7 +9,7 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, and, sql, inArray } from 'drizzle-orm';
+import { eq, and, sql, inArray, desc } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DatabaseException } from '../../../../common/exceptions';
@@ -141,6 +141,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
             eq(schema.mediaCatalogEvaluations.context, context),
           ),
         )
+        .orderBy(desc(schema.mediaCatalogEvaluations.policyVersion))
         .limit(1);
 
       if (result.length === 0) {
@@ -233,6 +234,10 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
             eq(schema.mediaCatalogEvaluations.policyVersion, policyVersion),
             eq(schema.mediaCatalogEvaluations.context, context),
           ),
+        )
+        .orderBy(
+          desc(schema.mediaCatalogEvaluations.evaluatedAt),
+          desc(schema.mediaCatalogEvaluations.mediaItemId),
         );
 
       if (options?.limit) {
@@ -264,6 +269,10 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
             eq(schema.mediaCatalogEvaluations.status, status),
             eq(schema.mediaCatalogEvaluations.context, context),
           ),
+        )
+        .orderBy(
+          desc(schema.mediaCatalogEvaluations.evaluatedAt),
+          desc(schema.mediaCatalogEvaluations.mediaItemId),
         );
 
       if (options?.limit) {

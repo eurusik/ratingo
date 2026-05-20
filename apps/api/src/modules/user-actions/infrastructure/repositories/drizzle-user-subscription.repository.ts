@@ -7,8 +7,8 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
@@ -44,49 +44,47 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
    * @returns {Promise<UserSubscription>} Persisted subscription
    */
   async upsert(data: UpsertSubscriptionData): Promise<UserSubscription> {
-    try {
-      const [row] = await this.db
-        .insert(schema.userSubscriptions)
-        .values({
-          userId: data.userId,
-          mediaItemId: data.mediaItemId,
-          trigger: data.trigger,
-          channel: data.channel ?? 'push',
-          isActive: true,
-          // Initialize dedup markers to prevent immediate notifications
-          lastNotifiedSeasonNumber: data.lastNotifiedSeasonNumber ?? null,
-          lastNotifiedEpisodeKey: data.lastNotifiedEpisodeKey ?? null,
-        })
-        .onConflictDoUpdate({
-          target: [
-            schema.userSubscriptions.userId,
-            schema.userSubscriptions.mediaItemId,
-            schema.userSubscriptions.trigger,
-            schema.userSubscriptions.channel,
-          ],
-          set: {
+    return withDbError(
+      'upsert subscription',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .insert(schema.userSubscriptions)
+          .values({
+            userId: data.userId,
+            mediaItemId: data.mediaItemId,
+            trigger: data.trigger,
+            channel: data.channel ?? 'push',
             isActive: true,
-            updatedAt: new Date(),
-            // Update markers only if reactivating (was inactive)
-            // This is handled by conditional update: only set if current isActive = false
-            ...(data.lastNotifiedSeasonNumber !== undefined && {
-              lastNotifiedSeasonNumber: sql`CASE WHEN ${schema.userSubscriptions.isActive} = false THEN ${data.lastNotifiedSeasonNumber} ELSE ${schema.userSubscriptions.lastNotifiedSeasonNumber} END`,
-            }),
-            ...(data.lastNotifiedEpisodeKey !== undefined && {
-              lastNotifiedEpisodeKey: sql`CASE WHEN ${schema.userSubscriptions.isActive} = false THEN ${data.lastNotifiedEpisodeKey} ELSE ${schema.userSubscriptions.lastNotifiedEpisodeKey} END`,
-            }),
-          },
-        })
-        .returning();
-      return this.mapRow(row);
-    } catch (error) {
-      this.logger.error(`upsert failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to upsert subscription', {
-        userId: data.userId,
-        mediaItemId: data.mediaItemId,
-        trigger: data.trigger,
-      });
-    }
+            // Initialize dedup markers to prevent immediate notifications
+            lastNotifiedSeasonNumber: data.lastNotifiedSeasonNumber ?? null,
+            lastNotifiedEpisodeKey: data.lastNotifiedEpisodeKey ?? null,
+          })
+          .onConflictDoUpdate({
+            target: [
+              schema.userSubscriptions.userId,
+              schema.userSubscriptions.mediaItemId,
+              schema.userSubscriptions.trigger,
+              schema.userSubscriptions.channel,
+            ],
+            set: {
+              isActive: true,
+              updatedAt: new Date(),
+              // Update markers only if reactivating (was inactive)
+              // This is handled by conditional update: only set if current isActive = false
+              ...(data.lastNotifiedSeasonNumber !== undefined && {
+                lastNotifiedSeasonNumber: sql`CASE WHEN ${schema.userSubscriptions.isActive} = false THEN ${data.lastNotifiedSeasonNumber} ELSE ${schema.userSubscriptions.lastNotifiedSeasonNumber} END`,
+              }),
+              ...(data.lastNotifiedEpisodeKey !== undefined && {
+                lastNotifiedEpisodeKey: sql`CASE WHEN ${schema.userSubscriptions.isActive} = false THEN ${data.lastNotifiedEpisodeKey} ELSE ${schema.userSubscriptions.lastNotifiedEpisodeKey} END`,
+              }),
+            },
+          })
+          .returning();
+        return this.mapRow(row);
+      },
+      { userId: data.userId, mediaItemId: data.mediaItemId, trigger: data.trigger },
+    );
   }
 
   /**
@@ -102,27 +100,25 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     mediaItemId: string,
     trigger: SubscriptionTrigger,
   ): Promise<boolean> {
-    try {
-      const result = await this.db
-        .update(schema.userSubscriptions)
-        .set({ isActive: false, updatedAt: new Date() })
-        .where(
-          and(
-            eq(schema.userSubscriptions.userId, userId),
-            eq(schema.userSubscriptions.mediaItemId, mediaItemId),
-            eq(schema.userSubscriptions.trigger, trigger),
-          ),
-        )
-        .returning({ id: schema.userSubscriptions.id });
-      return result.length > 0;
-    } catch (error) {
-      this.logger.error(`deactivate failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to deactivate subscription', {
-        userId,
-        mediaItemId,
-        trigger,
-      });
-    }
+    return withDbError(
+      'deactivate subscription',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .update(schema.userSubscriptions)
+          .set({ isActive: false, updatedAt: new Date() })
+          .where(
+            and(
+              eq(schema.userSubscriptions.userId, userId),
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+              eq(schema.userSubscriptions.trigger, trigger),
+            ),
+          )
+          .returning({ id: schema.userSubscriptions.id });
+        return result.length > 0;
+      },
+      { userId, mediaItemId, trigger },
+    );
   }
 
   /**
@@ -138,24 +134,26 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     mediaItemId: string,
     trigger: SubscriptionTrigger,
   ): Promise<UserSubscription | null> {
-    try {
-      const [row] = await this.db
-        .select()
-        .from(schema.userSubscriptions)
-        .where(
-          and(
-            eq(schema.userSubscriptions.userId, userId),
-            eq(schema.userSubscriptions.mediaItemId, mediaItemId),
-            eq(schema.userSubscriptions.trigger, trigger),
-            eq(schema.userSubscriptions.isActive, true),
-          ),
-        )
-        .limit(1);
-      return row ? this.mapRow(row) : null;
-    } catch (error) {
-      this.logger.error(`findOne failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to find subscription', { userId, mediaItemId, trigger });
-    }
+    return withDbError(
+      'find subscription',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select()
+          .from(schema.userSubscriptions)
+          .where(
+            and(
+              eq(schema.userSubscriptions.userId, userId),
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+              eq(schema.userSubscriptions.trigger, trigger),
+              eq(schema.userSubscriptions.isActive, true),
+            ),
+          )
+          .limit(1);
+        return row ? this.mapRow(row) : null;
+      },
+      { userId, mediaItemId, trigger },
+    );
   }
 
   /**
@@ -169,25 +167,24 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     userId: string,
     mediaItemId: string,
   ): Promise<SubscriptionTrigger[]> {
-    try {
-      const rows = await this.db
-        .select({ trigger: schema.userSubscriptions.trigger })
-        .from(schema.userSubscriptions)
-        .where(
-          and(
-            eq(schema.userSubscriptions.userId, userId),
-            eq(schema.userSubscriptions.mediaItemId, mediaItemId),
-            eq(schema.userSubscriptions.isActive, true),
-          ),
-        );
-      return rows.map((r) => r.trigger as SubscriptionTrigger);
-    } catch (error) {
-      this.logger.error(`findActiveTriggersForMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to find active triggers for media', {
-        userId,
-        mediaItemId,
-      });
-    }
+    return withDbError(
+      'find active triggers for media',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({ trigger: schema.userSubscriptions.trigger })
+          .from(schema.userSubscriptions)
+          .where(
+            and(
+              eq(schema.userSubscriptions.userId, userId),
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+              eq(schema.userSubscriptions.isActive, true),
+            ),
+          );
+        return rows.map((r) => r.trigger as SubscriptionTrigger);
+      },
+      { userId, mediaItemId },
+    );
   }
 
   /**
@@ -203,49 +200,51 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     limit = DEFAULT_PAGE_SIZE,
     offset = 0,
   ): Promise<SubscriptionWithMedia[]> {
-    try {
-      const rows = await this.db
-        .select({
-          sub: schema.userSubscriptions,
-          media: {
-            id: schema.mediaItems.id,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            slug: schema.mediaItems.slug,
-            posterPath: schema.mediaItems.posterPath,
-            releaseDate: schema.mediaItems.releaseDate,
-          },
-        })
-        .from(schema.userSubscriptions)
-        .innerJoin(
-          schema.mediaItems,
-          eq(schema.mediaItems.id, schema.userSubscriptions.mediaItemId),
-        )
-        .where(
-          and(
-            eq(schema.userSubscriptions.userId, userId),
-            eq(schema.userSubscriptions.isActive, true),
-          ),
-        )
-        .orderBy(desc(schema.userSubscriptions.createdAt))
-        .limit(limit)
-        .offset(offset);
+    return withDbError(
+      'list active subscriptions with media',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({
+            sub: schema.userSubscriptions,
+            media: {
+              id: schema.mediaItems.id,
+              type: schema.mediaItems.type,
+              title: schema.mediaItems.title,
+              slug: schema.mediaItems.slug,
+              posterPath: schema.mediaItems.posterPath,
+              releaseDate: schema.mediaItems.releaseDate,
+            },
+          })
+          .from(schema.userSubscriptions)
+          .innerJoin(
+            schema.mediaItems,
+            eq(schema.mediaItems.id, schema.userSubscriptions.mediaItemId),
+          )
+          .where(
+            and(
+              eq(schema.userSubscriptions.userId, userId),
+              eq(schema.userSubscriptions.isActive, true),
+            ),
+          )
+          .orderBy(desc(schema.userSubscriptions.createdAt), desc(schema.userSubscriptions.id))
+          .limit(limit)
+          .offset(offset);
 
-      return rows.map((r) => ({
-        ...this.mapRow(r.sub),
-        mediaSummary: {
-          id: r.media.id,
-          type: r.media.type as MediaType,
-          title: r.media.title,
-          slug: r.media.slug,
-          poster: ImageMapper.toPoster(r.media.posterPath),
-          releaseDate: r.media.releaseDate,
-        },
-      }));
-    } catch (error) {
-      this.logger.error(`listActiveWithMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to list active subscriptions with media', { userId });
-    }
+        return rows.map((r) => ({
+          ...this.mapRow(r.sub),
+          mediaSummary: {
+            id: r.media.id,
+            type: r.media.type as MediaType,
+            title: r.media.title,
+            slug: r.media.slug,
+            poster: ImageMapper.toPoster(r.media.posterPath),
+            releaseDate: r.media.releaseDate,
+          },
+        }));
+      },
+      { userId },
+    );
   }
 
   /**
@@ -255,21 +254,23 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
    * @returns {Promise<number>} Count
    */
   async countActive(userId: string): Promise<number> {
-    try {
-      const [row] = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.userSubscriptions)
-        .where(
-          and(
-            eq(schema.userSubscriptions.userId, userId),
-            eq(schema.userSubscriptions.isActive, true),
-          ),
-        );
-      return Number(row?.count ?? 0);
-    } catch (error) {
-      this.logger.error(`countActive failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to count active subscriptions', { userId });
-    }
+    return withDbError(
+      'count active subscriptions',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.userSubscriptions)
+          .where(
+            and(
+              eq(schema.userSubscriptions.userId, userId),
+              eq(schema.userSubscriptions.isActive, true),
+            ),
+          );
+        return Number(row?.count ?? 0);
+      },
+      { userId },
+    );
   }
 
   /**
@@ -279,15 +280,17 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
    * @returns {Promise<void>}
    */
   async markNotified(subscriptionId: string): Promise<void> {
-    try {
-      await this.db
-        .update(schema.userSubscriptions)
-        .set({ lastNotifiedAt: new Date(), updatedAt: new Date() })
-        .where(eq(schema.userSubscriptions.id, subscriptionId));
-    } catch (error) {
-      this.logger.error(`markNotified failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to mark subscription as notified', { subscriptionId });
-    }
+    return withDbError(
+      'mark subscription as notified',
+      this.logger,
+      () =>
+        this.db
+          .update(schema.userSubscriptions)
+          .set({ lastNotifiedAt: new Date(), updatedAt: new Date() })
+          .where(eq(schema.userSubscriptions.id, subscriptionId))
+          .then(() => undefined),
+      { subscriptionId },
+    );
   }
 
   /**
@@ -297,7 +300,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
    * @returns {Promise<number[]>} Array of TMDB IDs
    */
   async findTrackedShowTmdbIds(): Promise<number[]> {
-    try {
+    return withDbError('find tracked show TMDB IDs', this.logger, async () => {
       const rows = await this.db
         .selectDistinct({ tmdbId: schema.mediaItems.tmdbId })
         .from(schema.userSubscriptions)
@@ -325,106 +328,105 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
         .orderBy(schema.mediaItems.tmdbId);
 
       return rows.map((r) => r.tmdbId).filter((id): id is number => id !== null);
-    } catch (error) {
-      this.logger.error(`findTrackedShowTmdbIds failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to find tracked show TMDB IDs');
-    }
+    });
   }
 
   async atomicNotifyNewEpisode(
     mediaItemId: string,
     episodeKey: string,
   ): Promise<NotifiedSubscription[]> {
-    try {
-      return await this.db
-        .update(schema.userSubscriptions)
-        .set({
-          lastNotifiedEpisodeKey: episodeKey,
-          lastNotifiedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(schema.userSubscriptions.mediaItemId, mediaItemId),
-            eq(schema.userSubscriptions.trigger, SUBSCRIPTION_TRIGGER.NEW_EPISODE),
-            eq(schema.userSubscriptions.isActive, true),
-            or(
-              isNull(schema.userSubscriptions.lastNotifiedEpisodeKey),
-              ne(schema.userSubscriptions.lastNotifiedEpisodeKey, episodeKey),
+    return withDbError(
+      'atomically notify new episode',
+      this.logger,
+      () =>
+        this.db
+          .update(schema.userSubscriptions)
+          .set({
+            lastNotifiedEpisodeKey: episodeKey,
+            lastNotifiedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+              eq(schema.userSubscriptions.trigger, SUBSCRIPTION_TRIGGER.NEW_EPISODE),
+              eq(schema.userSubscriptions.isActive, true),
+              or(
+                isNull(schema.userSubscriptions.lastNotifiedEpisodeKey),
+                ne(schema.userSubscriptions.lastNotifiedEpisodeKey, episodeKey),
+              ),
             ),
-          ),
-        )
-        .returning({
-          id: schema.userSubscriptions.id,
-          userId: schema.userSubscriptions.userId,
-          mediaItemId: schema.userSubscriptions.mediaItemId,
-        });
-    } catch (error) {
-      this.logger.error(`atomicNotifyNewEpisode failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to atomically notify new episode', { mediaItemId });
-    }
+          )
+          .returning({
+            id: schema.userSubscriptions.id,
+            userId: schema.userSubscriptions.userId,
+            mediaItemId: schema.userSubscriptions.mediaItemId,
+          }),
+      { mediaItemId, episodeKey },
+    );
   }
 
   async atomicNotifyNewSeason(
     mediaItemId: string,
     seasonNumber: number,
   ): Promise<NotifiedSubscription[]> {
-    try {
-      return await this.db
-        .update(schema.userSubscriptions)
-        .set({
-          lastNotifiedSeasonNumber: seasonNumber,
-          lastNotifiedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(schema.userSubscriptions.mediaItemId, mediaItemId),
-            eq(schema.userSubscriptions.trigger, SUBSCRIPTION_TRIGGER.NEW_SEASON),
-            eq(schema.userSubscriptions.isActive, true),
-            or(
-              isNull(schema.userSubscriptions.lastNotifiedSeasonNumber),
-              lt(schema.userSubscriptions.lastNotifiedSeasonNumber, seasonNumber),
+    return withDbError(
+      'atomically notify new season',
+      this.logger,
+      () =>
+        this.db
+          .update(schema.userSubscriptions)
+          .set({
+            lastNotifiedSeasonNumber: seasonNumber,
+            lastNotifiedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+              eq(schema.userSubscriptions.trigger, SUBSCRIPTION_TRIGGER.NEW_SEASON),
+              eq(schema.userSubscriptions.isActive, true),
+              or(
+                isNull(schema.userSubscriptions.lastNotifiedSeasonNumber),
+                lt(schema.userSubscriptions.lastNotifiedSeasonNumber, seasonNumber),
+              ),
             ),
-          ),
-        )
-        .returning({
-          id: schema.userSubscriptions.id,
-          userId: schema.userSubscriptions.userId,
-          mediaItemId: schema.userSubscriptions.mediaItemId,
-        });
-    } catch (error) {
-      this.logger.error(`atomicNotifyNewSeason failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to atomically notify new season', { mediaItemId });
-    }
+          )
+          .returning({
+            id: schema.userSubscriptions.id,
+            userId: schema.userSubscriptions.userId,
+            mediaItemId: schema.userSubscriptions.mediaItemId,
+          }),
+      { mediaItemId, seasonNumber },
+    );
   }
 
   async deactivateForEndedShow(mediaItemId: string): Promise<number> {
-    try {
-      const result = await this.db
-        .update(schema.userSubscriptions)
-        .set({
-          isActive: false,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(schema.userSubscriptions.mediaItemId, mediaItemId),
-            eq(schema.userSubscriptions.isActive, true),
-            inArray(schema.userSubscriptions.trigger, [
-              SUBSCRIPTION_TRIGGER.NEW_SEASON,
-              SUBSCRIPTION_TRIGGER.NEW_EPISODE,
-            ]),
-          ),
-        )
-        .returning({ id: schema.userSubscriptions.id });
-      return result.length;
-    } catch (error) {
-      this.logger.error(`deactivateForEndedShow failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to deactivate subscriptions for ended show', {
-        mediaItemId,
-      });
-    }
+    return withDbError(
+      'deactivate subscriptions for ended show',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .update(schema.userSubscriptions)
+          .set({
+            isActive: false,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+              eq(schema.userSubscriptions.isActive, true),
+              inArray(schema.userSubscriptions.trigger, [
+                SUBSCRIPTION_TRIGGER.NEW_SEASON,
+                SUBSCRIPTION_TRIGGER.NEW_EPISODE,
+              ]),
+            ),
+          )
+          .returning({ id: schema.userSubscriptions.id });
+        return result.length;
+      },
+      { mediaItemId },
+    );
   }
 
   private mapRow(row: typeof schema.userSubscriptions.$inferSelect): UserSubscription {

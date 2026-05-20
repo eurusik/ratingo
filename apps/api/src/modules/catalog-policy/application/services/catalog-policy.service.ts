@@ -26,11 +26,12 @@ export class CatalogPolicyService {
     if (!policy) {
       throw new NotFoundException('No active policy found. Please seed the default policy first.');
     }
-    return policy;
+    return this.sortBreakoutRules(policy);
   }
 
   async getActive(): Promise<CatalogPolicy | null> {
-    return this.policyRepository.findActive();
+    const policy = await this.policyRepository.findActive();
+    return policy ? this.sortBreakoutRules(policy) : null;
   }
 
   async getById(id: string): Promise<CatalogPolicy | null> {
@@ -75,5 +76,15 @@ export class CatalogPolicyService {
 
   async listAll(): Promise<CatalogPolicy[]> {
     return this.policyRepository.findAll();
+  }
+
+  private sortBreakoutRules(policy: CatalogPolicy): CatalogPolicy {
+    return {
+      ...policy,
+      policy: {
+        ...policy.policy,
+        breakoutRules: [...policy.policy.breakoutRules].sort((a, b) => a.priority - b.priority),
+      },
+    };
   }
 }

@@ -20,7 +20,10 @@ import { type MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { type EligibilityStatusType } from '../../domain/constants/evaluation.constants';
+import {
+  DEFAULT_EVALUATION_CONTEXT,
+  type EligibilityStatusType,
+} from '../../domain/constants/evaluation.constants';
 
 export const ADMIN_CATALOG_REPOSITORY = 'ADMIN_CATALOG_REPOSITORY';
 
@@ -165,25 +168,29 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
         conditions.push(eq(schema.mediaItems.type, options.type));
       }
 
-      // Build query
+      if (options?.eligibilityStatus) {
+        conditions.push(eq(schema.mediaCatalogEvaluations.status, options.eligibilityStatus));
+      }
+
+      // Build query — restrict JOIN to active policy + catalog context to avoid duplicate rows
       let query = this.db
         .select(this.selectFields)
         .from(schema.mediaItems)
         .leftJoin(
           schema.mediaCatalogEvaluations,
-          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+          and(
+            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+            eq(
+              schema.mediaCatalogEvaluations.policyVersion,
+              sql`(SELECT version FROM catalog_policies WHERE is_active = true LIMIT 1)`,
+            ),
+            eq(schema.mediaCatalogEvaluations.context, DEFAULT_EVALUATION_CONTEXT),
+          ),
         );
 
       // Apply conditions
       if (conditions.length > 0) {
         query = query.where(and(...conditions)) as typeof query;
-      }
-
-      // Apply eligibility status filter (after join)
-      if (options?.eligibilityStatus) {
-        query = query.where(
-          eq(schema.mediaCatalogEvaluations.status, options.eligibilityStatus),
-        ) as typeof query;
       }
 
       // Apply sorting

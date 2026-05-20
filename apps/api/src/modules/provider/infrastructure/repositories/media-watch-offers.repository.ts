@@ -9,6 +9,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { mediaWatchOffers, providerVariants } from '../../../../database/schema';
@@ -41,38 +42,40 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
   ): Promise<void> {
     if (offers.length === 0) return;
 
-    try {
-      // Replace-per-region strategy: DELETE existing, then INSERT
-      await this.db.transaction(async (tx) => {
-        // Delete existing offers for this media item + region
-        await tx
-          .delete(mediaWatchOffers)
-          .where(
-            and(eq(mediaWatchOffers.mediaItemId, mediaItemId), eq(mediaWatchOffers.region, region)),
+    await withDbError(
+      'upsertMany',
+      this.logger,
+      async () => {
+        await this.db.transaction(async (tx) => {
+          await tx
+            .delete(mediaWatchOffers)
+            .where(
+              and(
+                eq(mediaWatchOffers.mediaItemId, mediaItemId),
+                eq(mediaWatchOffers.region, region),
+              ),
+            );
+
+          await tx.insert(mediaWatchOffers).values(
+            offers.map((offer) => ({
+              mediaItemId: offer.mediaItemId,
+              providerId: offer.providerId,
+              variantId: offer.variantId,
+              distributionChannel: offer.distributionChannel,
+              offerType: offer.offerType,
+              region: offer.region,
+              link: offer.link,
+              tmdbProviderId: offer.tmdbProviderId,
+            })),
           );
+        });
 
-        // Insert new offers
-        await tx.insert(mediaWatchOffers).values(
-          offers.map((offer) => ({
-            mediaItemId: offer.mediaItemId,
-            providerId: offer.providerId,
-            variantId: offer.variantId,
-            distributionChannel: offer.distributionChannel,
-            offerType: offer.offerType,
-            region: offer.region,
-            link: offer.link,
-            tmdbProviderId: offer.tmdbProviderId,
-          })),
+        this.logger.debug(
+          `Upserted ${offers.length} offers for media=${mediaItemId} region=${region}`,
         );
-      });
-
-      this.logger.debug(
-        `Upserted ${offers.length} offers for media=${mediaItemId} region=${region}`,
-      );
-    } catch (error) {
-      this.logger.error(`Failed to upsert offers for media=${mediaItemId} region=${region}`, error);
-      throw error;
-    }
+      },
+      { mediaItemId, region },
+    );
   }
 
   async upsertManyByRegions(mediaItemId: string, offers: CreateWatchOfferInput[]): Promise<void> {
@@ -86,57 +89,89 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
       offersByRegion.set(offer.region, regionOffers);
     }
 
-    // Upsert each region
-    for (const [region, regionOffers] of offersByRegion) {
-      await this.upsertMany(mediaItemId, region, regionOffers);
-    }
+    await withDbError(
+      'upsertManyByRegions',
+      this.logger,
+      async () => {
+        await this.db.transaction(async (tx) => {
+          for (const [region, regionOffers] of offersByRegion) {
+            await tx
+              .delete(mediaWatchOffers)
+              .where(
+                and(
+                  eq(mediaWatchOffers.mediaItemId, mediaItemId),
+                  eq(mediaWatchOffers.region, region),
+                ),
+              );
+
+            await tx.insert(mediaWatchOffers).values(
+              regionOffers.map((offer) => ({
+                mediaItemId: offer.mediaItemId,
+                providerId: offer.providerId,
+                variantId: offer.variantId,
+                distributionChannel: offer.distributionChannel,
+                offerType: offer.offerType,
+                region: offer.region,
+                link: offer.link,
+                tmdbProviderId: offer.tmdbProviderId,
+              })),
+            );
+          }
+        });
+      },
+      { mediaItemId, regionCount: offersByRegion.size },
+    );
   }
 
   async findByMediaItemId(
     mediaItemId: string,
     options?: FindOffersOptions,
   ): Promise<MediaWatchOffer[]> {
-    try {
-      const conditions = [eq(mediaWatchOffers.mediaItemId, mediaItemId)];
+    return withDbError(
+      'findByMediaItemId',
+      this.logger,
+      async () => {
+        const conditions = [eq(mediaWatchOffers.mediaItemId, mediaItemId)];
 
-      if (options?.offerTypes?.length) {
-        conditions.push(inArray(mediaWatchOffers.offerType, options.offerTypes));
-      }
+        if (options?.offerTypes?.length) {
+          conditions.push(inArray(mediaWatchOffers.offerType, options.offerTypes));
+        }
 
-      if (options?.distributionChannels?.length) {
-        conditions.push(
-          inArray(mediaWatchOffers.distributionChannel, options.distributionChannels),
-        );
-      }
+        if (options?.distributionChannels?.length) {
+          conditions.push(
+            inArray(mediaWatchOffers.distributionChannel, options.distributionChannels),
+          );
+        }
 
-      if (options?.region) {
-        conditions.push(eq(mediaWatchOffers.region, options.region));
-      }
+        if (options?.region) {
+          conditions.push(eq(mediaWatchOffers.region, options.region));
+        }
 
-      const rows = await this.db
-        .select()
-        .from(mediaWatchOffers)
-        .where(and(...conditions));
+        const rows = await this.db
+          .select()
+          .from(mediaWatchOffers)
+          .where(and(...conditions));
 
-      return rows.map(this.toDomain);
-    } catch (error) {
-      this.logger.error(`Failed to find offers for media=${mediaItemId}`, error);
-      throw error;
-    }
+        return rows.map(this.toDomain);
+      },
+      { mediaItemId },
+    );
   }
 
   async findByTmdbProviderId(tmdbProviderId: number): Promise<MediaWatchOffer[]> {
-    try {
-      const rows = await this.db
-        .select()
-        .from(mediaWatchOffers)
-        .where(eq(mediaWatchOffers.tmdbProviderId, tmdbProviderId));
+    return withDbError(
+      'findByTmdbProviderId',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select()
+          .from(mediaWatchOffers)
+          .where(eq(mediaWatchOffers.tmdbProviderId, tmdbProviderId));
 
-      return rows.map(this.toDomain);
-    } catch (error) {
-      this.logger.error(`Failed to find offers for tmdbProviderId=${tmdbProviderId}`, error);
-      throw error;
-    }
+        return rows.map(this.toDomain);
+      },
+      { tmdbProviderId },
+    );
   }
 
   async findByMediaItemIds(
@@ -147,67 +182,70 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
       return new Map();
     }
 
-    try {
-      const conditions = [inArray(mediaWatchOffers.mediaItemId, mediaItemIds)];
+    return withDbError(
+      'findByMediaItemIds',
+      this.logger,
+      async () => {
+        const conditions = [inArray(mediaWatchOffers.mediaItemId, mediaItemIds)];
 
-      if (options?.offerTypes?.length) {
-        conditions.push(inArray(mediaWatchOffers.offerType, options.offerTypes));
-      }
+        if (options?.offerTypes?.length) {
+          conditions.push(inArray(mediaWatchOffers.offerType, options.offerTypes));
+        }
 
-      if (options?.distributionChannels?.length) {
-        conditions.push(
-          inArray(mediaWatchOffers.distributionChannel, options.distributionChannels),
-        );
-      }
+        if (options?.distributionChannels?.length) {
+          conditions.push(
+            inArray(mediaWatchOffers.distributionChannel, options.distributionChannels),
+          );
+        }
 
-      if (options?.region) {
-        conditions.push(eq(mediaWatchOffers.region, options.region));
-      }
+        if (options?.region) {
+          conditions.push(eq(mediaWatchOffers.region, options.region));
+        }
 
-      const rows = await this.db
-        .select()
-        .from(mediaWatchOffers)
-        .where(and(...conditions));
+        const rows = await this.db
+          .select()
+          .from(mediaWatchOffers)
+          .where(and(...conditions));
 
-      // Group by media item
-      const grouped = new Map<string, MediaWatchOffer[]>();
-      for (const row of rows) {
-        const offers = grouped.get(row.mediaItemId) ?? [];
-        offers.push(this.toDomain(row));
-        grouped.set(row.mediaItemId, offers);
-      }
+        const grouped = new Map<string, MediaWatchOffer[]>();
+        for (const row of rows) {
+          const offers = grouped.get(row.mediaItemId) ?? [];
+          offers.push(this.toDomain(row));
+          grouped.set(row.mediaItemId, offers);
+        }
 
-      return grouped;
-    } catch (error) {
-      this.logger.error(`Failed to find offers for ${mediaItemIds.length} media items`, error);
-      throw error;
-    }
+        return grouped;
+      },
+      { count: mediaItemIds.length },
+    );
   }
 
   async deleteByMediaItemId(mediaItemId: string): Promise<void> {
-    try {
-      await this.db.delete(mediaWatchOffers).where(eq(mediaWatchOffers.mediaItemId, mediaItemId));
-
-      this.logger.debug(`Deleted all offers for media=${mediaItemId}`);
-    } catch (error) {
-      this.logger.error(`Failed to delete offers for media=${mediaItemId}`, error);
-      throw error;
-    }
+    await withDbError(
+      'deleteByMediaItemId',
+      this.logger,
+      async () => {
+        await this.db.delete(mediaWatchOffers).where(eq(mediaWatchOffers.mediaItemId, mediaItemId));
+        this.logger.debug(`Deleted all offers for media=${mediaItemId}`);
+      },
+      { mediaItemId },
+    );
   }
 
   async deleteByMediaItemIdAndRegion(mediaItemId: string, region: string): Promise<void> {
-    try {
-      await this.db
-        .delete(mediaWatchOffers)
-        .where(
-          and(eq(mediaWatchOffers.mediaItemId, mediaItemId), eq(mediaWatchOffers.region, region)),
-        );
-
-      this.logger.debug(`Deleted offers for media=${mediaItemId} region=${region}`);
-    } catch (error) {
-      this.logger.error(`Failed to delete offers for media=${mediaItemId} region=${region}`, error);
-      throw error;
-    }
+    await withDbError(
+      'deleteByMediaItemIdAndRegion',
+      this.logger,
+      async () => {
+        await this.db
+          .delete(mediaWatchOffers)
+          .where(
+            and(eq(mediaWatchOffers.mediaItemId, mediaItemId), eq(mediaWatchOffers.region, region)),
+          );
+        this.logger.debug(`Deleted offers for media=${mediaItemId} region=${region}`);
+      },
+      { mediaItemId, region },
+    );
   }
 
   async getOffersForMediaBatch(
@@ -218,53 +256,53 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
       return new Map();
     }
 
-    try {
-      const conditions = [inArray(mediaWatchOffers.mediaItemId, mediaItemIds)];
+    return withDbError(
+      'getOffersForMediaBatch',
+      this.logger,
+      async () => {
+        const conditions = [inArray(mediaWatchOffers.mediaItemId, mediaItemIds)];
 
-      if (options?.offerTypes?.length) {
-        conditions.push(inArray(mediaWatchOffers.offerType, options.offerTypes));
-      }
+        if (options?.offerTypes?.length) {
+          conditions.push(inArray(mediaWatchOffers.offerType, options.offerTypes));
+        }
 
-      if (options?.distributionChannels?.length) {
-        conditions.push(
-          inArray(mediaWatchOffers.distributionChannel, options.distributionChannels),
-        );
-      }
+        if (options?.distributionChannels?.length) {
+          conditions.push(
+            inArray(mediaWatchOffers.distributionChannel, options.distributionChannels),
+          );
+        }
 
-      // Conditional JOIN with provider_variants when variant info needed
-      if (options?.includeVariantInfo) {
+        if (options?.includeVariantInfo) {
+          const rows = await this.db
+            .select({
+              mediaItemId: mediaWatchOffers.mediaItemId,
+              providerId: mediaWatchOffers.providerId,
+              offerType: mediaWatchOffers.offerType,
+              distributionChannel: mediaWatchOffers.distributionChannel,
+              variantId: mediaWatchOffers.variantId,
+              isAdsTier: providerVariants.isAdsTier,
+            })
+            .from(mediaWatchOffers)
+            .leftJoin(providerVariants, eq(mediaWatchOffers.variantId, providerVariants.id))
+            .where(and(...conditions));
+
+          return this.groupOfferViewsWithVariant(rows);
+        }
+
         const rows = await this.db
           .select({
             mediaItemId: mediaWatchOffers.mediaItemId,
             providerId: mediaWatchOffers.providerId,
             offerType: mediaWatchOffers.offerType,
             distributionChannel: mediaWatchOffers.distributionChannel,
-            variantId: mediaWatchOffers.variantId,
-            isAdsTier: providerVariants.isAdsTier,
           })
           .from(mediaWatchOffers)
-          .leftJoin(providerVariants, eq(mediaWatchOffers.variantId, providerVariants.id))
           .where(and(...conditions));
 
-        return this.groupOfferViewsWithVariant(rows);
-      }
-
-      // Simple query without JOIN
-      const rows = await this.db
-        .select({
-          mediaItemId: mediaWatchOffers.mediaItemId,
-          providerId: mediaWatchOffers.providerId,
-          offerType: mediaWatchOffers.offerType,
-          distributionChannel: mediaWatchOffers.distributionChannel,
-        })
-        .from(mediaWatchOffers)
-        .where(and(...conditions));
-
-      return this.groupOfferViews(rows);
-    } catch (error) {
-      this.logger.error(`Failed to get offers for ${mediaItemIds.length} media items batch`, error);
-      throw error;
-    }
+        return this.groupOfferViews(rows);
+      },
+      { count: mediaItemIds.length },
+    );
   }
 
   private groupOfferViews(

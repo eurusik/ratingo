@@ -6,8 +6,8 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
 import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
@@ -39,36 +39,34 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
    * @returns {Promise<UserSavedItem>} Persisted item
    */
   async upsert(data: UpsertSavedItemData): Promise<UserSavedItem> {
-    try {
-      const [row] = await this.db
-        .insert(schema.userSavedItems)
-        .values({
-          userId: data.userId,
-          mediaItemId: data.mediaItemId,
-          list: data.list,
-          reasonKey: data.reasonKey ?? null,
-        })
-        .onConflictDoUpdate({
-          target: [
-            schema.userSavedItems.userId,
-            schema.userSavedItems.mediaItemId,
-            schema.userSavedItems.list,
-          ],
-          set: {
-            updatedAt: new Date(),
+    return withDbError(
+      'upsert saved item',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .insert(schema.userSavedItems)
+          .values({
+            userId: data.userId,
+            mediaItemId: data.mediaItemId,
+            list: data.list,
             reasonKey: data.reasonKey ?? null,
-          },
-        })
-        .returning();
-      return this.mapRow(row);
-    } catch (error) {
-      this.logger.error(`upsert failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to upsert saved item', {
-        userId: data.userId,
-        mediaItemId: data.mediaItemId,
-        list: data.list,
-      });
-    }
+          })
+          .onConflictDoUpdate({
+            target: [
+              schema.userSavedItems.userId,
+              schema.userSavedItems.mediaItemId,
+              schema.userSavedItems.list,
+            ],
+            set: {
+              updatedAt: new Date(),
+              reasonKey: data.reasonKey ?? null,
+            },
+          })
+          .returning();
+        return this.mapRow(row);
+      },
+      { userId: data.userId, mediaItemId: data.mediaItemId, list: data.list },
+    );
   }
 
   /**
@@ -80,22 +78,24 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
    * @returns {Promise<boolean>} True if deleted
    */
   async remove(userId: string, mediaItemId: string, list: SavedItemList): Promise<boolean> {
-    try {
-      const result = await this.db
-        .delete(schema.userSavedItems)
-        .where(
-          and(
-            eq(schema.userSavedItems.userId, userId),
-            eq(schema.userSavedItems.mediaItemId, mediaItemId),
-            eq(schema.userSavedItems.list, list),
-          ),
-        )
-        .returning({ id: schema.userSavedItems.id });
-      return result.length > 0;
-    } catch (error) {
-      this.logger.error(`remove failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to remove saved item', { userId, mediaItemId, list });
-    }
+    return withDbError(
+      'remove saved item',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .delete(schema.userSavedItems)
+          .where(
+            and(
+              eq(schema.userSavedItems.userId, userId),
+              eq(schema.userSavedItems.mediaItemId, mediaItemId),
+              eq(schema.userSavedItems.list, list),
+            ),
+          )
+          .returning({ id: schema.userSavedItems.id });
+        return result.length > 0;
+      },
+      { userId, mediaItemId, list },
+    );
   }
 
   /**
@@ -111,23 +111,25 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
     mediaItemId: string,
     list: SavedItemList,
   ): Promise<UserSavedItem | null> {
-    try {
-      const [row] = await this.db
-        .select()
-        .from(schema.userSavedItems)
-        .where(
-          and(
-            eq(schema.userSavedItems.userId, userId),
-            eq(schema.userSavedItems.mediaItemId, mediaItemId),
-            eq(schema.userSavedItems.list, list),
-          ),
-        )
-        .limit(1);
-      return row ? this.mapRow(row) : null;
-    } catch (error) {
-      this.logger.error(`findOne failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to find saved item', { userId, mediaItemId, list });
-    }
+    return withDbError(
+      'find saved item',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select()
+          .from(schema.userSavedItems)
+          .where(
+            and(
+              eq(schema.userSavedItems.userId, userId),
+              eq(schema.userSavedItems.mediaItemId, mediaItemId),
+              eq(schema.userSavedItems.list, list),
+            ),
+          )
+          .limit(1);
+        return row ? this.mapRow(row) : null;
+      },
+      { userId, mediaItemId, list },
+    );
   }
 
   /**
@@ -138,21 +140,23 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
    * @returns {Promise<SavedItemList[]>} Lists where item is saved
    */
   async findListsForMedia(userId: string, mediaItemId: string): Promise<SavedItemList[]> {
-    try {
-      const rows = await this.db
-        .select({ list: schema.userSavedItems.list })
-        .from(schema.userSavedItems)
-        .where(
-          and(
-            eq(schema.userSavedItems.userId, userId),
-            eq(schema.userSavedItems.mediaItemId, mediaItemId),
-          ),
-        );
-      return rows.map((r) => r.list as SavedItemList);
-    } catch (error) {
-      this.logger.error(`findListsForMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to find lists for media', { userId, mediaItemId });
-    }
+    return withDbError(
+      'find lists for media',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({ list: schema.userSavedItems.list })
+          .from(schema.userSavedItems)
+          .where(
+            and(
+              eq(schema.userSavedItems.userId, userId),
+              eq(schema.userSavedItems.mediaItemId, mediaItemId),
+            ),
+          );
+        return rows.map((r) => r.list as SavedItemList);
+      },
+      { userId, mediaItemId },
+    );
   }
 
   /**
@@ -171,69 +175,71 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
     offset = 0,
     type?: MediaType,
   ): Promise<SavedItemWithMedia[]> {
-    try {
-      // Subquery to aggregate active subscription triggers per media item
-      const subscriptionTriggersSubquery = this.db
-        .select({
-          mediaItemId: schema.userSubscriptions.mediaItemId,
-          triggers: sql<string[]>`array_agg(${schema.userSubscriptions.trigger})`.as('triggers'),
-        })
-        .from(schema.userSubscriptions)
-        .where(
-          and(
-            eq(schema.userSubscriptions.userId, userId),
-            eq(schema.userSubscriptions.isActive, true),
-          ),
-        )
-        .groupBy(schema.userSubscriptions.mediaItemId)
-        .as('sub_triggers');
+    return withDbError(
+      'list saved items with media',
+      this.logger,
+      async () => {
+        // Subquery to aggregate active subscription triggers per media item
+        const subscriptionTriggersSubquery = this.db
+          .select({
+            mediaItemId: schema.userSubscriptions.mediaItemId,
+            triggers: sql<string[]>`array_agg(${schema.userSubscriptions.trigger})`.as('triggers'),
+          })
+          .from(schema.userSubscriptions)
+          .where(
+            and(
+              eq(schema.userSubscriptions.userId, userId),
+              eq(schema.userSubscriptions.isActive, true),
+            ),
+          )
+          .groupBy(schema.userSubscriptions.mediaItemId)
+          .as('sub_triggers');
 
-      const rows = await this.db
-        .select({
-          item: schema.userSavedItems,
-          media: {
-            id: schema.mediaItems.id,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            slug: schema.mediaItems.slug,
-            posterPath: schema.mediaItems.posterPath,
-            releaseDate: schema.mediaItems.releaseDate,
+        const rows = await this.db
+          .select({
+            item: schema.userSavedItems,
+            media: {
+              id: schema.mediaItems.id,
+              type: schema.mediaItems.type,
+              title: schema.mediaItems.title,
+              slug: schema.mediaItems.slug,
+              posterPath: schema.mediaItems.posterPath,
+              releaseDate: schema.mediaItems.releaseDate,
+            },
+            triggers: subscriptionTriggersSubquery.triggers,
+          })
+          .from(schema.userSavedItems)
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userSavedItems.mediaItemId))
+          .leftJoin(
+            subscriptionTriggersSubquery,
+            eq(subscriptionTriggersSubquery.mediaItemId, schema.userSavedItems.mediaItemId),
+          )
+          .where(
+            and(
+              eq(schema.userSavedItems.userId, userId),
+              eq(schema.userSavedItems.list, list),
+              ...(type ? [eq(schema.mediaItems.type, type)] : []),
+            ),
+          )
+          .orderBy(desc(schema.userSavedItems.createdAt), desc(schema.userSavedItems.id))
+          .limit(limit)
+          .offset(offset);
+
+        return rows.map((r) => ({
+          ...this.mapRow(r.item),
+          mediaSummary: {
+            id: r.media.id,
+            type: r.media.type as MediaType,
+            title: r.media.title,
+            slug: r.media.slug,
+            poster: ImageMapper.toPoster(r.media.posterPath),
+            releaseDate: r.media.releaseDate,
           },
-          triggers: subscriptionTriggersSubquery.triggers,
-        })
-        .from(schema.userSavedItems)
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userSavedItems.mediaItemId))
-        .leftJoin(
-          subscriptionTriggersSubquery,
-          eq(subscriptionTriggersSubquery.mediaItemId, schema.userSavedItems.mediaItemId),
-        )
-        .where(
-          and(
-            eq(schema.userSavedItems.userId, userId),
-            eq(schema.userSavedItems.list, list),
-            ...(type ? [eq(schema.mediaItems.type, type)] : []),
-          ),
-        )
-        .orderBy(desc(schema.userSavedItems.createdAt))
-        .limit(limit)
-        .offset(offset);
-
-      return rows.map((r) => ({
-        ...this.mapRow(r.item),
-        mediaSummary: {
-          id: r.media.id,
-          type: r.media.type as MediaType,
-          title: r.media.title,
-          slug: r.media.slug,
-          poster: ImageMapper.toPoster(r.media.posterPath),
-          releaseDate: r.media.releaseDate,
-        },
-        activeSubscriptionTriggers: r.triggers ?? [],
-      }));
-    } catch (error) {
-      this.logger.error(`listWithMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to list saved items with media', { userId, list });
-    }
+          activeSubscriptionTriggers: r.triggers ?? [],
+        }));
+      },
+      { userId, list },
+    );
   }
 
   /**
@@ -244,26 +250,28 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
    * @returns {Promise<number>} Count
    */
   async count(userId: string, list: SavedItemList, type?: MediaType): Promise<number> {
-    try {
-      const whereParts = [
-        eq(schema.userSavedItems.userId, userId),
-        eq(schema.userSavedItems.list, list),
-      ];
+    return withDbError(
+      'count saved items',
+      this.logger,
+      async () => {
+        const whereParts = [
+          eq(schema.userSavedItems.userId, userId),
+          eq(schema.userSavedItems.list, list),
+        ];
 
-      if (type) {
-        whereParts.push(eq(schema.mediaItems.type, type));
-      }
+        if (type) {
+          whereParts.push(eq(schema.mediaItems.type, type));
+        }
 
-      const [row] = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.userSavedItems)
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userSavedItems.mediaItemId))
-        .where(and(...whereParts));
-      return Number(row?.count ?? 0);
-    } catch (error) {
-      this.logger.error(`count failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to count saved items', { userId, list });
-    }
+        const [row] = await this.db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.userSavedItems)
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userSavedItems.mediaItemId))
+          .where(and(...whereParts));
+        return Number(row?.count ?? 0);
+      },
+      { userId, list },
+    );
   }
 
   /**
@@ -281,37 +289,36 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
       return new Map();
     }
 
-    try {
-      const rows = await this.db
-        .select({
-          mediaItemId: schema.userSavedItems.mediaItemId,
-          list: schema.userSavedItems.list,
-        })
-        .from(schema.userSavedItems)
-        .where(
-          and(
-            eq(schema.userSavedItems.userId, userId),
-            sql`${schema.userSavedItems.mediaItemId} = ANY(ARRAY[${sql.join(
-              mediaItemIds.map((id) => sql`${id}::uuid`),
-              sql`, `,
-            )}])`,
-          ),
-        );
+    return withDbError(
+      'get batch save status',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({
+            mediaItemId: schema.userSavedItems.mediaItemId,
+            list: schema.userSavedItems.list,
+          })
+          .from(schema.userSavedItems)
+          .where(
+            and(
+              eq(schema.userSavedItems.userId, userId),
+              sql`${schema.userSavedItems.mediaItemId} = ANY(ARRAY[${sql.join(
+                mediaItemIds.map((id) => sql`${id}::uuid`),
+                sql`, `,
+              )}])`,
+            ),
+          );
 
-      const result = new Map<string, SavedItemList[]>();
-      for (const row of rows) {
-        const lists = result.get(row.mediaItemId) ?? [];
-        lists.push(row.list as SavedItemList);
-        result.set(row.mediaItemId, lists);
-      }
-      return result;
-    } catch (error) {
-      this.logger.error(`findListsForMediaBatch failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to get batch save status', {
-        userId,
-        count: mediaItemIds.length,
-      });
-    }
+        const result = new Map<string, SavedItemList[]>();
+        for (const row of rows) {
+          const lists = result.get(row.mediaItemId) ?? [];
+          lists.push(row.list as SavedItemList);
+          result.set(row.mediaItemId, lists);
+        }
+        return result;
+      },
+      { userId, count: mediaItemIds.length },
+    );
   }
 
   private mapRow(row: typeof schema.userSavedItems.$inferSelect): UserSavedItem {
