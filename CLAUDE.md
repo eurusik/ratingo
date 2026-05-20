@@ -53,7 +53,7 @@ module/
 
 ### Core Engines
 1. **Policy Engine** (`catalog-policy/domain/policy-engine.ts`) — catalog eligibility
-2. **Score Calculator** (`shared/score-calculator/`) — quality 40% + popularity 30% + freshness 30%
+2. **Score Calculator** (`shared/score-calculator/`) — popularity 40% (TMDB 24% + Trakt 16%) + quality 40% (avgRating 25% + voteConfidence 15%) + freshness 20%
 3. **Verdict Engine** (`shared/verdict/`) — user-facing recommendations
 
 ### BullMQ

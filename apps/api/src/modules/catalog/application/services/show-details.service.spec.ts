@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
+import { CLOCK_PORT } from '../../../shared/clock';
 import { ShowNotFoundError } from '../../domain/errors';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 
@@ -68,6 +69,7 @@ describe('ShowDetailsService', () => {
         ShowDetailsService,
         { provide: SHOW_REPOSITORY, useValue: mockShowRepository },
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
+        { provide: CLOCK_PORT, useValue: { now: () => new Date() } },
       ],
     }).compile();
 

@@ -141,11 +141,13 @@ export class BatchEvaluationService {
     options?: {
       batchSize?: number;
       context?: EvaluationContextType;
+      runId?: string;
       onProgress?: (processed: number, total: number) => void;
     },
   ): Promise<BatchEvaluationResult> {
     const batchSize = options?.batchSize ?? MAX_PAGE_SIZE;
     const context = options?.context;
+    const runId = options?.runId;
     const total = await this.policyInputRepository.countEligibleItems();
 
     this.logger.log(`Starting re-evaluation of ${total} items for policy v${policyVersion}`);
@@ -164,7 +166,7 @@ export class BatchEvaluationService {
       const ids = await this.policyInputRepository.fetchBatchIds({ batchSize, cursor });
       if (ids.length === 0) break;
 
-      const batchResult = await this.evaluateBatch(ids, { policyVersion, context });
+      const batchResult = await this.evaluateBatch(ids, { policyVersion, context, runId });
 
       aggregateResult.processed += batchResult.processed;
       aggregateResult.eligible += batchResult.eligible;

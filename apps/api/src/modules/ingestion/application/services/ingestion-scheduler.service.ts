@@ -47,7 +47,7 @@ export class IngestionSchedulerService implements OnModuleInit {
     @Inject(schedulerConfig.KEY)
     private readonly config: ConfigType<typeof schedulerConfig>,
   ) {
-    this.envPrefix = process.env.APP_ENV || process.env.NODE_ENV || 'dev';
+    this.envPrefix = this.config.envPrefix;
   }
 
   /**
@@ -206,10 +206,18 @@ export class IngestionSchedulerService implements OnModuleInit {
       return 'added';
     }
 
-    if (existing.pattern !== jobConfig.pattern) {
-      this.logger.log(
-        `[${jobConfig.name}] Pattern changed: "${existing.pattern}" → "${jobConfig.pattern}"`,
-      );
+    if (
+      existing.pattern !== jobConfig.pattern ||
+      existing.tz !== timezone ||
+      existing.name !== jobConfig.jobType
+    ) {
+      const changes: string[] = [];
+      if (existing.pattern !== jobConfig.pattern)
+        changes.push(`pattern: "${existing.pattern}" → "${jobConfig.pattern}"`);
+      if (existing.tz !== timezone) changes.push(`tz: "${existing.tz ?? 'none'}" → "${timezone}"`);
+      if (existing.name !== jobConfig.jobType)
+        changes.push(`name: "${existing.name}" → "${jobConfig.jobType}"`);
+      this.logger.log(`[${jobConfig.name}] Updated: ${changes.join(', ')}`);
       await this.upsertJobScheduler(schedulerId, jobConfig, timezone);
       return 'updated';
     }

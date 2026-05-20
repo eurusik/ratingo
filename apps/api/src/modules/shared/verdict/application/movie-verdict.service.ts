@@ -5,10 +5,11 @@
  * DNA Ratingo: "honesty before hype"
  */
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { MS_PER_YEAR } from '../../../../common/constants';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { type MovieVerdictInput, type MovieVerdict } from '../domain/movie-verdict.types';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 import { formatRatingContext } from '../domain/rating-aggregator';
@@ -37,6 +38,8 @@ import {
  */
 @Injectable()
 export class MovieVerdictService {
+  constructor(@Inject(CLOCK_PORT) private readonly clock: IClockPort) {}
+
   /**
    * Computes verdict for a movie.
    */
@@ -46,7 +49,7 @@ export class MovieVerdictService {
 
     // Calculate content age in years
     const contentAgeYears = releaseDate
-      ? (Date.now() - new Date(releaseDate).getTime()) / MS_PER_YEAR
+      ? (this.clock.now().getTime() - new Date(releaseDate).getTime()) / MS_PER_YEAR
       : 0;
     const isOlderContent = contentAgeYears >= AGE_THRESHOLDS.OLDER_CONTENT_YEARS;
     const isClassic = contentAgeYears >= AGE_THRESHOLDS.CLASSIC_YEARS;
@@ -272,10 +275,13 @@ export class MovieVerdictService {
 }
 
 /**
- * Standalone function for backward compatibility.
- * Prefer using MovieVerdictService.compute() in new code.
+ * Standalone function for use outside of NestJS DI (e.g. unit tests).
+ * Pass `now` explicitly to control time deterministically.
  */
-export function computeMovieVerdict(input: MovieVerdictInput): MovieVerdict {
-  const service = new MovieVerdictService();
+export function computeMovieVerdict(
+  input: MovieVerdictInput,
+  now: Date = new Date(),
+): MovieVerdict {
+  const service = new MovieVerdictService({ now: () => now });
   return service.compute(input);
 }

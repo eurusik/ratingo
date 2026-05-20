@@ -2,11 +2,13 @@ import { ShowVerdictService, computeShowVerdict } from './show-verdict.service';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 
+const mockClock = { now: () => new Date() };
+
 describe('ShowVerdictService', () => {
   let service: ShowVerdictService;
 
   beforeEach(() => {
-    service = new ShowVerdictService();
+    service = new ShowVerdictService(mockClock);
   });
 
   describe('cancelled shows', () => {
