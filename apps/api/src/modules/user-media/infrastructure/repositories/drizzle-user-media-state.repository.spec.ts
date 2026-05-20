@@ -1,5 +1,6 @@
 import { DrizzleUserMediaStateRepository } from './drizzle-user-media-state.repository';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import * as schema from '../../../../database/schema';
 
 describe('DrizzleUserMediaStateRepository', () => {
   const posterPath = '/poster.jpg';
@@ -225,6 +226,37 @@ describe('DrizzleUserMediaStateRepository', () => {
       const result = await repo.listWithMedia('u1', 10, 0);
 
       expect(result[0].progressSummary).toEqual({ watched: 5, total: 42 });
+    });
+  });
+
+  describe('buildListOrderBy', () => {
+    it('RECENT sort uses createdAt column as the single sort expression', () => {
+      const repo = new DrizzleUserMediaStateRepository(makeDbMock() as any, mockQuery);
+      const result = (repo as any).buildListOrderBy('recent');
+
+      expect(result).toHaveLength(1);
+      // Drizzle desc(col) wraps col in SQL queryChunks — verify it's createdAt not updatedAt
+      const chunks: unknown[] = (result[0] as any).queryChunks ?? [];
+      expect(chunks).toContain(schema.userMediaState.createdAt);
+      expect(chunks).not.toContain(schema.userMediaState.updatedAt);
+    });
+
+    it('RATING sort uses createdAt as the tiebreaker (second arg)', () => {
+      const repo = new DrizzleUserMediaStateRepository(makeDbMock() as any, mockQuery);
+      const [, tiebreaker] = (repo as any).buildListOrderBy('rating');
+
+      const chunks: unknown[] = (tiebreaker as any).queryChunks ?? [];
+      expect(chunks).toContain(schema.userMediaState.createdAt);
+      expect(chunks).not.toContain(schema.userMediaState.updatedAt);
+    });
+
+    it('RELEASE_DATE sort uses createdAt as the tiebreaker (second arg)', () => {
+      const repo = new DrizzleUserMediaStateRepository(makeDbMock() as any, mockQuery);
+      const [, tiebreaker] = (repo as any).buildListOrderBy('releaseDate');
+
+      const chunks: unknown[] = (tiebreaker as any).queryChunks ?? [];
+      expect(chunks).toContain(schema.userMediaState.createdAt);
+      expect(chunks).not.toContain(schema.userMediaState.updatedAt);
     });
   });
 

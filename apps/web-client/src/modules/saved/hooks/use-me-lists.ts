@@ -209,10 +209,6 @@ export function useUserMediaState(mediaItemId: string, enabled = true) {
   });
 }
 
-// Rating does not move items between list buckets (watching/paused/dropped/
-// completed/forLater/considering), so `meLists.counts` is not invalidated.
-// Revisit if the backend ever auto-transitions state on rating (e.g. sets
-// state=completed when user rates an unrated movie).
 export function useSetRating(mediaItemId: string) {
   const queryClient = useQueryClient();
 
@@ -254,20 +250,18 @@ export function useSetRating(mediaItemId: string) {
 
     onSettled: () => {
       // Backend syncs standalone rating → review rating
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.reviews.myReview(mediaItemId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.reviews.mediaBase(mediaItemId),
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.reviews.myReview(mediaItemId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.reviews.mediaBase(mediaItemId) });
       // Refresh batch ratings so badges update immediately
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userMedia.batchRatingsAll,
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.batchRatingsAll });
       // Rating changes may affect favorite updates (e.g. new show becomes favorite)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.meLists.favoriteUpdates,
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.favoriteUpdates });
+      // First-time ratings auto-create a user_media_state row (completed for movies,
+      // watching for shows). Refresh all affected list views so new entries appear immediately.
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
     },
   });
 }
