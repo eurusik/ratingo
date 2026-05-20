@@ -118,19 +118,19 @@ describe('UserMediaController', () => {
     expect(result).toBeNull();
   });
 
-  it('list should parse limit/offset and call service.listWithMedia', async () => {
+  it('list should pass pagination to service.listWithMedia', async () => {
     userMediaService.listWithMedia.mockResolvedValue([{ id: 's1' }] as any);
 
-    const result = await controller.list({ id: 'u1' }, '10' as any, '5' as any);
+    const result = await controller.list({ id: 'u1' }, { limit: 10, offset: 5 });
 
     expect(userMediaService.listWithMedia).toHaveBeenCalledWith('u1', 10, 5);
     expect(result).toEqual([{ id: 's1' }]);
   });
 
-  it('listContinue should parse limit/offset and call service.listContinueWithMedia', async () => {
+  it('listContinue should pass pagination to service.listContinueWithMedia', async () => {
     userMediaService.listContinueWithMedia.mockResolvedValue([{ id: 's1' }] as any);
 
-    const result = await controller.listContinue({ id: 'u1' }, '10' as any, '5' as any);
+    const result = await controller.listContinue({ id: 'u1' }, { limit: 10, offset: 5 });
 
     expect(userMediaService.listContinueWithMedia).toHaveBeenCalledWith('u1', 10, 5);
     expect(result).toEqual([{ id: 's1' }]);

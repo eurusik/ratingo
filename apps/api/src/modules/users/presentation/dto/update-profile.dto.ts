@@ -2,6 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { IsBoolean, IsOptional, IsString, IsUrl, MaxLength, MinLength } from 'class-validator';
 
+import { IsNotReservedUsername } from '../validators/not-reserved-username.validator';
+
 /**
  * Payload for updating user profile.
  */
@@ -13,6 +15,7 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   @MinLength(3)
+  @IsNotReservedUsername()
   username?: string;
 
   /**

@@ -2,11 +2,11 @@ import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import { ShowsCalendarService } from '../../application/services/shows-calendar.service';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { ShowDetailsService } from '../../application/services/show-details.service';
 import { ShowNotFoundError } from '../../domain/errors';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
-import { WatchingShowsCountQuery } from '../../infrastructure/queries/watching-shows-count.query';
 
 import { CatalogShowsController } from './catalog.shows.controller';
 
@@ -15,7 +15,7 @@ describe('CatalogShowsController', () => {
   let showRepository: any;
   let userStateEnricher: any;
   let showDetailsService: any;
-  let watchingShowsCountQuery: any;
+  let showsCalendarService: any;
 
   beforeEach(async () => {
     const mockShowRepository = {
@@ -52,8 +52,8 @@ describe('CatalogShowsController', () => {
       getBySlug: jest.fn(),
     };
 
-    const mockWatchingShowsCountQuery = {
-      execute: jest.fn().mockResolvedValue(3),
+    const mockShowsCalendarService = {
+      getWatchingShowsCount: jest.fn().mockResolvedValue(3),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -63,7 +63,7 @@ describe('CatalogShowsController', () => {
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
         { provide: CardEnrichmentService, useValue: mockCards },
         { provide: ShowDetailsService, useValue: mockShowDetailsService },
-        { provide: WatchingShowsCountQuery, useValue: mockWatchingShowsCountQuery },
+        { provide: ShowsCalendarService, useValue: mockShowsCalendarService },
       ],
     }).compile();
 
@@ -71,7 +71,7 @@ describe('CatalogShowsController', () => {
     showRepository = module.get(SHOW_REPOSITORY);
     userStateEnricher = module.get(CatalogUserStateEnricher);
     showDetailsService = module.get(ShowDetailsService);
-    watchingShowsCountQuery = module.get(WatchingShowsCountQuery);
+    showsCalendarService = module.get(ShowsCalendarService);
   });
 
   describe('getTrendingShows', () => {
@@ -138,7 +138,7 @@ describe('CatalogShowsController', () => {
       const result = await controller.getCalendar('2024-01-01', 7, undefined, null);
 
       expect(result.watchingShowsCount).toBeUndefined();
-      expect(watchingShowsCountQuery.execute).not.toHaveBeenCalled();
+      expect(showsCalendarService.getWatchingShowsCount).not.toHaveBeenCalled();
     });
   });
 

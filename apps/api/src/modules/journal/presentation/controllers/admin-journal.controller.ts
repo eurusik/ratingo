@@ -51,8 +51,8 @@ import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.gua
 import { JournalImageService, type UploadedFile } from '../../application/journal-image.service';
 import { generateExcerpt, renderMarkdownAsync } from '../../application/markdown-renderer';
 import { validatePostState } from '../../application/post-state.validation';
+import { JournalService } from '../../application/services/journal.service';
 import { ensureUniqueSlug, generateSlug } from '../../application/slug.utils';
-import { JournalRepository } from '../../infrastructure/journal.repository';
 import {
   AdminPostDto,
   AdminPostListResponseDto,
@@ -75,7 +75,7 @@ const DEFAULT_PAGE_LIMIT = 10;
 @Controller('admin/journal/posts')
 export class AdminJournalController {
   constructor(
-    private readonly repository: JournalRepository,
+    private readonly journalService: JournalService,
     private readonly imageService: JournalImageService,
   ) {}
 
@@ -98,25 +98,18 @@ export class AdminJournalController {
     const limit = query.limit ?? DEFAULT_PAGE_LIMIT;
     const page = query.page ?? 1;
 
-    const { posts, total } = await this.repository.findAll({
+    const { posts, total } = await this.journalService.findAll({
       page,
       limit,
-      status: query.status === 'scheduled' ? 'published' : query.status,
+      status: query.status,
     });
-
-    // Filter scheduled posts if needed
-    const now = new Date();
-    const filteredPosts =
-      query.status === 'scheduled'
-        ? posts.filter((p) => !p.isDraft && p.publishedAt && p.publishedAt > now)
-        : posts;
 
     const totalPages = Math.ceil(total / limit);
 
     return {
-      posts: filteredPosts.map((post) => this.mapToAdminDto(post)),
+      posts: posts.map((post) => this.mapToAdminDto(post)),
       meta: {
-        total: query.status === 'scheduled' ? filteredPosts.length : total,
+        total,
         page,
         totalPages,
         limit,
@@ -145,7 +138,7 @@ export class AdminJournalController {
     description: 'Full post details',
   })
   async getPostById(@Param('id', ParseUUIDPipe) id: string): Promise<AdminPostDto> {
-    const post = await this.repository.findById(id);
+    const post = await this.journalService.findById(id);
 
     if (!post) {
       throw new NotFoundException(`Post with ID "${id}" not found`);
@@ -186,13 +179,13 @@ export class AdminJournalController {
 
     // Generate or validate slug
     const baseSlug = dto.slug || (await generateSlug(dto.title));
-    const slug = await ensureUniqueSlug(baseSlug, (s) => this.repository.existsBySlug(s));
+    const slug = await ensureUniqueSlug(baseSlug, (s) => this.journalService.existsBySlug(s));
 
     // Render markdown to HTML
     const bodyHtml = await renderMarkdownAsync(dto.body);
     const excerpt = await generateExcerpt(dto.body);
 
-    const post = await this.repository.create({
+    const post = await this.journalService.create({
       slug,
       title: dto.title,
       body: dto.body,
@@ -237,7 +230,7 @@ export class AdminJournalController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdatePostDto,
   ): Promise<AdminPostDto> {
-    const existing = await this.repository.findById(id);
+    const existing = await this.journalService.findById(id);
     if (!existing) {
       throw new NotFoundException(`Post with ID "${id}" not found`);
     }
@@ -257,7 +250,7 @@ export class AdminJournalController {
     // Handle slug update
     let { slug } = existing;
     if (dto.slug && dto.slug !== existing.slug) {
-      const slugExists = await this.repository.existsBySlug(dto.slug, id);
+      const slugExists = await this.journalService.existsBySlug(dto.slug, id);
       if (slugExists) {
         throw new ValidationException('Slug already exists', { slug: dto.slug });
       }
@@ -272,7 +265,7 @@ export class AdminJournalController {
       excerpt = await generateExcerpt(dto.body);
     }
 
-    const updated = await this.repository.update(id, {
+    const updated = await this.journalService.update(id, {
       slug,
       title: dto.title,
       body: dto.body,
@@ -316,7 +309,7 @@ export class AdminJournalController {
     schema: { type: 'object', properties: { success: { type: 'boolean' } } },
   })
   async deletePost(@Param('id', ParseUUIDPipe) id: string): Promise<{ success: boolean }> {
-    const deleted = await this.repository.delete(id);
+    const deleted = await this.journalService.delete(id);
 
     if (!deleted) {
       throw new NotFoundException(`Post with ID "${id}" not found`);
@@ -347,7 +340,7 @@ export class AdminJournalController {
     description: 'Published post',
   })
   async publishPost(@Param('id', ParseUUIDPipe) id: string): Promise<AdminPostDto> {
-    const existing = await this.repository.findById(id);
+    const existing = await this.journalService.findById(id);
     if (!existing) {
       throw new NotFoundException(`Post with ID "${id}" not found`);
     }
@@ -359,7 +352,7 @@ export class AdminJournalController {
       throw new BadRequestException('Post is already published');
     }
 
-    const updated = await this.repository.update(id, {
+    const updated = await this.journalService.update(id, {
       isDraft: false,
       publishedAt: now,
     });
@@ -393,7 +386,7 @@ export class AdminJournalController {
     description: 'Unpublished post (draft)',
   })
   async unpublishPost(@Param('id', ParseUUIDPipe) id: string): Promise<AdminPostDto> {
-    const existing = await this.repository.findById(id);
+    const existing = await this.journalService.findById(id);
     if (!existing) {
       throw new NotFoundException(`Post with ID "${id}" not found`);
     }
@@ -402,7 +395,7 @@ export class AdminJournalController {
       throw new BadRequestException('Post is already a draft');
     }
 
-    const updated = await this.repository.update(id, {
+    const updated = await this.journalService.update(id, {
       isDraft: true,
       publishedAt: null,
     });

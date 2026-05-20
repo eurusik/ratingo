@@ -14,6 +14,7 @@ import { CatalogSitemapService } from './application/services/catalog-sitemap.se
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from './application/services/movie-details.service';
 import { ShowDetailsService } from './application/services/show-details.service';
+import { ShowsCalendarService } from './application/services/shows-calendar.service';
 import { IMPORT_JOB_PORT } from './domain/ports/import-job.port';
 import { MEDIA_METADATA_PORT } from './domain/ports/media-metadata.port';
 import { USER_STATE_PROVIDER } from './domain/ports/user-state-provider.port';
@@ -78,6 +79,7 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     CatalogUserStateEnricher,
     MovieDetailsService,
     ShowDetailsService,
+    ShowsCalendarService,
     // Query Objects - Shows
     TrendingShowsQuery,
     PopularShowsQuery,

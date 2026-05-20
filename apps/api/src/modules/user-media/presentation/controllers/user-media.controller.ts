@@ -25,6 +25,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { OffsetPaginationQueryDto } from '@/common/dtos/pagination.dto';
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
@@ -80,20 +81,19 @@ export class UserMediaController {
   /**
    * Returns only items that have `progress` set (i.e. user can resume watching).
    */
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Page size (default 20)' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset (default 0)' })
   @ApiOkResponse({ description: 'Continue items', type: UserMediaStateDto, isArray: true })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'List continue items with media summary (auth: Bearer)' })
   @Get('continue')
   async listContinue(
     @CurrentUser() user: { id: string },
-    @Query('limit') limit = DEFAULT_PAGE_SIZE,
-    @Query('offset') offset = 0,
+    @Query() pagination: OffsetPaginationQueryDto,
   ) {
-    const parsedLimit = Number(limit) || DEFAULT_PAGE_SIZE;
-    const parsedOffset = Number(offset) || 0;
-    return this.userMediaService.listContinueWithMedia(user.id, parsedLimit, parsedOffset);
+    return this.userMediaService.listContinueWithMedia(
+      user.id,
+      pagination.limit ?? DEFAULT_PAGE_SIZE,
+      pagination.offset ?? 0,
+    );
   }
 
   /**
@@ -170,6 +170,7 @@ export class UserMediaController {
   @ApiOkResponse({ description: 'Upserted user media state', type: UserMediaStateDto })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'Upsert user media state with media summary (auth: Bearer)' })
+  @Throttle({ strict: { limit: 10, ttl: 60000 } })
   @Patch(':mediaItemId')
   @HttpCode(HttpStatus.OK)
   async setState(
@@ -192,20 +193,16 @@ export class UserMediaController {
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
   }
 
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Page size (default 20)' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset (default 0)' })
   @ApiOkResponse({ description: 'User media states', type: UserMediaStateDto, isArray: true })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'List user media states with media summary (auth: Bearer)' })
   @Get()
-  async list(
-    @CurrentUser() user: { id: string },
-    @Query('limit') limit = DEFAULT_PAGE_SIZE,
-    @Query('offset') offset = 0,
-  ) {
-    const parsedLimit = Number(limit) || DEFAULT_PAGE_SIZE;
-    const parsedOffset = Number(offset) || 0;
-    return this.userMediaService.listWithMedia(user.id, parsedLimit, parsedOffset);
+  async list(@CurrentUser() user: { id: string }, @Query() pagination: OffsetPaginationQueryDto) {
+    return this.userMediaService.listWithMedia(
+      user.id,
+      pagination.limit ?? DEFAULT_PAGE_SIZE,
+      pagination.offset ?? 0,
+    );
   }
 
   @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })

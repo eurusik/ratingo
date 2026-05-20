@@ -19,7 +19,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/common/constants';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
@@ -120,8 +120,7 @@ export class SavedItemsController {
     @CurrentUser() user: { id: string },
     @Query() query: BatchStatusQueryDto,
   ): Promise<BatchStatusResponseDto> {
-    const ids = query.ids.split(',').filter(Boolean).slice(0, MAX_PAGE_SIZE);
-    const statuses = await this.savedItemsService.getBatchStatus(user.id, ids);
+    const statuses = await this.savedItemsService.getBatchStatus(user.id, query.ids);
     return { statuses };
   }
 
