@@ -51,3 +51,7 @@ export { INGESTION_QUEUE, IngestionJob } from '../ingestion.constants';
 
 // Domain events
 export { MediaSyncedEvent } from '../domain/events/media-synced.event';
+
+// Job ID utilities
+export { buildSyncMediaJobId } from '../domain/job-ids';
+export type { SyncMediaJobScope } from '../domain/job-ids';

@@ -1,16 +1,24 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { type Queue } from 'bullmq';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
+import {
+  buildSyncMediaJobId,
+  INGESTION_QUEUE,
+  IngestionJob,
+  MediaSyncedEvent,
+} from '../../../ingestion/public';
 import {
   IMPORT_PENDING_FAILURE,
   IMPORT_PENDING_REPOSITORY,
   IMPORT_PENDING_STATUS,
 } from '../../domain/constants/import-pending.constants';
+import { MEDIA_LOOKUP_PORT } from '../../domain/constants/import.constants';
 import { type ImportPendingItem } from '../../domain/entities/import-pending-item';
+import { type IMediaLookupPort } from '../../domain/ports/media-lookup.port';
 import { type ITmdbResolverPort, TMDB_RESOLVER } from '../../domain/ports/tmdb-resolver.port';
 import { type IImportPendingRepository } from '../../domain/repositories/import-pending.repository.interface';
 
@@ -26,6 +34,11 @@ type ResolvedMedia = { tmdbId: number; type: 'movie' | 'show' };
  * 4. If resolved: update status to 'ingesting', queue SYNC_MOVIE or SYNC_SHOW
  *
  * Runs on the backfill queue. Jobs are idempotent via jobId deduplication.
+ *
+ * Fix 4.4: When a SYNC_MOVIE/SYNC_SHOW job is already completed (deduplicated
+ * by 'oneshot' jobId), the media is already READY in the catalog. In that case
+ * we emit a synthetic media.synced event so LinkImportListener can link the
+ * pending item without waiting for a re-sync that will never happen.
  */
 @Injectable()
 export class ResolveImportItemPipeline {
@@ -38,6 +51,9 @@ export class ResolveImportItemPipeline {
     private readonly tmdbResolver: ITmdbResolverPort,
     @InjectQueue(INGESTION_QUEUE)
     private readonly ingestionQueue: Queue,
+    @Inject(MEDIA_LOOKUP_PORT)
+    private readonly mediaLookup: IMediaLookupPort,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -112,12 +128,27 @@ export class ResolveImportItemPipeline {
     // If queue.add() fails, the item stays in RESOLVING and can be retried.
     const jobName = resolved.type === 'movie' ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
     const mediaTypeName = resolved.type === 'movie' ? MediaType.MOVIE : MediaType.SHOW;
+    const jobId = buildSyncMediaJobId(resolved.type, resolved.tmdbId, 'oneshot');
 
-    await this.ingestionQueue.add(
+    const job = await this.ingestionQueue.add(
       jobName,
       { tmdbId: resolved.tmdbId, type: mediaTypeName },
-      { jobId: `${jobName}-${resolved.tmdbId}` },
+      { jobId },
     );
+
+    // Fix 4.4: If the job was deduplicated by BullMQ (already exists with same jobId)
+    // and it has already completed, the media is READY in the catalog but media.synced
+    // was already emitted (before this import was queued). Emit a synthetic event so
+    // LinkImportListener can link this pending item without a stuck INGESTING state.
+    if (job) {
+      const jobState = await job.getState();
+      if (jobState === 'completed') {
+        this.logger.log(
+          `[item] pendingItemId=${pendingItemId} jobId=${jobId} already completed — emitting synthetic media.synced`,
+        );
+        await this.emitSyntheticMediaSyncedIfReady(resolved.tmdbId, resolved.type);
+      }
+    }
 
     // Only transition to INGESTING after successful queue add.
     // Skip if the item was cancelled while waiting for queue.add() to complete.
@@ -174,5 +205,45 @@ export class ResolveImportItemPipeline {
     if (isShow) return { tmdbId, type: 'show' };
 
     return null;
+  }
+
+  /**
+   * Looks up the catalog media item for the given TMDB ID + type and emits
+   * a synthetic media.synced event if found.
+   *
+   * Used when a SYNC_MOVIE/SYNC_SHOW job was already completed (deduplicated
+   * by 'oneshot' jobId) — the real event was emitted before this import item
+   * was queued, so we synthesize it to trigger LinkImportListener.
+   */
+  private async emitSyntheticMediaSyncedIfReady(
+    tmdbId: number,
+    type: 'movie' | 'show',
+  ): Promise<void> {
+    try {
+      const matches = await this.mediaLookup.findManyByTmdbIds([tmdbId]);
+      const match = matches.find((m) => m.type === type);
+
+      if (!match) {
+        this.logger.warn(
+          `[item] Synthetic media.synced skipped: tmdbId=${tmdbId} type=${type} not found in catalog`,
+        );
+        return;
+      }
+
+      await this.eventEmitter.emitAsync(
+        MediaSyncedEvent.eventName,
+        new MediaSyncedEvent(tmdbId, type, match.id),
+      );
+
+      this.logger.log(
+        `[item] Synthetic media.synced emitted: tmdbId=${tmdbId} type=${type} mediaItemId=${match.id}`,
+      );
+    } catch (error) {
+      // Non-critical: if synthetic emit fails, the item stays INGESTING until
+      // the next full sync naturally emits the real event.
+      this.logger.error(
+        `[item] Failed to emit synthetic media.synced for tmdbId=${tmdbId}: ${(error as Error).message}`,
+      );
+    }
   }
 }

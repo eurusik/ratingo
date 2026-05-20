@@ -241,7 +241,8 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
     try {
       const results = await this.fetch<TraktSearchShowResult[]>(`/search/tmdb/${tmdbId}?type=show`);
       return results[0]?.show?.ids?.trakt || null;
-    } catch {
+    } catch (error) {
+      this.logger.warn(`Failed to resolve traktId for tmdb ${tmdbId}: ${error}`);
       return null;
     }
   }

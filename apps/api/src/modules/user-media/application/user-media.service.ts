@@ -19,6 +19,7 @@ import {
   USER_MEDIA_STATE_REPOSITORY,
   type UserMediaStats,
   type SetUserMediaStateInput,
+  type UpsertUserMediaStateData,
 } from '../domain/repositories/user-media-state.repository.interface';
 
 /**
@@ -50,34 +51,15 @@ export class UserMediaService implements IRatingSyncPort {
     data: SetUserMediaStateInput,
     mediaType?: MediaType,
   ): Promise<UserMediaState | null> {
-    const existing = await this.repo.findOne(data.userId, data.mediaItemId);
-
-    if (data.rating === null && !data.state && !data.progress && !existing) {
-      return null;
-    }
-
-    const resolvedState = data.state ?? this.resolveDefaultState(existing, mediaType);
-
-    // Issue #94: block dropping a show that the user rated mid-season.
-    // "Mid-season" = there is partial episode progress (user started watching
-    // but didn't finish). If `progress` is null, the user is not tracking
-    // episodes — rating applies to the whole show and drop is allowed.
-    // The check is state-agnostic: pause/caught_up preserve rating + progress,
-    // so guarding only WATCHING would let the rule be bypassed via a detour.
-    if (
-      resolvedState === USER_MEDIA_STATE.DROPPED &&
-      existing?.rating != null &&
-      existing?.progress != null &&
-      mediaType === MediaType.SHOW
-    ) {
-      throw new AppException(
-        ErrorCode.CANNOT_DROP_PARTIAL_RATING,
-        USER_MEDIA_STATE_ERRORS.CANNOT_DROP_PARTIAL_RATING,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
+    // Progress path: validate early (no DB read needed for rejection), then use
+    // upsertWithGuard to keep the transaction pattern consistent.
     if (data.progress != null) {
+      // We need the existing state to compute resolvedState and detect state changes.
+      // This read is outside the transaction but progress conflicts are rejected
+      // before writing, so a TOCTOU race here doesn't violate any invariant.
+      const existing = await this.repo.findOne(data.userId, data.mediaItemId);
+      const resolvedState = data.state ?? this.resolveDefaultState(existing, mediaType);
+
       if (
         resolvedState === USER_MEDIA_STATE.COMPLETED ||
         resolvedState === USER_MEDIA_STATE.DROPPED
@@ -100,13 +82,56 @@ export class UserMediaService implements IRatingSyncPort {
       return result;
     }
 
-    const result = await this.repo.upsert({ ...data, state: resolvedState });
+    // For all non-progress paths we need to know the existing record to:
+    //  - decide the default state (resolveDefaultState)
+    //  - short-circuit the rating-null + no-state + no-existing case
+    //  - emit the correct state-changed event
+    // We read it outside the transaction and pass it into the guard below.
+    // The guard re-reads the row under FOR UPDATE lock and enforces invariants
+    // atomically — eliminating the TOCTOU window.
+    const existing = await this.repo.findOne(data.userId, data.mediaItemId);
+
+    if (data.rating === null && !data.state && !data.progress && !existing) {
+      return null;
+    }
+
+    const resolvedState = data.state ?? this.resolveDefaultState(existing, mediaType);
+
+    // Issue #94: block dropping a show that the user rated mid-season.
+    // "Mid-season" = there is partial episode progress (user started watching
+    // but didn't finish). If `progress` is null, the user is not tracking
+    // episodes — rating applies to the whole show and drop is allowed.
+    // The check is state-agnostic: pause/caught_up preserve rating + progress,
+    // so guarding only WATCHING would let the rule be bypassed via a detour.
+    //
+    // The guard runs inside a DB transaction with SELECT … FOR UPDATE, so no
+    // concurrent request can change state between the read and the upsert.
+    const droppedGuard = (locked: UserMediaState | null): void => {
+      if (
+        resolvedState === USER_MEDIA_STATE.DROPPED &&
+        locked?.rating != null &&
+        locked?.progress != null &&
+        mediaType === MediaType.SHOW
+      ) {
+        throw new AppException(
+          ErrorCode.CANNOT_DROP_PARTIAL_RATING,
+          USER_MEDIA_STATE_ERRORS.CANNOT_DROP_PARTIAL_RATING,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    };
+
+    const upsertData: UpsertUserMediaStateData = { ...data, state: resolvedState };
+    const result = await this.repo.upsertWithGuard(upsertData, droppedGuard);
 
     if (data.rating !== undefined) {
       await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating ?? null);
     }
 
-    if (resolvedState !== existing?.state) {
+    // Skip emitting state.changed when the user didn't explicitly choose a state
+    // and this is a new record — the state was auto-resolved (e.g. rating-only create).
+    const userChoseState = data.state !== undefined;
+    if (resolvedState !== existing?.state && (userChoseState || existing !== null)) {
       await this.emitStateChanged(
         data.userId,
         data.mediaItemId,

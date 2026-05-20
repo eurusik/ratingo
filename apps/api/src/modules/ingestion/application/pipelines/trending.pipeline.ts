@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 
 import { MediaType } from '@/common/enums/media-type.enum';
-import { formatUtcDayId } from '@/common/utils/date.util';
 
 import {
   type ICatalogPolicyEvaluator,
@@ -9,6 +8,7 @@ import {
   EvaluationContext,
 } from '../../../catalog-policy/public';
 import { TrendingSyncService, HOMEPAGE_REFRESH_CONFIG } from '../../../stats/public';
+import { buildSyncMediaJobId } from '../../domain/job-ids';
 import {
   IngestionJob,
   TRENDING_STATS_DELAY_MS,
@@ -75,11 +75,20 @@ export class TrendingPipeline {
     const logPrefix = `[${type}:p${page}${jobId ? ` job:${jobId}` : ''}]`;
     this.logger.log(`${logPrefix} Processing...`);
 
-    const items = await this.syncService.getTrending(page, type);
+    const rawItems = await this.syncService.getTrending(page, type);
+    const items = rawItems.filter(
+      (item) => typeof item.tmdbId === 'number' && item.tmdbId > 0 && item.type,
+    );
 
     if (items.length === 0) {
       this.logger.log(`${logPrefix} found=0`);
       return;
+    }
+
+    if (items.length < rawItems.length) {
+      this.logger.warn(
+        `${logPrefix} Dropped ${rawItems.length - items.length} items with invalid shape`,
+      );
     }
 
     const jobs = this.buildSyncJobs(items, page);
@@ -242,17 +251,17 @@ export class TrendingPipeline {
   }
 
   private buildSyncJobs(items: Array<{ tmdbId: number; type: MediaType }>, page: number) {
-    const today = formatUtcDayId();
     const baseScore = 10000;
 
     return items.map((item, i) => {
       const rank = (page - 1) * TMDB_TRENDING_PAGE_SIZE + i + 1;
       const score = baseScore - rank + 1;
+      const mediaType = item.type === MediaType.MOVIE ? 'movie' : 'show';
 
       return {
         name: item.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW,
         data: { tmdbId: item.tmdbId, trending: { score, rank } },
-        opts: { jobId: `${item.type}_${item.tmdbId}_${today}` },
+        opts: { jobId: buildSyncMediaJobId(mediaType, item.tmdbId, 'daily') },
       };
     });
   }

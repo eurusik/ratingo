@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type Queue } from 'bullmq';
 
 import { IngestionJob } from '../../../ingestion/ingestion.constants';
@@ -6,6 +7,7 @@ import {
   IMPORT_PENDING_STATUS,
 } from '../../domain/constants/import-pending.constants';
 import { type ImportPendingItem } from '../../domain/entities/import-pending-item';
+import { type IMediaLookupPort } from '../../domain/ports/media-lookup.port';
 import { type ITmdbResolverPort } from '../../domain/ports/tmdb-resolver.port';
 import { type IImportPendingRepository } from '../../domain/repositories/import-pending.repository.interface';
 
@@ -31,10 +33,17 @@ function makePendingItem(overrides: Partial<ImportPendingItem> = {}): ImportPend
   };
 }
 
+/** Mock BullMQ job that reports the given state. */
+function makeJob(state: string = 'waiting') {
+  return { id: 'job-1', getState: jest.fn().mockResolvedValue(state) };
+}
+
 describe('ResolveImportItemPipeline', () => {
   let pendingRepo: jest.Mocked<IImportPendingRepository>;
   let tmdbResolver: jest.Mocked<ITmdbResolverPort>;
   let ingestionQueue: jest.Mocked<Pick<Queue, 'add'>>;
+  let mediaLookup: jest.Mocked<IMediaLookupPort>;
+  let eventEmitter: jest.Mocked<Pick<EventEmitter2, 'emitAsync'>>;
   let pipeline: ResolveImportItemPipeline;
 
   beforeEach(() => {
@@ -59,13 +68,24 @@ describe('ResolveImportItemPipeline', () => {
     };
 
     ingestionQueue = {
-      add: jest.fn().mockResolvedValue({ id: 'job-1' }),
+      add: jest.fn().mockResolvedValue(makeJob()),
+    };
+
+    mediaLookup = {
+      findManyByImdbIds: jest.fn().mockResolvedValue([]),
+      findManyByTmdbIds: jest.fn().mockResolvedValue([]),
+    };
+
+    eventEmitter = {
+      emitAsync: jest.fn().mockResolvedValue([]),
     };
 
     pipeline = new ResolveImportItemPipeline(
       pendingRepo as any,
       tmdbResolver as any,
       ingestionQueue as any,
+      mediaLookup as any,
+      eventEmitter as any,
     );
   });
 
@@ -173,11 +193,11 @@ describe('ResolveImportItemPipeline', () => {
         mediaType: 'movie',
       });
 
-      // Queues SYNC_MOVIE
+      // Queues SYNC_MOVIE with oneshot jobId
       expect(ingestionQueue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_MOVIE,
         { tmdbId: 550, type: 'movie' },
-        { jobId: `${IngestionJob.SYNC_MOVIE}-550` },
+        { jobId: 'movie_550_oneshot' },
       );
 
       expect(tmdbResolver.findByImdbId).toHaveBeenCalledWith('tt0000001');
@@ -194,7 +214,7 @@ describe('ResolveImportItemPipeline', () => {
       expect(ingestionQueue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_SHOW,
         { tmdbId: 1399, type: 'show' },
-        { jobId: `${IngestionJob.SYNC_SHOW}-1399` },
+        { jobId: 'show_1399_oneshot' },
       );
     });
   });
@@ -212,7 +232,7 @@ describe('ResolveImportItemPipeline', () => {
       expect(ingestionQueue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_MOVIE,
         { tmdbId: 550, type: 'movie' },
-        { jobId: `${IngestionJob.SYNC_MOVIE}-550` },
+        { jobId: 'movie_550_oneshot' },
       );
     });
 
@@ -227,7 +247,7 @@ describe('ResolveImportItemPipeline', () => {
       expect(ingestionQueue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_SHOW,
         { tmdbId: 1399, type: 'show' },
-        { jobId: `${IngestionJob.SYNC_SHOW}-1399` },
+        { jobId: 'show_1399_oneshot' },
       );
     });
 
@@ -323,8 +343,42 @@ describe('ResolveImportItemPipeline', () => {
     });
   });
 
+  describe('fix 4.4 — synthetic media.synced for already-completed jobs', () => {
+    it('emits synthetic media.synced when deduplicated job is already completed', async () => {
+      const item = makePendingItem({ imdbId: 'tt0000001' });
+      pendingRepo.findById.mockResolvedValue(item);
+      tmdbResolver.findByImdbId.mockResolvedValue({ tmdbId: 550, type: 'movie' });
+
+      // Job already completed (deduplicated by oneshot jobId)
+      ingestionQueue.add = jest.fn().mockResolvedValue(makeJob('completed'));
+      mediaLookup.findManyByTmdbIds = jest
+        .fn()
+        .mockResolvedValue([{ id: 'media-123', type: 'movie' }]);
+
+      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
+
+      expect(mediaLookup.findManyByTmdbIds).toHaveBeenCalledWith([550]);
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        'media.synced',
+        expect.objectContaining({ tmdbId: 550, type: 'movie', mediaItemId: 'media-123' }),
+      );
+    });
+
+    it('does not emit synthetic event when job is still waiting', async () => {
+      const item = makePendingItem({ imdbId: 'tt0000001' });
+      pendingRepo.findById.mockResolvedValue(item);
+      tmdbResolver.findByImdbId.mockResolvedValue({ tmdbId: 550, type: 'movie' });
+      ingestionQueue.add = jest.fn().mockResolvedValue(makeJob('waiting'));
+
+      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
+
+      expect(mediaLookup.findManyByTmdbIds).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+    });
+  });
+
   describe('jobId deduplication format', () => {
-    it('uses correct jobId format: {jobName}-{tmdbId}', async () => {
+    it('uses oneshot jobId format: {type}_{tmdbId}_oneshot', async () => {
       const item = makePendingItem({ imdbId: 'tt0000001' });
       pendingRepo.findById.mockResolvedValue(item);
       tmdbResolver.findByImdbId.mockResolvedValue({ tmdbId: 550, type: 'movie' });
@@ -332,11 +386,11 @@ describe('ResolveImportItemPipeline', () => {
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
       expect(ingestionQueue.add).toHaveBeenCalledWith(expect.any(String), expect.any(Object), {
-        jobId: 'sync-movie-550',
+        jobId: 'movie_550_oneshot',
       });
     });
 
-    it('show jobId format: sync-show-{tmdbId}', async () => {
+    it('show jobId format: show_{tmdbId}_oneshot', async () => {
       const item = makePendingItem({ imdbId: 'tt1234567' });
       pendingRepo.findById.mockResolvedValue(item);
       tmdbResolver.findByImdbId.mockResolvedValue({ tmdbId: 1399, type: 'show' });
@@ -344,7 +398,7 @@ describe('ResolveImportItemPipeline', () => {
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
       expect(ingestionQueue.add).toHaveBeenCalledWith(expect.any(String), expect.any(Object), {
-        jobId: 'sync-show-1399',
+        jobId: 'show_1399_oneshot',
       });
     });
   });
