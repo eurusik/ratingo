@@ -4,7 +4,7 @@ import { hasRecentEpisode, isNewRelease } from '../../../../common/utils/media.u
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
-import { CLOCK_PORT, type IClockPort } from '../../../shared/clock/clock.port';
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { computeShowVerdict } from '../../../shared/verdict';
 import { mapBadgeToPopularitySignal } from '../../../shared/verdict/domain/popularity-signal';
 import { ShowNotFoundError } from '../../domain/errors';

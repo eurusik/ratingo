@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { CLOCK_PORT } from '../../../shared/clock/clock.port';
+import { CLOCK_PORT } from '../../../shared/clock';
 import { ShowNotFoundError } from '../../domain/errors';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 

@@ -9,7 +9,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { MS_PER_DAY, MS_PER_YEAR } from '../../../../common/constants';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { CLOCK_PORT, type IClockPort } from '../../../shared/clock/clock.port';
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 import { aggregateRatings, formatRatingContext } from '../domain/rating-aggregator';
 import {

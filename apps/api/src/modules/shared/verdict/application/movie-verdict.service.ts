@@ -9,7 +9,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { MS_PER_YEAR } from '../../../../common/constants';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { CLOCK_PORT, type IClockPort } from '../../../shared/clock/clock.port';
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { type MovieVerdictInput, type MovieVerdict } from '../domain/movie-verdict.types';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 import { formatRatingContext } from '../domain/rating-aggregator';

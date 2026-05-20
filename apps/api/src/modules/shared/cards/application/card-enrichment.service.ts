@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { MS_PER_DAY } from '../../../../common/constants';
 import type { MediaType } from '../../../../common/enums/media-type.enum';
 import type { ImageData } from '../../../../common/types';
-import { CLOCK_PORT, type IClockPort } from '../../clock/clock.port';
+import { CLOCK_PORT, type IClockPort } from '../../clock';
 import {
   CARD_LIST_CONTEXT,
   CARD_NEW_RELEASE_WINDOW_DAYS,

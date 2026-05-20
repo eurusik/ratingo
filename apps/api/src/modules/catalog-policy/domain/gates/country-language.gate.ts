@@ -47,7 +47,7 @@ export interface NeutralCheckResult {
  *   This is an intentional tie-breaker: majority cannot be established without a minimum quorum.
  *   In practice, most titles have exactly 1 origin country, so MAJORITY ≈ ANY for them.
  *   Admins switching from ANY to MAJORITY will see no change for single-country titles.
- * - For 3+ countries, strict majority (≥ ceil(N/2)) must be blocked.
+ * - For 3+ countries, majority (≥ ceil(N/2) blocked) must be true; ties (e.g. 2 of 4) count as blocked.
  */
 function isBlockedByCountryRule(
   blockedCount: number,
