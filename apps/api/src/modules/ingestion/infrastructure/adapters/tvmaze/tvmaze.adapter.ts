@@ -2,8 +2,20 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 
 import { TvMazeApiException } from '../../../../../common/exceptions/external-api.exception';
+import {
+  HttpError,
+  ResilientHttpClient,
+  type RetryConfig,
+} from '../../../../../common/http/resilient-http.client';
 import tvmazeConfig from '../../../../../config/tvmaze.config';
 import { type NormalizedEpisode } from '../../../domain/models/normalized-media.model';
+
+const TVMAZE_RETRY_CONFIG: Partial<RetryConfig> = {
+  maxRetries: 2,
+  baseDelayMs: 500,
+  maxTotalTimeMs: 20_000,
+  timeoutMs: 10_000,
+};
 
 /**
  * TVMaze API response for show lookup.
@@ -41,6 +53,7 @@ export interface TvMazeEpisode extends NormalizedEpisode {
 @Injectable()
 export class TvMazeAdapter {
   private readonly logger = new Logger(TvMazeAdapter.name);
+  private readonly httpClient = new ResilientHttpClient(TVMAZE_RETRY_CONFIG);
 
   constructor(
     @Inject(tvmazeConfig.KEY)
@@ -137,16 +150,20 @@ export class TvMazeAdapter {
   }
 
   /**
-   * Fetches TVMaze JSON endpoint.
+   * Fetches TVMaze JSON endpoint with retry/backoff via ResilientHttpClient.
    *
    * @param {string} endpoint - Relative endpoint starting with slash
    * @returns {Promise<T>} Parsed JSON response
    */
   private async fetch<T>(endpoint: string): Promise<T> {
-    const res = await fetch(`${this.config.apiUrl}${endpoint}`);
-    if (!res.ok) {
-      throw new TvMazeApiException(`HTTP ${res.status}`, res.status);
+    const result = await this.httpClient.get<T>(`${this.config.apiUrl}${endpoint}`);
+
+    if (!result.success || result.data === null) {
+      const status =
+        result.error instanceof HttpError ? result.error.status : HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new TvMazeApiException(result.error?.message ?? 'Request failed', status ?? 500);
     }
-    return res.json();
+
+    return result.data;
   }
 }

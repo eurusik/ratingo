@@ -120,7 +120,10 @@ describe('TvMazeAdapter', () => {
 
       const result = await adapter.getEpisodesByShowName('Тиха Нава');
 
-      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/singlesearch/shows?q='));
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/singlesearch/shows?q='),
+        expect.objectContaining({ method: 'GET' }),
+      );
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         seasonNumber: 1,

@@ -1,17 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 import { SHOW_EVENTS } from '../../../user-actions/public';
-import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
+import { UserMediaStateChangedEvent } from '../../domain/events/user-media-state-changed.event';
 import {
   USER_MEDIA_STATE_REPOSITORY,
   type IUserMediaStateRepository,
 } from '../../domain/repositories/user-media-state.repository.interface';
-import { UserMediaService } from '../user-media.service';
 
 /**
  * Transitions caught_up → watching when a new episode is detected during sync.
- * Listens to 'show.new-episode' emitted by SubscriptionTriggerService.
+ * Uses a single bulk UPDATE instead of N+1 per-user calls.
  */
 @Injectable()
 export class CaughtUpTransitionListener {
@@ -20,47 +19,33 @@ export class CaughtUpTransitionListener {
   constructor(
     @Inject(USER_MEDIA_STATE_REPOSITORY)
     private readonly repo: IUserMediaStateRepository,
-    private readonly userMediaService: UserMediaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @OnEvent(SHOW_EVENTS.NEW_EPISODE)
   async handle(payload: { mediaItemId: string }): Promise<void> {
-    let caughtUpUsers: Array<{ userId: string }>;
+    let transitioned;
 
     try {
-      caughtUpUsers = await this.repo.findByMediaAndState(
-        payload.mediaItemId,
-        USER_MEDIA_STATE.CAUGHT_UP,
-      );
+      transitioned = await this.repo.bulkTransitionCaughtUpToWatching(payload.mediaItemId);
     } catch (error) {
       this.logger.warn(
-        `Failed to fetch caught_up users for media=${payload.mediaItemId}`,
+        `Failed to bulk transition caught_up → watching for media=${payload.mediaItemId}`,
         error instanceof Error ? error.message : error,
       );
       return;
     }
 
-    let transitioned = 0;
+    if (transitioned.length === 0) return;
 
-    for (const entry of caughtUpUsers) {
-      try {
-        await this.userMediaService.setState({
-          userId: entry.userId,
-          mediaItemId: payload.mediaItemId,
-          state: USER_MEDIA_STATE.WATCHING,
-        });
-        transitioned++;
-      } catch (error) {
-        this.logger.warn(
-          `Failed to transition caught_up → watching for user=${entry.userId} media=${payload.mediaItemId}`,
-          error instanceof Error ? error.message : error,
-        );
-      }
-    }
+    this.logger.log(
+      `Transitioned ${transitioned.length} users from caught_up to watching for media=${payload.mediaItemId}`,
+    );
 
-    if (transitioned > 0) {
-      this.logger.log(
-        `Transitioned ${transitioned} users from caught_up to watching for media=${payload.mediaItemId}`,
+    for (const state of transitioned) {
+      this.eventEmitter.emit(
+        UserMediaStateChangedEvent.eventName,
+        new UserMediaStateChangedEvent(state.userId, state.mediaItemId, state.state, 'caught_up'),
       );
     }
   }

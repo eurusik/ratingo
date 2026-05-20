@@ -168,23 +168,23 @@ export class TrackedSyncService {
         const episodeNumber = parseInt(match[2], 10);
 
         const airDate =
-          formatDateToIso(snapshot.lastEpisodeAirDate) ??
-          formatDateToIso(snapshot.nextAirDate) ??
-          new Date().toISOString().split('T')[0];
+          formatDateToIso(snapshot.lastEpisodeAirDate) ?? formatDateToIso(snapshot.nextAirDate);
 
-        diff.hasChanges = true;
-        diff.changes.newEpisode = {
-          season: seasonNumber,
-          episode: episodeNumber,
-          airDate,
-          key: snapshot.lastEpisodeKey,
-        };
+        if (airDate) {
+          diff.hasChanges = true;
+          diff.changes.newEpisode = {
+            season: seasonNumber,
+            episode: episodeNumber,
+            airDate,
+            key: snapshot.lastEpisodeKey,
+          };
 
-        diff.changes.newSeason = {
-          seasonNumber,
-          airDate,
-          key: formatSeasonKey(seasonNumber),
-        };
+          diff.changes.newSeason = {
+            seasonNumber,
+            airDate,
+            key: formatSeasonKey(seasonNumber),
+          };
+        }
       }
     }
 

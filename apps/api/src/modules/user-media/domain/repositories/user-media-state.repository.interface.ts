@@ -102,6 +102,23 @@ export interface IUserMediaStateRepository {
   upsert(data: UpsertUserMediaStateData): Promise<UserMediaState>;
 
   /**
+   * Atomically reads the current row under a FOR UPDATE lock, passes it to
+   * the guard callback, then performs the upsert — all inside a single DB
+   * transaction.  The guard must throw (e.g. AppException) to abort.
+   *
+   * Use this instead of a separate findOne + upsert to eliminate the TOCTOU
+   * race window between reading and writing.
+   *
+   * @param data   - Upsert payload (state must be fully resolved before calling)
+   * @param guard  - Callback that receives the locked row (or null for new rows).
+   *                 Throw to abort the transaction; return void to proceed.
+   */
+  upsertWithGuard(
+    data: UpsertUserMediaStateData,
+    guard: (existing: UserMediaState | null) => void | never,
+  ): Promise<UserMediaState>;
+
+  /**
    * Conditional update used to prevent TOCTOU races (issue #94, S-1).
    * Performs `UPDATE … WHERE state IN (fromStates) RETURNING *` atomically.
    *
@@ -186,6 +203,14 @@ export interface IUserMediaStateRepository {
     mediaItemId: string,
     state: UserMediaState['state'],
   ): Promise<Array<{ userId: string }>>;
+
+  /**
+   * Atomically transitions all caught_up rows for a media item to watching.
+   * Single UPDATE ... WHERE state = 'caught_up' RETURNING * — no N+1 queries.
+   *
+   * @returns Array of updated states (userId + full state)
+   */
+  bulkTransitionCaughtUpToWatching(mediaItemId: string): Promise<UserMediaState[]>;
 
   /** Lists highly-rated shows with recent or upcoming episodes. */
   listFavoriteUpdates(

@@ -12,6 +12,7 @@ import { UserMediaService } from './user-media.service';
 describe('UserMediaService', () => {
   const repo = {
     upsert: jest.fn(),
+    upsertWithGuard: jest.fn(),
     updateStateIfIn: jest.fn(),
     findOne: jest.fn(),
     findOneWithMedia: jest.fn(),
@@ -33,10 +34,21 @@ describe('UserMediaService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Default: upsertWithGuard simulates the transactional behavior by calling
+    // guard with the value currently returned by findOne (the "locked" row),
+    // then resolves with the upsert mock's value.
+    repo.upsertWithGuard.mockImplementation(async (_data: any, guard: (e: any) => void) => {
+      const existing = await repo.findOne();
+      guard(existing);
+      return repo.upsert();
+    });
+
     service = new UserMediaService(repo as any, cards as any, eventEmitter as any);
   });
 
-  it('setState should delegate to repo.upsert', async () => {
+  it('setState should delegate to repo.upsertWithGuard (no progress path)', async () => {
+    repo.findOne.mockResolvedValue(null);
     repo.upsert.mockResolvedValue({ id: 's1' } as any);
 
     const result = await service.setState({
@@ -48,7 +60,7 @@ describe('UserMediaService', () => {
       notes: null,
     });
 
-    expect(repo.upsert).toHaveBeenCalled();
+    expect(repo.upsertWithGuard).toHaveBeenCalled();
     expect(result).toEqual({ id: 's1' });
   });
 
@@ -143,8 +155,9 @@ describe('UserMediaService', () => {
       });
 
       expect(repo.findOne).toHaveBeenCalledWith('u1', 'm1');
-      expect(repo.upsert).toHaveBeenCalledWith(
+      expect(repo.upsertWithGuard).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.WATCHING, rating: 85 }),
+        expect.any(Function),
       );
     });
 
@@ -158,8 +171,9 @@ describe('UserMediaService', () => {
 
       await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: 85 }, MediaType.MOVIE);
 
-      expect(repo.upsert).toHaveBeenCalledWith(
+      expect(repo.upsertWithGuard).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.COMPLETED, rating: 85 }),
+        expect.any(Function),
       );
     });
 
@@ -173,8 +187,9 @@ describe('UserMediaService', () => {
 
       await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: 70 }, MediaType.SHOW);
 
-      expect(repo.upsert).toHaveBeenCalledWith(
+      expect(repo.upsertWithGuard).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.WATCHING, rating: 70 }),
+        expect.any(Function),
       );
     });
 
@@ -192,8 +207,9 @@ describe('UserMediaService', () => {
         rating: 50,
       });
 
-      expect(repo.upsert).toHaveBeenCalledWith(
+      expect(repo.upsertWithGuard).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.COMPLETED, rating: 50 }),
+        expect.any(Function),
       );
     });
 
@@ -211,8 +227,9 @@ describe('UserMediaService', () => {
         rating: null,
       });
 
-      expect(repo.upsert).toHaveBeenCalledWith(
+      expect(repo.upsertWithGuard).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.WATCHING, rating: null }),
+        expect.any(Function),
       );
     });
 
@@ -231,6 +248,7 @@ describe('UserMediaService', () => {
   });
 
   it('setState should allow paused state without progress', async () => {
+    repo.findOne.mockResolvedValue(null);
     repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.PAUSED } as any);
 
     await service.setState({
@@ -242,13 +260,14 @@ describe('UserMediaService', () => {
       notes: null,
     });
 
-    expect(repo.upsert).toHaveBeenCalledWith(
+    expect(repo.upsertWithGuard).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'u1',
         mediaItemId: 'm1',
         state: USER_MEDIA_STATE.PAUSED,
         progress: null,
       }),
+      expect.any(Function),
     );
   });
 
@@ -281,6 +300,7 @@ describe('UserMediaService', () => {
 
   describe('rating changed event (setState -> event)', () => {
     it('should emit event when rating is set via setState', async () => {
+      repo.findOne.mockResolvedValue(null);
       repo.upsert.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.WATCHING,
@@ -301,6 +321,7 @@ describe('UserMediaService', () => {
     });
 
     it('should not emit rating event when only state changes (rating not provided)', async () => {
+      repo.findOne.mockResolvedValue(null);
       repo.upsert.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.COMPLETED,
@@ -321,6 +342,7 @@ describe('UserMediaService', () => {
     });
 
     it('should not emit rating event when rating is undefined', async () => {
+      repo.findOne.mockResolvedValue(null);
       repo.upsert.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.WATCHING,
@@ -352,6 +374,7 @@ describe('UserMediaService', () => {
     });
 
     it('should emit event for rating 0 (falsy edge case)', async () => {
+      repo.findOne.mockResolvedValue(null);
       repo.upsert.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.COMPLETED,
@@ -392,7 +415,8 @@ describe('UserMediaService', () => {
     });
 
     it('should not emit event when upsert fails', async () => {
-      repo.upsert.mockRejectedValue(new Error('DB error'));
+      repo.findOne.mockResolvedValue(null);
+      repo.upsertWithGuard.mockRejectedValue(new Error('DB error'));
 
       await expect(
         service.setState({
@@ -428,6 +452,7 @@ describe('UserMediaService', () => {
     });
 
     it('should swallow emitAsync errors without failing setState', async () => {
+      repo.findOne.mockResolvedValue(null);
       repo.upsert.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.WATCHING,
@@ -606,6 +631,7 @@ describe('UserMediaService', () => {
         state: USER_MEDIA_STATE.COMPLETED,
       });
 
+      expect(repo.upsertWithGuard).toHaveBeenCalled();
       expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
         UserMediaStateChangedEvent.eventName,
         expect.objectContaining({
@@ -627,6 +653,7 @@ describe('UserMediaService', () => {
         state: USER_MEDIA_STATE.WATCHING,
       });
 
+      expect(repo.upsertWithGuard).toHaveBeenCalled();
       expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
         UserMediaStateChangedEvent.eventName,
         expect.objectContaining({
@@ -648,6 +675,7 @@ describe('UserMediaService', () => {
         state: USER_MEDIA_STATE.WATCHING,
       });
 
+      expect(repo.upsertWithGuard).toHaveBeenCalled();
       expect(eventEmitter.emitAsync).not.toHaveBeenCalledWith(
         UserMediaStateChangedEvent.eventName,
         expect.anything(),
@@ -686,6 +714,7 @@ describe('UserMediaService', () => {
         state: USER_MEDIA_STATE.DROPPED,
       });
 
+      expect(repo.upsertWithGuard).toHaveBeenCalled();
       expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
         UserMediaStateChangedEvent.eventName,
         expect.objectContaining({
@@ -863,8 +892,9 @@ describe('UserMediaService', () => {
         MediaType.SHOW,
       );
 
-      expect(repo.upsert).toHaveBeenCalledWith(
+      expect(repo.upsertWithGuard).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.DROPPED }),
+        expect.any(Function),
       );
     });
 
@@ -882,8 +912,9 @@ describe('UserMediaService', () => {
         MediaType.SHOW,
       );
 
-      expect(repo.upsert).toHaveBeenCalledWith(
+      expect(repo.upsertWithGuard).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.DROPPED }),
+        expect.any(Function),
       );
     });
 
@@ -901,7 +932,7 @@ describe('UserMediaService', () => {
         MediaType.MOVIE,
       );
 
-      expect(repo.upsert).toHaveBeenCalled();
+      expect(repo.upsertWithGuard).toHaveBeenCalled();
     });
   });
 });

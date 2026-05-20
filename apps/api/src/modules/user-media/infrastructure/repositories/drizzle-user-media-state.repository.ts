@@ -75,6 +75,65 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     );
   }
 
+  async upsertWithGuard(
+    data: UpsertUserMediaStateData,
+    guard: (existing: UserMediaState | null) => void | never,
+  ): Promise<UserMediaState> {
+    return withDbError(
+      'upsert user media state with guard',
+      this.logger,
+      async () => {
+        return this.db.transaction(async (tx) => {
+          // SELECT ... FOR UPDATE acquires a row-level lock, blocking concurrent
+          // writers on the same (userId, mediaItemId) pair until the transaction commits.
+          const [lockedRow] = await tx
+            .select()
+            .from(schema.userMediaState)
+            .where(
+              and(
+                eq(schema.userMediaState.userId, data.userId),
+                eq(schema.userMediaState.mediaItemId, data.mediaItemId),
+              ),
+            )
+            .for('update');
+
+          const existing = lockedRow ? this.mapRow(lockedRow) : null;
+
+          // Guard throws AppException on invariant violation; transaction auto-rolls back.
+          guard(existing);
+
+          const updateSet: Record<string, unknown> = {
+            state: data.state,
+            updatedAt: new Date(),
+          };
+
+          if (data.rating !== undefined) updateSet.rating = data.rating;
+          if (data.progress !== undefined) updateSet.progress = data.progress;
+          if (data.notes !== undefined) updateSet.notes = data.notes;
+
+          const [row] = await tx
+            .insert(schema.userMediaState)
+            .values({
+              userId: data.userId,
+              mediaItemId: data.mediaItemId,
+              state: data.state,
+              ...(data.rating !== undefined && { rating: data.rating }),
+              ...(data.progress !== undefined && { progress: data.progress }),
+              ...(data.notes !== undefined && { notes: data.notes }),
+            })
+            .onConflictDoUpdate({
+              target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
+              set: updateSet,
+            })
+            .returning();
+
+          return this.mapRow(row);
+        });
+      },
+      { userId: data.userId, mediaItemId: data.mediaItemId },
+    );
+  }
+
   async updateStateIfIn(
     userId: string,
     mediaItemId: string,
@@ -634,6 +693,27 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             ),
           ),
       { mediaItemId, state },
+    );
+  }
+
+  async bulkTransitionCaughtUpToWatching(mediaItemId: string): Promise<UserMediaState[]> {
+    return withDbError(
+      'bulk transition caught_up to watching',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .update(schema.userMediaState)
+          .set({ state: USER_MEDIA_STATE.WATCHING, updatedAt: new Date() })
+          .where(
+            and(
+              eq(schema.userMediaState.mediaItemId, mediaItemId),
+              eq(schema.userMediaState.state, USER_MEDIA_STATE.CAUGHT_UP),
+            ),
+          )
+          .returning();
+        return rows.map((r) => this.mapRow(r));
+      },
+      { mediaItemId },
     );
   }
 

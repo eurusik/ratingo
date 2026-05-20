@@ -142,6 +142,15 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   ): Promise<{ imported: number; skipped: number }> {
     return { imported: 0, skipped: 0 };
   }
+
+  async upsertWithGuard(_data: any, guard: (existing: any) => void): Promise<any> {
+    guard(null);
+    return {} as any;
+  }
+
+  async bulkTransitionCaughtUpToWatching(_mediaItemId: string): Promise<any[]> {
+    return [];
+  }
 }
 
 class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {

@@ -286,6 +286,26 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   ): Promise<{ imported: number; skipped: number }> {
     return { imported: 0, skipped: 0 };
   }
+
+  async upsertWithGuard(data: any, guard: (existing: any) => void): Promise<any> {
+    const existing = this.states.find(
+      (s: any) => s.userId === data.userId && s.mediaItemId === data.mediaItemId,
+    );
+    guard(existing ?? null);
+    return this.upsert(data);
+  }
+
+  async bulkTransitionCaughtUpToWatching(mediaItemId: string): Promise<any[]> {
+    const transitioned: any[] = [];
+    for (const s of this.states) {
+      if ((s as any).mediaItemId === mediaItemId && (s as any).state === 'caught_up') {
+        (s as any).state = 'watching';
+        (s as any).updatedAt = new Date();
+        transitioned.push(s);
+      }
+    }
+    return transitioned;
+  }
 }
 
 describe('User Media e2e', () => {
