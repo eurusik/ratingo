@@ -1,7 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { Transform } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsEnum,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 import { MAX_PAGE_SIZE } from '../../../../common/constants';
 import { OffsetPaginationQueryDto } from '../../../../common/dtos';
@@ -170,7 +179,8 @@ export class BatchStatusQueryDto {
       : value,
   )
   @IsArray()
-  @IsString({ each: true })
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
   @ArrayMaxSize(MAX_PAGE_SIZE)
   ids: string[];
 }

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { IsEmail, IsOptional, IsString, MinLength, MaxLength, Matches } from 'class-validator';
 
-import { IsNotReservedUsername } from '../../../users/presentation/validators/not-reserved-username.validator';
+import { IsNotReservedUsername } from '../../../users/public';
 import { PASSWORD_REGEX, PASSWORD_MESSAGE } from '../validators/password.constants';
 
 export class RegisterDto {
