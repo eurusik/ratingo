@@ -44,6 +44,7 @@ import {
   IngestionJobResponseDto,
   SyncDto,
   SyncTrendingDto,
+  SyncTrendingQueryDto,
   SyncNowPlayingDto,
   SyncNewReleasesDto,
 } from '../dto';
@@ -171,12 +172,6 @@ export class IngestionController {
       'Syncs trending content from TMDB using dispatcher pattern. Queues page jobs for movies and shows. With syncStats=true (default), also updates Trakt stats after ingestion.',
   })
   @ApiQuery({
-    name: 'pages',
-    required: false,
-    type: String,
-    description: 'Number of pages to fetch (dispatcher mode)',
-  })
-  @ApiQuery({
     name: 'page',
     required: false,
     type: String,
@@ -188,27 +183,19 @@ export class IngestionController {
     type: String,
     description: 'Sync Trakt stats after ingestion (default: true)',
   })
-  @ApiQuery({
-    name: 'type',
-    required: false,
-    type: String,
-    description: 'Media type filter (movie or show)',
-  })
   @ApiQuery({ name: 'force', required: false, type: String, description: 'Bypass dedupe' })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncTrending(
-    @Query('pages') pagesQuery?: string,
+    @Query() query: SyncTrendingQueryDto,
     @Query('page') pageQuery?: string,
     @Query('syncStats') syncStatsQuery?: string,
-    @Query('type') typeQuery?: string,
     @Query('force') forceQuery?: string,
     @Body() dto?: SyncTrendingDto,
   ) {
-    // Merge query params with body (query takes precedence for convenience)
-    const pages = pagesQuery ? parseInt(pagesQuery, 10) : dto?.pages;
+    const pages = query.pages ?? dto?.pages;
     const page = pageQuery ? parseInt(pageQuery, 10) : dto?.page;
     const syncStats = syncStatsQuery !== 'false' && dto?.syncStats !== false; // default true
-    const type = (typeQuery as MediaType) || dto?.type;
+    const type = query.type ?? dto?.type;
     const force = forceQuery === 'true';
 
     // Validate: page and pages are mutually exclusive

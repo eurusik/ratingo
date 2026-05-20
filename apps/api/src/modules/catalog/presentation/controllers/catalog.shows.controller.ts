@@ -31,11 +31,11 @@ import { CardEnrichmentService } from '../../../shared/cards/application/card-en
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { ShowDetailsService } from '../../application/services/show-details.service';
+import { ShowsCalendarService } from '../../application/services/shows-calendar.service';
 import {
   type IShowRepository,
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
-import { WatchingShowsCountQuery } from '../../infrastructure/queries/watching-shows-count.query';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
@@ -59,7 +59,7 @@ export class CatalogShowsController {
     private readonly userStateEnricher: CatalogUserStateEnricher,
     private readonly cards: CardEnrichmentService,
     private readonly showDetailsService: ShowDetailsService,
-    private readonly watchingShowsCountQuery: WatchingShowsCountQuery,
+    private readonly showsCalendarService: ShowsCalendarService,
   ) {}
 
   @Get('trending')
@@ -211,7 +211,7 @@ export class CatalogShowsController {
         ? this.showRepository.findEpisodesByDateRange(start, end, { userId: personalizedUserId })
         : this.showRepository.findEpisodesByDateRange(start, end),
       personalizedUserId
-        ? this.watchingShowsCountQuery.execute(personalizedUserId)
+        ? this.showsCalendarService.getWatchingShowsCount(personalizedUserId)
         : Promise.resolve(undefined),
     ]);
 

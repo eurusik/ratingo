@@ -124,7 +124,7 @@ describe('SubscriptionsController', () => {
 
   describe('listActive', () => {
     it('should return paginated active subscriptions', async () => {
-      const result = await controller.listActive(mockUser, 20, 0);
+      const result = await controller.listActive(mockUser, { limit: 20, offset: 0 });
 
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
@@ -133,7 +133,7 @@ describe('SubscriptionsController', () => {
     });
 
     it('should use default pagination values', async () => {
-      await controller.listActive(mockUser);
+      await controller.listActive(mockUser, {});
 
       expect(service.listActiveWithMedia).toHaveBeenCalledWith('user-id-1', 20, 0);
     });
@@ -144,7 +144,7 @@ describe('SubscriptionsController', () => {
         data: Array(20).fill(mockSubscriptionWithMedia),
       });
 
-      const result = await controller.listActive(mockUser, 20, 0);
+      const result = await controller.listActive(mockUser, { limit: 20, offset: 0 });
 
       expect(result.meta.hasMore).toBe(true);
     });

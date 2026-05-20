@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import { Transform, Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsArray, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import {
   JOURNAL_DEFAULT_PAGE_SIZE,
@@ -21,12 +21,12 @@ export class PostQueryDto {
   @IsOptional()
   @Transform(({ value }) => {
     if (!value) return undefined;
-    const types = String(value)
+    return String(value)
       .split(',')
       .map((t) => t.trim());
-    // Filter to only valid types
-    return types.filter((t) => POST_TYPE_VALUES.includes(t as PostType)) as PostType[];
   })
+  @IsArray()
+  @IsIn(POST_TYPE_VALUES, { each: true })
   type?: PostType[];
 
   @ApiPropertyOptional({

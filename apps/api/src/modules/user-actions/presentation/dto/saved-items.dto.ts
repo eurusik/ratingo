@@ -1,7 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsEnum,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
+import { MAX_PAGE_SIZE } from '../../../../common/constants';
 import { OffsetPaginationQueryDto } from '../../../../common/dtos';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { SAVED_ITEM_LIST, type SavedItemList } from '../../domain/entities/user-saved-item.entity';
@@ -157,10 +168,21 @@ export class UnsaveActionResultDto {
 export class BatchStatusQueryDto {
   @ApiProperty({
     example: 'id1,id2,id3',
-    description: 'Comma-separated list of media item UUIDs (max 100)',
+    description: `Comma-separated list of media item UUIDs (max ${MAX_PAGE_SIZE})`,
   })
-  @IsString()
-  ids: string;
+  @Transform(({ value }) =>
+    typeof value === 'string'
+      ? value
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : value,
+  )
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
+  @ArrayMaxSize(MAX_PAGE_SIZE)
+  ids: string[];
 }
 
 /**

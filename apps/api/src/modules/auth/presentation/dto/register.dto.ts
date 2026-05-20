@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { IsEmail, IsOptional, IsString, MinLength, MaxLength, Matches } from 'class-validator';
 
+import { IsNotReservedUsername } from '../../../users/public';
 import { PASSWORD_REGEX, PASSWORD_MESSAGE } from '../validators/password.constants';
 
 export class RegisterDto {
@@ -22,6 +23,7 @@ export class RegisterDto {
   @Matches(/^[a-zA-Z0-9_]+$/, {
     message: 'username can only contain letters, numbers, and underscores',
   })
+  @IsNotReservedUsername()
   username: string;
 
   /**

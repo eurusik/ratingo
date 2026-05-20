@@ -416,25 +416,33 @@ export class JournalRepository {
 
   /**
    * Finds all posts for admin (includes drafts).
+   * Supports 'scheduled' status: published (not draft) posts with publishedAt > now.
    *
-   * @param filters - Pagination options
+   * @param filters - Pagination and status filter options
    * @returns Paginated posts and total count
    */
   async findAll(filters: {
     page: number;
     limit: number;
-    status?: 'draft' | 'published';
+    status?: 'draft' | 'published' | 'scheduled';
   }): Promise<PaginatedPostsResult> {
     return withDbError(
       'find all posts',
       this.logger,
       async () => {
-        const conditions: ReturnType<typeof eq>[] = [];
+        const now = new Date();
+        const conditions: ReturnType<typeof eq | typeof gt>[] = [];
 
         if (filters.status === 'draft') {
           conditions.push(eq(schema.journalPosts.isDraft, true));
         } else if (filters.status === 'published') {
+          // Published: not a draft AND publishedAt <= now (already visible)
           conditions.push(eq(schema.journalPosts.isDraft, false));
+          conditions.push(lte(schema.journalPosts.publishedAt, now));
+        } else if (filters.status === 'scheduled') {
+          // Scheduled: not a draft AND publishedAt > now (future publication)
+          conditions.push(eq(schema.journalPosts.isDraft, false));
+          conditions.push(gt(schema.journalPosts.publishedAt, now));
         }
 
         const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

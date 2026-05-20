@@ -8,7 +8,7 @@
 import { Controller, Get, Header, NotFoundException, Param, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
-import { JournalRepository } from '../../infrastructure/journal.repository';
+import { JournalService } from '../../application/services/journal.service';
 import {
   PostDetailDto,
   PostListItemDto,
@@ -27,7 +27,7 @@ const DEFAULT_PAGE_LIMIT = 10;
 @ApiTags('Public: Journal')
 @Controller('journal/posts')
 export class JournalPostsController {
-  constructor(private readonly repository: JournalRepository) {}
+  constructor(private readonly journalService: JournalService) {}
 
   /**
    * Returns paginated list of published journal posts.
@@ -52,7 +52,7 @@ export class JournalPostsController {
     const limit = query.limit ?? DEFAULT_PAGE_LIMIT;
     const page = query.page ?? 1;
 
-    const { posts, total } = await this.repository.findPublished({
+    const { posts, total } = await this.journalService.findPublished({
       types: query.type,
       contextId: query.context,
       page,
@@ -94,13 +94,13 @@ export class JournalPostsController {
     description: 'Full post details with navigation',
   })
   async getPostBySlug(@Param('slug') slug: string): Promise<PostDetailDto> {
-    const post = await this.repository.findBySlug(slug);
+    const post = await this.journalService.findBySlug(slug);
 
     if (!post) {
       throw new NotFoundException(`Post with slug "${slug}" not found`);
     }
 
-    const navigation = await this.repository.getNavigation(post);
+    const navigation = await this.journalService.getNavigation(post);
 
     return {
       id: post.id,

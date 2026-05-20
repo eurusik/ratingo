@@ -17,10 +17,10 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { OffsetPaginationQueryDto } from '@/common/dtos/pagination.dto';
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
@@ -152,27 +152,26 @@ export class SubscriptionsController {
    */
   @Get()
   @ApiOperation({ summary: 'List active subscriptions (auth: Bearer)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'offset', required: false, type: Number })
   @ApiOkResponse({ type: [SubscriptionWithMediaResponseDto] })
   async listActive(
     @CurrentUser() user: { id: string },
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
+    @Query() pagination: OffsetPaginationQueryDto,
   ) {
+    const limit = pagination.limit ?? DEFAULT_PAGE_SIZE;
+    const offset = pagination.offset ?? 0;
     const { total, data } = await this.subscriptionsService.listActiveWithMedia(
       user.id,
-      limit ?? DEFAULT_PAGE_SIZE,
-      offset ?? 0,
+      limit,
+      offset,
     );
 
     return {
       data,
       meta: {
         total,
-        limit: limit ?? DEFAULT_PAGE_SIZE,
-        offset: offset ?? 0,
-        hasMore: (offset ?? 0) + data.length < total,
+        limit,
+        offset,
+        hasMore: offset + data.length < total,
       },
     };
   }
