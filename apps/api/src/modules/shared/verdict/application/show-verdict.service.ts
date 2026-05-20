@@ -5,10 +5,11 @@
  * DNA Ratingo: "honesty before hype"
  */
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { MS_PER_DAY, MS_PER_YEAR } from '../../../../common/constants';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock/clock.port';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 import { aggregateRatings, formatRatingContext } from '../domain/rating-aggregator';
 import {
@@ -39,6 +40,8 @@ import {
  */
 @Injectable()
 export class ShowVerdictService {
+  constructor(@Inject(CLOCK_PORT) private readonly clock: IClockPort) {}
+
   /**
    * Computes verdict for a show.
    */
@@ -48,7 +51,7 @@ export class ShowVerdictService {
 
     // Calculate content age in years
     const contentAgeYears = firstAirDate
-      ? (Date.now() - new Date(firstAirDate).getTime()) / MS_PER_YEAR
+      ? (this.clock.now().getTime() - new Date(firstAirDate).getTime()) / MS_PER_YEAR
       : 0;
     const isOlderContent = contentAgeYears >= AGE_THRESHOLDS.OLDER_CONTENT_YEARS;
     const isClassic = contentAgeYears >= AGE_THRESHOLDS.CLASSIC_YEARS;
@@ -109,7 +112,7 @@ export class ShowVerdictService {
     // New season detection: lastAirDate within 14 days
     const hasRecentSeason = (() => {
       if (!lastAirDate || !isReturning) return false;
-      const now = new Date();
+      const now = this.clock.now();
       const diffMs = now.getTime() - new Date(lastAirDate).getTime();
       const diffDays = diffMs / MS_PER_DAY;
       return diffDays >= 0 && diffDays <= TIME_WINDOWS.NEW_SEASON_DAYS;
@@ -410,10 +413,13 @@ export class ShowVerdictService {
 }
 
 /**
- * Standalone function for backward compatibility.
- * Prefer using ShowVerdictService.compute() in new code.
+ * Standalone function for use outside of NestJS DI (e.g. unit tests, show-details).
+ * Pass `now` explicitly to control time deterministically.
  */
-export function computeShowVerdict(input: ShowVerdictInput): ShowVerdictResult {
-  const service = new ShowVerdictService();
+export function computeShowVerdict(
+  input: ShowVerdictInput,
+  now: Date = new Date(),
+): ShowVerdictResult {
+  const service = new ShowVerdictService({ now: () => now });
   return service.compute(input);
 }

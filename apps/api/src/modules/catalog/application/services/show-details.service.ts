@@ -4,6 +4,7 @@ import { hasRecentEpisode, isNewRelease } from '../../../../common/utils/media.u
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock/clock.port';
 import { computeShowVerdict } from '../../../shared/verdict';
 import { mapBadgeToPopularitySignal } from '../../../shared/verdict/domain/popularity-signal';
 import { ShowNotFoundError } from '../../domain/errors';
@@ -25,6 +26,8 @@ export class ShowDetailsService {
   constructor(
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
     private readonly userStateEnricher: CatalogUserStateEnricher,
   ) {}
 
@@ -79,14 +82,17 @@ export class ShowDetailsService {
     show: ShowDetails,
     card: EnrichedShowDetails['card'],
   ): { verdict: EnrichedShowDetails['verdict']; statusHint: EnrichedShowDetails['statusHint'] } {
-    return computeShowVerdict({
-      status: show.status,
-      externalRatings: show.externalRatings,
-      popularitySignal: mapBadgeToPopularitySignal(card?.badgeKey),
-      popularity: show.stats?.popularityScore ?? null,
-      totalSeasons: show.totalSeasons,
-      lastAirDate: show.lastAirDate,
-      firstAirDate: show.releaseDate ?? null,
-    });
+    return computeShowVerdict(
+      {
+        status: show.status,
+        externalRatings: show.externalRatings,
+        popularitySignal: mapBadgeToPopularitySignal(card?.badgeKey),
+        popularity: show.stats?.popularityScore ?? null,
+        totalSeasons: show.totalSeasons,
+        lastAirDate: show.lastAirDate,
+        firstAirDate: show.releaseDate ?? null,
+      },
+      this.clock.now(),
+    );
   }
 }

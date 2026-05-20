@@ -23,6 +23,7 @@ describe('IngestionSchedulerService', () => {
     config = {
       enabled: true,
       timezone: 'UTC',
+      envPrefix: ENV_PREFIX,
       jobs: [
         {
           name: 'trackedShows',
@@ -198,7 +199,7 @@ describe('IngestionSchedulerService', () => {
 
       await service.onModuleInit();
 
-      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Pattern changed'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Updated: pattern:'));
       expect(ingestionQueue.upsertJobScheduler).toHaveBeenCalledWith(
         `${ENV_PREFIX}:scheduled-tracked-shows`,
         { pattern: '0 8,20 * * *', tz: 'UTC' },

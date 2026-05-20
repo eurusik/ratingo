@@ -1,3 +1,5 @@
+import * as fc from 'fast-check';
+
 import { EligibilityStatus, EvaluationReason } from '../constants/evaluation.constants';
 import { BlockedCountryMode, EligibilityMode } from '../types/policy.types';
 import { checkBlocked, checkNeutral, tryRelaxedModeEligibility } from './country-language.gate';
@@ -162,6 +164,74 @@ describe('CountryLanguageGate', () => {
       );
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('BlockedCountryMode.MAJORITY — property-based invariants', () => {
+    const BLOCKED = ['RU', 'BY', 'IR', 'KP', 'SY'];
+    const ALLOWED = ['US', 'GB', 'UA', 'DE', 'FR', 'PL', 'CA', 'AU'];
+
+    const policy = createPolicy({
+      blockedCountryMode: BlockedCountryMode.MAJORITY,
+      blockedCountries: BLOCKED,
+      allowedCountries: ALLOWED,
+    });
+
+    it('ANY mode always blocks when at least one country is blocked', () => {
+      fc.assert(
+        fc.property(
+          fc.subarray(BLOCKED, { minLength: 1 }),
+          fc.subarray(ALLOWED),
+          (blocked, allowed) => {
+            const countries = [...new Set([...blocked, ...allowed])];
+            const result = checkBlocked(
+              createMediaItem({ originCountries: countries }),
+              createPolicy({
+                blockedCountryMode: BlockedCountryMode.ANY,
+                blockedCountries: BLOCKED,
+              }),
+            );
+            return result.isBlocked === true;
+          },
+        ),
+      );
+    });
+
+    it('MAJORITY mode with ≤ 2 countries behaves like ANY (tie-breaker)', () => {
+      fc.assert(
+        fc.property(
+          fc.subarray(BLOCKED, { minLength: 1, maxLength: 2 }),
+          fc.subarray(ALLOWED, { maxLength: 1 }),
+          (blocked, allowed) => {
+            const countries = [...new Set([...blocked, ...allowed])].slice(0, 2);
+            if (countries.length === 0 || !countries.some((c) => BLOCKED.includes(c))) return true;
+            const result = checkBlocked(createMediaItem({ originCountries: countries }), policy);
+            // For ≤ 2 countries with at least 1 blocked, MAJORITY = ANY = blocked
+            return result.isBlocked === true;
+          },
+        ),
+      );
+    });
+
+    it('MAJORITY mode with 3+ countries: blocked only when strict majority is blocked', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: BLOCKED.length }),
+          fc.integer({ min: 0, max: ALLOWED.length }),
+          (blockedCount, allowedCount) => {
+            const blocked = BLOCKED.slice(0, blockedCount);
+            const allowed = ALLOWED.slice(0, allowedCount);
+            const countries = [...new Set([...blocked, ...allowed])];
+            if (countries.length <= 2) return true;
+
+            const result = checkBlocked(createMediaItem({ originCountries: countries }), policy);
+            const majority = Math.ceil(countries.length / 2);
+            const actualBlocked = countries.filter((c) => BLOCKED.includes(c)).length;
+            const expectedBlocked = actualBlocked >= majority;
+            return result.isBlocked === expectedBlocked;
+          },
+        ),
+      );
     });
   });
 });

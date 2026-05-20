@@ -26,6 +26,8 @@ export interface SchedulerConfig {
   enabled: boolean;
   /** Timezone for all scheduled jobs */
   timezone: string;
+  /** Namespace prefix for Redis keys (derived from APP_ENV or NODE_ENV) */
+  envPrefix: string;
   /** List of scheduled jobs */
   jobs: ScheduledJobConfig[];
 }
@@ -125,6 +127,7 @@ export default registerAs(
   (): SchedulerConfig => ({
     enabled: process.env.SCHEDULER_ENABLED !== 'false', // Enabled by default
     timezone: process.env.SCHEDULER_TIMEZONE || 'UTC',
+    envPrefix: process.env.APP_ENV || process.env.NODE_ENV || 'dev',
     jobs: DEFAULT_JOBS.map(buildJobConfig),
   }),
 );

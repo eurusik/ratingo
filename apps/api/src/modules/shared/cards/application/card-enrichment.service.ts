@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { MS_PER_DAY } from '../../../../common/constants';
 import type { MediaType } from '../../../../common/enums/media-type.enum';
 import type { ImageData } from '../../../../common/types';
+import { CLOCK_PORT, type IClockPort } from '../../clock/clock.port';
 import {
   CARD_LIST_CONTEXT,
   CARD_NEW_RELEASE_WINDOW_DAYS,
@@ -36,6 +37,8 @@ export type CatalogItemWithUserState = {
  */
 @Injectable()
 export class CardEnrichmentService {
+  constructor(@Inject(CLOCK_PORT) private readonly clock: IClockPort) {}
+
   /**
    * Enriches user media items with `mediaSummary.card`.
    *
@@ -105,7 +108,7 @@ export class CardEnrichmentService {
       hasRecentEpisode?: boolean;
     } & CatalogItemWithUserState,
   >(items: T[], opts: { context: CardListContext; now?: Date }): Array<T & { card: CardMeta }> {
-    const now = opts.now ?? new Date();
+    const now = opts.now ?? this.clock.now();
 
     return items.map((item) => {
       const userState = item.userState ?? null;

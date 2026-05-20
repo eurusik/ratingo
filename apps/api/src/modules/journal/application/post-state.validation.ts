@@ -71,7 +71,11 @@ export function isValidPostState(isDraft: boolean, publishedAt: Date | null): bo
  * @returns The post state: 'draft', 'published', or 'scheduled'
  * @throws BadRequestException if state is invalid
  */
-export function getPostState(isDraft: boolean, publishedAt: Date | null): PostState {
+export function getPostState(
+  isDraft: boolean,
+  publishedAt: Date | null,
+  now: Date = new Date(),
+): PostState {
   if (!isValidPostState(isDraft, publishedAt)) {
     throw new BadRequestException({
       code: JOURNAL_ERRORS.INVALID_POST_STATE,
@@ -83,6 +87,5 @@ export function getPostState(isDraft: boolean, publishedAt: Date | null): PostSt
     return 'draft';
   }
 
-  const now = new Date();
   return publishedAt! <= now ? 'published' : 'scheduled';
 }

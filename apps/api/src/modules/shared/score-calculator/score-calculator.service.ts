@@ -200,9 +200,12 @@ export class ScoreCalculatorService {
     const sources: RatingSource[] = [
       { value: imdbRating, weight: ratingWeights.imdb },
       { value: traktRating, weight: ratingWeights.trakt },
-      { value: mcRating ? mcRating / RATING_SCALE_MAX : null, weight: ratingWeights.metacritic },
       {
-        value: rtRating ? rtRating / RATING_SCALE_MAX : null,
+        value: mcRating == null ? null : mcRating / RATING_SCALE_MAX,
+        weight: ratingWeights.metacritic,
+      },
+      {
+        value: rtRating == null ? null : rtRating / RATING_SCALE_MAX,
         weight: ratingWeights.rottenTomatoes,
       },
     ];

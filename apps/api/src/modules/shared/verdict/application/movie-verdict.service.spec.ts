@@ -2,11 +2,13 @@ import { MovieVerdictService, computeMovieVerdict } from './movie-verdict.servic
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 
+const mockClock = { now: () => new Date() };
+
 describe('MovieVerdictService', () => {
   let service: MovieVerdictService;
 
   beforeEach(() => {
-    service = new MovieVerdictService();
+    service = new MovieVerdictService(mockClock);
   });
 
   describe('quality warnings', () => {
