@@ -16,6 +16,22 @@ import { useShowSync } from '../hooks/use-show-sync';
 
 const SEVEN_DAYS_MS = 7 * 24 * 3600 * 1000;
 
+const lsKey = (slug: string) => `ratingo:sync-queued:${slug}`;
+
+function readPersistedQueuedAt(slug: string): string | null {
+  try {
+    const stored = localStorage.getItem(lsKey(slug));
+    if (!stored) return null;
+    if (Date.now() - new Date(stored).getTime() >= SEVEN_DAYS_MS) {
+      localStorage.removeItem(lsKey(slug));
+      return null;
+    }
+    return stored;
+  } catch {
+    return null;
+  }
+}
+
 interface SyncButtonProps {
   slug: string;
   lastSyncedAt?: string | null;
@@ -29,7 +45,12 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
   const openLogin = useAuthModalStore((s) => s.openLogin);
   const { mutate, isPending } = useShowSync(slug);
 
-  const [justQueuedAt, setJustQueuedAt] = useState<string | null>(null);
+  // Persisted in localStorage so cooldown survives full page reloads.
+  // lastSyncedAt from the server is set only after the job completes (async),
+  // so we track the queue time locally to lock the button immediately.
+  const [justQueuedAt, setJustQueuedAt] = useState<string | null>(() =>
+    typeof window !== 'undefined' ? readPersistedQueuedAt(slug) : null,
+  );
   const [cooldownExpiresAt, setCooldownExpiresAt] = useState<string | null>(null);
 
   const effectiveLastSyncedAt = justQueuedAt ?? lastSyncedAt;
@@ -54,7 +75,9 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
     mutate(undefined, {
       onSuccess: (result) => {
         if (result.queued) {
-          setJustQueuedAt(new Date().toISOString());
+          const now = new Date().toISOString();
+          setJustQueuedAt(now);
+          try { localStorage.setItem(lsKey(slug), now); } catch { /* ignore */ }
         } else if (result.cooldownExpiresAt) {
           setCooldownExpiresAt(result.cooldownExpiresAt);
         }
