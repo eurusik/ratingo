@@ -266,11 +266,19 @@ export class SyncMediaService {
         `${logPrefix} TMDB episode fallback: filled ${emptySeasons.length} season(s)`,
       );
 
+      const totalEpisodesFromSeasons = updatedSeasons
+        .filter((s) => s.number > 0)
+        .reduce((sum, s) => sum + (s.episodeCount ?? 0), 0);
+
       return {
         ...media,
         details: {
           ...media.details,
           seasons: updatedSeasons,
+          totalEpisodes:
+            totalEpisodesFromSeasons > (media.details?.totalEpisodes ?? 0)
+              ? totalEpisodesFromSeasons
+              : media.details?.totalEpisodes,
           // TMDB is lower priority than TVMaze for air dates.
           // Existing value (set by TVMaze) takes precedence — only use TMDB if nothing else available.
           lastAirDate: media.details?.lastAirDate ?? lastAirDate,

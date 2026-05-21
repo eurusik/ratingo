@@ -457,6 +457,76 @@ describe('TvMazeEnrichmentService', () => {
       expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
     });
 
+    it('should update totalEpisodes when TVMaze finds more episodes than TMDB metadata', async () => {
+      const showWithStaleTmdbCount = {
+        ...mockShow,
+        details: {
+          ...mockShow.details,
+          totalEpisodes: 6,
+          seasons: [{ number: 1, name: 'Season 1', tmdbId: 101, episodeCount: 6, episodes: [] }],
+        },
+      };
+
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue(
+        Array.from({ length: 12 }, (_, i) => ({
+          seasonNumber: 1,
+          number: i + 1,
+          title: `Episode ${i + 1}`,
+          airDate: new Date('2024-01-01'),
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        })),
+      );
+
+      const result = await service.enrich(showWithStaleTmdbCount);
+
+      expect(result.details?.totalEpisodes).toBe(12);
+      expect(result.details?.seasons?.[0].episodeCount).toBe(12);
+    });
+
+    it('should exclude Season 0 from totalEpisodes calculation', async () => {
+      const showWithSpecialsAndSeason = {
+        ...mockShow,
+        details: {
+          totalEpisodes: 12,
+          seasons: [
+            { number: 0, name: 'Specials', tmdbId: 100, episodeCount: 3, episodes: [] },
+            { number: 1, name: 'Season 1', tmdbId: 101, episodeCount: 12, episodes: [] },
+          ],
+        },
+      };
+
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+        ...Array.from({ length: 3 }, (_, i) => ({
+          seasonNumber: 0,
+          number: i + 1,
+          title: `Special ${i + 1}`,
+          airDate: new Date('2020-01-01'),
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        })),
+        ...Array.from({ length: 12 }, (_, i) => ({
+          seasonNumber: 1,
+          number: i + 1,
+          title: `Episode ${i + 1}`,
+          airDate: new Date('2024-01-01'),
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        })),
+      ]);
+
+      const result = await service.enrich(showWithSpecialsAndSeason);
+
+      // Season 0 must not inflate totalEpisodes
+      expect(result.details?.totalEpisodes).toBe(12);
+    });
+
     it('should deduplicate when originalTitle equals title', async () => {
       const mediaWithSameNames = {
         ...mockShow,

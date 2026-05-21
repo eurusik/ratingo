@@ -563,6 +563,41 @@ describe('SyncMediaService', () => {
 
       expect(tmdbAdapter.getSeasonEpisodes).not.toHaveBeenCalled();
     });
+
+    it('should update totalEpisodes after TMDB episode fallback', async () => {
+      const showWithStaleTotalEpisodes: any = {
+        ...mockShowWithEmptyEpisodes,
+        details: {
+          totalEpisodes: 4,
+          seasons: [{ number: 1, name: 'Сезон 1', tmdbId: 101, episodeCount: 8, episodes: [] }],
+        },
+      };
+
+      tmdbAdapter.getShow.mockResolvedValue({ ...showWithStaleTotalEpisodes });
+      tvMazeEnrichment.enrich.mockResolvedValue({ ...showWithStaleTotalEpisodes });
+
+      const tmdbEpisodes = Array.from({ length: 8 }, (_, i) => ({
+        tmdbId: 1000 + i,
+        number: i + 1,
+        title: `Episode ${i + 1}`,
+        airDate: new Date('2026-01-15'),
+        runtime: 50,
+        overview: null,
+        stillPath: null,
+        rating: null,
+      }));
+      tmdbAdapter.getSeasonEpisodes.mockResolvedValue(tmdbEpisodes);
+
+      await service.syncShow(310537);
+
+      expect(mediaRepository.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          details: expect.objectContaining({
+            totalEpisodes: 8,
+          }),
+        }),
+      );
+    });
   });
 
   describe('provider normalization', () => {

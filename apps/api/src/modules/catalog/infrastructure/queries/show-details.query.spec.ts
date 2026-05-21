@@ -153,6 +153,10 @@ describe('ShowDetailsQuery', () => {
     expect(res?.seasons).toHaveLength(2);
     expect(res?.seasons[0].episodes).toHaveLength(2);
     expect(res?.seasons[0].episodes![0].title).toBe('Ep1');
+    // episodeCount should reflect actual rows, not stored value (10 stored, 2 rows)
+    expect(res?.seasons[0].episodeCount).toBe(2);
+    // season with no rows keeps stored episodeCount
+    expect(res?.seasons[1].episodeCount).toBe(10);
     expect(CreditsMapper.toDto).toHaveBeenCalled();
     expect(MediaWatchOffersMapper.toAvailability).toHaveBeenCalled();
   });
