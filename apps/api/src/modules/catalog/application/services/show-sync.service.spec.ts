@@ -35,6 +35,7 @@ describe('ShowSyncService', () => {
 
     cooldownGate = {
       tryAcquire: jest.fn(),
+      release: jest.fn().mockResolvedValue(undefined),
     };
 
     clock = {
@@ -165,11 +166,21 @@ describe('ShowSyncService', () => {
     });
 
     describe('when import job port throws', () => {
-      it('re-throws the error', async () => {
+      beforeEach(() => {
         cooldownGate.tryAcquire.mockResolvedValue({ acquired: true });
         importJobPort.queueImport.mockRejectedValue(new Error('Queue unavailable'));
+      });
 
+      it('re-throws the error', async () => {
         await expect(service.requestSync('test-show')).rejects.toThrow('Queue unavailable');
+      });
+
+      it('releases the cooldown key so the user is not blocked for 7 days', async () => {
+        await expect(service.requestSync('test-show')).rejects.toThrow();
+
+        expect(cooldownGate.release).toHaveBeenCalledWith(
+          `sync:cooldown:v1:show:${mockShowIdentity.id}`,
+        );
       });
     });
   });

@@ -73,7 +73,7 @@ describe('SyncMediaService', () => {
     const mockMediaRepository = {
       upsert: jest.fn(),
       updateIngestionStatus: jest.fn(),
-      findByTmdbId: jest.fn(),
+      findByTmdbId: jest.fn().mockResolvedValue({ id: 'media-item-1' }),
       updateLastSyncedAt: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -149,6 +149,10 @@ describe('SyncMediaService', () => {
           ratingRottenTomatoes: 79,
           ratingoScore: 75,
         }),
+      );
+      expect(mediaRepository.updateLastSyncedAt).toHaveBeenCalledWith(
+        'media-item-1',
+        expect.any(Date),
       );
     });
 

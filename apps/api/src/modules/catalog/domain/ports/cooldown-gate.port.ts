@@ -26,6 +26,14 @@ export interface ICooldownGate {
    * Returns acquired=false with remaining TTL if already locked.
    */
   tryAcquire(key: string, ttlSeconds: number): Promise<CooldownResult>;
+
+  /**
+   * Releases a previously acquired cooldown lock.
+   * Used to undo an acquired lock when the associated work fails,
+   * so the cooldown does not block future attempts unnecessarily.
+   * Implementations must handle missing keys gracefully (no-op).
+   */
+  release(key: string): Promise<void>;
 }
 
 export const COOLDOWN_GATE_PORT = Symbol('COOLDOWN_GATE_PORT');

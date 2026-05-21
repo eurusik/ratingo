@@ -74,6 +74,16 @@ const BASE_PROPS: DetailsHeroProps = {
 // ---------------------------------------------------------------------------
 
 describe('DetailsHero — CommunityRating integration', () => {
+  it('renders SyncButton when slug is provided', () => {
+    render(<DetailsHero {...BASE_PROPS} slug="test-show" />);
+    expect(screen.getByTestId('sync-button')).toBeInTheDocument();
+  });
+
+  it('does NOT render SyncButton when slug is absent', () => {
+    render(<DetailsHero {...BASE_PROPS} />);
+    expect(screen.queryByTestId('sync-button')).not.toBeInTheDocument();
+  });
+
   it('renders CommunityRating when both communityAverageRating and communityRatingCount are present', () => {
     render(
       <DetailsHero

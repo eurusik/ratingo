@@ -40,4 +40,9 @@ export class RedisCooldownGateAdapter implements ICooldownGate {
     this.logger.debug(`Cooldown blocked: ${key} (${seconds}s remaining)`);
     return { acquired: false, expiresInSeconds: seconds };
   }
+
+  async release(key: string): Promise<void> {
+    await this.redis.del(key);
+    this.logger.debug(`Cooldown released: ${key}`);
+  }
 }

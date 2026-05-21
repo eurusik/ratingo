@@ -17,6 +17,7 @@ describe('CatalogShowsController', () => {
   let userStateEnricher: any;
   let showDetailsService: any;
   let showsCalendarService: any;
+  let showSyncService: any;
 
   beforeEach(async () => {
     const mockShowRepository = {
@@ -81,6 +82,7 @@ describe('CatalogShowsController', () => {
     userStateEnricher = module.get(CatalogUserStateEnricher);
     showDetailsService = module.get(ShowDetailsService);
     showsCalendarService = module.get(ShowsCalendarService);
+    showSyncService = module.get(ShowSyncService);
   });
 
   describe('getTrendingShows', () => {
@@ -203,6 +205,18 @@ describe('CatalogShowsController', () => {
       showDetailsService.getBySlug.mockRejectedValue(new ShowNotFoundError('missing'));
 
       await expect(controller.getShowBySlug('missing')).rejects.toThrow(ShowNotFoundError);
+    });
+  });
+
+  describe('requestShowSync', () => {
+    it('delegates slug to ShowSyncService.requestSync and returns the result', async () => {
+      const expectedResult = { queued: true, lastSyncedAt: null, cooldownExpiresAt: null };
+      showSyncService.requestSync.mockResolvedValue(expectedResult);
+
+      const result = await controller.requestShowSync('breaking-bad');
+
+      expect(showSyncService.requestSync).toHaveBeenCalledWith('breaking-bad');
+      expect(result).toEqual(expectedResult);
     });
   });
 });

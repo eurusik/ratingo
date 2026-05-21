@@ -34,7 +34,9 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
     effectiveLastSyncedAt != null &&
     Date.now() - new Date(effectiveLastSyncedAt).getTime() < SEVEN_DAYS_MS;
 
-  const isOnCooldown = cooldownExpiresAt != null || isInitiallyCooling;
+  const hasActiveServerCooldown =
+    cooldownExpiresAt != null && new Date(cooldownExpiresAt).getTime() > Date.now();
+  const isOnCooldown = hasActiveServerCooldown || isInitiallyCooling;
   const isDisabled = isPending || isOnCooldown;
 
   const handleSync = () => {
@@ -50,7 +52,7 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
     });
   };
 
-  const cooldownDate = cooldownExpiresAt ?? (isInitiallyCooling && effectiveLastSyncedAt
+  const cooldownDate = (hasActiveServerCooldown ? cooldownExpiresAt : null) ?? (isInitiallyCooling && effectiveLastSyncedAt
     ? new Date(new Date(effectiveLastSyncedAt).getTime() + SEVEN_DAYS_MS).toISOString()
     : null);
 
