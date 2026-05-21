@@ -42,11 +42,19 @@ export class TvMazeEnrichmentService {
       const nextAirDate = this.findNextAirDate(episodes);
       const lastAirDate = this.findLastAirDate(episodes);
 
+      const tvmazeTotalEpisodes = mergedSeasons
+        .filter((s) => s.number > 0)
+        .reduce((sum, s) => sum + (s.episodeCount ?? 0), 0);
+
       return {
         ...media,
         details: {
           ...media.details,
           seasons: mergedSeasons,
+          totalEpisodes:
+            tvmazeTotalEpisodes > (media.details?.totalEpisodes ?? 0)
+              ? tvmazeTotalEpisodes
+              : media.details?.totalEpisodes,
           nextAirDate: nextAirDate ?? media.details?.nextAirDate,
           // TVMaze overrides TMDB's lastAirDate as TVMaze is "time authority"
           lastAirDate: lastAirDate ?? media.details?.lastAirDate,

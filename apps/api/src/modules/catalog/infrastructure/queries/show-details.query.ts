@@ -126,12 +126,16 @@ export class ShowDetailsQuery {
       episodesBySeason.set(ep.seasonNumber, existing);
     }
 
-    // Attach episodes to seasons
-    return seasonsData.map((season) => ({
-      ...season,
-      episodes: (episodesBySeason.get(season.number) ?? []).map(
+    // Attach episodes to seasons; override stored episodeCount with actual row count
+    return seasonsData.map((season) => {
+      const episodes = (episodesBySeason.get(season.number) ?? []).map(
         ({ seasonNumber: _seasonNumber, ...ep }) => ep,
-      ),
-    }));
+      );
+      return {
+        ...season,
+        episodeCount: episodes.length > 0 ? episodes.length : season.episodeCount,
+        episodes,
+      };
+    });
   }
 }
