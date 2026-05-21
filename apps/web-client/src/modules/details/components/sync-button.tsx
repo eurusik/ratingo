@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -48,9 +48,13 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
   // Persisted in localStorage so cooldown survives full page reloads.
   // lastSyncedAt from the server is set only after the job completes (async),
   // so we track the queue time locally to lock the button immediately.
-  const [justQueuedAt, setJustQueuedAt] = useState<string | null>(() =>
-    typeof window !== 'undefined' ? readPersistedQueuedAt(slug) : null,
-  );
+  // useEffect (not lazy initializer) because useState initializer runs on the server during SSR
+  // and React does NOT re-run it during hydration — localStorage would never be read on reload.
+  const [justQueuedAt, setJustQueuedAt] = useState<string | null>(null);
+  useEffect(() => {
+    const stored = readPersistedQueuedAt(slug);
+    if (stored !== null) setJustQueuedAt(stored);
+  }, [slug]);
   const [cooldownExpiresAt, setCooldownExpiresAt] = useState<string | null>(null);
 
   const effectiveLastSyncedAt = justQueuedAt ?? lastSyncedAt;
