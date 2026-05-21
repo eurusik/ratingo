@@ -54,12 +54,15 @@ export class ShowSyncService {
       };
     }
 
+    const { token } = result;
+
     try {
       await this.importJobPort.queueImport(show.tmdbId, MediaType.SHOW);
       this.logger.log(`Sync queued for show ${slug} (tmdbId: ${show.tmdbId})`);
     } catch (error) {
       // Release the cooldown lock so a transient queue failure doesn't block the user for 7 days.
-      await this.cooldownGate.release(cooldownKey);
+      // Passes the fencing token to ensure we only release the lock we acquired.
+      await this.cooldownGate.release(cooldownKey, token);
       this.logger.warn(`Failed to queue sync for show ${slug}: ${error.message}`);
       throw error;
     }

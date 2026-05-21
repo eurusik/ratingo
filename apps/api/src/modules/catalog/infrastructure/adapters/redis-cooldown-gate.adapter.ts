@@ -1,4 +1,6 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
+
+import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 
 import IORedis from 'ioredis';
 
@@ -6,43 +8,62 @@ import { type CooldownResult, type ICooldownGate } from '../../domain/ports/cool
 
 export const COOLDOWN_REDIS_CLIENT = Symbol('COOLDOWN_REDIS_CLIENT');
 
-// Atomically attempts SET NX EX; returns [1, ttl] if acquired, [0, remaining_ttl] if blocked.
+// Atomically attempts SET NX EX with a unique token value.
+// Returns [1, ttl] if acquired, [0, remaining_ttl] if blocked.
 // Handles TTL edge cases: -2 (expired between SET and TTL) → treats as acquired (retry safe);
-// -1 (no expiry, should not happen) → returns 1 second to unblock quickly.
+// -1 (no expiry, should not happen) → returns [0, 1] to unblock quickly without masking the bug.
 const LUA_TRY_ACQUIRE = `
 local set = redis.call('SET', KEYS[1], ARGV[1], 'NX', 'EX', ARGV[2])
 if set then return {1, tonumber(ARGV[2])} end
 local ttl = redis.call('TTL', KEYS[1])
-if ttl < 0 then return {1, tonumber(ARGV[2])} end
+if ttl == -2 then return {1, tonumber(ARGV[2])} end
+if ttl == -1 then return {0, 1} end
 return {0, ttl}
 `;
 
+// Compares stored token before deleting — prevents releasing another acquirer's lock.
+const LUA_RELEASE = `
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+  return redis.call('DEL', KEYS[1])
+end
+return 0
+`;
+
 @Injectable()
-export class RedisCooldownGateAdapter implements ICooldownGate {
+export class RedisCooldownGateAdapter implements ICooldownGate, OnModuleDestroy {
   private readonly logger = new Logger(RedisCooldownGateAdapter.name);
 
   constructor(@Inject(COOLDOWN_REDIS_CLIENT) private readonly redis: IORedis) {}
 
+  async onModuleDestroy() {
+    await this.redis.quit().catch(() => this.redis.disconnect());
+  }
+
   async tryAcquire(key: string, ttlSeconds: number): Promise<CooldownResult> {
+    const token = randomUUID();
     const [acquired, seconds] = (await this.redis.eval(
       LUA_TRY_ACQUIRE,
       1,
       key,
-      '1',
+      token,
       String(ttlSeconds),
     )) as [number, number];
 
     if (acquired === 1) {
       this.logger.debug(`Cooldown acquired: ${key} (TTL: ${ttlSeconds}s)`);
-      return { acquired: true };
+      return { acquired: true, token };
     }
 
     this.logger.debug(`Cooldown blocked: ${key} (${seconds}s remaining)`);
     return { acquired: false, expiresInSeconds: seconds };
   }
 
-  async release(key: string): Promise<void> {
-    await this.redis.del(key);
-    this.logger.debug(`Cooldown released: ${key}`);
+  async release(key: string, token: string): Promise<void> {
+    const deleted = (await this.redis.eval(LUA_RELEASE, 1, key, token)) as number;
+    if (deleted) {
+      this.logger.debug(`Cooldown released: ${key}`);
+    } else {
+      this.logger.debug(`Cooldown release skipped (token mismatch or already expired): ${key}`);
+    }
   }
 }

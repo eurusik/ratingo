@@ -464,7 +464,12 @@
       "cooldown": "Next sync available {date}",
       "autoSyncOff": "Auto-sync disabled — nobody follows this show",
       "queued": "Sync queued",
-      "alreadyQueued": "Already in queue"
+      "alreadyQueued": "Already in queue",
+      "tooltipDescription": "Updates ratings, episodes and metadata from TMDB and TVMaze",
+      "tooltipLastSync": "Last synced: {date}",
+      "tooltipNeverSync": "Never synced",
+      "tooltipCooldown": "Available once every 7 days",
+      "error": "Sync failed. Please try again later"
     }
   },
   "reviews": {
@@ -744,8 +749,16 @@
       "showingCount": "{hidden} {hiddenItem} hidden",
       "showAll": "Show all",
       "items": {
-        "movie": { "one": "movie", "few": "movies", "many": "movies" },
-        "show": { "one": "show", "few": "shows", "many": "shows" }
+        "movie": {
+          "one": "movie",
+          "few": "movies",
+          "many": "movies"
+        },
+        "show": {
+          "one": "show",
+          "few": "shows",
+          "many": "shows"
+        }
       }
     }
   },
@@ -810,8 +823,16 @@
       "showingCount": "{hidden} {hiddenItem} hidden",
       "showAll": "Show all",
       "items": {
-        "movie": { "one": "movie", "few": "movies", "many": "movies" },
-        "show": { "one": "show", "few": "shows", "many": "shows" }
+        "movie": {
+          "one": "movie",
+          "few": "movies",
+          "many": "movies"
+        },
+        "show": {
+          "one": "show",
+          "few": "shows",
+          "many": "shows"
+        }
       }
     }
   },
@@ -1015,7 +1036,7 @@
       "comingSoon": "Coming soon",
       "back": "Back",
       "continue": "Continue",
-      "maxSizeHint": "max\u00a05\u00a0MB",
+      "maxSizeHint": "max 5 MB",
       "filterAll": "All",
       "filterRatings": "Ratings",
       "filterWatchlist": "Watchlist",
@@ -1616,68 +1637,68 @@
       }
     },
     "journal": {
-        "title": "Journal",
-        "newPost": "New Post",
-        "editPost": "Edit Post",
-        "status": {
-          "draft": "Draft",
-          "published": "Published",
-          "scheduled": "Scheduled"
-        },
-        "columns": {
-          "title": "Title",
-          "type": "Type",
-          "status": "Status",
-          "publishedAt": "Published At",
-          "actions": "Actions"
-        },
-        "actions": {
-          "edit": "Edit",
-          "delete": "Delete",
-          "publish": "Publish",
-          "publishNow": "Publish Now",
-          "unpublish": "Unpublish",
-          "view": "View"
-        },
-        "form": {
-          "title": "Title",
-          "titlePlaceholder": "Enter title",
-          "slug": "URL Slug",
-          "slugPlaceholder": "auto-generated-slug",
-          "type": "Post Type",
-          "body": "Content",
-          "bodyPlaceholder": "Write your post content (Markdown supported)",
-          "featuredImage": "Featured Image",
-          "featuredImageHint": "Drag and drop or click to upload",
-          "metaTitle": "SEO Title",
-          "metaTitlePlaceholder": "Title for search engines",
-          "metaDescription": "SEO Description",
-          "metaDescriptionPlaceholder": "Description for search engines",
-          "publishedAt": "Publish Date",
-          "isDraft": "Draft",
-          "save": "Save",
-          "saving": "Saving...",
-          "publish": "Publish",
-          "saveAsDraft": "Save as Draft",
-          "errors": {
-            "titleRequired": "Title is required",
-            "bodyRequired": "Post body is required"
-          }
-        },
-        "editor": {
-          "preview": "Preview",
-          "write": "Write",
-          "markdown": "Markdown",
-          "wysiwyg": "Visual"
-        },
-        "deleteConfirm": {
-          "title": "Delete post?",
-          "description": "This action cannot be undone. The post will be permanently deleted.",
-          "confirm": "Delete",
-          "cancel": "Cancel"
-        },
-        "empty": "No posts yet",
-        "uploadingImage": "Uploading image..."
+      "title": "Journal",
+      "newPost": "New Post",
+      "editPost": "Edit Post",
+      "status": {
+        "draft": "Draft",
+        "published": "Published",
+        "scheduled": "Scheduled"
+      },
+      "columns": {
+        "title": "Title",
+        "type": "Type",
+        "status": "Status",
+        "publishedAt": "Published At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "publish": "Publish",
+        "publishNow": "Publish Now",
+        "unpublish": "Unpublish",
+        "view": "View"
+      },
+      "form": {
+        "title": "Title",
+        "titlePlaceholder": "Enter title",
+        "slug": "URL Slug",
+        "slugPlaceholder": "auto-generated-slug",
+        "type": "Post Type",
+        "body": "Content",
+        "bodyPlaceholder": "Write your post content (Markdown supported)",
+        "featuredImage": "Featured Image",
+        "featuredImageHint": "Drag and drop or click to upload",
+        "metaTitle": "SEO Title",
+        "metaTitlePlaceholder": "Title for search engines",
+        "metaDescription": "SEO Description",
+        "metaDescriptionPlaceholder": "Description for search engines",
+        "publishedAt": "Publish Date",
+        "isDraft": "Draft",
+        "save": "Save",
+        "saving": "Saving...",
+        "publish": "Publish",
+        "saveAsDraft": "Save as Draft",
+        "errors": {
+          "titleRequired": "Title is required",
+          "bodyRequired": "Post body is required"
+        }
+      },
+      "editor": {
+        "preview": "Preview",
+        "write": "Write",
+        "markdown": "Markdown",
+        "wysiwyg": "Visual"
+      },
+      "deleteConfirm": {
+        "title": "Delete post?",
+        "description": "This action cannot be undone. The post will be permanently deleted.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "empty": "No posts yet",
+      "uploadingImage": "Uploading image..."
     }
   },
   "calendar": {

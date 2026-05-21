@@ -166,6 +166,10 @@ export class SyncMediaService {
       // don't block the user-visible cooldown from reflecting actual sync work done)
       if (mediaItem) {
         await this.mediaRepository.updateLastSyncedAt(mediaItem.id, this.clock.now());
+      } else {
+        this.logger.warn(
+          `${logPrefix} lastSyncedAt not recorded — findByTmdbId returned null after persist`,
+        );
       }
 
       // Step 9: Normalize watch providers

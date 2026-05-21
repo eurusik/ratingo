@@ -74,7 +74,7 @@ describe('ShowSyncService', () => {
 
     describe('when cooldown is not active (gate acquired)', () => {
       beforeEach(() => {
-        cooldownGate.tryAcquire.mockResolvedValue({ acquired: true });
+        cooldownGate.tryAcquire.mockResolvedValue({ acquired: true, token: 'test-token-abc' });
       });
 
       it('queues an import job for the show', async () => {
@@ -157,7 +157,7 @@ describe('ShowSyncService', () => {
           ...mockShowIdentity,
           lastSyncedAt: null,
         });
-        cooldownGate.tryAcquire.mockResolvedValue({ acquired: true });
+        cooldownGate.tryAcquire.mockResolvedValue({ acquired: true, token: 'test-token-xyz' });
 
         const result = await service.requestSync('test-show');
 
@@ -167,7 +167,7 @@ describe('ShowSyncService', () => {
 
     describe('when import job port throws', () => {
       beforeEach(() => {
-        cooldownGate.tryAcquire.mockResolvedValue({ acquired: true });
+        cooldownGate.tryAcquire.mockResolvedValue({ acquired: true, token: 'test-token-fail' });
         importJobPort.queueImport.mockRejectedValue(new Error('Queue unavailable'));
       });
 
@@ -175,11 +175,12 @@ describe('ShowSyncService', () => {
         await expect(service.requestSync('test-show')).rejects.toThrow('Queue unavailable');
       });
 
-      it('releases the cooldown key so the user is not blocked for 7 days', async () => {
+      it('releases the cooldown key with fencing token so the user is not blocked for 7 days', async () => {
         await expect(service.requestSync('test-show')).rejects.toThrow();
 
         expect(cooldownGate.release).toHaveBeenCalledWith(
           `sync:cooldown:v1:show:${mockShowIdentity.id}`,
+          'test-token-fail',
         );
       });
     });

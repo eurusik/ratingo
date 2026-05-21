@@ -3,10 +3,12 @@
 import { useState } from 'react';
 
 import { RotateCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useAuth } from '@/core/auth/auth-context';
 import { useAuthModalStore } from '@/core/auth/auth-modal.store';
 import { useTranslation, useLocale } from '@/shared/i18n';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/utils';
 import { formatRelativeDate } from '@/shared/utils/format';
 
@@ -57,6 +59,9 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
           setCooldownExpiresAt(result.cooldownExpiresAt);
         }
       },
+      onError: () => {
+        toast.error(dict.details.sync.error);
+      },
     });
   };
 
@@ -89,21 +94,40 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
     label += ` · ${dict.details.sync.autoSyncOff}`;
   }
 
+  const tooltipLastSyncLine = effectiveLastSyncedAt
+    ? dict.details.sync.tooltipLastSync.replace(
+        '{date}',
+        formatRelativeDate(effectiveLastSyncedAt, locale).text,
+      )
+    : dict.details.sync.tooltipNeverSync;
+
   return (
-    // py-2.5 / -my-2.5 expands the tap target to ~44px on mobile without affecting visual spacing
-    <button
-      onClick={handleSync}
-      disabled={isDisabled}
-      className={cn(
-        'flex items-center gap-1.5 text-xs py-2.5 -my-2.5 w-full text-left transition-colors',
-        isDisabled
-          ? 'text-cinema-text-disabled cursor-not-allowed'
-          : 'text-cinema-text-muted hover:text-cinema-text-secondary active:opacity-70 cursor-pointer',
-      )}
-      aria-label={dict.details.sync.button}
-    >
-      <RotateCw className={cn('w-3 h-3 shrink-0', isPending && 'animate-spin')} />
-      <span>{label}</span>
-    </button>
+    <TooltipProvider delayDuration={400}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {/* py-2.5 / -my-2.5 expands the tap target to ~44px on mobile without affecting visual spacing */}
+          <button
+            onClick={handleSync}
+            disabled={isDisabled}
+            className={cn(
+              'flex items-center gap-1.5 text-xs py-2.5 -my-2.5 w-full text-left transition-colors',
+              isDisabled
+                ? 'text-cinema-text-disabled cursor-not-allowed'
+                : 'text-cinema-text-muted hover:text-cinema-text-secondary active:opacity-70 cursor-pointer',
+            )}
+            aria-label={dict.details.sync.button}
+          >
+            <RotateCw className={cn('w-3 h-3 shrink-0', isPending && 'animate-spin')} />
+            <span>{label}</span>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-56 space-y-1 text-center">
+          <p className="font-medium">{dict.details.sync.button}</p>
+          <p className="text-primary-foreground/70">{dict.details.sync.tooltipDescription}</p>
+          <p className="text-primary-foreground/70">{tooltipLastSyncLine}</p>
+          <p className="text-primary-foreground/50 text-[10px]">{dict.details.sync.tooltipCooldown}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
