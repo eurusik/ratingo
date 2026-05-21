@@ -27,9 +27,7 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
   const openLogin = useAuthModalStore((s) => s.openLogin);
   const { mutate, isPending } = useShowSync(slug);
 
-  // Tracks when this session queued a sync (overrides stale SSR lastSyncedAt for cooldown UI)
   const [justQueuedAt, setJustQueuedAt] = useState<string | null>(null);
-  // Tracks cooldown expiry returned by API when already on cooldown
   const [cooldownExpiresAt, setCooldownExpiresAt] = useState<string | null>(null);
 
   const effectiveLastSyncedAt = justQueuedAt ?? lastSyncedAt;
@@ -41,8 +39,8 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
   const hasActiveServerCooldown =
     cooldownExpiresAt != null && new Date(cooldownExpiresAt).getTime() > Date.now();
   const isOnCooldown = hasActiveServerCooldown || isInitiallyCooling;
-  // Disable the button at the HTML level only for authenticated users on cooldown/loading.
-  // Unauthenticated users must always be able to click to open the login modal.
+
+  // Disable at HTML level only for authenticated users — guests must always click to open login modal
   const isDisabled = isAuthenticated && (isPending || isOnCooldown);
 
   const handleSync = () => {
@@ -50,7 +48,7 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
       openLogin();
       return;
     }
-    if (isDisabled) return;
+    if (isPending || isOnCooldown) return;
     mutate(undefined, {
       onSuccess: (result) => {
         if (result.queued) {
@@ -62,56 +60,50 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
     });
   };
 
-  const cooldownDate = (hasActiveServerCooldown ? cooldownExpiresAt : null) ?? (isInitiallyCooling && effectiveLastSyncedAt
-    ? new Date(new Date(effectiveLastSyncedAt).getTime() + SEVEN_DAYS_MS).toISOString()
-    : null);
+  const cooldownDate =
+    (hasActiveServerCooldown ? cooldownExpiresAt : null) ??
+    (isInitiallyCooling && effectiveLastSyncedAt
+      ? new Date(new Date(effectiveLastSyncedAt).getTime() + SEVEN_DAYS_MS).toISOString()
+      : null);
 
   const isUntracked = totalWatchers != null && totalWatchers === 0;
 
+  let label: string;
+  if (isPending) {
+    label = dict.details.sync.button;
+  } else if (isOnCooldown && cooldownDate) {
+    label = dict.details.sync.cooldown.replace(
+      '{date}',
+      formatRelativeDate(cooldownDate, locale).text,
+    );
+  } else if (effectiveLastSyncedAt) {
+    label = dict.details.sync.lastSynced.replace(
+      '{time}',
+      formatRelativeDate(effectiveLastSyncedAt, locale).text,
+    );
+  } else {
+    label = dict.details.sync.neverSynced;
+  }
+
+  if (isUntracked) {
+    label += ` · ${dict.details.sync.autoSyncOff}`;
+  }
+
   return (
-    <div className="flex flex-col gap-1 pt-1">
-      <button
-        onClick={handleSync}
-        disabled={isDisabled}
-        className={cn(
-          'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border transition-colors w-fit',
-          isDisabled
-            ? 'border-cinema-border text-cinema-text-disabled cursor-not-allowed'
-            : 'border-cinema-border text-cinema-text-secondary hover:text-cinema-text-primary hover:border-cinema-border-hover',
-        )}
-        aria-label={dict.details.sync.button}
-      >
-        <RotateCw
-          className={cn('w-3 h-3', isPending && 'animate-spin')}
-        />
-        <span>{dict.details.sync.button}</span>
-      </button>
-
-      {isOnCooldown && cooldownDate && (
-        <p className="text-[11px] text-cinema-text-disabled">
-          {dict.details.sync.cooldown.replace(
-            '{date}',
-            formatRelativeDate(cooldownDate, locale).text,
-          )}
-        </p>
+    // py-2.5 / -my-2.5 expands the tap target to ~44px on mobile without affecting visual spacing
+    <button
+      onClick={handleSync}
+      disabled={isDisabled}
+      className={cn(
+        'flex items-center gap-1.5 text-xs py-2.5 -my-2.5 w-full text-left transition-colors',
+        isDisabled
+          ? 'text-cinema-text-disabled cursor-not-allowed'
+          : 'text-cinema-text-muted hover:text-cinema-text-secondary active:opacity-70 cursor-pointer',
       )}
-
-      {!isOnCooldown && effectiveLastSyncedAt && (
-        <p className="text-[11px] text-cinema-text-muted">
-          {dict.details.sync.lastSynced.replace(
-            '{time}',
-            formatRelativeDate(effectiveLastSyncedAt, locale).text,
-          )}
-        </p>
-      )}
-
-      {!isOnCooldown && !effectiveLastSyncedAt && (
-        <p className="text-[11px] text-cinema-text-muted">{dict.details.sync.neverSynced}</p>
-      )}
-
-      {isUntracked && (
-        <p className="text-[11px] text-cinema-text-disabled">{dict.details.sync.autoSyncOff}</p>
-      )}
-    </div>
+      aria-label={dict.details.sync.button}
+    >
+      <RotateCw className={cn('w-3 h-3 shrink-0', isPending && 'animate-spin')} />
+      <span>{label}</span>
+    </button>
   );
 }

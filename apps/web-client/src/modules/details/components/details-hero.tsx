@@ -85,10 +85,15 @@ export function DetailsHero({
               </div>
 
               {/* Meta line */}
-              <p className="text-sm md:text-base text-cinema-text-secondary">
-                {formatYear(releaseDate)}
-                {genres && genres.length > 0 && ` • ${genres.map((g) => g.name).join(', ')}`}
-              </p>
+              <div className="space-y-0.5">
+                <p className="text-sm md:text-base text-cinema-text-secondary">
+                  {formatYear(releaseDate)}
+                  {genres && genres.length > 0 && ` • ${genres.map((g) => g.name).join(', ')}`}
+                </p>
+                {slug && (
+                  <SyncButton slug={slug} lastSyncedAt={lastSyncedAt} totalWatchers={totalWatchers} />
+                )}
+              </div>
 
               {/* Ratingo score + User rating */}
               <div className="space-y-3">
@@ -102,9 +107,6 @@ export function DetailsHero({
                 )}
                 {mediaItemId && mediaType && (
                   <RatingPresets mediaItemId={mediaItemId} mediaType={mediaType} />
-                )}
-                {slug && (
-                  <SyncButton slug={slug} lastSyncedAt={lastSyncedAt} totalWatchers={totalWatchers} />
                 )}
               </div>
             </div>
