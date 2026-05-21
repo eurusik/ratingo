@@ -121,7 +121,7 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
             <span>{label}</span>
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-56 space-y-1 text-center">
+        <TooltipContent side="bottom" align="start" className="max-w-56 space-y-1">
           <p className="font-medium">{dict.details.sync.button}</p>
           <p className="text-primary-foreground/70">{dict.details.sync.tooltipDescription}</p>
           <p className="text-primary-foreground/70">{tooltipLastSyncLine}</p>
