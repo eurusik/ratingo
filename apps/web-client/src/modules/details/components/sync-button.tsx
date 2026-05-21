@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { RotateCw } from 'lucide-react';
 
+import { useAuth } from '@/core/auth/auth-context';
+import { useAuthModalStore } from '@/core/auth/auth-modal.store';
 import { useTranslation, useLocale } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import { formatRelativeDate } from '@/shared/utils/format';
@@ -21,6 +23,8 @@ interface SyncButtonProps {
 export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProps) {
   const { dict } = useTranslation();
   const locale = useLocale();
+  const { isAuthenticated } = useAuth();
+  const openLogin = useAuthModalStore((s) => s.openLogin);
   const { mutate, isPending } = useShowSync(slug);
 
   // Tracks when this session queued a sync (overrides stale SSR lastSyncedAt for cooldown UI)
@@ -37,9 +41,15 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
   const hasActiveServerCooldown =
     cooldownExpiresAt != null && new Date(cooldownExpiresAt).getTime() > Date.now();
   const isOnCooldown = hasActiveServerCooldown || isInitiallyCooling;
-  const isDisabled = isPending || isOnCooldown;
+  // Disable the button at the HTML level only for authenticated users on cooldown/loading.
+  // Unauthenticated users must always be able to click to open the login modal.
+  const isDisabled = isAuthenticated && (isPending || isOnCooldown);
 
   const handleSync = () => {
+    if (!isAuthenticated) {
+      openLogin();
+      return;
+    }
     if (isDisabled) return;
     mutate(undefined, {
       onSuccess: (result) => {

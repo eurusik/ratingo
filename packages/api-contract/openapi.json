@@ -1464,6 +1464,53 @@
         ]
       }
     },
+    "/api/catalog/shows/{slug}/sync": {
+      "post": {
+        "operationId": "CatalogShowsController_requestShowSync",
+        "summary": "Request metadata refresh for a show",
+        "description": "Queues a full metadata re-sync from TMDB/TVMaze. Rate-limited to once per 7 days per show.",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SyncRequestResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
     "/api/catalog/search": {
       "get": {
         "operationId": "CatalogSearchController_search",
@@ -2242,7 +2289,7 @@
             }
           },
           "400": {
-            "description": "Cannot pause: item is not currently being watched"
+            "description": "Cannot pause: item must be in watching or caught_up state"
           },
           "401": {
             "description": "Unauthorized"
@@ -10303,6 +10350,12 @@
             "nullable": true,
             "description": "First air date of the show"
           },
+          "lastSyncedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When the show metadata was last synced"
+          },
           "totalSeasons": {
             "type": "number",
             "example": 5,
@@ -10379,6 +10432,32 @@
           "ingestionStatus",
           "showId",
           "seasons"
+        ]
+      },
+      "SyncRequestResponseDto": {
+        "type": "object",
+        "properties": {
+          "queued": {
+            "type": "boolean",
+            "description": "Whether a sync job was queued"
+          },
+          "lastSyncedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When the show metadata was last successfully synced"
+          },
+          "cooldownExpiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When the next sync can be requested (null if not on cooldown)"
+          }
+        },
+        "required": [
+          "queued",
+          "lastSyncedAt",
+          "cooldownExpiresAt"
         ]
       },
       "SearchItemDto": {
