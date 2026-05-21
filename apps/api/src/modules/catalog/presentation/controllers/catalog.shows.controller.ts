@@ -3,9 +3,12 @@ import {
   Controller,
   DefaultValuePipe,
   Get,
+  HttpCode,
+  HttpStatus,
   Inject,
   Param,
   ParseIntPipe,
+  Post,
   Query,
   UnauthorizedException,
   UseFilters,
@@ -13,12 +16,15 @@ import {
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiAcceptedResponse,
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import {
   CATALOG_DEFAULT_CALENDAR_DAYS,
@@ -26,11 +32,13 @@ import {
   DEFAULT_PAGE_SIZE,
 } from '../../../../common/constants';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { ShowDetailsService } from '../../application/services/show-details.service';
+import { ShowSyncService } from '../../application/services/show-sync.service';
 import { ShowsCalendarService } from '../../application/services/shows-calendar.service';
 import {
   type IShowRepository,
@@ -39,6 +47,7 @@ import {
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
+import { SyncRequestResponseDto } from '../dtos/sync-request-response.dto';
 import { TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
 import { CatalogDomainExceptionFilter } from '../filters';
 import { groupEpisodesByDate } from '../utils/calendar.utils';
@@ -60,6 +69,7 @@ export class CatalogShowsController {
     private readonly cards: CardEnrichmentService,
     private readonly showDetailsService: ShowDetailsService,
     private readonly showsCalendarService: ShowsCalendarService,
+    private readonly showSyncService: ShowSyncService,
   ) {}
 
   @Get('trending')
@@ -233,5 +243,21 @@ export class CatalogShowsController {
   @ApiOkResponse({ type: ShowResponseDto })
   async getShowBySlug(@Param('slug') slug: string, @CurrentUser() user?: { id: string } | null) {
     return this.showDetailsService.getBySlug(slug, user?.id);
+  }
+
+  @Post(':slug/sync')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({
+    summary: 'Request metadata refresh for a show',
+    description:
+      'Queues a full metadata re-sync from TMDB/TVMaze. Rate-limited to once per 7 days per show globally; 5 requests per minute per user.',
+  })
+  @ApiAcceptedResponse({ type: SyncRequestResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Authentication required' })
+  async requestShowSync(@Param('slug') slug: string): Promise<SyncRequestResponseDto> {
+    return this.showSyncService.requestSync(slug);
   }
 }

@@ -5,6 +5,7 @@ import { CardEnrichmentService } from '../../../shared/cards/application/card-en
 import { ShowsCalendarService } from '../../application/services/shows-calendar.service';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { ShowDetailsService } from '../../application/services/show-details.service';
+import { ShowSyncService } from '../../application/services/show-sync.service';
 import { ShowNotFoundError } from '../../domain/errors';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 
@@ -16,6 +17,7 @@ describe('CatalogShowsController', () => {
   let userStateEnricher: any;
   let showDetailsService: any;
   let showsCalendarService: any;
+  let showSyncService: any;
 
   beforeEach(async () => {
     const mockShowRepository = {
@@ -64,6 +66,14 @@ describe('CatalogShowsController', () => {
         { provide: CardEnrichmentService, useValue: mockCards },
         { provide: ShowDetailsService, useValue: mockShowDetailsService },
         { provide: ShowsCalendarService, useValue: mockShowsCalendarService },
+        {
+          provide: ShowSyncService,
+          useValue: {
+            requestSync: jest
+              .fn()
+              .mockResolvedValue({ queued: true, lastSyncedAt: null, cooldownExpiresAt: null }),
+          },
+        },
       ],
     }).compile();
 
@@ -72,6 +82,7 @@ describe('CatalogShowsController', () => {
     userStateEnricher = module.get(CatalogUserStateEnricher);
     showDetailsService = module.get(ShowDetailsService);
     showsCalendarService = module.get(ShowsCalendarService);
+    showSyncService = module.get(ShowSyncService);
   });
 
   describe('getTrendingShows', () => {
@@ -194,6 +205,18 @@ describe('CatalogShowsController', () => {
       showDetailsService.getBySlug.mockRejectedValue(new ShowNotFoundError('missing'));
 
       await expect(controller.getShowBySlug('missing')).rejects.toThrow(ShowNotFoundError);
+    });
+  });
+
+  describe('requestShowSync', () => {
+    it('delegates slug to ShowSyncService.requestSync and returns the result', async () => {
+      const expectedResult = { queued: true, lastSyncedAt: null, cooldownExpiresAt: null };
+      showSyncService.requestSync.mockResolvedValue(expectedResult);
+
+      const result = await controller.requestShowSync('breaking-bad');
+
+      expect(showSyncService.requestSync).toHaveBeenCalledWith('breaking-bad');
+      expect(result).toEqual(expectedResult);
     });
   });
 });

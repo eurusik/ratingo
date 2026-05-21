@@ -14,10 +14,10 @@ import {
 
 /**
  * Raw row type from show details query.
- * Explicit types for all 34 fields to ensure type safety.
+ * Explicit types for all 35 fields to ensure type safety.
  */
 export interface ShowDetailsQueryRow {
-  // Core media item fields (15)
+  // Core media item fields (16)
   id: string;
   tmdbId: number;
   title: string;
@@ -33,6 +33,7 @@ export interface ShowDetailsQueryRow {
   rating: number;
   voteCount: number;
   releaseDate: Date | null;
+  lastSyncedAt: Date | null;
 
   // External ratings (7)
   ratingImdb: number | null;
@@ -137,6 +138,7 @@ export function mapShowDetails(
       row.watchProvidersRaw as Parameters<typeof MediaWatchOffersMapper.toAvailability>[1],
     ),
     releaseDate: row.releaseDate,
+    lastSyncedAt: row.lastSyncedAt,
 
     totalSeasons: row.totalSeasons,
     totalEpisodes: row.totalEpisodes,

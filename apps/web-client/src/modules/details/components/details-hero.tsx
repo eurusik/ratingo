@@ -14,6 +14,7 @@ import { HeroBackdrop } from './hero-backdrop';
 import { RatingoScore } from './ratingo-score';
 import { CommunityRating } from './community-rating';
 import { RatingPresets } from './rating-presets';
+import { SyncButton } from './sync-button';
 
 export interface DetailsHeroProps {
   title: string;
@@ -25,6 +26,9 @@ export interface DetailsHeroProps {
   stats?: Stats | null;
   mediaItemId?: string;
   mediaType?: MediaType;
+  slug?: string;
+  lastSyncedAt?: string | null;
+  totalWatchers?: number | null;
 }
 
 export function DetailsHero({
@@ -37,6 +41,9 @@ export function DetailsHero({
   stats,
   mediaItemId,
   mediaType,
+  slug,
+  lastSyncedAt,
+  totalWatchers,
 }: DetailsHeroProps) {
   const rating = stats?.qualityScore;
 
@@ -78,10 +85,15 @@ export function DetailsHero({
               </div>
 
               {/* Meta line */}
-              <p className="text-sm md:text-base text-cinema-text-secondary">
-                {formatYear(releaseDate)}
-                {genres && genres.length > 0 && ` • ${genres.map((g) => g.name).join(', ')}`}
-              </p>
+              <div className="space-y-0.5">
+                <p className="text-sm md:text-base text-cinema-text-secondary">
+                  {formatYear(releaseDate)}
+                  {genres && genres.length > 0 && ` • ${genres.map((g) => g.name).join(', ')}`}
+                </p>
+                {slug && mediaType === 'show' && (
+                  <SyncButton slug={slug} lastSyncedAt={lastSyncedAt} totalWatchers={totalWatchers} />
+                )}
+              </div>
 
               {/* Ratingo score + User rating */}
               <div className="space-y-3">

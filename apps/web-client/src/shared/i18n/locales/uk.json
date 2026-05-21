@@ -456,6 +456,20 @@
         "newSeason": "Новий сезон вже вийшов",
         "seriesFinale": "Можна дивитись повністю"
       }
+    },
+    "sync": {
+      "button": "Синхронізувати",
+      "lastSynced": "Синхронізовано {time}",
+      "neverSynced": "Ще не синхронізовано",
+      "cooldown": "Наступний синк {date}",
+      "autoSyncOff": "Авто-синк вимкнено — шоу ніхто не відстежує",
+      "queued": "Синхронізацію поставлено в чергу",
+      "alreadyQueued": "Синк вже в черзі",
+      "tooltipDescription": "Оновлює рейтинги, епізоди та метадані з TMDB і TVMaze",
+      "tooltipLastSync": "Синхронізовано: {date}",
+      "tooltipNeverSync": "Ще не синхронізувалось",
+      "tooltipCooldown": "Доступно раз на 7 днів",
+      "error": "Помилка синхронізації. Спробуй пізніше"
     }
   },
   "reviews": {
@@ -735,8 +749,16 @@
       "showingCount": "{hidden} {hiddenItem} приховано",
       "showAll": "Показати всі",
       "items": {
-        "movie": { "one": "фільм", "few": "фільми", "many": "фільмів" },
-        "show": { "one": "серіал", "few": "серіали", "many": "серіалів" }
+        "movie": {
+          "one": "фільм",
+          "few": "фільми",
+          "many": "фільмів"
+        },
+        "show": {
+          "one": "серіал",
+          "few": "серіали",
+          "many": "серіалів"
+        }
       }
     }
   },
@@ -801,8 +823,16 @@
       "showingCount": "{hidden} {hiddenItem} приховано",
       "showAll": "Показати всі",
       "items": {
-        "movie": { "one": "фільм", "few": "фільми", "many": "фільмів" },
-        "show": { "one": "серіал", "few": "серіали", "many": "серіалів" }
+        "movie": {
+          "one": "фільм",
+          "few": "фільми",
+          "many": "фільмів"
+        },
+        "show": {
+          "one": "серіал",
+          "few": "серіали",
+          "many": "серіалів"
+        }
       }
     }
   },
@@ -1006,7 +1036,7 @@
       "comingSoon": "Скоро",
       "back": "Назад",
       "continue": "Далі",
-      "maxSizeHint": "макс.\u00a05\u00a0МБ",
+      "maxSizeHint": "макс. 5 МБ",
       "filterAll": "Усі",
       "filterRatings": "Оцінки",
       "filterWatchlist": "Список",
@@ -1607,68 +1637,68 @@
       }
     },
     "journal": {
-        "title": "Журнал",
-        "newPost": "Нова публікація",
-        "editPost": "Редагувати публікацію",
-        "status": {
-          "draft": "Чернетка",
-          "published": "Опубліковано",
-          "scheduled": "Заплановано"
-        },
-        "columns": {
-          "title": "Заголовок",
-          "type": "Тип",
-          "status": "Статус",
-          "publishedAt": "Дата публікації",
-          "actions": "Дії"
-        },
-        "actions": {
-          "edit": "Редагувати",
-          "view": "Переглянути",
-          "delete": "Видалити",
-          "publish": "Опублікувати",
-          "publishNow": "Опублікувати зараз",
-          "unpublish": "Зняти з публікації"
-        },
-        "form": {
-          "title": "Заголовок",
-          "titlePlaceholder": "Введіть заголовок",
-          "slug": "URL-адреса",
-          "slugPlaceholder": "auto-generated-slug",
-          "type": "Тип публікації",
-          "body": "Текст",
-          "bodyPlaceholder": "Напишіть текст публікації (підтримується Markdown)",
-          "featuredImage": "Зображення",
-          "featuredImageHint": "Перетягніть або натисніть для завантаження",
-          "metaTitle": "SEO заголовок",
-          "metaTitlePlaceholder": "Заголовок для пошукових систем",
-          "metaDescription": "SEO опис",
-          "metaDescriptionPlaceholder": "Опис для пошукових систем",
-          "publishedAt": "Дата публікації",
-          "isDraft": "Чернетка",
-          "save": "Зберегти",
-          "saving": "Збереження...",
-          "publish": "Опублікувати",
-          "saveAsDraft": "Зберегти як чернетку",
-          "errors": {
-            "titleRequired": "Заголовок обов'язковий",
-            "bodyRequired": "Текст публікації обов'язковий"
-          }
-        },
-        "editor": {
-          "preview": "Попередній перегляд",
-          "write": "Редагування",
-          "markdown": "Markdown",
-          "wysiwyg": "Візуальний"
-        },
-        "deleteConfirm": {
-          "title": "Видалити публікацію?",
-          "description": "Ця дія незворотня. Публікацію буде видалено назавжди.",
-          "confirm": "Видалити",
-          "cancel": "Скасувати"
-        },
-        "empty": "Публікацій ще немає",
-        "uploadingImage": "Завантаження зображення..."
+      "title": "Журнал",
+      "newPost": "Нова публікація",
+      "editPost": "Редагувати публікацію",
+      "status": {
+        "draft": "Чернетка",
+        "published": "Опубліковано",
+        "scheduled": "Заплановано"
+      },
+      "columns": {
+        "title": "Заголовок",
+        "type": "Тип",
+        "status": "Статус",
+        "publishedAt": "Дата публікації",
+        "actions": "Дії"
+      },
+      "actions": {
+        "edit": "Редагувати",
+        "view": "Переглянути",
+        "delete": "Видалити",
+        "publish": "Опублікувати",
+        "publishNow": "Опублікувати зараз",
+        "unpublish": "Зняти з публікації"
+      },
+      "form": {
+        "title": "Заголовок",
+        "titlePlaceholder": "Введіть заголовок",
+        "slug": "URL-адреса",
+        "slugPlaceholder": "auto-generated-slug",
+        "type": "Тип публікації",
+        "body": "Текст",
+        "bodyPlaceholder": "Напишіть текст публікації (підтримується Markdown)",
+        "featuredImage": "Зображення",
+        "featuredImageHint": "Перетягніть або натисніть для завантаження",
+        "metaTitle": "SEO заголовок",
+        "metaTitlePlaceholder": "Заголовок для пошукових систем",
+        "metaDescription": "SEO опис",
+        "metaDescriptionPlaceholder": "Опис для пошукових систем",
+        "publishedAt": "Дата публікації",
+        "isDraft": "Чернетка",
+        "save": "Зберегти",
+        "saving": "Збереження...",
+        "publish": "Опублікувати",
+        "saveAsDraft": "Зберегти як чернетку",
+        "errors": {
+          "titleRequired": "Заголовок обов'язковий",
+          "bodyRequired": "Текст публікації обов'язковий"
+        }
+      },
+      "editor": {
+        "preview": "Попередній перегляд",
+        "write": "Редагування",
+        "markdown": "Markdown",
+        "wysiwyg": "Візуальний"
+      },
+      "deleteConfirm": {
+        "title": "Видалити публікацію?",
+        "description": "Ця дія незворотня. Публікацію буде видалено назавжди.",
+        "confirm": "Видалити",
+        "cancel": "Скасувати"
+      },
+      "empty": "Публікацій ще немає",
+      "uploadingImage": "Завантаження зображення..."
     }
   },
   "calendar": {

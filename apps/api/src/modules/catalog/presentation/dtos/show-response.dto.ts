@@ -69,6 +69,14 @@ export class ShowResponseDto extends MediaBaseDto {
   })
   releaseDate?: Date | null;
 
+  @ApiProperty({
+    type: Date,
+    required: false,
+    nullable: true,
+    description: 'When the show metadata was last synced',
+  })
+  lastSyncedAt?: Date | null;
+
   @ApiProperty({ example: 5, required: false, nullable: true })
   totalSeasons?: number | null;
 

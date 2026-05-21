@@ -410,7 +410,28 @@ export const catalogApi = {
     const response = await apiGet<ProvidersListDto>('catalog/providers');
     return response.data;
   },
+
+  /**
+   * Requests a metadata re-sync for a show.
+   * Rate-limited to once per 7 days per show.
+   *
+   * @param slug - Show slug
+   * @returns Sync request result with cooldown info
+   */
+  async requestShowSync(slug: string): Promise<SyncRequestResponseDto> {
+    return apiPost<SyncRequestResponseDto>(`catalog/shows/${slug}/sync`);
+  },
 } as const;
+
+/**
+ * Show sync request response.
+ * TODO: Replace with components['schemas']['SyncRequestResponseDto'] after contracts:update.
+ */
+export interface SyncRequestResponseDto {
+  queued: boolean;
+  lastSyncedAt: string | null;
+  cooldownExpiresAt: string | null;
+}
 
 /**
  * Job status response from import status API.

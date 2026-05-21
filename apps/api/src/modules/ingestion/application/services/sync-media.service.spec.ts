@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CLOCK_PORT } from '@/modules/shared/clock';
 import { SyncMediaService } from './sync-media.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '../../../tmdb/public';
@@ -72,7 +73,8 @@ describe('SyncMediaService', () => {
     const mockMediaRepository = {
       upsert: jest.fn(),
       updateIngestionStatus: jest.fn(),
-      findByTmdbId: jest.fn(),
+      findByTmdbId: jest.fn().mockResolvedValue({ id: 'media-item-1' }),
+      updateLastSyncedAt: jest.fn().mockResolvedValue(undefined),
     };
 
     const mockNormalizationService = {
@@ -98,6 +100,7 @@ describe('SyncMediaService', () => {
         { provide: NormalizationService, useValue: mockNormalizationService },
         { provide: EventEmitter2, useValue: mockEventEmitter },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
+        { provide: CLOCK_PORT, useValue: { now: jest.fn().mockReturnValue(new Date()) } },
         { provide: CATALOG_POLICY_EVALUATOR, useValue: mockCatalogEvaluator },
       ],
     }).compile();
@@ -146,6 +149,10 @@ describe('SyncMediaService', () => {
           ratingRottenTomatoes: 79,
           ratingoScore: 75,
         }),
+      );
+      expect(mediaRepository.updateLastSyncedAt).toHaveBeenCalledWith(
+        'media-item-1',
+        expect.any(Date),
       );
     });
 

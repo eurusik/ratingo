@@ -12,7 +12,7 @@ import { type ShowDetailsQueryRow } from './show-details.mapper';
  * The resulting rows are mapped via mapShowDetails() in show-details.mapper.ts
  */
 export const SHOW_DETAILS_SELECT_FIELDS = {
-  // Core media item fields (15)
+  // Core media item fields (16)
   id: schema.mediaItems.id,
   tmdbId: schema.mediaItems.tmdbId,
   title: schema.mediaItems.title,
@@ -28,6 +28,7 @@ export const SHOW_DETAILS_SELECT_FIELDS = {
   rating: schema.mediaItems.rating,
   voteCount: schema.mediaItems.voteCount,
   releaseDate: schema.mediaItems.releaseDate,
+  lastSyncedAt: schema.mediaItems.lastSyncedAt,
 
   // External ratings (6)
   ratingImdb: schema.mediaItems.ratingImdb,

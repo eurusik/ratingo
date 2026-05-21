@@ -3,10 +3,10 @@ import { SHOW_DETAILS_SELECT_FIELDS } from './show-details-select-fields';
 
 describe('SHOW_DETAILS_SELECT_FIELDS', () => {
   describe('Field count validation', () => {
-    it('should have exactly 35 fields', () => {
+    it('should have exactly 36 fields', () => {
       const fieldCount = Object.keys(SHOW_DETAILS_SELECT_FIELDS).length;
-      // 15 core + 7 external ratings + 6 show-specific + 7 stats = 35
-      expect(fieldCount).toBe(35);
+      // 15 core + 7 external ratings + 7 show-specific + 7 stats = 36
+      expect(fieldCount).toBe(36);
     });
   });
 
@@ -53,17 +53,18 @@ describe('SHOW_DETAILS_SELECT_FIELDS', () => {
       }
     });
 
-    it('should include all show-specific fields (6)', () => {
+    it('should include all show-specific fields (7)', () => {
       const showFields: (keyof typeof SHOW_DETAILS_SELECT_FIELDS)[] = [
         'totalSeasons',
         'totalEpisodes',
         'status',
         'lastAirDate',
+        'lastSyncedAt',
         'nextAirDate',
         'showId',
       ];
 
-      expect(showFields).toHaveLength(6);
+      expect(showFields).toHaveLength(7);
       for (const field of showFields) {
         expect(SHOW_DETAILS_SELECT_FIELDS).toHaveProperty(field);
       }
@@ -125,6 +126,7 @@ describe('SHOW_DETAILS_SELECT_FIELDS', () => {
         'totalEpisodes',
         'status',
         'lastAirDate',
+        'lastSyncedAt',
         'nextAirDate',
         'showId',
         // Stats

@@ -187,6 +187,9 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           stats={show.stats}
           mediaItemId={show.id}
           mediaType="show"
+          slug={show.slug}
+          lastSyncedAt={(show as ShowDetailsDto & { lastSyncedAt?: string | null }).lastSyncedAt}
+          totalWatchers={show.stats?.totalWatchers}
         />
 
         <DetailsContent>

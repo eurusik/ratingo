@@ -142,6 +142,15 @@ export interface SeasonInfo {
 }
 
 /**
+ * Minimal show identity for lightweight lookups (e.g. sync cooldown checks).
+ */
+export interface ShowIdentity {
+  id: string;
+  tmdbId: number;
+  lastSyncedAt: Date | null;
+}
+
+/**
  * Full show details.
  */
 export interface ShowDetails {
@@ -165,6 +174,7 @@ export interface ShowDetails {
   externalRatings: ExternalRatings;
 
   releaseDate: Date | null;
+  lastSyncedAt: Date | null;
   totalSeasons: number | null;
   totalEpisodes: number | null;
   status: ShowStatus | null;
@@ -246,6 +256,12 @@ export interface IShowRepository {
    * Finds full show details by slug.
    */
   findBySlug(slug: string): Promise<ShowDetails | null>;
+
+  /**
+   * Finds minimal show identity by slug (id, tmdbId, lastSyncedAt).
+   * Use this instead of findBySlug when full details are not needed.
+   */
+  findIdentityBySlug(slug: string): Promise<ShowIdentity | null>;
 }
 
 /**

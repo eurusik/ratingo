@@ -224,6 +224,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/shows/{slug}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request metadata refresh for a show
+         * @description Queues a full metadata re-sync from TMDB/TVMaze. Rate-limited to once per 7 days per show globally; 5 requests per minute per user.
+         */
+        post: operations["CatalogShowsController_requestShowSync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/search": {
         parameters: {
             query?: never;
@@ -3151,6 +3171,11 @@ export interface components {
              * @description First air date of the show
              */
             releaseDate?: string | null;
+            /**
+             * Format: date-time
+             * @description When the show metadata was last synced
+             */
+            lastSyncedAt?: string | null;
             /** @example 5 */
             totalSeasons?: number | null;
             /** @example 62 */
@@ -3172,6 +3197,20 @@ export interface components {
             verdict?: components["schemas"]["ShowVerdictDto"] | null;
             /** @description Status hint - explains "why now?" (secondary, optional) */
             statusHint?: components["schemas"]["ShowStatusHintDto"] | null;
+        };
+        SyncRequestResponseDto: {
+            /** @description Whether a sync job was queued */
+            queued: boolean;
+            /**
+             * Format: date-time
+             * @description When the show metadata was last successfully synced
+             */
+            lastSyncedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the next sync can be requested (null if not on cooldown)
+             */
+            cooldownExpiresAt: string | null;
         };
         SearchItemDto: {
             /** @enum {string} */
@@ -6567,6 +6606,38 @@ export interface operations {
             };
         };
     };
+    CatalogShowsController_requestShowSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SyncRequestResponseDto"];
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     CatalogSearchController_search: {
         parameters: {
             query: {
@@ -6789,10 +6860,8 @@ export interface operations {
     UserMediaController_listContinue: {
         parameters: {
             query?: {
-                /** @description Offset (default 0) */
-                offset?: number;
-                /** @description Page size (default 20) */
                 limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -6970,10 +7039,8 @@ export interface operations {
     UserMediaController_list: {
         parameters: {
             query?: {
-                /** @description Offset (default 0) */
-                offset?: number;
-                /** @description Page size (default 20) */
                 limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -7028,7 +7095,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description Cannot pause: item is not currently being watched */
+            /** @description Cannot pause: item must be in watching or caught_up state */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -8269,7 +8336,7 @@ export interface operations {
         parameters: {
             query: {
                 /** @description Comma-separated list of media item UUIDs (max 100) */
-                ids: string;
+                ids: string[];
             };
             header?: never;
             path?: never;
@@ -8546,14 +8613,14 @@ export interface operations {
     IngestionController_syncTrending: {
         parameters: {
             query?: {
-                /** @description Number of pages to fetch (dispatcher mode) */
-                pages?: string;
+                /** @description Number of pages to fetch in dispatcher mode (20 items per page) */
+                pages?: number;
+                /** @description Media type filter — sync only movies or only shows */
+                type?: "movie" | "show";
                 /** @description Single page number (legacy mode) */
                 page?: string;
                 /** @description Sync Trakt stats after ingestion (default: true) */
                 syncStats?: string;
-                /** @description Media type filter (movie or show) */
-                type?: string;
                 /** @description Bypass dedupe */
                 force?: string;
             };
