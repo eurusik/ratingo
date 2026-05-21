@@ -17,6 +17,7 @@ import {
 import {
   ApiBadRequestResponse,
   ApiAcceptedResponse,
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
@@ -247,6 +248,7 @@ export class CatalogShowsController {
   @Post(':slug/sync')
   @HttpCode(HttpStatus.ACCEPTED)
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Request metadata refresh for a show',

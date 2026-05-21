@@ -74,13 +74,18 @@ const BASE_PROPS: DetailsHeroProps = {
 // ---------------------------------------------------------------------------
 
 describe('DetailsHero — CommunityRating integration', () => {
-  it('renders SyncButton when slug is provided', () => {
-    render(<DetailsHero {...BASE_PROPS} slug="test-show" />);
+  it('renders SyncButton when slug and mediaType=show are provided', () => {
+    render(<DetailsHero {...BASE_PROPS} slug="test-show" mediaType="show" />);
     expect(screen.getByTestId('sync-button')).toBeInTheDocument();
   });
 
   it('does NOT render SyncButton when slug is absent', () => {
-    render(<DetailsHero {...BASE_PROPS} />);
+    render(<DetailsHero {...BASE_PROPS} mediaType="show" />);
+    expect(screen.queryByTestId('sync-button')).not.toBeInTheDocument();
+  });
+
+  it('does NOT render SyncButton for movies', () => {
+    render(<DetailsHero {...BASE_PROPS} slug="test-movie" mediaType="movie" />);
     expect(screen.queryByTestId('sync-button')).not.toBeInTheDocument();
   });
 

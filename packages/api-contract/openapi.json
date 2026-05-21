@@ -1468,7 +1468,7 @@
       "post": {
         "operationId": "CatalogShowsController_requestShowSync",
         "summary": "Request metadata refresh for a show",
-        "description": "Queues a full metadata re-sync from TMDB/TVMaze. Rate-limited to once per 7 days per show.",
+        "description": "Queues a full metadata re-sync from TMDB/TVMaze. Rate-limited to once per 7 days per show globally; 5 requests per minute per user.",
         "parameters": [
           {
             "name": "slug",
@@ -1504,10 +1504,18 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Authentication required"
           }
         },
         "tags": [
           "Public: Catalog"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       }
     },
@@ -1895,20 +1903,20 @@
         "summary": "List continue items with media summary (auth: Bearer)",
         "parameters": [
           {
-            "name": "offset",
+            "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Offset (default 0)",
             "schema": {
+              "default": 20,
               "type": "number"
             }
           },
           {
-            "name": "limit",
+            "name": "offset",
             "required": false,
             "in": "query",
-            "description": "Page size (default 20)",
             "schema": {
+              "default": 0,
               "type": "number"
             }
           }
@@ -2186,20 +2194,20 @@
         "summary": "List user media states with media summary (auth: Bearer)",
         "parameters": [
           {
-            "name": "offset",
+            "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Offset (default 0)",
             "schema": {
+              "default": 20,
               "type": "number"
             }
           },
           {
-            "name": "limit",
+            "name": "offset",
             "required": false,
             "in": "query",
-            "description": "Page size (default 20)",
             "schema": {
+              "default": 0,
               "type": "number"
             }
           }
@@ -4515,8 +4523,10 @@
             "in": "query",
             "description": "Comma-separated list of media item UUIDs (max 100)",
             "schema": {
-              "example": "id1,id2,id3",
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -4947,6 +4957,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "default": 20,
               "type": "number"
             }
           },
@@ -4955,6 +4966,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "default": 0,
               "type": "number"
             }
           }
@@ -5117,8 +5129,25 @@
             "name": "pages",
             "required": false,
             "in": "query",
-            "description": "Number of pages to fetch (dispatcher mode)",
+            "description": "Number of pages to fetch in dispatcher mode (20 items per page)",
             "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "example": 5,
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Media type filter — sync only movies or only shows",
+            "schema": {
+              "example": "movie",
+              "enum": [
+                "movie",
+                "show"
+              ],
               "type": "string"
             }
           },
@@ -5136,15 +5165,6 @@
             "required": false,
             "in": "query",
             "description": "Sync Trakt stats after ingestion (default: true)",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "type",
-            "required": false,
-            "in": "query",
-            "description": "Media type filter (movie or show)",
             "schema": {
               "type": "string"
             }

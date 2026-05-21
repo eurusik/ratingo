@@ -10,13 +10,21 @@ export const COOLDOWN_REDIS_CLIENT = Symbol('COOLDOWN_REDIS_CLIENT');
 
 // Atomically attempts SET NX EX with a unique token value.
 // Returns [1, ttl] if acquired, [0, remaining_ttl] if blocked.
-// Handles TTL edge cases: -2 (expired between SET and TTL) → treats as acquired (retry safe);
-// -1 (no expiry, should not happen) → returns [0, 1] to unblock quickly without masking the bug.
+// Handles TTL edge cases:
+//   -2 (key expired between our SET and TTL) → retry the SET once inside the same script
+//       so the token is always stored when we return acquired=true;
+//   -1 (key has no expiry, should not happen) → return [0, 1] to unblock quickly.
 const LUA_TRY_ACQUIRE = `
 local set = redis.call('SET', KEYS[1], ARGV[1], 'NX', 'EX', ARGV[2])
 if set then return {1, tonumber(ARGV[2])} end
 local ttl = redis.call('TTL', KEYS[1])
-if ttl == -2 then return {1, tonumber(ARGV[2])} end
+if ttl == -2 then
+  local retry = redis.call('SET', KEYS[1], ARGV[1], 'NX', 'EX', ARGV[2])
+  if retry then return {1, tonumber(ARGV[2])} end
+  local ttl2 = redis.call('TTL', KEYS[1])
+  if ttl2 < 0 then return {0, 0} end
+  return {0, ttl2}
+end
 if ttl == -1 then return {0, 1} end
 return {0, ttl}
 `;
