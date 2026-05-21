@@ -547,12 +547,12 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   private buildListOrderBy(sort?: ListWithMediaOptions['sort']): SQL[] {
     switch (sort) {
       case USER_MEDIA_LIST_SORT.RATING:
-        return [desc(schema.userMediaState.rating), desc(schema.userMediaState.updatedAt)];
+        return [desc(schema.userMediaState.rating), desc(schema.userMediaState.createdAt)];
       case USER_MEDIA_LIST_SORT.RELEASE_DATE:
-        return [desc(schema.mediaItems.releaseDate), desc(schema.userMediaState.updatedAt)];
+        return [desc(schema.mediaItems.releaseDate), desc(schema.userMediaState.createdAt)];
       case USER_MEDIA_LIST_SORT.RECENT:
       default:
-        return [desc(schema.userMediaState.updatedAt)];
+        return [desc(schema.userMediaState.createdAt)];
     }
   }
 

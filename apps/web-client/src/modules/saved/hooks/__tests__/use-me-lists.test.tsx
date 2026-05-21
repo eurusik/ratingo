@@ -950,6 +950,41 @@ describe('useSetRating', () => {
 
     invalidateSpy.mockRestore();
   });
+
+  it('invalidates historyAll, activityAll, ratingsAll and counts on settled (fix for #107)', async () => {
+    mockGetState.mockResolvedValue(makeHistoryItem({ rating: null }));
+    mockSetRating.mockResolvedValue(makeHistoryItem({ rating: 80 }));
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    renderWithClient(<SetRatingConsumer />, queryClient);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('query-status').textContent).toBe('success');
+    });
+
+    await act(async () => {
+      screen.getByTestId('set-rating').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('success');
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: queryKeys.meLists.historyAll }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: queryKeys.meLists.activityAll }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: queryKeys.meLists.ratingsAll }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: queryKeys.meLists.counts }),
+    );
+
+    invalidateSpy.mockRestore();
+  });
 });
 
 describe('usePauseMedia', () => {
