@@ -55,6 +55,10 @@ jest.mock('../rating-presets', () => ({
   RatingPresets: () => <div data-testid="rating-presets" />,
 }));
 
+jest.mock('../sync-button', () => ({
+  SyncButton: () => <div data-testid="sync-button" />,
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
