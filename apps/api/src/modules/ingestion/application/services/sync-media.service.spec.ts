@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CLOCK_PORT } from '@/modules/shared/clock';
 import { SyncMediaService } from './sync-media.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '../../../tmdb/public';
@@ -73,6 +74,7 @@ describe('SyncMediaService', () => {
       upsert: jest.fn(),
       updateIngestionStatus: jest.fn(),
       findByTmdbId: jest.fn(),
+      updateLastSyncedAt: jest.fn().mockResolvedValue(undefined),
     };
 
     const mockNormalizationService = {
@@ -98,6 +100,7 @@ describe('SyncMediaService', () => {
         { provide: NormalizationService, useValue: mockNormalizationService },
         { provide: EventEmitter2, useValue: mockEventEmitter },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
+        { provide: CLOCK_PORT, useValue: { now: jest.fn().mockReturnValue(new Date()) } },
         { provide: CATALOG_POLICY_EVALUATOR, useValue: mockCatalogEvaluator },
       ],
     }).compile();

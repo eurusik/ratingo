@@ -176,6 +176,7 @@ export const mediaItems = pgTable(
     ),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    lastSyncedAt: timestamp('last_synced_at'),
     deletedAt: timestamp('deleted_at'), // Soft delete support
   },
   (t) => ({

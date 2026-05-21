@@ -456,6 +456,15 @@
         "newSeason": "New season is out",
         "seriesFinale": "Ready to binge"
       }
+    },
+    "sync": {
+      "button": "Sync metadata",
+      "lastSynced": "Synced {time}",
+      "neverSynced": "Never synced",
+      "cooldown": "Next sync available {date}",
+      "autoSyncOff": "Auto-sync disabled — nobody follows this show",
+      "queued": "Sync queued",
+      "alreadyQueued": "Already in queue"
     }
   },
   "reviews": {

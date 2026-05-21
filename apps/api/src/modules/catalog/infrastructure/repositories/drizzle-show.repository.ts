@@ -14,6 +14,7 @@ import {
   type IShowRepository,
   type NewEpisodeItem,
   type ShowDetails,
+  type ShowIdentity,
   type ShowListItem,
   type TrendingShowItem,
   type TrendingShowsOptions,
@@ -210,6 +211,30 @@ export class DrizzleShowRepository implements IShowRepository {
     options?: { userId?: string | null },
   ): Promise<CalendarEpisode[]> {
     return this.calendarEpisodesQuery.execute(startDate, endDate, options?.userId);
+  }
+
+  /**
+   * Finds minimal show identity by slug (id, tmdbId, lastSyncedAt).
+   */
+  async findIdentityBySlug(slug: string): Promise<ShowIdentity | null> {
+    return withDbError(
+      'find show identity by slug',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            lastSyncedAt: schema.mediaItems.lastSyncedAt,
+          })
+          .from(schema.mediaItems)
+          .where(eq(schema.mediaItems.slug, slug))
+          .limit(1);
+
+        return result[0] ?? null;
+      },
+      { slug },
+    );
   }
 
   /**

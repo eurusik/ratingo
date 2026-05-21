@@ -1067,6 +1067,15 @@ export class DrizzleMediaRepository implements IMediaRepository {
     );
   }
 
+  async updateLastSyncedAt(id: string, date: Date): Promise<void> {
+    return withDbError('update last synced at', this.logger, async () => {
+      await this.db
+        .update(schema.mediaItems)
+        .set({ lastSyncedAt: date })
+        .where(eq(schema.mediaItems.id, id));
+    });
+  }
+
   async clearStaleTrendingRanks(before: Date): Promise<number> {
     return withDbError('clear stale trending ranks', this.logger, async () => {
       const result = await this.db

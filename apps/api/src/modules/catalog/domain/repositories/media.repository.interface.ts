@@ -248,6 +248,15 @@ export interface IMediaRepository {
   findSnapshotCandidates(options: { cursor?: string; limit: number }): Promise<SnapshotCandidate[]>;
 
   /**
+   * Records the timestamp of the last successful sync completion.
+   *
+   * @param {string} id - Media item ID
+   * @param {Date} date - Sync completion timestamp
+   * @returns {Promise<void>} Nothing
+   */
+  updateLastSyncedAt(id: string, date: Date): Promise<void>;
+
+  /**
    * Clears trending_rank and trending_score for items not updated since `before`.
    * Used to remove stale trending data after a fresh sync cycle completes.
    *

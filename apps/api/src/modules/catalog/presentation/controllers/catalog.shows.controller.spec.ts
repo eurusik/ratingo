@@ -5,6 +5,7 @@ import { CardEnrichmentService } from '../../../shared/cards/application/card-en
 import { ShowsCalendarService } from '../../application/services/shows-calendar.service';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { ShowDetailsService } from '../../application/services/show-details.service';
+import { ShowSyncService } from '../../application/services/show-sync.service';
 import { ShowNotFoundError } from '../../domain/errors';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 
@@ -64,6 +65,14 @@ describe('CatalogShowsController', () => {
         { provide: CardEnrichmentService, useValue: mockCards },
         { provide: ShowDetailsService, useValue: mockShowDetailsService },
         { provide: ShowsCalendarService, useValue: mockShowsCalendarService },
+        {
+          provide: ShowSyncService,
+          useValue: {
+            requestSync: jest
+              .fn()
+              .mockResolvedValue({ queued: true, lastSyncedAt: null, cooldownExpiresAt: null }),
+          },
+        },
       ],
     }).compile();
 

@@ -1,5 +1,8 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+import IORedis from 'ioredis';
 
 import { HERO_REPOSITORY } from '../home/public';
 import { INGESTION_QUEUE } from '../ingestion/public';
@@ -14,7 +17,9 @@ import { CatalogSitemapService } from './application/services/catalog-sitemap.se
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from './application/services/movie-details.service';
 import { ShowDetailsService } from './application/services/show-details.service';
+import { ShowSyncService } from './application/services/show-sync.service';
 import { ShowsCalendarService } from './application/services/shows-calendar.service';
+import { COOLDOWN_GATE_PORT } from './domain/ports/cooldown-gate.port';
 import { IMPORT_JOB_PORT } from './domain/ports/import-job.port';
 import { MEDIA_METADATA_PORT } from './domain/ports/media-metadata.port';
 import { USER_STATE_PROVIDER } from './domain/ports/user-state-provider.port';
@@ -25,6 +30,10 @@ import { PROVIDERS_REPOSITORY } from './domain/repositories/providers.repository
 import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
 import { BullMQImportJobAdapter } from './infrastructure/adapters/bullmq-import-job.adapter';
 import { HeroRepositoryAdapter } from './infrastructure/adapters/hero.repository.adapter';
+import {
+  COOLDOWN_REDIS_CLIENT,
+  RedisCooldownGateAdapter,
+} from './infrastructure/adapters/redis-cooldown-gate.adapter';
 import { TmdbMetadataAdapter } from './infrastructure/adapters/tmdb-metadata.adapter';
 import { UserStateAdapter } from './infrastructure/adapters/user-state.adapter';
 import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
@@ -80,6 +89,34 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     MovieDetailsService,
     ShowDetailsService,
     ShowsCalendarService,
+    ShowSyncService,
+    // Redis client for sync cooldown gate (7-day TTL per show)
+    {
+      provide: COOLDOWN_REDIS_CLIENT,
+      useFactory: (config: ConfigService) => {
+        const redisUrl = config.get<string>('REDIS_URL');
+        if (redisUrl) {
+          const url = new URL(redisUrl);
+          const port = url.port ? Number(url.port) : 6379;
+          const password = url.password ? decodeURIComponent(url.password) : undefined;
+          return new IORedis({
+            host: url.hostname,
+            port,
+            ...(password && { password }),
+            ...(url.protocol === 'rediss:' && { tls: {} }),
+          });
+        }
+        return new IORedis({
+          host: config.get('REDIS_HOST') ?? 'localhost',
+          port: config.get('REDIS_PORT') ?? 6379,
+        });
+      },
+      inject: [ConfigService],
+    },
+    {
+      provide: COOLDOWN_GATE_PORT,
+      useClass: RedisCooldownGateAdapter,
+    },
     // Query Objects - Shows
     TrendingShowsQuery,
     PopularShowsQuery,

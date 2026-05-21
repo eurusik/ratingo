@@ -208,6 +208,7 @@ export class FakeMovieRepository implements IMovieRepository {
 }
 
 export class FakeShowRepository implements IShowRepository {
+  // placeholder — overwritten in tests that need it
   public lastTrendingOptions: TrendingShowsOptions | undefined;
   private items = showsFixture;
 
@@ -282,5 +283,15 @@ export class FakeShowRepository implements IShowRepository {
 
   async findBySlug(slug: string): Promise<any | null> {
     return this.items.find((s) => s.slug === slug) ?? null;
+  }
+
+  async findIdentityBySlug(slug: string): Promise<any | null> {
+    const item = this.items.find((s) => s.slug === slug);
+    if (!item) return null;
+    return {
+      id: item.id ?? item.mediaItemId ?? slug,
+      tmdbId: item.tmdbId ?? 0,
+      lastSyncedAt: null,
+    };
   }
 }

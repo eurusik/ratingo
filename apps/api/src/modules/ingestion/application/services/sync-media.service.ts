@@ -11,6 +11,7 @@ import {
   EvaluationContext,
 } from '../../../catalog-policy/public';
 import { NormalizationService } from '../../../provider/public';
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
 import { TmdbAdapter } from '../../../tmdb/public';
 import { MediaSyncedEvent } from '../../domain/events/media-synced.event';
@@ -66,6 +67,9 @@ export class SyncMediaService {
 
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
+
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
 
     @Optional()
     @Inject(CATALOG_POLICY_EVALUATOR)
@@ -155,17 +159,23 @@ export class SyncMediaService {
       // Step 7: Persist
       await this.persist(classified, tmdbId);
 
-      // Fetch the persisted media item once — shared across steps 8–10 to avoid redundant DB calls
+      // Fetch the persisted media item once — shared across steps 8–11 to avoid redundant DB calls
       const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
 
-      // Step 8: Normalize watch providers
+      // Step 8: Record sync completion timestamp (before best-effort steps so partial failures
+      // don't block the user-visible cooldown from reflecting actual sync work done)
+      if (mediaItem) {
+        await this.mediaRepository.updateLastSyncedAt(mediaItem.id, this.clock.now());
+      }
+
+      // Step 9: Normalize watch providers
       await this.normalizeWatchProviders(classified, mediaItem, logPrefix);
 
-      // Step 9: Evaluate catalog eligibility (both catalog and trending contexts if applicable)
+      // Step 10: Evaluate catalog eligibility (both catalog and trending contexts if applicable)
       const isTrending = trending !== undefined && trending.score > 0;
       await this.evaluateCatalog(mediaItem, logPrefix, isTrending);
 
-      // Step 10: Emit domain event for cross-module consumers (e.g. link pending import items)
+      // Step 11: Emit domain event for cross-module consumers (e.g. link pending import items)
       await this.emitMediaSynced(tmdbId, type, mediaItem, logPrefix);
 
       this.logger.log(

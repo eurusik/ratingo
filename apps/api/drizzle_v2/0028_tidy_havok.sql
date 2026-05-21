@@ -1,0 +1,1 @@
+ALTER TABLE "media_items" ADD COLUMN "last_synced_at" timestamp;
