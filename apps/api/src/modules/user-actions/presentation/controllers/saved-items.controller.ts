@@ -37,7 +37,7 @@ import {
   SavedItemsListQueryDto,
 } from '../dto/saved-items.dto';
 
-@ApiTags('Saved Items')
+@ApiTags('Me: Saved Items')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('me/saved-items')

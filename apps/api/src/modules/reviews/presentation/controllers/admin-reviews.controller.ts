@@ -33,7 +33,7 @@ import {
 /** Default page limit for reports list */
 const DEFAULT_REPORTS_LIMIT = 20;
 
-@ApiTags('Admin - Reviews')
+@ApiTags('Admin: Reviews')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
 @Controller('admin/reviews')

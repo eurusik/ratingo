@@ -57,7 +57,7 @@ export class StatsController {
   @Post('sync')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Sync trending stats from Trakt',
     description:
@@ -85,7 +85,7 @@ export class StatsController {
   @Post('sync-eligible-trending')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Sync watchers for ELIGIBLE trending items',
     description:
@@ -137,7 +137,7 @@ export class StatsController {
   @Post('drop-off/analyze')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Analyze drop-off for shows',
     description:
@@ -166,7 +166,7 @@ export class StatsController {
   @Post('drop-off/analyze/:tmdbId')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Analyze drop-off for a specific show',
     description: 'Analyzes viewer drop-off for a single show by TMDB ID. Runs in background.',
@@ -215,7 +215,7 @@ export class StatsController {
   @Post('backfill/total-watchers')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Backfill total_watchers for corrupted items',
     description:
@@ -244,7 +244,7 @@ export class StatsController {
   @Post('backfill/watchers-count')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Queue backfill jobs for watchers_count',
     description:
@@ -277,7 +277,7 @@ export class StatsController {
   @Post('recalculate')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Recalculate scores for all media items',
     description:
@@ -302,7 +302,7 @@ export class StatsController {
   @Post('reconcile-community-ratings')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Reconcile community ratings',
     description:

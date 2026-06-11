@@ -748,313 +748,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/auth/register": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Register new user */
-        post: operations["AuthController_register"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Login with email/password */
-        post: operations["AuthController_login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Refresh tokens */
-        post: operations["AuthController_refresh"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Logout (revoke refresh tokens) */
-        post: operations["AuthController_logout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Change current user password */
-        patch: operations["AuthController_changePassword"];
-        trace?: never;
-    };
-    "/api/auth/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get current user profile */
-        get: operations["AuthController_me"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/google": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Initiate Google OAuth flow */
-        get: operations["AuthController_googleAuth"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/facebook": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Initiate Facebook OAuth flow */
-        get: operations["AuthController_facebookAuth"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/oauth/exchange": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Exchange one-time code for tokens */
-        post: operations["AuthController_exchangeCode"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/providers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get linked OAuth providers */
-        get: operations["AuthController_getLinkedAccounts"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/providers/{provider}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Unlink OAuth provider */
-        delete: operations["AuthController_unlinkProvider"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/config": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get auth configuration */
-        get: operations["AuthController_getConfig"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/users/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get current user profile (auth: Bearer) */
-        get: operations["UsersController_me"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update current user profile (auth: Bearer) */
-        patch: operations["UsersController_updateProfile"];
-        trace?: never;
-    };
-    "/api/users/me/avatar/upload-url": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create presigned upload URL for avatar (auth: Bearer) */
-        post: operations["UsersController_createAvatarUploadUrl"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/users/{username}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get public user profile by username (auth optional, privacy aware) */
-        get: operations["PublicUsersController_getPublicProfile"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/users/{username}/ratings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get public user ratings (auth optional, privacy aware) */
-        get: operations["PublicUsersController_getRatings"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/users/{username}/watchlist": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get public user watchlist (auth optional, privacy aware) */
-        get: operations["PublicUsersController_getWatchlist"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/users/{username}/history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get public user watch history (auth optional, privacy aware) */
-        get: operations["PublicUsersController_getHistory"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/me/notifications": {
         parameters: {
             query?: never;
@@ -2056,6 +1749,313 @@ export interface paths {
          * @description Returns media items with the biggest change in watchers count over the specified window.
          */
         get: operations["InsightsController_getMovements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register new user */
+        post: operations["AuthController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login with email/password */
+        post: operations["AuthController_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh tokens */
+        post: operations["AuthController_refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Logout (revoke refresh tokens) */
+        post: operations["AuthController_logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change current user password */
+        patch: operations["AuthController_changePassword"];
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get current user profile */
+        get: operations["AuthController_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Initiate Google OAuth flow */
+        get: operations["AuthController_googleAuth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/facebook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Initiate Facebook OAuth flow */
+        get: operations["AuthController_facebookAuth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/oauth/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Exchange one-time code for tokens */
+        post: operations["AuthController_exchangeCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get linked OAuth providers */
+        get: operations["AuthController_getLinkedAccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/providers/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unlink OAuth provider */
+        delete: operations["AuthController_unlinkProvider"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get auth configuration */
+        get: operations["AuthController_getConfig"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get current user profile (auth: Bearer) */
+        get: operations["UsersController_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update current user profile (auth: Bearer) */
+        patch: operations["UsersController_updateProfile"];
+        trace?: never;
+    };
+    "/api/users/me/avatar/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create presigned upload URL for avatar (auth: Bearer) */
+        post: operations["UsersController_createAvatarUploadUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public user profile by username (auth optional, privacy aware) */
+        get: operations["PublicUsersController_getPublicProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{username}/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public user ratings (auth optional, privacy aware) */
+        get: operations["PublicUsersController_getRatings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{username}/watchlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public user watchlist (auth optional, privacy aware) */
+        get: operations["PublicUsersController_getWatchlist"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{username}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public user watch history (auth optional, privacy aware) */
+        get: operations["PublicUsersController_getHistory"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3657,207 +3657,6 @@ export interface components {
              */
             watchedEpisodeIds: string[];
         };
-        RegisterDto: {
-            /** @example user@example.com */
-            email: string;
-            /** @example ratingo_fan */
-            username: string;
-            /** @example S3curePassw0rd */
-            password: string;
-            /** @example https://cdn.example.com/avatar.png */
-            avatarUrl?: string;
-        };
-        AuthTokensDto: {
-            /**
-             * @description JWT access token
-             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY1NDU5MDc0fQ.JYlxU9C9P_DJOJTeN_tosd5Dds5H5u3U9_y_AQdLtDU
-             */
-            accessToken: string;
-            /**
-             * @description Refresh token
-             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJqdGkiOiJmYmUwYTQxOC05ZWVkLTRjNmEtOTU2MS00MDRmZDFiMTFhOTciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY4MDUwMTc0fQ.Jra2xAp4OeKcm5ZSalwwMrqwoQngn8Js9ql_rK0VjFQ
-             */
-            refreshToken: string;
-        };
-        LoginDto: {
-            /** @example user@example.com */
-            email: string;
-            /** @example S3curePassw0rd */
-            password: string;
-        };
-        RefreshDto: {
-            /** @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... */
-            refreshToken: string;
-        };
-        ChangePasswordDto: {
-            /** @example OldPass123 */
-            currentPassword: string;
-            /** @example NewPass456 */
-            newPassword: string;
-        };
-        PrivacyDto: {
-            /** @example true */
-            isProfilePublic: boolean;
-            /** @example false */
-            showWatchHistory: boolean;
-            /** @example true */
-            showRatings: boolean;
-            /** @example true */
-            allowFollowers: boolean;
-            /** @example true */
-            autoSubscribeOnWatch: boolean;
-        };
-        ProfileDto: {
-            /** @example Люблю жахи та sci-fi */
-            bio: string | null;
-            /** @example Kyiv */
-            location: string | null;
-            /** @example https://instagram.com/me */
-            website: string | null;
-            /** @example uk */
-            preferredLanguage: string | null;
-            /** @example UA */
-            preferredRegion: string | null;
-            privacy: components["schemas"]["PrivacyDto"];
-        };
-        StatsDto: {
-            /** @example 24 */
-            moviesRated: number;
-            /** @example 10 */
-            showsRated: number;
-            /** @example 42 */
-            watchlistCount: number;
-        };
-        MeDto: {
-            /** @example 6bd54e62-bac3-49dd-a0d4-05efd7761700 */
-            id: string;
-            /** @example user@example.com */
-            email: string;
-            /** @example ratingo_fan */
-            username: string;
-            /** @example https://cdn.ratingo/avatar.png */
-            avatarUrl: string | null;
-            /**
-             * @example user
-             * @enum {string}
-             */
-            role: "user" | "admin";
-            profile: components["schemas"]["ProfileDto"];
-            /** @description Whether the user has a password set (false for OAuth-only accounts) */
-            hasPassword: boolean;
-            /**
-             * @description List of linked OAuth provider names
-             * @example [
-             *       "google"
-             *     ]
-             */
-            linkedProviders: string[];
-            stats: components["schemas"]["StatsDto"];
-        };
-        ExchangeCodeDto: {
-            /**
-             * @description One-time exchange code from OAuth callback
-             * @example abc123xyz...
-             */
-            code: string;
-        };
-        LinkedAccountDto: {
-            /**
-             * @description OAuth provider name
-             * @example google
-             */
-            provider: string;
-            /**
-             * @description Email from OAuth provider
-             * @example user@gmail.com
-             */
-            email?: string | null;
-            /**
-             * @description Display name from OAuth provider
-             * @example John Doe
-             */
-            displayName?: string | null;
-            /**
-             * Format: date-time
-             * @description When the account was linked
-             * @example 2025-01-15T10:30:00.000Z
-             */
-            linkedAt: string;
-        };
-        ProviderConfigDto: {
-            /** @description Whether this OAuth provider is enabled */
-            enabled: boolean;
-        };
-        AuthConfigDto: {
-            /** @description Google OAuth configuration */
-            google: components["schemas"]["ProviderConfigDto"];
-            /** @description Facebook OAuth configuration */
-            facebook: components["schemas"]["ProviderConfigDto"];
-        };
-        UpdateProfileDto: {
-            /** @example ratingo_fan */
-            username?: string;
-            /** @example https://cdn.example.com/avatar.png */
-            avatarUrl?: string;
-            /** @example Люблю фільми жахів та наукову фантастику */
-            bio?: string;
-            /** @example Kyiv, Ukraine */
-            location?: string;
-            /** @example https://instagram.com/myprofile */
-            website?: string;
-            /** @example uk */
-            preferredLanguage?: string;
-            /** @example UA */
-            preferredRegion?: string;
-            /** @example true */
-            isProfilePublic?: boolean;
-            /** @example false */
-            showWatchHistory?: boolean;
-            /** @example true */
-            showRatings?: boolean;
-            /** @example true */
-            allowFollowers?: boolean;
-            /** @example true */
-            autoSubscribeOnWatch?: boolean;
-        };
-        CreateAvatarUploadUrlDto: {
-            /** @enum {string} */
-            contentType: "image/jpeg" | "image/png" | "image/webp";
-        };
-        AvatarUploadUrlDto: {
-            uploadUrl: string;
-            publicUrl: string;
-            key: string;
-        };
-        PublicUserMediaSummaryDto: {
-            id: string;
-            /** @enum {string} */
-            type: "movie" | "show";
-            title: string;
-            slug: string;
-            poster: components["schemas"]["Function"] | null;
-            /** Format: date-time */
-            releaseDate?: string | null;
-        };
-        PublicUserMediaListItemDto: {
-            id: string;
-            /** @enum {string} */
-            state: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
-            /** @description 0-100 rating */
-            rating: number | null;
-            /** @description Arbitrary progress payload (JSON) */
-            progress?: Record<string, never> | null;
-            notes?: string | null;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-            mediaSummary: components["schemas"]["PublicUserMediaSummaryDto"];
-        };
-        PaginatedPublicUserMediaResponseDto: {
-            data: components["schemas"]["PublicUserMediaListItemDto"][];
-            meta: components["schemas"]["OffsetPaginationMetaDto"];
-        };
         NotificationPayloadDto: {
             /** @example 3 */
             seasonNumber?: number;
@@ -5438,6 +5237,207 @@ export interface components {
             metric: string;
             risers: components["schemas"]["RiseFallItemDto"][];
             fallers: components["schemas"]["RiseFallItemDto"][];
+        };
+        RegisterDto: {
+            /** @example user@example.com */
+            email: string;
+            /** @example ratingo_fan */
+            username: string;
+            /** @example S3curePassw0rd */
+            password: string;
+            /** @example https://cdn.example.com/avatar.png */
+            avatarUrl?: string;
+        };
+        AuthTokensDto: {
+            /**
+             * @description JWT access token
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY1NDU5MDc0fQ.JYlxU9C9P_DJOJTeN_tosd5Dds5H5u3U9_y_AQdLtDU
+             */
+            accessToken: string;
+            /**
+             * @description Refresh token
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJqdGkiOiJmYmUwYTQxOC05ZWVkLTRjNmEtOTU2MS00MDRmZDFiMTFhOTciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY4MDUwMTc0fQ.Jra2xAp4OeKcm5ZSalwwMrqwoQngn8Js9ql_rK0VjFQ
+             */
+            refreshToken: string;
+        };
+        LoginDto: {
+            /** @example user@example.com */
+            email: string;
+            /** @example S3curePassw0rd */
+            password: string;
+        };
+        RefreshDto: {
+            /** @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... */
+            refreshToken: string;
+        };
+        ChangePasswordDto: {
+            /** @example OldPass123 */
+            currentPassword: string;
+            /** @example NewPass456 */
+            newPassword: string;
+        };
+        PrivacyDto: {
+            /** @example true */
+            isProfilePublic: boolean;
+            /** @example false */
+            showWatchHistory: boolean;
+            /** @example true */
+            showRatings: boolean;
+            /** @example true */
+            allowFollowers: boolean;
+            /** @example true */
+            autoSubscribeOnWatch: boolean;
+        };
+        ProfileDto: {
+            /** @example Люблю жахи та sci-fi */
+            bio: string | null;
+            /** @example Kyiv */
+            location: string | null;
+            /** @example https://instagram.com/me */
+            website: string | null;
+            /** @example uk */
+            preferredLanguage: string | null;
+            /** @example UA */
+            preferredRegion: string | null;
+            privacy: components["schemas"]["PrivacyDto"];
+        };
+        StatsDto: {
+            /** @example 24 */
+            moviesRated: number;
+            /** @example 10 */
+            showsRated: number;
+            /** @example 42 */
+            watchlistCount: number;
+        };
+        MeDto: {
+            /** @example 6bd54e62-bac3-49dd-a0d4-05efd7761700 */
+            id: string;
+            /** @example user@example.com */
+            email: string;
+            /** @example ratingo_fan */
+            username: string;
+            /** @example https://cdn.ratingo/avatar.png */
+            avatarUrl: string | null;
+            /**
+             * @example user
+             * @enum {string}
+             */
+            role: "user" | "admin";
+            profile: components["schemas"]["ProfileDto"];
+            /** @description Whether the user has a password set (false for OAuth-only accounts) */
+            hasPassword: boolean;
+            /**
+             * @description List of linked OAuth provider names
+             * @example [
+             *       "google"
+             *     ]
+             */
+            linkedProviders: string[];
+            stats: components["schemas"]["StatsDto"];
+        };
+        ExchangeCodeDto: {
+            /**
+             * @description One-time exchange code from OAuth callback
+             * @example abc123xyz...
+             */
+            code: string;
+        };
+        LinkedAccountDto: {
+            /**
+             * @description OAuth provider name
+             * @example google
+             */
+            provider: string;
+            /**
+             * @description Email from OAuth provider
+             * @example user@gmail.com
+             */
+            email?: string | null;
+            /**
+             * @description Display name from OAuth provider
+             * @example John Doe
+             */
+            displayName?: string | null;
+            /**
+             * Format: date-time
+             * @description When the account was linked
+             * @example 2025-01-15T10:30:00.000Z
+             */
+            linkedAt: string;
+        };
+        ProviderConfigDto: {
+            /** @description Whether this OAuth provider is enabled */
+            enabled: boolean;
+        };
+        AuthConfigDto: {
+            /** @description Google OAuth configuration */
+            google: components["schemas"]["ProviderConfigDto"];
+            /** @description Facebook OAuth configuration */
+            facebook: components["schemas"]["ProviderConfigDto"];
+        };
+        UpdateProfileDto: {
+            /** @example ratingo_fan */
+            username?: string;
+            /** @example https://cdn.example.com/avatar.png */
+            avatarUrl?: string;
+            /** @example Люблю фільми жахів та наукову фантастику */
+            bio?: string;
+            /** @example Kyiv, Ukraine */
+            location?: string;
+            /** @example https://instagram.com/myprofile */
+            website?: string;
+            /** @example uk */
+            preferredLanguage?: string;
+            /** @example UA */
+            preferredRegion?: string;
+            /** @example true */
+            isProfilePublic?: boolean;
+            /** @example false */
+            showWatchHistory?: boolean;
+            /** @example true */
+            showRatings?: boolean;
+            /** @example true */
+            allowFollowers?: boolean;
+            /** @example true */
+            autoSubscribeOnWatch?: boolean;
+        };
+        CreateAvatarUploadUrlDto: {
+            /** @enum {string} */
+            contentType: "image/jpeg" | "image/png" | "image/webp";
+        };
+        AvatarUploadUrlDto: {
+            uploadUrl: string;
+            publicUrl: string;
+            key: string;
+        };
+        PublicUserMediaSummaryDto: {
+            id: string;
+            /** @enum {string} */
+            type: "movie" | "show";
+            title: string;
+            slug: string;
+            poster: components["schemas"]["Function"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+        };
+        PublicUserMediaListItemDto: {
+            id: string;
+            /** @enum {string} */
+            state: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
+            /** @description 0-100 rating */
+            rating: number | null;
+            /** @description Arbitrary progress payload (JSON) */
+            progress?: Record<string, never> | null;
+            notes?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            mediaSummary: components["schemas"]["PublicUserMediaSummaryDto"];
+        };
+        PaginatedPublicUserMediaResponseDto: {
+            data: components["schemas"]["PublicUserMediaListItemDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
         };
         PostListItemDto: {
             /**
@@ -7635,542 +7635,6 @@ export interface operations {
             };
         };
     };
-    AuthController_register: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterDto"];
-            };
-        };
-        responses: {
-            /** @description Tokens pair */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
-                };
-            };
-            /** @description Too many registration attempts */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginDto"];
-            };
-        };
-        responses: {
-            /** @description Tokens pair */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
-                };
-            };
-            /** @description Invalid credentials */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Too many login attempts */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_refresh: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RefreshDto"];
-            };
-        };
-        responses: {
-            /** @description Tokens pair */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
-                };
-            };
-            /** @description Too many refresh attempts */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_logout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_changePassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangePasswordDto"];
-            };
-        };
-        responses: {
-            /** @description Password changed successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not authenticated */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Invalid current password */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_me: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current authenticated user */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MeDto"];
-                    };
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_googleAuth: {
-        parameters: {
-            query?: {
-                /** @description URL to redirect after auth */
-                returnTo?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Redirect to Google */
-            302: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_facebookAuth: {
-        parameters: {
-            query?: {
-                /** @description URL to redirect after auth */
-                returnTo?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Redirect to Facebook */
-            302: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_exchangeCode: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ExchangeCodeDto"];
-            };
-        };
-        responses: {
-            /** @description Tokens pair */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
-                };
-            };
-            /** @description OAUTH_EXCHANGE_EXPIRED or OAUTH_EXCHANGE_USED */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Too many exchange attempts */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_getLinkedAccounts: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Linked accounts */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["LinkedAccountDto"][];
-                    };
-                };
-            };
-        };
-    };
-    AuthController_unlinkProvider: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description OAuth provider to unlink */
-                provider: "google" | "facebook";
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Provider unlinked */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Cannot unlink last authentication method */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthController_getConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Auth configuration */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthConfigDto"];
-                    };
-                };
-            };
-        };
-    };
-    UsersController_me: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    UsersController_updateProfile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateProfileDto"];
-            };
-        };
-        responses: {
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    UsersController_createAvatarUploadUrl: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateAvatarUploadUrlDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AvatarUploadUrlDto"];
-                    };
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    PublicUsersController_getPublicProfile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    PublicUsersController_getRatings: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-                sort?: "recent" | "rating" | "releaseDate";
-            };
-            header?: never;
-            path: {
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
-                    };
-                };
-            };
-        };
-    };
-    PublicUsersController_getWatchlist: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-                sort?: "recent" | "rating" | "releaseDate";
-            };
-            header?: never;
-            path: {
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
-                    };
-                };
-            };
-        };
-    };
-    PublicUsersController_getHistory: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-                sort?: "recent" | "rating" | "releaseDate";
-            };
-            header?: never;
-            path: {
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
-                    };
-                };
-            };
-        };
-    };
     NotificationsController_list: {
         parameters: {
             query?: {
@@ -9685,6 +9149,542 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["RiseFallResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    AuthController_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterDto"];
+            };
+        };
+        responses: {
+            /** @description Tokens pair */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
+                };
+            };
+            /** @description Too many registration attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginDto"];
+            };
+        };
+        responses: {
+            /** @description Tokens pair */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
+                };
+            };
+            /** @description Invalid credentials */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Too many login attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshDto"];
+            };
+        };
+        responses: {
+            /** @description Tokens pair */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
+                };
+            };
+            /** @description Too many refresh attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Password changed successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid current password */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current authenticated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MeDto"];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_googleAuth: {
+        parameters: {
+            query?: {
+                /** @description URL to redirect after auth */
+                returnTo?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to Google */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_facebookAuth: {
+        parameters: {
+            query?: {
+                /** @description URL to redirect after auth */
+                returnTo?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to Facebook */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_exchangeCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExchangeCodeDto"];
+            };
+        };
+        responses: {
+            /** @description Tokens pair */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
+                };
+            };
+            /** @description OAUTH_EXCHANGE_EXPIRED or OAUTH_EXCHANGE_USED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Too many exchange attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_getLinkedAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Linked accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["LinkedAccountDto"][];
+                    };
+                };
+            };
+        };
+    };
+    AuthController_unlinkProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description OAuth provider to unlink */
+                provider: "google" | "facebook";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Provider unlinked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cannot unlink last authentication method */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_getConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Auth configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthConfigDto"];
+                    };
+                };
+            };
+        };
+    };
+    UsersController_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UsersController_updateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileDto"];
+            };
+        };
+        responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UsersController_createAvatarUploadUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAvatarUploadUrlDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AvatarUploadUrlDto"];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PublicUsersController_getPublicProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PublicUsersController_getRatings: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+            };
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    PublicUsersController_getWatchlist: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+            };
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    PublicUsersController_getHistory: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+            };
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
                     };
                 };
             };

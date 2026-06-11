@@ -39,7 +39,7 @@ type UserMediaWithSummary = UserMediaState & {
 /**
  * Exposes owner-only user media list endpoints.
  */
-@ApiTags('Me')
+@ApiTags('Me: Lists')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('me')

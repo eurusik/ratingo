@@ -53,7 +53,7 @@ import {
  * Triggers ingestion processes.
  * Intended for admin panels and operational debugging.
  */
-@ApiTags('Service: Ingestion')
+@ApiTags('Admin: Ingestion')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
 @Controller('ingestion')

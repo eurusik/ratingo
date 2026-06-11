@@ -24,7 +24,7 @@ import {
 /**
  * Controller for user notifications.
  */
-@ApiTags('Notifications')
+@ApiTags('Me: Notifications')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('me/notifications')

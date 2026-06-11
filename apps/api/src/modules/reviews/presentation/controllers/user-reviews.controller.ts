@@ -41,7 +41,7 @@ import {
 /**
  * Authenticated endpoints for user reviews (CRUD + voting).
  */
-@ApiTags('User: Reviews')
+@ApiTags('Me: Reviews')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('me/reviews')

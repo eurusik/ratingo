@@ -3,13 +3,14 @@ import * as path from 'node:path';
 
 import { BullRegistrar, getQueueToken } from '@nestjs/bullmq';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
+import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 
 import { AppModule } from '../app.module';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
+import { buildSwaggerConfig } from '../swagger.config';
 
 const GLOBAL_PREFIX = 'api';
 const OUTPUT_PATH = path.resolve(__dirname, '../../../../packages/api-contract/openapi.json');
@@ -121,17 +122,6 @@ const wrapSuccessResponses = (doc: OpenAPIObject): void => {
       media.schema = wrapSchema(media.schema!);
     });
 };
-
-/**
- * Build Swagger/OpenAPI metadata.
- */
-const buildSwaggerConfig = () =>
-  new DocumentBuilder()
-    .setTitle('Ratingo API')
-    .setDescription('Rest API for Ratingo mobile and web clients')
-    .setVersion('2.0')
-    .addBearerAuth()
-    .build();
 
 /**
  * Create a Nest application instance configured for offline OpenAPI generation.

@@ -21,7 +21,7 @@ import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
 import { DryRunRequestDto, DryRunResponseDto } from '../dto/dry-run.dto';
 import { DryRunExceptionFilter } from '../filters/dry-run-exception.filter';
 
-@ApiTags('Admin - Policy Activation')
+@ApiTags('Admin: Policy')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
 @UseFilters(DryRunExceptionFilter)
