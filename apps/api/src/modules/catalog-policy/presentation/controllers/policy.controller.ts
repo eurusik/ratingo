@@ -37,7 +37,7 @@ import {
   CreatePolicyResponseDto,
 } from '../dto';
 
-@ApiTags('Admin - Policy Activation')
+@ApiTags('Admin: Policy')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
 @Controller('admin/catalog-policies')

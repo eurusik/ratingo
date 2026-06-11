@@ -45,7 +45,7 @@ import {
   MappingsQueryDto,
 } from '../dto';
 
-@ApiTags('Admin - Providers')
+@ApiTags('Admin: Providers')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
 @Controller('admin/providers')

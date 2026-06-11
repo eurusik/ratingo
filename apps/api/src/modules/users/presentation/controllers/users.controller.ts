@@ -27,7 +27,7 @@ import { UpdateProfileDto } from '../dto/update-profile.dto';
 /**
  * Handles authenticated user profile operations.
  */
-@ApiTags('Users')
+@ApiTags('Me: Profile')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('users')

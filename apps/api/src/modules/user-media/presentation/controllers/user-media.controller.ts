@@ -43,7 +43,7 @@ import { CsvImportResultDto, ImportMediaDto } from '../dto/import-media.dto';
 import { SetUserMediaStateDto } from '../dto/set-user-media-state.dto';
 import { UserMediaStateDto } from '../dto/user-media-state.dto';
 
-@ApiTags('User Media')
+@ApiTags('Me: Library')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('user-media')

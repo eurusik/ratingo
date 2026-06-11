@@ -28,7 +28,7 @@ import { EpisodeProgressService } from '../../application/episode-progress.servi
 import { BatchEpisodeIdsDto } from '../dto/batch-episode-ids.dto';
 import { ShowProgressDto } from '../dto/episode-progress.dto';
 
-@ApiTags('Episode Progress')
+@ApiTags('Me: Episode Progress')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('user-media')

@@ -35,7 +35,7 @@ import {
   UnsubscribeActionResultDto,
 } from '../dto/subscriptions.dto';
 
-@ApiTags('Subscriptions')
+@ApiTags('Me: Subscriptions')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('me/subscriptions')
