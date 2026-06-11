@@ -1,10 +1,11 @@
 import * as fc from 'fast-check';
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthService } from './auth.service';
+import { OAuthService } from './oauth.service';
+import { TokenService } from './token.service';
 import { ConsumeCodeFailureReason } from '../domain/repositories/exchange-codes.repository.interface';
 
-describe('AuthService - Exchange Code Property Tests', () => {
+describe('OAuthService - Exchange Code Property Tests', () => {
   // Mock dependencies
   const usersService = {
     getByEmail: jest.fn(),
@@ -49,7 +50,7 @@ describe('AuthService - Exchange Code Property Tests', () => {
     frontendUrl: 'http://localhost:3000',
   };
 
-  let service: AuthService;
+  let service: OAuthService;
 
   const mockUser = {
     id: 'user-123',
@@ -59,12 +60,17 @@ describe('AuthService - Exchange Code Property Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AuthService(
+    const tokenService = new TokenService(
       usersService as any,
       config as any,
       jwtService as any,
       passwordHasher as any,
       refreshTokensRepository as any,
+    );
+    service = new OAuthService(
+      usersService as any,
+      config as any,
+      tokenService,
       exchangeCodesRepository as any,
       {} as any,
     );
