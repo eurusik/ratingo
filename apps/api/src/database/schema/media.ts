@@ -20,10 +20,7 @@ import {
   type VideoTypeEnum,
   type VideoLanguageEnum,
 } from '../../common/enums/video.enum';
-import {
-  type Credits,
-  type WatchProvidersMap,
-} from '../../modules/ingestion/domain/models/normalized-media.model';
+import { type Credits, type WatchProvidersMap } from '../../modules/ingestion/public';
 
 import { tsvector } from './shared';
 
