@@ -31,7 +31,7 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { mapBullStateToJobStatus } from '../../../../common/infrastructure/bullmq/job-status-mapper';
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../../auth/public';
 import { normalizeRegion, formatHourWindow } from '../../application/helpers/queue.helpers';
 import { SyncMediaService } from '../../application/services/sync-media.service';
 import {

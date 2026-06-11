@@ -6,8 +6,8 @@ import { type Job } from 'bullmq';
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { WORKER_CONFIG } from '@/config/queue.config';
 
-import { ResolveImportDispatcherPipeline } from '../../../user-media/application/pipelines/resolve-import-dispatcher.pipeline';
-import { ResolveImportItemPipeline } from '../../../user-media/application/pipelines/resolve-import-item.pipeline';
+import { ResolveImportDispatcherPipeline } from '../../../user-media/public';
+import { ResolveImportItemPipeline } from '../../../user-media/public';
 import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';

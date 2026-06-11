@@ -7,7 +7,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { USER_MEDIA_STATE } from '../../../user-media/domain/entities/user-media-state.entity';
+import { USER_MEDIA_STATE } from '../../../user-media/public';
 
 /**
  * Counts the number of shows a user is currently watching.

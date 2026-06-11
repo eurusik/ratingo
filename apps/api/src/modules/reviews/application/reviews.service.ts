@@ -5,10 +5,7 @@ import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { type MediaType } from '../../../common/enums/media-type.enum';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { NotFoundException } from '../../../common/exceptions/not-found.exception';
-import {
-  RATING_SYNC_PORT,
-  type IRatingSyncPort,
-} from '../../user-media/domain/ports/rating-sync.port';
+import { RATING_SYNC_PORT, type IRatingSyncPort } from '../../user-media/public';
 import { REVIEW_LIMITS, REVIEW_SORT, type ReviewSort } from '../domain/constants/review.constants';
 import type {
   Review,

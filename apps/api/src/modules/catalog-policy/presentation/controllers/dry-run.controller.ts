@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../../auth/public';
 import { DryRunService, type DryRunResult } from '../../application/services/dry-run.service';
 import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
 import { DryRunRequestDto, DryRunResponseDto } from '../dto/dry-run.dto';

@@ -6,7 +6,7 @@ import { type Queue } from 'bullmq';
 
 import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../../auth/public';
 import {
   DropOffService,
   ScoreRecalculationService,

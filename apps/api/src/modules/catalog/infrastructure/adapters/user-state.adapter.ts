@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { UserMediaService } from '@/modules/user-media/application/user-media.service';
+import { UserMediaService } from '@/modules/user-media/public';
 
 import { IUserStateProvider, UserState } from '../../domain/ports/user-state-provider.port';
 

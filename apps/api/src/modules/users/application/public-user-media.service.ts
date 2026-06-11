@@ -2,11 +2,8 @@ import { Injectable } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
-import { UserMediaService } from '../../user-media/application/user-media.service';
-import {
-  USER_MEDIA_HISTORY_STATES,
-  USER_MEDIA_WATCHLIST_STATES,
-} from '../../user-media/domain/entities/user-media-state.entity';
+import { UserMediaService } from '../../user-media/public';
+import { USER_MEDIA_HISTORY_STATES, USER_MEDIA_WATCHLIST_STATES } from '../../user-media/public';
 import {
   type PublicUserMediaListQueryDto,
   USER_MEDIA_LIST_SORT,

@@ -2,8 +2,8 @@ import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { OptionalJwtAuthGuard } from '../../../auth/public';
 import { ReviewRepliesService } from '../../application/review-replies.service';
 import { ReviewVotesService } from '../../application/review-votes.service';
 import { ReviewsService } from '../../application/reviews.service';

@@ -16,7 +16,7 @@ import {
 } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../../auth/public';
 import { RunMapper } from '../../application/mappers';
 import { DiffService } from '../../application/services/diff.service';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';

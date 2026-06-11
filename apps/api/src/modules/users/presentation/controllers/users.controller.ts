@@ -17,8 +17,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { AvatarUploadService } from '../../application/avatar-upload.service';
 import { UsersService } from '../../application/users.service';
 import { AvatarUploadUrlDto, CreateAvatarUploadUrlDto } from '../dto/avatar-upload.dto';

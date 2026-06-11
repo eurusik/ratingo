@@ -3,8 +3,8 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { OptionalJwtAuthGuard } from '../../../auth/public';
 import { PublicUserMediaService } from '../../application/public-user-media.service';
 import { type ViewerContext } from '../../application/user-profile-visibility.policy';
 import { UsersService } from '../../application/users.service';

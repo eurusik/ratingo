@@ -8,7 +8,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
-import { USER_ROLE } from '../../../users/domain/entities/user.entity';
+import { USER_ROLE } from '../../../users/public';
 
 @Injectable()
 export class AdminJwtGuard extends AuthGuard('jwt') implements CanActivate {

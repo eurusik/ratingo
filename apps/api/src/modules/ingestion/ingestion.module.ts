@@ -9,10 +9,10 @@ import traktConfig from '../../config/trakt.config';
 import tvmazeConfig from '../../config/tvmaze.config';
 import { CatalogModule } from '../catalog/catalog.module';
 import { CatalogPolicyModule } from '../catalog-policy/catalog-policy.module';
-import { ProviderModule } from '../provider/public';
-import { ScoreCalculatorModule } from '../shared/score-calculator';
+import { ProviderModule } from '../provider/provider.module';
+import { ScoreCalculatorModule } from '../shared/score-calculator/score-calculator.module';
 import { StatsModule } from '../stats/stats.module';
-import { TmdbModule } from '../tmdb/public';
+import { TmdbModule } from '../tmdb/tmdb.module';
 import { UserActionsModule } from '../user-actions/user-actions.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 

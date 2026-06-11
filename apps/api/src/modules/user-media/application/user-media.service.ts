@@ -6,8 +6,8 @@ import { ErrorCode } from '@/common/enums/error-code.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { AppException } from '@/common/exceptions/app.exception';
 
-import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
-import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
+import { CardEnrichmentService } from '../../shared/cards';
+import { CARD_LIST_CONTEXT } from '../../shared/cards';
 import { USER_MEDIA_STATE_ERRORS } from '../domain/constants/user-media-state-errors.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
 import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';

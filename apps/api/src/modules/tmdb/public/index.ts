@@ -5,7 +5,7 @@
  *
  * @example
  * // ✅ Correct
- * import { TmdbAdapter, TmdbModule } from '../tmdb/public';
+ * import { TmdbAdapter } from '../tmdb/public';
  *
  * // ❌ Wrong - breaks module boundaries
  * import { TmdbAdapter } from '../tmdb/tmdb.adapter';
@@ -13,4 +13,3 @@
 
 export { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../constants/alt-title.constants';
 export { TmdbAdapter } from '../tmdb.adapter';
-export { TmdbModule } from '../tmdb.module';
