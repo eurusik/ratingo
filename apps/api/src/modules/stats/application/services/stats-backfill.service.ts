@@ -6,7 +6,7 @@ import { type Queue } from 'bullmq';
 import { MediaType } from '@/common/enums/media-type.enum';
 
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../ingestion/public';
+import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../trakt/public';
 import {
   type IStatsRepository,
   STATS_REPOSITORY,

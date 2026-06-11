@@ -33,7 +33,33 @@ export interface ShowEpisodesAnalysisPayload {
  * - undefined = not found in Trakt, can write 0 or skip
  * - null = transient error (429/5xx), skip DB update
  */
+/**
+ * Ratings and watchers payload for a single title.
+ */
+export interface MediaRatingsPayload {
+  rating: number;
+  votes: number;
+  watchers: number | null;
+  totalWatchers: number | null;
+}
+
 export interface TraktRatingsPort {
+  /**
+   * Gets ratings and watchers for a movie by TMDB ID.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<MediaRatingsPayload | null>} Ratings payload or null
+   */
+  getMovieRatingsByTmdbId(tmdbId: number): Promise<MediaRatingsPayload | null>;
+
+  /**
+   * Gets ratings and watchers for a show by TMDB ID.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<MediaRatingsPayload | null>} Ratings payload or null
+   */
+  getShowRatingsByTmdbId(tmdbId: number): Promise<MediaRatingsPayload | null>;
+
   /**
    * Gets watchers count for multiple movies by TMDB IDs.
    *

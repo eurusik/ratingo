@@ -22,6 +22,7 @@ const apiModules = [
   'reviews',
   'stats',
   'tmdb',
+  'trakt',
   'user-actions',
   'user-media',
   'users',

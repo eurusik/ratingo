@@ -11,18 +11,7 @@ export interface SeasonData {
   episode_count?: number;
 }
 
-/**
- * Media type literals for Trakt API.
- */
-export type TraktMediaType = 'movie' | 'show';
-
-/**
- * Media type constants.
- */
-export const TRAKT_MEDIA_TYPE = {
-  MOVIE: 'movie' as const,
-  SHOW: 'show' as const,
-};
+export { type TraktMediaType, TRAKT_MEDIA_TYPE } from '../../../domain/constants/trakt.constants';
 
 /**
  * Endpoint type literals for Trakt API.

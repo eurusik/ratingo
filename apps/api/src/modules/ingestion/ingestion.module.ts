@@ -1,11 +1,10 @@
 import { BullModule } from '@nestjs/bullmq';
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import mdblistConfig from '../../config/mdblist.config';
 import omdbConfig from '../../config/omdb.config';
 import schedulerConfig from '../../config/scheduler.config';
-import traktConfig from '../../config/trakt.config';
 import tvmazeConfig from '../../config/tvmaze.config';
 import { CatalogModule } from '../catalog/catalog.module';
 import { CatalogPolicyModule } from '../catalog-policy/catalog-policy.module';
@@ -13,6 +12,7 @@ import { ProviderModule } from '../provider/provider.module';
 import { ScoreCalculatorModule } from '../shared/score-calculator/score-calculator.module';
 import { StatsModule } from '../stats/stats.module';
 import { TmdbModule } from '../tmdb/tmdb.module';
+import { TraktModule } from '../trakt/trakt.module';
 import { UserActionsModule } from '../user-actions/user-actions.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 
@@ -33,13 +33,9 @@ import { TvMazeEnrichmentService } from './application/services/tvmaze-enrichmen
 import { BackfillWorker } from './application/workers/backfill.worker';
 import { RatingsBackfillWorker } from './application/workers/ratings-backfill.worker';
 import { SyncWorker } from './application/workers/sync.worker';
-import { TRAKT_LISTS_PORT } from './domain/ports/trakt-lists.port';
-import { TRAKT_RATINGS_PORT } from './domain/ports/trakt-ratings.port';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
 import { MdblistAdapter } from './infrastructure/adapters/mdblist/mdblist.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
-import { TraktListsAdapter } from './infrastructure/adapters/trakt/trakt-lists.adapter';
-import { TraktRatingsAdapter } from './infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
 import {
@@ -59,11 +55,11 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     CatalogPolicyModule,
     ProviderModule,
     TmdbModule,
-    forwardRef(() => StatsModule),
-    forwardRef(() => UserActionsModule),
-    forwardRef(() => UserMediaModule),
+    TraktModule,
+    StatsModule,
+    UserActionsModule,
+    UserMediaModule,
     ScoreCalculatorModule,
-    ConfigModule.forFeature(traktConfig),
     ConfigModule.forFeature(omdbConfig),
     ConfigModule.forFeature(mdblistConfig),
     ConfigModule.forFeature(tvmazeConfig),
@@ -95,18 +91,6 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       provide: SNAPSHOTS_REPOSITORY,
       useClass: SnapshotsRepository,
     },
-    // Port bindings (DDD: domain ports -> infrastructure adapters)
-    {
-      provide: TRAKT_RATINGS_PORT,
-      useClass: TraktRatingsAdapter,
-    },
-    {
-      provide: TRAKT_LISTS_PORT,
-      useClass: TraktListsAdapter,
-    },
-    // Adapters (still exported for internal use within ingestion module)
-    TraktRatingsAdapter,
-    TraktListsAdapter,
     OmdbAdapter,
     MdblistAdapter,
     TvMazeAdapter,
@@ -129,6 +113,6 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     BackfillAltTitlesPipeline,
     BackfillMdblistRatingsPipeline,
   ],
-  exports: [SyncMediaService, TRAKT_RATINGS_PORT, TRAKT_LISTS_PORT, SnapshotsService],
+  exports: [SyncMediaService, SnapshotsService],
 })
 export class IngestionModule {}

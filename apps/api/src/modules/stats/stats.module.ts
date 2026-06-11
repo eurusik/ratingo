@@ -1,10 +1,10 @@
 import { BullModule } from '@nestjs/bullmq';
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { CatalogModule } from '../catalog/catalog.module';
-import { IngestionModule } from '../ingestion/ingestion.module';
 import { DropOffAnalyzerModule } from '../shared/drop-off-analyzer/drop-off-analyzer.module';
 import { ScoreCalculatorModule } from '../shared/score-calculator/score-calculator.module';
+import { TraktModule } from '../trakt/trakt.module';
 
 import { CommunityRatingChangedListener } from './application/listeners/community-rating-changed.listener';
 import {
@@ -31,7 +31,7 @@ import { STATS_QUEUE } from './stats.constants';
 @Module({
   imports: [
     CatalogModule,
-    forwardRef(() => IngestionModule),
+    TraktModule,
     ScoreCalculatorModule,
     DropOffAnalyzerModule,
     BullModule.registerQueue({

@@ -1,4 +1,4 @@
-import { Module, forwardRef, type Provider } from '@nestjs/common';
+import { Module, type Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService, type ConfigType } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -83,7 +83,7 @@ const facebookStrategyProvider: Provider = {
       }),
     }),
     UsersModule,
-    forwardRef(() => UserMediaModule),
+    UserMediaModule,
     DatabaseModule,
   ],
   providers: [

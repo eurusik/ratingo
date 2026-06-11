@@ -4,13 +4,13 @@ import { MAX_PAGE_SIZE, MS_PER_MINUTE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
+import { ScoreCalculatorService } from '../../../shared/score-calculator';
 import {
   type TraktListsPort,
   TRAKT_LISTS_PORT,
   type TraktRatingsPort,
   TRAKT_RATINGS_PORT,
-} from '../../../ingestion/public';
-import { ScoreCalculatorService } from '../../../shared/score-calculator';
+} from '../../../trakt/public';
 import {
   type IStatsRepository,
   type MediaStatsData,
