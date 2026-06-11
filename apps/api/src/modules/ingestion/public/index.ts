@@ -17,10 +17,6 @@ export {
   METADATA_PROVIDER_PORT,
 } from '../domain/ports/metadata-provider.port';
 
-export { TraktRatingsPort, TRAKT_RATINGS_PORT } from '../domain/ports/trakt-ratings.port';
-
-export { TraktListsPort, TRAKT_LISTS_PORT } from '../domain/ports/trakt-lists.port';
-
 // Models (contract types)
 export type {
   NormalizedMedia,

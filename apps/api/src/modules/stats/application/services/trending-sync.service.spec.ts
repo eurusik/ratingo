@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TrendingSyncService } from './trending-sync.service';
 import { STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
 import { MEDIA_REPOSITORY } from '../../../catalog/public';
-import { TRAKT_LISTS_PORT, TRAKT_RATINGS_PORT } from '../../../ingestion/public';
+import { TRAKT_LISTS_PORT, TRAKT_RATINGS_PORT } from '../../../trakt/public';
 import { ScoreCalculatorService } from '../../../shared/score-calculator';
 import { MediaType } from '@/common/enums/media-type.enum';
 

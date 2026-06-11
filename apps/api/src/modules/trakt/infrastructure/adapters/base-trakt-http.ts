@@ -1,14 +1,14 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 
-import { TraktApiException } from '../../../../../common/exceptions/external-api.exception';
+import { TraktApiException } from '../../../../common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
   type RetryConfig,
   HttpError,
   parseRetryAfter,
-} from '../../../../../common/http/resilient-http.client';
-import traktConfig from '../../../../../config/trakt.config';
+} from '../../../../common/http/resilient-http.client';
+import traktConfig from '../../../../config/trakt.config';
 
 /**
  * Trakt-specific retry configuration.

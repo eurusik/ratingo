@@ -3,7 +3,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { StatsBackfillService } from './stats-backfill.service';
 import { STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
 import { MEDIA_REPOSITORY } from '../../../catalog/public';
-import { TRAKT_RATINGS_PORT } from '../../../ingestion/public';
+import { TRAKT_RATINGS_PORT } from '../../../trakt/public';
 import { STATS_QUEUE, STATS_JOBS, BACKFILL_CONFIG } from '../../stats.constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 

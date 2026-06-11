@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SnapshotsService } from './snapshots.service';
-import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '../../../trakt/public';
 import { SNAPSHOTS_REPOSITORY } from '../../domain/repositories/snapshots.repository.interface';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { type SnapshotCandidate } from '../../../catalog/public';
-import { TRAKT_MEDIA_TYPE } from '../../infrastructure/adapters/trakt/interfaces/trakt.types';
+import { TRAKT_MEDIA_TYPE } from '../../../trakt/public';
 
 describe('SnapshotsService', () => {
   let service: SnapshotsService;
   let traktAdapter: jest.Mocked<
     Pick<
-      TraktRatingsAdapter,
+      TraktRatingsPort,
       'getMovieRatingsByTmdbId' | 'getShowRatingsByTmdbId' | 'getTotalWatchersByTmdbIds'
     >
   >;
@@ -36,7 +36,7 @@ describe('SnapshotsService', () => {
     const testingModule: TestingModule = await Test.createTestingModule({
       providers: [
         SnapshotsService,
-        { provide: TraktRatingsAdapter, useValue: traktAdapter },
+        { provide: TRAKT_RATINGS_PORT, useValue: traktAdapter },
         { provide: SNAPSHOTS_REPOSITORY, useValue: snapshotsRepository },
       ],
     }).compile();

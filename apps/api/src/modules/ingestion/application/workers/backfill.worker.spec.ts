@@ -6,7 +6,7 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import { ResolveImportDispatcherPipeline } from '../../../user-media/application/pipelines/resolve-import-dispatcher.pipeline';
 import { ResolveImportItemPipeline } from '../../../user-media/application/pipelines/resolve-import-item.pipeline';
 import { IngestionJob } from '../../ingestion.constants';
-import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
+import { destroyTraktRateLimiter } from '../../../trakt/infrastructure/adapters/base-trakt-http';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 

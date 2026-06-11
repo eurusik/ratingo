@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
-import { type TraktRatingsPort } from '../../../domain/ports/trakt-ratings.port';
 import {
   TRAKT_BATCH_CONCURRENCY,
   TRAKT_BULK_CHUNK_SIZE,
   TRAKT_BULK_CHUNK_DELAY_MS,
   MAX_SEASONS_FOR_ANALYSIS,
-} from '../../../ingestion.constants';
+} from '../../domain/constants/trakt.constants';
+import { type TraktRatingsPort } from '../../domain/ports/trakt-ratings.port';
 
 import { BaseTraktHttp } from './base-trakt-http';
 import {

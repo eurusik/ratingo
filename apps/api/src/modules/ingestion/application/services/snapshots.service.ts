@@ -2,13 +2,12 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { type SnapshotCandidate } from '../../../catalog/public';
+import { type TraktRatingsPort, TRAKT_RATINGS_PORT, TRAKT_MEDIA_TYPE } from '../../../trakt/public';
 import {
   type ISnapshotsRepository,
   SNAPSHOTS_REPOSITORY,
   type SnapshotUpsertData,
 } from '../../domain/repositories/snapshots.repository.interface';
-import { TRAKT_MEDIA_TYPE } from '../../infrastructure/adapters/trakt/interfaces/trakt.types';
-import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 
 /**
  * Result of batch snapshot sync operation.
@@ -30,7 +29,8 @@ export class SnapshotsService {
   private readonly logger = new Logger(SnapshotsService.name);
 
   constructor(
-    private readonly traktAdapter: TraktRatingsAdapter,
+    @Inject(TRAKT_RATINGS_PORT)
+    private readonly traktAdapter: TraktRatingsPort,
     @Inject(SNAPSHOTS_REPOSITORY)
     private readonly snapshotsRepository: ISnapshotsRepository,
   ) {}

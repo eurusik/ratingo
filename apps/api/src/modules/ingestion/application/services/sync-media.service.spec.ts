@@ -4,7 +4,7 @@ import { CLOCK_PORT } from '@/modules/shared/clock';
 import { SyncMediaService } from './sync-media.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '../../../tmdb/public';
-import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '../../../trakt/public';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
@@ -16,7 +16,7 @@ import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '@/common/enums/
 describe('SyncMediaService', () => {
   let service: SyncMediaService;
   let tmdbAdapter: jest.Mocked<TmdbAdapter>;
-  let traktAdapter: jest.Mocked<TraktRatingsAdapter>;
+  let traktAdapter: jest.Mocked<TraktRatingsPort>;
   let omdbAdapter: jest.Mocked<OmdbAdapter>;
   let tvMazeEnrichment: jest.Mocked<TvMazeEnrichmentService>;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
@@ -93,7 +93,7 @@ describe('SyncMediaService', () => {
       providers: [
         SyncMediaService,
         { provide: TmdbAdapter, useValue: mockTmdbAdapter },
-        { provide: TraktRatingsAdapter, useValue: mockTraktAdapter },
+        { provide: TRAKT_RATINGS_PORT, useValue: mockTraktAdapter },
         { provide: OmdbAdapter, useValue: mockOmdbAdapter },
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
@@ -107,7 +107,7 @@ describe('SyncMediaService', () => {
 
     service = module.get<SyncMediaService>(SyncMediaService);
     tmdbAdapter = module.get(TmdbAdapter);
-    traktAdapter = module.get(TraktRatingsAdapter);
+    traktAdapter = module.get(TRAKT_RATINGS_PORT);
     omdbAdapter = module.get(OmdbAdapter);
     tvMazeEnrichment = module.get(TvMazeEnrichmentService);
     scoreCalculator = module.get(ScoreCalculatorService);

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { type TraktListsPort } from '../../../domain/ports/trakt-lists.port';
+import { type TraktListsPort } from '../../domain/ports/trakt-lists.port';
 
 import { BaseTraktHttp } from './base-trakt-http';
 import {

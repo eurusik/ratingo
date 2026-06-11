@@ -4,7 +4,7 @@ import { SyncMediaService } from '../../application/services/sync-media.service'
 import { getQueueToken } from '@nestjs/bullmq';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
+import { destroyTraktRateLimiter } from '../../../trakt/infrastructure/adapters/base-trakt-http';
 import { DEFAULT_REGION } from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 

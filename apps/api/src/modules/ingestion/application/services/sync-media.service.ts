@@ -14,10 +14,10 @@ import { NormalizationService } from '../../../provider/public';
 import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
 import { TmdbAdapter } from '../../../tmdb/public';
+import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../trakt/public';
 import { MediaSyncedEvent } from '../../domain/events/media-synced.event';
 import { type NormalizedMedia } from '../../domain/models/normalized-media.model';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
-import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 
@@ -58,7 +58,8 @@ export class SyncMediaService {
 
   constructor(
     private readonly tmdbAdapter: TmdbAdapter,
-    private readonly traktRatingsAdapter: TraktRatingsAdapter,
+    @Inject(TRAKT_RATINGS_PORT)
+    private readonly traktRatingsAdapter: TraktRatingsPort,
     private readonly omdbAdapter: OmdbAdapter,
     private readonly tvMazeEnrichment: TvMazeEnrichmentService,
     private readonly scoreCalculator: ScoreCalculatorService,

@@ -1,10 +1,9 @@
 import { BullModule } from '@nestjs/bullmq';
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import tmdbConfig from '../../config/tmdb.config';
 import { DatabaseModule } from '../../database/database.module';
-import { AuthModule } from '../auth/auth.module';
 import {
   BACKFILL_QUEUE,
   DEFAULT_INGESTION_JOB_OPTIONS,
@@ -43,7 +42,6 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
 @Module({
   imports: [
     DatabaseModule,
-    forwardRef(() => AuthModule),
     CardsModule,
     UserActionsModule,
     ConfigModule.forFeature(tmdbConfig),
