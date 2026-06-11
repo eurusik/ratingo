@@ -2,9 +2,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
 import { MediaSyncedEvent } from '../../../ingestion/public';
-import { SavedItemsService } from '../../../user-actions/application/saved-items.service';
-import { ACTION_CONTEXT } from '../../../user-actions/domain/entities/user-media-action.entity';
-import { SAVED_ITEM_LIST } from '../../../user-actions/domain/entities/user-saved-item.entity';
+import { SavedItemsService } from '../../../user-actions/public';
+import { ACTION_CONTEXT } from '../../../user-actions/public';
+import { SAVED_ITEM_LIST } from '../../../user-actions/public';
 import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_FAILURE,

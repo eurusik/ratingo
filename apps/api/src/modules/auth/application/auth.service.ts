@@ -19,8 +19,8 @@ import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { DevTiming } from '../../../common/utils/dev-timing';
 import authConfig from '../../../config/auth.config';
-import { UsersService } from '../../users/application/users.service';
-import { type User } from '../../users/domain/entities/user.entity';
+import { UsersService } from '../../users/public';
+import { type User } from '../../users/public';
 import {
   EXCHANGE_CODE_SIZE_BYTES,
   EXCHANGE_CODE_TTL_MS,

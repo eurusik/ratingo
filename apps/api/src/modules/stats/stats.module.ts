@@ -3,8 +3,8 @@ import { Module, forwardRef } from '@nestjs/common';
 
 import { CatalogModule } from '../catalog/catalog.module';
 import { IngestionModule } from '../ingestion/ingestion.module';
-import { DropOffAnalyzerModule } from '../shared/drop-off-analyzer';
-import { ScoreCalculatorModule } from '../shared/score-calculator';
+import { DropOffAnalyzerModule } from '../shared/drop-off-analyzer/drop-off-analyzer.module';
+import { ScoreCalculatorModule } from '../shared/score-calculator/score-calculator.module';
 
 import { CommunityRatingChangedListener } from './application/listeners/community-rating-changed.listener';
 import {

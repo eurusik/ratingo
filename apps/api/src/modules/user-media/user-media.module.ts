@@ -9,7 +9,7 @@ import {
   BACKFILL_QUEUE,
   DEFAULT_INGESTION_JOB_OPTIONS,
   INGESTION_QUEUE,
-} from '../ingestion/ingestion.constants';
+} from '../ingestion/public';
 import { CardsModule } from '../shared/cards/cards.module';
 import { UserActionsModule } from '../user-actions/user-actions.module';
 

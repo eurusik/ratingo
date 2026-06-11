@@ -22,8 +22,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { EpisodeProgressService } from '../../application/episode-progress.service';
 import { BatchEpisodeIdsDto } from '../dto/batch-episode-ids.dto';
 import { ShowProgressDto } from '../dto/episode-progress.dto';

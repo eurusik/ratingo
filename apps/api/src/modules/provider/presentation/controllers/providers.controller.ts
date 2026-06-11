@@ -26,7 +26,7 @@ import {
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../../auth/public';
 import { ProviderMappingService } from '../../application/services/provider-mapping.service';
 import { ProviderRegistryService } from '../../application/services/provider-registry.service';
 import { UnmappedTrackingService } from '../../application/services/unmapped-tracking.service';

@@ -8,7 +8,7 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
-import { ProviderModule } from '../provider/public';
+import { ProviderModule } from '../provider/provider.module';
 
 import { BatchEvaluationService } from './application/services/batch-evaluation.service';
 import { CatalogEvaluationService } from './application/services/catalog-evaluation.service';

@@ -20,8 +20,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { ReviewRepliesService } from '../../application/review-replies.service';
 import { ReviewReportsService } from '../../application/review-reports.service';
 import { ReviewVotesService } from '../../application/review-votes.service';

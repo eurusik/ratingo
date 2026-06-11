@@ -31,11 +31,11 @@ import {
   CATALOG_MAX_CALENDAR_DAYS,
   DEFAULT_PAGE_SIZE,
 } from '../../../../common/constants';
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
-import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
-import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
+import { OptionalJwtAuthGuard } from '../../../auth/public';
+import { CardEnrichmentService } from '../../../shared/cards';
+import { CARD_LIST_CONTEXT } from '../../../shared/cards';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { ShowDetailsService } from '../../application/services/show-details.service';
 import { ShowSyncService } from '../../application/services/show-sync.service';

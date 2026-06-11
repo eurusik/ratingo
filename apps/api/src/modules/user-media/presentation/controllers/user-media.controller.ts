@@ -27,8 +27,8 @@ import { Throttle } from '@nestjs/throttler';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { OffsetPaginationQueryDto } from '@/common/dtos/pagination.dto';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { ImportMediaService } from '../../application/import-media.service';
 import { ImportPendingService } from '../../application/import-pending.service';
 import { UserMediaService } from '../../application/user-media.service';

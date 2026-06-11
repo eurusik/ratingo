@@ -1,8 +1,8 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
-import { SavedItemsService } from '../../user-actions/application/saved-items.service';
-import { SubscriptionsService } from '../../user-actions/application/subscriptions.service';
-import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities';
+import { SavedItemsService } from '../../user-actions/public';
+import { SubscriptionsService } from '../../user-actions/public';
+import { SAVED_ITEM_LIST } from '../../user-actions/public';
 import {
   EPISODE_PROGRESS_ERRORS,
   UNSAVE_CONTEXT,

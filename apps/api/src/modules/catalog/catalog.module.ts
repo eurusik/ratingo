@@ -7,8 +7,8 @@ import IORedis from 'ioredis';
 import { HERO_REPOSITORY } from '../home/public';
 import { INGESTION_QUEUE } from '../ingestion/public';
 import { CardsModule } from '../shared/cards/cards.module';
-import { VerdictModule } from '../shared/verdict';
-import { TmdbModule } from '../tmdb/public';
+import { VerdictModule } from '../shared/verdict/verdict.module';
+import { TmdbModule } from '../tmdb/tmdb.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 
 import { CatalogImportService } from './application/services/catalog-import.service';

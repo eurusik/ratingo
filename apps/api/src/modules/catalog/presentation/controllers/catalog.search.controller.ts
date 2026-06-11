@@ -12,7 +12,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../../../auth/public';
 import { CatalogImportService } from '../../application/services/catalog-import.service';
 import { CatalogSearchService } from '../../application/services/catalog-search.service';
 import { type ImportResult } from '../../domain/types/import.types';

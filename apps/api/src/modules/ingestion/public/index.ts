@@ -47,7 +47,12 @@ export {
 } from '../domain/interfaces/show-sync-diff.interface';
 
 // Constants
-export { INGESTION_QUEUE, IngestionJob } from '../ingestion.constants';
+export {
+  INGESTION_QUEUE,
+  BACKFILL_QUEUE,
+  IngestionJob,
+  DEFAULT_INGESTION_JOB_OPTIONS,
+} from '../ingestion.constants';
 
 // Domain events
 export { MediaSyncedEvent } from '../domain/events/media-synced.event';

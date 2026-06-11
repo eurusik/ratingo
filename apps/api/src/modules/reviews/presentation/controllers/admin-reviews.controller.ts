@@ -19,8 +19,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { CurrentUser } from '../../../auth/public';
+import { AdminJwtGuard } from '../../../auth/public';
 import { ReviewReportsService } from '../../application/review-reports.service';
 import { ReviewsService } from '../../application/reviews.service';
 import {
