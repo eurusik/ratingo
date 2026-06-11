@@ -42,3 +42,102 @@ export const buildSwaggerConfig = (): Omit<OpenAPIObject, 'paths'> =>
     .addTag('Admin: Ingestion', 'Sync and backfill jobs')
     .addTag('Admin: Stats', 'Stats sync, recalculation, backfills')
     .build();
+
+// ---------------------------------------------------------------------------
+// Standard error responses
+// ---------------------------------------------------------------------------
+
+const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const;
+
+interface OperationLike {
+  tags?: string[];
+  security?: unknown[];
+  parameters?: Array<{ in?: string }>;
+  requestBody?: unknown;
+  responses?: Record<string, unknown>;
+}
+
+const ERROR_RESPONSE_SCHEMA_NAME = 'ErrorResponse';
+
+const errorResponseSchema = {
+  type: 'object',
+  required: ['success', 'error'],
+  properties: {
+    success: { type: 'boolean', enum: [false] },
+    error: {
+      type: 'object',
+      required: ['code', 'message', 'statusCode'],
+      properties: {
+        code: {
+          type: 'string',
+          description: 'Machine-readable error code (see ErrorCode enum)',
+          example: 'VALIDATION_ERROR',
+        },
+        message: { type: 'string', example: 'Validation failed' },
+        statusCode: { type: 'integer', example: 400 },
+        details: {
+          type: 'object',
+          additionalProperties: true,
+          description: 'Optional structured context for the error',
+        },
+      },
+    },
+  },
+} as const;
+
+const errorContent = {
+  content: {
+    'application/json': {
+      schema: { $ref: `#/components/schemas/${ERROR_RESPONSE_SCHEMA_NAME}` },
+    },
+  },
+};
+
+const hasAudience = (op: OperationLike, prefix: string): boolean =>
+  (op.tags ?? []).some((t) => t === prefix || t.startsWith(`${prefix}:`));
+
+/**
+ * Post-processes the OpenAPI document to document the error contract produced
+ * by AllExceptionsFilter (`{ success: false, error: { code, message, statusCode } }`).
+ *
+ * Error responses are derived from the operation shape and the tag taxonomy
+ * instead of per-endpoint decorators:
+ * - 500 — every operation
+ * - 400 — operations that accept input (request body or parameters)
+ * - 401 — operations with bearer security or tagged `Me:*` / `Admin:*`
+ * - 403 — operations tagged `Admin:*`
+ * - 404 — operations with path parameters
+ *
+ * Explicitly declared responses are never overwritten.
+ */
+export const applyStandardErrorResponses = (doc: OpenAPIObject): void => {
+  doc.components = doc.components ?? {};
+  doc.components.schemas = {
+    [ERROR_RESPONSE_SCHEMA_NAME]: errorResponseSchema as never,
+    ...doc.components.schemas,
+  };
+
+  const operations = Object.values(doc.paths ?? {}).flatMap((pathItem) =>
+    HTTP_METHODS.map((m) => (pathItem as Record<string, OperationLike | undefined>)[m]).filter(
+      (op): op is OperationLike => Boolean(op),
+    ),
+  );
+
+  for (const op of operations) {
+    const responses = (op.responses = op.responses ?? {});
+    const addIfMissing = (status: string, description: string) => {
+      responses[status] = responses[status] ?? { description, ...errorContent };
+    };
+
+    const hasInput = Boolean(op.requestBody) || (op.parameters?.length ?? 0) > 0;
+    const hasPathParams = (op.parameters ?? []).some((p) => p.in === 'path');
+    const isSecured =
+      (op.security?.length ?? 0) > 0 || hasAudience(op, 'Me') || hasAudience(op, 'Admin');
+
+    if (hasInput) addIfMissing('400', 'Validation failed or malformed input');
+    if (isSecured) addIfMissing('401', 'Missing or invalid access token');
+    if (hasAudience(op, 'Admin')) addIfMissing('403', 'Admin role required');
+    if (hasPathParams) addIfMissing('404', 'Resource not found');
+    addIfMissing('500', 'Internal server error');
+  }
+};

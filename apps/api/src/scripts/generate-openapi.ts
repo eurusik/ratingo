@@ -10,7 +10,7 @@ import { AppModule } from '../app.module';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
-import { buildSwaggerConfig } from '../swagger.config';
+import { applyStandardErrorResponses, buildSwaggerConfig } from '../swagger.config';
 
 const GLOBAL_PREFIX = 'api';
 const OUTPUT_PATH = path.resolve(__dirname, '../../../../packages/api-contract/openapi.json');
@@ -165,6 +165,7 @@ const generateOpenApi = async (): Promise<void> => {
   const doc = SwaggerModule.createDocument(app, buildSwaggerConfig());
 
   wrapSuccessResponses(doc);
+  applyStandardErrorResponses(doc);
 
   await writeFile(getOutputPath(), `${JSON.stringify(doc, null, 2)}\n`, 'utf8');
   await app.close();

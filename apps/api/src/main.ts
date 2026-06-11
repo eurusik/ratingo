@@ -11,7 +11,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { SlowRequestInterceptor } from './common/interceptors/slow-request.interceptor';
 import { DevTiming } from './common/utils/dev-timing';
-import { buildSwaggerConfig } from './swagger.config';
+import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.config';
 
 /**
  * Entry point of the API application.
@@ -68,6 +68,7 @@ async function bootstrap(): Promise<void> {
 
   // Swagger Documentation Setup (shared config — see swagger.config.ts)
   const document = SwaggerModule.createDocument(app, buildSwaggerConfig());
+  applyStandardErrorResponses(document);
   SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
       docExpansion: 'none', // collapse all groups — the tag list is the navigation
