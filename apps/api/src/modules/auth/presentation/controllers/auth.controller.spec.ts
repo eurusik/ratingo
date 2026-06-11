@@ -4,6 +4,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from '../../application/auth.service';
+import { OAuthService } from '../../application/oauth.service';
+import { TokenService } from '../../application/token.service';
 import { FacebookAuthGuard } from '../../infrastructure/guards/facebook-auth.guard';
 import { GoogleAuthGuard } from '../../infrastructure/guards/google-auth.guard';
 import { UsersService } from '../../../users/application/users.service';
@@ -47,18 +49,28 @@ function createMockReply() {
 function createAuthServiceMock() {
   return {
     register: jest.fn(),
-    login: jest.fn(),
     loginValidatedUser: jest.fn(),
+    changePassword: jest.fn(),
+  };
+}
+
+function createTokenServiceMock() {
+  return {
+    issueTokens: jest.fn(),
     refresh: jest.fn(),
     logout: jest.fn(),
-    changePassword: jest.fn(),
-    exchangeCodeForTokens: jest.fn(),
-    getLinkedProviders: jest.fn(),
-    getLinkedAccounts: jest.fn(),
+  };
+}
+
+function createOAuthServiceMock() {
+  return {
+    loginWithOAuth: jest.fn(),
     linkOAuthAccount: jest.fn(),
     unlinkOAuthAccount: jest.fn(),
-    loginWithOAuth: jest.fn(),
+    getLinkedAccounts: jest.fn(),
+    getLinkedProviders: jest.fn(),
     generateExchangeCode: jest.fn(),
+    exchangeCodeForTokens: jest.fn(),
   };
 }
 
@@ -123,6 +135,8 @@ const mockAuthConfig = {
  */
 async function buildTestModule(overrides?: {
   authService?: ReturnType<typeof createAuthServiceMock>;
+  tokenService?: ReturnType<typeof createTokenServiceMock>;
+  oauthService?: ReturnType<typeof createOAuthServiceMock>;
   googleGuard?: ReturnType<typeof createGoogleAuthGuardMock>;
   facebookGuard?: ReturnType<typeof createFacebookAuthGuardMock>;
   jwtService?: ReturnType<typeof createJwtServiceMock>;
@@ -132,6 +146,8 @@ async function buildTestModule(overrides?: {
   facebookCfg?: typeof mockFacebookConfig;
 }) {
   const authService = overrides?.authService ?? createAuthServiceMock();
+  const tokenService = overrides?.tokenService ?? createTokenServiceMock();
+  const oauthService = overrides?.oauthService ?? createOAuthServiceMock();
   const googleGuard = overrides?.googleGuard ?? createGoogleAuthGuardMock();
   const facebookGuard = overrides?.facebookGuard ?? createFacebookAuthGuardMock();
   const jwtService = overrides?.jwtService ?? createJwtServiceMock();
@@ -144,6 +160,8 @@ async function buildTestModule(overrides?: {
     controllers: [AuthController],
     providers: [
       { provide: AuthService, useValue: authService },
+      { provide: TokenService, useValue: tokenService },
+      { provide: OAuthService, useValue: oauthService },
       { provide: UsersService, useValue: usersService },
       { provide: UserMediaService, useValue: userMediaService },
       { provide: GoogleAuthGuard, useValue: googleGuard },
@@ -160,6 +178,8 @@ async function buildTestModule(overrides?: {
   return {
     controller,
     authService,
+    tokenService,
+    oauthService,
     usersService,
     userMediaService,
     googleGuard,
@@ -288,16 +308,6 @@ describe('AuthController.login', () => {
     });
     expect(result).toEqual({ accessToken: 'a', refreshToken: 'r' });
   });
-
-  it('should not call authService.login (deprecated path)', async () => {
-    const validatedUser = { id: 'u1', email: 'user@example.com', role: 'user' } as any;
-    authService.loginValidatedUser.mockResolvedValue({ accessToken: 'a', refreshToken: 'r' });
-
-    const mockReq = createMockRequest();
-    await controller.login(validatedUser, mockReq);
-
-    expect(authService.login).not.toHaveBeenCalled();
-  });
 });
 
 describe('AuthController.changePassword', () => {
@@ -336,14 +346,14 @@ describe('AuthController.changePassword', () => {
 
 describe('AuthController.me', () => {
   let controller: AuthController;
-  let authService: ReturnType<typeof createAuthServiceMock>;
+  let oauthService: ReturnType<typeof createOAuthServiceMock>;
   let usersService: { getById: jest.Mock };
   let userMediaService: { getStats: jest.Mock };
 
   beforeEach(async () => {
     const ctx = await buildTestModule();
     controller = ctx.controller;
-    authService = ctx.authService;
+    oauthService = ctx.oauthService;
     usersService = ctx.usersService;
     userMediaService = ctx.userMediaService;
     jest.clearAllMocks();
@@ -372,13 +382,13 @@ describe('AuthController.me', () => {
 
     usersService.getById.mockResolvedValue(dbUser);
     userMediaService.getStats.mockResolvedValue(stats);
-    authService.getLinkedProviders.mockResolvedValue([]);
+    oauthService.getLinkedProviders.mockResolvedValue([]);
 
     const result = await controller.me({ id: 'u1', email: 'user@example.com', role: 'user' });
 
     expect(usersService.getById).toHaveBeenCalledWith('u1');
     expect(userMediaService.getStats).toHaveBeenCalledWith('u1');
-    expect(authService.getLinkedProviders).toHaveBeenCalledWith('u1');
+    expect(oauthService.getLinkedProviders).toHaveBeenCalledWith('u1');
     expect(result).toEqual({
       id: 'u1',
       email: 'user@example.com',
@@ -418,22 +428,22 @@ describe('AuthController.me', () => {
 
 describe('AuthController.refresh', () => {
   let controller: AuthController;
-  let authService: ReturnType<typeof createAuthServiceMock>;
+  let tokenService: ReturnType<typeof createTokenServiceMock>;
 
   beforeEach(async () => {
     const ctx = await buildTestModule();
     controller = ctx.controller;
-    authService = ctx.authService;
+    tokenService = ctx.tokenService;
     jest.clearAllMocks();
   });
 
-  it('should delegate to authService.refresh with refreshToken and clientMeta', async () => {
-    authService.refresh.mockResolvedValue({ accessToken: 'new-a', refreshToken: 'new-r' });
+  it('should delegate to tokenService.refresh with refreshToken and clientMeta', async () => {
+    tokenService.refresh.mockResolvedValue({ accessToken: 'new-a', refreshToken: 'new-r' });
 
     const mockReq = createMockRequest();
     const result = await controller.refresh({ refreshToken: 'old-rt' } as any, mockReq);
 
-    expect(authService.refresh).toHaveBeenCalledWith('old-rt', {
+    expect(tokenService.refresh).toHaveBeenCalledWith('old-rt', {
       userAgent: 'test-agent',
       ip: '127.0.0.1',
     });
@@ -443,38 +453,38 @@ describe('AuthController.refresh', () => {
 
 describe('AuthController.logout', () => {
   let controller: AuthController;
-  let authService: ReturnType<typeof createAuthServiceMock>;
+  let tokenService: ReturnType<typeof createTokenServiceMock>;
 
   beforeEach(async () => {
     const ctx = await buildTestModule();
     controller = ctx.controller;
-    authService = ctx.authService;
+    tokenService = ctx.tokenService;
     jest.clearAllMocks();
   });
 
-  it('should delegate to authService.logout with user id', async () => {
-    authService.logout.mockResolvedValue(undefined);
+  it('should delegate to tokenService.logout with user id', async () => {
+    tokenService.logout.mockResolvedValue(undefined);
 
     const result = await controller.logout({ id: 'u1' });
 
-    expect(authService.logout).toHaveBeenCalledWith('u1');
+    expect(tokenService.logout).toHaveBeenCalledWith('u1');
     expect(result).toBeUndefined();
   });
 });
 
 describe('AuthController.exchangeCode', () => {
   let controller: AuthController;
-  let authService: ReturnType<typeof createAuthServiceMock>;
+  let oauthService: ReturnType<typeof createOAuthServiceMock>;
 
   beforeEach(async () => {
     const ctx = await buildTestModule();
     controller = ctx.controller;
-    authService = ctx.authService;
+    oauthService = ctx.oauthService;
     jest.clearAllMocks();
   });
 
-  it('should delegate to authService.exchangeCodeForTokens with code and clientMeta', async () => {
-    authService.exchangeCodeForTokens.mockResolvedValue({
+  it('should delegate to oauthService.exchangeCodeForTokens with code and clientMeta', async () => {
+    oauthService.exchangeCodeForTokens.mockResolvedValue({
       accessToken: 'a',
       refreshToken: 'r',
     });
@@ -482,7 +492,7 @@ describe('AuthController.exchangeCode', () => {
     const mockReq = createMockRequest();
     const result = await controller.exchangeCode({ code: 'one-time-code' } as any, mockReq);
 
-    expect(authService.exchangeCodeForTokens).toHaveBeenCalledWith('one-time-code', {
+    expect(oauthService.exchangeCodeForTokens).toHaveBeenCalledWith('one-time-code', {
       userAgent: 'test-agent',
       ip: '127.0.0.1',
     });
@@ -582,18 +592,18 @@ describe('AuthController.linkFacebook', () => {
 
 describe('AuthController.getLinkedAccounts', () => {
   let controller: AuthController;
-  let authService: ReturnType<typeof createAuthServiceMock>;
+  let oauthService: ReturnType<typeof createOAuthServiceMock>;
 
   beforeEach(async () => {
     const ctx = await buildTestModule();
     controller = ctx.controller;
-    authService = ctx.authService;
+    oauthService = ctx.oauthService;
     jest.clearAllMocks();
   });
 
   it('should return mapped linked accounts', async () => {
     const linkedDate = new Date('2025-06-15T10:30:00.000Z');
-    authService.getLinkedAccounts.mockResolvedValue([
+    oauthService.getLinkedAccounts.mockResolvedValue([
       {
         provider: 'google',
         email: 'user@gmail.com',
@@ -604,7 +614,7 @@ describe('AuthController.getLinkedAccounts', () => {
 
     const result = await controller.getLinkedAccounts({ id: 'u1' });
 
-    expect(authService.getLinkedAccounts).toHaveBeenCalledWith('u1');
+    expect(oauthService.getLinkedAccounts).toHaveBeenCalledWith('u1');
     expect(result).toEqual([
       {
         provider: 'google',
@@ -616,7 +626,7 @@ describe('AuthController.getLinkedAccounts', () => {
   });
 
   it('should return empty array when no accounts linked', async () => {
-    authService.getLinkedAccounts.mockResolvedValue([]);
+    oauthService.getLinkedAccounts.mockResolvedValue([]);
 
     const result = await controller.getLinkedAccounts({ id: 'u1' });
 
@@ -626,28 +636,28 @@ describe('AuthController.getLinkedAccounts', () => {
 
 describe('AuthController.unlinkProvider', () => {
   let controller: AuthController;
-  let authService: ReturnType<typeof createAuthServiceMock>;
+  let oauthService: ReturnType<typeof createOAuthServiceMock>;
 
   beforeEach(async () => {
     const ctx = await buildTestModule();
     controller = ctx.controller;
-    authService = ctx.authService;
+    oauthService = ctx.oauthService;
     jest.clearAllMocks();
   });
 
-  it('should delegate to authService.unlinkOAuthAccount', async () => {
-    authService.unlinkOAuthAccount.mockResolvedValue(undefined);
+  it('should delegate to oauthService.unlinkOAuthAccount', async () => {
+    oauthService.unlinkOAuthAccount.mockResolvedValue(undefined);
 
     const result = await controller.unlinkProvider({ id: 'u1' }, { provider: 'google' } as any);
 
-    expect(authService.unlinkOAuthAccount).toHaveBeenCalledWith('u1', 'google');
+    expect(oauthService.unlinkOAuthAccount).toHaveBeenCalledWith('u1', 'google');
     expect(result).toBeUndefined();
   });
 });
 
 describe('AuthController.handleOAuthCallback - link mode', () => {
   let controller: AuthController;
-  let authService: ReturnType<typeof createAuthServiceMock>;
+  let oauthService: ReturnType<typeof createOAuthServiceMock>;
 
   const frontendUrl = mockAuthConfig.frontendUrl;
 
@@ -662,7 +672,7 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
   beforeEach(async () => {
     const ctx = await buildTestModule();
     controller = ctx.controller;
-    authService = ctx.authService;
+    oauthService = ctx.oauthService;
     jest.clearAllMocks();
   });
 
@@ -688,7 +698,7 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
   }
 
   it('should redirect to settings with ?linked= on successful link', async () => {
-    authService.linkOAuthAccount.mockResolvedValue(undefined);
+    oauthService.linkOAuthAccount.mockResolvedValue(undefined);
     const mockRes = createMockReply();
 
     await callOAuthCallback(
@@ -697,12 +707,14 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
       mockRes,
     );
 
-    expect(authService.linkOAuthAccount).toHaveBeenCalledWith('user-123', defaultOAuthUser);
+    expect(oauthService.linkOAuthAccount).toHaveBeenCalledWith('user-123', defaultOAuthUser);
     expect(mockRes.redirect).toHaveBeenCalledWith(302, `${frontendUrl}/settings?linked=google`);
   });
 
   it('should redirect with ?linkError=ALREADY_LINKED on conflict', async () => {
-    authService.linkOAuthAccount.mockRejectedValue(new ConflictException('Account already linked'));
+    oauthService.linkOAuthAccount.mockRejectedValue(
+      new ConflictException('Account already linked'),
+    );
     const mockRes = createMockReply();
 
     await callOAuthCallback(
@@ -711,7 +723,7 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
       mockRes,
     );
 
-    expect(authService.linkOAuthAccount).toHaveBeenCalledWith('user-123', defaultOAuthUser);
+    expect(oauthService.linkOAuthAccount).toHaveBeenCalledWith('user-123', defaultOAuthUser);
     expect(mockRes.redirect).toHaveBeenCalledWith(
       302,
       `${frontendUrl}/settings?linkError=ALREADY_LINKED&provider=google`,
@@ -719,7 +731,7 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
   });
 
   it('should redirect with ?linkError=LINK_FAILED on unexpected error', async () => {
-    authService.linkOAuthAccount.mockRejectedValue(new Error('Database connection lost'));
+    oauthService.linkOAuthAccount.mockRejectedValue(new Error('Database connection lost'));
     const mockRes = createMockReply();
 
     await callOAuthCallback(
@@ -735,7 +747,7 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
   });
 
   it('should use /settings as default returnTo for link mode', async () => {
-    authService.linkOAuthAccount.mockResolvedValue(undefined);
+    oauthService.linkOAuthAccount.mockResolvedValue(undefined);
     const mockRes = createMockReply();
 
     const facebookOAuthUser = { ...defaultOAuthUser, provider: 'facebook' as const };
@@ -746,12 +758,12 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
       mockRes,
     );
 
-    expect(authService.linkOAuthAccount).toHaveBeenCalledWith('user-123', facebookOAuthUser);
+    expect(oauthService.linkOAuthAccount).toHaveBeenCalledWith('user-123', facebookOAuthUser);
     expect(mockRes.redirect).toHaveBeenCalledWith(302, `${frontendUrl}/settings?linked=facebook`);
   });
 
   it('should use oauthUser.provider when statePayload.provider is missing', async () => {
-    authService.linkOAuthAccount.mockResolvedValue(undefined);
+    oauthService.linkOAuthAccount.mockResolvedValue(undefined);
     const mockRes = createMockReply();
 
     const facebookOAuthUser = { ...defaultOAuthUser, provider: 'facebook' as const };

@@ -1,8 +1,9 @@
 import * as fc from 'fast-check';
 import { JwtService } from '@nestjs/jwt';
-import { AuthService } from './auth.service';
+import { OAuthService } from './oauth.service';
+import { TokenService } from './token.service';
 
-describe('AuthService - JWT Payload Consistency Property Tests', () => {
+describe('TokenService - JWT Payload Consistency Property Tests', () => {
   // Mock dependencies
   const usersService = {
     getByEmail: jest.fn(),
@@ -56,7 +57,8 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
     frontendUrl: 'http://localhost:3000',
   };
 
-  let service: AuthService;
+  let tokenService: TokenService;
+  let oauthService: OAuthService;
 
   // Track JWT payloads for comparison
   let capturedAccessPayloads: Array<{ sub: string; email: string; role: string }> = [];
@@ -78,12 +80,18 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
     passwordHasher.compare.mockResolvedValue(true);
     refreshTokensRepository.issue.mockResolvedValue({ id: 'jti' });
 
-    service = new AuthService(
+    tokenService = new TokenService(
       usersService as any,
       config as any,
       jwtService as any,
       passwordHasher as any,
       refreshTokensRepository as any,
+    );
+
+    oauthService = new OAuthService(
+      usersService as any,
+      config as any,
+      tokenService,
       exchangeCodesRepository as any,
       oauthAccountsRepository as any,
     );
@@ -116,12 +124,9 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
               avatarUrl: null,
             };
 
-            // Setup mocks for password login
-            usersService.getByEmail.mockResolvedValue(user);
-            passwordHasher.compare.mockResolvedValue(true);
-
-            // Password login
-            await service.login(email, 'password123');
+            // Password login: after LocalStrategy validation, tokens are issued
+            // directly via TokenService.issueTokens
+            await tokenService.issueTokens(user as any);
             const passwordPayload = capturedAccessPayloads[0];
 
             // Reset for OAuth login
@@ -134,7 +139,7 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
             usersService.getById.mockResolvedValue(user);
 
             // OAuth login
-            await service.loginWithOAuth({
+            await oauthService.loginWithOAuth({
               provider: 'google',
               providerAccountId: 'google-123',
               email,
@@ -184,7 +189,7 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
           });
           usersService.getById.mockResolvedValue(user);
 
-          await service.loginWithOAuth({
+          await oauthService.loginWithOAuth({
             provider: 'google',
             providerAccountId: 'google-123',
             email,
@@ -230,7 +235,7 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
           });
           usersService.getById.mockResolvedValue(user);
 
-          await service.loginWithOAuth({
+          await oauthService.loginWithOAuth({
             provider: 'google',
             providerAccountId: 'google-123',
             email,
@@ -277,7 +282,7 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
           });
           usersService.getById.mockResolvedValue(user);
 
-          await service.loginWithOAuth({
+          await oauthService.loginWithOAuth({
             provider: 'google',
             providerAccountId: 'google-123',
             email,
