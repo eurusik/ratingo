@@ -5,6 +5,15 @@ import { GENRE_REPOSITORY } from '../../domain/repositories/genre.repository.int
 import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 import { HeroMediaQuery } from '../queries/hero-media.query';
+import { MediaScoringQuery } from '../queries/media-scoring.query';
+import { MediaSearchQuery } from '../queries/media-search.query';
+import { TrendingUpdatedItemsQuery } from '../queries/trending-updated-items.query';
+import { SnapshotIdsQuery } from '../queries/snapshot-ids.query';
+import { RecalculationIdsQuery } from '../queries/recalculation-ids.query';
+import { WatchersIntegrityQuery } from '../queries/watchers-integrity.query';
+import { EligibleTrendingQuery } from '../queries/eligible-trending.query';
+import { SnapshotCandidatesQuery } from '../queries/snapshot-candidates.query';
+import { HeroCandidatesStatsQuery } from '../queries/hero-candidates-stats.query';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions';
@@ -49,6 +58,33 @@ describe('DrizzleMediaRepository', () => {
   let movieRepo: any;
   let showRepo: any;
   let heroQuery: any;
+  let mediaScoringQuery: any;
+  let mediaSearchQuery: any;
+  let trendingUpdatedItemsQuery: any;
+  let snapshotIdsQuery: any;
+  let recalculationIdsQuery: any;
+  let watchersIntegrityQuery: any;
+  let eligibleTrendingQuery: any;
+  let snapshotCandidatesQuery: any;
+  let heroCandidatesStatsQuery: any;
+
+  // Provides stub query objects so the repository can be instantiated.
+  // Individual SQL-level behaviour is covered by each query's own spec.
+  const queryProviders = () => [
+    { provide: HeroMediaQuery, useValue: { execute: jest.fn() } },
+    { provide: MediaScoringQuery, useValue: { findById: jest.fn(), findMany: jest.fn() } },
+    { provide: MediaSearchQuery, useValue: { execute: jest.fn() } },
+    { provide: TrendingUpdatedItemsQuery, useValue: { execute: jest.fn() } },
+    { provide: SnapshotIdsQuery, useValue: { execute: jest.fn() } },
+    { provide: RecalculationIdsQuery, useValue: { execute: jest.fn() } },
+    {
+      provide: WatchersIntegrityQuery,
+      useValue: { findMissingWatchers: jest.fn(), findCorruptedWatchersCount: jest.fn() },
+    },
+    { provide: EligibleTrendingQuery, useValue: { execute: jest.fn() } },
+    { provide: SnapshotCandidatesQuery, useValue: { execute: jest.fn() } },
+    { provide: HeroCandidatesStatsQuery, useValue: { execute: jest.fn() } },
+  ];
 
   const setup = (options: { resolveSelect?: any; reject?: Error } = {}) => {
     const selectChain = createThenable(options.resolveSelect ?? [], options.reject);
@@ -69,6 +105,21 @@ describe('DrizzleMediaRepository', () => {
     movieRepo = { upsertDetails: jest.fn() };
     showRepo = { upsertDetails: jest.fn() };
     heroQuery = { execute: jest.fn().mockResolvedValue(['hero']) };
+    mediaScoringQuery = {
+      findById: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
+    };
+    mediaSearchQuery = { execute: jest.fn().mockResolvedValue([]) };
+    trendingUpdatedItemsQuery = { execute: jest.fn().mockResolvedValue([]) };
+    snapshotIdsQuery = { execute: jest.fn().mockResolvedValue([]) };
+    recalculationIdsQuery = { execute: jest.fn().mockResolvedValue([]) };
+    watchersIntegrityQuery = {
+      findMissingWatchers: jest.fn().mockResolvedValue([]),
+      findCorruptedWatchersCount: jest.fn().mockResolvedValue([]),
+    };
+    eligibleTrendingQuery = { execute: jest.fn().mockResolvedValue([]) };
+    snapshotCandidatesQuery = { execute: jest.fn().mockResolvedValue([]) };
+    heroCandidatesStatsQuery = { execute: jest.fn().mockResolvedValue([]) };
 
     return Test.createTestingModule({
       providers: [
@@ -78,6 +129,15 @@ describe('DrizzleMediaRepository', () => {
         { provide: MOVIE_REPOSITORY, useValue: movieRepo },
         { provide: SHOW_REPOSITORY, useValue: showRepo },
         { provide: HeroMediaQuery, useValue: heroQuery },
+        { provide: MediaScoringQuery, useValue: mediaScoringQuery },
+        { provide: MediaSearchQuery, useValue: mediaSearchQuery },
+        { provide: TrendingUpdatedItemsQuery, useValue: trendingUpdatedItemsQuery },
+        { provide: SnapshotIdsQuery, useValue: snapshotIdsQuery },
+        { provide: RecalculationIdsQuery, useValue: recalculationIdsQuery },
+        { provide: WatchersIntegrityQuery, useValue: watchersIntegrityQuery },
+        { provide: EligibleTrendingQuery, useValue: eligibleTrendingQuery },
+        { provide: SnapshotCandidatesQuery, useValue: snapshotCandidatesQuery },
+        { provide: HeroCandidatesStatsQuery, useValue: heroCandidatesStatsQuery },
       ],
     }).compile();
   };
@@ -129,27 +189,14 @@ describe('DrizzleMediaRepository', () => {
   });
 
   describe('findByIdForScoring', () => {
-    it('should return scoring data', async () => {
-      const module = await setup({ resolveSelect: [{ id: 'm1', popularity: 1 }] });
+    it('should delegate to mediaScoringQuery.findById', async () => {
+      const module = await setup();
       repository = module.get(DrizzleMediaRepository);
+      mediaScoringQuery.findById.mockResolvedValue({ id: 'm1', popularity: 1 });
 
       const result = await repository.findByIdForScoring('m1');
       expect(result).toEqual({ id: 'm1', popularity: 1 });
-    });
-
-    it('should return null if not found', async () => {
-      const module = await setup({ resolveSelect: [] });
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.findByIdForScoring('m1');
-      expect(result).toBeNull();
-    });
-
-    it('should throw DatabaseException on error', async () => {
-      const module = await setup({ reject: new Error('DB Error') });
-      repository = module.get(DrizzleMediaRepository);
-
-      await expect(repository.findByIdForScoring('m1')).rejects.toThrow(DatabaseException);
+      expect(mediaScoringQuery.findById).toHaveBeenCalledWith('m1');
     });
   });
 
@@ -183,28 +230,14 @@ describe('DrizzleMediaRepository', () => {
   });
 
   describe('findManyForScoring', () => {
-    it('should return empty for empty input', async () => {
+    it('should delegate to mediaScoringQuery.findMany', async () => {
       const module = await setup();
       repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.findManyForScoring([]);
-      expect(result).toEqual([]);
-      expect(db.select).not.toHaveBeenCalled();
-    });
-
-    it('should return list for ids', async () => {
-      const module = await setup({ resolveSelect: [{ id: 'm1', tmdbId: 1, popularity: 1 }] });
-      repository = module.get(DrizzleMediaRepository);
+      mediaScoringQuery.findMany.mockResolvedValue([{ id: 'm1', tmdbId: 1, popularity: 1 }]);
 
       const result = await repository.findManyForScoring(['m1']);
       expect(result).toEqual([{ id: 'm1', tmdbId: 1, popularity: 1 }]);
-    });
-
-    it('should throw DatabaseException on error', async () => {
-      const module = await setup({ reject: new Error('DB Error') });
-      repository = module.get(DrizzleMediaRepository);
-
-      await expect(repository.findManyForScoring(['m1'])).rejects.toThrow(DatabaseException);
+      expect(mediaScoringQuery.findMany).toHaveBeenCalledWith(['m1']);
     });
   });
 
@@ -220,69 +253,14 @@ describe('DrizzleMediaRepository', () => {
   });
 
   describe('search', () => {
-    it('should return results matching the query', async () => {
-      const module = await setup({ resolveSelect: [{ id: 'm1' }] });
+    it('should delegate to mediaSearchQuery', async () => {
+      const module = await setup();
       repository = module.get(DrizzleMediaRepository);
+      mediaSearchQuery.execute.mockResolvedValue([{ id: 'm1' }]);
 
       const result = await repository.search('test query', 10);
       expect(result).toEqual([{ id: 'm1' }]);
-      expect(db.select).toHaveBeenCalled();
-    });
-
-    it('should call db.select twice: once for outer query and once for EXISTS subquery', async () => {
-      // The EXISTS subquery is built via this.db.select({ one: sql`1` }) nested inside
-      // the outer query's where clause. This means db.select is called twice per search call.
-      // Previously the method used innerJoin, which would only call db.select once.
-      const module = await setup({ resolveSelect: [{ id: 'm1' }] });
-      repository = module.get(DrizzleMediaRepository);
-
-      await repository.search('test', 10);
-
-      // db.select called twice: outer query + EXISTS subquery construction
-      expect(db.select).toHaveBeenCalledTimes(2);
-    });
-
-    it('should not call innerJoin (EXISTS subquery replaces JOIN to avoid row multiplication)', async () => {
-      const module = await setup({ resolveSelect: [{ id: 'm1' }] });
-      repository = module.get(DrizzleMediaRepository);
-
-      await repository.search('test', 10);
-
-      // The Drizzle chain mock tracks all method calls on the thenable.
-      // innerJoin must not be called — it was removed in favour of EXISTS.
-      const selectChain = db.select.mock.results[0].value;
-      expect(selectChain.innerJoin).not.toHaveBeenCalled();
-    });
-
-    it('should return empty array and not throw when a DB error occurs', async () => {
-      const module = await setup({ reject: new Error('DB Error') });
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.search('bad', 5);
-      expect(result).toEqual([]);
-    });
-
-    it('should return empty array for a query that matches nothing', async () => {
-      const module = await setup({ resolveSelect: [] });
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.search('zzznomatch', 10);
-      expect(result).toEqual([]);
-    });
-
-    it('should respect the limit parameter', async () => {
-      const rows = Array.from({ length: 5 }, (_, i) => ({ id: `m${i}` }));
-      const module = await setup({ resolveSelect: rows });
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.search('popular', 5);
-      // The repository delegates limit enforcement to the DB; we assert the
-      // resolved rows are returned as-is without further slicing.
-      expect(result).toHaveLength(5);
-
-      // Verify .limit() was called with the correct parameter
-      const selectChain = db.select.mock.results[0].value;
-      expect(selectChain.limit).toHaveBeenCalledWith(5);
+      expect(mediaSearchQuery.execute).toHaveBeenCalledWith('test query', 10);
     });
   });
 
@@ -307,7 +285,7 @@ describe('DrizzleMediaRepository', () => {
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
+          ...queryProviders(),
         ],
       }).compile();
       repository = module.get(DrizzleMediaRepository);
@@ -338,7 +316,7 @@ describe('DrizzleMediaRepository', () => {
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
+          ...queryProviders(),
         ],
       }).compile();
       repository = module.get(DrizzleMediaRepository);
@@ -377,7 +355,7 @@ describe('DrizzleMediaRepository', () => {
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
+          ...queryProviders(),
         ],
       }).compile();
       repository = module.get(DrizzleMediaRepository);
@@ -407,7 +385,7 @@ describe('DrizzleMediaRepository', () => {
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
+          ...queryProviders(),
         ],
       }).compile();
       repository = module.get(DrizzleMediaRepository);
@@ -438,7 +416,7 @@ describe('DrizzleMediaRepository', () => {
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
+          ...queryProviders(),
         ],
       }).compile();
       repository = module.get(DrizzleMediaRepository);
@@ -470,7 +448,7 @@ describe('DrizzleMediaRepository', () => {
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
+          ...queryProviders(),
         ],
       }).compile();
       repository = module.get(DrizzleMediaRepository);
@@ -506,7 +484,7 @@ describe('DrizzleMediaRepository', () => {
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
+          ...queryProviders(),
         ],
       }).compile();
       repository = module.get(DrizzleMediaRepository);
@@ -529,7 +507,7 @@ describe('DrizzleMediaRepository', () => {
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
+          ...queryProviders(),
         ],
       }).compile();
       repository = module.get(DrizzleMediaRepository);
@@ -578,7 +556,7 @@ describe('DrizzleMediaRepository', () => {
           { provide: GENRE_REPOSITORY, useValue: { syncGenres: jest.fn() } },
           { provide: MOVIE_REPOSITORY, useValue: { upsertDetails: jest.fn() } },
           { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
+          ...queryProviders(),
         ],
       }).compile();
       return module.get(DrizzleMediaRepository);
@@ -677,51 +655,111 @@ describe('DrizzleMediaRepository', () => {
   });
 
   describe('findEligibleForTrending', () => {
-    it('should return eligible items with tmdbId and type', async () => {
-      const mockRows = [
+    it('should delegate to eligibleTrendingQuery', async () => {
+      const mockItems = [
         { id: 'm1', tmdbId: 100, type: MediaType.MOVIE },
         { id: 's1', tmdbId: 200, type: MediaType.SHOW },
       ];
-      const module = await setup({ resolveSelect: mockRows });
+      const module = await setup();
       repository = module.get(DrizzleMediaRepository);
+      eligibleTrendingQuery.execute.mockResolvedValue(mockItems);
 
       const result = await repository.findEligibleForTrending({ limit: 10, offset: 0 });
 
-      expect(result).toEqual([
-        { id: 'm1', tmdbId: 100, type: MediaType.MOVIE },
-        { id: 's1', tmdbId: 200, type: MediaType.SHOW },
-      ]);
-      expect(db.select).toHaveBeenCalled();
+      expect(result).toEqual(mockItems);
+      expect(eligibleTrendingQuery.execute).toHaveBeenCalledWith({ limit: 10, offset: 0 });
     });
+  });
 
-    it('should return empty array when no items found', async () => {
-      const module = await setup({ resolveSelect: [] });
+  describe('delegating read methods', () => {
+    it('should delegate findTrendingUpdatedItems to trendingUpdatedItemsQuery', async () => {
+      const module = await setup();
       repository = module.get(DrizzleMediaRepository);
+      const items = [{ id: 'm1', tmdbId: 1, type: MediaType.MOVIE }];
+      trendingUpdatedItemsQuery.execute.mockResolvedValue(items);
 
-      const result = await repository.findEligibleForTrending({ limit: 10, offset: 0 });
-
-      expect(result).toEqual([]);
+      const result = await repository.findTrendingUpdatedItems({ limit: 5 });
+      expect(result).toEqual(items);
+      expect(trendingUpdatedItemsQuery.execute).toHaveBeenCalledWith({ limit: 5 });
     });
 
-    it('should respect limit and offset', async () => {
-      const module = await setup({
-        resolveSelect: [{ id: 'm1', tmdbId: 100, type: MediaType.MOVIE }],
+    it('should delegate findIdsForSnapshots to snapshotIdsQuery', async () => {
+      const module = await setup();
+      repository = module.get(DrizzleMediaRepository);
+      snapshotIdsQuery.execute.mockResolvedValue(['a', 'b']);
+
+      const result = await repository.findIdsForSnapshots({ limit: 2 });
+      expect(result).toEqual(['a', 'b']);
+      expect(snapshotIdsQuery.execute).toHaveBeenCalledWith({ limit: 2 });
+    });
+
+    it('should delegate findIdsForRecalculation to recalculationIdsQuery', async () => {
+      const module = await setup();
+      repository = module.get(DrizzleMediaRepository);
+      recalculationIdsQuery.execute.mockResolvedValue(['x']);
+
+      const result = await repository.findIdsForRecalculation({ limit: 1, offset: 0 });
+      expect(result).toEqual(['x']);
+      expect(recalculationIdsQuery.execute).toHaveBeenCalledWith({ limit: 1, offset: 0 });
+    });
+
+    it('should delegate findItemsWithMissingWatchers to watchersIntegrityQuery', async () => {
+      const module = await setup();
+      repository = module.get(DrizzleMediaRepository);
+      const items = [{ id: 'm1', tmdbId: 1, type: MediaType.MOVIE, voteCountTrakt: 50 }];
+      watchersIntegrityQuery.findMissingWatchers.mockResolvedValue(items);
+
+      const result = await repository.findItemsWithMissingWatchers({ limit: 5, minVotes: 10 });
+      expect(result).toEqual(items);
+      expect(watchersIntegrityQuery.findMissingWatchers).toHaveBeenCalledWith({
+        limit: 5,
+        minVotes: 10,
       });
-      repository = module.get(DrizzleMediaRepository);
-
-      await repository.findEligibleForTrending({ limit: 50, offset: 100 });
-
-      // Verify the chainable methods were called (limit/offset are in the chain)
-      expect(db.select).toHaveBeenCalled();
     });
 
-    it('should throw DatabaseException on error', async () => {
-      const module = await setup({ reject: new Error('DB Error') });
+    it('should delegate findItemsWithCorruptedWatchersCount to watchersIntegrityQuery', async () => {
+      const module = await setup();
       repository = module.get(DrizzleMediaRepository);
+      const items = [{ id: 'm1', tmdbId: 1, type: MediaType.MOVIE, voteCountTrakt: 0 }];
+      watchersIntegrityQuery.findCorruptedWatchersCount.mockResolvedValue(items);
 
-      await expect(repository.findEligibleForTrending({ limit: 10, offset: 0 })).rejects.toThrow(
-        DatabaseException,
-      );
+      const result = await repository.findItemsWithCorruptedWatchersCount({
+        limit: 5,
+        minTotalWatchers: 100,
+      });
+      expect(result).toEqual(items);
+      expect(watchersIntegrityQuery.findCorruptedWatchersCount).toHaveBeenCalledWith({
+        limit: 5,
+        minTotalWatchers: 100,
+      });
+    });
+
+    it('should delegate findSnapshotCandidates to snapshotCandidatesQuery', async () => {
+      const module = await setup();
+      repository = module.get(DrizzleMediaRepository);
+      const items = [{ id: 'm1', tmdbId: 1, type: MediaType.MOVIE }];
+      snapshotCandidatesQuery.execute.mockResolvedValue(items);
+
+      const result = await repository.findSnapshotCandidates({ limit: 5 });
+      expect(result).toEqual(items);
+      expect(snapshotCandidatesQuery.execute).toHaveBeenCalledWith({ limit: 5 });
+    });
+
+    it('should delegate findHeroCandidatesForStatsRefresh to heroCandidatesStatsQuery', async () => {
+      const module = await setup();
+      repository = module.get(DrizzleMediaRepository);
+      const items = [{ id: 'm1', tmdbId: 1, type: MediaType.MOVIE }];
+      heroCandidatesStatsQuery.execute.mockResolvedValue(items);
+
+      const result = await repository.findHeroCandidatesForStatsRefresh({
+        staleThresholdHours: 4,
+        limit: 5,
+      });
+      expect(result).toEqual(items);
+      expect(heroCandidatesStatsQuery.execute).toHaveBeenCalledWith({
+        staleThresholdHours: 4,
+        limit: 5,
+      });
     });
   });
 });
