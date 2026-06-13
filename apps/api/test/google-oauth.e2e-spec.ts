@@ -9,7 +9,7 @@ import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
-import { AuthService } from '../src/modules/auth/application/auth.service';
+import { OAuthService } from '../src/modules/auth/application/oauth.service';
 import {
   USERS_REPOSITORY,
   IUsersRepository,
@@ -567,10 +567,10 @@ describe('Google OAuth e2e', () => {
   });
 
   describe('Exchange code - happy path', () => {
-    let authService: AuthService;
+    let authService: OAuthService;
 
     beforeAll(() => {
-      authService = app.get(AuthService);
+      authService = app.get(OAuthService);
     });
 
     it('should exchange a valid code for tokens', async () => {
@@ -590,7 +590,7 @@ describe('Google OAuth e2e', () => {
       const user = await usersRepo.findByEmail('exchange-happy@test.com');
       expect(user).not.toBeNull();
 
-      // 3. Generate exchange code via AuthService
+      // 3. Generate exchange code via OAuthService
       const code = await authService.generateExchangeCode(user!.id);
       expect(typeof code).toBe('string');
       expect(code.length).toBeGreaterThan(0);
@@ -708,15 +708,15 @@ describe('Google OAuth e2e', () => {
   });
 
   describe('Google OAuth - simulated flow', () => {
-    let authService: AuthService;
+    let authService: OAuthService;
 
     beforeAll(() => {
-      authService = app.get(AuthService);
+      authService = app.get(OAuthService);
     });
 
     it('should complete full OAuth flow: loginWithOAuth -> generateExchangeCode -> exchange -> tokens', async () => {
       // Simulate what happens after GoogleAuthGuard validates the user:
-      // 1. AuthService.loginWithOAuth() is called with the OAuth user payload
+      // 1. OAuthService.loginWithOAuth() is called with the OAuth user payload
       const oauthPayload = {
         provider: 'google' as const,
         providerAccountId: 'google-flow-123',
@@ -808,10 +808,10 @@ describe('Google OAuth e2e', () => {
   });
 
   describe('Google OAuth - account linking', () => {
-    let authService: AuthService;
+    let authService: OAuthService;
 
     beforeAll(() => {
-      authService = app.get(AuthService);
+      authService = app.get(OAuthService);
     });
 
     it('should link Google to existing email/password account', async () => {

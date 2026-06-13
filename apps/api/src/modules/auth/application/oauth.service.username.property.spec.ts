@@ -1,8 +1,7 @@
 import * as fc from 'fast-check';
-import { JwtService } from '@nestjs/jwt';
-import { AuthService } from './auth.service';
+import { OAuthService } from './oauth.service';
 
-describe('AuthService - Username Generation Property Tests', () => {
+describe('OAuthService - Username Generation Property Tests', () => {
   // Mock dependencies
   const usersService = {
     getByEmail: jest.fn(),
@@ -11,24 +10,6 @@ describe('AuthService - Username Generation Property Tests', () => {
     getById: jest.fn(),
     updatePassword: jest.fn(),
     updateProfile: jest.fn(),
-  };
-
-  const jwtService: Pick<JwtService, 'signAsync' | 'verifyAsync'> = {
-    signAsync: jest.fn(),
-    verifyAsync: jest.fn(),
-  } as any;
-
-  const passwordHasher = {
-    hash: jest.fn(),
-    compare: jest.fn(),
-  };
-
-  const refreshTokensRepository = {
-    issue: jest.fn(),
-    findById: jest.fn(),
-    findValidByUser: jest.fn(),
-    revoke: jest.fn(),
-    revokeAllForUser: jest.fn(),
   };
 
   const exchangeCodesRepository = {
@@ -47,16 +28,17 @@ describe('AuthService - Username Generation Property Tests', () => {
     frontendUrl: 'http://localhost:3000',
   };
 
-  let service: AuthService;
+  // generateUniqueUsername never issues tokens, a stub TokenService is enough
+  const tokenService = { issueTokens: jest.fn() };
+
+  let service: OAuthService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AuthService(
+    service = new OAuthService(
       usersService as any,
       config as any,
-      jwtService as any,
-      passwordHasher as any,
-      refreshTokensRepository as any,
+      tokenService as any,
       exchangeCodesRepository as any,
       {} as any,
     );
