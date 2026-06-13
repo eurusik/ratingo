@@ -37,19 +37,28 @@ import {
 import { TmdbMetadataAdapter } from './infrastructure/adapters/tmdb-metadata.adapter';
 import { UserStateAdapter } from './infrastructure/adapters/user-state.adapter';
 import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
+import { EligibleTrendingQuery } from './infrastructure/queries/eligible-trending.query';
+import { HeroCandidatesStatsQuery } from './infrastructure/queries/hero-candidates-stats.query';
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
+import { MediaScoringQuery } from './infrastructure/queries/media-scoring.query';
+import { MediaSearchQuery } from './infrastructure/queries/media-search.query';
 import { MovieDetailsQuery } from './infrastructure/queries/movie-details.query';
 import { MovieListingsQuery } from './infrastructure/queries/movie-listings.query';
 import { NewEpisodesQuery } from './infrastructure/queries/new-episodes.query';
 import { PopularMoviesQuery } from './infrastructure/queries/popular-movies.query';
 import { PopularShowsQuery } from './infrastructure/queries/popular-shows.query';
 import { ProvidersQuery } from './infrastructure/queries/providers.query';
+import { RecalculationIdsQuery } from './infrastructure/queries/recalculation-ids.query';
 import { GenreQuery } from './infrastructure/queries/shared/genre.query';
 import { RecentRatersQuery } from './infrastructure/queries/shared/recent-raters.query';
 import { WatchOffersQuery } from './infrastructure/queries/shared/watch-offers.query';
 import { ShowDetailsQuery } from './infrastructure/queries/show-details.query';
+import { SnapshotCandidatesQuery } from './infrastructure/queries/snapshot-candidates.query';
+import { SnapshotIdsQuery } from './infrastructure/queries/snapshot-ids.query';
 import { TrendingMoviesQuery } from './infrastructure/queries/trending-movies.query';
 import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
+import { TrendingUpdatedItemsQuery } from './infrastructure/queries/trending-updated-items.query';
+import { WatchersIntegrityQuery } from './infrastructure/queries/watchers-integrity.query';
 import { WatchingNowMediaQuery } from './infrastructure/queries/watching-now-media.query';
 import { WatchingShowsCountQuery } from './infrastructure/queries/watching-shows-count.query';
 import { DrizzleGenreRepository } from './infrastructure/repositories/drizzle-genre.repository';
@@ -134,6 +143,15 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     // Query Objects - Mixed Media
     HeroMediaQuery,
     WatchingNowMediaQuery,
+    MediaScoringQuery,
+    MediaSearchQuery,
+    TrendingUpdatedItemsQuery,
+    SnapshotIdsQuery,
+    RecalculationIdsQuery,
+    WatchersIntegrityQuery,
+    EligibleTrendingQuery,
+    SnapshotCandidatesQuery,
+    HeroCandidatesStatsQuery,
 
     // Query Objects - Shared
     GenreQuery,

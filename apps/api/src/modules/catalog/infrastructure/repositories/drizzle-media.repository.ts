@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, inArray, sql, and, desc, gt, gte, lt, isNull, isNotNull, exists } from 'drizzle-orm';
+import { eq, inArray, and, lt, isNull, isNotNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DB_CONSTRAINT } from '../../../../common/constants/database.constants';
@@ -43,15 +43,16 @@ import {
 } from '../../domain/repositories/show.repository.interface';
 import { createRetrySlug, generateUniqueSlug } from '../../domain/utils/slug.utils';
 import { MediaItemPersistenceMapper } from '../mappers/media-item-persistence.mapper';
+import { EligibleTrendingQuery } from '../queries/eligible-trending.query';
+import { HeroCandidatesStatsQuery } from '../queries/hero-candidates-stats.query';
 import { HeroMediaQuery } from '../queries/hero-media.query';
-import {
-  toMediaIdItems,
-  buildMissingWatchersConditions,
-  buildCorruptedWatchersCountConditions,
-  buildSnapshotCandidateConditions,
-  buildHeroCandidatesConditions,
-  buildHeroCandidatesEvaluationConditions,
-} from '../queries/shared';
+import { MediaScoringQuery } from '../queries/media-scoring.query';
+import { MediaSearchQuery } from '../queries/media-search.query';
+import { RecalculationIdsQuery } from '../queries/recalculation-ids.query';
+import { SnapshotCandidatesQuery } from '../queries/snapshot-candidates.query';
+import { SnapshotIdsQuery } from '../queries/snapshot-ids.query';
+import { TrendingUpdatedItemsQuery } from '../queries/trending-updated-items.query';
+import { WatchersIntegrityQuery } from '../queries/watchers-integrity.query';
 import { preserveTotalWatchers } from '../utils/stats-preservation.utils';
 
 /**
@@ -72,6 +73,15 @@ export class DrizzleMediaRepository implements IMediaRepository {
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
     private readonly heroMediaQuery: HeroMediaQuery,
+    private readonly mediaScoringQuery: MediaScoringQuery,
+    private readonly mediaSearchQuery: MediaSearchQuery,
+    private readonly trendingUpdatedItemsQuery: TrendingUpdatedItemsQuery,
+    private readonly snapshotIdsQuery: SnapshotIdsQuery,
+    private readonly recalculationIdsQuery: RecalculationIdsQuery,
+    private readonly watchersIntegrityQuery: WatchersIntegrityQuery,
+    private readonly eligibleTrendingQuery: EligibleTrendingQuery,
+    private readonly snapshotCandidatesQuery: SnapshotCandidatesQuery,
+    private readonly heroCandidatesStatsQuery: HeroCandidatesStatsQuery,
   ) {}
 
   /**
@@ -547,35 +557,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
    * @throws {DatabaseException} If database query fails
    */
   async findByIdForScoring(id: string): Promise<MediaScoreData | null> {
-    return withDbError(
-      'find media for scoring',
-      this.logger,
-      async () => {
-        const result = await this.db
-          .select({
-            id: schema.mediaItems.id,
-            popularity: schema.mediaItems.popularity,
-            releaseDate: schema.mediaItems.releaseDate,
-            lastAirDate: schema.shows.lastAirDate,
-            ratingImdb: schema.mediaItems.ratingImdb,
-            ratingTrakt: schema.mediaItems.ratingTrakt,
-            ratingMetacritic: schema.mediaItems.ratingMetacritic,
-            ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-            voteCountImdb: schema.mediaItems.voteCountImdb,
-            voteCountTrakt: schema.mediaItems.voteCountTrakt,
-            watchersCount: schema.mediaStats.watchersCount,
-            totalWatchers: schema.mediaStats.totalWatchers,
-          })
-          .from(schema.mediaItems)
-          .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-          .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-          .where(eq(schema.mediaItems.id, id))
-          .limit(1);
-
-        return result[0] || null;
-      },
-      { id },
-    );
+    return this.mediaScoringQuery.findById(id);
   }
 
   /**
@@ -611,37 +593,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
    * @throws {DatabaseException} If database query fails
    */
   async findManyForScoring(ids: string[]): Promise<MediaScoreDataWithTmdbId[]> {
-    if (ids.length === 0) return [];
-
-    return withDbError(
-      'find media for batch scoring',
-      this.logger,
-      async () => {
-        const result = await this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-            popularity: schema.mediaItems.popularity,
-            releaseDate: schema.mediaItems.releaseDate,
-            lastAirDate: schema.shows.lastAirDate,
-            ratingImdb: schema.mediaItems.ratingImdb,
-            ratingTrakt: schema.mediaItems.ratingTrakt,
-            ratingMetacritic: schema.mediaItems.ratingMetacritic,
-            ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-            voteCountImdb: schema.mediaItems.voteCountImdb,
-            voteCountTrakt: schema.mediaItems.voteCountTrakt,
-            watchersCount: schema.mediaStats.watchersCount,
-            totalWatchers: schema.mediaStats.totalWatchers,
-          })
-          .from(schema.mediaItems)
-          .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-          .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-          .where(inArray(schema.mediaItems.id, ids));
-
-        return result as MediaScoreDataWithTmdbId[];
-      },
-      { count: ids.length },
-    );
+    return this.mediaScoringQuery.findMany(ids);
   }
 
   /**
@@ -663,70 +615,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
    * Note: Returns empty array on error (graceful degradation for user-facing search).
    */
   async search(query: string, limit: number): Promise<LocalSearchResult[]> {
-    try {
-      const searchTerm = query.trim();
-      const likePattern = `%${searchTerm}%`;
-
-      return await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-          title: schema.mediaItems.title,
-          originalTitle: schema.mediaItems.originalTitle,
-          alternativeTitles: schema.mediaItems.alternativeTitles,
-          slug: schema.mediaItems.slug,
-          posterPath: schema.mediaItems.posterPath,
-          rating: schema.mediaItems.rating,
-          releaseDate: schema.mediaItems.releaseDate,
-          ingestionStatus: schema.mediaItems.ingestionStatus,
-        })
-        .from(schema.mediaItems)
-        .where(
-          and(
-            sql`${schema.mediaItems.deletedAt} IS NULL`,
-            // Eligibility filter: EXISTS avoids row multiplication from multiple policy versions
-            exists(
-              this.db
-                .select({ one: sql`1` })
-                .from(schema.mediaCatalogEvaluations)
-                .where(
-                  and(
-                    eq(schema.mediaCatalogEvaluations.mediaItemId, schema.mediaItems.id),
-                    eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-                    eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
-                  ),
-                ),
-            ),
-            // Ready filter: only show items with ready ingestion status
-            eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
-            sql`(
-              ${schema.mediaItems.title} ILIKE ${likePattern}
-              OR ${schema.mediaItems.originalTitle} ILIKE ${likePattern}
-              OR ${schema.mediaItems.title} % ${searchTerm}
-              OR ${schema.mediaItems.originalTitle} % ${searchTerm}
-              OR EXISTS (
-                SELECT 1 FROM unnest(${schema.mediaItems.alternativeTitles}) AS alt
-                WHERE alt ILIKE ${likePattern} OR alt % ${searchTerm}
-              )
-            )`,
-          ),
-        )
-        .orderBy(
-          // Order by similarity score (higher = better match)
-          sql`GREATEST(
-            similarity(${schema.mediaItems.title}, ${searchTerm}),
-            similarity(COALESCE(${schema.mediaItems.originalTitle}, ''), ${searchTerm}),
-            COALESCE((SELECT MAX(similarity(alt, ${searchTerm})) FROM unnest(${schema.mediaItems.alternativeTitles}) AS alt), 0)
-          ) DESC`,
-          desc(schema.mediaItems.popularity),
-        )
-        .limit(limit);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to search media for "${query}": ${message}`);
-      return [];
-    }
+    return this.mediaSearchQuery.execute(query, limit);
   }
 
   /**
@@ -737,62 +626,14 @@ export class DrizzleMediaRepository implements IMediaRepository {
     since?: Date;
     limit: number;
   }): Promise<{ id: string; tmdbId: number; type: MediaType }[]> {
-    return withDbError(
-      'find trending updated items',
-      this.logger,
-      async () => {
-        const conditions = [
-          isNull(schema.mediaItems.deletedAt),
-          gt(schema.mediaItems.trendingScore, 0),
-          isNotNull(schema.mediaItems.tmdbId),
-        ];
-
-        if (options.since) {
-          conditions.push(gte(schema.mediaItems.trendingUpdatedAt, options.since));
-        }
-
-        const rows = await this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-            type: schema.mediaItems.type,
-          })
-          .from(schema.mediaItems)
-          .where(and(...conditions))
-          .orderBy(desc(schema.mediaItems.trendingScore))
-          .limit(options.limit);
-
-        return toMediaIdItems(rows);
-      },
-      { since: options.since?.toISOString(), limit: options.limit },
-    );
+    return this.trendingUpdatedItemsQuery.execute(options);
   }
 
   /**
    * Retrieves IDs of active media items for snapshots sync with cursor pagination.
    */
   async findIdsForSnapshots(options: { cursor?: string; limit: number }): Promise<string[]> {
-    return withDbError(
-      'find IDs for snapshots',
-      this.logger,
-      async () => {
-        const conditions = [isNull(schema.mediaItems.deletedAt)];
-
-        if (options.cursor) {
-          conditions.push(gt(schema.mediaItems.id, options.cursor));
-        }
-
-        const rows = await this.db
-          .select({ id: schema.mediaItems.id })
-          .from(schema.mediaItems)
-          .where(and(...conditions))
-          .orderBy(schema.mediaItems.id)
-          .limit(options.limit);
-
-        return rows.map((r) => r.id);
-      },
-      { cursor: options.cursor, limit: options.limit },
-    );
+    return this.snapshotIdsQuery.execute(options);
   }
 
   /**
@@ -803,28 +644,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     limit: number;
     offset: number;
   }): Promise<string[]> {
-    return withDbError(
-      'find IDs for recalculation',
-      this.logger,
-      async () => {
-        const conditions = [isNull(schema.mediaItems.deletedAt)];
-
-        if (options.type) {
-          conditions.push(eq(schema.mediaItems.type, options.type));
-        }
-
-        const rows = await this.db
-          .select({ id: schema.mediaItems.id })
-          .from(schema.mediaItems)
-          .where(and(...conditions))
-          .orderBy(schema.mediaItems.id)
-          .limit(options.limit)
-          .offset(options.offset);
-
-        return rows.map((r) => r.id);
-      },
-      { type: options.type, limit: options.limit, offset: options.offset },
-    );
+    return this.recalculationIdsQuery.execute(options);
   }
 
   /**
@@ -836,39 +656,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     limit: number;
     minVotes: number;
   }): Promise<CorruptedWatchersItem[]> {
-    return withDbError(
-      'find items with missing watchers',
-      this.logger,
-      async () => {
-        const conditions = buildMissingWatchersConditions({
-          type: options.type,
-          minVotes: options.minVotes,
-        });
-
-        const rows = await this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-            type: schema.mediaItems.type,
-            voteCountTrakt: schema.mediaItems.voteCountTrakt,
-          })
-          .from(schema.mediaItems)
-          .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-          .where(and(...conditions))
-          .orderBy(desc(schema.mediaItems.voteCountTrakt))
-          .limit(options.limit);
-
-        return rows
-          .filter((r) => r.tmdbId !== null && r.voteCountTrakt !== null)
-          .map((r) => ({
-            id: r.id,
-            tmdbId: r.tmdbId!,
-            type: r.type,
-            voteCountTrakt: r.voteCountTrakt!,
-          }));
-      },
-      { type: options.type, limit: options.limit, minVotes: options.minVotes },
-    );
+    return this.watchersIntegrityQuery.findMissingWatchers(options);
   }
 
   /**
@@ -880,39 +668,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     limit: number;
     minTotalWatchers: number;
   }): Promise<CorruptedWatchersItem[]> {
-    return withDbError(
-      'find items with corrupted watchers count',
-      this.logger,
-      async () => {
-        const conditions = buildCorruptedWatchersCountConditions({
-          type: options.type,
-          minTotalWatchers: options.minTotalWatchers,
-        });
-
-        const rows = await this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-            type: schema.mediaItems.type,
-            voteCountTrakt: schema.mediaItems.voteCountTrakt,
-          })
-          .from(schema.mediaItems)
-          .innerJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-          .where(and(...conditions))
-          .orderBy(desc(schema.mediaStats.totalWatchers))
-          .limit(options.limit);
-
-        return rows
-          .filter((r) => r.tmdbId !== null)
-          .map((r) => ({
-            id: r.id,
-            tmdbId: r.tmdbId!,
-            type: r.type,
-            voteCountTrakt: r.voteCountTrakt ?? 0,
-          }));
-      },
-      { type: options.type, limit: options.limit, minTotalWatchers: options.minTotalWatchers },
-    );
+    return this.watchersIntegrityQuery.findCorruptedWatchersCount(options);
   }
 
   /**
@@ -924,44 +680,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     limit: number;
     offset: number;
   }): Promise<MediaSyncItem[]> {
-    return withDbError(
-      'find eligible items for trending',
-      this.logger,
-      async () => {
-        const rows = await this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-            type: schema.mediaItems.type,
-          })
-          .from(schema.mediaItems)
-          .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-          .innerJoin(
-            schema.mediaCatalogEvaluations,
-            and(
-              eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-              eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-              eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
-              eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-            ),
-          )
-          .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-          .where(
-            and(
-              isNull(schema.mediaItems.deletedAt),
-              isNotNull(schema.mediaItems.tmdbId),
-              // Only items that need sync (no watchers data yet)
-              sql`(${schema.mediaStats.watchersCount} IS NULL OR ${schema.mediaStats.watchersCount} = 0)`,
-            ),
-          )
-          .orderBy(schema.mediaItems.id)
-          .limit(options.limit)
-          .offset(options.offset);
-
-        return toMediaIdItems(rows);
-      },
-      { limit: options.limit, offset: options.offset },
-    );
+    return this.eligibleTrendingQuery.execute(options);
   }
 
   /**
@@ -972,46 +691,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     cursor?: string;
     limit: number;
   }): Promise<SnapshotCandidate[]> {
-    return withDbError(
-      'find snapshot candidates',
-      this.logger,
-      async () => {
-        // Get active policy version
-        const activePolicy = await this.db
-          .select({ version: schema.catalogPolicies.version })
-          .from(schema.catalogPolicies)
-          .where(eq(schema.catalogPolicies.isActive, true))
-          .limit(1);
-
-        if (!activePolicy.length) {
-          this.logger.warn('No active policy found for snapshot candidates');
-          return [];
-        }
-
-        const conditions = buildSnapshotCandidateConditions({
-          policyVersion: activePolicy[0].version,
-          cursor: options.cursor,
-        });
-
-        const rows = await this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-            type: schema.mediaItems.type,
-          })
-          .from(schema.mediaItems)
-          .innerJoin(
-            schema.mediaCatalogEvaluations,
-            eq(schema.mediaCatalogEvaluations.mediaItemId, schema.mediaItems.id),
-          )
-          .where(and(...conditions))
-          .orderBy(schema.mediaItems.id)
-          .limit(options.limit);
-
-        return toMediaIdItems(rows);
-      },
-      { cursor: options.cursor, limit: options.limit },
-    );
+    return this.snapshotCandidatesQuery.execute(options);
   }
 
   /**
@@ -1025,46 +705,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     /** Minimum quality score (use 50 to cover both hero and watching-now) */
     minQualityScore?: number;
   }): Promise<MediaSyncItem[]> {
-    return withDbError(
-      'find homepage candidates for stats refresh',
-      this.logger,
-      async () => {
-        const conditions = buildHeroCandidatesConditions({
-          staleThresholdHours: options.staleThresholdHours,
-          minQualityScore: options.minQualityScore,
-        });
-
-        const evaluationConditions = buildHeroCandidatesEvaluationConditions();
-
-        const rows = await this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-            type: schema.mediaItems.type,
-          })
-          .from(schema.mediaItems)
-          .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-          .innerJoin(
-            schema.mediaCatalogEvaluations,
-            and(
-              eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-              ...evaluationConditions,
-            ),
-          )
-          .innerJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-          .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
-          .where(and(...conditions))
-          .orderBy(desc(schema.mediaStats.watchersCount), desc(schema.mediaStats.ratingoScore))
-          .limit(options.limit);
-
-        return toMediaIdItems(rows);
-      },
-      {
-        staleThresholdHours: options.staleThresholdHours,
-        limit: options.limit,
-        minQualityScore: options.minQualityScore,
-      },
-    );
+    return this.heroCandidatesStatsQuery.execute(options);
   }
 
   async updateLastSyncedAt(id: string, date: Date): Promise<void> {
