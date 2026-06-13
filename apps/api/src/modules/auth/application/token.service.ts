@@ -88,7 +88,8 @@ export class TokenService {
         secret: this.config.refreshTokenSecret,
       });
     } catch (error) {
-      this.logger.warn(`Refresh token verification failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Refresh token verification failed: ${message}`);
       throw new UnauthorizedException('Invalid refresh token');
     }
     t.mark('after_verify');
