@@ -11,11 +11,16 @@ global.fetch = mockFetch;
 // Mock TmdbMapper - can be configured per test
 const mockToDomain = jest.fn();
 
-jest.mock('./mappers/tmdb.mapper', () => ({
-  TmdbMapper: {
-    toDomain: (data: any, type: any) => mockToDomain(data, type),
-  },
-}));
+jest.mock('./mappers/tmdb.mapper', () => {
+  const actual = jest.requireActual('./mappers/tmdb.mapper');
+  return {
+    TmdbMapper: {
+      toDomain: (data: any, type: any) => mockToDomain(data, type),
+      // Use the real person mapper so getPerson tests exercise actual mapping.
+      toPersonDetails: actual.TmdbMapper.toPersonDetails,
+    },
+  };
+});
 
 // Mock ResilientHttpClient to disable retries in tests
 jest.mock('@/common/http/resilient-http.client', () => {
@@ -714,6 +719,53 @@ describe('TmdbAdapter', () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
       await expect(adapter.getMovie(550)).rejects.toThrow('Failed to communicate with TMDB');
+    });
+  });
+
+  describe('getPerson', () => {
+    it('fetches and maps person details', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 287,
+            name: 'Brad Pitt',
+            biography: 'An American actor.',
+            birthday: '1963-12-18',
+            deathday: null,
+            place_of_birth: 'Shawnee, Oklahoma, USA',
+            profile_path: '/b.jpg',
+            known_for_department: 'Acting',
+            popularity: 42,
+          }),
+      });
+
+      const result = await adapter.getPerson(287);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/person/287'),
+        expect.anything(),
+      );
+      expect(result).toMatchObject({
+        tmdbId: 287,
+        name: 'Brad Pitt',
+        biography: 'An American actor.',
+        knownForDepartment: 'Acting',
+        popularity: 42,
+      });
+      expect(result?.birthday).toEqual(new Date('1963-12-18'));
+    });
+
+    it('returns null when the person is not found (404)', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 404, statusText: 'Not Found' });
+
+      expect(await adapter.getPerson(999999)).toBeNull();
+    });
+
+    it('throws on non-404 errors', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 500, statusText: 'Server Error' });
+
+      await expect(adapter.getPerson(287)).rejects.toThrow(TmdbApiException);
     });
   });
 });

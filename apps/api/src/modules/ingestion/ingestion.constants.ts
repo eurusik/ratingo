@@ -80,6 +80,11 @@ export enum IngestionJob {
   BACKFILL_MDBLIST_RATINGS_DISPATCHER = 'backfill-mdblist-ratings-dispatcher',
   /** Item job: fetches RT ratings (critics + audience) from MDBList. @queue ratings-backfill */
   BACKFILL_MDBLIST_RATINGS_ITEM = 'backfill-mdblist-ratings-item',
+
+  /** Dispatcher job: finds media with credits and queues per-item person-credits backfill. @queue backfill */
+  BACKFILL_PERSON_CREDITS_DISPATCHER = 'backfill-person-credits-dispatcher',
+  /** Item job: normalizes a media item's credits JSONB into persons/media_credits. @queue backfill */
+  BACKFILL_PERSON_CREDITS_ITEM = 'backfill-person-credits-item',
 }
 
 /**

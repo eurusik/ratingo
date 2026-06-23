@@ -9,6 +9,7 @@ import { IngestionJob } from '../../ingestion.constants';
 import { destroyTraktRateLimiter } from '../../../trakt/infrastructure/adapters/base-trakt-http';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
+import { BackfillPersonCreditsPipeline } from '../pipelines/backfill-person-credits.pipeline';
 
 import { BackfillWorker } from './backfill.worker';
 
@@ -22,8 +23,12 @@ describe('BackfillWorker', () => {
   let backfillImdbPipeline: any;
   let resolveImportDispatcherPipeline: any;
   let resolveImportItemPipeline: any;
+  let backfillPersonCreditsPipeline: any;
 
   beforeEach(async () => {
+    backfillPersonCreditsPipeline = {
+      processItem: jest.fn().mockResolvedValue(undefined),
+    };
     backfillAltTitlesPipeline = {
       processItem: jest.fn().mockResolvedValue(undefined),
     };
@@ -52,6 +57,10 @@ describe('BackfillWorker', () => {
         {
           provide: ResolveImportItemPipeline,
           useValue: resolveImportItemPipeline,
+        },
+        {
+          provide: BackfillPersonCreditsPipeline,
+          useValue: backfillPersonCreditsPipeline,
         },
       ],
     }).compile();
@@ -96,6 +105,23 @@ describe('BackfillWorker', () => {
       await worker.process(job);
 
       expect(backfillImdbPipeline.processItem).toHaveBeenCalledWith(100, 'imdb-1');
+    });
+  });
+
+  describe('process - BACKFILL_PERSON_CREDITS_ITEM', () => {
+    it('should route to backfillPersonCreditsPipeline.processItem()', async () => {
+      const job = {
+        name: IngestionJob.BACKFILL_PERSON_CREDITS_ITEM,
+        data: { mediaItemId: 'media-1' },
+        id: 'person-credits-1',
+      } as Job;
+
+      await worker.process(job);
+
+      expect(backfillPersonCreditsPipeline.processItem).toHaveBeenCalledWith(
+        'media-1',
+        'person-credits-1',
+      );
     });
   });
 

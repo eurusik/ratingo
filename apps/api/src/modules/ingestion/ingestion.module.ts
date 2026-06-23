@@ -8,6 +8,7 @@ import schedulerConfig from '../../config/scheduler.config';
 import tvmazeConfig from '../../config/tvmaze.config';
 import { CatalogModule } from '../catalog/catalog.module';
 import { CatalogPolicyModule } from '../catalog-policy/catalog-policy.module';
+import { PersonModule } from '../person/person.module';
 import { ProviderModule } from '../provider/provider.module';
 import { ScoreCalculatorModule } from '../shared/score-calculator/score-calculator.module';
 import { StatsModule } from '../stats/stats.module';
@@ -19,6 +20,7 @@ import { UserMediaModule } from '../user-media/user-media.module';
 import { BackfillAltTitlesPipeline } from './application/pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from './application/pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from './application/pipelines/backfill-mdblist-ratings.pipeline';
+import { BackfillPersonCreditsPipeline } from './application/pipelines/backfill-person-credits.pipeline';
 import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
 import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline';
 import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
@@ -53,6 +55,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
   imports: [
     CatalogModule,
     CatalogPolicyModule,
+    PersonModule,
     ProviderModule,
     TmdbModule,
     TraktModule,
@@ -112,6 +115,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     BackfillImdbPipeline,
     BackfillAltTitlesPipeline,
     BackfillMdblistRatingsPipeline,
+    BackfillPersonCreditsPipeline,
   ],
   exports: [SyncMediaService, SnapshotsService],
 })

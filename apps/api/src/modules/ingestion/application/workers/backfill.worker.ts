@@ -11,6 +11,7 @@ import { ResolveImportItemPipeline } from '../../../user-media/public';
 import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
+import { BackfillPersonCreditsPipeline } from '../pipelines/backfill-person-credits.pipeline';
 
 /**
  * High-throughput worker for backfill item jobs (TMDB-only, no Trakt).
@@ -34,6 +35,7 @@ export class BackfillWorker extends WorkerHost {
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly resolveImportDispatcherPipeline: ResolveImportDispatcherPipeline,
     private readonly resolveImportItemPipeline: ResolveImportItemPipeline,
+    private readonly backfillPersonCreditsPipeline: BackfillPersonCreditsPipeline,
   ) {
     super();
   }
@@ -64,6 +66,13 @@ export class BackfillWorker extends WorkerHost {
 
         case IngestionJob.BACKFILL_IMDB_ITEM:
           await this.backfillImdbPipeline.processItem(job.data.tmdbId!, job.id ?? 'unknown');
+          break;
+
+        case IngestionJob.BACKFILL_PERSON_CREDITS_ITEM:
+          await this.backfillPersonCreditsPipeline.processItem(
+            job.data.mediaItemId!,
+            job.id ?? 'unknown',
+          );
           break;
 
         case IngestionJob.RESOLVE_IMPORT_DISPATCHER:

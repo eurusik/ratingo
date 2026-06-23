@@ -6515,6 +6515,99 @@
         ]
       }
     },
+    "/api/ingestion/backfill/person-credits": {
+      "post": {
+        "operationId": "IngestionController_backfillPersonCredits",
+        "summary": "Backfill person credits read-model from existing credits",
+        "description": "Finds media items whose credits JSONB contains cast/crew and queues per-item jobs that upsert persons and rebuild media_credits rows. Pure DB work — no external API calls.",
+        "parameters": [
+          {
+            "name": "force",
+            "required": false,
+            "in": "query",
+            "description": "Bypass daily deduplication",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Backfill job queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/IngestionJobResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin: Ingestion"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/admin/catalog-policies": {
       "get": {
         "operationId": "PolicyController_getPolicies",
@@ -8385,6 +8478,196 @@
           {
             "bearer": []
           }
+        ]
+      }
+    },
+    "/api/persons/{tmdbId}": {
+      "get": {
+        "operationId": "PersonController_getPerson",
+        "summary": "Get person details by TMDB id",
+        "description": "Returns photo, biography and vital data for an actor/crew member. Biography is enriched from TMDB lazily on first request.",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": 287,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PersonResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Persons"
+        ]
+      }
+    },
+    "/api/persons/{tmdbId}/credits": {
+      "get": {
+        "operationId": "PersonController_getPersonCredits",
+        "summary": "Get a person's catalog works",
+        "description": "Lists the person's works that exist in the Ratingo catalog (eligible titles only), sorted by Ratingo score then release date. Filter with creditType=cast|crew.",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": 287,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "creditType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by cast or crew",
+            "schema": {
+              "enum": [
+                "cast",
+                "crew"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedPersonCreditsResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Persons"
         ]
       }
     },
@@ -18586,6 +18869,156 @@
           "tmdbProviderId",
           "region",
           "found"
+        ]
+      },
+      "PersonResponseDto": {
+        "type": "object",
+        "properties": {
+          "tmdbId": {
+            "type": "number",
+            "example": 287
+          },
+          "slug": {
+            "type": "string",
+            "example": "brad-pitt"
+          },
+          "name": {
+            "type": "string",
+            "example": "Brad Pitt"
+          },
+          "profile": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "knownForDepartment": {
+            "type": "string",
+            "example": "Acting",
+            "nullable": true
+          },
+          "biography": {
+            "type": "string",
+            "example": "An American actor and film producer...",
+            "nullable": true
+          },
+          "birthday": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "deathday": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "placeOfBirth": {
+            "type": "string",
+            "example": "Shawnee, Oklahoma, USA",
+            "nullable": true
+          },
+          "popularity": {
+            "type": "number",
+            "example": 12.34
+          }
+        },
+        "required": [
+          "tmdbId",
+          "slug",
+          "name",
+          "popularity"
+        ]
+      },
+      "PersonCreditItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ],
+            "example": "movie"
+          },
+          "tmdbId": {
+            "type": "number",
+            "example": 550
+          },
+          "title": {
+            "type": "string",
+            "example": "Fight Club"
+          },
+          "slug": {
+            "type": "string",
+            "example": "fight-club"
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "ratingoScore": {
+            "type": "number",
+            "example": 0.87,
+            "nullable": true
+          },
+          "character": {
+            "type": "string",
+            "example": "Tyler Durden",
+            "nullable": true,
+            "description": "Cast character on this title, if the person acted in it"
+          },
+          "jobs": {
+            "example": [
+              "Director"
+            ],
+            "description": "Crew jobs on this title (e.g. Director, Creator); empty if none",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "tmdbId",
+          "title",
+          "slug",
+          "character",
+          "jobs"
+        ]
+      },
+      "PaginatedPersonCreditsResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonCreditItemDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
         ]
       },
       "HeroShowProgressDto": {
