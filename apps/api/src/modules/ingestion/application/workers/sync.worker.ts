@@ -10,6 +10,7 @@ import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
+import { BackfillPersonCreditsPipeline } from '../pipelines/backfill-person-credits.pipeline';
 import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
 import { SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
@@ -47,6 +48,7 @@ export class SyncWorker extends WorkerHost {
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
     private readonly backfillMdblistRatingsPipeline: BackfillMdblistRatingsPipeline,
+    private readonly backfillPersonCreditsPipeline: BackfillPersonCreditsPipeline,
   ) {
     super();
   }
@@ -157,6 +159,11 @@ export class SyncWorker extends WorkerHost {
         // MDBList RT ratings backfill dispatcher (item jobs run on RatingsBackfillWorker)
         case IngestionJob.BACKFILL_MDBLIST_RATINGS_DISPATCHER:
           await this.backfillMdblistRatingsPipeline.dispatch();
+          break;
+
+        // Person-credits backfill dispatcher (item jobs run on BackfillWorker)
+        case IngestionJob.BACKFILL_PERSON_CREDITS_DISPATCHER:
+          await this.backfillPersonCreditsPipeline.dispatch();
           break;
 
         default:

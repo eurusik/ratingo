@@ -13,3 +13,4 @@
 
 export { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../constants/alt-title.constants';
 export { TmdbAdapter } from '../tmdb.adapter';
+export type { PersonDetails } from '../types/person.types';

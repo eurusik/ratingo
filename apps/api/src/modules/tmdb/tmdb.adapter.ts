@@ -22,10 +22,12 @@ import {
 } from '../ingestion/public';
 
 import { TmdbMapper } from './mappers/tmdb.mapper';
+import type { PersonDetails } from './types/person.types';
 import type {
   TmdbAlternativeTitle,
   TmdbMediaResponse,
   TmdbMovieResponse,
+  TmdbPersonResponse,
   TmdbSeasonDetailResponse,
 } from './types/tmdb-api.types';
 
@@ -208,6 +210,24 @@ export class TmdbAdapter implements MetadataProviderPort {
         return null;
       }
       this.logger.error(`TMDB getShow error for ${tmdbId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetches person details (biography, photo, vital dates) from TMDB.
+   * Returns null if the person is not found (404).
+   */
+  public async getPerson(tmdbId: number): Promise<PersonDetails | null> {
+    try {
+      const data = await this.fetch<TmdbPersonResponse>(`/person/${tmdbId}`);
+      return TmdbMapper.toPersonDetails(data);
+    } catch (error) {
+      if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
+        this.logger.warn(`TMDB person ${tmdbId} not found (404)`);
+        return null;
+      }
+      this.logger.error(`TMDB getPerson error for ${tmdbId}:`, error);
       throw error;
     }
   }

@@ -5,6 +5,7 @@
 
 export * from './schema/shared';
 export * from './schema/media';
+export * from './schema/person';
 export * from './schema/users';
 export * from './schema/auth';
 export * from './schema/user-actions';

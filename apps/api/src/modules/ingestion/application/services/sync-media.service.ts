@@ -10,6 +10,7 @@ import {
   classifyContent,
   EvaluationContext,
 } from '../../../catalog-policy/public';
+import { type IPersonCreditsWriter, PERSON_CREDITS_WRITER } from '../../../person/public';
 import { NormalizationService } from '../../../provider/public';
 import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
@@ -75,6 +76,10 @@ export class SyncMediaService {
     @Optional()
     @Inject(CATALOG_POLICY_EVALUATOR)
     private readonly catalogEvaluator?: ICatalogPolicyEvaluator,
+
+    @Optional()
+    @Inject(PERSON_CREDITS_WRITER)
+    private readonly personCreditsWriter?: IPersonCreditsWriter,
   ) {}
 
   /**
@@ -175,6 +180,9 @@ export class SyncMediaService {
 
       // Step 9: Normalize watch providers
       await this.normalizeWatchProviders(classified, mediaItem, logPrefix);
+
+      // Step 9b: Populate persons / media_credits read-model from credits
+      await this.writePersonCredits(classified, mediaItem, logPrefix);
 
       // Step 10: Evaluate catalog eligibility (both catalog and trending contexts if applicable)
       const isTrending = trending !== undefined && trending.score > 0;
@@ -432,6 +440,24 @@ export class SyncMediaService {
     } catch (error) {
       // Best-effort: log warning but don't fail the sync
       this.logger.warn(`${logPrefix} Provider normalization failed: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Populates the persons / media_credits read-model from the synced credits.
+   * Best-effort: a failure here must not fail the whole sync.
+   */
+  private async writePersonCredits(
+    media: NormalizedMedia,
+    mediaItem: { id: string } | null,
+    logPrefix: string,
+  ): Promise<void> {
+    if (!this.personCreditsWriter || !mediaItem) return;
+
+    try {
+      await this.personCreditsWriter.writeFromCredits(mediaItem.id, media.credits ?? null);
+    } catch (error) {
+      this.logger.warn(`${logPrefix} Person credits write failed: ${(error as Error).message}`);
     }
   }
 

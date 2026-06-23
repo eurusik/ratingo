@@ -1168,6 +1168,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ingestion/backfill/person-credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill person credits read-model from existing credits
+         * @description Finds media items whose credits JSONB contains cast/crew and queues per-item jobs that upsert persons and rebuild media_credits rows. Pure DB work — no external API calls.
+         */
+        post: operations["IngestionController_backfillPersonCredits"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/catalog-policies": {
         parameters: {
             query?: never;
@@ -1492,6 +1512,46 @@ export interface paths {
          * @description Tests how a TMDB provider ID would be resolved to canonical provider. Useful for debugging mapping issues.
          */
         get: operations["ProvidersController_resolveProvider"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/persons/{tmdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get person details by TMDB id
+         * @description Returns photo, biography and vital data for an actor/crew member. Biography is enriched from TMDB lazily on first request.
+         */
+        get: operations["PersonController_getPerson"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/persons/{tmdbId}/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a person's catalog works
+         * @description Lists the person's works that exist in the Ratingo catalog (eligible titles only), sorted by Ratingo score then release date. Filter with creditType=cast|crew.
+         */
+        get: operations["PersonController_getPersonCredits"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5156,6 +5216,63 @@ export interface components {
              * @example region
              */
             source?: string;
+        };
+        PersonResponseDto: {
+            /** @example 287 */
+            tmdbId: number;
+            /** @example brad-pitt */
+            slug: string;
+            /** @example Brad Pitt */
+            name: string;
+            profile?: components["schemas"]["ImageDto"] | null;
+            /** @example Acting */
+            knownForDepartment?: string | null;
+            /** @example An American actor and film producer... */
+            biography?: string | null;
+            /** Format: date-time */
+            birthday?: string | null;
+            /** Format: date-time */
+            deathday?: string | null;
+            /** @example Shawnee, Oklahoma, USA */
+            placeOfBirth?: string | null;
+            /** @example 12.34 */
+            popularity: number;
+        };
+        PersonCreditItemDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /**
+             * @example movie
+             * @enum {string}
+             */
+            type: "movie" | "show";
+            /** @example 550 */
+            tmdbId: number;
+            /** @example Fight Club */
+            title: string;
+            /** @example fight-club */
+            slug: string;
+            poster?: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+            /** @example 0.87 */
+            ratingoScore?: number | null;
+            /**
+             * @description Cast character on this title, if the person acted in it
+             * @example Tyler Durden
+             */
+            character: string | null;
+            /**
+             * @description Crew jobs on this title (e.g. Director, Creator); empty if none
+             * @example [
+             *       "Director"
+             *     ]
+             */
+            jobs: string[];
+        };
+        PaginatedPersonCreditsResponseDto: {
+            data: components["schemas"]["PersonCreditItemDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
         };
         HeroShowProgressDto: {
             /** @example 5 */
@@ -9963,6 +10080,69 @@ export interface operations {
             };
         };
     };
+    IngestionController_backfillPersonCredits: {
+        parameters: {
+            query?: {
+                /** @description Bypass daily deduplication */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Backfill job queued */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     PolicyController_getPolicies: {
         parameters: {
             query?: never;
@@ -11209,6 +11389,115 @@ export interface operations {
             };
             /** @description Admin role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PersonController_getPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PersonResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PersonController_getPersonCredits: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Filter by cast or crew */
+                creditType?: "cast" | "crew";
+            };
+            header?: never;
+            path: {
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPersonCreditsResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

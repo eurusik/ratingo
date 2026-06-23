@@ -235,3 +235,18 @@ export interface TmdbSeasonDetailResponse {
  * Union type for TMDB API responses
  */
 export type TmdbMediaResponse = TmdbMovieResponse | TmdbShowResponse;
+
+/**
+ * TMDB person detail response (/person/{id})
+ */
+export interface TmdbPersonResponse {
+  id: number;
+  name: string;
+  biography: string | null;
+  birthday: string | null; // YYYY-MM-DD
+  deathday: string | null; // YYYY-MM-DD
+  place_of_birth: string | null;
+  profile_path: string | null;
+  known_for_department: string | null;
+  popularity: number;
+}

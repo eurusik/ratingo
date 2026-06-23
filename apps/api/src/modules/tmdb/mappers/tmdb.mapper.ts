@@ -15,6 +15,7 @@ import {
   type WatchProvider,
 } from '../../ingestion/public';
 import { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../constants/alt-title.constants';
+import type { PersonDetails } from '../types/person.types';
 import {
   type TmdbMediaResponse,
   type TmdbMovieResponse,
@@ -26,6 +27,7 @@ import {
   type TmdbVideo,
   type TmdbWatchProvider,
   type TmdbSeason,
+  type TmdbPersonResponse,
 } from '../types/tmdb-api.types';
 import {
   normalizeOriginCountries,
@@ -44,6 +46,26 @@ const DEFAULT_ORDER_FALLBACK = 999;
  * Handles type-specific mapping (Movie vs Show) and slug generation.
  */
 export class TmdbMapper {
+  /**
+   * Converts a raw TMDB /person/{id} response into normalized person details.
+   * Returns null if the response has no usable identity (missing id/name).
+   */
+  static toPersonDetails(data: TmdbPersonResponse | null): PersonDetails | null {
+    if (!data?.id || !data.name) return null;
+
+    return {
+      tmdbId: data.id,
+      name: data.name,
+      biography: data.biography?.trim() || null,
+      birthday: data.birthday ? new Date(data.birthday) : null,
+      deathday: data.deathday ? new Date(data.deathday) : null,
+      placeOfBirth: data.place_of_birth || null,
+      profilePath: data.profile_path || null,
+      knownForDepartment: data.known_for_department || null,
+      popularity: data.popularity ?? 0,
+    };
+  }
+
   /**
    * Converts raw TMDB API response to our Domain Model.
    * Returns null only if title is missing (essential for identification).

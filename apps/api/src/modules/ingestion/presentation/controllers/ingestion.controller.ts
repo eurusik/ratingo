@@ -551,4 +551,44 @@ export class IngestionController {
       force: isForce,
     };
   }
+
+  /**
+   * Queues a backfill job that populates the persons / media_credits read-model
+   * from existing media_items.credits JSONB. One-time operation; future syncs
+   * populate the read-model automatically.
+   */
+  @Post('backfill/person-credits')
+  @ApiOperation({
+    summary: 'Backfill person credits read-model from existing credits',
+    description:
+      'Finds media items whose credits JSONB contains cast/crew and queues per-item jobs ' +
+      'that upsert persons and rebuild media_credits rows. Pure DB work — no external API calls.',
+  })
+  @ApiQuery({
+    name: 'force',
+    required: false,
+    type: String,
+    description: 'Bypass daily deduplication',
+  })
+  @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async backfillPersonCredits(@Query('force') force?: string) {
+    const isForce = force === 'true';
+    const today = formatUtcDayId();
+    const window = isForce ? Date.now().toString() : today;
+    const jobId = `backfill_person_credits_${window}`;
+
+    const job = await this.ingestionQueue.add(
+      IngestionJob.BACKFILL_PERSON_CREDITS_DISPATCHER,
+      {},
+      { jobId },
+    );
+
+    return {
+      status: 'queued',
+      jobId: job.id,
+      jobType: IngestionJob.BACKFILL_PERSON_CREDITS_DISPATCHER,
+      force: isForce,
+    };
+  }
 }
