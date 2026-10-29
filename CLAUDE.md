@@ -25,7 +25,7 @@ After finishing each step, review the changed code before moving on, and fix wha
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`
 - `development` deploys to Railway dev, `main` deploys to Railway production; hotfixes go to `main`, then back-merge into `development`
 - CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck/tests/build, web lint/tests, contract drift. Railway and Vercel do the deploys
-- Write migrations to be idempotent (`IF NOT EXISTS`, `CONCURRENTLY`): dev runs them on a fresh DB, so state conflicts surface only in prod
+- Make every migration statement safe to re-run against existing state (`IF NOT EXISTS` / `IF EXISTS`): dev runs migrations on a fresh DB, so state conflicts surface only in prod
 
 ## Commands
 ```bash
