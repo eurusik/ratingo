@@ -62,7 +62,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile
+          file: apps/api/Dockerfile
           platforms: linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.IMAGE_TAG }}
