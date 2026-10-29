@@ -124,11 +124,6 @@ const wrapSuccessResponses = (doc: OpenAPIObject): void => {
     });
 };
 
-/**
- * Create a Nest application instance configured for offline OpenAPI generation.
- *
- * Stubs the database and BullMQ workers so only Redis is required, not Postgres.
- */
 const createApp = async (): Promise<NestFastifyApplication> => {
   const { AppModule } = await import('../app.module');
   const noopBullRegistrar = { onModuleInit: () => {}, register: () => {} };
