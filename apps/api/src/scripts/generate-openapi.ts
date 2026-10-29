@@ -6,7 +6,6 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 
-import { AppModule } from '../app.module';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
@@ -22,6 +21,8 @@ const DEFAULT_ENV: Record<string, string> = {
   TRAKT_CLIENT_ID: 'dummy',
   TRAKT_CLIENT_SECRET: 'dummy',
   OMDB_API_KEY: 'dummy',
+  ACCESS_TOKEN_SECRET: 'dummy-access-token-secret-for-openapi-gen',
+  REFRESH_TOKEN_SECRET: 'dummy-refresh-token-secret-for-openapi-gen',
 };
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const;
@@ -126,9 +127,10 @@ const wrapSuccessResponses = (doc: OpenAPIObject): void => {
 /**
  * Create a Nest application instance configured for offline OpenAPI generation.
  *
- * Stubs database and BullMQ-related providers to avoid requiring Postgres/Redis.
+ * Stubs the database and BullMQ workers so only Redis is required, not Postgres.
  */
 const createApp = async (): Promise<NestFastifyApplication> => {
+  const { AppModule } = await import('../app.module');
   const noopBullRegistrar = { onModuleInit: () => {}, register: () => {} };
 
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
