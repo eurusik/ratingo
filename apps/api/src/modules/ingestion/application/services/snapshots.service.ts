@@ -36,53 +36,8 @@ export class SnapshotsService {
   ) {}
 
   /**
-   * Syncs a single watcher snapshot for a specific media item.
-   *
-   * Fetches current watchers stats from Trakt and upserts a snapshot row.
-   * Designed to be idempotent for the same UTC day.
-   *
-   * @param mediaItemId - The ID of the media item to sync
-   * @param snapshotDate - The normalized date for the snapshot (00:00 UTC)
-   * @param region - The region code (default: 'global')
-   */
-  async syncSnapshotItem(
-    mediaItemId: string,
-    snapshotDate: Date,
-    region = 'global',
-  ): Promise<void> {
-    try {
-      // 1. Get minimal media info to know which Trakt endpoint to call
-      const item = await this.snapshotsRepository.findMediaItemForSnapshot(mediaItemId);
-
-      if (!item) {
-        this.logger.warn(`Media item ${mediaItemId} not found for snapshot sync.`);
-        return;
-      }
-
-      // 2. Fetch stats from Trakt
-      const stats =
-        item.type === MediaType.MOVIE
-          ? await this.traktAdapter.getMovieRatingsByTmdbId(item.tmdbId)
-          : await this.traktAdapter.getShowRatingsByTmdbId(item.tmdbId);
-
-      if (stats) {
-        // 3. Upsert snapshot
-        await this.snapshotsRepository.upsertSnapshot({
-          mediaItemId,
-          snapshotDate,
-          totalWatchers: stats.totalWatchers,
-          region,
-        });
-      }
-    } catch (e) {
-      this.logger.warn(`Failed to sync snapshot for item ${mediaItemId}: ${(e as Error).message}`);
-      throw e; // Rethrow so worker can retry
-    }
-  }
-
-  /**
    * Syncs snapshots for multiple items using optimized batch API calls.
-   * More efficient: 2 API calls per item (search + stats) vs 4 in syncSnapshotItem.
+   * Uses 2 API calls per item (search + stats).
    *
    * @param candidates - Array of snapshot candidates from repository
    * @param snapshotDate - The normalized UTC date for snapshots

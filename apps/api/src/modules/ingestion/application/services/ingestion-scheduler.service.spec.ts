@@ -260,26 +260,4 @@ describe('IngestionSchedulerService', () => {
       expect(ingestionQueue.removeJobScheduler).not.toHaveBeenCalledWith('prod:id2');
     });
   });
-
-  describe('legacy API', () => {
-    it('getRepeatableJobs should delegate to getJobSchedulers', async () => {
-      ingestionQueue.getJobSchedulers.mockResolvedValue([
-        { key: `${ENV_PREFIX}:id1`, name: 'job1', pattern: '0 * * * *', tz: 'UTC' },
-      ]);
-
-      const result = await service.getRepeatableJobs();
-
-      expect(result).toHaveLength(1);
-    });
-
-    it('removeAllRepeatableJobs should delegate to removeAllJobSchedulers', async () => {
-      ingestionQueue.getJobSchedulers.mockResolvedValue([
-        { key: `${ENV_PREFIX}:id1`, name: 'job1', pattern: '0 * * * *', tz: 'UTC' },
-      ]);
-
-      await service.removeAllRepeatableJobs();
-
-      expect(ingestionQueue.removeJobScheduler).toHaveBeenCalledWith(`${ENV_PREFIX}:id1`);
-    });
-  });
 });

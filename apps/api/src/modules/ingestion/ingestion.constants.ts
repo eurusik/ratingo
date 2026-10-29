@@ -43,8 +43,6 @@ export enum IngestionJob {
 
   /** Dispatcher job: iterates over all media and queues item jobs */
   SYNC_SNAPSHOTS_DISPATCHER = 'sync-snapshots-dispatcher',
-  /** @deprecated Use batch processing in SnapshotsPipeline.dispatch() */
-  SYNC_SNAPSHOT_ITEM = 'sync-snapshot-item',
 
   /** Dispatcher job: fetches tracked show IDs and queues batch jobs */
   SYNC_TRACKED_SHOWS = 'sync-tracked-shows',
@@ -89,8 +87,7 @@ export const TRACKED_SHOWS_CHUNK_SIZE = 50;
 
 /**
  * Delay between TMDB API calls in milliseconds.
- * TMDB rate limit: ~40 requests per 10 seconds.
- * 300ms delay = ~3.3 req/s = safe margin.
+ * TMDB allows ~40 req/s; a 300ms delay (~3.3 req/s) stays well within it.
  */
 export const TMDB_REQUEST_DELAY_MS = 300;
 

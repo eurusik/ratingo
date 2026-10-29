@@ -73,7 +73,6 @@ import {
   RunStatus,
   RunStatusType,
   EligibilityStatusType,
-  type EvaluationContextType,
 } from '../../src/modules/catalog-policy/domain/constants/evaluation.constants';
 import type {
   AggregatedCounters,
@@ -329,31 +328,8 @@ class InMemoryEvaluationRepository implements IMediaCatalogEvaluationRepository 
     return evaluation;
   }
 
-  async bulkUpsert(evaluations: MediaCatalogEvaluation[]): Promise<number> {
-    for (const e of evaluations) {
-      await this.upsert(e);
-    }
-    return evaluations.length;
-  }
-
   async findByMediaId(mediaItemId: string): Promise<MediaCatalogEvaluation | null> {
     return this.evaluations.find((e) => e.mediaItemId === mediaItemId) ?? null;
-  }
-
-  async findByMediaIdForContexts(
-    mediaItemId: string,
-    contexts: EvaluationContextType[],
-  ): Promise<Map<EvaluationContextType, MediaCatalogEvaluation>> {
-    const result = new Map<EvaluationContextType, MediaCatalogEvaluation>();
-    for (const ctx of contexts) {
-      const evaluation = this.evaluations.find(
-        (e) => e.mediaItemId === mediaItemId && e.context === ctx,
-      );
-      if (evaluation) {
-        result.set(ctx, evaluation);
-      }
-    }
-    return result;
   }
 
   async findByMediaIdAndPolicyVersion(
