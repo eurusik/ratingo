@@ -6684,9 +6684,9 @@ export interface operations {
     CatalogShowsController_getNewEpisodes: {
         parameters: {
             query?: {
-                /** @description Number of days to look back (default: 7). */
+                /** @description Number of days to look back. */
                 days?: number;
-                /** @description Max number of shows to return (default: 20). */
+                /** @description Max number of shows to return. */
                 limit?: number;
             };
             header?: never;
@@ -11343,7 +11343,10 @@ export interface operations {
     };
     StatsController_getStatsByTmdbId: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Media type (TMDB movie and TV ids overlap; recommended) */
+                type?: "movie" | "show";
+            };
             header?: never;
             path: {
                 /** @description TMDB ID of the media item */

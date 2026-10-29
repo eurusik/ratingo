@@ -26,11 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
-import {
-  CATALOG_DEFAULT_CALENDAR_DAYS,
-  CATALOG_MAX_CALENDAR_DAYS,
-  MAX_PAGE_SIZE,
-} from '../../../../common/constants';
+import { CATALOG_DEFAULT_CALENDAR_DAYS, CATALOG_MAX_CALENDAR_DAYS } from '../../../../common/constants';
 import { CurrentUser } from '../../../auth/public';
 import { JwtAuthGuard } from '../../../auth/public';
 import { OptionalJwtAuthGuard } from '../../../auth/public';
@@ -126,9 +122,6 @@ export class CatalogShowsController {
       'Returns shows that have aired new episodes recently. One entry per show with the latest episode.',
   })
   @ApiOkResponse({ type: NewEpisodesResponseDto })
-  @ApiBadRequestResponse({
-    description: `Invalid query parameters (days must be 1..${CATALOG_MAX_CALENDAR_DAYS}; limit must be 1..${MAX_PAGE_SIZE})`,
-  })
   async getNewEpisodes(@Query() query: NewEpisodesQueryDto): Promise<NewEpisodesResponseDto> {
     const episodes = await this.showRepository.findNewEpisodes(query.days, query.limit);
     return { data: episodes };
