@@ -11,6 +11,7 @@ import tmdbConfig from './config/tmdb.config';
 import traktConfig from './config/trakt.config';
 import { DatabaseModule } from './database/database.module';
 import { ClockModule } from './modules/shared/clock';
+import { RuntimeMetricsModule } from './telemetry/runtime-metrics.module';
 
 const DEFAULT_REDIS_PORT = 6379;
 
@@ -54,4 +55,5 @@ export const buildAppCoreImports = (role: AppRole = getAppRole()) => [
   EventEmitterModule.forRoot(),
   DatabaseModule,
   ClockModule,
+  RuntimeMetricsModule,
 ];
