@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { pgTable, text, integer, timestamp, index, pgEnum, uuid } from 'drizzle-orm/pg-core';
 
 import { users } from './users';
@@ -82,5 +83,8 @@ export const importPendingItems = pgTable(
   (t) => [
     index('idx_pending_batch_status').on(t.batchId, t.status),
     index('idx_pending_resolved_tmdb').on(t.resolvedTmdbId, t.mediaType, t.status),
+    index('idx_pending_link_sweep')
+      .on(t.updatedAt)
+      .where(sql`${t.status} in ('ingesting', 'linking')`),
   ],
 );

@@ -16,6 +16,7 @@ describe('ImportMediaService', () => {
     mediaLookup = {
       findManyByImdbIds: jest.fn(),
       findManyByTmdbIds: jest.fn(),
+      findReadyIdByTmdbId: jest.fn(),
       findTypeById: jest.fn(),
     };
 
