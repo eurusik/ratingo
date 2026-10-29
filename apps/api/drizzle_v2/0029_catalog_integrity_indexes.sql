@@ -1,9 +1,12 @@
--- Catalog integrity indexes previously documented in schema comments but never created.
+-- Catalog integrity indexes previously documented in schema comments but never created by migrations.
 --
 -- NOTE: drizzle-kit migrate runs every migration inside one transaction, so
 -- CREATE INDEX CONCURRENTLY is not possible here. All affected tables are small
 -- (policies, runs, subscriptions) or moderate (watch offers); the plain build holds
 -- a SHARE lock (reads allowed, writes wait) for the duration of each statement.
+--
+-- Idempotent (IF [NOT] EXISTS): some of these indexes were created by hand in production
+-- earlier (e.g. catalog_policies_single_active), so existing ones are kept as-is.
 --
 -- Pre-steps clean up rows that would violate the new unique indexes:
 -- * watch offers are derived data (re-synced from TMDB), so exact duplicates are deleted;
@@ -45,9 +48,9 @@ BEGIN
   END IF;
 END $$;--> statement-breakpoint
 
-DROP INDEX "catalog_policies_version_idx";--> statement-breakpoint
-CREATE UNIQUE INDEX "catalog_eval_runs_single_running" ON "catalog_evaluation_runs" USING btree ("target_policy_id") WHERE "catalog_evaluation_runs"."status" = 'running';--> statement-breakpoint
-CREATE UNIQUE INDEX "catalog_policies_version_uniq" ON "catalog_policies" USING btree ("version");--> statement-breakpoint
-CREATE UNIQUE INDEX "catalog_policies_single_active" ON "catalog_policies" USING btree ("is_active") WHERE "catalog_policies"."is_active" = true;--> statement-breakpoint
-CREATE UNIQUE INDEX "media_watch_offers_uniq" ON "media_watch_offers" USING btree ("media_item_id","provider_id",COALESCE("variant_id", 'standard'),"distribution_channel","offer_type","region");--> statement-breakpoint
-CREATE INDEX "user_subscriptions_media_trigger_active_idx" ON "user_subscriptions" USING btree ("media_item_id","trigger") WHERE "user_subscriptions"."is_active" = true;
+DROP INDEX IF EXISTS "catalog_policies_version_idx";--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "catalog_eval_runs_single_running" ON "catalog_evaluation_runs" USING btree ("target_policy_id") WHERE "catalog_evaluation_runs"."status" = 'running';--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "catalog_policies_version_uniq" ON "catalog_policies" USING btree ("version");--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "catalog_policies_single_active" ON "catalog_policies" USING btree ("is_active") WHERE "catalog_policies"."is_active" = true;--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "media_watch_offers_uniq" ON "media_watch_offers" USING btree ("media_item_id","provider_id",COALESCE("variant_id", 'standard'),"distribution_channel","offer_type","region");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "user_subscriptions_media_trigger_active_idx" ON "user_subscriptions" USING btree ("media_item_id","trigger") WHERE "user_subscriptions"."is_active" = true;

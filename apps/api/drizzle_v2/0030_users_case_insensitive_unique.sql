@@ -7,6 +7,7 @@
 --   SELECT lower(email), array_agg(id) FROM users GROUP BY 1 HAVING count(*) > 1;
 --   SELECT lower(username), array_agg(id) FROM users GROUP BY 1 HAVING count(*) > 1;
 --
+-- Idempotent (IF NOT EXISTS) in case the indexes were created by hand.
 -- No CONCURRENTLY: drizzle-kit migrate wraps migrations in a transaction; users is small.
 
 DO $$
@@ -25,5 +26,5 @@ BEGIN
   END IF;
 END $$;--> statement-breakpoint
 
-CREATE UNIQUE INDEX "users_email_lower_uniq" ON "users" USING btree (lower("email"));--> statement-breakpoint
-CREATE UNIQUE INDEX "users_username_lower_uniq" ON "users" USING btree (lower("username"));
+CREATE UNIQUE INDEX IF NOT EXISTS "users_email_lower_uniq" ON "users" USING btree (lower("email"));--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "users_username_lower_uniq" ON "users" USING btree (lower("username"));
