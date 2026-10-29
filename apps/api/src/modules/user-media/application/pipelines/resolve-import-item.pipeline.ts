@@ -12,12 +12,11 @@ import {
 } from '../../domain/constants/import-pending.constants';
 import { MEDIA_LOOKUP_PORT } from '../../domain/constants/import.constants';
 import { type ImportPendingItem } from '../../domain/entities/import-pending-item';
+import { type CatalogMediaRef } from '../../domain/entities/ready-media';
 import { type IMediaLookupPort } from '../../domain/ports/media-lookup.port';
 import { type ITmdbResolverPort, TMDB_RESOLVER } from '../../domain/ports/tmdb-resolver.port';
 import { type IImportPendingRepository } from '../../domain/repositories/import-pending.repository.interface';
 import { LinkPendingImportsService } from '../link-pending-imports.service';
-
-type ResolvedMedia = { tmdbId: number; type: 'movie' | 'show' };
 
 /**
  * Pipeline for the RESOLVE_IMPORT_ITEM job.
@@ -87,7 +86,7 @@ export class ResolveImportItemPipeline {
       return;
     }
 
-    let resolved: ResolvedMedia | null = null;
+    let resolved: CatalogMediaRef | null = null;
 
     try {
       resolved = await this.resolveViaTmdb(item);
@@ -101,18 +100,7 @@ export class ResolveImportItemPipeline {
     }
 
     if (!resolved) {
-      this.logger.debug(`[item] pendingItemId=${pendingItemId} not found in TMDB, marking failed`);
-      const markedFailed = await this.pendingRepo.updateItemStatusIfNotCancelled(pendingItemId, {
-        status: IMPORT_PENDING_STATUS.FAILED,
-        failureReason: IMPORT_PENDING_FAILURE.TMDB_NOT_FOUND,
-      });
-      if (!markedFailed) {
-        this.logger.log(
-          `[item] pendingItemId=${pendingItemId} was cancelled during TMDB lookup, skipping failed mark`,
-        );
-        return;
-      }
-      await this.pendingRepo.updateBatchCountersAtomic(batchId);
+      await this.markNotFoundInTmdb(pendingItemId, batchId);
       return;
     }
 
@@ -141,7 +129,25 @@ export class ResolveImportItemPipeline {
     await this.linkIfMediaReady(pendingItemId, resolved);
   }
 
-  private async enqueueSync(pendingItemId: string, resolved: ResolvedMedia): Promise<IngestionJob> {
+  private async markNotFoundInTmdb(pendingItemId: string, batchId: string): Promise<void> {
+    this.logger.debug(`[item] pendingItemId=${pendingItemId} not found in TMDB, marking failed`);
+    const markedFailed = await this.pendingRepo.updateItemStatusIfNotCancelled(pendingItemId, {
+      status: IMPORT_PENDING_STATUS.FAILED,
+      failureReason: IMPORT_PENDING_FAILURE.TMDB_NOT_FOUND,
+    });
+    if (!markedFailed) {
+      this.logger.log(
+        `[item] pendingItemId=${pendingItemId} was cancelled during TMDB lookup, skipping failed mark`,
+      );
+      return;
+    }
+    await this.pendingRepo.updateBatchCountersAtomic(batchId);
+  }
+
+  private async enqueueSync(
+    pendingItemId: string,
+    resolved: CatalogMediaRef,
+  ): Promise<IngestionJob> {
     const jobName = resolved.type === 'movie' ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
     const mediaTypeName = resolved.type === 'movie' ? MediaType.MOVIE : MediaType.SHOW;
     const jobId = buildSyncMediaJobId(resolved.type, resolved.tmdbId, 'oneshot');
@@ -163,7 +169,7 @@ export class ResolveImportItemPipeline {
     return jobName;
   }
 
-  private async linkIfMediaReady(pendingItemId: string, resolved: ResolvedMedia): Promise<void> {
+  private async linkIfMediaReady(pendingItemId: string, resolved: CatalogMediaRef): Promise<void> {
     try {
       const mediaItemId = await this.mediaLookup.findReadyIdByTmdbId(
         resolved.tmdbId,
@@ -189,7 +195,7 @@ export class ResolveImportItemPipeline {
    * - IMDB ID (globally unique): single TMDB Find API call
    * - TMDB ID only: check movie first, then show
    */
-  private async resolveViaTmdb(item: ImportPendingItem): Promise<ResolvedMedia | null> {
+  private async resolveViaTmdb(item: ImportPendingItem): Promise<CatalogMediaRef | null> {
     if (item.imdbId) {
       const result = await this.tmdbResolver.findByImdbId(item.imdbId);
       this.logger.debug(
@@ -214,7 +220,7 @@ export class ResolveImportItemPipeline {
    * TMDB IDs are unique per type, not globally, so we must check both.
    * Movie takes precedence when both return true (degenerate case).
    */
-  private async resolveByTmdbId(tmdbId: number): Promise<ResolvedMedia | null> {
+  private async resolveByTmdbId(tmdbId: number): Promise<CatalogMediaRef | null> {
     const [isMovie, isShow] = await Promise.all([
       this.tmdbResolver.checkExists(tmdbId, 'movie'),
       this.tmdbResolver.checkExists(tmdbId, 'show'),

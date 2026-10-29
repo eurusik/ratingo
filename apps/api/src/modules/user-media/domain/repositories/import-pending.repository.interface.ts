@@ -66,7 +66,7 @@ export interface IImportPendingRepository {
 
   /**
    * Finds pending items waiting to be linked for a specific resolved TMDB ID and media type.
-   * Used by LinkImportListener after media.synced event fires.
+   * Used by LinkPendingImportsService once the media is ready (media.synced or the readiness check).
    */
   findItemsByResolvedTmdb(
     resolvedTmdbId: number,

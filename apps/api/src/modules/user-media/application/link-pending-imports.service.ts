@@ -8,6 +8,7 @@ import {
   IMPORT_PENDING_STATUS,
 } from '../domain/constants/import-pending.constants';
 import { type ImportBatch } from '../domain/entities/import-batch';
+import { type ReadyMedia } from '../domain/entities/ready-media';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
 import {
   type IImportPendingRepository,
@@ -19,13 +20,8 @@ import {
   USER_MEDIA_STATE_REPOSITORY,
 } from '../domain/repositories/user-media-state.repository.interface';
 
-export interface ReadyMedia {
-  tmdbId: number;
-  type: 'movie' | 'show';
-  mediaItemId: string;
-}
-
 type BatchLookup = (batchId: string) => Promise<ImportBatch | null>;
+type LinkOutcome = 'linked' | 'failed' | 'skipped';
 
 @Injectable()
 export class LinkPendingImportsService {
@@ -71,10 +67,7 @@ export class LinkPendingImportsService {
     return linked;
   }
 
-  private async linkItem(
-    link: PendingMediaLink,
-    findBatch: BatchLookup,
-  ): Promise<'linked' | 'failed' | 'skipped'> {
+  private async linkItem(link: PendingMediaLink, findBatch: BatchLookup): Promise<LinkOutcome> {
     try {
       const batch = await this.findLinkableBatch(link.item, findBatch);
       if (!batch) return 'skipped';
@@ -110,7 +103,7 @@ export class LinkPendingImportsService {
   private async completeLink(
     userId: string,
     link: PendingMediaLink,
-  ): Promise<'linked' | 'skipped'> {
+  ): Promise<Exclude<LinkOutcome, 'failed'>> {
     const { item, mediaItemId } = link;
     await this.importUserState(userId, link);
 
@@ -159,7 +152,7 @@ export class LinkPendingImportsService {
     }
   }
 
-  private async markLinkFailed(itemId: string): Promise<'failed' | 'skipped'> {
+  private async markLinkFailed(itemId: string): Promise<Exclude<LinkOutcome, 'linked'>> {
     try {
       const failed = await this.leaveIngesting(itemId, {
         status: IMPORT_PENDING_STATUS.FAILED,
