@@ -3,7 +3,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 
 import { JOB_STATUS } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
-import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
+import { INGESTION_QUEUE, IngestionJob } from '@/modules/shared/contracts';
 
 import { BullMQImportJobAdapter } from './bullmq-import-job.adapter';
 

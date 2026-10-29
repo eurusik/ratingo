@@ -1,4 +1,4 @@
-import type { NormalizedMedia } from '@/modules/ingestion/public';
+import type { NormalizedMedia } from '@/modules/shared/contracts';
 
 import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { type MediaType } from '../../../../common/enums/media-type.enum';

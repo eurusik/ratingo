@@ -7,23 +7,28 @@ import * as postgres from 'postgres';
 import * as schema from './schema';
 
 export const DATABASE_CONNECTION = 'DATABASE_CONNECTION';
+export const POSTGRES_CLIENT = Symbol('POSTGRES_CLIENT');
 
 @Global()
 @Module({
   providers: [
     {
-      provide: DATABASE_CONNECTION,
+      provide: POSTGRES_CLIENT,
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const connectionString = configService.get<string>('DATABASE_URL');
         if (!connectionString) {
           throw new Error('DATABASE_URL is not defined');
         }
-        const client = postgres(connectionString);
-        return drizzle(client, { schema });
+        return postgres(connectionString);
       },
     },
+    {
+      provide: DATABASE_CONNECTION,
+      inject: [POSTGRES_CLIENT],
+      useFactory: (client: postgres.Sql) => drizzle(client, { schema }),
+    },
   ],
-  exports: [DATABASE_CONNECTION],
+  exports: [DATABASE_CONNECTION, POSTGRES_CLIENT],
 })
 export class DatabaseModule {}

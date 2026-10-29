@@ -1,5 +1,5 @@
 import { MediaWatchOffersMapper, type WatchOfferRow } from './media-watch-offers.mapper';
-import type { WatchProvidersMap } from '../../../ingestion/public';
+import type { WatchProvidersMap } from '../../../shared/contracts';
 
 describe('MediaWatchOffersMapper', () => {
   const createOffer = (overrides: Partial<WatchOfferRow> = {}): WatchOfferRow => ({

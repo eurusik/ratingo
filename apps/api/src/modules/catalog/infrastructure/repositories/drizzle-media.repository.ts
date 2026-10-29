@@ -18,7 +18,7 @@ import {
   DEFAULT_POLICY_VERSION,
   EvaluationContext,
 } from '../../../catalog-policy/public';
-import type { NormalizedMedia } from '../../../ingestion/public';
+import type { NormalizedMedia } from '../../../shared/contracts';
 import { type LocalSearchResult } from '../../domain/models/search-result.model';
 import {
   type IGenreRepository,

@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { apiOnly, workerOnly } from '../../common/runtime/app-role';
 import mdblistConfig from '../../config/mdblist.config';
 import omdbConfig from '../../config/omdb.config';
 import schedulerConfig from '../../config/scheduler.config';
@@ -84,7 +85,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       },
     }),
   ],
-  controllers: [IngestionController],
+  controllers: apiOnly(IngestionController),
   providers: [
     // Repository bindings
     {
@@ -98,11 +99,8 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     BulkJobService,
     SyncMediaService,
     TrackedSyncService,
-    SyncWorker,
-    BackfillWorker,
-    RatingsBackfillWorker,
     SnapshotsService,
-    IngestionSchedulerService,
+    ...workerOnly(SyncWorker, BackfillWorker, RatingsBackfillWorker, IngestionSchedulerService),
     // Pipeline classes
     SnapshotsPipeline,
     TrendingPipeline,

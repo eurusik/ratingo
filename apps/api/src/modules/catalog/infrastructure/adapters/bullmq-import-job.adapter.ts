@@ -5,7 +5,7 @@ import { Job, Queue } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { mapBullStateToJobStatus } from '@/common/infrastructure/bullmq/job-status-mapper';
-import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/public';
+import { INGESTION_QUEUE, IngestionJob } from '@/modules/shared/contracts';
 
 import { IImportJobPort, JobStatusResult, QueuedJob } from '../../domain/ports/import-job.port';
 
