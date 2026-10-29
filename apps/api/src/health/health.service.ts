@@ -5,6 +5,7 @@ import { Queue } from 'bullmq';
 import { sql } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { withTimeout } from '../common/utils/with-timeout.util';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import * as schema from '../database/schema';
 
@@ -50,24 +51,18 @@ export class HealthService {
   }
 
   private async probe(name: string, fn: () => Promise<void>): Promise<DependencyStatus> {
-    let timer: NodeJS.Timeout | undefined;
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(
-        () => reject(new Error(`timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`)),
-        HEALTH_CHECK_TIMEOUT_MS,
-      );
-    });
-
     try {
-      await Promise.race([fn(), timeout]);
+      await withTimeout(
+        fn(),
+        HEALTH_CHECK_TIMEOUT_MS,
+        `timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`,
+      );
       return 'up';
     } catch (error) {
       this.logger.warn(
         `Health check failed for ${name}: ${error instanceof Error ? error.message : String(error)}`,
       );
       return 'down';
-    } finally {
-      clearTimeout(timer);
     }
   }
 }

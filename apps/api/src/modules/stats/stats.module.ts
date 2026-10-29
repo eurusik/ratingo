@@ -1,6 +1,7 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
+import { apiOnly, workerOnly } from '../../common/runtime/app-role';
 import { CatalogModule } from '../catalog/catalog.module';
 import { DropOffAnalyzerModule } from '../shared/drop-off-analyzer/drop-off-analyzer.module';
 import { ScoreCalculatorModule } from '../shared/score-calculator/score-calculator.module';
@@ -42,7 +43,7 @@ import { STATS_QUEUE } from './stats.constants';
       },
     }),
   ],
-  controllers: [StatsController],
+  controllers: apiOnly(StatsController),
   providers: [
     TrendingSyncService,
     ScoreRecalculationService,
@@ -51,7 +52,7 @@ import { STATS_QUEUE } from './stats.constants';
     DropOffService,
     CommunityRatingService,
     CommunityRatingChangedListener,
-    StatsWorker,
+    ...workerOnly(StatsWorker),
     {
       provide: STATS_REPOSITORY,
       useClass: DrizzleStatsRepository,

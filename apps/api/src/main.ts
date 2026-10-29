@@ -1,3 +1,5 @@
+import './common/runtime/load-env';
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -6,10 +8,10 @@ import { SwaggerModule } from '@nestjs/swagger';
 import fastifyCookie from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 
-import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { SlowRequestInterceptor } from './common/interceptors/slow-request.interceptor';
+import { getAppRole, runsHttp } from './common/runtime/app-role';
 import { DevTiming } from './common/utils/dev-timing';
 import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.config';
 
@@ -20,6 +22,14 @@ import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.confi
  * @returns {Promise<void>}
  */
 async function bootstrap(): Promise<void> {
+  const role = getAppRole();
+  if (!runsHttp(role)) {
+    throw new Error(
+      `HTTP entrypoint cannot run with APP_ROLE=${role}; start dist/src/worker.js instead`,
+    );
+  }
+
+  const { AppModule } = await import('./app.module');
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({

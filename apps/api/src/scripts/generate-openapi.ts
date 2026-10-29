@@ -6,6 +6,7 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 
+import { type AppRole } from '../common/runtime/app-role';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
@@ -24,6 +25,8 @@ const DEFAULT_ENV: Record<string, string> = {
   ACCESS_TOKEN_SECRET: 'dummy-access-token-secret-for-openapi-gen',
   REFRESH_TOKEN_SECRET: 'dummy-refresh-token-secret-for-openapi-gen',
 };
+
+const OPENAPI_APP_ROLE: AppRole = 'api';
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const;
 
@@ -50,8 +53,10 @@ type PathItemObject = Partial<Record<(typeof HTTP_METHODS)[number], OperationObj
 /**
  * Apply default environment variables required to bootstrap the Nest app for OpenAPI generation.
  */
-const applyDefaultEnv = () =>
+const applyDefaultEnv = () => {
   Object.entries(DEFAULT_ENV).forEach(([k, v]) => (process.env[k] ??= v));
+  process.env.APP_ROLE = OPENAPI_APP_ROLE;
+};
 
 /**
  * Resolve output path for generated OpenAPI JSON.

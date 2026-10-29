@@ -31,6 +31,7 @@
     "dev:api": "turbo run dev --filter=api",
     "dev:client": "turbo run dev --filter=web-client",
     "dev:fx-demo": "turbo run dev --filter=fx-demo",
+    "dev:worker": "npm run dev:worker --workspace=api",
     "lint:all": "turbo run lint",
     "lint:api": "turbo run lint --filter=api",
     "lint:api:fix": "eslint \"apps/api/src/**/*.ts\" --fix",

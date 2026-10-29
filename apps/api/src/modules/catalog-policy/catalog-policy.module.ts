@@ -8,6 +8,7 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
+import { apiOnly, workerOnly } from '../../common/runtime/app-role';
 import { ProviderModule } from '../provider/provider.module';
 
 import { CatalogEvaluationService } from './application/services/catalog-evaluation.service';
@@ -62,7 +63,7 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     }),
     ProviderModule,
   ],
-  controllers: [PolicyController, RunController, DryRunController],
+  controllers: apiOnly(PolicyController, RunController, DryRunController),
   providers: [
     // Repositories
     {
@@ -117,9 +118,7 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     // Worker handlers (SRP: one handler per job type)
     ReEvaluateAllHandler,
     EvaluateItemHandler,
-    WatchdogHandler,
-    // Worker (thin router)
-    CatalogPolicyWorker,
+    ...workerOnly(WatchdogHandler, CatalogPolicyWorker),
   ],
   exports: [
     // Export port token for other modules (preferred way)
