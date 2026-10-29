@@ -1,8 +1,16 @@
 import * as fc from 'fast-check';
 
-import { LINK_PENDING_IMPORTS_MIN_AGE_MS } from '../constants/import-pending.constants';
+import {
+  LINK_PENDING_IMPORTS_INGEST_TIMEOUT_MS,
+  LINK_PENDING_IMPORTS_MIN_AGE_MS,
+  LINK_PENDING_IMPORTS_STALE_LINKING_MS,
+} from '../constants/import-pending.constants';
 
-import { pendingLinkSweepCutoffMs } from './pending-link-sweep.policy';
+import {
+  pendingLinkSweepCutoffMs,
+  pendingLinkSweepCutoffsMs,
+  staleLinkingCutoffMs,
+} from './pending-link-sweep.policy';
 
 const MAX_EPOCH_MS = 4_102_444_800_000;
 const MAX_AGE_MS = 30 * 24 * 60 * 60_000;
@@ -44,6 +52,27 @@ describe('pendingLinkSweepCutoffMs - property tests', () => {
     fc.assert(
       fc.property(nowMsArb, (nowMs) => {
         expect(pendingLinkSweepCutoffMs(nowMs)).toBe(nowMs - LINK_PENDING_IMPORTS_MIN_AGE_MS);
+      }),
+    );
+  });
+
+  it('reclaims a LINKING item only after a live linker would long have finished', () => {
+    fc.assert(
+      fc.property(nowMsArb, (nowMs) => {
+        expect(staleLinkingCutoffMs(nowMs)).toBe(nowMs - LINK_PENDING_IMPORTS_STALE_LINKING_MS);
+        expect(staleLinkingCutoffMs(nowMs)).toBeLessThan(pendingLinkSweepCutoffMs(nowMs));
+      }),
+    );
+  });
+
+  it('times an ingest out only long after linking would have been retried', () => {
+    fc.assert(
+      fc.property(nowMsArb, (nowMs) => {
+        const cutoffs = pendingLinkSweepCutoffsMs(nowMs);
+        expect(cutoffs.ingestTimeoutBefore).toBe(nowMs - LINK_PENDING_IMPORTS_INGEST_TIMEOUT_MS);
+        expect(cutoffs.ingestTimeoutBefore).toBeLessThan(cutoffs.staleLinkingBefore);
+        expect(cutoffs.staleLinkingBefore).toBeLessThan(cutoffs.ingestingBefore);
+        expect(cutoffs.ingestingBefore).toBeLessThan(nowMs);
       }),
     );
   });

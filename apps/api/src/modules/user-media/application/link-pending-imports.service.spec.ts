@@ -3,6 +3,7 @@ import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_FAILURE,
   IMPORT_PENDING_STATUS,
+  LINK_PENDING_IMPORTS_STALE_LINKING_MS,
 } from '../domain/constants/import-pending.constants';
 import { type ImportBatch } from '../domain/entities/import-batch';
 import { type ImportPendingItem } from '../domain/entities/import-pending-item';
@@ -10,6 +11,8 @@ import { type IImportPendingRepository } from '../domain/repositories/import-pen
 import { type IUserMediaStateRepository } from '../domain/repositories/user-media-state.repository.interface';
 
 import { LinkPendingImportsService } from './link-pending-imports.service';
+
+const NOW = new Date('2026-10-29T12:00:00.000Z');
 
 function makeBatch(overrides: Partial<ImportBatch> = {}): ImportBatch {
   return {
@@ -62,7 +65,9 @@ describe('LinkPendingImportsService', () => {
       findPendingByBatchAndStatus: jest.fn(),
       findById: jest.fn(),
       findItemsByResolvedTmdb: jest.fn(),
-      findIngestingWithReadyMedia: jest.fn(),
+      findLinkableWithReadyMedia: jest.fn(),
+      claimForLinking: jest.fn().mockResolvedValue(true),
+      failIngestingUpdatedBefore: jest.fn().mockResolvedValue([]),
       updateItemStatus: jest.fn().mockResolvedValue(undefined),
       updateItemStatusIfNotCancelled: jest.fn(),
       transitionItemStatus: jest.fn().mockResolvedValue(true),
@@ -87,6 +92,7 @@ describe('LinkPendingImportsService', () => {
       pendingRepo as any,
       userMediaRepo as any,
       savedItemsService as any,
+      { now: () => NOW },
     );
   });
 
@@ -142,7 +148,7 @@ describe('LinkPendingImportsService', () => {
 
       expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
         'item-1',
-        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
         {
           status: IMPORT_PENDING_STATUS.DONE,
           mediaItemId: 'media-uuid-1',
@@ -206,7 +212,7 @@ describe('LinkPendingImportsService', () => {
       expect(pendingRepo.findBatchById).toHaveBeenCalledTimes(2);
       expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
         'item-2',
-        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
         { status: IMPORT_PENDING_STATUS.DONE, mediaItemId: 'media-uuid-1' },
       );
     });
@@ -317,7 +323,7 @@ describe('LinkPendingImportsService', () => {
 
       expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
         'item-1',
-        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
         {
           status: IMPORT_PENDING_STATUS.FAILED,
           failureReason: IMPORT_PENDING_FAILURE.LINK_FAILED,
@@ -338,7 +344,7 @@ describe('LinkPendingImportsService', () => {
       // Second item processed successfully
       expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
         'item-2',
-        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
         {
           status: IMPORT_PENDING_STATUS.DONE,
           mediaItemId: 'media-uuid-1',
@@ -392,7 +398,7 @@ describe('LinkPendingImportsService', () => {
       // The pending item itself is still linked and marked DONE
       expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
         'item-1',
-        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
         {
           status: IMPORT_PENDING_STATUS.DONE,
           mediaItemId: 'media-uuid-1',
@@ -421,7 +427,7 @@ describe('LinkPendingImportsService', () => {
       // saveItem failure is isolated — user_media_state was written, so item is still DONE
       expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
         'item-1',
-        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
         {
           status: IMPORT_PENDING_STATUS.DONE,
           mediaItemId: 'media-uuid-1',
@@ -473,19 +479,16 @@ describe('LinkPendingImportsService', () => {
 
       expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
         'item-1',
-        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
         { status: IMPORT_PENDING_STATUS.FAILED, failureReason: IMPORT_PENDING_FAILURE.LINK_FAILED },
       );
       expect(pendingRepo.updateBatchCountersAtomic).not.toHaveBeenCalled();
     });
 
-    it('is idempotent: two linkers racing on the same item link it once and save it once', async () => {
+    it('is idempotent: of two linkers racing on the same item only the claimant writes', async () => {
       const item = makePendingItem({ state: 'planned', rating: null });
       pendingRepo.findBatchById.mockResolvedValue(makeBatch());
-      pendingRepo.transitionItemStatus.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
-      userMediaRepo.bulkImport
-        .mockResolvedValueOnce({ imported: 1, skipped: 0, plannedMediaItemIds: ['media-uuid-1'] })
-        .mockResolvedValueOnce({ imported: 0, skipped: 1, plannedMediaItemIds: [] });
+      pendingRepo.claimForLinking.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
 
       const [first, second] = await Promise.all([
         service.linkItems([{ item, mediaItemId: 'media-uuid-1' }]),
@@ -493,8 +496,88 @@ describe('LinkPendingImportsService', () => {
       ]);
 
       expect(first + second).toBe(1);
+      expect(userMediaRepo.bulkImport).toHaveBeenCalledTimes(1);
       expect(savedItemsService.saveItem).toHaveBeenCalledTimes(1);
       expect(pendingRepo.updateBatchCountersAtomic).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('claim before writing user state', () => {
+    beforeEach(() => {
+      pendingRepo.findItemsByResolvedTmdb.mockResolvedValue([makePendingItem()]);
+      pendingRepo.findBatchById.mockResolvedValue(makeBatch());
+    });
+
+    const link = () =>
+      service.linkReadyMedia({ tmdbId: 550, type: 'movie', mediaItemId: 'media-uuid-1' });
+
+    it('claims INGESTING (or stale LINKING) items with the stale-linking cutoff from the clock', async () => {
+      await link();
+
+      expect(pendingRepo.claimForLinking).toHaveBeenCalledWith(
+        'item-1',
+        new Date(NOW.getTime() - LINK_PENDING_IMPORTS_STALE_LINKING_MS),
+      );
+      expect(pendingRepo.claimForLinking.mock.invocationCallOrder[0]).toBeLessThan(
+        userMediaRepo.bulkImport.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('writes nothing for the user when the batch was cancelled before the claim', async () => {
+      pendingRepo.claimForLinking.mockResolvedValue(false);
+
+      await expect(link()).resolves.toBe(0);
+
+      expect(userMediaRepo.bulkImport).not.toHaveBeenCalled();
+      expect(savedItemsService.saveItem).not.toHaveBeenCalled();
+      expect(pendingRepo.transitionItemStatus).not.toHaveBeenCalled();
+    });
+
+    it('leaves the item for the sweeper instead of failing it when the claim errors', async () => {
+      pendingRepo.claimForLinking.mockRejectedValue(new Error('connection reset'));
+
+      await expect(link()).resolves.toBe(0);
+
+      expect(userMediaRepo.bulkImport).not.toHaveBeenCalled();
+      expect(pendingRepo.transitionItemStatus).not.toHaveBeenCalled();
+      expect(pendingRepo.updateBatchCountersAtomic).not.toHaveBeenCalled();
+    });
+
+    it('cancels a stale LINKING item of a cancelled batch from its current status', async () => {
+      pendingRepo.findItemsByResolvedTmdb.mockResolvedValue([
+        makePendingItem({ status: IMPORT_PENDING_STATUS.LINKING }),
+      ]);
+      pendingRepo.findBatchById.mockResolvedValue(
+        makeBatch({ status: IMPORT_BATCH_STATUS.CANCELLED }),
+      );
+
+      await link();
+
+      expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
+        'item-1',
+        IMPORT_PENDING_STATUS.LINKING,
+        { status: IMPORT_PENDING_STATUS.CANCELLED },
+      );
+      expect(pendingRepo.claimForLinking).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('failTimedOutIngests', () => {
+    const before = new Date('2026-10-28T12:00:00.000Z');
+
+    it('refreshes counters once per affected batch and returns how many items timed out', async () => {
+      pendingRepo.failIngestingUpdatedBefore.mockResolvedValue(['batch-1', 'batch-1', 'batch-2']);
+
+      await expect(service.failTimedOutIngests(before, 200)).resolves.toBe(3);
+
+      expect(pendingRepo.failIngestingUpdatedBefore).toHaveBeenCalledWith(before, 200);
+      expect(pendingRepo.updateBatchCountersAtomic).toHaveBeenCalledTimes(2);
+    });
+
+    it('does nothing more when no ingest timed out', async () => {
+      await expect(service.failTimedOutIngests(before, 200)).resolves.toBe(0);
+
+      expect(pendingRepo.updateBatchCountersAtomic).not.toHaveBeenCalled();
     });
   });
 
@@ -509,12 +592,12 @@ describe('LinkPendingImportsService', () => {
 
       expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
         'item-1',
-        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
         { status: IMPORT_PENDING_STATUS.DONE, mediaItemId: 'media-a' },
       );
       expect(pendingRepo.transitionItemStatus).toHaveBeenCalledWith(
         'item-2',
-        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
         { status: IMPORT_PENDING_STATUS.DONE, mediaItemId: 'media-b' },
       );
       expect(pendingRepo.findItemsByResolvedTmdb).not.toHaveBeenCalled();

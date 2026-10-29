@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { CLOCK_PORT, type IClockPort } from '../../shared/clock';
 import { ACTION_CONTEXT, SAVED_ITEM_LIST, SavedItemsService } from '../../user-actions/public';
 import {
   IMPORT_BATCH_STATUS,
@@ -10,6 +11,7 @@ import {
 import { type ImportBatch } from '../domain/entities/import-batch';
 import { type ReadyMedia } from '../domain/entities/ready-media';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
+import { staleLinkingCutoffMs } from '../domain/policies/pending-link-sweep.policy';
 import {
   type IImportPendingRepository,
   type PendingMediaLink,
@@ -33,6 +35,8 @@ export class LinkPendingImportsService {
     @Inject(USER_MEDIA_STATE_REPOSITORY)
     private readonly userMediaRepo: IUserMediaStateRepository,
     private readonly savedItemsService: SavedItemsService,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
   ) {}
 
   async linkReadyMedia(media: ReadyMedia): Promise<number> {
@@ -67,17 +71,52 @@ export class LinkPendingImportsService {
     return linked;
   }
 
+  async failTimedOutIngests(before: Date, limit: number): Promise<number> {
+    const batchIds = await this.pendingRepo.failIngestingUpdatedBefore(before, limit);
+    if (batchIds.length === 0) {
+      return 0;
+    }
+
+    this.logger.warn(
+      `[timeout] marked ${batchIds.length} item(s) ${IMPORT_PENDING_FAILURE.INGEST_FAILED}: still ingesting since before ${before.toISOString()}`,
+    );
+    await this.refreshBatchCounters(new Set(batchIds));
+    return batchIds.length;
+  }
+
   private async linkItem(link: PendingMediaLink, findBatch: BatchLookup): Promise<LinkOutcome> {
+    const { item } = link;
+    const batch = await this.claimWithinBatch(item, findBatch);
+    if (!batch) return 'skipped';
+
     try {
-      const batch = await this.findLinkableBatch(link.item, findBatch);
-      if (!batch) return 'skipped';
       return await this.completeLink(batch.userId, link);
     } catch (error) {
       this.logger.error(
-        `[link] Failed to link itemId=${link.item.id}: ${(error as Error).message}`,
+        `[link] Failed to link itemId=${item.id}: ${(error as Error).message}`,
         (error as Error).stack,
       );
-      return this.markLinkFailed(link.item.id);
+      return this.markLinkFailed(item.id);
+    }
+  }
+
+  private async claimWithinBatch(
+    item: PendingMediaLink['item'],
+    findBatch: BatchLookup,
+  ): Promise<ImportBatch | null> {
+    try {
+      const batch = await this.findLinkableBatch(item, findBatch);
+      if (!batch) return null;
+      if (!(await this.claim(item.id))) {
+        this.logger.debug(`[link] itemId=${item.id} already claimed by another linker`);
+        return null;
+      }
+      return batch;
+    } catch (error) {
+      this.logger.error(
+        `[link] itemId=${item.id} left for the sweeper, could not claim it: ${(error as Error).message}`,
+      );
+      return null;
     }
   }
 
@@ -93,11 +132,18 @@ export class LinkPendingImportsService {
 
     if (batch.status === IMPORT_BATCH_STATUS.CANCELLED) {
       this.logger.debug(`[link] batchId=${item.batchId} is cancelled, skipping itemId=${item.id}`);
-      await this.leaveIngesting(item.id, { status: IMPORT_PENDING_STATUS.CANCELLED });
+      await this.pendingRepo.transitionItemStatus(item.id, item.status, {
+        status: IMPORT_PENDING_STATUS.CANCELLED,
+      });
       return null;
     }
 
     return batch;
+  }
+
+  private claim(itemId: string): Promise<boolean> {
+    const staleLinkingBefore = new Date(staleLinkingCutoffMs(this.clock.now().getTime()));
+    return this.pendingRepo.claimForLinking(itemId, staleLinkingBefore);
   }
 
   private async completeLink(
@@ -107,12 +153,12 @@ export class LinkPendingImportsService {
     const { item, mediaItemId } = link;
     await this.importUserState(userId, link);
 
-    const done = await this.leaveIngesting(item.id, {
+    const done = await this.leaveLinking(item.id, {
       status: IMPORT_PENDING_STATUS.DONE,
       mediaItemId,
     });
     if (!done) {
-      this.logger.debug(`[link] itemId=${item.id} no longer ingesting, another linker won`);
+      this.logger.warn(`[link] itemId=${item.id} lost its claim before it was marked done`);
       return 'skipped';
     }
 
@@ -154,7 +200,7 @@ export class LinkPendingImportsService {
 
   private async markLinkFailed(itemId: string): Promise<Exclude<LinkOutcome, 'linked'>> {
     try {
-      const failed = await this.leaveIngesting(itemId, {
+      const failed = await this.leaveLinking(itemId, {
         status: IMPORT_PENDING_STATUS.FAILED,
         failureReason: IMPORT_PENDING_FAILURE.LINK_FAILED,
       });
@@ -167,8 +213,8 @@ export class LinkPendingImportsService {
     }
   }
 
-  private leaveIngesting(itemId: string, update: UpdatePendingItemInput): Promise<boolean> {
-    return this.pendingRepo.transitionItemStatus(itemId, IMPORT_PENDING_STATUS.INGESTING, update);
+  private leaveLinking(itemId: string, update: UpdatePendingItemInput): Promise<boolean> {
+    return this.pendingRepo.transitionItemStatus(itemId, IMPORT_PENDING_STATUS.LINKING, update);
   }
 
   private cachedBatchLookup(): BatchLookup {

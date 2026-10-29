@@ -5,13 +5,17 @@ import {
   IMPORT_PENDING_REPOSITORY,
   LINK_PENDING_IMPORTS_BATCH_SIZE,
 } from '../domain/constants/import-pending.constants';
-import { pendingLinkSweepCutoffMs } from '../domain/policies/pending-link-sweep.policy';
+import { pendingLinkSweepCutoffsMs } from '../domain/policies/pending-link-sweep.policy';
+import {
+  type ILinkPendingImportsSweep,
+  type LinkPendingImportsSweepResult,
+} from '../domain/ports/link-pending-imports-sweep.port';
 import { type IImportPendingRepository } from '../domain/repositories/import-pending.repository.interface';
 
 import { LinkPendingImportsService } from './link-pending-imports.service';
 
 @Injectable()
-export class LinkPendingImportsSweeper {
+export class LinkPendingImportsSweeper implements ILinkPendingImportsSweep {
   private readonly logger = new Logger(LinkPendingImportsSweeper.name);
 
   constructor(
@@ -22,19 +26,32 @@ export class LinkPendingImportsSweeper {
     private readonly linkPendingImports: LinkPendingImportsService,
   ) {}
 
-  async execute(): Promise<number> {
-    const cutoff = new Date(pendingLinkSweepCutoffMs(this.clock.now().getTime()));
-    const stuck = await this.pendingRepo.findIngestingWithReadyMedia(
-      cutoff,
+  async execute(): Promise<LinkPendingImportsSweepResult> {
+    const cutoffs = pendingLinkSweepCutoffsMs(this.clock.now().getTime());
+    const linked = await this.linkStuckItems(
+      new Date(cutoffs.ingestingBefore),
+      new Date(cutoffs.staleLinkingBefore),
+    );
+    const timedOut = await this.linkPendingImports.failTimedOutIngests(
+      new Date(cutoffs.ingestTimeoutBefore),
       LINK_PENDING_IMPORTS_BATCH_SIZE,
     );
+    return { linked, timedOut };
+  }
+
+  private async linkStuckItems(ingestingBefore: Date, staleLinkingBefore: Date): Promise<number> {
+    const stuck = await this.pendingRepo.findLinkableWithReadyMedia({
+      ingestingBefore,
+      staleLinkingBefore,
+      limit: LINK_PENDING_IMPORTS_BATCH_SIZE,
+    });
     if (stuck.length === 0) {
       return 0;
     }
 
     const linked = await this.linkPendingImports.linkItems(stuck);
     this.logger.log(
-      `[sweep] linked ${linked}/${stuck.length} item(s) stuck in ingesting since before ${cutoff.toISOString()}`,
+      `[sweep] linked ${linked}/${stuck.length} stuck item(s) (ingesting since before ${ingestingBefore.toISOString()})`,
     );
     return linked;
   }

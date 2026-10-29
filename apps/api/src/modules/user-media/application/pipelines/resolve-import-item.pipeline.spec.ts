@@ -60,7 +60,9 @@ describe('ResolveImportItemPipeline', () => {
       findPendingByBatchAndStatus: jest.fn(),
       findById: jest.fn(),
       findItemsByResolvedTmdb: jest.fn(),
-      findIngestingWithReadyMedia: jest.fn(),
+      findLinkableWithReadyMedia: jest.fn(),
+      claimForLinking: jest.fn().mockResolvedValue(true),
+      failIngestingUpdatedBefore: jest.fn().mockResolvedValue([]),
       updateItemStatus: jest.fn().mockResolvedValue(undefined),
       updateItemStatusIfNotCancelled: jest.fn().mockResolvedValue(true),
       transitionItemStatus: jest.fn(),
@@ -150,6 +152,17 @@ describe('ResolveImportItemPipeline', () => {
 
       expect(pendingRepo.updateItemStatusIfNotCancelled).not.toHaveBeenCalled();
       expect(pendingRepo.updateItemStatus).not.toHaveBeenCalled();
+      expect(ingestionQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('skips item already claimed for LINKING', async () => {
+      pendingRepo.findById.mockResolvedValue(
+        makePendingItem({ status: IMPORT_PENDING_STATUS.LINKING }),
+      );
+
+      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
+
+      expect(pendingRepo.updateItemStatusIfNotCancelled).not.toHaveBeenCalled();
       expect(ingestionQueue.add).not.toHaveBeenCalled();
     });
 

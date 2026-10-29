@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
@@ -7,7 +7,8 @@ import { type MediaType } from '@/common/enums/media-type.enum';
 import { WORKER_CONFIG } from '@/config/queue.config';
 
 import {
-  LinkPendingImportsSweeper,
+  type ILinkPendingImportsSweep,
+  LINK_PENDING_IMPORTS_SWEEP,
   ResolveImportDispatcherPipeline,
   ResolveImportItemPipeline,
 } from '../../../user-media/public';
@@ -38,7 +39,8 @@ export class BackfillWorker extends WorkerHost {
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly resolveImportDispatcherPipeline: ResolveImportDispatcherPipeline,
     private readonly resolveImportItemPipeline: ResolveImportItemPipeline,
-    private readonly linkPendingImportsSweeper: LinkPendingImportsSweeper,
+    @Inject(LINK_PENDING_IMPORTS_SWEEP)
+    private readonly linkPendingImportsSweep: ILinkPendingImportsSweep,
   ) {
     super();
   }
@@ -83,7 +85,7 @@ export class BackfillWorker extends WorkerHost {
           break;
 
         case IngestionJob.LINK_PENDING_IMPORTS:
-          await this.linkPendingImportsSweeper.execute();
+          await this.linkPendingImportsSweep.execute();
           break;
 
         default:

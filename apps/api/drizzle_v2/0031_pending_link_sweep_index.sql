@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "idx_pending_link_sweep" ON "import_pending_items" USING btree ("updated_at") WHERE "import_pending_items"."status" in ('ingesting', 'linking');

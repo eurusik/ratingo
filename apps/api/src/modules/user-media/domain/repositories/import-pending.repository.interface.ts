@@ -33,6 +33,12 @@ export interface PendingMediaLink {
   mediaItemId: string;
 }
 
+export interface LinkableItemsQuery {
+  ingestingBefore: Date;
+  staleLinkingBefore: Date;
+  limit: number;
+}
+
 export interface IImportPendingRepository {
   /** Creates a new import batch record. */
   createBatch(input: CreateBatchInput): Promise<ImportBatch>;
@@ -74,7 +80,11 @@ export interface IImportPendingRepository {
     status: ImportPendingItemStatus,
   ): Promise<ImportPendingItem[]>;
 
-  findIngestingWithReadyMedia(updatedBefore: Date, limit: number): Promise<PendingMediaLink[]>;
+  findLinkableWithReadyMedia(query: LinkableItemsQuery): Promise<PendingMediaLink[]>;
+
+  claimForLinking(itemId: string, staleLinkingBefore: Date): Promise<boolean>;
+
+  failIngestingUpdatedBefore(before: Date, limit: number): Promise<string[]>;
 
   /** Updates the status and optional fields of a single pending item. */
   updateItemStatus(itemId: string, update: UpdatePendingItemInput): Promise<void>;
@@ -93,7 +103,7 @@ export interface IImportPendingRepository {
 
   /**
    * Cancels all non-terminal items in a batch and marks the batch as cancelled.
-   * Items already in DONE or FAILED state are left unchanged.
+   * Items already in DONE or FAILED state, or being LINKED right now, are left unchanged.
    */
   cancelBatch(batchId: string): Promise<void>;
 

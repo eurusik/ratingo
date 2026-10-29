@@ -66,6 +66,7 @@ export class ResolveImportItemPipeline {
       IMPORT_PENDING_STATUS.DONE,
       IMPORT_PENDING_STATUS.FAILED,
       IMPORT_PENDING_STATUS.INGESTING,
+      IMPORT_PENDING_STATUS.LINKING,
       IMPORT_PENDING_STATUS.CANCELLED,
     ];
     if (SKIP_STATUSES.includes(item.status)) {

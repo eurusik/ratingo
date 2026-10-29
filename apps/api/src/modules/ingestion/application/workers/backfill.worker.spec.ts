@@ -3,7 +3,7 @@ import { Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 
-import { LinkPendingImportsSweeper } from '../../../user-media/application/link-pending-imports.sweeper';
+import { LINK_PENDING_IMPORTS_SWEEP } from '../../../user-media/public';
 import { ResolveImportDispatcherPipeline } from '../../../user-media/application/pipelines/resolve-import-dispatcher.pipeline';
 import { ResolveImportItemPipeline } from '../../../user-media/application/pipelines/resolve-import-item.pipeline';
 import { IngestionJob } from '../../ingestion.constants';
@@ -43,7 +43,7 @@ describe('BackfillWorker', () => {
     };
 
     linkPendingImportsSweeper = {
-      execute: jest.fn().mockResolvedValue(0),
+      execute: jest.fn().mockResolvedValue({ linked: 0, timedOut: 0 }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -59,7 +59,7 @@ describe('BackfillWorker', () => {
           provide: ResolveImportItemPipeline,
           useValue: resolveImportItemPipeline,
         },
-        { provide: LinkPendingImportsSweeper, useValue: linkPendingImportsSweeper },
+        { provide: LINK_PENDING_IMPORTS_SWEEP, useValue: linkPendingImportsSweeper },
       ],
     }).compile();
 

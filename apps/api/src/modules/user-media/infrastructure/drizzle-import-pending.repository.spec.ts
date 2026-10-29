@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
-import { type SQL } from 'drizzle-orm';
+import { sql, type SQL } from 'drizzle-orm';
 
 import { DATABASE_CONNECTION } from '../../../database/database.module';
 import {
@@ -289,9 +289,10 @@ describe('DrizzleImportPendingRepository', () => {
     });
   });
 
-  describe('findIngestingWithReadyMedia', () => {
-    it('selects INGESTING items older than the cutoff joined to READY media, bounded', async () => {
-      const cutoff = new Date('2025-01-01T00:00:00.000Z');
+  describe('findLinkableWithReadyMedia', () => {
+    it('selects old INGESTING and stale LINKING items joined to READY media, bounded', async () => {
+      const ingestingBefore = new Date('2025-01-01T00:00:00.000Z');
+      const staleLinkingBefore = new Date('2024-12-31T23:52:00.000Z');
       const itemRow = makeItemRow({
         resolvedTmdbId: 550,
         mediaType: 'movie',
@@ -299,17 +300,95 @@ describe('DrizzleImportPendingRepository', () => {
       });
       mockDb.limit.mockResolvedValueOnce([{ item: itemRow, mediaItemId: 'media-1' }]);
 
-      const result = await repository.findIngestingWithReadyMedia(cutoff, 200);
+      const result = await repository.findLinkableWithReadyMedia({
+        ingestingBefore,
+        staleLinkingBefore,
+        limit: 200,
+      });
 
       expect(mockDb.innerJoin).toHaveBeenCalled();
       expect(mockDb.limit).toHaveBeenCalledWith(200);
       const { params } = renderWhere(mockDb.where);
-      expect(params).toEqual([IMPORT_PENDING_STATUS.INGESTING, cutoff.toISOString()]);
+      expect(params).toEqual([
+        IMPORT_PENDING_STATUS.INGESTING,
+        ingestingBefore.toISOString(),
+        IMPORT_PENDING_STATUS.LINKING,
+        staleLinkingBefore.toISOString(),
+      ]);
       expect(result).toEqual([
         {
           item: expect.objectContaining({ id: 'item-1', resolvedTmdbId: 550 }),
           mediaItemId: 'media-1',
         },
+      ]);
+    });
+  });
+
+  describe('claimForLinking', () => {
+    const staleLinkingBefore = new Date('2025-01-01T00:00:00.000Z');
+
+    it('moves an INGESTING or stale LINKING item to LINKING', async () => {
+      mockDb.returning.mockResolvedValueOnce([{ id: 'item-1' }]);
+
+      await expect(repository.claimForLinking('item-1', staleLinkingBefore)).resolves.toBe(true);
+
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({ status: IMPORT_PENDING_STATUS.LINKING }),
+      );
+      const { params } = renderWhere(mockDb.where);
+      expect(params).toEqual([
+        'item-1',
+        IMPORT_PENDING_STATUS.INGESTING,
+        IMPORT_PENDING_STATUS.LINKING,
+        staleLinkingBefore.toISOString(),
+      ]);
+    });
+
+    it('returns false when another linker holds a fresh claim or the item moved on', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+
+      await expect(repository.claimForLinking('item-1', staleLinkingBefore)).resolves.toBe(false);
+    });
+  });
+
+  describe('failIngestingUpdatedBefore', () => {
+    it('fails timed-out INGESTING items with ingest_failed and returns their batch ids', async () => {
+      const before = new Date('2025-01-01T00:00:00.000Z');
+      mockDb.limit.mockReturnValueOnce(sql`select 'item-1'`);
+      mockDb.returning.mockResolvedValueOnce([{ batchId: 'batch-1' }, { batchId: 'batch-2' }]);
+
+      const batchIds = await repository.failIngestingUpdatedBefore(before, 200);
+
+      expect(batchIds).toEqual(['batch-1', 'batch-2']);
+      expect(mockDb.limit).toHaveBeenCalledWith(200);
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: IMPORT_PENDING_STATUS.FAILED,
+          failureReason: 'ingest_failed',
+        }),
+      );
+      const update = new PgDialect().sqlToQuery(mockDb.where.mock.calls.at(-1)[0] as SQL);
+      expect(update.params).toContain(IMPORT_PENDING_STATUS.INGESTING);
+    });
+  });
+
+  describe('cancelBatch', () => {
+    it('leaves items that are being linked right now untouched', async () => {
+      const tx = {
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(undefined),
+      };
+      mockDb.transaction.mockImplementation(async (cb: (t: typeof tx) => Promise<void>) => cb(tx));
+
+      await repository.cancelBatch('batch-1');
+
+      const { params } = new PgDialect().sqlToQuery(tx.where.mock.calls[0][0] as SQL);
+      expect(params).toEqual([
+        'batch-1',
+        IMPORT_PENDING_STATUS.DONE,
+        IMPORT_PENDING_STATUS.FAILED,
+        IMPORT_PENDING_STATUS.LINKING,
       ]);
     });
   });

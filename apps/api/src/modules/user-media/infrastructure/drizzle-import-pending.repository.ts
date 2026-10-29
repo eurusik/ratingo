@@ -1,6 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, asc, desc, eq, isNull, lt, ne, notInArray, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  lt,
+  ne,
+  notExists,
+  notInArray,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '../../../common/enums/ingestion-status.enum';
@@ -9,6 +22,7 @@ import { DATABASE_CONNECTION } from '../../../database/database.module';
 import * as schema from '../../../database/schema';
 import {
   IMPORT_BATCH_STATUS,
+  IMPORT_PENDING_FAILURE,
   IMPORT_PENDING_STATUS,
   type ImportBatchStatus,
   type ImportPendingItemStatus,
@@ -19,6 +33,7 @@ import {
   type CreateBatchInput,
   type CreatePendingItemInput,
   type IImportPendingRepository,
+  type LinkableItemsQuery,
   type PendingMediaLink,
   type UpdatePendingItemInput,
 } from '../domain/repositories/import-pending.repository.interface';
@@ -227,37 +242,95 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
     );
   }
 
-  async findIngestingWithReadyMedia(
-    updatedBefore: Date,
-    limit: number,
-  ): Promise<PendingMediaLink[]> {
+  async findLinkableWithReadyMedia({
+    ingestingBefore,
+    staleLinkingBefore,
+    limit,
+  }: LinkableItemsQuery): Promise<PendingMediaLink[]> {
     return withDbError(
-      'find ingesting pending items with ready media',
+      'find linkable pending items with ready media',
       this.logger,
       async () => {
         const rows = await this.db
           .select({ item: schema.importPendingItems, mediaItemId: schema.mediaItems.id })
           .from(schema.importPendingItems)
-          .innerJoin(
-            schema.mediaItems,
-            and(
-              eq(schema.mediaItems.tmdbId, schema.importPendingItems.resolvedTmdbId),
-              sql`${schema.mediaItems.type}::text = ${schema.importPendingItems.mediaType}`,
-              eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
-              isNull(schema.mediaItems.deletedAt),
-            ),
-          )
-          .where(
-            and(
-              eq(schema.importPendingItems.status, IMPORT_PENDING_STATUS.INGESTING),
-              lt(schema.importPendingItems.updatedAt, updatedBefore),
-            ),
-          )
+          .innerJoin(schema.mediaItems, this.readyMediaFor())
+          .where(this.isLinkable(ingestingBefore, staleLinkingBefore))
           .orderBy(asc(schema.importPendingItems.updatedAt))
           .limit(limit);
         return rows.map((row) => ({ item: this.mapItem(row.item), mediaItemId: row.mediaItemId }));
       },
-      { updatedBefore: updatedBefore.toISOString(), limit },
+      {
+        ingestingBefore: ingestingBefore.toISOString(),
+        staleLinkingBefore: staleLinkingBefore.toISOString(),
+        limit,
+      },
+    );
+  }
+
+  async claimForLinking(itemId: string, staleLinkingBefore: Date): Promise<boolean> {
+    return withDbError(
+      'claim pending item for linking',
+      this.logger,
+      async () => {
+        const claimed = await this.db
+          .update(schema.importPendingItems)
+          .set({ status: IMPORT_PENDING_STATUS.LINKING, updatedAt: new Date() })
+          .where(
+            and(
+              eq(schema.importPendingItems.id, itemId),
+              or(
+                eq(schema.importPendingItems.status, IMPORT_PENDING_STATUS.INGESTING),
+                this.isStaleLinking(staleLinkingBefore),
+              ),
+            ),
+          )
+          .returning({ id: schema.importPendingItems.id });
+        return claimed.length > 0;
+      },
+      { itemId },
+    );
+  }
+
+  async failIngestingUpdatedBefore(before: Date, limit: number): Promise<string[]> {
+    return withDbError(
+      'fail timed-out ingesting items',
+      this.logger,
+      async () => {
+        const timedOut = this.db
+          .select({ id: schema.importPendingItems.id })
+          .from(schema.importPendingItems)
+          .where(
+            and(
+              eq(schema.importPendingItems.status, IMPORT_PENDING_STATUS.INGESTING),
+              lt(schema.importPendingItems.updatedAt, before),
+              notExists(
+                this.db
+                  .select({ id: schema.mediaItems.id })
+                  .from(schema.mediaItems)
+                  .where(this.readyMediaFor()),
+              ),
+            ),
+          )
+          .limit(limit);
+
+        const failed = await this.db
+          .update(schema.importPendingItems)
+          .set({
+            status: IMPORT_PENDING_STATUS.FAILED,
+            failureReason: IMPORT_PENDING_FAILURE.INGEST_FAILED,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              inArray(schema.importPendingItems.id, timedOut),
+              eq(schema.importPendingItems.status, IMPORT_PENDING_STATUS.INGESTING),
+            ),
+          )
+          .returning({ batchId: schema.importPendingItems.batchId });
+        return failed.map((row) => row.batchId);
+      },
+      { before: before.toISOString(), limit },
     );
   }
 
@@ -332,7 +405,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       this.logger,
       async () => {
         await this.db.transaction(async (tx) => {
-          // Cancel all non-terminal items (leave DONE and FAILED untouched)
+          // Cancel all non-terminal items (leave DONE, FAILED and in-flight LINKING untouched)
           await tx
             .update(schema.importPendingItems)
             .set({ status: IMPORT_PENDING_STATUS.CANCELLED, updatedAt: new Date() })
@@ -342,6 +415,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
                 notInArray(schema.importPendingItems.status, [
                   IMPORT_PENDING_STATUS.DONE,
                   IMPORT_PENDING_STATUS.FAILED,
+                  IMPORT_PENDING_STATUS.LINKING,
                 ]),
               ),
             );
@@ -406,6 +480,32 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
         return this.mapBatch(row);
       },
       { batchId },
+    );
+  }
+
+  private readyMediaFor() {
+    return and(
+      eq(schema.mediaItems.tmdbId, schema.importPendingItems.resolvedTmdbId),
+      sql`${schema.mediaItems.type}::text = ${schema.importPendingItems.mediaType}`,
+      eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+      isNull(schema.mediaItems.deletedAt),
+    );
+  }
+
+  private isStaleLinking(staleLinkingBefore: Date) {
+    return and(
+      eq(schema.importPendingItems.status, IMPORT_PENDING_STATUS.LINKING),
+      lt(schema.importPendingItems.updatedAt, staleLinkingBefore),
+    );
+  }
+
+  private isLinkable(ingestingBefore: Date, staleLinkingBefore: Date) {
+    return or(
+      and(
+        eq(schema.importPendingItems.status, IMPORT_PENDING_STATUS.INGESTING),
+        lt(schema.importPendingItems.updatedAt, ingestingBefore),
+      ),
+      this.isStaleLinking(staleLinkingBefore),
     );
   }
 
