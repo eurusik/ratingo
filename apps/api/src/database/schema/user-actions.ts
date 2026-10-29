@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   pgTable,
   text,
@@ -183,6 +183,10 @@ export const userSubscriptions = pgTable(
     userIdx: index('user_subscriptions_user_idx').on(t.userId),
     userActiveIdx: index('user_subscriptions_user_active_idx').on(t.userId, t.isActive),
     triggerIdx: index('user_subscriptions_trigger_idx').on(t.trigger),
+    // New-episode/release fan-out: WHERE media_item_id = ? AND trigger = ? AND is_active
+    mediaTriggerActiveIdx: index('user_subscriptions_media_trigger_active_idx')
+      .on(t.mediaItemId, t.trigger)
+      .where(sql`${t.isActive} = true`),
   }),
 );
 

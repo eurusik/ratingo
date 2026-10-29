@@ -204,6 +204,20 @@
       "when": 1779347495966,
       "tag": "0028_tidy_havok",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793263352130,
+      "tag": "0029_catalog_integrity_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793263431324,
+      "tag": "0030_users_case_insensitive_unique",
+      "breakpoints": true
     }
   ]
 }

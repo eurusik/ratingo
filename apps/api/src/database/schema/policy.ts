@@ -7,6 +7,7 @@ import {
   boolean,
   jsonb,
   index,
+  uniqueIndex,
   pgEnum,
   uuid,
   primaryKey,
@@ -91,10 +92,12 @@ export const catalogPolicies = pgTable(
     activatedAt: timestamp('activated_at'),
   },
   (t) => ({
-    versionIdx: index('catalog_policies_version_idx').on(t.version),
+    versionUniq: uniqueIndex('catalog_policies_version_uniq').on(t.version),
+    // At most one active policy at a time
+    singleActive: uniqueIndex('catalog_policies_single_active')
+      .on(t.isActive)
+      .where(sql`${t.isActive} = true`),
     // Partial index for fast active policy lookup (used by new-episodes query CTE)
-    // Note: Partial unique index ensuring only one active policy is created via raw SQL migration:
-    // CREATE UNIQUE INDEX catalog_policies_single_active ON catalog_policies ((1)) WHERE is_active = true;
     activeIdx: index('catalog_policies_active_idx')
       .on(t.isActive)
       .where(sql`${t.isActive} = true`),
@@ -210,6 +213,9 @@ export const catalogEvaluationRuns = pgTable(
     policyVersionIdx: index('catalog_eval_runs_policy_version_idx').on(t.policyVersion),
     statusIdx: index('catalog_eval_runs_status_idx').on(t.status),
     targetPolicyIdx: index('catalog_eval_runs_target_policy_idx').on(t.targetPolicyId),
-    // Note: Partial unique index for running runs created via raw SQL migration
+    // At most one running evaluation run per target policy
+    singleRunningPerPolicy: uniqueIndex('catalog_eval_runs_single_running')
+      .on(t.targetPolicyId)
+      .where(sql`${t.status} = 'running'`),
   }),
 );
