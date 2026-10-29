@@ -1,5 +1,6 @@
 import { Controller, Get, HttpStatus } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { AppException } from '../common/exceptions/app.exception';
@@ -7,6 +8,7 @@ import { AppException } from '../common/exceptions/app.exception';
 import { HealthReport, HealthService } from './health.service';
 
 @ApiExcludeController()
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}

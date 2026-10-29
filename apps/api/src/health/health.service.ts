@@ -36,6 +36,9 @@ export class HealthService {
       }),
       this.probe('redis', async () => {
         const client = await this.queue.client;
+        if (client.status !== 'ready') {
+          throw new Error(`connection is ${client.status}`);
+        }
         await client.ping();
       }),
     ]);
@@ -59,7 +62,7 @@ export class HealthService {
       await Promise.race([fn(), timeout]);
       return 'up';
     } catch (error) {
-      this.logger.error(
+      this.logger.warn(
         `Health check failed for ${name}: ${error instanceof Error ? error.message : String(error)}`,
       );
       return 'down';
