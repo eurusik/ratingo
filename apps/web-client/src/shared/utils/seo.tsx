@@ -103,6 +103,8 @@ export function createNotFoundMetadata(type: 'show' | 'movie'): Metadata {
  */
 export const SEO_BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo.top').trim().replace(/\/$/, '');
 
+export const IS_SEARCH_INDEXING_ENABLED = process.env.VERCEL_ENV === 'production';
+
 /**
  * Returns an `alternates.canonical` object for use in Next.js Metadata.
  *
