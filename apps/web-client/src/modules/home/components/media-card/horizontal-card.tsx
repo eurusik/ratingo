@@ -53,7 +53,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
 
   const dict = getDictionary(locale);
   const href = (type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`) as Route;
-  const posterUrl = poster?.medium ?? null;
+  const posterUrl = poster?.small ?? null;
   const rating = stats?.qualityScore ?? null;
   const watchers = stats?.liveWatchers ?? null;
 
