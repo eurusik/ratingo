@@ -1,3 +1,5 @@
+// Moved to shared/contracts (ADR 0001 Phase 1); re-exported for existing
+// ingestion imports. New code outside ingestion should import shared/contracts.
 export {
   INGESTION_QUEUE,
   BACKFILL_QUEUE,

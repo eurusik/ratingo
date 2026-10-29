@@ -1,5 +1,3 @@
-export { generateSlug } from '../../../../common/utils/slug.util';
-
 /**
  * Checks if slug already has the tmdbId suffix.
  */

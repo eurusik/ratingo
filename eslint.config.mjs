@@ -36,6 +36,13 @@ const sharedModules = [
   'verdict',
 ];
 const moduleBoundaryZones = [
+  {
+    target: './apps/api/src/modules/shared/contracts/**/*',
+    from: './apps/api/src',
+    except: ['./modules/shared/contracts', './common/enums'],
+    message:
+      'shared/contracts must stay dependency-free: import only sibling contracts and common/enums.',
+  },
   ...apiModules.flatMap((m) => [
     {
       target: `./apps/api/src/modules/!(${m})/**/*`,
@@ -243,7 +250,11 @@ export default [
   },
   // Bootstrap/scripts — console allowed
   {
-    files: ['apps/api/src/main.ts', 'apps/api/scripts/**/*.ts', '**/drizzle/**/*.ts'],
+    files: [
+      'apps/api/src/main.ts',
+      'apps/api/scripts/**/*.ts',
+      '**/drizzle/**/*.ts',
+    ],
     rules: {
       'no-console': 'off',
     },
@@ -334,26 +345,28 @@ export default [
       ],
     },
   },
-  // Cycle guards (ADR 0001 Phase 1): catalog must not depend on ingestion, and
+  // Cycle guards (ADR 0001 Phase 1): catalog and catalog-policy must not depend on ingestion, and
   // tmdb must not depend on catalog. Shared types live in shared/contracts.
   // Covers specs too. Uses no-restricted-imports (not import/no-restricted-paths)
-  // so it does not replace the module boundary zones below.
+  // so it does not replace the module boundary zones below. Flat config is
+  // last-wins per rule: keep ONE no-restricted-imports block per file glob, or a
+  // later block for the same files silently drops these patterns.
   {
-    files: ['apps/api/src/modules/catalog/**/*.ts'],
+    files: [
+      'apps/api/src/modules/catalog/**/*.ts',
+      'apps/api/src/modules/catalog-policy/**/*.ts',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             {
-              group: [
-                '**/ingestion',
-                '**/ingestion/**',
-                '@/modules/ingestion',
-                '@/modules/ingestion/**',
-              ],
+              // modules/ingestion via `@/modules/...` or relative `../` hops only
+              // (not common/enums/ingestion-status.enum or a local ./ingestion folder).
+              regex: '(^|/)modules/ingestion(/|$)|^(\\.\\./)+ingestion(/|$)',
               message:
-                'catalog must not import ingestion (ADR 0001). Use shared/contracts for queue names, job names and Normalized* types.',
+                'catalog and catalog-policy must not import ingestion (ADR 0001). Use shared/contracts for queue names, job names and Normalized* types.',
             },
           ],
         },
@@ -368,7 +381,7 @@ export default [
         {
           patterns: [
             {
-              group: ['**/catalog', '**/catalog/**', '@/modules/catalog', '@/modules/catalog/**'],
+              regex: '(^|/)modules/catalog(/|$)|^(\\.\\./)+catalog(/|$)',
               message:
                 'tmdb must not import catalog (ADR 0001). Use common/utils or shared/contracts instead.',
             },
@@ -378,6 +391,8 @@ export default [
     },
   },
   // shared/contracts stays dependency-free: pure types/enums/constants only.
+  // Packages are banned here; project imports are limited by the resolved-path
+  // zone in moduleBoundaryZones (contracts may import only itself and common/enums).
   {
     files: ['apps/api/src/modules/shared/contracts/**/*.ts'],
     rules: {
@@ -386,10 +401,9 @@ export default [
         {
           patterns: [
             {
-              // Allow only sibling files and common/enums.
-              regex: '^(?!\\./|\\.\\./\\.\\./\\.\\./common/enums/)',
+              regex: '^(?!\\.|@/)',
               message:
-                'shared/contracts must stay dependency-free (no packages, no module imports; only siblings and common/enums).',
+                'shared/contracts must stay dependency-free: no packages (Nest, Drizzle, BullMQ, ...).',
             },
           ],
         },

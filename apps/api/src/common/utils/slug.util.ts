@@ -3,7 +3,7 @@ import slugify from 'slugify';
 /**
  * Slug generation configuration.
  */
-export const SLUG_CONFIG = {
+const SLUG_CONFIG = {
   LOWER: true,
   STRICT: true,
   LOCALE: 'uk',

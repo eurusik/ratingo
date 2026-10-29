@@ -13,7 +13,7 @@ import {
   type CrewMember,
   type WatchProvidersMap,
   type WatchProvider,
-} from '../../ingestion/public';
+} from '../../shared/contracts';
 import { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../constants/alt-title.constants';
 import {
   type TmdbMediaResponse,
