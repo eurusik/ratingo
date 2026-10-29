@@ -28,6 +28,7 @@ import { ResolveImportItemPipeline } from './application/pipelines/resolve-impor
 import { UserMediaService } from './application/user-media.service';
 import { IMPORT_PENDING_REPOSITORY } from './domain/constants/import-pending.constants';
 import { MEDIA_LOOKUP_PORT } from './domain/constants/import.constants';
+import { IMPORT_LINK_METRICS } from './domain/ports/import-link-metrics.port';
 import { LINK_PENDING_IMPORTS_SWEEP } from './domain/ports/link-pending-imports-sweep.port';
 import { RATING_SYNC_PORT } from './domain/ports/rating-sync.port';
 import { SHOW_STATUS_PORT } from './domain/ports/show-status.port';
@@ -36,6 +37,7 @@ import { EPISODE_PROGRESS_REPOSITORY } from './domain/repositories/episode-progr
 import { USER_MEDIA_STATE_REPOSITORY } from './domain/repositories/user-media-state.repository.interface';
 import { DrizzleMediaLookupAdapter } from './infrastructure/adapters/drizzle-media-lookup.adapter';
 import { DrizzleShowStatusAdapter } from './infrastructure/adapters/drizzle-show-status.adapter';
+import { OtelImportLinkMetricsAdapter } from './infrastructure/adapters/otel-import-link-metrics.adapter';
 import { TmdbResolverAdapter } from './infrastructure/adapters/tmdb-resolver.adapter';
 import { DrizzleImportPendingRepository } from './infrastructure/drizzle-import-pending.repository';
 import { FavoriteUpdatesQuery } from './infrastructure/queries/favorite-updates.query';
@@ -78,6 +80,10 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     ...workerOnly(LinkPendingImportsScheduler),
     ResolveImportDispatcherPipeline,
     ResolveImportItemPipeline,
+    {
+      provide: IMPORT_LINK_METRICS,
+      useClass: OtelImportLinkMetricsAdapter,
+    },
     {
       provide: LINK_PENDING_IMPORTS_SWEEP,
       useExisting: LinkPendingImportsSweeper,

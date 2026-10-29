@@ -1,9 +1,9 @@
-import { WorkerHost } from '@nestjs/bullmq';
 import { type INestApplicationContext, Logger } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
 
 import type * as postgres from 'postgres';
 
+import { findBullWorkers } from './common/runtime/bull-workers';
 import { withTimeout } from './common/utils/with-timeout.util';
 import { POSTGRES_CLIENT } from './database/database.module';
 
@@ -13,17 +13,10 @@ export const WORKER_SHUTDOWN_TIMEOUT_MS = 25_000;
 
 const logger = new Logger('WorkerShutdown');
 
-const findBullWorkers = (app: INestApplicationContext) =>
-  app
-    .get(DiscoveryService, { strict: false })
-    .getProviders()
-    .map(({ instance }) => instance)
-    .filter((instance): instance is WorkerHost => instance instanceof WorkerHost)
-    .map((host) => host.worker);
-
 async function drainWorkersThenClose(app: INestApplicationContext): Promise<void> {
   const postgresClient = app.get<postgres.Sql>(POSTGRES_CLIENT);
-  await Promise.all(findBullWorkers(app).map((worker) => worker.close()));
+  const workers = findBullWorkers(app.get(DiscoveryService, { strict: false }));
+  await Promise.all(workers.map((worker) => worker.close()));
   await app.close();
   await postgresClient.end({ timeout: POOL_CLOSE_TIMEOUT_SECONDS });
 }

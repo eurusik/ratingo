@@ -7,6 +7,10 @@ import {
 } from '../domain/constants/import-pending.constants';
 import { pendingLinkSweepCutoffsMs } from '../domain/policies/pending-link-sweep.policy';
 import {
+  IMPORT_LINK_METRICS,
+  type IImportLinkMetrics,
+} from '../domain/ports/import-link-metrics.port';
+import {
   type ILinkPendingImportsSweep,
   type LinkPendingImportsSweepResult,
 } from '../domain/ports/link-pending-imports-sweep.port';
@@ -24,6 +28,8 @@ export class LinkPendingImportsSweeper implements ILinkPendingImportsSweep {
     @Inject(CLOCK_PORT)
     private readonly clock: IClockPort,
     private readonly linkPendingImports: LinkPendingImportsService,
+    @Inject(IMPORT_LINK_METRICS)
+    private readonly metrics: IImportLinkMetrics,
   ) {}
 
   async execute(): Promise<LinkPendingImportsSweepResult> {
@@ -36,7 +42,9 @@ export class LinkPendingImportsSweeper implements ILinkPendingImportsSweep {
       new Date(cutoffs.ingestTimeoutBefore),
       LINK_PENDING_IMPORTS_BATCH_SIZE,
     );
-    return { linked, timedOut };
+    const result = { linked, timedOut };
+    this.metrics.recordSweep(result);
+    return result;
   }
 
   private async linkStuckItems(ingestingBefore: Date, staleLinkingBefore: Date): Promise<number> {
