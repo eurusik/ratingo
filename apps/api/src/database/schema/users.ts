@@ -31,6 +31,7 @@ export const users = pgTable(
   (t) => ({
     // Case-insensitive uniqueness (lookups use lower(...))
     emailLowerUniq: uniqueIndex('users_email_lower_uniq').on(sql`lower(${t.email})`),
-    usernameLowerUniq: uniqueIndex('users_username_lower_uniq').on(sql`lower(${t.username})`),
+    // TODO: add users_username_lower_uniq once the case-only duplicate username in
+    // production is resolved (the app already rejects new case-insensitive duplicates).
   }),
 );
