@@ -5,7 +5,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
 import { buildAppCoreImports } from './app-core.imports';
 import { buildThrottlerTiers, ThrottlerRealIpGuard } from './common/guards/throttler-realip.guard';
-import { getAppRole } from './common/runtime/app-role';
 import { HealthController } from './health.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
@@ -36,7 +35,7 @@ import { UsersModule } from './modules/users/users.module';
         throttlers: buildThrottlerTiers(config.get('THROTTLE_LIMIT', 600)), // 600 req/min (10 rps)
       }),
     }),
-    ...buildAppCoreImports(getAppRole()),
+    ...buildAppCoreImports(),
     CatalogModule,
     IngestionModule,
     StatsModule,

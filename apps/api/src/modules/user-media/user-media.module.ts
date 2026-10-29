@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { apiOnly } from '../../common/runtime/app-role';
 import tmdbConfig from '../../config/tmdb.config';
 import { DatabaseModule } from '../../database/database.module';
 import {
@@ -97,7 +98,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
       useClass: DrizzleShowStatusAdapter,
     },
   ],
-  controllers: [UserMediaController, MeListsController, EpisodeProgressController],
+  controllers: apiOnly(UserMediaController, MeListsController, EpisodeProgressController),
   exports: [
     UserMediaService,
     RATING_SYNC_PORT,

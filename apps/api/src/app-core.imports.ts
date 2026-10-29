@@ -2,7 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 
-import { type AppRole, runsHttp } from './common/runtime/app-role';
+import { type AppRole, getAppRole, runsHttp } from './common/runtime/app-role';
 import { ENV_FILE_PATHS } from './common/runtime/env-files';
 import authConfig from './config/auth.config';
 import { buildEnvSchema } from './config/env.schema';
@@ -36,7 +36,7 @@ const buildBullConnection = (config: ConfigService) => {
 
 const httpConfigLoaders = (role: AppRole) => (runsHttp(role) ? [authConfig] : []);
 
-export const buildAppCoreImports = (role: AppRole) => [
+export const buildAppCoreImports = (role: AppRole = getAppRole()) => [
   ConfigModule.forRoot({
     isGlobal: true,
     envFilePath: ENV_FILE_PATHS,

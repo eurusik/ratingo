@@ -1,4 +1,5 @@
 import { type INestApplicationContext, type Type } from '@nestjs/common';
+import { type DiscoveryService, type ModulesContainer } from '@nestjs/core';
 import { type EventEmitter2 } from '@nestjs/event-emitter';
 import { type Test as NestTest } from '@nestjs/testing';
 
@@ -47,6 +48,16 @@ jest.mock('bullmq', () => {
   return { ...actual, Queue: FakeQueue, Worker: FakeWorker, FlowProducer: FakeQueue };
 });
 
+jest.mock('ioredis', () => {
+  class FakeRedis {
+    defineCommand = () => undefined;
+    on = () => this;
+    quit = async () => 'OK';
+    disconnect = () => undefined;
+  }
+  return { __esModule: true, default: FakeRedis, Redis: FakeRedis };
+});
+
 const REQUIRED_ENV = {
   NODE_ENV: 'test',
   DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/postgres',
@@ -71,59 +82,57 @@ const WORKER_QUEUES = [
   STATS_QUEUE,
 ];
 
-interface RoleBoot {
-  app: INestApplicationContext;
-  load: <T = Type<unknown>>(path: string, exportName: string) => T;
-  emitter: () => EventEmitter2;
-}
-
-const fakeRedis = { defineCommand: () => undefined, quit: async () => 'OK', on: () => undefined };
-const fakePostgres = { end: async () => undefined };
-
-const WORKER_PROVIDERS: Array<[string, string]> = [
-  ['./modules/ingestion/application/workers/sync.worker', 'SyncWorker'],
-  ['./modules/ingestion/application/workers/backfill.worker', 'BackfillWorker'],
-  ['./modules/ingestion/application/workers/ratings-backfill.worker', 'RatingsBackfillWorker'],
-  ['./modules/catalog-policy/application/workers/catalog-policy.worker', 'CatalogPolicyWorker'],
-  ['./modules/stats/application/workers/stats.worker', 'StatsWorker'],
-  [
-    './modules/ingestion/application/services/ingestion-scheduler.service',
-    'IngestionSchedulerService',
-  ],
-  ['./modules/catalog-policy/application/workers/handlers/watchdog.handler', 'WatchdogHandler'],
+const WORKER_PROVIDERS = [
+  'SyncWorker',
+  'BackfillWorker',
+  'RatingsBackfillWorker',
+  'CatalogPolicyWorker',
+  'StatsWorker',
+  'IngestionSchedulerService',
+  'WatchdogHandler',
 ];
 
-const GATED_CONTROLLERS: Array<[string, string]> = [
-  ['./modules/ingestion/presentation/controllers/ingestion.controller', 'IngestionController'],
-  ['./modules/catalog-policy/presentation/controllers', 'PolicyController'],
-  ['./modules/catalog-policy/presentation/controllers', 'RunController'],
-  ['./modules/catalog-policy/presentation/controllers', 'DryRunController'],
-  ['./modules/stats/presentation/controllers/stats.controller', 'StatsController'],
+const GATED_CONTROLLERS = [
+  'IngestionController',
+  'PolicyController',
+  'RunController',
+  'DryRunController',
+  'StatsController',
+  'CatalogMoviesController',
+  'ProvidersController',
+  'NotificationsController',
+  'UserMediaController',
 ];
 
-const AUTH_MODULE: [string, string] = ['./modules/auth/auth.module', 'AuthModule'];
-const AUTH_CLEANUP_CRON: [string, string] = [
-  './modules/auth/infrastructure/jobs/cleanup-exchange-codes.job',
-  'CleanupExchangeCodesJob',
-];
+const API_ONLY_PROVIDERS = ['CleanupExchangeCodesJob'];
+const API_ONLY_MODULES = ['AuthModule', 'ThrottlerModule'];
 
 const APP_MODULE = { path: './app.module', exportName: 'AppModule' };
 const WORKER_APP_MODULE = { path: './worker-app.module', exportName: 'WorkerAppModule' };
-
 const DATABASE_MODULE_PATH = './database/database.module';
-const COOLDOWN_GATE_PATH = './modules/catalog/infrastructure/adapters/redis-cooldown-gate.adapter';
 
 const ISOLATED_PATHS = [
   '@nestjs/testing',
+  '@nestjs/core',
   '@nestjs/event-emitter',
   DATABASE_MODULE_PATH,
-  COOLDOWN_GATE_PATH,
   APP_MODULE.path,
   WORKER_APP_MODULE.path,
-  AUTH_MODULE[0],
-  AUTH_CLEANUP_CRON[0],
-  ...[...WORKER_PROVIDERS, ...GATED_CONTROLLERS].map(([path]) => path),
 ];
+
+interface Composition {
+  modules: string[];
+  providers: string[];
+  controllers: string[];
+}
+
+interface RoleBoot {
+  app: INestApplicationContext;
+  composition: Composition;
+  emitter: EventEmitter2;
+}
+
+const fakePostgres = { end: async () => undefined };
 
 async function bootRole(
   role: AppRole,
@@ -138,42 +147,33 @@ async function bootRole(
   jest.isolateModules(() => {
     ISOLATED_PATHS.forEach((path) => isolated.set(path, jest.requireActual(path)));
   });
-  const load = <T = Type<unknown>>(path: string, exportName: string): T =>
-    isolated.get(path)[exportName] as T;
+  const load = <T>(path: string, exportName: string): T => isolated.get(path)[exportName] as T;
+
   const Test = load<typeof NestTest>('@nestjs/testing', 'Test');
-  const root = load(rootModule.path, rootModule.exportName);
-  const tokens = {
-    postgres: load<symbol>(DATABASE_MODULE_PATH, 'POSTGRES_CLIENT'),
-    database: load<string>(DATABASE_MODULE_PATH, 'DATABASE_CONNECTION'),
-    redis: load<symbol>(COOLDOWN_GATE_PATH, 'COOLDOWN_REDIS_CLIENT'),
-  };
-
-  const moduleRef = await Test.createTestingModule({ imports: [root] })
-    .overrideProvider(tokens.postgres)
+  const moduleRef = await Test.createTestingModule({
+    imports: [load<Type<unknown>>(rootModule.path, rootModule.exportName)],
+  })
+    .overrideProvider(load<symbol>(DATABASE_MODULE_PATH, 'POSTGRES_CLIENT'))
     .useValue(fakePostgres)
-    .overrideProvider(tokens.database)
+    .overrideProvider(load<string>(DATABASE_MODULE_PATH, 'DATABASE_CONNECTION'))
     .useValue({})
-    .overrideProvider(tokens.redis)
-    .useValue(fakeRedis)
     .compile();
-
   const app = await moduleRef.init();
-  const emitterToken = load<Type<EventEmitter2>>('@nestjs/event-emitter', 'EventEmitter2');
-  return { app, load, emitter: () => app.get(emitterToken) };
-}
 
-const isRegistered = (boot: RoleBoot, path: string, exportName: string): boolean => {
-  const token = boot.load(path, exportName);
-  if (!token) {
-    throw new Error(`${path} no longer exports ${exportName}; update the role composition spec`);
-  }
-  try {
-    boot.app.get(token, { strict: false });
-    return true;
-  } catch {
-    return false;
-  }
-};
+  const discovery = app.get(load<Type<DiscoveryService>>('@nestjs/core', 'DiscoveryService'), {
+    strict: false,
+  });
+  const modulesContainer = app.get(
+    load<Type<ModulesContainer>>('@nestjs/core', 'ModulesContainer'),
+  );
+  const composition = {
+    modules: [...modulesContainer.values()].map((module) => module.metatype?.name),
+    providers: discovery.getProviders().map((wrapper) => wrapper.name),
+    controllers: discovery.getControllers().map((wrapper) => wrapper.name),
+  };
+  const emitter = app.get(load<Type<EventEmitter2>>('@nestjs/event-emitter', 'EventEmitter2'));
+  return { app, composition, emitter };
+}
 
 describe('role composition', () => {
   const originalEnv = { ...process.env };
@@ -191,17 +191,17 @@ describe('role composition', () => {
     });
     afterAll(closeBoot);
 
-    it('boots without AuthModule or its cleanup cron in the graph', () => {
-      expect(isRegistered(boot, ...AUTH_MODULE)).toBe(false);
-      expect(isRegistered(boot, ...AUTH_CLEANUP_CRON)).toBe(false);
+    it('registers every processor and repeatable-job scheduler', () => {
+      expect(boot.composition.providers).toEqual(expect.arrayContaining(WORKER_PROVIDERS));
     });
 
-    it.each(WORKER_PROVIDERS)('registers %s#%s', (path, name) => {
-      expect(isRegistered(boot, path, name)).toBe(true);
+    it('registers no HTTP controllers at all', () => {
+      expect(boot.composition.controllers).toEqual([]);
     });
 
-    it.each(GATED_CONTROLLERS)('does not register %s#%s', (path, name) => {
-      expect(isRegistered(boot, path, name)).toBe(false);
+    it('leaves AuthModule, Throttler and the exchange-code cleanup cron to the API', () => {
+      API_ONLY_MODULES.forEach((name) => expect(boot.composition.modules).not.toContain(name));
+      API_ONLY_PROVIDERS.forEach((name) => expect(boot.composition.providers).not.toContain(name));
     });
 
     it('starts a BullMQ worker for every processor', () => {
@@ -209,9 +209,8 @@ describe('role composition', () => {
     });
 
     it('keeps the in-process listeners for events the worker emits', () => {
-      const emitter = boot.emitter();
-      expect(emitter.listenerCount(MediaSyncedEvent.eventName)).toBeGreaterThan(0);
-      expect(emitter.listenerCount(SHOW_EVENTS.NEW_EPISODE)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(MediaSyncedEvent.eventName)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(SHOW_EVENTS.NEW_EPISODE)).toBeGreaterThan(0);
     });
   });
 
@@ -221,17 +220,17 @@ describe('role composition', () => {
     });
     afterAll(closeBoot);
 
-    it.each(WORKER_PROVIDERS)('does not register %s#%s', (path, name) => {
-      expect(isRegistered(boot, path, name)).toBe(false);
+    it('registers no processor or repeatable-job scheduler', () => {
+      WORKER_PROVIDERS.forEach((name) => expect(boot.composition.providers).not.toContain(name));
     });
 
-    it.each(GATED_CONTROLLERS)('registers %s#%s', (path, name) => {
-      expect(isRegistered(boot, path, name)).toBe(true);
+    it('registers the role-gated controllers', () => {
+      expect(boot.composition.controllers).toEqual(expect.arrayContaining(GATED_CONTROLLERS));
     });
 
-    it('owns AuthModule and the exchange-code cleanup cron', () => {
-      expect(isRegistered(boot, ...AUTH_MODULE)).toBe(true);
-      expect(isRegistered(boot, ...AUTH_CLEANUP_CRON)).toBe(true);
+    it('owns AuthModule, Throttler and the exchange-code cleanup cron', () => {
+      expect(boot.composition.modules).toEqual(expect.arrayContaining(API_ONLY_MODULES));
+      expect(boot.composition.providers).toEqual(expect.arrayContaining(API_ONLY_PROVIDERS));
     });
 
     it('starts no BullMQ workers', () => {
@@ -239,9 +238,8 @@ describe('role composition', () => {
     });
 
     it('keeps the in-process listeners for events the API emits', () => {
-      const emitter = boot.emitter();
-      expect(emitter.listenerCount(UserMediaRatingChangedEvent.eventName)).toBeGreaterThan(0);
-      expect(emitter.listenerCount(UserMediaStateChangedEvent.eventName)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(UserMediaRatingChangedEvent.eventName)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(UserMediaStateChangedEvent.eventName)).toBeGreaterThan(0);
     });
   });
 
@@ -251,8 +249,12 @@ describe('role composition', () => {
     });
     afterAll(closeBoot);
 
-    it.each([...WORKER_PROVIDERS, ...GATED_CONTROLLERS])('registers %s#%s', (path, name) => {
-      expect(isRegistered(boot, path, name)).toBe(true);
+    it('registers every processor, scheduler and gated controller', () => {
+      expect(boot.composition.providers).toEqual(
+        expect.arrayContaining([...WORKER_PROVIDERS, ...API_ONLY_PROVIDERS]),
+      );
+      expect(boot.composition.controllers).toEqual(expect.arrayContaining(GATED_CONTROLLERS));
+      expect(boot.composition.modules).toEqual(expect.arrayContaining(API_ONLY_MODULES));
     });
 
     it('starts the same BullMQ workers as the worker role', () => {
@@ -260,11 +262,10 @@ describe('role composition', () => {
     });
 
     it('keeps every in-process listener', () => {
-      const emitter = boot.emitter();
-      expect(emitter.listenerCount(MediaSyncedEvent.eventName)).toBeGreaterThan(0);
-      expect(emitter.listenerCount(SHOW_EVENTS.NEW_EPISODE)).toBeGreaterThan(0);
-      expect(emitter.listenerCount(UserMediaRatingChangedEvent.eventName)).toBeGreaterThan(0);
-      expect(emitter.listenerCount(UserMediaStateChangedEvent.eventName)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(MediaSyncedEvent.eventName)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(SHOW_EVENTS.NEW_EPISODE)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(UserMediaRatingChangedEvent.eventName)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(UserMediaStateChangedEvent.eventName)).toBeGreaterThan(0);
     });
   });
 });
