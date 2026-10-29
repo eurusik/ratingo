@@ -7,7 +7,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import type { NormalizedSeason } from '../../../ingestion/public';
+import type { NormalizedSeason } from '../../../shared/contracts';
 import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import {
   type CalendarEpisode,

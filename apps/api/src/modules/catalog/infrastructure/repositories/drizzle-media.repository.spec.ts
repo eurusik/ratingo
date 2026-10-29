@@ -10,7 +10,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions';
 import { PG_ERROR_CODE, DB_CONSTRAINT } from '../../../../common/constants/database.constants';
-import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
+import { NormalizedMedia } from '../../../shared/contracts';
 
 // Helper to create a chainable thenable for Drizzle-like fluent API
 const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {

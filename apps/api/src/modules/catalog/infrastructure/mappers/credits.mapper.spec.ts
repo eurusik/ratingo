@@ -1,5 +1,5 @@
 import { CreditsMapper } from './credits.mapper';
-import { Credits } from '../../../ingestion/domain/models/normalized-media.model';
+import { Credits } from '../../../shared/contracts';
 
 describe('CreditsMapper', () => {
   it('should map cast members correctly with slug and personId', () => {

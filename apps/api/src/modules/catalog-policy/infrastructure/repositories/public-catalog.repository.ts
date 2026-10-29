@@ -17,7 +17,7 @@ import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/consta
 import { DatabaseException } from '../../../../common/exceptions';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import type * as schema from '../../../../database/schema';
-import type { Credits, WatchProvidersMap } from '../../../ingestion/public';
+import type { Credits, WatchProvidersMap } from '../../../shared/contracts';
 import { TRENDING_GATE } from '../../catalog-policy.constants';
 
 export const PUBLIC_CATALOG_REPOSITORY = 'PUBLIC_CATALOG_REPOSITORY';

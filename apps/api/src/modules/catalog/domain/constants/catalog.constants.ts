@@ -14,15 +14,6 @@ export const SEARCH_CONFIG = {
 } as const;
 
 /**
- * Slug generation configuration.
- */
-export const SLUG_CONFIG = {
-  LOWER: true,
-  STRICT: true,
-  LOCALE: 'uk',
-} as const;
-
-/**
  * Thresholds for determining "classic" media status.
  */
 export const CLASSIC_THRESHOLDS = {
