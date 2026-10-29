@@ -10,6 +10,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { type CatalogEvaluationRun } from '../../domain/repositories';
 import { CatalogEvaluationRunRepository } from './catalog-evaluation-run.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
@@ -56,6 +57,7 @@ describe('CatalogEvaluationRunRepository', () => {
       limit: jest.fn(),
       update: jest.fn().mockReturnThis(),
       set: jest.fn().mockReturnThis(),
+      execute: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -354,16 +356,17 @@ describe('CatalogEvaluationRunRepository', () => {
   });
 
   describe('aggregateCounters', () => {
-    it('should aggregate counters from evaluations and errors column', async () => {
-      // First call: select from mediaCatalogEvaluations (ends at where, no limit)
-      // Second call: select errors from catalogEvaluationRuns (uses limit)
-      mockDb.where
-        .mockResolvedValueOnce([{ processed: 100, eligible: 80, ineligible: 15, review: 5 }])
-        .mockReturnThis(); // For the second select's from().where()
+    it('should aggregate item-level counters from evaluations and errors column', async () => {
+      // First call: raw SQL aggregate over per-item sub-select
+      mockDb.execute.mockResolvedValueOnce([
+        { evaluations: 200, processed: 100, eligible: 80, ineligible: 15, review: 5 },
+      ]);
+      // Second call: errors from catalogEvaluationRuns (uses limit)
       mockDb.limit.mockResolvedValueOnce([{ errors: 2 }]);
 
-      const result = await repository.aggregateCounters('run-123');
+      const result = await repository.aggregateCounters('run-123', ['catalog', 'trending']);
 
+      expect(result.evaluations).toBe(200);
       expect(result.processed).toBe(100);
       expect(result.eligible).toBe(80);
       expect(result.ineligible).toBe(15);
@@ -371,19 +374,69 @@ describe('CatalogEvaluationRunRepository', () => {
       expect(result.errors).toBe(2);
     });
 
+    it('should require an evaluation per required context (not just per item)', async () => {
+      mockDb.execute.mockResolvedValueOnce([
+        { evaluations: 0, processed: 0, eligible: 0, ineligible: 0, review: 0 },
+      ]);
+      mockDb.limit.mockResolvedValueOnce([{ errors: 0 }]);
+
+      await repository.aggregateCounters('run-123', ['catalog', 'trending']);
+
+      const { sql: text, params } = new PgDialect().sqlToQuery(mockDb.execute.mock.calls[0][0]);
+      // Compares per-item context count against the number of required contexts (2)
+      expect(text).toContain('context_count >= $');
+      expect(params).toEqual(expect.arrayContaining([2, 'catalog', 'trending']));
+    });
+
     it('should default to 0 when no evaluations exist', async () => {
-      mockDb.where
-        .mockResolvedValueOnce([]) // No evaluation results
-        .mockReturnThis();
+      mockDb.execute.mockResolvedValueOnce([]);
       mockDb.limit.mockResolvedValueOnce([{ errors: null }]);
 
       const result = await repository.aggregateCounters('run-123');
 
+      expect(result.evaluations).toBe(0);
       expect(result.processed).toBe(0);
       expect(result.eligible).toBe(0);
       expect(result.ineligible).toBe(0);
       expect(result.review).toBe(0);
       expect(result.errors).toBe(0);
+    });
+
+    it('should throw DatabaseException when aggregation fails', async () => {
+      mockDb.execute.mockRejectedValueOnce(new Error('DB Error'));
+
+      await expect(repository.aggregateCounters('run-123')).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('transitionToCancelled', () => {
+    it('should return true when run was cancelled', async () => {
+      mockDb.returning.mockResolvedValueOnce([{ id: 'run-123' }]);
+
+      const result = await repository.transitionToCancelled('run-123', ['running', 'prepared']);
+
+      expect(result).toBe(true);
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'cancelled', finishedAt: expect.any(Date) }),
+      );
+      // Guarded by WHERE status IN (...)
+      expect(mockDb.where).toHaveBeenCalled();
+    });
+
+    it('should return false when status no longer allows cancellation (0 rows)', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+
+      const result = await repository.transitionToCancelled('run-123', ['running', 'prepared']);
+
+      expect(result).toBe(false);
+    });
+
+    it('should throw DatabaseException when update fails', async () => {
+      mockDb.returning.mockRejectedValueOnce(new Error('DB Error'));
+
+      await expect(
+        repository.transitionToCancelled('run-123', ['running', 'prepared']),
+      ).rejects.toThrow(DatabaseException);
     });
   });
 

@@ -58,7 +58,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
   let pipeline: BackfillMdblistRatingsPipeline;
   let dbSpies: ReturnType<typeof buildDbMock>['spies'];
   let queueAddBulk: jest.Mock;
-  let mdblistAdapter: jest.Mocked<Pick<MdblistAdapter, 'getRottenTomatoesRatings'>>;
+  let mdblistAdapter: jest.Mocked<Pick<MdblistAdapter, 'getRottenTomatoesRatings' | 'isConfigured'>>;
 
   const setupPipeline = async (dbSetup: Parameters<typeof buildDbMock>[0] = {}) => {
     const { db, spies } = buildDbMock(dbSetup);
@@ -68,6 +68,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
     mdblistAdapter = {
       getRottenTomatoesRatings: jest.fn(),
+      isConfigured: jest.fn().mockReturnValue(true),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -139,6 +140,16 @@ describe('BackfillMdblistRatingsPipeline', () => {
       expect(queueAddBulk).toHaveBeenCalledTimes(2);
       expect(queueAddBulk.mock.calls[0][0]).toHaveLength(2);
       expect(queueAddBulk.mock.calls[1][0]).toHaveLength(1);
+    });
+
+    it('skips the run without querying or queueing when MDBLIST_API_KEY is missing', async () => {
+      await setupPipeline({ selectBatches: [[{ id: 'media-1', tmdbId: 1, type: MediaType.MOVIE }]] });
+      mdblistAdapter.isConfigured.mockReturnValue(false);
+
+      await pipeline.dispatch();
+
+      expect(dbSpies.select).not.toHaveBeenCalled();
+      expect(queueAddBulk).not.toHaveBeenCalled();
     });
 
     it('does not queue anything when no rows match the filter', async () => {
@@ -244,7 +255,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
       expect(setPayload).not.toHaveProperty('ratingRottenTomatoes');
     });
 
-    it('ALWAYS stamps rtFetchedAt even when MDBList returned nothing (critical for quota)', async () => {
+    it('stamps rtFetchedAt when MDBList returned nothing (genuine not-found, critical for quota)', async () => {
       await setupPipeline();
       mdblistAdapter.getRottenTomatoesRatings.mockResolvedValue({
         rottenTomatoesCritics: null,
@@ -258,6 +269,25 @@ describe('BackfillMdblistRatingsPipeline', () => {
       expect(setPayload.rtFetchedAt).toBeInstanceOf(Date);
       expect(setPayload).not.toHaveProperty('ratingRottenTomatoes');
       expect(setPayload).not.toHaveProperty('ratingRottenTomatoesAudience');
+    });
+
+    it('does NOT stamp rtFetchedAt and propagates the error when the adapter throws', async () => {
+      await setupPipeline();
+      mdblistAdapter.getRottenTomatoesRatings.mockRejectedValue(new Error('MDBList 429'));
+
+      await expect(pipeline.processItem(payload)).rejects.toThrow('MDBList 429');
+
+      expect(dbSpies.update).not.toHaveBeenCalled();
+    });
+
+    it('skips without fetching or stamping when MDBLIST_API_KEY is not configured', async () => {
+      await setupPipeline();
+      mdblistAdapter.isConfigured.mockReturnValue(false);
+
+      await pipeline.processItem(payload);
+
+      expect(mdblistAdapter.getRottenTomatoesRatings).not.toHaveBeenCalled();
+      expect(dbSpies.update).not.toHaveBeenCalled();
     });
 
     it('does NOT bump updatedAt when only rtFetchedAt changed (avoid ISR churn)', async () => {

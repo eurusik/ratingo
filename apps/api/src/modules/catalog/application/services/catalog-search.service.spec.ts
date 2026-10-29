@@ -136,7 +136,7 @@ describe('CatalogSearchService', () => {
   it('should mark TMDB results as imported when they exist in DB', async () => {
     metadataPort.searchMulti.mockResolvedValue([mockTmdbMovie]);
     mediaRepository.findManyByTmdbIds.mockResolvedValue([
-      { id: 'uuid-2', tmdbId: 200, alternativeTitles: null },
+      { id: 'uuid-2', tmdbId: 200, type: MediaType.MOVIE, alternativeTitles: null },
     ]);
 
     const result = await service.search('movie');
@@ -146,10 +146,34 @@ describe('CatalogSearchService', () => {
     expect(mediaRepository.findManyByTmdbIds).toHaveBeenCalledWith([200]);
   });
 
+  it('should not treat a local movie as duplicate of a TMDB show with the same tmdbId', async () => {
+    mediaRepository.search.mockResolvedValue([mockLocalMovie]); // movie:100
+    metadataPort.searchMulti.mockResolvedValue([
+      { ...mockDuplicateTmdbMovie, type: MediaType.SHOW }, // show:100
+    ]);
+
+    const result = await service.search('movie');
+
+    expect(result.tmdb).toHaveLength(1);
+    expect(result.tmdb[0]).toMatchObject({ tmdbId: 100, type: MediaType.SHOW });
+  });
+
+  it('should not mark a TMDB show as imported when only the movie with same tmdbId exists', async () => {
+    metadataPort.searchMulti.mockResolvedValue([{ ...mockTmdbMovie, type: MediaType.SHOW }]);
+    mediaRepository.findManyByTmdbIds.mockResolvedValue([
+      { id: 'uuid-2', tmdbId: 200, type: MediaType.MOVIE, alternativeTitles: ['Movie alt'] },
+    ]);
+
+    const result = await service.search('movie');
+
+    expect(result.tmdb[0].isImported).toBe(false);
+    expect(result.tmdb[0].alternativeTitles).toBeNull();
+  });
+
   it('should enrich TMDB results with alternative titles from DB', async () => {
     metadataPort.searchMulti.mockResolvedValue([mockTmdbMovie]);
     mediaRepository.findManyByTmdbIds.mockResolvedValue([
-      { id: 'uuid-2', tmdbId: 200, alternativeTitles: ['Alt Title 1', 'Alt Title 2'] },
+      { id: 'uuid-2', tmdbId: 200, type: MediaType.MOVIE, alternativeTitles: ['Alt Title 1', 'Alt Title 2'] },
     ]);
 
     const result = await service.search('movie');
@@ -217,7 +241,7 @@ describe('CatalogSearchService', () => {
     // TMDB returns plain first, enriched second
     metadataPort.searchMulti.mockResolvedValue([plainMovie, enrichedMovie]);
     mediaRepository.findManyByTmdbIds.mockResolvedValue([
-      { id: 'uuid-2', tmdbId: 200, alternativeTitles: ['In the Mud'] },
+      { id: 'uuid-2', tmdbId: 200, type: MediaType.MOVIE, alternativeTitles: ['In the Mud'] },
     ]);
 
     const result = await service.search('In the Mud');

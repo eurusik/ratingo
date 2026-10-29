@@ -1,14 +1,15 @@
 import {
+  Body,
   Controller,
-  Post,
   Delete,
   Get,
-  Param,
-  Body,
-  Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -54,7 +55,7 @@ export class SubscriptionsController {
   })
   async subscribe(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: SubscribeDto,
   ): Promise<SubscribeActionResultDto> {
     const subscription = await this.subscriptionsService.subscribe({
@@ -98,7 +99,7 @@ export class SubscriptionsController {
   })
   async unsubscribe(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: UnsubscribeDto,
   ): Promise<UnsubscribeActionResultDto> {
     const unsubscribed = await this.subscriptionsService.unsubscribe(
@@ -133,7 +134,7 @@ export class SubscriptionsController {
   @ApiOkResponse({ type: MediaSubscriptionStatusDto })
   async getStatus(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
   ): Promise<MediaSubscriptionStatusDto> {
     const triggers = await this.subscriptionsService.getActiveTriggersForMedia(
       user.id,

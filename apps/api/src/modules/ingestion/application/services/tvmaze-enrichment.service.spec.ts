@@ -132,6 +132,53 @@ describe('TvMazeEnrichmentService', () => {
       expect(result.details?.nextAirDate).toEqual(futureDate);
     });
 
+    it('should write explicit null nextAirDate when no future episode exists (clears stale value)', async () => {
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Past Episode',
+          airDate: new Date('2020-01-01'),
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+      const staleShow: NormalizedMedia = {
+        ...mockShow,
+        details: { ...mockShow.details, nextAirDate: new Date('2021-01-01') },
+      };
+
+      const result = await service.enrich(staleShow);
+
+      expect(result.details?.nextAirDate).toBeNull();
+    });
+
+    it('should keep TMDB nextAirDate when TVMaze has no future episode but TMDB date is in the future', async () => {
+      const tmdbNext = new Date();
+      tmdbNext.setDate(tmdbNext.getDate() + 3);
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Past Episode',
+          airDate: new Date('2020-01-01'),
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich({
+        ...mockShow,
+        details: { ...mockShow.details, nextAirDate: tmdbNext },
+      });
+
+      expect(result.details?.nextAirDate).toEqual(tmdbNext);
+    });
+
     it('should calculate lastAirDate from already-aired episodes', async () => {
       const pastDate1 = new Date('2024-01-01');
       const pastDate2 = new Date('2024-01-15'); // Most recent

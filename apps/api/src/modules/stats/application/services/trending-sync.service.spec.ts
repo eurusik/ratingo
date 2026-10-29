@@ -21,9 +21,10 @@ describe('TrendingSyncService', () => {
     freshnessScore: 90,
   };
 
-  const createScoreData = (id: string, tmdbId: number) => ({
+  const createScoreData = (id: string, tmdbId: number, type: MediaType = MediaType.MOVIE) => ({
     id,
     tmdbId,
+    type,
     popularity: 85.5,
     totalWatchers: 10000,
     watchersCount: 500,
@@ -115,15 +116,15 @@ describe('TrendingSyncService', () => {
       ]);
 
       mediaRepository.findManyByTmdbIds.mockResolvedValue([
-        { id: 'movie-1', tmdbId: 100 },
-        { id: 'movie-2', tmdbId: 101 },
-        { id: 'show-1', tmdbId: 200 },
+        { id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE },
+        { id: 'movie-2', tmdbId: 101, type: MediaType.MOVIE },
+        { id: 'show-1', tmdbId: 200, type: MediaType.SHOW },
       ]);
 
       mediaRepository.findManyForScoring.mockResolvedValue([
         createScoreData('movie-1', 100),
         createScoreData('movie-2', 101),
-        createScoreData('show-1', 200),
+        createScoreData('show-1', 200, MediaType.SHOW),
       ]);
 
       const result = await service.syncTrendingStats(100);
@@ -144,7 +145,7 @@ describe('TrendingSyncService', () => {
         { tmdbId: 100, watchers: 500, rank: 1 },
       ]);
       traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([]);
-      mediaRepository.findManyByTmdbIds.mockResolvedValue([{ id: 'movie-1', tmdbId: 100 }]);
+      mediaRepository.findManyByTmdbIds.mockResolvedValue([{ id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE }]);
       mediaRepository.findManyForScoring.mockResolvedValue([createScoreData('movie-1', 100)]);
 
       await service.syncTrendingStats(100);
@@ -165,7 +166,7 @@ describe('TrendingSyncService', () => {
         { tmdbId: 100, watchers: 500, rank: 1 },
       ]);
       traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([]);
-      mediaRepository.findManyByTmdbIds.mockResolvedValue([{ id: 'movie-1', tmdbId: 100 }]);
+      mediaRepository.findManyByTmdbIds.mockResolvedValue([{ id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE }]);
       mediaRepository.findManyForScoring.mockResolvedValue([]); // No score data
 
       await service.syncTrendingStats(100);
@@ -180,6 +181,53 @@ describe('TrendingSyncService', () => {
           qualityScore: undefined,
         }),
       ]);
+    });
+
+    it('should not mix a movie and a show that share the same tmdbId', async () => {
+      traktListsPort.getTrendingMoviesWithWatchers.mockResolvedValue([
+        { tmdbId: 100, watchers: 500, rank: 1 },
+      ]);
+      traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([
+        { tmdbId: 100, watchers: 9000, rank: 3 },
+      ]);
+      mediaRepository.findManyByTmdbIds.mockResolvedValue([
+        { id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE },
+        { id: 'show-1', tmdbId: 100, type: MediaType.SHOW },
+      ]);
+      mediaRepository.findManyForScoring.mockResolvedValue([
+        createScoreData('movie-1', 100, MediaType.MOVIE),
+        createScoreData('show-1', 100, MediaType.SHOW),
+      ]);
+
+      const result = await service.syncTrendingStats(100);
+
+      expect(result).toEqual({ movies: 1, shows: 1 });
+      const upserted = statsRepository.bulkUpsert.mock.calls[0][0];
+      expect(upserted).toHaveLength(2);
+      expect(upserted).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ mediaItemId: 'movie-1', watchersCount: 500, trendingRank: 1 }),
+          expect.objectContaining({ mediaItemId: 'show-1', watchersCount: 9000, trendingRank: 3 }),
+        ]),
+      );
+      // Score inputs come from the matching row (watchers differ per type)
+      expect(scoreCalculator.calculate).toHaveBeenCalledTimes(2);
+    });
+
+    it('should only update the item of the trending type when the other type is missing in DB', async () => {
+      traktListsPort.getTrendingMoviesWithWatchers.mockResolvedValue([]);
+      traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([
+        { tmdbId: 100, watchers: 9000, rank: 3 },
+      ]);
+      // Only the MOVIE with the same tmdbId exists locally
+      mediaRepository.findManyByTmdbIds.mockResolvedValue([
+        { id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE },
+      ]);
+
+      const result = await service.syncTrendingStats(100);
+
+      expect(result).toEqual({ movies: 0, shows: 0 });
+      expect(statsRepository.bulkUpsert).not.toHaveBeenCalled();
     });
 
     it('should use default limit of MAX_PAGE_SIZE', async () => {
@@ -216,7 +264,7 @@ describe('TrendingSyncService', () => {
       traktRatingsPort.getShowWatchersByTmdbIds.mockResolvedValue(new Map([[200, 1000]]));
       mediaRepository.findManyForScoring.mockResolvedValue([
         createScoreData('movie-1', 100),
-        createScoreData('show-1', 200),
+        createScoreData('show-1', 200, MediaType.SHOW),
       ]);
 
       const result = await service.syncTrendingStatsForUpdatedItems({
@@ -226,6 +274,31 @@ describe('TrendingSyncService', () => {
 
       expect(result).toEqual({ movies: 1, shows: 1 });
       expect(statsRepository.bulkUpsert).toHaveBeenCalled();
+    });
+
+    it('should keep watchers separate for a movie and a show sharing the same tmdbId', async () => {
+      const dbItems = [
+        { id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE },
+        { id: 'show-1', tmdbId: 100, type: MediaType.SHOW },
+      ];
+      mediaRepository.findTrendingUpdatedItems.mockResolvedValue(dbItems);
+      traktRatingsPort.getMovieWatchersByTmdbIds.mockResolvedValue(new Map([[100, 500]]));
+      traktRatingsPort.getShowWatchersByTmdbIds.mockResolvedValue(new Map([[100, null]])); // transient error
+      mediaRepository.findManyForScoring.mockResolvedValue([
+        createScoreData('movie-1', 100, MediaType.MOVIE),
+      ]);
+
+      const result = await service.syncTrendingStatsForUpdatedItems({
+        since: new Date(),
+        limit: 100,
+      });
+
+      // Show's null must NOT overwrite the movie's 500 (nor the other way round)
+      expect(result).toEqual({ movies: 1, shows: 0 });
+      expect(mediaRepository.findManyForScoring).toHaveBeenCalledWith(['movie-1']);
+      expect(statsRepository.bulkUpsert).toHaveBeenCalledWith([
+        expect.objectContaining({ mediaItemId: 'movie-1', watchersCount: 500 }),
+      ]);
     });
 
     it('should skip items with null watchers (transient error)', async () => {
@@ -342,7 +415,7 @@ describe('TrendingSyncService', () => {
       traktRatingsPort.getShowWatchersByTmdbIds.mockResolvedValue(new Map([[200, 1000]]));
       mediaRepository.findManyForScoring.mockResolvedValue([
         createScoreData('movie-1', 100),
-        createScoreData('show-1', 200),
+        createScoreData('show-1', 200, MediaType.SHOW),
       ]);
 
       const result = await service.syncHeroCandidatesStats({

@@ -25,6 +25,7 @@ export interface AuthMocks {
     findById: jest.Mock;
     findValidByUser: jest.Mock;
     revoke: jest.Mock;
+    revokeIfActive: jest.Mock;
     revokeAllForUser: jest.Mock;
   };
   exchangeCodesRepository: {
@@ -78,6 +79,7 @@ export function createAuthMocks(): AuthMocks {
       findById: jest.fn(),
       findValidByUser: jest.fn(),
       revoke: jest.fn(),
+      revokeIfActive: jest.fn(),
       revokeAllForUser: jest.fn(),
     },
     exchangeCodesRepository: {

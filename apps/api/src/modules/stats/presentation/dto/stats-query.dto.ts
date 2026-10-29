@@ -178,3 +178,19 @@ export class SyncEligibleTrendingQueryDto {
   @Min(0)
   offset?: number = 0;
 }
+
+/**
+ * Query DTO for GET /stats/tmdb/:tmdbId.
+ * TMDB movie and TV id spaces overlap, so clients should pass `type`.
+ * Optional for backward compatibility.
+ */
+export class StatsByTmdbQueryDto {
+  @ApiPropertyOptional({
+    description: 'Media type (TMDB movie and TV ids overlap; recommended)',
+    enum: ['movie', 'show'],
+    example: 'movie',
+  })
+  @IsOptional()
+  @IsIn(['movie', 'show'])
+  type?: 'movie' | 'show';
+}

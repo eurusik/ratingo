@@ -1,3 +1,4 @@
+import { MediaType } from '../../../../common/enums/media-type.enum';
 import { toScoreInput } from './score-input.mapper';
 import { type MediaScoreDataWithTmdbId } from '../../../catalog/public';
 
@@ -7,6 +8,7 @@ describe('toScoreInput', () => {
   ): MediaScoreDataWithTmdbId => ({
     id: 'media-1',
     tmdbId: 550,
+    type: MediaType.MOVIE,
     popularity: 85.5,
     totalWatchers: 10000,
     watchersCount: 500,

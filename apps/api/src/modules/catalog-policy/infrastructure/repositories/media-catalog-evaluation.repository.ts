@@ -174,11 +174,16 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
             eq(schema.mediaCatalogEvaluations.mediaItemId, mediaItemId),
             inArray(schema.mediaCatalogEvaluations.context, contexts),
           ),
-        );
+        )
+        .orderBy(desc(schema.mediaCatalogEvaluations.policyVersion));
 
+      // Rows are ordered by policy version DESC: keep only the latest evaluation per context
+      // (consistent with findByMediaId).
       for (const row of result) {
         const entity = this.mapToEntity(row);
-        resultMap.set(entity.context, entity);
+        if (!resultMap.has(entity.context)) {
+          resultMap.set(entity.context, entity);
+        }
       }
 
       return resultMap;

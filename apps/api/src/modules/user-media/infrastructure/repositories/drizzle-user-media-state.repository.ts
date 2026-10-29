@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, desc, eq, inArray, isNotNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
@@ -15,6 +15,7 @@ import {
   USER_MEDIA_STATE,
 } from '../../domain/entities/user-media-state.entity';
 import {
+  type BulkImportResult,
   type ContinuePoint,
   type FavoriteUpdateItem,
   type FavoriteUpdatesOptions,
@@ -224,6 +225,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             and(
               eq(schema.userMediaState.userId, userId),
               isNotNull(schema.userMediaState.progress),
+              isNull(schema.mediaItems.deletedAt),
             ),
           )
           .orderBy(desc(schema.userMediaState.updatedAt))
@@ -252,7 +254,9 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           })
           .from(schema.userMediaState)
           .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-          .where(eq(schema.userMediaState.userId, userId));
+          .where(
+            and(eq(schema.userMediaState.userId, userId), isNull(schema.mediaItems.deletedAt)),
+          );
 
         return {
           moviesRated: Number(row?.moviesRated ?? 0),
@@ -344,7 +348,10 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       'list user media state with media',
       this.logger,
       async () => {
-        const whereParts = [eq(schema.userMediaState.userId, userId)];
+        const whereParts = [
+          eq(schema.userMediaState.userId, userId),
+          isNull(schema.mediaItems.deletedAt),
+        ];
 
         if (options?.ratedOnly) {
           whereParts.push(isNotNull(schema.userMediaState.rating));
@@ -418,7 +425,10 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       'count user media state with media',
       this.logger,
       async () => {
-        const whereParts = [eq(schema.userMediaState.userId, userId)];
+        const whereParts = [
+          eq(schema.userMediaState.userId, userId),
+          isNull(schema.mediaItems.deletedAt),
+        ];
 
         if (options?.ratedOnly) {
           whereParts.push(isNotNull(schema.userMediaState.rating));
@@ -456,6 +466,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       async () => {
         const whereParts = [
           eq(schema.userMediaState.userId, userId),
+          isNull(schema.mediaItems.deletedAt),
           or(
             eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
             isNotNull(schema.userMediaState.progress),
@@ -502,6 +513,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       async () => {
         const whereParts = [
           eq(schema.userMediaState.userId, userId),
+          isNull(schema.mediaItems.deletedAt),
           or(
             eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
             isNotNull(schema.userMediaState.progress),
@@ -532,10 +544,12 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
         const [row] = await this.db
           .select({ count: sql<number>`count(*)` })
           .from(schema.userMediaState)
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
           .where(
             and(
               eq(schema.userMediaState.userId, userId),
               isNotNull(schema.userMediaState.progress),
+              isNull(schema.mediaItems.deletedAt),
             ),
           );
         return Number(row?.count ?? 0);
@@ -547,12 +561,20 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   private buildListOrderBy(sort?: ListWithMediaOptions['sort']): SQL[] {
     switch (sort) {
       case USER_MEDIA_LIST_SORT.RATING:
-        return [desc(schema.userMediaState.rating), desc(schema.userMediaState.createdAt)];
+        return [
+          sql`${schema.userMediaState.rating} DESC NULLS LAST`,
+          desc(schema.userMediaState.createdAt),
+          desc(schema.userMediaState.id),
+        ];
       case USER_MEDIA_LIST_SORT.RELEASE_DATE:
-        return [desc(schema.mediaItems.releaseDate), desc(schema.userMediaState.createdAt)];
+        return [
+          sql`${schema.mediaItems.releaseDate} DESC NULLS LAST`,
+          desc(schema.userMediaState.createdAt),
+          desc(schema.userMediaState.id),
+        ];
       case USER_MEDIA_LIST_SORT.RECENT:
       default:
-        return [desc(schema.userMediaState.createdAt)];
+        return [desc(schema.userMediaState.createdAt), desc(schema.userMediaState.id)];
     }
   }
 
@@ -729,9 +751,10 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     userId: string,
     items: Array<{ mediaItemId: string; state: string; rating: number | null }>,
     overwrite: boolean,
-  ): Promise<{ imported: number; skipped: number }> {
+  ): Promise<BulkImportResult> {
     let imported = 0;
     let skipped = 0;
+    const plannedMediaItemIds: string[] = [];
 
     for (let i = 0; i < items.length; i += DrizzleUserMediaStateRepository.BATCH_SIZE) {
       const batch = items.slice(i, i + DrizzleUserMediaStateRepository.BATCH_SIZE);
@@ -754,10 +777,14 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
               .onConflictDoNothing({
                 target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
               })
-              .returning({ id: schema.userMediaState.id });
+              .returning({
+                mediaItemId: schema.userMediaState.mediaItemId,
+                state: schema.userMediaState.state,
+              });
 
             imported += result.length;
             skipped += batch.length - result.length;
+            this.collectPlanned(result, plannedMediaItemIds);
           } else {
             const result = await this.db
               .insert(schema.userMediaState)
@@ -792,18 +819,31 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
                   updatedAt: sql`NOW()`,
                 },
               })
-              .returning({ id: schema.userMediaState.id });
+              .returning({
+                mediaItemId: schema.userMediaState.mediaItemId,
+                state: schema.userMediaState.state,
+              });
 
             // All rows result in a returned row (insert or update); we count all as imported.
             imported += result.length;
             skipped += batch.length - result.length;
+            this.collectPlanned(result, plannedMediaItemIds);
           }
         },
         { userId, batchOffset: i },
       );
     }
 
-    return { imported, skipped };
+    return { imported, skipped, plannedMediaItemIds };
+  }
+
+  private collectPlanned(
+    rows: Array<{ mediaItemId: string; state: string }>,
+    target: string[],
+  ): void {
+    for (const row of rows) {
+      if (row.state === USER_MEDIA_STATE.PLANNED) target.push(row.mediaItemId);
+    }
   }
 
   private mapRow(row: typeof schema.userMediaState.$inferSelect): UserMediaState {

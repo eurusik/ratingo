@@ -43,7 +43,7 @@ export interface IMediaCatalogEvaluationRepository {
 
   /**
    * Finds evaluations by media item ID for multiple contexts (batch).
-   * Returns a Map of context → evaluation for efficient lookup.
+   * Returns a Map of context → latest evaluation (highest policy version) for efficient lookup.
    */
   findByMediaIdForContexts(
     mediaItemId: string,

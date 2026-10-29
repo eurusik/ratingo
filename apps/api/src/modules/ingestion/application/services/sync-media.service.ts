@@ -133,7 +133,11 @@ export class SyncMediaService {
     this.logger.debug(`${logPrefix} Syncing...`);
 
     try {
-      await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.IMPORTING);
+      // Conditional: a READY item stays READY during re-sync (public queries require READY,
+      // flipping to IMPORTING would hide the item for the whole job duration).
+      await this.mediaRepository.updateIngestionStatus(tmdbId, type, IngestionStatus.IMPORTING, {
+        preserveReady: true,
+      });
 
       // Step 1: Fetch base metadata
       const baseMedia = await this.fetchBaseMedia(tmdbId, type, logPrefix);
@@ -148,8 +152,16 @@ export class SyncMediaService {
       // Step 3: Attach external ratings
       const withRatings = await this.attachExternalRatings(enrichedMedia, tmdbId, type);
 
+      // Step 3b: Fill score inputs missing from failed/empty external sources with stored values
+      const withStoredRatings = await this.fillMissingScoreInputsFromStored(
+        withRatings,
+        tmdbId,
+        type,
+        logPrefix,
+      );
+
       // Step 4: Apply trending data
-      const withTrending = this.applyTrending(withRatings, trending);
+      const withTrending = this.applyTrending(withStoredRatings, trending);
 
       // Step 5: Calculate scores
       const scored = this.calculateScores(withTrending);
@@ -161,7 +173,7 @@ export class SyncMediaService {
       await this.persist(classified, tmdbId);
 
       // Fetch the persisted media item once — shared across steps 8–11 to avoid redundant DB calls
-      const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
+      const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId, type);
 
       // Step 8: Record sync completion timestamp (before best-effort steps so partial failures
       // don't block the user-visible cooldown from reflecting actual sync work done)
@@ -188,7 +200,7 @@ export class SyncMediaService {
       );
     } catch (error) {
       this.logger.error(`${logPrefix} Failed: ${error.message}`, error.stack);
-      await this.markAsFailed(tmdbId, logPrefix);
+      await this.markAsFailed(tmdbId, type, logPrefix, error.message);
       throw error;
     }
   }
@@ -210,7 +222,9 @@ export class SyncMediaService {
 
     if (!media) {
       this.logger.warn(`${logPrefix} Not found in TMDB`);
-      await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
+      await this.mediaRepository.updateIngestionStatus(tmdbId, type, IngestionStatus.FAILED, {
+        preserveReady: true,
+      });
       return null;
     }
 
@@ -341,6 +355,62 @@ export class SyncMediaService {
     };
   }
 
+  /**
+   * Fills score inputs that external sources failed to provide with currently stored values.
+   *
+   * Trakt/OMDb adapters are best-effort and return null/empty on transient failures
+   * (indistinguishable from "not found"). Without this, calculateScores would run with
+   * watchers=0 / missing ratings and upsertMediaStats would overwrite the stored
+   * ratingoScore/qualityScore/popularityScore with degraded values. Only gaps are filled
+   * (fresh values always win), so "not found" sources simply keep the last known value.
+   * Best-effort: any lookup error leaves the media unchanged.
+   */
+  private async fillMissingScoreInputsFromStored(
+    media: NormalizedMedia,
+    tmdbId: number,
+    type: MediaType,
+    logPrefix: string,
+  ): Promise<NormalizedMedia> {
+    const hasGap =
+      media.ratingTrakt == null ||
+      media.voteCountTrakt == null ||
+      media.totalWatchers == null ||
+      media.ratingImdb == null ||
+      media.voteCountImdb == null ||
+      media.ratingMetacritic == null ||
+      media.ratingRottenTomatoes == null;
+    if (!hasGap) return media;
+
+    try {
+      const existing = await this.mediaRepository.findByTmdbId(tmdbId, type);
+      if (!existing) return media;
+
+      const stored = await this.mediaRepository.findByIdForScoring(existing.id);
+      if (!stored) return media;
+
+      // Only set a field when a value exists, so no new nulls reach the persistence mapper
+      const fill = <K extends keyof NormalizedMedia>(key: K, storedValue: number | null) =>
+        media[key] == null && storedValue != null ? { [key]: storedValue } : {};
+
+      return {
+        ...media,
+        ...fill('ratingTrakt', stored.ratingTrakt),
+        ...fill('voteCountTrakt', stored.voteCountTrakt),
+        ...fill('ratingImdb', stored.ratingImdb),
+        ...fill('voteCountImdb', stored.voteCountImdb),
+        ...fill('ratingMetacritic', stored.ratingMetacritic),
+        ...fill('ratingRottenTomatoes', stored.ratingRottenTomatoes),
+        ...fill('watchersCount', stored.watchersCount),
+        ...fill('totalWatchers', stored.totalWatchers),
+      };
+    } catch (error) {
+      this.logger.warn(
+        `${logPrefix} Could not load stored score inputs, scoring with fetched data only: ${(error as Error).message}`,
+      );
+      return media;
+    }
+  }
+
   /** Applies trending score and rank if provided. */
   private applyTrending(
     media: NormalizedMedia,
@@ -409,7 +479,10 @@ export class SyncMediaService {
     mediaItem: { id: string } | null,
     logPrefix: string,
   ): Promise<void> {
-    if (!media.watchProvidersRaw || Object.keys(media.watchProvidersRaw).length === 0) {
+    // undefined = providers were not part of this sync payload → leave existing offers alone.
+    // null / {} = TMDB responded but has no UA/US providers → normalize with an empty map so
+    // stale offers for managed regions get removed.
+    if (media.watchProvidersRaw === undefined) {
       return;
     }
 
@@ -421,7 +494,7 @@ export class SyncMediaService {
     try {
       const result = await this.normalizationService.normalizeWatchProviders(
         mediaItem.id,
-        media.watchProvidersRaw,
+        media.watchProvidersRaw ?? {},
       );
 
       if (result.unmappedCount > 0) {
@@ -467,10 +540,24 @@ export class SyncMediaService {
     }
   }
 
-  /** Marks media as failed in database. */
-  private async markAsFailed(tmdbId: number, logPrefix: string): Promise<void> {
+  /**
+   * Marks media as failed in database.
+   * A READY item is never downgraded: it keeps serving the last good data and the
+   * failure is only logged (with reason) so the next sync can retry.
+   */
+  private async markAsFailed(
+    tmdbId: number,
+    type: MediaType,
+    logPrefix: string,
+    reason: string,
+  ): Promise<void> {
     try {
-      await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
+      await this.mediaRepository.updateIngestionStatus(tmdbId, type, IngestionStatus.FAILED, {
+        preserveReady: true,
+      });
+      this.logger.warn(
+        `${logPrefix} Sync failed (reason: ${reason}); item marked FAILED unless it was already READY`,
+      );
     } catch (statusError) {
       this.logger.warn(`${logPrefix} Failed to mark as failed: ${(statusError as Error).message}`);
     }
@@ -517,20 +604,25 @@ export class SyncMediaService {
    * Checks if media already exists in database.
    *
    * @param {number} tmdbId - TMDB ID
+   * @param {MediaType} type - Media type (TMDB movie/TV id spaces overlap; pass whenever known)
    * @returns {Promise<ExistingMediaResult | null>} Existing media info or null
    */
-  public async findExistingMedia(tmdbId: number): Promise<ExistingMediaResult | null> {
-    return this.mediaRepository.findByTmdbId(tmdbId);
+  public async findExistingMedia(
+    tmdbId: number,
+    type?: MediaType,
+  ): Promise<ExistingMediaResult | null> {
+    return this.mediaRepository.findByTmdbId(tmdbId, type);
   }
 
   /**
    * Gets media slug by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID
+   * @param {MediaType} type - Media type (TMDB movie/TV id spaces overlap; pass whenever known)
    * @returns {Promise<string | null>} Slug or null if not found
    */
-  public async getSlugByTmdbId(tmdbId: number): Promise<string | null> {
-    const media = await this.mediaRepository.findByTmdbId(tmdbId);
+  public async getSlugByTmdbId(tmdbId: number, type?: MediaType): Promise<string | null> {
+    const media = await this.mediaRepository.findByTmdbId(tmdbId, type);
     return media?.slug ?? null;
   }
 

@@ -1,5 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
+import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { AppException } from '../../../common/exceptions/app.exception';
+import { DatabaseException } from '../../../common/exceptions/database.exception';
+import { isUniqueViolation } from '../../../common/utils/pg-error.utils';
 import { type User } from '../domain/entities/user.entity';
 import {
   type IUsersRepository,
@@ -7,6 +11,13 @@ import {
 } from '../domain/repositories/users.repository.interface';
 
 import { UserProfileVisibilityPolicy, type ViewerContext } from './user-profile-visibility.policy';
+
+/**
+ * Normalizes email for storage and lookup (trim + lower-case).
+ */
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
 
 /**
  * Application service for user-related use cases.
@@ -31,13 +42,13 @@ export class UsersService {
   }
 
   /**
-   * Gets user by email.
+   * Gets user by email. Lookup is case-insensitive and ignores surrounding whitespace.
    *
    * @param {string} email - Email address
    * @returns {Promise<User | null>} User or null
    */
   async getByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findByEmail(email);
+    return this.usersRepository.findByEmail(normalizeEmail(email));
   }
 
   /**
@@ -124,9 +135,10 @@ export class UsersService {
       avatarUrl?: string | null;
     },
   ): Promise<User> {
-    this.logger.debug(`Creating user ${data.email}`);
+    const email = normalizeEmail(data.email);
+    this.logger.debug(`Creating user ${email}`);
     return this.usersRepository.create({
-      email: data.email,
+      email,
       username: data.username,
       passwordHash: data.passwordHash,
       avatarUrl: data.avatarUrl,
@@ -139,6 +151,7 @@ export class UsersService {
    * @param {string} id - User identifier
    * @param {object} payload - Profile fields
    * @returns {Promise<User>} Updated user
+   * @throws {AppException} USERNAME_ALREADY_EXISTS (409) when the username is taken
    */
   async updateProfile(
     id: string,
@@ -157,7 +170,34 @@ export class UsersService {
       autoSubscribeOnWatch?: boolean;
     },
   ): Promise<User> {
-    return this.usersRepository.updateProfile(id, payload);
+    if (payload.username !== undefined) {
+      const taken = await this.usersRepository.findByUsername(payload.username);
+      if (taken && taken.id !== id) {
+        throw this.usernameTakenException();
+      }
+    }
+
+    try {
+      return await this.usersRepository.updateProfile(id, payload);
+    } catch (error) {
+      // Lost a race against a concurrent claim of the same username
+      if (
+        payload.username !== undefined &&
+        error instanceof DatabaseException &&
+        isUniqueViolation(error.cause)
+      ) {
+        throw this.usernameTakenException();
+      }
+      throw error;
+    }
+  }
+
+  private usernameTakenException(): AppException {
+    return new AppException(
+      ErrorCode.USERNAME_ALREADY_EXISTS,
+      'Username already in use',
+      HttpStatus.CONFLICT,
+    );
   }
 
   /**

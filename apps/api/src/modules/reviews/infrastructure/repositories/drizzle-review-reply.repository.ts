@@ -88,41 +88,77 @@ export class DrizzleReviewReplyRepository implements IReviewReplyRepository {
     );
   }
 
+  /**
+   * Creates a reply and increments the review's replies count in one transaction.
+   */
   async create(input: CreateReplyInput): Promise<ReviewReply> {
     return withDbError(
       'create reply',
       this.logger,
       async () => {
-        const now = new Date();
-        const [reply] = await this.db
-          .insert(reviewReplies)
-          .values({
-            reviewId: input.reviewId,
-            userId: input.userId,
-            parentReplyId: input.parentReplyId ?? null,
-            replyToUsername: input.replyToUsername ?? null,
-            content: input.content,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .returning();
+        return this.db.transaction(async (tx) => {
+          const now = new Date();
+          const [reply] = await tx
+            .insert(reviewReplies)
+            .values({
+              reviewId: input.reviewId,
+              userId: input.userId,
+              parentReplyId: input.parentReplyId ?? null,
+              replyToUsername: input.replyToUsername ?? null,
+              content: input.content,
+              createdAt: now,
+              updatedAt: now,
+            })
+            .returning();
 
-        return reply;
+          await tx
+            .update(schema.reviews)
+            .set({
+              repliesCount: sql`${schema.reviews.repliesCount} + 1`,
+              updatedAt: now,
+            })
+            .where(eq(schema.reviews.id, input.reviewId));
+
+          return reply;
+        });
       },
       { reviewId: input.reviewId, userId: input.userId },
     );
   }
 
-  async softDelete(id: string): Promise<void> {
+  /**
+   * Soft-deletes a reply and decrements the review's replies count in one transaction.
+   * The update is conditional (`is_deleted = false`), so concurrent deletes of the same reply
+   * decrement the counter at most once.
+   *
+   * @returns true if this call deleted the reply, false if it was already deleted/missing
+   */
+  async softDelete(id: string): Promise<boolean> {
     return withDbError(
       'soft delete reply',
       this.logger,
-      () =>
-        this.db
-          .update(reviewReplies)
-          .set({ isDeleted: true, updatedAt: new Date() })
-          .where(eq(reviewReplies.id, id))
-          .then(() => undefined),
+      async () => {
+        return this.db.transaction(async (tx) => {
+          const now = new Date();
+          const [deleted] = await tx
+            .update(reviewReplies)
+            .set({ isDeleted: true, updatedAt: now })
+            .where(and(eq(reviewReplies.id, id), eq(reviewReplies.isDeleted, false)))
+            .returning({ reviewId: reviewReplies.reviewId });
+
+          if (!deleted) return false;
+
+          await tx
+            .update(schema.reviews)
+            .set({
+              repliesCount: sql`GREATEST(${schema.reviews.repliesCount} - 1, 0)`,
+              updatedAt: now,
+            })
+            .where(eq(schema.reviews.id, deleted.reviewId));
+
+          return true;
+        });
+      },
       { id },
     );
   }

@@ -45,7 +45,9 @@ export class CatalogSearchService {
         this.metadataPort.searchMulti(query, 1),
       ]);
 
-      const localTmdbIds = new Set(localResults.map((r) => r.tmdbId));
+      // TMDB movie and TV id spaces overlap — always key by `${type}:${tmdbId}`
+      const mediaKey = (type: string, tmdbId: number) => `${type}:${tmdbId}`;
+      const localKeys = new Set(localResults.map((r) => mediaKey(r.type, r.tmdbId)));
 
       const local: LocalSearchResultItem[] = localResults.map((r) => ({
         source: SEARCH_SOURCE.LOCAL,
@@ -62,7 +64,7 @@ export class CatalogSearchService {
       }));
 
       const filteredTmdb = tmdbResults
-        .filter((r) => !localTmdbIds.has(r.externalIds.tmdbId))
+        .filter((r) => !localKeys.has(mediaKey(r.type, r.externalIds.tmdbId)))
         .slice(0, SEARCH_CONFIG.RESULTS_LIMIT);
 
       // Batch-check which TMDB results are already imported in our DB
@@ -70,11 +72,11 @@ export class CatalogSearchService {
       const importedItems = tmdbIdsToCheck.length
         ? await this.mediaRepository.findManyByTmdbIds(tmdbIdsToCheck)
         : [];
-      const importedTmdbIds = new Set(importedItems.map((item) => item.tmdbId));
-      const altTitlesByTmdbId = new Map(
+      const importedKeys = new Set(importedItems.map((item) => mediaKey(item.type, item.tmdbId)));
+      const altTitlesByKey = new Map(
         importedItems
           .filter((item) => item.alternativeTitles?.length)
-          .map((item) => [item.tmdbId, item.alternativeTitles!]),
+          .map((item) => [mediaKey(item.type, item.tmdbId), item.alternativeTitles!]),
       );
 
       const tmdb: TmdbSearchResultItem[] = filteredTmdb
@@ -87,8 +89,8 @@ export class CatalogSearchService {
           year: r.releaseDate ? new Date(r.releaseDate).getFullYear() || null : null,
           posterPath: r.posterPath,
           rating: r.rating || 0,
-          isImported: importedTmdbIds.has(r.externalIds.tmdbId),
-          alternativeTitles: altTitlesByTmdbId.get(r.externalIds.tmdbId) ?? null,
+          isImported: importedKeys.has(mediaKey(r.type, r.externalIds.tmdbId)),
+          alternativeTitles: altTitlesByKey.get(mediaKey(r.type, r.externalIds.tmdbId)) ?? null,
         }))
         // Boost items enriched with our alt titles to the top
         .sort((a, b) => (b.alternativeTitles ? 1 : 0) - (a.alternativeTitles ? 1 : 0));

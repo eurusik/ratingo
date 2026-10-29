@@ -49,7 +49,7 @@ export class StatsWorker extends WorkerHost {
         case STATS_JOBS.SYNC_ELIGIBLE_TRENDING:
           await this.trendingSyncService.syncEligibleTrendingStats({
             batchSize: job.data.batchSize,
-            offset: job.data.offset,
+            afterId: job.data.afterId,
           });
           break;
 

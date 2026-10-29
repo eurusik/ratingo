@@ -17,6 +17,7 @@ import { type User } from '../../users/public';
 import {
   EXCHANGE_CODE_SIZE_BYTES,
   EXCHANGE_CODE_TTL_MS,
+  OAuthErrorCode,
   USERNAME_MAX_BASE_LENGTH,
   USERNAME_MIN_LENGTH,
   USERNAME_SUFFIX_LENGTH,
@@ -63,6 +64,10 @@ export class OAuthService {
   /**
    * Authenticates user via OAuth (any provider).
    * Resolves account by: provider+providerAccountId → email (auto-link) → create new.
+   * Auto-link by email is allowed only for OAuth-only accounts: password accounts are
+   * never verified by email, so linking them would allow pre-registration takeover.
+   *
+   * @throws {UnauthorizedException} OAUTH_ACCOUNT_EXISTS_PASSWORD when a password account owns the email
    */
   async loginWithOAuth(
     payload: OAuthUserPayload,
@@ -83,8 +88,12 @@ export class OAuthService {
     // 2. Find by email and auto-link new provider
     if (!user) {
       user = await this.usersService.getByEmail(payload.email);
+      if (user?.passwordHash) {
+        // Password registration does not verify email ownership; require explicit linking
+        throw new UnauthorizedException(OAuthErrorCode.ACCOUNT_EXISTS_PASSWORD);
+      }
       if (user) {
-        // Auto-link this provider to existing account
+        // Auto-link this provider to existing OAuth-only account
         await this.oauthAccountsRepository.create({
           userId: user.id,
           provider: payload.provider,

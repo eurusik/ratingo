@@ -1,14 +1,15 @@
 import {
+  Body,
   Controller,
-  Post,
   Delete,
   Get,
-  Param,
-  Body,
-  Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -53,7 +54,7 @@ export class SavedItemsController {
   @ApiCreatedResponse({ type: SaveActionResultDto, description: 'Item saved with current status' })
   async saveItem(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: SaveItemDto,
   ): Promise<SaveActionResultDto> {
     const item = await this.savedItemsService.saveItem({
@@ -88,7 +89,7 @@ export class SavedItemsController {
   @ApiOkResponse({ type: UnsaveActionResultDto, description: 'Item removed with current status' })
   async unsaveItem(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: UnsaveItemDto,
   ): Promise<UnsaveActionResultDto> {
     const removed = await this.savedItemsService.unsaveItem(
@@ -133,7 +134,7 @@ export class SavedItemsController {
   @ApiOkResponse({ type: MediaSaveStatusDto })
   async getStatus(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
   ): Promise<MediaSaveStatusDto> {
     const lists = await this.savedItemsService.getListsForMedia(user.id, mediaItemId);
     return {

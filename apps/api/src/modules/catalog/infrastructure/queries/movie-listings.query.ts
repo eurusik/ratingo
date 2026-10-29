@@ -47,6 +47,7 @@ import {
 import { GenreQuery } from './shared/genre.query';
 import { MovieResultMapper } from './shared/movie-result.mapper';
 import { movieSelectFields, type MovieSelectRow } from './shared/movie-select.fields';
+import { buildMovieSortOrder } from './shared/sort-order.builder';
 
 /**
  * Type of movie listing to fetch.
@@ -358,22 +359,8 @@ export class MovieListingsQuery {
   }
 
   private buildOrder(sort: CatalogSort, order: SortOrder): SQL[] {
-    const dir = order === 'asc' ? sql`asc` : sql`desc`;
-    const nullsLast = sql`NULLS LAST`;
-
-    if (sort === 'ratingo') {
-      return [sql`${schema.mediaStats.ratingoScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
-    }
-    if (sort === 'releaseDate' || sort === 'lastAirDate') {
-      return [
-        sql`${schema.mediaItems.releaseDate} ${dir} ${nullsLast}`,
-        sql`${schema.mediaItems.id} desc`,
-      ];
-    }
-    if (sort === 'tmdbPopularity') {
-      return [sql`${schema.mediaItems.popularity} ${dir}`, sql`${schema.mediaItems.id} desc`];
-    }
-    return [sql`${schema.mediaStats.popularityScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
+    // Shared builder: handles trending, NULLS LAST and releaseDate fallback consistently.
+    return buildMovieSortOrder(sort, order);
   }
 
   /**

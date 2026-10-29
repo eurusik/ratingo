@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
@@ -218,6 +218,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
             and(
               eq(schema.userSavedItems.userId, userId),
               eq(schema.userSavedItems.list, list),
+              isNull(schema.mediaItems.deletedAt),
               ...(type ? [eq(schema.mediaItems.type, type)] : []),
             ),
           )
@@ -257,6 +258,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
         const whereParts = [
           eq(schema.userSavedItems.userId, userId),
           eq(schema.userSavedItems.list, list),
+          isNull(schema.mediaItems.deletedAt),
         ];
 
         if (type) {

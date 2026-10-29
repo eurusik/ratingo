@@ -10,6 +10,7 @@ import { CommunityRatingService } from '../../application/services/community-rat
 import { getQueueToken } from '@nestjs/bullmq';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import { StatsNotFoundException } from '@/common/exceptions';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('StatsController', () => {
   let controller: StatsController;
@@ -93,7 +94,15 @@ describe('StatsController', () => {
       const result = await controller.getStatsByTmdbId(550);
 
       expect(result).toEqual(mockStats);
-      expect(statsQueryService.getStatsByTmdbId).toHaveBeenCalledWith(550);
+      expect(statsQueryService.getStatsByTmdbId).toHaveBeenCalledWith(550, undefined);
+    });
+
+    it('should forward the optional type query param', async () => {
+      statsQueryService.getStatsByTmdbId.mockResolvedValue({ mediaItemId: 'uuid-123' });
+
+      await controller.getStatsByTmdbId(550, { type: 'show' });
+
+      expect(statsQueryService.getStatsByTmdbId).toHaveBeenCalledWith(550, MediaType.SHOW);
     });
 
     it('should propagate StatsNotFoundException', async () => {

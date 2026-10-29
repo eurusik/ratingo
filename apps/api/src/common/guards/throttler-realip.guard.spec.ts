@@ -1,5 +1,10 @@
 import { ExecutionContext, Logger } from '@nestjs/common';
-import { ThrottlerRealIpGuard } from './throttler-realip.guard';
+import { Throttle } from '@nestjs/throttler';
+import {
+  buildThrottlerTiers,
+  skipUnlessRouteOptsIn,
+  ThrottlerRealIpGuard,
+} from './throttler-realip.guard';
 import { ThrottlerLimitDetail } from '@nestjs/throttler';
 import { Reflector } from '@nestjs/core';
 import type { FastifyRequest, FastifyReply } from 'fastify';
@@ -111,6 +116,94 @@ describe('ThrottlerRealIpGuard', () => {
 
       const result = guard['generateKey'](context, 'suffix', 'tier');
       expect(result).toBe('tier:1.2.3.4:suffix');
+    });
+  });
+
+  describe('generateKey for route-scoped tiers', () => {
+    class DummyController {
+      handlerA() {}
+      handlerB() {}
+    }
+    const ctxFor = (handler: () => void) =>
+      ({
+        switchToHttp: () => ({
+          getRequest: () => ({ headers: { 'cf-connecting-ip': '1.2.3.4' } }),
+        }),
+        getClass: () => DummyController,
+        getHandler: () => handler,
+      }) as unknown as ExecutionContext;
+
+    it('should keep a separate counter per route for the auth tier', () => {
+      const a = guard['generateKey'](ctxFor(DummyController.prototype.handlerA), '1.2.3.4', 'auth');
+      const b = guard['generateKey'](ctxFor(DummyController.prototype.handlerB), '1.2.3.4', 'auth');
+      expect(a).toBe('auth:1.2.3.4:1.2.3.4:DummyController.handlerA');
+      expect(a).not.toBe(b);
+    });
+
+    it('should keep shared per-IP counters for default/strict tiers', () => {
+      const a = guard['generateKey'](ctxFor(DummyController.prototype.handlerA), 'x', 'strict');
+      const b = guard['generateKey'](ctxFor(DummyController.prototype.handlerB), 'x', 'strict');
+      expect(a).toBe(b);
+    });
+  });
+
+  describe('buildThrottlerTiers / skipUnlessRouteOptsIn', () => {
+    class OptedInController {
+      @Throttle({ auth: { limit: 10, ttl: 60000 } })
+      login() {}
+
+      @Throttle({ refresh: { limit: 30, ttl: 60000 } })
+      refresh() {}
+
+      plain() {}
+    }
+
+    @Throttle({ auth: { limit: 5, ttl: 60000 } })
+    class ClassLevelController {
+      anything() {}
+    }
+
+    const ctx = (cls: new () => unknown, handler: () => void, method = 'POST') =>
+      ({
+        switchToHttp: () => ({ getRequest: () => ({ method }) }),
+        getClass: () => cls,
+        getHandler: () => handler,
+      }) as unknown as ExecutionContext;
+
+    it('should apply the auth tier only to routes that opt in via @Throttle({ auth })', () => {
+      const skip = skipUnlessRouteOptsIn('auth');
+      expect(skip(ctx(OptedInController, OptedInController.prototype.login))).toBe(false);
+      expect(skip(ctx(OptedInController, OptedInController.prototype.plain))).toBe(true);
+      expect(skip(ctx(OptedInController, OptedInController.prototype.refresh))).toBe(true);
+      expect(skip(ctx(ClassLevelController, ClassLevelController.prototype.anything))).toBe(false);
+    });
+
+    it('should define auth (10/min) and refresh (30/min) tiers that apply to POST routes', () => {
+      const tiers = buildThrottlerTiers(600);
+      const auth = tiers.find((t) => t.name === 'auth')!;
+      const refresh = tiers.find((t) => t.name === 'refresh')!;
+      const login = ctx(OptedInController, OptedInController.prototype.login);
+      const refreshRoute = ctx(OptedInController, OptedInController.prototype.refresh);
+
+      expect(auth.limit).toBe(10);
+      expect(refresh.limit).toBe(30);
+      expect((auth.skipIf as any)(login)).toBe(false);
+      expect((refresh.skipIf as any)(refreshRoute)).toBe(false);
+      expect((auth.skipIf as any)(refreshRoute)).toBe(true);
+    });
+
+    it('should skip default tier for mutations and strict tier for reads', () => {
+      const tiers = buildThrottlerTiers(600);
+      const def = tiers.find((t) => t.name === 'default')!;
+      const strict = tiers.find((t) => t.name === 'strict')!;
+      const post = ctx(OptedInController, OptedInController.prototype.plain, 'POST');
+      const get = ctx(OptedInController, OptedInController.prototype.plain, 'GET');
+
+      expect(def.limit).toBe(600);
+      expect((def.skipIf as any)(post)).toBe(true);
+      expect((def.skipIf as any)(get)).toBe(false);
+      expect((strict.skipIf as any)(post)).toBe(false);
+      expect((strict.skipIf as any)(get)).toBe(true);
     });
   });
 

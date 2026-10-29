@@ -1,3 +1,4 @@
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleUsersRepository } from './drizzle-users.repository';
 import * as schema from '../../../../database/schema';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -85,5 +86,51 @@ describe('DrizzleUsersRepository', () => {
     await expect(repo.updateProfile('u1', { username: 'x' })).rejects.toBeInstanceOf(
       DatabaseException,
     );
+  });
+
+  describe('case-insensitive lookups', () => {
+    const makeSelectDb = (rows: any[]) => {
+      const chain: any = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(rows),
+      };
+      // findByEmail awaits the chain after where(); make it thenable
+      chain.then = (resolve: (v: any[]) => void) => resolve(rows);
+      return { db: { select: jest.fn().mockReturnValue(chain) } as any, chain };
+    };
+
+    it('findByEmail should match with lower(email) = lower($1)', async () => {
+      const { db, chain } = makeSelectDb([baseRow]);
+      const repo = new DrizzleUsersRepository(db);
+
+      const user = await repo.findByEmail('User@Example.com');
+
+      expect(user).toMatchObject({ id: 'u1' });
+      const { sql: whereSql, params } = new PgDialect().sqlToQuery(chain.where.mock.calls[0][0]);
+      expect(whereSql).toBe('lower("users"."email") = lower($1)');
+      expect(params).toEqual(['User@Example.com']);
+    });
+
+    it('findByUsername should match case-insensitively and return a single row', async () => {
+      const { db, chain } = makeSelectDb([baseRow]);
+      const repo = new DrizzleUsersRepository(db);
+
+      const user = await repo.findByUsername('Ratingo_Fan');
+
+      expect(user).toMatchObject({ id: 'u1', username: 'ratingo_fan' });
+      const { sql: whereSql, params } = new PgDialect().sqlToQuery(chain.where.mock.calls[0][0]);
+      expect(whereSql).toBe('lower("users"."username") = lower($1)');
+      expect(params).toEqual(['Ratingo_Fan']);
+      expect(chain.limit).toHaveBeenCalledWith(1);
+    });
+
+    it('findByUsername should return null when nothing matches', async () => {
+      const { db } = makeSelectDb([]);
+      const repo = new DrizzleUsersRepository(db);
+
+      await expect(repo.findByUsername('nobody')).resolves.toBeNull();
+    });
   });
 });

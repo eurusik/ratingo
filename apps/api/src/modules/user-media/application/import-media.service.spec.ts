@@ -16,6 +16,7 @@ describe('ImportMediaService', () => {
     mediaLookup = {
       findManyByImdbIds: jest.fn(),
       findManyByTmdbIds: jest.fn(),
+      findTypeById: jest.fn(),
     };
 
     repo = {
@@ -49,7 +50,7 @@ describe('ImportMediaService', () => {
         { id: 'media-2', imdbId: 'tt0000002', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 2, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({ imported: 2, skipped: 0, plannedMediaItemIds: [] });
 
       const result = await service.import({
         userId: 'user-1',
@@ -103,7 +104,7 @@ describe('ImportMediaService', () => {
         { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0, plannedMediaItemIds: [] });
 
       const result = await service.import({
         userId: 'user-1',
@@ -126,7 +127,7 @@ describe('ImportMediaService', () => {
       mediaLookup.findManyByTmdbIds.mockResolvedValue([
         { id: 'media-5', tmdbId: 550, type: 'movie' },
       ]);
-      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0, plannedMediaItemIds: [] });
 
       const result = await service.import({
         userId: 'user-1',
@@ -153,7 +154,7 @@ describe('ImportMediaService', () => {
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
       // DB skips 1 because it already exists
-      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 1 });
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 1, plannedMediaItemIds: [] });
 
       const result = await service.import({
         userId: 'user-1',
@@ -177,7 +178,7 @@ describe('ImportMediaService', () => {
         { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0, plannedMediaItemIds: [] });
 
       await service.import({
         userId: 'user-1',
@@ -197,7 +198,7 @@ describe('ImportMediaService', () => {
         { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0, plannedMediaItemIds: [] });
 
       const result = await service.import({
         userId: 'user-1',
@@ -225,7 +226,7 @@ describe('ImportMediaService', () => {
     it('reports items with neither imdbId nor tmdbId as notFound', async () => {
       mediaLookup.findManyByImdbIds.mockResolvedValue([]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 0, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({ imported: 0, skipped: 0, plannedMediaItemIds: [] });
 
       const result = await service.import({
         userId: 'user-1',
@@ -288,7 +289,7 @@ describe('ImportMediaService', () => {
         { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0, plannedMediaItemIds: [] });
       // Second item is not found and has an identifier — triggers createPendingBatches
       importPendingService.createPendingBatches.mockRejectedValue(new Error('DB is down'));
 
@@ -358,7 +359,11 @@ describe('ImportMediaService', () => {
         { id: 'media-2', imdbId: 'tt0000002', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 2, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({
+        imported: 2,
+        skipped: 0,
+        plannedMediaItemIds: ['media-2'],
+      });
 
       await service.import({
         userId: 'user-1',
@@ -385,7 +390,7 @@ describe('ImportMediaService', () => {
         { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0, plannedMediaItemIds: [] });
 
       await service.import({
         userId: 'user-1',
@@ -402,7 +407,11 @@ describe('ImportMediaService', () => {
         { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({
+        imported: 1,
+        skipped: 0,
+        plannedMediaItemIds: ['media-1'],
+      });
       savedItemsService.saveItem.mockRejectedValue(new Error('saved_items DB error'));
 
       const result = await service.import({
@@ -429,7 +438,11 @@ describe('ImportMediaService', () => {
         items.map((item, i) => ({ id: `media-${i}`, imdbId: item.imdbId, type: 'movie' })),
       );
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 51, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({
+        imported: 51,
+        skipped: 0,
+        plannedMediaItemIds: items.map((_, i) => `media-${i}`),
+      });
 
       await service.import({
         userId: 'user-1',
@@ -449,7 +462,11 @@ describe('ImportMediaService', () => {
         { id: 'media-3', imdbId: 'tt0000003', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      repo.bulkImport.mockResolvedValue({ imported: 3, skipped: 0 });
+      repo.bulkImport.mockResolvedValue({
+        imported: 3,
+        skipped: 0,
+        plannedMediaItemIds: ['media-1', 'media-2', 'media-3'],
+      });
       // 2nd saveItem call rejects; 1st and 3rd succeed
       savedItemsService.saveItem
         .mockResolvedValueOnce({} as any)
@@ -472,6 +489,63 @@ describe('ImportMediaService', () => {
       // Core import is unaffected
       expect(result.imported).toBe(3);
       expect(result.skipped).toBe(0);
+    });
+
+    it('does not save items skipped because a state already exists (not in plannedMediaItemIds)', async () => {
+      mediaLookup.findManyByImdbIds.mockResolvedValue([
+        { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
+        { id: 'media-2', imdbId: 'tt0000002', type: 'movie' },
+      ]);
+      mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
+      // media-1 already had a (completed) state -> skipped by ON CONFLICT DO NOTHING
+      repo.bulkImport.mockResolvedValue({
+        imported: 1,
+        skipped: 1,
+        plannedMediaItemIds: ['media-2'],
+      });
+
+      await service.import({
+        userId: 'user-1',
+        source: 'kinobaza',
+        items: [
+          { imdbId: 'tt0000001', state: 'planned', title: 'Already completed elsewhere' },
+          { imdbId: 'tt0000002', state: 'planned', title: 'Really new' },
+        ],
+        overwriteExisting: false,
+      });
+
+      expect(savedItemsService.saveItem).toHaveBeenCalledTimes(1);
+      expect(savedItemsService.saveItem).toHaveBeenCalledWith(
+        expect.objectContaining({ mediaItemId: 'media-2' }),
+      );
+    });
+  });
+
+  describe('deduplication by resolved mediaItemId', () => {
+    it('collapses entries resolving to the same mediaItemId before bulkImport (last wins)', async () => {
+      // IMDB-only row and TMDB-only row both resolve to media-1
+      mediaLookup.findManyByImdbIds.mockResolvedValue([
+        { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
+      ]);
+      mediaLookup.findManyByTmdbIds.mockResolvedValue([
+        { id: 'media-1', tmdbId: 550, type: 'movie' },
+      ]);
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0, plannedMediaItemIds: [] });
+
+      await service.import({
+        userId: 'user-1',
+        source: 'kinobaza',
+        items: [
+          { imdbId: 'tt0000001', state: 'planned', rating: null, title: 'By IMDB' },
+          { tmdbId: 550, state: 'completed', rating: 70, title: 'By TMDB (last)' },
+        ],
+        overwriteExisting: true,
+      });
+
+      expect(repo.bulkImport).toHaveBeenCalledTimes(1);
+      const passed = repo.bulkImport.mock.calls[0][1];
+      expect(passed).toHaveLength(1);
+      expect(passed[0]).toEqual({ mediaItemId: 'media-1', state: 'completed', rating: 70 });
     });
   });
 });

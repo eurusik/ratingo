@@ -312,6 +312,22 @@ describe('BaseOAuthGuard', () => {
       await expect(guard.canActivate(context)).rejects.toThrow(OAuthErrorCode.STATE_INVALID);
     });
 
+    it('should throw STATE_INVALID when code is present but state query param is missing', async () => {
+      const signedState = guard.signState(guard.generateStatePayload('/home'));
+
+      const { context, req } = mockContext({ code: 'auth-code' });
+      req.cookies = { oauth_state: signedState };
+
+      await expect(guard.canActivate(context)).rejects.toThrow(OAuthErrorCode.STATE_INVALID);
+      expect(req.oauthStatePayload).toBeUndefined();
+    });
+
+    it('should throw STATE_INVALID when code is present without state and without cookie', async () => {
+      const { context } = mockContext({ code: 'auth-code' });
+
+      await expect(guard.canActivate(context)).rejects.toThrow(OAuthErrorCode.STATE_INVALID);
+    });
+
     it('should throw STATE_INVALID when cookie state mismatches query state', async () => {
       const payload = guard.generateStatePayload('/home');
       const signedState = guard.signState(payload);

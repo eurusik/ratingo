@@ -3,8 +3,9 @@ import * as schema from '../../../../../database/schema';
 
 describe('movie-select.fields', () => {
   describe('movieSelectFields - schema mappings', () => {
-    it('should map id to movies.id column', () => {
-      expect(movieSelectFields.id).toBe(schema.movies.id);
+    it('should map id to mediaItems.id column (media item id, not movies PK)', () => {
+      expect(movieSelectFields.id).toBe(schema.mediaItems.id);
+      expect(movieSelectFields.id).not.toBe(schema.movies.id);
     });
 
     it('should map mediaItemId to movies.mediaItemId column', () => {

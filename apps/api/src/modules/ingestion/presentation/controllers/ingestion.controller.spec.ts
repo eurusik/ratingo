@@ -55,7 +55,7 @@ describe('IngestionController', () => {
       const dto = { tmdbId: 550, type: MediaType.MOVIE };
       const res = await controller.sync(dto);
 
-      expect(mockSyncService.findExistingMedia).toHaveBeenCalledWith(550);
+      expect(mockSyncService.findExistingMedia).toHaveBeenCalledWith(550, MediaType.MOVIE);
       expect(mockSyncService.createStubForIngestion).toHaveBeenCalledWith(550, MediaType.MOVIE);
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_MOVIE, { tmdbId: 550 });
       expect(res.jobId).toBe('job-1');
@@ -200,6 +200,35 @@ describe('IngestionController', () => {
       );
     });
 
+    it('should report deduped=false when no job with that id existed', async () => {
+      mockQueue.getJob.mockResolvedValue(undefined);
+
+      const result = await controller.syncNewReleases({ region: DEFAULT_REGION, daysBack: 60 });
+
+      expect(result.deduped).toBe(false);
+    });
+
+    it('should report deduped=true when a job with that id already existed', async () => {
+      mockQueue.getJob.mockResolvedValue({ id: 'existing' });
+
+      const result = await controller.syncNewReleases({ region: DEFAULT_REGION, daysBack: 60 });
+
+      expect(result.deduped).toBe(true);
+    });
+
+    it('should report deduped=false and skip the lookup when forced', async () => {
+      mockQueue.getJob.mockResolvedValue({ id: 'existing' });
+
+      const result = await controller.syncNewReleases({
+        region: DEFAULT_REGION,
+        daysBack: 60,
+        force: true,
+      });
+
+      expect(result.deduped).toBe(false);
+      expect(mockQueue.getJob).not.toHaveBeenCalled();
+    });
+
     it('should use default values when not provided', async () => {
       await controller.syncNewReleases({});
 
@@ -303,13 +332,32 @@ describe('IngestionController', () => {
       const finishedOn = Date.now();
       mockQueue.getJob = jest
         .fn()
-        .mockResolvedValue(makeJob('completed', { finishedOn, data: { tmdbId: 550 } }));
+        .mockResolvedValue(
+          makeJob('completed', { finishedOn, name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 550 } }),
+        );
       mockSyncService.getSlugByTmdbId.mockResolvedValue('test-movie-slug');
 
       const res = await controller.getJobStatus('job-42');
       expect(res.status).toBe('ready');
       expect(res.slug).toBe('test-movie-slug');
-      expect(mockSyncService.getSlugByTmdbId).toHaveBeenCalledWith(550);
+      expect(mockSyncService.getSlugByTmdbId).toHaveBeenCalledWith(550, MediaType.MOVIE);
+    });
+
+    it('derives show type from the job name when resolving the slug', async () => {
+      mockQueue.getJob = jest
+        .fn()
+        .mockResolvedValue(
+          makeJob('completed', {
+            finishedOn: Date.now(),
+            name: IngestionJob.SYNC_SHOW,
+            data: { tmdbId: 550 },
+          }),
+        );
+      mockSyncService.getSlugByTmdbId.mockResolvedValue('test-show-slug');
+
+      const res = await controller.getJobStatus('job-42');
+      expect(res.slug).toBe('test-show-slug');
+      expect(mockSyncService.getSlugByTmdbId).toHaveBeenCalledWith(550, MediaType.SHOW);
     });
 
     it('returns null slug when job is not completed', async () => {

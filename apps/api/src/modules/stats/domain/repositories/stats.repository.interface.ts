@@ -1,3 +1,5 @@
+import { type MediaType } from '@/common/enums/media-type.enum';
+
 /**
  * Injection token for the Stats Repository.
  */
@@ -65,9 +67,10 @@ export interface IStatsRepository {
    * Performs a join with media_items table.
    *
    * @param {number} tmdbId - TMDB ID of the media item
+   * @param {MediaType} type - Optional media type (TMDB movie/TV id spaces overlap; pass when known)
    * @returns {Promise<MediaStatsData | null>} Stats or null if not found
    */
-  findByTmdbId(tmdbId: number): Promise<MediaStatsData | null>;
+  findByTmdbId(tmdbId: number, type?: MediaType): Promise<MediaStatsData | null>;
 
   /**
    * Upserts only the total_watchers field for a media item.

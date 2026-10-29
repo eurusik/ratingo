@@ -99,15 +99,23 @@ export class MdblistAdapter {
     this.httpClient = new ResilientHttpClient(MDBLIST_RETRY_CONFIG);
   }
 
+  /** True when an API key is configured; without it every request would fail. */
+  isConfigured(): boolean {
+    return Boolean(this.config.apiKey);
+  }
+
   /**
    * Fetches Rotten Tomatoes ratings for a media item by TMDB ID.
    *
-   * Best-effort: returns an object with null fields (rather than throwing)
-   * when MDBList has no data for the requested title or the input is invalid.
+   * Returns an object with null fields only for a genuine "no data" outcome:
+   * the title is unknown to MDBList (404), it has no RT entries, or the input
+   * is invalid. Every other failure (missing API key, 401/403, 429, 5xx,
+   * network) is thrown so callers can retry instead of recording "no data".
    *
    * @param tmdbId - The TMDB numeric ID (must be a positive integer)
    * @param type - MediaType.MOVIE or MediaType.SHOW
    * @returns RT critics and audience scores (each 0-100 or null)
+   * @throws MdblistApiException on any failure other than not-found
    */
   async getRottenTomatoesRatings(tmdbId: number, type: MediaType): Promise<MdblistRatings> {
     // Defensive runtime validation — BullMQ payloads are JSON and TypeScript
@@ -128,7 +136,7 @@ export class MdblistAdapter {
     try {
       const data = await this.fetch<MdblistResponse>(tmdbId, type);
 
-      const ratings = Array.isArray(data.ratings) ? data.ratings : [];
+      const ratings = Array.isArray(data?.ratings) ? data.ratings : [];
       return {
         rottenTomatoesCritics: this.extractScore(ratings, SOURCE.TOMATOES),
         rottenTomatoesAudience: this.extractScore(ratings, SOURCE.POPCORN),
@@ -138,8 +146,12 @@ export class MdblistAdapter {
         error instanceof MdblistApiException
           ? (error.details as Record<string, unknown> | undefined)?.statusCode
           : 'unknown';
-      this.logger.warn(`MDBList enrichment skipped for tmdbId=${tmdbId} (status=${status})`);
-      return { rottenTomatoesCritics: null, rottenTomatoesAudience: null };
+      if (status === HttpStatus.NOT_FOUND) {
+        this.logger.debug(`MDBList has no entry for tmdbId=${tmdbId} (404)`);
+        return { rottenTomatoesCritics: null, rottenTomatoesAudience: null };
+      }
+      this.logger.warn(`MDBList request failed for tmdbId=${tmdbId} (status=${status})`);
+      throw error;
     }
   }
 

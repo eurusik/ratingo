@@ -9,7 +9,7 @@ import {
   HttpStatus,
   ParseIntPipe,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { OptionalJwtAuthGuard } from '../../../auth/public';
@@ -40,9 +40,12 @@ export class CatalogSearchController {
    */
   @Get('search')
   @ApiOperation({ summary: 'Search movies and shows' })
+  @ApiQuery({ name: 'query', type: String, required: true })
   @ApiResponse({ status: 200, type: SearchResponseDto })
-  async search(@Query('query') query: string): Promise<SearchResponseDto> {
-    const result = await this.catalogSearchService.search(query);
+  async search(@Query('query') query: string | string[]): Promise<SearchResponseDto> {
+    // Repeated `?query=a&query=b` is parsed into an array; use the first value.
+    const normalized = Array.isArray(query) ? (query[0] ?? '') : query;
+    const result = await this.catalogSearchService.search(normalized);
     return SearchMapper.toResponseDto(result);
   }
 

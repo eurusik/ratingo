@@ -68,6 +68,13 @@ export class BackfillMdblistRatingsPipeline {
    * row for {@link MDBLIST_RATINGS_REFRESH_DAYS} days.
    */
   async dispatch(): Promise<void> {
+    if (!this.mdblistAdapter.isConfigured()) {
+      this.logger.warn(
+        'MDBList ratings backfill dispatcher skipped: MDBLIST_API_KEY is not configured',
+      );
+      return;
+    }
+
     this.logger.log('Starting MDBList ratings backfill dispatcher...');
 
     const staleBefore = new Date(Date.now() - MDBLIST_RATINGS_REFRESH_DAYS * MS_PER_DAY);
@@ -158,22 +165,30 @@ export class BackfillMdblistRatingsPipeline {
   /**
    * Item job: fetches RT ratings from MDBList and updates DB directly.
    *
-   * ALWAYS stamps `rtFetchedAt` on a real fetch (even when MDBList returns
-   * no data) so the dispatcher skips this row for the next refresh window —
-   * preventing endless re-polling for titles MDBList has no coverage for.
+   * Stamps `rtFetchedAt` only after a successful fetch or a genuine not-found
+   * (adapter returns null fields for 404 / no RT entries), so the dispatcher
+   * skips this row for the next refresh window and does not endlessly re-poll
+   * titles MDBList has no coverage for.
+   *
+   * Any other failure (401, 429, 5xx, network) is thrown by the adapter and
+   * propagates out of this method WITHOUT stamping, so BullMQ retries the job
+   * and the row stays eligible instead of being locked out for the refresh
+   * window with zero data. If the API key is missing nothing is stamped.
    *
    * Before fetching, re-reads `rtFetchedAt` from the DB and short-circuits
    * if the row was already processed within the refresh window. This is
    * belt-and-braces defence: the dispatcher's budget cap is the primary
    * protection, but a duplicate job can still arrive (admin force=true,
    * BullMQ retries, worker restarts) and would otherwise burn a quota unit.
-   *
-   * Best-effort on the network side: if MDBList is unreachable, the
-   * adapter returns nulls and this method no-ops on ratings but still
-   * bumps `rtFetchedAt` — acceptable, because the alternative (retrying
-   * forever on a MDBList outage) burns more quota than the ~90-day delay.
    */
   async processItem(data: { mediaItemId: string; tmdbId: number; type: MediaType }): Promise<void> {
+    if (!this.mdblistAdapter.isConfigured()) {
+      this.logger.warn(
+        `MDBList item skipped for tmdbId=${data.tmdbId}: MDBLIST_API_KEY is not configured`,
+      );
+      return;
+    }
+
     // Pre-check: skip if this row was already processed within the refresh
     // window. Saves an MDBList quota unit per redundant job.
     const [existing] = await withDbError(

@@ -78,8 +78,14 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
     );
   }
 
-  async upsertManyByRegions(mediaItemId: string, offers: CreateWatchOfferInput[]): Promise<void> {
-    if (offers.length === 0) return;
+  async upsertManyByRegions(
+    mediaItemId: string,
+    offers: CreateWatchOfferInput[],
+    managedRegions: readonly string[] = [],
+  ): Promise<void> {
+    // Managed regions without any new offer must be cleared (stale offers), so an empty
+    // payload is only a no-op when there is nothing to clear either.
+    if (offers.length === 0 && managedRegions.length === 0) return;
 
     // Group offers by region
     const offersByRegion = new Map<string, CreateWatchOfferInput[]>();
@@ -88,12 +94,25 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
       regionOffers.push(offer);
       offersByRegion.set(offer.region, regionOffers);
     }
+    const regionsToClear = managedRegions.filter((region) => !offersByRegion.has(region));
 
     await withDbError(
       'upsertManyByRegions',
       this.logger,
       async () => {
         await this.db.transaction(async (tx) => {
+          // Same transaction as the inserts: a failed insert must not leave regions wiped
+          if (regionsToClear.length > 0) {
+            await tx
+              .delete(mediaWatchOffers)
+              .where(
+                and(
+                  eq(mediaWatchOffers.mediaItemId, mediaItemId),
+                  inArray(mediaWatchOffers.region, [...regionsToClear]),
+                ),
+              );
+          }
+
           for (const [region, regionOffers] of offersByRegion) {
             await tx
               .delete(mediaWatchOffers)
@@ -119,7 +138,7 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
           }
         });
       },
-      { mediaItemId, regionCount: offersByRegion.size },
+      { mediaItemId, regionCount: offersByRegion.size, clearedRegions: regionsToClear.length },
     );
   }
 

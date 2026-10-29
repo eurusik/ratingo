@@ -6,6 +6,7 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -157,7 +158,10 @@ export class UserMediaController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'Get user media state with media summary (auth: Bearer)' })
   @Get(':mediaItemId')
-  async getState(@CurrentUser() user: { id: string }, @Param('mediaItemId') mediaItemId: string) {
+  async getState(
+    @CurrentUser() user: { id: string },
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
+  ) {
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
   }
 
@@ -175,7 +179,7 @@ export class UserMediaController {
   @HttpCode(HttpStatus.OK)
   async setState(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: SetUserMediaStateDto,
   ) {
     await this.userMediaService.setState(
@@ -214,7 +218,10 @@ export class UserMediaController {
   @ApiOperation({ summary: 'Pause a media item (auth: Bearer)' })
   @Post(':mediaItemId/pause')
   @HttpCode(HttpStatus.OK)
-  async pauseMedia(@CurrentUser() user: { id: string }, @Param('mediaItemId') mediaItemId: string) {
+  async pauseMedia(
+    @CurrentUser() user: { id: string },
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
+  ) {
     await this.userMediaService.pauseMedia(user.id, mediaItemId);
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
   }
@@ -228,7 +235,7 @@ export class UserMediaController {
   @HttpCode(HttpStatus.OK)
   async resumeMedia(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
   ) {
     await this.userMediaService.resumeMedia(user.id, mediaItemId);
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);

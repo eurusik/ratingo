@@ -4,6 +4,7 @@
 
 import { Test } from '@nestjs/testing';
 
+import { DatabaseException } from '../../../../common/exceptions';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { MEDIA_WATCH_OFFERS_REPOSITORY } from '../../../provider/public';
@@ -287,6 +288,46 @@ describe('PolicyInputRepository', () => {
       expect(result).toEqual(['media-1']);
       // The where clause should include the snapshotCutoff condition
       expect(queryMock.where).toHaveBeenCalled();
+    });
+  });
+
+  describe('database error wrapping', () => {
+    const failingQuery = () => ({
+      from: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockRejectedValue(new Error('connection lost')),
+    });
+
+    it('should wrap findOneForEvaluation failures in DatabaseException', async () => {
+      mockDb.select.mockReturnValue(failingQuery());
+
+      await expect(repository.findOneForEvaluation('media-1')).rejects.toThrow(DatabaseException);
+    });
+
+    it('should wrap findManyForEvaluation failures in DatabaseException', async () => {
+      const query = failingQuery();
+      query.where = jest.fn().mockRejectedValue(new Error('connection lost'));
+      mockDb.select.mockReturnValue(query);
+
+      await expect(repository.findManyForEvaluation(['media-1'])).rejects.toThrow(
+        DatabaseException,
+      );
+    });
+
+    it('should wrap fetchBatchIds failures in DatabaseException', async () => {
+      mockDb.select.mockReturnValue(failingQuery());
+
+      await expect(repository.fetchBatchIds({ batchSize: 10 })).rejects.toThrow(DatabaseException);
+    });
+
+    it('should wrap countEligibleItems failures in DatabaseException', async () => {
+      const query = failingQuery();
+      query.where = jest.fn().mockRejectedValue(new Error('connection lost'));
+      mockDb.select.mockReturnValue(query);
+
+      await expect(repository.countEligibleItems()).rejects.toThrow(DatabaseException);
     });
   });
 });

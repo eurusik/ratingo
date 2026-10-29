@@ -150,4 +150,20 @@ describe('DrizzleMediaLookupAdapter', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('findTypeById', () => {
+    it('returns the media type of an existing item', async () => {
+      const chain = mockDb.select();
+      chain.where.mockResolvedValueOnce([{ type: 'show' }]);
+
+      await expect(adapter.findTypeById('media-1')).resolves.toBe('show');
+    });
+
+    it('returns null when the item does not exist or is soft-deleted', async () => {
+      const chain = mockDb.select();
+      chain.where.mockResolvedValueOnce([]);
+
+      await expect(adapter.findTypeById('missing')).resolves.toBeNull();
+    });
+  });
 });

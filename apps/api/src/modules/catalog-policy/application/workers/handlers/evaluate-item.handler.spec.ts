@@ -193,6 +193,41 @@ describe('EvaluateItemHandler', () => {
         );
       });
 
+      it('should rethrow and NOT record error on a non-final attempt so BullMQ retries', async () => {
+        mockRunRepository.findById.mockResolvedValue(mockRun);
+        mockEvaluationService.evaluateOne.mockRejectedValue(new Error('Transient failure'));
+
+        await expect(handler.handle(validPayload, { isFinalAttempt: false })).rejects.toThrow(
+          'Transient failure',
+        );
+
+        expect(mockRunRepository.recordError).not.toHaveBeenCalled();
+      });
+
+      it('should record error and complete (not throw) on the final attempt', async () => {
+        mockRunRepository.findById.mockResolvedValue(mockRun);
+        mockEvaluationService.evaluateOne.mockRejectedValue(new Error('Permanent failure'));
+
+        await expect(
+          handler.handle(validPayload, { isFinalAttempt: true }),
+        ).resolves.toBeUndefined();
+
+        expect(mockRunRepository.recordError).toHaveBeenCalledTimes(1);
+        expect(mockRunRepository.recordError).toHaveBeenCalledWith(
+          'run-123',
+          expect.objectContaining({ mediaItemId: 'item-456', error: 'Permanent failure' }),
+        );
+      });
+
+      it('should wrap non-Error rejections when rethrowing for retry', async () => {
+        mockRunRepository.findById.mockResolvedValue(mockRun);
+        mockEvaluationService.evaluateOne.mockRejectedValue('String error');
+
+        await expect(handler.handle(validPayload, { isFinalAttempt: false })).rejects.toThrow(
+          'String error',
+        );
+      });
+
       it('should not throw when evaluation fails', async () => {
         mockRunRepository.findById.mockResolvedValue(mockRun);
         mockEvaluationService.evaluateOne.mockRejectedValue(new Error('Evaluation failed'));

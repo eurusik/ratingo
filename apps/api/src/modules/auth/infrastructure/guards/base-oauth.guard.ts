@@ -124,13 +124,13 @@ export function createBaseOAuthGuard(strategyName: string) {
         throw new UnauthorizedException(OAuthErrorCode.CANCELLED);
       }
 
-      // On callback: validate state from cookie vs query
-      if (query.code && query.state) {
+      // On callback: a valid state (query) matching the signed cookie is REQUIRED whenever a code is present
+      if (query.code) {
         this.logger.debug('Callback phase - validating state');
         const cookieState = this.getStateCookie(req);
         this.logger.debug(`Cookie state present: ${!!cookieState}`);
 
-        if (!cookieState || !this.safeCompare(cookieState, query.state)) {
+        if (!cookieState || !query.state || !this.safeCompare(cookieState, query.state)) {
           this.logger.warn('State mismatch or missing cookie');
           throw new UnauthorizedException(OAuthErrorCode.STATE_INVALID);
         }

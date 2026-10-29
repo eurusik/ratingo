@@ -120,7 +120,7 @@ export class AuthController {
    * Registers a new user.
    */
   @Post('register')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ auth: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Register new user' })
   @ApiBody({ type: RegisterDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
@@ -144,7 +144,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ auth: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Login with email/password' })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
@@ -159,7 +159,7 @@ export class AuthController {
    * Refreshes tokens using valid refresh token.
    */
   @Post('refresh')
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Throttle({ refresh: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'Refresh tokens' })
   @ApiBody({ type: RefreshDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
@@ -331,7 +331,7 @@ export class AuthController {
    */
   @Post('oauth/exchange')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ auth: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Exchange one-time code for tokens' })
   @ApiBody({ type: ExchangeCodeDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })

@@ -22,6 +22,7 @@ export {
 // Response DTOs - Other
 export { SearchItemDto, SearchResponseDto } from './search.dto';
 export { CalendarEpisodeDto, CalendarDayDto, CalendarResponseDto } from './calendar-response.dto';
+export { NewEpisodesQueryDto } from './new-episodes-query.dto';
 export { NewEpisodeDto, NewEpisodesResponseDto } from './new-episodes-response.dto';
 export { ProvidersListDto, ProviderDto } from './providers.dto';
 export { ImportResultDto } from './import-result.dto';

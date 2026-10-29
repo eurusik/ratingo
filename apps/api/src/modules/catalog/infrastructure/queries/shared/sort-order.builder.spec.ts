@@ -115,6 +115,14 @@ describe('sort-order.builder', () => {
       });
     });
 
+    describe('NULLS LAST', () => {
+      it.each(Object.values(CATALOG_SORT))('puts NULLs last for %s DESC', (sort) => {
+        const [primary] = buildMovieSortOrder(sort, SORT_ORDER.DESC);
+
+        expect(getSqlStrings(primary)).toContain('nulls last');
+      });
+    });
+
     describe('all sort values are handled', () => {
       it('handles all CATALOG_SORT values without throwing', () => {
         const allSortValues = Object.values(CATALOG_SORT);
@@ -128,6 +136,12 @@ describe('sort-order.builder', () => {
   });
 
   describe('buildShowSortOrder', () => {
+    describe('NULLS LAST', () => {
+      it.each(Object.values(CATALOG_SORT))('puts NULLs last for %s DESC', (sort) => {
+        expect(getSqlStrings(buildShowSortOrder(sort, SORT_ORDER.DESC))).toContain('nulls last');
+      });
+    });
+
     describe('sort options', () => {
       it('returns SQL expression for trending sort', () => {
         const result = buildShowSortOrder(CATALOG_SORT.TRENDING, SORT_ORDER.DESC);

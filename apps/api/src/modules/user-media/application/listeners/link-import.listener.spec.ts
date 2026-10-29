@@ -70,7 +70,12 @@ describe('LinkImportListener', () => {
     };
 
     userMediaRepo = {
-      bulkImport: jest.fn().mockResolvedValue({ imported: 1, skipped: 0 }),
+      // Mimics a fresh insert: every planned item ends up planned
+      bulkImport: jest.fn().mockImplementation(async (_userId: string, items: any[]) => ({
+        imported: items.length,
+        skipped: 0,
+        plannedMediaItemIds: items.filter((i) => i.state === 'planned').map((i) => i.mediaItemId),
+      })),
     };
 
     savedItemsService = {
@@ -308,7 +313,7 @@ describe('LinkImportListener', () => {
       pendingRepo.findBatchById.mockResolvedValue(makeBatch());
       userMediaRepo.bulkImport
         .mockRejectedValueOnce(new Error('First item fails'))
-        .mockResolvedValueOnce({ imported: 1, skipped: 0 });
+        .mockResolvedValueOnce({ imported: 1, skipped: 0, plannedMediaItemIds: [] });
 
       const event = new MediaSyncedEvent(550, 'movie', 'media-uuid-1');
       await listener.handleMediaSynced(event);
@@ -348,6 +353,28 @@ describe('LinkImportListener', () => {
         mediaItemId: 'media-uuid-1',
         list: 'for_later',
         context: 'import',
+      });
+    });
+
+    it('does not call saveItem when the row was skipped because a state already exists', async () => {
+      const item = makePendingItem({ state: 'planned', rating: null });
+      pendingRepo.findItemsByResolvedTmdb.mockResolvedValue([item]);
+      pendingRepo.findBatchById.mockResolvedValue(makeBatch());
+      // ON CONFLICT DO NOTHING: user already has (e.g.) a completed state for this media
+      userMediaRepo.bulkImport.mockResolvedValueOnce({
+        imported: 0,
+        skipped: 1,
+        plannedMediaItemIds: [],
+      });
+
+      const event = new MediaSyncedEvent(550, 'movie', 'media-uuid-1');
+      await listener.handleMediaSynced(event);
+
+      expect(savedItemsService.saveItem).not.toHaveBeenCalled();
+      // The pending item itself is still linked and marked DONE
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalledWith('item-1', {
+        status: IMPORT_PENDING_STATUS.DONE,
+        mediaItemId: 'media-uuid-1',
       });
     });
 

@@ -55,7 +55,10 @@ export class TvMazeEnrichmentService {
             tvmazeTotalEpisodes > (media.details?.totalEpisodes ?? 0)
               ? tvmazeTotalEpisodes
               : media.details?.totalEpisodes,
-          nextAirDate: nextAirDate ?? media.details?.nextAirDate,
+          // Episodes were fetched successfully, so a missing future episode means "no next
+          // episode": write explicit null (pickDefined keeps null, drops undefined) so a stale
+          // past nextAirDate gets cleared. A TMDB value is kept only while still in the future.
+          nextAirDate: nextAirDate ?? this.futureOrNull(media.details?.nextAirDate),
           // TVMaze overrides TMDB's lastAirDate as TVMaze is "time authority"
           lastAirDate: lastAirDate ?? media.details?.lastAirDate,
         },
@@ -165,6 +168,11 @@ export class TvMazeEnrichmentService {
     }
 
     return merged.sort((a, b) => a.number - b.number);
+  }
+
+  /** Returns the date only if it is still in the future, otherwise null. */
+  private futureOrNull(date?: Date | null): Date | null {
+    return date && date > new Date() ? date : null;
   }
 
   /** Finds next air date from future episodes. */

@@ -13,7 +13,8 @@ import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
   POLICY_ACTIVATION_REPOSITORY,
 } from '../../domain/repositories';
-import { CATALOG_POLICY_QUEUE } from '../../catalog-policy.constants';
+import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
+import { ACTIVE_EVALUATION_CONTEXTS } from '../../domain/constants/evaluation.constants';
 import {
   PolicyNotFoundError,
   RunNotFoundError,
@@ -45,6 +46,7 @@ describe('PolicyActivationService', () => {
       update: jest.fn(),
       incrementCounters: jest.fn(),
       recordError: jest.fn(),
+      transitionToCancelled: jest.fn(),
     };
 
     mockPolicyActivationRepository = {
@@ -195,6 +197,11 @@ describe('PolicyActivationService', () => {
 
       expect(result.coverage).toBe(0.5);
       expect(result.processed).toBe(500);
+      // Item-level progress: an item only counts once ALL active contexts are evaluated
+      expect(mockAggregationService.aggregateCounters).toHaveBeenCalledWith(
+        'run-1',
+        ACTIVE_EVALUATION_CONTEXTS,
+      );
     });
 
     it('should return coverage 0 when totalReadySnapshot is 0', async () => {
@@ -479,6 +486,77 @@ describe('PolicyActivationService', () => {
       });
     });
 
+    it('should queue post-snapshot evaluations for every active context after promotion', async () => {
+      const snapshotCutoff = new Date('2024-01-01T00:00:00Z');
+      mockRunRepository.findById.mockResolvedValue({
+        id: 'run-1',
+        status: 'prepared',
+        totalReadySnapshot: 1000,
+        processed: 1000,
+        errors: 0,
+        promotedAt: null,
+        targetPolicyId: 'policy-1',
+        targetPolicyVersion: 2,
+        snapshotCutoff,
+      });
+
+      const result = await service.promoteRun('run-1');
+
+      expect(result.success).toBe(true);
+      expect(mockQueue.add).toHaveBeenCalledTimes(ACTIVE_EVALUATION_CONTEXTS.length);
+      for (const context of ACTIVE_EVALUATION_CONTEXTS) {
+        expect(mockQueue.add).toHaveBeenCalledWith(
+          CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
+          expect.objectContaining({
+            runId: 'run-1',
+            policyVersion: 2,
+            context,
+            afterSnapshot: true,
+          }),
+          expect.objectContaining({ jobId: `reeval-post_2_run-1_${context}` }),
+        );
+      }
+    });
+
+    it('should not queue post-snapshot evaluations when promotion fails', async () => {
+      mockRunRepository.findById.mockResolvedValue({
+        id: 'run-1',
+        status: 'prepared',
+        totalReadySnapshot: 1000,
+        processed: 1000,
+        errors: 0,
+        promotedAt: null,
+        targetPolicyId: 'policy-1',
+        targetPolicyVersion: 2,
+        snapshotCutoff: new Date(),
+      });
+      mockPolicyActivationRepository.promoteRun.mockRejectedValue(new Error('boom'));
+
+      const result = await service.promoteRun('run-1');
+
+      expect(result.success).toBe(false);
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('should still report success when queueing post-snapshot evaluations fails', async () => {
+      mockRunRepository.findById.mockResolvedValue({
+        id: 'run-1',
+        status: 'prepared',
+        totalReadySnapshot: 1000,
+        processed: 1000,
+        errors: 0,
+        promotedAt: null,
+        targetPolicyId: 'policy-1',
+        targetPolicyVersion: 2,
+        snapshotCutoff: new Date(),
+      });
+      mockQueue.add.mockRejectedValue(new Error('redis down'));
+
+      const result = await service.promoteRun('run-1');
+
+      expect(result.success).toBe(true);
+    });
+
     it('should allow custom coverage threshold', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
@@ -543,17 +621,31 @@ describe('PolicyActivationService', () => {
         id: 'run-1',
         status: 'running',
       });
-      mockRunRepository.update.mockResolvedValue(undefined);
+      mockRunRepository.transitionToCancelled.mockResolvedValue(true);
 
       const result = await service.cancelRun('run-1');
 
       expect(result.success).toBe(true);
-      expect(mockRunRepository.update).toHaveBeenCalledWith(
-        'run-1',
-        expect.objectContaining({
-          status: 'cancelled',
-        }),
-      );
+      expect(mockRunRepository.transitionToCancelled).toHaveBeenCalledWith('run-1', [
+        'running',
+        'prepared',
+      ]);
+      expect(mockRunRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('should report a conflict when the run changed status after it was read', async () => {
+      // Read says PREPARED, but a concurrent promote won the race: guarded update hits 0 rows
+      mockRunRepository.findById.mockResolvedValue({
+        id: 'run-1',
+        status: 'prepared',
+      });
+      mockRunRepository.transitionToCancelled.mockResolvedValue(false);
+
+      const result = await service.cancelRun('run-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('changed concurrently');
+      expect(mockRunRepository.update).not.toHaveBeenCalled();
     });
   });
 });

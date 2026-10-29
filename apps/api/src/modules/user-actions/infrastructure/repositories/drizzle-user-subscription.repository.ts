@@ -112,6 +112,9 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
               eq(schema.userSubscriptions.userId, userId),
               eq(schema.userSubscriptions.mediaItemId, mediaItemId),
               eq(schema.userSubscriptions.trigger, trigger),
+              // Only match active rows: re-deactivating an inactive row must report false,
+              // otherwise callers log a duplicate UNSUBSCRIBE action.
+              eq(schema.userSubscriptions.isActive, true),
             ),
           )
           .returning({ id: schema.userSubscriptions.id });
@@ -225,6 +228,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             and(
               eq(schema.userSubscriptions.userId, userId),
               eq(schema.userSubscriptions.isActive, true),
+              isNull(schema.mediaItems.deletedAt),
             ),
           )
           .orderBy(desc(schema.userSubscriptions.createdAt), desc(schema.userSubscriptions.id))
@@ -261,10 +265,16 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
         const [row] = await this.db
           .select({ count: sql<number>`count(*)` })
           .from(schema.userSubscriptions)
+          // Same join + filters as listActiveWithMedia — keep counts and lists consistent.
+          .innerJoin(
+            schema.mediaItems,
+            eq(schema.mediaItems.id, schema.userSubscriptions.mediaItemId),
+          )
           .where(
             and(
               eq(schema.userSubscriptions.userId, userId),
               eq(schema.userSubscriptions.isActive, true),
+              isNull(schema.mediaItems.deletedAt),
             ),
           );
         return Number(row?.count ?? 0);

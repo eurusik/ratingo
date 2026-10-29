@@ -103,8 +103,11 @@ export const SNAPSHOTS_BATCH_SIZE = 500;
  * Hard cap on items the snapshots dispatcher may process per run.
  *
  * Prevents the dispatcher from running for many hours on a fresh or grown
- * catalog. With Trakt rate limit ~30/min, 5000 items ≈ 3h per run. Daily
- * cron fires again next day and picks up the remainder via cursor.
+ * catalog. With Trakt rate limit ~30/min, 5000 items ≈ 3h per run. The cursor
+ * only lives within a single run (it does NOT persist to the next one); progress
+ * across runs of the same UTC day comes from the candidate query excluding items
+ * that already have today's snapshot. A new day starts over from the lowest id, so
+ * the dispatcher must be scheduled more than once per day for catalogs above the cap.
  *
  * Without this cap, a single run could hold the ingestion worker for 24h+
  * on catalogs of 50k+ ELIGIBLE items, preventing any other ingestion jobs

@@ -57,7 +57,7 @@ describe('ReviewRepliesService', () => {
       findByReview: jest.fn().mockResolvedValue([mockReplyWithAuthor]),
       findById: jest.fn().mockResolvedValue(mockReply),
       create: jest.fn().mockResolvedValue(mockReply),
-      softDelete: jest.fn().mockResolvedValue(undefined),
+      softDelete: jest.fn().mockResolvedValue(true),
       countByReview: jest.fn().mockResolvedValue(1),
       getNestingDepth: jest.fn().mockResolvedValue(0),
     };
@@ -117,7 +117,8 @@ describe('ReviewRepliesService', () => {
         replyToUsername: null,
         content: 'Nice review!',
       });
-      expect(reviewRepo.incrementRepliesCount).toHaveBeenCalledWith('review-id-1');
+      // Counter is incremented atomically inside replyRepo.create (same transaction)
+      expect(reviewRepo.incrementRepliesCount).not.toHaveBeenCalled();
     });
 
     it('should create a nested reply', async () => {
@@ -216,7 +217,13 @@ describe('ReviewRepliesService', () => {
       await service.delete('reply-id-1', 'user-id-1');
 
       expect(replyRepo.softDelete).toHaveBeenCalledWith('reply-id-1');
-      expect(reviewRepo.decrementRepliesCount).toHaveBeenCalledWith('review-id-1');
+      expect(reviewRepo.decrementRepliesCount).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when a concurrent delete already removed the reply', async () => {
+      replyRepo.softDelete.mockResolvedValue(false);
+
+      await expect(service.delete('reply-id-1', 'user-id-1')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when reply not found', async () => {

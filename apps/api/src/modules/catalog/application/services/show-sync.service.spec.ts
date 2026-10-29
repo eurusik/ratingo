@@ -165,6 +165,28 @@ describe('ShowSyncService', () => {
       });
     });
 
+    describe('when a sync job is already in flight', () => {
+      beforeEach(() => {
+        cooldownGate.tryAcquire.mockResolvedValue({ acquired: true, token: 'test-token-dedup' });
+        importJobPort.queueImport.mockResolvedValue({ jobId: 'job-1', deduplicated: true });
+      });
+
+      it('reports queued:false instead of claiming a new job was queued', async () => {
+        const result = await service.requestSync('test-show');
+
+        expect(result.queued).toBe(false);
+      });
+
+      it('releases the cooldown so the user can retry after the job finishes', async () => {
+        await service.requestSync('test-show');
+
+        expect(cooldownGate.release).toHaveBeenCalledWith(
+          `sync:cooldown:v1:show:${mockShowIdentity.id}`,
+          'test-token-dedup',
+        );
+      });
+    });
+
     describe('when import job port throws', () => {
       beforeEach(() => {
         cooldownGate.tryAcquire.mockResolvedValue({ acquired: true, token: 'test-token-fail' });

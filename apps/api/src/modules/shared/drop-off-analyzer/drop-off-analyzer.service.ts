@@ -64,6 +64,8 @@ const DROP_OFF_CONFIG = {
   decimalPrecision: 10,
 };
 
+const INSUFFICIENT_DATA_INSIGHT = 'Недостатньо даних для аналізу';
+
 /**
  * Service for analyzing show episode data to detect viewer drop-off points.
  *
@@ -96,24 +98,24 @@ export class DropOffAnalyzerService {
     // Find drop-off point
     const dropOffPoint = this.findDropOffPoint(allEpisodes);
 
-    // Calculate overall retention based on season engagement (first vs last season avg votes)
-    const firstSeasonVotes = seasonEngagement[0]?.avgVotes || 1;
-    const lastSeasonVotes = seasonEngagement[seasonEngagement.length - 1]?.avgVotes || 0;
-    const overallRetention = Math.round(
-      (lastSeasonVotes / firstSeasonVotes) * DROP_OFF_CONFIG.maxPercent,
-    );
+    // Calculate overall retention based on season engagement (first vs last season WITH valid data).
+    // Seasons without valid episodes (avgVotes = 0) must not act as baseline or endpoint.
+    const seasonsWithData = seasonEngagement.filter((s) => s.avgVotes > 0);
+    const baselineVotes = seasonsWithData[0]?.avgVotes ?? 0;
+    const lastVotes = seasonsWithData[seasonsWithData.length - 1]?.avgVotes ?? 0;
+    const hasRetentionBaseline = baselineVotes > 0;
+    const overallRetention = hasRetentionBaseline
+      ? Math.round((lastVotes / baselineVotes) * DROP_OFF_CONFIG.maxPercent)
+      : 0;
 
     const dropOffPercent = dropOffPoint
       ? this.calculateDropOffPercent(allEpisodes, dropOffPoint)
       : 0;
 
     // Generate insight
-    const { insight, insightType } = this.generateInsight(
-      dropOffPoint,
-      dropOffPercent,
-      overallRetention,
-      allEpisodes.length,
-    );
+    const { insight, insightType } = hasRetentionBaseline
+      ? this.generateInsight(dropOffPoint, dropOffPercent, overallRetention, allEpisodes.length)
+      : { insight: INSUFFICIENT_DATA_INSIGHT, insightType: 'steady' as const };
 
     return {
       dropOffPoint,
@@ -215,16 +217,24 @@ export class DropOffAnalyzerService {
     episodes: Array<EpisodeData & { season: number }>,
     dropOffPoint: NonNullable<DropOffAnalysis['dropOffPoint']>,
   ): number {
-    const dropIndex = episodes.findIndex(
+    // Detection compares consecutive episodes that have enough votes, so the percentage
+    // must use the same "previous valid episode" (not the raw previous one).
+    const validEpisodes = episodes.filter((ep) => ep.votes >= DROP_OFF_CONFIG.minVotesThreshold);
+    const dropIndex = validEpisodes.findIndex(
       (ep) => ep.season === dropOffPoint.season && ep.number === dropOffPoint.episode,
     );
 
     if (dropIndex <= 0) return 0;
 
-    const beforeVotes = episodes[dropIndex - 1].votes;
-    const atVotes = episodes[dropIndex].votes;
+    const beforeVotes = validEpisodes[dropIndex - 1].votes;
+    const atVotes = validEpisodes[dropIndex].votes;
 
-    return Math.round(((beforeVotes - atVotes) / beforeVotes) * DROP_OFF_CONFIG.maxPercent);
+    if (!(beforeVotes > 0) || !Number.isFinite(beforeVotes) || !Number.isFinite(atVotes)) return 0;
+
+    const percent = Math.round(
+      ((beforeVotes - atVotes) / beforeVotes) * DROP_OFF_CONFIG.maxPercent,
+    );
+    return Math.max(DROP_OFF_CONFIG.minPercent, Math.min(DROP_OFF_CONFIG.maxPercent, percent));
   }
 
   /**
@@ -285,7 +295,7 @@ export class DropOffAnalyzerService {
       dropOffPercent: 0,
       overallRetention: 0,
       seasonEngagement: [],
-      insight: 'Недостатньо даних для аналізу',
+      insight: INSUFFICIENT_DATA_INSIGHT,
       insightType: 'steady',
       analyzedAt: new Date().toISOString(),
       episodesAnalyzed: 0,

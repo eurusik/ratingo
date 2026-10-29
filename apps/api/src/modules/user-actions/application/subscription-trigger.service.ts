@@ -73,6 +73,15 @@ export class SubscriptionTriggerService {
     return events;
   }
 
+  /**
+   * Persists notifications for subscriptions whose dedup markers were ALREADY advanced
+   * by atomicNotify* (a separate UPDATE ... RETURNING).
+   *
+   * Ideally marker advance + insert would share one DB transaction, but user-actions has
+   * no transaction abstraction (the only one lives in catalog's domain and cross-module
+   * imports are barrel-only), so failures are logged and RETHROWN: the caller/job sees the
+   * failure instead of the notifications silently disappearing.
+   */
   private async persistNotifications(events: SubscriptionNotificationEvent[]): Promise<void> {
     try {
       const notificationData = events.map((event) => ({
@@ -96,7 +105,10 @@ export class SubscriptionTriggerService {
       this.logger.log(`Persisted ${created} notifications to database`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to persist notifications: ${msg}`);
+      this.logger.error(
+        `Failed to persist ${events.length} notifications (dedup markers already advanced): ${msg}`,
+      );
+      throw error;
     }
   }
 
@@ -123,11 +135,13 @@ export class SubscriptionTriggerService {
 
     if (events.length > 0) {
       this.logger.log(`New episode ${newEpisode.key}: ${events.length} subscriptions notified`);
-      // Emit only when atomicNotifyNewEpisode confirmed a genuinely new episode.
-      // caught_up users always have subscriptions (auto-subscribed in syncStateAfterWatch),
-      // so events.length > 0 reliably indicates a new episode, not a repeated sync.
-      this.eventEmitter.emit(SHOW_EVENTS.NEW_EPISODE, { mediaItemId: diff.mediaItemId });
     }
+
+    // Emit whenever the sync diff reports a new episode — independent of subscribers.
+    // caught_up users may have no (or an inactive) subscription (e.g. unsubscribed, or
+    // dropped→restored) and must still move back to watching. The listener is an idempotent
+    // bulk UPDATE of caught_up rows and is a no-op when nobody matches.
+    this.eventEmitter.emit(SHOW_EVENTS.NEW_EPISODE, { mediaItemId: diff.mediaItemId });
 
     return events;
   }

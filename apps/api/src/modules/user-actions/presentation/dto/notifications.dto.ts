@@ -13,7 +13,9 @@ export class NotificationListQueryDto extends OffsetPaginationQueryDto {
   @ApiPropertyOptional({ description: 'Filter by unread only' })
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
+  // Read the RAW value from `obj`: with `enableImplicitConversion: true` class-transformer
+  // coerces "false" -> true (Boolean("false")) BEFORE this transform sees `value`.
+  @Transform(({ obj, key }) => obj[key] === 'true' || obj[key] === true)
   unread?: boolean;
 }
 

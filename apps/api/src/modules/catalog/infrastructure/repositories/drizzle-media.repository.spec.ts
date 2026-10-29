@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleMediaRepository } from './drizzle-media.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { GENRE_REPOSITORY } from '../../domain/repositories/genre.repository.interface';
@@ -53,7 +54,7 @@ describe('DrizzleMediaRepository', () => {
   const setup = (options: { resolveSelect?: any; reject?: Error } = {}) => {
     const selectChain = createThenable(options.resolveSelect ?? [], options.reject);
     const insertChain = createThenable([], options.reject, ['onConflictDoNothing']);
-    const updateChain = createThenable([], options.reject);
+    const updateChain = createThenable([], options.reject, ['set']);
 
     db = {
       select: jest.fn().mockReturnValue(selectChain),
@@ -165,13 +166,40 @@ describe('DrizzleMediaRepository', () => {
 
     it('should return list for ids', async () => {
       const module = await setup({
-        resolveSelect: [{ id: 'm1', tmdbId: 1, alternativeTitles: null }],
+        resolveSelect: [{ id: 'm1', tmdbId: 1, type: MediaType.MOVIE, alternativeTitles: null }],
       });
       repository = module.get(DrizzleMediaRepository);
 
       const result = await repository.findManyByTmdbIds([1]);
-      expect(result).toEqual([{ id: 'm1', tmdbId: 1, alternativeTitles: null }]);
+      expect(result).toEqual([
+        { id: 'm1', tmdbId: 1, type: MediaType.MOVIE, alternativeTitles: null },
+      ]);
       expect(db.select).toHaveBeenCalled();
+    });
+
+    it('should filter by type when provided (movie/show tmdb id spaces overlap)', async () => {
+      const module = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleMediaRepository);
+
+      await repository.findManyByTmdbIds([1, 2], MediaType.MOVIE);
+
+      const selectChain = db.select.mock.results[0].value;
+      const { sql: whereSql, params } = new PgDialect().sqlToQuery(
+        selectChain.where.mock.calls[0][0],
+      );
+      expect(whereSql).toContain('"type"');
+      expect(params).toContain(MediaType.MOVIE);
+    });
+
+    it('should not filter by type when omitted', async () => {
+      const module = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleMediaRepository);
+
+      await repository.findManyByTmdbIds([1, 2]);
+
+      const selectChain = db.select.mock.results[0].value;
+      const { sql: whereSql } = new PgDialect().sqlToQuery(selectChain.where.mock.calls[0][0]);
+      expect(whereSql).not.toContain('"type"');
     });
 
     it('should throw DatabaseException on error', async () => {
@@ -179,6 +207,49 @@ describe('DrizzleMediaRepository', () => {
       repository = module.get(DrizzleMediaRepository);
 
       await expect(repository.findManyByTmdbIds([1])).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('updateIngestionStatus', () => {
+    it('should scope the update by tmdb id AND type', async () => {
+      const module = await setup();
+      repository = module.get(DrizzleMediaRepository);
+
+      await repository.updateIngestionStatus(5, MediaType.SHOW, IngestionStatus.IMPORTING);
+
+      const updateChain = db.update.mock.results[0].value;
+      const { sql: whereSql, params } = new PgDialect().sqlToQuery(
+        updateChain.where.mock.calls[0][0],
+      );
+      expect(whereSql).toContain('"tmdb_id"');
+      expect(whereSql).toContain('"type"');
+      expect(whereSql).not.toContain('"ingestion_status"');
+      expect(params).toEqual(expect.arrayContaining([5, MediaType.SHOW]));
+    });
+
+    it('should only touch non-READY rows with preserveReady', async () => {
+      const module = await setup();
+      repository = module.get(DrizzleMediaRepository);
+
+      await repository.updateIngestionStatus(5, MediaType.MOVIE, IngestionStatus.FAILED, {
+        preserveReady: true,
+      });
+
+      const updateChain = db.update.mock.results[0].value;
+      const { sql: whereSql, params } = new PgDialect().sqlToQuery(
+        updateChain.where.mock.calls[0][0],
+      );
+      expect(whereSql).toContain('"ingestion_status" <>');
+      expect(params).toContain(IngestionStatus.READY);
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const module = await setup({ reject: new Error('DB Error') });
+      repository = module.get(DrizzleMediaRepository);
+
+      await expect(
+        repository.updateIngestionStatus(5, MediaType.MOVIE, IngestionStatus.FAILED),
+      ).rejects.toThrow(DatabaseException);
     });
   });
 
@@ -193,11 +264,13 @@ describe('DrizzleMediaRepository', () => {
     });
 
     it('should return list for ids', async () => {
-      const module = await setup({ resolveSelect: [{ id: 'm1', tmdbId: 1, popularity: 1 }] });
+      const module = await setup({
+        resolveSelect: [{ id: 'm1', tmdbId: 1, type: MediaType.SHOW, popularity: 1 }],
+      });
       repository = module.get(DrizzleMediaRepository);
 
       const result = await repository.findManyForScoring(['m1']);
-      expect(result).toEqual([{ id: 'm1', tmdbId: 1, popularity: 1 }]);
+      expect(result).toEqual([{ id: 'm1', tmdbId: 1, type: MediaType.SHOW, popularity: 1 }]);
     });
 
     it('should throw DatabaseException on error', async () => {
@@ -240,6 +313,21 @@ describe('DrizzleMediaRepository', () => {
 
       // db.select called twice: outer query + EXISTS subquery construction
       expect(db.select).toHaveBeenCalledTimes(2);
+    });
+
+    it('should escape LIKE wildcards and backslashes in the ILIKE pattern', async () => {
+      const module = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleMediaRepository);
+
+      await repository.search('100%_a\\b', 10);
+
+      // select chain is shared with the EXISTS subquery, whose where() is called first
+      const selectChain = db.select.mock.results[0].value;
+      const whereCalls = selectChain.where.mock.calls;
+      const { params } = new PgDialect().sqlToQuery(whereCalls[whereCalls.length - 1][0]);
+      // ILIKE pattern is escaped; the raw term (used by trigram %) stays unescaped
+      expect(params).toContain('%100\\%\\_a\\\\b%');
+      expect(params).toContain('100%_a\\b');
     });
 
     it('should not call innerJoin (EXISTS subquery replaces JOIN to avoid row multiplication)', async () => {
@@ -315,6 +403,32 @@ describe('DrizzleMediaRepository', () => {
       const result = await repository.upsertStub(stubPayload);
 
       expect(result).toEqual({ id: 'new-id', slug: 'test-show' });
+    });
+
+    it('should never downgrade a READY item on conflict (forced re-sync)', async () => {
+      const insertChain = createThenable([{ id: 'new-id', slug: 'test-show' }]);
+      const module = await Test.createTestingModule({
+        providers: [
+          DrizzleMediaRepository,
+          {
+            provide: DATABASE_CONNECTION,
+            useValue: { insert: jest.fn().mockReturnValue(insertChain) },
+          },
+          { provide: GENRE_REPOSITORY, useValue: {} },
+          { provide: MOVIE_REPOSITORY, useValue: {} },
+          { provide: SHOW_REPOSITORY, useValue: {} },
+          { provide: HeroMediaQuery, useValue: {} },
+        ],
+      }).compile();
+      repository = module.get(DrizzleMediaRepository);
+
+      await repository.upsertStub(stubPayload);
+
+      const { set } = insertChain.onConflictDoUpdate.mock.calls[0][0];
+      const { sql: statusSql, params } = new PgDialect().sqlToQuery(set.ingestionStatus);
+      expect(statusSql).toContain('CASE WHEN');
+      expect(statusSql).toContain('excluded.ingestion_status');
+      expect(params).toContain(IngestionStatus.READY);
     });
 
     it('should return existing record on race condition (same tmdbId)', async () => {
@@ -685,7 +799,7 @@ describe('DrizzleMediaRepository', () => {
       const module = await setup({ resolveSelect: mockRows });
       repository = module.get(DrizzleMediaRepository);
 
-      const result = await repository.findEligibleForTrending({ limit: 10, offset: 0 });
+      const result = await repository.findEligibleForTrending({ limit: 10 });
 
       expect(result).toEqual([
         { id: 'm1', tmdbId: 100, type: MediaType.MOVIE },
@@ -698,28 +812,30 @@ describe('DrizzleMediaRepository', () => {
       const module = await setup({ resolveSelect: [] });
       repository = module.get(DrizzleMediaRepository);
 
-      const result = await repository.findEligibleForTrending({ limit: 10, offset: 0 });
+      const result = await repository.findEligibleForTrending({ limit: 10 });
 
       expect(result).toEqual([]);
     });
 
-    it('should respect limit and offset', async () => {
+    it('should accept a keyset cursor instead of an offset', async () => {
       const module = await setup({
         resolveSelect: [{ id: 'm1', tmdbId: 100, type: MediaType.MOVIE }],
       });
       repository = module.get(DrizzleMediaRepository);
 
-      await repository.findEligibleForTrending({ limit: 50, offset: 100 });
+      await repository.findEligibleForTrending({ limit: 50, afterId: 'm0' });
 
-      // Verify the chainable methods were called (limit/offset are in the chain)
       expect(db.select).toHaveBeenCalled();
+      const chain = db.select.mock.results[0].value;
+      expect(chain.limit).toHaveBeenCalledWith(50);
+      expect(chain.offset).not.toHaveBeenCalled();
     });
 
     it('should throw DatabaseException on error', async () => {
       const module = await setup({ reject: new Error('DB Error') });
       repository = module.get(DrizzleMediaRepository);
 
-      await expect(repository.findEligibleForTrending({ limit: 10, offset: 0 })).rejects.toThrow(
+      await expect(repository.findEligibleForTrending({ limit: 10 })).rejects.toThrow(
         DatabaseException,
       );
     });

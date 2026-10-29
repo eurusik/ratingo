@@ -11,7 +11,7 @@ import { MS_PER_DAY, MS_PER_YEAR } from '../../../../common/constants';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
-import { aggregateRatings, formatRatingContext } from '../domain/rating-aggregator';
+import { aggregateRatings, formatRatingContext, roundToTenth } from '../domain/rating-aggregator';
 import {
   type ShowVerdictInput,
   type ShowVerdict,
@@ -57,7 +57,14 @@ export class ShowVerdictService {
     const isClassic = contentAgeYears >= AGE_THRESHOLDS.CLASSIC_YEARS;
 
     // Aggregate ratings from all sources
-    const { consensusRating, spread, totalVotes, ratingsCount } = aggregateRatings(externalRatings);
+    const {
+      consensusRating,
+      spread: rawSpread,
+      totalVotes,
+      ratingsCount,
+    } = aggregateRatings(externalRatings);
+    // Defensive: avoid float artifacts (8.3 - 7.3 = 1.0000000000000009) in threshold compares
+    const spread = roundToTenth(rawSpread);
 
     // Helper to format rating context (just the number, no source brand)
     const formatContext = (rating: number | null | undefined): string | null => {

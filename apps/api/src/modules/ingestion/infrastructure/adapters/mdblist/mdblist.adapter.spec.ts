@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MdblistAdapter } from './mdblist.adapter';
 import mdblistConfig from '@/config/mdblist.config';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { MdblistApiException } from '@/common/exceptions/external-api.exception';
 
 // Mock global fetch
 const mockFetch = jest.fn();
@@ -189,11 +190,11 @@ describe('MdblistAdapter', () => {
       expect(result).toEqual({ rottenTomatoesCritics: 100, rottenTomatoesAudience: 0 });
     });
 
-    it('returns null fields on HTTP error (best-effort, no throw)', async () => {
+    it('returns null fields on 404 (genuine not-found)', async () => {
       mockFetch.mockResolvedValue({
         ok: false,
-        status: 429,
-        statusText: 'Too Many Requests',
+        status: 404,
+        statusText: 'Not Found',
         headers: new Headers(),
       });
 
@@ -201,11 +202,25 @@ describe('MdblistAdapter', () => {
       expect(result).toEqual({ rottenTomatoesCritics: null, rottenTomatoesAudience: null });
     });
 
-    it('returns null fields on network failure (best-effort)', async () => {
+    it.each([401, 403, 429, 500, 503])('throws on HTTP %i instead of returning nulls', async (status) => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status,
+        statusText: 'Error',
+        headers: new Headers(),
+      });
+
+      await expect(adapter.getRottenTomatoesRatings(1, MediaType.MOVIE)).rejects.toMatchObject({
+        details: { statusCode: status },
+      });
+    });
+
+    it('throws on network failure', async () => {
       mockFetch.mockRejectedValue(new Error('network down'));
 
-      const result = await adapter.getRottenTomatoesRatings(1, MediaType.MOVIE);
-      expect(result).toEqual({ rottenTomatoesCritics: null, rottenTomatoesAudience: null });
+      await expect(adapter.getRottenTomatoesRatings(1, MediaType.MOVIE)).rejects.toBeInstanceOf(
+        MdblistApiException,
+      );
     });
 
     it('returns null fields and does not fetch for invalid tmdbId', async () => {
@@ -235,7 +250,7 @@ describe('MdblistAdapter', () => {
       }
     });
 
-    it('returns null fields and does not fetch when API key is not configured', async () => {
+    it('throws and does not fetch when API key is not configured', async () => {
       const moduleWithoutKey: TestingModule = await Test.createTestingModule({
         providers: [
           MdblistAdapter,
@@ -245,10 +260,15 @@ describe('MdblistAdapter', () => {
 
       const adapterNoKey = moduleWithoutKey.get<MdblistAdapter>(MdblistAdapter);
 
-      // Best-effort wrapper catches and returns nulls — adapter doesn't throw to caller.
-      const result = await adapterNoKey.getRottenTomatoesRatings(1, MediaType.MOVIE);
-      expect(result).toEqual({ rottenTomatoesCritics: null, rottenTomatoesAudience: null });
+      expect(adapterNoKey.isConfigured()).toBe(false);
+      await expect(adapterNoKey.getRottenTomatoesRatings(1, MediaType.MOVIE)).rejects.toBeInstanceOf(
+        MdblistApiException,
+      );
       expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('isConfigured is true when API key is set', () => {
+      expect(adapter.isConfigured()).toBe(true);
     });
   });
 });

@@ -68,7 +68,7 @@ export class ShowDetailsService {
         hasUserEntry: Boolean(userState),
         userState: userState?.state ?? null,
         continuePoint: extractContinuePoint(userState?.progress ?? null),
-        hasNewEpisode: hasRecentEpisode(show.nextAirDate),
+        hasNewEpisode: hasRecentEpisode(show.lastAirDate),
         isNewRelease: isNewRelease(show.releaseDate),
         isHit: isHitQuality(show.externalRatings),
         trendDelta: null,

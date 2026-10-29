@@ -235,7 +235,7 @@ describe('SubscriptionTriggerService', () => {
       });
     });
 
-    it('should NOT emit event when no subscriptions are notified (dedup — episode already processed)', async () => {
+    it('should STILL emit event when no subscriptions are notified (caught_up users without a subscription must go back to watching)', async () => {
       const module = await Test.createTestingModule({
         providers: [
           SubscriptionTriggerService,
@@ -257,9 +257,12 @@ describe('SubscriptionTriggerService', () => {
       const emitter = module.get(EventEmitter2);
       const triggerService = module.get(SubscriptionTriggerService);
 
-      await triggerService.handleShowDiff(mockDiff);
+      const events = await triggerService.handleShowDiff(mockDiff);
 
-      expect(emitter.emit).not.toHaveBeenCalledWith('show.new-episode', expect.anything());
+      expect(events).toEqual([]);
+      expect(emitter.emit).toHaveBeenCalledWith('show.new-episode', {
+        mediaItemId: 'media-123',
+      });
     });
 
     it('should NOT emit event when diff has no newEpisode', async () => {
@@ -318,13 +321,11 @@ describe('SubscriptionTriggerService', () => {
       ]);
     });
 
-    it('should not fail if notification persistence fails', async () => {
+    it('should rethrow when notification persistence fails (markers already advanced; failure must not be silent)', async () => {
       const { notificationRepo } = await setup({ notifiedSubs: [mockSubscription] });
       notificationRepo.createMany.mockRejectedValueOnce(new Error('DB error'));
 
-      const events = await service.handleShowDiff(mockDiff);
-
-      expect(events).toHaveLength(1);
+      await expect(service.handleShowDiff(mockDiff)).rejects.toThrow('DB error');
     });
   });
 });

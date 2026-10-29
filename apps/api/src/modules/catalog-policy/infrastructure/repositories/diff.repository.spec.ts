@@ -4,6 +4,7 @@
 
 import { Test } from '@nestjs/testing';
 
+import { DatabaseException } from '../../../../common/exceptions';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { EligibilityStatus, DIFF_STATUS_NONE } from '../../domain/constants/evaluation.constants';
 
@@ -222,6 +223,52 @@ describe('DiffRepository', () => {
 
       expect(result.improvementReasons).toEqual({ ALLOWED_COUNTRY: 100 });
       expect(result.regressionReasons).toEqual({});
+    });
+  });
+
+  describe('context scoping and error wrapping', () => {
+    const renderSql = (query: { queryChunks: unknown[] }): { text: string; params: unknown[] } => {
+      const params: unknown[] = [];
+      let text = '';
+      const walk = (chunks: unknown[]) => {
+        for (const chunk of chunks) {
+          if (chunk && typeof chunk === 'object' && 'queryChunks' in chunk) {
+            walk((chunk as { queryChunks: unknown[] }).queryChunks);
+          } else if (chunk && typeof chunk === 'object' && 'value' in chunk) {
+            text += (chunk as { value: string[] }).value.join('');
+          } else {
+            params.push(chunk);
+            text += '?';
+          }
+        }
+      };
+      walk(query.queryChunks);
+      return { text, params };
+    };
+
+    it.each([
+      ['computeDiffCounts', (r: DiffRepository) => r.computeDiffCounts(2, 1)],
+      ['getDiffSamples', (r: DiffRepository) => r.getDiffSamples(2, 1, 'regression', 5)],
+      ['computeReasonBreakdown', (r: DiffRepository) => r.computeReasonBreakdown(2, 1)],
+    ])('%s should restrict both old and new evaluations to the catalog context', async (_n, call) => {
+      mockDb.execute.mockResolvedValue([]);
+
+      await call(repository);
+
+      const { text, params } = renderSql(mockDb.execute.mock.calls[0][0]);
+      // Both CTEs filter by context (baseline filter + target filter)
+      expect(text.match(/context = \?/g)).toHaveLength(2);
+      expect(params.filter((p) => p === 'catalog')).toHaveLength(2);
+    });
+
+    it.each([
+      ['computeDiffCounts', (r: DiffRepository) => r.computeDiffCounts(2, 1)],
+      ['getDiffSamples', (r: DiffRepository) => r.getDiffSamples(2, 1, 'improvement', 5)],
+      ['computeReasonBreakdown', (r: DiffRepository) => r.computeReasonBreakdown(2, 1)],
+    ])('%s should wrap database failures in DatabaseException', async (_n, call) => {
+      mockDb.execute.mockRejectedValue(new Error('connection lost'));
+
+      await expect(call(repository)).rejects.toThrow(DatabaseException);
     });
   });
 });

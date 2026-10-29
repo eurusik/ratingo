@@ -16,6 +16,7 @@ import {
   type ICatalogEvaluationRunRepository,
 } from '../../domain/repositories';
 import { type FinalizeResult, type RunAnomaly } from '../../domain/types';
+import { resolveRunContextScope } from '../../domain/utils/run-contexts';
 
 import { RunAggregationService } from './run-aggregation.service';
 
@@ -30,7 +31,12 @@ export class RunFinalizeService {
   ) {}
 
   /**
-   * Attempts to finalize a run if all items processed.
+   * Attempts to finalize a run once every expected (item, context) evaluation is accounted for.
+   *
+   * An evaluation is accounted for when it either completed or permanently failed (recorded
+   * in the run's error counter). Failed items therefore cannot keep a run RUNNING forever:
+   * the run moves to PREPARED with `errors > 0`, and promotion is then gated by the
+   * `maxErrors` / `coverageThreshold` options (see PolicyActivationService.promoteRun).
    *
    * @param runId - Run identifier
    * @returns Finalization result with status and counters
@@ -50,8 +56,10 @@ export class RunFinalizeService {
       };
     }
 
-    const counters = await this.aggregationService.aggregateCounters(runId);
+    const scope = resolveRunContextScope(run);
+    const counters = await this.aggregationService.aggregateCounters(runId, scope.requiredContexts);
     const total = run.totalReadySnapshot || 0;
+    const expectedEvaluations = total * scope.contextsPerItem;
 
     // Detect anomaly: more evaluations than expected
     if (counters.processed > total) {
@@ -73,15 +81,27 @@ export class RunFinalizeService {
       }
     }
 
-    if (counters.processed < total) {
-      await this.aggregationService.syncRunCounters(runId);
+    // Completed + permanently failed evaluations (errors are recorded once, on final attempt)
+    const accountedEvaluations = counters.evaluations + counters.errors;
+
+    if (accountedEvaluations < expectedEvaluations) {
+      await this.aggregationService.syncRunCounters(runId, scope.requiredContexts);
 
       return {
         runId,
         finalized: false,
-        reason: `Still processing: ${counters.processed}/${total}`,
+        reason:
+          `Still processing: ${counters.processed}/${total} ` +
+          `(${accountedEvaluations}/${expectedEvaluations} evaluations incl. ${counters.errors} errors)`,
         counters: { ...counters, total },
       };
+    }
+
+    if (counters.errors > 0) {
+      this.logger.warn(
+        `Run ${runId} finished with ${counters.errors} failed evaluations ` +
+          `(${counters.processed}/${total} items fully processed); promotion requires maxErrors/coverage override`,
+      );
     }
 
     // Transition to PREPARED with WHERE guard (prevents race conditions)

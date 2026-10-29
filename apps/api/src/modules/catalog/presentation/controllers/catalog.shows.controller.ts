@@ -29,7 +29,7 @@ import { Throttle } from '@nestjs/throttler';
 import {
   CATALOG_DEFAULT_CALENDAR_DAYS,
   CATALOG_MAX_CALENDAR_DAYS,
-  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
 } from '../../../../common/constants';
 import { CurrentUser } from '../../../auth/public';
 import { JwtAuthGuard } from '../../../auth/public';
@@ -45,6 +45,7 @@ import {
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
+import { NewEpisodesQueryDto } from '../dtos/new-episodes-query.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
 import { SyncRequestResponseDto } from '../dtos/sync-request-response.dto';
@@ -124,24 +125,12 @@ export class CatalogShowsController {
     description:
       'Returns shows that have aired new episodes recently. One entry per show with the latest episode.',
   })
-  @ApiQuery({
-    name: 'days',
-    required: false,
-    type: Number,
-    description: 'Number of days to look back (default: 7).',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Max number of shows to return (default: 20).',
-  })
   @ApiOkResponse({ type: NewEpisodesResponseDto })
-  async getNewEpisodes(
-    @Query('days', new DefaultValuePipe(CATALOG_DEFAULT_CALENDAR_DAYS), ParseIntPipe) days: number,
-    @Query('limit', new DefaultValuePipe(DEFAULT_PAGE_SIZE), ParseIntPipe) limit: number,
-  ): Promise<NewEpisodesResponseDto> {
-    const episodes = await this.showRepository.findNewEpisodes(days, limit);
+  @ApiBadRequestResponse({
+    description: `Invalid query parameters (days must be 1..${CATALOG_MAX_CALENDAR_DAYS}; limit must be 1..${MAX_PAGE_SIZE})`,
+  })
+  async getNewEpisodes(@Query() query: NewEpisodesQueryDto): Promise<NewEpisodesResponseDto> {
+    const episodes = await this.showRepository.findNewEpisodes(query.days, query.limit);
     return { data: episodes };
   }
 
@@ -249,7 +238,7 @@ export class CatalogShowsController {
   @HttpCode(HttpStatus.ACCEPTED)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Throttle({ strict: { limit: 5, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Request metadata refresh for a show',
     description:
