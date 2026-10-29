@@ -5,7 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
 import { buildAppCoreImports } from './app-core.imports';
 import { buildThrottlerTiers, ThrottlerRealIpGuard } from './common/guards/throttler-realip.guard';
-import { HealthController } from './health.controller';
+import { HealthModule } from './health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { HomeModule } from './modules/home/home.module';
@@ -47,8 +47,8 @@ import { UsersModule } from './modules/users/users.module';
     UserActionsModule,
     JournalModule,
     ReviewsModule,
+    HealthModule,
   ],
-  controllers: [HealthController],
   providers: [
     // Global rate limiting guard with real IP extraction (Cloudflare/proxy support)
     {
