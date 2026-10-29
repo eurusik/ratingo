@@ -1,4 +1,5 @@
 import './common/runtime/load-env';
+import './telemetry/register';
 
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -14,6 +15,7 @@ import { SlowRequestInterceptor } from './common/interceptors/slow-request.inter
 import { getAppRole, runsHttp } from './common/runtime/app-role';
 import { DevTiming } from './common/utils/dev-timing';
 import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.config';
+import { registerHttpMetrics } from './telemetry/http-metrics';
 
 /**
  * Entry point of the API application.
@@ -37,6 +39,8 @@ async function bootstrap(): Promise<void> {
       trustProxy: true,
     }),
   );
+
+  registerHttpMetrics(app.getHttpAdapter().getInstance());
 
   // Register Fastify cookie plugin for OAuth state management
   await app.register(fastifyCookie);

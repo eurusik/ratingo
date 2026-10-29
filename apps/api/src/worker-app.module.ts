@@ -6,6 +6,7 @@ import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { UserActionsModule } from './modules/user-actions/user-actions.module';
 import { UserMediaModule } from './modules/user-media/user-media.module';
+import { QueueMetricsModule } from './telemetry/queue-metrics.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UserMediaModule } from './modules/user-media/user-media.module';
     StatsModule,
     UserMediaModule,
     UserActionsModule,
+    QueueMetricsModule,
   ],
 })
 export class WorkerAppModule {}
