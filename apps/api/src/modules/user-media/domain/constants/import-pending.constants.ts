@@ -30,4 +30,9 @@ export const MAX_PENDING_ITEMS_PER_BATCH = 500;
 /** Maximum number of recent batches returned by getUserBatches(). */
 export const USER_BATCHES_LIMIT = 10;
 
+export const LINK_PENDING_IMPORTS_SCHEDULER_ID = 'link-pending-imports';
+export const LINK_PENDING_IMPORTS_INTERVAL_MS = 120_000;
+export const LINK_PENDING_IMPORTS_MIN_AGE_MS = 120_000;
+export const LINK_PENDING_IMPORTS_BATCH_SIZE = 200;
+
 export const IMPORT_PENDING_REPOSITORY = Symbol('IMPORT_PENDING_REPOSITORY');

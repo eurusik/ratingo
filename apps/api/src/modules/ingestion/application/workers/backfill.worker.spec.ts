@@ -3,6 +3,7 @@ import { Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 
+import { LinkPendingImportsSweeper } from '../../../user-media/application/link-pending-imports.sweeper';
 import { ResolveImportDispatcherPipeline } from '../../../user-media/application/pipelines/resolve-import-dispatcher.pipeline';
 import { ResolveImportItemPipeline } from '../../../user-media/application/pipelines/resolve-import-item.pipeline';
 import { IngestionJob } from '../../ingestion.constants';
@@ -22,6 +23,7 @@ describe('BackfillWorker', () => {
   let backfillImdbPipeline: any;
   let resolveImportDispatcherPipeline: any;
   let resolveImportItemPipeline: any;
+  let linkPendingImportsSweeper: any;
 
   beforeEach(async () => {
     backfillAltTitlesPipeline = {
@@ -40,6 +42,10 @@ describe('BackfillWorker', () => {
       execute: jest.fn().mockResolvedValue(undefined),
     };
 
+    linkPendingImportsSweeper = {
+      execute: jest.fn().mockResolvedValue(0),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BackfillWorker,
@@ -53,6 +59,7 @@ describe('BackfillWorker', () => {
           provide: ResolveImportItemPipeline,
           useValue: resolveImportItemPipeline,
         },
+        { provide: LinkPendingImportsSweeper, useValue: linkPendingImportsSweeper },
       ],
     }).compile();
 
@@ -96,6 +103,16 @@ describe('BackfillWorker', () => {
       await worker.process(job);
 
       expect(backfillImdbPipeline.processItem).toHaveBeenCalledWith(100, 'imdb-1');
+    });
+  });
+
+  describe('process - LINK_PENDING_IMPORTS', () => {
+    it('should route to linkPendingImportsSweeper.execute()', async () => {
+      const job = { name: IngestionJob.LINK_PENDING_IMPORTS, data: {}, id: 'sweep-1' } as Job;
+
+      await worker.process(job);
+
+      expect(linkPendingImportsSweeper.execute).toHaveBeenCalledTimes(1);
     });
   });
 

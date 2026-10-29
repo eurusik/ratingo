@@ -2,7 +2,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { apiOnly } from '../../common/runtime/app-role';
+import { apiOnly, workerOnly } from '../../common/runtime/app-role';
+import schedulerConfig from '../../config/scheduler.config';
 import tmdbConfig from '../../config/tmdb.config';
 import { DatabaseModule } from '../../database/database.module';
 import {
@@ -16,6 +17,9 @@ import { UserActionsModule } from '../user-actions/user-actions.module';
 import { EpisodeProgressService } from './application/episode-progress.service';
 import { ImportMediaService } from './application/import-media.service';
 import { ImportPendingService } from './application/import-pending.service';
+import { LinkPendingImportsScheduler } from './application/link-pending-imports.scheduler';
+import { LinkPendingImportsService } from './application/link-pending-imports.service';
+import { LinkPendingImportsSweeper } from './application/link-pending-imports.sweeper';
 import { CaughtUpTransitionListener } from './application/listeners/caught-up-transition.listener';
 import { LinkImportListener } from './application/listeners/link-import.listener';
 import { MeListsService } from './application/me-lists.service';
@@ -46,6 +50,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     CardsModule,
     UserActionsModule,
     ConfigModule.forFeature(tmdbConfig),
+    ConfigModule.forFeature(schedulerConfig),
     BullModule.registerQueue({
       name: BACKFILL_QUEUE,
       defaultJobOptions: {
@@ -67,6 +72,9 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     FavoriteUpdatesQuery,
     CaughtUpTransitionListener,
     LinkImportListener,
+    LinkPendingImportsService,
+    LinkPendingImportsSweeper,
+    ...workerOnly(LinkPendingImportsScheduler),
     ResolveImportDispatcherPipeline,
     ResolveImportItemPipeline,
     {
@@ -107,6 +115,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     ImportPendingService,
     ResolveImportDispatcherPipeline,
     ResolveImportItemPipeline,
+    LinkPendingImportsSweeper,
     IMPORT_PENDING_REPOSITORY,
     TMDB_RESOLVER,
   ],

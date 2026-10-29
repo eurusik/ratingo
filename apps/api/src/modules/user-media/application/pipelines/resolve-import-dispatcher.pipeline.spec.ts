@@ -61,7 +61,9 @@ describe('ResolveImportDispatcherPipeline', () => {
       findById: jest.fn(),
       findItemsByResolvedTmdb: jest.fn(),
       updateItemStatus: jest.fn(),
+      findIngestingWithReadyMedia: jest.fn(),
       updateItemStatusIfNotCancelled: jest.fn(),
+      transitionItemStatus: jest.fn(),
       cancelBatch: jest.fn(),
       updateBatchCountersAtomic: jest.fn(),
     };

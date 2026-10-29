@@ -1,4 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PgDialect } from 'drizzle-orm/pg-core';
+import { type SQL } from 'drizzle-orm';
 
 import { DATABASE_CONNECTION } from '../../../database/database.module';
 import {
@@ -20,6 +22,9 @@ const makeBatchRow = (overrides: Record<string, unknown> = {}) => ({
   updatedAt: new Date('2025-01-01'),
   ...overrides,
 });
+
+const renderWhere = (mockWhere: jest.Mock) =>
+  new PgDialect().sqlToQuery(mockWhere.mock.calls[0][0] as SQL);
 
 const makeItemRow = (overrides: Record<string, unknown> = {}) => ({
   id: 'item-1',
@@ -50,6 +55,7 @@ describe('DrizzleImportPendingRepository', () => {
       returning: jest.fn(),
       select: jest.fn().mockReturnThis(),
       from: jest.fn().mockReturnThis(),
+      innerJoin: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       limit: jest.fn(),
@@ -248,6 +254,63 @@ describe('DrizzleImportPendingRepository', () => {
       );
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('transitionItemStatus', () => {
+    it('updates only while the item is still in the expected status', async () => {
+      mockDb.returning.mockResolvedValueOnce([{ id: 'item-1' }]);
+
+      const transitioned = await repository.transitionItemStatus(
+        'item-1',
+        IMPORT_PENDING_STATUS.INGESTING,
+        { status: IMPORT_PENDING_STATUS.DONE, mediaItemId: 'media-1' },
+      );
+
+      expect(transitioned).toBe(true);
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({ status: IMPORT_PENDING_STATUS.DONE, mediaItemId: 'media-1' }),
+      );
+      const { sql, params } = renderWhere(mockDb.where);
+      expect(sql).toContain('"status" = $');
+      expect(params).toEqual(['item-1', IMPORT_PENDING_STATUS.INGESTING]);
+    });
+
+    it('returns false when another writer already moved the item on', async () => {
+      mockDb.returning.mockResolvedValueOnce([]);
+
+      const transitioned = await repository.transitionItemStatus(
+        'item-1',
+        IMPORT_PENDING_STATUS.INGESTING,
+        { status: IMPORT_PENDING_STATUS.DONE },
+      );
+
+      expect(transitioned).toBe(false);
+    });
+  });
+
+  describe('findIngestingWithReadyMedia', () => {
+    it('selects INGESTING items older than the cutoff joined to READY media, bounded', async () => {
+      const cutoff = new Date('2025-01-01T00:00:00.000Z');
+      const itemRow = makeItemRow({
+        resolvedTmdbId: 550,
+        mediaType: 'movie',
+        status: IMPORT_PENDING_STATUS.INGESTING,
+      });
+      mockDb.limit.mockResolvedValueOnce([{ item: itemRow, mediaItemId: 'media-1' }]);
+
+      const result = await repository.findIngestingWithReadyMedia(cutoff, 200);
+
+      expect(mockDb.innerJoin).toHaveBeenCalled();
+      expect(mockDb.limit).toHaveBeenCalledWith(200);
+      const { params } = renderWhere(mockDb.where);
+      expect(params).toEqual([IMPORT_PENDING_STATUS.INGESTING, cutoff.toISOString()]);
+      expect(result).toEqual([
+        {
+          item: expect.objectContaining({ id: 'item-1', resolvedTmdbId: 550 }),
+          mediaItemId: 'media-1',
+        },
+      ]);
     });
   });
 });

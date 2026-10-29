@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, desc, eq, ne, notInArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, lt, ne, notInArray, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { IngestionStatus } from '../../../common/enums/ingestion-status.enum';
 import { withDbError } from '../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../database/database.module';
 import * as schema from '../../../database/schema';
@@ -18,6 +19,7 @@ import {
   type CreateBatchInput,
   type CreatePendingItemInput,
   type IImportPendingRepository,
+  type PendingMediaLink,
   type UpdatePendingItemInput,
 } from '../domain/repositories/import-pending.repository.interface';
 
@@ -225,24 +227,48 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
     );
   }
 
+  async findIngestingWithReadyMedia(
+    updatedBefore: Date,
+    limit: number,
+  ): Promise<PendingMediaLink[]> {
+    return withDbError(
+      'find ingesting pending items with ready media',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({ item: schema.importPendingItems, mediaItemId: schema.mediaItems.id })
+          .from(schema.importPendingItems)
+          .innerJoin(
+            schema.mediaItems,
+            and(
+              eq(schema.mediaItems.tmdbId, schema.importPendingItems.resolvedTmdbId),
+              sql`${schema.mediaItems.type}::text = ${schema.importPendingItems.mediaType}`,
+              eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+              isNull(schema.mediaItems.deletedAt),
+            ),
+          )
+          .where(
+            and(
+              eq(schema.importPendingItems.status, IMPORT_PENDING_STATUS.INGESTING),
+              lt(schema.importPendingItems.updatedAt, updatedBefore),
+            ),
+          )
+          .orderBy(asc(schema.importPendingItems.updatedAt))
+          .limit(limit);
+        return rows.map((row) => ({ item: this.mapItem(row.item), mediaItemId: row.mediaItemId }));
+      },
+      { updatedBefore: updatedBefore.toISOString(), limit },
+    );
+  }
+
   async updateItemStatus(itemId: string, update: UpdatePendingItemInput): Promise<void> {
     return withDbError(
       'update pending item status',
       this.logger,
       async () => {
-        const setValues: Record<string, unknown> = {
-          status: update.status,
-          updatedAt: new Date(),
-        };
-
-        if (update.resolvedTmdbId !== undefined) setValues.resolvedTmdbId = update.resolvedTmdbId;
-        if (update.mediaType !== undefined) setValues.mediaType = update.mediaType;
-        if (update.failureReason !== undefined) setValues.failureReason = update.failureReason;
-        if (update.mediaItemId !== undefined) setValues.mediaItemId = update.mediaItemId;
-
         await this.db
           .update(schema.importPendingItems)
-          .set(setValues)
+          .set(this.toItemUpdateValues(update))
           .where(eq(schema.importPendingItems.id, itemId));
       },
       { itemId, status: update.status },
@@ -257,19 +283,9 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       'update pending item status if not cancelled',
       this.logger,
       async () => {
-        const setValues: Record<string, unknown> = {
-          status: update.status,
-          updatedAt: new Date(),
-        };
-
-        if (update.resolvedTmdbId !== undefined) setValues.resolvedTmdbId = update.resolvedTmdbId;
-        if (update.mediaType !== undefined) setValues.mediaType = update.mediaType;
-        if (update.failureReason !== undefined) setValues.failureReason = update.failureReason;
-        if (update.mediaItemId !== undefined) setValues.mediaItemId = update.mediaItemId;
-
         const result = await this.db
           .update(schema.importPendingItems)
-          .set(setValues)
+          .set(this.toItemUpdateValues(update))
           .where(
             and(
               eq(schema.importPendingItems.id, itemId),
@@ -281,6 +297,32 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
         return result.length > 0;
       },
       { itemId, status: update.status },
+    );
+  }
+
+  async transitionItemStatus(
+    itemId: string,
+    from: ImportPendingItemStatus,
+    update: UpdatePendingItemInput,
+  ): Promise<boolean> {
+    return withDbError(
+      'transition pending item status',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .update(schema.importPendingItems)
+          .set(this.toItemUpdateValues(update))
+          .where(
+            and(
+              eq(schema.importPendingItems.id, itemId),
+              eq(schema.importPendingItems.status, from),
+            ),
+          )
+          .returning({ id: schema.importPendingItems.id });
+
+        return result.length > 0;
+      },
+      { itemId, from, status: update.status },
     );
   }
 
@@ -365,6 +407,20 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       },
       { batchId },
     );
+  }
+
+  private toItemUpdateValues(update: UpdatePendingItemInput): Record<string, unknown> {
+    const setValues: Record<string, unknown> = {
+      status: update.status,
+      updatedAt: new Date(),
+    };
+
+    if (update.resolvedTmdbId !== undefined) setValues.resolvedTmdbId = update.resolvedTmdbId;
+    if (update.mediaType !== undefined) setValues.mediaType = update.mediaType;
+    if (update.failureReason !== undefined) setValues.failureReason = update.failureReason;
+    if (update.mediaItemId !== undefined) setValues.mediaItemId = update.mediaItemId;
+
+    return setValues;
   }
 
   private mapBatch(row: typeof schema.importBatches.$inferSelect): ImportBatch {

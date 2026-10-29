@@ -6,8 +6,11 @@ import { type Job } from 'bullmq';
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { WORKER_CONFIG } from '@/config/queue.config';
 
-import { ResolveImportDispatcherPipeline } from '../../../user-media/public';
-import { ResolveImportItemPipeline } from '../../../user-media/public';
+import {
+  LinkPendingImportsSweeper,
+  ResolveImportDispatcherPipeline,
+  ResolveImportItemPipeline,
+} from '../../../user-media/public';
 import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
@@ -19,7 +22,8 @@ import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
  * Concurrency: 15 jobs in parallel — TMDB allows ~40 req/s, each job makes 1 call.
  *
  * Also handles import resolution jobs (RESOLVE_IMPORT_DISPATCHER, RESOLVE_IMPORT_ITEM)
- * which use TMDB-only endpoints and benefit from the same high-throughput configuration.
+ * which use TMDB-only endpoints and benefit from the same high-throughput configuration,
+ * and the LINK_PENDING_IMPORTS sweeper (DB only).
  */
 @Processor(BACKFILL_QUEUE, {
   concurrency: 15,
@@ -34,6 +38,7 @@ export class BackfillWorker extends WorkerHost {
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly resolveImportDispatcherPipeline: ResolveImportDispatcherPipeline,
     private readonly resolveImportItemPipeline: ResolveImportItemPipeline,
+    private readonly linkPendingImportsSweeper: LinkPendingImportsSweeper,
   ) {
     super();
   }
@@ -75,6 +80,10 @@ export class BackfillWorker extends WorkerHost {
             pendingItemId: job.data.pendingItemId!,
             batchId: job.data.batchId!,
           });
+          break;
+
+        case IngestionJob.LINK_PENDING_IMPORTS:
+          await this.linkPendingImportsSweeper.execute();
           break;
 
         default:

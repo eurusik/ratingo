@@ -32,3 +32,4 @@ export type { IRatingSyncPort } from '../domain/ports/rating-sync.port';
 export { UserMediaService } from '../application/user-media.service';
 export { ResolveImportDispatcherPipeline } from '../application/pipelines/resolve-import-dispatcher.pipeline';
 export { ResolveImportItemPipeline } from '../application/pipelines/resolve-import-item.pipeline';
+export { LinkPendingImportsSweeper } from '../application/link-pending-imports.sweeper';

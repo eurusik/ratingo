@@ -28,6 +28,11 @@ export interface UpdatePendingItemInput {
   mediaItemId?: string | null;
 }
 
+export interface PendingMediaLink {
+  item: ImportPendingItem;
+  mediaItemId: string;
+}
+
 export interface IImportPendingRepository {
   /** Creates a new import batch record. */
   createBatch(input: CreateBatchInput): Promise<ImportBatch>;
@@ -69,6 +74,8 @@ export interface IImportPendingRepository {
     status: ImportPendingItemStatus,
   ): Promise<ImportPendingItem[]>;
 
+  findIngestingWithReadyMedia(updatedBefore: Date, limit: number): Promise<PendingMediaLink[]>;
+
   /** Updates the status and optional fields of a single pending item. */
   updateItemStatus(itemId: string, update: UpdatePendingItemInput): Promise<void>;
 
@@ -77,6 +84,12 @@ export interface IImportPendingRepository {
    * Returns true if the update was applied, false if the item was already cancelled.
    */
   updateItemStatusIfNotCancelled(itemId: string, update: UpdatePendingItemInput): Promise<boolean>;
+
+  transitionItemStatus(
+    itemId: string,
+    from: ImportPendingItemStatus,
+    update: UpdatePendingItemInput,
+  ): Promise<boolean>;
 
   /**
    * Cancels all non-terminal items in a batch and marks the batch as cancelled.
