@@ -1,7 +1,7 @@
 import fastify, { type FastifyInstance } from 'fastify';
 
 import { registerHttpMetrics } from './http-metrics';
-import { HTTP_REQUEST_DURATION_METRIC } from './telemetry.constants';
+import { HTTP_DURATION_BUCKETS_SECONDS, HTTP_REQUEST_DURATION_METRIC } from './telemetry.constants';
 import { createTestMeterProvider } from './telemetry.testing';
 
 describe('registerHttpMetrics', () => {
@@ -46,6 +46,14 @@ describe('registerHttpMetrics', () => {
     );
     const itemPoint = points.find((point) => point.attributes['http.route'] === '/api/items/:id');
     expect(itemPoint?.value).toMatchObject({ count: 2 });
+  });
+
+  it('uses second-scale bucket boundaries so request latencies spread across buckets', async () => {
+    await app.inject({ method: 'GET', url: '/api/items/42' });
+
+    const [point] = await collect(HTTP_REQUEST_DURATION_METRIC);
+
+    expect(point.value).toMatchObject({ buckets: { boundaries: HTTP_DURATION_BUCKETS_SECONDS } });
   });
 
   it('labels requests without a matching route as unmatched', async () => {

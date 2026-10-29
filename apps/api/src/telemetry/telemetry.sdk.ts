@@ -48,8 +48,11 @@ export function startTelemetry(env: NodeJS.ProcessEnv = process.env): NodeSDK | 
       exportIntervalMillis: METRICS_EXPORT_INTERVAL_MS,
     }),
     instrumentations: [
-      new HttpInstrumentation({ ignoreIncomingRequestHook: isHealthCheck }),
-      new UndiciInstrumentation(),
+      new HttpInstrumentation({
+        ignoreIncomingRequestHook: isHealthCheck,
+        requireParentforOutgoingSpans: true,
+      }),
+      new UndiciInstrumentation({ requireParentforSpans: true }),
       new IORedisInstrumentation({ requireParentSpan: true }),
       new NestInstrumentation(),
     ],

@@ -3,6 +3,7 @@ import { type FastifyInstance } from 'fastify';
 
 import {
   HEALTH_PATH_PREFIX,
+  HTTP_DURATION_BUCKETS_SECONDS,
   HTTP_REQUEST_DURATION_METRIC,
   METER_NAME,
   UNMATCHED_ROUTE,
@@ -17,6 +18,7 @@ export function registerHttpMetrics(
   const duration = meter.createHistogram(HTTP_REQUEST_DURATION_METRIC, {
     description: 'Duration of HTTP requests handled by the API',
     unit: 's',
+    advice: { explicitBucketBoundaries: HTTP_DURATION_BUCKETS_SECONDS },
   });
 
   fastify.addHook('onResponse', (request, reply, done) => {
