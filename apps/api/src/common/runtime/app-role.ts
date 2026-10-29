@@ -13,7 +13,7 @@ export function getAppRole(env: NodeJS.ProcessEnv = process.env): AppRole {
     return DEFAULT_APP_ROLE;
   }
   if (!isAppRole(requested)) {
-    throw new Error(`Invalid APP_ROLE "${env.APP_ROLE}". Expected one of: ${APP_ROLES.join(', ')}`);
+    throw new Error(`Invalid APP_ROLE "${requested}". Expected one of: ${APP_ROLES.join(', ')}`);
   }
   return requested;
 }

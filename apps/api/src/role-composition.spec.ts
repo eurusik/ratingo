@@ -134,21 +134,26 @@ interface RoleBoot {
 
 const fakePostgres = { end: async () => undefined };
 
-async function bootRole(
-  role: AppRole,
-  rootModule: { path: string; exportName: string },
-  env: Record<string, string>,
-): Promise<RoleBoot> {
+type Loader = <T>(path: string, exportName: string) => T;
+
+function applyRoleEnv(role: AppRole, env: Record<string, string>): void {
   ROLE_ENV_KEYS.forEach((key) => delete process.env[key]);
   Object.assign(process.env, env, { APP_ROLE: role });
   mockStartedWorkerQueues.length = 0;
+}
 
+function loadIsolated(): Loader {
   const isolated = new Map<string, Record<string, unknown>>();
   jest.isolateModules(() => {
     ISOLATED_PATHS.forEach((path) => isolated.set(path, jest.requireActual(path)));
   });
-  const load = <T>(path: string, exportName: string): T => isolated.get(path)[exportName] as T;
+  return <T>(path: string, exportName: string) => isolated.get(path)[exportName] as T;
+}
 
+async function bootModule(
+  load: Loader,
+  rootModule: { path: string; exportName: string },
+): Promise<INestApplicationContext> {
   const Test = load<typeof NestTest>('@nestjs/testing', 'Test');
   const moduleRef = await Test.createTestingModule({
     imports: [load<Type<unknown>>(rootModule.path, rootModule.exportName)],
@@ -158,21 +163,36 @@ async function bootRole(
     .overrideProvider(load<string>(DATABASE_MODULE_PATH, 'DATABASE_CONNECTION'))
     .useValue({})
     .compile();
-  const app = await moduleRef.init();
+  return moduleRef.init();
+}
 
+function snapshotComposition(app: INestApplicationContext, load: Loader): Composition {
   const discovery = app.get(load<Type<DiscoveryService>>('@nestjs/core', 'DiscoveryService'), {
     strict: false,
   });
   const modulesContainer = app.get(
     load<Type<ModulesContainer>>('@nestjs/core', 'ModulesContainer'),
   );
-  const composition = {
+  return {
     modules: [...modulesContainer.values()].map((module) => module.metatype?.name),
     providers: discovery.getProviders().map((wrapper) => wrapper.name),
     controllers: discovery.getControllers().map((wrapper) => wrapper.name),
   };
-  const emitter = app.get(load<Type<EventEmitter2>>('@nestjs/event-emitter', 'EventEmitter2'));
-  return { app, composition, emitter };
+}
+
+async function bootRole(
+  role: AppRole,
+  rootModule: { path: string; exportName: string },
+  env: Record<string, string>,
+): Promise<RoleBoot> {
+  applyRoleEnv(role, env);
+  const load = loadIsolated();
+  const app = await bootModule(load, rootModule);
+  return {
+    app,
+    composition: snapshotComposition(app, load),
+    emitter: app.get(load<Type<EventEmitter2>>('@nestjs/event-emitter', 'EventEmitter2')),
+  };
 }
 
 describe('role composition', () => {
