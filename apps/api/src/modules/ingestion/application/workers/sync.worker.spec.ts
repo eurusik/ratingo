@@ -127,8 +127,6 @@ describe('SyncWorker', () => {
       await worker.process(job);
       expect(snapshotsPipeline.dispatch).toHaveBeenCalledWith('UA');
     });
-
-    // Note: SYNC_SNAPSHOT_ITEM is deprecated - batch processing is now used directly in SnapshotsPipeline.dispatch()
   });
 
   describe('process - trending pipeline', () => {

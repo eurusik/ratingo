@@ -43,8 +43,3 @@ export const HOMEPAGE_REFRESH_CONFIG = {
   /** Minimum quality score (covers both hero@60 and watching-now@50) */
   MIN_QUALITY_SCORE: 50,
 } as const;
-
-/**
- * @deprecated Use HOMEPAGE_REFRESH_CONFIG instead
- */
-export const HERO_REFRESH_CONFIG = HOMEPAGE_REFRESH_CONFIG;

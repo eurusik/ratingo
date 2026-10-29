@@ -170,7 +170,7 @@ export class SyncMediaService {
       const classified = this.classifyMedia(scored);
 
       // Step 7: Persist
-      await this.persist(classified, tmdbId);
+      await this.persist(classified);
 
       // Fetch the persisted media item once — shared across steps 8–11 to avoid redundant DB calls
       const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId, type);
@@ -469,7 +469,7 @@ export class SyncMediaService {
   }
 
   /** Persists media to database. */
-  private async persist(media: NormalizedMedia, _tmdbId: number): Promise<void> {
+  private async persist(media: NormalizedMedia): Promise<void> {
     await this.mediaRepository.upsert(media);
   }
 

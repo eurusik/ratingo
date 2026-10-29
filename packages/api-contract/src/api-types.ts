@@ -9844,7 +9844,7 @@ export interface operations {
     IngestionController_backfillAltTitles: {
         parameters: {
             query?: {
-                /** @description Re-fetch alt titles for items that already have them */
+                /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
                 force?: string;
             };
             header?: never;
