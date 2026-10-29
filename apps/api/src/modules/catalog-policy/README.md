@@ -48,8 +48,8 @@ Ratingo aggregates content from TMDB, JustWatch, and other providers. Not all co
 │                                                               │
 │   Services:                                                   │
 │   • CatalogEvaluationService    • PolicyActivationService     │
-│   • BatchEvaluationService      • DryRunService               │
-│   • CatalogPolicyService        • DiffService                 │
+│   • CatalogPolicyService        • DryRunService               │
+│                                 • DiffService                 │
 │                                                               │
 │   Workers (BullMQ):                                           │
 │   • ReEvaluateAllHandler                                      │

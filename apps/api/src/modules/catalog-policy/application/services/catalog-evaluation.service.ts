@@ -1,6 +1,5 @@
 /**
  * Evaluates media items against catalog policies.
- * Batch operations are in BatchEvaluationService.
  */
 
 import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
@@ -94,68 +93,6 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       evaluation: saved,
       changed,
     };
-  }
-
-  /** Evaluates a single media item across multiple contexts. Returns count of changed evaluations. */
-  async evaluateOneForContexts(
-    input: EvaluateOneInput,
-    contexts: EvaluationContextType[],
-  ): Promise<number> {
-    if (contexts.length === 0) return 0;
-
-    const { mediaItemId } = input;
-
-    const policy = await this.resolvePolicy(input.policyVersion);
-
-    const engineInput = await this.policyInputRepository.findOneForEvaluation(mediaItemId);
-    if (!engineInput) {
-      throw new NotFoundException(`Media item ${mediaItemId} not found`);
-    }
-
-    // Batch fetch to avoid N+1
-    const previousEvaluationsMap = await this.evaluationRepository.findByMediaIdForContexts(
-      mediaItemId,
-      contexts,
-    );
-
-    const relevanceScore = computeRelevance(engineInput, policy.policy);
-    const evaluatedAt = new Date();
-
-    const evaluations: MediaCatalogEvaluation[] = [];
-    let changedCount = 0;
-
-    for (const context of contexts) {
-      const previousEvaluation = previousEvaluationsMap.get(context) ?? null;
-      const evalResult = evaluateEligibility(engineInput, policy.policy, { context });
-
-      const changed =
-        !previousEvaluation ||
-        previousEvaluation.status !== evalResult.status ||
-        previousEvaluation.policyVersion !== policy.version;
-
-      if (changed) {
-        changedCount++;
-        this.logger.log(
-          `Evaluated ${mediaItemId} [${context}]: ${previousEvaluation?.status || 'NEW'} → ${evalResult.status} (policy v${policy.version})`,
-        );
-      }
-
-      evaluations.push({
-        mediaItemId,
-        status: evalResult.status,
-        reasons: evalResult.reasons,
-        relevanceScore,
-        policyVersion: policy.version,
-        breakoutRuleId: evalResult.breakoutRuleId,
-        evaluatedAt,
-        runId: input.runId,
-        context,
-      });
-    }
-
-    await this.evaluationRepository.bulkUpsert(evaluations);
-
-    return changedCount;
   }
 
   async getEligibilityStats(context: EvaluationContextType): Promise<EligibilityStats> {

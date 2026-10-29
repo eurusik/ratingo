@@ -10,7 +10,6 @@ import { Module } from '@nestjs/common';
 
 import { ProviderModule } from '../provider/provider.module';
 
-import { BatchEvaluationService } from './application/services/batch-evaluation.service';
 import { CatalogEvaluationService } from './application/services/catalog-evaluation.service';
 import { CatalogPolicyService } from './application/services/catalog-policy.service';
 import { DiffService } from './application/services/diff.service';
@@ -105,7 +104,6 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     // Services
     CatalogPolicyService,
     CatalogEvaluationService,
-    BatchEvaluationService,
     // Port binding - other modules inject CATALOG_POLICY_EVALUATOR
     {
       provide: CATALOG_POLICY_EVALUATOR,
@@ -129,7 +127,6 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     // Export services for internal use and backward compatibility
     CatalogPolicyService,
     CatalogEvaluationService,
-    BatchEvaluationService,
     PolicyActivationService,
     DiffService,
     DryRunService,
