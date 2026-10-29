@@ -4,7 +4,7 @@ import { DEFAULT_REGION } from '../../../common/constants';
 import { AVAILABILITY_REGIONS, FALLBACK_REGION } from '../../../common/constants/region.constants';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../common/enums/video.enum';
-import { generateSlug } from '../../catalog/public';
+import { generateSlug } from '../../../common/utils/slug.util';
 import {
   type NormalizedMedia,
   type NormalizedVideo,

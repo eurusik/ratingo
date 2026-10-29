@@ -1,7 +1,7 @@
 import { type InferInsertModel } from 'drizzle-orm';
 
 import type * as schema from '../../../../database/schema';
-import type { NormalizedMedia } from '../../../ingestion/public';
+import type { NormalizedMedia } from '../../../shared/contracts';
 import { pickDefined } from '../utils/persistence.utils';
 
 /** Movie-specific details from NormalizedMedia.details */

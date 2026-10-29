@@ -27,7 +27,14 @@ const apiModules = [
   'user-media',
   'users',
 ];
-const sharedModules = ['cards', 'clock', 'drop-off-analyzer', 'score-calculator', 'verdict'];
+const sharedModules = [
+  'cards',
+  'clock',
+  'contracts',
+  'drop-off-analyzer',
+  'score-calculator',
+  'verdict',
+];
 const moduleBoundaryZones = [
   ...apiModules.flatMap((m) => [
     {
@@ -236,11 +243,7 @@ export default [
   },
   // Bootstrap/scripts — console allowed
   {
-    files: [
-      'apps/api/src/main.ts',
-      'apps/api/scripts/**/*.ts',
-      '**/drizzle/**/*.ts',
-    ],
+    files: ['apps/api/src/main.ts', 'apps/api/scripts/**/*.ts', '**/drizzle/**/*.ts'],
     rules: {
       'no-console': 'off',
     },
@@ -325,6 +328,68 @@ export default [
               target: './apps/api/src/modules/**/domain/**/*',
               from: './apps/api/src/modules/**/infrastructure/**/*',
               message: 'Domain must not depend on infrastructure',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Cycle guards (ADR 0001 Phase 1): catalog must not depend on ingestion, and
+  // tmdb must not depend on catalog. Shared types live in shared/contracts.
+  // Covers specs too. Uses no-restricted-imports (not import/no-restricted-paths)
+  // so it does not replace the module boundary zones below.
+  {
+    files: ['apps/api/src/modules/catalog/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '**/ingestion',
+                '**/ingestion/**',
+                '@/modules/ingestion',
+                '@/modules/ingestion/**',
+              ],
+              message:
+                'catalog must not import ingestion (ADR 0001). Use shared/contracts for queue names, job names and Normalized* types.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/api/src/modules/tmdb/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/catalog', '**/catalog/**', '@/modules/catalog', '@/modules/catalog/**'],
+              message:
+                'tmdb must not import catalog (ADR 0001). Use common/utils or shared/contracts instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // shared/contracts stays dependency-free: pure types/enums/constants only.
+  {
+    files: ['apps/api/src/modules/shared/contracts/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              // Allow only sibling files and common/enums.
+              regex: '^(?!\\./|\\.\\./\\.\\./\\.\\./common/enums/)',
+              message:
+                'shared/contracts must stay dependency-free (no packages, no module imports; only siblings and common/enums).',
             },
           ],
         },

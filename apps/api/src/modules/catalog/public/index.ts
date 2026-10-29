@@ -33,4 +33,4 @@ export type {
 } from '../domain/repositories/media.repository.interface';
 
 // Domain utilities
-export { generateSlug } from '../domain/utils/slug.utils';
+export { generateSlug } from '../../../common/utils/slug.util';

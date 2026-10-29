@@ -2,7 +2,7 @@ import type {
   Credits,
   CastMember as TmdbCastMember,
   CrewMember as TmdbCrewMember,
-} from '../../../ingestion/public';
+} from '../../../shared/contracts';
 import type { CreditsData, CastMember, CrewMember } from '../../domain/types/common.types';
 
 export class CreditsMapper {
