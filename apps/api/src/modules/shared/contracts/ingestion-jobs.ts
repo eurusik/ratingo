@@ -42,6 +42,7 @@ export enum IngestionJob {
   RESOLVE_IMPORT_DISPATCHER = 'resolve-import-dispatcher',
   /** Item job: resolves a single pending import item via TMDB Find API, queues SYNC_MOVIE/SYNC_SHOW. @queue backfill */
   RESOLVE_IMPORT_ITEM = 'resolve-import-item',
+  LINK_PENDING_IMPORTS = 'link-pending-imports',
 
   /** Dispatcher job: finds items without Rotten Tomatoes ratings and queues MDBList fetch. @queue ingestion */
   BACKFILL_MDBLIST_RATINGS_DISPATCHER = 'backfill-mdblist-ratings-dispatcher',

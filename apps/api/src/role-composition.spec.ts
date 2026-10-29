@@ -90,6 +90,7 @@ const WORKER_PROVIDERS = [
   'StatsWorker',
   'IngestionSchedulerService',
   'WatchdogHandler',
+  'LinkPendingImportsScheduler',
 ];
 
 const GATED_CONTROLLERS = [
