@@ -7,6 +7,14 @@ Ratingo — Ukrainian-language streaming content discovery service. NPM workspac
 - Import across modules through `module/public/` barrel exports only
 - Use `import type { components } from '@ratingo/api-contract'` for all API types on frontend
 - Run `npm run contracts:update` after any DTO or controller change
+- Don't write comments in code or config (no inline, JSDoc, or YAML comments) — make names and structure explain the code instead. Leave existing comments alone unless you're rewriting that code
+
+## Review After Every Step
+After finishing each step, review the changed code before moving on, and fix what the reviews find:
+1. A regular code review (`code-review` skill)
+2. A review against the `clean-code` skill
+3. Backend (`apps/api`): also against the `clean-ddd-hexagonal` skill (Clean Architecture)
+4. Frontend (`apps/web-client`): also against the Vercel skills — `vercel-react-best-practices` and `web-design-guidelines`
 
 ## Layout
 - `apps/api/` — NestJS + Fastify + Drizzle ORM + PostgreSQL

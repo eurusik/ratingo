@@ -246,7 +246,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk', in
     } catch {
       // localStorage unavailable (private browsing, storage quota exceeded, etc.)
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const dict = getDictionary(locale);
 

@@ -1,7 +1,5 @@
 name: CI
 
-# Validation only — deploys are done by Railway (API) and Vercel (web).
-# Railway waits for these checks before deploying (source.checkSuites).
 on:
   pull_request:
     branches: [main, development]
@@ -71,6 +69,16 @@ jobs:
     name: contracts
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -81,8 +89,8 @@ jobs:
 
       - run: npm ci
 
-      # OpenAPI generation stubs Postgres/Redis, so no services are needed.
       - name: Regenerate API contract
+        timeout-minutes: 5
         run: npm run contracts:update
 
       - name: Check contract is up to date
