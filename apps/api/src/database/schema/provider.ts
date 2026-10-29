@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   pgTable,
   text,
@@ -145,11 +145,15 @@ export const mediaWatchOffers = pgTable(
     regionIdx: index('media_watch_offers_region_idx').on(t.region),
     providerOfferIdx: index('media_watch_offers_provider_offer_idx').on(t.providerId, t.offerType),
     tmdbIdx: index('media_watch_offers_tmdb_idx').on(t.tmdbProviderId),
-    // Note: Unique constraint with COALESCE for variant_id created via raw SQL migration:
-    // CREATE UNIQUE INDEX media_watch_offers_uniq ON media_watch_offers (
-    //   media_item_id, provider_id, COALESCE(variant_id, 'standard'),
-    //   distribution_channel, offer_type, region
-    // );
+    // One row per offer; NULL variant is treated as 'standard'
+    uniqOffer: uniqueIndex('media_watch_offers_uniq').on(
+      t.mediaItemId,
+      t.providerId,
+      sql`COALESCE(${t.variantId}, 'standard')`,
+      t.distributionChannel,
+      t.offerType,
+      t.region,
+    ),
   }),
 );
 

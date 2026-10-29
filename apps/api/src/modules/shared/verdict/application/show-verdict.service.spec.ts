@@ -88,6 +88,26 @@ describe('ShowVerdictService', () => {
       // spread = 1.0, totalVotes = 1300 >= 1000
       expect(result.verdict.messageKey).toBe('mixedReviews');
     });
+
+    it('treats 8.3 vs 7.3 (float spread 1.0000000000000009) as exactly 1.0', () => {
+      const lowVotes = service.compute({
+        externalRatings: {
+          imdb: { rating: 8.3, voteCount: 300 },
+          trakt: { rating: 7.3, voteCount: 200 },
+        },
+      });
+      // spread == 1.0 with < 1000 votes is NOT high spread
+      expect(lowVotes.verdict.messageKey).not.toBe('mixedReviews');
+      expect(lowVotes.verdict.messageKey).not.toBe('noConsensusYet');
+
+      const highVotes = service.compute({
+        externalRatings: {
+          imdb: { rating: 8.3, voteCount: 800 },
+          trakt: { rating: 7.3, voteCount: 500 },
+        },
+      });
+      expect(highVotes.verdict.messageKey).toBe('mixedReviews');
+    });
   });
 
   describe('quality signals', () => {

@@ -3,12 +3,16 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { ErrorCode } from '../../../../common/enums/error-code.enum';
+import { NotFoundException } from '../../../../common/exceptions/not-found.exception';
 import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { VOTE_TYPE, type VoteType } from '../../domain/constants/review.constants';
 import type { ReviewVote, UpsertVoteInput } from '../../domain/entities/review-vote.entity';
 import type { IReviewVoteRepository } from '../../domain/repositories/review-vote.repository.interface';
+
+type ReviewVoteTx = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
 /**
  * Drizzle implementation of review vote repository.
@@ -175,6 +179,10 @@ export class DrizzleReviewVoteRepository implements IReviewVoteRepository {
       this.logger,
       async () => {
         return this.db.transaction(async (tx) => {
+          // Serialize concurrent votes on the same review: under READ COMMITTED two
+          // transactions would otherwise recount without seeing each other's uncommitted vote.
+          await this.lockReview(tx, input.reviewId);
+
           const [row] = await tx
             .insert(schema.reviewVotes)
             .values({ userId: input.userId, reviewId: input.reviewId, voteType: input.voteType })
@@ -218,6 +226,8 @@ export class DrizzleReviewVoteRepository implements IReviewVoteRepository {
       this.logger,
       async () => {
         return this.db.transaction(async (tx) => {
+          await this.lockReview(tx, reviewId);
+
           const deleted = await tx
             .delete(schema.reviewVotes)
             .where(
@@ -245,6 +255,21 @@ export class DrizzleReviewVoteRepository implements IReviewVoteRepository {
       },
       { userId, reviewId },
     );
+  }
+
+  /**
+   * Locks the review row (SELECT ... FOR UPDATE) for the duration of the transaction.
+   */
+  private async lockReview(tx: ReviewVoteTx, reviewId: string): Promise<void> {
+    const [locked] = await tx
+      .select({ id: schema.reviews.id })
+      .from(schema.reviews)
+      .where(eq(schema.reviews.id, reviewId))
+      .for('update');
+
+    if (!locked) {
+      throw new NotFoundException(ErrorCode.REVIEW_NOT_FOUND, 'Review not found', { reviewId });
+    }
   }
 
   private mapRow(row: typeof schema.reviewVotes.$inferSelect): ReviewVote {

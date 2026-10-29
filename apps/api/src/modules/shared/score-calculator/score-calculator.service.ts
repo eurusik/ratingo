@@ -211,7 +211,9 @@ export class ScoreCalculatorService {
     ];
 
     // Filter out null, undefined, and 0 (0 means "no rating" in TMDB/Trakt)
-    const active = sources.filter((s) => typeof s.value === 'number' && s.value !== null);
+    const active = sources.filter(
+      (s) => typeof s.value === 'number' && Number.isFinite(s.value) && s.value > 0,
+    );
 
     if (active.length === 0) {
       return NEUTRAL_RATING_DEFAULT; // Neutral default
@@ -241,7 +243,13 @@ export class ScoreCalculatorService {
     }
 
     const now = new Date();
-    const daysSinceRelease = Math.max(0, Math.floor((now.getTime() - date.getTime()) / MS_PER_DAY));
+    const msSinceRelease = now.getTime() - date.getTime();
+    if (msSinceRelease < 0) {
+      // Not yet released: not "fresh" yet. Use the floor so unreleased titles never
+      // outrank titles released today (previously clamped to 0 days => max freshness).
+      return this.clamp(minFloor, 0, 1);
+    }
+    const daysSinceRelease = Math.floor(msSinceRelease / MS_PER_DAY);
 
     const expDecay = Math.exp(-daysSinceRelease / decayDays);
     return this.clamp(Math.max(expDecay, minFloor), 0, 1);

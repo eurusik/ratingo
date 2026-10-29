@@ -25,6 +25,7 @@ function isSupportedProvider(value: string): value is SupportedProvider {
 
 /** Error code to i18n key mapping. */
 const errorCodeToKey: Record<string, string> = {
+  OAUTH_ACCOUNT_EXISTS_PASSWORD: 'accountExistsPassword',
   OAUTH_CANCELLED: 'cancelled',
   OAUTH_EMAIL_NOT_VERIFIED: 'emailNotVerified',
   OAUTH_EXCHANGE_EXPIRED: 'exchangeExpired',

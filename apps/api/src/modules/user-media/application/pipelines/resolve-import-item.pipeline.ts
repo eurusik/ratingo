@@ -130,19 +130,25 @@ export class ResolveImportItemPipeline {
     const mediaTypeName = resolved.type === 'movie' ? MediaType.MOVIE : MediaType.SHOW;
     const jobId = buildSyncMediaJobId(resolved.type, resolved.tmdbId, 'oneshot');
 
-    const job = await this.ingestionQueue.add(
-      jobName,
-      { tmdbId: resolved.tmdbId, type: mediaTypeName },
-      { jobId },
-    );
+    const jobData = { tmdbId: resolved.tmdbId, type: mediaTypeName };
+    let job = await this.ingestionQueue.add(jobName, jobData, { jobId });
 
-    // Fix 4.4: If the job was deduplicated by BullMQ (already exists with same jobId)
-    // and it has already completed, the media is READY in the catalog but media.synced
-    // was already emitted (before this import was queued). Emit a synthetic event so
-    // LinkImportListener can link this pending item without a stuck INGESTING state.
+    // BullMQ ignores add() when a job with the same jobId is retained and returns that job.
+    // - 'completed': media is READY but media.synced was already emitted before this import
+    //   was queued → emit a synthetic event so LinkImportListener can link this item.
+    // - 'failed': the retained job will never run again, so the item would sit in INGESTING
+    //   forever → remove the dead job and enqueue a fresh one under the same jobId.
+    // - anything else (waiting/active/delayed/...): the job is still going to run and will
+    //   emit media.synced itself.
     if (job) {
       const jobState = await job.getState();
-      if (jobState === 'completed') {
+      if (jobState === 'failed') {
+        this.logger.warn(
+          `[item] pendingItemId=${pendingItemId} jobId=${jobId} retained in failed state — removing and re-adding`,
+        );
+        await job.remove();
+        job = await this.ingestionQueue.add(jobName, jobData, { jobId });
+      } else if (jobState === 'completed') {
         this.logger.log(
           `[item] pendingItemId=${pendingItemId} jobId=${jobId} already completed — emitting synthetic media.synced`,
         );

@@ -5,7 +5,8 @@ import * as schema from '../../../../../database/schema';
  * Eliminates duplication between TrendingMoviesQuery and MovieListingsQuery.
  */
 export const movieSelectFields = {
-  id: schema.movies.id,
+  // Media item id (not movies PK) - consistent with show lists and required for user-state lookup.
+  id: schema.mediaItems.id,
   mediaItemId: schema.movies.mediaItemId,
   tmdbId: schema.mediaItems.tmdbId,
   title: schema.mediaItems.title,

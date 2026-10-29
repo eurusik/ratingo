@@ -80,6 +80,7 @@ export class DryRunController {
       homepage: dto.policy.homepage || { minRelevanceScore: 50 },
       globalRequirements: dto.policy.globalRequirements,
       excludedContentClasses: dto.policy.excludedContentClasses || [],
+      contextRequirements: dto.policy.contextRequirements,
     });
   }
 

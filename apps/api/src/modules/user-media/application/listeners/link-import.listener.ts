@@ -89,7 +89,7 @@ export class LinkImportListener {
         }
 
         // Create user_media_state using existing bulkImport (overwrite=false respects existing entries)
-        await this.userMediaRepo.bulkImport(
+        const importResult = await this.userMediaRepo.bulkImport(
           batch.userId,
           [
             {
@@ -101,7 +101,12 @@ export class LinkImportListener {
           false,
         );
 
-        if (item.state === USER_MEDIA_STATE.PLANNED) {
+        // Only save to for_later when the row is actually planned (not skipped
+        // because the user already has a state for this media item).
+        if (
+          item.state === USER_MEDIA_STATE.PLANNED &&
+          importResult.plannedMediaItemIds.includes(event.mediaItemId)
+        ) {
           try {
             await this.savedItemsService.saveItem({
               userId: batch.userId,

@@ -231,6 +231,43 @@ describe('OAuthService - Account Resolution (loginWithOAuth)', () => {
     expect(result.user).toEqual(updatedUser);
   });
 
+  it('should refuse to auto-link when the email belongs to a password account', async () => {
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue(null);
+    mocks.usersService.getByEmail.mockResolvedValue({
+      id: 'u1',
+      email: 'user@example.com',
+      passwordHash: 'bcrypt-hash',
+      avatarUrl: null,
+      role: 'user',
+    });
+
+    await expect(service.loginWithOAuth(mockOAuthPayload)).rejects.toThrow(
+      'OAUTH_ACCOUNT_EXISTS_PASSWORD',
+    );
+
+    expect(mocks.oauthAccountsRepository.create).not.toHaveBeenCalled();
+    expect(mocks.usersService.createUser).not.toHaveBeenCalled();
+    expect(mocks.usersService.updateProfile).not.toHaveBeenCalled();
+    expect(mocks.refreshTokensRepository.issue).not.toHaveBeenCalled();
+  });
+
+  it('should still auto-link OAuth-only accounts (no passwordHash)', async () => {
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue(null);
+    mocks.usersService.getByEmail.mockResolvedValue({
+      id: 'u1',
+      email: 'user@example.com',
+      passwordHash: null,
+      avatarUrl: 'https://existing.com/a.jpg',
+      role: 'user',
+    });
+
+    await service.loginWithOAuth(mockOAuthPayload);
+
+    expect(mocks.oauthAccountsRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'u1', provider: 'google' }),
+    );
+  });
+
   it('should not overwrite existing avatarUrl when linking', async () => {
     const existingUser = {
       id: 'u1',

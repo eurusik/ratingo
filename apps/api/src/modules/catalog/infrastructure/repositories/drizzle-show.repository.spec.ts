@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleShowRepository } from './drizzle-show.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -23,6 +24,7 @@ const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods:
     'from',
     'innerJoin',
     'limit',
+    'orderBy',
     ...extraMethods,
   ];
   chainMethods.forEach((m) => {
@@ -94,6 +96,33 @@ describe('DrizzleShowRepository', () => {
       expect(insertChain.onConflictDoUpdate).toHaveBeenCalled();
     });
 
+    it('should not overwrite existing episode columns with null (COALESCE on conflict)', async () => {
+      const module: TestingModule = await setup();
+      repository = module.get(DrizzleShowRepository);
+      const tx = { insert: jest.fn().mockReturnValue(insertChain) } as any;
+
+      await repository.upsertDetails(tx, 'media-1', {
+        seasons: [{ number: 1, episodes: [{ number: 1, title: 'Pilot' }] }],
+      });
+
+      // Last onConflictDoUpdate call is the episodes upsert (seasons come first)
+      const calls = insertChain.onConflictDoUpdate.mock.calls;
+      const { set } = calls[calls.length - 1][0];
+      const dialect = new PgDialect();
+      const rendered = Object.fromEntries(
+        Object.entries(set).map(([k, v]) => [k, dialect.sqlToQuery(v as any).sql]),
+      );
+
+      expect(Object.keys(rendered).sort()).toEqual(
+        ['airDate', 'overview', 'runtime', 'stillPath', 'title', 'tmdbId', 'voteAverage'].sort(),
+      );
+      expect(rendered.tmdbId).toBe('COALESCE(excluded.tmdb_id, "episodes"."tmdb_id")');
+      expect(rendered.stillPath).toBe('COALESCE(excluded.still_path, "episodes"."still_path")');
+      for (const sqlText of Object.values(rendered)) {
+        expect(sqlText).toMatch(/^COALESCE\(excluded\./);
+      }
+    });
+
     it('should propagate errors', async () => {
       const errChain = createThenable([], new Error('DB Error'));
       const tx = { insert: jest.fn().mockReturnValue(errChain) } as any;
@@ -148,6 +177,21 @@ describe('DrizzleShowRepository', () => {
       expect(db.select).toHaveBeenCalled();
     });
 
+    it('should filter soft-deleted shows and order stalest analysis first', async () => {
+      const module: TestingModule = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleShowRepository);
+
+      await repository.findShowsForAnalysis(5);
+
+      const dialect = new PgDialect();
+      const whereSql = dialect.sqlToQuery(selectChain.where.mock.calls[0][0]).sql;
+      expect(whereSql).toContain('"deleted_at" is null');
+
+      const [staleness] = selectChain.orderBy.mock.calls[0];
+      expect(dialect.sqlToQuery(staleness).sql).toContain("->>'analyzedAt' ASC NULLS FIRST");
+      expect(selectChain.limit).toHaveBeenCalledWith(5);
+    });
+
     it('should throw DatabaseException on error', async () => {
       const module: TestingModule = await setup({ reject: new Error('DB Error') });
       repository = module.get(DrizzleShowRepository);
@@ -180,6 +224,33 @@ describe('DrizzleShowRepository', () => {
       repository = module.get(DrizzleShowRepository);
 
       await expect(repository.getDropOffAnalysis(1)).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('findIdentityBySlug', () => {
+    it('should only match non-deleted shows (slug is unique per type, not globally)', async () => {
+      const module: TestingModule = await setup({
+        resolveSelect: [{ id: 'show-1', tmdbId: 7, lastSyncedAt: null }],
+      });
+      repository = module.get(DrizzleShowRepository);
+
+      const result = await repository.findIdentityBySlug('some-slug');
+
+      expect(result).toEqual({ id: 'show-1', tmdbId: 7, lastSyncedAt: null });
+      const { sql: whereSql, params } = new PgDialect().sqlToQuery(
+        selectChain.where.mock.calls[0][0],
+      );
+      expect(whereSql).toContain('"slug"');
+      expect(whereSql).toContain('"type"');
+      expect(whereSql).toContain('"deleted_at" is null');
+      expect(params).toEqual(expect.arrayContaining(['some-slug', 'show']));
+    });
+
+    it('should return null when nothing matches', async () => {
+      const module: TestingModule = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleShowRepository);
+
+      await expect(repository.findIdentityBySlug('missing')).resolves.toBeNull();
     });
   });
 

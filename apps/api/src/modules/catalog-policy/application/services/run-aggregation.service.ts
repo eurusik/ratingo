@@ -10,11 +10,12 @@
 
 import { Injectable, Inject } from '@nestjs/common';
 
+import { type EvaluationContextType } from '../../domain/constants/evaluation.constants';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
   type ICatalogEvaluationRunRepository,
 } from '../../domain/repositories';
-import { type AggregatedCounters } from '../../domain/types';
+import { type AggregatedCounters, type RunProgressCounters } from '../../domain/types';
 
 @Injectable()
 export class RunAggregationService {
@@ -28,19 +29,27 @@ export class RunAggregationService {
    *
    * Note: Per Readability & Pending Reform, pending is always 0.
    * @param runId - Run identifier
-   * @returns Aggregated counters
+   * @param requiredContexts - Contexts an item must be evaluated in to count as processed
+   * @returns Aggregated item-level counters plus completed evaluation count
    */
-  async aggregateCounters(runId: string): Promise<AggregatedCounters> {
-    return this.runRepository.aggregateCounters(runId);
+  async aggregateCounters(
+    runId: string,
+    requiredContexts?: readonly EvaluationContextType[],
+  ): Promise<RunProgressCounters> {
+    return this.runRepository.aggregateCounters(runId, requiredContexts);
   }
 
   /**
    * Syncs cached counters with actual aggregated values.
    *
    * @param runId - Run identifier
+   * @param requiredContexts - Contexts an item must be evaluated in to count as processed
    * @returns Synced counters
    */
-  async syncRunCounters(runId: string): Promise<AggregatedCounters> {
-    return this.runRepository.syncRunCounters(runId);
+  async syncRunCounters(
+    runId: string,
+    requiredContexts?: readonly EvaluationContextType[],
+  ): Promise<AggregatedCounters> {
+    return this.runRepository.syncRunCounters(runId, requiredContexts);
   }
 }

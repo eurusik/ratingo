@@ -160,8 +160,8 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     _userId: string,
     _items: Array<{ mediaItemId: string; state: string; rating: number | null }>,
     _overwrite: boolean,
-  ): Promise<{ imported: number; skipped: number }> {
-    return { imported: 0, skipped: 0 };
+  ): Promise<{ imported: number; skipped: number; plannedMediaItemIds: string[] }> {
+    return { imported: 0, skipped: 0, plannedMediaItemIds: [] };
   }
 
   async upsertWithGuard(_data: any, guard: (existing: any) => void): Promise<any> {
@@ -195,6 +195,13 @@ class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
   async revoke(id: string): Promise<void> {
     const token = this.tokens.find((t) => t.id === id);
     if (token) token.revokedAt = new Date();
+  }
+
+  async revokeIfActive(id: string): Promise<boolean> {
+    const token = this.tokens.find((t) => t.id === id);
+    if (!token || token.revokedAt) return false;
+    token.revokedAt = new Date();
+    return true;
   }
 
   async revokeAllForUser(userId: string): Promise<void> {

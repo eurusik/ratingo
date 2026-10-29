@@ -1,12 +1,16 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as request from 'supertest';
 
 import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
+import {
+  buildThrottlerTiers,
+  ThrottlerRealIpGuard,
+} from '../src/common/guards/throttler-realip.guard';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
 import { DATABASE_CONNECTION } from '../src/database/database.module';
@@ -68,18 +72,14 @@ async function createThrottledApp(): Promise<INestApplication> {
     imports: [
       ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
       EventEmitterModule.forRoot(),
-      ThrottlerModule.forRoot({
-        throttlers: [
-          { name: 'default', ttl: 60_000, limit: 600 },
-          { name: 'strict', ttl: 60_000, limit: 120 },
-        ],
-      }),
+      // Same tiers (incl. skipIf) and guard as AppModule, so the module-level skipIf
+      // semantics that previously disabled @Throttle on mutation routes are exercised.
+      ThrottlerModule.forRoot({ throttlers: buildThrottlerTiers(600) }),
       AuthModule,
       UsersModule,
     ],
-    // Use base ThrottlerGuard (proper per-route key generation) to validate
-    // that @Throttle decorators on auth routes are correctly applied.
-    providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+    // Use the production guard to validate that @Throttle decorators on auth routes apply.
+    providers: [{ provide: APP_GUARD, useClass: ThrottlerRealIpGuard }],
   })
     .overrideProvider(USERS_REPOSITORY)
     .useClass(InMemoryUsersRepository)
@@ -115,7 +115,7 @@ async function createThrottledApp(): Promise<INestApplication> {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('Auth Rate Limiting (e2e)', () => {
-  describe('POST /auth/register — @Throttle limit: 10', () => {
+  describe('POST /auth/register — auth tier limit: 10', () => {
     let app: INestApplication;
     let server: ReturnType<INestApplication['getHttpServer']>;
 
@@ -155,7 +155,36 @@ describe('Auth Rate Limiting (e2e)', () => {
     });
   });
 
-  describe('POST /auth/oauth/exchange — @Throttle limit: 10', () => {
+  describe('POST /auth/login — auth tier limit: 10', () => {
+    let app: INestApplication;
+    let server: ReturnType<INestApplication['getHttpServer']>;
+
+    beforeAll(async () => {
+      app = await createThrottledApp();
+      server = app.getHttpServer();
+    }, 30_000);
+
+    afterAll(async () => {
+      await app.close();
+    });
+
+    it('should return 401 for 10 bad logins and 429 on the 11th', async () => {
+      for (let i = 0; i < 10; i++) {
+        const res = await request(server)
+          .post(`${BASE_URL}/login`)
+          .send({ email: 'nobody@test.com', password: 'WrongPassw0rd' });
+        expect(res.status).toBe(401);
+      }
+
+      const blocked = await request(server)
+        .post(`${BASE_URL}/login`)
+        .send({ email: 'nobody@test.com', password: 'WrongPassw0rd' });
+
+      expect(blocked.status).toBe(429);
+    });
+  });
+
+  describe('POST /auth/oauth/exchange — auth tier limit: 10', () => {
     let app: INestApplication;
     let server: ReturnType<INestApplication['getHttpServer']>;
 
@@ -184,7 +213,7 @@ describe('Auth Rate Limiting (e2e)', () => {
     });
   });
 
-  // Note: POST /auth/refresh has @Throttle({ default: { limit: 30 } }).
+  // Note: POST /auth/refresh has @Throttle({ refresh: { limit: 30 } }).
   // Not tested here because jwtService.verify() on invalid tokens is slow in test env.
   // The @Throttle mechanism is validated by register and exchange tests above.
 

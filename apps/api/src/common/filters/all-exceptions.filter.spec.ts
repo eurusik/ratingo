@@ -2,6 +2,7 @@ import { ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common
 import { AllExceptionsFilter } from './all-exceptions.filter';
 import { AppException } from '../exceptions/app.exception';
 import { ErrorCode } from '../enums/error-code.enum';
+import { DatabaseConflictException, DatabaseException } from '../exceptions/database.exception';
 
 describe('AllExceptionsFilter', () => {
   const replyMock = () => {
@@ -32,6 +33,18 @@ describe('AllExceptionsFilter', () => {
   afterEach(() => {
     jest.restoreAllMocks();
     delete process.env.NODE_ENV;
+  });
+
+  it('should render DatabaseConflictException as 409 and DatabaseException as 500', () => {
+    const conflict = replyMock();
+    filter.catch(new DatabaseConflictException(new Error('dup')), hostMock(conflict));
+    expect(conflict.status).toHaveBeenCalledWith(HttpStatus.CONFLICT);
+    expect(conflict.send.mock.calls[0][0].error.code).toBe(ErrorCode.RESOURCE_CONFLICT);
+
+    const failed = replyMock();
+    filter.catch(new DatabaseException('Failed to x'), hostMock(failed));
+    expect(failed.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+    expect(failed.send.mock.calls[0][0].error.code).toBe(ErrorCode.DATABASE_ERROR);
   });
 
   it('should handle AppException and log warn', () => {

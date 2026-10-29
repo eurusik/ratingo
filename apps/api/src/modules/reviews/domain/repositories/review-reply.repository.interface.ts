@@ -22,14 +22,17 @@ export interface IReviewReplyRepository {
   findById(id: string): Promise<ReviewReply | null>;
 
   /**
-   * Create a new reply.
+   * Create a new reply and increment the review's replies count atomically.
    */
   create(input: CreateReplyInput): Promise<ReviewReply>;
 
   /**
-   * Soft delete a reply.
+   * Soft delete a reply and decrement the review's replies count atomically.
+   * Conditional on the reply not being deleted yet.
+   *
+   * @returns true if this call deleted the reply, false if it was already deleted
    */
-  softDelete(id: string): Promise<void>;
+  softDelete(id: string): Promise<boolean>;
 
   /**
    * Count replies for a review (non-deleted).

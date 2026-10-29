@@ -12,6 +12,13 @@ import {
   type RatingSourceLabel,
 } from './verdict.types';
 
+const TENTHS_PER_UNIT = 10;
+
+/** Rounds to 1 decimal place (rating precision). */
+export function roundToTenth(value: number): number {
+  return Math.round(value * TENTHS_PER_UNIT) / TENTHS_PER_UNIT;
+}
+
 /**
  * Computes aggregated rating data from external sources.
  *
@@ -71,8 +78,9 @@ export function aggregateRatings(ratings: ExternalRatings | null | undefined): A
   const consensusRating =
     sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 
-  // Calculate spread (max - min)
-  const spread = Math.max(...ratingValues) - Math.min(...ratingValues);
+  // Calculate spread (max - min), rounded to 1 decimal to avoid float artifacts
+  // (e.g. 8.3 - 7.3 = 1.0000000000000009) breaking threshold comparisons.
+  const spread = roundToTenth(Math.max(...ratingValues) - Math.min(...ratingValues));
 
   // Calculate total votes
   const totalVotes = sources.reduce((sum, s) => sum + s.votes, 0);

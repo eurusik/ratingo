@@ -44,7 +44,9 @@ export class CatalogPolicyWorker extends WorkerHost {
           break;
 
         case CATALOG_POLICY_JOBS.EVALUATE_CATALOG_ITEM:
-          await this.evaluateItemHandler.handle(job.data as EvaluateCatalogItemPayload);
+          await this.evaluateItemHandler.handle(job.data as EvaluateCatalogItemPayload, {
+            isFinalAttempt: this.isFinalAttempt(job),
+          });
           break;
 
         case CATALOG_POLICY_JOBS.WATCHDOG:
@@ -58,5 +60,14 @@ export class CatalogPolicyWorker extends WorkerHost {
       this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
       throw error;
     }
+  }
+
+  /**
+   * Whether BullMQ will not retry this job after the current attempt fails.
+   * `attemptsMade` counts previously failed attempts, so the current one is attemptsMade + 1.
+   */
+  private isFinalAttempt(job: Job): boolean {
+    const maxAttempts = job.opts?.attempts ?? 1;
+    return (job.attemptsMade ?? 0) + 1 >= maxAttempts;
   }
 }

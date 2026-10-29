@@ -3,9 +3,11 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { DryRunRepository } from './dry-run.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DatabaseException } from '../../../../common/exceptions';
 
 describe('DryRunRepository', () => {
   let repository: DryRunRepository;
@@ -149,6 +151,38 @@ describe('DryRunRepository', () => {
       await repository.getCurrentEvaluations(ids);
 
       expect(mockDb.where).toHaveBeenCalledTimes(2);
+    });
+
+    it('should filter by catalog context and the active policy version', async () => {
+      mockDb.where.mockResolvedValue([{ mediaItemId: '1', status: 'eligible' }]);
+
+      await repository.getCurrentEvaluations(['1']);
+
+      const { sql: text, params } = new PgDialect().sqlToQuery(mockDb.where.mock.calls[0][0]);
+      expect(text).toContain('"context" = $');
+      expect(text).toContain('"policy_version" = (SELECT');
+      expect(text).toContain('"is_active" = true');
+      expect(params).toContain('catalog');
+    });
+
+    it('should wrap database failures in DatabaseException', async () => {
+      mockDb.where.mockRejectedValue(new Error('DB down'));
+
+      await expect(repository.getCurrentEvaluations(['1'])).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('error wrapping', () => {
+    it('should wrap fetchTopItems failures in DatabaseException', async () => {
+      mockDb.limit.mockRejectedValue(new Error('DB down'));
+
+      await expect(repository.fetchTopItems(10)).rejects.toThrow(DatabaseException);
+    });
+
+    it('should wrap fetchSampleItems failures in DatabaseException', async () => {
+      mockDb.execute.mockRejectedValue(new Error('DB down'));
+
+      await expect(repository.fetchSampleItems(10, 5)).rejects.toThrow(DatabaseException);
     });
   });
 });

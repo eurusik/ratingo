@@ -7,7 +7,7 @@ import {
   EPISODE_PROGRESS_ERRORS,
   UNSAVE_CONTEXT,
 } from '../domain/constants/episode-progress.constants';
-import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
+import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
 import { SHOW_STATUS_PORT, type IShowStatusPort } from '../domain/ports/show-status.port';
 import {
   EPISODE_PROGRESS_REPOSITORY,
@@ -149,15 +149,15 @@ export class EpisodeProgressService {
           `Auto-set user_media_state to '${targetState}' for user=${userId}, media=${mediaItemId} (${watchedEpisodes}/${totalEpisodes} episodes)`,
         );
       }
-      await this.tryAutoSubscribe(userId, mediaItemId);
+      await this.tryAutoSubscribe(userId, mediaItemId, currentState);
       return;
     }
 
     // Paused → user must explicitly resume
     if (currentState?.state === USER_MEDIA_STATE.PAUSED) return;
 
-    // Auto-subscribe for every non-paused watch event (idempotent)
-    await this.tryAutoSubscribe(userId, mediaItemId);
+    // Auto-subscribe for every non-paused, non-dropped watch event (idempotent)
+    await this.tryAutoSubscribe(userId, mediaItemId, currentState);
 
     if (
       !currentState ||
@@ -186,8 +186,16 @@ export class EpisodeProgressService {
   /**
    * Attempts to auto-subscribe the user to new_season / new_episode
    * notifications for the show. Failures are logged and swallowed.
+   *
+   * Skipped when the show is dropped — the user explicitly stopped following it
+   * (dropping auto-unsubscribes), so a stray watch event must not re-subscribe them.
    */
-  private async tryAutoSubscribe(userId: string, mediaItemId: string): Promise<void> {
+  private async tryAutoSubscribe(
+    userId: string,
+    mediaItemId: string,
+    currentState: UserMediaState | null,
+  ): Promise<void> {
+    if (currentState?.state === USER_MEDIA_STATE.DROPPED) return;
     try {
       await this.subscriptionsService.autoSubscribeForShow(userId, mediaItemId);
     } catch (error) {
@@ -198,7 +206,18 @@ export class EpisodeProgressService {
     }
   }
 
-  /** Removes state if 0 watched, reverts completed → watching if some remain. */
+  /**
+   * 0 watched episodes:
+   *  - the row is deleted only when it is the auto-created one (state `watching`,
+   *    no rating, no notes) — nothing user-authored is lost;
+   *  - otherwise the row is kept (rating / notes / explicit paused|dropped|planned
+   *    state survive) and watching/completed/caught_up fall back to `planned`
+   *    (the show is still on the user's radar but no longer started).
+   *    Going through setState emits the same state-changed event as any other
+   *    transition and clears the stale `progress` (so the item leaves /continue).
+   *
+   * Some episodes remain: reverts completed/caught_up → watching.
+   */
   private async syncStateAfterUnwatch(
     userId: string,
     showId: string,
@@ -211,10 +230,32 @@ export class EpisodeProgressService {
     if (!currentState) return;
 
     if (watchedEpisodes === 0) {
-      await this.userMediaService.deleteState(userId, mediaItemId);
-      this.logger.log(
-        `Removed user_media_state for user=${userId}, media=${mediaItemId} (0 episodes watched)`,
-      );
+      const hasUserData =
+        currentState.rating != null ||
+        (currentState.notes != null && currentState.notes.trim() !== '');
+
+      if (currentState.state === USER_MEDIA_STATE.WATCHING && !hasUserData) {
+        await this.userMediaService.deleteState(userId, mediaItemId);
+        this.logger.log(
+          `Removed user_media_state for user=${userId}, media=${mediaItemId} (0 episodes watched)`,
+        );
+        return;
+      }
+
+      if (
+        currentState.state === USER_MEDIA_STATE.WATCHING ||
+        currentState.state === USER_MEDIA_STATE.COMPLETED ||
+        currentState.state === USER_MEDIA_STATE.CAUGHT_UP
+      ) {
+        await this.userMediaService.setState({
+          userId,
+          mediaItemId,
+          state: USER_MEDIA_STATE.PLANNED,
+        });
+        this.logger.log(
+          `Reverted user_media_state from '${currentState.state}' to 'planned' for user=${userId}, media=${mediaItemId} (0 episodes watched, user data kept)`,
+        );
+      }
       return;
     }
 

@@ -201,6 +201,7 @@
       "failed": "Authentication failed",
       "tryAgain": "Try again",
       "errors": {
+        "accountExistsPassword": "An account with this email already exists. Sign in with your password and link Google/Facebook in settings.",
         "cancelled": "Sign in cancelled",
         "emailNotVerified": "Please verify your email in Google first",
         "exchangeExpired": "Session expired, please try again",

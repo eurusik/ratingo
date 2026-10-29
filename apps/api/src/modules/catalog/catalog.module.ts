@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import IORedis from 'ioredis';
 
 import { HERO_REPOSITORY } from '../home/public';
-import { INGESTION_QUEUE } from '../ingestion/public';
+import { DEFAULT_INGESTION_JOB_OPTIONS, INGESTION_QUEUE } from '../ingestion/public';
 import { CardsModule } from '../shared/cards/cards.module';
 import { VerdictModule } from '../shared/verdict/verdict.module';
 import { TmdbModule } from '../tmdb/tmdb.module';
@@ -72,7 +72,10 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     UserMediaModule,
     CardsModule,
     VerdictModule,
-    BullModule.registerQueue({ name: INGESTION_QUEUE }),
+    BullModule.registerQueue({
+      name: INGESTION_QUEUE,
+      defaultJobOptions: DEFAULT_INGESTION_JOB_OPTIONS,
+    }),
   ],
   controllers: [
     CatalogMoviesController,

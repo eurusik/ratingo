@@ -1,7 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ValidationException } from '@/common/exceptions';
+import { S3Client } from '@aws-sdk/client-s3';
+
+import { ExternalApiException, NotFoundException, ValidationException } from '@/common/exceptions';
 
 import { JOURNAL_ERRORS } from '../domain/constants/journal-errors';
 
@@ -224,6 +226,44 @@ describe('JournalImageService', () => {
   describe('JOURNAL_IMAGES_PREFIX', () => {
     it('should be journal/', () => {
       expect(JOURNAL_IMAGES_PREFIX).toBe('journal/');
+    });
+  });
+
+  describe('getImage error mapping', () => {
+    const s3Error = (name: string) => Object.assign(new Error(name), { name });
+
+    beforeEach(() => {
+      mockConfigService.get.mockImplementation((key: string) =>
+        key.startsWith('S3_') ? 'configured' : undefined,
+      );
+    });
+
+    const mockSend = (error: Error) =>
+      jest
+        .spyOn(S3Client.prototype, 'send')
+        .mockImplementation(() => Promise.reject(error) as never);
+
+    afterEach(() => jest.restoreAllMocks());
+
+    it('maps NoSuchKey to NotFoundException', async () => {
+      mockSend(s3Error('NoSuchKey'));
+      await expect(service.getImage('journal/a.png')).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it.each(['SignatureDoesNotMatch', 'InvalidAccessKeyId', 'AccessDenied', 'NoSuchBucket'])(
+      'maps %s to a 502 ExternalApiException instead of a 500',
+      async (name) => {
+        mockSend(s3Error(name));
+        const promise = service.getImage('journal/a.png');
+        await expect(promise).rejects.toBeInstanceOf(ExternalApiException);
+        await expect(promise).rejects.toMatchObject({ status: 502 });
+      },
+    );
+
+    it('rethrows unknown errors unchanged', async () => {
+      const error = s3Error('SomethingElse');
+      mockSend(error);
+      await expect(service.getImage('journal/a.png')).rejects.toBe(error);
     });
   });
 });

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '@/common/utils/db-error.utils';
@@ -45,7 +45,7 @@ export class DrizzleUsersRepository implements IUsersRepository {
   }
 
   /**
-   * Finds user by email.
+   * Finds user by email (case-insensitive, so legacy mixed-case rows still match).
    *
    * @param {string} email - User email
    * @returns {Promise<User | null>} User or null
@@ -58,7 +58,7 @@ export class DrizzleUsersRepository implements IUsersRepository {
         const [row] = await this.db
           .select()
           .from(schema.users)
-          .where(eq(schema.users.email, email));
+          .where(sql`lower(${schema.users.email}) = lower(${email})`);
         return row ? this.mapRow(row) : null;
       },
       { email },
@@ -66,7 +66,7 @@ export class DrizzleUsersRepository implements IUsersRepository {
   }
 
   /**
-   * Finds user by username.
+   * Finds user by username, ignoring case (exact-case match preferred if legacy duplicates exist).
    *
    * @param {string} username - Username
    * @returns {Promise<User | null>} User or null
@@ -79,7 +79,9 @@ export class DrizzleUsersRepository implements IUsersRepository {
         const [row] = await this.db
           .select()
           .from(schema.users)
-          .where(eq(schema.users.username, username));
+          .where(sql`lower(${schema.users.username}) = lower(${username})`)
+          .orderBy(sql`(${schema.users.username} = ${username}) desc`)
+          .limit(1);
         return row ? this.mapRow(row) : null;
       },
       { username },

@@ -64,13 +64,33 @@ export const POLICY_EVALUATION_SELECT_FIELDS = {
 
 const DEFAULT_CONTENT_CLASS: ContentClass = 'mainstream';
 
+/** Normalizes a 0-100 DB score to 0-1, preserving null. */
+function normalizeScore(value: number | null): number | null {
+  return value !== null ? value / SCORE_NORMALIZATION_DIVISOR : null;
+}
+
+/**
+ * Whether the LEFT JOINed media_stats row exists.
+ * A missing row yields all-null stat columns; any non-null stat means the row exists.
+ */
+function hasStatsRow(row: MediaItemRow): boolean {
+  return (
+    row.qualityScore !== null ||
+    row.popularityScore !== null ||
+    row.freshnessScore !== null ||
+    row.ratingoScore !== null ||
+    row.watchersCount !== null
+  );
+}
+
 /**
  * Maps a database row to PolicyEngineInput.
  *
  * Handles:
  * - Type casting for JSONB fields (originCountries)
  * - ContentClass validation with fallback to 'mainstream'
- * - Stats object creation (null if no qualityScore)
+ * - Stats object creation (null only when the media_stats row is absent, i.e. every stat is null;
+ *   individual stats such as qualityScore stay nullable so freshness/watchers still feed gates)
  * - Normalized offers from media_watch_offers table
  *
  * @param row - Raw database row
@@ -115,21 +135,15 @@ export function mapRowToPolicyEngineInput(
     // Normalize scores from 0-100 (DB format) to 0-1 (policy engine format)
     // Policy engine expects normalized values for minQualityScoreNormalized comparisons
     // watchersCount is NOT normalized - it's a raw count, not a score
-    stats:
-      row.qualityScore !== null
-        ? {
-            qualityScore: row.qualityScore / SCORE_NORMALIZATION_DIVISOR,
-            popularityScore:
-              row.popularityScore !== null
-                ? row.popularityScore / SCORE_NORMALIZATION_DIVISOR
-                : null,
-            freshnessScore:
-              row.freshnessScore !== null ? row.freshnessScore / SCORE_NORMALIZATION_DIVISOR : null,
-            ratingoScore:
-              row.ratingoScore !== null ? row.ratingoScore / SCORE_NORMALIZATION_DIVISOR : null,
-            watchersCount: row.watchersCount,
-          }
-        : null,
+    stats: hasStatsRow(row)
+      ? {
+          qualityScore: normalizeScore(row.qualityScore),
+          popularityScore: normalizeScore(row.popularityScore),
+          freshnessScore: normalizeScore(row.freshnessScore),
+          ratingoScore: normalizeScore(row.ratingoScore),
+          watchersCount: row.watchersCount,
+        }
+      : null,
   };
 }
 

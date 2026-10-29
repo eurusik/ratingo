@@ -201,6 +201,7 @@
       "failed": "Помилка автентифікації",
       "tryAgain": "Спробувати ще",
       "errors": {
+        "accountExistsPassword": "Акаунт з цим email уже існує. Увійдіть з паролем і прив'яжіть Google/Facebook у налаштуваннях.",
         "cancelled": "Вхід скасовано",
         "emailNotVerified": "Спочатку підтвердіть email у Google",
         "exchangeExpired": "Сесія закінчилась, спробуйте ще",

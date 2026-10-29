@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -130,14 +130,16 @@ export class DrizzleShowRepository implements IShowRepository {
       .values(values)
       .onConflictDoUpdate({
         target: [schema.episodes.seasonId, schema.episodes.number],
+        // COALESCE keeps existing enrichment (e.g. TMDB tmdbId/stillPath) when a
+        // sparser provider (e.g. TVMaze) sends null for the column.
         set: {
-          tmdbId: sql`excluded.tmdb_id`,
-          title: sql`excluded.title`,
-          overview: sql`excluded.overview`,
-          airDate: sql`excluded.air_date`,
-          runtime: sql`excluded.runtime`,
-          stillPath: sql`excluded.still_path`,
-          voteAverage: sql`excluded.vote_average`,
+          tmdbId: sql`COALESCE(excluded.tmdb_id, ${schema.episodes.tmdbId})`,
+          title: sql`COALESCE(excluded.title, ${schema.episodes.title})`,
+          overview: sql`COALESCE(excluded.overview, ${schema.episodes.overview})`,
+          airDate: sql`COALESCE(excluded.air_date, ${schema.episodes.airDate})`,
+          runtime: sql`COALESCE(excluded.runtime, ${schema.episodes.runtime})`,
+          stillPath: sql`COALESCE(excluded.still_path, ${schema.episodes.stillPath})`,
+          voteAverage: sql`COALESCE(excluded.vote_average, ${schema.episodes.voteAverage})`,
         },
       });
   }
@@ -215,6 +217,7 @@ export class DrizzleShowRepository implements IShowRepository {
 
   /**
    * Finds minimal show identity by slug (id, tmdbId, lastSyncedAt).
+   * Slug is unique per (type, slug), so filter type=show and exclude soft-deleted rows.
    */
   async findIdentityBySlug(slug: string): Promise<ShowIdentity | null> {
     return withDbError(
@@ -228,7 +231,13 @@ export class DrizzleShowRepository implements IShowRepository {
             lastSyncedAt: schema.mediaItems.lastSyncedAt,
           })
           .from(schema.mediaItems)
-          .where(eq(schema.mediaItems.slug, slug))
+          .where(
+            and(
+              eq(schema.mediaItems.slug, slug),
+              eq(schema.mediaItems.type, MediaType.SHOW),
+              isNull(schema.mediaItems.deletedAt),
+            ),
+          )
           .limit(1);
 
         return result[0] ?? null;
@@ -239,6 +248,9 @@ export class DrizzleShowRepository implements IShowRepository {
 
   /**
    * Gets shows for drop-off analysis.
+   * Excludes soft-deleted shows and returns the stalest first (never analyzed, then oldest
+   * analyzedAt) so repeated batch runs rotate through the catalog instead of re-analyzing
+   * the same arbitrary N shows.
    */
   async findShowsForAnalysis(limit: number): Promise<ShowListItem[]> {
     return withDbError(
@@ -252,7 +264,14 @@ export class DrizzleShowRepository implements IShowRepository {
           })
           .from(schema.mediaItems)
           .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-          .where(eq(schema.mediaItems.type, MediaType.SHOW))
+          .where(
+            and(eq(schema.mediaItems.type, MediaType.SHOW), isNull(schema.mediaItems.deletedAt)),
+          )
+          // analyzedAt is an ISO-8601 string inside the jsonb, so text order == chronological order
+          .orderBy(
+            sql`${schema.shows.dropOffAnalysis}->>'analyzedAt' ASC NULLS FIRST`,
+            schema.mediaItems.id,
+          )
           .limit(limit);
       },
       { limit },

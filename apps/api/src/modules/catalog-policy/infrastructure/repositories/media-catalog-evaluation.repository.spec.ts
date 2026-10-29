@@ -300,8 +300,8 @@ describe('MediaCatalogEvaluationRepository', () => {
         },
       ];
 
-      // findByMediaIdForContexts uses where() without limit()
-      mockDb.where.mockResolvedValue(mockResults);
+      // findByMediaIdForContexts ends at orderBy() (no limit)
+      mockDb.orderBy.mockResolvedValue(mockResults);
 
       const result = await repository.findByMediaIdForContexts('media-1', ['catalog', 'trending']);
 
@@ -326,7 +326,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         },
       ];
 
-      mockDb.where.mockResolvedValue(mockResults);
+      mockDb.orderBy.mockResolvedValue(mockResults);
 
       const result = await repository.findByMediaIdForContexts('media-1', [
         'catalog',
@@ -340,8 +340,33 @@ describe('MediaCatalogEvaluationRepository', () => {
       expect(result.has('homepage')).toBe(false);
     });
 
+    it('should keep the latest policy version per context', async () => {
+      const base = {
+        mediaItemId: 'media-1',
+        reasons: ['ALLOWED_COUNTRY'],
+        relevanceScore: 50,
+        evaluatedAt: new Date(),
+        breakoutRuleId: null,
+        context: 'catalog',
+        runId: null,
+      };
+      // Rows are returned ordered by policy_version DESC
+      mockDb.orderBy.mockResolvedValue([
+        { ...base, status: 'ineligible', policyVersion: 3 },
+        { ...base, status: 'eligible', policyVersion: 2 },
+        { ...base, status: 'eligible', policyVersion: 1 },
+      ]);
+
+      const result = await repository.findByMediaIdForContexts('media-1', ['catalog']);
+
+      expect(result.size).toBe(1);
+      expect(result.get('catalog')?.policyVersion).toBe(3);
+      expect(result.get('catalog')?.status).toBe('ineligible');
+      expect(mockDb.orderBy).toHaveBeenCalled();
+    });
+
     it('should throw DatabaseException when query fails', async () => {
-      mockDb.where.mockRejectedValue(new Error('DB Error'));
+      mockDb.orderBy.mockRejectedValue(new Error('DB Error'));
 
       await expect(repository.findByMediaIdForContexts('media-1', ['catalog'])).rejects.toThrow(
         DatabaseException,

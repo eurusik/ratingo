@@ -59,7 +59,8 @@ export class ReviewQueryDto {
     description: 'Hide reviews marked as spoilers',
   })
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
+  // Read the raw value: with enableImplicitConversion, "false" is already coerced to true before @Transform
+  @Transform(({ obj, key }) => obj[key] === 'true' || obj[key] === true)
   @IsBoolean()
   hideSpoilers?: boolean;
 }

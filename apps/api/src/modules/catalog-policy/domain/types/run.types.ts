@@ -5,8 +5,12 @@
  */
 
 /**
- * Aggregated counters from evaluations table.
- * Derived from COUNT(DISTINCT media_item_id) with FILTER conditions.
+ * Aggregated counters from evaluations table (item-level).
+ *
+ * An item counts as `processed` only when it has an evaluation for EVERY context the run
+ * must cover (see resolveRunContextScope). Its eligible/ineligible/review bucket is taken
+ * from the catalog context (falling back to any covered context), so each processed item
+ * lands in exactly one bucket.
  *
  * Invariant: processed = eligible + ineligible + review
  * (errors are tracked separately in run's errors column)
@@ -17,6 +21,17 @@ export interface AggregatedCounters {
   ineligible: number;
   review: number;
   errors: number;
+}
+
+/**
+ * Aggregated counters plus evaluation-level progress used to decide run completion.
+ */
+export interface RunProgressCounters extends AggregatedCounters {
+  /**
+   * Number of completed (media_item_id, context) evaluations within the run's required contexts.
+   * Compared against total * contextsPerItem; recorded errors count toward completion too.
+   */
+  evaluations: number;
 }
 
 /**

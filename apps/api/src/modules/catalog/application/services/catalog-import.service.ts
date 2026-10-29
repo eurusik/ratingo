@@ -184,7 +184,8 @@ export class CatalogImportService {
     // Get slug from DB if job is completed
     let slug: string | null = null;
     if (jobStatus.status === JOB_STATUS.READY && jobStatus.tmdbId) {
-      const media = await this.mediaRepository.findByTmdbId(jobStatus.tmdbId);
+      // Type is encoded in the job id (SYNC_MOVIE_/SYNC_SHOW_); TMDB movie/TV id spaces overlap
+      const media = await this.mediaRepository.findByTmdbId(jobStatus.tmdbId, jobStatus.type);
       slug = media?.slug ?? null;
     }
 

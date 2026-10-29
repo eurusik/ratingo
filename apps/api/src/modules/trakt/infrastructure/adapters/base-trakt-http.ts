@@ -52,7 +52,7 @@ const RATE_LIMITER_ACQUIRE_TIMEOUT_MS = 120000; // 2 minutes
  * Note: If running multiple processes (PM2 cluster, K8s pods), each process
  * has its own limiter. Reduce maxTokens accordingly or use Redis-based limiter.
  */
-class RateLimiter {
+export class RateLimiter {
   private tokens: number;
   private queue: Array<{ resolve: () => void; reject: (err: Error) => void }> = [];
   // Stored for potential cleanup in the future (e.g., graceful shutdown)
@@ -173,22 +173,26 @@ class RateLimiter {
 
     // Wait in queue with timeout
     return new Promise((resolve, reject) => {
+      // Keep a reference to the queued entry so the timeout can remove it by identity.
+      // (The queue stores a wrapper, not the raw `resolve`, so a lookup by `resolve`
+      // never matches and stale waiters would later consume tokens and queue slots.)
+      const entry = {
+        resolve: () => {
+          clearTimeout(timeoutId);
+          resolve();
+        },
+        reject,
+      };
+
       const timeoutId = setTimeout(() => {
-        // Remove from queue on timeout
-        const idx = this.queue.findIndex((item) => item.resolve === resolve);
+        const idx = this.queue.indexOf(entry);
         if (idx !== -1) {
           this.queue.splice(idx, 1);
         }
         reject(new Error(`Rate limiter timeout after ${this.acquireTimeoutMs}ms`));
       }, this.acquireTimeoutMs);
 
-      this.queue.push({
-        resolve: () => {
-          clearTimeout(timeoutId);
-          resolve();
-        },
-        reject,
-      });
+      this.queue.push(entry);
     });
   }
 }

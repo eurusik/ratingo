@@ -12,7 +12,11 @@ import {
   type ICatalogEvaluationRunRepository,
 } from '../../../domain/repositories';
 import { CatalogEvaluationService } from '../../services/catalog-evaluation.service';
-import type { EvaluateCatalogItemPayload, ErrorSampleEntry } from '../types/job-payloads';
+import type {
+  EvaluateCatalogItemPayload,
+  EvaluateItemAttemptInfo,
+  ErrorSampleEntry,
+} from '../types/job-payloads';
 import { validateContextPayload } from '../utils/context-validator';
 
 const ERROR_STACK_MAX_LENGTH = 500;
@@ -30,8 +34,14 @@ export class EvaluateItemHandler {
   /**
    * Handles EVALUATE_CATALOG_ITEM job.
    * Evaluates single media item and writes result.
+   *
+   * On failure the error is rethrown so BullMQ retries the job with backoff. The error is
+   * recorded on the run only on the final attempt, so the run counts it toward completion
+   * (see RunFinalizeService) instead of staying RUNNING forever.
+   *
+   * @param attempt - Retry info from the worker; when omitted the call is treated as final
    */
-  async handle(payload: EvaluateCatalogItemPayload): Promise<void> {
+  async handle(payload: EvaluateCatalogItemPayload, attempt?: EvaluateItemAttemptInfo): Promise<void> {
     const { runId, policyVersion, mediaItemId, context } = payload;
 
     if (!validateContextPayload(payload, { runId, policyVersion, mediaItemId }, this.logger)) {
@@ -59,6 +69,14 @@ export class EvaluateItemHandler {
 
       this.logger.debug(`Evaluated ${mediaItemId} for run ${runId} (context: ${context})`);
     } catch (error: unknown) {
+      if (attempt && !attempt.isFinalAttempt) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        this.logger.warn(
+          `Evaluation attempt failed for ${mediaItemId} (run ${runId}, context ${context}), will retry: ${err.message}`,
+        );
+        throw err;
+      }
+
       await this.recordError(runId, mediaItemId, error);
     }
   }

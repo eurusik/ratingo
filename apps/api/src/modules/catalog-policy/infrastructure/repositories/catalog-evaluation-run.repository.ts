@@ -7,7 +7,7 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, desc, sql, and, lt } from 'drizzle-orm';
+import { eq, desc, sql, and, lt, inArray, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
@@ -16,7 +16,9 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
   EligibilityStatus,
+  EvaluationContext,
   RunStatus,
+  type EvaluationContextType,
   type RunStatusType,
 } from '../../domain/constants/evaluation.constants';
 import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
@@ -27,7 +29,14 @@ import {
   type UpdateRunInput,
   type IncrementCountersInput,
 } from '../../domain/repositories';
-import { type AggregatedCounters, type RunAnomaly } from '../../domain/types';
+import {
+  type AggregatedCounters,
+  type RunAnomaly,
+  type RunProgressCounters,
+} from '../../domain/types';
+
+/** Context whose status decides an item's eligible/ineligible/review bucket. */
+const PRIMARY_BUCKET_CONTEXT = EvaluationContext.CATALOG;
 
 @Injectable()
 export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepository {
@@ -234,22 +243,76 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
   }
 
   /**
-   * Aggregates counters from evaluations table for a specific run.
-   * Uses COUNT(DISTINCT media_item_id) to avoid double-counting.
+   * Builds the per-item sub-select shared by aggregateCounters and syncRunCounters.
+   *
+   * One row per media item with:
+   * - context_count: number of distinct (restricted) contexts evaluated within the run
+   * - item_status: status in the catalog context, falling back to any evaluated context
    */
-  async aggregateCounters(runId: string): Promise<AggregatedCounters> {
-    try {
-      const result = await this.db
-        .select({
-          processed: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId})::int`,
-          eligible: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.ELIGIBLE})::int`,
-          ineligible: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.INELIGIBLE})::int`,
-          review: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.REVIEW})::int`,
-        })
-        .from(schema.mediaCatalogEvaluations)
-        .where(eq(schema.mediaCatalogEvaluations.runId, runId));
+  private buildPerItemEvaluationsSql(
+    runId: string,
+    requiredContexts?: readonly EvaluationContextType[],
+  ): SQL {
+    const contextFilter =
+      requiredContexts && requiredContexts.length > 0
+        ? sql` AND context IN (${sql.join(
+            requiredContexts.map((context) => sql`${context}`),
+            sql`, `,
+          )})`
+        : sql``;
 
-      const counters = result[0] || { processed: 0, eligible: 0, ineligible: 0, review: 0 };
+    return sql`
+      SELECT
+        media_item_id,
+        COUNT(DISTINCT context)::int AS context_count,
+        COALESCE(
+          MAX(status::text) FILTER (WHERE context = ${PRIMARY_BUCKET_CONTEXT}),
+          MAX(status::text)
+        ) AS item_status
+      FROM ${schema.mediaCatalogEvaluations}
+      WHERE run_id = ${runId}${contextFilter}
+      GROUP BY media_item_id
+    `;
+  }
+
+  /**
+   * Aggregates item-level counters from evaluations table for a specific run.
+   *
+   * An item is `processed` only when it has an evaluation in EVERY required context, so
+   * finishing the catalog context alone no longer looks like 100% coverage.
+   * `evaluations` counts (item, context) pairs for completion checks.
+   */
+  async aggregateCounters(
+    runId: string,
+    requiredContexts?: readonly EvaluationContextType[],
+  ): Promise<RunProgressCounters> {
+    try {
+      const contextsPerItem = requiredContexts?.length ? requiredContexts.length : 1;
+      const perItem = this.buildPerItemEvaluationsSql(runId, requiredContexts);
+
+      const rows = await this.db.execute<{
+        evaluations: number | string | null;
+        processed: number | string | null;
+        eligible: number | string | null;
+        ineligible: number | string | null;
+        review: number | string | null;
+      }>(sql`
+        SELECT
+          COALESCE(SUM(context_count), 0)::int AS evaluations,
+          COUNT(*) FILTER (WHERE context_count >= ${contextsPerItem})::int AS processed,
+          COUNT(*) FILTER (
+            WHERE context_count >= ${contextsPerItem} AND item_status = ${EligibilityStatus.ELIGIBLE}
+          )::int AS eligible,
+          COUNT(*) FILTER (
+            WHERE context_count >= ${contextsPerItem} AND item_status = ${EligibilityStatus.INELIGIBLE}
+          )::int AS ineligible,
+          COUNT(*) FILTER (
+            WHERE context_count >= ${contextsPerItem} AND item_status = ${EligibilityStatus.REVIEW}
+          )::int AS review
+        FROM (${perItem}) AS per_item
+      `);
+
+      const row = rows[0];
 
       // Get error count from run's errors column (atomic counter, source of truth)
       const run = await this.db
@@ -259,7 +322,11 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
         .limit(1);
 
       return {
-        ...counters,
+        evaluations: Number(row?.evaluations ?? 0),
+        processed: Number(row?.processed ?? 0),
+        eligible: Number(row?.eligible ?? 0),
+        ineligible: Number(row?.ineligible ?? 0),
+        review: Number(row?.review ?? 0),
         errors: run[0]?.errors ?? 0,
       };
     } catch (error) {
@@ -269,29 +336,32 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
   }
 
   /**
-   * Syncs cached counters with actual aggregated values.
-   * Uses atomic UPDATE with subqueries to prevent race conditions.
+   * Syncs cached counters with actual aggregated values (same item-level semantics as
+   * aggregateCounters). Uses atomic UPDATE with subqueries to prevent race conditions.
    */
-  async syncRunCounters(runId: string): Promise<AggregatedCounters> {
+  async syncRunCounters(
+    runId: string,
+    requiredContexts?: readonly EvaluationContextType[],
+  ): Promise<AggregatedCounters> {
     try {
+      const contextsPerItem = requiredContexts?.length ? requiredContexts.length : 1;
+      const perItem = this.buildPerItemEvaluationsSql(runId, requiredContexts);
+
       // Atomic UPDATE with subqueries - no race condition between read and write
       const result = await this.db
         .update(schema.catalogEvaluationRuns)
         .set({
           processed: sql`(
-            SELECT COUNT(DISTINCT media_item_id)::int
-            FROM ${schema.mediaCatalogEvaluations}
-            WHERE run_id = ${runId}
+            SELECT COUNT(*)::int FROM (${perItem}) AS per_item
+            WHERE context_count >= ${contextsPerItem}
           )`,
           eligible: sql`(
-            SELECT COUNT(DISTINCT media_item_id)::int
-            FROM ${schema.mediaCatalogEvaluations}
-            WHERE run_id = ${runId} AND status = ${EligibilityStatus.ELIGIBLE}
+            SELECT COUNT(*)::int FROM (${perItem}) AS per_item
+            WHERE context_count >= ${contextsPerItem} AND item_status = ${EligibilityStatus.ELIGIBLE}
           )`,
           ineligible: sql`(
-            SELECT COUNT(DISTINCT media_item_id)::int
-            FROM ${schema.mediaCatalogEvaluations}
-            WHERE run_id = ${runId} AND status = ${EligibilityStatus.INELIGIBLE}
+            SELECT COUNT(*)::int FROM (${perItem}) AS per_item
+            WHERE context_count >= ${contextsPerItem} AND item_status = ${EligibilityStatus.INELIGIBLE}
           )`,
           // errors column is not updated here - it's managed by recordError atomically
         })
@@ -389,6 +459,36 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
     } catch (error) {
       this.logger.error(`Failed to transition run ${runId} to PREPARED`, error);
       throw new DatabaseException(`Failed to transition run ${runId} to PREPARED`, error);
+    }
+  }
+
+  /**
+   * Atomically transitions a run to CANCELLED only while its status is in `fromStatuses`.
+   * Uses WHERE guard so a concurrent promote/finalize cannot be overwritten.
+   */
+  async transitionToCancelled(
+    runId: string,
+    fromStatuses: readonly RunStatusType[],
+  ): Promise<boolean> {
+    try {
+      const result = await this.db
+        .update(schema.catalogEvaluationRuns)
+        .set({
+          status: RunStatus.CANCELLED,
+          finishedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.catalogEvaluationRuns.id, runId),
+            inArray(schema.catalogEvaluationRuns.status, [...fromStatuses]),
+          ),
+        )
+        .returning({ id: schema.catalogEvaluationRuns.id });
+
+      return result.length > 0;
+    } catch (error) {
+      this.logger.error(`Failed to transition run ${runId} to CANCELLED`, error);
+      throw new DatabaseException(`Failed to transition run ${runId} to CANCELLED`, error);
     }
   }
 

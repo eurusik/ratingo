@@ -7,7 +7,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
 import * as Joi from 'joi';
 
-import { ThrottlerRealIpGuard } from './common/guards/throttler-realip.guard';
+import { buildThrottlerTiers, ThrottlerRealIpGuard } from './common/guards/throttler-realip.guard';
 import authConfig from './config/auth.config';
 import omdbConfig from './config/omdb.config';
 import tmdbConfig from './config/tmdb.config';
@@ -38,34 +38,15 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
 @Module({
   imports: [
     // Rate Limiting - Tiered protection
-    // Note: 'auth' and 'refresh' tiers are applied explicitly via @Throttle() decorator
-    // on auth routes. All other routes use method-based selection (GET=default, mutations=strict)
+    // Method-based selection: GET=default, mutations=strict. The 'auth' and 'refresh' tiers are
+    // skipped everywhere except routes that opt in via @Throttle({ auth|refresh: {...} })
+    // (see buildThrottlerTiers). Do NOT override 'default' with @Throttle() on mutation routes:
+    // its module-level skipIf would still skip it.
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        throttlers: [
-          {
-            name: 'default',
-            ttl: 60000, // 1 minute window
-            limit: config.get('THROTTLE_LIMIT', 600), // 600 req/min (10 rps) - browsing
-            // Skip 'default' tier for mutation methods (they use 'strict')
-            skipIf: (context) => {
-              const req = context.switchToHttp().getRequest();
-              return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
-            },
-          },
-          {
-            name: 'strict',
-            ttl: 60000,
-            limit: 120, // 120 req/min - mutations (POST/PATCH/DELETE)
-            // Skip 'strict' tier for read methods (they use 'default')
-            skipIf: (context) => {
-              const req = context.switchToHttp().getRequest();
-              return ['GET', 'HEAD', 'OPTIONS'].includes(req.method);
-            },
-          },
-        ],
+        throttlers: buildThrottlerTiers(config.get('THROTTLE_LIMIT', 600)), // 600 req/min (10 rps)
       }),
     }),
     ConfigModule.forRoot({
@@ -107,6 +88,13 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
         ACCESS_TOKEN_TTL: Joi.string().pattern(DURATION_RE).default('15m'),
         REFRESH_TOKEN_TTL: Joi.string().pattern(DURATION_RE).default('7d'),
         BCRYPT_SALT_ROUNDS: Joi.number().default(12),
+        // OAuth state/exchange secrets: required in production (auth.config.ts only has dev fallbacks)
+        OAUTH_STATE_SECRET: Joi.string()
+          .min(32)
+          .when('NODE_ENV', { is: 'production', then: Joi.required(), otherwise: Joi.optional() }),
+        OAUTH_EXCHANGE_CODE_PEPPER: Joi.string()
+          .min(32)
+          .when('NODE_ENV', { is: 'production', then: Joi.required(), otherwise: Joi.optional() }),
 
         // Rate Limiting
         THROTTLE_LIMIT: Joi.number().default(600),

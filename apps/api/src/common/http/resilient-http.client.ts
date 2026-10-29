@@ -27,21 +27,36 @@ export interface FetchResult<T> {
 }
 
 /**
+ * Cloudflare-specific transient 5xx codes (520-524): unknown error, web server down,
+ * connection timed out, origin unreachable, timeout occurred.
+ */
+const CLOUDFLARE_UNKNOWN_ERROR = 520;
+const CLOUDFLARE_WEB_SERVER_DOWN = 521;
+const CLOUDFLARE_CONNECTION_TIMED_OUT = 522;
+const CLOUDFLARE_ORIGIN_UNREACHABLE = 523;
+const CLOUDFLARE_TIMEOUT_OCCURRED = 524;
+
+/**
  * HTTP status codes that are retryable.
  */
-const RETRYABLE_STATUS_CODES = new Set([
+const RETRYABLE_STATUS_CODES = new Set<number>([
   HttpStatus.REQUEST_TIMEOUT,
   HttpStatus.TOO_MANY_REQUESTS,
   HttpStatus.INTERNAL_SERVER_ERROR,
   HttpStatus.BAD_GATEWAY,
   HttpStatus.SERVICE_UNAVAILABLE,
   HttpStatus.GATEWAY_TIMEOUT,
+  CLOUDFLARE_UNKNOWN_ERROR,
+  CLOUDFLARE_WEB_SERVER_DOWN,
+  CLOUDFLARE_CONNECTION_TIMED_OUT,
+  CLOUDFLARE_ORIGIN_UNREACHABLE,
+  CLOUDFLARE_TIMEOUT_OCCURRED,
 ]);
 
 /**
  * HTTP status codes that should NOT be retried.
  */
-const NON_RETRYABLE_STATUS_CODES = new Set([
+const NON_RETRYABLE_STATUS_CODES = new Set<number>([
   HttpStatus.BAD_REQUEST,
   HttpStatus.UNAUTHORIZED,
   HttpStatus.FORBIDDEN,
@@ -71,6 +86,12 @@ export interface RetryableError extends Error {
  * Checks if an error/status is retryable.
  */
 export function isRetryableError(error: Partial<RetryableError>): boolean {
+  // Malformed response body (JSON.parse failure) is deterministic — retrying won't help
+  // and it is not a network error.
+  if (error.name === 'SyntaxError') {
+    return false;
+  }
+
   // Network errors (no response)
   if (!error.status && error.name !== 'AbortError') {
     return true;
@@ -341,7 +362,10 @@ export class ResilientHttpClient {
         );
       }
 
-      return response.json();
+      // Must be awaited: otherwise `finally` clears the timeout before the body is read, so a
+      // stalled body would hang past the timeout, and body-read AbortError/SyntaxError would
+      // bypass the catch below.
+      return await response.json();
     } catch (error: unknown) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new HttpError('Request timeout', 408);

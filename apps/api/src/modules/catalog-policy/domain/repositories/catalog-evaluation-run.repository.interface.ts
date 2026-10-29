@@ -5,8 +5,8 @@
  * Supports two-phase policy activation flow (Prepare → Promote).
  */
 
-import { type RunStatusType } from '../constants/evaluation.constants';
-import { type AggregatedCounters, type RunAnomaly } from '../types';
+import { type EvaluationContextType, type RunStatusType } from '../constants/evaluation.constants';
+import { type AggregatedCounters, type RunAnomaly, type RunProgressCounters } from '../types';
 
 export const CATALOG_EVALUATION_RUN_REPOSITORY = Symbol('CATALOG_EVALUATION_RUN_REPOSITORY');
 
@@ -95,16 +95,24 @@ export interface ICatalogEvaluationRunRepository {
   findAll(options?: { limit?: number; offset?: number }): Promise<CatalogEvaluationRun[]>;
 
   /**
-   * Aggregates counters from evaluations table for a specific run.
-   * Uses COUNT(DISTINCT media_item_id) to avoid double-counting.
+   * Aggregates item-level counters from evaluations table for a specific run.
+   * An item is `processed` only when it has an evaluation in every `requiredContexts`
+   * (or in at least one context when omitted). Also returns the number of completed
+   * (item, context) evaluations for completion checks.
    */
-  aggregateCounters(runId: string): Promise<AggregatedCounters>;
+  aggregateCounters(
+    runId: string,
+    requiredContexts?: readonly EvaluationContextType[],
+  ): Promise<RunProgressCounters>;
 
   /**
    * Syncs cached counters with actual aggregated values.
    * Aggregates from evaluations table and updates the run.
    */
-  syncRunCounters(runId: string): Promise<AggregatedCounters>;
+  syncRunCounters(
+    runId: string,
+    requiredContexts?: readonly EvaluationContextType[],
+  ): Promise<AggregatedCounters>;
 
   /**
    * Finds runs that are RUNNING and started before the cutoff date.
@@ -124,4 +132,11 @@ export interface ICatalogEvaluationRunRepository {
    * @returns true if transition succeeded, false if already transitioned
    */
   transitionToPrepared(runId: string, counters: AggregatedCounters): Promise<boolean>;
+
+  /**
+   * Atomically transitions a run to CANCELLED only if its current status is in `fromStatuses`.
+   * Prevents overwriting a terminal state (e.g. PROMOTED) after a stale read.
+   * @returns true if the run was cancelled, false if its status no longer allowed cancellation
+   */
+  transitionToCancelled(runId: string, fromStatuses: readonly RunStatusType[]): Promise<boolean>;
 }

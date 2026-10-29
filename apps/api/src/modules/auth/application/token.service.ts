@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'crypto';
 
 import { Injectable, Inject, Logger, UnauthorizedException } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
@@ -20,6 +20,20 @@ import {
   type JwtPayload,
   type RefreshPayload,
 } from '../domain/types';
+
+/** Prefix shared by all bcrypt hashes ($2a$, $2b$, $2y$). */
+const BCRYPT_HASH_PREFIX = '$2';
+
+/** Replays of a token revoked less than this long ago are treated as client races, not theft. */
+const REUSE_GRACE_PERIOD_MS = 30_000;
+
+/**
+ * Hashes a refresh token with SHA-256 (hex). bcrypt only covers the first 72 bytes, which
+ * for a JWT is just the header and the start of the payload, so it cannot bind the signature.
+ */
+function sha256Hex(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
 
 /**
  * Issues, rotates and revokes JWT access/refresh token pairs.
@@ -56,7 +70,7 @@ export class TokenService {
       expiresIn: this.config.refreshTokenTtl,
     });
 
-    const refreshTokenHash = await this.passwordHasher.hash(refreshToken);
+    const refreshTokenHash = sha256Hex(refreshToken);
     const expiresAt = this.computeExpiry(this.config.refreshTokenTtl);
 
     await this.refreshTokensRepository.issue({
@@ -98,12 +112,27 @@ export class TokenService {
     const stored = await this.refreshTokensRepository.findById(payload.jti);
     t.mark('after_lookup');
 
-    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+    if (!stored) {
+      throw new UnauthorizedException('Refresh token expired or revoked');
+    }
+
+    if (stored.revokedAt) {
+      // Replay shortly after rotation is usually a benign client race (two tabs, a retry
+      // after a lost response): reject it without killing every session.
+      if (Date.now() - stored.revokedAt.getTime() < REUSE_GRACE_PERIOD_MS) {
+        throw new UnauthorizedException('Refresh token expired or revoked');
+      }
+      // A long-revoked token is being replayed: assume theft and kill every session
+      await this.refreshTokensRepository.revokeAllForUser(stored.userId);
+      throw new UnauthorizedException('Refresh token reuse detected');
+    }
+
+    if (stored.expiresAt < new Date()) {
       throw new UnauthorizedException('Refresh token expired or revoked');
     }
 
     t.mark('before_compare');
-    const valid = await this.passwordHasher.compare(refreshToken, stored.tokenHash);
+    const valid = await this.matchesStoredHash(refreshToken, stored.tokenHash);
     t.mark('after_compare');
 
     if (!valid) {
@@ -120,9 +149,14 @@ export class TokenService {
     }
 
     t.mark('before_revoke');
-    // rotate: revoke old, issue new
-    await this.refreshTokensRepository.revoke(stored.id);
+    // rotate: atomically revoke old (only one concurrent caller can win), issue new
+    const revoked = await this.refreshTokensRepository.revokeIfActive(stored.id);
     t.mark('after_revoke');
+
+    if (!revoked) {
+      // Lost a concurrent race for the same token: only one caller gets a new pair
+      throw new UnauthorizedException('Refresh token expired or revoked');
+    }
 
     t.mark('before_issue');
     const tokens = await this.issueTokens(user, clientMeta);
@@ -138,6 +172,18 @@ export class TokenService {
    */
   async logout(userId: string): Promise<void> {
     await this.refreshTokensRepository.revokeAllForUser(userId);
+  }
+
+  /**
+   * Compares token against stored hash. New tokens use SHA-256 hex; legacy rows are bcrypt.
+   */
+  private async matchesStoredHash(refreshToken: string, storedHash: string): Promise<boolean> {
+    if (storedHash.startsWith(BCRYPT_HASH_PREFIX)) {
+      return this.passwordHasher.compare(refreshToken, storedHash);
+    }
+    const expected = Buffer.from(storedHash, 'utf8');
+    const actual = Buffer.from(sha256Hex(refreshToken), 'utf8');
+    return expected.length === actual.length && timingSafeEqual(expected, actual);
   }
 
   private computeExpiry(ttl: string): Date {

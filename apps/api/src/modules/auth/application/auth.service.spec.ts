@@ -178,6 +178,44 @@ describe('AuthService - changePassword', () => {
     expect(mocks.usersService.updatePassword).toHaveBeenCalledWith('u1', 'new-hash');
   });
 
+  it('should revoke all refresh tokens after updating the password', async () => {
+    mocks.usersService.getById.mockResolvedValue({
+      id: 'u1',
+      email: 'user@example.com',
+      passwordHash: 'old-hash',
+      role: 'user',
+    });
+    mocks.passwordHasher.compare.mockResolvedValue(true);
+    mocks.passwordHasher.hash.mockResolvedValue('new-hash');
+    const order: string[] = [];
+    mocks.usersService.updatePassword.mockImplementation(async () => {
+      order.push('updatePassword');
+    });
+    mocks.refreshTokensRepository.revokeAllForUser.mockImplementation(async () => {
+      order.push('revokeAll');
+    });
+
+    await service.changePassword('u1', 'OldPass123', 'NewPass456');
+
+    expect(mocks.refreshTokensRepository.revokeAllForUser).toHaveBeenCalledWith('u1');
+    expect(order).toEqual(['updatePassword', 'revokeAll']);
+  });
+
+  it('should not revoke refresh tokens when the current password is wrong', async () => {
+    mocks.usersService.getById.mockResolvedValue({
+      id: 'u1',
+      email: 'user@example.com',
+      passwordHash: 'old-hash',
+      role: 'user',
+    });
+    mocks.passwordHasher.compare.mockResolvedValue(false);
+
+    await expect(service.changePassword('u1', 'WrongPass1', 'NewPass456')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(mocks.refreshTokensRepository.revokeAllForUser).not.toHaveBeenCalled();
+  });
+
   it('should throw ForbiddenException when user not found', async () => {
     mocks.usersService.getById.mockResolvedValue(null);
 

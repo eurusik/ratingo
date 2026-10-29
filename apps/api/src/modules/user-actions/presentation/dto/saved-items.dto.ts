@@ -10,6 +10,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
 } from 'class-validator';
 
 import { MAX_PAGE_SIZE } from '../../../../common/constants';
@@ -43,6 +44,7 @@ export class SaveItemDto {
   })
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   reasonKey?: string;
 }
 

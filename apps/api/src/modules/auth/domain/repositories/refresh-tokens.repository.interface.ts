@@ -42,6 +42,15 @@ export interface IRefreshTokensRepository {
   revoke(id: string): Promise<void>;
 
   /**
+   * Atomically revokes a refresh token only if it is still active (not revoked).
+   * Used for rotation: exactly one concurrent caller can win.
+   *
+   * @param {string} id - Token id
+   * @returns {Promise<boolean>} True when this call revoked the token, false when it was already revoked or missing
+   */
+  revokeIfActive(id: string): Promise<boolean>;
+
+  /**
    * Revokes all refresh tokens for a user.
    *
    * @param {string} userId - User id

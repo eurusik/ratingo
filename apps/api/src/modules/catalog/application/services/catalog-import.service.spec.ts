@@ -289,6 +289,7 @@ describe('CatalogImportService', () => {
         status: JOB_STATUS.READY,
         errorMessage: null,
         tmdbId: 123,
+        type: MediaType.MOVIE,
       });
       mediaRepository.findByTmdbId.mockResolvedValue({
         id: 'media-id',
@@ -302,7 +303,28 @@ describe('CatalogImportService', () => {
       expect(result.status).toBe(JOB_STATUS.READY);
       expect(result.slug).toBe('the-matrix');
       expect(result.errorMessage).toBeNull();
-      expect(mediaRepository.findByTmdbId).toHaveBeenCalledWith(123);
+      expect(mediaRepository.findByTmdbId).toHaveBeenCalledWith(123, MediaType.MOVIE);
+    });
+
+    it('should look up slug by the job type, not tmdbId alone (movie/show ids overlap)', async () => {
+      importJobPort.isValidImportJobId.mockReturnValue(true);
+      importJobPort.getJobStatus.mockResolvedValue({
+        status: JOB_STATUS.READY,
+        errorMessage: null,
+        tmdbId: 123,
+        type: MediaType.SHOW,
+      });
+      mediaRepository.findByTmdbId.mockResolvedValue({
+        id: 'show-id',
+        slug: 'some-show',
+        type: MediaType.SHOW,
+        ingestionStatus: IngestionStatus.READY,
+      });
+
+      const result = await service.getImportJobStatus('sync-show_123');
+
+      expect(result.slug).toBe('some-show');
+      expect(mediaRepository.findByTmdbId).toHaveBeenCalledWith(123, MediaType.SHOW);
     });
 
     it('should return job status without slug when job is PROCESSING', async () => {
@@ -311,6 +333,7 @@ describe('CatalogImportService', () => {
         status: JOB_STATUS.PROCESSING,
         errorMessage: null,
         tmdbId: 123,
+        type: MediaType.MOVIE,
       });
 
       const result = await service.getImportJobStatus('sync-movie_123');
@@ -326,6 +349,7 @@ describe('CatalogImportService', () => {
         status: JOB_STATUS.FAILED,
         errorMessage: 'TMDB API error',
         tmdbId: 123,
+        type: MediaType.MOVIE,
       });
 
       const result = await service.getImportJobStatus('sync-movie_123');
@@ -341,6 +365,7 @@ describe('CatalogImportService', () => {
         status: JOB_STATUS.READY,
         errorMessage: null,
         tmdbId: 123,
+        type: MediaType.MOVIE,
       });
       mediaRepository.findByTmdbId.mockResolvedValue(null);
 

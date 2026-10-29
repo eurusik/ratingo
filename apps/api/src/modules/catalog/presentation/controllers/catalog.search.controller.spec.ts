@@ -84,6 +84,14 @@ describe('CatalogSearchController', () => {
       expect(result.tmdb[0].poster).toBeDefined();
     });
 
+    it('should use the first value when query is repeated (array)', async () => {
+      catalogSearchService.search.mockResolvedValue({ query: 'a', local: [], tmdb: [] });
+
+      await controller.search(['a', 'b']);
+
+      expect(catalogSearchService.search).toHaveBeenCalledWith('a');
+    });
+
     it('should return empty arrays for empty query', async () => {
       catalogSearchService.search.mockResolvedValue({ query: '', local: [], tmdb: [] });
 

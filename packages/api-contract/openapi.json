@@ -1464,8 +1464,11 @@
             "name": "days",
             "required": false,
             "in": "query",
-            "description": "Number of days to look back (default: 7).",
+            "description": "Number of days to look back.",
             "schema": {
+              "minimum": 1,
+              "maximum": 90,
+              "default": 7,
               "type": "number"
             }
           },
@@ -1473,8 +1476,11 @@
             "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Max number of shows to return (default: 20).",
+            "description": "Max number of shows to return.",
             "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
               "type": "number"
             }
           }
@@ -8558,6 +8564,20 @@
             "description": "TMDB ID of the media item",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Media type (TMDB movie and TV ids overlap; recommended)",
+            "schema": {
+              "example": "movie",
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
             }
           }
         ],

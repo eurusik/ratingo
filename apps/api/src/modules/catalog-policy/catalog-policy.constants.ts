@@ -19,6 +19,22 @@ export const CATALOG_POLICY_JOBS = {
 } as const;
 
 /**
+ * Retry configuration for EVALUATE_CATALOG_ITEM jobs.
+ * Evaluation errors are rethrown so BullMQ retries; the error is recorded on the run
+ * only on the final attempt (see EvaluateItemHandler).
+ */
+export const EVALUATE_ITEM_JOB_MAX_ATTEMPTS = 3;
+export const EVALUATE_ITEM_JOB_BACKOFF_DELAY_MS = 2000;
+
+export const EVALUATE_ITEM_JOB_OPTIONS = {
+  attempts: EVALUATE_ITEM_JOB_MAX_ATTEMPTS,
+  backoff: {
+    type: 'exponential' as const,
+    delay: EVALUATE_ITEM_JOB_BACKOFF_DELAY_MS,
+  },
+} as const;
+
+/**
  * Trending gate thresholds for public catalog.
  * Content must pass at least one of these to appear in trending.
  */

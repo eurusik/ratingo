@@ -70,6 +70,8 @@ export class AuthService {
 
   /**
    * Changes user password after verifying current password.
+   * Revokes all refresh tokens so existing sessions cannot outlive the old password
+   * (clients must log in again to get a fresh session).
    *
    * @throws {ForbiddenException} When current password is invalid
    */
@@ -90,5 +92,6 @@ export class AuthService {
 
     const newHash = await this.passwordHasher.hash(newPassword);
     await this.usersService.updatePassword(user.id, newHash);
+    await this.tokenService.logout(user.id);
   }
 }

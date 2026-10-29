@@ -22,6 +22,7 @@ import {
   SyncTrendingQueryDto,
   AnalyzeDropOffQueryDto,
   SyncEligibleTrendingQueryDto,
+  StatsByTmdbQueryDto,
 } from '../dto';
 
 /**
@@ -112,6 +113,7 @@ export class StatsController {
    * Gets stats by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID of the media item
+   * @param {StatsByTmdbQueryDto} query - Optional `type` (movie/show TMDB ids overlap)
    * @returns {Promise<any>} Stats payload
    */
   @Get('tmdb/:tmdbId')
@@ -121,8 +123,11 @@ export class StatsController {
     description: 'Returns current watchers count and trending rank for a media item.',
   })
   @ApiParam({ name: 'tmdbId', type: Number, description: 'TMDB ID of the media item' })
-  async getStatsByTmdbId(@Param('tmdbId') tmdbId: number) {
-    return this.statsQueryService.getStatsByTmdbId(tmdbId);
+  async getStatsByTmdbId(
+    @Param('tmdbId') tmdbId: number,
+    @Query() query: StatsByTmdbQueryDto = {},
+  ) {
+    return this.statsQueryService.getStatsByTmdbId(tmdbId, parseMediaType(query.type));
   }
 
   // === DROP-OFF ANALYSIS ===

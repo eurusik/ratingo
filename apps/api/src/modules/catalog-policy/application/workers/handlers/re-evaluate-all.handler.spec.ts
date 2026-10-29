@@ -2,7 +2,11 @@ import { Logger } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../../catalog-policy.constants';
+import {
+  CATALOG_POLICY_QUEUE,
+  CATALOG_POLICY_JOBS,
+  EVALUATE_ITEM_JOB_OPTIONS,
+} from '../../../catalog-policy.constants';
 import { EvaluationContext, RunStatus } from '../../../domain/constants/evaluation.constants';
 import { RunNotFoundError } from '../../../domain/errors';
 import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../../domain/repositories';
@@ -206,6 +210,30 @@ describe('ReEvaluateAllHandler', () => {
         );
       });
 
+      it('should configure retries with backoff on item jobs', async () => {
+        mockRunRepository.findById.mockResolvedValue(mockRun);
+
+        const mockQueryBuilder = {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          orderBy: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValueOnce([{ id: 'item-1' }]).mockResolvedValueOnce([]),
+        };
+        mockDb.select.mockReturnValue(mockQueryBuilder);
+        mockFinalizeService.finalizeRun.mockResolvedValue({ finalized: true });
+
+        await handler.handle(validPayload);
+
+        const [jobs] = mockQueue.addBulk.mock.calls[0];
+        expect(jobs[0].opts).toEqual(
+          expect.objectContaining({
+            attempts: EVALUATE_ITEM_JOB_OPTIONS.attempts,
+            backoff: EVALUATE_ITEM_JOB_OPTIONS.backoff,
+          }),
+        );
+        expect(jobs[0].opts.attempts).toBeGreaterThan(1);
+      });
+
       it('should update cursor after each batch', async () => {
         const mockItems = [{ id: 'item-1' }, { id: 'item-2' }];
 
@@ -226,6 +254,33 @@ describe('ReEvaluateAllHandler', () => {
         expect(mockRunRepository.update).toHaveBeenCalledWith('run-123', {
           cursor: 'item-2', // Last item in batch
         });
+      });
+    });
+
+    describe('afterSnapshot mode (items synced after the snapshot cutoff)', () => {
+      const postSnapshotPayload: ReEvaluateAllPayload = { ...validPayload, afterSnapshot: true };
+
+      it('should dispatch distinct job IDs, skip cursor persistence and skip finalization', async () => {
+        mockRunRepository.findById.mockResolvedValue({ ...mockRun, status: RunStatus.PROMOTED });
+
+        const mockQueryBuilder = {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          orderBy: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValueOnce([{ id: 'item-9' }]).mockResolvedValueOnce([]),
+        };
+        mockDb.select.mockReturnValue(mockQueryBuilder);
+
+        await handler.handle(postSnapshotPayload);
+
+        expect(mockQueue.addBulk).toHaveBeenCalledWith([
+          expect.objectContaining({
+            data: expect.objectContaining({ mediaItemId: 'item-9', policyVersion: 1 }),
+            opts: expect.objectContaining({ jobId: 'eval_post_run-123_item-9_catalog' }),
+          }),
+        ]);
+        expect(mockRunRepository.update).not.toHaveBeenCalled();
+        expect(mockFinalizeService.finalizeRun).not.toHaveBeenCalled();
       });
     });
 

@@ -156,6 +156,61 @@ describe('MediaWatchOffersRepository', () => {
       // Assert - all regions in a single atomic transaction
       expect(mockDb.transaction).toHaveBeenCalledTimes(1);
     });
+
+    it('should clear managed regions when payload has no offers (stale offers)', async () => {
+      const mockTx = {
+        delete: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(undefined),
+        values: jest.fn().mockResolvedValue(undefined),
+      };
+      mockDb.transaction.mockImplementation(async (fn) => fn(mockTx));
+
+      await repository.upsertManyByRegions('media-123', [], ['UA', 'US']);
+
+      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+      expect(mockTx.delete).toHaveBeenCalledTimes(1); // one DELETE ... IN (UA, US)
+      expect(mockTx.insert).not.toHaveBeenCalled();
+    });
+
+    it('should delete managed regions without new rows in the same transaction as inserts', async () => {
+      const mockTx = {
+        delete: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(undefined),
+        values: jest.fn().mockResolvedValue(undefined),
+      };
+      mockDb.transaction.mockImplementation(async (fn) => fn(mockTx));
+
+      // Only US has offers; UA is managed and must be cleared
+      await repository.upsertManyByRegions('media-123', [createOfferInput({ region: 'US' })], [
+        'UA',
+        'US',
+      ]);
+
+      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+      // 1 delete for stale UA + 1 delete/insert pair for US
+      expect(mockTx.delete).toHaveBeenCalledTimes(2);
+      expect(mockTx.insert).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not issue a clearing delete when every managed region has new rows', async () => {
+      const mockTx = {
+        delete: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(undefined),
+        values: jest.fn().mockResolvedValue(undefined),
+      };
+      mockDb.transaction.mockImplementation(async (fn) => fn(mockTx));
+
+      await repository.upsertManyByRegions(
+        'media-123',
+        [createOfferInput({ region: 'US' }), createOfferInput({ region: 'UA' })],
+        ['UA', 'US'],
+      );
+
+      expect(mockTx.delete).toHaveBeenCalledTimes(2); // only the per-region replace deletes
+    });
   });
 
   describe('findByMediaItemId', () => {

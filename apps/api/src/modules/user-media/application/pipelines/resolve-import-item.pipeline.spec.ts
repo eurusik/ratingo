@@ -35,7 +35,11 @@ function makePendingItem(overrides: Partial<ImportPendingItem> = {}): ImportPend
 
 /** Mock BullMQ job that reports the given state. */
 function makeJob(state: string = 'waiting') {
-  return { id: 'job-1', getState: jest.fn().mockResolvedValue(state) };
+  return {
+    id: 'job-1',
+    getState: jest.fn().mockResolvedValue(state),
+    remove: jest.fn().mockResolvedValue(undefined),
+  };
 }
 
 describe('ResolveImportItemPipeline', () => {
@@ -74,6 +78,7 @@ describe('ResolveImportItemPipeline', () => {
     mediaLookup = {
       findManyByImdbIds: jest.fn().mockResolvedValue([]),
       findManyByTmdbIds: jest.fn().mockResolvedValue([]),
+      findTypeById: jest.fn(),
     };
 
     eventEmitter = {
@@ -374,6 +379,49 @@ describe('ResolveImportItemPipeline', () => {
 
       expect(mediaLookup.findManyByTmdbIds).not.toHaveBeenCalled();
       expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('retained failed oneshot job', () => {
+    it('removes the failed job and re-adds it so the item does not stay INGESTING forever', async () => {
+      const item = makePendingItem({ imdbId: 'tt0000001' });
+      pendingRepo.findById.mockResolvedValue(item);
+      tmdbResolver.findByImdbId.mockResolvedValue({ tmdbId: 550, type: 'movie' });
+
+      const failedJob = makeJob('failed');
+      const freshJob = makeJob('waiting');
+      ingestionQueue.add = jest
+        .fn()
+        .mockResolvedValueOnce(failedJob)
+        .mockResolvedValueOnce(freshJob);
+
+      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
+
+      expect(failedJob.remove).toHaveBeenCalledTimes(1);
+      expect(ingestionQueue.add).toHaveBeenCalledTimes(2);
+      expect(ingestionQueue.add).toHaveBeenLastCalledWith(
+        expect.anything(),
+        { tmdbId: 550, type: 'movie' },
+        { jobId: 'movie_550_oneshot' },
+      );
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenLastCalledWith(
+        'item-1',
+        expect.objectContaining({ status: IMPORT_PENDING_STATUS.INGESTING }),
+      );
+    });
+
+    it('does not remove/re-add jobs that are still waiting or active', async () => {
+      const item = makePendingItem({ imdbId: 'tt0000001' });
+      pendingRepo.findById.mockResolvedValue(item);
+      tmdbResolver.findByImdbId.mockResolvedValue({ tmdbId: 550, type: 'movie' });
+      const activeJob = makeJob('active');
+      ingestionQueue.add = jest.fn().mockResolvedValue(activeJob);
+
+      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
+
+      expect(activeJob.remove).not.toHaveBeenCalled();
+      expect(ingestionQueue.add).toHaveBeenCalledTimes(1);
     });
   });
 

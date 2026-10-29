@@ -7,6 +7,12 @@
 // Validators
 export { IsNotReservedUsername } from '../presentation/validators/not-reserved-username.validator';
 
+export {
+  USERNAME_MAX_LENGTH,
+  USERNAME_REGEX,
+  USERNAME_MESSAGE,
+} from '../presentation/validators/username.constants';
+
 // Domain constants & entities
 export { RESERVED_USERNAMES } from '../domain/constants/reserved-usernames';
 export { USER_ROLE } from '../domain/entities/user.entity';

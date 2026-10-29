@@ -1,5 +1,9 @@
 import { Injectable, Logger, type ExecutionContext } from '@nestjs/common';
-import { ThrottlerGuard, type ThrottlerLimitDetail } from '@nestjs/throttler';
+import {
+  ThrottlerGuard,
+  type ThrottlerLimitDetail,
+  type ThrottlerOptions,
+} from '@nestjs/throttler';
 
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
@@ -22,13 +26,96 @@ function extractRealIp(req: FastifyRequest): string {
   return rawSocket?.remoteAddress ?? 'unknown';
 }
 
+const ONE_MINUTE_MS = 60_000;
+
+/**
+ * Names of route-scoped throttler tiers. They are skipped everywhere except on routes that
+ * opt in via `@Throttle({ <tier>: { limit, ttl } })`.
+ */
+export const ROUTE_THROTTLE_TIER = {
+  /** Credential endpoints: register, login, OAuth code exchange. */
+  AUTH: 'auth',
+  /** Refresh-token rotation. */
+  REFRESH: 'refresh',
+} as const;
+
+/** Metadata key prefix `@Throttle()` uses for a tier's limit (not exported by @nestjs/throttler). */
+const THROTTLER_LIMIT_METADATA = 'THROTTLER:LIMIT';
+
+/**
+ * Builds a `skipIf` that skips a tier unless the handler (or controller) opted in with
+ * `@Throttle({ [tier]: ... })`.
+ *
+ * Needed because @nestjs/throttler applies a tier's module-level `skipIf` even when a route
+ * overrides that tier via `@Throttle()`, so overrides of a skipped tier never take effect.
+ */
+export function skipUnlessRouteOptsIn(tier: string): (context: ExecutionContext) => boolean {
+  const metadataKey = THROTTLER_LIMIT_METADATA + tier;
+  return (context) => {
+    const optedIn =
+      Reflect.getMetadata(metadataKey, context.getHandler()) !== undefined ||
+      Reflect.getMetadata(metadataKey, context.getClass()) !== undefined;
+    return !optedIn;
+  };
+}
+
+/**
+ * Builds the application throttler tiers.
+ *
+ * - `default`: reads (GET/HEAD/OPTIONS), shared per IP
+ * - `strict`: mutations (POST/PUT/PATCH/DELETE), shared per IP
+ * - `auth` / `refresh`: only on routes that opt in with `@Throttle()`, counted per route
+ *
+ * @param {number} defaultLimit - Requests per minute for the `default` tier
+ * @returns {ThrottlerOptions[]} Throttler tier definitions
+ */
+export function buildThrottlerTiers(defaultLimit: number): ThrottlerOptions[] {
+  return [
+    {
+      name: 'default',
+      ttl: ONE_MINUTE_MS,
+      limit: defaultLimit, // browsing
+      // Skip 'default' tier for mutation methods (they use 'strict')
+      skipIf: (context) => {
+        const req = context.switchToHttp().getRequest();
+        return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
+      },
+    },
+    {
+      name: 'strict',
+      ttl: ONE_MINUTE_MS,
+      limit: 120, // 120 req/min - mutations (POST/PATCH/DELETE)
+      // Skip 'strict' tier for read methods (they use 'default')
+      skipIf: (context) => {
+        const req = context.switchToHttp().getRequest();
+        return ['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+      },
+    },
+    {
+      name: ROUTE_THROTTLE_TIER.AUTH,
+      ttl: ONE_MINUTE_MS,
+      limit: 10, // register/login/oauth exchange
+      skipIf: skipUnlessRouteOptsIn(ROUTE_THROTTLE_TIER.AUTH),
+    },
+    {
+      name: ROUTE_THROTTLE_TIER.REFRESH,
+      ttl: ONE_MINUTE_MS,
+      limit: 30,
+      skipIf: skipUnlessRouteOptsIn(ROUTE_THROTTLE_TIER.REFRESH),
+    },
+  ];
+}
+
+const ROUTE_SCOPED_TIERS: ReadonlySet<string> = new Set(Object.values(ROUTE_THROTTLE_TIER));
+
 /**
  * Custom ThrottlerGuard that:
  * 1. Extracts real client IP from Cloudflare/proxy headers
  * 2. Adds rate limit headers and detailed logging on 429
  *
  * Note: Method-based tier selection (GET→default, mutations→strict) is handled
- * via skipIf in ThrottlerModule config. Explicit @Throttle() decorators override this.
+ * via skipIf in ThrottlerModule config (see {@link buildThrottlerTiers}). Auth routes opt
+ * in to the dedicated `auth`/`refresh` tiers with `@Throttle({ auth: { limit, ttl } })`.
  */
 @Injectable()
 export class ThrottlerRealIpGuard extends ThrottlerGuard {
@@ -42,7 +129,12 @@ export class ThrottlerRealIpGuard extends ThrottlerGuard {
   protected generateKey(context: ExecutionContext, suffix: string, name: string): string {
     const req = context.switchToHttp().getRequest<FastifyRequest>();
     const ip = extractRealIp(req);
-    return `${name}:${ip}:${suffix}`;
+    const key = `${name}:${ip}:${suffix}`;
+    // Route-scoped tiers keep a separate counter per route
+    if (ROUTE_SCOPED_TIERS.has(name)) {
+      return `${key}:${context.getClass().name}.${context.getHandler().name}`;
+    }
+    return key;
   }
 
   /**

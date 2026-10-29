@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, inArray, isNotNull, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
@@ -85,5 +85,14 @@ export class DrizzleMediaLookupAdapter implements IMediaLookupPort {
     }
 
     return allRows.map((r) => ({ id: r.id, tmdbId: r.tmdbId!, type: r.type }));
+  }
+
+  async findTypeById(mediaItemId: string): Promise<string | null> {
+    const [row] = await this.db
+      .select({ type: schema.mediaItems.type })
+      .from(schema.mediaItems)
+      .where(and(eq(schema.mediaItems.id, mediaItemId), isNull(schema.mediaItems.deletedAt)));
+
+    return row?.type ?? null;
   }
 }

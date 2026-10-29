@@ -57,7 +57,7 @@ export interface IUsersRepository {
   findById(id: string): Promise<User | null>;
 
   /**
-   * Finds a user by email.
+   * Finds a user by email (case-insensitive).
    *
    * @param {string} email - Email
    * @returns {Promise<User | null>} User or null
@@ -65,7 +65,7 @@ export interface IUsersRepository {
   findByEmail(email: string): Promise<User | null>;
 
   /**
-   * Finds a user by username.
+   * Finds a user by username (case-insensitive; an exact-case match wins if several rows match).
    *
    * @param {string} username - Username
    * @returns {Promise<User | null>} User or null

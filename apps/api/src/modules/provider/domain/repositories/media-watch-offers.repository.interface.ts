@@ -63,9 +63,16 @@ export interface IMediaWatchOffersRepository {
 
   /**
    * Upserts offers across multiple regions for a media item.
-   * Groups by region and calls upsertMany for each.
+   * Groups by region and replaces each region present in `offers` (DELETE + INSERT).
+   *
+   * `managedRegions` are regions fully owned by the sync: those without any new offer
+   * are deleted too, in the same transaction, so stale offers don't outlive the provider.
    */
-  upsertManyByRegions(mediaItemId: string, offers: CreateWatchOfferInput[]): Promise<void>;
+  upsertManyByRegions(
+    mediaItemId: string,
+    offers: CreateWatchOfferInput[],
+    managedRegions?: readonly string[],
+  ): Promise<void>;
 
   /**
    * Finds all offers for a media item.

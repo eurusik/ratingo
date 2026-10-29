@@ -1,3 +1,9 @@
+import { PgDialect } from 'drizzle-orm/pg-core';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import * as postgres from 'postgres';
+
+import * as schema from '../../../../database/schema';
+
 import { FavoriteUpdatesQuery } from './favorite-updates.query';
 
 describe('FavoriteUpdatesQuery', () => {
@@ -200,7 +206,7 @@ describe('FavoriteUpdatesQuery', () => {
 
     expect(result).toEqual([]);
     expect(dbMock.selectDistinctOn).not.toHaveBeenCalled();
-    expect(dbMock.select).toHaveBeenCalledTimes(1);
+    expect(dbMock.select).toHaveBeenCalledTimes(2); // base query + EXISTS subquery
   });
 
   it('should skip shows when episodes are outside the date range', async () => {
@@ -229,7 +235,7 @@ describe('FavoriteUpdatesQuery', () => {
     const result = await query.execute('u1', options);
 
     expect(result).toHaveLength(1);
-    expect(dbMock.select).toHaveBeenCalledTimes(1);
+    expect(dbMock.select).toHaveBeenCalledTimes(2); // base query + EXISTS subquery (no batch query)
   });
 
   it('should throw DatabaseException on query failure', async () => {
@@ -251,5 +257,60 @@ describe('FavoriteUpdatesQuery', () => {
     const query = createQuery(dbMock);
 
     await expect(query.execute('u1', options)).rejects.toThrow('Failed to list favorite updates');
+  });
+
+  describe('SQL-level recent/upcoming filter', () => {
+    // Real drizzle builder with a lazy (never-connected) client so SQL can be rendered.
+    const realDb = drizzle(postgres('postgres://user:pass@localhost:1/none'), { schema });
+    const dialect = new PgDialect();
+    const window = {
+      now: new Date('2025-06-01T00:00:00Z'),
+      pastDate: new Date('2025-05-18T00:00:00Z'),
+      futureDate: new Date('2025-07-01T00:00:00Z'),
+    };
+
+    it('builds an EXISTS over non-special episodes within the past/future windows', () => {
+      const query = new FavoriteUpdatesQuery(realDb as any);
+
+      const { sql, params } = dialect.sqlToQuery((query as any).hasRecentOrUpcomingEpisode(window));
+
+      expect(sql).toMatch(/^exists \(select 1 from "episodes"/);
+      expect(sql).toContain('"episodes"."show_id" = "shows"."id"');
+      expect(sql).toContain('"seasons"."number" > $');
+      expect(sql).toContain('"episodes"."air_date" >= $');
+      expect(sql).toContain('"episodes"."air_date" <= $');
+      expect(sql).toContain('"episodes"."air_date" > $');
+      expect(params).toEqual(
+        expect.arrayContaining([
+          0,
+          window.pastDate.toISOString(),
+          window.now.toISOString(),
+          window.futureDate.toISOString(),
+        ]),
+      );
+    });
+
+    it('applies the filter inside the base query WHERE and LIMITs to options.limit (no over-fetch)', async () => {
+      const limit = jest.fn().mockResolvedValue([]);
+      const where = jest.fn().mockReturnValue({ orderBy: () => ({ limit }) });
+      const stubDb: any = {
+        select: (...args: any[]) =>
+          args[0]?.mediaItemId
+            ? {
+                from: () => ({
+                  innerJoin: () => ({ innerJoin: () => ({ where }) }),
+                }),
+              }
+            : (realDb as any).select(...args),
+      };
+      const query = new FavoriteUpdatesQuery(stubDb);
+
+      await (query as any).fetchBaseShows('u1', options, window);
+
+      expect(limit).toHaveBeenCalledWith(options.limit);
+      const whereSql = dialect.sqlToQuery(where.mock.calls[0][0]).sql;
+      expect(whereSql).toContain('exists (select 1 from "episodes"');
+      expect(whereSql).toContain('"media_items"."deleted_at" is null');
+    });
   });
 });

@@ -6,7 +6,7 @@
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsString,
   IsOptional,
@@ -259,6 +259,7 @@ export class MappingsQueryDto extends OffsetPaginationQueryDto {
   @ApiPropertyOptional({ example: true, description: 'Include global mappings' })
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  // Raw value: Boolean("false") / implicit conversion would turn "false" into true
+  @Transform(({ obj, key }) => obj[key] === 'true' || obj[key] === true)
   includeGlobal?: boolean = true;
 }

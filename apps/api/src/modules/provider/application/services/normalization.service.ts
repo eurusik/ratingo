@@ -6,6 +6,7 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { AVAILABILITY_REGIONS } from '../../../../common/constants/region.constants';
 import {
   CreateWatchOfferInput,
   IMediaWatchOffersRepository,
@@ -122,10 +123,13 @@ export class NormalizationService {
       );
     }
 
-    // Persist offers
-    if (offers.length > 0) {
-      await this.offersRepository.upsertManyByRegions(mediaItemId, offers);
-    }
+    // Persist offers. Always called (even with zero offers): regions we manage that have no
+    // new rows must be cleared, otherwise offers removed upstream stay visible forever.
+    const managedRegions = new Set<string>([
+      ...AVAILABILITY_REGIONS,
+      ...Object.keys(rawProviders).map((region) => normalizeRegion(region)),
+    ]);
+    await this.offersRepository.upsertManyByRegions(mediaItemId, offers, [...managedRegions]);
 
     // Record unmapped providers
     if (unmapped.length > 0) {

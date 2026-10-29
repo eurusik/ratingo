@@ -1,3 +1,4 @@
+import { MediaType } from '@/common/enums/media-type.enum';
 import { Test, TestingModule } from '@nestjs/testing';
 import { StatsQueryService } from './stats-query.service';
 import { STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
@@ -36,14 +37,22 @@ describe('StatsQueryService', () => {
       const result = await service.getStatsByTmdbId(550);
 
       expect(result).toEqual(mockStats);
-      expect(statsRepository.findByTmdbId).toHaveBeenCalledWith(550);
+      expect(statsRepository.findByTmdbId).toHaveBeenCalledWith(550, undefined);
+    });
+
+    it('should pass the media type through to the repository when given', async () => {
+      statsRepository.findByTmdbId.mockResolvedValue({ mediaItemId: 'media-1' });
+
+      await service.getStatsByTmdbId(550, MediaType.SHOW);
+
+      expect(statsRepository.findByTmdbId).toHaveBeenCalledWith(550, MediaType.SHOW);
     });
 
     it('should throw StatsNotFoundException when stats not found', async () => {
       statsRepository.findByTmdbId.mockResolvedValue(null);
 
       await expect(service.getStatsByTmdbId(999)).rejects.toThrow(StatsNotFoundException);
-      expect(statsRepository.findByTmdbId).toHaveBeenCalledWith(999);
+      expect(statsRepository.findByTmdbId).toHaveBeenCalledWith(999, undefined);
     });
 
     it('should throw StatsNotFoundException with correct identifier', async () => {

@@ -100,7 +100,9 @@ describe('CatalogPolicyWorker', () => {
 
         await worker.process(job);
 
-        expect(mockEvaluateItemHandler.handle).toHaveBeenCalledWith(payload);
+        expect(mockEvaluateItemHandler.handle).toHaveBeenCalledWith(payload, {
+          isFinalAttempt: true,
+        });
         expect(mockReEvaluateAllHandler.handle).not.toHaveBeenCalled();
         expect(mockWatchdogHandler.handle).not.toHaveBeenCalled();
       });
