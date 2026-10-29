@@ -11,7 +11,12 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AppProviders } from '@/core/providers';
 import { GoogleAnalytics } from '@/shared/components';
 import { getDictionary } from '@/shared/i18n';
-import { JsonLd, buildOrganizationJsonLd, SEO_BASE_URL } from '@/shared/utils/seo';
+import {
+  JsonLd,
+  buildOrganizationJsonLd,
+  IS_SEARCH_INDEXING_ENABLED,
+  SEO_BASE_URL,
+} from '@/shared/utils/seo';
 import './globals.css';
 
 const inter = Inter({
@@ -55,17 +60,19 @@ export const metadata: Metadata = {
     title: dict.meta.defaultTitle,
     description: dict.meta.defaultDescription,
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
+  robots: IS_SEARCH_INDEXING_ENABLED
+    ? {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      }
+    : { index: false, follow: false },
   appleWebApp: {
     capable: true,
     title: 'Ratingo',

@@ -1,25 +1,26 @@
 import type { MetadataRoute } from 'next';
 
+import { IS_SEARCH_INDEXING_ENABLED, SEO_BASE_URL } from '@/shared/utils/seo';
+
+const DISALLOWED_PATHS = [
+  '/admin',
+  '/auth',
+  '/settings',
+  '/api',
+  '/~offline',
+  '/activity',
+  '/calendar',
+  '/saved',
+  '/notifications',
+];
+
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo.top';
+  if (!IS_SEARCH_INDEXING_ENABLED) {
+    return { rules: [{ userAgent: '*', disallow: '/' }] };
+  }
+
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: [
-          '/admin',
-          '/auth',
-          '/settings',
-          '/api',
-          '/~offline',
-          '/activity',
-          '/calendar',
-          '/saved',
-          '/notifications',
-        ],
-      },
-    ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    rules: [{ userAgent: '*', allow: '/', disallow: DISALLOWED_PATHS }],
+    sitemap: `${SEO_BASE_URL}/sitemap.xml`,
   };
 }
