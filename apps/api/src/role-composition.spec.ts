@@ -91,7 +91,10 @@ const WORKER_PROVIDERS = [
   'IngestionSchedulerService',
   'WatchdogHandler',
   'LinkPendingImportsScheduler',
+  'QueueJobMetricsService',
 ];
+
+const EVERY_ROLE_PROVIDERS = ['RuntimeMetricsService'];
 
 const GATED_CONTROLLERS = [
   'IngestionController',
@@ -212,8 +215,10 @@ describe('role composition', () => {
     });
     afterAll(closeBoot);
 
-    it('registers every processor and repeatable-job scheduler', () => {
-      expect(boot.composition.providers).toEqual(expect.arrayContaining(WORKER_PROVIDERS));
+    it('registers every processor, repeatable-job scheduler and job metric', () => {
+      expect(boot.composition.providers).toEqual(
+        expect.arrayContaining([...WORKER_PROVIDERS, ...EVERY_ROLE_PROVIDERS]),
+      );
     });
 
     it('registers no HTTP controllers at all', () => {
@@ -241,8 +246,12 @@ describe('role composition', () => {
     });
     afterAll(closeBoot);
 
-    it('registers no processor or repeatable-job scheduler', () => {
+    it('registers no processor, repeatable-job scheduler or job metric', () => {
       WORKER_PROVIDERS.forEach((name) => expect(boot.composition.providers).not.toContain(name));
+    });
+
+    it('still reports runtime metrics', () => {
+      expect(boot.composition.providers).toEqual(expect.arrayContaining(EVERY_ROLE_PROVIDERS));
     });
 
     it('registers the role-gated controllers', () => {

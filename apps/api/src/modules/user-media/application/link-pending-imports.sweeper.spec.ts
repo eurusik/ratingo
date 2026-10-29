@@ -33,6 +33,7 @@ describe('LinkPendingImportsSweeper', () => {
   let linkPendingImports: jest.Mocked<
     Pick<LinkPendingImportsService, 'linkItems' | 'failTimedOutIngests'>
   >;
+  let metrics: { recordSweep: jest.Mock };
   let sweeper: LinkPendingImportsSweeper;
 
   const ago = (ms: number) => new Date(NOW.getTime() - ms);
@@ -43,11 +44,13 @@ describe('LinkPendingImportsSweeper', () => {
       linkItems: jest.fn().mockResolvedValue(0),
       failTimedOutIngests: jest.fn().mockResolvedValue(0),
     };
+    metrics = { recordSweep: jest.fn() };
     const clock: IClockPort = { now: () => NOW };
     sweeper = new LinkPendingImportsSweeper(
       pendingRepo as unknown as IImportPendingRepository,
       clock,
       linkPendingImports as unknown as LinkPendingImportsService,
+      metrics,
     );
   });
 
@@ -86,5 +89,13 @@ describe('LinkPendingImportsSweeper', () => {
       ago(LINK_PENDING_IMPORTS_INGEST_TIMEOUT_MS),
       LINK_PENDING_IMPORTS_BATCH_SIZE,
     );
+  });
+
+  it('records every sweep result, including empty ones', async () => {
+    linkPendingImports.failTimedOutIngests.mockResolvedValue(1);
+
+    await sweeper.execute();
+
+    expect(metrics.recordSweep).toHaveBeenCalledWith({ linked: 0, timedOut: 1 });
   });
 });
