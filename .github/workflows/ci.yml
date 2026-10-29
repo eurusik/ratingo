@@ -1,0 +1,93 @@
+name: CI
+
+# Validation only — deploys are done by Railway (API) and Vercel (web).
+# Railway waits for these checks before deploying (source.checkSuites).
+on:
+  pull_request:
+    branches: [main, development]
+  push:
+    branches: [main, development]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 20
+  HUSKY: 0
+
+jobs:
+  api:
+    name: api
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace=api
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=api
+
+      - name: Unit tests
+        run: npm test --workspace=api -- --runInBand
+
+      - name: Build
+        run: npm run build --workspace=api
+
+  web:
+    name: web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace=web-client
+
+      - name: Unit tests
+        run: npm test --workspace=web-client
+
+  contracts:
+    name: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # OpenAPI generation stubs Postgres/Redis, so no services are needed.
+      - name: Regenerate API contract
+        run: npm run contracts:update
+
+      - name: Check contract is up to date
+        run: |
+          if ! git diff --exit-code -- packages/api-contract; then
+            echo "::error::packages/api-contract is out of date. Run 'npm run contracts:update' and commit the result."
+            exit 1
+          fi
