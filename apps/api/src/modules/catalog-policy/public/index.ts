@@ -50,3 +50,5 @@ export {
   type EvaluationResult,
   type EligibilityStats,
 } from '../domain/ports';
+
+export { CATALOG_POLICY_QUEUE } from '../catalog-policy.constants';
