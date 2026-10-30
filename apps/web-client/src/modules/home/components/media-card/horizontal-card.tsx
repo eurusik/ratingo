@@ -28,6 +28,7 @@ interface HorizontalCardProps extends Omit<MediaCardServerProps, 'badgeKey'> {
   badge?: string;
   /** Display variant for different contexts */
   variant?: HorizontalCardVariant;
+  aboveTheFold?: boolean;
 }
 
 /**
@@ -49,6 +50,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
     badge,
     variant = 'topPicks',
     locale = 'uk',
+    aboveTheFold = false,
   } = props;
 
   const dict = getDictionary(locale);
@@ -111,7 +113,14 @@ export function HorizontalCard(props: HorizontalCardProps) {
       {/* Poster */}
       <div className="relative w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-cinema-elevated">
         {posterUrl ? (
-          <Image src={posterUrl} alt={title} fill className="object-cover" sizes="64px" />
+          <Image
+            src={posterUrl}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="64px"
+            priority={aboveTheFold}
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-cinema-text-disabled text-xs">
             {dict.card.noPoster}

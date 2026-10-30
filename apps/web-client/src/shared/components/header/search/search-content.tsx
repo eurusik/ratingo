@@ -14,6 +14,7 @@ import { useTranslation } from '@/shared/i18n';
 import type { MediaType } from '@/shared/types';
 import type { useSearch } from './use-search';
 import { SearchResultItem } from './search-result-item';
+import { thumbnailUrl } from '@/shared/utils/image';
 
 const CMDK_CLASSES =
   '[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5';
@@ -79,7 +80,7 @@ export function SearchContent({ search, listClassName }: SearchContentProps) {
                 type={item.type}
                 year={item.year}
                 rating={item.rating}
-                posterUrl={item.poster?.small}
+                posterUrl={thumbnailUrl(item.poster)}
                 slug={item.slug}
                 isLocal
                 matchedAlternativeTitle={item.matchedAlternativeTitle}
@@ -102,7 +103,7 @@ export function SearchContent({ search, listClassName }: SearchContentProps) {
                   title={item.title}
                   type={item.type}
                   year={item.year}
-                  posterUrl={item.poster?.small}
+                  posterUrl={thumbnailUrl(item.poster)}
                   isLocal={false}
                   isImporting={importingTmdbId === item.tmdbId}
                   notImportedLabel={dict.search.notImported}

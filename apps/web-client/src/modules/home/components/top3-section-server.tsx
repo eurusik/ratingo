@@ -25,6 +25,7 @@ interface Top3SectionServerProps {
   badge?: string;
   /** Display variant for cards */
   variant?: HorizontalCardVariant;
+  aboveTheFold?: boolean;
 }
 
 /**
@@ -43,6 +44,7 @@ export function Top3SectionServer({
   startRank = 2,
   badge,
   variant = 'topPicks',
+  aboveTheFold = false,
 }: Top3SectionServerProps) {
   const dict = getDictionary(locale);
 
@@ -79,6 +81,7 @@ export function Top3SectionServer({
             badge={badge}
             variant={variant}
             locale={locale}
+            aboveTheFold={aboveTheFold}
           />
         ))}
       </div>
