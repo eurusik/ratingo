@@ -12,6 +12,7 @@ describe('ImageMapper', () => {
       const result = ImageMapper.toPoster(path);
 
       expect(result).not.toBeNull();
+      expect(result?.thumb).toBe('https://image.tmdb.org/t/p/w154/abc.jpg');
       expect(result?.small).toBe('https://image.tmdb.org/t/p/w342/abc.jpg');
       expect(result?.medium).toBe('https://image.tmdb.org/t/p/w500/abc.jpg');
       expect(result?.large).toBe('https://image.tmdb.org/t/p/w780/abc.jpg');
@@ -29,6 +30,7 @@ describe('ImageMapper', () => {
       const result = ImageMapper.toBackdrop(path);
 
       expect(result).not.toBeNull();
+      expect(result?.thumb).toBe('https://image.tmdb.org/t/p/w300/xyz.jpg');
       expect(result?.small).toBe('https://image.tmdb.org/t/p/w300/xyz.jpg');
       expect(result?.medium).toBe('https://image.tmdb.org/t/p/w780/xyz.jpg');
       expect(result?.large).toBe('https://image.tmdb.org/t/p/w1280/xyz.jpg');

@@ -10,7 +10,7 @@ import Image from 'next/image';
 import type { Route } from 'next';
 import type { components } from '@ratingo/api-contract';
 import { useTranslation } from '@/shared/i18n';
-import { cn } from '@/shared/utils';
+import { cn, thumbnailUrl } from '@/shared/utils';
 
 type NotificationItem = components['schemas']['NotificationItemDto'];
 
@@ -77,6 +77,7 @@ export function NotificationCard({
       status_changed: dict.notifications.events.statusChanged,
     }[trigger] ?? trigger;
 
+  const posterUrl = thumbnailUrl(mediaSummary.poster);
   const href = (
     mediaSummary.type === 'movie'
       ? `/movies/${mediaSummary.slug}`
@@ -111,9 +112,9 @@ export function NotificationCard({
     >
       {/* Poster */}
       <div className="relative w-16 h-24 rounded-md overflow-hidden bg-cinema-elevated shrink-0">
-        {mediaSummary.poster?.small ? (
+        {posterUrl ? (
           <Image
-            src={mediaSummary.poster.small}
+            src={posterUrl}
             alt={mediaSummary.title}
             fill
             sizes="64px"

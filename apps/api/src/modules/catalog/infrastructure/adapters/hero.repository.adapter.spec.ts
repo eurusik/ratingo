@@ -22,12 +22,14 @@ describe('HeroRepositoryAdapter', () => {
     overview: 'Test overview',
     primaryTrailerKey: 'abc123',
     poster: {
+      thumb: '/poster-thumb.jpg',
       small: '/poster-small.jpg',
       medium: '/poster-medium.jpg',
       large: '/poster-large.jpg',
       original: '/poster-original.jpg',
     },
     backdrop: {
+      thumb: '/backdrop-thumb.jpg',
       small: '/backdrop-small.jpg',
       medium: '/backdrop-medium.jpg',
       large: '/backdrop-large.jpg',

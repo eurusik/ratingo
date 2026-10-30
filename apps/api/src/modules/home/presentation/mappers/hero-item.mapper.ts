@@ -1,7 +1,7 @@
 import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
 import { HeroItemDto, type HeroShowProgressDto } from '../dtos/hero-item.dto';
 
-const EMPTY_IMAGE = { small: '', medium: '', large: '', original: '' };
+const EMPTY_IMAGE = { thumb: '', small: '', medium: '', large: '', original: '' };
 
 /**
  * Maps domain HeroMediaItem to presentation HeroItemDto.
