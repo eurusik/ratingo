@@ -10,6 +10,7 @@ export class ImageMapper {
   static toPoster(path: string | null): ImageData | null {
     if (!path) return null;
     return {
+      thumb: `${TMDB_BASE_URL}/w154${path}`,
       small: `${TMDB_BASE_URL}/w342${path}`,
       medium: `${TMDB_BASE_URL}/w500${path}`,
       large: `${TMDB_BASE_URL}/w780${path}`,
@@ -20,6 +21,7 @@ export class ImageMapper {
   static toBackdrop(path: string | null): ImageData | null {
     if (!path) return null;
     return {
+      thumb: `${TMDB_BASE_URL}/w300${path}`,
       small: `${TMDB_BASE_URL}/w300${path}`,
       medium: `${TMDB_BASE_URL}/w780${path}`,
       large: `${TMDB_BASE_URL}/w1280${path}`,

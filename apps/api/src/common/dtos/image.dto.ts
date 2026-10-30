@@ -6,6 +6,13 @@ import { ApiProperty } from '@nestjs/swagger';
  */
 export class ImageDto {
   @ApiProperty({
+    example: 'https://image.tmdb.org/t/p/w154/abc.jpg',
+    description:
+      'Thumbnail for list rows and avatars up to ~75px wide (posters w154, backdrops w300)',
+  })
+  thumb: string;
+
+  @ApiProperty({
     example: 'https://image.tmdb.org/t/p/w342/abc.jpg',
     description: 'Small image for cards (w342)',
   })

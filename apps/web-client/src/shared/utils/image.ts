@@ -8,6 +8,10 @@
  * TVMaze URLs are stored as full URLs in DB and rewritten client-side only.
  */
 
+import type { components } from '@ratingo/api-contract';
+
+type ImageSet = Pick<components['schemas']['ImageDto'], 'thumb' | 'small'>;
+
 /** Image proxy origin (e.g. https://img.ratingo.top) */
 const IMAGE_PROXY_ORIGIN = process.env.NEXT_PUBLIC_IMAGE_PROXY_ORIGIN || null;
 
@@ -65,4 +69,8 @@ export function resolveMediaImageUrl(
   if (path.startsWith('http')) return path;
   // TMDB path - build full URL
   return `${MEDIA_IMAGE_BASE}/${size}${path}`;
+}
+
+export function thumbnailUrl(image: Partial<ImageSet> | null | undefined): string | null {
+  return image?.thumb || image?.small || null;
 }

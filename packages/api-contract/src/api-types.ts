@@ -2502,6 +2502,11 @@ export interface components {
         };
         ImageDto: {
             /**
+             * @description Thumbnail for list rows and avatars up to ~75px wide (posters w154, backdrops w300)
+             * @example https://image.tmdb.org/t/p/w154/abc.jpg
+             */
+            thumb: string;
+            /**
              * @description Small image for cards (w342)
              * @example https://image.tmdb.org/t/p/w342/abc.jpg
              */

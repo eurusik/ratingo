@@ -11,7 +11,7 @@ import type { Route } from 'next';
 import Image from 'next/image';
 import { Play, CheckCircle, XCircle, Pause, Clock, RotateCcw, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/shared/utils';
+import { cn, thumbnailUrl } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
 import {
   AlertDialog,
@@ -92,7 +92,7 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
 
   const href = media.type === 'movie' ? `/movies/${media.slug}` : `/shows/${media.slug}`;
   const year = media.releaseDate ? new Date(media.releaseDate).getFullYear() : null;
-  const poster = media.poster as Record<string, string> | null;
+  const posterUrl = thumbnailUrl(media.poster);
 
   const stateInfo = stateConfig[item.state];
   const StateIcon = stateInfo.icon;
@@ -230,8 +230,8 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
       {/* Poster */}
       <div className="shrink-0">
         <div className="relative w-16 h-24 rounded-lg overflow-hidden bg-cinema-elevated">
-          {poster?.small ? (
-            <Image src={poster.small} alt={media.title} fill sizes="64px" className="object-cover" />
+          {posterUrl ? (
+            <Image src={posterUrl} alt={media.title} fill sizes="64px" className="object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-cinema-text-disabled text-xs">
               —

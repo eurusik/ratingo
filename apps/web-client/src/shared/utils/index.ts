@@ -9,7 +9,7 @@ export {
   type DateFreshness,
   type RelativeDateResult,
 } from './format';
-export { resolveMediaImageUrl, IMAGE_SIZES, MEDIA_IMAGE_BASE } from './image';
+export { resolveMediaImageUrl, thumbnailUrl, IMAGE_SIZES, MEDIA_IMAGE_BASE } from './image';
 export { pluralize } from './pluralize';
 export {
   SEO_BASE_URL,
