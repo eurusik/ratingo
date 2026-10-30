@@ -1,4 +1,4 @@
-import { resolveMediaImageUrl, IMAGE_SIZES, MEDIA_IMAGE_BASE } from '../image';
+import { resolveMediaImageUrl, thumbnailUrl, IMAGE_SIZES, MEDIA_IMAGE_BASE } from '../image';
 
 describe('resolveMediaImageUrl', () => {
   describe('without proxy (default)', () => {
@@ -41,5 +41,29 @@ describe('resolveMediaImageUrl', () => {
     it('defaults to TMDB when no env var set', () => {
       expect(MEDIA_IMAGE_BASE).toBe('https://image.tmdb.org/t/p');
     });
+  });
+});
+
+describe('thumbnailUrl', () => {
+  it('prefers the thumbnail size', () => {
+    expect(thumbnailUrl({ thumb: 'https://img/w154/a.jpg', small: 'https://img/w342/a.jpg' })).toBe(
+      'https://img/w154/a.jpg',
+    );
+  });
+
+  it('falls back to the small size for responses cached before thumb existed', () => {
+    expect(thumbnailUrl({ small: 'https://img/w342/a.jpg' })).toBe('https://img/w342/a.jpg');
+  });
+
+  it('falls back to the small size when thumb is empty', () => {
+    expect(thumbnailUrl({ thumb: '', small: 'https://img/w342/a.jpg' })).toBe(
+      'https://img/w342/a.jpg',
+    );
+  });
+
+  it('returns null without an image', () => {
+    expect(thumbnailUrl(null)).toBeNull();
+    expect(thumbnailUrl(undefined)).toBeNull();
+    expect(thumbnailUrl({ thumb: '', small: '' })).toBeNull();
   });
 });

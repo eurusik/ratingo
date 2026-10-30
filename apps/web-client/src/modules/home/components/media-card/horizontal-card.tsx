@@ -9,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Activity, Calendar, Eye } from 'lucide-react';
-import { cn } from '@/shared/utils';
+import { cn, thumbnailUrl } from '@/shared/utils';
 import { formatYear, formatRating } from '@/shared/utils/format';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import type { MediaCardServerProps } from './media-card-server';
@@ -53,7 +53,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
 
   const dict = getDictionary(locale);
   const href = (type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`) as Route;
-  const posterUrl = poster?.small ?? null;
+  const posterUrl = thumbnailUrl(poster);
   const rating = stats?.qualityScore ?? null;
   const watchers = stats?.liveWatchers ?? null;
 

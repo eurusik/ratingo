@@ -2,6 +2,7 @@
  * Image data with multiple sizes.
  */
 export interface ImageData {
+  thumb: string;
   small: string;
   medium: string;
   large: string;

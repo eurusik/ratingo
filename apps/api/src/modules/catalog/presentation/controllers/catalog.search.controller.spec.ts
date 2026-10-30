@@ -74,6 +74,7 @@ describe('CatalogSearchController', () => {
       // Verify mapper added isImported and poster URLs
       expect(result.local[0].isImported).toBe(true);
       expect(result.local[0].poster).toEqual({
+        thumb: 'https://image.tmdb.org/t/p/w154/poster.jpg',
         small: 'https://image.tmdb.org/t/p/w342/poster.jpg',
         medium: 'https://image.tmdb.org/t/p/w500/poster.jpg',
         large: 'https://image.tmdb.org/t/p/w780/poster.jpg',
