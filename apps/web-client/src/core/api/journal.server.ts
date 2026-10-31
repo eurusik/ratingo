@@ -5,7 +5,7 @@
 
 import ky from 'ky';
 import { env } from '../config/env';
-import type { ApiErrorDetail } from './error';
+import { isNotFoundError, type ApiErrorDetail } from './error';
 import type { PostListResponseDto, PostDetailDto, PostsQueryParams } from '@/modules/journal/types';
 
 /** Server-side ky instance without auth (for public endpoints). */
@@ -81,7 +81,7 @@ export async function getJournalPost(slug: string): Promise<PostDetailDto | null
 
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch journal post:', error);
+    if (!isNotFoundError(error)) throw error;
     return null;
   }
 }

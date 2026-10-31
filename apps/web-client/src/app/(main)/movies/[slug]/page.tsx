@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 import { Film } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
 import { createMediaMetadata, createNotFoundMetadata, JsonLd } from '@/shared/utils';
-import { catalogApi, type MovieDetailsDto } from '@/core/api';
+import { catalogApi, isNotFoundError, type MovieDetailsDto } from '@/core/api';
 import { getReviewsForMedia } from '@/core/api/reviews.server';
 import {
   DetailsHero,
@@ -31,6 +31,10 @@ import { Separator } from '@/shared/ui';
 // ISR: Revalidate every hour
 export const revalidate = 3600;
 
+export function generateStaticParams() {
+  return [];
+}
+
 interface PageParams {
   params: Promise<{ slug: string }>;
 }
@@ -44,7 +48,8 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   try {
     const movie = await catalogApi.getMovieBySlug(slug);
     return createMediaMetadata(movie, { type: 'movie', slug });
-  } catch {
+  } catch (error) {
+    if (!isNotFoundError(error)) throw error;
     return createNotFoundMetadata('movie');
   }
 }
@@ -116,7 +121,8 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
   let apiMovie: MovieDetailsDto;
   try {
     apiMovie = await catalogApi.getMovieBySlug(slug);
-  } catch {
+  } catch (error) {
+    if (!isNotFoundError(error)) throw error;
     return (
       <NotFoundView
         icon={Film}

@@ -112,3 +112,17 @@ export async function getApiErrorCode(error: unknown): Promise<string | null> {
 
   return null;
 }
+
+const NOT_FOUND_STATUS = 404;
+
+export function isNotFoundError(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    return error.statusCode === NOT_FOUND_STATUS;
+  }
+
+  if (error instanceof HTTPError) {
+    return error.response.status === NOT_FOUND_STATUS;
+  }
+
+  return false;
+}
