@@ -34,7 +34,7 @@ const getShow = cache(async (slug: string): Promise<ShowDetailsDto | null> => {
   try {
     return await catalogApi.getShowBySlug(slug);
   } catch (error) {
-    if (!isNotFoundError(error)) throw error;
+    if (!(await isNotFoundError(error))) throw error;
     return null;
   }
 });
