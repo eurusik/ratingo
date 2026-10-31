@@ -7,6 +7,7 @@ import mdblistConfig from '../../config/mdblist.config';
 import omdbConfig from '../../config/omdb.config';
 import schedulerConfig from '../../config/scheduler.config';
 import tvmazeConfig from '../../config/tvmaze.config';
+import webRevalidationConfig from '../../config/web-revalidation.config';
 import { CatalogModule } from '../catalog/catalog.module';
 import { CatalogPolicyModule } from '../catalog-policy/catalog-policy.module';
 import { ProviderModule } from '../provider/provider.module';
@@ -27,6 +28,7 @@ import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipe
 import { TrendingPipeline } from './application/pipelines/trending.pipeline';
 import { BulkJobService } from './application/services/bulk-job.service';
 import { IngestionSchedulerService } from './application/services/ingestion-scheduler.service';
+import { MediaPageCacheService } from './application/services/media-page-cache.service';
 import { SnapshotsService } from './application/services/snapshots.service';
 import { SyncMediaService } from './application/services/sync-media.service';
 import { TrackedSyncService } from './application/services/tracked-sync.service';
@@ -34,10 +36,12 @@ import { TvMazeEnrichmentService } from './application/services/tvmaze-enrichmen
 import { BackfillWorker } from './application/workers/backfill.worker';
 import { RatingsBackfillWorker } from './application/workers/ratings-backfill.worker';
 import { SyncWorker } from './application/workers/sync.worker';
+import { WEB_PAGE_CACHE_PORT } from './domain/ports/web-page-cache.port';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
 import { MdblistAdapter } from './infrastructure/adapters/mdblist/mdblist.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
+import { NextRevalidateAdapter } from './infrastructure/adapters/web-page-cache/next-revalidate.adapter';
 import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
 import {
   BACKFILL_QUEUE,
@@ -65,6 +69,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     ConfigModule.forFeature(mdblistConfig),
     ConfigModule.forFeature(tvmazeConfig),
     ConfigModule.forFeature(schedulerConfig),
+    ConfigModule.forFeature(webRevalidationConfig),
     BullModule.registerQueue({
       name: INGESTION_QUEUE,
       defaultJobOptions: DEFAULT_INGESTION_JOB_OPTIONS,
@@ -92,6 +97,11 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       provide: SNAPSHOTS_REPOSITORY,
       useClass: SnapshotsRepository,
     },
+    {
+      provide: WEB_PAGE_CACHE_PORT,
+      useClass: NextRevalidateAdapter,
+    },
+    MediaPageCacheService,
     OmdbAdapter,
     MdblistAdapter,
     TvMazeAdapter,

@@ -33,6 +33,9 @@ const sharedEnvKeys = {
   // pipeline no-ops when key is absent)
   MDBLIST_API_KEY: Joi.string().optional(),
   MDBLIST_API_URL: Joi.string().uri().optional(),
+
+  WEB_REVALIDATE_ORIGIN: Joi.string().uri().optional(),
+  WEB_REVALIDATE_SECRET: Joi.string().min(32).optional(),
 };
 
 const httpEnvKeys = {

@@ -5,7 +5,7 @@ import { Job, Queue } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { mapBullStateToJobStatus } from '@/common/infrastructure/bullmq/job-status-mapper';
-import { INGESTION_QUEUE, IngestionJob } from '@/modules/shared/contracts';
+import { INGESTION_QUEUE, IngestionJob, type SyncMediaJobData } from '@/modules/shared/contracts';
 
 import { IImportJobPort, JobStatusResult, QueuedJob } from '../../domain/ports/import-job.port';
 
@@ -63,7 +63,8 @@ export class BullMQImportJobAdapter implements IImportJobPort {
       }
     }
 
-    const job = await this.queue.add(jobName, { tmdbId }, { jobId, priority: IMPORT_JOB_PRIORITY });
+    const data: SyncMediaJobData = { tmdbId, userRequested: true };
+    const job = await this.queue.add(jobName, data, { jobId, priority: IMPORT_JOB_PRIORITY });
     return { jobId: job.id!, deduplicated: false };
   }
 

@@ -40,7 +40,7 @@ describe('BullMQImportJobAdapter', () => {
 
       expect(queue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_MOVIE,
-        { tmdbId: 123 },
+        { tmdbId: 123, userRequested: true },
         { jobId: 'sync-movie_123', priority: 1 },
       );
       expect(result.jobId).toBe('sync-movie_123');
@@ -53,7 +53,7 @@ describe('BullMQImportJobAdapter', () => {
 
       expect(queue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_SHOW,
-        { tmdbId: 456 },
+        { tmdbId: 456, userRequested: true },
         { jobId: 'sync-show_456', priority: 1 },
       );
       expect(result.jobId).toBe('sync-show_456');
@@ -63,7 +63,11 @@ describe('BullMQImportJobAdapter', () => {
       'should remove a retained %s job and re-add it',
       async (state) => {
         const remove = jest.fn().mockResolvedValue(undefined);
-        queue.getJob.mockResolvedValue({ id: 'sync-movie_123', getState: async () => state, remove });
+        queue.getJob.mockResolvedValue({
+          id: 'sync-movie_123',
+          getState: async () => state,
+          remove,
+        });
         queue.add.mockResolvedValue({ id: 'sync-movie_123' });
 
         const result = await adapter.queueImport(123, MediaType.MOVIE);
@@ -78,7 +82,11 @@ describe('BullMQImportJobAdapter', () => {
       'should not re-add when a %s job is in flight',
       async (state) => {
         const remove = jest.fn();
-        queue.getJob.mockResolvedValue({ id: 'sync-movie_123', getState: async () => state, remove });
+        queue.getJob.mockResolvedValue({
+          id: 'sync-movie_123',
+          getState: async () => state,
+          remove,
+        });
 
         const result = await adapter.queueImport(123, MediaType.MOVIE);
 
