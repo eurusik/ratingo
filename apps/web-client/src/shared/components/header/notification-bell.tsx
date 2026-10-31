@@ -20,7 +20,7 @@ import {
   useMarkAllNotificationsAsRead,
 } from '@/core/query';
 import { useAuth } from '@/core/auth';
-import { thumbnailUrl } from '@/shared/utils';
+import { thumbnailUrl } from '@/shared/utils/image';
 
 export function NotificationBell() {
   const { dict } = useTranslation();

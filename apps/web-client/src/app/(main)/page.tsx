@@ -136,6 +136,7 @@ export default async function HomePage() {
               locale="uk"
               className="mb-12"
               count={3}
+              aboveTheFold
             />
           )}
 

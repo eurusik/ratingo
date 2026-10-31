@@ -2502,7 +2502,7 @@ export interface components {
         };
         ImageDto: {
             /**
-             * @description Thumbnail for list rows and avatars up to ~75px wide (posters w154, backdrops w300)
+             * @description Smallest size TMDB serves: w154 for posters (list thumbnails up to ~75px wide), w300 for backdrops (same as small)
              * @example https://image.tmdb.org/t/p/w154/abc.jpg
              */
             thumb: string;
