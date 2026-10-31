@@ -15,7 +15,9 @@ permissions:
   contents: read
 
 env:
+  # api runs on Railway (node:20 Dockerfile); web-client runs on Vercel (Node 24.x)
   NODE_VERSION: 20
+  WEB_NODE_VERSION: 24
   HUSKY: 0
 
 jobs:
@@ -54,7 +56,7 @@ jobs:
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ env.WEB_NODE_VERSION }}
           cache: npm
 
       - run: npm ci
