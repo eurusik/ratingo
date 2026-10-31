@@ -13,6 +13,8 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+const CORS_IMAGE_FETCH: RequestInit = { mode: 'cors', credentials: 'omit' };
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
@@ -20,9 +22,10 @@ const serwist = new Serwist({
   navigationPreload: true,
   runtimeCaching: [
     {
-      matcher: /^https:\/\/(image\.tmdb\.org\/t\/p|img\.ratingo\.top\/tmdb)\/.*/i,
+      matcher: /^https:\/\/img\.ratingo\.top\/tmdb\/.*/i,
       handler: new CacheFirst({
         cacheName: 'tmdb-images',
+        fetchOptions: CORS_IMAGE_FETCH,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 200,
@@ -36,6 +39,7 @@ const serwist = new Serwist({
       matcher: /^https:\/\/(static\.tvmaze\.com|img\.ratingo\.top\/tvmaze)\/.*/i,
       handler: new CacheFirst({
         cacheName: 'tvmaze-images',
+        fetchOptions: CORS_IMAGE_FETCH,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 100,
