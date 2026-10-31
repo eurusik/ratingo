@@ -47,10 +47,7 @@ export async function getReviewsForMedia(
     };
 
     const response = await serverApi
-      .get(`reviews/media/${mediaItemId}`, {
-        searchParams,
-        fetch: (input, init) => fetch(input, { ...init, next: { revalidate: 60 } }),
-      })
+      .get(`reviews/media/${mediaItemId}`, { searchParams })
       .json<ApiResponse<ReviewListResponseDto>>();
 
     if (!response.success || !response.data) {

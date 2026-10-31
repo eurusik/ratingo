@@ -5,7 +5,7 @@
 
 import ky from 'ky';
 import { env } from '../config/env';
-import type { ApiErrorDetail } from './error';
+import { ApiError, isNotFoundError, type ApiErrorDetail } from './error';
 import type { PostListResponseDto, PostDetailDto, PostsQueryParams } from '@/modules/journal/types';
 
 /** Server-side ky instance without auth (for public endpoints). */
@@ -75,13 +75,14 @@ export async function getJournalPost(slug: string): Promise<PostDetailDto | null
       .json<ApiResponse<PostDetailDto>>();
 
     if (!response.success || !response.data) {
-      console.error('Journal API error:', response.error);
-      return null;
+      throw response.error
+        ? ApiError.fromResponse(response.error)
+        : new Error(`Journal post "${slug}" response has no data`);
     }
 
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch journal post:', error);
+    if (!(await isNotFoundError(error))) throw error;
     return null;
   }
 }

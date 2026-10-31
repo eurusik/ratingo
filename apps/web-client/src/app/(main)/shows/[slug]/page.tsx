@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 import { Tv } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
 import { createMediaMetadata, createNotFoundMetadata, JsonLd } from '@/shared/utils';
-import { catalogApi, type ShowDetailsDto } from '@/core/api';
+import { catalogApi, isNotFoundError, type ShowDetailsDto } from '@/core/api';
 import { getReviewsForMedia } from '@/core/api/reviews.server';
 import {
   DetailsHero,
@@ -33,13 +33,18 @@ import { Separator } from '@/shared/ui';
 const getShow = cache(async (slug: string): Promise<ShowDetailsDto | null> => {
   try {
     return await catalogApi.getShowBySlug(slug);
-  } catch {
+  } catch (error) {
+    if (!(await isNotFoundError(error))) throw error;
     return null;
   }
 });
 
 // ISR: Revalidate every hour (balance between fresh data & performance)
 export const revalidate = 3600;
+
+export function generateStaticParams() {
+  return [];
+}
 
 interface PageParams {
   params: Promise<{ slug: string }>;
