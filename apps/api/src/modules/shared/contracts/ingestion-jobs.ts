@@ -49,3 +49,8 @@ export enum IngestionJob {
   /** Item job: fetches RT ratings (critics + audience) from MDBList. @queue ratings-backfill */
   BACKFILL_MDBLIST_RATINGS_ITEM = 'backfill-mdblist-ratings-item',
 }
+
+export interface SyncMediaJobData {
+  tmdbId: number;
+  userRequested?: boolean;
+}
