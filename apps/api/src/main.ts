@@ -1,16 +1,21 @@
+import './common/runtime/load-env';
+import './telemetry/register';
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 
 import fastifyCookie from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 
-import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { SlowRequestInterceptor } from './common/interceptors/slow-request.interceptor';
+import { getAppRole, runsHttp } from './common/runtime/app-role';
 import { DevTiming } from './common/utils/dev-timing';
+import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.config';
+import { registerHttpMetrics } from './telemetry/http-metrics';
 
 /**
  * Entry point of the API application.
@@ -19,6 +24,14 @@ import { DevTiming } from './common/utils/dev-timing';
  * @returns {Promise<void>}
  */
 async function bootstrap(): Promise<void> {
+  const role = getAppRole();
+  if (!runsHttp(role)) {
+    throw new Error(
+      `HTTP entrypoint cannot run with APP_ROLE=${role}; start dist/src/worker.js instead`,
+    );
+  }
+
+  const { AppModule } = await import('./app.module');
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({
@@ -26,6 +39,8 @@ async function bootstrap(): Promise<void> {
       trustProxy: true,
     }),
   );
+
+  registerHttpMetrics(app.getHttpAdapter().getInstance());
 
   // Register Fastify cookie plugin for OAuth state management
   await app.register(fastifyCookie);
@@ -65,16 +80,17 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new SlowRequestInterceptor(), new ResponseInterceptor());
 
-  // Swagger Documentation Setup
-  const config = new DocumentBuilder()
-    .setTitle('Ratingo API')
-    .setDescription('Rest API for Ratingo mobile and web clients')
-    .setVersion('2.0')
-    .addBearerAuth()
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  // Swagger Documentation Setup (shared config — see swagger.config.ts)
+  const document = SwaggerModule.createDocument(app, buildSwaggerConfig());
+  applyStandardErrorResponses(document);
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      docExpansion: 'none', // collapse all groups — the tag list is the navigation
+      filter: true, // search box over tags/operations
+      persistAuthorization: true, // keep the Bearer token across page reloads
+      defaultModelsExpandDepth: 0, // hide the schemas wall at the bottom
+    },
+  });
 
   // Start server
   const port = process.env.PORT || 3001;

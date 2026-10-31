@@ -4,7 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
+import { ErrorCode } from '@/common/enums/error-code.enum';
 import {
+  ExternalApiException,
   FeatureDisabledException,
   NotFoundException,
   ValidationException,
@@ -53,6 +55,16 @@ export const EXTENSION_TO_MIME: Record<string, string> = {
  * Journal images folder prefix in S3.
  */
 export const JOURNAL_IMAGES_PREFIX = 'journal/';
+
+/**
+ * S3 error names that indicate misconfigured credentials or bucket (not a missing object).
+ */
+const S3_ACCESS_ERROR_NAMES = new Set([
+  'SignatureDoesNotMatch',
+  'InvalidAccessKeyId',
+  'AccessDenied',
+  'NoSuchBucket',
+]);
 
 /**
  * Generic uploaded file interface compatible with both Express/Multer and Fastify.
@@ -177,6 +189,13 @@ export class JournalImageService {
       if (this.isS3NotFoundError(error)) {
         throw new NotFoundException();
       }
+      if (this.isS3AccessError(error)) {
+        this.logger.error(
+          `S3 rejected storage credentials (${(error as { name: string }).name}) for bucket "${bucket}". ` +
+            'Check S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY / S3_BUCKET / S3_ENDPOINT.',
+        );
+        throw new ExternalApiException(ErrorCode.EXTERNAL_API_ERROR, 'Image storage unavailable');
+      }
       throw error;
     }
   }
@@ -279,6 +298,17 @@ export class JournalImageService {
     if (error && typeof error === 'object' && 'name' in error) {
       const { name } = error as { name: string };
       return name === 'NoSuchKey' || name === 'NotFound';
+    }
+    return false;
+  }
+
+  /**
+   * Checks if error is an S3 auth/config error (bad credentials, wrong bucket).
+   */
+  private isS3AccessError(error: unknown): boolean {
+    if (error && typeof error === 'object' && 'name' in error) {
+      const { name } = error as { name: string };
+      return S3_ACCESS_ERROR_NAMES.has(name);
     }
     return false;
   }

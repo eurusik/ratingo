@@ -11,6 +11,7 @@ import type { SubscriptionTrigger } from '@/shared/types';
 import { useSubscriptions, useUnsubscribe } from '../hooks';
 import { SubscriptionCard } from './subscription-card';
 import { EmptyState } from './empty-state';
+import { thumbnailUrl } from '@/shared/utils/image';
 
 export function SubscriptionsList() {
   const { dict } = useTranslation();
@@ -74,7 +75,7 @@ export function SubscriptionsList() {
             title={media.title}
             type={media.type}
             slug={media.slug}
-            posterUrl={media.poster?.small ?? null}
+            posterUrl={thumbnailUrl(media.poster)}
             trigger={item.trigger}
             onUnsubscribe={() => handleUnsubscribe(item.mediaItemId, item.trigger)}
             isUnsubscribing={unsubscribeMutation.isPending}

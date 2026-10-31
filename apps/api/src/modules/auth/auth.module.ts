@@ -1,4 +1,4 @@
-import { Module, forwardRef, type Provider } from '@nestjs/common';
+import { Module, type Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService, type ConfigType } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -11,6 +11,8 @@ import { UserMediaModule } from '../user-media/user-media.module';
 import { UsersModule } from '../users/users.module';
 
 import { AuthService } from './application/auth.service';
+import { OAuthService } from './application/oauth.service';
+import { TokenService } from './application/token.service';
 import { EXCHANGE_CODES_REPOSITORY } from './domain/repositories/exchange-codes.repository.interface';
 import { OAUTH_ACCOUNTS_REPOSITORY } from './domain/repositories/oauth-accounts.repository.interface';
 import { REFRESH_TOKENS_REPOSITORY } from './domain/repositories/refresh-tokens.repository.interface';
@@ -83,11 +85,13 @@ const facebookStrategyProvider: Provider = {
       }),
     }),
     UsersModule,
-    forwardRef(() => UserMediaModule),
+    UserMediaModule,
     DatabaseModule,
   ],
   providers: [
     AuthService,
+    TokenService,
+    OAuthService,
     JwtStrategy,
     LocalStrategy,
     googleStrategyProvider,
@@ -114,6 +118,13 @@ const facebookStrategyProvider: Provider = {
     },
   ],
   controllers: [AuthController],
-  exports: [AuthService, PASSWORD_HASHER, REFRESH_TOKENS_REPOSITORY, EXCHANGE_CODES_REPOSITORY],
+  exports: [
+    AuthService,
+    TokenService,
+    OAuthService,
+    PASSWORD_HASHER,
+    REFRESH_TOKENS_REPOSITORY,
+    EXCHANGE_CODES_REPOSITORY,
+  ],
 })
 export class AuthModule {}

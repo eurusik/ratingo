@@ -17,11 +17,7 @@ export {
   METADATA_PROVIDER_PORT,
 } from '../domain/ports/metadata-provider.port';
 
-export { TraktRatingsPort, TRAKT_RATINGS_PORT } from '../domain/ports/trakt-ratings.port';
-
-export { TraktListsPort, TRAKT_LISTS_PORT } from '../domain/ports/trakt-lists.port';
-
-// Models (contract types)
+// Models (contract types — defined in shared/contracts, re-exported for existing consumers)
 export type {
   NormalizedMedia,
   NormalizedVideo,
@@ -33,7 +29,7 @@ export type {
   WatchProvider,
   WatchProviderRegion,
   WatchProvidersMap,
-} from '../domain/models/normalized-media.model';
+} from '../../shared/contracts';
 
 // Interfaces
 export type { ShowSyncDiff, ShowSyncChanges } from '../domain/interfaces/show-sync-diff.interface';
@@ -46,8 +42,14 @@ export {
   parseSeasonFromEpisodeKey,
 } from '../domain/interfaces/show-sync-diff.interface';
 
-// Constants
-export { INGESTION_QUEUE, IngestionJob } from '../ingestion.constants';
+// Constants (defined in shared/contracts, re-exported for existing consumers)
+export {
+  INGESTION_QUEUE,
+  BACKFILL_QUEUE,
+  RATINGS_BACKFILL_QUEUE,
+  IngestionJob,
+  DEFAULT_INGESTION_JOB_OPTIONS,
+} from '../../shared/contracts';
 
 // Domain events
 export { MediaSyncedEvent } from '../domain/events/media-synced.event';

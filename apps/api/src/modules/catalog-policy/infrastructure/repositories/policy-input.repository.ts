@@ -11,6 +11,7 @@ import { eq, inArray, isNull, and, gt, lte, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
@@ -45,21 +46,33 @@ export class PolicyInputRepository implements IPolicyInputRepository {
    * Fetches PolicyEngineInput for a single media item.
    */
   async findOneForEvaluation(mediaItemId: string): Promise<PolicyEngineInput | null> {
-    const result = await this.db
-      .select(POLICY_EVALUATION_SELECT_FIELDS)
-      .from(schema.mediaItems)
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(eq(schema.mediaItems.id, mediaItemId))
-      .limit(1);
+    const result = await withDbError(
+      'find media item for evaluation',
+      this.logger,
+      () =>
+        this.db
+          .select(POLICY_EVALUATION_SELECT_FIELDS)
+          .from(schema.mediaItems)
+          .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+          .where(eq(schema.mediaItems.id, mediaItemId))
+          .limit(1),
+      { mediaItemId },
+    );
 
     if (result.length === 0) {
       return null;
     }
 
     // Fetch normalized offers for this media item
-    const offersMap = await this.watchOffersRepository.getOffersForMediaBatch([mediaItemId], {
-      includeVariantInfo: true,
-    });
+    const offersMap = await withDbError(
+      'fetch watch offers for evaluation',
+      this.logger,
+      () =>
+        this.watchOffersRepository.getOffersForMediaBatch([mediaItemId], {
+          includeVariantInfo: true,
+        }),
+      { mediaItemId },
+    );
     const normalizedOffers = mapOffersToNormalized(offersMap.get(mediaItemId) ?? []);
 
     return mapRowToPolicyEngineInput(result[0] as MediaItemRow, normalizedOffers, this.logger);
@@ -73,16 +86,28 @@ export class PolicyInputRepository implements IPolicyInputRepository {
       return [];
     }
 
-    const result = await this.db
-      .select(POLICY_EVALUATION_SELECT_FIELDS)
-      .from(schema.mediaItems)
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(inArray(schema.mediaItems.id, mediaItemIds));
+    const result = await withDbError(
+      'find media items for evaluation',
+      this.logger,
+      () =>
+        this.db
+          .select(POLICY_EVALUATION_SELECT_FIELDS)
+          .from(schema.mediaItems)
+          .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+          .where(inArray(schema.mediaItems.id, mediaItemIds)),
+      { count: mediaItemIds.length },
+    );
 
     // Fetch normalized offers for all media items in batch
-    const offersMap = await this.watchOffersRepository.getOffersForMediaBatch(mediaItemIds, {
-      includeVariantInfo: true,
-    });
+    const offersMap = await withDbError(
+      'fetch watch offers for evaluation batch',
+      this.logger,
+      () =>
+        this.watchOffersRepository.getOffersForMediaBatch(mediaItemIds, {
+          includeVariantInfo: true,
+        }),
+      { count: mediaItemIds.length },
+    );
 
     // Convert MediaWatchOfferView to NormalizedOffer
     const normalizedOffersMap = new Map<string, NormalizedOffer[]>();
@@ -98,15 +123,17 @@ export class PolicyInputRepository implements IPolicyInputRepository {
    * Uses same filters as fetchBatchIds for consistency.
    */
   async countEligibleItems(): Promise<number> {
-    const result = await this.db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(schema.mediaItems)
-      .where(
-        and(
-          eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
-          isNull(schema.mediaItems.deletedAt),
+    const result = await withDbError('count eligible items for evaluation', this.logger, () =>
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.mediaItems)
+        .where(
+          and(
+            eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+            isNull(schema.mediaItems.deletedAt),
+          ),
         ),
-      );
+    );
 
     return result[0]?.count ?? 0;
   }
@@ -131,12 +158,14 @@ export class PolicyInputRepository implements IPolicyInputRepository {
       conditions.push(gt(schema.mediaItems.id, cursor));
     }
 
-    const result = await this.db
-      .select({ id: schema.mediaItems.id })
-      .from(schema.mediaItems)
-      .where(and(...conditions))
-      .orderBy(schema.mediaItems.id)
-      .limit(batchSize);
+    const result = await withDbError('fetch evaluation batch ids', this.logger, () =>
+      this.db
+        .select({ id: schema.mediaItems.id })
+        .from(schema.mediaItems)
+        .where(and(...conditions))
+        .orderBy(schema.mediaItems.id)
+        .limit(batchSize),
+    );
 
     return result.map((row) => row.id);
   }

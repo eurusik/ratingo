@@ -22,6 +22,7 @@ const REDIRECT_ERROR_CODES = new Set([
   'OAUTH_STATE_INVALID',
   'OAUTH_PROVIDER_ERROR',
   'OAUTH_EMAIL_NOT_VERIFIED',
+  'OAUTH_ACCOUNT_EXISTS_PASSWORD',
 ]);
 
 /**
@@ -121,6 +122,8 @@ export class OAuthExceptionFilter implements ExceptionFilter {
       OAUTH_STATE_INVALID: 'Security validation failed, please try again',
       OAUTH_PROVIDER_ERROR: 'OAuth sign in failed',
       OAUTH_EMAIL_NOT_VERIFIED: 'Please verify your email first',
+      OAUTH_ACCOUNT_EXISTS_PASSWORD:
+        'An account with this email already exists. Sign in with your password and link the provider in settings',
       OAUTH_EXCHANGE_EXPIRED: 'Session expired, please try again',
       OAUTH_EXCHANGE_USED: 'Session already used, please try again',
     };

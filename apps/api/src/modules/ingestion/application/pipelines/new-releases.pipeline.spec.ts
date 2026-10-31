@@ -4,6 +4,7 @@ import { TmdbAdapter } from '../../../tmdb/public';
 import { BulkJobService } from '../services/bulk-job.service';
 import { MEDIA_REPOSITORY } from '../../../catalog/public';
 import { IngestionJob } from '../../ingestion.constants';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 describe('NewReleasesPipeline', () => {
   let pipeline: NewReleasesPipeline;
@@ -47,7 +48,10 @@ describe('NewReleasesPipeline', () => {
       await pipeline.sync('UA', 30);
 
       expect(tmdbAdapter.getNewReleaseIds).toHaveBeenCalledWith(30, 'UA');
-      expect(mediaRepository.findManyByTmdbIds).toHaveBeenCalledWith([100, 200, 300]);
+      expect(mediaRepository.findManyByTmdbIds).toHaveBeenCalledWith(
+        [100, 200, 300],
+        MediaType.MOVIE,
+      );
       expect(bulkJobService.enqueueBulk).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({
@@ -62,6 +66,17 @@ describe('NewReleasesPipeline', () => {
         expect.any(Object),
         expect.any(String),
       );
+    });
+
+    it('should use an nr-prefixed job id distinct from trending sync job ids', async () => {
+      tmdbAdapter.getNewReleaseIds.mockResolvedValue([200]);
+
+      await pipeline.sync('UA', 30);
+
+      const jobs = bulkJobService.enqueueBulk.mock.calls[0][0] as Array<{
+        opts: { jobId: string };
+      }>;
+      expect(jobs[0].opts.jobId).toMatch(/^nr_movie_200_\d{8}$/);
     });
 
     it('should skip if no new releases found', async () => {

@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse, ApiParam } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { NotificationsService } from '../../application/notifications.service';
 import {
   NotificationListQueryDto,
@@ -24,7 +24,7 @@ import {
 /**
  * Controller for user notifications.
  */
-@ApiTags('Notifications')
+@ApiTags('Me: Notifications')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('me/notifications')

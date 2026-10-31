@@ -50,7 +50,10 @@ export function buildMovieSortOrder(sort: CatalogSort, order: SortOrder): SQL[] 
   }
 
   if (sort === CATALOG_SORT.RATINGO) {
-    return [sql`${schema.mediaStats.ratingoScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
+    return [
+      sql`${schema.mediaStats.ratingoScore} ${dir} ${nullsLast}`,
+      sql`${schema.mediaItems.id} desc`,
+    ];
   }
 
   if (sort === CATALOG_SORT.RELEASE_DATE || sort === CATALOG_SORT.LAST_AIR_DATE) {
@@ -63,11 +66,17 @@ export function buildMovieSortOrder(sort: CatalogSort, order: SortOrder): SQL[] 
   }
 
   if (sort === CATALOG_SORT.TMDB_POPULARITY) {
-    return [sql`${schema.mediaItems.popularity} ${dir}`, sql`${schema.mediaItems.id} desc`];
+    return [
+      sql`${schema.mediaItems.popularity} ${dir} ${nullsLast}`,
+      sql`${schema.mediaItems.id} desc`,
+    ];
   }
 
   // Default: popularity
-  return [sql`${schema.mediaStats.popularityScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
+  return [
+    sql`${schema.mediaStats.popularityScore} ${dir} ${nullsLast}`,
+    sql`${schema.mediaItems.id} desc`,
+  ];
 }
 
 /**
@@ -120,7 +129,7 @@ export function buildShowSortOrder(sort: CatalogSort, order: SortOrder): SQL {
   }
 
   if (sort === CATALOG_SORT.TMDB_POPULARITY) {
-    return sql`mi.popularity ${dir}, mi.id DESC`;
+    return sql`mi.popularity ${dir} NULLS LAST, mi.id DESC`;
   }
 
   // Default: popularity

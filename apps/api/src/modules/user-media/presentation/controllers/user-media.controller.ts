@@ -6,6 +6,7 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -27,8 +28,8 @@ import { Throttle } from '@nestjs/throttler';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { OffsetPaginationQueryDto } from '@/common/dtos/pagination.dto';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { ImportMediaService } from '../../application/import-media.service';
 import { ImportPendingService } from '../../application/import-pending.service';
 import { UserMediaService } from '../../application/user-media.service';
@@ -43,7 +44,7 @@ import { CsvImportResultDto, ImportMediaDto } from '../dto/import-media.dto';
 import { SetUserMediaStateDto } from '../dto/set-user-media-state.dto';
 import { UserMediaStateDto } from '../dto/user-media-state.dto';
 
-@ApiTags('User Media')
+@ApiTags('Me: Library')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('user-media')
@@ -157,7 +158,10 @@ export class UserMediaController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'Get user media state with media summary (auth: Bearer)' })
   @Get(':mediaItemId')
-  async getState(@CurrentUser() user: { id: string }, @Param('mediaItemId') mediaItemId: string) {
+  async getState(
+    @CurrentUser() user: { id: string },
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
+  ) {
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
   }
 
@@ -175,7 +179,7 @@ export class UserMediaController {
   @HttpCode(HttpStatus.OK)
   async setState(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: SetUserMediaStateDto,
   ) {
     await this.userMediaService.setState(
@@ -214,7 +218,10 @@ export class UserMediaController {
   @ApiOperation({ summary: 'Pause a media item (auth: Bearer)' })
   @Post(':mediaItemId/pause')
   @HttpCode(HttpStatus.OK)
-  async pauseMedia(@CurrentUser() user: { id: string }, @Param('mediaItemId') mediaItemId: string) {
+  async pauseMedia(
+    @CurrentUser() user: { id: string },
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
+  ) {
     await this.userMediaService.pauseMedia(user.id, mediaItemId);
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
   }
@@ -228,7 +235,7 @@ export class UserMediaController {
   @HttpCode(HttpStatus.OK)
   async resumeMedia(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
   ) {
     await this.userMediaService.resumeMedia(user.id, mediaItemId);
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);

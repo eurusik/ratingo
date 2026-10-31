@@ -7,6 +7,68 @@ import { fileURLToPath } from 'node:url';
 
 const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
 
+// Module boundary zones: cross-module imports must go through the module's
+// public/ barrel (or the shared micro-module's index). The only exception is
+// `<module>.module.ts` — Nest module wiring imports it directly.
+const apiModules = [
+  'auth',
+  'catalog',
+  'catalog-policy',
+  'home',
+  'ingestion',
+  'insights',
+  'journal',
+  'provider',
+  'reviews',
+  'stats',
+  'tmdb',
+  'trakt',
+  'user-actions',
+  'user-media',
+  'users',
+];
+const sharedModules = [
+  'cards',
+  'clock',
+  'contracts',
+  'drop-off-analyzer',
+  'score-calculator',
+  'verdict',
+];
+const moduleBoundaryZones = [
+  {
+    target: './apps/api/src/modules/shared/contracts/**/*',
+    from: './apps/api/src',
+    except: ['./modules/shared/contracts', './common/enums'],
+    message:
+      'shared/contracts must stay dependency-free: import only sibling contracts and common/enums.',
+  },
+  ...apiModules.flatMap((m) => [
+    {
+      target: `./apps/api/src/modules/!(${m})/**/*`,
+      from: `./apps/api/src/modules/${m}/!(public)/**/*`,
+      message: `Import from ${m}/public instead of internal files.`,
+    },
+    {
+      target: `./apps/api/src/modules/!(${m})/**/*`,
+      from: `./apps/api/src/modules/${m}/!(${m}.module).ts`,
+      message: `Import from ${m}/public instead of internal files (only ${m}.module.ts may be imported directly, for module wiring).`,
+    },
+  ]),
+  ...sharedModules.flatMap((m) => [
+    {
+      target: './apps/api/src/modules/!(shared)/**/*',
+      from: `./apps/api/src/modules/shared/${m}/*/**/*`,
+      message: `Import from shared/${m} (its index.ts) instead of internal files.`,
+    },
+    {
+      target: './apps/api/src/modules/!(shared)/**/*',
+      from: `./apps/api/src/modules/shared/${m}/!(index|${m}.module).ts`,
+      message: `Import from shared/${m} (its index.ts) instead of internal files (only ${m}.module.ts may be imported directly, for module wiring).`,
+    },
+  ]),
+];
+
 export default [
   {
     ignores: [
@@ -283,6 +345,71 @@ export default [
       ],
     },
   },
+  // Cycle guards (ADR 0001 Phase 1): catalog and catalog-policy must not depend on ingestion, and
+  // tmdb must not depend on catalog. Shared types live in shared/contracts.
+  // Covers specs too. Uses no-restricted-imports (not import/no-restricted-paths)
+  // so it does not replace the module boundary zones below. Flat config is
+  // last-wins per rule: keep ONE no-restricted-imports block per file glob, or a
+  // later block for the same files silently drops these patterns.
+  {
+    files: [
+      'apps/api/src/modules/catalog/**/*.ts',
+      'apps/api/src/modules/catalog-policy/**/*.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              // modules/ingestion via `@/modules/...` or relative `../` hops only
+              // (not common/enums/ingestion-status.enum or a local ./ingestion folder).
+              regex: '(^|/)modules/ingestion(/|$)|^(\\.\\./)+ingestion(/|$)',
+              message:
+                'catalog and catalog-policy must not import ingestion (ADR 0001). Use shared/contracts for queue names, job names and Normalized* types.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/api/src/modules/tmdb/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '(^|/)modules/catalog(/|$)|^(\\.\\./)+catalog(/|$)',
+              message:
+                'tmdb must not import catalog (ADR 0001). Use common/utils or shared/contracts instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // shared/contracts stays dependency-free: pure types/enums/constants only.
+  // Packages are banned here; project imports are limited by the resolved-path
+  // zone in moduleBoundaryZones (contracts may import only itself and common/enums).
+  {
+    files: ['apps/api/src/modules/shared/contracts/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^(?!\\.|@/)',
+              message:
+                'shared/contracts must stay dependency-free: no packages (Nest, Drizzle, BullMQ, ...).',
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Module boundaries: enforce public API imports
   {
     files: ['apps/api/src/modules/**/*.ts'],
@@ -300,95 +427,7 @@ export default [
       'import/no-restricted-paths': [
         'error',
         {
-          zones: [
-            {
-              target: './apps/api/src/modules/!(tmdb)/**/*',
-              from: './apps/api/src/modules/tmdb/!(public)/**/*',
-              message: 'Import from tmdb/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(tmdb)/**/*',
-              from: './apps/api/src/modules/tmdb/tmdb.*.ts',
-              message: 'Import from tmdb/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(ingestion)/**/*',
-              from: './apps/api/src/modules/ingestion/domain/**/*',
-              message: 'Import from ingestion/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(ingestion)/**/*',
-              from: './apps/api/src/modules/ingestion/application/**/*',
-              message: 'Import from ingestion/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(ingestion)/**/*',
-              from: './apps/api/src/modules/ingestion/infrastructure/**/*',
-              message: 'Import from ingestion/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(ingestion)/**/*',
-              from: './apps/api/src/modules/ingestion/presentation/**/*',
-              message: 'Import from ingestion/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(catalog)/**/*',
-              from: './apps/api/src/modules/catalog/domain/**/*',
-              message: 'Import from catalog/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(catalog)/**/*',
-              from: './apps/api/src/modules/catalog/application/**/*',
-              message: 'Import from catalog/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(catalog)/**/*',
-              from: './apps/api/src/modules/catalog/infrastructure/**/*',
-              message: 'Import from catalog/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(catalog)/**/*',
-              from: './apps/api/src/modules/catalog/presentation/**/*',
-              message: 'Import from catalog/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(stats)/**/*',
-              from: './apps/api/src/modules/stats/domain/**/*',
-              message: 'Import from stats/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(stats)/**/*',
-              from: './apps/api/src/modules/stats/application/**/*',
-              message: 'Import from stats/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(catalog-policy)/**/*',
-              from: './apps/api/src/modules/catalog-policy/domain/**/*',
-              message: 'Import from catalog-policy/public instead of internal files.',
-            },
-            // home module
-            {
-              target: './apps/api/src/modules/!(home)/**/*',
-              from: './apps/api/src/modules/home/domain/**/*',
-              message: 'Import from home/public instead of internal files.',
-            },
-            // provider module
-            {
-              target: './apps/api/src/modules/!(provider)/**/*',
-              from: './apps/api/src/modules/provider/domain/**/*',
-              message: 'Import from provider/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(provider)/**/*',
-              from: './apps/api/src/modules/provider/application/**/*',
-              message: 'Import from provider/public instead of internal files.',
-            },
-            {
-              target: './apps/api/src/modules/!(provider)/**/*',
-              from: './apps/api/src/modules/provider/infrastructure/**/*',
-              message: 'Import from provider/public instead of internal files.',
-            },
-          ],
+          zones: moduleBoundaryZones,
         },
       ],
     },

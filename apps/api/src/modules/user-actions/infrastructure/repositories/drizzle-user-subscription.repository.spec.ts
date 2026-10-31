@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleUserSubscriptionRepository } from './drizzle-user-subscription.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -150,6 +151,18 @@ describe('DrizzleUserSubscriptionRepository', () => {
       expect(db.update).toHaveBeenCalled();
     });
 
+    it('only matches ACTIVE rows so re-deactivating reports false (no duplicate UNSUBSCRIBE log)', async () => {
+      const module = await setup({ resolveUpdate: [] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      await repository.deactivate('user-id-1', 'media-id-1', SUBSCRIPTION_TRIGGER.RELEASE);
+
+      const where = db.update.mock.results[0].value.where.mock.calls[0][0];
+      const { sql, params } = new PgDialect().sqlToQuery(where);
+      expect(sql).toContain('"user_subscriptions"."is_active" = $');
+      expect(params).toContain(true);
+    });
+
     it('should return false when no subscription deactivated', async () => {
       const module = await setup({ resolveUpdate: [] });
       repository = module.get(DrizzleUserSubscriptionRepository);
@@ -247,6 +260,24 @@ describe('DrizzleUserSubscriptionRepository', () => {
       expect(result[0].id).toBe('sub-id-1');
       expect(result[0].mediaSummary).toBeDefined();
       expect(result[0].mediaSummary.title).toBe('Inception');
+    });
+
+    it('excludes soft-deleted media, consistently with countActive', async () => {
+      const module = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      await repository.listActiveWithMedia('user-id-1');
+      await repository.countActive('user-id-1');
+
+      const wheres = db.select.mock.results[0].value.where.mock.calls.map(
+        (c: any[]) => new PgDialect().sqlToQuery(c[0]).sql,
+      );
+      expect(wheres).toHaveLength(2);
+      for (const w of wheres) {
+        expect(w).toContain('"media_items"."deleted_at" is null');
+      }
+      // countActive must join media_items like the list does
+      expect(db.select.mock.results[0].value.innerJoin).toHaveBeenCalledTimes(2);
     });
 
     it('should throw DatabaseException on error', async () => {

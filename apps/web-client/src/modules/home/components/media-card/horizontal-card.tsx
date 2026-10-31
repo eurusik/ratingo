@@ -9,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Activity, Calendar, Eye } from 'lucide-react';
-import { cn } from '@/shared/utils';
+import { cn, thumbnailUrl } from '@/shared/utils';
 import { formatYear, formatRating } from '@/shared/utils/format';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import type { MediaCardServerProps } from './media-card-server';
@@ -28,6 +28,7 @@ interface HorizontalCardProps extends Omit<MediaCardServerProps, 'badgeKey'> {
   badge?: string;
   /** Display variant for different contexts */
   variant?: HorizontalCardVariant;
+  aboveTheFold?: boolean;
 }
 
 /**
@@ -49,11 +50,12 @@ export function HorizontalCard(props: HorizontalCardProps) {
     badge,
     variant = 'topPicks',
     locale = 'uk',
+    aboveTheFold = false,
   } = props;
 
   const dict = getDictionary(locale);
   const href = (type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`) as Route;
-  const posterUrl = poster?.medium ?? null;
+  const posterUrl = thumbnailUrl(poster);
   const rating = stats?.qualityScore ?? null;
   const watchers = stats?.liveWatchers ?? null;
 
@@ -111,7 +113,14 @@ export function HorizontalCard(props: HorizontalCardProps) {
       {/* Poster */}
       <div className="relative w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-cinema-elevated">
         {posterUrl ? (
-          <Image src={posterUrl} alt={title} fill className="object-cover" sizes="64px" />
+          <Image
+            src={posterUrl}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="64px"
+            priority={aboveTheFold}
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-cinema-text-disabled text-xs">
             {dict.card.noPoster}

@@ -1,12 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { type ExternalRatings } from '../../../../common/types';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
+import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import { type RiseFallItem, type RiseFallMediaType } from '../../domain/models/rise-fall.model';
 import { type InsightsRepository } from '../../domain/repositories/insights.repository.interface';
 
@@ -56,42 +58,67 @@ export class DrizzleInsightsRepository implements InsightsRepository {
 
     const formatDateKey = (d: Date) => d.toISOString().split('T')[0];
 
-    try {
+    return withDbError('get insights movements', this.logger, async () => {
+      // Public endpoint: only live (not soft-deleted) items that are ELIGIBLE under the active
+      // catalog policy (same condition as the hero query). Select only the columns we map.
       const rows = await this.db
         .select({
-          snapshot: schema.mediaWatchersSnapshots,
-          media: schema.mediaItems,
+          snapshotDate: schema.mediaWatchersSnapshots.snapshotDate,
+          totalWatchers: schema.mediaWatchersSnapshots.totalWatchers,
+          id: schema.mediaItems.id,
+          type: schema.mediaItems.type,
+          slug: schema.mediaItems.slug,
+          title: schema.mediaItems.title,
+          originalTitle: schema.mediaItems.originalTitle,
+          posterPath: schema.mediaItems.posterPath,
+          backdropPath: schema.mediaItems.backdropPath,
+          rating: schema.mediaItems.rating,
+          voteCount: schema.mediaItems.voteCount,
         })
         .from(schema.mediaWatchersSnapshots)
         .innerJoin(
           schema.mediaItems,
           eq(schema.mediaWatchersSnapshots.mediaItemId, schema.mediaItems.id),
         )
+        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          and(
+            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+          ),
+        )
         .where(
           and(
             eq(schema.mediaWatchersSnapshots.region, 'global'),
             inArray(schema.mediaWatchersSnapshots.snapshotDate, targetDates),
+            isNull(schema.mediaItems.deletedAt),
+            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
           ),
         );
 
-      const grouped = new Map<
-        string,
-        { media: (typeof rows)[0]['media']; snapshots: Record<string, number> }
-      >();
+      type MediaRow = Omit<(typeof rows)[0], 'snapshotDate' | 'totalWatchers'>;
+      const grouped = new Map<string, { media: MediaRow; snapshots: Record<string, number> }>();
 
       for (const row of rows) {
-        const { id } = row.media;
-        if (!grouped.has(id)) {
-          grouped.set(id, { media: row.media, snapshots: {} });
+        const { snapshotDate, totalWatchers, ...media } = row;
+        if (!grouped.has(media.id)) {
+          grouped.set(media.id, { media, snapshots: {} });
         }
-        const dateKey = formatDateKey(row.snapshot.snapshotDate);
-        grouped.get(id)!.snapshots[dateKey] = row.snapshot.totalWatchers;
+        grouped.get(media.id)!.snapshots[formatDateKey(snapshotDate)] = totalWatchers;
       }
 
-      const items = Array.from(grouped.values()).map(({ media, snapshots }) => {
-        const tNow = snapshots[formatDateKey(now)] || 0;
-        const tPrev = snapshots[formatDateKey(prev)] || 0;
-        const tPrev2 = snapshots[formatDateKey(prev2)] || 0;
+      const items: RiseFallItem[] = [];
+
+      for (const { media, snapshots } of grouped.values()) {
+        const tNow = snapshots[formatDateKey(now)];
+        const tPrev = snapshots[formatDateKey(prev)];
+        const tPrev2 = snapshots[formatDateKey(prev2)];
+
+        // A missing snapshot is "unknown", not 0 (otherwise lifetime totals look like growth).
+        // Each window needs both of its endpoints; skip the item otherwise.
+        if (tNow === undefined || tPrev === undefined || tPrev2 === undefined) continue;
 
         const growthCurrent = tNow - tPrev;
         const growthPrev = tPrev - tPrev2;
@@ -105,7 +132,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
         // Identify new entrants (no growth in previous window, but growth now)
         const isNewInTrends = growthPrev === 0 && growthCurrent > 0;
 
-        return {
+        items.push({
           id: media.id,
           mediaItemId: media.id,
           type: media.type as RiseFallMediaType,
@@ -128,8 +155,8 @@ export class DrizzleInsightsRepository implements InsightsRepository {
               voteCount: Number(media.voteCount),
             },
           } as ExternalRatings,
-        };
-      });
+        });
+      }
 
       // Separate Risers & Fallers and Sort
       const risers = items
@@ -150,9 +177,6 @@ export class DrizzleInsightsRepository implements InsightsRepository {
         .slice(0, limit);
 
       return { risers, fallers };
-    } catch (error) {
-      this.logger.error(`Failed to get movements: ${error.message}`, error.stack);
-      return { risers: [], fallers: [] };
-    }
+    });
   }
 }

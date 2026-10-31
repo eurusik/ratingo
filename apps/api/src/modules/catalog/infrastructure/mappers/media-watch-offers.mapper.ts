@@ -5,7 +5,7 @@ import {
   type AvailabilityRegion,
 } from '../../../../common/constants/region.constants';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import type { WatchProvidersMap } from '../../../ingestion/public';
+import type { WatchProvidersMap } from '../../../shared/contracts';
 import type {
   AvailabilityData,
   AvailabilityHint,

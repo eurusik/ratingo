@@ -9,11 +9,13 @@ interface DrizzlePostgresError {
   message?: string;
   detail?: string;
   constraint_name?: string;
+  table_name?: string;
   cause?: {
     code?: string;
     message?: string;
     detail?: string;
     constraint_name?: string;
+    table_name?: string;
   };
 }
 
@@ -25,6 +27,7 @@ export interface PgErrorDetails {
   message?: string;
   detail?: string;
   constraint?: string;
+  table?: string;
 }
 
 /**
@@ -43,6 +46,7 @@ export function extractPgError(error: unknown): PgErrorDetails {
     message: pgError.message ?? err.message,
     detail: pgError.detail ?? err.detail,
     constraint: pgError.constraint_name ?? err.constraint_name,
+    table: pgError.table_name ?? err.table_name,
   };
 }
 
@@ -76,4 +80,25 @@ export function isUniqueViolation(error: unknown, constraint?: string): boolean 
  */
 export function isSlugCollision(error: unknown, constraintName: string): boolean {
   return isUniqueViolation(error, constraintName);
+}
+
+/**
+ * Removes the bound-parameter section from a Drizzle query error message
+ * ("Failed query: <sql>\nparams: <values>"). Params can contain user data/secrets.
+ */
+export function stripQueryParams(message: string): string {
+  const idx = message.indexOf('\nparams:');
+  return idx === -1 ? message : message.slice(0, idx);
+}
+
+/**
+ * Returns the error stack with the (possibly param-bearing) message header sanitized.
+ */
+export function sanitizeErrorStack(error: unknown): string | undefined {
+  if (!(error instanceof Error) || !error.stack) return undefined;
+
+  const header = `${error.name}: ${error.message}`;
+  if (!error.stack.startsWith(header)) return error.stack;
+
+  return `${error.name}: ${stripQueryParams(error.message)}${error.stack.slice(header.length)}`;
 }

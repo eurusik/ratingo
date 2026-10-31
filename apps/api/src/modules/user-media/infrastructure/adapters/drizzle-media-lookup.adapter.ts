@@ -1,8 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, inArray, isNotNull, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { type IMediaLookupPort } from '../../domain/ports/media-lookup.port';
@@ -85,5 +88,37 @@ export class DrizzleMediaLookupAdapter implements IMediaLookupPort {
     }
 
     return allRows.map((r) => ({ id: r.id, tmdbId: r.tmdbId!, type: r.type }));
+  }
+
+  async findReadyIdByTmdbId(tmdbId: number, type: 'movie' | 'show'): Promise<string | null> {
+    return withDbError(
+      'find ready media item by tmdb id',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select({ id: schema.mediaItems.id })
+          .from(schema.mediaItems)
+          .where(
+            and(
+              eq(schema.mediaItems.tmdbId, tmdbId),
+              eq(schema.mediaItems.type, type === 'movie' ? MediaType.MOVIE : MediaType.SHOW),
+              eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+              isNull(schema.mediaItems.deletedAt),
+            ),
+          )
+          .limit(1);
+        return row?.id ?? null;
+      },
+      { tmdbId, type },
+    );
+  }
+
+  async findTypeById(mediaItemId: string): Promise<string | null> {
+    const [row] = await this.db
+      .select({ type: schema.mediaItems.type })
+      .from(schema.mediaItems)
+      .where(and(eq(schema.mediaItems.id, mediaItemId), isNull(schema.mediaItems.deletedAt)));
+
+    return row?.type ?? null;
   }
 }

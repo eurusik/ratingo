@@ -56,9 +56,9 @@ export class ShowSyncService {
 
     const { token } = result;
 
+    let queued: { deduplicated?: boolean };
     try {
-      await this.importJobPort.queueImport(show.tmdbId, MediaType.SHOW);
-      this.logger.log(`Sync queued for show ${slug} (tmdbId: ${show.tmdbId})`);
+      queued = await this.importJobPort.queueImport(show.tmdbId, MediaType.SHOW);
     } catch (error) {
       // Release the cooldown lock so a transient queue failure doesn't block the user for 7 days.
       // Passes the fencing token to ensure we only release the lock we acquired.
@@ -67,6 +67,19 @@ export class ShowSyncService {
       throw error;
     }
 
+    if (queued.deduplicated) {
+      // A sync for this show is already pending/running: nothing new was enqueued.
+      // Release the cooldown so the user can request again once that job finishes.
+      await this.cooldownGate.release(cooldownKey, token);
+      this.logger.log(`Sync already in flight for show ${slug} (tmdbId: ${show.tmdbId})`);
+      return {
+        queued: false,
+        lastSyncedAt: show.lastSyncedAt,
+        cooldownExpiresAt: null,
+      };
+    }
+
+    this.logger.log(`Sync queued for show ${slug} (tmdbId: ${show.tmdbId})`);
     return {
       queued: true,
       lastSyncedAt: show.lastSyncedAt,

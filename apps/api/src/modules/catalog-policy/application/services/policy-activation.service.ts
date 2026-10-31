@@ -35,6 +35,7 @@ import {
   POLICY_ACTIVATION_REPOSITORY,
   type IPolicyActivationRepository,
 } from '../../domain/repositories';
+import { resolveRunContextScope } from '../../domain/utils/run-contexts';
 
 import { CatalogPolicyService } from './catalog-policy.service';
 import { RunAggregationService } from './run-aggregation.service';
@@ -42,6 +43,7 @@ import { RunAggregationService } from './run-aggregation.service';
 // Constants
 const DEFAULT_BATCH_SIZE = 500;
 const BACKFILL_RUN_PREFIX = 'backfill';
+const POST_SNAPSHOT_RUN_PREFIX = 'reeval-post';
 const PERCENT_MULTIPLIER = 100;
 
 // Job configuration
@@ -183,7 +185,10 @@ export class PolicyActivationService {
     // For completed runs, use cached counters
     const counters =
       run.status === RunStatusEnum.RUNNING
-        ? await this.aggregationService.aggregateCounters(runId)
+        ? await this.aggregationService.aggregateCounters(
+            runId,
+            resolveRunContextScope(run).requiredContexts,
+          )
         : {
             processed: run.processed,
             eligible: run.eligible,
@@ -273,6 +278,9 @@ export class PolicyActivationService {
       });
 
       this.logger.log(`Promoted run ${run.id}: policy v${run.targetPolicyVersion} is now active`);
+
+      await this.queuePostSnapshotEvaluations(run);
+
       return { success: true };
     } catch (error) {
       this.logger.error(`Failed to promote run ${run.id}`, error);
@@ -293,10 +301,18 @@ export class PolicyActivationService {
       };
     }
 
-    await this.runRepository.update(runId, {
-      status: RunStatusEnum.CANCELLED,
-      finishedAt: new Date(),
-    });
+    // Guarded update: the run may have been promoted/finalized since it was read
+    const cancelled = await this.runRepository.transitionToCancelled(
+      runId,
+      CANCELLABLE_RUN_STATUSES,
+    );
+    if (!cancelled) {
+      this.logger.warn(`Cannot cancel run ${runId}: status changed concurrently (conflict)`);
+      return {
+        success: false,
+        error: `Run ${runId} status changed concurrently; can only cancel ${CANCELLABLE_RUN_STATUSES.join(', ')} runs`,
+      };
+    }
 
     this.logger.log(`Cancelled run ${runId}`);
 
@@ -409,18 +425,60 @@ export class PolicyActivationService {
     return reasons;
   }
 
+  /**
+   * After promotion, evaluates items synced AFTER the run's snapshotCutoff for the newly
+   * active policy version in every active context. The run itself only covers items
+   * updated at or before the cutoff, so without this those items would have no row for
+   * the promoted version. Reuses the RE_EVALUATE_ALL machinery in `afterSnapshot` mode;
+   * job IDs are deterministic so re-dispatching is idempotent.
+   *
+   * Failures are logged but do not fail the (already committed) promotion.
+   */
+  private async queuePostSnapshotEvaluations(run: {
+    id: string;
+    targetPolicyVersion: number | null;
+    snapshotCutoff: Date | null;
+  }): Promise<void> {
+    if (run.targetPolicyVersion === null || !run.snapshotCutoff) {
+      this.logger.warn(
+        `Run ${run.id} has no target version or snapshot cutoff, skipping post-snapshot evaluation`,
+      );
+      return;
+    }
+
+    try {
+      for (const context of ACTIVE_EVALUATION_CONTEXTS) {
+        await this.queueReEvaluateJob({
+          runId: run.id,
+          policyVersion: run.targetPolicyVersion,
+          context,
+          batchSize: DEFAULT_BATCH_SIZE,
+          jobIdPrefix: POST_SNAPSHOT_RUN_PREFIX,
+          afterSnapshot: true,
+        });
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to queue post-snapshot evaluations for promoted run ${run.id} ` +
+          `(policy v${run.targetPolicyVersion}): ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+    }
+  }
+
   private async queueReEvaluateJob(params: {
     runId: string;
     policyVersion: number;
     context: EvaluationContextType;
     batchSize: number;
     jobIdPrefix: string;
+    afterSnapshot?: boolean;
   }): Promise<void> {
-    const { runId, policyVersion, context, batchSize, jobIdPrefix } = params;
+    const { runId, policyVersion, context, batchSize, jobIdPrefix, afterSnapshot } = params;
 
     await this.catalogQueue.add(
       CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
-      { runId, policyVersion, context, batchSize },
+      { runId, policyVersion, context, batchSize, ...(afterSnapshot ? { afterSnapshot } : {}) },
       {
         jobId: `${jobIdPrefix}_${policyVersion}_${runId}_${context}`,
         ...RE_EVALUATE_JOB_OPTIONS,

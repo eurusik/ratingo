@@ -6,25 +6,11 @@
  * NOT a direct TMDB genre mapping.
  */
 
+import { ContentClassValues, type ContentClass } from '../../shared/contracts';
+
 import { TMDB_GENRE_IDS } from './constants/genre-mapping.constants';
 
-/**
- * Content class constants.
- * Use these instead of magic strings throughout the codebase.
- */
-export const ContentClassValues = {
-  MAINSTREAM: 'mainstream',
-  ANIME: 'anime',
-  DOCUMENTARY: 'documentary',
-  REALITY: 'reality',
-  KIDS: 'kids',
-} as const;
-
-/**
- * Content class enum values.
- * Matches the content_class_enum in database schema.
- */
-export type ContentClass = (typeof ContentClassValues)[keyof typeof ContentClassValues];
+export { ContentClassValues, type ContentClass };
 
 /**
  * Input for content classification.

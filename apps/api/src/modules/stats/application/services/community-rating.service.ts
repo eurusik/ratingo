@@ -12,6 +12,9 @@ import {
 /** Multiplier for rounding to 2 decimal places. */
 const ROUNDING_PRECISION = 100;
 
+/** Rows per bulkUpsert call (keeps each statement under Postgres' 65535 bind-param limit). */
+const BULK_UPSERT_BATCH_SIZE = 500;
+
 /** Rounds a number to 2 decimal places. */
 function roundToTwoDecimals(value: number): number {
   return Math.round(value * ROUNDING_PRECISION) / ROUNDING_PRECISION;
@@ -69,9 +72,7 @@ export class CommunityRatingService {
       communityRatingCount: agg.ratingCount,
     }));
 
-    if (stats.length > 0) {
-      await this.statsRepository.bulkUpsert(stats);
-    }
+    await this.bulkUpsertInBatches(stats);
 
     // Reset stale community ratings for items that no longer have any user ratings
     const existingIds = await this.aggregationPort.findMediaItemIdsWithCommunityRatings();
@@ -79,7 +80,7 @@ export class CommunityRatingService {
     const staleIds = existingIds.filter((id) => !freshIds.has(id));
 
     if (staleIds.length > 0) {
-      await this.statsRepository.bulkUpsert(
+      await this.bulkUpsertInBatches(
         staleIds.map((mediaItemId) => ({
           mediaItemId,
           communityAverageRating: 0,
@@ -91,5 +92,17 @@ export class CommunityRatingService {
 
     this.logger.log(`Reconciled community ratings for ${stats.length} media items`);
     return { updated: stats.length, reset: staleIds.length };
+  }
+
+  /**
+   * Upserts in batches: a single statement with thousands of rows exceeds
+   * Postgres' 65535 bind-parameter limit.
+   */
+  private async bulkUpsertInBatches(
+    rows: Parameters<IStatsRepository['bulkUpsert']>[0],
+  ): Promise<void> {
+    for (let i = 0; i < rows.length; i += BULK_UPSERT_BATCH_SIZE) {
+      await this.statsRepository.bulkUpsert(rows.slice(i, i + BULK_UPSERT_BATCH_SIZE));
+    }
   }
 }

@@ -15,13 +15,13 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../../auth/public';
 import { DryRunService, type DryRunResult } from '../../application/services/dry-run.service';
 import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
 import { DryRunRequestDto, DryRunResponseDto } from '../dto/dry-run.dto';
 import { DryRunExceptionFilter } from '../filters/dry-run-exception.filter';
 
-@ApiTags('Admin - Policy Activation')
+@ApiTags('Admin: Policy')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
 @UseFilters(DryRunExceptionFilter)
@@ -80,6 +80,7 @@ export class DryRunController {
       homepage: dto.policy.homepage || { minRelevanceScore: 50 },
       globalRequirements: dto.policy.globalRequirements,
       excludedContentClasses: dto.policy.excludedContentClasses || [],
+      contextRequirements: dto.policy.contextRequirements,
     });
   }
 

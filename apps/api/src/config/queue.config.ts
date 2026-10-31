@@ -42,8 +42,8 @@ export const WORKER_CONFIG = {
    * Duration: 1-60+ seconds (HTTP calls to 4+ external APIs)
    *
    * Rate limiter: 30 jobs/min to prevent Trakt API 429 errors.
-   * Math: Trakt limit ~3 req/s = 180/min. Each job makes ~4 calls.
-   * Safe jobs/min: 180 ÷ 4 = 45, with safety margin → 30.
+   * Math: client Trakt limiter caps at 2 req/s = 120 calls/min. Each job
+   * makes ~4 Trakt calls → 120 ÷ 4 = 30 jobs/min.
    */
   ingestion: {
     lockDuration: 120_000, // 2 minutes

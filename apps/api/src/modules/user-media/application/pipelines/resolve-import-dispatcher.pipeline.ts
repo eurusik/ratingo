@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
 
-import { BACKFILL_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
+import { BACKFILL_QUEUE, IngestionJob } from '../../../ingestion/public';
 import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_REPOSITORY,

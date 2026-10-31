@@ -60,6 +60,7 @@ describe('SearchMapper', () => {
         originalTitle: 'The Matrix',
         year: 1999,
         poster: {
+          thumb: 'https://image.tmdb.org/t/p/w154/poster.jpg',
           small: 'https://image.tmdb.org/t/p/w342/poster.jpg',
           medium: 'https://image.tmdb.org/t/p/w500/poster.jpg',
           large: 'https://image.tmdb.org/t/p/w780/poster.jpg',
@@ -102,6 +103,7 @@ describe('SearchMapper', () => {
         originalTitle: 'Game of Thrones',
         year: 2011,
         poster: {
+          thumb: 'https://image.tmdb.org/t/p/w154/got.jpg',
           small: 'https://image.tmdb.org/t/p/w342/got.jpg',
           medium: 'https://image.tmdb.org/t/p/w500/got.jpg',
           large: 'https://image.tmdb.org/t/p/w780/got.jpg',

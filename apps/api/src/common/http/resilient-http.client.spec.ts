@@ -49,6 +49,16 @@ describe('ResilientHttpClient', () => {
       expect(isRetryableError({ status: 504 })).toBe(true);
     });
 
+    it('should return true for Cloudflare 520-524 status codes', () => {
+      for (const status of [520, 521, 522, 523, 524]) {
+        expect(isRetryableError({ status })).toBe(true);
+      }
+    });
+
+    it('should return false for SyntaxError (malformed JSON body is not a network error)', () => {
+      expect(isRetryableError(new SyntaxError('Unexpected token < in JSON'))).toBe(false);
+    });
+
     it('should return false for non-retryable status codes', () => {
       expect(isRetryableError({ status: 400 })).toBe(false);
       expect(isRetryableError({ status: 401 })).toBe(false);
@@ -266,6 +276,49 @@ describe('ResilientHttpClient', () => {
 
         expect(result.success).toBe(false);
         expect(result.attempts).toBe(DEFAULT_RETRY_CONFIG.maxRetries + 1);
+        expect(result.isRetryable).toBe(true);
+      });
+
+      it('should not retry or classify malformed JSON as a retryable network error', async () => {
+        mockFetch.mockResolvedValue({
+          ok: true,
+          json: jest.fn().mockRejectedValue(new SyntaxError('Unexpected token < in JSON')),
+        } as any);
+
+        const result = await client.get('https://api.example.com/test');
+
+        expect(result.success).toBe(false);
+        expect(result.attempts).toBe(1);
+        expect(result.isRetryable).toBe(false);
+        expect(result.error).toBeInstanceOf(SyntaxError);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+      });
+
+      it('should time out a stalled response body and map the AbortError to a timeout error', async () => {
+        const shortClient = new ResilientHttpClient({ maxRetries: 0, timeoutMs: 1000 });
+        mockFetch.mockImplementation(async (_url, init) => {
+          const signal = (init as RequestInit).signal as AbortSignal;
+          return {
+            ok: true,
+            // Body never arrives; rejects only when the request is aborted.
+            json: () =>
+              new Promise((_resolve, reject) => {
+                signal.addEventListener('abort', () =>
+                  reject(
+                    Object.assign(new Error('The operation was aborted'), { name: 'AbortError' }),
+                  ),
+                );
+              }),
+          } as any;
+        });
+
+        const resultPromise = shortClient.get('https://api.example.com/test');
+        await jest.advanceTimersByTimeAsync(1000);
+        const result = await resultPromise;
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBeInstanceOf(HttpError);
+        expect((result.error as HttpError).status).toBe(408);
         expect(result.isRetryable).toBe(true);
       });
 

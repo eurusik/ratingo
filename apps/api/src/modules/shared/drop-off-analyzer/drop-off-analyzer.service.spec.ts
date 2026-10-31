@@ -1,3 +1,5 @@
+import * as fc from 'fast-check';
+
 import { DropOffAnalyzerService } from './drop-off-analyzer.service';
 
 describe('DropOffAnalyzerService', () => {
@@ -269,6 +271,77 @@ describe('DropOffAnalyzerService', () => {
       const result = service.analyze(seasons);
 
       expect(result.episodesAnalyzed).toBe(15);
+    });
+  });
+
+  describe('regressions', () => {
+    const ep = (number: number, votes: number, rating = 8) => ({
+      number,
+      title: `E${number}`,
+      rating,
+      votes,
+    });
+
+    it('computes dropOffPercent from the previous VALID episode, within 0..100', () => {
+      const result = service.analyze([
+        {
+          number: 1,
+          episodes: [ep(1, 1000, 9), ep(2, 5, 9), ep(3, 300, 6)],
+        },
+      ]);
+
+      expect(result.dropOffPoint).toEqual({ season: 1, episode: 3, title: 'E3' });
+      // (1000 - 300) / 1000, not (5 - 300) / 5 = -5900%
+      expect(result.dropOffPercent).toBe(70);
+    });
+
+    it('never returns NaN/Infinity/negative dropOffPercent', () => {
+      const result = service.analyze([
+        { number: 1, episodes: [ep(1, 0), ep(2, 0), ep(3, 1000, 5), ep(4, 1000, 9)] },
+      ]);
+      expect(Number.isFinite(result.dropOffPercent)).toBe(true);
+      expect(result.dropOffPercent).toBeGreaterThanOrEqual(0);
+      expect(result.dropOffPercent).toBeLessThanOrEqual(100);
+    });
+
+    it('uses first/last seasons WITH data for retention when season 1 has no valid episodes', () => {
+      const result = service.analyze([
+        { number: 1, episodes: [ep(1, 10), ep(2, 20)] },
+        { number: 2, episodes: [ep(1, 800), ep(2, 800)] },
+        { number: 3, episodes: [ep(1, 400), ep(2, 400)] },
+      ]);
+      // Previously baseline fell back to 1 => clamped to a false 100%
+      expect(result.overallRetention).toBe(50);
+    });
+
+    it('returns neutral result with insufficient-data insight when no season has valid votes', () => {
+      const result = service.analyze([{ number: 1, episodes: [ep(1, 10), ep(2, 20), ep(3, 30)] }]);
+      expect(result.overallRetention).toBe(0);
+      expect(result.dropOffPoint).toBeNull();
+      expect(result.insight).toBe('Недостатньо даних для аналізу');
+    });
+
+    it('property: dropOffPercent and overallRetention are always finite and within 0..100', () => {
+      const episode = fc.record({
+        rating: fc.double({ min: 0, max: 10, noNaN: true }),
+        votes: fc.integer({ min: 0, max: 100_000 }),
+      });
+      const season = fc.array(episode, { minLength: 1, maxLength: 8 });
+      fc.assert(
+        fc.property(fc.array(season, { minLength: 1, maxLength: 5 }), (seasons) => {
+          const result = service.analyze(
+            seasons.map((eps, si) => ({
+              number: si + 1,
+              episodes: eps.map((e, ei) => ({ number: ei + 1, title: `E${ei + 1}`, ...e })),
+            })),
+          );
+          for (const v of [result.dropOffPercent, result.overallRetention]) {
+            expect(Number.isFinite(v)).toBe(true);
+            expect(v).toBeGreaterThanOrEqual(0);
+            expect(v).toBeLessThanOrEqual(100);
+          }
+        }),
+      );
     });
   });
 });

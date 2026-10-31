@@ -4,6 +4,7 @@ import { TmdbAdapter } from '../../../tmdb/public';
 import { BulkJobService } from '../services/bulk-job.service';
 import { MEDIA_REPOSITORY, MOVIE_REPOSITORY } from '../../../catalog/public';
 import { IngestionJob } from '../../ingestion.constants';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 describe('NowPlayingPipeline', () => {
   let pipeline: NowPlayingPipeline;
@@ -54,7 +55,10 @@ describe('NowPlayingPipeline', () => {
       await pipeline.sync('UA');
 
       expect(tmdbAdapter.getNowPlayingIds).toHaveBeenCalledWith('UA');
-      expect(mediaRepository.findManyByTmdbIds).toHaveBeenCalledWith([100, 200, 300]);
+      expect(mediaRepository.findManyByTmdbIds).toHaveBeenCalledWith(
+        [100, 200, 300],
+        MediaType.MOVIE,
+      );
       expect(bulkJobService.enqueueBulk).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({

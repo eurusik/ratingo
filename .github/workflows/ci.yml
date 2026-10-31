@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, development]
+  push:
+    branches: [main, development]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  # api runs on Railway (node:20 Dockerfile); web-client runs on Vercel (Node 24.x)
+  NODE_VERSION: 20
+  WEB_NODE_VERSION: 24
+  HUSKY: 0
+
+jobs:
+  api:
+    name: api
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace=api
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=api
+
+      - name: Unit tests
+        run: npm test --workspace=api -- --runInBand
+
+      - name: Build
+        run: npm run build --workspace=api
+
+  web:
+    name: web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: ${{ env.WEB_NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace=web-client
+
+      - name: Unit tests
+        run: npm test --workspace=web-client
+
+  contracts:
+    name: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Regenerate API contract
+        timeout-minutes: 5
+        run: npm run contracts:update
+
+      - name: Check contract is up to date
+        run: |
+          if [ -n "$(git status --porcelain -- packages/api-contract)" ]; then
+            git status --short -- packages/api-contract
+            git diff -- packages/api-contract
+            echo "::error::packages/api-contract is out of date. Run 'npm run contracts:update' and commit the result."
+            exit 1
+          fi

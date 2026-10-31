@@ -1,6 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { DEFAULT_REGION } from '../../../../common/constants';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
   type IMediaRepository,
   MEDIA_REPOSITORY,
@@ -72,7 +73,8 @@ export class NowPlayingPipeline {
   }
 
   private async filterMissing(tmdbIds: number[]): Promise<number[]> {
-    const existingMedia = await this.mediaRepository.findManyByTmdbIds(tmdbIds);
+    // TMDB movie/TV id spaces overlap — a show with the same id must not mask a missing movie
+    const existingMedia = await this.mediaRepository.findManyByTmdbIds(tmdbIds, MediaType.MOVIE);
     const existingTmdbIds = new Set(existingMedia.map((m) => m.tmdbId));
     return tmdbIds.filter((id) => !existingTmdbIds.has(id));
   }

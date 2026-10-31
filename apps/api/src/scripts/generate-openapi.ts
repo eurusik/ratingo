@@ -3,13 +3,14 @@ import * as path from 'node:path';
 
 import { BullRegistrar, getQueueToken } from '@nestjs/bullmq';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
+import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 
-import { AppModule } from '../app.module';
+import { type AppRole } from '../common/runtime/app-role';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
+import { applyStandardErrorResponses, buildSwaggerConfig } from '../swagger.config';
 
 const GLOBAL_PREFIX = 'api';
 const OUTPUT_PATH = path.resolve(__dirname, '../../../../packages/api-contract/openapi.json');
@@ -21,7 +22,11 @@ const DEFAULT_ENV: Record<string, string> = {
   TRAKT_CLIENT_ID: 'dummy',
   TRAKT_CLIENT_SECRET: 'dummy',
   OMDB_API_KEY: 'dummy',
+  ACCESS_TOKEN_SECRET: 'dummy-access-token-secret-for-openapi-gen',
+  REFRESH_TOKEN_SECRET: 'dummy-refresh-token-secret-for-openapi-gen',
 };
+
+const OPENAPI_APP_ROLE: AppRole = 'api';
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const;
 
@@ -48,8 +53,10 @@ type PathItemObject = Partial<Record<(typeof HTTP_METHODS)[number], OperationObj
 /**
  * Apply default environment variables required to bootstrap the Nest app for OpenAPI generation.
  */
-const applyDefaultEnv = () =>
+const applyDefaultEnv = () => {
   Object.entries(DEFAULT_ENV).forEach(([k, v]) => (process.env[k] ??= v));
+  process.env.APP_ROLE = OPENAPI_APP_ROLE;
+};
 
 /**
  * Resolve output path for generated OpenAPI JSON.
@@ -122,23 +129,8 @@ const wrapSuccessResponses = (doc: OpenAPIObject): void => {
     });
 };
 
-/**
- * Build Swagger/OpenAPI metadata.
- */
-const buildSwaggerConfig = () =>
-  new DocumentBuilder()
-    .setTitle('Ratingo API')
-    .setDescription('Rest API for Ratingo mobile and web clients')
-    .setVersion('2.0')
-    .addBearerAuth()
-    .build();
-
-/**
- * Create a Nest application instance configured for offline OpenAPI generation.
- *
- * Stubs database and BullMQ-related providers to avoid requiring Postgres/Redis.
- */
 const createApp = async (): Promise<NestFastifyApplication> => {
+  const { AppModule } = await import('../app.module');
   const noopBullRegistrar = { onModuleInit: () => {}, register: () => {} };
 
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -175,6 +167,7 @@ const generateOpenApi = async (): Promise<void> => {
   const doc = SwaggerModule.createDocument(app, buildSwaggerConfig());
 
   wrapSuccessResponses(doc);
+  applyStandardErrorResponses(doc);
 
   await writeFile(getOutputPath(), `${JSON.stringify(doc, null, 2)}\n`, 'utf8');
   await app.close();

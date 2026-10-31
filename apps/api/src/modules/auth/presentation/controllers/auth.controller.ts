@@ -41,10 +41,12 @@ import { type FastifyReply, type FastifyRequest } from 'fastify';
 import authConfig from '../../../../config/auth.config';
 import facebookConfig from '../../../../config/facebook.config';
 import googleConfig from '../../../../config/google.config';
-import { UserMediaService } from '../../../user-media/application/user-media.service';
-import { UsersService } from '../../../users/application/users.service';
-import { type User } from '../../../users/domain/entities/user.entity';
+import { UserMediaService } from '../../../user-media/public';
+import { UsersService } from '../../../users/public';
+import { type User } from '../../../users/public';
 import { AuthService } from '../../application/auth.service';
+import { OAuthService } from '../../application/oauth.service';
+import { TokenService } from '../../application/token.service';
 import { HTTP_REDIRECT_FOUND } from '../../auth.constants';
 import { type OAuthProvider, type OAuthUserPayload } from '../../domain/types';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
@@ -99,6 +101,8 @@ export class AuthController {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly tokenService: TokenService,
+    private readonly oauthService: OAuthService,
     private readonly usersService: UsersService,
     private readonly userMediaService: UserMediaService,
     private readonly googleAuthGuard: GoogleAuthGuard,
@@ -116,7 +120,7 @@ export class AuthController {
    * Registers a new user.
    */
   @Post('register')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ auth: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Register new user' })
   @ApiBody({ type: RegisterDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
@@ -140,7 +144,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ auth: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Login with email/password' })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
@@ -155,14 +159,14 @@ export class AuthController {
    * Refreshes tokens using valid refresh token.
    */
   @Post('refresh')
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Throttle({ refresh: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'Refresh tokens' })
   @ApiBody({ type: RefreshDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
   @ApiTooManyRequestsResponse({ description: 'Too many refresh attempts' })
   async refresh(@Body() body: RefreshDto, @Req() req: FastifyRequest): Promise<AuthTokensDto> {
     const clientMeta = extractClientMeta(req);
-    return this.authService.refresh(body.refreshToken, clientMeta);
+    return this.tokenService.refresh(body.refreshToken, clientMeta);
   }
 
   /**
@@ -174,7 +178,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@CurrentUser() user: { id: string }): Promise<void> {
-    await this.authService.logout(user.id);
+    await this.tokenService.logout(user.id);
     return;
   }
 
@@ -217,7 +221,7 @@ export class AuthController {
 
     const [stats, linkedProviders] = await Promise.all([
       this.userMediaService.getStats(dbUser.id),
-      this.authService.getLinkedProviders(dbUser.id),
+      this.oauthService.getLinkedProviders(dbUser.id),
     ]);
 
     return MeMapper.toDto(dbUser, stats, linkedProviders);
@@ -293,7 +297,7 @@ export class AuthController {
       const returnTo = statePayload.returnTo || '/settings';
       const provider = statePayload.provider || oauthUser.provider;
       try {
-        await this.authService.linkOAuthAccount(statePayload.linkUserId, oauthUser);
+        await this.oauthService.linkOAuthAccount(statePayload.linkUserId, oauthUser);
         await res.redirect(HTTP_REDIRECT_FOUND, `${frontendUrl}${returnTo}?linked=${provider}`);
       } catch (error) {
         const errorCode = error instanceof ConflictException ? 'ALREADY_LINKED' : 'LINK_FAILED';
@@ -312,8 +316,8 @@ export class AuthController {
 
     // Login mode (existing logic)
     const clientMeta = extractClientMeta(req);
-    const { user } = await this.authService.loginWithOAuth(oauthUser, clientMeta);
-    const code = await this.authService.generateExchangeCode(user.id, clientMeta);
+    const { user } = await this.oauthService.loginWithOAuth(oauthUser, clientMeta);
+    const code = await this.oauthService.generateExchangeCode(user.id, clientMeta);
 
     const returnTo = statePayload?.returnTo || '/';
     const provider = statePayload?.provider || oauthUser.provider;
@@ -327,7 +331,7 @@ export class AuthController {
    */
   @Post('oauth/exchange')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ auth: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Exchange one-time code for tokens' })
   @ApiBody({ type: ExchangeCodeDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
@@ -338,7 +342,7 @@ export class AuthController {
     @Req() req: FastifyRequest,
   ): Promise<AuthTokensDto> {
     const clientMeta = extractClientMeta(req);
-    return this.authService.exchangeCodeForTokens(body.code, clientMeta);
+    return this.oauthService.exchangeCodeForTokens(body.code, clientMeta);
   }
 
   /**
@@ -392,7 +396,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get linked OAuth providers' })
   @ApiOkResponse({ description: 'Linked accounts', type: [LinkedAccountDto] })
   async getLinkedAccounts(@CurrentUser() user: { id: string }): Promise<LinkedAccountDto[]> {
-    const accounts = await this.authService.getLinkedAccounts(user.id);
+    const accounts = await this.oauthService.getLinkedAccounts(user.id);
     return accounts.map((a) => ({
       provider: a.provider,
       email: a.email,
@@ -415,7 +419,7 @@ export class AuthController {
     @CurrentUser() user: { id: string },
     @Param() params: UnlinkProviderParamDto,
   ): Promise<void> {
-    await this.authService.unlinkOAuthAccount(user.id, params.provider as OAuthProvider);
+    await this.oauthService.unlinkOAuthAccount(user.id, params.provider as OAuthProvider);
   }
 
   /**

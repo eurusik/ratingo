@@ -5,16 +5,18 @@
  * Computes diff data between policy versions using SQL aggregation.
  */
 
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 
 import { sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
   EligibilityStatus,
   DIFF_STATUS_NONE,
+  EvaluationContext,
   type DiffStatus,
 } from '../../domain/constants/evaluation.constants';
 import { type IDiffRepository } from '../../domain/repositories/diff.repository.interface';
@@ -24,19 +26,29 @@ import {
   type ReasonBreakdown,
 } from '../../domain/types/diff.types';
 
+/** Diff reports compare catalog-context evaluations only (one row per item per version). */
+const DIFF_CONTEXT = EvaluationContext.CATALOG;
+
 @Injectable()
 export class DiffRepository implements IDiffRepository {
+  private readonly logger = new Logger(DiffRepository.name);
+
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   /**
-   * Builds SQL filter for baseline policy version.
+   * Builds SQL filter for baseline policy version, scoped to the catalog context.
    * Returns FALSE when baselineVersion is null to get empty result set.
+   *
+   * The diff report is item-level and reflects catalog eligibility. Without the context
+   * filter, items evaluated in several contexts would multiply rows in the FULL OUTER JOIN.
    */
   private buildBaselineFilter(baselineVersion: number | null): SQL {
-    return baselineVersion !== null ? sql`policy_version = ${baselineVersion}` : sql`FALSE`;
+    return baselineVersion !== null
+      ? sql`policy_version = ${baselineVersion} AND context = ${DIFF_CONTEXT}`
+      : sql`FALSE`;
   }
 
   /**
@@ -55,7 +67,8 @@ export class DiffRepository implements IDiffRepository {
     const baselineFilter = this.buildBaselineFilter(baselineVersion);
 
     // Note: Uses idx_media_catalog_evaluations_version_item_status index
-    const result = await this.db.execute<{
+    const result = await withDbError('compute diff counts', this.logger, () =>
+      this.db.execute<{
       regressions: string;
       improvements: string;
       unchanged: string;
@@ -69,7 +82,7 @@ export class DiffRepository implements IDiffRepository {
       new_evals AS (
         SELECT media_item_id, status
         FROM media_catalog_evaluations
-        WHERE policy_version = ${targetVersion}
+        WHERE policy_version = ${targetVersion} AND context = ${DIFF_CONTEXT}
       ),
       diff AS (
         SELECT
@@ -84,7 +97,8 @@ export class DiffRepository implements IDiffRepository {
         COUNT(*) FILTER (WHERE old_status = ${EligibilityStatus.ELIGIBLE} AND new_status = ${EligibilityStatus.ELIGIBLE})::int as unchanged,
         COUNT(*) FILTER (WHERE old_status != ${EligibilityStatus.ELIGIBLE} AND new_status != ${EligibilityStatus.ELIGIBLE})::int as still_ineligible
       FROM diff
-    `);
+    `),
+    );
 
     const row = result[0];
     return {
@@ -108,7 +122,8 @@ export class DiffRepository implements IDiffRepository {
     const baselineFilter = this.buildBaselineFilter(baselineVersion);
     const diffFilter = this.buildDiffTypeFilter(type);
 
-    const result = await this.db.execute<{
+    const result = await withDbError('get diff samples', this.logger, () =>
+      this.db.execute<{
       media_item_id: string;
       title: string | null;
       old_status: string;
@@ -123,7 +138,7 @@ export class DiffRepository implements IDiffRepository {
       new_evals AS (
         SELECT media_item_id, status
         FROM media_catalog_evaluations
-        WHERE policy_version = ${targetVersion}
+        WHERE policy_version = ${targetVersion} AND context = ${DIFF_CONTEXT}
       ),
       diff AS (
         SELECT
@@ -144,7 +159,8 @@ export class DiffRepository implements IDiffRepository {
       WHERE ${diffFilter}
       ORDER BY m.trending_score DESC NULLS LAST
       LIMIT ${limit}
-    `);
+    `),
+    );
 
     return result.map((row) => ({
       mediaItemId: row.media_item_id,
@@ -180,7 +196,8 @@ export class DiffRepository implements IDiffRepository {
   ): Promise<ReasonBreakdown> {
     const baselineFilter = this.buildBaselineFilter(baselineVersion);
 
-    const result = await this.db.execute<{
+    const result = await withDbError('compute reason breakdown', this.logger, () =>
+      this.db.execute<{
       diff_type: string;
       reason: string;
       count: string;
@@ -193,7 +210,7 @@ export class DiffRepository implements IDiffRepository {
       new_evals AS (
         SELECT media_item_id, status, reasons
         FROM media_catalog_evaluations
-        WHERE policy_version = ${targetVersion}
+        WHERE policy_version = ${targetVersion} AND context = ${DIFF_CONTEXT}
       ),
       diff AS (
         SELECT
@@ -222,7 +239,8 @@ export class DiffRepository implements IDiffRepository {
       SELECT 'improvement' as diff_type, reason, COUNT(*)::int as count
       FROM improvements
       GROUP BY reason
-    `);
+    `),
+    );
 
     const regressionReasons: Record<string, number> = {};
     const improvementReasons: Record<string, number> = {};

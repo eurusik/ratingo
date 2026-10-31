@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { getBestRating, isNewRelease } from '../../../../common/utils/media.utils';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
-import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
-import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
+import { CARD_LIST_CONTEXT } from '../../../shared/cards';
+import { isHitQuality } from '../../../shared/cards';
+import { buildCardMeta, extractContinuePoint } from '../../../shared/cards';
 import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { MovieVerdictService } from '../../../shared/verdict';
-import { mapBadgeToPopularitySignal } from '../../../shared/verdict/domain/popularity-signal';
+import { mapBadgeToPopularitySignal } from '../../../shared/verdict';
 import { MovieNotFoundError } from '../../domain/errors';
 import {
   type IMovieRepository,

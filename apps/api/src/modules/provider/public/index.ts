@@ -4,9 +4,6 @@
  * Exports for use by other modules.
  */
 
-// Module
-export { ProviderModule } from '../provider.module';
-
 // Services
 export { ProviderRegistryService } from '../application/services/provider-registry.service';
 export { ProviderMappingService } from '../application/services/provider-mapping.service';

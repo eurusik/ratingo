@@ -4,13 +4,13 @@ import { MAX_PAGE_SIZE, MS_PER_MINUTE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
+import { ScoreCalculatorService } from '../../../shared/score-calculator';
 import {
   type TraktListsPort,
   TRAKT_LISTS_PORT,
   type TraktRatingsPort,
   TRAKT_RATINGS_PORT,
-} from '../../../ingestion/public';
-import { ScoreCalculatorService } from '../../../shared/score-calculator';
+} from '../../../trakt/public';
 import {
   type IStatsRepository,
   type MediaStatsData,
@@ -27,6 +27,15 @@ const SAFETY_WINDOW_MINUTES = 5;
 const SAFETY_WINDOW_MS = SAFETY_WINDOW_MINUTES * MS_PER_MINUTE;
 const NOT_FOUND_EXAMPLES_LIMIT = 5;
 const DEFAULT_ELIGIBLE_BATCH_SIZE = 50;
+
+/** Watchers lookup result: number (incl. 0) = success, undefined = not found, null = transient error */
+type WatchersResult = number | null | undefined;
+
+/**
+ * Composite key for a media item. TMDB movie and TV id spaces overlap, so tmdbId alone is
+ * NOT unique — (type, tmdb_id) is. All in-memory maps in this service use this key.
+ */
+const mediaKey = (type: string, tmdbId: number): string => `${type}:${tmdbId}`;
 
 /**
  * Service for syncing trending stats from Trakt.
@@ -100,10 +109,10 @@ export class TrendingSyncService {
     // Batch: Get all media items by TMDB IDs (1 query)
     const tmdbIds = allTrending.map((t) => t.tmdbId);
     const mediaItems = await this.mediaRepository.findManyByTmdbIds(tmdbIds);
-    const mediaMap = new Map(mediaItems.map((m) => [m.tmdbId, m.id]));
+    const mediaMap = new Map(mediaItems.map((m) => [mediaKey(m.type, m.tmdbId), m.id]));
 
     // Filter to only items we have in DB
-    const existingTrending = allTrending.filter((t) => mediaMap.has(t.tmdbId));
+    const existingTrending = allTrending.filter((t) => mediaMap.has(mediaKey(t.type, t.tmdbId)));
 
     if (existingTrending.length === 0) {
       this.logger.log('No matching media items in database');
@@ -111,16 +120,17 @@ export class TrendingSyncService {
     }
 
     // Batch: Get score data for all existing items (1 query)
-    const mediaIds = existingTrending.map((t) => mediaMap.get(t.tmdbId)!);
+    const mediaIds = existingTrending.map((t) => mediaMap.get(mediaKey(t.type, t.tmdbId))!);
     const scoreDataList = await this.mediaRepository.findManyForScoring(mediaIds);
-    const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
+    const scoreDataMap = new Map(scoreDataList.map((s) => [mediaKey(s.type, s.tmdbId), s]));
 
     // Calculate scores and prepare batch upsert
     const statsToUpsert: MediaStatsData[] = [];
 
     for (const item of existingTrending) {
-      const mediaId = mediaMap.get(item.tmdbId)!;
-      const scoreData = scoreDataMap.get(item.tmdbId);
+      const key = mediaKey(item.type, item.tmdbId);
+      const mediaId = mediaMap.get(key)!;
+      const scoreData = scoreDataMap.get(key);
 
       const scores = scoreData
         ? this.scoreCalculator.calculate(toScoreInput(scoreData, item.watchers))
@@ -198,15 +208,8 @@ export class TrendingSyncService {
       this.traktRatingsPort.getShowWatchersByTmdbIds(showItems.map((i) => i.tmdbId)),
     ]);
 
-    // Merge watchers maps
-    // number (including 0) = success, undefined = not found, null = transient error
-    const watchersMap = new Map<number, number | null | undefined>();
-    for (const [tmdbId, watchers] of movieWatchers) {
-      watchersMap.set(tmdbId, watchers);
-    }
-    for (const [tmdbId, watchers] of showWatchers) {
-      watchersMap.set(tmdbId, watchers);
-    }
+    // Merge watchers maps (keyed by type:tmdbId — movie and show ids overlap)
+    const watchersMap = this.mergeWatchers(movieWatchers, showWatchers);
 
     // Aggregate results for logging
     const { fetched, skipped, notFound, notFoundExamples } = this.aggregateWatchersResults(
@@ -225,18 +228,21 @@ export class TrendingSyncService {
 
     // 3. Get score data for items we'll update (only those with successful fetch)
     // typeof === 'number' ensures we exclude both null (error) and undefined (not found)
-    const itemsToUpdate = dbItems.filter((i) => typeof watchersMap.get(i.tmdbId) === 'number');
+    const itemsToUpdate = dbItems.filter(
+      (i) => typeof watchersMap.get(mediaKey(i.type, i.tmdbId)) === 'number',
+    );
     const scoreDataList = await this.mediaRepository.findManyForScoring(
       itemsToUpdate.map((i) => i.id),
     );
-    const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
+    const scoreDataMap = new Map(scoreDataList.map((s) => [mediaKey(s.type, s.tmdbId), s]));
 
     // 4. Build stats to upsert (skip items with null watchers to preserve old data)
     const statsToUpsert: MediaStatsData[] = [];
 
     for (const item of itemsToUpdate) {
-      const watchers = watchersMap.get(item.tmdbId)!; // Not null, we filtered above
-      const scoreData = scoreDataMap.get(item.tmdbId);
+      const key = mediaKey(item.type, item.tmdbId);
+      const watchers = watchersMap.get(key)! as number; // Not null, we filtered above
+      const scoreData = scoreDataMap.get(key);
 
       const scores = scoreData
         ? this.scoreCalculator.calculate(toScoreInput(scoreData, watchers))
@@ -265,15 +271,35 @@ export class TrendingSyncService {
   }
 
   /**
+   * Merges per-type watchers maps (tmdbId -> result) into one map keyed by `type:tmdbId`.
+   * A single tmdbId-keyed map would let a show silently overwrite a movie with the same id.
+   */
+  private mergeWatchers(
+    movieWatchers: Map<number, WatchersResult>,
+    showWatchers: Map<number, WatchersResult>,
+  ): Map<string, WatchersResult> {
+    const merged = new Map<string, WatchersResult>();
+    for (const [tmdbId, watchers] of movieWatchers) {
+      merged.set(mediaKey(MediaType.MOVIE, tmdbId), watchers);
+    }
+    for (const [tmdbId, watchers] of showWatchers) {
+      merged.set(mediaKey(MediaType.SHOW, tmdbId), watchers);
+    }
+    return merged;
+  }
+
+  /**
    * Aggregates watchers results for logging purposes.
    *
    * Semantics:
    * - number (including 0) = fetched successfully
    * - undefined = not found in Trakt (item doesn't exist there)
    * - null = transient error (429/5xx), skipped DB update
+   *
+   * @param watchersMap - Results keyed by `type:tmdbId`
    */
   private aggregateWatchersResults(
-    watchersMap: Map<number, number | null | undefined>,
+    watchersMap: Map<string, WatchersResult>,
     dbItems: { tmdbId: number; type: string }[],
   ): WatchersAggregationResult {
     let fetched = 0;
@@ -281,7 +307,7 @@ export class TrendingSyncService {
     let notFound = 0;
     const notFoundExamples: { tmdbId: number; type: string }[] = [];
 
-    for (const [tmdbId, watchers] of watchersMap) {
+    for (const [key, watchers] of watchersMap) {
       if (watchers === null) {
         // Transient error (429/5xx) - skip DB update
         skipped++;
@@ -291,7 +317,7 @@ export class TrendingSyncService {
       if (watchers === undefined) {
         // Not found in Trakt
         notFound++;
-        this.collectNotFoundExample(tmdbId, dbItems, notFoundExamples);
+        this.collectNotFoundExample(key, dbItems, notFoundExamples);
         continue;
       }
 
@@ -306,15 +332,15 @@ export class TrendingSyncService {
    * Collects not-found examples for debugging (up to limit).
    */
   private collectNotFoundExample(
-    tmdbId: number,
+    key: string,
     dbItems: { tmdbId: number; type: string }[],
     notFoundExamples: { tmdbId: number; type: string }[],
   ): void {
     if (notFoundExamples.length >= NOT_FOUND_EXAMPLES_LIMIT) return;
 
-    const item = dbItems.find((i) => i.tmdbId === tmdbId);
+    const item = dbItems.find((i) => mediaKey(i.type, i.tmdbId) === key);
     if (item) {
-      notFoundExamples.push({ tmdbId, type: item.type });
+      notFoundExamples.push({ tmdbId: item.tmdbId, type: item.type });
     }
   }
 
@@ -331,24 +357,30 @@ export class TrendingSyncService {
    *
    * @param {object} options - Sync options
    * @param {number} options.batchSize - Number of items per batch (default: 50)
-   * @param {number} options.offset - Offset for pagination (default: 0)
-   * @returns {Promise<{ movies: number; shows: number; total: number; hasMore: boolean }>} Sync result
+   * @param {string} options.afterId - Keyset cursor: only items with id greater than this (default: from start)
+   * @returns {Promise<{ movies: number; shows: number; total: number; hasMore: boolean; lastId?: string }>} Sync result (lastId = cursor for the next batch)
    */
   async syncEligibleTrendingStats(options: {
     batchSize?: number;
-    offset?: number;
-  }): Promise<{ movies: number; shows: number; total: number; hasMore: boolean }> {
+    afterId?: string;
+  }): Promise<{
+    movies: number;
+    shows: number;
+    total: number;
+    hasMore: boolean;
+    lastId?: string;
+  }> {
     const batchSize = options.batchSize ?? DEFAULT_ELIGIBLE_BATCH_SIZE;
-    const offset = options.offset ?? 0;
+    const { afterId } = options;
 
     this.logger.log(
-      `Syncing eligible trending stats (batchSize: ${batchSize}, offset: ${offset})...`,
+      `Syncing eligible trending stats (batchSize: ${batchSize}, afterId: ${afterId ?? 'start'})...`,
     );
 
     // 1. Get ELIGIBLE items with pagination (+1 to detect hasMore)
     const eligibleItems = await this.mediaRepository.findEligibleForTrending({
       limit: batchSize + 1,
-      offset,
+      afterId,
     });
 
     const hasMore = eligibleItems.length > batchSize;
@@ -373,15 +405,8 @@ export class TrendingSyncService {
       this.traktRatingsPort.getShowWatchersByTmdbIds(showItems.map((i) => i.tmdbId)),
     ]);
 
-    // Merge watchers maps
-    // number (including 0) = success, undefined = not found, null = transient error
-    const watchersMap = new Map<number, number | null | undefined>();
-    for (const [tmdbId, watchers] of movieWatchers) {
-      watchersMap.set(tmdbId, watchers);
-    }
-    for (const [tmdbId, watchers] of showWatchers) {
-      watchersMap.set(tmdbId, watchers);
-    }
+    // Merge watchers maps (keyed by type:tmdbId — movie and show ids overlap)
+    const watchersMap = this.mergeWatchers(movieWatchers, showWatchers);
 
     // Aggregate results for logging
     const { fetched, skipped, notFound, notFoundExamples } = this.aggregateWatchersResults(
@@ -398,18 +423,21 @@ export class TrendingSyncService {
     }
 
     // 3. Get score data for items we'll update (only those with successful fetch)
-    const itemsToUpdate = items.filter((i) => typeof watchersMap.get(i.tmdbId) === 'number');
+    const itemsToUpdate = items.filter(
+      (i) => typeof watchersMap.get(mediaKey(i.type, i.tmdbId)) === 'number',
+    );
     const scoreDataList = await this.mediaRepository.findManyForScoring(
       itemsToUpdate.map((i) => i.id),
     );
-    const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
+    const scoreDataMap = new Map(scoreDataList.map((s) => [mediaKey(s.type, s.tmdbId), s]));
 
     // 4. Build stats to upsert (skip items with null watchers to preserve old data)
     const statsToUpsert: MediaStatsData[] = [];
 
     for (const item of itemsToUpdate) {
-      const watchers = watchersMap.get(item.tmdbId)!; // Not null, we filtered above
-      const scoreData = scoreDataMap.get(item.tmdbId);
+      const key = mediaKey(item.type, item.tmdbId);
+      const watchers = watchersMap.get(key)! as number; // Not null, we filtered above
+      const scoreData = scoreDataMap.get(key);
 
       const scores = scoreData
         ? this.scoreCalculator.calculate(toScoreInput(scoreData, watchers))
@@ -442,6 +470,8 @@ export class TrendingSyncService {
       shows: showsUpdated,
       total: moviesUpdated + showsUpdated,
       hasMore,
+      // Cursor covers the whole fetched batch (including skipped items) so the caller never re-reads it.
+      lastId: items[items.length - 1].id,
     };
   }
 
@@ -478,13 +508,7 @@ export class TrendingSyncService {
       this.traktRatingsPort.getShowWatchersByTmdbIds(showItems.map((i) => i.tmdbId)),
     ]);
 
-    const watchersMap = new Map<number, number | null | undefined>();
-    for (const [tmdbId, watchers] of movieWatchers) {
-      watchersMap.set(tmdbId, watchers);
-    }
-    for (const [tmdbId, watchers] of showWatchers) {
-      watchersMap.set(tmdbId, watchers);
-    }
+    const watchersMap = this.mergeWatchers(movieWatchers, showWatchers);
 
     const { fetched, skipped, notFound } = this.aggregateWatchersResults(watchersMap, candidates);
 
@@ -493,22 +517,27 @@ export class TrendingSyncService {
     );
 
     // Items with successful response (number) - update watchers and scores
-    const itemsWithData = candidates.filter((i) => typeof watchersMap.get(i.tmdbId) === 'number');
+    const itemsWithData = candidates.filter(
+      (i) => typeof watchersMap.get(mediaKey(i.type, i.tmdbId)) === 'number',
+    );
     // Items not found in Trakt (undefined) - just touch updated_at to unblock queue
-    const itemsNotFound = candidates.filter((i) => watchersMap.get(i.tmdbId) === undefined);
+    const itemsNotFound = candidates.filter(
+      (i) => watchersMap.get(mediaKey(i.type, i.tmdbId)) === undefined,
+    );
     // Items with transient errors (null) - skip, will retry next run
 
     const scoreDataList = await this.mediaRepository.findManyForScoring(
       itemsWithData.map((i) => i.id),
     );
-    const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
+    const scoreDataMap = new Map(scoreDataList.map((s) => [mediaKey(s.type, s.tmdbId), s]));
 
     const statsToUpsert: MediaStatsData[] = [];
 
     // Add items with watchers data
     for (const item of itemsWithData) {
-      const watchers = watchersMap.get(item.tmdbId)!;
-      const scoreData = scoreDataMap.get(item.tmdbId);
+      const key = mediaKey(item.type, item.tmdbId);
+      const watchers = watchersMap.get(key)! as number;
+      const scoreData = scoreDataMap.get(key);
 
       const scores = scoreData
         ? this.scoreCalculator.calculate(toScoreInput(scoreData, watchers))

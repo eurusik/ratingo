@@ -62,7 +62,7 @@ export class TrendingPipeline {
     const result = await this.bulkJobService.enqueueBulk(jobs, this.logger, 'Trending dispatcher');
 
     if (syncStats) {
-      await this.queueStatsJob(startedAt, pages, window);
+      await this.queueStatsJob(startedAt, window);
     }
 
     this.logger.log(
@@ -94,7 +94,7 @@ export class TrendingPipeline {
       );
     }
 
-    const jobs = this.buildSyncJobs(items, page);
+    const jobs = this.buildSyncJobs(items, page, this.resolveWindow(jobId));
     await this.bulkJobService.enqueueBulk(jobs, this.logger, logPrefix);
   }
 
@@ -161,7 +161,7 @@ export class TrendingPipeline {
     this.logger.log('Starting eligible trending backfill...');
 
     let totalSynced = 0;
-    let offset = 0;
+    let afterId: string | undefined;
     let batchCount = 0;
     let hasMoreRemaining = false;
     const batchSize = TRENDING_DEFAULT_STATS_LIMIT;
@@ -170,18 +170,19 @@ export class TrendingPipeline {
     while (batchCount < ELIGIBLE_BACKFILL_MAX_BATCHES) {
       const result = await this.trendingSyncService.syncEligibleTrendingStats({
         batchSize,
-        offset,
+        afterId,
       });
 
       totalSynced += result.total;
       batchCount++;
       hasMoreRemaining = result.hasMore;
 
-      if (!result.hasMore || result.total === 0) {
+      // Keyset cursor: stop if the service gave nothing to resume from.
+      if (!result.hasMore || !result.lastId) {
         break;
       }
 
-      offset += batchSize;
+      afterId = result.lastId;
     }
 
     this.logger.log(
@@ -253,7 +254,19 @@ export class TrendingPipeline {
     return jobs;
   }
 
-  private buildSyncJobs(items: Array<{ tmdbId: number; type: MediaType }>, page: number) {
+  /**
+   * Extracts the dispatch window from a page job id (`trending_<type>_<page>_<window>`).
+   * Falls back to the current hour bucket when the id is absent or malformed.
+   */
+  private resolveWindow(jobId?: string): string {
+    return jobId?.match(/_(\d+)$/)?.[1] ?? formatHourWindow();
+  }
+
+  private buildSyncJobs(
+    items: Array<{ tmdbId: number; type: MediaType }>,
+    page: number,
+    window: string,
+  ) {
     const baseScore = 10000;
 
     return items.map((item, i) => {
@@ -264,14 +277,13 @@ export class TrendingPipeline {
       return {
         name: item.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW,
         data: { tmdbId: item.tmdbId, trending: { score, rank } },
-        opts: { jobId: buildSyncMediaJobId(mediaType, item.tmdbId, 'daily') },
+        opts: { jobId: buildSyncMediaJobId(mediaType, item.tmdbId, 'window', window) },
       };
     });
   }
 
-  private async queueStatsJob(startedAt: Date, _pages: number, window: string): Promise<void> {
-    // Use constant limit instead of dynamic calculation to avoid rate limiting.
-    // With 4 API calls per item and ~3 req/s rate limit, 50 items takes ~70 seconds.
+  private async queueStatsJob(startedAt: Date, window: string): Promise<void> {
+    // Fixed limit (not derived from pages) keeps the stats job within the Trakt rate budget.
     const limit = TRENDING_DEFAULT_STATS_LIMIT;
 
     await this.bulkJobService.addDelayed(

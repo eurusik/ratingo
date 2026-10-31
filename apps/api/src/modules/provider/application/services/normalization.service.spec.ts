@@ -117,6 +117,7 @@ describe('NormalizationService', () => {
             tmdbProviderId: 9,
           }),
         ]),
+        expect.arrayContaining(['UA', 'US']),
       );
     });
 
@@ -172,6 +173,7 @@ describe('NormalizationService', () => {
           expect.objectContaining({ offerType: 'rent' }),
           expect.objectContaining({ offerType: 'buy' }),
         ]),
+        expect.arrayContaining(['UA', 'US']),
       );
     });
 
@@ -220,6 +222,7 @@ describe('NormalizationService', () => {
       expect(mockOffersRepository.upsertManyByRegions).toHaveBeenCalledWith(
         'media-123',
         expect.arrayContaining([expect.objectContaining({ region: 'US' })]),
+        expect.arrayContaining(['UA', 'US']),
       );
     });
 
@@ -244,6 +247,7 @@ describe('NormalizationService', () => {
       expect(mockOffersRepository.upsertManyByRegions).toHaveBeenCalledWith(
         'media-123',
         expect.arrayContaining([expect.objectContaining({ link: 'https://tmdb.org/watch/123' })]),
+        expect.arrayContaining(['UA', 'US']),
       );
     });
 
@@ -267,6 +271,7 @@ describe('NormalizationService', () => {
       expect(mockOffersRepository.upsertManyByRegions).toHaveBeenCalledWith(
         'media-123',
         expect.arrayContaining([expect.objectContaining({ tmdbProviderId: 8 })]),
+        expect.arrayContaining(['UA', 'US']),
       );
     });
 
@@ -280,8 +285,25 @@ describe('NormalizationService', () => {
       // Assert
       expect(result.offersCreated).toBe(0);
       expect(result.unmappedCount).toBe(0);
-      expect(mockOffersRepository.upsertManyByRegions).not.toHaveBeenCalled();
+      // Still called with zero offers: managed regions must be cleared of stale rows
+      expect(mockOffersRepository.upsertManyByRegions).toHaveBeenCalledWith(
+        'media-123',
+        [],
+        expect.arrayContaining(['UA', 'US']),
+      );
       expect(mockUnmappedRepository.recordUnmappedBatch).not.toHaveBeenCalled();
+    });
+
+    it('should also manage regions present in payload but without mappable offers', async () => {
+      const rawProviders: WatchProvidersMap = {
+        pl: { flatrate: [{ providerId: 999999, name: 'Unknown' }] },
+      };
+
+      await service.normalizeWatchProviders('media-123', rawProviders);
+
+      const [, offers, managed] = mockOffersRepository.upsertManyByRegions.mock.calls[0];
+      expect(offers).toEqual([]);
+      expect(managed).toEqual(expect.arrayContaining(['UA', 'US', 'PL']));
     });
 
     it('should handle mixed mapped and unmapped providers', async () => {
@@ -332,6 +354,7 @@ describe('NormalizationService', () => {
       expect(mockOffersRepository.upsertManyByRegions).toHaveBeenCalledWith(
         'media-123',
         expect.arrayContaining([expect.objectContaining({ providerId: 'netflix' })]),
+        expect.arrayContaining(['UA', 'US']),
       );
       const calls = mockOffersRepository.upsertManyByRegions.mock.calls;
       expect(calls[0][1]).toHaveLength(1);

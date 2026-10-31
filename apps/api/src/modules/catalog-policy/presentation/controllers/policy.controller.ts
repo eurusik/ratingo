@@ -24,7 +24,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../../auth/public';
 import { PolicyMapper } from '../../application/mappers/policy.mapper';
 import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
@@ -37,7 +37,7 @@ import {
   CreatePolicyResponseDto,
 } from '../dto';
 
-@ApiTags('Admin - Policy Activation')
+@ApiTags('Admin: Policy')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
 @Controller('admin/catalog-policies')

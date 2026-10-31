@@ -73,9 +73,12 @@ import {
   RunStatus,
   RunStatusType,
   EligibilityStatusType,
-  type EvaluationContextType,
 } from '../../src/modules/catalog-policy/domain/constants/evaluation.constants';
-import type { AggregatedCounters, RunAnomaly } from '../../src/modules/catalog-policy/domain/types';
+import type {
+  AggregatedCounters,
+  RunAnomaly,
+  RunProgressCounters,
+} from '../../src/modules/catalog-policy/domain/types';
 
 // ============================================================================
 // Test Helpers
@@ -237,12 +240,13 @@ class InMemoryRunRepository implements ICatalogEvaluationRunRepository {
     return this.runs.slice(offset, offset + limit);
   }
 
-  async aggregateCounters(runId: string): Promise<AggregatedCounters> {
+  async aggregateCounters(runId: string): Promise<RunProgressCounters> {
     const run = this.runs.find((r) => r.id === runId);
     if (!run) {
-      return { processed: 0, eligible: 0, ineligible: 0, review: 0, errors: 0 };
+      return { evaluations: 0, processed: 0, eligible: 0, ineligible: 0, review: 0, errors: 0 };
     }
     return {
+      evaluations: run.processed,
       processed: run.processed,
       eligible: run.eligible,
       ineligible: run.ineligible,
@@ -269,6 +273,19 @@ class InMemoryRunRepository implements ICatalogEvaluationRunRepository {
         ...run.errorSample,
       ].slice(0, 10);
     }
+  }
+
+  async transitionToCancelled(
+    runId: string,
+    fromStatuses: readonly CatalogEvaluationRun['status'][],
+  ): Promise<boolean> {
+    const run = this.runs.find((r) => r.id === runId);
+    if (!run || !fromStatuses.includes(run.status)) {
+      return false;
+    }
+    run.status = RunStatus.CANCELLED;
+    run.finishedAt = new Date();
+    return true;
   }
 
   async transitionToPrepared(runId: string, counters: AggregatedCounters): Promise<boolean> {
@@ -311,31 +328,8 @@ class InMemoryEvaluationRepository implements IMediaCatalogEvaluationRepository 
     return evaluation;
   }
 
-  async bulkUpsert(evaluations: MediaCatalogEvaluation[]): Promise<number> {
-    for (const e of evaluations) {
-      await this.upsert(e);
-    }
-    return evaluations.length;
-  }
-
   async findByMediaId(mediaItemId: string): Promise<MediaCatalogEvaluation | null> {
     return this.evaluations.find((e) => e.mediaItemId === mediaItemId) ?? null;
-  }
-
-  async findByMediaIdForContexts(
-    mediaItemId: string,
-    contexts: EvaluationContextType[],
-  ): Promise<Map<EvaluationContextType, MediaCatalogEvaluation>> {
-    const result = new Map<EvaluationContextType, MediaCatalogEvaluation>();
-    for (const ctx of contexts) {
-      const evaluation = this.evaluations.find(
-        (e) => e.mediaItemId === mediaItemId && e.context === ctx,
-      );
-      if (evaluation) {
-        result.set(ctx, evaluation);
-      }
-    }
-    return result;
   }
 
   async findByMediaIdAndPolicyVersion(
@@ -692,6 +686,7 @@ function createMockRunAggregationService(runRepo: InMemoryRunRepository) {
       const run = await runRepo.findById(runId);
       if (!run) {
         return {
+          evaluations: 0,
           processed: 0,
           eligible: 0,
           ineligible: 0,
@@ -699,6 +694,7 @@ function createMockRunAggregationService(runRepo: InMemoryRunRepository) {
         };
       }
       return {
+        evaluations: run.processed,
         processed: run.processed,
         eligible: run.eligible,
         ineligible: run.ineligible,

@@ -6,7 +6,7 @@ import { type Queue } from 'bullmq';
 
 import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../../auth/public';
 import {
   DropOffService,
   ScoreRecalculationService,
@@ -22,6 +22,7 @@ import {
   SyncTrendingQueryDto,
   AnalyzeDropOffQueryDto,
   SyncEligibleTrendingQueryDto,
+  StatsByTmdbQueryDto,
 } from '../dto';
 
 /**
@@ -57,7 +58,7 @@ export class StatsController {
   @Post('sync')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Sync trending stats from Trakt',
     description:
@@ -85,7 +86,7 @@ export class StatsController {
   @Post('sync-eligible-trending')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Sync watchers for ELIGIBLE trending items',
     description:
@@ -112,6 +113,7 @@ export class StatsController {
    * Gets stats by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID of the media item
+   * @param {StatsByTmdbQueryDto} query - Optional `type` (movie/show TMDB ids overlap)
    * @returns {Promise<any>} Stats payload
    */
   @Get('tmdb/:tmdbId')
@@ -121,8 +123,11 @@ export class StatsController {
     description: 'Returns current watchers count and trending rank for a media item.',
   })
   @ApiParam({ name: 'tmdbId', type: Number, description: 'TMDB ID of the media item' })
-  async getStatsByTmdbId(@Param('tmdbId') tmdbId: number) {
-    return this.statsQueryService.getStatsByTmdbId(tmdbId);
+  async getStatsByTmdbId(
+    @Param('tmdbId') tmdbId: number,
+    @Query() query: StatsByTmdbQueryDto = {},
+  ) {
+    return this.statsQueryService.getStatsByTmdbId(tmdbId, parseMediaType(query.type));
   }
 
   // === DROP-OFF ANALYSIS ===
@@ -137,7 +142,7 @@ export class StatsController {
   @Post('drop-off/analyze')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Analyze drop-off for shows',
     description:
@@ -166,7 +171,7 @@ export class StatsController {
   @Post('drop-off/analyze/:tmdbId')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Analyze drop-off for a specific show',
     description: 'Analyzes viewer drop-off for a single show by TMDB ID. Runs in background.',
@@ -215,7 +220,7 @@ export class StatsController {
   @Post('backfill/total-watchers')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Backfill total_watchers for corrupted items',
     description:
@@ -244,7 +249,7 @@ export class StatsController {
   @Post('backfill/watchers-count')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Queue backfill jobs for watchers_count',
     description:
@@ -277,7 +282,7 @@ export class StatsController {
   @Post('recalculate')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Recalculate scores for all media items',
     description:
@@ -302,7 +307,7 @@ export class StatsController {
   @Post('reconcile-community-ratings')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
-  @ApiTags('Service: Stats')
+  @ApiTags('Admin: Stats')
   @ApiOperation({
     summary: 'Reconcile community ratings',
     description:

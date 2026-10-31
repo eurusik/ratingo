@@ -1,4 +1,4 @@
-import type { NormalizedMedia } from '@/modules/ingestion/public';
+import type { NormalizedMedia } from '@/modules/shared/contracts';
 
 import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { type MediaType } from '../../../../common/enums/media-type.enum';
@@ -31,6 +31,8 @@ export interface MediaScoreData {
 export interface MediaWithTmdbId {
   id: string;
   tmdbId: number;
+  /** TMDB id spaces overlap between movies and shows — always pair tmdbId with type */
+  type: MediaType;
   alternativeTitles: string[] | null;
 }
 
@@ -39,6 +41,8 @@ export interface MediaWithTmdbId {
  */
 export interface MediaScoreDataWithTmdbId extends MediaScoreData {
   tmdbId: number;
+  /** TMDB id spaces overlap between movies and shows — always pair tmdbId with type */
+  type: MediaType;
 }
 
 /**
@@ -92,13 +96,24 @@ export interface IMediaRepository {
   } | null>;
 
   /**
-   * Updates ingestion status by TMDB ID (no-op if not found).
+   * Updates ingestion status by (type, TMDB ID) — no-op if not found.
+   * TMDB movie and TV id spaces overlap, so the type is required.
+   *
+   * With `preserveReady`, the update is conditional (`WHERE ingestion_status <> 'ready'`)
+   * so a READY item is never downgraded to IMPORTING/FAILED by a re-sync.
    *
    * @param {number} tmdbId - TMDB ID
+   * @param {MediaType} type - Media type
    * @param {IngestionStatus} status - New status
+   * @param {{ preserveReady?: boolean }} options - Skip the update when item is already READY
    * @returns {Promise<void>} Nothing
    */
-  updateIngestionStatus(tmdbId: number, status: IngestionStatus): Promise<void>;
+  updateIngestionStatus(
+    tmdbId: number,
+    type: MediaType,
+    status: IngestionStatus,
+    options?: { preserveReady?: boolean },
+  ): Promise<void>;
 
   /**
    * Updates only the alternative_titles column for a media item.
@@ -119,11 +134,14 @@ export interface IMediaRepository {
 
   /**
    * Batch: Retrieves multiple media items by TMDB IDs.
+   * TMDB movie and TV id spaces overlap: without `type` rows of BOTH types may be
+   * returned — callers must key results by `${type}:${tmdbId}`.
    *
    * @param {number[]} tmdbIds - TMDB IDs
-   * @returns {Promise<MediaWithTmdbId[]>} Mappings list with id, tmdbId, alternativeTitles
+   * @param {MediaType} type - Optional media type filter
+   * @returns {Promise<MediaWithTmdbId[]>} Mappings list with id, tmdbId, type, alternativeTitles
    */
-  findManyByTmdbIds(tmdbIds: number[]): Promise<MediaWithTmdbId[]>;
+  findManyByTmdbIds(tmdbIds: number[], type?: MediaType): Promise<MediaWithTmdbId[]>;
 
   /**
    * Batch: Retrieves score data for multiple media items by their IDs.
@@ -231,7 +249,7 @@ export interface IMediaRepository {
    * @param {number} options.offset - Offset for pagination
    * @returns {Promise<MediaSyncItem[]>} ELIGIBLE trending items with tmdbId and type
    */
-  findEligibleForTrending(options: { limit: number; offset: number }): Promise<MediaSyncItem[]>;
+  findEligibleForTrending(options: { limit: number; afterId?: string }): Promise<MediaSyncItem[]>;
 
   /**
    * Retrieves ELIGIBLE media items for snapshots sync.
@@ -242,10 +260,18 @@ export interface IMediaRepository {
    *
    * Uses cursor pagination for memory efficiency.
    *
-   * @param options - Query options (cursor, limit)
+   * When `snapshotDate` and `region` are given, items that already have a snapshot for
+   * that day/region are excluded so successive capped runs make progress.
+   *
+   * @param options - Query options (cursor, limit, snapshotDate, region)
    * @returns Array of snapshot candidates
    */
-  findSnapshotCandidates(options: { cursor?: string; limit: number }): Promise<SnapshotCandidate[]>;
+  findSnapshotCandidates(options: {
+    cursor?: string;
+    limit: number;
+    snapshotDate?: Date;
+    region?: string;
+  }): Promise<SnapshotCandidate[]>;
 
   /**
    * Records the timestamp of the last successful sync completion.

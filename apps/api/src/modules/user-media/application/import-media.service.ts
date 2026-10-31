@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { SavedItemsService } from '../../user-actions/application/saved-items.service';
-import { ACTION_CONTEXT } from '../../user-actions/domain/entities/user-media-action.entity';
-import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities/user-saved-item.entity';
+import { SavedItemsService } from '../../user-actions/public';
+import { ACTION_CONTEXT } from '../../user-actions/public';
+import { SAVED_ITEM_LIST } from '../../user-actions/public';
 import { MEDIA_LOOKUP_PORT } from '../domain/constants/import.constants';
 import {
   type ExternalMediaEntry,
@@ -54,10 +54,14 @@ export class ImportMediaService {
 
     const { matched, notFound } = await this.resolveMediaIds(command.items);
 
-    const toImport = Array.from(matched.entries()).map(([entry, mediaItemId]) => ({
-      entry,
-      mediaItemId,
-    }));
+    // Deduplicate by resolved mediaItemId (last entry wins): different external entries
+    // (e.g. IMDB-only vs TMDB-only rows) can resolve to the same catalog item, and a
+    // multi-row INSERT … ON CONFLICT DO UPDATE cannot affect the same row twice.
+    const byMediaItemId = new Map<string, { entry: ExternalMediaEntry; mediaItemId: string }>();
+    for (const [entry, mediaItemId] of matched.entries()) {
+      byMediaItemId.set(mediaItemId, { entry, mediaItemId });
+    }
+    const toImport = Array.from(byMediaItemId.values());
 
     const dbItems = toImport.map(({ entry, mediaItemId }) => ({
       mediaItemId,
@@ -67,15 +71,22 @@ export class ImportMediaService {
 
     let dbImported = 0;
     let dbSkipped = 0;
+    let plannedMediaItemIds = new Set<string>();
 
     if (dbItems.length > 0) {
       const result = await this.repo.bulkImport(command.userId, dbItems, command.overwriteExisting);
       dbImported = result.imported;
       dbSkipped = result.skipped;
+      plannedMediaItemIds = new Set(result.plannedMediaItemIds);
     }
 
-    // Save planned (watchlist) items to for_later — non-critical, per-item isolation
-    const plannedItems = toImport.filter(({ entry }) => entry.state === USER_MEDIA_STATE.PLANNED);
+    // Save planned (watchlist) items to for_later — non-critical, per-item isolation.
+    // Only items whose persisted state is planned: entries skipped because a state
+    // already exists (e.g. completed) must not be pushed onto the for_later list.
+    const plannedItems = toImport.filter(
+      ({ entry, mediaItemId }) =>
+        entry.state === USER_MEDIA_STATE.PLANNED && plannedMediaItemIds.has(mediaItemId),
+    );
     const SAVE_CONCURRENCY = 50;
     for (let i = 0; i < plannedItems.length; i += SAVE_CONCURRENCY) {
       const chunk = plannedItems.slice(i, i + SAVE_CONCURRENCY);

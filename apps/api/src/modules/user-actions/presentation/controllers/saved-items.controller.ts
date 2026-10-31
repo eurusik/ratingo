@@ -1,14 +1,15 @@
 import {
+  Body,
   Controller,
-  Post,
   Delete,
   Get,
-  Param,
-  Body,
-  Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,8 +22,8 @@ import {
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { SavedItemsService } from '../../application/saved-items.service';
 import { SAVED_ITEM_LIST } from '../../domain/entities/user-saved-item.entity';
 import {
@@ -37,7 +38,7 @@ import {
   SavedItemsListQueryDto,
 } from '../dto/saved-items.dto';
 
-@ApiTags('Saved Items')
+@ApiTags('Me: Saved Items')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('me/saved-items')
@@ -53,7 +54,7 @@ export class SavedItemsController {
   @ApiCreatedResponse({ type: SaveActionResultDto, description: 'Item saved with current status' })
   async saveItem(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: SaveItemDto,
   ): Promise<SaveActionResultDto> {
     const item = await this.savedItemsService.saveItem({
@@ -88,7 +89,7 @@ export class SavedItemsController {
   @ApiOkResponse({ type: UnsaveActionResultDto, description: 'Item removed with current status' })
   async unsaveItem(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: UnsaveItemDto,
   ): Promise<UnsaveActionResultDto> {
     const removed = await this.savedItemsService.unsaveItem(
@@ -133,7 +134,7 @@ export class SavedItemsController {
   @ApiOkResponse({ type: MediaSaveStatusDto })
   async getStatus(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
   ): Promise<MediaSaveStatusDto> {
     const lists = await this.savedItemsService.getListsForMedia(user.id, mediaItemId);
     return {

@@ -10,6 +10,7 @@ import { SavedItemCard } from './saved-item-card';
 import { EmptyState } from './empty-state';
 import { MediaTypeFilter } from './media-type-filter';
 import { SavedFilterIndicator } from './saved-filter-indicator';
+import { thumbnailUrl } from '@/shared/utils/image';
 
 interface SavedListProps {
   list: 'for_later' | 'considering';
@@ -110,7 +111,7 @@ export function SavedList({ list, totalAcrossTypes = 0 }: SavedListProps) {
                   title={media.title}
                   type={media.type as 'movie' | 'show'}
                   slug={media.slug}
-                  posterUrl={poster?.small ?? null}
+                  posterUrl={thumbnailUrl(poster)}
                   releaseDate={media.releaseDate}
                   reasonKey={item.reasonKey}
                   activeSubscriptionTriggers={item.activeSubscriptionTriggers}

@@ -10,7 +10,9 @@ import { SnapshotsService } from '../services/snapshots.service';
 /**
  * Snapshots pipeline: daily snapshot sync for ELIGIBLE media items only.
  *
- * Uses batch processing with cursor pagination for memory efficiency.
+ * Uses batch processing with cursor pagination for memory efficiency. Candidates that
+ * already have today's snapshot are excluded, so each capped run continues where the
+ * previous one stopped instead of re-selecting the lowest ids.
  * Optimized to reduce Trakt API calls by ~95% compared to previous approach.
  */
 @Injectable()
@@ -52,6 +54,8 @@ export class SnapshotsPipeline {
       const candidates = await this.mediaRepository.findSnapshotCandidates({
         limit: batchLimit,
         cursor,
+        snapshotDate,
+        region: normalizedRegion,
       });
 
       if (candidates.length === 0) break;
@@ -80,7 +84,7 @@ export class SnapshotsPipeline {
       this.logger.log(
         `Snapshots dispatcher hit run cap (${SNAPSHOTS_RUN_CAP}); ` +
           `batches=${batchCount}, synced=${totalSynced}, skipped=${totalSkipped}, errors=${totalErrors}. ` +
-          `Remaining candidates will be picked up on next run.`,
+          `Remaining candidates (no snapshot for ${today} yet) will be picked up on the next run today.`,
       );
     } else {
       this.logger.log(

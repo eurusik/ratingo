@@ -19,6 +19,11 @@ describe('UserMediaService', () => {
     listByUser: jest.fn(),
     listWithMedia: jest.fn(),
     findManyByMediaIds: jest.fn(),
+    delete: jest.fn(),
+  };
+
+  const mediaLookup = {
+    findTypeById: jest.fn(),
   };
 
   const cards = {
@@ -35,6 +40,9 @@ describe('UserMediaService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Default: lookup finds nothing -> the (client) mediaType hint is used as fallback
+    mediaLookup.findTypeById.mockResolvedValue(null);
+
     // Default: upsertWithGuard simulates the transactional behavior by calling
     // guard with the value currently returned by findOne (the "locked" row),
     // then resolves with the upsert mock's value.
@@ -44,7 +52,12 @@ describe('UserMediaService', () => {
       return repo.upsert();
     });
 
-    service = new UserMediaService(repo as any, cards as any, eventEmitter as any);
+    service = new UserMediaService(
+      repo as any,
+      cards as any,
+      eventEmitter as any,
+      mediaLookup as any,
+    );
   });
 
   it('setState should delegate to repo.upsertWithGuard (no progress path)', async () => {
@@ -360,8 +373,12 @@ describe('UserMediaService', () => {
       );
     });
 
-    it('should not emit event when called via syncRating (loop prevention)', async () => {
-      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
+    it('should not emit event when syncRating does not change the rating (loop prevention)', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 85,
+      } as any);
       repo.upsert.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.WATCHING,
@@ -472,8 +489,12 @@ describe('UserMediaService', () => {
   });
 
   describe('syncRating', () => {
-    it('should upsert directly without emitting events', async () => {
-      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
+    it('should upsert directly and emit a rating-changed event when the rating changed', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 60,
+      } as any);
       repo.upsert.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.WATCHING,
@@ -485,7 +506,40 @@ describe('UserMediaService', () => {
       expect(repo.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 85 }),
       );
-      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).toHaveBeenCalledTimes(1);
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        new UserMediaRatingChangedEvent('u1', 'm1', 85),
+      );
+      // never emits state-changed (bypasses setState)
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalledWith(
+        UserMediaStateChangedEvent.eventName,
+        expect.anything(),
+      );
+    });
+
+    it('should emit rating-changed for a brand new row', async () => {
+      repo.findOne.mockResolvedValue(null);
+      repo.upsert.mockResolvedValue({ id: 's1' } as any);
+
+      await service.syncRating('u1', 'm1', 70, MediaType.SHOW);
+
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        new UserMediaRatingChangedEvent('u1', 'm1', 70),
+      );
+    });
+
+    it('should derive the default state from the server-side media type, not the hint', async () => {
+      repo.findOne.mockResolvedValue(null);
+      repo.upsert.mockResolvedValue({ id: 's1' } as any);
+      mediaLookup.findTypeById.mockResolvedValue('show');
+
+      await service.syncRating('u1', 'm1', 70, MediaType.MOVIE);
+
+      expect(repo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ state: USER_MEDIA_STATE.WATCHING }),
+      );
     });
 
     it('should default to watching for shows when no existing state', async () => {
@@ -533,8 +587,12 @@ describe('UserMediaService', () => {
       );
     });
 
-    it('should accept null rating', async () => {
-      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
+    it('should accept null rating and emit rating-changed(null) when a rating existed', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 80,
+      } as any);
       repo.upsert.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.WATCHING,
@@ -546,7 +604,110 @@ describe('UserMediaService', () => {
       expect(repo.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: null }),
       );
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        new UserMediaRatingChangedEvent('u1', 'm1', null),
+      );
+    });
+
+    it('should not emit when clearing a rating that was already null', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: null,
+      } as any);
+      repo.upsert.mockResolvedValue({ id: 's1' } as any);
+
+      await service.syncRating('u1', 'm1', null);
+
       expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteState', () => {
+    it('should emit rating-changed(null) when the deleted row had a rating', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', rating: 80 } as any);
+
+      await service.deleteState('u1', 'm1');
+
+      expect(repo.delete).toHaveBeenCalledWith('u1', 'm1');
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        new UserMediaRatingChangedEvent('u1', 'm1', null),
+      );
+    });
+
+    it('should emit for rating 0 (falsy edge case)', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', rating: 0 } as any);
+
+      await service.deleteState('u1', 'm1');
+
+      expect(eventEmitter.emitAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not emit when the deleted row had no rating', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', rating: null } as any);
+
+      await service.deleteState('u1', 'm1');
+
+      expect(repo.delete).toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+    });
+
+    it('should not emit when there was no row', async () => {
+      repo.findOne.mockResolvedValue(null);
+
+      await service.deleteState('u1', 'm1');
+
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setState — stale progress reset', () => {
+    it.each([USER_MEDIA_STATE.COMPLETED, USER_MEDIA_STATE.DROPPED, USER_MEDIA_STATE.PLANNED])(
+      'writes progress: null when moving to %s without explicit progress',
+      async (state) => {
+        repo.findOne.mockResolvedValue({
+          id: 's1',
+          state: USER_MEDIA_STATE.WATCHING,
+          rating: null,
+          progress: { seasons: { 1: 3 } },
+        } as any);
+        repo.upsert.mockResolvedValue({ id: 's1', state } as any);
+
+        await service.setState({ userId: 'u1', mediaItemId: 'm1', state });
+
+        expect(repo.upsertWithGuard).toHaveBeenCalledWith(
+          expect.objectContaining({ state, progress: null }),
+          expect.any(Function),
+        );
+      },
+    );
+
+    it.each([USER_MEDIA_STATE.WATCHING, USER_MEDIA_STATE.PAUSED])(
+      'does not touch progress when moving to %s',
+      async (state) => {
+        repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.PLANNED } as any);
+        repo.upsert.mockResolvedValue({ id: 's1', state } as any);
+
+        await service.setState({ userId: 'u1', mediaItemId: 'm1', state });
+
+        const data = repo.upsertWithGuard.mock.calls[0][0];
+        expect(data).not.toHaveProperty('progress');
+      },
+    );
+
+    it('does not touch progress on a rating-only update (no explicit state)', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.COMPLETED,
+        progress: null,
+      } as any);
+      repo.upsert.mockResolvedValue({ id: 's1' } as any);
+
+      await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: 90 });
+
+      expect(repo.upsertWithGuard.mock.calls[0][0]).not.toHaveProperty('progress');
     });
   });
 
@@ -933,6 +1094,80 @@ describe('UserMediaService', () => {
       );
 
       expect(repo.upsertWithGuard).toHaveBeenCalled();
+    });
+  });
+
+  describe('setState — server-side media type', () => {
+    it('rejects drop for a show even when the client claims mediaType=movie', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 80,
+        progress: { seasons: { 1: 3 } },
+      } as any);
+      mediaLookup.findTypeById.mockResolvedValue('show');
+
+      await expect(
+        service.setState(
+          { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.DROPPED },
+          MediaType.MOVIE,
+        ),
+      ).rejects.toBeInstanceOf(AppException);
+      expect(repo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('rejects drop for a show when the client omits mediaType', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 80,
+        progress: { seasons: { 1: 3 } },
+      } as any);
+      mediaLookup.findTypeById.mockResolvedValue('show');
+
+      await expect(
+        service.setState({ userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.DROPPED }),
+      ).rejects.toBeInstanceOf(AppException);
+    });
+
+    it('allows drop for a movie even when the client claims mediaType=show', async () => {
+      repo.findOne.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 80,
+        progress: { seasons: { 1: 3 } },
+      } as any);
+      repo.upsert.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.DROPPED } as any);
+      mediaLookup.findTypeById.mockResolvedValue('movie');
+
+      await service.setState(
+        { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.DROPPED },
+        MediaType.SHOW,
+      );
+
+      expect(repo.upsertWithGuard).toHaveBeenCalled();
+    });
+
+    it('picks the default state from the looked-up type for a new rating-only row', async () => {
+      repo.findOne.mockResolvedValue(null);
+      repo.upsert.mockResolvedValue({ id: 's1' } as any);
+      mediaLookup.findTypeById.mockResolvedValue('show');
+
+      await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: 70 }, MediaType.MOVIE);
+
+      expect(repo.upsertWithGuard).toHaveBeenCalledWith(
+        expect.objectContaining({ state: USER_MEDIA_STATE.WATCHING }),
+        expect.any(Function),
+      );
+    });
+
+    it('does not hit the lookup when the type cannot influence the outcome', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
+      repo.upsert.mockResolvedValue({ id: 's1' } as any);
+
+      await service.setState({ userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.PAUSED });
+
+      expect(mediaLookup.findTypeById).not.toHaveBeenCalled();
     });
   });
 });

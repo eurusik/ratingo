@@ -1,4 +1,4 @@
-import { type User } from '../../../users/domain/entities/user.entity';
+import { type User } from '../../../users/public';
 
 export interface AuthTokens {
   accessToken: string;

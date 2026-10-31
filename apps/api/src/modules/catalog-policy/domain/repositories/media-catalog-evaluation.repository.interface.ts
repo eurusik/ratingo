@@ -28,11 +28,6 @@ export interface IMediaCatalogEvaluationRepository {
   upsert(evaluation: MediaCatalogEvaluation): Promise<MediaCatalogEvaluation>;
 
   /**
-   * Bulk upsert evaluations (for batch processing).
-   */
-  bulkUpsert(evaluations: MediaCatalogEvaluation[]): Promise<number>;
-
-  /**
    * Finds evaluation by media item ID (latest/current) for a specific context.
    * Defaults to 'catalog' context for backward compatibility.
    */
@@ -40,15 +35,6 @@ export interface IMediaCatalogEvaluationRepository {
     mediaItemId: string,
     context?: EvaluationContextType,
   ): Promise<MediaCatalogEvaluation | null>;
-
-  /**
-   * Finds evaluations by media item ID for multiple contexts (batch).
-   * Returns a Map of context → evaluation for efficient lookup.
-   */
-  findByMediaIdForContexts(
-    mediaItemId: string,
-    contexts: EvaluationContextType[],
-  ): Promise<Map<EvaluationContextType, MediaCatalogEvaluation>>;
 
   /**
    * Finds evaluation by media item ID, policy version, and context.

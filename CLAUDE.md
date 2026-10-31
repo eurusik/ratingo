@@ -7,11 +7,25 @@ Ratingo — Ukrainian-language streaming content discovery service. NPM workspac
 - Import across modules through `module/public/` barrel exports only
 - Use `import type { components } from '@ratingo/api-contract'` for all API types on frontend
 - Run `npm run contracts:update` after any DTO or controller change
+- Don't write comments in code or config (no inline, JSDoc, or YAML comments) — make names and structure explain the code instead. Leave existing comments alone unless you're rewriting that code
+
+## Review After Every Step
+After finishing each step, review the changed code before moving on, and fix what the reviews find:
+1. A regular code review (`code-review` skill)
+2. A review against the `clean-code` skill
+3. Backend (`apps/api`): also against the `clean-ddd-hexagonal` skill (Clean Architecture)
+4. Frontend (`apps/web-client`): also against the Vercel skills — `vercel-react-best-practices` and `web-design-guidelines`
 
 ## Layout
 - `apps/api/` — NestJS + Fastify + Drizzle ORM + PostgreSQL
 - `apps/web-client/` — Next.js 16 + React 19 + TanStack Query v5
 - `packages/api-contract/` — Shared OpenAPI types (auto-generated)
+
+## Branches & Deploy
+- Open PRs against `development` (not `main`); promote with a release PR `development` → `main`
+- `development` deploys to Railway dev, `main` deploys to Railway production; hotfixes go to `main`, then back-merge into `development`
+- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck/tests/build, web lint/tests, contract drift. Railway and Vercel do the deploys
+- Make every migration statement safe to re-run against existing state (`IF NOT EXISTS` / `IF EXISTS`): dev runs migrations on a fresh DB, so state conflicts surface only in prod
 
 ## Commands
 ```bash

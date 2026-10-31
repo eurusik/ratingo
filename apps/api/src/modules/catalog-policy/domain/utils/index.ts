@@ -16,3 +16,6 @@ export {
 
 // Diff utilities (pure functions for status comparison)
 export { isDiffRegression, isDiffImprovement } from './diff.utils';
+
+// Run context scope (which contexts a run must cover)
+export { resolveRunContextScope, type RunContextScope } from './run-contexts';

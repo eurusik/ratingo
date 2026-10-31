@@ -1,7 +1,6 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { DatabaseModule } from '../../database/database.module';
-import { AuthModule } from '../auth/auth.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 
 import { UserMediaRatingChangedListener } from './application/listeners/user-media-rating-changed.listener';
@@ -32,7 +31,7 @@ import { UserReviewsController } from './presentation/controllers/user-reviews.c
  * - Privacy-aware display
  */
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule), UserMediaModule],
+  imports: [DatabaseModule, UserMediaModule],
   providers: [
     ReviewsService,
     ReviewVotesService,

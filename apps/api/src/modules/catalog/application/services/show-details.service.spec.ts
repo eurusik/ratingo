@@ -5,8 +5,15 @@ import { CLOCK_PORT } from '../../../shared/clock';
 import { ShowNotFoundError } from '../../domain/errors';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 
+import { hasRecentEpisode } from '../../../../common/utils/media.utils';
+
 import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
 import { ShowDetailsService } from './show-details.service';
+
+jest.mock('../../../../common/utils/media.utils', () => ({
+  ...jest.requireActual('../../../../common/utils/media.utils'),
+  hasRecentEpisode: jest.fn(),
+}));
 
 describe('ShowDetailsService', () => {
   let service: ShowDetailsService;
@@ -106,6 +113,17 @@ describe('ShowDetailsService', () => {
       const result = await service.getBySlug('test-show');
 
       expect(result.card).toBeDefined();
+    });
+
+    it('should derive hasNewEpisode from lastAirDate, not nextAirDate', async () => {
+      const lastAirDate = new Date('2024-12-01');
+      const nextAirDate = new Date('2025-01-15');
+      showRepository.findBySlug.mockResolvedValue({ ...mockShow, lastAirDate, nextAirDate });
+
+      await service.getBySlug('test-show');
+
+      expect(hasRecentEpisode).toHaveBeenCalledWith(lastAirDate);
+      expect(hasRecentEpisode).not.toHaveBeenCalledWith(nextAirDate);
     });
 
     it('should include verdict in response', async () => {

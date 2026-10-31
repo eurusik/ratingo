@@ -74,6 +74,7 @@ describe('CatalogSearchController', () => {
       // Verify mapper added isImported and poster URLs
       expect(result.local[0].isImported).toBe(true);
       expect(result.local[0].poster).toEqual({
+        thumb: 'https://image.tmdb.org/t/p/w154/poster.jpg',
         small: 'https://image.tmdb.org/t/p/w342/poster.jpg',
         medium: 'https://image.tmdb.org/t/p/w500/poster.jpg',
         large: 'https://image.tmdb.org/t/p/w780/poster.jpg',
@@ -82,6 +83,14 @@ describe('CatalogSearchController', () => {
 
       expect(result.tmdb[0].isImported).toBe(false);
       expect(result.tmdb[0].poster).toBeDefined();
+    });
+
+    it('should use the first value when query is repeated (array)', async () => {
+      catalogSearchService.search.mockResolvedValue({ query: 'a', local: [], tmdb: [] });
+
+      await controller.search(['a', 'b']);
+
+      expect(catalogSearchService.search).toHaveBeenCalledWith('a');
     });
 
     it('should return empty arrays for empty query', async () => {

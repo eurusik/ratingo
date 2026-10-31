@@ -7,6 +7,7 @@
 
 import { Module } from '@nestjs/common';
 
+import { apiOnly } from '../../common/runtime/app-role';
 import { DatabaseModule } from '../../database/database.module';
 
 import { NormalizationService } from './application/services/normalization.service';
@@ -25,7 +26,7 @@ import { ProvidersController } from './presentation/controllers/providers.contro
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [ProvidersController],
+  controllers: apiOnly(ProvidersController),
   providers: [
     // Repositories
     {

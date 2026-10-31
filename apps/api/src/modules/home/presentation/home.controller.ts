@@ -10,7 +10,7 @@ import { HeroItemMapper } from './mappers/hero-item.mapper';
 /**
  * Public home endpoints.
  */
-@ApiTags('Home')
+@ApiTags('Public: Home')
 @Controller('home')
 export class HomeController {
   constructor(private readonly homeService: HomeService) {}

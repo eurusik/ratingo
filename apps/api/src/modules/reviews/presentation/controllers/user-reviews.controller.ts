@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Body,
   UseGuards,
   HttpCode,
@@ -20,8 +21,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { ReviewRepliesService } from '../../application/review-replies.service';
 import { ReviewReportsService } from '../../application/review-reports.service';
 import { ReviewVotesService } from '../../application/review-votes.service';
@@ -41,7 +42,7 @@ import {
 /**
  * Authenticated endpoints for user reviews (CRUD + voting).
  */
-@ApiTags('User: Reviews')
+@ApiTags('Me: Reviews')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('me/reviews')
@@ -85,7 +86,7 @@ export class UserReviewsController {
   @ApiOkResponse({ type: ReviewMutationResponseDto, description: 'Review found' })
   async getMyReviewForMedia(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
   ): Promise<ReviewMutationResponseDto | null> {
     const review = await this.reviewsService.getUserReviewForMedia(user.id, mediaItemId);
 
@@ -106,7 +107,7 @@ export class UserReviewsController {
   @ApiOkResponse({ type: ReviewMutationResponseDto, description: 'Review updated' })
   async update(
     @CurrentUser() user: { id: string },
-    @Param('reviewId') reviewId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
     @Body() body: UpdateReviewDto,
   ): Promise<ReviewMutationResponseDto> {
     const review = await this.reviewsService.update(reviewId, user.id, {
@@ -129,7 +130,7 @@ export class UserReviewsController {
   @ApiNoContentResponse({ description: 'Review deleted' })
   async delete(
     @CurrentUser() user: { id: string },
-    @Param('reviewId') reviewId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
   ): Promise<void> {
     await this.reviewsService.delete(reviewId, user.id);
   }
@@ -143,7 +144,7 @@ export class UserReviewsController {
   @ApiCreatedResponse({ type: VoteResultDto, description: 'Vote registered' })
   async vote(
     @CurrentUser() user: { id: string },
-    @Param('reviewId') reviewId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
     @Body() body: ReviewVoteDto,
   ): Promise<VoteResultDto> {
     const result = await this.votesService.vote(user.id, reviewId, body.voteType);
@@ -164,7 +165,7 @@ export class UserReviewsController {
   @ApiOkResponse({ type: VoteResultDto, description: 'Vote removed' })
   async unvote(
     @CurrentUser() user: { id: string },
-    @Param('reviewId') reviewId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
   ): Promise<VoteResultDto> {
     const result = await this.votesService.unvote(user.id, reviewId);
 
@@ -187,7 +188,7 @@ export class UserReviewsController {
   @ApiCreatedResponse({ type: ReplyMutationResponseDto, description: 'Reply created' })
   async createReply(
     @CurrentUser() user: { id: string },
-    @Param('reviewId') reviewId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
     @Body() body: CreateReplyDto,
   ): Promise<ReplyMutationResponseDto> {
     const reply = await this.repliesService.create({
@@ -220,7 +221,7 @@ export class UserReviewsController {
   @ApiNoContentResponse({ description: 'Reply deleted' })
   async deleteReply(
     @CurrentUser() user: { id: string },
-    @Param('replyId') replyId: string,
+    @Param('replyId', ParseUUIDPipe) replyId: string,
   ): Promise<void> {
     await this.repliesService.delete(replyId, user.id);
   }
@@ -239,7 +240,7 @@ export class UserReviewsController {
   @ApiCreatedResponse({ type: ReportResponseDto, description: 'Report submitted' })
   async report(
     @CurrentUser() user: { id: string },
-    @Param('reviewId') reviewId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
     @Body() body: CreateReportDto,
   ): Promise<ReportResponseDto> {
     const report = await this.reportsService.create({

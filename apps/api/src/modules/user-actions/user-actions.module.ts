@@ -1,7 +1,7 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
+import { apiOnly } from '../../common/runtime/app-role';
 import { DatabaseModule } from '../../database/database.module';
-import { AuthModule } from '../auth/auth.module';
 
 import { AutoResubscribeOnRestoreListener } from './application/listeners/auto-resubscribe-on-restore.listener';
 import { AutoUnsubscribeOnDropListener } from './application/listeners/auto-unsubscribe-on-drop.listener';
@@ -35,7 +35,7 @@ import { SubscriptionsController } from './presentation/controllers/subscription
  * - Action event logging for analytics
  */
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule)],
+  imports: [DatabaseModule],
   providers: [
     NotificationsService,
     SavedItemsService,
@@ -68,7 +68,7 @@ import { SubscriptionsController } from './presentation/controllers/subscription
       useClass: DrizzleUserPreferenceAdapter,
     },
   ],
-  controllers: [NotificationsController, SavedItemsController, SubscriptionsController],
+  controllers: apiOnly(NotificationsController, SavedItemsController, SubscriptionsController),
   exports: [
     NotificationsService,
     SavedItemsService,

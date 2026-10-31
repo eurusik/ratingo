@@ -1,8 +1,10 @@
 import { type JwtService } from '@nestjs/jwt';
 import { AuthService } from '../../src/modules/auth/application/auth.service';
+import { OAuthService } from '../../src/modules/auth/application/oauth.service';
+import { TokenService } from '../../src/modules/auth/application/token.service';
 
 /**
- * Shape of all mock dependencies required to instantiate AuthService in tests.
+ * Shape of all mock dependencies required to instantiate auth services in tests.
  */
 export interface AuthMocks {
   usersService: {
@@ -23,6 +25,7 @@ export interface AuthMocks {
     findById: jest.Mock;
     findValidByUser: jest.Mock;
     revoke: jest.Mock;
+    revokeIfActive: jest.Mock;
     revokeAllForUser: jest.Mock;
   };
   exchangeCodesRepository: {
@@ -76,6 +79,7 @@ export function createAuthMocks(): AuthMocks {
       findById: jest.fn(),
       findValidByUser: jest.fn(),
       revoke: jest.fn(),
+      revokeIfActive: jest.fn(),
       revokeAllForUser: jest.fn(),
     },
     exchangeCodesRepository: {
@@ -104,16 +108,43 @@ export function createAuthMocks(): AuthMocks {
 }
 
 /**
- * Instantiates AuthService with the provided mocks.
+ * Instantiates a real TokenService with the provided mocks.
  * Mirrors the real constructor parameter order.
  */
-export function createAuthService(mocks: AuthMocks): AuthService {
-  return new AuthService(
+export function createTokenService(mocks: AuthMocks): TokenService {
+  return new TokenService(
     mocks.usersService as any,
     mocks.config as any,
     mocks.jwtService as any,
     mocks.passwordHasher as any,
     mocks.refreshTokensRepository as any,
+  );
+}
+
+/**
+ * Instantiates AuthService with the provided mocks.
+ * Uses a real TokenService by default so token-issuance assertions
+ * against jwtService/refreshTokensRepository mocks keep working.
+ */
+export function createAuthService(
+  mocks: AuthMocks,
+  tokenService: TokenService = createTokenService(mocks),
+): AuthService {
+  return new AuthService(mocks.usersService as any, mocks.passwordHasher as any, tokenService);
+}
+
+/**
+ * Instantiates OAuthService with the provided mocks.
+ * Uses a real TokenService by default (see {@link createAuthService}).
+ */
+export function createOAuthService(
+  mocks: AuthMocks,
+  tokenService: TokenService = createTokenService(mocks),
+): OAuthService {
+  return new OAuthService(
+    mocks.usersService as any,
+    mocks.config as any,
+    tokenService,
     mocks.exchangeCodesRepository as any,
     mocks.oauthAccountsRepository as any,
   );

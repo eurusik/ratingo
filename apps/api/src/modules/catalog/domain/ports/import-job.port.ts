@@ -6,6 +6,8 @@ import { MediaType } from '@/common/enums/media-type.enum';
  */
 export interface QueuedJob {
   jobId: string;
+  /** True when an in-flight job with the same id already existed and no new job was enqueued. */
+  deduplicated?: boolean;
 }
 
 /**
@@ -15,6 +17,8 @@ export interface JobStatusResult {
   status: JobStatus;
   errorMessage: string | null;
   tmdbId: number | null;
+  /** Media type encoded in the import job id (TMDB movie/TV id spaces overlap) */
+  type: MediaType;
 }
 
 /**

@@ -148,6 +148,29 @@ describe('DryRunController', () => {
       );
     });
 
+    it('should pass contextRequirements through to the service', async () => {
+      const dto = {
+        ...createValidDto(),
+        policy: {
+          ...createValidDto().policy,
+          contextRequirements: {
+            trending: { requireOverview: true, minOverviewChars: 40 },
+          },
+        },
+      };
+      mockDryRunService.execute.mockResolvedValue({
+        summary: { total: 0, eligible: 0, ineligible: 0 },
+        items: [],
+      });
+
+      await controller.executeDryRun(dto as any);
+
+      const calledPolicy = mockDryRunService.execute.mock.calls[0][0];
+      expect(calledPolicy.contextRequirements).toEqual({
+        trending: { requireOverview: true, minOverviewChars: 40 },
+      });
+    });
+
     it('should include globalRequirements in policy passed to service', async () => {
       const dto = createValidDto();
 

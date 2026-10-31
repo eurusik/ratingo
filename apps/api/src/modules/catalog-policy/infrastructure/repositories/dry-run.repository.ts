@@ -4,14 +4,16 @@
  * Database queries for dry-run evaluation.
  */
 
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 
 import { eq, and, isNull, inArray, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
+import { DEFAULT_EVALUATION_CONTEXT } from '../../domain/constants/evaluation.constants';
 import {
   type IDryRunRepository,
   type DryRunMediaItem,
@@ -42,13 +44,16 @@ const DRY_RUN_SELECT_FIELDS = {
 
 @Injectable()
 export class DryRunRepository implements IDryRunRepository {
+  private readonly logger = new Logger(DryRunRepository.name);
+
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   async fetchSampleItems(limit: number, samplePercent: number): Promise<DryRunMediaItem[]> {
-    const result = await this.db.execute(sql`
+    const result = await withDbError('fetch dry-run sample items', this.logger, () =>
+      this.db.execute(sql`
       SELECT
         mi.id,
         mi.title,
@@ -72,13 +77,15 @@ export class DryRunRepository implements IDryRunRepository {
       WHERE mi.deleted_at IS NULL
         AND mi.ingestion_status = 'ready'
       LIMIT ${limit}
-    `);
+    `),
+    );
 
     return result as unknown as DryRunMediaItem[];
   }
 
   async fetchTopItems(limit: number): Promise<DryRunMediaItem[]> {
-    const result = await this.db
+    const result = await withDbError('fetch dry-run top items', this.logger, () =>
+      this.db
       .select(DRY_RUN_SELECT_FIELDS)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
@@ -86,13 +93,15 @@ export class DryRunRepository implements IDryRunRepository {
         and(isNull(schema.mediaItems.deletedAt), eq(schema.mediaItems.ingestionStatus, 'ready')),
       )
       .orderBy(sql`${schema.mediaStats.popularityScore} DESC NULLS LAST`)
-      .limit(limit);
+      .limit(limit),
+    );
 
     return result as DryRunMediaItem[];
   }
 
   async fetchByTypeItems(mediaType: MediaType, limit: number): Promise<DryRunMediaItem[]> {
-    const result = await this.db
+    const result = await withDbError('fetch dry-run items by type', this.logger, () =>
+      this.db
       .select(DRY_RUN_SELECT_FIELDS)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
@@ -104,7 +113,8 @@ export class DryRunRepository implements IDryRunRepository {
         ),
       )
       .orderBy(sql`${schema.mediaStats.popularityScore} DESC NULLS LAST`)
-      .limit(limit);
+      .limit(limit),
+    );
 
     return result as DryRunMediaItem[];
   }
@@ -112,7 +122,8 @@ export class DryRunRepository implements IDryRunRepository {
   async fetchByCountryItems(country: string, limit: number): Promise<DryRunMediaItem[]> {
     const countryUpper = country.toUpperCase();
 
-    const result = await this.db
+    const result = await withDbError('fetch dry-run items by country', this.logger, () =>
+      this.db
       .select(DRY_RUN_SELECT_FIELDS)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
@@ -124,7 +135,8 @@ export class DryRunRepository implements IDryRunRepository {
         ),
       )
       .orderBy(sql`${schema.mediaStats.popularityScore} DESC NULLS LAST`)
-      .limit(limit);
+      .limit(limit),
+    );
 
     return result as DryRunMediaItem[];
   }
@@ -139,13 +151,26 @@ export class DryRunRepository implements IDryRunRepository {
     // Process in batches to avoid large IN clauses
     for (let i = 0; i < mediaItemIds.length; i += EVALUATION_BATCH_SIZE) {
       const batch = mediaItemIds.slice(i, i + EVALUATION_BATCH_SIZE);
-      const result = await this.db
-        .select({
-          mediaItemId: schema.mediaCatalogEvaluations.mediaItemId,
-          status: schema.mediaCatalogEvaluations.status,
-        })
-        .from(schema.mediaCatalogEvaluations)
-        .where(inArray(schema.mediaCatalogEvaluations.mediaItemId, batch));
+      const result = await withDbError('fetch dry-run current evaluations', this.logger, () =>
+        this.db
+          .select({
+            mediaItemId: schema.mediaCatalogEvaluations.mediaItemId,
+            status: schema.mediaCatalogEvaluations.status,
+          })
+          .from(schema.mediaCatalogEvaluations)
+          .where(
+            and(
+              inArray(schema.mediaCatalogEvaluations.mediaItemId, batch),
+              // Only the currently active policy version in the catalog context is the baseline;
+              // otherwise historical versions / other contexts overwrite each other in the map.
+              eq(schema.mediaCatalogEvaluations.context, DEFAULT_EVALUATION_CONTEXT),
+              eq(
+                schema.mediaCatalogEvaluations.policyVersion,
+                sql`(SELECT ${schema.catalogPolicies.version} FROM ${schema.catalogPolicies} WHERE ${schema.catalogPolicies.isActive} = true LIMIT 1)`,
+              ),
+            ),
+          ),
+      );
 
       for (const row of result) {
         map.set(row.mediaItemId, { mediaItemId: row.mediaItemId, status: row.status });

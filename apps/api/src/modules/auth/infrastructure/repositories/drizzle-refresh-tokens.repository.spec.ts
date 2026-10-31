@@ -90,6 +90,41 @@ describe('DrizzleRefreshTokensRepository', () => {
     );
   });
 
+  const makeRevokeIfActiveDb = (returning: jest.Mock) => {
+    const where = jest.fn().mockReturnValue({ returning });
+    const set = jest.fn().mockReturnValue({ where });
+    const update = jest.fn().mockReturnValue({ set });
+    return { db: { update } as any, update, set, where, returning };
+  };
+
+  it('revokeIfActive should return true when a row was revoked', async () => {
+    const { db, update, set, where, returning } = makeRevokeIfActiveDb(
+      jest.fn().mockResolvedValue([{ id: 'j1' }]),
+    );
+    const repo = new DrizzleRefreshTokensRepository(db);
+
+    await expect(repo.revokeIfActive('j1')).resolves.toBe(true);
+
+    expect(update).toHaveBeenCalledWith(schema.refreshTokens);
+    expect(set).toHaveBeenCalledWith(expect.objectContaining({ revokedAt: expect.any(Date) }));
+    expect(where).toHaveBeenCalledTimes(1);
+    expect(returning).toHaveBeenCalledTimes(1);
+  });
+
+  it('revokeIfActive should return false when the token was already revoked', async () => {
+    const { db } = makeRevokeIfActiveDb(jest.fn().mockResolvedValue([]));
+    const repo = new DrizzleRefreshTokensRepository(db);
+
+    await expect(repo.revokeIfActive('j1')).resolves.toBe(false);
+  });
+
+  it('revokeIfActive should wrap errors into DatabaseException', async () => {
+    const { db } = makeRevokeIfActiveDb(jest.fn().mockRejectedValue(new Error('db fail')));
+    const repo = new DrizzleRefreshTokensRepository(db);
+
+    await expect(repo.revokeIfActive('j1')).rejects.toBeInstanceOf(DatabaseException);
+  });
+
   it('revokeAllForUser should set revokedAt by user', async () => {
     const db = makeDb();
     const repo = new DrizzleRefreshTokensRepository(db as any);

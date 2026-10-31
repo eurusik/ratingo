@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -22,13 +23,13 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { EpisodeProgressService } from '../../application/episode-progress.service';
 import { BatchEpisodeIdsDto } from '../dto/batch-episode-ids.dto';
 import { ShowProgressDto } from '../dto/episode-progress.dto';
 
-@ApiTags('Episode Progress')
+@ApiTags('Me: Episode Progress')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('user-media')
@@ -74,7 +75,7 @@ export class EpisodeProgressController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async markWatched(
     @CurrentUser() user: { id: string },
-    @Param('episodeId') episodeId: string,
+    @Param('episodeId', ParseUUIDPipe) episodeId: string,
   ): Promise<void> {
     await this.episodeProgressService.markWatched(user.id, episodeId);
   }
@@ -87,7 +88,7 @@ export class EpisodeProgressController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async markUnwatched(
     @CurrentUser() user: { id: string },
-    @Param('episodeId') episodeId: string,
+    @Param('episodeId', ParseUUIDPipe) episodeId: string,
   ): Promise<void> {
     await this.episodeProgressService.markUnwatched(user.id, episodeId);
   }
@@ -99,7 +100,7 @@ export class EpisodeProgressController {
   @Get('shows/:showId/progress')
   async getShowProgress(
     @CurrentUser() user: { id: string },
-    @Param('showId') showId: string,
+    @Param('showId', ParseUUIDPipe) showId: string,
   ): Promise<ShowProgressDto> {
     const seasons = await this.episodeProgressService.getShowProgress(user.id, showId);
     return {

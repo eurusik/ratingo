@@ -120,6 +120,28 @@ export class DrizzleRefreshTokensRepository implements IRefreshTokensRepository 
   }
 
   /**
+   * Atomically revokes a token only if it is still active.
+   *
+   * @param {string} id - Token identifier
+   * @returns {Promise<boolean>} True when this call revoked the token
+   */
+  async revokeIfActive(id: string): Promise<boolean> {
+    return withDbError(
+      'revoke active refresh token',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .update(schema.refreshTokens)
+          .set({ revokedAt: new Date() })
+          .where(and(eq(schema.refreshTokens.id, id), isNull(schema.refreshTokens.revokedAt)))
+          .returning({ id: schema.refreshTokens.id });
+        return rows.length > 0;
+      },
+      { id },
+    );
+  }
+
+  /**
    * Revokes all tokens for user.
    *
    * @param {string} userId - User identifier

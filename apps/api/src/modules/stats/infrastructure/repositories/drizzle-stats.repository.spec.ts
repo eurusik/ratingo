@@ -1,4 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PgDialect } from 'drizzle-orm/pg-core';
+import { MediaType } from '@/common/enums/media-type.enum';
 import { DrizzleStatsRepository } from './drizzle-stats.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { DatabaseException } from '../../../../common/exceptions';
@@ -187,6 +189,32 @@ describe('DrizzleStatsRepository', () => {
       expect(valuesArg[0].communityAverageRating).toBe(0);
     });
 
+    it('should merge rows with the same mediaItemId (Postgres rejects duplicate conflict targets)', async () => {
+      const mockDb = createMockDb();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      await repository.bulkUpsert([
+        { mediaItemId: 'media-1', watchersCount: 10, trendingRank: 3 },
+        { mediaItemId: 'media-2', watchersCount: 20 },
+        { mediaItemId: 'media-1', watchersCount: 99, ratingoScore: 70 },
+      ]);
+
+      const thenable = mockDb.insert.mock.results[0].value;
+      const valuesArg = thenable.values.mock.calls[0][0];
+
+      expect(valuesArg).toHaveLength(2);
+      const merged = valuesArg.find((v: any) => v.mediaItemId === 'media-1');
+      // Later defined fields win; earlier fields not overridden are kept
+      expect(merged.watchersCount).toBe(99);
+      expect(merged.trendingRank).toBe(3);
+      expect(merged.ratingoScore).toBe(70);
+    });
+
     it('should return early if array is empty', async () => {
       const mockDb = createMockDb();
 
@@ -199,6 +227,24 @@ describe('DrizzleStatsRepository', () => {
       await repository.bulkUpsert([]);
 
       expect(mockDb.insert).not.toHaveBeenCalled();
+    });
+
+    it('should split large batches into chunks of 500 rows (bind-param limit)', async () => {
+      const mockDb = createMockDb();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      const stats = Array.from({ length: 1100 }, (_, i) => ({
+        mediaItemId: `id-${i}`,
+        watchersCount: i,
+      }));
+      await repository.bulkUpsert(stats);
+
+      expect(mockDb.insert).toHaveBeenCalledTimes(3);
     });
 
     it('should throw DatabaseException on error', async () => {
@@ -337,6 +383,27 @@ describe('DrizzleStatsRepository', () => {
         communityRatingCount: 15,
       });
       expect(mockDb.select).toHaveBeenCalled();
+    });
+
+    it('should filter by media type when provided', async () => {
+      const mockDb = createMockDb({ resolveWith: [{ mediaItemId: 'show-1', watchersCount: 5 }] });
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      const result = await repository.findByTmdbId(550, MediaType.SHOW);
+
+      expect(result?.mediaItemId).toBe('show-1');
+      // where() receives a composite (tmdb_id AND type) condition
+      const thenable = mockDb.select.mock.results[0].value;
+      const whereArg = thenable.where.mock.calls[0][0];
+      const dialect = new PgDialect();
+      const { sql: whereSql, params } = dialect.sqlToQuery(whereArg);
+      expect(whereSql).toContain('"type"');
+      expect(params).toEqual(expect.arrayContaining([550, MediaType.SHOW]));
     });
 
     it('should return null if not found', async () => {

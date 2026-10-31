@@ -212,6 +212,19 @@ describe('EpisodeProgressService', () => {
         expect(mockSubscriptionsService.autoSubscribeForShow).not.toHaveBeenCalled();
       });
 
+      it('should NOT call auto-subscribe when the show is dropped', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 5, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.DROPPED });
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockSubscriptionsService.autoSubscribeForShow).not.toHaveBeenCalled();
+        expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+      });
+
       it('should call auto-subscribe when already watching', async () => {
         mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
         mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
@@ -597,6 +610,90 @@ describe('EpisodeProgressService', () => {
         await service.markUnwatched('user-1', 'ep-1');
 
         expect(mockUserMediaService.deleteState).toHaveBeenCalledWith('user-1', 'media-1');
+      });
+
+      describe('0 watched episodes with user data', () => {
+        const zeroWatched = () => {
+          mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+          mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+            { seasonNumber: 1, watchedCount: 0, totalCount: 10, watchedEpisodeIds: [] },
+          ]);
+        };
+
+        it('keeps the row (does NOT delete) and moves watching -> planned when a rating exists', async () => {
+          zeroWatched();
+          mockUserMediaService.getState.mockResolvedValue({
+            state: USER_MEDIA_STATE.WATCHING,
+            rating: 80,
+            notes: null,
+          });
+
+          await service.markUnwatched('user-1', 'ep-1');
+
+          expect(mockUserMediaService.deleteState).not.toHaveBeenCalled();
+          expect(mockUserMediaService.setState).toHaveBeenCalledWith({
+            userId: 'user-1',
+            mediaItemId: 'media-1',
+            state: USER_MEDIA_STATE.PLANNED,
+          });
+        });
+
+        it('keeps the row when notes exist', async () => {
+          zeroWatched();
+          mockUserMediaService.getState.mockResolvedValue({
+            state: USER_MEDIA_STATE.WATCHING,
+            rating: null,
+            notes: 'remember this',
+          });
+
+          await service.markUnwatched('user-1', 'ep-1');
+
+          expect(mockUserMediaService.deleteState).not.toHaveBeenCalled();
+          expect(mockUserMediaService.setState).toHaveBeenCalledWith(
+            expect.objectContaining({ state: USER_MEDIA_STATE.PLANNED }),
+          );
+        });
+
+        it('treats rating 0 as user data', async () => {
+          zeroWatched();
+          mockUserMediaService.getState.mockResolvedValue({
+            state: USER_MEDIA_STATE.WATCHING,
+            rating: 0,
+            notes: null,
+          });
+
+          await service.markUnwatched('user-1', 'ep-1');
+
+          expect(mockUserMediaService.deleteState).not.toHaveBeenCalled();
+        });
+
+        it.each([USER_MEDIA_STATE.COMPLETED, USER_MEDIA_STATE.CAUGHT_UP])(
+          'moves explicit %s state to planned instead of deleting',
+          async (state) => {
+            zeroWatched();
+            mockUserMediaService.getState.mockResolvedValue({ state, rating: null, notes: null });
+
+            await service.markBatchUnwatched('user-1', ['ep-1']);
+
+            expect(mockUserMediaService.deleteState).not.toHaveBeenCalled();
+            expect(mockUserMediaService.setState).toHaveBeenCalledWith(
+              expect.objectContaining({ state: USER_MEDIA_STATE.PLANNED }),
+            );
+          },
+        );
+
+        it.each([USER_MEDIA_STATE.PAUSED, USER_MEDIA_STATE.DROPPED, USER_MEDIA_STATE.PLANNED])(
+          'leaves explicit %s state untouched',
+          async (state) => {
+            zeroWatched();
+            mockUserMediaService.getState.mockResolvedValue({ state, rating: null, notes: null });
+
+            await service.markUnwatched('user-1', 'ep-1');
+
+            expect(mockUserMediaService.deleteState).not.toHaveBeenCalled();
+            expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+          },
+        );
       });
 
       it('should revert from "completed" to "watching" when episode is unmarked', async () => {

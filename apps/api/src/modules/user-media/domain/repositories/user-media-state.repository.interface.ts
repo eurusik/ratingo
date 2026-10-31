@@ -65,6 +65,12 @@ export interface UpsertUserMediaStateData {
   notes?: string | null;
 }
 
+export interface BulkImportResult {
+  imported: number;
+  skipped: number;
+  plannedMediaItemIds: string[];
+}
+
 export interface UserMediaStats {
   moviesRated: number;
   showsRated: number;
@@ -226,10 +232,17 @@ export interface IUserMediaStateRepository {
    * priority than the existing one (no-downgrade rule) and the rating is always overwritten.
    *
    * Processes items in batches of 500 to stay within Postgres parameter limits.
+   *
+   * `items` MUST NOT contain duplicate `mediaItemId`s — a multi-row
+   * ON CONFLICT DO UPDATE cannot affect the same row twice.
+   *
+   * `plannedMediaItemIds` lists the items whose persisted state after the call is `planned`
+   * (rows that were inserted, or updated and still planned). Rows skipped because a state
+   * already exists are NOT included.
    */
   bulkImport(
     userId: string,
     items: Array<{ mediaItemId: string; state: string; rating: number | null }>,
     overwrite: boolean,
-  ): Promise<{ imported: number; skipped: number }>;
+  ): Promise<BulkImportResult>;
 }

@@ -21,4 +21,12 @@ export interface IMediaLookupPort {
   findManyByTmdbIds(
     tmdbIds: number[],
   ): Promise<Array<{ id: string; tmdbId: number; type: string }>>;
+
+  findReadyIdByTmdbId(tmdbId: number, type: 'movie' | 'show'): Promise<string | null>;
+
+  /**
+   * Returns the catalog type ('movie' | 'show') of a media item,
+   * or null when the item does not exist (or is soft-deleted).
+   */
+  findTypeById(mediaItemId: string): Promise<string | null>;
 }

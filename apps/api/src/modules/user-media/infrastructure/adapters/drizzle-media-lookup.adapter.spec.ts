@@ -1,4 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { type SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 
@@ -12,6 +14,7 @@ describe('DrizzleMediaLookupAdapter', () => {
     const chain: any = {
       from: jest.fn().mockReturnThis(),
       where: jest.fn().mockResolvedValue([]),
+      limit: jest.fn().mockResolvedValue([]),
     };
 
     mockDb = {
@@ -148,6 +151,45 @@ describe('DrizzleMediaLookupAdapter', () => {
       // Should have made 2 DB queries (500 + 1)
       expect(mockDb.select).toHaveBeenCalledTimes(2);
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('findTypeById', () => {
+    it('returns the media type of an existing item', async () => {
+      const chain = mockDb.select();
+      chain.where.mockResolvedValueOnce([{ type: 'show' }]);
+
+      await expect(adapter.findTypeById('media-1')).resolves.toBe('show');
+    });
+
+    it('returns null when the item does not exist or is soft-deleted', async () => {
+      const chain = mockDb.select();
+      chain.where.mockResolvedValueOnce([]);
+
+      await expect(adapter.findTypeById('missing')).resolves.toBeNull();
+    });
+  });
+
+  describe('findReadyIdByTmdbId', () => {
+    it('returns the id of the READY, non-deleted catalog item for this tmdbId and type', async () => {
+      const chain = mockDb.select();
+      chain.where.mockReturnValueOnce(chain);
+      chain.limit.mockResolvedValueOnce([{ id: 'media-1' }]);
+
+      const result = await adapter.findReadyIdByTmdbId(550, 'show');
+
+      expect(result).toBe('media-1');
+      const { sql, params } = new PgDialect().sqlToQuery(chain.where.mock.calls[0][0] as SQL);
+      expect(params).toEqual([550, 'show', 'ready']);
+      expect(sql).toContain('"deleted_at" is null');
+    });
+
+    it('returns null while the media is missing or not ready', async () => {
+      const chain = mockDb.select();
+      chain.where.mockReturnValueOnce(chain);
+      chain.limit.mockResolvedValueOnce([]);
+
+      await expect(adapter.findReadyIdByTmdbId(550, 'movie')).resolves.toBeNull();
     });
   });
 });

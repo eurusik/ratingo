@@ -119,6 +119,13 @@ class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
     if (token) token.revokedAt = new Date();
   }
 
+  async revokeIfActive(id: string): Promise<boolean> {
+    const token = this.tokens.find((t) => t.id === id);
+    if (!token || token.revokedAt) return false;
+    token.revokedAt = new Date();
+    return true;
+  }
+
   async revokeAllForUser(userId: string): Promise<void> {
     this.tokens.forEach((t) => {
       if (t.userId === userId) t.revokedAt = new Date();

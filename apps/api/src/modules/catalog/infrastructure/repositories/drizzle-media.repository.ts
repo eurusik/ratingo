@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, inArray, sql, and, desc, gt, gte, lt, isNull, isNotNull, exists } from 'drizzle-orm';
+import { eq, ne, inArray, sql, and, desc, gt, gte, lt, isNull, isNotNull, exists } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DB_CONSTRAINT } from '../../../../common/constants/database.constants';
@@ -18,7 +18,7 @@ import {
   DEFAULT_POLICY_VERSION,
   EvaluationContext,
 } from '../../../catalog-policy/public';
-import type { NormalizedMedia } from '../../../ingestion/public';
+import type { NormalizedMedia } from '../../../shared/contracts';
 import { type LocalSearchResult } from '../../domain/models/search-result.model';
 import {
   type IGenreRepository,
@@ -52,6 +52,7 @@ import {
   buildHeroCandidatesConditions,
   buildHeroCandidatesEvaluationConditions,
 } from '../queries/shared';
+import { escapeLikePattern } from '../utils/like-escape.utils';
 import { preserveTotalWatchers } from '../utils/stats-preservation.utils';
 
 /**
@@ -124,19 +125,36 @@ export class DrizzleMediaRepository implements IMediaRepository {
   }
 
   /**
-   * Updates ingestion status by TMDB ID (noop if not found).
+   * Updates ingestion status by (type, TMDB ID) (noop if not found).
+   * TMDB movie and TV id spaces overlap, so type is required.
+   *
+   * With `preserveReady`, a READY item is left untouched (conditional UPDATE),
+   * so re-syncs/failures never hide an already published item.
    */
-  async updateIngestionStatus(tmdbId: number, status: IngestionStatus): Promise<void> {
+  async updateIngestionStatus(
+    tmdbId: number,
+    type: MediaType,
+    status: IngestionStatus,
+    options?: { preserveReady?: boolean },
+  ): Promise<void> {
     return withDbError(
       'update ingestion status',
       this.logger,
       async () => {
+        const conditions = [
+          eq(schema.mediaItems.tmdbId, tmdbId),
+          eq(schema.mediaItems.type, type),
+        ];
+        if (options?.preserveReady) {
+          conditions.push(ne(schema.mediaItems.ingestionStatus, IngestionStatus.READY));
+        }
+
         await this.db
           .update(schema.mediaItems)
           .set({ ingestionStatus: status, updatedAt: new Date() })
-          .where(eq(schema.mediaItems.tmdbId, tmdbId));
+          .where(and(...conditions));
       },
-      { tmdbId, status },
+      { tmdbId, type, status, preserveReady: options?.preserveReady ?? false },
     );
   }
 
@@ -196,7 +214,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
           set: {
             title: payload.title,
             // slug intentionally omitted: preserve collision-resolved slugs (e.g., "sandwich-200")
-            ingestionStatus: payload.ingestionStatus,
+            // Never downgrade an already READY item (forced re-sync must not hide it)
+            ingestionStatus: sql`CASE WHEN ${schema.mediaItems.ingestionStatus} = ${IngestionStatus.READY} THEN ${schema.mediaItems.ingestionStatus} ELSE excluded.ingestion_status END`,
             updatedAt: new Date(),
           },
         })
@@ -580,10 +599,11 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
   /**
    * Batch: Retrieves multiple media items by TMDB IDs in a single query.
+   * Optional `type` restricts the lookup (TMDB movie/TV id spaces overlap).
    *
    * @throws {DatabaseException} If database query fails
    */
-  async findManyByTmdbIds(tmdbIds: number[]): Promise<MediaWithTmdbId[]> {
+  async findManyByTmdbIds(tmdbIds: number[], type?: MediaType): Promise<MediaWithTmdbId[]> {
     if (tmdbIds.length === 0) return [];
 
     return withDbError(
@@ -594,14 +614,22 @@ export class DrizzleMediaRepository implements IMediaRepository {
           .select({
             id: schema.mediaItems.id,
             tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
             alternativeTitles: schema.mediaItems.alternativeTitles,
           })
           .from(schema.mediaItems)
-          .where(inArray(schema.mediaItems.tmdbId, tmdbIds));
+          .where(
+            type
+              ? and(
+                  inArray(schema.mediaItems.tmdbId, tmdbIds),
+                  eq(schema.mediaItems.type, type),
+                )
+              : inArray(schema.mediaItems.tmdbId, tmdbIds),
+          );
 
         return result as MediaWithTmdbId[];
       },
-      { count: tmdbIds.length },
+      { count: tmdbIds.length, type },
     );
   }
 
@@ -621,6 +649,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           .select({
             id: schema.mediaItems.id,
             tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
             popularity: schema.mediaItems.popularity,
             releaseDate: schema.mediaItems.releaseDate,
             lastAirDate: schema.shows.lastAirDate,
@@ -665,7 +694,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
   async search(query: string, limit: number): Promise<LocalSearchResult[]> {
     try {
       const searchTerm = query.trim();
-      const likePattern = `%${searchTerm}%`;
+      // Escape %, _ and \ so user input is matched literally inside ILIKE
+      const likePattern = `%${escapeLikePattern(searchTerm)}%`;
 
       return await this.db
         .select({
@@ -922,7 +952,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
    */
   async findEligibleForTrending(options: {
     limit: number;
-    offset: number;
+    afterId?: string;
   }): Promise<MediaSyncItem[]> {
     return withDbError(
       'find eligible items for trending',
@@ -952,15 +982,17 @@ export class DrizzleMediaRepository implements IMediaRepository {
               isNotNull(schema.mediaItems.tmdbId),
               // Only items that need sync (no watchers data yet)
               sql`(${schema.mediaStats.watchersCount} IS NULL OR ${schema.mediaStats.watchersCount} = 0)`,
+              // Keyset pagination: the filtered set shrinks as rows are processed,
+              // so OFFSET would skip rows. Resume strictly after the last seen id.
+              options.afterId ? gt(schema.mediaItems.id, options.afterId) : undefined,
             ),
           )
           .orderBy(schema.mediaItems.id)
-          .limit(options.limit)
-          .offset(options.offset);
+          .limit(options.limit);
 
         return toMediaIdItems(rows);
       },
-      { limit: options.limit, offset: options.offset },
+      { limit: options.limit, afterId: options.afterId },
     );
   }
 
@@ -971,6 +1003,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
   async findSnapshotCandidates(options: {
     cursor?: string;
     limit: number;
+    snapshotDate?: Date;
+    region?: string;
   }): Promise<SnapshotCandidate[]> {
     return withDbError(
       'find snapshot candidates',
@@ -991,6 +1025,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
         const conditions = buildSnapshotCandidateConditions({
           policyVersion: activePolicy[0].version,
           cursor: options.cursor,
+          snapshotDate: options.snapshotDate,
+          region: options.region,
         });
 
         const rows = await this.db

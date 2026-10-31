@@ -1,86 +1,12 @@
-/**
- * Queue name for ingestion tasks (Trakt/OMDb/TVMaze — rate-limited).
- */
-export const INGESTION_QUEUE = 'ingestion';
-
-/**
- * Queue name for backfill tasks (TMDB-only — high throughput).
- * Separated from ingestion queue to avoid Trakt rate limiter bottleneck.
- */
-export const BACKFILL_QUEUE = 'backfill';
-
-/**
- * Queue name for external ratings backfill (MDBList and similar
- * low-quota providers — strict rate limiting, long-running drain).
- *
- * Separated from BACKFILL_QUEUE because MDBList free tier is capped at
- * 1000 requests/day; cannot share the TMDB-tuned 600/min limiter.
- */
-export const RATINGS_BACKFILL_QUEUE = 'ratings-backfill';
-
-/**
- * Shared default job options for both ingestion and backfill queues.
- * Backfill queue overrides `removeOnComplete` for higher observability.
- */
-export const DEFAULT_INGESTION_JOB_OPTIONS = {
-  attempts: 3,
-  backoff: { type: 'exponential' as const, delay: 2000 },
-  removeOnComplete: 100,
-  removeOnFail: 50,
-} as const;
-
-/**
- * Job names for ingestion queue.
- * Used by Producer (Controller) and Consumer (Worker).
- */
-export enum IngestionJob {
-  SYNC_MOVIE = 'sync-movie',
-  SYNC_SHOW = 'sync-show',
-  SYNC_NOW_PLAYING = 'sync-now-playing',
-  SYNC_NEW_RELEASES = 'sync-new-releases',
-  UPDATE_NOW_PLAYING_FLAGS = 'update-now-playing-flags',
-  SYNC_SNAPSHOTS = 'sync-snapshots',
-
-  /** Dispatcher job: iterates over all media and queues item jobs */
-  SYNC_SNAPSHOTS_DISPATCHER = 'sync-snapshots-dispatcher',
-  /** @deprecated Use batch processing in SnapshotsPipeline.dispatch() */
-  SYNC_SNAPSHOT_ITEM = 'sync-snapshot-item',
-
-  /** Dispatcher job: fetches tracked show IDs and queues batch jobs */
-  SYNC_TRACKED_SHOWS = 'sync-tracked-shows',
-  /** Batch job: syncs a chunk of tracked shows with diff detection */
-  SYNC_TRACKED_SHOW_BATCH = 'sync-tracked-show-batch',
-
-  /** Dispatcher job: queues page jobs for trending movies and shows */
-  SYNC_TRENDING_DISPATCHER = 'sync-trending-dispatcher',
-  /** Page job: syncs one page of trending items */
-  SYNC_TRENDING_PAGE = 'sync-trending-page',
-  /** Stats job: syncs Trakt stats after all trending pages complete */
-  SYNC_TRENDING_STATS = 'sync-trending-stats',
-
-  /** @deprecated Use SYNC_TRENDING_DISPATCHER instead */
-  SYNC_TRENDING_FULL = 'sync-trending-full',
-
-  /** Dispatcher job: finds shows without IMDb ID and queues re-sync */
-  BACKFILL_IMDB_DISPATCHER = 'backfill-imdb-dispatcher',
-  /** Item job: fetches external IDs from TMDB for a single show. @queue backfill */
-  BACKFILL_IMDB_ITEM = 'backfill-imdb-item',
-
-  /** Dispatcher job: finds items without alternative titles and queues TMDB fetch */
-  BACKFILL_ALT_TITLES_DISPATCHER = 'backfill-alt-titles-dispatcher',
-  /** Item job: fetches alternative titles from TMDB for a single item. @queue backfill */
-  BACKFILL_ALT_TITLES_ITEM = 'backfill-alt-titles-item',
-
-  /** Dispatcher job: loads pending import items for a batch and queues per-item jobs. @queue backfill */
-  RESOLVE_IMPORT_DISPATCHER = 'resolve-import-dispatcher',
-  /** Item job: resolves a single pending import item via TMDB Find API, queues SYNC_MOVIE/SYNC_SHOW. @queue backfill */
-  RESOLVE_IMPORT_ITEM = 'resolve-import-item',
-
-  /** Dispatcher job: finds items without Rotten Tomatoes ratings and queues MDBList fetch. @queue ingestion */
-  BACKFILL_MDBLIST_RATINGS_DISPATCHER = 'backfill-mdblist-ratings-dispatcher',
-  /** Item job: fetches RT ratings (critics + audience) from MDBList. @queue ratings-backfill */
-  BACKFILL_MDBLIST_RATINGS_ITEM = 'backfill-mdblist-ratings-item',
-}
+// Moved to shared/contracts (ADR 0001 Phase 1); re-exported for existing
+// ingestion imports. New code outside ingestion should import shared/contracts.
+export {
+  INGESTION_QUEUE,
+  BACKFILL_QUEUE,
+  RATINGS_BACKFILL_QUEUE,
+  DEFAULT_INGESTION_JOB_OPTIONS,
+  IngestionJob,
+} from '../shared/contracts';
 
 /**
  * Chunk size for tracked shows batch processing.
@@ -89,8 +15,7 @@ export const TRACKED_SHOWS_CHUNK_SIZE = 50;
 
 /**
  * Delay between TMDB API calls in milliseconds.
- * TMDB rate limit: ~40 requests per 10 seconds.
- * 300ms delay = ~3.3 req/s = safe margin.
+ * TMDB allows ~40 req/s; a 300ms delay (~3.3 req/s) stays well within it.
  */
 export const TMDB_REQUEST_DELAY_MS = 300;
 
@@ -103,8 +28,11 @@ export const SNAPSHOTS_BATCH_SIZE = 500;
  * Hard cap on items the snapshots dispatcher may process per run.
  *
  * Prevents the dispatcher from running for many hours on a fresh or grown
- * catalog. With Trakt rate limit ~30/min, 5000 items ≈ 3h per run. Daily
- * cron fires again next day and picks up the remainder via cursor.
+ * catalog. With Trakt rate limit ~30/min, 5000 items ≈ 3h per run. The cursor
+ * only lives within a single run (it does NOT persist to the next one); progress
+ * across runs of the same UTC day comes from the candidate query excluding items
+ * that already have today's snapshot. A new day starts over from the lowest id, so
+ * the dispatcher must be scheduled more than once per day for catalogs above the cap.
  *
  * Without this cap, a single run could hold the ingestion worker for 24h+
  * on catalogs of 50k+ ELIGIBLE items, preventing any other ingestion jobs
@@ -153,33 +81,9 @@ export const ELIGIBLE_BACKFILL_MAX_BATCHES = 2;
 export const TMDB_TRENDING_PAGE_SIZE = 20;
 
 /**
- * Default concurrency for Trakt API batch requests.
- * Set to 1 to avoid rate limiting (Trakt allows ~10 req/s but we share the limit).
- * With 2 API calls per item (search + watching), concurrency=1 means ~2 req/s.
- */
-export const TRAKT_BATCH_CONCURRENCY = 1;
-
-/**
- * Chunk size for bulk Trakt operations.
- * Process this many items, then pause before next chunk.
- */
-export const TRAKT_BULK_CHUNK_SIZE = 10;
-
-/**
- * Delay between chunks in bulk Trakt operations (ms).
- * Helps avoid hitting rate limits.
- */
-export const TRAKT_BULK_CHUNK_DELAY_MS = 2000;
-
-/**
  * Concurrency for job deduplication checks in Redis.
  */
 export const JOB_DEDUPE_CHECK_CONCURRENCY = 50;
-
-/**
- * Max seasons to fetch for drop-off analysis.
- */
-export const MAX_SEASONS_FOR_ANALYSIS = 10;
 
 /**
  * Batch size for alternative titles backfill dispatcher pagination.

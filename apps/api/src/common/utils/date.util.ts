@@ -9,6 +9,19 @@ export function formatUtcDayId(date: Date = new Date()): string {
   return date.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
+const ISO_HOUR_PREFIX_LENGTH = 13; // YYYY-MM-DDTHH
+
+/**
+ * Formats a date as a UTC hour bucket identifier string (YYYYMMDDHH).
+ * Used for per-dispatch-window job IDs.
+ *
+ * @param date - Date to format (defaults to now)
+ * @returns String in YYYYMMDDHH format (e.g., "2023122119")
+ */
+export function formatUtcHourId(date: Date = new Date()): string {
+  return date.toISOString().slice(0, ISO_HOUR_PREFIX_LENGTH).replace(/[-T]/g, '');
+}
+
 export function utcDateFromDayId(dayId: string): Date {
   if (!/^[0-9]{8}$/.test(dayId)) {
     throw new Error(`Invalid dayId: ${dayId}`);

@@ -212,8 +212,7 @@ module/
 | `SYNC_NEW_RELEASES`         | New digital releases            |
 | `SYNC_TRACKED_SHOWS`        | Dispatcher for tracked shows    |
 | `SYNC_TRACKED_SHOW_BATCH`   | Batch sync with diff detection  |
-| `SYNC_SNAPSHOTS_DISPATCHER` | Queue snapshot jobs             |
-| `SYNC_SNAPSHOT_ITEM`        | Single item snapshot            |
+| `SYNC_SNAPSHOTS_DISPATCHER` | Batch-sync daily snapshots      |
 
 ### Stats Jobs
 

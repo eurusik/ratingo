@@ -6,12 +6,14 @@ import { ErrorCode } from '@/common/enums/error-code.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { AppException } from '@/common/exceptions/app.exception';
 
-import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
-import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
+import { CardEnrichmentService } from '../../shared/cards';
+import { CARD_LIST_CONTEXT } from '../../shared/cards';
+import { MEDIA_LOOKUP_PORT } from '../domain/constants/import.constants';
 import { USER_MEDIA_STATE_ERRORS } from '../domain/constants/user-media-state-errors.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
 import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';
 import { UserMediaStateChangedEvent } from '../domain/events/user-media-state-changed.event';
+import type { IMediaLookupPort } from '../domain/ports/media-lookup.port';
 import type { IRatingSyncPort } from '../domain/ports/rating-sync.port';
 import {
   type IUserMediaStateRepository,
@@ -34,6 +36,8 @@ export class UserMediaService implements IRatingSyncPort {
     private readonly repo: IUserMediaStateRepository,
     private readonly cards: CardEnrichmentService,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(MEDIA_LOOKUP_PORT)
+    private readonly mediaLookup: IMediaLookupPort,
   ) {}
 
   /**
@@ -44,6 +48,8 @@ export class UserMediaService implements IRatingSyncPort {
    * - If `progress` is provided with `completed` or `dropped`, the request is rejected.
    *
    * @param {SetUserMediaStateInput} data - Upsert payload
+   * @param mediaType - Client-supplied hint only; the authoritative type is looked up
+   *   server-side (see {@link resolveMediaType}).
    * @returns {Promise<UserMediaState | null>} Persisted state, or null if clearing a non-existent rating
    * @throws {BadRequestException} When `progress` is provided for `completed`/`dropped` states
    */
@@ -58,7 +64,13 @@ export class UserMediaService implements IRatingSyncPort {
       // This read is outside the transaction but progress conflicts are rejected
       // before writing, so a TOCTOU race here doesn't violate any invariant.
       const existing = await this.repo.findOne(data.userId, data.mediaItemId);
-      const resolvedState = data.state ?? this.resolveDefaultState(existing, mediaType);
+      const needsType = data.state === undefined && !existing;
+      const resolvedState =
+        data.state ??
+        this.resolveDefaultState(
+          existing,
+          needsType ? await this.resolveMediaType(data.mediaItemId, mediaType) : mediaType,
+        );
 
       if (
         resolvedState === USER_MEDIA_STATE.COMPLETED ||
@@ -95,7 +107,17 @@ export class UserMediaService implements IRatingSyncPort {
       return null;
     }
 
-    const resolvedState = data.state ?? this.resolveDefaultState(existing, mediaType);
+    // The media type is derived server-side (never trusted from the request body) and
+    // only looked up when it can influence the outcome: default state for a new row,
+    // or the partial-rating drop guard.
+    const needsType =
+      (data.state === undefined && !existing) ||
+      (data.state ?? existing?.state) === USER_MEDIA_STATE.DROPPED;
+    const trustedMediaType = needsType
+      ? await this.resolveMediaType(data.mediaItemId, mediaType)
+      : mediaType;
+
+    const resolvedState = data.state ?? this.resolveDefaultState(existing, trustedMediaType);
 
     // Issue #94: block dropping a show that the user rated mid-season.
     // "Mid-season" = there is partial episode progress (user started watching
@@ -111,7 +133,7 @@ export class UserMediaService implements IRatingSyncPort {
         resolvedState === USER_MEDIA_STATE.DROPPED &&
         locked?.rating != null &&
         locked?.progress != null &&
-        mediaType === MediaType.SHOW
+        trustedMediaType === MediaType.SHOW
       ) {
         throw new AppException(
           ErrorCode.CANNOT_DROP_PARTIAL_RATING,
@@ -122,6 +144,17 @@ export class UserMediaService implements IRatingSyncPort {
     };
 
     const upsertData: UpsertUserMediaStateData = { ...data, state: resolvedState };
+    // Moving to completed / dropped / planned ends active watching: explicitly clear
+    // stale progress, otherwise the item lingers in /continue (progress IS NOT NULL).
+    if (
+      data.progress === undefined &&
+      data.state !== undefined &&
+      (data.state === USER_MEDIA_STATE.COMPLETED ||
+        data.state === USER_MEDIA_STATE.DROPPED ||
+        data.state === USER_MEDIA_STATE.PLANNED)
+    ) {
+      upsertData.progress = null;
+    }
     const result = await this.repo.upsertWithGuard(upsertData, droppedGuard);
 
     if (data.rating !== undefined) {
@@ -147,8 +180,13 @@ export class UserMediaService implements IRatingSyncPort {
    * Syncs a rating from an external aggregate (e.g. reviews).
    * Implements IRatingSyncPort.
    *
-   * Bypasses setState() to avoid emitting events — the source aggregate
-   * (reviews) already has the correct rating.
+   * Bypasses setState() (no state-changed events — the source aggregate, reviews,
+   * already has the correct rating) but DOES emit UserMediaRatingChangedEvent when the
+   * rating actually changed, so community rating is recalculated.
+   *
+   * Loop safety: reviews' UserMediaRatingChangedListener only writes back when the
+   * review's rating differs from the event's; here the review already holds this rating
+   * (and null is ignored), so the listener is a no-op. Unchanged ratings emit nothing.
    *
    * @param mediaType - When provided, allows the correct default state
    *   to be chosen for first-time entries (`watching` for shows,
@@ -166,9 +204,15 @@ export class UserMediaService implements IRatingSyncPort {
       return;
     }
 
-    const resolvedState = this.resolveDefaultState(existing, mediaType);
+    const resolvedState = existing
+      ? existing.state
+      : this.resolveDefaultState(null, await this.resolveMediaType(mediaItemId, mediaType));
 
     await this.repo.upsert({ userId, mediaItemId, rating, state: resolvedState });
+
+    if ((existing?.rating ?? null) !== rating) {
+      await this.emitRatingChanged(userId, mediaItemId, rating);
+    }
   }
 
   /**
@@ -190,8 +234,14 @@ export class UserMediaService implements IRatingSyncPort {
    * @returns {Promise<void>}
    */
   async deleteState(userId: string, mediaItemId: string): Promise<void> {
+    const existing = await this.repo.findOne(userId, mediaItemId);
     await this.repo.delete(userId, mediaItemId);
     this.logger.log(`Deleted user_media_state for user=${userId}, media=${mediaItemId}`);
+
+    // A deleted rated row removes a rating from the community aggregate.
+    if (existing?.rating != null) {
+      await this.emitRatingChanged(userId, mediaItemId, null);
+    }
   }
 
   /**
@@ -444,6 +494,19 @@ export class UserMediaService implements IRatingSyncPort {
    */
   async countPausedWithMedia(userId: string): Promise<number> {
     return this.repo.countWithMedia(userId, { states: [USER_MEDIA_STATE.PAUSED] });
+  }
+
+  /**
+   * Resolves the media type server-side. The client-supplied hint is used only as a
+   * fallback when the lookup finds nothing (the subsequent write would fail on the FK anyway).
+   */
+  private async resolveMediaType(
+    mediaItemId: string,
+    hint?: MediaType,
+  ): Promise<MediaType | undefined> {
+    const type = await this.mediaLookup.findTypeById(mediaItemId);
+    if (type === MediaType.SHOW || type === MediaType.MOVIE) return type;
+    return hint;
   }
 
   private resolveDefaultState(

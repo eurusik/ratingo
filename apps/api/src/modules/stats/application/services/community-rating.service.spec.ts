@@ -177,5 +177,34 @@ describe('CommunityRatingService', () => {
       // bulkUpsert called only once (for fresh items), no second call for stale resets
       expect(statsRepository.bulkUpsert).toHaveBeenCalledTimes(1);
     });
+
+    it('should chunk bulk upserts into batches of at most 500 rows', async () => {
+      const aggregations = new Map(
+        Array.from({ length: 1201 }, (_, i) => [
+          `media-${i}`,
+          { averageRating: 50, ratingCount: 1 },
+        ]),
+      );
+      aggregationPort.aggregateAll.mockResolvedValue(aggregations);
+      aggregationPort.findMediaItemIdsWithCommunityRatings.mockResolvedValue([]);
+
+      const result = await service.reconcileAll();
+
+      expect(result).toEqual({ updated: 1201, reset: 0 });
+      const sizes = statsRepository.bulkUpsert.mock.calls.map(([rows]) => rows.length);
+      expect(sizes).toEqual([500, 500, 201]);
+    });
+
+    it('should chunk stale resets as well', async () => {
+      aggregationPort.aggregateAll.mockResolvedValue(new Map());
+      aggregationPort.findMediaItemIdsWithCommunityRatings.mockResolvedValue(
+        Array.from({ length: 501 }, (_, i) => `stale-${i}`),
+      );
+
+      const result = await service.reconcileAll();
+
+      expect(result).toEqual({ updated: 0, reset: 501 });
+      expect(statsRepository.bulkUpsert.mock.calls.map(([rows]) => rows.length)).toEqual([500, 1]);
+    });
   });
 });

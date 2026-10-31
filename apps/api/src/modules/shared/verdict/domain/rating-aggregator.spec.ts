@@ -1,3 +1,5 @@
+import * as fc from 'fast-check';
+
 import { aggregateRatings, formatRatingContext } from './rating-aggregator';
 import { RATING_SOURCE } from './verdict.types';
 
@@ -139,5 +141,32 @@ describe('formatRatingContext', () => {
   it('should return null for null rating', () => {
     expect(formatRatingContext(null)).toBeNull();
     expect(formatRatingContext(undefined)).toBeNull();
+  });
+});
+
+describe('aggregateRatings spread (property-based)', () => {
+  const tenths = fc.integer({ min: 1, max: 100 }).map((n) => n / 10);
+
+  it('spread of one-decimal ratings is exactly max - min in tenths (no float drift)', () => {
+    fc.assert(
+      fc.property(tenths, tenths, tenths, (a, b, c) => {
+        const { spread } = aggregateRatings({
+          imdb: { rating: a, voteCount: 1 },
+          trakt: { rating: b, voteCount: 1 },
+          tmdb: { rating: c, voteCount: 1 },
+        });
+        const expected =
+          (Math.round(Math.max(a, b, c) * 10) - Math.round(Math.min(a, b, c) * 10)) / 10;
+        expect(spread).toBe(expected);
+      }),
+    );
+  });
+
+  it('8.3 - 7.3 yields exactly 1', () => {
+    const { spread } = aggregateRatings({
+      imdb: { rating: 8.3, voteCount: 1 },
+      trakt: { rating: 7.3, voteCount: 1 },
+    });
+    expect(spread).toBe(1);
   });
 });

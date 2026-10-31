@@ -2,8 +2,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_BATCH_SIZE } from '../../../../common/constants';
 import { type IShowRepository, SHOW_REPOSITORY } from '../../../catalog/public';
-import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../ingestion/public';
 import { DropOffAnalyzerService, type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
+import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../trakt/public';
 
 /**
  * Service for orchestrating drop-off analysis for shows.

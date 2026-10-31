@@ -31,7 +31,7 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { mapBullStateToJobStatus } from '../../../../common/infrastructure/bullmq/job-status-mapper';
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../../auth/public';
 import { normalizeRegion, formatHourWindow } from '../../application/helpers/queue.helpers';
 import { SyncMediaService } from '../../application/services/sync-media.service';
 import {
@@ -49,11 +49,17 @@ import {
   SyncNewReleasesDto,
 } from '../dto';
 
+/** Media type per sync job name (TMDB movie and TV id spaces overlap). */
+const SYNC_JOB_MEDIA_TYPE: Partial<Record<string, MediaType>> = {
+  [IngestionJob.SYNC_MOVIE]: MediaType.MOVIE,
+  [IngestionJob.SYNC_SHOW]: MediaType.SHOW,
+};
+
 /**
  * Triggers ingestion processes.
  * Intended for admin panels and operational debugging.
  */
-@ApiTags('Service: Ingestion')
+@ApiTags('Admin: Ingestion')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
 @Controller('ingestion')
@@ -105,7 +111,9 @@ export class IngestionController {
     // Get slug from DB if job is completed and has tmdbId
     let slug: string | null = null;
     if (status === JOB_STATUS.READY && job.data?.tmdbId) {
-      slug = await this.syncService.getSlugByTmdbId(job.data.tmdbId);
+      // TMDB movie/TV id spaces overlap — derive the media type from the job name
+      const jobType = SYNC_JOB_MEDIA_TYPE[job.name];
+      slug = await this.syncService.getSlugByTmdbId(job.data.tmdbId, jobType);
     }
 
     return {
@@ -128,7 +136,7 @@ export class IngestionController {
   @HttpCode(HttpStatus.ACCEPTED)
   async sync(@Body() dto: SyncDto) {
     // Check if already in DB
-    const existing = await this.syncService.findExistingMedia(dto.tmdbId);
+    const existing = await this.syncService.findExistingMedia(dto.tmdbId, dto.type);
     if (existing && !dto.force) {
       return {
         id: existing.id,
@@ -317,6 +325,10 @@ export class IngestionController {
     // If force is true, we don't set jobId so BullMQ creates a new unique ID
     const jobOptions = force ? {} : { jobId };
 
+    // BullMQ silently returns the existing job when the id is taken (job.id === jobId either
+    // way), so dedup can only be detected by checking for the job before adding.
+    const alreadyQueued = force ? false : Boolean(await this.ingestionQueue.getJob(jobId));
+
     const job = await this.ingestionQueue.add(
       IngestionJob.SYNC_NEW_RELEASES,
       {
@@ -333,7 +345,7 @@ export class IngestionController {
       region,
       daysBack,
       force,
-      deduped: !force && job.id === jobId,
+      deduped: alreadyQueued,
     };
   }
 
@@ -481,7 +493,7 @@ export class IngestionController {
     name: 'force',
     required: false,
     type: String,
-    description: 'Re-fetch alt titles for items that already have them',
+    description: 'Bypass daily deduplication (allows re-running within the same UTC day)',
   })
   @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
   @HttpCode(HttpStatus.ACCEPTED)

@@ -12,7 +12,7 @@ import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
-import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
+import { destroyTraktRateLimiter } from '../../../trakt/infrastructure/adapters/base-trakt-http';
 
 afterAll(() => {
   destroyTraktRateLimiter();
@@ -127,8 +127,6 @@ describe('SyncWorker', () => {
       await worker.process(job);
       expect(snapshotsPipeline.dispatch).toHaveBeenCalledWith('UA');
     });
-
-    // Note: SYNC_SNAPSHOT_ITEM is deprecated - batch processing is now used directly in SnapshotsPipeline.dispatch()
   });
 
   describe('process - trending pipeline', () => {

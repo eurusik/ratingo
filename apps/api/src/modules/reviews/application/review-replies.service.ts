@@ -104,9 +104,6 @@ export class ReviewRepliesService {
       content: content.trim(),
     });
 
-    // Increment replies count on review
-    await this.reviewRepo.incrementRepliesCount(reviewId);
-
     this.logger.log(`User ${userId} created reply ${reply.id} for review ${reviewId}`);
 
     return reply;
@@ -132,10 +129,12 @@ export class ReviewRepliesService {
       );
     }
 
-    await this.replyRepo.softDelete(replyId);
+    // Atomic: marks deleted and decrements the review counter only if this call won the race
+    const deleted = await this.replyRepo.softDelete(replyId);
 
-    // Decrement replies count on review
-    await this.reviewRepo.decrementRepliesCount(reply.reviewId);
+    if (!deleted) {
+      throw new NotFoundException(ErrorCode.REPLY_NOT_FOUND, 'Reply not found', { replyId });
+    }
 
     this.logger.log(`User ${userId} deleted reply ${replyId}`);
   }

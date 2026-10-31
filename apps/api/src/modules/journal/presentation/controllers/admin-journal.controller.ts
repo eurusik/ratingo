@@ -46,8 +46,8 @@ interface MultipartRequest extends FastifyRequest {
   file: () => Promise<MultipartFile | undefined>;
 }
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { CurrentUser } from '../../../auth/public';
+import { AdminJwtGuard } from '../../../auth/public';
 import { JournalImageService, type UploadedFile } from '../../application/journal-image.service';
 import { generateExcerpt, renderMarkdownAsync } from '../../application/markdown-renderer';
 import { validatePostState } from '../../application/post-state.validation';
@@ -69,7 +69,7 @@ const DEFAULT_PAGE_LIMIT = 10;
  * Admin journal controller.
  * Provides CRUD operations for journal posts with admin authentication.
  */
-@ApiTags('Admin - Journal')
+@ApiTags('Admin: Journal')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
 @Controller('admin/journal/posts')

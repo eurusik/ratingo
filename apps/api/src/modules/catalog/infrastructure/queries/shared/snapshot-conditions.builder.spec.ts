@@ -127,6 +127,41 @@ describe('snapshot-conditions.builder', () => {
       });
     });
 
+    describe('already-snapshotted exclusion', () => {
+      it('adds a NOT EXISTS condition when snapshotDate and region are provided', () => {
+        const conditions = buildSnapshotCandidateConditions({
+          policyVersion: 1,
+          snapshotDate: new Date('2025-12-21T00:00:00Z'),
+          region: 'global',
+        });
+
+        expect(conditions.length).toBe(6);
+      });
+
+      it('does not add the exclusion when snapshotDate or region is missing', () => {
+        expect(
+          buildSnapshotCandidateConditions({ policyVersion: 1, region: 'global' }).length,
+        ).toBe(5);
+        expect(
+          buildSnapshotCandidateConditions({
+            policyVersion: 1,
+            snapshotDate: new Date('2025-12-21T00:00:00Z'),
+          }).length,
+        ).toBe(5);
+      });
+
+      it('combines with cursor', () => {
+        const conditions = buildSnapshotCandidateConditions({
+          policyVersion: 1,
+          cursor: 'x',
+          snapshotDate: new Date('2025-12-21T00:00:00Z'),
+          region: 'UA',
+        });
+
+        expect(conditions.length).toBe(7);
+      });
+    });
+
     describe('combined options', () => {
       it('handles all options together', () => {
         const options: SnapshotConditionsOptions = {

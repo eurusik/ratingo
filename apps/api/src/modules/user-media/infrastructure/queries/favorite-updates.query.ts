@@ -1,6 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, desc, eq, gt, gte, inArray, isNotNull, lte, or, sql } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  exists,
+  gt,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MS_PER_DAY } from '@/common/constants';
@@ -28,10 +41,10 @@ const BATCH_RELEASE_THRESHOLD = 3;
  * Strategy: 3 sequential DB round-trips (steps 2a/2b run in parallel).
  * Each step depends on the previous result, so further parallelisation is not possible.
  *
- * 1. Base shows with user rating
+ * 1. Base shows with user rating that have a recent/upcoming episode (EXISTS in SQL, then LIMIT)
  * 2. Latest aired + next upcoming episode per show (parallel via Promise.all)
  * 3. Batch release detection (count episodes sharing same air date)
- * 4. In-memory merge, filter by date range, limit
+ * 4. In-memory merge (defensive date-range re-check)
  *
  * @throws {DatabaseException} When any database query fails
  */
@@ -53,7 +66,7 @@ export class FavoriteUpdatesQuery {
         const pastDate = new Date(now.getTime() - options.daysBack * MS_PER_DAY);
         const futureDate = new Date(now.getTime() + options.daysAhead * MS_PER_DAY);
 
-        const baseRows = await this.fetchBaseShows(userId, options);
+        const baseRows = await this.fetchBaseShows(userId, options, { now, pastDate, futureDate });
         if (baseRows.length === 0) return [];
 
         const showIds = baseRows.map((r) => r.showId);
@@ -74,36 +87,69 @@ export class FavoriteUpdatesQuery {
     );
   }
 
-  private async fetchBaseShows(userId: string, options: FavoriteUpdatesOptions) {
-    return (
+  private async fetchBaseShows(
+    userId: string,
+    options: FavoriteUpdatesOptions,
+    window: { now: Date; pastDate: Date; futureDate: Date },
+  ) {
+    return this.db
+      .select({
+        mediaItemId: schema.userMediaState.mediaItemId,
+        rating: schema.userMediaState.rating,
+        showId: schema.shows.id,
+        media: {
+          id: schema.mediaItems.id,
+          type: schema.mediaItems.type,
+          title: schema.mediaItems.title,
+          slug: schema.mediaItems.slug,
+          posterPath: schema.mediaItems.posterPath,
+          releaseDate: schema.mediaItems.releaseDate,
+        },
+      })
+      .from(schema.userMediaState)
+      .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+      .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+      .where(
+        and(
+          eq(schema.userMediaState.userId, userId),
+          gte(schema.userMediaState.rating, options.ratingThreshold),
+          eq(schema.mediaItems.type, MediaType.SHOW),
+          isNull(schema.mediaItems.deletedAt),
+          this.hasRecentOrUpcomingEpisode(window),
+        ),
+      )
+      .orderBy(desc(schema.userMediaState.rating), desc(schema.userMediaState.id))
+      .limit(options.limit);
+  }
+
+  /**
+   * Recent (aired within the past window) or upcoming (airs within the future window)
+   * episode filter lives in SQL so LIMIT applies AFTER filtering — otherwise users with
+   * many rated-but-ended shows would get an empty widget.
+   */
+  private hasRecentOrUpcomingEpisode(window: { now: Date; pastDate: Date; futureDate: Date }) {
+    return exists(
       this.db
-        .select({
-          mediaItemId: schema.userMediaState.mediaItemId,
-          rating: schema.userMediaState.rating,
-          showId: schema.shows.id,
-          media: {
-            id: schema.mediaItems.id,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            slug: schema.mediaItems.slug,
-            posterPath: schema.mediaItems.posterPath,
-            releaseDate: schema.mediaItems.releaseDate,
-          },
-        })
-        .from(schema.userMediaState)
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-        .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+        .select({ one: sql`1` })
+        .from(schema.episodes)
+        .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
         .where(
           and(
-            eq(schema.userMediaState.userId, userId),
-            gte(schema.userMediaState.rating, options.ratingThreshold),
-            eq(schema.mediaItems.type, MediaType.SHOW),
+            eq(schema.episodes.showId, schema.shows.id),
+            gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
+            isNotNull(schema.episodes.airDate),
+            or(
+              and(
+                gte(schema.episodes.airDate, window.pastDate),
+                lte(schema.episodes.airDate, window.now),
+              ),
+              and(
+                gt(schema.episodes.airDate, window.now),
+                lte(schema.episodes.airDate, window.futureDate),
+              ),
+            ),
           ),
-        )
-        .orderBy(desc(schema.userMediaState.rating))
-        // Over-fetch 2x because in-memory filtering (hasRecentOrUpcoming) may
-        // discard rows that lack qualifying episodes. Result may be < limit.
-        .limit(options.limit * 2)
+        ),
     );
   }
 

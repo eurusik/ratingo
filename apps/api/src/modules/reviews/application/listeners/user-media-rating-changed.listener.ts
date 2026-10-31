@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { UserMediaRatingChangedEvent } from '../../../user-media/domain/events/user-media-rating-changed.event';
+import { UserMediaRatingChangedEvent } from '../../../user-media/public';
 import { ReviewsService } from '../reviews.service';
 
 /**

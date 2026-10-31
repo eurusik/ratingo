@@ -4,19 +4,20 @@ import { CLOCK_PORT } from '@/modules/shared/clock';
 import { SyncMediaService } from './sync-media.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '../../../tmdb/public';
-import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '../../../trakt/public';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import { NormalizationService } from '@/modules/provider/public';
 import { CATALOG_POLICY_EVALUATOR, EvaluationContext } from '@/modules/catalog-policy/public';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '@/common/enums/video.enum';
 
 describe('SyncMediaService', () => {
   let service: SyncMediaService;
   let tmdbAdapter: jest.Mocked<TmdbAdapter>;
-  let traktAdapter: jest.Mocked<TraktRatingsAdapter>;
+  let traktAdapter: jest.Mocked<TraktRatingsPort>;
   let omdbAdapter: jest.Mocked<OmdbAdapter>;
   let tvMazeEnrichment: jest.Mocked<TvMazeEnrichmentService>;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
@@ -74,6 +75,7 @@ describe('SyncMediaService', () => {
       upsert: jest.fn(),
       updateIngestionStatus: jest.fn(),
       findByTmdbId: jest.fn().mockResolvedValue({ id: 'media-item-1' }),
+      findByIdForScoring: jest.fn().mockResolvedValue(null),
       updateLastSyncedAt: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -93,7 +95,7 @@ describe('SyncMediaService', () => {
       providers: [
         SyncMediaService,
         { provide: TmdbAdapter, useValue: mockTmdbAdapter },
-        { provide: TraktRatingsAdapter, useValue: mockTraktAdapter },
+        { provide: TRAKT_RATINGS_PORT, useValue: mockTraktAdapter },
         { provide: OmdbAdapter, useValue: mockOmdbAdapter },
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
@@ -107,7 +109,7 @@ describe('SyncMediaService', () => {
 
     service = module.get<SyncMediaService>(SyncMediaService);
     tmdbAdapter = module.get(TmdbAdapter);
-    traktAdapter = module.get(TraktRatingsAdapter);
+    traktAdapter = module.get(TRAKT_RATINGS_PORT);
     omdbAdapter = module.get(OmdbAdapter);
     tvMazeEnrichment = module.get(TvMazeEnrichmentService);
     scoreCalculator = module.get(ScoreCalculatorService);
@@ -163,10 +165,136 @@ describe('SyncMediaService', () => {
 
       expect(traktAdapter.getMovieRatingsByTmdbId).not.toHaveBeenCalled();
       expect(mediaRepository.upsert).not.toHaveBeenCalled();
+      // Type-scoped (movie id N must never touch show id N) and READY items are preserved
       expect(mediaRepository.updateIngestionStatus).toHaveBeenCalledWith(
         999999,
-        expect.stringMatching(/importing|failed/i),
+        MediaType.MOVIE,
+        IngestionStatus.IMPORTING,
+        { preserveReady: true },
       );
+      expect(mediaRepository.updateIngestionStatus).toHaveBeenCalledWith(
+        999999,
+        MediaType.MOVIE,
+        IngestionStatus.FAILED,
+        { preserveReady: true },
+      );
+    });
+
+    it('should scope ingestion status updates and lookups by media type (show)', async () => {
+      tmdbAdapter.getShow.mockResolvedValue({ ...mockMedia, type: MediaType.SHOW });
+      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+
+      await service.syncShow(550);
+
+      expect(mediaRepository.updateIngestionStatus).toHaveBeenCalledWith(
+        550,
+        MediaType.SHOW,
+        IngestionStatus.IMPORTING,
+        { preserveReady: true },
+      );
+      expect(mediaRepository.findByTmdbId).toHaveBeenCalledWith(550, MediaType.SHOW);
+      expect(mediaRepository.findByTmdbId).not.toHaveBeenCalledWith(550, MediaType.MOVIE);
+    });
+
+    it('should not downgrade a READY item to FAILED when sync throws', async () => {
+      tmdbAdapter.getMovie.mockRejectedValue(new Error('TMDB API Error'));
+
+      await expect(service.syncMovie(550)).rejects.toThrow('TMDB API Error');
+
+      expect(mediaRepository.updateIngestionStatus).toHaveBeenCalledWith(
+        550,
+        MediaType.MOVIE,
+        IngestionStatus.FAILED,
+        { preserveReady: true },
+      );
+      // Never an unconditional FAILED write
+      for (const call of mediaRepository.updateIngestionStatus.mock.calls) {
+        expect(call[3]).toEqual({ preserveReady: true });
+      }
+    });
+
+    it('should keep stored score inputs when Trakt and OMDb fail (no degraded score overwrite)', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null); // transient failure
+      omdbAdapter.getAggregatedRatings.mockResolvedValue({
+        imdbRating: null,
+        imdbVotes: null,
+        metacritic: null,
+        metascore: null,
+        rottenTomatoes: null,
+      });
+      mediaRepository.findByIdForScoring.mockResolvedValue({
+        id: 'media-item-1',
+        ratingImdb: 8.1,
+        ratingTrakt: 7.9,
+        ratingMetacritic: 70,
+        ratingRottenTomatoes: 90,
+        voteCountImdb: 1000,
+        voteCountTrakt: 500,
+        watchersCount: 12,
+        totalWatchers: 7777,
+      });
+
+      await service.syncMovie(550);
+
+      expect(scoreCalculator.calculate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          traktTotalWatchers: 7777,
+          traktLiveWatchers: 12,
+          imdbRating: 8.1,
+          traktRating: 7.9,
+          metacriticRating: 70,
+          rottenTomatoesRating: 90,
+          imdbVotes: 1000,
+          traktVotes: 500,
+        }),
+      );
+    });
+
+    it('should prefer freshly fetched ratings over stored ones', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({
+        rating: 8.0,
+        votes: 5000,
+        watchers: 100,
+        totalWatchers: 5000,
+      });
+      omdbAdapter.getAggregatedRatings.mockResolvedValue({
+        imdbRating: 8.8,
+        imdbVotes: 2000000,
+        metacritic: 66,
+        metascore: 66,
+        rottenTomatoes: 79,
+      });
+      mediaRepository.findByIdForScoring.mockResolvedValue({
+        id: 'media-item-1',
+        ratingImdb: 1,
+        ratingTrakt: 1,
+        ratingMetacritic: 1,
+        ratingRottenTomatoes: 1,
+        voteCountImdb: 1,
+        voteCountTrakt: 1,
+        watchersCount: 1,
+        totalWatchers: 1,
+      });
+
+      await service.syncMovie(550);
+
+      expect(scoreCalculator.calculate).toHaveBeenCalledWith(
+        expect.objectContaining({ traktTotalWatchers: 5000, imdbRating: 8.8, traktRating: 8.0 }),
+      );
+    });
+
+    it('should score with fetched data only when the stored-values lookup fails', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByIdForScoring.mockRejectedValue(new Error('DB down'));
+
+      await service.syncMovie(550);
+
+      expect(mediaRepository.upsert).toHaveBeenCalled();
     });
 
     it('should sync with trending data when provided', async () => {
@@ -630,14 +758,30 @@ describe('SyncMediaService', () => {
       );
     });
 
-    it('should skip normalization when no watch providers', async () => {
-      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProvidersRaw: {} });
+    it('should skip normalization when providers are not part of the payload (undefined)', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProvidersRaw: undefined });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
       omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
 
       await service.syncMovie(550);
 
       expect(normalizationService.normalizeWatchProviders).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['empty map', {}],
+      ['null (TMDB has no UA/US providers)', null],
+    ])('should still normalize with an empty map so stale offers get cleared: %s', async (_n, raw) => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProvidersRaw: raw });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+
+      await service.syncMovie(550);
+
+      expect(normalizationService.normalizeWatchProviders).toHaveBeenCalledWith(
+        'media-item-1',
+        {},
+      );
     });
 
     it('should handle normalization failure gracefully', async () => {

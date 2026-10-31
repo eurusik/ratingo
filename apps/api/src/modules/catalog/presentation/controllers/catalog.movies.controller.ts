@@ -5,10 +5,10 @@ import {
   CATALOG_DEFAULT_NEW_RELEASE_DAYS,
   CATALOG_DEFAULT_DIGITAL_DAYS,
 } from '../../../../common/constants';
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
-import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
+import { CurrentUser } from '../../../auth/public';
+import { OptionalJwtAuthGuard } from '../../../auth/public';
+import { CardEnrichmentService } from '../../../shared/cards';
+import { CARD_LIST_CONTEXT } from '../../../shared/cards';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from '../../application/services/movie-details.service';
 import {

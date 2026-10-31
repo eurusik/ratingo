@@ -145,6 +145,48 @@ describe('Policy Schema Validation', () => {
     });
   });
 
+  describe('validatePolicyOrThrow - Breakout provider options', () => {
+    it('should preserve availabilityMode, excludeAdsTiers and excludeChannelDistribution', () => {
+      const policy = createValidPolicy({
+        breakoutRules: [
+          {
+            id: 'rule-1',
+            name: 'Provider Rule',
+            priority: 1,
+            requirements: {
+              requireAnyOfProviders: ['netflix'],
+              availabilityMode: 'transactional_only',
+              excludeAdsTiers: true,
+              excludeChannelDistribution: true,
+            },
+          },
+        ] as any,
+      });
+
+      const result = validatePolicyOrThrow(policy);
+
+      expect(result.breakoutRules[0].requirements).toMatchObject({
+        availabilityMode: 'transactional_only',
+        excludeAdsTiers: true,
+        excludeChannelDistribution: true,
+      });
+    });
+
+    it('should reject invalid availabilityMode', () => {
+      const policy = createValidPolicy({
+        breakoutRules: [
+          {
+            id: 'rule-1',
+            name: 'Bad Rule',
+            priority: 1,
+            requirements: { availabilityMode: 'bogus' },
+          },
+        ] as any,
+      });
+      expect(() => validatePolicyOrThrow(policy)).toThrow();
+    });
+  });
+
   describe('validatePolicyOrThrow - Normalization', () => {
     it('should uppercase country codes', () => {
       const policy = createValidPolicy({

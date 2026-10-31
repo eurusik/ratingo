@@ -36,9 +36,7 @@ describe('CatalogEvaluationService', () => {
   };
   let mockEvaluationRepository: {
     findByMediaId: jest.Mock;
-    findByMediaIdForContexts: jest.Mock;
     upsert: jest.Mock;
-    bulkUpsert: jest.Mock;
     countByStatusAndPolicyVersion: jest.Mock;
   };
 
@@ -102,9 +100,7 @@ describe('CatalogEvaluationService', () => {
 
     mockEvaluationRepository = {
       findByMediaId: jest.fn(),
-      findByMediaIdForContexts: jest.fn(),
       upsert: jest.fn(),
-      bulkUpsert: jest.fn(),
       countByStatusAndPolicyVersion: jest.fn(),
     };
 
@@ -282,144 +278,6 @@ describe('CatalogEvaluationService', () => {
       expect(mockEvaluationRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ runId }),
       );
-    });
-  });
-
-  describe('evaluateOneForContexts', () => {
-    it('should evaluate for multiple contexts with single batch fetch', async () => {
-      const mediaItemId = 'test-media-1';
-      const contexts: EvaluationContextType[] = [
-        EvaluationContext.CATALOG,
-        EvaluationContext.TRENDING,
-      ];
-      const engineInput = createMockPolicyEngineInput();
-
-      mockPolicyInputRepository.findOneForEvaluation.mockResolvedValue(engineInput);
-      mockEvaluationRepository.findByMediaIdForContexts.mockResolvedValue(new Map());
-      mockEvaluationRepository.bulkUpsert.mockResolvedValue(contexts.length);
-
-      await service.evaluateOneForContexts({ mediaItemId }, contexts);
-
-      // Should fetch policy input once
-      expect(mockPolicyInputRepository.findOneForEvaluation).toHaveBeenCalledTimes(1);
-      // Should batch fetch previous evaluations (N+1 fix)
-      expect(mockEvaluationRepository.findByMediaIdForContexts).toHaveBeenCalledWith(
-        mediaItemId,
-        contexts,
-      );
-      // Should NOT call individual findByMediaId (N+1 was fixed)
-      expect(mockEvaluationRepository.findByMediaId).not.toHaveBeenCalled();
-      // Should bulk upsert all evaluations
-      expect(mockEvaluationRepository.bulkUpsert).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ context: EvaluationContext.CATALOG }),
-          expect.objectContaining({ context: EvaluationContext.TRENDING }),
-        ]),
-      );
-    });
-
-    it('should detect changes using batch-fetched previous evaluations', async () => {
-      const mediaItemId = 'test-media-1';
-      const contexts: EvaluationContextType[] = [
-        EvaluationContext.CATALOG,
-        EvaluationContext.TRENDING,
-      ];
-      const engineInput = createMockPolicyEngineInput();
-
-      // Mock previous evaluation for CATALOG context only
-      const previousEvaluationsMap = new Map<EvaluationContextType, unknown>([
-        [EvaluationContext.CATALOG, { status: EligibilityStatus.INELIGIBLE, policyVersion: 1 }],
-      ]);
-
-      mockPolicyInputRepository.findOneForEvaluation.mockResolvedValue(engineInput);
-      mockEvaluationRepository.findByMediaIdForContexts.mockResolvedValue(previousEvaluationsMap);
-      mockEvaluationRepository.bulkUpsert.mockResolvedValue(contexts.length);
-
-      await service.evaluateOneForContexts({ mediaItemId }, contexts);
-
-      expect(mockEvaluationRepository.findByMediaIdForContexts).toHaveBeenCalledWith(
-        mediaItemId,
-        contexts,
-      );
-    });
-
-    it('should return early for empty contexts array', async () => {
-      const mediaItemId = 'test-media-1';
-
-      await service.evaluateOneForContexts({ mediaItemId }, []);
-
-      expect(mockPolicyInputRepository.findOneForEvaluation).not.toHaveBeenCalled();
-      expect(mockEvaluationRepository.findByMediaIdForContexts).not.toHaveBeenCalled();
-      expect(mockEvaluationRepository.bulkUpsert).not.toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException when media item not found', async () => {
-      const mediaItemId = 'non-existent';
-
-      mockPolicyInputRepository.findOneForEvaluation.mockResolvedValue(null);
-
-      await expect(
-        service.evaluateOneForContexts({ mediaItemId }, [EvaluationContext.CATALOG]),
-      ).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw NotFoundException when policy version not found', async () => {
-      const mediaItemId = 'test-media-1';
-      const policyVersion = 999;
-
-      mockPolicyService.getByVersion.mockResolvedValue(null);
-
-      await expect(
-        service.evaluateOneForContexts({ mediaItemId, policyVersion }, [EvaluationContext.CATALOG]),
-      ).rejects.toThrow(NotFoundException);
-    });
-
-    it('should return count of changed evaluations', async () => {
-      const mediaItemId = 'test-media-1';
-      const contexts: EvaluationContextType[] = [
-        EvaluationContext.CATALOG,
-        EvaluationContext.TRENDING,
-      ];
-      const engineInput = createMockPolicyEngineInput();
-
-      // CATALOG has previous with same status, TRENDING is new
-      const previousEvaluationsMap = new Map<EvaluationContextType, unknown>([
-        [EvaluationContext.CATALOG, { status: EligibilityStatus.ELIGIBLE, policyVersion: 1 }],
-      ]);
-
-      mockPolicyInputRepository.findOneForEvaluation.mockResolvedValue(engineInput);
-      mockEvaluationRepository.findByMediaIdForContexts.mockResolvedValue(previousEvaluationsMap);
-      mockEvaluationRepository.bulkUpsert.mockResolvedValue(undefined);
-
-      const changedCount = await service.evaluateOneForContexts({ mediaItemId }, contexts);
-
-      // Only TRENDING should count as changed (new), CATALOG unchanged
-      expect(changedCount).toBe(1);
-    });
-
-    it('should return zero when no evaluations changed', async () => {
-      const mediaItemId = 'test-media-1';
-      const contexts: EvaluationContextType[] = [EvaluationContext.CATALOG];
-      const engineInput = createMockPolicyEngineInput();
-
-      const previousEvaluationsMap = new Map<EvaluationContextType, unknown>([
-        [EvaluationContext.CATALOG, { status: EligibilityStatus.ELIGIBLE, policyVersion: 1 }],
-      ]);
-
-      mockPolicyInputRepository.findOneForEvaluation.mockResolvedValue(engineInput);
-      mockEvaluationRepository.findByMediaIdForContexts.mockResolvedValue(previousEvaluationsMap);
-      mockEvaluationRepository.bulkUpsert.mockResolvedValue(undefined);
-
-      const changedCount = await service.evaluateOneForContexts({ mediaItemId }, contexts);
-
-      expect(changedCount).toBe(0);
-    });
-
-    it('should return zero for empty contexts without calling repositories', async () => {
-      const changedCount = await service.evaluateOneForContexts({ mediaItemId: 'test' }, []);
-
-      expect(changedCount).toBe(0);
-      expect(mockPolicyService.getActiveOrThrow).not.toHaveBeenCalled();
     });
   });
 

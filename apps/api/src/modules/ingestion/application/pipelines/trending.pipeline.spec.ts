@@ -129,6 +129,32 @@ describe('TrendingPipeline', () => {
       );
     });
 
+    it('should derive sync job ids from the dispatch window of the page job', async () => {
+      syncService.getTrending.mockResolvedValue([
+        { tmdbId: 100, type: MediaType.MOVIE },
+        { tmdbId: 200, type: MediaType.SHOW },
+      ]);
+
+      await pipeline.processPage(MediaType.MOVIE, 1, 'trending_movie_1_2026102904');
+
+      const jobs = bulkJobService.enqueueBulk.mock.calls[0][0] as Array<{
+        opts: { jobId: string };
+      }>;
+      expect(jobs.map((j) => j.opts.jobId)).toEqual(['movie_100_2026102904', 'show_200_2026102904']);
+    });
+
+    it('should produce different sync job ids in different dispatch cycles', async () => {
+      syncService.getTrending.mockResolvedValue([{ tmdbId: 100, type: MediaType.MOVIE }]);
+
+      await pipeline.processPage(MediaType.MOVIE, 1, 'trending_movie_1_2026102900');
+      await pipeline.processPage(MediaType.MOVIE, 1, 'trending_movie_1_2026102904');
+
+      const ids = bulkJobService.enqueueBulk.mock.calls.map(
+        (c) => (c[0] as Array<{ opts: { jobId: string } }>)[0].opts.jobId,
+      );
+      expect(ids[0]).not.toBe(ids[1]);
+    });
+
     it('should skip if no items found', async () => {
       syncService.getTrending.mockResolvedValue([]);
 
@@ -169,13 +195,13 @@ describe('TrendingPipeline', () => {
 
       expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenCalledWith({
         batchSize: 50,
-        offset: 0,
+        afterId: undefined,
       });
     });
 
     it('should process multiple batches if hasMore is true', async () => {
       trendingSyncService.syncEligibleTrendingStats
-        .mockResolvedValueOnce({ movies: 10, shows: 15, total: 25, hasMore: true })
+        .mockResolvedValueOnce({ movies: 10, shows: 15, total: 25, hasMore: true, lastId: 'id-50' })
         .mockResolvedValueOnce({ movies: 5, shows: 3, total: 8, hasMore: false });
 
       await pipeline.processStats();
@@ -183,11 +209,11 @@ describe('TrendingPipeline', () => {
       expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenCalledTimes(2);
       expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenNthCalledWith(1, {
         batchSize: 50,
-        offset: 0,
+        afterId: undefined,
       });
       expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenNthCalledWith(2, {
         batchSize: 50,
-        offset: 50,
+        afterId: 'id-50',
       });
     });
 
@@ -198,6 +224,7 @@ describe('TrendingPipeline', () => {
         shows: 25,
         total: 50,
         hasMore: true,
+        lastId: 'id-last',
       });
 
       await pipeline.processStats();

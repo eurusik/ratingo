@@ -5,7 +5,7 @@ import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto
 import { ImageDto } from '../../../../common/dtos/image.dto';
 import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
+import { CardMetaDto } from '../../../shared/cards';
 
 import { CatalogListQueryDto } from './catalog-list-query.dto';
 

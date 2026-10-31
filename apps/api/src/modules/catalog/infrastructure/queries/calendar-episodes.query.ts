@@ -7,7 +7,7 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
-import { USER_MEDIA_STATE } from '../../../user-media/domain/entities/user-media-state.entity';
+import { USER_MEDIA_STATE } from '../../../user-media/public';
 import { type CalendarEpisode } from '../../domain/repositories/show.repository.interface';
 
 /**

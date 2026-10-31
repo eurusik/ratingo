@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { VALID_CONTENT_CLASSES } from '../classification.service';
 import { EvaluationContext } from '../constants/evaluation.constants';
 import { PolicyValidationError } from '../errors';
-import { type PolicyConfig } from '../types/policy.types';
+import { AvailabilityMode, type PolicyConfig } from '../types/policy.types';
 
 // Schema validation constants
 const MIN_OVERVIEW_CHARS = 0;
@@ -18,6 +18,10 @@ const MAX_RELEVANCE_SCORE = 100;
 const VALID_CONTEXTS = Object.values(EvaluationContext) as [string, ...string[]];
 const VALID_RATING_SOURCES = ['imdb', 'metacritic', 'rt', 'trakt'] as const;
 const VALID_VOTE_SOURCES = ['imdb', 'trakt'] as const;
+const VALID_AVAILABILITY_MODES = Object.values(AvailabilityMode) as [
+  AvailabilityMode,
+  ...AvailabilityMode[],
+];
 
 /** Breakout rule requirements schema. */
 const BreakoutRuleSchema = z.object({
@@ -30,6 +34,9 @@ const BreakoutRuleSchema = z.object({
     minQualityScoreNormalized: z.number().min(0).max(1).optional(),
     requireAnyOfProviders: z.array(z.string()).optional(),
     requireAnyOfRatingsPresent: z.array(z.enum(VALID_RATING_SOURCES)).optional(),
+    availabilityMode: z.enum(VALID_AVAILABILITY_MODES).optional(),
+    excludeAdsTiers: z.boolean().optional(),
+    excludeChannelDistribution: z.boolean().optional(),
     originCountries: z
       .array(z.string().length(2, 'Country codes must be 2 characters (ISO 3166-1 alpha-2)'))
       .optional(),

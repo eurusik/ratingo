@@ -3,6 +3,7 @@
  * SSR first page + client-side infinite scroll.
  */
 
+import type { components } from '@ratingo/api-contract';
 import type { Metadata } from 'next';
 import type { Route } from 'next';
 import { notFound } from 'next/navigation';
@@ -85,7 +86,7 @@ async function fetchInitialData(
         id: string;
         slug: string;
         title: string;
-        poster?: { small: string; medium: string; large: string; original: string } | null;
+        poster?: components['schemas']['ImageDto'] | null;
         stats?: { qualityScore?: number | null; liveWatchers?: number | null } | null;
         externalRatings?: {
           imdb?: { rating: number } | null;

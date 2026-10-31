@@ -1,14 +1,15 @@
 import {
+  Body,
   Controller,
-  Post,
   Delete,
   Get,
-  Param,
-  Body,
-  Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,8 +23,8 @@ import {
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { OffsetPaginationQueryDto } from '@/common/dtos/pagination.dto';
 
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { JwtAuthGuard } from '../../../auth/public';
 import { SubscriptionsService } from '../../application/subscriptions.service';
 import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
 import {
@@ -35,7 +36,7 @@ import {
   UnsubscribeActionResultDto,
 } from '../dto/subscriptions.dto';
 
-@ApiTags('Subscriptions')
+@ApiTags('Me: Subscriptions')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('me/subscriptions')
@@ -54,7 +55,7 @@ export class SubscriptionsController {
   })
   async subscribe(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: SubscribeDto,
   ): Promise<SubscribeActionResultDto> {
     const subscription = await this.subscriptionsService.subscribe({
@@ -98,7 +99,7 @@ export class SubscriptionsController {
   })
   async unsubscribe(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Body() body: UnsubscribeDto,
   ): Promise<UnsubscribeActionResultDto> {
     const unsubscribed = await this.subscriptionsService.unsubscribe(
@@ -133,7 +134,7 @@ export class SubscriptionsController {
   @ApiOkResponse({ type: MediaSubscriptionStatusDto })
   async getStatus(
     @CurrentUser() user: { id: string },
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
   ): Promise<MediaSubscriptionStatusDto> {
     const triggers = await this.subscriptionsService.getActiveTriggersForMedia(
       user.id,

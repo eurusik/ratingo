@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { generateSlug } from '@/common/utils/slug.util';
 import { JOB_STATUS, type JobStatus } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
 
@@ -14,7 +15,6 @@ import {
   MEDIA_REPOSITORY,
 } from '../../domain/repositories/media.repository.interface';
 import { IMPORT_STATUS, type ImportResult } from '../../domain/types/import.types';
-import { generateSlug } from '../../domain/utils/slug.utils';
 
 /**
  * Service for on-demand import of media from TMDB.
@@ -184,7 +184,8 @@ export class CatalogImportService {
     // Get slug from DB if job is completed
     let slug: string | null = null;
     if (jobStatus.status === JOB_STATUS.READY && jobStatus.tmdbId) {
-      const media = await this.mediaRepository.findByTmdbId(jobStatus.tmdbId);
+      // Type is encoded in the job id (SYNC_MOVIE_/SYNC_SHOW_); TMDB movie/TV id spaces overlap
+      const media = await this.mediaRepository.findByTmdbId(jobStatus.tmdbId, jobStatus.type);
       slug = media?.slug ?? null;
     }
 

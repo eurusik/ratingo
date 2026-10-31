@@ -15,7 +15,11 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
 import { DATABASE_CONNECTION } from '../../../../../database/database.module';
 import * as schema from '../../../../../database/schema';
-import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../../catalog-policy.constants';
+import {
+  CATALOG_POLICY_QUEUE,
+  CATALOG_POLICY_JOBS,
+  EVALUATE_ITEM_JOB_OPTIONS,
+} from '../../../catalog-policy.constants';
 import {
   RunStatus,
   type EvaluationContextType,
@@ -50,14 +54,21 @@ export class ReEvaluateAllHandler {
    * Fetches items in batches and dispatches EVALUATE_CATALOG_ITEM jobs.
    */
   async handle(payload: ReEvaluateAllPayload): Promise<void> {
-    const { runId, policyVersion, context, batchSize = DEFAULT_BATCH_SIZE } = payload;
+    const {
+      runId,
+      policyVersion,
+      context,
+      batchSize = DEFAULT_BATCH_SIZE,
+      afterSnapshot = false,
+    } = payload;
 
     if (!validateContextPayload(payload, { runId, policyVersion }, this.logger)) {
       return;
     }
 
     this.logger.log(
-      `Starting RE_EVALUATE_ALL for run=${runId}, policy=v${policyVersion}, context=${context}`,
+      `Starting RE_EVALUATE_ALL for run=${runId}, policy=v${policyVersion}, context=${context}${ 
+        afterSnapshot ? ' (items updated after snapshot)' : ''}`,
     );
 
     const run = await this.runRepository.findById(runId);
@@ -80,9 +91,16 @@ export class ReEvaluateAllHandler {
         return;
       }
 
-      const batch = await this.fetchBatch(run.snapshotCutoff!, batchSize, cursor);
+      const batch = await this.fetchBatch(run.snapshotCutoff!, batchSize, cursor, afterSnapshot);
 
       if (batch.length === 0) {
+        if (afterSnapshot) {
+          // Run is already terminal (promoted): nothing to finalize
+          this.logger.log(
+            `Dispatched ${totalDispatched} post-snapshot jobs for run=${runId}, context=${context}`,
+          );
+          return;
+        }
         await this.attemptFinalization(runId, totalDispatched, context);
         return;
       }
@@ -100,7 +118,8 @@ export class ReEvaluateAllHandler {
           context,
         } as EvaluateCatalogItemPayload,
         opts: {
-          jobId: `eval_${runId}_${item.id}_${context}`,
+          jobId: `${afterSnapshot ? 'eval_post' : 'eval'}_${runId}_${item.id}_${context}`,
+          ...EVALUATE_ITEM_JOB_OPTIONS,
         },
       }));
 
@@ -108,7 +127,9 @@ export class ReEvaluateAllHandler {
       totalDispatched += batch.length;
 
       cursor = batch[batch.length - 1].id;
-      await this.runRepository.update(runId, { cursor });
+      if (!afterSnapshot) {
+        await this.runRepository.update(runId, { cursor });
+      }
 
       this.logger.debug(
         `Dispatched ${batch.length} evaluation jobs for run=${runId}, context=${context} (total: ${totalDispatched})`,
@@ -118,16 +139,21 @@ export class ReEvaluateAllHandler {
 
   /**
    * Fetches batch of media items for evaluation.
+   * Snapshot mode: items updated at or before the cutoff.
+   * After-snapshot mode: items updated after the cutoff (synced while the run was in progress).
    */
   private async fetchBatch(
     snapshotCutoff: Date,
     batchSize: number,
     cursor?: string,
+    afterSnapshot = false,
   ): Promise<Array<{ id: string }>> {
     const conditions = [
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       isNull(schema.mediaItems.deletedAt),
-      lte(schema.mediaItems.updatedAt, snapshotCutoff),
+      afterSnapshot
+        ? gt(schema.mediaItems.updatedAt, snapshotCutoff)
+        : lte(schema.mediaItems.updatedAt, snapshotCutoff),
     ];
 
     if (cursor) {

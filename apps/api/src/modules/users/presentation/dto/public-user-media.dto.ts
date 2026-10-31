@@ -5,10 +5,7 @@ import { IsIn, IsOptional } from 'class-validator';
 import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../common/dtos';
 import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import {
-  type UserMediaState,
-  USER_MEDIA_STATE_VALUES,
-} from '../../../user-media/domain/entities/user-media-state.entity';
+import { type UserMediaState, USER_MEDIA_STATE_VALUES } from '../../../user-media/public';
 
 export const USER_MEDIA_LIST_SORT = {
   RECENT: 'recent',

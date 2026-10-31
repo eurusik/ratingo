@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleUserSavedItemRepository } from './drizzle-user-saved-item.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -225,6 +226,23 @@ describe('DrizzleUserSavedItemRepository', () => {
       await expect(
         repository.listWithMedia('user-id-1', SAVED_ITEM_LIST.FOR_LATER),
       ).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('soft-deleted media', () => {
+    it('listWithMedia and count both exclude soft-deleted media (consistent)', async () => {
+      const module = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleUserSavedItemRepository);
+
+      await repository.listWithMedia('user-id-1', SAVED_ITEM_LIST.FOR_LATER);
+      await repository.count('user-id-1', SAVED_ITEM_LIST.FOR_LATER);
+
+      const wheres: string[] = db.select.mock.results[0].value.where.mock.calls.map(
+        (c: any[]) => new PgDialect().sqlToQuery(c[0]).sql,
+      );
+      // calls: [subscription-triggers subquery, list main query, count]
+      const withMedia = wheres.filter((w) => w.includes('"media_items"."deleted_at" is null'));
+      expect(withMedia).toHaveLength(2);
     });
   });
 

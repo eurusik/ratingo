@@ -13,7 +13,6 @@ describe('SnapshotsPipeline', () => {
 
   beforeEach(async () => {
     const mockSnapshotsService = {
-      syncSnapshotItem: jest.fn().mockResolvedValue(undefined),
       syncSnapshotBatch: jest
         .fn()
         .mockResolvedValue({ synced: 0, skipped: 0, errors: 0 } as SnapshotBatchResult),
@@ -63,14 +62,20 @@ describe('SnapshotsPipeline', () => {
       expect(mediaRepository.findSnapshotCandidates).toHaveBeenNthCalledWith(1, {
         limit: 500,
         cursor: undefined,
+        snapshotDate: expect.any(Date),
+        region: 'UA',
       });
       expect(mediaRepository.findSnapshotCandidates).toHaveBeenNthCalledWith(2, {
         limit: 500,
         cursor: 'id3',
+        snapshotDate: expect.any(Date),
+        region: 'UA',
       });
       expect(mediaRepository.findSnapshotCandidates).toHaveBeenNthCalledWith(3, {
         limit: 500,
         cursor: 'id5',
+        snapshotDate: expect.any(Date),
+        region: 'UA',
       });
 
       expect(snapshotsService.syncSnapshotBatch).toHaveBeenCalledTimes(2);

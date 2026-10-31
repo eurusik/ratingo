@@ -1,9 +1,9 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { CurrentUser } from '../../../auth/public';
+import { OptionalJwtAuthGuard } from '../../../auth/public';
 import { ReviewRepliesService } from '../../application/review-replies.service';
 import { ReviewVotesService } from '../../application/review-votes.service';
 import { ReviewsService } from '../../application/reviews.service';
@@ -39,7 +39,7 @@ export class ReviewsController {
   @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })
   @ApiOkResponse({ type: ReviewListResponseDto })
   async listForMedia(
-    @Param('mediaItemId') mediaItemId: string,
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
     @Query() query: ReviewQueryDto,
     @CurrentUser() user: { id: string } | null,
   ): Promise<ReviewListResponseDto> {
@@ -79,7 +79,7 @@ export class ReviewsController {
   @ApiParam({ name: 'reviewId', type: String, description: 'Review UUID' })
   @ApiOkResponse({ type: ReviewResponseDto })
   async getById(
-    @Param('reviewId') reviewId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
     @CurrentUser() user: { id: string } | null,
   ): Promise<ReviewResponseDto> {
     const review = await this.reviewsService.getById(reviewId);
@@ -103,7 +103,9 @@ export class ReviewsController {
   })
   @ApiParam({ name: 'reviewId', type: String, description: 'Review UUID' })
   @ApiOkResponse({ type: [ReplyResponseDto] })
-  async listReplies(@Param('reviewId') reviewId: string): Promise<ReplyResponseDto[]> {
+  async listReplies(
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+  ): Promise<ReplyResponseDto[]> {
     const replies = await this.repliesService.listForReview(reviewId);
 
     return replies.map((reply) => this.toReplyResponseDto(reply));
