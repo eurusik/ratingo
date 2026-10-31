@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SyncWorker } from './sync.worker';
 import { SyncMediaService } from '../services/sync-media.service';
+import { MediaPageCacheService } from '../services/media-page-cache.service';
 import { IngestionJob } from '../../ingestion.constants';
 import { Job } from 'bullmq';
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -29,8 +30,13 @@ describe('SyncWorker', () => {
   let backfillImdbPipeline: any;
   let backfillAltTitlesPipeline: any;
   let backfillMdblistRatingsPipeline: any;
+  let mediaPageCache: any;
 
   beforeEach(async () => {
+    mediaPageCache = {
+      invalidateAfterSync: jest.fn().mockResolvedValue(undefined),
+    };
+
     syncService = {
       syncMovie: jest.fn().mockResolvedValue(undefined),
       syncShow: jest.fn().mockResolvedValue(undefined),
@@ -89,6 +95,7 @@ describe('SyncWorker', () => {
         { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
         { provide: BackfillMdblistRatingsPipeline, useValue: backfillMdblistRatingsPipeline },
+        { provide: MediaPageCacheService, useValue: mediaPageCache },
       ],
     }).compile();
 
@@ -114,6 +121,47 @@ describe('SyncWorker', () => {
         { score: 9999, rank: 2 },
         'test-job-2',
       );
+    });
+
+    it('invalidates the web page after a requested movie sync', async () => {
+      const job = {
+        name: IngestionJob.SYNC_MOVIE,
+        data: { tmdbId: 550, userRequested: true },
+        id: 'import-1',
+      } as Job;
+      await worker.process(job);
+      expect(mediaPageCache.invalidateAfterSync).toHaveBeenCalledWith(550, MediaType.MOVIE);
+    });
+
+    it('invalidates the web page after a requested show sync', async () => {
+      const job = {
+        name: IngestionJob.SYNC_SHOW,
+        data: { tmdbId: 100, userRequested: true },
+        id: 'import-2',
+      } as Job;
+      await worker.process(job);
+      expect(mediaPageCache.invalidateAfterSync).toHaveBeenCalledWith(100, MediaType.SHOW);
+    });
+
+    it('does not invalidate the web page for background syncs', async () => {
+      const job = {
+        name: IngestionJob.SYNC_SHOW,
+        data: { tmdbId: 100, trending: { score: 1, rank: 1 } },
+        id: 'trending-1',
+      } as Job;
+      await worker.process(job);
+      expect(mediaPageCache.invalidateAfterSync).not.toHaveBeenCalled();
+    });
+
+    it('does not invalidate the web page when the sync fails', async () => {
+      syncService.syncMovie.mockRejectedValue(new Error('TMDB down'));
+      const job = {
+        name: IngestionJob.SYNC_MOVIE,
+        data: { tmdbId: 550, userRequested: true },
+        id: 'import-3',
+      } as Job;
+      await expect(worker.process(job)).rejects.toThrow('TMDB down');
+      expect(mediaPageCache.invalidateAfterSync).not.toHaveBeenCalled();
     });
   });
 

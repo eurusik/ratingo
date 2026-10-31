@@ -13,6 +13,10 @@ import { JournalPostPageClient } from './client';
 // ISR: Revalidate every 10 minutes
 export const revalidate = 600;
 
+export function generateStaticParams() {
+  return [];
+}
+
 interface PageParams {
   params: Promise<{ slug: string }>;
 }
