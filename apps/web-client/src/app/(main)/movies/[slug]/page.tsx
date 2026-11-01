@@ -38,8 +38,7 @@ const getMovie = cache(async (slug: string): Promise<MovieDetailsDto | null> => 
   }
 });
 
-// ISR: Revalidate every hour
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export function generateStaticParams() {
   return [];

@@ -39,8 +39,7 @@ const getShow = cache(async (slug: string): Promise<ShowDetailsDto | null> => {
   }
 });
 
-// ISR: Revalidate every hour (balance between fresh data & performance)
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export function generateStaticParams() {
   return [];
