@@ -7,6 +7,9 @@ updates:
     target-branch: development
     schedule:
       interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Kyiv
     groups:
       actions:
         patterns: ['*']
@@ -16,6 +19,9 @@ updates:
     target-branch: development
     schedule:
       interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Kyiv
     open-pull-requests-limit: 5
     ignore:
       - dependency-name: '*'
