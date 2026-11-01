@@ -182,7 +182,7 @@ describe('Query Keys Property Tests', () => {
           fc.option(fc.integer({ min: 1, max: 100 }), { nil: undefined }),
           fc.option(fc.integer({ min: 0, max: 1000 }), { nil: undefined }),
           (list, limit, offset) => {
-            const key = queryKeys.userActions.savedItems.list(list, limit, offset);
+            const key = queryKeys.userActions.savedItems.list(list, undefined, limit, offset);
             expect(allPrimitives(key)).toBe(true);
           },
         ),

@@ -66,7 +66,7 @@ jest.mock('../sync-button', () => ({
 const BASE_PROPS: DetailsHeroProps = {
   title: 'Test Movie',
   releaseDate: '2024-01-15',
-  genres: [{ id: 1, name: 'Drama' }],
+  genres: [{ id: 'genre-1', name: 'Drama', slug: 'drama' }],
 };
 
 // ---------------------------------------------------------------------------

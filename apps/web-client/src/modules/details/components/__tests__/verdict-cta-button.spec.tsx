@@ -41,7 +41,7 @@ const mockDict = {
       no_release_date: 'Немає дати виходу',
     },
   },
-} as ReturnType<typeof import('@/shared/i18n').getDictionary>;
+} as unknown as ReturnType<typeof import('@/shared/i18n').getDictionary>;
 
 describe('VerdictCtaButton', () => {
   const defaultProps = {
