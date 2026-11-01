@@ -12,6 +12,7 @@ import fastifyMultipart from '@fastify/multipart';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { SlowRequestInterceptor } from './common/interceptors/slow-request.interceptor';
+import { createAppLogger } from './common/logging/app-logger';
 import { getAppRole, runsHttp } from './common/runtime/app-role';
 import { DevTiming } from './common/utils/dev-timing';
 import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.config';
@@ -38,6 +39,7 @@ async function bootstrap(): Promise<void> {
       // Trust proxy headers for correct IP detection behind reverse proxies (nginx, Cloudflare, etc.)
       trustProxy: true,
     }),
+    { logger: createAppLogger() },
   );
 
   registerHttpMetrics(app.getHttpAdapter().getInstance());

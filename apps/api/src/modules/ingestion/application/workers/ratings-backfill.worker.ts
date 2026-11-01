@@ -1,9 +1,10 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { HttpStatus, Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
+import { MdblistApiException } from '@/common/exceptions';
 import { WORKER_CONFIG } from '@/config/queue.config';
 
 import { IngestionJob, RATINGS_BACKFILL_QUEUE } from '../../ingestion.constants';
@@ -34,6 +35,10 @@ export function isValidMdblistItemPayload(data: unknown): data is MdblistItemPay
     (type === MediaType.MOVIE || type === MediaType.SHOW)
   );
 }
+
+const isMdblistQuotaExhausted = (error: unknown): boolean =>
+  error instanceof MdblistApiException &&
+  error.details?.statusCode === HttpStatus.TOO_MANY_REQUESTS;
 
 /**
  * Dedicated worker for external-ratings backfill jobs.
@@ -77,6 +82,10 @@ export class RatingsBackfillWorker extends WorkerHost {
           this.logger.warn(`Unknown ratings-backfill job type: ${job.name}`);
       }
     } catch (error) {
+      if (isMdblistQuotaExhausted(error)) {
+        this.logger.warn(`[job:${job.id}] Failed: MDBList daily quota exhausted (429)`);
+        throw error;
+      }
       const err = error instanceof Error ? error : new Error(String(error));
       this.logger.error(`[job:${job.id}] Failed: ${err.message}`, err.stack);
       throw error;

@@ -4,6 +4,7 @@ import './telemetry/register';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
+import { createAppLogger } from './common/logging/app-logger';
 import { type AppRole, getAppRole } from './common/runtime/app-role';
 import { closeWorkerOnSignals } from './worker-shutdown';
 
@@ -19,7 +20,9 @@ async function bootstrap(): Promise<void> {
   }
 
   const { WorkerAppModule } = await import('./worker-app.module');
-  const app = await NestFactory.createApplicationContext(WorkerAppModule);
+  const app = await NestFactory.createApplicationContext(WorkerAppModule, {
+    logger: createAppLogger(),
+  });
   closeWorkerOnSignals(app);
   logger.log('Worker is running (APP_ROLE=worker)');
 }
