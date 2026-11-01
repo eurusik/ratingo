@@ -4,6 +4,8 @@ import { ConsoleLogger, type LogLevel } from '@nestjs/common';
 
 type WriteStream = 'stdout' | 'stderr';
 
+const INSPECT_DEPTH = 5;
+
 const SEVERITY_BY_LEVEL: Record<LogLevel, string> = {
   verbose: 'debug',
   debug: 'debug',
@@ -74,4 +76,6 @@ function buildEntry(
 }
 
 const stringifyMessage = (message: unknown): string =>
-  typeof message === 'string' ? message : inspect(message, { depth: 5, breakLength: Infinity });
+  typeof message === 'string'
+    ? message
+    : inspect(message, { depth: INSPECT_DEPTH, breakLength: Infinity });
