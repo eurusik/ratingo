@@ -3,6 +3,7 @@ import { type DiscoveryService, type ModulesContainer } from '@nestjs/core';
 import { type EventEmitter2 } from '@nestjs/event-emitter';
 import { type Test as NestTest } from '@nestjs/testing';
 
+import { EXTERNAL_API_FAILURE_EVENT } from './common/events/external-api-failure.event';
 import { type AppRole } from './common/runtime/app-role';
 import { CATALOG_POLICY_QUEUE } from './modules/catalog-policy/public';
 import {
@@ -11,6 +12,7 @@ import {
   MediaSyncedEvent,
   RATINGS_BACKFILL_QUEUE,
 } from './modules/ingestion/public';
+import { MONITORING_QUEUE } from './modules/monitoring/public';
 import { STATS_QUEUE } from './modules/stats/public';
 import { SHOW_EVENTS } from './modules/user-actions/public';
 import {
@@ -80,6 +82,7 @@ const WORKER_QUEUES = [
   RATINGS_BACKFILL_QUEUE,
   CATALOG_POLICY_QUEUE,
   STATS_QUEUE,
+  MONITORING_QUEUE,
 ];
 
 const WORKER_PROVIDERS = [
@@ -92,6 +95,9 @@ const WORKER_PROVIDERS = [
   'WatchdogHandler',
   'LinkPendingImportsScheduler',
   'QueueJobMetricsService',
+  'MonitoringWorker',
+  'MonitoringSchedulerService',
+  'KeyHealthGaugesObserver',
 ];
 
 const EVERY_ROLE_PROVIDERS = ['RuntimeMetricsService'];
@@ -106,6 +112,7 @@ const GATED_CONTROLLERS = [
   'ProvidersController',
   'NotificationsController',
   'UserMediaController',
+  'MonitoringController',
 ];
 
 const API_ONLY_PROVIDERS = ['CleanupExchangeCodesJob'];
@@ -237,6 +244,7 @@ describe('role composition', () => {
     it('keeps the in-process listeners for events the worker emits', () => {
       expect(boot.emitter.listenerCount(MediaSyncedEvent.eventName)).toBeGreaterThan(0);
       expect(boot.emitter.listenerCount(SHOW_EVENTS.NEW_EPISODE)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(EXTERNAL_API_FAILURE_EVENT)).toBeGreaterThan(0);
     });
   });
 
@@ -270,6 +278,7 @@ describe('role composition', () => {
     it('keeps the in-process listeners for events the API emits', () => {
       expect(boot.emitter.listenerCount(UserMediaRatingChangedEvent.eventName)).toBeGreaterThan(0);
       expect(boot.emitter.listenerCount(UserMediaStateChangedEvent.eventName)).toBeGreaterThan(0);
+      expect(boot.emitter.listenerCount(EXTERNAL_API_FAILURE_EVENT)).toBeGreaterThan(0);
     });
   });
 
