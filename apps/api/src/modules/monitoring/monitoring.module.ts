@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import IORedis from 'ioredis';
 
+import { apiOnly, workerOnly } from '@/common/runtime/app-role';
 import mdblistConfig from '@/config/mdblist.config';
 import omdbConfig from '@/config/omdb.config';
 import schedulerConfig from '@/config/scheduler.config';
@@ -50,7 +51,7 @@ import { MonitoringController } from './presentation/controllers/monitoring.cont
       },
     }),
   ],
-  controllers: [MonitoringController, MetricsController],
+  controllers: apiOnly(MonitoringController, MetricsController),
   providers: [
     TmdbKeyProbe,
     TraktKeyProbe,
@@ -109,8 +110,7 @@ import { MonitoringController } from './presentation/controllers/monitoring.cont
       useClass: KeyHealthMetrics,
     },
     KeyHealthService,
-    MonitoringSchedulerService,
-    MonitoringWorker,
+    ...workerOnly(MonitoringSchedulerService, MonitoringWorker),
     ExternalApiFailureListener,
   ],
 })
