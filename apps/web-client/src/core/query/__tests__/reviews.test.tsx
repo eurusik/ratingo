@@ -108,8 +108,8 @@ function makeReviewListResponse(
 ): ReviewListResponseDto {
   return {
     data: reviews,
-    meta: { total: reviews.length, limit: 10, offset: 0 },
-  } as ReviewListResponseDto;
+    meta: {},
+  };
 }
 
 function makeReply(overrides?: Partial<ReplyResponseDto>): ReplyResponseDto {
