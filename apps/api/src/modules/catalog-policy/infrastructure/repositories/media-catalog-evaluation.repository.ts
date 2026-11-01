@@ -9,7 +9,7 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, and, sql, inArray, desc } from 'drizzle-orm';
+import { eq, and, sql, desc } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DatabaseException } from '../../../../common/exceptions';
@@ -80,53 +80,6 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
     }
   }
 
-  async bulkUpsert(evaluations: MediaCatalogEvaluation[]): Promise<number> {
-    if (evaluations.length === 0) {
-      return 0;
-    }
-
-    try {
-      const values = evaluations.map((e) => ({
-        mediaItemId: e.mediaItemId,
-        status: e.status,
-        reasons: e.reasons,
-        relevanceScore: e.relevanceScore,
-        policyVersion: e.policyVersion,
-        breakoutRuleId: e.breakoutRuleId,
-        evaluatedAt: e.evaluatedAt,
-        runId: e.runId,
-        context: e.context ?? DEFAULT_EVALUATION_CONTEXT,
-      }));
-
-      const result = await this.db
-        .insert(schema.mediaCatalogEvaluations)
-        .values(values)
-        .onConflictDoUpdate({
-          target: [
-            schema.mediaCatalogEvaluations.mediaItemId,
-            schema.mediaCatalogEvaluations.policyVersion,
-            schema.mediaCatalogEvaluations.context,
-          ],
-          set: {
-            status: sql`excluded.status`,
-            reasons: sql`excluded.reasons`,
-            relevanceScore: sql`excluded.relevance_score`,
-            breakoutRuleId: sql`excluded.breakout_rule_id`,
-            evaluatedAt: sql`excluded.evaluated_at`,
-            // New run_id wins, but NULL keeps existing
-            runId: sql`COALESCE(excluded.run_id, ${schema.mediaCatalogEvaluations.runId})`,
-          },
-        })
-        .returning({ mediaItemId: schema.mediaCatalogEvaluations.mediaItemId });
-
-      this.logger.log(`Bulk upserted ${result.length} evaluations`);
-      return result.length;
-    } catch (error) {
-      this.logger.error(`Failed to bulk upsert ${evaluations.length} evaluations`, error);
-      throw new DatabaseException('Failed to bulk upsert evaluations', error);
-    }
-  }
-
   async findByMediaId(
     mediaItemId: string,
     context: EvaluationContextType = DEFAULT_EVALUATION_CONTEXT,
@@ -152,44 +105,6 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
     } catch (error) {
       this.logger.error(`Failed to find evaluation for ${mediaItemId}`, error);
       throw new DatabaseException('Failed to find evaluation', error);
-    }
-  }
-
-  async findByMediaIdForContexts(
-    mediaItemId: string,
-    contexts: EvaluationContextType[],
-  ): Promise<Map<EvaluationContextType, MediaCatalogEvaluation>> {
-    const resultMap = new Map<EvaluationContextType, MediaCatalogEvaluation>();
-
-    if (contexts.length === 0) {
-      return resultMap;
-    }
-
-    try {
-      const result = await this.db
-        .select()
-        .from(schema.mediaCatalogEvaluations)
-        .where(
-          and(
-            eq(schema.mediaCatalogEvaluations.mediaItemId, mediaItemId),
-            inArray(schema.mediaCatalogEvaluations.context, contexts),
-          ),
-        )
-        .orderBy(desc(schema.mediaCatalogEvaluations.policyVersion));
-
-      // Rows are ordered by policy version DESC: keep only the latest evaluation per context
-      // (consistent with findByMediaId).
-      for (const row of result) {
-        const entity = this.mapToEntity(row);
-        if (!resultMap.has(entity.context)) {
-          resultMap.set(entity.context, entity);
-        }
-      }
-
-      return resultMap;
-    } catch (error) {
-      this.logger.error(`Failed to find evaluations for ${mediaItemId} across contexts`, error);
-      throw new DatabaseException('Failed to find evaluations for contexts', error);
     }
   }
 

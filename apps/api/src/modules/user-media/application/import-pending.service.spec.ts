@@ -40,7 +40,11 @@ describe('ImportPendingService', () => {
       findById: jest.fn(),
       findItemsByResolvedTmdb: jest.fn(),
       updateItemStatus: jest.fn(),
+      findLinkableWithReadyMedia: jest.fn(),
+      claimForLinking: jest.fn().mockResolvedValue(true),
+      failIngestingUpdatedBefore: jest.fn().mockResolvedValue([]),
       updateItemStatusIfNotCancelled: jest.fn(),
+      transitionItemStatus: jest.fn(),
       cancelBatch: jest.fn(),
       updateBatchCountersAtomic: jest.fn(),
     };

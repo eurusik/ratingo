@@ -6,15 +6,30 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 
-import { AppModule } from '../app.module';
+import { type AppRole } from '../common/runtime/app-role';
 import { DATABASE_CONNECTION } from '../database/database.module';
+import { HEALTH_QUEUE } from '../health/health.constants';
+import { COOLDOWN_REDIS_CLIENT } from '../modules/catalog/infrastructure/adapters/redis-cooldown-gate.adapter';
+import { CATALOG_POLICY_QUEUE } from '../modules/catalog-policy/catalog-policy.constants';
 import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
 import { MONITORING_REDIS_CLIENT } from '../modules/monitoring/infrastructure/counters/redis-failure-counter.store';
 import { MONITORING_QUEUE } from '../modules/monitoring/monitoring.constants';
+import { BACKFILL_QUEUE, RATINGS_BACKFILL_QUEUE } from '../modules/shared/contracts';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
 import { applyStandardErrorResponses, buildSwaggerConfig } from '../swagger.config';
 
 const GLOBAL_PREFIX = 'api';
+
+const QUEUES = [
+  INGESTION_QUEUE,
+  STATS_QUEUE,
+  BACKFILL_QUEUE,
+  RATINGS_BACKFILL_QUEUE,
+  CATALOG_POLICY_QUEUE,
+  HEALTH_QUEUE,
+  MONITORING_QUEUE,
+];
+
 const OUTPUT_PATH = path.resolve(__dirname, '../../../../packages/api-contract/openapi.json');
 
 const DEFAULT_ENV: Record<string, string> = {
@@ -24,7 +39,11 @@ const DEFAULT_ENV: Record<string, string> = {
   TRAKT_CLIENT_ID: 'dummy',
   TRAKT_CLIENT_SECRET: 'dummy',
   OMDB_API_KEY: 'dummy',
+  ACCESS_TOKEN_SECRET: 'dummy-access-token-secret-for-openapi-gen',
+  REFRESH_TOKEN_SECRET: 'dummy-refresh-token-secret-for-openapi-gen',
 };
+
+const OPENAPI_APP_ROLE: AppRole = 'api';
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const;
 
@@ -51,8 +70,10 @@ type PathItemObject = Partial<Record<(typeof HTTP_METHODS)[number], OperationObj
 /**
  * Apply default environment variables required to bootstrap the Nest app for OpenAPI generation.
  */
-const applyDefaultEnv = () =>
+const applyDefaultEnv = () => {
   Object.entries(DEFAULT_ENV).forEach(([k, v]) => (process.env[k] ??= v));
+  process.env.APP_ROLE = OPENAPI_APP_ROLE;
+};
 
 /**
  * Resolve output path for generated OpenAPI JSON.
@@ -125,28 +146,26 @@ const wrapSuccessResponses = (doc: OpenAPIObject): void => {
     });
 };
 
-/**
- * Create a Nest application instance configured for offline OpenAPI generation.
- *
- * Stubs database and BullMQ-related providers to avoid requiring Postgres/Redis.
- */
 const createApp = async (): Promise<NestFastifyApplication> => {
+  const { AppModule } = await import('../app.module');
   const noopBullRegistrar = { onModuleInit: () => {}, register: () => {} };
+  const noopRedisClient = { quit: async () => 'OK', disconnect: () => {} };
 
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+  const builder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(DATABASE_CONNECTION)
     .useValue({})
-    .overrideProvider(BullRegistrar)
-    .useValue(noopBullRegistrar)
-    .overrideProvider(getQueueToken(INGESTION_QUEUE))
-    .useValue({})
-    .overrideProvider(getQueueToken(STATS_QUEUE))
-    .useValue({})
-    .overrideProvider(getQueueToken(MONITORING_QUEUE))
-    .useValue({})
+    .overrideProvider(COOLDOWN_REDIS_CLIENT)
+    .useValue(noopRedisClient)
     .overrideProvider(MONITORING_REDIS_CLIENT)
-    .useValue({ quit: async () => undefined, disconnect: () => undefined })
-    .compile();
+    .useValue(noopRedisClient)
+    .overrideProvider(BullRegistrar)
+    .useValue(noopBullRegistrar);
+
+  for (const queue of QUEUES) {
+    builder.overrideProvider(getQueueToken(queue)).useValue({});
+  }
+
+  const moduleRef = await builder.compile();
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
     logger: false,

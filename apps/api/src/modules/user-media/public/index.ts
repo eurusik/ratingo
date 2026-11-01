@@ -28,6 +28,12 @@ export { UserMediaStateChangedEvent } from '../domain/events/user-media-state-ch
 export { RATING_SYNC_PORT } from '../domain/ports/rating-sync.port';
 export type { IRatingSyncPort } from '../domain/ports/rating-sync.port';
 
+export { LINK_PENDING_IMPORTS_SWEEP } from '../domain/ports/link-pending-imports-sweep.port';
+export type {
+  ILinkPendingImportsSweep,
+  LinkPendingImportsSweepResult,
+} from '../domain/ports/link-pending-imports-sweep.port';
+
 // Application services
 export { UserMediaService } from '../application/user-media.service';
 export { ResolveImportDispatcherPipeline } from '../application/pipelines/resolve-import-dispatcher.pipeline';

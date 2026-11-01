@@ -1,0 +1,193 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, development]
+  push:
+    branches: [main, development]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  # api runs on Railway (node:20 Dockerfile); web-client runs on Vercel (Node 24.x)
+  NODE_VERSION: 20
+  WEB_NODE_VERSION: 24
+  HUSKY: 0
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+      contracts: ${{ steps.filter.outputs.contracts }}
+    steps:
+      - id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]]; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+            echo "web=true" >> "$GITHUB_OUTPUT"
+            echo "contracts=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[].filename')
+          count=$(grep -c . <<< "$files" || true)
+          echo "$count changed files"
+
+          match() { grep -qE "$1" <<< "$files" && echo true || echo false; }
+
+          if (( count >= 3000 )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|\.github/)') == true ]]; then
+            api=true; web=true; contracts=true
+          else
+            api=$(match '^apps/api/')
+            web=$(match '^(apps/web-client/|packages/(api-contract|fx-engine)/)')
+            contracts=$(match '^(apps/api/|packages/api-contract/)')
+          fi
+
+          echo "api=$api web=$web contracts=$contracts"
+          echo "api=$api" >> "$GITHUB_OUTPUT"
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "contracts=$contracts" >> "$GITHUB_OUTPUT"
+
+  api:
+    name: api
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Tool cache key
+        run: echo "TOOL_CACHE_KEY=api-tools-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}" >> "$GITHUB_ENV"
+
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            .cache/eslint/api
+            .cache/jest/api
+            apps/api/dist/tsconfig.tsbuildinfo
+          key: ${{ env.TOOL_CACHE_KEY }}-${{ github.sha }}
+          restore-keys: ${{ env.TOOL_CACHE_KEY }}-
+
+      - name: Lint
+        run: npm run lint --workspace=api -- --cache --cache-strategy content --cache-location "$GITHUB_WORKSPACE/.cache/eslint/api"
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=api
+
+      - name: Unit tests
+        run: npm test --workspace=api -- --ci --cacheDirectory "$GITHUB_WORKSPACE/.cache/jest/api"
+
+      - if: success() && github.event_name == 'push'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            .cache/eslint/api
+            .cache/jest/api
+            apps/api/dist/tsconfig.tsbuildinfo
+          key: ${{ env.TOOL_CACHE_KEY }}-${{ github.sha }}
+
+  web:
+    name: web
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.WEB_NODE_VERSION }}
+
+      - name: Tool cache key
+        run: echo "TOOL_CACHE_KEY=web-tools-${{ runner.os }}-node${{ env.WEB_NODE_VERSION }}-${{ hashFiles('package-lock.json') }}" >> "$GITHUB_ENV"
+
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            .cache/eslint/web
+            .cache/jest/web
+            apps/web-client/tsconfig.typecheck.tsbuildinfo
+          key: ${{ env.TOOL_CACHE_KEY }}-${{ github.sha }}
+          restore-keys: ${{ env.TOOL_CACHE_KEY }}-
+
+      - name: Lint
+        run: npm run lint --workspace=web-client -- --cache --cache-strategy content --cache-location "$GITHUB_WORKSPACE/.cache/eslint/web"
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=web-client
+
+      - name: Unit tests
+        run: npm test --workspace=web-client -- --ci --cacheDirectory "$GITHUB_WORKSPACE/.cache/jest/web"
+
+      - if: success() && github.event_name == 'push'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            .cache/eslint/web
+            .cache/jest/web
+            apps/web-client/tsconfig.typecheck.tsbuildinfo
+          key: ${{ env.TOOL_CACHE_KEY }}-${{ github.sha }}
+
+  contracts:
+    name: contracts
+    needs: changes
+    if: needs.changes.outputs.contracts == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Regenerate API contract
+        timeout-minutes: 5
+        run: npm run contracts:update
+
+      - name: Check contract is up to date
+        run: |
+          if [ -n "$(git status --porcelain -- packages/api-contract)" ]; then
+            git status --short -- packages/api-contract
+            git diff -- packages/api-contract
+            echo "::error::packages/api-contract is out of date. Run 'npm run contracts:update' and commit the result."
+            exit 1
+          fi
+
+  ci:
+    name: ci
+    needs: [changes, api, web, contracts]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "results: $RESULTS"
+          for r in $RESULTS; do
+            if [[ "$r" == "failure" || "$r" == "cancelled" ]]; then
+              exit 1
+            fi
+          done

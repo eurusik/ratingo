@@ -20,6 +20,7 @@ import {
   useMarkAllNotificationsAsRead,
 } from '@/core/query';
 import { useAuth } from '@/core/auth';
+import { thumbnailUrl } from '@/shared/utils/image';
 
 export function NotificationBell() {
   const { dict } = useTranslation();
@@ -98,6 +99,7 @@ export function NotificationBell() {
             <div className="divide-y divide-zinc-800">
               {notifications.slice(0, 5).map((item) => {
                 const media = item.mediaSummary;
+                const posterUrl = thumbnailUrl(media.poster);
                 const href =
                   media.type === 'movie' ? `/movies/${media.slug}` : `/shows/${media.slug}`;
 
@@ -119,9 +121,9 @@ export function NotificationBell() {
                     }`}
                   >
                     <div className="relative w-10 h-14 rounded overflow-hidden bg-cinema-elevated shrink-0">
-                      {media.poster?.small ? (
+                      {posterUrl ? (
                         <Image
-                          src={media.poster.small}
+                          src={posterUrl}
                           alt={media.title}
                           fill
                           sizes="40px"

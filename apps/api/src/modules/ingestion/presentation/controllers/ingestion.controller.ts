@@ -493,7 +493,7 @@ export class IngestionController {
     name: 'force',
     required: false,
     type: String,
-    description: 'Re-fetch alt titles for items that already have them',
+    description: 'Bypass daily deduplication (allows re-running within the same UTC day)',
   })
   @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
   @HttpCode(HttpStatus.ACCEPTED)

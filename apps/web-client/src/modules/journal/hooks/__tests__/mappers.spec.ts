@@ -67,8 +67,8 @@ describe('Journal Mappers', () => {
         excerpt: 'This is a test',
         type: 'update',
         featuredImageUrl: 'https://example.com/image.jpg',
-        publishedAt: '2026-01-15T10:00:00.000Z' as unknown as Date,
-        createdAt: '2026-01-14T15:30:00.000Z' as unknown as Date,
+        publishedAt: '2026-01-15T10:00:00.000Z',
+        createdAt: '2026-01-14T15:30:00.000Z',
       };
 
       const result = mapPostListItem(dto);
@@ -87,8 +87,8 @@ describe('Journal Mappers', () => {
         excerpt: 'This is a test',
         type: 'update',
         featuredImageUrl: null,
-        publishedAt: '2026-01-15T10:00:00.000Z' as unknown as Date,
-        createdAt: '2026-01-14T15:30:00.000Z' as unknown as Date,
+        publishedAt: '2026-01-15T10:00:00.000Z',
+        createdAt: '2026-01-14T15:30:00.000Z',
       };
 
       const result = mapPostListItem(dto);
@@ -104,8 +104,8 @@ describe('Journal Mappers', () => {
         excerpt: 'My excerpt',
         type: 'fix',
         featuredImageUrl: 'https://cdn.example.com/img.png',
-        publishedAt: '2026-01-15T10:00:00.000Z' as unknown as Date,
-        createdAt: '2026-01-14T15:30:00.000Z' as unknown as Date,
+        publishedAt: '2026-01-15T10:00:00.000Z',
+        createdAt: '2026-01-14T15:30:00.000Z',
       };
 
       const result = mapPostListItem(dto);
@@ -177,14 +177,14 @@ describe('Journal Mappers', () => {
       excerpt: 'This is a test',
       type: 'update',
       featuredImageUrl: 'https://example.com/image.jpg',
-      publishedAt: '2026-01-15T10:00:00.000Z' as unknown as Date,
-      createdAt: '2026-01-14T15:30:00.000Z' as unknown as Date,
+      publishedAt: '2026-01-15T10:00:00.000Z',
+      createdAt: '2026-01-14T15:30:00.000Z',
       body: '## Hello\n\nWorld',
       bodyHtml: '<h2>Hello</h2><p>World</p>',
       contextId: 'trending',
       metaTitle: 'Test Post | Journal',
       metaDescription: 'A test post description',
-      updatedAt: '2026-01-15T12:00:00.000Z' as unknown as Date,
+      updatedAt: '2026-01-15T12:00:00.000Z',
       navigation: {
         prev: { slug: 'prev', title: 'Prev' },
         next: { slug: 'next', title: 'Next' },
@@ -233,14 +233,14 @@ describe('Journal Mappers', () => {
         excerpt: 'This is a test',
         type: 'update',
         featuredImageUrl: null,
-        publishedAt: '2026-01-15T10:00:00.000Z' as unknown as Date,
-        createdAt: '2026-01-14T15:30:00.000Z' as unknown as Date,
+        publishedAt: '2026-01-15T10:00:00.000Z',
+        createdAt: '2026-01-14T15:30:00.000Z',
         body: '## Hello',
         bodyHtml: '<h2>Hello</h2>',
         contextId: null,
         metaTitle: null,
         metaDescription: null,
-        updatedAt: '2026-01-15T12:00:00.000Z' as unknown as Date,
+        updatedAt: '2026-01-15T12:00:00.000Z',
         navigation: { prev: null, next: null },
         isDraft: true,
         authorId: 'author-456',

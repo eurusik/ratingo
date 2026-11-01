@@ -47,6 +47,6 @@ COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY apps/api/drizzle.config.js ./apps/api/drizzle.config.js
 COPY apps/api/drizzle_v2 ./apps/api/drizzle_v2
 
-EXPOSE 3000
+EXPOSE 3001
 
-CMD ["npm", "run", "start:prod", "--workspace=api"]
+CMD ["sh", "-c", "if [ \"$APP_ROLE\" = worker ]; then exec npm run start:worker:prod --workspace=api; else exec npm run start:prod --workspace=api; fi"]

@@ -2,6 +2,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { apiOnly, workerOnly } from '../../common/runtime/app-role';
+import schedulerConfig from '../../config/scheduler.config';
 import tmdbConfig from '../../config/tmdb.config';
 import { DatabaseModule } from '../../database/database.module';
 import {
@@ -15,6 +17,9 @@ import { UserActionsModule } from '../user-actions/user-actions.module';
 import { EpisodeProgressService } from './application/episode-progress.service';
 import { ImportMediaService } from './application/import-media.service';
 import { ImportPendingService } from './application/import-pending.service';
+import { LinkPendingImportsScheduler } from './application/link-pending-imports.scheduler';
+import { LinkPendingImportsService } from './application/link-pending-imports.service';
+import { LinkPendingImportsSweeper } from './application/link-pending-imports.sweeper';
 import { CaughtUpTransitionListener } from './application/listeners/caught-up-transition.listener';
 import { LinkImportListener } from './application/listeners/link-import.listener';
 import { MeListsService } from './application/me-lists.service';
@@ -23,6 +28,8 @@ import { ResolveImportItemPipeline } from './application/pipelines/resolve-impor
 import { UserMediaService } from './application/user-media.service';
 import { IMPORT_PENDING_REPOSITORY } from './domain/constants/import-pending.constants';
 import { MEDIA_LOOKUP_PORT } from './domain/constants/import.constants';
+import { IMPORT_LINK_METRICS } from './domain/ports/import-link-metrics.port';
+import { LINK_PENDING_IMPORTS_SWEEP } from './domain/ports/link-pending-imports-sweep.port';
 import { RATING_SYNC_PORT } from './domain/ports/rating-sync.port';
 import { SHOW_STATUS_PORT } from './domain/ports/show-status.port';
 import { TMDB_RESOLVER } from './domain/ports/tmdb-resolver.port';
@@ -30,6 +37,7 @@ import { EPISODE_PROGRESS_REPOSITORY } from './domain/repositories/episode-progr
 import { USER_MEDIA_STATE_REPOSITORY } from './domain/repositories/user-media-state.repository.interface';
 import { DrizzleMediaLookupAdapter } from './infrastructure/adapters/drizzle-media-lookup.adapter';
 import { DrizzleShowStatusAdapter } from './infrastructure/adapters/drizzle-show-status.adapter';
+import { OtelImportLinkMetricsAdapter } from './infrastructure/adapters/otel-import-link-metrics.adapter';
 import { TmdbResolverAdapter } from './infrastructure/adapters/tmdb-resolver.adapter';
 import { DrizzleImportPendingRepository } from './infrastructure/drizzle-import-pending.repository';
 import { FavoriteUpdatesQuery } from './infrastructure/queries/favorite-updates.query';
@@ -45,6 +53,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     CardsModule,
     UserActionsModule,
     ConfigModule.forFeature(tmdbConfig),
+    ConfigModule.forFeature(schedulerConfig),
     BullModule.registerQueue({
       name: BACKFILL_QUEUE,
       defaultJobOptions: {
@@ -66,8 +75,19 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     FavoriteUpdatesQuery,
     CaughtUpTransitionListener,
     LinkImportListener,
+    LinkPendingImportsService,
+    LinkPendingImportsSweeper,
+    ...workerOnly(LinkPendingImportsScheduler),
     ResolveImportDispatcherPipeline,
     ResolveImportItemPipeline,
+    {
+      provide: IMPORT_LINK_METRICS,
+      useClass: OtelImportLinkMetricsAdapter,
+    },
+    {
+      provide: LINK_PENDING_IMPORTS_SWEEP,
+      useExisting: LinkPendingImportsSweeper,
+    },
     {
       provide: USER_MEDIA_STATE_REPOSITORY,
       useClass: DrizzleUserMediaStateRepository,
@@ -97,7 +117,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
       useClass: DrizzleShowStatusAdapter,
     },
   ],
-  controllers: [UserMediaController, MeListsController, EpisodeProgressController],
+  controllers: apiOnly(UserMediaController, MeListsController, EpisodeProgressController),
   exports: [
     UserMediaService,
     RATING_SYNC_PORT,
@@ -106,6 +126,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     ImportPendingService,
     ResolveImportDispatcherPipeline,
     ResolveImportItemPipeline,
+    LINK_PENDING_IMPORTS_SWEEP,
     IMPORT_PENDING_REPOSITORY,
     TMDB_RESOLVER,
   ],

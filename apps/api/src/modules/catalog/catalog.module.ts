@@ -4,9 +4,10 @@ import { ConfigService } from '@nestjs/config';
 
 import IORedis from 'ioredis';
 
+import { apiOnly } from '../../common/runtime/app-role';
 import { HERO_REPOSITORY } from '../home/public';
-import { DEFAULT_INGESTION_JOB_OPTIONS, INGESTION_QUEUE } from '../ingestion/public';
 import { CardsModule } from '../shared/cards/cards.module';
+import { DEFAULT_INGESTION_JOB_OPTIONS, INGESTION_QUEUE } from '../shared/contracts';
 import { VerdictModule } from '../shared/verdict/verdict.module';
 import { TmdbModule } from '../tmdb/tmdb.module';
 import { UserMediaModule } from '../user-media/user-media.module';
@@ -77,13 +78,13 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
       defaultJobOptions: DEFAULT_INGESTION_JOB_OPTIONS,
     }),
   ],
-  controllers: [
+  controllers: apiOnly(
     CatalogMoviesController,
     CatalogShowsController,
     CatalogSearchController,
     CatalogProvidersController,
     CatalogSitemapController,
-  ],
+  ),
   providers: [
     CatalogSearchService,
     CatalogImportService,

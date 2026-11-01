@@ -1,5 +1,5 @@
 {
-  "id": "f3b32c0b-6bd2-4b21-aa02-33e464598f81",
+  "id": "7db227ed-8165-4002-a4e1-0ae47535f844",
   "prevId": "e621b048-9cc2-4356-9f2f-4ced6b6282ca",
   "version": "7",
   "dialect": "postgresql",
@@ -3210,6 +3210,22 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "idx_pending_link_sweep": {
+          "name": "idx_pending_link_sweep",
+          "columns": [
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"import_pending_items\".\"status\" in ('ingesting', 'linking')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -5167,97 +5183,6 @@
           ]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.key_health_checks": {
-      "name": "key_health_checks",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "provider": {
-          "name": "provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status_code": {
-          "name": "status_code",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "latency_ms": {
-          "name": "latency_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "detail": {
-          "name": "detail",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "quota_remaining": {
-          "name": "quota_remaining",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "quota_limit": {
-          "name": "quota_limit",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "checked_at": {
-          "name": "checked_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "key_health_checks_provider_checked_idx": {
-          "name": "key_health_checks_provider_checked_idx",
-          "columns": [
-            {
-              "expression": "provider",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "checked_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

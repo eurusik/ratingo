@@ -1,7 +1,7 @@
 import { type InferInsertModel } from 'drizzle-orm';
 
 import type * as schema from '../../../../database/schema';
-import type { NormalizedSeason, NormalizedEpisode } from '../../../ingestion/public';
+import type { NormalizedSeason, NormalizedEpisode } from '../../../shared/contracts';
 import { pickDefined } from '../utils/persistence.utils';
 
 /**

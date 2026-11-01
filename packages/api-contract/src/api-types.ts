@@ -2502,6 +2502,11 @@ export interface components {
         };
         ImageDto: {
             /**
+             * @description Smallest size TMDB serves: w154 for posters (list thumbnails up to ~75px wide), w300 for backdrops (same as small)
+             * @example https://image.tmdb.org/t/p/w154/abc.jpg
+             */
+            thumb: string;
+            /**
              * @description Small image for cards (w342)
              * @example https://image.tmdb.org/t/p/w342/abc.jpg
              */
@@ -9844,7 +9849,7 @@ export interface operations {
     IngestionController_backfillAltTitles: {
         parameters: {
             query?: {
-                /** @description Re-fetch alt titles for items that already have them */
+                /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
                 force?: string;
             };
             header?: never;

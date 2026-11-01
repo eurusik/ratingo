@@ -28,6 +28,17 @@ export interface UpdatePendingItemInput {
   mediaItemId?: string | null;
 }
 
+export interface PendingMediaLink {
+  item: ImportPendingItem;
+  mediaItemId: string;
+}
+
+export interface LinkableItemsQuery {
+  ingestingBefore: Date;
+  staleLinkingBefore: Date;
+  limit: number;
+}
+
 export interface IImportPendingRepository {
   /** Creates a new import batch record. */
   createBatch(input: CreateBatchInput): Promise<ImportBatch>;
@@ -61,13 +72,19 @@ export interface IImportPendingRepository {
 
   /**
    * Finds pending items waiting to be linked for a specific resolved TMDB ID and media type.
-   * Used by LinkImportListener after media.synced event fires.
+   * Used by LinkPendingImportsService once the media is ready (media.synced or the readiness check).
    */
   findItemsByResolvedTmdb(
     resolvedTmdbId: number,
     mediaType: string,
     status: ImportPendingItemStatus,
   ): Promise<ImportPendingItem[]>;
+
+  findLinkableWithReadyMedia(query: LinkableItemsQuery): Promise<PendingMediaLink[]>;
+
+  claimForLinking(itemId: string, staleLinkingBefore: Date): Promise<boolean>;
+
+  failIngestingUpdatedBefore(before: Date, limit: number): Promise<string[]>;
 
   /** Updates the status and optional fields of a single pending item. */
   updateItemStatus(itemId: string, update: UpdatePendingItemInput): Promise<void>;
@@ -78,9 +95,15 @@ export interface IImportPendingRepository {
    */
   updateItemStatusIfNotCancelled(itemId: string, update: UpdatePendingItemInput): Promise<boolean>;
 
+  transitionItemStatus(
+    itemId: string,
+    from: ImportPendingItemStatus,
+    update: UpdatePendingItemInput,
+  ): Promise<boolean>;
+
   /**
    * Cancels all non-terminal items in a batch and marks the batch as cancelled.
-   * Items already in DONE or FAILED state are left unchanged.
+   * Items already in DONE or FAILED state, or being LINKED right now, are left unchanged.
    */
   cancelBatch(batchId: string): Promise<void>;
 

@@ -21,4 +21,4 @@ export {
 } from '../application/services';
 
 // Constants
-export { HOMEPAGE_REFRESH_CONFIG, HERO_REFRESH_CONFIG } from '../stats.constants';
+export { HOMEPAGE_REFRESH_CONFIG, STATS_QUEUE } from '../stats.constants';

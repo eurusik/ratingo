@@ -202,8 +202,7 @@ export class RateLimiter {
   }
 }
 
-// Shared limiter: ~3 requests per second (1 token every 333ms, max 3 tokens)
-// Max queue: 100 requests, timeout: 30 seconds
+// Module-level so every Trakt client shares one budget (limits: see RATE_LIMITER_* above).
 const sharedLimiter = new RateLimiter(
   RATE_LIMITER_MAX_TOKENS,
   RATE_LIMITER_REFILL_INTERVAL_MS,
@@ -247,7 +246,7 @@ export class BaseTraktHttp {
 
   /**
    * Generic fetch wrapper with automatic rate limit handling and retry logic.
-   * Uses shared rate limiter to ensure max 3 req/s across all Trakt calls.
+   * Uses shared rate limiter to ensure max 2 req/s across all Trakt calls.
    * Freezes limiter on 429 to respect Retry-After header globally.
    *
    * @param endpoint - API endpoint starting with slash (e.g., '/shows/trending')

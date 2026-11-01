@@ -1,4 +1,3 @@
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type Queue } from 'bullmq';
 
 import { IngestionJob } from '../../../ingestion/ingestion.constants';
@@ -10,6 +9,7 @@ import { type ImportPendingItem } from '../../domain/entities/import-pending-ite
 import { type IMediaLookupPort } from '../../domain/ports/media-lookup.port';
 import { type ITmdbResolverPort } from '../../domain/ports/tmdb-resolver.port';
 import { type IImportPendingRepository } from '../../domain/repositories/import-pending.repository.interface';
+import { type LinkPendingImportsService } from '../link-pending-imports.service';
 
 import { ResolveImportItemPipeline } from './resolve-import-item.pipeline';
 
@@ -47,7 +47,7 @@ describe('ResolveImportItemPipeline', () => {
   let tmdbResolver: jest.Mocked<ITmdbResolverPort>;
   let ingestionQueue: jest.Mocked<Pick<Queue, 'add'>>;
   let mediaLookup: jest.Mocked<IMediaLookupPort>;
-  let eventEmitter: jest.Mocked<Pick<EventEmitter2, 'emitAsync'>>;
+  let linkPendingImports: jest.Mocked<Pick<LinkPendingImportsService, 'linkReadyMedia'>>;
   let pipeline: ResolveImportItemPipeline;
 
   beforeEach(() => {
@@ -60,8 +60,12 @@ describe('ResolveImportItemPipeline', () => {
       findPendingByBatchAndStatus: jest.fn(),
       findById: jest.fn(),
       findItemsByResolvedTmdb: jest.fn(),
+      findLinkableWithReadyMedia: jest.fn(),
+      claimForLinking: jest.fn().mockResolvedValue(true),
+      failIngestingUpdatedBefore: jest.fn().mockResolvedValue([]),
       updateItemStatus: jest.fn().mockResolvedValue(undefined),
       updateItemStatusIfNotCancelled: jest.fn().mockResolvedValue(true),
+      transitionItemStatus: jest.fn(),
       cancelBatch: jest.fn(),
       updateBatchCountersAtomic: jest.fn().mockResolvedValue({ id: 'batch-1' }),
     };
@@ -78,11 +82,12 @@ describe('ResolveImportItemPipeline', () => {
     mediaLookup = {
       findManyByImdbIds: jest.fn().mockResolvedValue([]),
       findManyByTmdbIds: jest.fn().mockResolvedValue([]),
+      findReadyIdByTmdbId: jest.fn().mockResolvedValue(null),
       findTypeById: jest.fn(),
     };
 
-    eventEmitter = {
-      emitAsync: jest.fn().mockResolvedValue([]),
+    linkPendingImports = {
+      linkReadyMedia: jest.fn().mockResolvedValue(1),
     };
 
     pipeline = new ResolveImportItemPipeline(
@@ -90,7 +95,7 @@ describe('ResolveImportItemPipeline', () => {
       tmdbResolver as any,
       ingestionQueue as any,
       mediaLookup as any,
-      eventEmitter as any,
+      linkPendingImports as any,
     );
   });
 
@@ -147,6 +152,17 @@ describe('ResolveImportItemPipeline', () => {
 
       expect(pendingRepo.updateItemStatusIfNotCancelled).not.toHaveBeenCalled();
       expect(pendingRepo.updateItemStatus).not.toHaveBeenCalled();
+      expect(ingestionQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('skips item already claimed for LINKING', async () => {
+      pendingRepo.findById.mockResolvedValue(
+        makePendingItem({ status: IMPORT_PENDING_STATUS.LINKING }),
+      );
+
+      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
+
+      expect(pendingRepo.updateItemStatusIfNotCancelled).not.toHaveBeenCalled();
       expect(ingestionQueue.add).not.toHaveBeenCalled();
     });
 
@@ -348,37 +364,68 @@ describe('ResolveImportItemPipeline', () => {
     });
   });
 
-  describe('fix 4.4 — synthetic media.synced for already-completed jobs', () => {
-    it('emits synthetic media.synced when deduplicated job is already completed', async () => {
-      const item = makePendingItem({ imdbId: 'tt0000001' });
-      pendingRepo.findById.mockResolvedValue(item);
+  describe('readiness check after INGESTING', () => {
+    beforeEach(() => {
+      pendingRepo.findById.mockResolvedValue(makePendingItem({ imdbId: 'tt0000001' }));
       tmdbResolver.findByImdbId.mockResolvedValue({ tmdbId: 550, type: 'movie' });
-
-      // Job already completed (deduplicated by oneshot jobId)
-      ingestionQueue.add = jest.fn().mockResolvedValue(makeJob('completed'));
-      mediaLookup.findManyByTmdbIds = jest
-        .fn()
-        .mockResolvedValue([{ id: 'media-123', type: 'movie' }]);
-
-      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
-
-      expect(mediaLookup.findManyByTmdbIds).toHaveBeenCalledWith([550]);
-      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
-        'media.synced',
-        expect.objectContaining({ tmdbId: 550, type: 'movie', mediaItemId: 'media-123' }),
-      );
     });
 
-    it('does not emit synthetic event when job is still waiting', async () => {
-      const item = makePendingItem({ imdbId: 'tt0000001' });
-      pendingRepo.findById.mockResolvedValue(item);
-      tmdbResolver.findByImdbId.mockResolvedValue({ tmdbId: 550, type: 'movie' });
-      ingestionQueue.add = jest.fn().mockResolvedValue(makeJob('waiting'));
+    it('enqueues the sync, then marks INGESTING, then checks readiness', async () => {
+      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
+
+      const enqueued = ingestionQueue.add.mock.invocationCallOrder[0];
+      const markedIngesting =
+        pendingRepo.updateItemStatusIfNotCancelled.mock.invocationCallOrder[1];
+      const readinessChecked = mediaLookup.findReadyIdByTmdbId.mock.invocationCallOrder[0];
+      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenNthCalledWith(
+        2,
+        'item-1',
+        expect.objectContaining({ status: IMPORT_PENDING_STATUS.INGESTING }),
+      );
+      expect(enqueued).toBeLessThan(markedIngesting);
+      expect(markedIngesting).toBeLessThan(readinessChecked);
+      expect(mediaLookup.findReadyIdByTmdbId).toHaveBeenCalledWith(550, 'movie');
+    });
+
+    it('links directly when the sync finished (and media.synced fired) before the item was INGESTING', async () => {
+      ingestionQueue.add.mockResolvedValue(makeJob('completed') as any);
+      mediaLookup.findReadyIdByTmdbId.mockResolvedValue('media-123');
 
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
-      expect(mediaLookup.findManyByTmdbIds).not.toHaveBeenCalled();
-      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+      expect(linkPendingImports.linkReadyMedia).toHaveBeenCalledWith({
+        tmdbId: 550,
+        type: 'movie',
+        mediaItemId: 'media-123',
+      });
+    });
+
+    it('leaves the item INGESTING for media.synced when the media is not ready yet', async () => {
+      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
+
+      expect(linkPendingImports.linkReadyMedia).not.toHaveBeenCalled();
+    });
+
+    it('skips the readiness check when the item was cancelled while the sync was queued', async () => {
+      pendingRepo.updateItemStatusIfNotCancelled
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
+
+      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
+
+      expect(ingestionQueue.add).toHaveBeenCalledTimes(1);
+      expect(mediaLookup.findReadyIdByTmdbId).not.toHaveBeenCalled();
+      expect(linkPendingImports.linkReadyMedia).not.toHaveBeenCalled();
+    });
+
+    it('does not fail the job when the readiness check throws (the sweeper picks it up)', async () => {
+      mediaLookup.findReadyIdByTmdbId.mockRejectedValue(new Error('db down'));
+
+      await expect(
+        pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' }),
+      ).resolves.toBeUndefined();
+
+      expect(linkPendingImports.linkReadyMedia).not.toHaveBeenCalled();
     });
   });
 
@@ -404,7 +451,6 @@ describe('ResolveImportItemPipeline', () => {
         { tmdbId: 550, type: 'movie' },
         { jobId: 'movie_550_oneshot' },
       );
-      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
       expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenLastCalledWith(
         'item-1',
         expect.objectContaining({ status: IMPORT_PENDING_STATUS.INGESTING }),

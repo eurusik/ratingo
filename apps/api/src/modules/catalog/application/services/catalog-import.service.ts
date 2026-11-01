@@ -3,6 +3,7 @@ import { BadRequestException, Inject, Injectable, Logger, NotFoundException } fr
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { JOB_STATUS, type JobStatus } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { generateSlug } from '@/common/utils/slug.util';
 
 import { IMPORT_JOB_PORT, IImportJobPort } from '../../domain/ports/import-job.port';
 import {
@@ -14,7 +15,6 @@ import {
   MEDIA_REPOSITORY,
 } from '../../domain/repositories/media.repository.interface';
 import { IMPORT_STATUS, type ImportResult } from '../../domain/types/import.types';
-import { generateSlug } from '../../domain/utils/slug.utils';
 
 /**
  * Service for on-demand import of media from TMDB.

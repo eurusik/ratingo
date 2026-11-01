@@ -81,20 +81,6 @@ export class IngestionSchedulerService implements OnModuleInit {
   }
 
   /**
-   * @deprecated Use getJobSchedulers() instead.
-   */
-  async getRepeatableJobs(): Promise<JobSchedulerJson[]> {
-    return this.getJobSchedulers();
-  }
-
-  /**
-   * @deprecated Use removeAllJobSchedulers() instead.
-   */
-  async removeAllRepeatableJobs(): Promise<void> {
-    return this.removeAllJobSchedulers();
-  }
-
-  /**
    * Returns namespaced scheduler ID.
    *
    * @param {string} jobId - Original job ID

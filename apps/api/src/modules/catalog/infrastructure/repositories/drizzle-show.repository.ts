@@ -7,7 +7,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import type { NormalizedSeason } from '../../../ingestion/public';
+import type { NormalizedSeason } from '../../../shared/contracts';
 import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import {
   type CalendarEpisode,
@@ -257,22 +257,24 @@ export class DrizzleShowRepository implements IShowRepository {
       'find shows for analysis',
       this.logger,
       async () => {
-        return this.db
-          .select({
-            tmdbId: schema.mediaItems.tmdbId,
-            title: schema.mediaItems.title,
-          })
-          .from(schema.mediaItems)
-          .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-          .where(
-            and(eq(schema.mediaItems.type, MediaType.SHOW), isNull(schema.mediaItems.deletedAt)),
-          )
-          // analyzedAt is an ISO-8601 string inside the jsonb, so text order == chronological order
-          .orderBy(
-            sql`${schema.shows.dropOffAnalysis}->>'analyzedAt' ASC NULLS FIRST`,
-            schema.mediaItems.id,
-          )
-          .limit(limit);
+        return (
+          this.db
+            .select({
+              tmdbId: schema.mediaItems.tmdbId,
+              title: schema.mediaItems.title,
+            })
+            .from(schema.mediaItems)
+            .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+            .where(
+              and(eq(schema.mediaItems.type, MediaType.SHOW), isNull(schema.mediaItems.deletedAt)),
+            )
+            // analyzedAt is an ISO-8601 string inside the jsonb, so text order == chronological order
+            .orderBy(
+              sql`${schema.shows.dropOffAnalysis}->>'analyzedAt' ASC NULLS FIRST`,
+              schema.mediaItems.id,
+            )
+            .limit(limit)
+        );
       },
       { limit },
     );

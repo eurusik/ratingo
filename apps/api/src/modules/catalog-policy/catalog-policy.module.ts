@@ -8,9 +8,9 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
+import { apiOnly, workerOnly } from '../../common/runtime/app-role';
 import { ProviderModule } from '../provider/provider.module';
 
-import { BatchEvaluationService } from './application/services/batch-evaluation.service';
 import { CatalogEvaluationService } from './application/services/catalog-evaluation.service';
 import { CatalogPolicyService } from './application/services/catalog-policy.service';
 import { DiffService } from './application/services/diff.service';
@@ -63,7 +63,7 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     }),
     ProviderModule,
   ],
-  controllers: [PolicyController, RunController, DryRunController],
+  controllers: apiOnly(PolicyController, RunController, DryRunController),
   providers: [
     // Repositories
     {
@@ -105,7 +105,6 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     // Services
     CatalogPolicyService,
     CatalogEvaluationService,
-    BatchEvaluationService,
     // Port binding - other modules inject CATALOG_POLICY_EVALUATOR
     {
       provide: CATALOG_POLICY_EVALUATOR,
@@ -119,9 +118,7 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     // Worker handlers (SRP: one handler per job type)
     ReEvaluateAllHandler,
     EvaluateItemHandler,
-    WatchdogHandler,
-    // Worker (thin router)
-    CatalogPolicyWorker,
+    ...workerOnly(WatchdogHandler, CatalogPolicyWorker),
   ],
   exports: [
     // Export port token for other modules (preferred way)
@@ -129,7 +126,6 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     // Export services for internal use and backward compatibility
     CatalogPolicyService,
     CatalogEvaluationService,
-    BatchEvaluationService,
     PolicyActivationService,
     DiffService,
     DryRunService,

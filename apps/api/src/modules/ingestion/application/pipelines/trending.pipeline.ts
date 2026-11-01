@@ -62,7 +62,7 @@ export class TrendingPipeline {
     const result = await this.bulkJobService.enqueueBulk(jobs, this.logger, 'Trending dispatcher');
 
     if (syncStats) {
-      await this.queueStatsJob(startedAt, pages, window);
+      await this.queueStatsJob(startedAt, window);
     }
 
     this.logger.log(
@@ -282,9 +282,8 @@ export class TrendingPipeline {
     });
   }
 
-  private async queueStatsJob(startedAt: Date, _pages: number, window: string): Promise<void> {
-    // Use constant limit instead of dynamic calculation to avoid rate limiting.
-    // With 4 API calls per item and ~3 req/s rate limit, 50 items takes ~70 seconds.
+  private async queueStatsJob(startedAt: Date, window: string): Promise<void> {
+    // Fixed limit (not derived from pages) keeps the stats job within the Trakt rate budget.
     const limit = TRENDING_DEFAULT_STATS_LIMIT;
 
     await this.bulkJobService.addDelayed(

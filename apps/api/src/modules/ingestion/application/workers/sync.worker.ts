@@ -3,8 +3,9 @@ import { Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
-import { type MediaType } from '@/common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 import { WORKER_CONFIG } from '@/config/queue.config';
+import { type SyncMediaJobData } from '@/modules/shared/contracts';
 
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
@@ -15,6 +16,7 @@ import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
 import { SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
 import { TrackedShowsPipeline } from '../pipelines/tracked-shows.pipeline';
 import { TrendingPipeline } from '../pipelines/trending.pipeline';
+import { MediaPageCacheService } from '../services/media-page-cache.service';
 import { SyncMediaService } from '../services/sync-media.service';
 
 // Job ID formatting constants
@@ -47,6 +49,7 @@ export class SyncWorker extends WorkerHost {
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
     private readonly backfillMdblistRatingsPipeline: BackfillMdblistRatingsPipeline,
+    private readonly mediaPageCache: MediaPageCacheService,
   ) {
     super();
   }
@@ -59,14 +62,21 @@ export class SyncWorker extends WorkerHost {
     return jobId.length > JOB_ID_MIN_LENGTH ? jobId.slice(-JOB_ID_SUFFIX_LENGTH) : jobId;
   }
 
+  private async invalidateWebPageIfUserRequested(
+    data: Partial<SyncMediaJobData>,
+    type: MediaType,
+  ): Promise<void> {
+    if (!data.userRequested || data.tmdbId === undefined) return;
+    await this.mediaPageCache.invalidateAfterSync(data.tmdbId, type);
+  }
+
   /**
    * Routes jobs to appropriate pipeline handlers.
    * BullMQ handles concurrency and retries automatically.
    */
   async process(
     job: Job<
-      {
-        tmdbId?: number;
+      Partial<SyncMediaJobData> & {
         tmdbIds?: number[];
         trending?: { score: number; rank: number };
         region?: string;
@@ -95,9 +105,11 @@ export class SyncWorker extends WorkerHost {
         // Direct sync jobs
         case IngestionJob.SYNC_MOVIE:
           await this.syncService.syncMovie(job.data.tmdbId!, job.data.trending, jid);
+          await this.invalidateWebPageIfUserRequested(job.data, MediaType.MOVIE);
           break;
         case IngestionJob.SYNC_SHOW:
           await this.syncService.syncShow(job.data.tmdbId!, job.data.trending, jid);
+          await this.invalidateWebPageIfUserRequested(job.data, MediaType.SHOW);
           break;
 
         // Snapshots pipeline

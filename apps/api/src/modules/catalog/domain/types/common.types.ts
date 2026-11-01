@@ -68,6 +68,7 @@ export interface RatingoStats {
  * Image data with multiple sizes for media items.
  */
 export interface ImageData {
+  thumb: string;
   small: string;
   medium: string;
   large: string;

@@ -6359,7 +6359,7 @@
             "name": "force",
             "required": false,
             "in": "query",
-            "description": "Re-fetch alt titles for items that already have them",
+            "description": "Bypass daily deduplication (allows re-running within the same UTC day)",
             "schema": {
               "type": "string"
             }
@@ -13304,6 +13304,11 @@
       "ImageDto": {
         "type": "object",
         "properties": {
+          "thumb": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w154/abc.jpg",
+            "description": "Smallest size TMDB serves: w154 for posters (list thumbnails up to ~75px wide), w300 for backdrops (same as small)"
+          },
           "small": {
             "type": "string",
             "example": "https://image.tmdb.org/t/p/w342/abc.jpg",
@@ -13326,6 +13331,7 @@
           }
         },
         "required": [
+          "thumb",
           "small",
           "medium",
           "large",

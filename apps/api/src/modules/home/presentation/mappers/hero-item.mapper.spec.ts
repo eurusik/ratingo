@@ -12,8 +12,8 @@ describe('HeroItemMapper', () => {
     originalTitle: 'Fight Club',
     overview: 'An insomniac office worker...',
     primaryTrailerKey: 'abc123',
-    poster: { small: 'ps', medium: 'pm', large: 'pl', original: 'po' },
-    backdrop: { small: 'bs', medium: 'bm', large: 'bl', original: 'bo' },
+    poster: { thumb: 'ps', small: 'ps', medium: 'pm', large: 'pl', original: 'po' },
+    backdrop: { thumb: 'bs', small: 'bs', medium: 'bm', large: 'bl', original: 'bo' },
     releaseDate: new Date('1999-10-15'),
     isNew: false,
     isClassic: true,
@@ -57,8 +57,20 @@ describe('HeroItemMapper', () => {
 
       const dto = HeroItemMapper.toDto(item);
 
-      expect(dto.poster).toEqual({ small: 'ps', medium: 'pm', large: 'pl', original: 'po' });
-      expect(dto.backdrop).toEqual({ small: 'bs', medium: 'bm', large: 'bl', original: 'bo' });
+      expect(dto.poster).toEqual({
+        thumb: 'ps',
+        small: 'ps',
+        medium: 'pm',
+        large: 'pl',
+        original: 'po',
+      });
+      expect(dto.backdrop).toEqual({
+        thumb: 'bs',
+        small: 'bs',
+        medium: 'bm',
+        large: 'bl',
+        original: 'bo',
+      });
     });
 
     it('should handle null images', () => {
@@ -66,8 +78,8 @@ describe('HeroItemMapper', () => {
 
       const dto = HeroItemMapper.toDto(item);
 
-      expect(dto.poster).toEqual({ small: '', medium: '', large: '', original: '' });
-      expect(dto.backdrop).toEqual({ small: '', medium: '', large: '', original: '' });
+      expect(dto.poster).toEqual({ thumb: '', small: '', medium: '', large: '', original: '' });
+      expect(dto.backdrop).toEqual({ thumb: '', small: '', medium: '', large: '', original: '' });
     });
 
     it('should map stats correctly', () => {
