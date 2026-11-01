@@ -54,6 +54,8 @@ export {
 // Run feature components
 export { RunHeader, RunDiffTab, RunErrorsTab } from './components/run';
 
+export { KeysHealthDashboard } from './components/monitoring';
+
 // Configuration
 export { ADMIN_NAVIGATION, getAdminNavigation } from './config';
 

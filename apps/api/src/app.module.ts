@@ -13,6 +13,7 @@ import { HomeModule } from './modules/home/home.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { InsightsModule } from './modules/insights/insights.module';
 import { JournalModule } from './modules/journal/journal.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { UserActionsModule } from './modules/user-actions/user-actions.module';
@@ -49,6 +50,7 @@ import { QueueMetricsModule } from './telemetry/queue-metrics.module';
     UserActionsModule,
     JournalModule,
     ReviewsModule,
+    MonitoringModule,
     HealthModule,
     ...workerOnly(QueueMetricsModule),
   ],

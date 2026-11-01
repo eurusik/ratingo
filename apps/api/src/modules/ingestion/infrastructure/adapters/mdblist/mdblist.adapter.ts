@@ -1,7 +1,12 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { MediaType } from '../../../../../common/enums/media-type.enum';
+import {
+  EXTERNAL_API_PROVIDER,
+  emitExternalApiFailure,
+} from '../../../../../common/events/external-api-failure.event';
 import { MdblistApiException } from '../../../../../common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
@@ -95,6 +100,7 @@ export class MdblistAdapter {
   constructor(
     @Inject(mdblistConfig.KEY)
     private readonly config: ConfigType<typeof mdblistConfig>,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.httpClient = new ResilientHttpClient(MDBLIST_RETRY_CONFIG);
   }
@@ -172,6 +178,7 @@ export class MdblistAdapter {
       const { error } = result;
 
       if (error instanceof HttpError) {
+        emitExternalApiFailure(this.eventEmitter, EXTERNAL_API_PROVIDER.MDBLIST, error.status);
         throw new MdblistApiException(error.message, error.status);
       }
 

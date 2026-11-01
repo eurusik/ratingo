@@ -1,5 +1,6 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import {
   DEFAULT_REGION,
@@ -8,6 +9,10 @@ import {
   MS_PER_DAY,
 } from '../../common/constants';
 import { MediaType } from '../../common/enums/media-type.enum';
+import {
+  EXTERNAL_API_PROVIDER,
+  emitExternalApiFailure,
+} from '../../common/events/external-api-failure.event';
 import { TmdbApiException } from '../../common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
@@ -96,6 +101,7 @@ export class TmdbAdapter implements MetadataProviderPort {
   constructor(
     @Inject(tmdbConfig.KEY)
     private readonly config: ConfigType<typeof tmdbConfig>,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.httpClient = new ResilientHttpClient(TMDB_RETRY_CONFIG);
   }
@@ -484,6 +490,7 @@ export class TmdbAdapter implements MetadataProviderPort {
         if (error.status === HttpStatus.NOT_FOUND) {
           throw new TmdbApiException('Resource not found', HttpStatus.NOT_FOUND);
         }
+        emitExternalApiFailure(this.eventEmitter, EXTERNAL_API_PROVIDER.TMDB, error.status);
         throw new TmdbApiException(error.message, error.status);
       }
 

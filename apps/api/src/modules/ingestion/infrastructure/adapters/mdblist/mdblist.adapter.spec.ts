@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MdblistAdapter } from './mdblist.adapter';
 import mdblistConfig from '@/config/mdblist.config';
@@ -73,7 +74,11 @@ describe('MdblistAdapter', () => {
     mockFetch.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MdblistAdapter, { provide: mdblistConfig.KEY, useValue: mockConfig }],
+      providers: [
+        MdblistAdapter,
+        { provide: mdblistConfig.KEY, useValue: mockConfig },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+      ],
     }).compile();
 
     adapter = module.get<MdblistAdapter>(MdblistAdapter);
@@ -202,18 +207,21 @@ describe('MdblistAdapter', () => {
       expect(result).toEqual({ rottenTomatoesCritics: null, rottenTomatoesAudience: null });
     });
 
-    it.each([401, 403, 429, 500, 503])('throws on HTTP %i instead of returning nulls', async (status) => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status,
-        statusText: 'Error',
-        headers: new Headers(),
-      });
+    it.each([401, 403, 429, 500, 503])(
+      'throws on HTTP %i instead of returning nulls',
+      async (status) => {
+        mockFetch.mockResolvedValue({
+          ok: false,
+          status,
+          statusText: 'Error',
+          headers: new Headers(),
+        });
 
-      await expect(adapter.getRottenTomatoesRatings(1, MediaType.MOVIE)).rejects.toMatchObject({
-        details: { statusCode: status },
-      });
-    });
+        await expect(adapter.getRottenTomatoesRatings(1, MediaType.MOVIE)).rejects.toMatchObject({
+          details: { statusCode: status },
+        });
+      },
+    );
 
     it('throws on network failure', async () => {
       mockFetch.mockRejectedValue(new Error('network down'));
@@ -255,15 +263,16 @@ describe('MdblistAdapter', () => {
         providers: [
           MdblistAdapter,
           { provide: mdblistConfig.KEY, useValue: { apiKey: undefined, apiUrl: 'x' } },
+          { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         ],
       }).compile();
 
       const adapterNoKey = moduleWithoutKey.get<MdblistAdapter>(MdblistAdapter);
 
       expect(adapterNoKey.isConfigured()).toBe(false);
-      await expect(adapterNoKey.getRottenTomatoesRatings(1, MediaType.MOVIE)).rejects.toBeInstanceOf(
-        MdblistApiException,
-      );
+      await expect(
+        adapterNoKey.getRottenTomatoesRatings(1, MediaType.MOVIE),
+      ).rejects.toBeInstanceOf(MdblistApiException);
       expect(mockFetch).not.toHaveBeenCalled();
     });
 

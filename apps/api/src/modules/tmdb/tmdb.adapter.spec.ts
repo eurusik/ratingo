@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TmdbAdapter } from './tmdb.adapter';
 import tmdbConfig from '@/config/tmdb.config';
@@ -91,7 +92,11 @@ describe('TmdbAdapter', () => {
     }));
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TmdbAdapter, { provide: tmdbConfig.KEY, useValue: mockConfig }],
+      providers: [
+        TmdbAdapter,
+        { provide: tmdbConfig.KEY, useValue: mockConfig },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+      ],
     }).compile();
 
     adapter = module.get<TmdbAdapter>(TmdbAdapter);

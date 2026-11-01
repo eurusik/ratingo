@@ -12,6 +12,8 @@ import { HEALTH_QUEUE } from '../health/health.constants';
 import { COOLDOWN_REDIS_CLIENT } from '../modules/catalog/infrastructure/adapters/redis-cooldown-gate.adapter';
 import { CATALOG_POLICY_QUEUE } from '../modules/catalog-policy/catalog-policy.constants';
 import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
+import { MONITORING_REDIS_CLIENT } from '../modules/monitoring/infrastructure/counters/redis-failure-counter.store';
+import { MONITORING_QUEUE } from '../modules/monitoring/monitoring.constants';
 import { BACKFILL_QUEUE, RATINGS_BACKFILL_QUEUE } from '../modules/shared/contracts';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
 import { applyStandardErrorResponses, buildSwaggerConfig } from '../swagger.config';
@@ -25,6 +27,7 @@ const QUEUES = [
   RATINGS_BACKFILL_QUEUE,
   CATALOG_POLICY_QUEUE,
   HEALTH_QUEUE,
+  MONITORING_QUEUE,
 ];
 
 const OUTPUT_PATH = path.resolve(__dirname, '../../../../packages/api-contract/openapi.json');
@@ -152,6 +155,8 @@ const createApp = async (): Promise<NestFastifyApplication> => {
     .overrideProvider(DATABASE_CONNECTION)
     .useValue({})
     .overrideProvider(COOLDOWN_REDIS_CLIENT)
+    .useValue(noopRedisClient)
+    .overrideProvider(MONITORING_REDIS_CLIENT)
     .useValue(noopRedisClient)
     .overrideProvider(BullRegistrar)
     .useValue(noopBullRegistrar);

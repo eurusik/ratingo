@@ -50,6 +50,12 @@ export {
   useForceDeleteReview,
 } from './admin-reports';
 export {
+  adminMonitoringKeys,
+  useKeyHealth,
+  useKeyHealthHistory,
+  useCheckKeysNow,
+} from './admin-monitoring';
+export {
   useShowProgress,
   useToggleEpisodeWatched,
   useMarkMultipleWatched,

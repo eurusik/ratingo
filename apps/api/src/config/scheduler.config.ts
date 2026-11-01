@@ -131,3 +131,15 @@ export default registerAs(
     jobs: DEFAULT_JOBS.map(buildJobConfig),
   }),
 );
+
+export interface MonitoringKeyHealthOverride {
+  enabled: boolean;
+  pattern: string | undefined;
+}
+
+export function getMonitoringKeyHealthOverride(): MonitoringKeyHealthOverride {
+  return {
+    enabled: process.env.SCHEDULER_MONITORING_KEY_HEALTH_ENABLED !== 'false',
+    pattern: process.env.SCHEDULER_MONITORING_KEY_HEALTH_PATTERN || undefined,
+  };
+}

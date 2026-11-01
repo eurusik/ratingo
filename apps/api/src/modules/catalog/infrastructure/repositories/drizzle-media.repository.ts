@@ -1,6 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, ne, inArray, sql, and, desc, gt, gte, lt, isNull, isNotNull, exists } from 'drizzle-orm';
+import {
+  eq,
+  ne,
+  inArray,
+  sql,
+  and,
+  desc,
+  gt,
+  gte,
+  lt,
+  isNull,
+  isNotNull,
+  exists,
+} from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DB_CONSTRAINT } from '../../../../common/constants/database.constants';
@@ -141,10 +154,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
       'update ingestion status',
       this.logger,
       async () => {
-        const conditions = [
-          eq(schema.mediaItems.tmdbId, tmdbId),
-          eq(schema.mediaItems.type, type),
-        ];
+        const conditions = [eq(schema.mediaItems.tmdbId, tmdbId), eq(schema.mediaItems.type, type)];
         if (options?.preserveReady) {
           conditions.push(ne(schema.mediaItems.ingestionStatus, IngestionStatus.READY));
         }
@@ -620,10 +630,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           .from(schema.mediaItems)
           .where(
             type
-              ? and(
-                  inArray(schema.mediaItems.tmdbId, tmdbIds),
-                  eq(schema.mediaItems.type, type),
-                )
+              ? and(inArray(schema.mediaItems.tmdbId, tmdbIds), eq(schema.mediaItems.type, type))
               : inArray(schema.mediaItems.tmdbId, tmdbIds),
           );
 

@@ -13,3 +13,4 @@ export * from './schema/provider';
 export * from './schema/policy';
 export * from './schema/reviews';
 export * from './schema/journal';
+export * from './schema/monitoring';
