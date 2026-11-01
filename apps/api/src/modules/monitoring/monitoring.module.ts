@@ -30,10 +30,14 @@ import {
   RedisFailureCounterStore,
 } from './infrastructure/counters/redis-failure-counter.store';
 import { RedisRunLockAdapter } from './infrastructure/locks/redis-run-lock.adapter';
-import { KeyHealthMetrics } from './infrastructure/metrics/key-health.metrics';
+import { KeyHealthGaugesObserver } from './infrastructure/metrics/key-health-gauges.observer';
+import { OtelKeyHealthMetricsAdapter } from './infrastructure/metrics/otel-key-health-metrics.adapter';
 import { DrizzleKeyHealthRepository } from './infrastructure/repositories/drizzle-key-health.repository';
-import { MONITORING_QUEUE } from './monitoring.constants';
-import { MetricsController } from './presentation/controllers/metrics.controller';
+import {
+  MONITORING_QUEUE,
+  MONITORING_REDIS_COMMAND_TIMEOUT_MS,
+  MONITORING_REDIS_MAX_RETRIES_PER_REQUEST,
+} from './monitoring.constants';
 import { MonitoringController } from './presentation/controllers/monitoring.controller';
 
 @Module({
@@ -51,7 +55,7 @@ import { MonitoringController } from './presentation/controllers/monitoring.cont
       },
     }),
   ],
-  controllers: apiOnly(MonitoringController, MetricsController),
+  controllers: apiOnly(MonitoringController),
   providers: [
     TmdbKeyProbe,
     TraktKeyProbe,
@@ -86,13 +90,15 @@ import { MonitoringController } from './presentation/controllers/monitoring.cont
             port,
             ...(password && { password }),
             ...(url.protocol === 'rediss:' && { tls: {} }),
-            maxRetriesPerRequest: null,
+            maxRetriesPerRequest: MONITORING_REDIS_MAX_RETRIES_PER_REQUEST,
+            commandTimeout: MONITORING_REDIS_COMMAND_TIMEOUT_MS,
           });
         }
         return new IORedis({
           host: config.get('REDIS_HOST') ?? 'localhost',
           port: config.get('REDIS_PORT') ?? 6379,
-          maxRetriesPerRequest: null,
+          maxRetriesPerRequest: MONITORING_REDIS_MAX_RETRIES_PER_REQUEST,
+          commandTimeout: MONITORING_REDIS_COMMAND_TIMEOUT_MS,
         });
       },
       inject: [ConfigService],
@@ -107,10 +113,10 @@ import { MonitoringController } from './presentation/controllers/monitoring.cont
     },
     {
       provide: KEY_HEALTH_METRICS,
-      useClass: KeyHealthMetrics,
+      useClass: OtelKeyHealthMetricsAdapter,
     },
     KeyHealthService,
-    ...workerOnly(MonitoringSchedulerService, MonitoringWorker),
+    ...workerOnly(MonitoringSchedulerService, MonitoringWorker, KeyHealthGaugesObserver),
     ExternalApiFailureListener,
   ],
 })

@@ -5,11 +5,13 @@ import { type FetchResult, HttpError, type RetryConfig } from '@/common/http/res
 import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
 import { type KeyProbeResult } from '../../domain/ports/key-probe.port';
 
+export const PROBE_TIMEOUT_MS = 8_000;
+
 export const PROBE_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 1,
   baseDelayMs: 500,
   maxTotalTimeMs: 10_000,
-  timeoutMs: 8_000,
+  timeoutMs: PROBE_TIMEOUT_MS,
 };
 
 export function mapHttpFailure(result: FetchResult<unknown>): KeyProbeResult {

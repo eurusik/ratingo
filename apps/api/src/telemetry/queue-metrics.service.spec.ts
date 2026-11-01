@@ -38,6 +38,7 @@ describe('QueueMetricsService', () => {
       fakeQueue('ratings-backfill', others),
       fakeQueue('catalog-policy-queue', failing),
       fakeQueue('stats-queue', stats),
+      fakeQueue('monitoring-queue', others),
     );
   };
 
@@ -64,7 +65,9 @@ describe('QueueMetricsService', () => {
     const points = await collect(QUEUE_JOBS_METRIC);
     const queues = new Set(points.map((point) => point.attributes.queue));
 
-    expect(queues).toEqual(new Set(['ingestion', 'backfill', 'ratings-backfill', 'stats-queue']));
+    expect(queues).toEqual(
+      new Set(['ingestion', 'backfill', 'ratings-backfill', 'stats-queue', 'monitoring-queue']),
+    );
   });
 
   it('stops observing after module destroy', async () => {

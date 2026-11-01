@@ -1,4 +1,4 @@
-CREATE TABLE "key_health_checks" (
+CREATE TABLE IF NOT EXISTS "key_health_checks" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"provider" text NOT NULL,
 	"status" text NOT NULL,
@@ -10,4 +10,4 @@ CREATE TABLE "key_health_checks" (
 	"checked_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX "key_health_checks_provider_checked_idx" ON "key_health_checks" USING btree ("provider","checked_at" DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS "key_health_checks_provider_checked_idx" ON "key_health_checks" USING btree ("provider","checked_at" DESC NULLS LAST);

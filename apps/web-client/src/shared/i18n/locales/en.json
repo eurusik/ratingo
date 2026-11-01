@@ -1077,6 +1077,19 @@
   },
   "admin": {
     "monitoring": {
+      "status": {
+        "valid": "Valid",
+        "degraded": "Degraded",
+        "invalid": "Invalid",
+        "unknown": "Unknown"
+      },
+      "time": {
+        "justNow": "just now",
+        "minutesAgo": "{count} min ago",
+        "hoursAgo": "{count} h ago",
+        "daysAgo": "{count} d ago"
+      },
+      "latencyValue": "{count} ms",
       "title": "Key monitoring",
       "description": "Active probe + passive counters of real 401/403/429 over 24h. Auto-refreshes every minute.",
       "checkNow": "Check now",

@@ -23,7 +23,7 @@ describe('KeyHealthService', () => {
   let repository: jest.Mocked<KeyHealthRepository>;
   let failures: jest.Mocked<FailureCounterStore>;
   let runLock: RunLock;
-  let metrics: jest.Mocked<Pick<KeyHealthMetricsPort, 'recordProbe' | 'recordFailure'>>;
+  let metrics: jest.Mocked<Pick<KeyHealthMetricsPort, 'recordFailure'>>;
 
   function build(probes: KeyProbe[]): KeyHealthService {
     return new KeyHealthService(
@@ -46,7 +46,7 @@ describe('KeyHealthService', () => {
       get: jest.fn().mockResolvedValue({ unauthorized: 0, rateLimited: 0 }),
     };
     runLock = { withLock: jest.fn((fn) => fn()) };
-    metrics = { recordProbe: jest.fn(), recordFailure: jest.fn() };
+    metrics = { recordFailure: jest.fn() };
   });
 
   describe('runChecks', () => {
@@ -79,7 +79,6 @@ describe('KeyHealthService', () => {
           detail: 'bad key',
         }),
       );
-      expect(metrics.recordProbe).toHaveBeenCalledWith(MONITORED_PROVIDER.TMDB, 'valid', 42);
     });
 
     it('skips without persisting when the lock is held', async () => {
@@ -89,6 +88,24 @@ describe('KeyHealthService', () => {
       await build([probe]).runChecks();
 
       expect(repository.save).not.toHaveBeenCalled();
+    });
+
+    it('keeps recording other providers when one snapshot fails to persist', async () => {
+      repository.save.mockImplementation(async (snapshot) => {
+        if (snapshot.provider === MONITORED_PROVIDER.OMDB) {
+          throw new Error('db down');
+        }
+      });
+      const probes = [
+        makeProbe(MONITORED_PROVIDER.OMDB, { status: API_KEY_STATUS.VALID }),
+        makeProbe(MONITORED_PROVIDER.TMDB, { status: API_KEY_STATUS.VALID }),
+      ];
+
+      await expect(build(probes).runChecks()).resolves.toBeUndefined();
+
+      expect(repository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: MONITORED_PROVIDER.TMDB }),
+      );
     });
   });
 

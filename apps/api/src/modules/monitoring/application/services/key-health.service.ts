@@ -39,12 +39,18 @@ export class KeyHealthService {
   ) {}
 
   async runChecks(): Promise<void> {
-    const ran = await this.runLock.withLock(() =>
-      Promise.all(this.probes.map((probe) => this.runSingle(probe))),
+    const outcomes = await this.runLock.withLock(() =>
+      Promise.allSettled(this.probes.map((probe) => this.runSingle(probe))),
     );
-    if (ran === null) {
+    if (outcomes === null) {
       this.logger.warn('Key-health check already running — skipped this trigger');
+      return;
     }
+    outcomes.forEach((outcome, index) => {
+      if (outcome.status === 'rejected') {
+        this.logFailedCheck(this.probes[index].provider, outcome.reason);
+      }
+    });
   }
 
   async getDashboard(): Promise<ProviderKeyHealth[]> {
@@ -84,8 +90,12 @@ export class KeyHealthService {
     };
 
     await this.repository.save(snapshot);
-    this.metrics.recordProbe(snapshot.provider, snapshot.status, snapshot.latencyMs);
     this.logOutcome(snapshot);
+  }
+
+  private logFailedCheck(provider: MonitoredProvider, reason: unknown): void {
+    const detail = reason instanceof Error ? reason.message : String(reason);
+    this.logger.error(`Failed to record ${provider} key health: ${detail}`);
   }
 
   private logOutcome(snapshot: SaveKeyHealthInput): void {

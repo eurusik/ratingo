@@ -2477,6 +2477,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/monitoring/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current health of every monitored API key */
+        get: operations["MonitoringController_getKeys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/monitoring/keys/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Probe all keys now and return the fresh dashboard */
+        post: operations["MonitoringController_checkNow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/monitoring/keys/{provider}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recent probe history for one provider */
+        get: operations["MonitoringController_getHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6179,6 +6230,54 @@ export interface components {
             moderatorNotes?: string;
             /** @description Whether to hide the review (soft delete) */
             hideReview?: boolean;
+        };
+        KeyHealthSnapshotDto: {
+            /**
+             * @example tmdb
+             * @enum {string}
+             */
+            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            /**
+             * @example valid
+             * @enum {string}
+             */
+            status: "valid" | "degraded" | "invalid" | "unknown";
+            /** @description HTTP status observed by the probe */
+            statusCode: number | null;
+            /** @description Probe latency in milliseconds */
+            latencyMs: number | null;
+            /** @description Error message or quota note */
+            detail: string | null;
+            quotaRemaining: number | null;
+            quotaLimit: number | null;
+            /** Format: date-time */
+            checkedAt: string;
+        };
+        ProviderFailureCountsDto: {
+            /** @description 401/403 responses seen on live requests */
+            unauthorized: number;
+            /** @description 429 responses seen on live requests */
+            rateLimited: number;
+        };
+        ProviderKeyHealthDto: {
+            /**
+             * @example tmdb
+             * @enum {string}
+             */
+            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            latest: components["schemas"]["KeyHealthSnapshotDto"] | null;
+            failures: components["schemas"]["ProviderFailureCountsDto"];
+        };
+        KeyHealthDashboardDto: {
+            providers: components["schemas"]["ProviderKeyHealthDto"][];
+        };
+        KeyHealthHistoryDto: {
+            /**
+             * @example tmdb
+             * @enum {string}
+             */
+            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            items: components["schemas"]["KeyHealthSnapshotDto"][];
         };
     };
     responses: never;
@@ -14456,6 +14555,151 @@ export interface operations {
             };
             /** @description Admin role required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MonitoringController_getKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["KeyHealthDashboardDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MonitoringController_checkNow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["KeyHealthDashboardDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MonitoringController_getHistory: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["KeyHealthHistoryDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

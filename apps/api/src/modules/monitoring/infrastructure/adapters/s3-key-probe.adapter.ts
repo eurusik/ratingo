@@ -8,6 +8,9 @@ import { MONITORED_PROVIDER } from '../../domain/constants/monitored-provider.co
 import { type KeyProbeResult } from '../../domain/ports/key-probe.port';
 
 import { BaseKeyProbe } from './base-key-probe';
+import { PROBE_TIMEOUT_MS } from './probe-http.util';
+
+const S3_PROBE_MAX_ATTEMPTS = 1;
 
 @Injectable()
 export class S3KeyProbe extends BaseKeyProbe implements OnModuleDestroy {
@@ -34,6 +37,7 @@ export class S3KeyProbe extends BaseKeyProbe implements OnModuleDestroy {
     try {
       await this.getClient(accessKeyId, secretAccessKey).send(
         new HeadBucketCommand({ Bucket: bucket }),
+        { abortSignal: AbortSignal.timeout(PROBE_TIMEOUT_MS) },
       );
       return { status: API_KEY_STATUS.VALID };
     } catch (error) {
@@ -58,6 +62,7 @@ export class S3KeyProbe extends BaseKeyProbe implements OnModuleDestroy {
       region: this.config.get<string>('S3_REGION') ?? 'auto',
       endpoint: this.config.get<string>('S3_ENDPOINT') ?? undefined,
       forcePathStyle: true,
+      maxAttempts: S3_PROBE_MAX_ATTEMPTS,
       credentials: { accessKeyId, secretAccessKey },
     });
     return this.client;

@@ -1077,6 +1077,19 @@
   },
   "admin": {
     "monitoring": {
+      "status": {
+        "valid": "Валідний",
+        "degraded": "Деградація",
+        "invalid": "Невалідний",
+        "unknown": "Невідомо"
+      },
+      "time": {
+        "justNow": "щойно",
+        "minutesAgo": "{count} хв тому",
+        "hoursAgo": "{count} год тому",
+        "daysAgo": "{count} дн тому"
+      },
+      "latencyValue": "{count} мс",
       "title": "Моніторинг ключів",
       "description": "Активний probe + пасивні лічильники реальних 401/403/429 за добу. Автооновлення щохвилини.",
       "checkNow": "Перевірити зараз",
