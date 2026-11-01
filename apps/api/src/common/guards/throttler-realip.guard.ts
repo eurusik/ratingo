@@ -119,7 +119,7 @@ const ROUTE_SCOPED_TIERS: ReadonlySet<string> = new Set(Object.values(ROUTE_THRO
  */
 @Injectable()
 export class ThrottlerRealIpGuard extends ThrottlerGuard {
-  private readonly logger = new Logger(ThrottlerRealIpGuard.name);
+  protected readonly logger = new Logger(ThrottlerRealIpGuard.name);
 
   protected getTracker(req: Record<string, unknown>): Promise<string> {
     const fastifyReq = req as unknown as FastifyRequest;
