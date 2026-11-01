@@ -6,6 +6,7 @@ import { DATABASE_CONNECTION } from '@/database/database.module';
 
 import { MdblistAdapter } from '../../infrastructure/adapters/mdblist/mdblist.adapter';
 import {
+  BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
   IngestionJob,
   MDBLIST_DAILY_BUDGET,
   MDBLIST_RATINGS_REFRESH_DAYS,
@@ -54,17 +55,38 @@ function buildDbMock(options: { selectBatches?: Array<Array<Record<string, unkno
   };
 }
 
+function pendingJobs(count: number): Array<{ data: unknown }> {
+  return Array.from({ length: count }, (_, i) => ({
+    data: { mediaItemId: `queued-${i}`, tmdbId: 500_000 + i, type: MediaType.MOVIE },
+  }));
+}
+
+function candidateRows(count: number): Array<Record<string, unknown>> {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `media-${i}`,
+    tmdbId: 1000 + i,
+    type: MediaType.MOVIE,
+  }));
+}
+
 describe('BackfillMdblistRatingsPipeline', () => {
   let pipeline: BackfillMdblistRatingsPipeline;
   let dbSpies: ReturnType<typeof buildDbMock>['spies'];
   let queueAddBulk: jest.Mock;
-  let mdblistAdapter: jest.Mocked<Pick<MdblistAdapter, 'getRottenTomatoesRatings' | 'isConfigured'>>;
+  let queueGetJobs: jest.Mock;
+  let mdblistAdapter: jest.Mocked<
+    Pick<MdblistAdapter, 'getRottenTomatoesRatings' | 'isConfigured'>
+  >;
 
-  const setupPipeline = async (dbSetup: Parameters<typeof buildDbMock>[0] = {}) => {
+  const setupPipeline = async (
+    dbSetup: Parameters<typeof buildDbMock>[0] = {},
+    queuedJobs: Array<{ data: unknown }> = [],
+  ) => {
     const { db, spies } = buildDbMock(dbSetup);
     dbSpies = spies;
 
     queueAddBulk = jest.fn().mockResolvedValue([]);
+    queueGetJobs = jest.fn().mockResolvedValue(queuedJobs);
 
     mdblistAdapter = {
       getRottenTomatoesRatings: jest.fn(),
@@ -75,7 +97,10 @@ describe('BackfillMdblistRatingsPipeline', () => {
       providers: [
         BackfillMdblistRatingsPipeline,
         { provide: DATABASE_CONNECTION, useValue: db },
-        { provide: getQueueToken(RATINGS_BACKFILL_QUEUE), useValue: { addBulk: queueAddBulk } },
+        {
+          provide: getQueueToken(RATINGS_BACKFILL_QUEUE),
+          useValue: { addBulk: queueAddBulk, getJobs: queueGetJobs },
+        },
         { provide: MdblistAdapter, useValue: mdblistAdapter },
       ],
     }).compile();
@@ -118,8 +143,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
       await pipeline.dispatch();
 
       const job = queueAddBulk.mock.calls[0][0][0];
-      // jobId: "backfill-mdblist-ratings_<tmdbId>_<YYYYMMDD>" (formatUtcDayId format)
-      expect(job.opts.jobId).toMatch(/^backfill-mdblist-ratings_101_\d{8}$/);
+      expect(job.opts.jobId).toMatch(/^backfill-mdblist-ratings_media-1_\d{8}$/);
     });
 
     it('paginates through multiple batches using id cursor', async () => {
@@ -143,7 +167,9 @@ describe('BackfillMdblistRatingsPipeline', () => {
     });
 
     it('skips the run without querying or queueing when MDBLIST_API_KEY is missing', async () => {
-      await setupPipeline({ selectBatches: [[{ id: 'media-1', tmdbId: 1, type: MediaType.MOVIE }]] });
+      await setupPipeline({
+        selectBatches: [[{ id: 'media-1', tmdbId: 1, type: MediaType.MOVIE }]],
+      });
       mdblistAdapter.isConfigured.mockReturnValue(false);
 
       await pipeline.dispatch();
@@ -200,6 +226,119 @@ describe('BackfillMdblistRatingsPipeline', () => {
       // Must still queue a meaningful amount — confirms the loop ran, not
       // that it bailed on first iteration.
       expect(totalQueued).toBeGreaterThanOrEqual(MDBLIST_DAILY_BUDGET - 100);
+    });
+
+    it('looks up queued jobs in every pending state but not failed or completed', async () => {
+      await setupPipeline({ selectBatches: [[]] });
+
+      await pipeline.dispatch();
+
+      const states = queueGetJobs.mock.calls[0][0] as string[];
+      expect(states).toEqual(
+        expect.arrayContaining(['waiting', 'prioritized', 'delayed', 'paused', 'active']),
+      );
+      expect(states).not.toContain('failed');
+      expect(states).not.toContain('completed');
+    });
+
+    it('does not re-queue items that already have a pending job from an earlier day', async () => {
+      await setupPipeline(
+        {
+          selectBatches: [
+            [
+              { id: 'media-1', tmdbId: 101, type: MediaType.MOVIE },
+              { id: 'media-2', tmdbId: 202, type: MediaType.SHOW },
+            ],
+            [],
+          ],
+        },
+        [{ data: { mediaItemId: 'media-1', tmdbId: 101, type: MediaType.MOVIE } }],
+      );
+
+      await pipeline.dispatch();
+
+      const jobs = queueAddBulk.mock.calls[0][0];
+      expect(jobs).toHaveLength(1);
+      expect(jobs[0].data.tmdbId).toBe(202);
+    });
+
+    it('counts already-queued items toward the daily budget', async () => {
+      const batch = candidateRows(100);
+      await setupPipeline(
+        { selectBatches: [batch, batch, []] },
+        pendingJobs(MDBLIST_DAILY_BUDGET - 50),
+      );
+
+      await pipeline.dispatch();
+
+      expect(dbSpies.limit).toHaveBeenCalledTimes(1);
+      expect(queueAddBulk).toHaveBeenCalledTimes(1);
+      expect(queueAddBulk.mock.calls[0][0]).toHaveLength(50);
+    });
+
+    it('counts every pending job toward the budget, including duplicates of one item', async () => {
+      const duplicate = {
+        data: { mediaItemId: 'duplicated-item', tmdbId: 400_000, type: MediaType.MOVIE },
+      };
+      await setupPipeline({ selectBatches: [candidateRows(100), []] }, [
+        duplicate,
+        duplicate,
+        ...pendingJobs(MDBLIST_DAILY_BUDGET - 52),
+      ]);
+
+      await pipeline.dispatch();
+
+      expect(queueAddBulk.mock.calls[0][0]).toHaveLength(50);
+    });
+
+    it('queues a show whose tmdbId matches an already-queued movie', async () => {
+      await setupPipeline(
+        { selectBatches: [[{ id: 'show-101', tmdbId: 101, type: MediaType.SHOW }], []] },
+        [{ data: { mediaItemId: 'movie-101', tmdbId: 101, type: MediaType.MOVIE } }],
+      );
+
+      await pipeline.dispatch();
+
+      const jobs = queueAddBulk.mock.calls[0][0];
+      expect(jobs).toHaveLength(1);
+      expect(jobs[0].data).toMatchObject({ mediaItemId: 'show-101', type: MediaType.SHOW });
+    });
+
+    it('gives a movie and a show with the same tmdbId distinct jobIds', async () => {
+      await setupPipeline({
+        selectBatches: [
+          [
+            { id: 'movie-101', tmdbId: 101, type: MediaType.MOVIE },
+            { id: 'show-101', tmdbId: 101, type: MediaType.SHOW },
+          ],
+          [],
+        ],
+      });
+
+      await pipeline.dispatch();
+
+      const [movieJob, showJob] = queueAddBulk.mock.calls[0][0];
+      expect(movieJob.opts.jobId).not.toBe(showJob.opts.jobId);
+    });
+
+    it('scans the DB in full batches even when little budget is left', async () => {
+      await setupPipeline({ selectBatches: [[]] }, pendingJobs(MDBLIST_DAILY_BUDGET - 20));
+
+      await pipeline.dispatch();
+
+      expect(dbSpies.limit).toHaveBeenCalledWith(BACKFILL_MDBLIST_RATINGS_BATCH_SIZE);
+    });
+
+    it('queues nothing when the backlog already covers the daily budget', async () => {
+      await setupPipeline(
+        { selectBatches: [[{ id: 'media-1', tmdbId: 101, type: MediaType.MOVIE }], []] },
+        pendingJobs(MDBLIST_DAILY_BUDGET),
+      );
+
+      await pipeline.dispatch();
+
+      expect(dbSpies.select).not.toHaveBeenCalled();
+      expect(queueAddBulk).not.toHaveBeenCalled();
     });
   });
 
