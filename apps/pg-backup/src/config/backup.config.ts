@@ -1,4 +1,5 @@
 import { MS_PER_SECOND } from '../domain';
+import { BackupConfigError } from './backup-config.error';
 
 export interface BackupConfig {
   databaseUrl: string;
@@ -32,7 +33,7 @@ const DEFAULT_UPLOAD_RETRY_DELAYS_SECONDS = [30, 60, 120, 240, 480];
 export function loadBackupConfig(env: NodeJS.ProcessEnv = process.env): BackupConfig {
   const missing = REQUIRED_VARIABLES.filter((name) => !env[name]);
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    throw new BackupConfigError(`Missing required environment variables: ${missing.join(', ')}`);
   }
 
   return {
@@ -61,7 +62,7 @@ function parseRetryDelaysSeconds(raw: string | undefined): number[] {
   if (!raw) return DEFAULT_UPLOAD_RETRY_DELAYS_SECONDS;
   const delays = raw.split(',').map((part) => Number(part.trim()));
   if (delays.some((delay) => !Number.isFinite(delay) || delay < 0)) {
-    throw new Error(
+    throw new BackupConfigError(
       `UPLOAD_RETRY_DELAYS_SECONDS must be comma-separated non-negative numbers, got "${raw}"`,
     );
   }

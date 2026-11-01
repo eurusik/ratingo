@@ -75,10 +75,9 @@ function toUploadError(error: S3ErrorShape): BackupUploadError {
   const status = error.$metadata?.httpStatusCode;
   const code = error.Code ?? error.code ?? error.name ?? 'UnknownError';
   const statusText = status === undefined ? 'no HTTP response' : `HTTP ${status}`;
-  return new BackupUploadError(
-    `${code} (${statusText}): ${error.message ?? ''}`.trim(),
-    isRetryable(code, status),
-  );
+  return new BackupUploadError(`${code} (${statusText}): ${error.message ?? ''}`.trim(), {
+    retryable: isRetryable(code, status),
+  });
 }
 
 function isRetryable(code: string, status: number | undefined): boolean {
