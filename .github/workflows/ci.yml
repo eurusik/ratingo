@@ -68,7 +68,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
@@ -83,7 +83,6 @@ jobs:
         with:
           path: |
             .cache/eslint/api
-            .cache/jest/api
             apps/api/dist/tsconfig.tsbuildinfo
           key: ${{ env.TOOL_CACHE_KEY }}-${{ github.sha }}
           restore-keys: ${{ env.TOOL_CACHE_KEY }}-
@@ -94,17 +93,32 @@ jobs:
       - name: Typecheck
         run: npm run typecheck --workspace=api
 
-      - name: Unit tests
-        run: npm test --workspace=api -- --ci --cacheDirectory "$GITHUB_WORKSPACE/.cache/jest/api"
-
       - if: success() && github.event_name == 'push'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
             .cache/eslint/api
-            .cache/jest/api
             apps/api/dist/tsconfig.tsbuildinfo
           key: ${{ env.TOOL_CACHE_KEY }}-${{ github.sha }}
+
+  api-test:
+    name: api-test (${{ matrix.shard }}/2)
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Unit tests
+        run: npm test --workspace=api -- --ci --shard=${{ matrix.shard }}/2
 
   web:
     name: web
@@ -177,7 +191,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, web, contracts]
+    needs: [changes, api, api-test, web, contracts]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
