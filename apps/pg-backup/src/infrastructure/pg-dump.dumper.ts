@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { createGzip } from 'node:zlib';
 
-import type { DatabaseDump, DatabaseDumper } from '../domain';
+import { DatabaseDumpError, type DatabaseDump, type DatabaseDumper } from '../domain';
 
 const ARCHIVE_EXTENSION = '.tar.gz';
 
@@ -29,7 +29,7 @@ export class PgDumpDumper implements DatabaseDumper {
       await pipeline(pgDump.stdout, createGzip(), createWriteStream(filePath));
       const exitCode = await exited;
       if (exitCode !== 0) {
-        throw new Error(`pg_dump exited with code ${exitCode}: ${stderr().trim()}`);
+        throw new DatabaseDumpError(exitCode, stderr().trim());
       }
     } catch (error) {
       pgDump.kill();

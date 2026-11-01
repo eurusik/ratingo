@@ -1,4 +1,10 @@
-import { BACKUP_RESULT, BackupUploadError, type BackupOutcome, type DatabaseDump } from '../domain';
+import {
+  BACKUP_RESULT,
+  BackupUploadError,
+  DatabaseDumpError,
+  type BackupOutcome,
+  type DatabaseDump,
+} from '../domain';
 import { RunBackupUseCase } from './run-backup.use-case';
 
 const STARTED_AT = new Date('2026-11-01T03:17:00.123Z');
@@ -52,7 +58,7 @@ describe('RunBackupUseCase', () => {
   it('retries a throttled upload and succeeds', async () => {
     const { useCase, deps } = setup();
     deps.storage.upload
-      .mockRejectedValueOnce(new BackupUploadError('SlowDown (HTTP 503)', true))
+      .mockRejectedValueOnce(new BackupUploadError('SlowDown (HTTP 503)', { retryable: true }))
       .mockResolvedValueOnce(undefined);
 
     const outcome = await useCase.execute();
@@ -67,7 +73,7 @@ describe('RunBackupUseCase', () => {
   it('reports failure with all attempts once retries run out, and still discards the dump', async () => {
     const { useCase, deps, reported } = setup();
     deps.storage.upload.mockRejectedValue(
-      new BackupUploadError('EPIPE (no HTTP response): write EPIPE', true),
+      new BackupUploadError('EPIPE (no HTTP response): write EPIPE', { retryable: true }),
     );
 
     const outcome = await useCase.execute();
@@ -86,7 +92,7 @@ describe('RunBackupUseCase', () => {
   it('fails fast on an upload error that retrying cannot fix', async () => {
     const { useCase, deps } = setup();
     deps.storage.upload.mockRejectedValue(
-      new BackupUploadError('SignatureDoesNotMatch (HTTP 403)', false),
+      new BackupUploadError('SignatureDoesNotMatch (HTTP 403)', { retryable: false }),
     );
 
     const outcome = await useCase.execute();
@@ -98,7 +104,7 @@ describe('RunBackupUseCase', () => {
 
   it('reports failure without uploading when the dump fails', async () => {
     const { useCase, deps } = setup();
-    deps.dumper.dump.mockRejectedValue(new Error('pg_dump exited with code 1: connection refused'));
+    deps.dumper.dump.mockRejectedValue(new DatabaseDumpError(1, 'connection refused'));
 
     const outcome = await useCase.execute();
 

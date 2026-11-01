@@ -1,9 +1,9 @@
 export class BackupUploadError extends Error {
-  constructor(
-    message: string,
-    readonly retryable: boolean,
-  ) {
+  readonly retryable: boolean;
+
+  constructor(message: string, options: { retryable: boolean }) {
     super(message);
     this.name = 'BackupUploadError';
+    this.retryable = options.retryable;
   }
 }
