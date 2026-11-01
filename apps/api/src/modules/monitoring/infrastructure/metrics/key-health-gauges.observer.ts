@@ -13,7 +13,9 @@ import {
   type ObservableGauge,
 } from '@opentelemetry/api';
 
+import { MS_PER_SECOND } from '../../../../common/constants';
 import {
+  API_KEY_LAST_CHECKED_METRIC,
   API_KEY_PROBE_LATENCY_METRIC,
   API_KEY_STATUS_METRIC,
   METER_NAME,
@@ -37,6 +39,7 @@ export class KeyHealthGaugesObserver implements OnModuleInit, OnModuleDestroy {
   private readonly meter: Meter = metrics.getMeter(METER_NAME);
   private statusGauge?: ObservableGauge;
   private latencyGauge?: ObservableGauge;
+  private lastCheckedGauge?: ObservableGauge;
 
   constructor(@Inject(KEY_HEALTH_REPOSITORY) private readonly repository: KeyHealthRepository) {}
 
@@ -48,24 +51,39 @@ export class KeyHealthGaugesObserver implements OnModuleInit, OnModuleDestroy {
       description: 'Latency of the latest key-health probe',
       unit: 'ms',
     });
-    this.meter.addBatchObservableCallback(this.observe, [this.statusGauge, this.latencyGauge]);
+    this.lastCheckedGauge = this.meter.createObservableGauge(API_KEY_LAST_CHECKED_METRIC, {
+      description: 'Unix time of the latest persisted key-health probe',
+      unit: 's',
+    });
+    this.meter.addBatchObservableCallback(this.observe, this.gauges());
   }
 
   onModuleDestroy(): void {
-    if (this.statusGauge && this.latencyGauge) {
-      this.meter.removeBatchObservableCallback(this.observe, [this.statusGauge, this.latencyGauge]);
+    const gauges = this.gauges();
+    if (gauges.length > 0) {
+      this.meter.removeBatchObservableCallback(this.observe, gauges);
     }
   }
 
+  private gauges(): ObservableGauge[] {
+    const { statusGauge, latencyGauge, lastCheckedGauge } = this;
+    return statusGauge && latencyGauge && lastCheckedGauge
+      ? [statusGauge, latencyGauge, lastCheckedGauge]
+      : [];
+  }
+
   private readonly observe: BatchObservableCallback = async (result) => {
-    const { statusGauge, latencyGauge } = this;
-    if (!statusGauge || !latencyGauge) {
+    const { statusGauge, latencyGauge, lastCheckedGauge } = this;
+    if (!statusGauge || !latencyGauge || !lastCheckedGauge) {
       return;
     }
     try {
       const snapshots = await this.repository.findLatestPerProvider();
-      snapshots.forEach(({ provider, status, latencyMs }) => {
+      snapshots.forEach(({ provider, status, latencyMs, checkedAt }) => {
         result.observe(statusGauge, STATUS_VALUE[status], { provider });
+        result.observe(lastCheckedGauge, Math.floor(checkedAt.getTime() / MS_PER_SECOND), {
+          provider,
+        });
         if (latencyMs !== null) {
           result.observe(latencyGauge, latencyMs, { provider });
         }

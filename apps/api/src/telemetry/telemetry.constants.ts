@@ -31,4 +31,5 @@ export const SERVICE_NAME_BY_ROLE = {
 } as const;
 export const API_KEY_STATUS_METRIC = 'app.api_key.status';
 export const API_KEY_PROBE_LATENCY_METRIC = 'app.api_key.probe.latency';
+export const API_KEY_LAST_CHECKED_METRIC = 'app.api_key.last_checked';
 export const EXTERNAL_API_FAILURES_METRIC = 'app.external_api.failures';

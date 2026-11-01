@@ -1,6 +1,7 @@
 import { metrics } from '@opentelemetry/api';
 
 import {
+  API_KEY_LAST_CHECKED_METRIC,
   API_KEY_PROBE_LATENCY_METRIC,
   API_KEY_STATUS_METRIC,
 } from '../../../../telemetry/telemetry.constants';
@@ -19,6 +20,7 @@ const snapshot = (
   provider: MonitoredProvider,
   status: ApiKeyStatus,
   latencyMs: number | null,
+  checkedAt = new Date(0),
 ): KeyHealthSnapshot => ({
   provider,
   status,
@@ -27,7 +29,7 @@ const snapshot = (
   detail: null,
   quotaRemaining: null,
   quotaLimit: null,
-  checkedAt: new Date(0),
+  checkedAt,
 });
 
 describe('KeyHealthGaugesObserver', () => {
@@ -43,8 +45,18 @@ describe('KeyHealthGaugesObserver', () => {
       findLatestPerProvider: jest
         .fn()
         .mockResolvedValue([
-          snapshot(MONITORED_PROVIDER.TMDB, API_KEY_STATUS.VALID, 120),
-          snapshot(MONITORED_PROVIDER.OMDB, API_KEY_STATUS.INVALID, 80),
+          snapshot(
+            MONITORED_PROVIDER.TMDB,
+            API_KEY_STATUS.VALID,
+            120,
+            new Date('2026-11-01T13:20:00.750Z'),
+          ),
+          snapshot(
+            MONITORED_PROVIDER.OMDB,
+            API_KEY_STATUS.INVALID,
+            80,
+            new Date('2026-11-01T13:00:00Z'),
+          ),
           snapshot(MONITORED_PROVIDER.TRAKT, API_KEY_STATUS.DEGRADED, null),
           snapshot(MONITORED_PROVIDER.S3, API_KEY_STATUS.UNKNOWN, null),
         ]),
@@ -83,6 +95,18 @@ describe('KeyHealthGaugesObserver', () => {
     );
   });
 
+  it('reports when each provider was last checked, in whole unix seconds', async () => {
+    new KeyHealthGaugesObserver(repository).onModuleInit();
+
+    await expect(collect(API_KEY_LAST_CHECKED_METRIC)).resolves.toEqual(
+      expect.arrayContaining([
+        { value: 1793539200, attributes: { provider: 'tmdb' } },
+        { value: 1793538000, attributes: { provider: 'omdb' } },
+        { value: 0, attributes: { provider: 'trakt' } },
+      ]),
+    );
+  });
+
   it('reports nothing when the repository read fails', async () => {
     repository.findLatestPerProvider.mockRejectedValue(new Error('db down'));
     new KeyHealthGaugesObserver(repository).onModuleInit();
@@ -96,5 +120,6 @@ describe('KeyHealthGaugesObserver', () => {
     observer.onModuleDestroy();
 
     await expect(collect(API_KEY_STATUS_METRIC)).resolves.toHaveLength(0);
+    await expect(collect(API_KEY_LAST_CHECKED_METRIC)).resolves.toHaveLength(0);
   });
 });
