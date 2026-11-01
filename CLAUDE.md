@@ -19,12 +19,13 @@ After finishing each step, review the changed code before moving on, and fix wha
 ## Layout
 - `apps/api/` — NestJS + Fastify + Drizzle ORM + PostgreSQL
 - `apps/web-client/` — Next.js 16 + React 19 + TanStack Query v5
+- `apps/pg-backup/` — daily `pg_dump` of prod to the Railway bucket (Railway cron service `Backup CRON`, own Dockerfile)
 - `packages/api-contract/` — Shared OpenAPI types (auto-generated)
 
 ## Branches & Deploy
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`
 - `development` deploys to Railway dev, `main` deploys to Railway production; hotfixes go to `main`, then back-merge into `development`
-- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck and tests (2 shards), web lint/typecheck/tests, contract drift. On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
+- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck and tests (2 shards), web lint/typecheck/tests, contract drift, pg-backup lint/typecheck/tests. On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
 - Make every migration statement safe to re-run against existing state (`IF NOT EXISTS` / `IF EXISTS`): dev runs migrations on a fresh DB, so state conflicts surface only in prod
 
 ## Commands
