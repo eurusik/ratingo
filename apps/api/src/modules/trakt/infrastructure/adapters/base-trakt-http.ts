@@ -1,6 +1,11 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
+import {
+  EXTERNAL_API_PROVIDER,
+  emitExternalApiFailure,
+} from '../../../../common/events/external-api-failure.event';
 import { TraktApiException } from '../../../../common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
@@ -231,6 +236,7 @@ export class BaseTraktHttp {
   constructor(
     @Inject(traktConfig.KEY)
     private readonly config: ConfigType<typeof traktConfig>,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     if (!this.config.clientId) {
       throw new TraktApiException('Client ID is not configured');
@@ -280,6 +286,7 @@ export class BaseTraktHttp {
             `Trakt rate limit exceeded after ${result.attempts} attempts: ${endpoint}`,
           );
         }
+        emitExternalApiFailure(this.eventEmitter, EXTERNAL_API_PROVIDER.TRAKT, error.status);
         throw new TraktApiException(error.message, error.status);
       }
 

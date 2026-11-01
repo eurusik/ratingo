@@ -20,6 +20,7 @@ import { HomeModule } from './modules/home/home.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { InsightsModule } from './modules/insights/insights.module';
 import { JournalModule } from './modules/journal/journal.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { ClockModule } from './modules/shared/clock';
 import { StatsModule } from './modules/stats/stats.module';
@@ -144,6 +145,7 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
     UserActionsModule,
     JournalModule,
     ReviewsModule,
+    MonitoringModule,
   ],
   controllers: [HealthController],
   providers: [

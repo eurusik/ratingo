@@ -9,6 +9,8 @@ import { Test } from '@nestjs/testing';
 import { AppModule } from '../app.module';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
+import { MONITORING_REDIS_CLIENT } from '../modules/monitoring/infrastructure/counters/redis-failure-counter.store';
+import { MONITORING_QUEUE } from '../modules/monitoring/monitoring.constants';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
 import { applyStandardErrorResponses, buildSwaggerConfig } from '../swagger.config';
 
@@ -140,6 +142,10 @@ const createApp = async (): Promise<NestFastifyApplication> => {
     .useValue({})
     .overrideProvider(getQueueToken(STATS_QUEUE))
     .useValue({})
+    .overrideProvider(getQueueToken(MONITORING_QUEUE))
+    .useValue({})
+    .overrideProvider(MONITORING_REDIS_CLIENT)
+    .useValue({ quit: async () => undefined, disconnect: () => undefined })
     .compile();
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {

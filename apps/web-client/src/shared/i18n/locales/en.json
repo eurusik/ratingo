@@ -1076,6 +1076,23 @@
     }
   },
   "admin": {
+    "monitoring": {
+      "title": "Key monitoring",
+      "description": "Active probe + passive counters of real 401/403/429 over 24h. Auto-refreshes every minute.",
+      "checkNow": "Check now",
+      "checkError": "Check failed. Try again.",
+      "error": "Failed to load key health.",
+      "retry": "Retry",
+      "loading": "Loading…",
+      "columns": {
+        "provider": "Provider",
+        "status": "Status",
+        "latency": "Latency",
+        "checkedAt": "Checked",
+        "passive": "Failures (24h)",
+        "detail": "Detail"
+      }
+    },
     "navigation": {
       "title": "Navigation",
       "catalog": "Catalog",
