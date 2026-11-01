@@ -29,9 +29,10 @@ describe('API Client 204 Handling', () => {
         delete: jest.fn(),
       };
 
-      const ky = jest.fn(() => mockInstance);
-      ky.create = jest.fn(() => mockInstance);
-      return ky;
+      return Object.assign(
+        jest.fn(() => mockInstance),
+        { create: jest.fn(() => mockInstance) },
+      );
     });
 
     jest.doMock('../../config/env', () => ({
@@ -68,9 +69,10 @@ describe('API Client 204 Handling', () => {
         delete: jest.fn(),
       };
 
-      const ky = jest.fn(() => mockInstance);
-      ky.create = jest.fn(() => mockInstance);
-      return ky;
+      return Object.assign(
+        jest.fn(() => mockInstance),
+        { create: jest.fn(() => mockInstance) },
+      );
     });
 
     jest.doMock('../../config/env', () => ({
@@ -105,9 +107,10 @@ describe('API Client 204 Handling', () => {
         put: jest.fn(),
       };
 
-      const ky = jest.fn(() => mockInstance);
-      ky.create = jest.fn(() => mockInstance);
-      return ky;
+      return Object.assign(
+        jest.fn(() => mockInstance),
+        { create: jest.fn(() => mockInstance) },
+      );
     });
 
     jest.doMock('../../config/env', () => ({
@@ -144,9 +147,10 @@ describe('API Client 204 Handling', () => {
         put: jest.fn(),
       };
 
-      const ky = jest.fn(() => mockInstance);
-      ky.create = jest.fn(() => mockInstance);
-      return ky;
+      return Object.assign(
+        jest.fn(() => mockInstance),
+        { create: jest.fn(() => mockInstance) },
+      );
     });
 
     jest.doMock('../../config/env', () => ({

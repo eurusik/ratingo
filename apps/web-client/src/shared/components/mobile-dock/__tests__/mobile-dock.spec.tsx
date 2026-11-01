@@ -1,3 +1,5 @@
+import { forwardRef } from 'react';
+import type { LucideProps } from 'lucide-react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 /* ------------------------------------------------------------------ */
@@ -287,7 +289,10 @@ describe('MobileDock', () => {
 /* ------------------------------------------------------------------ */
 
 describe('MobileDockItem', () => {
-  const IconStub = () => <svg data-testid="item-icon" />;
+  const IconStub = forwardRef<SVGSVGElement, LucideProps>((_props, ref) => (
+    <svg ref={ref} data-testid="item-icon" />
+  ));
+  IconStub.displayName = 'IconStub';
 
   beforeEach(() => {
     jest.clearAllMocks();
