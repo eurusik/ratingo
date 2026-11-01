@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { Queue } from 'bullmq';
+import { type JobType, Queue } from 'bullmq';
 import { and, eq, gt, isNull, isNotNull, lt, or } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
@@ -11,6 +11,7 @@ import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 
+import { buildMdblistRatingsJobId } from '../../domain/job-ids';
 import { MdblistAdapter } from '../../infrastructure/adapters/mdblist/mdblist.adapter';
 import {
   BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
@@ -21,6 +22,19 @@ import {
 } from '../../ingestion.constants';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const PENDING_JOB_STATES: JobType[] = ['waiting', 'prioritized', 'delayed', 'paused', 'active'];
+
+interface PendingJobsSnapshot {
+  jobCount: number;
+  mediaItemIds: Set<string>;
+}
+
+interface MdblistCandidate {
+  id: string;
+  tmdbId: number | null;
+  type: MediaType;
+}
 
 /**
  * Pipeline for backfilling Rotten Tomatoes ratings from MDBList.
@@ -78,87 +92,103 @@ export class BackfillMdblistRatingsPipeline {
     this.logger.log('Starting MDBList ratings backfill dispatcher...');
 
     const staleBefore = new Date(Date.now() - MDBLIST_RATINGS_REFRESH_DAYS * MS_PER_DAY);
-    // Per-day jobId scoping: a failed/stuck job from a previous day must not
-    // block today's dispatcher from re-queueing the same tmdbId. BullMQ dedup
-    // operates across waiting/active/completed/failed sets, so without a day
-    // suffix one bad job could block a row indefinitely.
     const day = formatUtcDayId();
+    const pending = await this.getPendingJobs();
+    let remainingBudget = MDBLIST_DAILY_BUDGET - pending.jobCount;
+    let newlyQueued = 0;
     let cursor: string | undefined;
-    // NOTE: `totalAttempted` counts jobs sent to `addBulk`, NOT uniquely
-    // accepted jobs. BullMQ silently dedupes by jobId within the same UTC day,
-    // so when an admin triggers the dispatcher twice with `force=true` on the
-    // same day, the second run will appear to "reach daily budget" while in
-    // fact enqueueing nothing new. MDBList quota is preserved (dedup means no
-    // duplicate work), so observability — not correctness — is the concern.
-    let totalAttempted = 0;
 
-    while (totalAttempted < MDBLIST_DAILY_BUDGET) {
-      const conditions = [
-        isNotNull(schema.mediaItems.tmdbId),
-        isNull(schema.mediaItems.deletedAt),
-        or(
-          isNull(schema.mediaItems.ratingRottenTomatoes),
-          isNull(schema.mediaItems.ratingRottenTomatoesAudience),
-        )!,
-        or(isNull(schema.mediaItems.rtFetchedAt), lt(schema.mediaItems.rtFetchedAt, staleBefore))!,
-      ];
+    while (remainingBudget > 0) {
+      const candidates = await this.findCandidates(staleBefore, cursor);
+      if (candidates.length === 0) break;
 
-      if (cursor) {
-        conditions.push(gt(schema.mediaItems.id, cursor));
-      }
-
-      // Shrink the batch so we never overshoot the daily budget by more
-      // than BACKFILL_MDBLIST_RATINGS_BATCH_SIZE - 1.
-      const remaining = MDBLIST_DAILY_BUDGET - totalAttempted;
-      const batchSize = Math.min(BACKFILL_MDBLIST_RATINGS_BATCH_SIZE, remaining);
-
-      const rows = await withDbError('find MDBList backfill candidates', this.logger, () =>
-        this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-            type: schema.mediaItems.type,
-          })
-          .from(schema.mediaItems)
-          .where(and(...conditions))
-          .orderBy(schema.mediaItems.id)
-          .limit(batchSize),
-      );
-
-      if (rows.length === 0) break;
-
-      const jobs = rows
-        .filter((r) => r.tmdbId !== null)
-        .map((r) => ({
-          name: IngestionJob.BACKFILL_MDBLIST_RATINGS_ITEM,
-          data: {
-            mediaItemId: r.id,
-            tmdbId: r.tmdbId,
-            type: r.type,
-          },
-          // Dedup: one in-flight job per (tmdbId, UTC day). The day suffix
-          // prevents a failed job from yesterday blocking today's re-queue.
-          opts: { jobId: `backfill-mdblist-ratings_${r.tmdbId}_${day}` },
-        }));
+      const jobs = candidates
+        .filter((candidate) => candidate.tmdbId !== null && !pending.mediaItemIds.has(candidate.id))
+        .slice(0, remainingBudget)
+        .map((candidate) => this.toItemJob(candidate, day));
 
       if (jobs.length > 0) {
         await this.queue.addBulk(jobs);
-        totalAttempted += jobs.length;
+        newlyQueued += jobs.length;
+        remainingBudget -= jobs.length;
       }
 
-      cursor = rows[rows.length - 1].id;
-
-      this.logger.debug(`Queued ${jobs.length} MDBList jobs (total: ${totalAttempted})`);
+      cursor = candidates[candidates.length - 1].id;
+      this.logger.debug(`Queued ${jobs.length} MDBList jobs (new total: ${newlyQueued})`);
     }
 
-    if (totalAttempted >= MDBLIST_DAILY_BUDGET) {
+    this.logDispatchSummary(pending.jobCount, newlyQueued, remainingBudget);
+  }
+
+  private async getPendingJobs(): Promise<PendingJobsSnapshot> {
+    const jobs = await this.queue.getJobs(PENDING_JOB_STATES);
+    const mediaItemIds = new Set<string>();
+    let jobCount = 0;
+    for (const job of jobs) {
+      if (!job) continue;
+      jobCount += 1;
+      const mediaItemId = (job.data as { mediaItemId?: unknown } | undefined)?.mediaItemId;
+      if (typeof mediaItemId === 'string') mediaItemIds.add(mediaItemId);
+    }
+    return { jobCount, mediaItemIds };
+  }
+
+  private findCandidates(
+    staleBefore: Date,
+    cursor: string | undefined,
+  ): Promise<MdblistCandidate[]> {
+    const conditions = [
+      isNotNull(schema.mediaItems.tmdbId),
+      isNull(schema.mediaItems.deletedAt),
+      or(
+        isNull(schema.mediaItems.ratingRottenTomatoes),
+        isNull(schema.mediaItems.ratingRottenTomatoesAudience),
+      )!,
+      or(isNull(schema.mediaItems.rtFetchedAt), lt(schema.mediaItems.rtFetchedAt, staleBefore))!,
+    ];
+
+    if (cursor) {
+      conditions.push(gt(schema.mediaItems.id, cursor));
+    }
+
+    return withDbError('find MDBList backfill candidates', this.logger, () =>
+      this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          type: schema.mediaItems.type,
+        })
+        .from(schema.mediaItems)
+        .where(and(...conditions))
+        .orderBy(schema.mediaItems.id)
+        .limit(BACKFILL_MDBLIST_RATINGS_BATCH_SIZE),
+    );
+  }
+
+  private toItemJob(candidate: MdblistCandidate, day: string) {
+    return {
+      name: IngestionJob.BACKFILL_MDBLIST_RATINGS_ITEM,
+      data: {
+        mediaItemId: candidate.id,
+        tmdbId: candidate.tmdbId,
+        type: candidate.type,
+      },
+      opts: { jobId: buildMdblistRatingsJobId(candidate.id, day) },
+    };
+  }
+
+  private logDispatchSummary(
+    alreadyQueued: number,
+    newlyQueued: number,
+    remainingBudget: number,
+  ): void {
+    const summary = `alreadyQueued=${alreadyQueued} newlyQueued=${newlyQueued} budget=${MDBLIST_DAILY_BUDGET}`;
+    if (remainingBudget <= 0) {
       this.logger.log(
-        `MDBList ratings backfill dispatcher reached daily budget (attempted=${MDBLIST_DAILY_BUDGET}; actual new-vs-deduped count depends on same-day previous runs). Remaining work will be picked up on next run.`,
+        `MDBList ratings backfill dispatcher reached daily budget (${summary}). Remaining work will be picked up on next run.`,
       );
     } else {
-      this.logger.log(
-        `MDBList ratings backfill dispatcher complete: attempted=${totalAttempted} items`,
-      );
+      this.logger.log(`MDBList ratings backfill dispatcher complete (${summary})`);
     }
   }
 
