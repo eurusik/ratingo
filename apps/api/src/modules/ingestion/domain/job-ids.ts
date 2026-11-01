@@ -38,3 +38,7 @@ export function buildNewReleaseJobId(tmdbId: number): string {
 export function buildMdblistRatingsJobId(mediaItemId: string, day: string): string {
   return `backfill-mdblist-ratings_${mediaItemId}_${day}`;
 }
+
+export function buildAltTitlesBackfillJobId(mediaItemId: string, day: string): string {
+  return `backfill-alt_${mediaItemId}_${day}`;
+}

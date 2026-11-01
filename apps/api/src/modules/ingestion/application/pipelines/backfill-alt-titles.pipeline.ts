@@ -14,6 +14,7 @@ import * as schema from '@/database/schema';
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../../../tmdb/public';
 import { TmdbAdapter } from '../../../tmdb/public';
+import { buildAltTitlesBackfillJobId } from '../../domain/job-ids';
 import {
   BACKFILL_ALT_TITLES_BATCH_SIZE,
   BACKFILL_QUEUE,
@@ -97,7 +98,7 @@ export class BackfillAltTitlesPipeline {
             title: r.title,
             originalTitle: r.originalTitle,
           },
-          opts: { jobId: `backfill-alt_${r.tmdbId}_${day}` },
+          opts: { jobId: buildAltTitlesBackfillJobId(r.id, day) },
         }));
 
       if (jobs.length > 0) {

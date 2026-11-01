@@ -1,4 +1,9 @@
-import { buildMdblistRatingsJobId, buildNewReleaseJobId, buildSyncMediaJobId } from './job-ids';
+import {
+  buildAltTitlesBackfillJobId,
+  buildMdblistRatingsJobId,
+  buildNewReleaseJobId,
+  buildSyncMediaJobId,
+} from './job-ids';
 
 // 2025-12-21T19:45:10Z
 const FIXED_NOW = 1_766_346_310_000;
@@ -56,6 +61,20 @@ describe('job-ids', () => {
     it('differs for two media items that share a tmdbId', () => {
       expect(buildMdblistRatingsJobId('movie-uuid', '20251221')).not.toBe(
         buildMdblistRatingsJobId('show-uuid', '20251221'),
+      );
+    });
+  });
+
+  describe('buildAltTitlesBackfillJobId', () => {
+    it('is keyed by media item id and the given day', () => {
+      expect(buildAltTitlesBackfillJobId('item-1', '20251221')).toBe(
+        'backfill-alt_item-1_20251221',
+      );
+    });
+
+    it('gives a movie and a show with the same tmdbId distinct ids', () => {
+      expect(buildAltTitlesBackfillJobId('movie-uuid', '20251221')).not.toBe(
+        buildAltTitlesBackfillJobId('show-uuid', '20251221'),
       );
     });
   });
