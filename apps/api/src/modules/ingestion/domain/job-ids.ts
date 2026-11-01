@@ -34,3 +34,7 @@ export function buildSyncMediaJobId(
 export function buildNewReleaseJobId(tmdbId: number): string {
   return `nr_movie_${tmdbId}_${formatUtcDayId()}`;
 }
+
+export function buildMdblistRatingsJobId(mediaItemId: string, day: string): string {
+  return `backfill-mdblist-ratings_${mediaItemId}_${day}`;
+}
