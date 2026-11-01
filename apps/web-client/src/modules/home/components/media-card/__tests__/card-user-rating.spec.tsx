@@ -61,7 +61,7 @@ describe('CardUserRating', () => {
     const badge = screen.getByTestId('user-rating-badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveAttribute('data-rating', '8');
-    expect(badge).toHaveClass('absolute', 'bottom-2', 'left-2', 'z-10');
+    expect(badge).toHaveClass('absolute bottom-2 left-2 z-10');
   });
 
   it('passes correct mediaItemId to getRating', () => {

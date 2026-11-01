@@ -58,9 +58,11 @@ function makeProps(
       title: 'Breaking Bad',
       slug: 'breaking-bad',
       poster: {
+        thumb: 'https://example.com/poster-th.jpg',
         small: 'https://example.com/poster-sm.jpg',
         medium: 'https://example.com/poster-md.jpg',
         large: 'https://example.com/poster-lg.jpg',
+        original: 'https://example.com/poster-orig.jpg',
       },
     },
     ...overrides,
