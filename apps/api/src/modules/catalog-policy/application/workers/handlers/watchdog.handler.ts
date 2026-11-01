@@ -8,6 +8,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
+import type IORedis from 'ioredis';
 
 import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../../catalog-policy.constants';
 import { RunFinalizeService } from '../../services/run-finalize.service';
@@ -36,7 +37,7 @@ export class WatchdogHandler implements OnModuleInit {
     const lockKey = 'catalog-policy:watchdog:register-lock';
 
     try {
-      const client = await this.catalogQueue.client;
+      const client = (await this.catalogQueue.client) as unknown as IORedis;
       const acquired = await client.set(
         lockKey,
         process.pid.toString(),
