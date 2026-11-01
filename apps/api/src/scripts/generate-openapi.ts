@@ -8,11 +8,25 @@ import { Test } from '@nestjs/testing';
 
 import { type AppRole } from '../common/runtime/app-role';
 import { DATABASE_CONNECTION } from '../database/database.module';
+import { HEALTH_QUEUE } from '../health/health.constants';
+import { COOLDOWN_REDIS_CLIENT } from '../modules/catalog/infrastructure/adapters/redis-cooldown-gate.adapter';
+import { CATALOG_POLICY_QUEUE } from '../modules/catalog-policy/catalog-policy.constants';
 import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
+import { BACKFILL_QUEUE, RATINGS_BACKFILL_QUEUE } from '../modules/shared/contracts';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
 import { applyStandardErrorResponses, buildSwaggerConfig } from '../swagger.config';
 
 const GLOBAL_PREFIX = 'api';
+
+const QUEUES = [
+  INGESTION_QUEUE,
+  STATS_QUEUE,
+  BACKFILL_QUEUE,
+  RATINGS_BACKFILL_QUEUE,
+  CATALOG_POLICY_QUEUE,
+  HEALTH_QUEUE,
+];
+
 const OUTPUT_PATH = path.resolve(__dirname, '../../../../packages/api-contract/openapi.json');
 
 const DEFAULT_ENV: Record<string, string> = {
@@ -132,17 +146,21 @@ const wrapSuccessResponses = (doc: OpenAPIObject): void => {
 const createApp = async (): Promise<NestFastifyApplication> => {
   const { AppModule } = await import('../app.module');
   const noopBullRegistrar = { onModuleInit: () => {}, register: () => {} };
+  const noopRedisClient = { quit: async () => 'OK', disconnect: () => {} };
 
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+  const builder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(DATABASE_CONNECTION)
     .useValue({})
+    .overrideProvider(COOLDOWN_REDIS_CLIENT)
+    .useValue(noopRedisClient)
     .overrideProvider(BullRegistrar)
-    .useValue(noopBullRegistrar)
-    .overrideProvider(getQueueToken(INGESTION_QUEUE))
-    .useValue({})
-    .overrideProvider(getQueueToken(STATS_QUEUE))
-    .useValue({})
-    .compile();
+    .useValue(noopBullRegistrar);
+
+  for (const queue of QUEUES) {
+    builder.overrideProvider(getQueueToken(queue)).useValue({});
+  }
+
+  const moduleRef = await builder.compile();
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
     logger: false,
