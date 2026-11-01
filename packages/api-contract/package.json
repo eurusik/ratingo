@@ -13,6 +13,6 @@
     "update": "npm run fetch:schema && npm run generate:types"
   },
   "devDependencies": {
-    "openapi-typescript": "^7.9.1"
+    "openapi-typescript": "^7.13.0"
   }
 }
