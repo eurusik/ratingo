@@ -1,8 +1,9 @@
+import { randomUUID } from 'crypto';
+
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
 
 import { ErrorCode } from '@/common/enums/error-code.enum';
 import {
@@ -128,7 +129,7 @@ export class JournalImageService {
 
     const bucket = this.getBucket();
     const ext = MIME_TO_EXTENSION[file.mimetype as AllowedImageType];
-    const key = `${JOURNAL_IMAGES_PREFIX}${uuidv4()}.${ext}`;
+    const key = `${JOURNAL_IMAGES_PREFIX}${randomUUID()}.${ext}`;
 
     await this.getClient().send(
       new PutObjectCommand({

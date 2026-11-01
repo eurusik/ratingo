@@ -4,6 +4,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { sql } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import type IORedis from 'ioredis';
 
 import { withTimeout } from '../common/utils/with-timeout.util';
 import { DATABASE_CONNECTION } from '../database/database.module';
@@ -36,7 +37,7 @@ export class HealthService {
         await this.db.execute(sql`select 1`);
       }),
       this.probe('redis', async () => {
-        const client = await this.queue.client;
+        const client = (await this.queue.client) as unknown as IORedis;
         if (client.status !== 'ready') {
           throw new Error(`connection is ${client.status}`);
         }

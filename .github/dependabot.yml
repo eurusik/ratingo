@@ -20,6 +20,10 @@ updates:
     ignore:
       - dependency-name: '*'
         update-types: [version-update:semver-major]
+      - dependency-name: sanitize-html
+        versions: ['>=2.18.0']
     groups:
+      opentelemetry:
+        patterns: ['@opentelemetry/*']
       minor-and-patch:
         update-types: [minor, patch]
