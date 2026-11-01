@@ -31,6 +31,7 @@ jobs:
       api: ${{ steps.filter.outputs.api }}
       web: ${{ steps.filter.outputs.web }}
       contracts: ${{ steps.filter.outputs.contracts }}
+      backup: ${{ steps.filter.outputs.backup }}
     steps:
       - id: filter
         env:
@@ -41,6 +42,7 @@ jobs:
             echo "api=true" >> "$GITHUB_OUTPUT"
             echo "web=true" >> "$GITHUB_OUTPUT"
             echo "contracts=true" >> "$GITHUB_OUTPUT"
+            echo "backup=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -51,17 +53,19 @@ jobs:
           match() { grep -qE "$1" <<< "$files" && echo true || echo false; }
 
           if (( count >= 3000 )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|\.github/)') == true ]]; then
-            api=true; web=true; contracts=true
+            api=true; web=true; contracts=true; backup=true
           else
             api=$(match '^apps/api/')
             web=$(match '^(apps/web-client/|packages/(api-contract|fx-engine)/)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
+            backup=$(match '^apps/pg-backup/')
           fi
 
-          echo "api=$api web=$web contracts=$contracts"
+          echo "api=$api web=$web contracts=$contracts backup=$backup"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "contracts=$contracts" >> "$GITHUB_OUTPUT"
+          echo "backup=$backup" >> "$GITHUB_OUTPUT"
 
   api:
     name: api
@@ -189,9 +193,31 @@ jobs:
             exit 1
           fi
 
+  pg-backup:
+    name: pg-backup
+    needs: changes
+    if: needs.changes.outputs.backup == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Lint
+        run: npm run lint --workspace=pg-backup
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=pg-backup
+
+      - name: Unit tests
+        run: npm test --workspace=pg-backup -- --ci
+
   ci:
     name: ci
-    needs: [changes, api, api-test, web, contracts]
+    needs: [changes, api, api-test, web, contracts, pg-backup]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
