@@ -1,9 +1,9 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
-import { generateSlug } from '@/common/utils/slug.util';
 import { JOB_STATUS, type JobStatus } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { generateSlug } from '@/common/utils/slug.util';
 
 import { IMPORT_JOB_PORT, IImportJobPort } from '../../domain/ports/import-job.port';
 import {

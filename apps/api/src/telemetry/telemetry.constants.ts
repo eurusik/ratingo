@@ -29,3 +29,6 @@ export const SERVICE_NAME_BY_ROLE = {
   worker: 'ratingo-worker',
   all: 'ratingo-api',
 } as const;
+export const API_KEY_STATUS_METRIC = 'app.api_key.status';
+export const API_KEY_PROBE_LATENCY_METRIC = 'app.api_key.probe.latency';
+export const EXTERNAL_API_FAILURES_METRIC = 'app.external_api.failures';

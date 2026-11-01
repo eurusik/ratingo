@@ -8,6 +8,7 @@ import {
   INGESTION_QUEUE,
   RATINGS_BACKFILL_QUEUE,
 } from '../modules/ingestion/public';
+import { MONITORING_QUEUE } from '../modules/monitoring/public';
 import { STATS_QUEUE } from '../modules/stats/public';
 
 import { QueueJobMetricsService } from './queue-job-metrics.service';
@@ -22,6 +23,7 @@ import { QueueMetricsService } from './queue-metrics.service';
       { name: RATINGS_BACKFILL_QUEUE },
       { name: CATALOG_POLICY_QUEUE },
       { name: STATS_QUEUE },
+      { name: MONITORING_QUEUE },
     ),
   ],
   providers: [QueueMetricsService, QueueJobMetricsService],

@@ -1076,6 +1076,36 @@
     }
   },
   "admin": {
+    "monitoring": {
+      "status": {
+        "valid": "Валідний",
+        "degraded": "Деградація",
+        "invalid": "Невалідний",
+        "unknown": "Невідомо"
+      },
+      "time": {
+        "justNow": "щойно",
+        "minutesAgo": "{count} хв тому",
+        "hoursAgo": "{count} год тому",
+        "daysAgo": "{count} дн тому"
+      },
+      "latencyValue": "{count} мс",
+      "title": "Моніторинг ключів",
+      "description": "Активний probe + пасивні лічильники реальних 401/403/429 за добу. Автооновлення щохвилини.",
+      "checkNow": "Перевірити зараз",
+      "checkError": "Не вдалося перевірити. Спробуйте ще раз.",
+      "error": "Не вдалося завантажити стан ключів.",
+      "retry": "Повторити",
+      "loading": "Завантаження…",
+      "columns": {
+        "provider": "Провайдер",
+        "status": "Статус",
+        "latency": "Затримка",
+        "checkedAt": "Перевірено",
+        "passive": "Збої (24 год)",
+        "detail": "Деталі"
+      }
+    },
     "navigation": {
       "title": "Навігація",
       "catalog": "Каталог",

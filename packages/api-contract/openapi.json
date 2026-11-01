@@ -13150,6 +13150,239 @@
           }
         ]
       }
+    },
+    "/api/admin/monitoring/keys": {
+      "get": {
+        "operationId": "MonitoringController_getKeys",
+        "summary": "Current health of every monitored API key",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/KeyHealthDashboardDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin Monitoring"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/monitoring/keys/check": {
+      "post": {
+        "operationId": "MonitoringController_checkNow",
+        "summary": "Probe all keys now and return the fresh dashboard",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/KeyHealthDashboardDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin Monitoring"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/monitoring/keys/{provider}/history": {
+      "get": {
+        "operationId": "MonitoringController_getHistory",
+        "summary": "Recent probe history for one provider",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "tmdb",
+                "trakt",
+                "mdblist",
+                "omdb",
+                "s3"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/KeyHealthHistoryDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin Monitoring"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -20667,6 +20900,158 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "KeyHealthSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "tmdb",
+              "trakt",
+              "mdblist",
+              "omdb",
+              "s3"
+            ],
+            "example": "tmdb"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "valid",
+              "degraded",
+              "invalid",
+              "unknown"
+            ],
+            "example": "valid"
+          },
+          "statusCode": {
+            "type": "number",
+            "nullable": true,
+            "description": "HTTP status observed by the probe"
+          },
+          "latencyMs": {
+            "type": "number",
+            "nullable": true,
+            "description": "Probe latency in milliseconds"
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message or quota note"
+          },
+          "quotaRemaining": {
+            "type": "number",
+            "nullable": true
+          },
+          "quotaLimit": {
+            "type": "number",
+            "nullable": true
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "provider",
+          "status",
+          "statusCode",
+          "latencyMs",
+          "detail",
+          "quotaRemaining",
+          "quotaLimit",
+          "checkedAt"
+        ]
+      },
+      "ProviderFailureCountsDto": {
+        "type": "object",
+        "properties": {
+          "unauthorized": {
+            "type": "number",
+            "description": "401/403 responses seen on live requests"
+          },
+          "rateLimited": {
+            "type": "number",
+            "description": "429 responses seen on live requests"
+          }
+        },
+        "required": [
+          "unauthorized",
+          "rateLimited"
+        ]
+      },
+      "ProviderKeyHealthDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "tmdb",
+              "trakt",
+              "mdblist",
+              "omdb",
+              "s3"
+            ],
+            "example": "tmdb"
+          },
+          "latest": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/KeyHealthSnapshotDto"
+              }
+            ]
+          },
+          "failures": {
+            "$ref": "#/components/schemas/ProviderFailureCountsDto"
+          }
+        },
+        "required": [
+          "provider",
+          "latest",
+          "failures"
+        ]
+      },
+      "KeyHealthDashboardDto": {
+        "type": "object",
+        "properties": {
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderKeyHealthDto"
+            }
+          }
+        },
+        "required": [
+          "providers"
+        ]
+      },
+      "KeyHealthHistoryDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "tmdb",
+              "trakt",
+              "mdblist",
+              "omdb",
+              "s3"
+            ],
+            "example": "tmdb"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KeyHealthSnapshotDto"
+            }
+          }
+        },
+        "required": [
+          "provider",
+          "items"
         ]
       }
     }

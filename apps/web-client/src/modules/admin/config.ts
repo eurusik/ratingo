@@ -62,6 +62,19 @@ export const ADMIN_NAVIGATION: NavigationItem[] = [
     href: '/admin/journal',
     permissions: ['admin.journal.read'],
   },
+  {
+    id: 'monitoring',
+    label: 'Моніторинг',
+    href: '/admin/monitoring',
+    children: [
+      {
+        id: 'keys',
+        label: 'Ключі',
+        href: '/admin/monitoring',
+        permissions: ['admin.monitoring.read'],
+      },
+    ],
+  },
 ];
 
 /**

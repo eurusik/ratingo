@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TraktRatingsAdapter } from './trakt-ratings.adapter';
 import { TraktListsAdapter } from './trakt-lists.adapter';
@@ -80,6 +81,7 @@ describe('Trakt adapters', () => {
         TraktRatingsAdapter,
         TraktListsAdapter,
         { provide: traktConfig.KEY, useValue: mockConfig },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 
@@ -95,6 +97,7 @@ describe('Trakt adapters', () => {
             TraktRatingsAdapter,
             TraktListsAdapter,
             { provide: traktConfig.KEY, useValue: { ...mockConfig, clientId: '' } },
+            { provide: EventEmitter2, useValue: { emit: jest.fn() } },
           ],
         }).compile(),
       ).rejects.toThrow(TraktApiException);

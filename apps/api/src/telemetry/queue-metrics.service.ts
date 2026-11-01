@@ -15,6 +15,7 @@ import {
   INGESTION_QUEUE,
   RATINGS_BACKFILL_QUEUE,
 } from '../modules/ingestion/public';
+import { MONITORING_QUEUE } from '../modules/monitoring/public';
 import { STATS_QUEUE } from '../modules/stats/public';
 
 import { METER_NAME, QUEUE_JOB_STATES, QUEUE_JOBS_METRIC } from './telemetry.constants';
@@ -32,8 +33,9 @@ export class QueueMetricsService implements OnModuleInit, OnModuleDestroy {
     @InjectQueue(RATINGS_BACKFILL_QUEUE) ratingsBackfill: Queue,
     @InjectQueue(CATALOG_POLICY_QUEUE) catalogPolicy: Queue,
     @InjectQueue(STATS_QUEUE) stats: Queue,
+    @InjectQueue(MONITORING_QUEUE) monitoring: Queue,
   ) {
-    this.queues = [ingestion, backfill, ratingsBackfill, catalogPolicy, stats];
+    this.queues = [ingestion, backfill, ratingsBackfill, catalogPolicy, stats, monitoring];
   }
 
   onModuleInit(): void {

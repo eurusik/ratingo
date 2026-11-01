@@ -1,7 +1,12 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { MediaType } from '../../../../../common/enums/media-type.enum';
+import {
+  EXTERNAL_API_PROVIDER,
+  emitExternalApiFailure,
+} from '../../../../../common/events/external-api-failure.event';
 import { OmdbApiException } from '../../../../../common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
@@ -66,6 +71,7 @@ export class OmdbAdapter {
   constructor(
     @Inject(omdbConfig.KEY)
     private readonly config: ConfigType<typeof omdbConfig>,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.httpClient = new ResilientHttpClient(OMDB_RETRY_CONFIG);
   }
@@ -93,6 +99,7 @@ export class OmdbAdapter {
       const { error } = result;
 
       if (error instanceof HttpError) {
+        emitExternalApiFailure(this.eventEmitter, EXTERNAL_API_PROVIDER.OMDB, error.status);
         throw new OmdbApiException(error.message, error.status);
       }
 

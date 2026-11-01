@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { OmdbAdapter } from './omdb.adapter';
 import omdbConfig from '@/config/omdb.config';
@@ -73,7 +74,11 @@ describe('OmdbAdapter', () => {
     mockFetch.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [OmdbAdapter, { provide: omdbConfig.KEY, useValue: mockConfig }],
+      providers: [
+        OmdbAdapter,
+        { provide: omdbConfig.KEY, useValue: mockConfig },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+      ],
     }).compile();
 
     adapter = module.get<OmdbAdapter>(OmdbAdapter);
@@ -248,6 +253,7 @@ describe('OmdbAdapter', () => {
         providers: [
           OmdbAdapter,
           { provide: omdbConfig.KEY, useValue: { ...mockConfig, apiKey: '' } },
+          { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         ],
       }).compile();
 
