@@ -12,9 +12,11 @@ const sharedEnvKeys = {
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
   LOG_LEVEL: Joi.string()
     .valid(...LOG_LEVELS)
+    .allow('')
     .optional(),
   LOG_FORMAT: Joi.string()
     .valid(...LOG_FORMATS)
+    .allow('')
     .optional(),
 
   // Database

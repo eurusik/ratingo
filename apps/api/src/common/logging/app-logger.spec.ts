@@ -48,6 +48,16 @@ describe('app-logger', () => {
       expect(getLogLevels({ LOG_LEVEL: 'warn' })).toEqual(['warn', 'error', 'fatal']);
     });
 
+    it('falls back to the default when LOG_LEVEL or LOG_FORMAT is blank', () => {
+      expect(getLogLevels({ NODE_ENV: 'production', LOG_LEVEL: '' })).toEqual([
+        'log',
+        'warn',
+        'error',
+        'fatal',
+      ]);
+      expect(getLogFormat({ NODE_ENV: 'production', LOG_FORMAT: '' })).toBe('json');
+    });
+
     it('rejects an unknown LOG_LEVEL', () => {
       expect(() => getLogLevels({ LOG_LEVEL: 'trace' })).toThrow('Invalid LOG_LEVEL "trace"');
     });

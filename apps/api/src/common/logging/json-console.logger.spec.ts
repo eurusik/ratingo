@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { ConsoleLogger, Logger } from '@nestjs/common';
 
 import { JsonConsoleLogger } from './json-console.logger';
 
@@ -62,6 +62,40 @@ describe('JsonConsoleLogger', () => {
     ]);
   });
 
+  it('folds an Error passed after the message into the same entry', () => {
+    const error = new Error('connection refused');
+
+    new JsonConsoleLogger().error('Sync failed', error, 'TraktSyncService');
+
+    expect(stderr).toHaveBeenCalledTimes(1);
+    expect(entries(stderr)).toEqual([
+      expect.objectContaining({
+        context: 'TraktSyncService',
+        message: 'Sync failed: connection refused',
+        stack: error.stack,
+      }),
+    ]);
+  });
+
+  it('writes several error messages with one stack as a single entry', () => {
+    const stack = 'Error: boom\n    at a (a.js:1:1)';
+
+    new JsonConsoleLogger().error('first', 'second', stack, 'Ctx');
+
+    expect(entries(stderr)).toEqual([
+      expect.objectContaining({ context: 'Ctx', message: 'first: second', stack }),
+    ]);
+  });
+
+  it('writes fatal to stdout with error severity', () => {
+    new JsonConsoleLogger().fatal('shutting down', 'Ctx');
+
+    expect(stderr).not.toHaveBeenCalled();
+    expect(entries(stdout)).toEqual([
+      expect.objectContaining({ level: 'error', message: 'shutting down' }),
+    ]);
+  });
+
   it('serialises non-string messages without colour codes', () => {
     new JsonConsoleLogger().warn({ jobId: 7, nested: { ok: false } }, 'Ctx');
 
@@ -92,6 +126,7 @@ describe('JsonConsoleLogger', () => {
     logger.verbose('hidden', 'Ctx');
 
     expect(stdout).not.toHaveBeenCalled();
+    expect(stderr).not.toHaveBeenCalled();
   });
 
   it('formats messages from Nest Logger instances once overridden', () => {
@@ -99,7 +134,7 @@ describe('JsonConsoleLogger', () => {
     try {
       new Logger('CatalogService').warn('slow query');
     } finally {
-      Logger.overrideLogger(false);
+      Logger.overrideLogger(new ConsoleLogger());
     }
 
     expect(entries(stdout)).toEqual([

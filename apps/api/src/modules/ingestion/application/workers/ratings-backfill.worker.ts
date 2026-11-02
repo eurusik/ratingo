@@ -36,7 +36,7 @@ export function isValidMdblistItemPayload(data: unknown): data is MdblistItemPay
   );
 }
 
-const isMdblistQuotaExhausted = (error: unknown): boolean =>
+const isMdblistRateLimited = (error: unknown): boolean =>
   error instanceof MdblistApiException &&
   error.details?.statusCode === HttpStatus.TOO_MANY_REQUESTS;
 
@@ -82,8 +82,8 @@ export class RatingsBackfillWorker extends WorkerHost {
           this.logger.warn(`Unknown ratings-backfill job type: ${job.name}`);
       }
     } catch (error) {
-      if (isMdblistQuotaExhausted(error)) {
-        this.logger.warn(`[job:${job.id}] Failed: MDBList daily quota exhausted (429)`);
+      if (isMdblistRateLimited(error)) {
+        this.logger.warn(`[job:${job.id}] Failed: MDBList rate limited (429)`);
         throw error;
       }
       const err = error instanceof Error ? error : new Error(String(error));

@@ -4,7 +4,11 @@ import { ConsoleLogger, type LogLevel } from '@nestjs/common';
 
 type WriteStream = 'stdout' | 'stderr';
 
+type LogEntry = Record<string, unknown>;
+
 const INSPECT_DEPTH = 5;
+
+const ERROR_MESSAGE_SEPARATOR = ': ';
 
 const SEVERITY_BY_LEVEL: Record<LogLevel, string> = {
   verbose: 'debug',
@@ -27,13 +31,15 @@ export class JsonConsoleLogger extends ConsoleLogger {
     messages: unknown[],
     context = '',
     logLevel: LogLevel = 'log',
-    writeStreamType?: WriteStream,
+    writeStreamType: WriteStream = 'stdout',
   ): void {
     if (logLevel === 'error') {
       this.pendingError = { messages, context };
       return;
     }
-    this.writeEntries(messages, context, logLevel, undefined, writeStreamType);
+    for (const message of messages) {
+      this.writeLine(writeStreamType, buildEntry(message, context, logLevel));
+    }
   }
 
   protected override printStackTrace(stack?: string): void {
@@ -42,40 +48,42 @@ export class JsonConsoleLogger extends ConsoleLogger {
     if (!pending) {
       return;
     }
-    this.writeEntries(pending.messages, pending.context, 'error', stack, 'stderr');
+    this.writeLine('stderr', buildErrorEntry(pending, stack));
   }
 
-  private writeEntries(
-    messages: unknown[],
-    context: string | undefined,
-    logLevel: LogLevel,
-    stack: string | undefined,
-    writeStreamType: WriteStream = 'stdout',
-  ): void {
+  private writeLine(writeStreamType: WriteStream, entry: LogEntry): void {
     const stream = writeStreamType === 'stderr' ? process.stderr : process.stdout;
-    for (const message of messages) {
-      stream.write(`${JSON.stringify(buildEntry(message, context, logLevel, stack))}\n`);
-    }
+    stream.write(`${JSON.stringify(entry)}\n`);
   }
 }
 
-function buildEntry(
-  message: unknown,
-  context: string | undefined,
-  logLevel: LogLevel,
-  stack: string | undefined,
-): Record<string, unknown> {
-  const isError = message instanceof Error;
+function buildEntry(message: unknown, context: string | undefined, logLevel: LogLevel): LogEntry {
   return {
     time: new Date().toISOString(),
     level: SEVERITY_BY_LEVEL[logLevel],
     context: context || undefined,
-    message: isError ? message.message : stringifyMessage(message),
-    stack: stack ?? (isError ? message.stack : undefined),
+    message: describeMessage(message),
+    stack: message instanceof Error ? message.stack : undefined,
   };
 }
 
-const stringifyMessage = (message: unknown): string =>
-  typeof message === 'string'
-    ? message
-    : inspect(message, { depth: INSPECT_DEPTH, breakLength: Infinity });
+function buildErrorEntry(pending: PendingError, stack: string | undefined): LogEntry {
+  const firstError = pending.messages.find((message) => message instanceof Error);
+  return {
+    time: new Date().toISOString(),
+    level: SEVERITY_BY_LEVEL.error,
+    context: pending.context || undefined,
+    message: pending.messages.map(describeMessage).join(ERROR_MESSAGE_SEPARATOR),
+    stack: stack ?? firstError?.stack,
+  };
+}
+
+function describeMessage(message: unknown): string {
+  if (typeof message === 'string') {
+    return message;
+  }
+  if (message instanceof Error) {
+    return message.message;
+  }
+  return inspect(message, { depth: INSPECT_DEPTH, breakLength: Infinity });
+}

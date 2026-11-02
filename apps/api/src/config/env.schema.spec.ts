@@ -51,4 +51,14 @@ describe('buildEnvSchema', () => {
     const { DATABASE_URL: _omitted, ...env } = BASE_ENV;
     expect(validate(role, { ...env, ...JWT_SECRETS }).error?.message).toMatch(/DATABASE_URL/);
   });
+
+  it('treats blank LOG_LEVEL and LOG_FORMAT as unset', () => {
+    const env = { ...BASE_ENV, LOG_LEVEL: '', LOG_FORMAT: '' };
+    expect(validate('worker', env).error).toBeUndefined();
+  });
+
+  it('rejects an unknown LOG_LEVEL', () => {
+    const env = { ...BASE_ENV, LOG_LEVEL: 'trace' };
+    expect(validate('worker', env).error?.message).toMatch(/LOG_LEVEL/);
+  });
 });
