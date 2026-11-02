@@ -16,6 +16,11 @@ import { type ApiErrorResponse } from '../interfaces/api-response.interface';
 
 type ExceptionResponseMessage = string | string[];
 
+const EXPECTED_CLIENT_ERROR_STATUSES: ReadonlySet<number> = new Set([
+  HttpStatus.UNAUTHORIZED,
+  HttpStatus.NOT_FOUND,
+]);
+
 function hasMessageField(value: unknown): value is { message?: unknown } {
   return typeof value === 'object' && value !== null && 'message' in value;
 }
@@ -42,17 +47,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const { statusCode, errorResponse } = this.buildErrorResponse(exception);
 
-    // Log based on severity
-    if (statusCode >= 500) {
-      this.logger.error(
-        `${errorResponse.error.code}: ${errorResponse.error.message}`,
-        exception instanceof Error ? exception.stack : undefined,
-      );
-    } else {
-      this.logger.warn(`${errorResponse.error.code}: ${errorResponse.error.message}`);
-    }
+    this.logException(exception, errorResponse);
 
     response.status(statusCode).send(errorResponse);
+  }
+
+  private logException(exception: unknown, { error }: ApiErrorResponse): void {
+    const message = `${error.code}: ${error.message}`;
+
+    if (error.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      this.logger.error(message, exception instanceof Error ? exception.stack : undefined);
+    } else if (EXPECTED_CLIENT_ERROR_STATUSES.has(error.statusCode)) {
+      this.logger.debug(message);
+    } else {
+      this.logger.warn(message);
+    }
   }
 
   private buildErrorResponse(exception: unknown): {
