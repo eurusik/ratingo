@@ -15,6 +15,10 @@ export class ExternalApiException extends AppException {
   ) {
     super(code, message, HttpStatus.BAD_GATEWAY, details);
   }
+
+  isRateLimited(): boolean {
+    return this.details?.statusCode === HttpStatus.TOO_MANY_REQUESTS;
+  }
 }
 
 /**
