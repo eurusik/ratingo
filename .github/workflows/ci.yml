@@ -15,8 +15,8 @@ permissions:
   contents: read
 
 env:
-  # api runs on Railway (node:20 Dockerfile); web-client runs on Vercel (Node 24.x)
-  NODE_VERSION: 20
+  # api and pg-backup run on Railway (node:22 Dockerfiles); web-client runs on Vercel (Node 24.x)
+  NODE_VERSION: 22
   WEB_NODE_VERSION: 24
   HUSKY: 0
 
