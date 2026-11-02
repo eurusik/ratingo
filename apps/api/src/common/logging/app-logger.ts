@@ -2,18 +2,18 @@ import { ConsoleLogger, type LoggerService, type LogLevel } from '@nestjs/common
 
 import { JsonConsoleLogger } from './json-console.logger';
 
-export const LOG_LEVELS: readonly LogLevel[] = [
+const LOG_LEVELS = [
   'verbose',
   'debug',
   'log',
   'warn',
   'error',
   'fatal',
-];
+] as const satisfies readonly LogLevel[];
 
-export const LOG_FORMATS = ['json', 'pretty'] as const;
+const LOG_FORMATS = ['json', 'pretty'] as const;
 
-export type LogFormat = (typeof LOG_FORMATS)[number];
+type LogFormat = (typeof LOG_FORMATS)[number];
 
 const DEPLOYED_MIN_LEVEL: LogLevel = 'log';
 

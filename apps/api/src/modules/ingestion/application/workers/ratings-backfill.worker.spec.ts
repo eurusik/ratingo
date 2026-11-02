@@ -111,17 +111,15 @@ describe('RatingsBackfillWorker', () => {
     ).rejects.toThrow('DB outage');
   });
 
-  it('logs MDBList quota exhaustion as a warning without a stack trace and rethrows', async () => {
+  it('rethrows an MDBList rate limit without logging it again as an error', async () => {
     const rateLimitError = new MdblistApiException('429 Too Many Requests', 429);
     pipeline.processItem.mockRejectedValue(rateLimitError);
-    const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
     const error = jest.spyOn(Logger.prototype, 'error').mockImplementation();
 
     await expect(
       worker.process(buildJob({ mediaItemId: 'media-1', tmdbId: 101, type: MediaType.MOVIE })),
     ).rejects.toBe(rateLimitError);
 
-    expect(warn).toHaveBeenCalledWith('[job:job-1] Failed: MDBList rate limited (429)');
     expect(error).not.toHaveBeenCalled();
   });
 

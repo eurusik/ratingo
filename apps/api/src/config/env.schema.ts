@@ -1,6 +1,5 @@
 import * as Joi from 'joi';
 
-import { LOG_FORMATS, LOG_LEVELS } from '../common/logging/app-logger';
 import { type AppRole, runsHttp } from '../common/runtime/app-role';
 
 /**
@@ -10,14 +9,6 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
 
 const sharedEnvKeys = {
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
-  LOG_LEVEL: Joi.string()
-    .valid(...LOG_LEVELS)
-    .allow('')
-    .optional(),
-  LOG_FORMAT: Joi.string()
-    .valid(...LOG_FORMATS)
-    .allow('')
-    .optional(),
 
   // Database
   DATABASE_URL: Joi.string().required(),

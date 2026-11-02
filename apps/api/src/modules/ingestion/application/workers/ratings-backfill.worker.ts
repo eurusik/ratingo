@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { HttpStatus, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
@@ -37,8 +37,7 @@ export function isValidMdblistItemPayload(data: unknown): data is MdblistItemPay
 }
 
 const isMdblistRateLimited = (error: unknown): boolean =>
-  error instanceof MdblistApiException &&
-  error.details?.statusCode === HttpStatus.TOO_MANY_REQUESTS;
+  error instanceof MdblistApiException && error.isRateLimited();
 
 /**
  * Dedicated worker for external-ratings backfill jobs.
@@ -83,7 +82,6 @@ export class RatingsBackfillWorker extends WorkerHost {
       }
     } catch (error) {
       if (isMdblistRateLimited(error)) {
-        this.logger.warn(`[job:${job.id}] Failed: MDBList rate limited (429)`);
         throw error;
       }
       const err = error instanceof Error ? error : new Error(String(error));
