@@ -1,8 +1,10 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { type Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
+import { MdblistApiException } from '@/common/exceptions';
 
 import { IngestionJob } from '../../ingestion.constants';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
@@ -60,6 +62,10 @@ describe('RatingsBackfillWorker', () => {
     worker = module.get(RatingsBackfillWorker);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   const buildJob = (data: unknown, name: string = IngestionJob.BACKFILL_MDBLIST_RATINGS_ITEM) =>
     ({ id: 'job-1', name, data }) as unknown as Job;
 
@@ -103,5 +109,31 @@ describe('RatingsBackfillWorker', () => {
     await expect(
       worker.process(buildJob({ mediaItemId: 'media-1', tmdbId: 101, type: MediaType.MOVIE })),
     ).rejects.toThrow('DB outage');
+  });
+
+  it('rethrows an MDBList rate limit without logging it again as an error', async () => {
+    const rateLimitError = new MdblistApiException('429 Too Many Requests', 429);
+    pipeline.processItem.mockRejectedValue(rateLimitError);
+    const error = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+
+    await expect(
+      worker.process(buildJob({ mediaItemId: 'media-1', tmdbId: 101, type: MediaType.MOVIE })),
+    ).rejects.toBe(rateLimitError);
+
+    expect(error).not.toHaveBeenCalled();
+  });
+
+  it('keeps other MDBList failures at error level', async () => {
+    pipeline.processItem.mockRejectedValue(new MdblistApiException('503 Unavailable', 503));
+    const error = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+
+    await expect(
+      worker.process(buildJob({ mediaItemId: 'media-1', tmdbId: 101, type: MediaType.MOVIE })),
+    ).rejects.toThrow('503 Unavailable');
+
+    expect(error).toHaveBeenCalledWith(
+      '[job:job-1] Failed: MDBList API: 503 Unavailable',
+      expect.any(String),
+    );
   });
 });

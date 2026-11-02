@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
+import { MdblistApiException } from '@/common/exceptions';
 import { WORKER_CONFIG } from '@/config/queue.config';
 
 import { IngestionJob, RATINGS_BACKFILL_QUEUE } from '../../ingestion.constants';
@@ -34,6 +35,9 @@ export function isValidMdblistItemPayload(data: unknown): data is MdblistItemPay
     (type === MediaType.MOVIE || type === MediaType.SHOW)
   );
 }
+
+const isMdblistRateLimited = (error: unknown): boolean =>
+  error instanceof MdblistApiException && error.isRateLimited();
 
 /**
  * Dedicated worker for external-ratings backfill jobs.
@@ -77,6 +81,9 @@ export class RatingsBackfillWorker extends WorkerHost {
           this.logger.warn(`Unknown ratings-backfill job type: ${job.name}`);
       }
     } catch (error) {
+      if (isMdblistRateLimited(error)) {
+        throw error;
+      }
       const err = error instanceof Error ? error : new Error(String(error));
       this.logger.error(`[job:${job.id}] Failed: ${err.message}`, err.stack);
       throw error;
