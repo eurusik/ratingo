@@ -50,15 +50,9 @@ export class OAuthExceptionFilter implements ExceptionFilter {
 
     const errorCode = this.extractErrorCode(exception);
 
-    // Log OAuth error with request context (without sensitive data)
-    this.logger.warn(`OAuth error: ${errorCode}`, {
-      ip: request.ip,
-      userAgent: request.headers['user-agent'],
-      path: request.url,
-    });
-
     // Handle redirect errors (OAuth flow errors)
     if (REDIRECT_ERROR_CODES.has(errorCode)) {
+      this.logOAuthError(errorCode, request);
       const { frontendUrl } = this.authCfg;
       // Determine provider from state payload or infer from URL path
       const provider =
@@ -72,6 +66,7 @@ export class OAuthExceptionFilter implements ExceptionFilter {
 
     // Handle JSON errors (exchange errors)
     if (JSON_ERROR_CODES.has(errorCode)) {
+      this.logOAuthError(errorCode, request);
       void response.status(HttpStatus.UNAUTHORIZED).send({
         success: false,
         error: {
@@ -86,6 +81,12 @@ export class OAuthExceptionFilter implements ExceptionFilter {
     // For non-OAuth UnauthorizedException, let it propagate to global filter
     // by re-throwing (this filter only handles OAuth-specific errors)
     throw exception;
+  }
+
+  private logOAuthError(errorCode: string, request: FastifyRequest): void {
+    this.logger.warn(
+      `OAuth error: ${errorCode} (ip=${request.ip}, userAgent=${request.headers['user-agent']}, path=${request.url})`,
+    );
   }
 
   private extractErrorCode(exception: UnauthorizedException): string {

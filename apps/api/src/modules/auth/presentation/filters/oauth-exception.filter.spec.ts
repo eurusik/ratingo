@@ -445,11 +445,10 @@ describe('OAuthExceptionFilter', () => {
 
       filter.catch(exception, host);
 
-      expect(loggerWarnSpy).toHaveBeenCalledWith('OAuth error: OAUTH_CANCELLED', {
-        ip: '192.168.1.100',
-        userAgent: 'Mozilla/5.0',
-        path: '/api/auth/google/callback',
-      });
+      expect(loggerWarnSpy).toHaveBeenCalledTimes(1);
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        'OAuth error: OAUTH_CANCELLED (ip=192.168.1.100, userAgent=Mozilla/5.0, path=/api/auth/google/callback)',
+      );
     });
 
     it('should log warning with error code for JSON errors', () => {
@@ -464,27 +463,21 @@ describe('OAuthExceptionFilter', () => {
 
       filter.catch(exception, host);
 
-      expect(loggerWarnSpy).toHaveBeenCalledWith('OAuth error: OAUTH_EXCHANGE_EXPIRED', {
-        ip: '10.0.0.1',
-        userAgent: 'PostmanRuntime/7.0',
-        path: '/api/auth/exchange',
-      });
+      expect(loggerWarnSpy).toHaveBeenCalledTimes(1);
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        'OAuth error: OAUTH_EXCHANGE_EXPIRED (ip=10.0.0.1, userAgent=PostmanRuntime/7.0, path=/api/auth/exchange)',
+      );
     });
 
-    it('should log warning even for non-OAuth errors before re-throwing', () => {
-      const exception = new UnauthorizedException('Invalid credentials');
-      const request = createMockRequest();
+    it('should not log non-OAuth errors that are re-thrown to the global filter', () => {
+      const exception = new UnauthorizedException();
+      const request = createMockRequest({ url: '/api/auth/me' });
       const reply = createMockReply();
       const host = createMockHost(request, reply);
 
-      expect(() => filter.catch(exception, host)).toThrow();
+      expect(() => filter.catch(exception, host)).toThrow(exception);
 
-      expect(loggerWarnSpy).toHaveBeenCalledWith(
-        'OAuth error: Invalid credentials',
-        expect.objectContaining({
-          ip: '127.0.0.1',
-        }),
-      );
+      expect(loggerWarnSpy).not.toHaveBeenCalled();
     });
 
     it('should handle missing user-agent header gracefully', () => {
@@ -500,11 +493,9 @@ describe('OAuthExceptionFilter', () => {
 
       filter.catch(exception, host);
 
-      expect(loggerWarnSpy).toHaveBeenCalledWith('OAuth error: OAUTH_CANCELLED', {
-        ip: '127.0.0.1',
-        userAgent: undefined,
-        path: '/api/auth/google/callback',
-      });
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        'OAuth error: OAUTH_CANCELLED (ip=127.0.0.1, userAgent=undefined, path=/api/auth/google/callback)',
+      );
     });
   });
 });

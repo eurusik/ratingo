@@ -254,7 +254,7 @@ export class ResilientHttpClient {
       // Check total time budget
       const elapsed = Date.now() - startTime;
       if (elapsed >= this.config.maxTotalTimeMs) {
-        this.logger.warn(
+        this.logger.debug(
           `Time budget exhausted after ${elapsed}ms and ${attempts} attempts: ${redactSensitiveUrlParams(url)}`,
         );
         break;
@@ -285,7 +285,7 @@ export class ResilientHttpClient {
 
         // Don't retry if we've exhausted attempts
         if (attempt >= this.config.maxRetries) {
-          this.logger.warn(
+          this.logger.debug(
             `Max retries (${this.config.maxRetries}) exhausted: ${redactSensitiveUrlParams(url)}`,
           );
           break;
@@ -297,7 +297,7 @@ export class ResilientHttpClient {
         // Check if delay would exceed time budget
         const remainingTime = this.config.maxTotalTimeMs - (Date.now() - startTime);
         if (delayMs >= remainingTime) {
-          this.logger.warn(
+          this.logger.debug(
             `Delay ${delayMs}ms would exceed time budget (${remainingTime}ms remaining): ${redactSensitiveUrlParams(url)}`,
           );
           break;

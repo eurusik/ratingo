@@ -23,11 +23,13 @@ describe('AllExceptionsFilter', () => {
   let filter: AllExceptionsFilter;
   let loggerErrorSpy: jest.SpyInstance;
   let loggerWarnSpy: jest.SpyInstance;
+  let loggerDebugSpy: jest.SpyInstance;
 
   beforeEach(() => {
     filter = new AllExceptionsFilter();
     loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    loggerDebugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -82,7 +84,8 @@ describe('AllExceptionsFilter', () => {
         details: { errors: ['nope'] },
       },
     });
-    expect(loggerWarnSpy).toHaveBeenCalled();
+    expect(loggerDebugSpy).toHaveBeenCalledWith('UNAUTHORIZED: nope');
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
   });
 
   it('should handle HttpException forbidden and map code', () => {
@@ -101,6 +104,8 @@ describe('AllExceptionsFilter', () => {
         details: undefined,
       },
     });
+    expect(loggerWarnSpy).toHaveBeenCalledWith('FORBIDDEN: forbidden');
+    expect(loggerDebugSpy).not.toHaveBeenCalled();
   });
 
   it('should handle HttpException default mapping (e.g. 404) without details', () => {
@@ -118,6 +123,22 @@ describe('AllExceptionsFilter', () => {
         statusCode: HttpStatus.NOT_FOUND,
       },
     });
+    expect(loggerDebugSpy).toHaveBeenCalledWith('RESOURCE_NOT_FOUND: nope');
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+  });
+
+  it('should log AppException with 404 status at debug', () => {
+    const response = replyMock();
+    const exception = new AppException(
+      ErrorCode.RESOURCE_NOT_FOUND,
+      'Movie not found',
+      HttpStatus.NOT_FOUND,
+    );
+
+    filter.catch(exception, hostMock(response));
+
+    expect(loggerDebugSpy).toHaveBeenCalledWith('RESOURCE_NOT_FOUND: Movie not found');
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
   });
 
   it('should handle unknown errors and expose message in non-production', () => {
@@ -176,5 +197,6 @@ describe('AllExceptionsFilter', () => {
       },
     });
     expect(loggerErrorSpy).toHaveBeenCalled();
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
   });
 });

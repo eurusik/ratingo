@@ -1,3 +1,5 @@
+import { Logger } from '@nestjs/common';
+
 import {
   ResilientHttpClient,
   isRetryableError,
@@ -343,6 +345,61 @@ describe('ResilientHttpClient', () => {
 
         expect(mockFetch).toHaveBeenCalledTimes(DEFAULT_RETRY_CONFIG.maxRetries + 1);
         expect(result.success).toBe(false);
+      });
+
+      describe('logging', () => {
+        let loggerWarnSpy: jest.SpyInstance;
+        let loggerDebugSpy: jest.SpyInstance;
+
+        beforeEach(() => {
+          loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+          loggerDebugSpy = jest
+            .spyOn(Logger.prototype, 'debug')
+            .mockImplementation(() => undefined);
+        });
+
+        afterEach(() => {
+          jest.restoreAllMocks();
+        });
+
+        it('should log exhausted retries at debug and leave the warn to the caller', async () => {
+          mockFetch.mockResolvedValue({
+            ok: false,
+            status: 500,
+            statusText: 'Internal Server Error',
+            headers: new Headers(),
+          } as any);
+
+          const resultPromise = client.get('https://api.example.com/test');
+          for (let i = 0; i < DEFAULT_RETRY_CONFIG.maxRetries; i++) {
+            await jest.advanceTimersByTimeAsync(5000);
+          }
+          await resultPromise;
+
+          expect(loggerDebugSpy).toHaveBeenCalledWith(
+            expect.stringContaining(`Max retries (${DEFAULT_RETRY_CONFIG.maxRetries}) exhausted`),
+          );
+          expect(loggerWarnSpy).not.toHaveBeenCalled();
+        });
+
+        it('should log a Retry-After beyond the time budget at debug', async () => {
+          const budgetClient = new ResilientHttpClient({ maxTotalTimeMs: 1000 });
+          mockFetch.mockResolvedValue({
+            ok: false,
+            status: 429,
+            statusText: 'Too Many Requests',
+            headers: new Headers({ 'retry-after': '10' }),
+          } as any);
+
+          const result = await budgetClient.get('https://api.example.com/test');
+
+          expect(result.success).toBe(false);
+          expect(mockFetch).toHaveBeenCalledTimes(1);
+          expect(loggerDebugSpy).toHaveBeenCalledWith(
+            expect.stringContaining('would exceed time budget'),
+          );
+          expect(loggerWarnSpy).not.toHaveBeenCalled();
+        });
       });
 
       it('should handle different HTTP error status codes', async () => {
