@@ -7,6 +7,9 @@ import {
   DEFAULT_LANGUAGE,
   CATALOG_DEFAULT_NEW_RELEASE_DAYS,
   MS_PER_DAY,
+  NEW_RELEASES_REGION,
+  NEW_RELEASES_MIN_VOTE_COUNT,
+  NEW_RELEASES_MAX_PRIMARY_RELEASE_AGE_DAYS,
 } from '../../common/constants';
 import { MediaType } from '../../common/enums/media-type.enum';
 import {
@@ -47,6 +50,7 @@ const TMDB_RETRY_CONFIG: Partial<RetryConfig> = {
 
 /** Safety limit to prevent infinite loops when paginating */
 const MAX_PAGES = 10;
+const TMDB_THEATRICAL_RELEASE_TYPE = '3';
 
 /**
  * TMDB API response for paginated results.
@@ -351,22 +355,16 @@ export class TmdbAdapter implements MetadataProviderPort {
    */
   public async getNewReleaseIds(
     daysBack = CATALOG_DEFAULT_NEW_RELEASE_DAYS,
-    region = DEFAULT_REGION,
+    region = NEW_RELEASES_REGION,
   ): Promise<number[]> {
-    const now = new Date();
-    const cutoff = new Date(now.getTime() - daysBack * MS_PER_DAY);
+    const query = this.buildNewReleasesQuery(daysBack, region);
     const ids: number[] = [];
     let pagesFetched = 0;
     let totalPages = 0;
 
-    // Fetch all pages (with safety limit)
     for (let page = 1; page <= MAX_PAGES; page++) {
       const data = await this.fetch<TmdbPaginatedResponse>('/discover/movie', {
-        region,
-        sort_by: 'primary_release_date.desc',
-        'primary_release_date.lte': now.toISOString().split('T')[0],
-        'primary_release_date.gte': cutoff.toISOString().split('T')[0],
-        with_release_type: '3', // Theatrical
+        ...query,
         page: page.toString(),
       });
 
@@ -391,6 +389,21 @@ export class TmdbAdapter implements MetadataProviderPort {
     );
 
     return ids;
+  }
+
+  private buildNewReleasesQuery(daysBack: number, region: string): Record<string, string> {
+    const now = Date.now();
+    const daysAgo = (days: number) => new Date(now - days * MS_PER_DAY).toISOString().split('T')[0];
+
+    return {
+      region,
+      'release_date.gte': daysAgo(daysBack),
+      'release_date.lte': daysAgo(0),
+      'primary_release_date.gte': daysAgo(NEW_RELEASES_MAX_PRIMARY_RELEASE_AGE_DAYS),
+      with_release_type: TMDB_THEATRICAL_RELEASE_TYPE,
+      'vote_count.gte': NEW_RELEASES_MIN_VOTE_COUNT.toString(),
+      sort_by: 'popularity.desc',
+    };
   }
 
   /**

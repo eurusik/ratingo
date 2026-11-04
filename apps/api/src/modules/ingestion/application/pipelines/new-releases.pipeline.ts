@@ -1,6 +1,9 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
-import { DEFAULT_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '../../../../common/constants';
+import {
+  NEW_RELEASES_REGION,
+  CATALOG_DEFAULT_NEW_RELEASE_DAYS,
+} from '../../../../common/constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { TmdbAdapter } from '../../../tmdb/public';
@@ -27,10 +30,13 @@ export class NewReleasesPipeline {
   /**
    * Syncs new releases: fetches TMDB IDs and enqueues sync jobs.
    *
-   * @param region - Region code for release dates (default: DEFAULT_REGION)
+   * @param region - Region code for release dates (default: NEW_RELEASES_REGION)
    * @param daysBack - Number of days to look back (default: CATALOG_DEFAULT_NEW_RELEASE_DAYS)
    */
-  async sync(region = DEFAULT_REGION, daysBack = CATALOG_DEFAULT_NEW_RELEASE_DAYS): Promise<void> {
+  async sync(
+    region = NEW_RELEASES_REGION,
+    daysBack = CATALOG_DEFAULT_NEW_RELEASE_DAYS,
+  ): Promise<void> {
     this.logger.log(`Starting new releases sync (region: ${region}, daysBack: ${daysBack})...`);
 
     const tmdbIds = await this.tmdbAdapter.getNewReleaseIds(daysBack, region);

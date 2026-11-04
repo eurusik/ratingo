@@ -235,7 +235,7 @@ describe('IngestionController', () => {
       expect(mockQueue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_NEW_RELEASES,
         {
-          region: DEFAULT_REGION,
+          region: 'US',
           daysBack: 30,
           force: false,
         },
@@ -333,7 +333,11 @@ describe('IngestionController', () => {
       mockQueue.getJob = jest
         .fn()
         .mockResolvedValue(
-          makeJob('completed', { finishedOn, name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 550 } }),
+          makeJob('completed', {
+            finishedOn,
+            name: IngestionJob.SYNC_MOVIE,
+            data: { tmdbId: 550 },
+          }),
         );
       mockSyncService.getSlugByTmdbId.mockResolvedValue('test-movie-slug');
 
@@ -344,15 +348,13 @@ describe('IngestionController', () => {
     });
 
     it('derives show type from the job name when resolving the slug', async () => {
-      mockQueue.getJob = jest
-        .fn()
-        .mockResolvedValue(
-          makeJob('completed', {
-            finishedOn: Date.now(),
-            name: IngestionJob.SYNC_SHOW,
-            data: { tmdbId: 550 },
-          }),
-        );
+      mockQueue.getJob = jest.fn().mockResolvedValue(
+        makeJob('completed', {
+          finishedOn: Date.now(),
+          name: IngestionJob.SYNC_SHOW,
+          data: { tmdbId: 550 },
+        }),
+      );
       mockSyncService.getSlugByTmdbId.mockResolvedValue('test-show-slug');
 
       const res = await controller.getJobStatus('job-42');

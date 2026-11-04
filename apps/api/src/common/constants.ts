@@ -29,6 +29,10 @@ export const CATALOG_DEFAULT_NEW_RELEASE_DAYS = 30;
 export const CATALOG_DEFAULT_DIGITAL_DAYS = 14;
 export const CATALOG_MAX_DAYS_BACK = 365;
 
+export const NEW_RELEASES_REGION = 'US';
+export const NEW_RELEASES_MIN_VOTE_COUNT = 5;
+export const NEW_RELEASES_MAX_PRIMARY_RELEASE_AGE_DAYS = 180;
+
 // Digital Release Freshness — only show movies originally released within this window
 // Excludes re-releases of old classics (e.g., Harry Potter re-released on Max)
 export const DIGITAL_RELEASE_MAX_AGE_DAYS = 365;
