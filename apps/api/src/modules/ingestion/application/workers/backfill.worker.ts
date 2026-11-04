@@ -4,6 +4,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 
 import { type MediaType } from '@/common/enums/media-type.enum';
+import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 
 import {
@@ -92,7 +93,7 @@ export class BackfillWorker extends WorkerHost {
           this.logger.warn(`Unknown backfill job type: ${job.name}`);
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       this.logger.error(`[job:${job.id}] Failed: ${err.message}`, err.stack);
       throw error;
     }

@@ -22,6 +22,8 @@ const LAG_THRESHOLD_MS = 100;
 
 const logger = new Logger('DevTiming');
 
+type TimingContext = Record<string, string | number | boolean | null | undefined>;
+
 /**
  * Timing session for a single operation.
  */
@@ -31,7 +33,7 @@ class TimingSession {
 
   constructor(
     private readonly operation: string,
-    private readonly context: Record<string, unknown> = {},
+    private readonly context: TimingContext = {},
   ) {}
 
   mark(name: string): this {
@@ -100,7 +102,7 @@ export const DevTiming = {
   /**
    * Starts a timing session for an operation.
    */
-  start(operation: string, context: Record<string, unknown> = {}): ITimingSession {
+  start(operation: string, context: TimingContext = {}): ITimingSession {
     return ENABLED ? new TimingSession(operation, context) : NOOP_SESSION;
   },
 

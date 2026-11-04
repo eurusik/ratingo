@@ -9,6 +9,8 @@ import {
 } from '@opentelemetry/api';
 import { Queue } from 'bullmq';
 
+import { errorMessage } from '@/common/utils/error.utils';
+
 import { CATALOG_POLICY_QUEUE } from '../modules/catalog-policy/public';
 import {
   BACKFILL_QUEUE,
@@ -65,7 +67,7 @@ export class QueueMetricsService implements OnModuleInit, OnModuleDestroy {
           );
         } catch (error) {
           this.logger.warn(
-            `Failed to read job counts for queue ${queue.name}: ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to read job counts for queue ${queue.name}: ${errorMessage(error)}`,
           );
         }
       }),

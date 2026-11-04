@@ -13,6 +13,8 @@ import {
   type ObservableGauge,
 } from '@opentelemetry/api';
 
+import { errorMessage } from '@/common/utils/error.utils';
+
 import { MS_PER_SECOND } from '../../../../common/constants';
 import {
   API_KEY_LAST_CHECKED_METRIC,
@@ -89,9 +91,7 @@ export class KeyHealthGaugesObserver implements OnModuleInit, OnModuleDestroy {
         }
       });
     } catch (error) {
-      this.logger.warn(
-        `Failed to read key health for metrics: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      this.logger.warn(`Failed to read key health for metrics: ${errorMessage(error)}`);
     }
   };
 }

@@ -16,8 +16,13 @@ export class ExternalApiException extends AppException {
     super(code, message, HttpStatus.BAD_GATEWAY, details);
   }
 
+  get upstreamStatus(): number | undefined {
+    const statusCode = this.details?.statusCode;
+    return typeof statusCode === 'number' ? statusCode : undefined;
+  }
+
   isRateLimited(): boolean {
-    return this.details?.statusCode === HttpStatus.TOO_MANY_REQUESTS;
+    return this.upstreamStatus === HttpStatus.TOO_MANY_REQUESTS;
   }
 }
 

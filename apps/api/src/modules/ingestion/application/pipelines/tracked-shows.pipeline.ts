@@ -1,5 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
+import { toError } from '@/common/utils/error.utils';
+
 import {
   SubscriptionTriggerService,
   type IUserSubscriptionRepository,
@@ -115,7 +117,7 @@ export class TrackedShowsPipeline {
 
       return { hasChanges: diff.hasChanges };
     } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       this.logger.error(`Failed to sync tracked show ${tmdbId}: ${err.message}`);
       return { hasChanges: false };
     }

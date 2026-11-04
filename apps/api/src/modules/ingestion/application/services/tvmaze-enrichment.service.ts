@@ -87,27 +87,27 @@ export class TvMazeEnrichmentService {
 
     for (const name of namesToTry) {
       const episodes = await this.tvMazeAdapter.getEpisodesByShowName(name);
-      if (episodes.length > 0) {
-        // Validate year match to prevent wrong show association
-        const tmdbYear = media.releaseDate?.getFullYear();
-        const firstEpisodeYear = episodes[0]?.airDate?.getFullYear();
+      if (episodes.length === 0) continue;
 
-        if (tmdbYear && firstEpisodeYear) {
-          const yearDiff = Math.abs(tmdbYear - firstEpisodeYear);
-          if (yearDiff > MAX_YEAR_TOLERANCE) {
-            this.logger.warn(
-              `TVMaze name match rejected: year mismatch tmdb=${tmdbYear} tvmaze=${firstEpisodeYear} for "${name}" (imdbId=${imdbId ?? 'none'})`,
-            );
-            continue; // Try next name
-          }
+      // Validate year match to prevent wrong show association
+      const tmdbYear = media.releaseDate?.getFullYear();
+      const firstEpisodeYear = episodes[0]?.airDate?.getFullYear();
+
+      if (tmdbYear && firstEpisodeYear) {
+        const yearDiff = Math.abs(tmdbYear - firstEpisodeYear);
+        if (yearDiff > MAX_YEAR_TOLERANCE) {
+          this.logger.warn(
+            `TVMaze name match rejected: year mismatch tmdb=${tmdbYear} tvmaze=${firstEpisodeYear} for "${name}" (imdbId=${imdbId ?? 'none'})`,
+          );
+          continue; // Try next name
         }
-
-        // Accepted — log for monitoring
-        this.logger.log(
-          `TVMaze name search fallback matched "${name}" (year=${firstEpisodeYear}, imdbId=${imdbId ?? 'none'})`,
-        );
-        return episodes;
       }
+
+      // Accepted — log for monitoring
+      this.logger.log(
+        `TVMaze name search fallback matched "${name}" (year=${firstEpisodeYear}, imdbId=${imdbId ?? 'none'})`,
+      );
+      return episodes;
     }
 
     return [];

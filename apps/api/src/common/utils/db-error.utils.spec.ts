@@ -13,7 +13,7 @@ import { withDbError } from './db-error.utils';
 
 /** Mimics drizzle-orm 0.44 DrizzleQueryError wrapping a postgres.js PostgresError. */
 function drizzleError(pg: Record<string, unknown>, params = 'secret@example.com,hunter2') {
-  const cause = Object.assign(new Error(String(pg.message ?? 'pg error')), pg);
+  const cause = Object.assign(new Error((pg.message as string | undefined) ?? 'pg error'), pg);
   const wrapper = new Error(`Failed query: insert into "users" values ($1, $2)\nparams: ${params}`);
   (wrapper as Error & { cause?: unknown }).cause = cause;
   return wrapper;

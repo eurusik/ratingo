@@ -1,7 +1,7 @@
 import './common/runtime/load-env';
 import './telemetry/register';
 
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { SwaggerModule } from '@nestjs/swagger';
@@ -15,8 +15,11 @@ import { SlowRequestInterceptor } from './common/interceptors/slow-request.inter
 import { createAppLogger } from './common/logging/app-logger';
 import { getAppRole, runsHttp } from './common/runtime/app-role';
 import { DevTiming } from './common/utils/dev-timing';
+import { errorMessage } from './common/utils/error.utils';
 import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.config';
 import { registerHttpMetrics } from './telemetry/http-metrics';
+
+const logger = new Logger('Bootstrap');
 
 /**
  * Entry point of the API application.
@@ -103,4 +106,10 @@ async function bootstrap(): Promise<void> {
   DevTiming.startEventLoopMonitor();
 }
 
-bootstrap();
+bootstrap().catch((error: unknown) => {
+  logger.error(
+    `Application failed to start: ${errorMessage(error)}`,
+    error instanceof Error ? error.stack : undefined,
+  );
+  process.exit(1);
+});

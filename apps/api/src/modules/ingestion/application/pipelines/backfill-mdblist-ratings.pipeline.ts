@@ -5,6 +5,7 @@ import { type JobType, Queue } from 'bullmq';
 import { and, eq, gt, isNull, isNotNull, lt, or } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { MS_PER_DAY } from '@/common/constants';
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
 import { withDbError } from '@/common/utils/db-error.utils';
@@ -20,8 +21,6 @@ import {
   MDBLIST_RATINGS_REFRESH_DAYS,
   RATINGS_BACKFILL_QUEUE,
 } from '../../ingestion.constants';
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const PENDING_JOB_STATES: JobType[] = ['waiting', 'prioritized', 'delayed', 'paused', 'active'];
 

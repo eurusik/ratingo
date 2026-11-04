@@ -4,6 +4,7 @@ import { DiscoveryService } from '@nestjs/core';
 import type * as postgres from 'postgres';
 
 import { findBullWorkers } from './common/runtime/bull-workers';
+import { errorMessage } from './common/utils/error.utils';
 import { withTimeout } from './common/utils/with-timeout.util';
 import { POSTGRES_CLIENT } from './database/database.module';
 
@@ -36,7 +37,7 @@ const exitAfter = (shutdown: Promise<void>): Promise<void> =>
     .then(() => process.exit(0))
     .catch((error: unknown) => {
       logger.error(
-        `Worker shutdown failed: ${String(error)}`,
+        `Worker shutdown failed: ${errorMessage(error)}`,
         error instanceof Error ? error.stack : undefined,
       );
       process.exit(1);
@@ -46,7 +47,7 @@ export function closeWorkerOnSignals(app: INestApplicationContext): void {
   let shutdown: Promise<void> | undefined;
 
   const onSignal = (signal: NodeJS.Signals) => {
-    if (shutdown) {
+    if (shutdown !== undefined) {
       logger.warn(`Received ${signal} while already shutting down`);
       return;
     }
