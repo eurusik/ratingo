@@ -1,9 +1,6 @@
 import { Logger } from '@nestjs/common';
 
-import {
-  EvaluationContext,
-  type EvaluationContextType,
-} from '../../../domain/constants/evaluation.constants';
+import { EvaluationContext } from '../../../domain/constants/evaluation.constants';
 
 import { validateContextPayload } from './context-validator';
 
@@ -126,15 +123,8 @@ describe('validateContextPayload', () => {
       };
       const jobInfo = { runId: 'run-123' };
 
-      const narrowedContext: EvaluationContextType | null = validateContextPayload(
-        payload,
-        jobInfo,
-        mockLogger,
-      )
-        ? payload.context
-        : null;
-
-      expect(narrowedContext).toBe(EvaluationContext.CATALOG);
+      expect(validateContextPayload(payload, jobInfo, mockLogger)).toBe(true);
+      expect(payload.context).toBe(EvaluationContext.CATALOG);
     });
   });
 });

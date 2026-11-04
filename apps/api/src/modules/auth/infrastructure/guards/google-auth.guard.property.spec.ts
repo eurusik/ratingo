@@ -107,10 +107,7 @@ describe('Google OAuth - returnTo Validation Property Tests', () => {
       fc.assert(
         fc.property(fc.string(), (input) => {
           const isValidRelativePath =
-            !!input &&
-            input.startsWith('/') &&
-            !input.startsWith('//') &&
-            RETURN_TO_PATTERN.test(input);
+            input.startsWith('/') && !input.startsWith('//') && RETURN_TO_PATTERN.test(input);
 
           expect(validateReturnTo(input)).toBe(isValidRelativePath ? input : null);
         }),

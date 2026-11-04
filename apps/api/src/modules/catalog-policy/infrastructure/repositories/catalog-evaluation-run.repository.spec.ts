@@ -79,49 +79,18 @@ describe('CatalogEvaluationRunRepository', () => {
      * error handling. We verify the cause contains the original error.
      */
 
-    it('should throw DatabaseException with InvalidRunStatusError cause for "completed" (legacy)', async () => {
-      const mockRow = createMockRow({ status: 'completed' });
-      mockDb.limit.mockResolvedValue([mockRow]);
+    it.each(['completed', 'success', 'pending', 'unknown_status'])(
+      'should throw DatabaseException with InvalidRunStatusError cause for "%s"',
+      async (status) => {
+        mockDb.limit.mockResolvedValue([createMockRow({ status })]);
 
-      const error = await repository.findById('run-123').catch((e: unknown) => e);
+        const error = await repository.findById('run-123').catch((e: unknown) => e);
 
-      expect(error).toBeInstanceOf(DatabaseException);
-      expect(error).toHaveProperty('cause', expect.any(InvalidRunStatusError));
-      expect(error).toHaveProperty('cause.message', expect.stringContaining('completed'));
-    });
-
-    it('should throw DatabaseException with InvalidRunStatusError cause for "success" (legacy)', async () => {
-      const mockRow = createMockRow({ status: 'success' });
-      mockDb.limit.mockResolvedValue([mockRow]);
-
-      const error = await repository.findById('run-123').catch((e: unknown) => e);
-
-      expect(error).toBeInstanceOf(DatabaseException);
-      expect(error).toHaveProperty('cause', expect.any(InvalidRunStatusError));
-      expect(error).toHaveProperty('cause.message', expect.stringContaining('success'));
-    });
-
-    it('should throw DatabaseException with InvalidRunStatusError cause for "pending" (legacy)', async () => {
-      const mockRow = createMockRow({ status: 'pending' });
-      mockDb.limit.mockResolvedValue([mockRow]);
-
-      const error = await repository.findById('run-123').catch((e: unknown) => e);
-
-      expect(error).toBeInstanceOf(DatabaseException);
-      expect(error).toHaveProperty('cause', expect.any(InvalidRunStatusError));
-      expect(error).toHaveProperty('cause.message', expect.stringContaining('pending'));
-    });
-
-    it('should throw DatabaseException with InvalidRunStatusError cause for unknown status', async () => {
-      const mockRow = createMockRow({ status: 'unknown_status' });
-      mockDb.limit.mockResolvedValue([mockRow]);
-
-      const error = await repository.findById('run-123').catch((e: unknown) => e);
-
-      expect(error).toBeInstanceOf(DatabaseException);
-      expect(error).toHaveProperty('cause', expect.any(InvalidRunStatusError));
-      expect(error).toHaveProperty('cause.message', expect.stringContaining('unknown_status'));
-    });
+        expect(error).toBeInstanceOf(DatabaseException);
+        expect(error).toHaveProperty('cause', expect.any(InvalidRunStatusError));
+        expect(error).toHaveProperty('cause.message', expect.stringContaining(status));
+      },
+    );
 
     it('should keep "running" as "running"', async () => {
       const mockRow = createMockRow({ status: 'running' });
