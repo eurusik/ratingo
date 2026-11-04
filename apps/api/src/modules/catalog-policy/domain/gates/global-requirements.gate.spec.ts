@@ -167,6 +167,34 @@ describe('GlobalRequirementsGate', () => {
         expect(result.passes).toBe(false);
         expect(result.failedChecks).toContain(GlobalGateCheck.MIN_QUALITY_SCORE);
       });
+
+      it.each([NaN, Infinity, -Infinity])(
+        'should fail when quality score is %p',
+        (qualityScore) => {
+          const input = createInput(
+            {},
+            { qualityScore, popularityScore: 0.5, freshnessScore: 0.3, ratingoScore: 30 },
+          );
+          const requirements: GlobalRequirements = { minQualityScoreNormalized: 0.5 };
+
+          const result = checkGlobalRequirements(input, requirements);
+
+          expect(result.passes).toBe(false);
+          expect(result.failedChecks).toContain(GlobalGateCheck.MIN_QUALITY_SCORE);
+        },
+      );
+
+      it('should pass when quality score equals the minimum', () => {
+        const input = createInput(
+          {},
+          { qualityScore: 0.5, popularityScore: 0.5, freshnessScore: 0.3, ratingoScore: 30 },
+        );
+        const requirements: GlobalRequirements = { minQualityScoreNormalized: 0.5 };
+
+        const result = checkGlobalRequirements(input, requirements);
+
+        expect(result.failedChecks).not.toContain(GlobalGateCheck.MIN_QUALITY_SCORE);
+      });
     });
 
     describe('requireAnyOfRatingsPresent', () => {

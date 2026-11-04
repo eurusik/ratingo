@@ -8,6 +8,7 @@
 import { hasAnyRating } from '../gates/global-requirements.gate';
 import type { BreakoutRule, PolicyEngineInput } from '../types/policy.types';
 import { hasAnyProvider } from '../utils/offer-filter';
+import { meetsMinQualityScore } from '../utils/quality-score';
 
 /**
  * Checks excludeOriginCountries requirement.
@@ -111,11 +112,7 @@ export function matchesMinQualityScore(
     return true;
   }
 
-  return (
-    stats?.qualityScore !== null &&
-    stats?.qualityScore !== undefined &&
-    stats.qualityScore >= minQualityScoreNormalized
-  );
+  return meetsMinQualityScore(stats?.qualityScore, minQualityScoreNormalized);
 }
 
 /**

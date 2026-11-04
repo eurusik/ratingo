@@ -19,3 +19,5 @@ export { isDiffRegression, isDiffImprovement } from './diff.utils';
 
 // Run context scope (which contexts a run must cover)
 export { resolveRunContextScope, type RunContextScope } from './run-contexts';
+
+export { meetsMinQualityScore } from './quality-score';

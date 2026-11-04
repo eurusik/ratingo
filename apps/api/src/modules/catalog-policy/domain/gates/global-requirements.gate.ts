@@ -15,6 +15,7 @@ import {
   type PolicyEngineInput,
   type GlobalGateCheckType,
 } from '../types/policy.types';
+import { meetsMinQualityScore } from '../utils/quality-score';
 
 /**
  * Default contexts where gate applies when appliesTo not configured.
@@ -145,16 +146,11 @@ export function checkGlobalRequirements(
   const { mediaItem } = input;
   let localMaturityOverrideApplied = false;
 
-  // Check minQualityScoreNormalized (null/undefined = fail)
-  if (requirements.minQualityScoreNormalized !== undefined) {
-    const qualityScore = input.stats?.qualityScore;
-    if (
-      qualityScore === null ||
-      qualityScore === undefined ||
-      qualityScore < requirements.minQualityScoreNormalized
-    ) {
-      failedChecks.push(GlobalGateCheck.MIN_QUALITY_SCORE);
-    }
+  if (
+    requirements.minQualityScoreNormalized !== undefined &&
+    !meetsMinQualityScore(input.stats?.qualityScore, requirements.minQualityScoreNormalized)
+  ) {
+    failedChecks.push(GlobalGateCheck.MIN_QUALITY_SCORE);
   }
 
   // Check requireAnyOfRatingsPresent (OR logic)

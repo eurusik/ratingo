@@ -288,9 +288,6 @@ export class OAuthService {
       base = 'user';
     }
 
-    // Truncate to leave room for suffix
-    base = base.slice(0, USERNAME_MAX_BASE_LENGTH);
-
     // Check if base username is available
     let username = base;
     const existingUser = await this.usersService.getByUsername(username);
@@ -321,6 +318,7 @@ export class OAuthService {
       .toLowerCase()
       .replace(/[^a-z0-9_]/g, '_') // Replace non-alphanumeric with underscore
       .replace(/_+/g, '_') // Collapse multiple underscores
+      .slice(0, USERNAME_MAX_BASE_LENGTH)
       .replace(/^_|_$/g, ''); // Trim leading/trailing underscores
   }
 

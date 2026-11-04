@@ -659,7 +659,7 @@ describe('Global Quality Gate Properties', () => {
     fc.assert(
       fc.property(
         fc.double({ min: 0, max: 1 }),
-        fc.option(fc.double({ min: 0, max: 1 })),
+        fc.option(fc.oneof(fc.double({ min: 0, max: 1 }), fc.constant(NaN))),
         (threshold, score) => {
           const policy: PolicyConfig = {
             allowedCountries: ['US'],
@@ -706,14 +706,14 @@ describe('Global Quality Gate Properties', () => {
 
           const result = evaluateEligibility(input, policy);
 
-          if (score === null || score < threshold) {
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.globalGateDetails?.failedChecks).toContain('minQualityScoreNormalized');
-          } else {
-            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-          }
+          const meetsThreshold = Number.isFinite(score) && score >= threshold;
+          const failedChecks = result.globalGateDetails?.failedChecks ?? [];
+
+          expect(result.status).toBe(
+            meetsThreshold ? EligibilityStatus.ELIGIBLE : EligibilityStatus.INELIGIBLE,
+          );
+          expect(result.reasons.includes('MISSING_GLOBAL_SIGNALS')).toBe(!meetsThreshold);
+          expect(failedChecks.includes('minQualityScoreNormalized')).toBe(!meetsThreshold);
         },
       ),
       { numRuns: 100 },

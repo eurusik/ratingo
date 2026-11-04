@@ -185,14 +185,38 @@ describe('OAuthService - Username Generation Property Tests', () => {
 
           const username = await service.generateUniqueUsername(name, email);
 
-          // No leading/trailing underscores (trimmed during normalization)
-          // Exception: suffix adds underscore before random chars
-          if (!username.includes('_')) {
-            expect(username).not.toMatch(/^_|_$/);
-          }
+          expect(username).not.toMatch(/^_|_$/);
         }),
         { numRuns: 100 },
       );
+    });
+
+    it('should not end with an underscore when truncation cuts at a word boundary', async () => {
+      const multiWordNameArb = fc
+        .array(fc.stringMatching(/^[a-z]{1,8}$/), { minLength: 3, maxLength: 10 })
+        .map((words) => words.join(' '));
+
+      await fc.assert(
+        fc.asyncProperty(multiWordNameArb, emailArb, async (name, email) => {
+          usersService.getByUsername.mockResolvedValue(null);
+
+          const username = await service.generateUniqueUsername(name, email);
+
+          expect(username).not.toMatch(/^_|_$/);
+        }),
+        { numRuns: 200 },
+      );
+    });
+
+    it('should drop the separator left at the truncation point', async () => {
+      usersService.getByUsername.mockResolvedValue(null);
+
+      const username = await service.generateUniqueUsername(
+        `${'a'.repeat(23)} bcd`,
+        'someone@example.com',
+      );
+
+      expect(username).toBe('a'.repeat(23));
     });
   });
 });
