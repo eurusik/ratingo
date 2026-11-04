@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
 
-import { DEFAULT_REGION } from '../../../../common/constants';
+import { DEFAULT_REGION, NEW_RELEASES_REGION } from '../../../../common/constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
 /**
@@ -91,9 +91,9 @@ export class SyncNowPlayingDto {
  */
 export class SyncNewReleasesDto {
   @ApiProperty({
-    example: DEFAULT_REGION,
+    example: NEW_RELEASES_REGION,
     description: 'Region code (ISO 3166-1)',
-    default: DEFAULT_REGION,
+    default: NEW_RELEASES_REGION,
     required: false,
   })
   @IsOptional()

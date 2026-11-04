@@ -503,6 +503,10 @@ describe('TmdbAdapter', () => {
   });
 
   describe('getNewReleaseIds', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
     it('should fetch all pages until total_pages and return aggregated IDs', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -524,7 +528,7 @@ describe('TmdbAdapter', () => {
           }),
       });
 
-      const result = await adapter.getNewReleaseIds(30, 'UA');
+      const result = await adapter.getNewReleaseIds(30, 'US');
 
       expect(result).toEqual([201, 202]);
       expect(mockFetch).toHaveBeenCalledWith(
@@ -533,6 +537,45 @@ describe('TmdbAdapter', () => {
       );
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'), expect.anything());
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'), expect.anything());
+    });
+
+    it('should query popular US theatrical releases with votes and a recent primary release', async () => {
+      jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-04T12:00:00Z'));
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ page: 1, total_pages: 1, results: [{ id: 301 }] }),
+      });
+
+      await adapter.getNewReleaseIds();
+
+      const params = new URL(mockFetch.mock.calls[0][0]).searchParams;
+      expect(Object.fromEntries(params)).toEqual(
+        expect.objectContaining({
+          region: 'US',
+          'release_date.gte': '2026-10-05',
+          'release_date.lte': '2026-11-04',
+          'primary_release_date.gte': '2026-05-08',
+          with_release_type: '3',
+          'vote_count.gte': '5',
+          sort_by: 'popularity.desc',
+          page: '1',
+        }),
+      );
+      expect(params.has('primary_release_date.lte')).toBe(false);
+    });
+
+    it('should stop at the page cap and warn when more pages exist', async () => {
+      const warnSpy = jest.spyOn((adapter as any).logger, 'warn');
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ page: 1, total_pages: 25, results: [{ id: 1 }] }),
+      });
+
+      const result = await adapter.getNewReleaseIds(30, 'US');
+
+      expect(mockFetch).toHaveBeenCalledTimes(10);
+      expect(result).toHaveLength(10);
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('New releases limit reached'));
     });
   });
 

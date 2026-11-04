@@ -26,7 +26,11 @@ import { type Queue } from 'bullmq';
 
 import { formatUtcDayId } from '@/common/utils/date.util';
 
-import { DEFAULT_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '../../../../common/constants';
+import {
+  DEFAULT_REGION,
+  CATALOG_DEFAULT_NEW_RELEASE_DAYS,
+  NEW_RELEASES_REGION,
+} from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -313,7 +317,7 @@ export class IngestionController {
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncNewReleases(@Body() dto: SyncNewReleasesDto) {
-    const region = dto.region || DEFAULT_REGION;
+    const region = dto.region || NEW_RELEASES_REGION;
     const daysBack = dto.daysBack || CATALOG_DEFAULT_NEW_RELEASE_DAYS;
     const force = dto.force || false;
 

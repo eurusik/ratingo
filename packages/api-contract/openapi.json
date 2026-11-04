@@ -17006,9 +17006,9 @@
         "properties": {
           "region": {
             "type": "string",
-            "example": "UA",
+            "example": "US",
             "description": "Region code (ISO 3166-1)",
-            "default": "UA"
+            "default": "US"
           },
           "daysBack": {
             "type": "number",
