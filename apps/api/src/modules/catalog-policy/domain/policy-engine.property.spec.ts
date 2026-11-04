@@ -707,7 +707,7 @@ describe('Global Quality Gate Properties', () => {
           expectGlobalGateOutcome(result, passesGate, 'minQualityScoreNormalized');
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 100, examples: [[0.5, NaN]] },
     );
   });
 

@@ -145,7 +145,7 @@ export function checkGlobalRequirements(
   const { mediaItem } = input;
   let localMaturityOverrideApplied = false;
 
-  // Check minQualityScoreNormalized (null/undefined = fail)
+  // Check minQualityScoreNormalized (null/undefined/NaN = fail)
   if (requirements.minQualityScoreNormalized !== undefined) {
     const qualityScore = input.stats?.qualityScore;
     const meetsQualityScore =
