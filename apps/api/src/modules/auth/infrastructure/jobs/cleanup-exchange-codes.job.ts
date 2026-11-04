@@ -4,6 +4,8 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 
 import { CronJob } from 'cron';
 
+import { errorMessage } from '@/common/utils/error.utils';
+
 import authConfig from '../../../../config/auth.config';
 import {
   EXCHANGE_CODES_REPOSITORY,
@@ -48,7 +50,7 @@ export class CleanupExchangeCodesJob implements OnModuleInit {
       }
     } catch (error) {
       this.logger.error(
-        `Exchange codes cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Exchange codes cleanup failed: ${errorMessage(error)}`,
         error instanceof Error ? error.stack : undefined,
       );
     }

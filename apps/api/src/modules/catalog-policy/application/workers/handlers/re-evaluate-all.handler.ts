@@ -12,6 +12,8 @@ import { type Queue } from 'bullmq';
 import { eq, and, isNull, lte, gt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { toError } from '@/common/utils/error.utils';
+
 import { IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
 import { DATABASE_CONNECTION } from '../../../../../database/database.module';
 import * as schema from '../../../../../database/schema';
@@ -67,8 +69,9 @@ export class ReEvaluateAllHandler {
     }
 
     this.logger.log(
-      `Starting RE_EVALUATE_ALL for run=${runId}, policy=v${policyVersion}, context=${context}${ 
-        afterSnapshot ? ' (items updated after snapshot)' : ''}`,
+      `Starting RE_EVALUATE_ALL for run=${runId}, policy=v${policyVersion}, context=${context}${
+        afterSnapshot ? ' (items updated after snapshot)' : ''
+      }`,
     );
 
     const run = await this.runRepository.findById(runId);
@@ -190,7 +193,7 @@ export class ReEvaluateAllHandler {
         this.logger.log(`Run ${runId} not ready for finalization: ${result.reason}`);
       }
     } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       this.logger.warn(
         `Finalize attempt failed for run ${runId}, watchdog will retry: ${err.message}`,
       );

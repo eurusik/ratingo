@@ -51,7 +51,7 @@ export class CatalogImportService {
 
     // If import is already in progress, wait for it
     const pending = this.pendingImports.get(lockKey);
-    if (pending) {
+    if (pending !== undefined) {
       this.logger.debug(`Import already in progress for ${lockKey}, waiting...`);
       return pending;
     }

@@ -164,10 +164,7 @@ export class OmdbAdapter {
       return { imdbRating, imdbVotes, rottenTomatoes, metacritic, metascore };
     } catch (error) {
       // Best-effort: log warning but don't fail the job
-      const status =
-        error instanceof OmdbApiException
-          ? (error.details as Record<string, unknown>)?.statusCode
-          : 'unknown';
+      const status = (error instanceof OmdbApiException && error.upstreamStatus) || 'unknown';
       this.logger.warn(`OMDb enrichment skipped for ${imdbId} (status=${status})`);
       return {
         imdbRating: null,

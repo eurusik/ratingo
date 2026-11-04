@@ -10,6 +10,8 @@ import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { type Queue } from 'bullmq';
 import type IORedis from 'ioredis';
 
+import { toError } from '@/common/utils/error.utils';
+
 import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../../catalog-policy.constants';
 import { RunFinalizeService } from '../../services/run-finalize.service';
 
@@ -71,7 +73,7 @@ export class WatchdogHandler implements OnModuleInit {
       const results = await this.finalizeService.finalizeStaleRuns(STALE_RUN_MAX_AGE_MINUTES);
       this.logResults(results);
     } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       this.logger.error('Watchdog error during stale run finalization', {
         errorMessage: err.message,
         errorName: err.name,

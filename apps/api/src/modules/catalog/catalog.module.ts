@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 import IORedis from 'ioredis';
 
+import { buildRedisConnectionOptions } from '../../common/infrastructure/redis/redis-connection';
 import { apiOnly } from '../../common/runtime/app-role';
 import { HERO_REPOSITORY } from '../home/public';
 import { CardsModule } from '../shared/cards/cards.module';
@@ -97,24 +98,7 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     // Redis client for sync cooldown gate (7-day TTL per show)
     {
       provide: COOLDOWN_REDIS_CLIENT,
-      useFactory: (config: ConfigService) => {
-        const redisUrl = config.get<string>('REDIS_URL');
-        if (redisUrl) {
-          const url = new URL(redisUrl);
-          const port = url.port ? Number(url.port) : 6379;
-          const password = url.password ? decodeURIComponent(url.password) : undefined;
-          return new IORedis({
-            host: url.hostname,
-            port,
-            ...(password && { password }),
-            ...(url.protocol === 'rediss:' && { tls: {} }),
-          });
-        }
-        return new IORedis({
-          host: config.get('REDIS_HOST') ?? 'localhost',
-          port: config.get('REDIS_PORT') ?? 6379,
-        });
-      },
+      useFactory: (config: ConfigService) => new IORedis(buildRedisConnectionOptions(config)),
       inject: [ConfigService],
     },
     {

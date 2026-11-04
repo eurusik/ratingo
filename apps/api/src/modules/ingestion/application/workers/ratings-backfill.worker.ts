@@ -5,6 +5,7 @@ import { type Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { MdblistApiException } from '@/common/exceptions';
+import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 
 import { IngestionJob, RATINGS_BACKFILL_QUEUE } from '../../ingestion.constants';
@@ -84,7 +85,7 @@ export class RatingsBackfillWorker extends WorkerHost {
       if (isMdblistRateLimited(error)) {
         throw error;
       }
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       this.logger.error(`[job:${job.id}] Failed: ${err.message}`, err.stack);
       throw error;
     }

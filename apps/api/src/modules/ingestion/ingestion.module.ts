@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { SECONDS_PER_DAY } from '../../common/constants';
 import { apiOnly, workerOnly } from '../../common/runtime/app-role';
 import mdblistConfig from '../../config/mdblist.config';
 import omdbConfig from '../../config/omdb.config';
@@ -86,7 +87,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       defaultJobOptions: {
         ...DEFAULT_INGESTION_JOB_OPTIONS,
         // Keep failed jobs longer to diagnose quota/429 issues after overnight drains.
-        removeOnFail: { age: 24 * 3600, count: 500 },
+        removeOnFail: { age: SECONDS_PER_DAY, count: 500 },
       },
     }),
   ],

@@ -161,7 +161,10 @@ export class TvMazeAdapter {
     if (!result.success || result.data === null) {
       const status =
         result.error instanceof HttpError ? result.error.status : HttpStatus.INTERNAL_SERVER_ERROR;
-      throw new TvMazeApiException(result.error?.message ?? 'Request failed', status ?? 500);
+      throw new TvMazeApiException(
+        result.error?.message ?? 'Request failed',
+        status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     return result.data;

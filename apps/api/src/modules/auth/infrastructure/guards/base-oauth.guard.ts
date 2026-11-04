@@ -5,6 +5,7 @@ import { type ConfigType } from '@nestjs/config';
 import { AuthGuard, type IAuthModuleOptions } from '@nestjs/passport';
 
 import { type FastifyReply, type FastifyRequest } from 'fastify';
+import { isObservable, lastValueFrom } from 'rxjs';
 
 import { MS_PER_SECOND } from '../../../../common/constants';
 import type authConfig from '../../../../config/auth.config';
@@ -149,8 +150,9 @@ export function createBaseOAuthGuard(strategyName: string) {
       // Let Passport handle the callback (token exchange)
       this.logger.debug('Calling super.canActivate (Passport)');
       const result = await super.canActivate(context);
-      this.logger.debug(`Passport returned: ${result}`);
-      return result as boolean;
+      const allowed = isObservable(result) ? await lastValueFrom(result) : result;
+      this.logger.debug(`Passport returned: ${allowed}`);
+      return allowed;
     }
 
     getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions {
