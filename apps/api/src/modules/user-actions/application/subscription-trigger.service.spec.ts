@@ -216,7 +216,7 @@ describe('SubscriptionTriggerService', () => {
 
   describe('show.new-episode event emission', () => {
     it('should emit event when subscriptions exist', async () => {
-      const { service: svc } = await setup({ notifiedSubs: [mockSubscription] });
+      await setup({ notifiedSubs: [mockSubscription] });
       const module = await Test.createTestingModule({
         providers: [
           SubscriptionTriggerService,

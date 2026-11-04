@@ -1,12 +1,7 @@
 import * as fc from 'fast-check';
 import { BadRequestException } from '@nestjs/common';
 
-import {
-  validatePostState,
-  isValidPostState,
-  getPostState,
-  PostState,
-} from './post-state.validation';
+import { validatePostState, isValidPostState, getPostState } from './post-state.validation';
 import { JOURNAL_ERRORS } from '../domain/constants/journal-errors';
 
 /**
@@ -19,6 +14,15 @@ import { JOURNAL_ERRORS } from '../domain/constants/journal-errors';
  * - isDraft=true with publishedAt!=null
  */
 describe('PostStateValidation - Property Tests', () => {
+  const thrownBy = (action: () => unknown): unknown => {
+    try {
+      action();
+    } catch (error) {
+      return error;
+    }
+    return undefined;
+  };
+
   // --- Arbitraries ---
 
   /** Generates a valid draft state: isDraft=true, publishedAt=null */
@@ -92,17 +96,12 @@ describe('PostStateValidation - Property Tests', () => {
           expect(() => validatePostState(isDraft, publishedAt)).toThrow(BadRequestException);
           expect(isValidPostState(isDraft, publishedAt)).toBe(false);
 
-          try {
-            validatePostState(isDraft, publishedAt);
-          } catch (error) {
-            expect(error).toBeInstanceOf(BadRequestException);
-            const response = (error as BadRequestException).getResponse() as {
-              code: string;
-              message: string;
-            };
-            expect(response.code).toBe(JOURNAL_ERRORS.INVALID_POST_STATE);
-            expect(response.message).toBe('Published posts must have a publication date');
-          }
+          const error = thrownBy(() => validatePostState(isDraft, publishedAt));
+          expect(error).toBeInstanceOf(BadRequestException);
+          expect((error as BadRequestException).getResponse()).toMatchObject({
+            code: JOURNAL_ERRORS.INVALID_POST_STATE,
+            message: 'Published posts must have a publication date',
+          });
         }),
         { numRuns: 100 },
       );
@@ -114,17 +113,12 @@ describe('PostStateValidation - Property Tests', () => {
           expect(() => validatePostState(isDraft, publishedAt)).toThrow(BadRequestException);
           expect(isValidPostState(isDraft, publishedAt)).toBe(false);
 
-          try {
-            validatePostState(isDraft, publishedAt);
-          } catch (error) {
-            expect(error).toBeInstanceOf(BadRequestException);
-            const response = (error as BadRequestException).getResponse() as {
-              code: string;
-              message: string;
-            };
-            expect(response.code).toBe(JOURNAL_ERRORS.INVALID_POST_STATE);
-            expect(response.message).toBe('Draft posts cannot have a publication date');
-          }
+          const error = thrownBy(() => validatePostState(isDraft, publishedAt));
+          expect(error).toBeInstanceOf(BadRequestException);
+          expect((error as BadRequestException).getResponse()).toMatchObject({
+            code: JOURNAL_ERRORS.INVALID_POST_STATE,
+            message: 'Draft posts cannot have a publication date',
+          });
         }),
         { numRuns: 100 },
       );

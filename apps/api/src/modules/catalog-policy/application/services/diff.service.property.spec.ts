@@ -26,12 +26,6 @@ function filterAndLimitSamples(
 describe('DiffService - Property-Based Tests', () => {
   // Arbitraries (generators)
 
-  const eligibilityStatusArb = fc.constantFrom<DiffStatus>(
-    EligibilityStatus.ELIGIBLE,
-    EligibilityStatus.INELIGIBLE,
-    EligibilityStatus.REVIEW,
-  );
-
   const diffStatusArb = fc.constantFrom<DiffStatus>(
     EligibilityStatus.ELIGIBLE,
     EligibilityStatus.INELIGIBLE,
@@ -86,10 +80,7 @@ describe('DiffService - Property-Based Tests', () => {
         fc.property(manyRegressionsArb, fc.integer({ min: 1, max: 50 }), (samples, limit) => {
           const result = filterAndLimitSamples(samples, 'regression', limit);
 
-          // When we have more samples than limit, result should be exactly limit
-          if (samples.length >= limit) {
-            expect(result.length).toBe(limit);
-          }
+          expect(result.length).toBe(Math.min(samples.length, limit));
         }),
         { numRuns: 100 },
       );
@@ -111,10 +102,7 @@ describe('DiffService - Property-Based Tests', () => {
                 : isDiffImprovement(s.oldStatus, s.newStatus);
             }).length;
 
-            // When we have fewer matching samples than limit, return all matching
-            if (matchingCount < limit) {
-              expect(result.length).toBe(matchingCount);
-            }
+            expect(result.length).toBe(Math.min(matchingCount, limit));
           },
         ),
         { numRuns: 100 },

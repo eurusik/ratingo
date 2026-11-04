@@ -2,8 +2,13 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettierConfig from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
+import jestPlugin from 'eslint-plugin-jest';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const jestRecommendedRulesAsErrors = Object.fromEntries(
+  Object.keys(jestPlugin.configs['flat/recommended'].rules).map((rule) => [rule, 'error']),
+);
 
 const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -476,6 +481,27 @@ export default [
         'error',
         {
           zones: moduleBoundaryZones,
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/api/src/**/*.spec.ts'],
+    ...jestPlugin.configs['flat/recommended'],
+    settings: { jest: { version: 29 } },
+    rules: {
+      ...jestRecommendedRulesAsErrors,
+      'jest/no-focused-tests': 'error',
+      'jest/no-disabled-tests': 'error',
+      'jest/expect-expect': [
+        'error',
+        { assertFunctionNames: ['expect', 'fc.assert', 'request.**.expect'] },
+      ],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
         },
       ],
     },

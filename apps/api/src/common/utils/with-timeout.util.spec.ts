@@ -15,12 +15,15 @@ describe('withTimeout', () => {
 
   it('rejects with the timeout message when the work does not settle in time', async () => {
     jest.useFakeTimers();
-    const result = withTimeout(new Promise(() => undefined), 50, 'too slow');
-    const assertion = expect(result).rejects.toThrow('too slow');
+    const outcome = withTimeout(new Promise(() => undefined), 50, 'too slow').catch(
+      (error: unknown) => error,
+    );
 
     await jest.advanceTimersByTimeAsync(50);
 
-    await assertion;
+    const error = await outcome;
+    expect(error).toBeInstanceOf(Error);
+    expect(error).toHaveProperty('message', 'too slow');
   });
 
   it('clears its timer once the work settles', async () => {

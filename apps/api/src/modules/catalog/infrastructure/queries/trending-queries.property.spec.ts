@@ -17,7 +17,7 @@ import {
   LIST_CONTEXT,
   TRENDING_THRESHOLDS,
 } from '../../domain/constants/catalog.constants';
-import type { TrendingQueryMeta, TrendingQueryResult } from '../../domain/types/query.types';
+import type { TrendingQueryResult } from '../../domain/types/query.types';
 import { CATALOG_SORT, type CatalogSort } from '../../domain/constants/catalog-query.constants';
 
 // ============================================================================
@@ -431,20 +431,17 @@ describe('Trending Queries - Freshness Gate Property Tests', () => {
       // This test documents the bug we fixed
       fc.assert(
         fc.property(
-          listContextArb,
           fc.constantFrom<CatalogSort>(CATALOG_SORT.RATINGO, CATALOG_SORT.RELEASE_DATE),
-          (context, sort) => {
-            const fixedThreshold = getFreshnessThreshold(context, sort);
-            const buggyThreshold = getFreshnessThresholdBuggy(context, sort);
+          (sort) => {
+            const fixedThreshold = getFreshnessThreshold(LIST_CONTEXT.CATALOG, sort);
+            const buggyThreshold = getFreshnessThresholdBuggy(LIST_CONTEXT.CATALOG, sort);
 
             // For catalog context with ratingo/releaseDate:
             // - Fixed: always uses .trending (30)
             // - Buggy: used .ratingo (0) or .releaseDate (0)
-            if (context === LIST_CONTEXT.CATALOG) {
-              expect(fixedThreshold).toBe(CONTEXT_FRESHNESS.catalog.trending); // 30
-              expect(buggyThreshold).toBe(0); // was the bug
-              expect(fixedThreshold).not.toBe(buggyThreshold);
-            }
+            expect(fixedThreshold).toBe(CONTEXT_FRESHNESS.catalog.trending); // 30
+            expect(buggyThreshold).toBe(0); // was the bug
+            expect(fixedThreshold).not.toBe(buggyThreshold);
           },
         ),
         { numRuns: 50 },
@@ -535,11 +532,7 @@ describe('Trending Queries - Watchers Gate Property Tests', () => {
         fc.property(watchersArb, (watchersCount) => {
           const passes = watchersCount >= TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES;
 
-          if (watchersCount < TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES) {
-            expect(passes).toBe(false);
-          } else {
-            expect(passes).toBe(true);
-          }
+          expect(passes).toBe(!(watchersCount < TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES));
         }),
         { numRuns: 50 },
       );
@@ -550,11 +543,7 @@ describe('Trending Queries - Watchers Gate Property Tests', () => {
         fc.property(watchersArb, (watchersCount) => {
           const passes = watchersCount >= TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS;
 
-          if (watchersCount < TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS) {
-            expect(passes).toBe(false);
-          } else {
-            expect(passes).toBe(true);
-          }
+          expect(passes).toBe(!(watchersCount < TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS));
         }),
         { numRuns: 50 },
       );

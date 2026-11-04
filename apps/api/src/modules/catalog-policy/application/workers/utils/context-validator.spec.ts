@@ -1,6 +1,9 @@
 import { Logger } from '@nestjs/common';
 
-import { EvaluationContext } from '../../../domain/constants/evaluation.constants';
+import {
+  EvaluationContext,
+  type EvaluationContextType,
+} from '../../../domain/constants/evaluation.constants';
 
 import { validateContextPayload } from './context-validator';
 
@@ -123,10 +126,15 @@ describe('validateContextPayload', () => {
       };
       const jobInfo = { runId: 'run-123' };
 
-      if (validateContextPayload(payload, jobInfo, mockLogger)) {
-        // TypeScript should recognize payload.context as defined here
-        expect(payload.context).toBe(EvaluationContext.CATALOG);
-      }
+      const narrowedContext: EvaluationContextType | null = validateContextPayload(
+        payload,
+        jobInfo,
+        mockLogger,
+      )
+        ? payload.context
+        : null;
+
+      expect(narrowedContext).toBe(EvaluationContext.CATALOG);
     });
   });
 });

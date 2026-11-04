@@ -173,11 +173,8 @@ describe('Classification Service - Property-Based Tests', () => {
     it('should classify Animation + JP origin as anime', () => {
       fc.assert(
         fc.property(animeInputArb, (input) => {
-          // Ensure JP is in origin countries
-          if (input.originCountries?.includes('JP')) {
-            const result = classifyContent(input);
-            expect(result).toBe(ContentClassValues.ANIME);
-          }
+          expect(input.originCountries).toContain('JP');
+          expect(classifyContent(input)).toBe(ContentClassValues.ANIME);
         }),
         { numRuns: 100 },
       );

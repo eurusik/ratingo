@@ -64,12 +64,9 @@ describe('OAuthProvider', () => {
     it('should partition all strings into valid or invalid', () => {
       fc.assert(
         fc.property(fc.string(), (input) => {
-          const result = isOAuthProvider(input);
-          if (result) {
-            expect(validProviders).toContain(input);
-          } else {
-            expect(validProviders).not.toContain(input);
-          }
+          expect(isOAuthProvider(input)).toBe(
+            validProviders.some((provider) => provider === input),
+          );
         }),
         { numRuns: 200 },
       );

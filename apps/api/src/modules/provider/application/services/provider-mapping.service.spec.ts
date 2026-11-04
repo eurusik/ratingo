@@ -4,7 +4,6 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ErrorCode } from '../../../../common/enums/error-code.enum';
 import { NotFoundException } from '../../../../common/exceptions';
 import { PROVIDER_MAPPING_REPOSITORY } from '../../domain/repositories/provider-mapping.repository.interface';
 import type { ProviderMapping, ResolvedMapping } from '../../domain/types/provider.types';

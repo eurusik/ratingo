@@ -74,10 +74,8 @@ describe('DatabaseException - Property-Based Tests', () => {
           const originalError = new Error('Original database error');
           const dbException = new DatabaseException(message, originalError);
 
-          // Stack should contain "Caused by:" when original error has stack
-          if (originalError.stack) {
-            expect(dbException.stack).toContain('Caused by:');
-          }
+          expect(originalError.stack).toBeDefined();
+          expect(dbException.stack).toContain('Caused by:');
         }),
         { numRuns: 100 },
       );

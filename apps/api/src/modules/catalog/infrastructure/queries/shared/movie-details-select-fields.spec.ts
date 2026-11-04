@@ -133,7 +133,7 @@ describe('MOVIE_DETAILS_SELECT_FIELDS', () => {
 
   describe('Drizzle column references', () => {
     it('should reference valid Drizzle columns (not undefined)', () => {
-      Object.entries(MOVIE_DETAILS_SELECT_FIELDS).forEach(([key, value]) => {
+      Object.values(MOVIE_DETAILS_SELECT_FIELDS).forEach((value) => {
         expect(value).toBeDefined();
         expect(typeof value).toBe('object');
       });

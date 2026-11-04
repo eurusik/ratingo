@@ -11,7 +11,6 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
-import { type CatalogEvaluationRun } from '../../domain/repositories';
 import { CatalogEvaluationRunRepository } from './catalog-evaluation-run.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
@@ -84,56 +83,44 @@ describe('CatalogEvaluationRunRepository', () => {
       const mockRow = createMockRow({ status: 'completed' });
       mockDb.limit.mockResolvedValue([mockRow]);
 
-      await expect(repository.findById('run-123')).rejects.toThrow(DatabaseException);
+      const error = await repository.findById('run-123').catch((e: unknown) => e);
 
-      try {
-        await repository.findById('run-123');
-      } catch (error) {
-        expect(error.cause).toBeInstanceOf(InvalidRunStatusError);
-        expect(error.cause.message).toContain('completed');
-      }
+      expect(error).toBeInstanceOf(DatabaseException);
+      expect(error).toHaveProperty('cause', expect.any(InvalidRunStatusError));
+      expect(error).toHaveProperty('cause.message', expect.stringContaining('completed'));
     });
 
     it('should throw DatabaseException with InvalidRunStatusError cause for "success" (legacy)', async () => {
       const mockRow = createMockRow({ status: 'success' });
       mockDb.limit.mockResolvedValue([mockRow]);
 
-      await expect(repository.findById('run-123')).rejects.toThrow(DatabaseException);
+      const error = await repository.findById('run-123').catch((e: unknown) => e);
 
-      try {
-        await repository.findById('run-123');
-      } catch (error) {
-        expect(error.cause).toBeInstanceOf(InvalidRunStatusError);
-        expect(error.cause.message).toContain('success');
-      }
+      expect(error).toBeInstanceOf(DatabaseException);
+      expect(error).toHaveProperty('cause', expect.any(InvalidRunStatusError));
+      expect(error).toHaveProperty('cause.message', expect.stringContaining('success'));
     });
 
     it('should throw DatabaseException with InvalidRunStatusError cause for "pending" (legacy)', async () => {
       const mockRow = createMockRow({ status: 'pending' });
       mockDb.limit.mockResolvedValue([mockRow]);
 
-      await expect(repository.findById('run-123')).rejects.toThrow(DatabaseException);
+      const error = await repository.findById('run-123').catch((e: unknown) => e);
 
-      try {
-        await repository.findById('run-123');
-      } catch (error) {
-        expect(error.cause).toBeInstanceOf(InvalidRunStatusError);
-        expect(error.cause.message).toContain('pending');
-      }
+      expect(error).toBeInstanceOf(DatabaseException);
+      expect(error).toHaveProperty('cause', expect.any(InvalidRunStatusError));
+      expect(error).toHaveProperty('cause.message', expect.stringContaining('pending'));
     });
 
     it('should throw DatabaseException with InvalidRunStatusError cause for unknown status', async () => {
       const mockRow = createMockRow({ status: 'unknown_status' });
       mockDb.limit.mockResolvedValue([mockRow]);
 
-      await expect(repository.findById('run-123')).rejects.toThrow(DatabaseException);
+      const error = await repository.findById('run-123').catch((e: unknown) => e);
 
-      try {
-        await repository.findById('run-123');
-      } catch (error) {
-        expect(error.cause).toBeInstanceOf(InvalidRunStatusError);
-        expect(error.cause.message).toContain('unknown_status');
-      }
+      expect(error).toBeInstanceOf(DatabaseException);
+      expect(error).toHaveProperty('cause', expect.any(InvalidRunStatusError));
+      expect(error).toHaveProperty('cause.message', expect.stringContaining('unknown_status'));
     });
 
     it('should keep "running" as "running"', async () => {

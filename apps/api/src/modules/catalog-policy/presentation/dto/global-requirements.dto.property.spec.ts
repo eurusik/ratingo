@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import * as fc from 'fast-check';
 import { plainToInstance } from 'class-transformer';
-import { validateSync, ValidationError } from 'class-validator';
+import { validateSync } from 'class-validator';
 import { GlobalRequirementsDto, MinVotesAnyOfDto } from './global-requirements.dto';
 import { RatingSource, VoteSource } from '../../domain/types/policy.types';
 
@@ -9,20 +9,6 @@ const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt'];
 const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt'];
 
 describe('GlobalRequirementsDto - Property-Based Tests', () => {
-  // Helper to get all validation error messages
-  const getValidationMessages = (errors: ValidationError[]): string[] => {
-    const messages: string[] = [];
-    for (const error of errors) {
-      if (error.constraints) {
-        messages.push(...Object.values(error.constraints));
-      }
-      if (error.children && error.children.length > 0) {
-        messages.push(...getValidationMessages(error.children));
-      }
-    }
-    return messages;
-  };
-
   // Arbitraries for valid data
   const validRatingSourceArb = fc.constantFrom(...RATING_SOURCES);
   const validVoteSourceArb = fc.constantFrom(...VOTE_SOURCES);

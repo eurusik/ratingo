@@ -102,9 +102,8 @@ describe('Catalog Policy Worker - Property-Based Tests', () => {
             const entry = createErrorSampleEntry(mediaItemId, error);
 
             // Stack should be truncated to 500 chars max
-            if (entry.stack) {
-              expect(entry.stack.length).toBeLessThanOrEqual(500);
-            }
+            expect(entry.stack).toBe(stack.substring(0, 500));
+            expect(entry.stack).toHaveLength(Math.min(stack.length, 500));
           },
         ),
         { numRuns: 100 },
@@ -572,7 +571,6 @@ describe('Catalog Policy Worker - Property-Based Tests', () => {
     }
 
     // Arbitraries for generating test data
-    const mediaItemIdArb = fc.uuid();
     const mediaItemIdsArb = fc.array(fc.uuid(), { minLength: 1, maxLength: 10 });
     const policyVersionArb = fc.integer({ min: 1, max: 1000 });
     const runIdArb = fc.uuid();

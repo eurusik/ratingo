@@ -1,8 +1,6 @@
-import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { AppException } from '../../../common/exceptions/app.exception';
 import { NotFoundException } from '../../../common/exceptions/not-found.exception';
 import { REVIEW_LIMITS, REPORT_REASON, REPORT_STATUS } from '../domain/constants/review.constants';
 import type { IReviewReportRepository } from '../domain/repositories/review-report.repository.interface';
