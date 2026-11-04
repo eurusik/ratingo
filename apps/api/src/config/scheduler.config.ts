@@ -1,5 +1,7 @@
 import { registerAs } from '@nestjs/config';
 
+import { CATALOG_DEFAULT_NEW_RELEASE_DAYS, NEW_RELEASES_REGION } from '../common/constants';
+
 /**
  * Scheduled job definition.
  */
@@ -84,7 +86,7 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'sync-new-releases',
     pattern: '0 4 * * *', // Daily 4:00 UTC
     jobId: 'scheduled-new-releases',
-    data: { region: 'UA', daysBack: 30 },
+    data: { region: NEW_RELEASES_REGION, daysBack: CATALOG_DEFAULT_NEW_RELEASE_DAYS },
   },
   {
     name: 'mdblistRatings',
@@ -122,15 +124,12 @@ function buildJobConfig(defaultJob: Omit<ScheduledJobConfig, 'enabled'>): Schedu
   };
 }
 
-export default registerAs(
-  'scheduler',
-  (): SchedulerConfig => ({
-    enabled: process.env.SCHEDULER_ENABLED !== 'false', // Enabled by default
-    timezone: process.env.SCHEDULER_TIMEZONE || 'UTC',
-    envPrefix: process.env.APP_ENV || process.env.NODE_ENV || 'dev',
-    jobs: DEFAULT_JOBS.map(buildJobConfig),
-  }),
-);
+export default registerAs('scheduler', (): SchedulerConfig => ({
+  enabled: process.env.SCHEDULER_ENABLED !== 'false', // Enabled by default
+  timezone: process.env.SCHEDULER_TIMEZONE || 'UTC',
+  envPrefix: process.env.APP_ENV || process.env.NODE_ENV || 'dev',
+  jobs: DEFAULT_JOBS.map(buildJobConfig),
+}));
 
 export interface MonitoringKeyHealthOverride {
   enabled: boolean;

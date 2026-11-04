@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger, type OnModuleInit, Inject } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
@@ -20,7 +22,7 @@ import { INGESTION_QUEUE } from '../../ingestion.constants';
  * Uses idempotent diff-based registration:
  * - Adds only missing jobs
  * - Removes only orphaned jobs
- * - Upserts on pattern changes
+ * - Upserts on pattern, timezone, job type or data changes
  *
  * ## Environment Isolation
  *
@@ -192,17 +194,8 @@ export class IngestionSchedulerService implements OnModuleInit {
       return 'added';
     }
 
-    if (
-      existing.pattern !== jobConfig.pattern ||
-      existing.tz !== timezone ||
-      existing.name !== jobConfig.jobType
-    ) {
-      const changes: string[] = [];
-      if (existing.pattern !== jobConfig.pattern)
-        changes.push(`pattern: "${existing.pattern}" → "${jobConfig.pattern}"`);
-      if (existing.tz !== timezone) changes.push(`tz: "${existing.tz ?? 'none'}" → "${timezone}"`);
-      if (existing.name !== jobConfig.jobType)
-        changes.push(`name: "${existing.name}" → "${jobConfig.jobType}"`);
+    const changes = this.describeSchedulerChanges(existing, jobConfig, timezone);
+    if (changes.length > 0) {
       this.logger.log(`[${jobConfig.name}] Updated: ${changes.join(', ')}`);
       await this.upsertJobScheduler(schedulerId, jobConfig, timezone);
       return 'updated';
@@ -210,6 +203,30 @@ export class IngestionSchedulerService implements OnModuleInit {
 
     this.logger.debug(`[${jobConfig.name}] Unchanged: ${jobConfig.pattern}`);
     return 'unchanged';
+  }
+
+  private describeSchedulerChanges(
+    existing: JobSchedulerJson,
+    jobConfig: ScheduledJobConfig,
+    timezone: string,
+  ): string[] {
+    const changes: string[] = [];
+    if (existing.pattern !== jobConfig.pattern)
+      changes.push(`pattern: "${existing.pattern}" → "${jobConfig.pattern}"`);
+    if (existing.tz !== timezone) changes.push(`tz: "${existing.tz ?? 'none'}" → "${timezone}"`);
+    if (existing.name !== jobConfig.jobType)
+      changes.push(`name: "${existing.name}" → "${jobConfig.jobType}"`);
+
+    const existingData = existing.template?.data ?? {};
+    const desiredData = this.schedulerData(jobConfig);
+    if (!isDeepStrictEqual(existingData, desiredData))
+      changes.push(`data: ${JSON.stringify(existingData)} → ${JSON.stringify(desiredData)}`);
+
+    return changes;
+  }
+
+  private schedulerData(jobConfig: ScheduledJobConfig): Record<string, unknown> {
+    return jobConfig.data ?? {};
   }
 
   /**
@@ -229,7 +246,7 @@ export class IngestionSchedulerService implements OnModuleInit {
       { pattern: job.pattern, tz: timezone },
       {
         name: job.jobType,
-        data: job.data || {},
+        data: this.schedulerData(job),
         opts: { removeOnComplete: 100, removeOnFail: 50 },
       },
     );

@@ -41,13 +41,19 @@ describe('NewReleasesPipeline', () => {
   });
 
   describe('sync', () => {
+    it('should default to US theatrical releases from the last 30 days', async () => {
+      await pipeline.sync();
+
+      expect(tmdbAdapter.getNewReleaseIds).toHaveBeenCalledWith(30, 'US');
+    });
+
     it('should fetch new releases and enqueue missing items', async () => {
       tmdbAdapter.getNewReleaseIds.mockResolvedValue([100, 200, 300]);
       mediaRepository.findManyByTmdbIds.mockResolvedValue([{ tmdbId: 100 }]);
 
-      await pipeline.sync('UA', 30);
+      await pipeline.sync('US', 30);
 
-      expect(tmdbAdapter.getNewReleaseIds).toHaveBeenCalledWith(30, 'UA');
+      expect(tmdbAdapter.getNewReleaseIds).toHaveBeenCalledWith(30, 'US');
       expect(mediaRepository.findManyByTmdbIds).toHaveBeenCalledWith(
         [100, 200, 300],
         MediaType.MOVIE,
@@ -71,7 +77,7 @@ describe('NewReleasesPipeline', () => {
     it('should use an nr-prefixed job id distinct from trending sync job ids', async () => {
       tmdbAdapter.getNewReleaseIds.mockResolvedValue([200]);
 
-      await pipeline.sync('UA', 30);
+      await pipeline.sync('US', 30);
 
       const jobs = bulkJobService.enqueueBulk.mock.calls[0][0] as Array<{
         opts: { jobId: string };
@@ -82,7 +88,7 @@ describe('NewReleasesPipeline', () => {
     it('should skip if no new releases found', async () => {
       tmdbAdapter.getNewReleaseIds.mockResolvedValue([]);
 
-      await pipeline.sync('UA', 30);
+      await pipeline.sync('US', 30);
 
       expect(bulkJobService.enqueueBulk).not.toHaveBeenCalled();
     });
@@ -91,7 +97,7 @@ describe('NewReleasesPipeline', () => {
       tmdbAdapter.getNewReleaseIds.mockResolvedValue([100, 200]);
       mediaRepository.findManyByTmdbIds.mockResolvedValue([{ tmdbId: 100 }, { tmdbId: 200 }]);
 
-      await pipeline.sync('UA', 30);
+      await pipeline.sync('US', 30);
 
       expect(bulkJobService.enqueueBulk).not.toHaveBeenCalled();
     });

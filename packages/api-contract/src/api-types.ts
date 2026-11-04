@@ -4080,8 +4080,8 @@ export interface components {
         SyncNewReleasesDto: {
             /**
              * @description Region code (ISO 3166-1)
-             * @default UA
-             * @example UA
+             * @default US
+             * @example US
              */
             region: string;
             /**

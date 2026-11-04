@@ -206,6 +206,64 @@ describe('IngestionSchedulerService', () => {
         expect.anything(),
       );
     });
+
+    it('should upsert scheduler when only data changes', async () => {
+      const loggerSpy = jest.spyOn((service as any).logger, 'log');
+
+      ingestionQueue.getJobSchedulers.mockResolvedValue([
+        {
+          key: `${ENV_PREFIX}:scheduled-tracked-shows`,
+          name: 'sync-tracked-shows',
+          pattern: '0 8,20 * * *',
+          tz: 'UTC',
+          template: { data: {} },
+        },
+        {
+          key: `${ENV_PREFIX}:scheduled-trending`,
+          name: 'sync-trending-dispatcher',
+          pattern: '0 */6 * * *',
+          tz: 'UTC',
+          template: { data: { pages: 3, syncStats: true } },
+        },
+      ]);
+
+      await service.onModuleInit();
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Updated: data: {"pages":3,"syncStats":true} → {"pages":5,"syncStats":true}',
+        ),
+      );
+      expect(ingestionQueue.upsertJobScheduler).toHaveBeenCalledTimes(1);
+      expect(ingestionQueue.upsertJobScheduler).toHaveBeenCalledWith(
+        `${ENV_PREFIX}:scheduled-trending`,
+        { pattern: '0 */6 * * *', tz: 'UTC' },
+        expect.objectContaining({ data: { pages: 5, syncStats: true } }),
+      );
+    });
+
+    it('should not upsert scheduler when data is equal regardless of key order', async () => {
+      ingestionQueue.getJobSchedulers.mockResolvedValue([
+        {
+          key: `${ENV_PREFIX}:scheduled-tracked-shows`,
+          name: 'sync-tracked-shows',
+          pattern: '0 8,20 * * *',
+          tz: 'UTC',
+          template: { data: {} },
+        },
+        {
+          key: `${ENV_PREFIX}:scheduled-trending`,
+          name: 'sync-trending-dispatcher',
+          pattern: '0 */6 * * *',
+          tz: 'UTC',
+          template: { data: { syncStats: true, pages: 5 } },
+        },
+      ]);
+
+      await service.onModuleInit();
+
+      expect(ingestionQueue.upsertJobScheduler).not.toHaveBeenCalled();
+    });
   });
 
   describe('scheduler disabled', () => {
