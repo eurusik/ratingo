@@ -148,11 +148,11 @@ export function checkGlobalRequirements(
   // Check minQualityScoreNormalized (null/undefined = fail)
   if (requirements.minQualityScoreNormalized !== undefined) {
     const qualityScore = input.stats?.qualityScore;
-    if (
-      qualityScore === null ||
-      qualityScore === undefined ||
-      qualityScore < requirements.minQualityScoreNormalized
-    ) {
+    const meetsQualityScore =
+      qualityScore !== null &&
+      qualityScore !== undefined &&
+      qualityScore >= requirements.minQualityScoreNormalized;
+    if (!meetsQualityScore) {
       failedChecks.push(GlobalGateCheck.MIN_QUALITY_SCORE);
     }
   }

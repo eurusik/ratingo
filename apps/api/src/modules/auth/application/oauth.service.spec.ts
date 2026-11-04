@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { OAuthService } from './oauth.service';
+import { USERNAME_MAX_BASE_LENGTH } from '../auth.constants';
 import { ConsumeCodeFailureReason } from '../domain/repositories/exchange-codes.repository.interface';
 import { type OAuthUserPayload } from '../domain/types';
 import { type AuthMocks, createAuthMocks, createOAuthService } from '../../../../test/auth/_mocks';
@@ -49,6 +50,15 @@ describe('OAuthService - Username Generation', () => {
       const result = await service.generateUniqueUsername('_John_', 'john@example.com');
 
       expect(result).toBe('john');
+    });
+
+    it('should not end with an underscore when truncation cuts at a word boundary', async () => {
+      mocks.usersService.getByUsername.mockResolvedValue(null);
+      const firstWord = 'a'.repeat(USERNAME_MAX_BASE_LENGTH - 1);
+
+      const result = await service.generateUniqueUsername(`${firstWord} b`, 'john@example.com');
+
+      expect(result).toBe(firstWord);
     });
 
     it('should convert to lowercase', async () => {

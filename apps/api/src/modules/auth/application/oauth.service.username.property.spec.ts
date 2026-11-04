@@ -178,14 +178,14 @@ describe('OAuthService - Username Generation Property Tests', () => {
       );
     });
 
-    it('should never produce usernames starting with underscore', async () => {
+    it('should never produce usernames starting or ending with underscore', async () => {
       await fc.assert(
         fc.asyncProperty(googleNameArb, emailArb, async (name, email) => {
           usersService.getByUsername.mockResolvedValue(null);
 
           const username = await service.generateUniqueUsername(name, email);
 
-          expect(username).not.toMatch(/^_/);
+          expect(username).not.toMatch(/^_|_$/);
         }),
         { numRuns: 100 },
       );
