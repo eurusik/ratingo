@@ -17,22 +17,24 @@ import {
   EligibilityStatus,
   EligibilityStatusType,
   EvaluationContext as EvaluationContextConst,
+  EvaluationReason,
+  type EvaluationReasonType,
 } from './constants/evaluation.constants';
 import { ContentClass } from './classification.service';
 
-const BLOCKING_REASONS: string[] = [
-  'BLOCKED_COUNTRY',
-  'BLOCKED_LANGUAGE',
-  'NEUTRAL_COUNTRY',
-  'NEUTRAL_LANGUAGE',
-  'MISSING_REQUIRED_METADATA',
-  'MISSING_ORIGIN_COUNTRY',
-  'MISSING_ORIGINAL_LANGUAGE',
-  'MISSING_TITLE',
-  'MISSING_TRANSLATED_TITLE',
-  'MISSING_OVERVIEW',
-  'MISSING_GLOBAL_SIGNALS',
-  'EXCLUDED_CONTENT_CLASS',
+const BLOCKING_REASONS: readonly EvaluationReasonType[] = [
+  EvaluationReason.BLOCKED_COUNTRY,
+  EvaluationReason.BLOCKED_LANGUAGE,
+  EvaluationReason.NEUTRAL_COUNTRY,
+  EvaluationReason.NEUTRAL_LANGUAGE,
+  EvaluationReason.MISSING_REQUIRED_METADATA,
+  EvaluationReason.MISSING_ORIGIN_COUNTRY,
+  EvaluationReason.MISSING_ORIGINAL_LANGUAGE,
+  EvaluationReason.MISSING_TITLE,
+  EvaluationReason.MISSING_TRANSLATED_TITLE,
+  EvaluationReason.MISSING_OVERVIEW,
+  EvaluationReason.MISSING_GLOBAL_SIGNALS,
+  EvaluationReason.EXCLUDED_CONTENT_CLASS,
 ];
 
 describe('Policy Engine - Property-Based Tests', () => {
@@ -186,56 +188,61 @@ describe('Policy Engine - Property-Based Tests', () => {
   });
 
   describe('Property 6: Breakout Rule Priority Ordering', () => {
+    const alwaysMatchingRulesInRandomOrderArb = fc
+      .uniqueArray(fc.nat({ max: 100 }), { minLength: 2, maxLength: 5 })
+      .chain((priorities) =>
+        fc.tuple(
+          fc.shuffledSubarray(priorities, {
+            minLength: priorities.length,
+            maxLength: priorities.length,
+          }),
+          fc.array(breakoutRuleArb, { minLength: priorities.length, maxLength: priorities.length }),
+        ),
+      )
+      .map(([priorityOrder, rules]) =>
+        rules.map((rule, index) => ({
+          ...rule,
+          id: `rule-${priorityOrder[index]}`,
+          priority: priorityOrder[index],
+          requirements: { minImdbVotes: 0 },
+        })),
+      );
+
     it('should always select the breakout rule with lowest priority number', () => {
       fc.assert(
-        fc.property(
-          policyEngineInputArb,
-          fc.array(breakoutRuleArb, { minLength: 2, maxLength: 5 }),
-          (input, rules) => {
-            // Ensure unique IDs and priorities
-            const uniqueRules = rules.map((rule, index) => ({
-              ...rule,
-              id: `rule-${index}`,
-              priority: index,
-              requirements: {
-                minImdbVotes: 0, // Always matches
-              },
-            }));
+        fc.property(policyEngineInputArb, alwaysMatchingRulesInRandomOrderArb, (input, rules) => {
+          const highestPriority = Math.min(...rules.map((rule) => rule.priority));
+          const expectedRuleId = `rule-${highestPriority}`;
 
-            // Sort rules by priority to find expected winner
-            const sortedRules = [...uniqueRules].sort((a, b) => a.priority - b.priority);
-            const expectedRuleId = sortedRules[0].id;
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: ['RU'],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: rules,
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+          };
 
-            const policy: PolicyConfig = {
-              allowedCountries: ['US'],
-              blockedCountries: ['RU'],
-              blockedCountryMode: 'ANY',
-              allowedLanguages: ['en'],
-              blockedLanguages: [],
-              globalProviders: [],
-              breakoutRules: [...uniqueRules].reverse(),
-              eligibilityMode: 'STRICT',
-              homepage: { minRelevanceScore: 50 },
-            };
+          const neutralInput: PolicyEngineInput = {
+            ...input,
+            mediaItem: {
+              ...input.mediaItem,
+              originCountries: ['FR'],
+              originalLanguage: 'en',
+              voteCountImdb: 100, // Meets requirement
+              contentClass: 'mainstream',
+              title: 'Test Movie',
+            },
+          };
 
-            const neutralInput: PolicyEngineInput = {
-              ...input,
-              mediaItem: {
-                ...input.mediaItem,
-                originCountries: ['FR'],
-                originalLanguage: 'en',
-                voteCountImdb: 100, // Meets requirement
-                contentClass: 'mainstream',
-                title: 'Test Movie',
-              },
-            };
+          const result = evaluateEligibility(neutralInput, policy);
 
-            const result = evaluateEligibility(neutralInput, policy);
-
-            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-            expect(result.breakoutRuleId).toBe(expectedRuleId);
-          },
-        ),
+          expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+          expect(result.breakoutRuleId).toBe(expectedRuleId);
+        }),
         { numRuns: 100 },
       );
     });
@@ -336,18 +343,17 @@ describe('Policy Engine - Property-Based Tests', () => {
           // ELIGIBLE via breakout should have BREAKOUT_ALLOWED reason
           const isEligibleViaBreakout =
             result.status === EligibilityStatus.ELIGIBLE && Boolean(result.breakoutRuleId);
-          expect(result.reasons).toEqual(
-            expect.arrayContaining(isEligibleViaBreakout ? ['BREAKOUT_ALLOWED'] : []),
-          );
+          const breakoutWithoutReason =
+            isEligibleViaBreakout && !result.reasons.includes(EvaluationReason.BREAKOUT_ALLOWED);
+          expect(breakoutWithoutReason).toBe(false);
 
           // INELIGIBLE should have blocking reasons (including new readability reasons)
           const hasBlockingReason = result.reasons.some((reason) =>
             BLOCKING_REASONS.includes(reason),
           );
-          expect({ status: result.status, hasBlockingReason }).not.toEqual({
-            status: EligibilityStatus.INELIGIBLE,
-            hasBlockingReason: false,
-          });
+          const ineligibleWithoutBlockingReason =
+            result.status === EligibilityStatus.INELIGIBLE && !hasBlockingReason;
+          expect(ineligibleWithoutBlockingReason).toBe(false);
 
           // Reasons array should not be empty
           expect(result.reasons.length).toBeGreaterThan(0);
@@ -516,17 +522,23 @@ const expectGateStatus = (result: Evaluation, passesGate: boolean): void => {
   expect(result.status).toBe(
     passesGate ? EligibilityStatus.ELIGIBLE : EligibilityStatus.INELIGIBLE,
   );
-  expect(result.reasons.includes('MISSING_GLOBAL_SIGNALS')).toBe(!passesGate);
+  const missingGlobalSignals = [EvaluationReason.MISSING_GLOBAL_SIGNALS];
+  expect(result.reasons).toEqual(
+    passesGate
+      ? expect.not.arrayContaining(missingGlobalSignals)
+      : expect.arrayContaining(missingGlobalSignals),
+  );
 };
 
 const expectGlobalGateOutcome = (
   result: Evaluation,
   passesGate: boolean,
-  failedCheck: string,
+  gateCheck: string,
 ): void => {
   expectGateStatus(result, passesGate);
-  const failedChecks: string[] = result.globalGateDetails?.failedChecks ?? [];
-  expect(failedChecks.includes(failedCheck)).toBe(!passesGate);
+  expect(result.globalGateDetails?.failedChecks ?? []).toEqual(
+    passesGate ? expect.not.arrayContaining([gateCheck]) : expect.arrayContaining([gateCheck]),
+  );
 };
 
 describe('Global Quality Gate Properties', () => {

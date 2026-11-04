@@ -532,7 +532,7 @@ describe('Trending Queries - Watchers Gate Property Tests', () => {
         fc.property(watchersArb, (watchersCount) => {
           const passes = watchersCount >= TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES;
 
-          expect(passes).toBe(!(watchersCount < TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES));
+          expect(passes).toBe(watchersCount >= TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES);
         }),
         { numRuns: 50 },
       );
@@ -543,7 +543,7 @@ describe('Trending Queries - Watchers Gate Property Tests', () => {
         fc.property(watchersArb, (watchersCount) => {
           const passes = watchersCount >= TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS;
 
-          expect(passes).toBe(!(watchersCount < TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS));
+          expect(passes).toBe(watchersCount >= TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS);
         }),
         { numRuns: 50 },
       );

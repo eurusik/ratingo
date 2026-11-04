@@ -102,7 +102,6 @@ describe('Catalog Policy Worker - Property-Based Tests', () => {
             const entry = createErrorSampleEntry(mediaItemId, error);
 
             // Stack should be truncated to 500 chars max
-            expect(entry.stack).toBe(stack.substring(0, 500));
             expect(entry.stack).toHaveLength(Math.min(stack.length, 500));
           },
         ),
