@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
+import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 import { type SyncMediaJobData } from '@/modules/shared/contracts';
 
@@ -175,7 +176,7 @@ export class SyncWorker extends WorkerHost {
           this.logger.warn(`[job:${jid}] Unknown job type: ${job.name}`);
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       this.logger.error(`[job:${jid}] Failed: ${err.message}`, err.stack);
       throw error;
     }

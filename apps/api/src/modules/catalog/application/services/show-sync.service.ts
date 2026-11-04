@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { MS_PER_SECOND, SECONDS_PER_DAY } from '../../../../common/constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { ShowNotFoundError } from '../../domain/errors';
@@ -16,7 +17,8 @@ export interface SyncRequestResult {
   cooldownExpiresAt: Date | null;
 }
 
-const SHOW_SYNC_COOLDOWN_SECONDS = 7 * 24 * 3600;
+const SHOW_SYNC_COOLDOWN_DAYS = 7;
+const SHOW_SYNC_COOLDOWN_SECONDS = SHOW_SYNC_COOLDOWN_DAYS * SECONDS_PER_DAY;
 
 /**
  * Handles user-triggered metadata sync requests with a 7-day per-show cooldown.
@@ -50,7 +52,7 @@ export class ShowSyncService {
       return {
         queued: false,
         lastSyncedAt: show.lastSyncedAt,
-        cooldownExpiresAt: new Date(now.getTime() + result.expiresInSeconds * 1000),
+        cooldownExpiresAt: new Date(now.getTime() + result.expiresInSeconds * MS_PER_SECOND),
       };
     }
 

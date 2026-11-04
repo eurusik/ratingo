@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
+import { errorMessage } from '@/common/utils/error.utils';
+
 import { ShowStatus } from '../../../common/enums/show-status.enum';
 import type { ShowSyncDiff } from '../../ingestion/public';
 import { SHOW_EVENTS } from '../domain/constants/events.constants';
@@ -89,11 +91,7 @@ export class SubscriptionTriggerService {
         mediaItemId: event.mediaItemId,
         subscriptionId: event.subscriptionId,
         trigger: event.trigger as
-          | 'release'
-          | 'new_season'
-          | 'new_episode'
-          | 'on_streaming'
-          | 'status_changed',
+          'release' | 'new_season' | 'new_episode' | 'on_streaming' | 'status_changed',
         payload: {
           seasonNumber: event.payload.seasonNumber,
           episodeKey: event.payload.episodeKey,
@@ -104,7 +102,7 @@ export class SubscriptionTriggerService {
       const created = await this.notificationRepo.createMany(notificationData);
       this.logger.log(`Persisted ${created} notifications to database`);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
+      const msg = errorMessage(error);
       this.logger.error(
         `Failed to persist ${events.length} notifications (dedup markers already advanced): ${msg}`,
       );

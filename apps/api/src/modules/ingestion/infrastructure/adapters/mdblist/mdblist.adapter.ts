@@ -2,6 +2,7 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
+import { PG_INT_MAX } from '../../../../../common/constants/database.constants';
 import { MediaType } from '../../../../../common/enums/media-type.enum';
 import {
   EXTERNAL_API_PROVIDER,
@@ -38,6 +39,8 @@ interface MdblistResponse {
   };
   ratings?: MdblistRatingEntry[];
 }
+
+const MAX_SCORE = 100;
 
 /**
  * Source identifiers in MDBList ratings array.
@@ -128,7 +131,7 @@ export class MdblistAdapter {
     // types do not survive serialisation, so a malformed payload (e.g. from
     // an older schema or a manual re-queue) could otherwise template a
     // weird string directly into the URL path.
-    if (!Number.isInteger(tmdbId) || tmdbId <= 0 || tmdbId > 2_147_483_647) {
+    if (!Number.isInteger(tmdbId) || tmdbId <= 0 || tmdbId > PG_INT_MAX) {
       this.logger.warn(`MDBList skipped: invalid tmdbId=${tmdbId}`);
       return { rottenTomatoesCritics: null, rottenTomatoesAudience: null };
     }
@@ -148,10 +151,7 @@ export class MdblistAdapter {
         rottenTomatoesAudience: this.extractScore(ratings, SOURCE.POPCORN),
       };
     } catch (error) {
-      const status =
-        error instanceof MdblistApiException
-          ? (error.details as Record<string, unknown> | undefined)?.statusCode
-          : 'unknown';
+      const status = (error instanceof MdblistApiException && error.upstreamStatus) || 'unknown';
       if (status === HttpStatus.NOT_FOUND) {
         this.logger.debug(`MDBList has no entry for tmdbId=${tmdbId} (404)`);
         return { rottenTomatoesCritics: null, rottenTomatoesAudience: null };
@@ -214,6 +214,6 @@ export class MdblistAdapter {
     if (!Number.isFinite(num)) return null;
 
     // Clamp defensively — protects against upstream schema drift.
-    return Math.max(0, Math.min(100, Math.round(num)));
+    return Math.max(0, Math.min(MAX_SCORE, Math.round(num)));
   }
 }

@@ -4,6 +4,8 @@ import { HttpStatus, Inject, Injectable, Logger, type OnModuleDestroy } from '@n
 
 import IORedis from 'ioredis';
 
+import { errorMessage } from '@/common/utils/error.utils';
+
 import { type MonitoredProvider } from '../../domain/constants/monitored-provider.const';
 import { type ProviderFailureCounts } from '../../domain/entities/key-health-snapshot.entity';
 import { type FailureCounterStore } from '../../domain/ports/failure-counter-store.port';
@@ -11,6 +13,8 @@ import { type FailureCounterStore } from '../../domain/ports/failure-counter-sto
 export const MONITORING_REDIS_CLIENT = Symbol('MONITORING_REDIS_CLIENT');
 
 const WINDOW_MS = 86_400_000;
+const UNAUTHORIZED_ZCARD_RESULT_INDEX = 1;
+const RATE_LIMITED_ZCARD_RESULT_INDEX = 3;
 
 type FailureBucket = keyof ProviderFailureCounts;
 
@@ -39,7 +43,7 @@ export class RedisFailureCounterStore implements FailureCounterStore, OnModuleDe
         .pexpire(key, WINDOW_MS)
         .exec();
     } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
+      const detail = errorMessage(error);
       this.logger.warn(`Failed to record ${provider} failure: ${detail}`);
     }
   }
@@ -57,11 +61,11 @@ export class RedisFailureCounterStore implements FailureCounterStore, OnModuleDe
         .exec();
 
       return {
-        unauthorized: this.cardAt(results, 1),
-        rateLimited: this.cardAt(results, 3),
+        unauthorized: this.cardAt(results, UNAUTHORIZED_ZCARD_RESULT_INDEX),
+        rateLimited: this.cardAt(results, RATE_LIMITED_ZCARD_RESULT_INDEX),
       };
     } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
+      const detail = errorMessage(error);
       this.logger.warn(`Failed to read ${provider} failure counts: ${detail}`);
       return { unauthorized: 0, rateLimited: 0 };
     }

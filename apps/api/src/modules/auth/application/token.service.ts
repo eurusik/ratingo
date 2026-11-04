@@ -4,6 +4,8 @@ import { Injectable, Inject, Logger, UnauthorizedException } from '@nestjs/commo
 import { type ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
+import { errorMessage } from '@/common/utils/error.utils';
+
 import { MS_PER_SECOND, MS_PER_MINUTE, MS_PER_HOUR, MS_PER_DAY } from '../../../common/constants';
 import { DevTiming } from '../../../common/utils/dev-timing';
 import authConfig from '../../../config/auth.config';
@@ -102,7 +104,7 @@ export class TokenService {
         secret: this.config.refreshTokenSecret,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = errorMessage(error);
       this.logger.warn(`Refresh token verification failed: ${message}`);
       throw new UnauthorizedException('Invalid refresh token');
     }

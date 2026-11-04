@@ -15,3 +15,5 @@ export const PG_ERROR_CODE = {
 export const DB_CONSTRAINT = {
   MEDIA_TYPE_SLUG: 'media_type_slug_idx',
 } as const;
+
+export const PG_INT_MAX = 2_147_483_647;

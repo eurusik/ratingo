@@ -196,4 +196,7 @@ const generateOpenApi = async (): Promise<void> => {
   await app.close();
 };
 
-generateOpenApi();
+generateOpenApi().catch((error: unknown) => {
+  console.error('OpenAPI generation failed', error);
+  process.exit(1);
+});

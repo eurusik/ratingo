@@ -7,6 +7,16 @@ import { fileURLToPath } from 'node:url';
 
 const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
 
+const apiImportSettings = {
+  'import/parsers': {
+    '@typescript-eslint/parser': ['.ts'],
+  },
+  'import/resolver': {
+    typescript: { project: path.join(tsconfigRootDir, 'apps/api/tsconfig.json') },
+    node: true,
+  },
+};
+
 // Module boundary zones: cross-module imports must go through the module's
 // public/ barrel (or the shared micro-module's index). The only exception is
 // `<module>.module.ts` — Nest module wiring imports it directly.
@@ -35,7 +45,17 @@ const sharedModules = [
   'score-calculator',
   'verdict',
 ];
+const domainInfrastructureZone = {
+  target: './apps/api/src/modules/**/domain/**/*',
+  from: [
+    './apps/api/src/modules/**/infrastructure/**/*',
+    './apps/api/src/common/infrastructure/**/*',
+    './apps/api/src/database/**/*',
+  ],
+  message: 'Domain must not depend on infrastructure',
+};
 const moduleBoundaryZones = [
+  domainInfrastructureZone,
   {
     target: './apps/api/src/modules/shared/contracts/**/*',
     from: './apps/api/src',
@@ -124,11 +144,11 @@ export default [
     rules: {
       // === TYPE SAFETY ===
       // Avoid any — use unknown for external data
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
 
       // Catch unused variables
       '@typescript-eslint/no-unused-vars': [
-        'warn',
+        'error',
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
@@ -144,13 +164,17 @@ export default [
 
       // === MAGIC VALUES ===
       // No magic numbers — force extraction to constants
-      'no-magic-numbers': [
-        'warn',
+      '@typescript-eslint/no-magic-numbers': [
+        'error',
         {
           ignore: [-1, 0, 1, 2],
           ignoreArrayIndexes: true,
           ignoreDefaultValues: true,
           enforceConst: true,
+          ignoreEnums: true,
+          ignoreNumericLiteralTypes: true,
+          ignoreReadonlyClassProperties: true,
+          ignoreTypeIndexes: true,
         },
       ],
 
@@ -163,11 +187,11 @@ export default [
 
       // === READABILITY ===
       // Prefer template literals over string concatenation
-      'prefer-template': 'warn',
+      'prefer-template': 'error',
 
       // Prefer destructuring (objects only)
       'prefer-destructuring': [
-        'warn',
+        'error',
         {
           array: false,
           object: true,
@@ -181,22 +205,22 @@ export default [
       eqeqeq: ['error', 'always', { null: 'ignore' }],
 
       // No nested ternary (readability)
-      'no-nested-ternary': 'warn',
+      'no-nested-ternary': 'error',
 
       // === EARLY RETURNS ===
       // Max depth of nested blocks
-      'max-depth': ['warn', 3],
+      'max-depth': ['error', 3],
 
       // No else after return
-      'no-else-return': ['warn', { allowElseIf: false }],
+      'no-else-return': ['error', { allowElseIf: false }],
 
       // === FUNCTIONAL STYLE ===
       // Prefer arrow functions for callbacks
-      'prefer-arrow-callback': 'warn',
+      'prefer-arrow-callback': 'error',
 
       // Prefer array methods over for-in
       'no-restricted-syntax': [
-        'warn',
+        'error',
         {
           selector: 'ForInStatement',
           message: 'Use Object.keys/values/entries instead of for-in.',
@@ -205,11 +229,11 @@ export default [
 
       // === LOGGING ===
       // No console — use NestJS Logger (bootstrap/scripts can override)
-      'no-console': 'warn',
+      'no-console': 'error',
 
       // === IMPORT ORDER ===
       'import/order': [
-        'warn',
+        'error',
         {
           groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
           pathGroups: [
@@ -234,6 +258,26 @@ export default [
       ],
     },
   },
+  {
+    files: ['apps/api/src/**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+      },
+    },
+    rules: {
+      'no-throw-literal': 'off',
+      '@typescript-eslint/only-throw-error': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/return-await': ['error', 'in-try-catch'],
+      '@typescript-eslint/prefer-promise-reject-errors': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@typescript-eslint/no-base-to-string': 'error',
+      '@typescript-eslint/restrict-template-expressions': 'error',
+    },
+  },
   // Config/DTO/Common files — relaxed magic numbers (ports, TTL, validation limits, defaults)
   {
     files: [
@@ -243,16 +287,19 @@ export default [
       'apps/api/src/**/*.dto.ts',
       'apps/api/src/app.module.ts',
       'apps/api/src/main.ts',
+      'apps/api/src/**/*.constants.ts',
+      'apps/api/src/database/seed*.ts',
     ],
     rules: {
-      'no-magic-numbers': 'off',
+      '@typescript-eslint/no-magic-numbers': 'off',
     },
   },
   // Bootstrap/scripts — console allowed
   {
     files: [
       'apps/api/src/main.ts',
-      'apps/api/scripts/**/*.ts',
+      'apps/api/src/scripts/**/*.ts',
+      'apps/api/src/database/seed*.ts',
       '**/drizzle/**/*.ts',
     ],
     rules: {
@@ -299,7 +346,7 @@ export default [
         },
       ],
       // Domain functions should be self-documenting
-      '@typescript-eslint/explicit-function-return-type': 'warn',
+      '@typescript-eslint/explicit-function-return-type': 'error',
     },
   },
   // Application/Infrastructure — typed errors only
@@ -324,25 +371,34 @@ export default [
       ],
     },
   },
-  // Domain must not depend on infrastructure (clean architecture)
   {
     files: ['apps/api/src/modules/**/domain/**/*.ts'],
-    plugins: {
-      import: importPlugin,
-    },
+    ignores: ['**/*.spec.ts', '**/*.test.ts'],
     rules: {
-      'import/no-restricted-paths': [
+      '@typescript-eslint/no-restricted-imports': [
         'error',
         {
-          zones: [
+          patterns: [
             {
-              target: './apps/api/src/modules/**/domain/**/*',
-              from: './apps/api/src/modules/**/infrastructure/**/*',
-              message: 'Domain must not depend on infrastructure',
+              group: ['@nestjs/*', 'drizzle-orm', 'drizzle-orm/*', 'ioredis', 'bullmq'],
+              message: 'Domain must stay framework-free: no Nest, Drizzle, Redis or BullMQ.',
             },
           ],
         },
       ],
+    },
+  },
+  {
+    files: [
+      'apps/api/src/modules/**/domain/**/*.spec.ts',
+      'apps/api/src/modules/**/domain/**/*.test.ts',
+    ],
+    plugins: {
+      import: importPlugin,
+    },
+    settings: apiImportSettings,
+    rules: {
+      'import/no-restricted-paths': ['error', { zones: [domainInfrastructureZone] }],
     },
   },
   // Cycle guards (ADR 0001 Phase 1): catalog and catalog-policy must not depend on ingestion, and
@@ -352,10 +408,7 @@ export default [
   // last-wins per rule: keep ONE no-restricted-imports block per file glob, or a
   // later block for the same files silently drops these patterns.
   {
-    files: [
-      'apps/api/src/modules/catalog/**/*.ts',
-      'apps/api/src/modules/catalog-policy/**/*.ts',
-    ],
+    files: ['apps/api/src/modules/catalog/**/*.ts', 'apps/api/src/modules/catalog-policy/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -417,12 +470,7 @@ export default [
     plugins: {
       import: importPlugin,
     },
-    settings: {
-      'import/resolver': {
-        typescript: true,
-        node: true,
-      },
-    },
+    settings: apiImportSettings,
     rules: {
       'import/no-restricted-paths': [
         'error',

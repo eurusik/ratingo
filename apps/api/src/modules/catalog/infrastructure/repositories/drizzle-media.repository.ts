@@ -16,6 +16,8 @@ import {
 } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { errorMessage } from '@/common/utils/error.utils';
+
 import { DB_CONSTRAINT } from '../../../../common/constants/database.constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -760,7 +762,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
         )
         .limit(limit);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = errorMessage(error);
       this.logger.error(`Failed to search media for "${query}": ${message}`);
       return [];
     }

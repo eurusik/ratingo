@@ -6,6 +6,8 @@ import { sql } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import type IORedis from 'ioredis';
 
+import { errorMessage } from '@/common/utils/error.utils';
+
 import { withTimeout } from '../common/utils/with-timeout.util';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import * as schema from '../database/schema';
@@ -60,9 +62,7 @@ export class HealthService {
       );
       return 'up';
     } catch (error) {
-      this.logger.warn(
-        `Health check failed for ${name}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      this.logger.warn(`Health check failed for ${name}: ${errorMessage(error)}`);
       return 'down';
     }
   }

@@ -24,7 +24,7 @@ describe('JsonConsoleLogger', () => {
     expect(entries(stdout)).toEqual([
       expect.objectContaining({ level: 'info', context: 'Worker', message: 'Worker is running' }),
     ]);
-    expect(Date.parse(String(entries(stdout)[0].time))).not.toBeNaN();
+    expect(Date.parse(entries(stdout)[0].time as string)).not.toBeNaN();
   });
 
   it('keeps the stack trace inside the error entry instead of separate lines', () => {

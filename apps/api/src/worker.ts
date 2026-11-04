@@ -6,6 +6,7 @@ import { NestFactory } from '@nestjs/core';
 
 import { createAppLogger } from './common/logging/app-logger';
 import { type AppRole, getAppRole } from './common/runtime/app-role';
+import { errorMessage } from './common/utils/error.utils';
 import { closeWorkerOnSignals } from './worker-shutdown';
 
 const WORKER_ROLE: AppRole = 'worker';
@@ -29,7 +30,7 @@ async function bootstrap(): Promise<void> {
 
 bootstrap().catch((error: unknown) => {
   logger.error(
-    `Worker failed to start: ${String(error)}`,
+    `Worker failed to start: ${errorMessage(error)}`,
     error instanceof Error ? error.stack : undefined,
   );
   process.exit(1);

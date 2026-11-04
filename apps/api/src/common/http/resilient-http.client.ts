@@ -1,5 +1,7 @@
 import { HttpStatus, Logger } from '@nestjs/common';
 
+import { toError } from '../utils/error.utils';
+
 /**
  * Configuration for retry behavior.
  */
@@ -265,7 +267,7 @@ export class ResilientHttpClient {
         return { data, success: true, attempts };
       } catch (error: unknown) {
         const retryableError = error as Partial<RetryableError>;
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = toError(error);
 
         const canRetry = isRetryableError(retryableError);
 

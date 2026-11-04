@@ -6,6 +6,8 @@
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
+import { toError } from '@/common/utils/error.utils';
+
 import { RunStatus } from '../../../domain/constants/evaluation.constants';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
@@ -41,7 +43,10 @@ export class EvaluateItemHandler {
    *
    * @param attempt - Retry info from the worker; when omitted the call is treated as final
    */
-  async handle(payload: EvaluateCatalogItemPayload, attempt?: EvaluateItemAttemptInfo): Promise<void> {
+  async handle(
+    payload: EvaluateCatalogItemPayload,
+    attempt?: EvaluateItemAttemptInfo,
+  ): Promise<void> {
     const { runId, policyVersion, mediaItemId, context } = payload;
 
     if (!validateContextPayload(payload, { runId, policyVersion, mediaItemId }, this.logger)) {
@@ -70,7 +75,7 @@ export class EvaluateItemHandler {
       this.logger.debug(`Evaluated ${mediaItemId} for run ${runId} (context: ${context})`);
     } catch (error: unknown) {
       if (attempt && !attempt.isFinalAttempt) {
-        const err = error instanceof Error ? error : new Error(String(error));
+        const err = toError(error);
         this.logger.warn(
           `Evaluation attempt failed for ${mediaItemId} (run ${runId}, context ${context}), will retry: ${err.message}`,
         );
@@ -85,7 +90,7 @@ export class EvaluateItemHandler {
    * Records evaluation error for visibility in run status.
    */
   private async recordError(runId: string, mediaItemId: string, error: unknown): Promise<void> {
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
 
     this.logger.error(`Failed to evaluate media item`, {
       runId,

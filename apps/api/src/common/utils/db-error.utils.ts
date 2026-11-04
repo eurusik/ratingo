@@ -8,6 +8,7 @@ import {
   DatabaseInvalidInputException,
 } from '../exceptions/database.exception';
 
+import { errorMessage } from './error.utils';
 import { extractPgError, sanitizeErrorStack, stripQueryParams } from './pg-error.utils';
 
 /**
@@ -39,7 +40,7 @@ function safeErrorMessage(error: unknown): string {
     const pgMessage = extractPgError(error).message;
     if (pgMessage && (error as { cause?: unknown }).cause) return stripQueryParams(pgMessage);
   }
-  const msg = error instanceof Error ? error.message : String(error);
+  const msg = errorMessage(error);
   return stripQueryParams(msg);
 }
 

@@ -4,6 +4,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { type Queue } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
+import { errorMessage } from '@/common/utils/error.utils';
 
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../trakt/public';
@@ -322,7 +323,7 @@ export class StatsBackfillService {
           continue;
         }
 
-        this.logger.warn(`Failed to fetch stats for ${type} ${tmdbId}: ${err.message || error}`);
+        this.logger.warn(`Failed to fetch stats for ${type} ${tmdbId}: ${errorMessage(error)}`);
         return null; // Transient failure
       }
     }

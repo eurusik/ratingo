@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { errorMessage } from '@/common/utils/error.utils';
+
 import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
 import {
   MONITORED_PROVIDERS,
@@ -94,7 +96,7 @@ export class KeyHealthService {
   }
 
   private logFailedCheck(provider: MonitoredProvider, reason: unknown): void {
-    const detail = reason instanceof Error ? reason.message : String(reason);
+    const detail = errorMessage(reason);
     this.logger.error(`Failed to record ${provider} key health: ${detail}`);
   }
 

@@ -56,9 +56,7 @@ export class OAuthExceptionFilter implements ExceptionFilter {
       const { frontendUrl } = this.authCfg;
       // Determine provider from state payload or infer from URL path
       const provider =
-        (request as any).oauthStatePayload?.provider ||
-        this.inferProviderFromUrl(request.url) ||
-        'google';
+        request.oauthStatePayload?.provider || this.inferProviderFromUrl(request.url) || 'google';
       const redirectUrl = `${frontendUrl}/auth/callback/${provider}?error=${encodeURIComponent(errorCode)}`;
       void response.redirect(redirectUrl);
       return;
