@@ -123,10 +123,8 @@ describe('validateContextPayload', () => {
       };
       const jobInfo = { runId: 'run-123' };
 
-      if (validateContextPayload(payload, jobInfo, mockLogger)) {
-        // TypeScript should recognize payload.context as defined here
-        expect(payload.context).toBe(EvaluationContext.CATALOG);
-      }
+      expect(validateContextPayload(payload, jobInfo, mockLogger)).toBe(true);
+      expect(payload.context).toBe(EvaluationContext.CATALOG);
     });
   });
 });

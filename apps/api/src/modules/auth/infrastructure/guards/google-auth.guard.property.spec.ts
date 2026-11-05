@@ -106,29 +106,10 @@ describe('Google OAuth - returnTo Validation Property Tests', () => {
     it('should partition all strings into valid relative paths or rejected', () => {
       fc.assert(
         fc.property(fc.string(), (input) => {
-          const result = validateReturnTo(input);
+          const isValidRelativePath =
+            input.startsWith('/') && !input.startsWith('//') && RETURN_TO_PATTERN.test(input);
 
-          if (result !== null) {
-            // If accepted, must be a valid relative path
-            expect(result).toBe(input);
-            expect(result.startsWith('/')).toBe(true);
-            expect(result.startsWith('//')).toBe(false);
-            expect(RETURN_TO_PATTERN.test(result)).toBe(true);
-          } else {
-            // If rejected, must violate at least one rule:
-            // - empty/undefined
-            // - doesn't start with /
-            // - starts with //
-            // - contains invalid characters
-            const isEmpty = !input;
-            const doesntStartWithSlash = !input.startsWith('/');
-            const startsWithDoubleSlash = input.startsWith('//');
-            const hasInvalidChars = !RETURN_TO_PATTERN.test(input);
-
-            expect(
-              isEmpty || doesntStartWithSlash || startsWithDoubleSlash || hasInvalidChars,
-            ).toBe(true);
-          }
+          expect(validateReturnTo(input)).toBe(isValidRelativePath ? input : null);
         }),
         { numRuns: 100 },
       );

@@ -42,23 +42,12 @@ describe('Provider Mapping Service - Property-Based Tests', () => {
           // Act
           const result = await service.resolve(mapping.tmdbProviderId, mapping.region);
 
-          // Assert - result should exist
-          expect(result).not.toBeNull();
-
-          if (result) {
-            // Assert - should have required fields
-            expect(result).toHaveProperty('providerId');
-            expect(result).toHaveProperty('variantId');
-            expect(result).toHaveProperty('distributionChannel');
-
-            // Assert - should NOT have offerType
-            expect(result).not.toHaveProperty('offerType');
-
-            // Assert - values should match mapping
-            expect(result.providerId).toBe(mapping.providerId);
-            expect(result.variantId).toBe(mapping.variantId);
-            expect(result.distributionChannel).toBe(mapping.distributionChannel);
-          }
+          expect(result).toEqual({
+            providerId: mapping.providerId,
+            variantId: mapping.variantId,
+            distributionChannel: mapping.distributionChannel,
+          });
+          expect(result).not.toHaveProperty('offerType');
         }),
         { numRuns: 100 },
       );
@@ -74,11 +63,12 @@ describe('Provider Mapping Service - Property-Based Tests', () => {
           // Act
           const result = await service.resolve(mapping.tmdbProviderId, mapping.region);
 
-          // Assert
-          if (result) {
-            const keys = Object.keys(result).sort();
-            expect(keys).toEqual(['distributionChannel', 'providerId', 'variantId']);
-          }
+          expect(result).not.toBeNull();
+          expect(Object.keys(result ?? {}).sort()).toEqual([
+            'distributionChannel',
+            'providerId',
+            'variantId',
+          ]);
         }),
         { numRuns: 100 },
       );

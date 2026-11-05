@@ -1,7 +1,6 @@
-import { MovieListingsQuery, EligibilityMode } from './movie-listings.query';
+import { MovieListingsQuery } from './movie-listings.query';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { EligibilityStatus } from '../../../catalog-policy/public';
 
 // Simple chainable thenable for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
@@ -52,7 +51,7 @@ describe('MovieListingsQuery', () => {
     };
 
     const mockGenreQuery = {
-      fetchForMediaItems: jest.fn().mockImplementation((ids: string[]) => {
+      fetchForMediaItems: jest.fn().mockImplementation(() => {
         const genresData = selectQueue.shift() ?? [];
         const map = new Map<string, any[]>();
         genresData.forEach((g: any) => {
@@ -277,35 +276,6 @@ describe('MovieListingsQuery', () => {
     });
 
     it('should exclude movies that are already on streaming (digitalReleaseDate <= now)', async () => {
-      const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 30); // 30 days ago
-
-      const movies = [
-        {
-          id: 'streaming-movie',
-          mediaItemId: 'mid-streaming',
-          tmdbId: 12345,
-          title: 'Already Streaming Movie',
-          slug: 'already-streaming',
-          overview: 'This movie is on streaming',
-          ingestionStatus: 'ready',
-          posterPath: '/stream.jpg',
-          backdropPath: '/stream-bg.jpg',
-          popularity: 50,
-          releaseDate: pastDate,
-          theatricalReleaseDate: pastDate,
-          digitalReleaseDate: pastDate, // Already on streaming
-          runtime: 120,
-          ratingoScore: 70,
-          qualityScore: 75,
-          popularityScore: 60,
-          watchersCount: 500,
-          totalWatchers: 2000,
-          rating: 7,
-          voteCount: 1000,
-        },
-      ];
-
       // Query returns empty because digitalReleaseDate filter excludes it
       setup([[], [{ total: 0 }]]);
 

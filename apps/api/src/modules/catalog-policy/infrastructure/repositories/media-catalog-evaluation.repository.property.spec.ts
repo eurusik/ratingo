@@ -155,27 +155,6 @@ const evaluationArb = fc.record({
   context: evaluationContextArb,
 });
 
-/**
- * Generates an evaluation with fixed composite key but varying other fields.
- * Used to test that upserts update the same record.
- */
-const evaluationWithFixedKeyArb = (
-  mediaItemId: string,
-  policyVersion: number,
-  context: EvaluationContextType,
-) =>
-  fc.record({
-    mediaItemId: fc.constant(mediaItemId),
-    status: eligibilityStatusArb,
-    reasons: reasonsArb,
-    relevanceScore: relevanceScoreArb,
-    policyVersion: fc.constant(policyVersion),
-    breakoutRuleId: breakoutRuleIdArb,
-    evaluatedAt: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }),
-    runId: runIdArb,
-    context: fc.constant(context),
-  });
-
 // ============================================================================
 // Property Tests
 // ============================================================================

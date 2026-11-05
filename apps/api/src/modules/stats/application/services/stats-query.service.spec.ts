@@ -58,13 +58,10 @@ describe('StatsQueryService', () => {
     it('should throw StatsNotFoundException with correct identifier', async () => {
       statsRepository.findByTmdbId.mockResolvedValue(null);
 
-      try {
-        await service.getStatsByTmdbId(12345);
-        fail('Expected StatsNotFoundException to be thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatsNotFoundException);
-        expect(error.message).toContain('12345');
-      }
+      const error = await service.getStatsByTmdbId(12345).catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(StatsNotFoundException);
+      expect(error).toHaveProperty('message', expect.stringContaining('12345'));
     });
   });
 });

@@ -17,8 +17,25 @@ import {
   EligibilityStatus,
   EligibilityStatusType,
   EvaluationContext as EvaluationContextConst,
+  EvaluationReason,
+  type EvaluationReasonType,
 } from './constants/evaluation.constants';
 import { ContentClass } from './classification.service';
+
+const BLOCKING_REASONS: readonly EvaluationReasonType[] = [
+  EvaluationReason.BLOCKED_COUNTRY,
+  EvaluationReason.BLOCKED_LANGUAGE,
+  EvaluationReason.NEUTRAL_COUNTRY,
+  EvaluationReason.NEUTRAL_LANGUAGE,
+  EvaluationReason.MISSING_REQUIRED_METADATA,
+  EvaluationReason.MISSING_ORIGIN_COUNTRY,
+  EvaluationReason.MISSING_ORIGINAL_LANGUAGE,
+  EvaluationReason.MISSING_TITLE,
+  EvaluationReason.MISSING_TRANSLATED_TITLE,
+  EvaluationReason.MISSING_OVERVIEW,
+  EvaluationReason.MISSING_GLOBAL_SIGNALS,
+  EvaluationReason.EXCLUDED_CONTENT_CLASS,
+];
 
 describe('Policy Engine - Property-Based Tests', () => {
   // Arbitraries (generators) for property-based testing
@@ -91,31 +108,6 @@ describe('Policy Engine - Property-Based Tests', () => {
     stats: statsArb,
   });
 
-  // Helper to create a minimal valid input for inline test cases
-  const createTestInput = (
-    overrides?: Partial<PolicyEngineInput['mediaItem']>,
-  ): PolicyEngineInput => ({
-    mediaItem: {
-      id: 'test-id',
-      originCountries: ['US'],
-      originalLanguage: 'en',
-      normalizedOffers: [],
-      voteCountImdb: null,
-      voteCountTrakt: null,
-      ratingImdb: null,
-      ratingMetacritic: null,
-      ratingRottenTomatoes: null,
-      ratingTrakt: null,
-      contentClass: 'mainstream' as ContentClass,
-      title: 'Test Movie',
-      // Overview must be 60+ chars to pass trending/homepage context requirements
-      overview:
-        'A comprehensive test movie description for testing purposes and validation scenarios.',
-      ...overrides,
-    },
-    stats: null,
-  });
-
   describe('Property: Canonical Lowercase Status', () => {
     // Canonical lowercase status values (PENDING removed per Readability & Pending Reform)
     const CANONICAL_STATUSES: EligibilityStatusType[] = [
@@ -181,7 +173,7 @@ describe('Policy Engine - Property-Based Tests', () => {
           (input1, input2, policy) => {
             // Evaluate in order: input1, input2, input1 again
             const result1a = evaluateEligibility(input1, policy);
-            const result2 = evaluateEligibility(input2, policy);
+            evaluateEligibility(input2, policy);
             const result1b = evaluateEligibility(input1, policy);
 
             // First and third evaluations of input1 should be identical
@@ -196,57 +188,61 @@ describe('Policy Engine - Property-Based Tests', () => {
   });
 
   describe('Property 6: Breakout Rule Priority Ordering', () => {
+    const alwaysMatchingRulesInRandomOrderArb = fc
+      .uniqueArray(fc.nat({ max: 100 }), { minLength: 2, maxLength: 5 })
+      .chain((priorities) =>
+        fc.tuple(
+          fc.shuffledSubarray(priorities, {
+            minLength: priorities.length,
+            maxLength: priorities.length,
+          }),
+          fc.array(breakoutRuleArb, { minLength: priorities.length, maxLength: priorities.length }),
+        ),
+      )
+      .map(([priorityOrder, rules]) =>
+        rules.map((rule, index) => ({
+          ...rule,
+          id: `rule-${priorityOrder[index]}`,
+          priority: priorityOrder[index],
+          requirements: { minImdbVotes: 0 },
+        })),
+      );
+
     it('should always select the breakout rule with lowest priority number', () => {
       fc.assert(
-        fc.property(
-          policyEngineInputArb,
-          fc.array(breakoutRuleArb, { minLength: 2, maxLength: 5 }),
-          (input, rules) => {
-            // Ensure unique IDs and priorities
-            const uniqueRules = rules.map((rule, index) => ({
-              ...rule,
-              id: `rule-${index}`,
-              priority: index,
-              requirements: {
-                minImdbVotes: 0, // Always matches
-              },
-            }));
+        fc.property(policyEngineInputArb, alwaysMatchingRulesInRandomOrderArb, (input, rules) => {
+          const highestPriority = Math.min(...rules.map((rule) => rule.priority));
+          const expectedRuleId = `rule-${highestPriority}`;
 
-            // Sort rules by priority to find expected winner
-            const sortedRules = [...uniqueRules].sort((a, b) => a.priority - b.priority);
-            const expectedRuleId = sortedRules[0].id;
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: ['RU'],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: rules,
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+          };
 
-            const policy: PolicyConfig = {
-              allowedCountries: ['US'],
-              blockedCountries: ['RU'], // Block to trigger breakout check
-              blockedCountryMode: 'ANY',
-              allowedLanguages: ['en'],
-              blockedLanguages: [],
-              globalProviders: [],
-              breakoutRules: uniqueRules,
-              eligibilityMode: 'STRICT',
-              homepage: { minRelevanceScore: 50 },
-            };
+          const neutralInput: PolicyEngineInput = {
+            ...input,
+            mediaItem: {
+              ...input.mediaItem,
+              originCountries: ['FR'],
+              originalLanguage: 'en',
+              voteCountImdb: 100, // Meets requirement
+              contentClass: 'mainstream',
+              title: 'Test Movie',
+            },
+          };
 
-            // Create input with blocked country to trigger breakout
-            const blockedInput: PolicyEngineInput = {
-              ...input,
-              mediaItem: {
-                ...input.mediaItem,
-                originCountries: ['RU'],
-                originalLanguage: 'en',
-                voteCountImdb: 100, // Meets requirement
-              },
-            };
+          const result = evaluateEligibility(neutralInput, policy);
 
-            const result = evaluateEligibility(blockedInput, policy);
-
-            // If eligible via breakout, should use highest priority rule
-            if (result.status === EligibilityStatus.ELIGIBLE && result.breakoutRuleId) {
-              expect(result.breakoutRuleId).toBe(expectedRuleId);
-            }
-          },
-        ),
+          expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+          expect(result.breakoutRuleId).toBe(expectedRuleId);
+        }),
         { numRuns: 100 },
       );
     });
@@ -345,27 +341,19 @@ describe('Policy Engine - Property-Based Tests', () => {
           expect(result.status).not.toBe('pending');
 
           // ELIGIBLE via breakout should have BREAKOUT_ALLOWED reason
-          if (result.status === EligibilityStatus.ELIGIBLE && result.breakoutRuleId) {
-            expect(result.reasons).toContain('BREAKOUT_ALLOWED');
-          }
+          const isEligibleViaBreakout =
+            result.status === EligibilityStatus.ELIGIBLE && Boolean(result.breakoutRuleId);
+          const breakoutWithoutReason =
+            isEligibleViaBreakout && !result.reasons.includes(EvaluationReason.BREAKOUT_ALLOWED);
+          expect(breakoutWithoutReason).toBe(false);
 
           // INELIGIBLE should have blocking reasons (including new readability reasons)
-          if (result.status === EligibilityStatus.INELIGIBLE) {
-            const hasBlockingReason =
-              result.reasons.includes('BLOCKED_COUNTRY') ||
-              result.reasons.includes('BLOCKED_LANGUAGE') ||
-              result.reasons.includes('NEUTRAL_COUNTRY') ||
-              result.reasons.includes('NEUTRAL_LANGUAGE') ||
-              result.reasons.includes('MISSING_REQUIRED_METADATA') ||
-              result.reasons.includes('MISSING_ORIGIN_COUNTRY') ||
-              result.reasons.includes('MISSING_ORIGINAL_LANGUAGE') ||
-              result.reasons.includes('MISSING_TITLE') ||
-              result.reasons.includes('MISSING_TRANSLATED_TITLE') ||
-              result.reasons.includes('MISSING_OVERVIEW') ||
-              result.reasons.includes('MISSING_GLOBAL_SIGNALS') ||
-              result.reasons.includes('EXCLUDED_CONTENT_CLASS');
-            expect(hasBlockingReason).toBe(true);
-          }
+          const hasBlockingReason = result.reasons.some((reason) =>
+            BLOCKING_REASONS.includes(reason),
+          );
+          const ineligibleWithoutBlockingReason =
+            result.status === EligibilityStatus.INELIGIBLE && !hasBlockingReason;
+          expect(ineligibleWithoutBlockingReason).toBe(false);
 
           // Reasons array should not be empty
           expect(result.reasons.length).toBeGreaterThan(0);
@@ -469,14 +457,9 @@ describe('Context-Aware Eligibility Properties', () => {
             );
 
             // globalGateDetails should also match
-            if (resultWithoutOptions.globalGateDetails) {
-              expect(resultWithCatalogContext.globalGateDetails).toBeDefined();
-              expect(resultWithoutOptions.globalGateDetails.failedChecks).toEqual(
-                resultWithCatalogContext.globalGateDetails?.failedChecks,
-              );
-            } else {
-              expect(resultWithCatalogContext.globalGateDetails).toBeUndefined();
-            }
+            expect(resultWithCatalogContext.globalGateDetails).toEqual(
+              resultWithoutOptions.globalGateDetails,
+            );
           },
         ),
         { numRuns: 100 },
@@ -533,6 +516,31 @@ describe('Context-Aware Eligibility Properties', () => {
   });
 });
 
+type Evaluation = ReturnType<typeof evaluateEligibility>;
+
+const expectGateStatus = (result: Evaluation, passesGate: boolean): void => {
+  expect(result.status).toBe(
+    passesGate ? EligibilityStatus.ELIGIBLE : EligibilityStatus.INELIGIBLE,
+  );
+  const missingGlobalSignals = [EvaluationReason.MISSING_GLOBAL_SIGNALS];
+  expect(result.reasons).toEqual(
+    passesGate
+      ? expect.not.arrayContaining(missingGlobalSignals)
+      : expect.arrayContaining(missingGlobalSignals),
+  );
+};
+
+const expectGlobalGateOutcome = (
+  result: Evaluation,
+  passesGate: boolean,
+  gateCheck: string,
+): void => {
+  expectGateStatus(result, passesGate);
+  expect(result.globalGateDetails?.failedChecks ?? []).toEqual(
+    passesGate ? expect.not.arrayContaining([gateCheck]) : expect.arrayContaining([gateCheck]),
+  );
+};
+
 describe('Global Quality Gate Properties', () => {
   it('Property 1: should enforce minVotesAnyOf threshold with OR logic', () => {
     fc.assert(
@@ -583,14 +591,7 @@ describe('Global Quality Gate Properties', () => {
           const traktPasses = traktVotes !== null && traktVotes >= threshold;
           const anyPasses = imdbPasses || traktPasses;
 
-          if (!anyPasses) {
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
-          } else {
-            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-          }
+          expectGlobalGateOutcome(result, anyPasses, 'minVotesAnyOf');
         },
       ),
       { numRuns: 100 },
@@ -641,14 +642,9 @@ describe('Global Quality Gate Properties', () => {
 
           const result = evaluateEligibility(input, policy);
 
-          if (votes === null || votes < threshold) {
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
-          } else {
-            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-          }
+          const passesGate = votes !== null && votes >= threshold;
+
+          expectGlobalGateOutcome(result, passesGate, 'minVotesAnyOf');
         },
       ),
       { numRuns: 100 },
@@ -706,14 +702,9 @@ describe('Global Quality Gate Properties', () => {
 
           const result = evaluateEligibility(input, policy);
 
-          if (score === null || score < threshold) {
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.globalGateDetails?.failedChecks).toContain('minQualityScoreNormalized');
-          } else {
-            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-          }
+          const passesGate = !(score === null || score < threshold);
+
+          expectGlobalGateOutcome(result, passesGate, 'minQualityScoreNormalized');
         },
       ),
       { numRuns: 100 },
@@ -763,14 +754,7 @@ describe('Global Quality Gate Properties', () => {
 
           const result = evaluateEligibility(input, policy);
 
-          if (!hasRating) {
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.globalGateDetails?.failedChecks).toContain('requireAnyOfRatingsPresent');
-          } else {
-            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-          }
+          expectGlobalGateOutcome(result, hasRating, 'requireAnyOfRatingsPresent');
         },
       ),
       { numRuns: 100 },
@@ -835,14 +819,10 @@ describe('Global Quality Gate Properties', () => {
           const qualityPasses = quality !== null && quality >= qualityThreshold;
 
           // Both must pass for ELIGIBLE
-          if (votesPasses && qualityPasses) {
-            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-          } else {
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.globalGateDetails).toBeDefined();
-          }
+          const passesGate = votesPasses && qualityPasses;
+
+          expectGateStatus(result, passesGate);
+          expect(result.globalGateDetails !== undefined).toBe(!passesGate);
         },
       ),
       { numRuns: 100 },
@@ -894,14 +874,10 @@ describe('Global Quality Gate Properties', () => {
 
           // If gate fails, should be INELIGIBLE with MISSING_GLOBAL_SIGNALS
           // even though content is allowed
-          if (votes === null || votes < threshold) {
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.reasons).not.toContain('ALLOWED_COUNTRY');
-          } else {
-            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-            expect(result.reasons).toContain('ALLOWED_COUNTRY');
-          }
+          const passesGate = votes !== null && votes >= threshold;
+
+          expectGateStatus(result, passesGate);
+          expect(result.reasons.includes('ALLOWED_COUNTRY')).toBe(passesGate);
         },
       ),
       { numRuns: 100 },
@@ -1111,15 +1087,8 @@ describe('Global Quality Gate Properties', () => {
 
             const passesGate = votes !== null && votes >= threshold;
 
-            if (passesGate) {
-              // Gate passes → ELIGIBLE
-              expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-              expect(result.reasons).toContain('ALLOWED_COUNTRY');
-            } else {
-              // Gate fails → INELIGIBLE with MISSING_GLOBAL_SIGNALS
-              expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-              expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-            }
+            expectGateStatus(result, passesGate);
+            expect(result.reasons.includes('ALLOWED_COUNTRY')).toBe(passesGate);
           },
         ),
         { numRuns: 100 },
@@ -1240,19 +1209,7 @@ describe('Global Quality Gate Properties', () => {
             const isDefaultContext = DEFAULT_QUALITY_CONTEXTS.includes(context);
             const passesGate = votes !== null && votes >= threshold;
 
-            if (isDefaultContext) {
-              // Gate applies for default contexts
-              if (passesGate) {
-                expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-              } else {
-                expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-                expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-              }
-            } else {
-              // Gate skipped for non-default contexts (now_playing, new_digital)
-              expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-              expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-            }
+            expectGateStatus(result, !isDefaultContext || passesGate);
           },
         ),
         { numRuns: 100 },
@@ -1443,8 +1400,6 @@ describe('Global Quality Gate Properties', () => {
  * Content Classification Property Tests
  */
 describe('Content Classification Properties', () => {
-  const countryCodeArb = fc.stringMatching(/^[A-Z]{2}$/);
-  const languageCodeArb = fc.stringMatching(/^[a-z]{2}$/);
   const contentClassArb = fc.constantFrom(
     'mainstream',
     'anime',
@@ -1452,34 +1407,6 @@ describe('Content Classification Properties', () => {
     'reality',
     'kids',
   ) as fc.Arbitrary<ContentClass>;
-
-  const mediaItemArb = fc.record({
-    id: fc.uuid(),
-    originCountries: fc.option(fc.array(countryCodeArb, { minLength: 1, maxLength: 5 })),
-    originalLanguage: fc.option(languageCodeArb),
-    normalizedOffers: fc.constant([] as NormalizedOffer[]),
-    voteCountImdb: fc.option(fc.nat({ max: 1000000 })),
-    voteCountTrakt: fc.option(fc.nat({ max: 100000 })),
-    ratingImdb: fc.option(fc.double({ min: 0, max: 10 })),
-    ratingMetacritic: fc.option(fc.nat({ max: 100 })),
-    ratingRottenTomatoes: fc.option(fc.nat({ max: 100 })),
-    ratingTrakt: fc.option(fc.double({ min: 0, max: 10 })),
-    contentClass: contentClassArb,
-    title: fc.option(fc.string({ minLength: 1, maxLength: 100 })),
-    overview: fc.option(fc.string({ minLength: 0, maxLength: 500 })),
-  });
-
-  const policyEngineInputArb = fc.record({
-    mediaItem: mediaItemArb,
-    stats: fc.option(
-      fc.record({
-        qualityScore: fc.option(fc.double({ min: 0, max: 1 })),
-        popularityScore: fc.option(fc.double({ min: 0, max: 1 })),
-        freshnessScore: fc.option(fc.double({ min: 0, max: 1 })),
-        ratingoScore: fc.option(fc.double({ min: 0, max: 1 })),
-      }),
-    ),
-  });
 
   describe('Property 2: Content Class Filtering with Breakout Override', () => {
     it('should include EXCLUDED_CONTENT_CLASS in reasons when content class is excluded', () => {
@@ -2264,11 +2191,9 @@ describe('Context Requirements Properties', () => {
         fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
           const defaults = getDefaultContextRequirements(context);
 
-          if (defaults.requireOverview) {
-            expect(defaults.minOverviewChars).toBe(DEFAULT_MIN_OVERVIEW_CHARS);
-          } else {
-            expect(defaults.minOverviewChars).toBe(0);
-          }
+          expect(defaults.minOverviewChars).toBe(
+            defaults.requireOverview ? DEFAULT_MIN_OVERVIEW_CHARS : 0,
+          );
         }),
         { numRuns: 100 },
       );

@@ -36,11 +36,22 @@ const journalPostArb = fc.record({
   metaTitle: fc.option(fc.string({ minLength: 1, maxLength: 70 }), { nil: null }),
   metaDescription: fc.option(fc.string({ minLength: 1, maxLength: 160 }), { nil: null }),
   isDraft: fc.boolean(),
-  publishedAt: fc.option(fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }), {
-    nil: null,
+  publishedAt: fc.option(
+    fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01'), noInvalidDate: true }),
+    {
+      nil: null,
+    },
+  ),
+  createdAt: fc.date({
+    min: new Date('2020-01-01'),
+    max: new Date('2030-01-01'),
+    noInvalidDate: true,
   }),
-  createdAt: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }),
-  updatedAt: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }),
+  updatedAt: fc.date({
+    min: new Date('2020-01-01'),
+    max: new Date('2030-01-01'),
+    noInvalidDate: true,
+  }),
   authorId: fc.uuid(),
 });
 
@@ -138,13 +149,12 @@ describe('JournalRepository - Property Tests', () => {
             const currentPublished = current.publishedAt?.getTime() ?? 0;
             const nextPublished = next.publishedAt?.getTime() ?? 0;
 
-            // Current should be >= next (DESC order)
-            if (currentPublished !== nextPublished) {
-              expect(currentPublished).toBeGreaterThanOrEqual(nextPublished);
-            } else {
-              // Tie-breaker: createdAt DESC
-              expect(current.createdAt.getTime()).toBeGreaterThanOrEqual(next.createdAt.getTime());
-            }
+            const isNewerPublication = currentPublished > nextPublished;
+            const isTieBrokenByCreatedAt =
+              currentPublished === nextPublished &&
+              current.createdAt.getTime() >= next.createdAt.getTime();
+
+            expect(isNewerPublication || isTieBrokenByCreatedAt).toBe(true);
           }
         }),
         { numRuns: 100 },
@@ -186,7 +196,16 @@ describe('JournalRepository - Property Tests', () => {
    */
   describe('Property 3: Type filtering returns matching posts', () => {
     const postTypeArb = fc.constantFrom(...POST_TYPE_VALUES) as fc.Arbitrary<PostType>;
-    const typeFilterArb = fc.array(postTypeArb, { minLength: 0, maxLength: 4 });
+    const typeFilterArb = fc.array(postTypeArb, { minLength: 1, maxLength: 4 });
+
+    it('should return all posts when no type filter is given', () => {
+      fc.assert(
+        fc.property(fc.array(publishedPostArb, { minLength: 0, maxLength: 50 }), (posts) => {
+          expect(filterByTypes(posts, [])).toHaveLength(posts.length);
+        }),
+        { numRuns: 100 },
+      );
+    });
 
     it('should return only posts matching the specified types', () => {
       fc.assert(
@@ -196,14 +215,8 @@ describe('JournalRepository - Property Tests', () => {
           (posts, types) => {
             const filtered = filterByTypes(posts, types);
 
-            if (types.length === 0) {
-              // No filter = all posts returned
-              expect(filtered.length).toBe(posts.length);
-            } else {
-              // All returned posts must have a type in the filter
-              for (const post of filtered) {
-                expect(types).toContain(post.type);
-              }
+            for (const post of filtered) {
+              expect(types).toContain(post.type);
             }
           },
         ),
@@ -218,12 +231,9 @@ describe('JournalRepository - Property Tests', () => {
           typeFilterArb,
           (posts, types) => {
             const filtered = filterByTypes(posts, types);
+            const expectedCount = posts.filter((p) => types.includes(p.type)).length;
 
-            if (types.length > 0) {
-              // Count posts that should match
-              const expectedCount = posts.filter((p) => types.includes(p.type)).length;
-              expect(filtered.length).toBe(expectedCount);
-            }
+            expect(filtered.length).toBe(expectedCount);
           },
         ),
         { numRuns: 100 },

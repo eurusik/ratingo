@@ -56,16 +56,12 @@ describe('Status Validation - Property-Based Tests', () => {
         fc.property(uppercaseStatusArb, (status) => {
           // Uppercase versions should throw
           expect(() => validateStatus(status)).toThrow(InvalidEligibilityStatusError);
-
-          try {
-            validateStatus(status);
-          } catch (error) {
-            expect(error).toBeInstanceOf(InvalidEligibilityStatusError);
-            expect((error as InvalidEligibilityStatusError).invalidStatus).toBe(status);
-            expect((error as InvalidEligibilityStatusError).validStatuses).toEqual(
-              CANONICAL_STATUSES,
-            );
-          }
+          expect(() => validateStatus(status)).toThrow(
+            expect.objectContaining({
+              invalidStatus: status,
+              validStatuses: CANONICAL_STATUSES,
+            }),
+          );
         }),
         { numRuns: 100 },
       );
@@ -86,18 +82,14 @@ describe('Status Validation - Property-Based Tests', () => {
         fc.property(invalidStatusArb, (status) => {
           // Any string not in canonical set should throw
           expect(() => validateStatus(status)).toThrow(InvalidEligibilityStatusError);
-
-          try {
-            validateStatus(status);
-          } catch (error) {
-            expect(error).toBeInstanceOf(InvalidEligibilityStatusError);
-            expect((error as InvalidEligibilityStatusError).invalidStatus).toBe(status);
-            // Error message should include the invalid status
-            expect((error as Error).message).toContain(status);
-            // Error message should list valid statuses
-            for (const validStatus of CANONICAL_STATUSES) {
-              expect((error as Error).message).toContain(validStatus);
-            }
+          expect(() => validateStatus(status)).toThrow(
+            expect.objectContaining({ invalidStatus: status }),
+          );
+          // Error message should include the invalid status
+          expect(() => validateStatus(status)).toThrow(status);
+          // Error message should list valid statuses
+          for (const validStatus of CANONICAL_STATUSES) {
+            expect(() => validateStatus(status)).toThrow(validStatus);
           }
         }),
         { numRuns: 100 },

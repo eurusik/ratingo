@@ -177,20 +177,13 @@ describe('OAuthService - Exchange Code Property Tests', () => {
               reason: failureReason,
             });
 
-            try {
-              await service.exchangeCodeForTokens(code);
-              // Should not reach here
-              expect(true).toBe(false);
-            } catch (error) {
-              expect(error).toBeInstanceOf(UnauthorizedException);
+            const expectedMessage =
+              failureReason === 'already_used' ? 'OAUTH_EXCHANGE_USED' : 'OAUTH_EXCHANGE_EXPIRED';
 
-              if (failureReason === 'already_used') {
-                expect((error as UnauthorizedException).message).toBe('OAUTH_EXCHANGE_USED');
-              } else {
-                // Both 'expired' and 'not_found' return OAUTH_EXCHANGE_EXPIRED
-                expect((error as UnauthorizedException).message).toBe('OAUTH_EXCHANGE_EXPIRED');
-              }
-            }
+            const error = await service.exchangeCodeForTokens(code).catch((e: unknown) => e);
+
+            expect(error).toBeInstanceOf(UnauthorizedException);
+            expect(error).toHaveProperty('message', expectedMessage);
           },
         ),
         { numRuns: 50 },

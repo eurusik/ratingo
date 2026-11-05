@@ -5,7 +5,6 @@
 import { Test } from '@nestjs/testing';
 
 import { DatabaseException } from '../../../../common/exceptions';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { MEDIA_WATCH_OFFERS_REPOSITORY } from '../../../provider/public';
 

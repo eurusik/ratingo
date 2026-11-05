@@ -216,12 +216,15 @@ describe('SubscriptionTriggerService', () => {
 
   describe('show.new-episode event emission', () => {
     it('should emit event when subscriptions exist', async () => {
-      const { service: svc } = await setup({ notifiedSubs: [mockSubscription] });
+      const {
+        subscriptionRepo: notifyingSubscriptionRepo,
+        notificationRepo: stubNotificationRepo,
+      } = await setup({ notifiedSubs: [mockSubscription] });
       const module = await Test.createTestingModule({
         providers: [
           SubscriptionTriggerService,
-          { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: subscriptionRepo },
-          { provide: USER_NOTIFICATION_REPOSITORY, useValue: notificationRepo },
+          { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: notifyingSubscriptionRepo },
+          { provide: USER_NOTIFICATION_REPOSITORY, useValue: stubNotificationRepo },
           { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         ],
       }).compile();

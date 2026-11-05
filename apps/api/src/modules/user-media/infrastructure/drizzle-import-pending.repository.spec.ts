@@ -108,8 +108,6 @@ describe('DrizzleImportPendingRepository', () => {
     it('transaction inserts batch then items (two insert calls on tx)', async () => {
       const batchRow = makeBatchRow();
       const txInsertReturning = jest.fn().mockResolvedValue([batchRow]);
-      const txInsertValues = jest.fn().mockReturnThis();
-      const txInsertChain = { values: txInsertValues, returning: txInsertReturning };
 
       let insertCallCount = 0;
       const tx = {

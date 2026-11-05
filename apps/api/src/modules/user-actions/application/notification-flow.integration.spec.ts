@@ -379,6 +379,7 @@ describe('Notification Flow Integration', () => {
 
       // Step 4: Same sync runs again (idempotency check)
       const events2 = await triggerService.handleShowDiff(diff);
+      expect(events2).toHaveLength(0);
 
       // Verify: No new notifications (dedup worked)
       const { data: data2 } = await notificationsService.listWithMedia(userId);

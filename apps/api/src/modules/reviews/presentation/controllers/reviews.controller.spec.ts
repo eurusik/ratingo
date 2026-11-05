@@ -11,7 +11,6 @@ describe('ReviewsController', () => {
   let controller: ReviewsController;
   let reviewsService: jest.Mocked<ReviewsService>;
   let votesService: jest.Mocked<ReviewVotesService>;
-  let repliesService: jest.Mocked<ReviewRepliesService>;
 
   const mockUser = { id: 'user-id-1' };
 
@@ -76,7 +75,6 @@ describe('ReviewsController', () => {
     controller = module.get<ReviewsController>(ReviewsController);
     reviewsService = module.get(ReviewsService);
     votesService = module.get(ReviewVotesService);
-    repliesService = module.get(ReviewRepliesService);
   });
 
   describe('listForMedia', () => {

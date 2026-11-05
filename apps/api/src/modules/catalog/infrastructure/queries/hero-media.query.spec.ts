@@ -384,11 +384,7 @@ describe('Hero - Sorting Property Tests', () => {
           const sorted = sortHeroItems(items);
 
           // Item with more watchers should be first
-          if (w1 > w2) {
-            expect(sorted[0].id).toBe('a');
-          } else {
-            expect(sorted[0].id).toBe('b');
-          }
+          expect(sorted[0].id).toBe(w1 > w2 ? 'a' : 'b');
         }),
         { numRuns: 100 },
       );
@@ -420,11 +416,7 @@ describe('Hero - Sorting Property Tests', () => {
           const sorted = sortHeroItems(items);
 
           // Item with higher score should be first
-          if (s1 > s2) {
-            expect(sorted[0].id).toBe('a');
-          } else {
-            expect(sorted[0].id).toBe('b');
-          }
+          expect(sorted[0].id).toBe(s1 > s2 ? 'a' : 'b');
         }),
         { numRuns: 100 },
       );

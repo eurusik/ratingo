@@ -178,18 +178,14 @@ describe('OAuthService - Username Generation Property Tests', () => {
       );
     });
 
-    it('should never produce usernames starting or ending with underscore', async () => {
+    it('should never produce usernames starting with underscore', async () => {
       await fc.assert(
         fc.asyncProperty(googleNameArb, emailArb, async (name, email) => {
           usersService.getByUsername.mockResolvedValue(null);
 
           const username = await service.generateUniqueUsername(name, email);
 
-          // No leading/trailing underscores (trimmed during normalization)
-          // Exception: suffix adds underscore before random chars
-          if (!username.includes('_')) {
-            expect(username).not.toMatch(/^_|_$/);
-          }
+          expect(username).not.toMatch(/^_/);
         }),
         { numRuns: 100 },
       );

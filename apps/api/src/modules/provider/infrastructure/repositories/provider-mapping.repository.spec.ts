@@ -142,7 +142,7 @@ describe('ProviderMappingRepository', () => {
     it('should return mapping when found', async () => {
       const result = await repository.findById('mapping-1');
 
-      expect(result).toMatchObject({ id: 'mapping-1' });
+      expect(result).toEqual(mockMapping);
     });
 
     it('should return null when not found', async () => {

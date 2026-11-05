@@ -1,5 +1,5 @@
 import * as fc from 'fast-check';
-import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import {
   InvalidEligibilityStatusError,
   InvalidBreakoutRuleError,

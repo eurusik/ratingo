@@ -5,6 +5,7 @@ import { CatalogUserStateEnricher } from '../../application/services/catalog-use
 import { MovieDetailsService } from '../../application/services/movie-details.service';
 import { NotFoundException } from '@nestjs/common';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import { CARD_LIST_CONTEXT } from '../../../shared/cards';
 
 describe('CatalogMoviesController', () => {
   let controller: CatalogMoviesController;
@@ -84,6 +85,9 @@ describe('CatalogMoviesController', () => {
       expect(result.data).toHaveLength(1);
       expect(result.meta).toEqual({ count: 1, total: 1, limit: 20, offset: 0, hasMore: false });
       expect(userStateEnricher.enrichItemList).toHaveBeenCalled();
+      expect(cards.enrichCatalogItems).toHaveBeenCalledWith(result.data, {
+        context: CARD_LIST_CONTEXT.IN_THEATERS_LIST,
+      });
     });
   });
 

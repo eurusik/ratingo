@@ -1,7 +1,6 @@
 import {
   classifyContent,
   ClassificationInput,
-  ContentClass,
   ContentClassValues,
   isValidContentClass,
   VALID_CONTENT_CLASSES,

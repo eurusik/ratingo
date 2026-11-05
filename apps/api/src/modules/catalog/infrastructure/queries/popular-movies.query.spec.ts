@@ -51,7 +51,7 @@ describe('PopularMoviesQuery', () => {
     };
 
     const mockGenreQuery = {
-      fetchForMediaItems: jest.fn().mockImplementation((ids: string[]) => {
+      fetchForMediaItems: jest.fn().mockImplementation(() => {
         const genresData = selectQueue.shift() ?? [];
         const map = new Map<string, any[]>();
         genresData.forEach((g: any) => {

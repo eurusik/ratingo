@@ -1,4 +1,3 @@
-import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AppException } from '../../../common/exceptions/app.exception';

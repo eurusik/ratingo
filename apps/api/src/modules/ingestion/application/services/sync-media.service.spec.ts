@@ -771,18 +771,21 @@ describe('SyncMediaService', () => {
     it.each([
       ['empty map', {}],
       ['null (TMDB has no UA/US providers)', null],
-    ])('should still normalize with an empty map so stale offers get cleared: %s', async (_n, raw) => {
-      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProvidersRaw: raw });
-      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+    ])(
+      'should still normalize with an empty map so stale offers get cleared: %s',
+      async (_n, raw) => {
+        tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProvidersRaw: raw });
+        traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+        omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
 
-      await service.syncMovie(550);
+        await service.syncMovie(550);
 
-      expect(normalizationService.normalizeWatchProviders).toHaveBeenCalledWith(
-        'media-item-1',
-        {},
-      );
-    });
+        expect(normalizationService.normalizeWatchProviders).toHaveBeenCalledWith(
+          'media-item-1',
+          {},
+        );
+      },
+    );
 
     it('should handle normalization failure gracefully', async () => {
       const mediaWithProviders = {
@@ -902,7 +905,6 @@ describe('SyncMediaService', () => {
 
     beforeEach(() => {
       // Retrieve the mocked EventEmitter2 instance registered in the module
-      const { EventEmitter2: EE2 } = jest.requireActual('@nestjs/event-emitter');
       eventEmitter = (service as any).eventEmitter;
     });
 
