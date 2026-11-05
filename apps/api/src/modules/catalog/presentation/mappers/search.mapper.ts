@@ -1,11 +1,11 @@
 import { ImageMapper } from '@/common/mappers/image.mapper';
 
 import {
-  HybridSearchResult,
-  LocalSearchResultItem,
-  TmdbSearchResultItem,
+  type HybridSearchResult,
+  type LocalSearchResultItem,
+  type TmdbSearchResultItem,
 } from '../../domain/types/search.types';
-import { SearchItemDto, SearchResponseDto } from '../dtos/search.dto';
+import { type SearchItemDto, type SearchResponseDto } from '../dtos/search.dto';
 
 /**
  * Maps domain search results to presentation DTOs.

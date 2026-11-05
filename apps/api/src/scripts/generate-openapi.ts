@@ -149,7 +149,7 @@ const wrapSuccessResponses = (doc: OpenAPIObject): void => {
 const createApp = async (): Promise<NestFastifyApplication> => {
   const { AppModule } = await import('../app.module');
   const noopBullRegistrar = { onModuleInit: () => {}, register: () => {} };
-  const noopRedisClient = { quit: async () => 'OK', disconnect: () => {} };
+  const noopRedisClient = { quit: () => Promise.resolve('OK'), disconnect: () => {} };
 
   const builder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(DATABASE_CONNECTION)

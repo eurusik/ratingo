@@ -118,7 +118,7 @@ export class ImportPendingService {
    */
   async cancelBatch(userId: string, batchId: string): Promise<void> {
     const batch = await this.pendingRepo.findBatchById(batchId);
-    if (!batch || batch.userId !== userId) {
+    if (batch?.userId !== userId) {
       throw new NotFoundException(`Batch ${batchId} not found`);
     }
     if (

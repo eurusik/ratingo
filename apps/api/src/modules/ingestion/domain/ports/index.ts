@@ -15,3 +15,8 @@ export {
   ROTTEN_TOMATOES_RATINGS_PORT,
 } from './rotten-tomatoes-ratings.port';
 export { WebPageCachePort, WEB_PAGE_CACHE_PORT } from './web-page-cache.port';
+export {
+  IngestionJobStatus,
+  IngestionJobStatusPort,
+  INGESTION_JOB_STATUS_PORT,
+} from './ingestion-job-status.port';

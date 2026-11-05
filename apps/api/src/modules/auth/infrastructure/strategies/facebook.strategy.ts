@@ -37,11 +37,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
    *
    * @throws {UnauthorizedException} OAUTH_EMAIL_NOT_VERIFIED when email is missing
    */
-  async validate(
-    accessToken: string,
-    refreshToken: string,
-    profile: FacebookProfile,
-  ): Promise<OAuthUserPayload> {
+  validate(accessToken: string, refreshToken: string, profile: FacebookProfile): OAuthUserPayload {
     const email = profile.emails?.[0]?.value;
 
     if (!email) {

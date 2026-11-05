@@ -1,6 +1,6 @@
 import { eq, gte, isNull, sql, type SQL } from 'drizzle-orm';
 
-import { MediaType } from '@/common/enums/media-type.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
 import * as schema from '@/database/schema';
 
 /**

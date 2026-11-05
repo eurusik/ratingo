@@ -78,9 +78,8 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
     const saved = await this.evaluationRepository.upsert(evaluation);
 
     const changed =
-      !previousEvaluation ||
-      previousEvaluation.status !== saved.status ||
-      previousEvaluation.policyVersion !== saved.policyVersion;
+      previousEvaluation?.status !== saved.status ||
+      previousEvaluation?.policyVersion !== saved.policyVersion;
 
     if (changed) {
       this.logger.log(

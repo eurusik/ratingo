@@ -4,7 +4,7 @@
  * Validates that job payloads contain required context field.
  */
 
-import { Logger } from '@nestjs/common';
+import { type Logger } from '@nestjs/common';
 
 import { type EvaluationContextType } from '../../../domain/constants/evaluation.constants';
 

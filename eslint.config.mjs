@@ -81,11 +81,34 @@ const infrastructureApplicationZone = {
   message:
     'Infrastructure must not depend on application: move shared types to domain and row mappers to infrastructure',
 };
+const presentationInfrastructureZone = {
+  target: './apps/api/src/modules/**/presentation/**/*',
+  from: [
+    './apps/api/src/modules/**/infrastructure/**/*',
+    './apps/api/src/common/infrastructure/**/*',
+    './apps/api/src/database/**/*',
+  ],
+  message:
+    'Presentation must not depend on infrastructure: call an application service, and keep guards and decorators in presentation',
+};
+const domainOuterLayersZone = {
+  target: './apps/api/src/modules/**/domain/**/*',
+  from: ['./apps/api/src/modules/**/application/**/*', './apps/api/src/modules/**/presentation/**/*'],
+  message: 'Domain must not depend on application or presentation',
+};
+const infrastructurePresentationZone = {
+  target: './apps/api/src/modules/**/infrastructure/**/*',
+  from: './apps/api/src/modules/**/presentation/**/*',
+  message: 'Infrastructure must not depend on presentation: move shared types to domain',
+};
 const moduleBoundaryZones = [
   domainInfrastructureZone,
+  domainOuterLayersZone,
   applicationInfrastructureZone,
   applicationPresentationZone,
   infrastructureApplicationZone,
+  infrastructurePresentationZone,
+  presentationInfrastructureZone,
   {
     target: './apps/api/src/modules/shared/contracts/**/*',
     from: './apps/api/src',
@@ -190,7 +213,10 @@ export default [
 
       // Disabled: NestJS DI requires real class imports at runtime
       // Type-only imports break constructor injection
-      '@typescript-eslint/consistent-type-imports': 'off',
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
+      ],
 
       // === MAGIC VALUES ===
       // No magic numbers — force extraction to constants
@@ -293,6 +319,8 @@ export default [
     languageOptions: {
       parserOptions: {
         projectService: true,
+        emitDecoratorMetadata: true,
+        experimentalDecorators: true,
       },
     },
     rules: {
@@ -304,6 +332,8 @@ export default [
       '@typescript-eslint/return-await': ['error', 'in-try-catch'],
       '@typescript-eslint/prefer-promise-reject-errors': 'error',
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/require-await': 'error',
       '@typescript-eslint/no-base-to-string': 'error',
       '@typescript-eslint/restrict-template-expressions': 'error',
     },
@@ -393,6 +423,10 @@ export default [
         {
           selector: "ThrowStatement > NewExpression[callee.name='Error']",
           message: 'Use app-specific error classes instead of generic Error',
+        },
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'Read environment variables in apps/api/src/config and inject the config instead',
         },
         {
           selector: 'ForInStatement',
@@ -508,6 +542,7 @@ export default [
           zones: moduleBoundaryZones,
         },
       ],
+      'import/no-cycle': ['error', { ignoreExternal: true }],
     },
   },
   {
@@ -516,6 +551,7 @@ export default [
     settings: { jest: { version: 29 } },
     rules: {
       ...jestRecommendedRulesAsErrors,
+      '@typescript-eslint/require-await': 'off',
       'jest/no-focused-tests': 'error',
       'jest/no-disabled-tests': 'error',
       'jest/expect-expect': [

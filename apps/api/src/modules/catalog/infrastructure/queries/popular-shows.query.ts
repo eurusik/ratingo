@@ -115,7 +115,7 @@ export class PopularShowsQuery {
         whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);
       }
 
-      if (genres && genres.length) {
+      if (genres?.length) {
         const genreList = sql.join(
           genres.map((g) => sql`${g}`),
           sql`, `,

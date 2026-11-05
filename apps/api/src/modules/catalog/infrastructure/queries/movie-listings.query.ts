@@ -240,7 +240,7 @@ export class MovieListingsQuery {
       conditions.push(gte(voteColumn, minVotes));
     }
 
-    if (genres && genres.length) {
+    if (genres?.length) {
       conditions.push(this.buildGenreCondition(genres));
     }
 

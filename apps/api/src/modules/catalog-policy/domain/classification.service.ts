@@ -47,8 +47,7 @@ export function classifyContent(input: ClassificationInput): ContentClass {
 
   // Rule 1: Anime = Animation + Japanese origin
   if (safeGenreIds.includes(TMDB_GENRE_IDS.ANIMATION)) {
-    const isJapanese =
-      (originCountries && originCountries.includes('JP')) || originalLanguage === 'ja';
+    const isJapanese = originCountries?.includes('JP') || originalLanguage === 'ja';
 
     if (isJapanese) {
       return ContentClassValues.ANIME;

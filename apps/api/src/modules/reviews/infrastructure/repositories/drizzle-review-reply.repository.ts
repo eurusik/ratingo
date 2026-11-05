@@ -187,13 +187,13 @@ export class DrizzleReviewReplyRepository implements IReviewReplyRepository {
         // Simple depth calculation: check if parent has a parent
         // MAX_REPLIES_DEPTH is 2, so we only need to check 2 levels
         const reply = await this.findById(replyId);
-        if (!reply || !reply.parentReplyId) {
+        if (!reply?.parentReplyId) {
           return 0; // Top-level reply
         }
 
         // Check if parent has a parent (depth 1 means parent is at root level)
         const parent = await this.findById(reply.parentReplyId);
-        if (!parent || !parent.parentReplyId) {
+        if (!parent?.parentReplyId) {
           return 1; // Reply to a top-level reply
         }
 

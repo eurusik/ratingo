@@ -18,8 +18,6 @@ import { OAUTH_ACCOUNTS_REPOSITORY } from './domain/repositories/oauth-accounts.
 import { REFRESH_TOKENS_REPOSITORY } from './domain/repositories/refresh-tokens.repository.interface';
 import { PASSWORD_HASHER } from './domain/services/password-hasher.interface';
 import { BcryptPasswordHasher } from './infrastructure/adapters/bcrypt-password.hasher';
-import { FacebookAuthGuard } from './infrastructure/guards/facebook-auth.guard';
-import { GoogleAuthGuard } from './infrastructure/guards/google-auth.guard';
 import { CleanupExchangeCodesJob } from './infrastructure/jobs/cleanup-exchange-codes.job';
 import { DrizzleExchangeCodesRepository } from './infrastructure/repositories/drizzle-exchange-codes.repository';
 import { DrizzleOAuthAccountsRepository } from './infrastructure/repositories/drizzle-oauth-accounts.repository';
@@ -30,6 +28,8 @@ import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { AuthController } from './presentation/controllers/auth.controller';
 import { OAuthExceptionFilter } from './presentation/filters/oauth-exception.filter';
+import { FacebookAuthGuard } from './presentation/guards/facebook-auth.guard';
+import { GoogleAuthGuard } from './presentation/guards/google-auth.guard';
 
 /**
  * Conditionally provides GoogleStrategy only when Google OAuth is enabled.

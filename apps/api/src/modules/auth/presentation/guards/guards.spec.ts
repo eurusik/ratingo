@@ -62,7 +62,7 @@ describe('Auth Guards', () => {
       jest.spyOn(guard, 'canActivate').mockImplementation(async (context) => {
         const request = context.switchToHttp().getRequest();
         // Simulate JWT validation passed, user is set
-        if (!request.user || request.user.role !== 'admin') {
+        if (request.user?.role !== 'admin') {
           throw new ForbiddenException('Admin access required');
         }
         return true;
@@ -76,7 +76,7 @@ describe('Auth Guards', () => {
 
       jest.spyOn(guard, 'canActivate').mockImplementation(async (context) => {
         const request = context.switchToHttp().getRequest();
-        if (!request.user || request.user.role !== 'admin') {
+        if (request.user?.role !== 'admin') {
           throw new ForbiddenException('Admin access required');
         }
         return true;
