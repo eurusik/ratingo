@@ -11,7 +11,6 @@ import {
   NotFoundException,
   BadRequestException,
   UseGuards,
-  Inject,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -33,15 +32,11 @@ import {
   NEW_RELEASES_REGION,
 } from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { AdminJwtGuard } from '../../../auth/public';
 import { normalizeRegion, formatHourWindow } from '../../application/helpers/queue.helpers';
+import { IngestionJobStatusService } from '../../application/services/ingestion-job-status.service';
 import { SyncMediaService } from '../../application/services/sync-media.service';
-import {
-  INGESTION_JOB_STATUS_PORT,
-  type IngestionJobStatusPort,
-} from '../../domain/ports/ingestion-job-status.port';
 import {
   INGESTION_QUEUE,
   IngestionJob,
@@ -69,8 +64,7 @@ export class IngestionController {
   constructor(
     @InjectQueue(INGESTION_QUEUE) private readonly ingestionQueue: Queue,
     private readonly syncService: SyncMediaService,
-    @Inject(INGESTION_JOB_STATUS_PORT)
-    private readonly jobStatusPort: IngestionJobStatusPort,
+    private readonly jobStatusService: IngestionJobStatusService,
   ) {}
 
   /**
@@ -99,14 +93,9 @@ export class IngestionController {
     },
   })
   async getJobStatus(@Param('id') id: string) {
-    const job = await this.jobStatusPort.getJobStatus(id);
+    const job = await this.jobStatusService.getJobStatus(id);
     if (!job) {
       throw new NotFoundException('Job not found');
-    }
-
-    let slug: string | null = null;
-    if (job.status === JOB_STATUS.READY && job.tmdbId) {
-      slug = await this.syncService.getSlugByTmdbId(job.tmdbId, job.mediaType);
     }
 
     return {
@@ -114,7 +103,7 @@ export class IngestionController {
       status: job.status,
       errorMessage: job.errorMessage,
       updatedAt: job.updatedAt ? job.updatedAt.toISOString() : null,
-      slug,
+      slug: job.slug,
     };
   }
 

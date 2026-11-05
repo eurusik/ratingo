@@ -28,6 +28,7 @@ import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
 import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipeline';
 import { TrendingPipeline } from './application/pipelines/trending.pipeline';
 import { BulkJobService } from './application/services/bulk-job.service';
+import { IngestionJobStatusService } from './application/services/ingestion-job-status.service';
 import { IngestionSchedulerService } from './application/services/ingestion-scheduler.service';
 import { MediaPageCacheService } from './application/services/media-page-cache.service';
 import { SnapshotsService } from './application/services/snapshots.service';
@@ -151,6 +152,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     TvMazeEnrichmentService,
     BulkJobService,
     SyncMediaService,
+    IngestionJobStatusService,
     TrackedSyncService,
     SnapshotsService,
     ...workerOnly(SyncWorker, BackfillWorker, RatingsBackfillWorker, IngestionSchedulerService),
