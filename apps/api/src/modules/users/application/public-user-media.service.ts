@@ -109,15 +109,15 @@ export class PublicUserMediaService {
     ]);
 
     const isOwnerOrAdmin = UserProfileVisibilityPolicy.isOwnerOrAdmin(user, viewer);
-    const data = items.map((i) => ({
-      id: i.id,
-      state: i.state,
-      rating: i.rating,
-      progress: isOwnerOrAdmin ? i.progress : null,
-      notes: isOwnerOrAdmin ? i.notes : null,
-      createdAt: i.createdAt,
-      updatedAt: i.updatedAt,
-      mediaSummary: i.mediaSummary,
+    const data = items.map((item) => ({
+      id: item.id,
+      state: item.state,
+      rating: item.rating,
+      progress: isOwnerOrAdmin ? item.progress : null,
+      notes: isOwnerOrAdmin ? item.notes : null,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      mediaSummary: item.mediaSummary,
     }));
 
     return { total, data };

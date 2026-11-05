@@ -187,8 +187,7 @@ catalog-policy/
 │   ├── services/           # Core services
 │   ├── workers/            # BullMQ worker
 │   │   └── handlers/       # Job handlers (SRP)
-│   ├── mappers/            # Entity ↔ DTO conversion
-│   └── utils/              # OfferMapper, PolicyInputMapper
+│   └── mappers/            # Entity ↔ DTO conversion
 │
 ├── domain/                 # Pure business logic (zero dependencies)
 │   ├── policy-engine.ts    # Main orchestrator
@@ -201,6 +200,7 @@ catalog-policy/
 │   └── validation/         # Zod schemas
 │
 ├── infrastructure/         # Database access
+│   ├── mappers/            # OfferMapper, PolicyInputMapper (raw rows → PolicyEngineInput)
 │   └── repositories/       # Drizzle ORM implementations
 │
 └── public/                 # Module exports for other modules

@@ -12,16 +12,15 @@ export function toPaginatedPublicUserMediaResponseDto(
 ): PaginatedPublicUserMediaResponseDto {
   const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
   const offset = query?.offset ?? 0;
-  const items = page.data;
 
   return {
-    data: items,
+    data: page.data,
     meta: {
-      count: items.length,
+      count: page.data.length,
       total: page.total,
       limit,
       offset,
-      hasMore: offset + items.length < page.total,
+      hasMore: offset + page.data.length < page.total,
     },
   };
 }
