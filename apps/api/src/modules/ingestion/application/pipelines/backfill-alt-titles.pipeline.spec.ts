@@ -3,39 +3,39 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
-import { DATABASE_CONNECTION } from '@/database/database.module';
 
 import { MEDIA_REPOSITORY } from '../../../catalog/public';
 import { TmdbAdapter } from '../../../tmdb/public';
+import { ALT_TITLES_BACKFILL_REPOSITORY } from '../../domain/repositories/alt-titles-backfill.repository.interface';
 import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
 
 import { BackfillAltTitlesPipeline } from './backfill-alt-titles.pipeline';
 
-function buildDbMock(selectBatches: Array<Array<Record<string, unknown>>>) {
+function buildRepositoryMock(candidateBatches: Array<Array<Record<string, unknown>>>) {
   let batchIndex = 0;
-  const limit = jest.fn().mockImplementation(() => {
-    const batch = selectBatches[batchIndex] ?? [];
-    batchIndex += 1;
-    return Promise.resolve(batch);
-  });
-  const orderBy = jest.fn().mockReturnValue({ limit });
-  const where = jest.fn().mockReturnValue({ orderBy });
-  const from = jest.fn().mockReturnValue({ where });
-  const select = jest.fn().mockReturnValue({ from });
-  return { select };
+  return {
+    findCandidates: jest.fn().mockImplementation(() => {
+      const batch = candidateBatches[batchIndex] ?? [];
+      batchIndex += 1;
+      return Promise.resolve(batch);
+    }),
+  };
 }
 
 describe('BackfillAltTitlesPipeline', () => {
   let pipeline: BackfillAltTitlesPipeline;
   let queueAddBulk: jest.Mock;
 
-  const setupPipeline = async (selectBatches: Array<Array<Record<string, unknown>>>) => {
+  const setupPipeline = async (candidateBatches: Array<Array<Record<string, unknown>>>) => {
     queueAddBulk = jest.fn().mockResolvedValue([]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BackfillAltTitlesPipeline,
-        { provide: DATABASE_CONNECTION, useValue: buildDbMock(selectBatches) },
+        {
+          provide: ALT_TITLES_BACKFILL_REPOSITORY,
+          useValue: buildRepositoryMock(candidateBatches),
+        },
         { provide: getQueueToken(BACKFILL_QUEUE), useValue: { addBulk: queueAddBulk } },
         { provide: TmdbAdapter, useValue: { getAlternativeTitles: jest.fn() } },
         { provide: MEDIA_REPOSITORY, useValue: { updateAlternativeTitles: jest.fn() } },

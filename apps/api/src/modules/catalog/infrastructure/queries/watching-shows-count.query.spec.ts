@@ -24,22 +24,22 @@ describe('WatchingShowsCountQuery', () => {
 
   it('should return count from result', async () => {
     setup([{ count: 5 }]);
-    expect(await query.execute('user-1')).toBe(5);
+    expect(await query.countWatchingShows('user-1')).toBe(5);
   });
 
   it('should return 0 when result is empty', async () => {
     setup([]);
-    expect(await query.execute('user-1')).toBe(0);
+    expect(await query.countWatchingShows('user-1')).toBe(0);
   });
 
   it('should return 0 when count is 0', async () => {
     setup([{ count: 0 }]);
-    expect(await query.execute('user-1')).toBe(0);
+    expect(await query.countWatchingShows('user-1')).toBe(0);
   });
 
   it('should perform innerJoin (filters by media type via join)', async () => {
     setup([{ count: 2 }]);
-    await query.execute('user-1');
+    await query.countWatchingShows('user-1');
     const thenable = db.select.mock.results[0].value;
     // Expects exactly 1 innerJoin: userMediaState → mediaItems
     expect(thenable.innerJoin).toHaveBeenCalledTimes(1);
@@ -47,6 +47,6 @@ describe('WatchingShowsCountQuery', () => {
 
   it('should throw DatabaseException on database error', async () => {
     setup([], new Error('DB connection lost'));
-    await expect(query.execute('user-1')).rejects.toThrow(DatabaseException);
+    await expect(query.countWatchingShows('user-1')).rejects.toThrow(DatabaseException);
   });
 });

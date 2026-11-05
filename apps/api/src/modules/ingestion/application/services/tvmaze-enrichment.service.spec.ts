@@ -1,12 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
-import { TvMazeAdapter } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
+import {
+  EPISODE_SCHEDULE_PORT,
+  type EpisodeSchedulePort,
+} from '../../domain/ports/episode-schedule.port';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { NormalizedMedia } from '../../domain/models/normalized-media.model';
 
 describe('TvMazeEnrichmentService', () => {
   let service: TvMazeEnrichmentService;
-  let tvMazeAdapter: jest.Mocked<TvMazeAdapter>;
+  let episodeSchedule: jest.Mocked<EpisodeSchedulePort>;
 
   const mockShow: NormalizedMedia = {
     type: MediaType.SHOW,
@@ -26,17 +29,20 @@ describe('TvMazeEnrichmentService', () => {
   };
 
   beforeEach(async () => {
-    const mockTvMazeAdapter = {
+    const mockEpisodeSchedule = {
       getEpisodesByImdbId: jest.fn(),
       getEpisodesByShowName: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TvMazeEnrichmentService, { provide: TvMazeAdapter, useValue: mockTvMazeAdapter }],
+      providers: [
+        TvMazeEnrichmentService,
+        { provide: EPISODE_SCHEDULE_PORT, useValue: mockEpisodeSchedule },
+      ],
     }).compile();
 
     service = module.get<TvMazeEnrichmentService>(TvMazeEnrichmentService);
-    tvMazeAdapter = module.get(TvMazeAdapter);
+    episodeSchedule = module.get(EPISODE_SCHEDULE_PORT);
   });
 
   describe('enrich', () => {
@@ -45,18 +51,18 @@ describe('TvMazeEnrichmentService', () => {
         ...mockShow,
         externalIds: { tmdbId: 1000 },
       };
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockResolvedValue([]);
 
       const result = await service.enrich(mediaWithoutImdb);
 
       expect(result).toEqual(mediaWithoutImdb);
-      expect(tvMazeAdapter.getEpisodesByImdbId).not.toHaveBeenCalled();
-      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalled();
+      expect(episodeSchedule.getEpisodesByImdbId).not.toHaveBeenCalled();
+      expect(episodeSchedule.getEpisodesByShowName).toHaveBeenCalled();
     });
 
     it('should return media unchanged if TVMaze returns no episodes', async () => {
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockResolvedValue([]);
 
       const result = await service.enrich(mockShow);
 
@@ -64,7 +70,7 @@ describe('TvMazeEnrichmentService', () => {
     });
 
     it('should merge TVMaze episodes with TMDB season metadata', async () => {
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -104,7 +110,7 @@ describe('TvMazeEnrichmentService', () => {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7);
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -133,7 +139,7 @@ describe('TvMazeEnrichmentService', () => {
     });
 
     it('should write explicit null nextAirDate when no future episode exists (clears stale value)', async () => {
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -158,7 +164,7 @@ describe('TvMazeEnrichmentService', () => {
     it('should keep TMDB nextAirDate when TVMaze has no future episode but TMDB date is in the future', async () => {
       const tmdbNext = new Date();
       tmdbNext.setDate(tmdbNext.getDate() + 3);
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -185,7 +191,7 @@ describe('TvMazeEnrichmentService', () => {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7);
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -236,7 +242,7 @@ describe('TvMazeEnrichmentService', () => {
         },
       };
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -269,7 +275,7 @@ describe('TvMazeEnrichmentService', () => {
       };
 
       // Only future episodes from TVMaze
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -299,7 +305,7 @@ describe('TvMazeEnrichmentService', () => {
         },
       };
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -319,7 +325,7 @@ describe('TvMazeEnrichmentService', () => {
     });
 
     it('should handle TVMaze failure gracefully', async () => {
-      tvMazeAdapter.getEpisodesByImdbId.mockRejectedValue(new Error('TVMaze API Error'));
+      episodeSchedule.getEpisodesByImdbId.mockRejectedValue(new Error('TVMaze API Error'));
 
       const result = await service.enrich(mockShow);
 
@@ -327,8 +333,8 @@ describe('TvMazeEnrichmentService', () => {
     });
 
     it('should fallback to name search when IMDb lookup returns empty', async () => {
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -343,15 +349,15 @@ describe('TvMazeEnrichmentService', () => {
 
       const result = await service.enrich(mockShow);
 
-      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledWith('Test Show Original');
+      expect(episodeSchedule.getEpisodesByShowName).toHaveBeenCalledWith('Test Show Original');
       expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
       expect(result.details?.seasons?.[0].episodes[0].title).toBe('Name Fallback Ep');
     });
 
     it('should try originalTitle first, then title for name search', async () => {
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValueOnce([]); // originalTitle miss
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValueOnce([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockResolvedValueOnce([]); // originalTitle miss
+      episodeSchedule.getEpisodesByShowName.mockResolvedValueOnce([
         {
           seasonNumber: 1,
           number: 1,
@@ -366,9 +372,12 @@ describe('TvMazeEnrichmentService', () => {
 
       const result = await service.enrich(mockShow);
 
-      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledTimes(2);
-      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenNthCalledWith(1, 'Test Show Original');
-      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenNthCalledWith(2, 'Test Show');
+      expect(episodeSchedule.getEpisodesByShowName).toHaveBeenCalledTimes(2);
+      expect(episodeSchedule.getEpisodesByShowName).toHaveBeenNthCalledWith(
+        1,
+        'Test Show Original',
+      );
+      expect(episodeSchedule.getEpisodesByShowName).toHaveBeenNthCalledWith(2, 'Test Show');
       expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
     });
 
@@ -379,7 +388,7 @@ describe('TvMazeEnrichmentService', () => {
         externalIds: { tmdbId: 1000 },
       };
 
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+      episodeSchedule.getEpisodesByShowName.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -394,8 +403,8 @@ describe('TvMazeEnrichmentService', () => {
 
       const result = await service.enrich(mediaWithoutImdb);
 
-      expect(tvMazeAdapter.getEpisodesByImdbId).not.toHaveBeenCalled();
-      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledWith('Test Show');
+      expect(episodeSchedule.getEpisodesByImdbId).not.toHaveBeenCalled();
+      expect(episodeSchedule.getEpisodesByShowName).toHaveBeenCalledWith('Test Show');
       expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
     });
 
@@ -405,8 +414,8 @@ describe('TvMazeEnrichmentService', () => {
         releaseDate: new Date('2020-01-01'),
       };
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -423,7 +432,7 @@ describe('TvMazeEnrichmentService', () => {
 
       // Should reject and return unchanged
       expect(result).toEqual(showFrom2020);
-      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledTimes(2); // Tried both names
+      expect(episodeSchedule.getEpisodesByShowName).toHaveBeenCalledTimes(2); // Tried both names
     });
 
     it('should accept name match when year difference <= 1', async () => {
@@ -432,8 +441,8 @@ describe('TvMazeEnrichmentService', () => {
         releaseDate: new Date('2024-01-01'),
       };
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -458,8 +467,8 @@ describe('TvMazeEnrichmentService', () => {
         releaseDate: null,
       };
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -484,8 +493,8 @@ describe('TvMazeEnrichmentService', () => {
         releaseDate: new Date('2024-01-01'),
       };
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockResolvedValue([
         {
           seasonNumber: 1,
           number: 1,
@@ -514,7 +523,7 @@ describe('TvMazeEnrichmentService', () => {
         },
       };
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue(
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue(
         Array.from({ length: 12 }, (_, i) => ({
           seasonNumber: 1,
           number: i + 1,
@@ -545,7 +554,7 @@ describe('TvMazeEnrichmentService', () => {
         },
       };
 
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
         ...Array.from({ length: 3 }, (_, i) => ({
           seasonNumber: 0,
           number: i + 1,
@@ -582,12 +591,12 @@ describe('TvMazeEnrichmentService', () => {
         externalIds: { tmdbId: 1000 },
       };
 
-      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockResolvedValue([]);
 
       await service.enrich(mediaWithSameNames);
 
-      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledTimes(1);
-      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledWith('Test Show');
+      expect(episodeSchedule.getEpisodesByShowName).toHaveBeenCalledTimes(1);
+      expect(episodeSchedule.getEpisodesByShowName).toHaveBeenCalledWith('Test Show');
     });
   });
 });

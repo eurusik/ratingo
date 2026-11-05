@@ -2,18 +2,22 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { type JobType, Queue } from 'bullmq';
-import { and, eq, gt, isNull, isNotNull, lt, or } from 'drizzle-orm';
-import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MS_PER_DAY } from '@/common/constants';
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
-import { withDbError } from '@/common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '@/database/database.module';
-import * as schema from '@/database/schema';
 
 import { buildMdblistRatingsJobId } from '../../domain/job-ids';
-import { MdblistAdapter } from '../../infrastructure/adapters/mdblist/mdblist.adapter';
+import {
+  hasRottenTomatoesRatings,
+  ROTTEN_TOMATOES_RATINGS_PORT,
+  type RottenTomatoesRatingsPort,
+} from '../../domain/ports/rotten-tomatoes-ratings.port';
+import {
+  ROTTEN_TOMATOES_BACKFILL_REPOSITORY,
+  type IRottenTomatoesBackfillRepository,
+  type RottenTomatoesBackfillCandidate,
+} from '../../domain/repositories/rotten-tomatoes-backfill.repository.interface';
 import {
   BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
   IngestionJob,
@@ -27,12 +31,6 @@ const PENDING_JOB_STATES: JobType[] = ['waiting', 'prioritized', 'delayed', 'pau
 interface PendingJobsSnapshot {
   jobCount: number;
   mediaItemIds: Set<string>;
-}
-
-interface MdblistCandidate {
-  id: string;
-  tmdbId: number | null;
-  type: MediaType;
 }
 
 /**
@@ -50,29 +48,28 @@ interface MdblistCandidate {
  *     to 40/hour) calls MDBList and writes the two RT fields directly.
  *
  * Writes bypass the full persistence mapper — this is a targeted rating
- * update, not a full media re-sync. Direct UPDATE keeps other columns
- * untouched and avoids any risk of regressing the sync flow.
+ * update, not a full media re-sync. `updatedAt` is bumped only when rating
+ * data changed, so cache invalidation keyed on it is not flooded by every
+ * rtFetchedAt stamp.
  */
 @Injectable()
 export class BackfillMdblistRatingsPipeline {
   private readonly logger = new Logger(BackfillMdblistRatingsPipeline.name);
 
   constructor(
-    @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    @Inject(ROTTEN_TOMATOES_BACKFILL_REPOSITORY)
+    private readonly backfillRepository: IRottenTomatoesBackfillRepository,
     @InjectQueue(RATINGS_BACKFILL_QUEUE)
     private readonly queue: Queue,
-    private readonly mdblistAdapter: MdblistAdapter,
+    @Inject(ROTTEN_TOMATOES_RATINGS_PORT)
+    private readonly rottenTomatoesRatings: RottenTomatoesRatingsPort,
   ) {}
 
   /**
    * Dispatcher: finds items missing RT data and queues MDBList item jobs.
    *
-   * Selection criteria:
-   *   - tmdbId IS NOT NULL                              (MDBList lookup is TMDB-keyed)
-   *   - (ratingRottenTomatoes IS NULL OR ratingRottenTomatoesAudience IS NULL)
-   *   - rtFetchedAt IS NULL OR older than refresh window
-   *   - deletedAt IS NULL
+   * Candidates have a TMDB id, at least one missing RT score and no fetch
+   * within the refresh window.
    *
    * The `rtFetchedAt` check is critical for free-tier cadence: without it,
    * items that MDBList legitimately has no RT data for would be re-polled
@@ -81,7 +78,7 @@ export class BackfillMdblistRatingsPipeline {
    * row for {@link MDBLIST_RATINGS_REFRESH_DAYS} days.
    */
   async dispatch(): Promise<void> {
-    if (!this.mdblistAdapter.isConfigured()) {
+    if (!this.rottenTomatoesRatings.isConfigured()) {
       this.logger.warn(
         'MDBList ratings backfill dispatcher skipped: MDBLIST_API_KEY is not configured',
       );
@@ -98,7 +95,11 @@ export class BackfillMdblistRatingsPipeline {
     let cursor: string | undefined;
 
     while (remainingBudget > 0) {
-      const candidates = await this.findCandidates(staleBefore, cursor);
+      const candidates = await this.backfillRepository.findCandidates({
+        fetchedBefore: staleBefore,
+        cursor,
+        limit: BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
+      });
       if (candidates.length === 0) break;
 
       const jobs = candidates
@@ -132,39 +133,7 @@ export class BackfillMdblistRatingsPipeline {
     return { jobCount, mediaItemIds };
   }
 
-  private findCandidates(
-    staleBefore: Date,
-    cursor: string | undefined,
-  ): Promise<MdblistCandidate[]> {
-    const conditions = [
-      isNotNull(schema.mediaItems.tmdbId),
-      isNull(schema.mediaItems.deletedAt),
-      or(
-        isNull(schema.mediaItems.ratingRottenTomatoes),
-        isNull(schema.mediaItems.ratingRottenTomatoesAudience),
-      )!,
-      or(isNull(schema.mediaItems.rtFetchedAt), lt(schema.mediaItems.rtFetchedAt, staleBefore))!,
-    ];
-
-    if (cursor) {
-      conditions.push(gt(schema.mediaItems.id, cursor));
-    }
-
-    return withDbError('find MDBList backfill candidates', this.logger, () =>
-      this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-        })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .orderBy(schema.mediaItems.id)
-        .limit(BACKFILL_MDBLIST_RATINGS_BATCH_SIZE),
-    );
-  }
-
-  private toItemJob(candidate: MdblistCandidate, day: string) {
+  private toItemJob(candidate: RottenTomatoesBackfillCandidate, day: string) {
     return {
       name: IngestionJob.BACKFILL_MDBLIST_RATINGS_ITEM,
       data: {
@@ -192,7 +161,7 @@ export class BackfillMdblistRatingsPipeline {
   }
 
   /**
-   * Item job: fetches RT ratings from MDBList and updates DB directly.
+   * Item job: fetches RT ratings from MDBList and saves them with the fetch stamp.
    *
    * Stamps `rtFetchedAt` only after a successful fetch or a genuine not-found
    * (adapter returns null fields for 404 / no RT entries), so the dispatcher
@@ -211,7 +180,7 @@ export class BackfillMdblistRatingsPipeline {
    * BullMQ retries, worker restarts) and would otherwise burn a quota unit.
    */
   async processItem(data: { mediaItemId: string; tmdbId: number; type: MediaType }): Promise<void> {
-    if (!this.mdblistAdapter.isConfigured()) {
+    if (!this.rottenTomatoesRatings.isConfigured()) {
       this.logger.warn(
         `MDBList item skipped for tmdbId=${data.tmdbId}: MDBLIST_API_KEY is not configured`,
       );
@@ -220,21 +189,11 @@ export class BackfillMdblistRatingsPipeline {
 
     // Pre-check: skip if this row was already processed within the refresh
     // window. Saves an MDBList quota unit per redundant job.
-    const [existing] = await withDbError(
-      'read MDBList rtFetchedAt',
-      this.logger,
-      () =>
-        this.db
-          .select({ rtFetchedAt: schema.mediaItems.rtFetchedAt })
-          .from(schema.mediaItems)
-          .where(eq(schema.mediaItems.id, data.mediaItemId))
-          .limit(1),
-      { mediaItemId: data.mediaItemId, tmdbId: data.tmdbId },
-    );
+    const rtFetchedAt = await this.backfillRepository.findLastFetchedAt(data.mediaItemId);
 
-    if (existing?.rtFetchedAt) {
+    if (rtFetchedAt) {
       const staleBefore = new Date(Date.now() - MDBLIST_RATINGS_REFRESH_DAYS * MS_PER_DAY);
-      if (existing.rtFetchedAt >= staleBefore) {
+      if (rtFetchedAt >= staleBefore) {
         this.logger.debug(
           `Skipping tmdbId=${data.tmdbId}: rtFetchedAt within refresh window (quota preserved)`,
         );
@@ -242,38 +201,18 @@ export class BackfillMdblistRatingsPipeline {
       }
     }
 
-    const ratings = await this.mdblistAdapter.getRottenTomatoesRatings(data.tmdbId, data.type);
-
-    const update: Partial<typeof schema.mediaItems.$inferInsert> = {
-      rtFetchedAt: new Date(),
-    };
-
-    if (ratings.rottenTomatoesCritics != null) {
-      update.ratingRottenTomatoes = ratings.rottenTomatoesCritics;
-    }
-    if (ratings.rottenTomatoesAudience != null) {
-      update.ratingRottenTomatoesAudience = ratings.rottenTomatoesAudience;
-    }
-
-    // Only bump `updatedAt` when actual rating data changed, so downstream
-    // cache-invalidation keyed on media_items.updated_at is not flooded by
-    // every rt_fetched_at bump.
-    const wroteRatings =
-      update.ratingRottenTomatoes != null || update.ratingRottenTomatoesAudience != null;
-    if (wroteRatings) {
-      update.updatedAt = new Date();
-    }
-
-    await withDbError(
-      'persist MDBList RT ratings',
-      this.logger,
-      () =>
-        this.db
-          .update(schema.mediaItems)
-          .set(update)
-          .where(eq(schema.mediaItems.id, data.mediaItemId)),
-      { mediaItemId: data.mediaItemId, tmdbId: data.tmdbId },
+    const ratings = await this.rottenTomatoesRatings.getRottenTomatoesRatings(
+      data.tmdbId,
+      data.type,
     );
+
+    const wroteRatings = hasRottenTomatoesRatings(ratings);
+    const fetchedAt = new Date();
+    await this.backfillRepository.saveFetchResult(data.mediaItemId, {
+      fetchedAt,
+      ratings,
+      ratingsChangedAt: wroteRatings ? fetchedAt : null,
+    });
 
     if (wroteRatings) {
       this.logger.debug(

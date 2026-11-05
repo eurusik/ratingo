@@ -2,19 +2,18 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { Queue } from 'bullmq';
-import { and, gt, isNull } from 'drizzle-orm';
-import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
-import { withDbError } from '@/common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '@/database/database.module';
-import * as schema from '@/database/schema';
 
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../../../tmdb/public';
 import { TmdbAdapter } from '../../../tmdb/public';
 import { buildAltTitlesBackfillJobId } from '../../domain/job-ids';
+import {
+  ALT_TITLES_BACKFILL_REPOSITORY,
+  type IAltTitlesBackfillRepository,
+} from '../../domain/repositories/alt-titles-backfill.repository.interface';
 import {
   BACKFILL_ALT_TITLES_BATCH_SIZE,
   BACKFILL_QUEUE,
@@ -36,8 +35,8 @@ export class BackfillAltTitlesPipeline {
   private readonly logger = new Logger(BackfillAltTitlesPipeline.name);
 
   constructor(
-    @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    @Inject(ALT_TITLES_BACKFILL_REPOSITORY)
+    private readonly altTitlesBackfillRepository: IAltTitlesBackfillRepository,
     @InjectQueue(BACKFILL_QUEUE)
     private readonly queue: Queue,
     private readonly tmdbAdapter: TmdbAdapter,
@@ -56,32 +55,13 @@ export class BackfillAltTitlesPipeline {
     let totalQueued = 0;
 
     while (totalQueued < TMDB_BACKFILL_RUN_CAP) {
-      const conditions = [
-        isNull(schema.mediaItems.alternativeTitles),
-        isNull(schema.mediaItems.deletedAt),
-      ];
-
-      if (cursor) {
-        conditions.push(gt(schema.mediaItems.id, cursor));
-      }
-
       const remaining = TMDB_BACKFILL_RUN_CAP - totalQueued;
       const batchSize = Math.min(BACKFILL_ALT_TITLES_BATCH_SIZE, remaining);
 
-      const rows = await withDbError('find alt-titles backfill candidates', this.logger, () =>
-        this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            originalTitle: schema.mediaItems.originalTitle,
-          })
-          .from(schema.mediaItems)
-          .where(and(...conditions))
-          .orderBy(schema.mediaItems.id)
-          .limit(batchSize),
-      );
+      const rows = await this.altTitlesBackfillRepository.findCandidates({
+        cursor,
+        limit: batchSize,
+      });
 
       if (rows.length === 0) break;
 

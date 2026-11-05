@@ -2,8 +2,14 @@ import { Controller, Get, UseFilters } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { CatalogSitemapService } from '../../application/services/catalog-sitemap.service';
-import { SitemapResponseDto } from '../dtos/sitemap-item.dto';
+import { type SitemapItem } from '../../domain/repositories/sitemap.repository.interface';
+import { type SitemapItemDto, SitemapResponseDto } from '../dtos/sitemap-item.dto';
 import { CatalogDomainExceptionFilter } from '../filters';
+
+const toSitemapItemDto = ({ slug, updatedAt }: SitemapItem): SitemapItemDto => ({
+  slug,
+  updatedAt: updatedAt.toISOString(),
+});
 
 /**
  * Public sitemap endpoints for movies and shows.
@@ -24,7 +30,7 @@ export class CatalogSitemapController {
   @ApiOkResponse({ type: SitemapResponseDto })
   async getMovieSitemap(): Promise<SitemapResponseDto> {
     const items = await this.sitemapService.getMovieSitemapItems();
-    return { items };
+    return { items: items.map(toSitemapItemDto) };
   }
 
   @Get('shows')
@@ -36,6 +42,6 @@ export class CatalogSitemapController {
   @ApiOkResponse({ type: SitemapResponseDto })
   async getShowSitemap(): Promise<SitemapResponseDto> {
     const items = await this.sitemapService.getShowSitemapItems();
-    return { items };
+    return { items: items.map(toSitemapItemDto) };
   }
 }

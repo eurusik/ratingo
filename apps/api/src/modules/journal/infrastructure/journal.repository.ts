@@ -7,69 +7,21 @@ import { withDbError } from '@/common/utils/db-error.utils';
 
 import { DATABASE_CONNECTION } from '../../../database/database.module';
 import * as schema from '../../../database/schema';
-import { type PostType } from '../domain/constants/post-types';
 import { type JournalPost, type PostNavigation } from '../domain/interfaces/journal-post.interface';
-
-/**
- * Data for creating a new journal post.
- */
-export interface CreateJournalPostData {
-  slug: string;
-  title: string;
-  body: string;
-  bodyHtml: string;
-  excerpt: string;
-  type: PostType;
-  featuredImageUrl?: string | null;
-  contextId?: string | null;
-  metaTitle?: string | null;
-  metaDescription?: string | null;
-  isDraft: boolean;
-  publishedAt?: Date | null;
-  authorId: string;
-}
-
-/**
- * Data for updating an existing journal post.
- */
-export interface UpdateJournalPostData {
-  slug?: string;
-  title?: string;
-  body?: string;
-  bodyHtml?: string;
-  excerpt?: string;
-  type?: PostType;
-  featuredImageUrl?: string | null;
-  contextId?: string | null;
-  metaTitle?: string | null;
-  metaDescription?: string | null;
-  isDraft?: boolean;
-  publishedAt?: Date | null;
-}
-
-/**
- * Filters for querying published posts.
- */
-export interface FindPublishedFilters {
-  types?: PostType[];
-  contextId?: string;
-  page: number;
-  limit: number;
-}
-
-/**
- * Result of paginated post query.
- */
-export interface PaginatedPostsResult {
-  posts: JournalPost[];
-  total: number;
-}
+import {
+  type CreateJournalPostData,
+  type FindAllPostsFilters,
+  type FindPublishedFilters,
+  type IJournalRepository,
+  type PaginatedPostsResult,
+  type UpdateJournalPostData,
+} from '../domain/repositories/journal.repository.interface';
 
 /**
  * Drizzle implementation of Journal repository.
  */
 @Injectable()
-export class JournalRepository {
+export class JournalRepository implements IJournalRepository {
   private readonly logger = new Logger(JournalRepository.name);
 
   constructor(
@@ -421,11 +373,7 @@ export class JournalRepository {
    * @param filters - Pagination and status filter options
    * @returns Paginated posts and total count
    */
-  async findAll(filters: {
-    page: number;
-    limit: number;
-    status?: 'draft' | 'published' | 'scheduled';
-  }): Promise<PaginatedPostsResult> {
+  async findAll(filters: FindAllPostsFilters): Promise<PaginatedPostsResult> {
     return withDbError(
       'find all posts',
       this.logger,

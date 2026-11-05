@@ -37,13 +37,24 @@ import { TvMazeEnrichmentService } from './application/services/tvmaze-enrichmen
 import { BackfillWorker } from './application/workers/backfill.worker';
 import { RatingsBackfillWorker } from './application/workers/ratings-backfill.worker';
 import { SyncWorker } from './application/workers/sync.worker';
+import { AGGREGATED_RATINGS_PORT } from './domain/ports/aggregated-ratings.port';
+import { EPISODE_SCHEDULE_PORT } from './domain/ports/episode-schedule.port';
+import { ROTTEN_TOMATOES_RATINGS_PORT } from './domain/ports/rotten-tomatoes-ratings.port';
 import { WEB_PAGE_CACHE_PORT } from './domain/ports/web-page-cache.port';
+import { ALT_TITLES_BACKFILL_REPOSITORY } from './domain/repositories/alt-titles-backfill.repository.interface';
+import { IMDB_BACKFILL_REPOSITORY } from './domain/repositories/imdb-backfill.repository.interface';
+import { ROTTEN_TOMATOES_BACKFILL_REPOSITORY } from './domain/repositories/rotten-tomatoes-backfill.repository.interface';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
+import { TRACKED_SHOW_REPOSITORY } from './domain/repositories/tracked-show.repository.interface';
 import { MdblistAdapter } from './infrastructure/adapters/mdblist/mdblist.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { NextRevalidateAdapter } from './infrastructure/adapters/web-page-cache/next-revalidate.adapter';
+import { AltTitlesBackfillRepository } from './infrastructure/repositories/alt-titles-backfill.repository';
+import { ImdbBackfillRepository } from './infrastructure/repositories/imdb-backfill.repository';
+import { RottenTomatoesBackfillRepository } from './infrastructure/repositories/rotten-tomatoes-backfill.repository';
 import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
+import { TrackedShowRepository } from './infrastructure/repositories/tracked-show.repository';
 import {
   BACKFILL_QUEUE,
   DEFAULT_INGESTION_JOB_OPTIONS,
@@ -99,13 +110,38 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       useClass: SnapshotsRepository,
     },
     {
+      provide: ROTTEN_TOMATOES_BACKFILL_REPOSITORY,
+      useClass: RottenTomatoesBackfillRepository,
+    },
+    {
+      provide: ALT_TITLES_BACKFILL_REPOSITORY,
+      useClass: AltTitlesBackfillRepository,
+    },
+    {
+      provide: IMDB_BACKFILL_REPOSITORY,
+      useClass: ImdbBackfillRepository,
+    },
+    {
+      provide: TRACKED_SHOW_REPOSITORY,
+      useClass: TrackedShowRepository,
+    },
+    {
       provide: WEB_PAGE_CACHE_PORT,
       useClass: NextRevalidateAdapter,
     },
     MediaPageCacheService,
-    OmdbAdapter,
-    MdblistAdapter,
-    TvMazeAdapter,
+    {
+      provide: AGGREGATED_RATINGS_PORT,
+      useClass: OmdbAdapter,
+    },
+    {
+      provide: ROTTEN_TOMATOES_RATINGS_PORT,
+      useClass: MdblistAdapter,
+    },
+    {
+      provide: EPISODE_SCHEDULE_PORT,
+      useClass: TvMazeAdapter,
+    },
     TvMazeEnrichmentService,
     BulkJobService,
     SyncMediaService,

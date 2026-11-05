@@ -59,8 +59,19 @@ const domainInfrastructureZone = {
   ],
   message: 'Domain must not depend on infrastructure',
 };
+const applicationInfrastructureZone = {
+  target: './apps/api/src/modules/**/application/**/*',
+  from: [
+    './apps/api/src/modules/**/infrastructure/**/*',
+    './apps/api/src/common/infrastructure/**/*',
+    './apps/api/src/database/**/*',
+  ],
+  message:
+    'Application must not depend on infrastructure: inject a domain port or repository token instead',
+};
 const moduleBoundaryZones = [
   domainInfrastructureZone,
+  applicationInfrastructureZone,
   {
     target: './apps/api/src/modules/shared/contracts/**/*',
     from: './apps/api/src',
