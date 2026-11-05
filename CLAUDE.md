@@ -25,7 +25,7 @@ After finishing each step, review the changed code before moving on, and fix wha
 ## Branches & Deploy
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`
 - `development` deploys to Railway dev, `main` deploys to Railway production; hotfixes go to `main`, then back-merge into `development`
-- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck and tests (2 shards), web lint/typecheck/tests, contract drift, pg-backup lint/typecheck/tests. On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
+- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck, unit tests (2 shards) and e2e tests, web lint/typecheck/tests, contract drift, pg-backup lint/typecheck/tests. On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
 - Make every migration statement safe to re-run against existing state (`IF NOT EXISTS` / `IF EXISTS`): dev runs migrations on a fresh DB, so state conflicts surface only in prod
 
 ## Commands
@@ -38,6 +38,7 @@ docker-compose up              # PostgreSQL (5434) + Redis (6379)
 # Quality
 npm run test:api               # Backend tests (--runInBand)
 npm run test:client            # Frontend tests
+npm run test:e2e --workspace=api # Backend e2e (in-memory fakes, no Postgres/Redis needed)
 npm run lint:api:fix           # Auto-fix backend lint
 
 # Single test (from apps/api/ or apps/web-client/)

@@ -1,14 +1,10 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import { TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { ConfigModule } from '@nestjs/config';
-import authConfig from '../../src/config/auth.config';
 import { AuthModule } from '../../src/modules/auth/auth.module';
 import { UsersModule } from '../../src/modules/users/users.module';
 import { UserMediaModule } from '../../src/modules/user-media/user-media.module';
 import { CatalogModule } from '../../src/modules/catalog/catalog.module';
-import { ResponseInterceptor } from '../../src/common/interceptors/response.interceptor';
-import { AllExceptionsFilter } from '../../src/common/filters/all-exceptions.filter';
 import {
   USERS_REPOSITORY,
   IUsersRepository,
@@ -19,7 +15,6 @@ import {
 } from '../../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { User } from '../../src/modules/users/domain/entities/user.entity';
 import { RefreshToken } from '../../src/modules/auth/domain/entities/refresh-token.entity';
-import { DATABASE_CONNECTION } from '../../src/database/database.module';
 import {
   IUserMediaStateRepository,
   USER_MEDIA_STATE_REPOSITORY,
@@ -42,6 +37,8 @@ import { SearchResponseDto } from '../../src/modules/catalog/presentation/dtos/s
 import { MEDIA_REPOSITORY } from '../../src/modules/catalog/domain/repositories/media.repository.interface';
 import { TmdbAdapter } from '../../src/modules/tmdb/tmdb.adapter';
 import { FakeMovieRepository, FakeShowRepository } from './_fakes';
+import { createE2eApp, createE2eTestingModule } from '../support/e2e-testing-module';
+import { testUuid } from '../support/test-uuid';
 
 class InMemoryUsersRepository implements IUsersRepository {
   private users: User[] = [];
@@ -293,7 +290,7 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
 
 class FakeMediaRepository {
   async upsertStub(): Promise<{ id: string; slug: string }> {
-    return { id: 'mid-stub', slug: 'stub' };
+    return { id: testUuid('mid-stub'), slug: 'stub' };
   }
   async upsert(): Promise<void> {
     return;
@@ -330,7 +327,7 @@ class FakeCatalogSearchService {
         {
           source: 'local' as any,
           type: MediaType.MOVIE,
-          id: 'mid-1',
+          id: testUuid('mid-1'),
           slug: 'movie-one',
           tmdbId: 1,
           title: 'Movie One',
@@ -357,14 +354,8 @@ export interface CatalogE2eContext {
 }
 
 export async function createCatalogApp(): Promise<CatalogE2eContext> {
-  const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [
-      ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
-      AuthModule,
-      UsersModule,
-      UserMediaModule,
-      CatalogModule,
-    ],
+  const moduleFixture: TestingModule = await createE2eTestingModule({
+    imports: [AuthModule, UsersModule, UserMediaModule, CatalogModule],
   })
     .overrideProvider(USERS_REPOSITORY)
     .useClass(InMemoryUsersRepository)
@@ -372,8 +363,6 @@ export async function createCatalogApp(): Promise<CatalogE2eContext> {
     .useClass(InMemoryRefreshTokensRepository)
     .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
     .useClass(InMemoryUserMediaRepository)
-    .overrideProvider(DATABASE_CONNECTION)
-    .useValue({})
     .overrideProvider(MOVIE_REPOSITORY)
     .useClass(FakeMovieRepository)
     .overrideProvider(SHOW_REPOSITORY)
@@ -389,20 +378,7 @@ export async function createCatalogApp(): Promise<CatalogE2eContext> {
   const moviesRepo = moduleFixture.get(MOVIE_REPOSITORY) as unknown as FakeMovieRepository;
   const showsRepo = moduleFixture.get(SHOW_REPOSITORY) as unknown as FakeShowRepository;
 
-  const app = moduleFixture.createNestApplication();
-  app.setGlobalPrefix('api');
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new ResponseInterceptor());
-
-  await app.init();
+  const app = await createE2eApp(moduleFixture);
 
   const authBase = '/api/auth';
   const catalogBase = '/api/catalog';

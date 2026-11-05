@@ -1,4 +1,5 @@
 import { UsersE2eContext, createUsersApp } from './users/_harness';
+import { testUuid } from './support/test-uuid';
 
 describe('Auth /me stats e2e', () => {
   let ctx: UsersE2eContext;
@@ -20,18 +21,22 @@ describe('Auth /me stats e2e', () => {
 
     // movie rated
     await ctx
-      .patch('/api/user-media/mid-1', accessToken)
+      .patch(`/api/user-media/${testUuid('mid-1')}`, accessToken)
       .send({ state: 'completed', rating: 80 })
       .expect(200);
 
-    // show rated
+    const showId = testUuid('sid-1');
+    ctx.userMediaRepo.registerShow(showId);
     await ctx
-      .patch('/api/user-media/sid-1', accessToken)
+      .patch(`/api/user-media/${showId}`, accessToken)
       .send({ state: 'completed', rating: 90 })
       .expect(200);
 
     // watchlist item (planned)
-    await ctx.patch('/api/user-media/mid-2', accessToken).send({ state: 'planned' }).expect(200);
+    await ctx
+      .patch(`/api/user-media/${testUuid('mid-2')}`, accessToken)
+      .send({ state: 'planned' })
+      .expect(200);
 
     const meRes = await ctx.get('/api/auth/me', accessToken).expect(200);
     expect(meRes.body.success).toBe(true);

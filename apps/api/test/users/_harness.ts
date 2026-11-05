@@ -1,16 +1,12 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import { TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import authConfig from '../../src/config/auth.config';
+import { ConfigService } from '@nestjs/config';
 import { AuthModule } from '../../src/modules/auth/auth.module';
 import { UsersModule } from '../../src/modules/users/users.module';
-import { ResponseInterceptor } from '../../src/common/interceptors/response.interceptor';
-import { AllExceptionsFilter } from '../../src/common/filters/all-exceptions.filter';
 import { JwtService } from '@nestjs/jwt';
 import { USERS_REPOSITORY } from '../../src/modules/users/domain/repositories/users.repository.interface';
 import { REFRESH_TOKENS_REPOSITORY } from '../../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
-import { DATABASE_CONNECTION } from '../../src/database/database.module';
 import { USER_MEDIA_STATE_REPOSITORY } from '../../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
 import { OBJECT_STORAGE_SERVICE } from '../../src/modules/users/domain/services/object-storage.service.interface';
 import {
@@ -18,6 +14,9 @@ import {
   InMemoryUserMediaRepository,
   InMemoryUsersRepository,
 } from './_fakes';
+import { createE2eApp, createE2eTestingModule } from '../support/e2e-testing-module';
+import { OAUTH_ACCOUNTS_REPOSITORY } from '../../src/modules/auth/domain/repositories/oauth-accounts.repository.interface';
+import { InMemoryOAuthAccountsRepository } from '../support/in-memory-oauth-accounts.repository';
 
 export interface UsersE2eContext {
   app: INestApplication;
@@ -39,12 +38,8 @@ export interface UsersE2eContext {
 }
 
 export async function createUsersApp(): Promise<UsersE2eContext> {
-  const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [
-      ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
-      AuthModule,
-      UsersModule,
-    ],
+  const moduleFixture: TestingModule = await createE2eTestingModule({
+    imports: [AuthModule, UsersModule],
   })
     .overrideProvider(USERS_REPOSITORY)
     .useClass(InMemoryUsersRepository)
@@ -52,6 +47,8 @@ export async function createUsersApp(): Promise<UsersE2eContext> {
     .useClass(InMemoryRefreshTokensRepository)
     .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
     .useClass(InMemoryUserMediaRepository)
+    .overrideProvider(OAUTH_ACCOUNTS_REPOSITORY)
+    .useClass(InMemoryOAuthAccountsRepository)
     .overrideProvider(OBJECT_STORAGE_SERVICE)
     .useValue({
       getPresignedPutUrl: async ({ key }: { key: string }) => ({
@@ -60,31 +57,15 @@ export async function createUsersApp(): Promise<UsersE2eContext> {
         key,
       }),
     })
-    .overrideProvider(DATABASE_CONNECTION)
-    .useValue({})
     .compile();
 
-  const app = moduleFixture.createNestApplication();
+  const app = await createE2eApp(moduleFixture);
   const usersRepo = app.get(USERS_REPOSITORY) as unknown as InMemoryUsersRepository;
   const userMediaRepo = app.get(
     USER_MEDIA_STATE_REPOSITORY,
   ) as unknown as InMemoryUserMediaRepository;
   const configService = app.get(ConfigService);
   const jwtService = app.get(JwtService);
-
-  app.setGlobalPrefix('api');
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new ResponseInterceptor());
-
-  await app.init();
 
   const makeAccessToken = async (payload: { sub: string; email: string; role: string }) => {
     const secret = configService.get<string>('auth.accessTokenSecret');

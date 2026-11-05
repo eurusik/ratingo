@@ -1,11 +1,11 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { InsightsController } from '../src/modules/insights/presentation/controllers/insights.controller';
 import { InsightsService } from '../src/modules/insights/application/services/insights.service';
 import { INSIGHTS_REPOSITORY } from '../src/modules/insights/domain/repositories/insights.repository.interface';
-import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+import { createE2eApp } from './support/e2e-testing-module';
+import { testUuid } from './support/test-uuid';
 
 describe('Insights e2e - Movements', () => {
   let app: INestApplication;
@@ -20,20 +20,7 @@ describe('Insights e2e - Movements', () => {
       providers: [InsightsService, { provide: INSIGHTS_REPOSITORY, useValue: insightsRepository }],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-        transformOptions: { enableImplicitConversion: true },
-      }),
-    );
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalInterceptors(new ResponseInterceptor());
-
-    await app.init();
+    app = await createE2eApp(moduleFixture);
   });
 
   afterAll(async () => {
@@ -44,8 +31,8 @@ describe('Insights e2e - Movements', () => {
     insightsRepository.getMovements.mockResolvedValue({
       risers: [
         {
-          id: 'mid-1',
-          mediaItemId: 'mid-1',
+          id: testUuid('mid-1'),
+          mediaItemId: testUuid('mid-1'),
           type: 'movie',
           slug: 'm1',
           title: 'Movie 1',

@@ -1,14 +1,9 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import { TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { ConfigModule } from '@nestjs/config';
-import authConfig from '../src/config/auth.config';
 import googleConfig from '../src/config/google.config';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
-import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { OAuthService } from '../src/modules/auth/application/oauth.service';
 import {
   USERS_REPOSITORY,
@@ -25,20 +20,15 @@ import {
   ConsumeCodeResult,
   ConsumeCodeFailureReason,
 } from '../src/modules/auth/domain/repositories/exchange-codes.repository.interface';
-import {
-  IOAuthAccountsRepository,
-  OAUTH_ACCOUNTS_REPOSITORY,
-  CreateOAuthAccountData,
-} from '../src/modules/auth/domain/repositories/oauth-accounts.repository.interface';
-import { OAuthAccount } from '../src/modules/auth/domain/entities/oauth-account.entity';
-import { OAuthProvider } from '../src/modules/auth/domain/types/oauth-provider';
+import { OAUTH_ACCOUNTS_REPOSITORY } from '../src/modules/auth/domain/repositories/oauth-accounts.repository.interface';
 import { User } from '../src/modules/users/domain/entities/user.entity';
 import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
-import { DATABASE_CONNECTION } from '../src/database/database.module';
 import {
   IUserMediaStateRepository,
   USER_MEDIA_STATE_REPOSITORY,
 } from '../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
+import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
+import { InMemoryOAuthAccountsRepository } from './support/in-memory-oauth-accounts.repository';
 
 type UserData = Omit<User, 'id' | 'createdAt' | 'updatedAt'> & {
   id?: string;
@@ -263,65 +253,6 @@ class InMemoryExchangeCodesRepository implements IExchangeCodesRepository {
   }
 }
 
-class InMemoryOAuthAccountsRepository implements IOAuthAccountsRepository {
-  private accounts: OAuthAccount[] = [];
-
-  async findByProviderAccount(
-    provider: OAuthProvider,
-    providerAccountId: string,
-  ): Promise<OAuthAccount | null> {
-    return (
-      this.accounts.find(
-        (a) => a.provider === provider && a.providerAccountId === providerAccountId,
-      ) ?? null
-    );
-  }
-
-  async findByUserId(userId: string): Promise<OAuthAccount[]> {
-    return this.accounts.filter((a) => a.userId === userId);
-  }
-
-  async findByUserAndProvider(
-    userId: string,
-    provider: OAuthProvider,
-  ): Promise<OAuthAccount | null> {
-    return this.accounts.find((a) => a.userId === userId && a.provider === provider) ?? null;
-  }
-
-  async create(data: CreateOAuthAccountData): Promise<OAuthAccount> {
-    const account: OAuthAccount = {
-      id: `oauth-${this.accounts.length + 1}`,
-      userId: data.userId,
-      provider: data.provider,
-      providerAccountId: data.providerAccountId,
-      email: data.email,
-      displayName: data.displayName,
-      avatarUrl: data.avatarUrl,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.accounts.push(account);
-    return account;
-  }
-
-  async deleteByUserAndProvider(userId: string, provider: OAuthProvider): Promise<boolean> {
-    const idx = this.accounts.findIndex((a) => a.userId === userId && a.provider === provider);
-    if (idx >= 0) {
-      this.accounts.splice(idx, 1);
-      return true;
-    }
-    return false;
-  }
-
-  async countByUserId(userId: string): Promise<number> {
-    return this.accounts.filter((a) => a.userId === userId).length;
-  }
-
-  clear(): void {
-    this.accounts = [];
-  }
-}
-
 describe('Google OAuth e2e', () => {
   let app: INestApplication;
   let usersRepo: InMemoryUsersRepository;
@@ -334,18 +265,12 @@ describe('Google OAuth e2e', () => {
     exchangeCodesRepo = new InMemoryExchangeCodesRepository();
     oauthAccountsRepo = new InMemoryOAuthAccountsRepository();
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          load: [authConfig, googleConfig],
-          ignoreEnvFile: true,
-        }),
-        EventEmitterModule.forRoot(),
-        AuthModule,
-        UsersModule,
-      ],
-    })
+    const moduleFixture: TestingModule = await createE2eTestingModule(
+      {
+        imports: [AuthModule, UsersModule],
+      },
+      [googleConfig],
+    )
       .overrideProvider(USERS_REPOSITORY)
       .useValue(usersRepo)
       .overrideProvider(REFRESH_TOKENS_REPOSITORY)
@@ -356,24 +281,9 @@ describe('Google OAuth e2e', () => {
       .useValue(oauthAccountsRepo)
       .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
       .useClass(InMemoryUserMediaRepository)
-      .overrideProvider(DATABASE_CONNECTION)
-      .useValue({})
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-        transformOptions: { enableImplicitConversion: true },
-      }),
-    );
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalInterceptors(new ResponseInterceptor());
-
-    await app.init();
+    app = await createE2eApp(moduleFixture);
   });
 
   afterAll(async () => {
@@ -821,56 +731,38 @@ describe('Google OAuth e2e', () => {
       authService = app.get(OAuthService);
     });
 
-    it('should link Google to existing email/password account', async () => {
-      // 1. Register a user with email/password
+    it('should refuse to auto-link Google to an existing email/password account', async () => {
       await request(app.getHttpServer())
         .post(`${baseUrl}/register`)
         .send({ email: 'link-test@test.com', username: 'linktest', password: 'Password123' })
         .expect(201);
 
-      const userBefore = await usersRepo.findByEmail('link-test@test.com');
-      expect(userBefore).not.toBeNull();
-      expect(userBefore!.passwordHash).not.toBeNull();
+      await expect(
+        authService.loginWithOAuth({
+          provider: 'google' as const,
+          providerAccountId: 'google-link-999',
+          email: 'link-test@test.com',
+          name: 'Link Test',
+          picture: 'https://example.com/linked-avatar.jpg',
+        }),
+      ).rejects.toThrow('OAUTH_ACCOUNT_EXISTS_PASSWORD');
 
-      // 2. Simulate Google login with the same email
-      const oauthPayload = {
-        provider: 'google' as const,
-        providerAccountId: 'google-link-999',
-        email: 'link-test@test.com',
-        name: 'Link Test',
-        picture: 'https://example.com/linked-avatar.jpg',
-      };
+      expect(await oauthAccountsRepo.findByProviderAccount('google', 'google-link-999')).toBeNull();
 
-      const { user: linkedUser } = await authService.loginWithOAuth(oauthPayload);
-
-      // 3. Verify the accounts are linked via oauth_accounts table
-      expect(linkedUser.id).toBe(userBefore!.id);
-      expect(linkedUser.email).toBe('link-test@test.com');
-      const oauthLink = await oauthAccountsRepo.findByProviderAccount('google', 'google-link-999');
-      expect(oauthLink).not.toBeNull();
-      expect(oauthLink!.userId).toBe(linkedUser.id);
-
-      // 4. Verify original password login still works
-      const loginRes = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post(`${baseUrl}/login`)
         .send({ email: 'link-test@test.com', password: 'Password123' })
         .expect(200);
-
-      expect(loginRes.body.success).toBe(true);
-      expect(loginRes.body.data).toHaveProperty('accessToken');
     });
 
-    it('should set avatar from Google when existing account has no avatar', async () => {
-      // 1. Register a user without avatar
-      await request(app.getHttpServer())
-        .post(`${baseUrl}/register`)
-        .send({ email: 'avatar-link@test.com', username: 'avatarlink', password: 'Password123' })
-        .expect(201);
+    it('should auto-link Google and set its avatar for an OAuth-only account without avatar', async () => {
+      const oauthOnlyUser = await usersRepo.create({
+        email: 'avatar-link@test.com',
+        username: 'avatarlink',
+        passwordHash: null,
+        avatarUrl: null,
+      } as UserData);
 
-      const userBefore = await usersRepo.findByEmail('avatar-link@test.com');
-      expect(userBefore!.avatarUrl).toBeNull();
-
-      // 2. Link Google account with a picture
       const { user: linkedUser } = await authService.loginWithOAuth({
         provider: 'google' as const,
         providerAccountId: 'google-avatar-111',
@@ -879,8 +771,13 @@ describe('Google OAuth e2e', () => {
         picture: 'https://example.com/google-pic.jpg',
       });
 
-      // 3. Verify avatar was set from Google
+      expect(linkedUser.id).toBe(oauthOnlyUser.id);
       expect(linkedUser.avatarUrl).toBe('https://example.com/google-pic.jpg');
+      const oauthLink = await oauthAccountsRepo.findByProviderAccount(
+        'google',
+        'google-avatar-111',
+      );
+      expect(oauthLink!.userId).toBe(oauthOnlyUser.id);
     });
 
     it('should create new user for unknown Google email', async () => {
@@ -916,14 +813,13 @@ describe('Google OAuth e2e', () => {
       expect(res.body.data).toHaveProperty('accessToken');
     });
 
-    it('should find user by OAuth account on subsequent logins after linking', async () => {
-      // 1. Register with email/password
+    it('should find user by OAuth account on logins after explicit linking', async () => {
       await request(app.getHttpServer())
         .post(`${baseUrl}/register`)
         .send({ email: 'find-by-gid@test.com', username: 'findbygid', password: 'Password123' })
         .expect(201);
+      const passwordUser = await usersRepo.findByEmail('find-by-gid@test.com');
 
-      // 2. First Google login - links account via oauth_accounts table
       const oauthPayload = {
         provider: 'google' as const,
         providerAccountId: 'google-findme-333',
@@ -931,17 +827,10 @@ describe('Google OAuth e2e', () => {
         name: 'Find By GID',
         picture: null,
       };
-      const { user: firstLogin } = await authService.loginWithOAuth(oauthPayload);
-      const oauthLink = await oauthAccountsRepo.findByProviderAccount(
-        'google',
-        'google-findme-333',
-      );
-      expect(oauthLink).not.toBeNull();
-      expect(oauthLink!.userId).toBe(firstLogin.id);
+      await authService.linkOAuthAccount(passwordUser!.id, oauthPayload);
 
-      // 3. Second Google login - should find by provider account (not by email)
-      const { user: secondLogin } = await authService.loginWithOAuth(oauthPayload);
-      expect(secondLogin.id).toBe(firstLogin.id);
+      const { user: oauthLogin } = await authService.loginWithOAuth(oauthPayload);
+      expect(oauthLogin.id).toBe(passwordUser!.id);
     });
   });
 });

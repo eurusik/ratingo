@@ -1,13 +1,14 @@
 import { MovieWithMedia } from '../../src/modules/catalog/domain/repositories/movie.repository.interface';
 import { TrendingShowItem } from '../../src/modules/catalog/domain/repositories/show.repository.interface';
 import { MediaType } from '../../src/common/enums/media-type.enum';
+import { testUuid } from '../support/test-uuid';
 
 export const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
 export const moviesFixture: MovieWithMedia[] = [
   {
-    id: 'mid-1',
-    mediaItemId: 'mid-1',
+    id: testUuid('mid-1'),
+    mediaItemId: testUuid('mid-1'),
     tmdbId: 1,
     title: 'Movie One',
     slug: 'movie-one',
@@ -41,8 +42,8 @@ export const moviesFixture: MovieWithMedia[] = [
     genres: [{ id: 'g-action', name: 'Action', slug: 'action' }] as any,
   },
   {
-    id: 'mid-2',
-    mediaItemId: 'mid-2',
+    id: testUuid('mid-2'),
+    mediaItemId: testUuid('mid-2'),
     tmdbId: 2,
     title: 'Movie Two',
     slug: 'movie-two',
@@ -76,8 +77,8 @@ export const moviesFixture: MovieWithMedia[] = [
     genres: [{ id: 'g-drama', name: 'Drama', slug: 'drama' }] as any,
   },
   {
-    id: 'mid-3',
-    mediaItemId: 'mid-3',
+    id: testUuid('mid-3'),
+    mediaItemId: testUuid('mid-3'),
     tmdbId: 3,
     title: 'Movie Three',
     slug: 'movie-three',
@@ -114,8 +115,8 @@ export const moviesFixture: MovieWithMedia[] = [
     ] as any,
   },
   {
-    id: 'mid-4',
-    mediaItemId: 'mid-4',
+    id: testUuid('mid-4'),
+    mediaItemId: testUuid('mid-4'),
     tmdbId: 4,
     title: 'Movie Four',
     slug: 'movie-four',
@@ -153,8 +154,8 @@ export const moviesFixture: MovieWithMedia[] = [
 // use any to allow extra fields (genres/popularity) for filtering/sorting fixtures
 export const showsFixture: any[] = [
   {
-    id: 'sid-1',
-    mediaItemId: 'sid-1',
+    id: testUuid('sid-1'),
+    mediaItemId: testUuid('sid-1'),
     type: MediaType.SHOW,
     slug: 'show-one',
     title: 'Show One',
@@ -196,8 +197,8 @@ export const showsFixture: any[] = [
     popularity: 90,
   },
   {
-    id: 'sid-2',
-    mediaItemId: 'sid-2',
+    id: testUuid('sid-2'),
+    mediaItemId: testUuid('sid-2'),
     type: MediaType.SHOW,
     slug: 'show-two',
     title: 'Show Two',

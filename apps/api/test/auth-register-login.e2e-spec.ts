@@ -1,12 +1,8 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import { TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { ConfigModule } from '@nestjs/config';
-import authConfig from '../src/config/auth.config';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
-import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import {
   USERS_REPOSITORY,
   IUsersRepository,
@@ -17,11 +13,11 @@ import {
 } from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { User } from '../src/modules/users/domain/entities/user.entity';
 import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
-import { DATABASE_CONNECTION } from '../src/database/database.module';
 import {
   IUserMediaStateRepository,
   USER_MEDIA_STATE_REPOSITORY,
 } from '../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
+import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
 
 class InMemoryUsersRepository implements IUsersRepository {
   private users: User[] = [];
@@ -195,12 +191,8 @@ describe('Auth e2e: register -> login -> refresh -> me', () => {
   const baseUrl = '/api/auth';
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
-        AuthModule,
-        UsersModule,
-      ],
+    const moduleFixture: TestingModule = await createE2eTestingModule({
+      imports: [AuthModule, UsersModule],
     })
       .overrideProvider(USERS_REPOSITORY)
       .useClass(InMemoryUsersRepository)
@@ -208,24 +200,9 @@ describe('Auth e2e: register -> login -> refresh -> me', () => {
       .useClass(InMemoryRefreshTokensRepository)
       .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
       .useClass(InMemoryUserMediaRepository)
-      .overrideProvider(DATABASE_CONNECTION)
-      .useValue({})
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-        transformOptions: { enableImplicitConversion: true },
-      }),
-    );
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalInterceptors(new ResponseInterceptor());
-
-    await app.init();
+    app = await createE2eApp(moduleFixture);
   });
 
   afterAll(async () => {

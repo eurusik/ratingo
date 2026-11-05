@@ -71,18 +71,23 @@ export class InMemoryUsersRepository implements IUsersRepository {
 
 export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   private states: any[] = [];
+  private showIds = new Set<string>();
 
   addState(state: any) {
     this.states.push(state);
   }
 
+  registerShow(mediaItemId: string) {
+    this.showIds.add(mediaItemId);
+  }
+
   clear() {
     this.states = [];
+    this.showIds.clear();
   }
 
   private makeSummary(mediaItemId: string) {
-    const type =
-      mediaItemId.startsWith('sid-') || mediaItemId.startsWith('show-') ? 'show' : 'movie';
+    const type = this.showIds.has(mediaItemId) ? 'show' : 'movie';
     return {
       id: mediaItemId,
       type,

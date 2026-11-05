@@ -124,6 +124,22 @@ jobs:
       - name: Unit tests
         run: npm test --workspace=api -- --ci --shard=${{ matrix.shard }}/2
 
+  api-e2e:
+    name: api-e2e
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: E2E tests
+        run: npm run test:e2e --workspace=api -- --ci
+
   web:
     name: web
     needs: changes
@@ -217,7 +233,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, web, contracts, pg-backup]
+    needs: [changes, api, api-test, api-e2e, web, contracts, pg-backup]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
