@@ -60,14 +60,18 @@ import {
 import { DRY_RUN_REPOSITORY } from '../../src/modules/catalog-policy/domain/repositories';
 import type {
   IDryRunRepository,
-  DryRunMediaItem,
   CurrentEvaluation,
 } from '../../src/modules/catalog-policy/domain/repositories/dry-run.repository.interface';
+import {
+  type MediaItemRow,
+  mapRowsToPolicyEngineInputs,
+} from '../../src/modules/catalog-policy/infrastructure/mappers/policy-input.mapper';
 import { MediaType } from '../../src/common/enums/media-type.enum';
 import {
   CatalogPolicy,
   PolicyConfig,
   MediaCatalogEvaluation,
+  PolicyEngineInput,
 } from '../../src/modules/catalog-policy/domain/types/policy.types';
 import {
   RunStatus,
@@ -421,31 +425,33 @@ class MockAdminJwtGuard implements CanActivate {
 // ============================================================================
 
 class MockDryRunRepository implements IDryRunRepository {
-  private items: DryRunMediaItem[] = [];
+  private inputs: PolicyEngineInput[] = [];
   private evaluations: Map<string, CurrentEvaluation> = new Map();
 
-  setItems(items: DryRunMediaItem[]): void {
-    this.items = items;
+  setItems(rows: MediaItemRow[]): void {
+    this.inputs = mapRowsToPolicyEngineInputs(rows);
   }
 
   setEvaluations(evaluations: Map<string, CurrentEvaluation>): void {
     this.evaluations = evaluations;
   }
 
-  async fetchSampleItems(limit: number, _samplePercent: number): Promise<DryRunMediaItem[]> {
-    return this.items.slice(0, limit);
+  async fetchSampleItems(limit: number, _samplePercent: number): Promise<PolicyEngineInput[]> {
+    return this.inputs.slice(0, limit);
   }
 
-  async fetchTopItems(limit: number): Promise<DryRunMediaItem[]> {
-    return this.items.slice(0, limit);
+  async fetchTopItems(limit: number): Promise<PolicyEngineInput[]> {
+    return this.inputs.slice(0, limit);
   }
 
-  async fetchByTypeItems(_mediaType: MediaType, limit: number): Promise<DryRunMediaItem[]> {
-    return this.items.slice(0, limit);
+  async fetchByTypeItems(_mediaType: MediaType, limit: number): Promise<PolicyEngineInput[]> {
+    return this.inputs.slice(0, limit);
   }
 
-  async fetchByCountryItems(country: string, limit: number): Promise<DryRunMediaItem[]> {
-    return this.items.filter((item) => item.originCountries?.includes(country)).slice(0, limit);
+  async fetchByCountryItems(country: string, limit: number): Promise<PolicyEngineInput[]> {
+    return this.inputs
+      .filter((input) => input.mediaItem.originCountries?.includes(country))
+      .slice(0, limit);
   }
 
   async getCurrentEvaluations(mediaItemIds: string[]): Promise<Map<string, CurrentEvaluation>> {
@@ -460,7 +466,7 @@ class MockDryRunRepository implements IDryRunRepository {
   }
 
   clear(): void {
-    this.items = [];
+    this.inputs = [];
     this.evaluations = new Map();
   }
 }

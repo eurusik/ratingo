@@ -11,13 +11,13 @@
  */
 
 import { createCatalogPolicyApp, CatalogPolicyE2eContext, createTestPolicy } from './_harness';
-import type { DryRunMediaItem } from '../../src/modules/catalog-policy/domain/repositories/dry-run.repository.interface';
+import type { MediaItemRow } from '../../src/modules/catalog-policy/infrastructure/mappers/policy-input.mapper';
 
 // ============================================================================
 // Test Data Factories
 // ============================================================================
 
-function createMediaItem(overrides: Partial<DryRunMediaItem> = {}): DryRunMediaItem {
+function createMediaItem(overrides: Partial<MediaItemRow> = {}): MediaItemRow {
   return {
     id: `item-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     title: 'Test Movie',

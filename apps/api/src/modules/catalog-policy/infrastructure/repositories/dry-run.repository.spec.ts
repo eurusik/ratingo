@@ -8,10 +8,33 @@ import { DryRunRepository } from './dry-run.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions';
+import { MEDIA_WATCH_OFFERS_REPOSITORY } from '../../../provider/public';
 
 describe('DryRunRepository', () => {
   let repository: DryRunRepository;
   let mockDb: any;
+  let mockWatchOffersRepository: { getOffersForMediaBatch: jest.Mock };
+
+  const createRow = (id: string, overrides: Record<string, unknown> = {}) => ({
+    id,
+    title: `Title ${id}`,
+    overview: null,
+    originCountries: ['US'],
+    originalLanguage: 'en',
+    contentClass: 'mainstream',
+    ratingImdb: 7.5,
+    ratingMetacritic: null,
+    ratingRottenTomatoes: null,
+    ratingTrakt: null,
+    voteCountImdb: 1000,
+    voteCountTrakt: null,
+    qualityScore: 70,
+    popularityScore: 60,
+    freshnessScore: 50,
+    ratingoScore: 65,
+    watchersCount: 10,
+    ...overrides,
+  });
 
   beforeEach(async () => {
     // Create a deeply chainable mock for Drizzle ORM
@@ -33,8 +56,16 @@ describe('DryRunRepository', () => {
     mockDb.orderBy.mockReturnValue(mockDb);
     mockDb.limit.mockResolvedValue([]);
 
+    mockWatchOffersRepository = {
+      getOffersForMediaBatch: jest.fn().mockResolvedValue(new Map()),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [DryRunRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      providers: [
+        DryRunRepository,
+        { provide: DATABASE_CONNECTION, useValue: mockDb },
+        { provide: MEDIA_WATCH_OFFERS_REPOSITORY, useValue: mockWatchOffersRepository },
+      ],
     }).compile();
 
     repository = module.get<DryRunRepository>(DryRunRepository);
@@ -42,20 +73,77 @@ describe('DryRunRepository', () => {
 
   describe('fetchSampleItems', () => {
     it('should execute raw SQL with TABLESAMPLE', async () => {
-      const items = [{ id: '1', title: 'Test Movie' }];
-      mockDb.execute.mockResolvedValue(items);
+      mockDb.execute.mockResolvedValue([createRow('1', { title: 'Test Movie' })]);
 
       const result = await repository.fetchSampleItems(100, 10);
 
       expect(mockDb.execute).toHaveBeenCalled();
-      expect(result).toEqual(items);
+      expect(result.map((input) => input.mediaItem.title)).toEqual(['Test Movie']);
+    });
+  });
+
+  describe('policy engine input mapping', () => {
+    it('should attach normalized watch offers and normalize scores', async () => {
+      mockDb.limit.mockResolvedValue([createRow('1'), createRow('2')]);
+      mockWatchOffersRepository.getOffersForMediaBatch.mockResolvedValue(
+        new Map([
+          [
+            '1',
+            [
+              {
+                providerId: 'netflix',
+                offerType: 'flatrate',
+                distributionChannel: 'svod',
+                variantIsAdsTier: false,
+              },
+            ],
+          ],
+        ]),
+      );
+
+      const [first, second] = await repository.fetchTopItems(10);
+
+      expect(mockWatchOffersRepository.getOffersForMediaBatch).toHaveBeenCalledWith(['1', '2'], {
+        includeVariantInfo: true,
+      });
+      expect(first.mediaItem.normalizedOffers).toEqual([
+        {
+          providerId: 'netflix',
+          offerType: 'flatrate',
+          distributionChannel: 'svod',
+          isAdsTier: false,
+        },
+      ]);
+      expect(second.mediaItem.normalizedOffers).toEqual([]);
+      expect(first.stats).toEqual({
+        qualityScore: 0.7,
+        popularityScore: 0.6,
+        freshnessScore: 0.5,
+        ratingoScore: 0.65,
+        watchersCount: 10,
+      });
+    });
+
+    it('should skip the offers lookup when no rows match', async () => {
+      mockDb.limit.mockResolvedValue([]);
+
+      const result = await repository.fetchTopItems(10);
+
+      expect(result).toEqual([]);
+      expect(mockWatchOffersRepository.getOffersForMediaBatch).not.toHaveBeenCalled();
+    });
+
+    it('should wrap watch offers failures in DatabaseException', async () => {
+      mockDb.limit.mockResolvedValue([createRow('1')]);
+      mockWatchOffersRepository.getOffersForMediaBatch.mockRejectedValue(new Error('DB down'));
+
+      await expect(repository.fetchTopItems(10)).rejects.toThrow(DatabaseException);
     });
   });
 
   describe('fetchTopItems', () => {
     it('should query with popularity order and limit', async () => {
-      const items = [{ id: '1', title: 'Popular Movie' }];
-      mockDb.limit.mockResolvedValue(items);
+      mockDb.limit.mockResolvedValue([createRow('1', { title: 'Popular Movie' })]);
 
       const result = await repository.fetchTopItems(50);
 
@@ -65,31 +153,30 @@ describe('DryRunRepository', () => {
       expect(mockDb.where).toHaveBeenCalled();
       expect(mockDb.orderBy).toHaveBeenCalled();
       expect(mockDb.limit).toHaveBeenCalledWith(50);
-      expect(result).toEqual(items);
+      expect(result.map((input) => input.mediaItem.title)).toEqual(['Popular Movie']);
     });
   });
 
   describe('fetchByTypeItems', () => {
     it('should filter by media type', async () => {
-      const items = [{ id: '1', title: 'Movie', type: MediaType.MOVIE }];
-      mockDb.limit.mockResolvedValue(items);
+      mockDb.limit.mockResolvedValue([createRow('1')]);
 
       const result = await repository.fetchByTypeItems(MediaType.MOVIE, 100);
 
       expect(mockDb.where).toHaveBeenCalled();
-      expect(result).toEqual(items);
+      expect(result.map((input) => input.mediaItem.id)).toEqual(['1']);
     });
   });
 
   describe('fetchByCountryItems', () => {
     it('should filter by country and uppercase it', async () => {
-      const items = [{ id: '1', title: 'UA Movie', originCountries: ['UA'] }];
-      mockDb.limit.mockResolvedValue(items);
+      mockDb.limit.mockResolvedValue([createRow('1', { originCountries: ['UA'] })]);
 
       const result = await repository.fetchByCountryItems('ua', 100);
 
-      expect(mockDb.where).toHaveBeenCalled();
-      expect(result).toEqual(items);
+      const { params } = new PgDialect().sqlToQuery(mockDb.where.mock.calls[0][0]);
+      expect(params).toContain(JSON.stringify(['UA']));
+      expect(result[0].mediaItem.originCountries).toEqual(['UA']);
     });
   });
 

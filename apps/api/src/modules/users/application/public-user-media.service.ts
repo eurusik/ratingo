@@ -2,25 +2,29 @@ import { Injectable } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
-import { UserMediaService } from '../../user-media/public';
-import { USER_MEDIA_HISTORY_STATES, USER_MEDIA_WATCHLIST_STATES } from '../../user-media/public';
 import {
-  type PublicUserMediaListQueryDto,
+  USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_LIST_SORT,
-} from '../presentation/dto/public-user-media.dto';
+  USER_MEDIA_WATCHLIST_STATES,
+  type UserMediaState,
+  UserMediaService,
+} from '../../user-media/public';
+import { type User } from '../domain/entities/user.entity';
+import {
+  type PublicUserMediaListQuery,
+  type PublicUserMediaPage,
+} from '../domain/read-models/public-user-media-list';
 
 import { UserProfileVisibilityPolicy, type ViewerContext } from './user-profile-visibility.policy';
 import { UsersService } from './users.service';
+
+type PublicUserMediaFilter = { ratedOnly: true } | { states: Array<UserMediaState['state']> };
 
 /**
  * Application service for reading public user media lists with privacy enforcement.
  */
 @Injectable()
 export class PublicUserMediaService {
-  /**
-   * Reads public user media slices (ratings/watchlist/history) with privacy enforcement.
-   * Returns null when section is not visible.
-   */
   constructor(
     private readonly usersService: UsersService,
     private readonly userMediaService: UserMediaService,
@@ -31,37 +35,20 @@ export class PublicUserMediaService {
    *
    * @param {string} username - Username
    * @param {ViewerContext} viewer - Optional viewer context
-   * @param {PublicUserMediaListQueryDto} query - Pagination and sorting query
-   * @returns {Promise<{ total: number; data: any } | null>} Total count and list items, or null when user not found / not visible
+   * @param {PublicUserMediaListQuery} query - Pagination and sorting query
+   * @returns {Promise<PublicUserMediaPage | null>} Total count and list items, or null when user not found / not visible
    */
-  async getRatings(username: string, viewer?: ViewerContext, query?: PublicUserMediaListQueryDto) {
+  async getRatings(
+    username: string,
+    viewer?: ViewerContext,
+    query?: PublicUserMediaListQuery,
+  ): Promise<PublicUserMediaPage | null> {
     const user = await this.usersService.getByUsername(username);
     if (!user) return null;
 
     if (!UserProfileVisibilityPolicy.canViewRatings(user, viewer)) return null;
 
-    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
-    const offset = query?.offset ?? 0;
-    const sort = query?.sort ?? USER_MEDIA_LIST_SORT.RECENT;
-
-    const [total, items] = await Promise.all([
-      this.userMediaService.countWithMedia(user.id, { ratedOnly: true }),
-      this.userMediaService.listWithMedia(user.id, limit, offset, { ratedOnly: true, sort }),
-    ]);
-
-    const isOwnerOrAdmin = UserProfileVisibilityPolicy.isOwnerOrAdmin(user, viewer);
-    const data = items.map((i) => ({
-      id: i.id,
-      state: i.state,
-      rating: i.rating,
-      progress: isOwnerOrAdmin ? i.progress : null,
-      notes: isOwnerOrAdmin ? i.notes : null,
-      createdAt: i.createdAt,
-      updatedAt: i.updatedAt,
-      mediaSummary: i.mediaSummary,
-    }));
-
-    return { total, data };
+    return this.listPage(user, viewer, query, { ratedOnly: true });
   }
 
   /**
@@ -69,44 +56,20 @@ export class PublicUserMediaService {
    *
    * @param {string} username - Username
    * @param {ViewerContext} viewer - Optional viewer context
-   * @param {PublicUserMediaListQueryDto} query - Pagination and sorting query
-   * @returns {Promise<{ total: number; data: any } | null>} Total count and list items, or null when user not found / not visible
+   * @param {PublicUserMediaListQuery} query - Pagination and sorting query
+   * @returns {Promise<PublicUserMediaPage | null>} Total count and list items, or null when user not found / not visible
    */
   async getWatchlist(
     username: string,
     viewer?: ViewerContext,
-    query?: PublicUserMediaListQueryDto,
-  ) {
+    query?: PublicUserMediaListQuery,
+  ): Promise<PublicUserMediaPage | null> {
     const user = await this.usersService.getByUsername(username);
     if (!user) return null;
 
     if (!UserProfileVisibilityPolicy.canViewWatchHistory(user, viewer)) return null;
 
-    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
-    const offset = query?.offset ?? 0;
-    const sort = query?.sort ?? USER_MEDIA_LIST_SORT.RECENT;
-
-    const [total, items] = await Promise.all([
-      this.userMediaService.countWithMedia(user.id, { states: USER_MEDIA_WATCHLIST_STATES }),
-      this.userMediaService.listWithMedia(user.id, limit, offset, {
-        states: USER_MEDIA_WATCHLIST_STATES,
-        sort,
-      }),
-    ]);
-
-    const isOwnerOrAdmin = UserProfileVisibilityPolicy.isOwnerOrAdmin(user, viewer);
-    const data = items.map((i) => ({
-      id: i.id,
-      state: i.state,
-      rating: i.rating,
-      progress: isOwnerOrAdmin ? i.progress : null,
-      notes: isOwnerOrAdmin ? i.notes : null,
-      createdAt: i.createdAt,
-      updatedAt: i.updatedAt,
-      mediaSummary: i.mediaSummary,
-    }));
-
-    return { total, data };
+    return this.listPage(user, viewer, query, { states: USER_MEDIA_WATCHLIST_STATES });
   }
 
   /**
@@ -114,37 +77,47 @@ export class PublicUserMediaService {
    *
    * @param {string} username - Username
    * @param {ViewerContext} viewer - Optional viewer context
-   * @param {PublicUserMediaListQueryDto} query - Pagination and sorting query
-   * @returns {Promise<{ total: number; data: any } | null>} Total count and list items, or null when user not found / not visible
+   * @param {PublicUserMediaListQuery} query - Pagination and sorting query
+   * @returns {Promise<PublicUserMediaPage | null>} Total count and list items, or null when user not found / not visible
    */
-  async getHistory(username: string, viewer?: ViewerContext, query?: PublicUserMediaListQueryDto) {
+  async getHistory(
+    username: string,
+    viewer?: ViewerContext,
+    query?: PublicUserMediaListQuery,
+  ): Promise<PublicUserMediaPage | null> {
     const user = await this.usersService.getByUsername(username);
     if (!user) return null;
 
     if (!UserProfileVisibilityPolicy.canViewWatchHistory(user, viewer)) return null;
 
+    return this.listPage(user, viewer, query, { states: USER_MEDIA_HISTORY_STATES });
+  }
+
+  private async listPage(
+    user: User,
+    viewer: ViewerContext | undefined,
+    query: PublicUserMediaListQuery | undefined,
+    filter: PublicUserMediaFilter,
+  ): Promise<PublicUserMediaPage> {
     const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query?.offset ?? 0;
     const sort = query?.sort ?? USER_MEDIA_LIST_SORT.RECENT;
 
     const [total, items] = await Promise.all([
-      this.userMediaService.countWithMedia(user.id, { states: USER_MEDIA_HISTORY_STATES }),
-      this.userMediaService.listWithMedia(user.id, limit, offset, {
-        states: USER_MEDIA_HISTORY_STATES,
-        sort,
-      }),
+      this.userMediaService.countWithMedia(user.id, filter),
+      this.userMediaService.listWithMedia(user.id, limit, offset, { ...filter, sort }),
     ]);
 
     const isOwnerOrAdmin = UserProfileVisibilityPolicy.isOwnerOrAdmin(user, viewer);
-    const data = items.map((i) => ({
-      id: i.id,
-      state: i.state,
-      rating: i.rating,
-      progress: isOwnerOrAdmin ? i.progress : null,
-      notes: isOwnerOrAdmin ? i.notes : null,
-      createdAt: i.createdAt,
-      updatedAt: i.updatedAt,
-      mediaSummary: i.mediaSummary,
+    const data = items.map((item) => ({
+      id: item.id,
+      state: item.state,
+      rating: item.rating,
+      progress: isOwnerOrAdmin ? item.progress : null,
+      notes: isOwnerOrAdmin ? item.notes : null,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      mediaSummary: item.mediaSummary,
     }));
 
     return { total, data };

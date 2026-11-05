@@ -5,8 +5,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DryRunService, DryRunOptions } from './dry-run.service';
 import { CatalogPolicyService } from './catalog-policy.service';
-import { PolicyConfig } from '../../domain/types/policy.types';
-import { MEDIA_WATCH_OFFERS_REPOSITORY } from '../../../provider/public';
+import { PolicyConfig, PolicyEngineInput } from '../../domain/types/policy.types';
 import { DRY_RUN_REPOSITORY } from '../../domain/repositories';
 import {
   MissingModeParameterError,
@@ -19,7 +18,6 @@ describe('DryRunService', () => {
   let service: DryRunService;
   let mockDryRunRepository: any;
   let mockPolicyService: any;
-  let mockWatchOffersRepository: any;
 
   const createTestPolicy = (overrides: Partial<PolicyConfig> = {}): PolicyConfig => ({
     allowedCountries: ['US', 'UA'],
@@ -47,16 +45,11 @@ describe('DryRunService', () => {
       getActive: jest.fn().mockResolvedValue({ version: 1 }),
     };
 
-    mockWatchOffersRepository = {
-      getOffersForMediaBatch: jest.fn().mockResolvedValue(new Map()),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DryRunService,
         { provide: DRY_RUN_REPOSITORY, useValue: mockDryRunRepository },
         { provide: CatalogPolicyService, useValue: mockPolicyService },
-        { provide: MEDIA_WATCH_OFFERS_REPOSITORY, useValue: mockWatchOffersRepository },
       ],
     }).compile();
 
@@ -227,24 +220,33 @@ describe('DryRunService', () => {
   });
 
   describe('evaluation with items', () => {
-    const createTestItem = (id: string, overrides: Record<string, unknown> = {}) => ({
-      id,
-      title: `Test Item ${id}`,
-      overview: 'Test overview',
-      originCountries: ['US'],
-      originalLanguage: 'en',
-      contentClass: 'GENERAL',
-      ratingImdb: 7.5,
-      ratingMetacritic: null,
-      ratingRottenTomatoes: null,
-      ratingTrakt: null,
-      voteCountImdb: 1000,
-      voteCountTrakt: null,
-      qualityScore: 70,
-      popularityScore: 60,
-      freshnessScore: 50,
-      ratingoScore: 65,
-      ...overrides,
+    const createTestItem = (
+      id: string,
+      overrides: Partial<PolicyEngineInput['mediaItem']> = {},
+    ): PolicyEngineInput => ({
+      mediaItem: {
+        id,
+        title: `Test Item ${id}`,
+        overview: 'Test overview',
+        originCountries: ['US'],
+        originalLanguage: 'en',
+        normalizedOffers: [],
+        contentClass: 'mainstream',
+        ratingImdb: 7.5,
+        ratingMetacritic: null,
+        ratingRottenTomatoes: null,
+        ratingTrakt: null,
+        voteCountImdb: 1000,
+        voteCountTrakt: null,
+        ...overrides,
+      },
+      stats: {
+        qualityScore: 0.7,
+        popularityScore: 0.6,
+        freshnessScore: 0.5,
+        ratingoScore: 0.65,
+        watchersCount: null,
+      },
     });
 
     it('should evaluate items and count eligible/ineligible', async () => {

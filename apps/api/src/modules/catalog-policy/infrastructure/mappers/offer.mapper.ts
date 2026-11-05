@@ -2,7 +2,7 @@
  * Offer Mapper Utility
  *
  * Shared utility for mapping MediaWatchOfferView to NormalizedOffer.
- * Used by CatalogEvaluationService, DryRunService, and PolicyInputRepository.
+ * Used by PolicyInputRepository and DryRunRepository.
  */
 
 import { type MediaWatchOfferView } from '../../../provider/public';
@@ -21,4 +21,14 @@ export function mapOffersToNormalized(offers: MediaWatchOfferView[]): Normalized
     distributionChannel: offer.distributionChannel,
     isAdsTier: offer.variantIsAdsTier,
   }));
+}
+
+export function mapOffersByMediaItemToNormalized(
+  offersByMediaItem: Map<string, MediaWatchOfferView[]>,
+): Map<string, NormalizedOffer[]> {
+  const normalizedOffersByMediaItem = new Map<string, NormalizedOffer[]>();
+  for (const [mediaItemId, offers] of offersByMediaItem) {
+    normalizedOffersByMediaItem.set(mediaItemId, mapOffersToNormalized(offers));
+  }
+  return normalizedOffersByMediaItem;
 }
