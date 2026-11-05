@@ -23,9 +23,10 @@ import {
 import { PolicyActivationService } from '../../src/modules/catalog-policy/application/services/policy-activation.service';
 import { DiffService } from '../../src/modules/catalog-policy/application/services/diff.service';
 import { DryRunService } from '../../src/modules/catalog-policy/application/services/dry-run.service';
+import dryRunConfig from '../../src/config/dry-run.config';
 import { CatalogPolicyService } from '../../src/modules/catalog-policy/application/services/catalog-policy.service';
 import { RunAggregationService } from '../../src/modules/catalog-policy/application/services/run-aggregation.service';
-import { AdminJwtGuard } from '../../src/modules/auth/infrastructure/guards/admin-jwt.guard';
+import { AdminJwtGuard } from '../../src/modules/auth/presentation/guards/admin-jwt.guard';
 import { CATALOG_POLICY_QUEUE } from '../../src/modules/catalog-policy/catalog-policy.constants';
 import {
   CATALOG_POLICY_REPOSITORY,
@@ -757,6 +758,7 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
       { provide: MEDIA_CATALOG_EVALUATION_REPOSITORY, useValue: evaluationRepo },
       { provide: MEDIA_WATCH_OFFERS_REPOSITORY, useValue: mockWatchOffersRepo },
       { provide: DRY_RUN_REPOSITORY, useValue: mockDryRunRepo },
+      { provide: dryRunConfig.KEY, useValue: dryRunConfig() },
       { provide: getQueueToken(CATALOG_POLICY_QUEUE), useValue: queue },
     ],
   })

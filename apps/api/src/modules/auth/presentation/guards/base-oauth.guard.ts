@@ -1,6 +1,11 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 
-import { ExecutionContext, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  type ExecutionContext,
+  type Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { AuthGuard, type IAuthModuleOptions } from '@nestjs/passport';
 

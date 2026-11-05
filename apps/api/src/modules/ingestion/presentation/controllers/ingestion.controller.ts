@@ -32,11 +32,10 @@ import {
   NEW_RELEASES_REGION,
 } from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { mapBullStateToJobStatus } from '../../../../common/infrastructure/bullmq/job-status-mapper';
 import { AdminJwtGuard } from '../../../auth/public';
 import { normalizeRegion, formatHourWindow } from '../../application/helpers/queue.helpers';
+import { IngestionJobStatusService } from '../../application/services/ingestion-job-status.service';
 import { SyncMediaService } from '../../application/services/sync-media.service';
 import {
   INGESTION_QUEUE,
@@ -53,12 +52,6 @@ import {
   SyncNewReleasesDto,
 } from '../dto';
 
-/** Media type per sync job name (TMDB movie and TV id spaces overlap). */
-const SYNC_JOB_MEDIA_TYPE: Partial<Record<string, MediaType>> = {
-  [IngestionJob.SYNC_MOVIE]: MediaType.MOVIE,
-  [IngestionJob.SYNC_SHOW]: MediaType.SHOW,
-};
-
 /**
  * Triggers ingestion processes.
  * Intended for admin panels and operational debugging.
@@ -71,6 +64,7 @@ export class IngestionController {
   constructor(
     @InjectQueue(INGESTION_QUEUE) private readonly ingestionQueue: Queue,
     private readonly syncService: SyncMediaService,
+    private readonly jobStatusService: IngestionJobStatusService,
   ) {}
 
   /**
@@ -99,33 +93,17 @@ export class IngestionController {
     },
   })
   async getJobStatus(@Param('id') id: string) {
-    const job = await this.ingestionQueue.getJob(id);
+    const job = await this.jobStatusService.getJobStatus(id);
     if (!job) {
       throw new NotFoundException('Job not found');
     }
 
-    const state = await job.getState();
-    const status = mapBullStateToJobStatus(state, job.finishedOn);
-
-    const updatedAt =
-      (job.finishedOn ?? job.processedOn ?? job.timestamp)
-        ? new Date(job.finishedOn ?? job.processedOn ?? job.timestamp)
-        : null;
-
-    // Get slug from DB if job is completed and has tmdbId
-    let slug: string | null = null;
-    if (status === JOB_STATUS.READY && job.data?.tmdbId) {
-      // TMDB movie/TV id spaces overlap — derive the media type from the job name
-      const jobType = SYNC_JOB_MEDIA_TYPE[job.name];
-      slug = await this.syncService.getSlugByTmdbId(job.data.tmdbId, jobType);
-    }
-
     return {
-      id: `${job.id}`,
-      status,
-      errorMessage: job.failedReason ?? null,
-      updatedAt: updatedAt ? updatedAt.toISOString() : null,
-      slug,
+      id: job.id,
+      status: job.status,
+      errorMessage: job.errorMessage,
+      updatedAt: job.updatedAt ? job.updatedAt.toISOString() : null,
+      slug: job.slug,
     };
   }
 

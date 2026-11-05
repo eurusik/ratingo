@@ -25,6 +25,13 @@ import { type CatalogPolicy, type MediaCatalogEvaluation } from '../../domain/ty
 
 import { CatalogPolicyService } from './catalog-policy.service';
 
+function hasEvaluationChanged(
+  previous: MediaCatalogEvaluation,
+  current: MediaCatalogEvaluation,
+): boolean {
+  return previous.status !== current.status || previous.policyVersion !== current.policyVersion;
+}
+
 @Injectable()
 export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
   private readonly logger = new Logger(CatalogEvaluationService.name);
@@ -77,10 +84,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
     // Idempotent via UNIQUE(media_item_id, policy_version, context)
     const saved = await this.evaluationRepository.upsert(evaluation);
 
-    const changed =
-      !previousEvaluation ||
-      previousEvaluation.status !== saved.status ||
-      previousEvaluation.policyVersion !== saved.policyVersion;
+    const changed = !previousEvaluation || hasEvaluationChanged(previousEvaluation, saved);
 
     if (changed) {
       this.logger.log(

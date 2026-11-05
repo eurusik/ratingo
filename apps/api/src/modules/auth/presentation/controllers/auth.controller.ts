@@ -49,11 +49,7 @@ import { OAuthService } from '../../application/oauth.service';
 import { TokenService } from '../../application/token.service';
 import { HTTP_REDIRECT_FOUND } from '../../auth.constants';
 import { type OAuthProvider, type OAuthUserPayload } from '../../domain/types';
-import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
-import { FacebookAuthGuard } from '../../infrastructure/guards/facebook-auth.guard';
-import { GoogleAuthGuard } from '../../infrastructure/guards/google-auth.guard';
-import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
-import { LocalAuthGuard } from '../../infrastructure/guards/local-auth.guard';
+import { CurrentUser } from '../decorators/current-user.decorator';
 import { AuthConfigDto } from '../dto/auth-config.dto';
 import { AuthTokensDto } from '../dto/auth-tokens.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
@@ -65,6 +61,10 @@ import { RefreshDto } from '../dto/refresh.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { UnlinkProviderParamDto } from '../dto/unlink-provider-param.dto';
 import { OAuthExceptionFilter } from '../filters/oauth-exception.filter';
+import { FacebookAuthGuard } from '../guards/facebook-auth.guard';
+import { GoogleAuthGuard } from '../guards/google-auth.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { MeMapper } from '../mappers/me.mapper';
 
 function getHeader(req: FastifyRequest, name: string): string | null {

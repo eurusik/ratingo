@@ -36,11 +36,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
    *
    * @throws {UnauthorizedException} OAUTH_EMAIL_NOT_VERIFIED when email is missing or not verified
    */
-  async validate(
-    accessToken: string,
-    refreshToken: string,
-    profile: GoogleProfile,
-  ): Promise<OAuthUserPayload> {
+  validate(accessToken: string, refreshToken: string, profile: GoogleProfile): OAuthUserPayload {
     const email = profile.emails?.[0]?.value;
     // email_verified is more reliably found in _json than in emails array
     const emailVerified = (profile._json as { email_verified?: boolean })?.email_verified === true;

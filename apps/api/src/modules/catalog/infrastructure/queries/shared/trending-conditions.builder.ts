@@ -69,7 +69,7 @@ export function buildTrendingMovieConditions(
     conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
   }
 
-  if (genres && genres.length) {
+  if (genres?.length) {
     conditions.push(
       exists(
         db

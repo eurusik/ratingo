@@ -21,7 +21,7 @@ export class S3KeyProbe extends BaseKeyProbe implements OnModuleDestroy {
     super();
   }
 
-  async onModuleDestroy(): Promise<void> {
+  onModuleDestroy(): void {
     this.client?.destroy();
   }
 

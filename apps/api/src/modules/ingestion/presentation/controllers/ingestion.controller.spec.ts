@@ -7,6 +7,8 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { destroyTraktRateLimiter } from '../../../trakt/infrastructure/adapters/base-trakt-http';
 import { DEFAULT_REGION } from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { IngestionJobStatusService } from '../../application/services/ingestion-job-status.service';
+import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
 
 // Cleanup rate limiter interval to prevent Jest from hanging
 afterAll(() => {
@@ -17,6 +19,7 @@ describe('IngestionController', () => {
   let controller: IngestionController;
   let mockQueue: any;
   let mockSyncService: any;
+  let mockJobStatusService: { getJobStatus: jest.Mock };
   let moduleRef: TestingModule;
 
   beforeEach(async () => {
@@ -35,11 +38,14 @@ describe('IngestionController', () => {
       getSlugByTmdbId: jest.fn().mockResolvedValue(null),
     };
 
+    mockJobStatusService = { getJobStatus: jest.fn() };
+
     moduleRef = await Test.createTestingModule({
       controllers: [IngestionController],
       providers: [
         { provide: getQueueToken(INGESTION_QUEUE), useValue: mockQueue },
         { provide: SyncMediaService, useValue: mockSyncService },
+        { provide: IngestionJobStatusService, useValue: mockJobStatusService },
       ],
     }).compile();
 
@@ -293,91 +299,52 @@ describe('IngestionController', () => {
   });
 
   describe('getJobStatus', () => {
-    const makeJob = (state: string, overrides: Partial<any> = {}) => ({
-      id: 'job-42',
-      getState: jest.fn().mockResolvedValue(state),
-      failedReason: null,
-      finishedOn: null,
-      processedOn: null,
-      timestamp: Date.now(),
-      data: {},
-      ...overrides,
-    });
-
-    it('maps waiting/delayed to queued', async () => {
-      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('waiting'));
-      const res = await controller.getJobStatus('job-42');
-      expect(res.status).toBe('queued');
-
-      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('delayed'));
-      const res2 = await controller.getJobStatus('job-42');
-      expect(res2.status).toBe('queued');
-    });
-
-    it('maps active to processing', async () => {
-      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('active'));
-      const res = await controller.getJobStatus('job-42');
-      expect(res.status).toBe('processing');
-    });
-
-    it('maps completed to ready and sets updatedAt', async () => {
-      const finishedOn = Date.now();
-      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('completed', { finishedOn }));
-      const res = await controller.getJobStatus('job-42');
-      expect(res.status).toBe('ready');
-      expect(res.updatedAt).toBe(new Date(finishedOn).toISOString());
-    });
-
-    it('returns slug when job is completed and has tmdbId', async () => {
-      const finishedOn = Date.now();
-      mockQueue.getJob = jest
-        .fn()
-        .mockResolvedValue(
-          makeJob('completed', {
-            finishedOn,
-            name: IngestionJob.SYNC_MOVIE,
-            data: { tmdbId: 550 },
-          }),
-        );
-      mockSyncService.getSlugByTmdbId.mockResolvedValue('test-movie-slug');
+    it('maps the job status to the response and serialises updatedAt', async () => {
+      const updatedAt = new Date('2026-01-01T00:00:00.000Z');
+      mockJobStatusService.getJobStatus.mockResolvedValue({
+        id: 'job-42',
+        status: JOB_STATUS.READY,
+        errorMessage: null,
+        updatedAt,
+        tmdbId: 550,
+        mediaType: MediaType.MOVIE,
+        slug: 'test-movie-slug',
+      });
 
       const res = await controller.getJobStatus('job-42');
-      expect(res.status).toBe('ready');
-      expect(res.slug).toBe('test-movie-slug');
-      expect(mockSyncService.getSlugByTmdbId).toHaveBeenCalledWith(550, MediaType.MOVIE);
+
+      expect(mockJobStatusService.getJobStatus).toHaveBeenCalledWith('job-42');
+      expect(res).toEqual({
+        id: 'job-42',
+        status: JOB_STATUS.READY,
+        errorMessage: null,
+        updatedAt: updatedAt.toISOString(),
+        slug: 'test-movie-slug',
+      });
     });
 
-    it('derives show type from the job name when resolving the slug', async () => {
-      mockQueue.getJob = jest.fn().mockResolvedValue(
-        makeJob('completed', {
-          finishedOn: Date.now(),
-          name: IngestionJob.SYNC_SHOW,
-          data: { tmdbId: 550 },
-        }),
-      );
-      mockSyncService.getSlugByTmdbId.mockResolvedValue('test-show-slug');
+    it('returns null updatedAt when the job has no activity time', async () => {
+      mockJobStatusService.getJobStatus.mockResolvedValue({
+        id: 'job-42',
+        status: JOB_STATUS.FAILED,
+        errorMessage: 'boom',
+        updatedAt: null,
+        tmdbId: null,
+        mediaType: undefined,
+        slug: null,
+      });
 
       const res = await controller.getJobStatus('job-42');
-      expect(res.slug).toBe('test-show-slug');
-      expect(mockSyncService.getSlugByTmdbId).toHaveBeenCalledWith(550, MediaType.SHOW);
-    });
 
-    it('returns null slug when job is not completed', async () => {
-      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('active', { data: { tmdbId: 550 } }));
-      const res = await controller.getJobStatus('job-42');
-      expect(res.status).toBe('processing');
-      expect(res.slug).toBeNull();
-    });
-
-    it('maps failed to failed and returns errorMessage', async () => {
-      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('failed', { failedReason: 'boom' }));
-      const res = await controller.getJobStatus('job-42');
-      expect(res.status).toBe('failed');
-      expect(res.errorMessage).toBe('boom');
+      expect(res).toMatchObject({
+        status: JOB_STATUS.FAILED,
+        errorMessage: 'boom',
+        updatedAt: null,
+      });
     });
 
     it('throws NotFound when job is missing', async () => {
-      mockQueue.getJob = jest.fn().mockResolvedValue(null);
+      mockJobStatusService.getJobStatus.mockResolvedValue(null);
       await expect(controller.getJobStatus('missing')).rejects.toThrow('Job not found');
     });
   });

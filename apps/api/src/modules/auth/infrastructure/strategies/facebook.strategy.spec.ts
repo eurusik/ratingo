@@ -45,10 +45,10 @@ describe('FacebookStrategy', () => {
   });
 
   describe('validate', () => {
-    it('should return correct OAuthUserPayload with provider="facebook"', async () => {
+    it('should return correct OAuthUserPayload with provider="facebook"', () => {
       const profile = buildFacebookProfile();
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result).toEqual({
         provider: OAUTH_PROVIDER.FACEBOOK,
@@ -59,81 +59,81 @@ describe('FacebookStrategy', () => {
       });
     });
 
-    it('should throw UnauthorizedException when email is missing (no emails array)', async () => {
+    it('should throw UnauthorizedException when email is missing (no emails array)', () => {
       const profile = buildFacebookProfile({ emails: undefined });
 
-      await expect(strategy.validate('access-token', 'refresh-token', profile)).rejects.toThrow(
+      expect(() => strategy.validate('access-token', 'refresh-token', profile)).toThrow(
         UnauthorizedException,
       );
-      await expect(strategy.validate('access-token', 'refresh-token', profile)).rejects.toThrow(
+      expect(() => strategy.validate('access-token', 'refresh-token', profile)).toThrow(
         OAuthErrorCode.EMAIL_NOT_VERIFIED,
       );
     });
 
-    it('should throw UnauthorizedException when emails array is empty', async () => {
+    it('should throw UnauthorizedException when emails array is empty', () => {
       const profile = buildFacebookProfile({ emails: [] });
 
-      await expect(strategy.validate('access-token', 'refresh-token', profile)).rejects.toThrow(
+      expect(() => strategy.validate('access-token', 'refresh-token', profile)).toThrow(
         UnauthorizedException,
       );
-      await expect(strategy.validate('access-token', 'refresh-token', profile)).rejects.toThrow(
+      expect(() => strategy.validate('access-token', 'refresh-token', profile)).toThrow(
         OAuthErrorCode.EMAIL_NOT_VERIFIED,
       );
     });
 
-    it('should extract displayName correctly', async () => {
+    it('should extract displayName correctly', () => {
       const profile = buildFacebookProfile({ displayName: 'Jane Doe' });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.name).toBe('Jane Doe');
     });
 
-    it('should fallback to empty string when displayName is missing', async () => {
+    it('should fallback to empty string when displayName is missing', () => {
       const profile = buildFacebookProfile({ displayName: '' });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.name).toBe('');
     });
 
-    it('should extract photo URL from photos array', async () => {
+    it('should extract photo URL from photos array', () => {
       const profile = buildFacebookProfile({
         photos: [{ value: 'https://example.com/photo.jpg' }],
       });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.picture).toBe('https://example.com/photo.jpg');
     });
 
-    it('should return null picture when photos array is missing', async () => {
+    it('should return null picture when photos array is missing', () => {
       const profile = buildFacebookProfile({ photos: undefined });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.picture).toBeNull();
     });
 
-    it('should return null picture when photos array is empty', async () => {
+    it('should return null picture when photos array is empty', () => {
       const profile = buildFacebookProfile({ photos: [] });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.picture).toBeNull();
     });
 
-    it('should use the first email when multiple emails are present', async () => {
+    it('should use the first email when multiple emails are present', () => {
       const profile = buildFacebookProfile({
         emails: [{ value: 'primary@example.com' }, { value: 'secondary@example.com' }],
       });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.email).toBe('primary@example.com');
     });
 
-    it('should use the first photo when multiple photos are present', async () => {
+    it('should use the first photo when multiple photos are present', () => {
       const profile = buildFacebookProfile({
         photos: [
           { value: 'https://example.com/photo1.jpg' },
@@ -141,15 +141,15 @@ describe('FacebookStrategy', () => {
         ],
       });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.picture).toBe('https://example.com/photo1.jpg');
     });
 
-    it('should use profile.id as providerAccountId', async () => {
+    it('should use profile.id as providerAccountId', () => {
       const profile = buildFacebookProfile({ id: 'fb-unique-999' });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.providerAccountId).toBe('fb-unique-999');
     });

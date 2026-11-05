@@ -1,4 +1,4 @@
-import { IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
+import { type IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../../common/enums/media-type.enum';
 import { ImageMapper } from '../../../../../common/mappers/image.mapper';
 import { hasRecentEpisode } from '../../../../../common/utils/media.utils';

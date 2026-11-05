@@ -28,6 +28,7 @@ import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
 import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipeline';
 import { TrendingPipeline } from './application/pipelines/trending.pipeline';
 import { BulkJobService } from './application/services/bulk-job.service';
+import { IngestionJobStatusService } from './application/services/ingestion-job-status.service';
 import { IngestionSchedulerService } from './application/services/ingestion-scheduler.service';
 import { MediaPageCacheService } from './application/services/media-page-cache.service';
 import { SnapshotsService } from './application/services/snapshots.service';
@@ -39,6 +40,7 @@ import { RatingsBackfillWorker } from './application/workers/ratings-backfill.wo
 import { SyncWorker } from './application/workers/sync.worker';
 import { AGGREGATED_RATINGS_PORT } from './domain/ports/aggregated-ratings.port';
 import { EPISODE_SCHEDULE_PORT } from './domain/ports/episode-schedule.port';
+import { INGESTION_JOB_STATUS_PORT } from './domain/ports/ingestion-job-status.port';
 import { ROTTEN_TOMATOES_RATINGS_PORT } from './domain/ports/rotten-tomatoes-ratings.port';
 import { WEB_PAGE_CACHE_PORT } from './domain/ports/web-page-cache.port';
 import { ALT_TITLES_BACKFILL_REPOSITORY } from './domain/repositories/alt-titles-backfill.repository.interface';
@@ -46,6 +48,7 @@ import { IMDB_BACKFILL_REPOSITORY } from './domain/repositories/imdb-backfill.re
 import { ROTTEN_TOMATOES_BACKFILL_REPOSITORY } from './domain/repositories/rotten-tomatoes-backfill.repository.interface';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
 import { TRACKED_SHOW_REPOSITORY } from './domain/repositories/tracked-show.repository.interface';
+import { BullMqIngestionJobStatusAdapter } from './infrastructure/adapters/job-status/bullmq-ingestion-job-status.adapter';
 import { MdblistAdapter } from './infrastructure/adapters/mdblist/mdblist.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
@@ -129,6 +132,10 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       provide: WEB_PAGE_CACHE_PORT,
       useClass: NextRevalidateAdapter,
     },
+    {
+      provide: INGESTION_JOB_STATUS_PORT,
+      useClass: BullMqIngestionJobStatusAdapter,
+    },
     MediaPageCacheService,
     {
       provide: AGGREGATED_RATINGS_PORT,
@@ -145,6 +152,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     TvMazeEnrichmentService,
     BulkJobService,
     SyncMediaService,
+    IngestionJobStatusService,
     TrackedSyncService,
     SnapshotsService,
     ...workerOnly(SyncWorker, BackfillWorker, RatingsBackfillWorker, IngestionSchedulerService),

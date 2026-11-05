@@ -81,7 +81,7 @@ export class AuthService {
     newPassword: string,
   ): Promise<void> {
     const user = await this.usersService.getById(userId);
-    if (!user || !user.passwordHash) {
+    if (!user?.passwordHash) {
       throw new ForbiddenException('Invalid credentials');
     }
 
