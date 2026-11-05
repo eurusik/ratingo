@@ -4,7 +4,7 @@ import { type ISitemapRepository } from '../../domain/repositories/sitemap.repos
 import { CatalogSitemapService } from './catalog-sitemap.service';
 
 describe('CatalogSitemapService', () => {
-  const items = [{ slug: 'slug', updatedAt: '2026-01-01T00:00:00.000Z' }];
+  const items = [{ slug: 'slug', updatedAt: new Date('2026-01-01T00:00:00.000Z') }];
   let repository: jest.Mocked<ISitemapRepository>;
   let service: CatalogSitemapService;
 

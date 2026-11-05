@@ -144,32 +144,36 @@ export class PolicyInputRepository implements IPolicyInputRepository {
    * Uses cursor-based pagination with ordered results.
    */
   async fetchBatchIds(options: FetchBatchIdsOptions): Promise<string[]> {
-    const { batchSize, cursor, snapshotCutoff, updatedAfter } = options;
+    const { batchSize, cursor, updatedAtWindow } = options;
 
     const conditions = [
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       isNull(schema.mediaItems.deletedAt),
     ];
 
-    if (snapshotCutoff) {
-      conditions.push(lte(schema.mediaItems.updatedAt, snapshotCutoff));
-    }
-
-    if (updatedAfter) {
-      conditions.push(gt(schema.mediaItems.updatedAt, updatedAfter));
+    if (updatedAtWindow) {
+      conditions.push(
+        'updatedAfter' in updatedAtWindow
+          ? gt(schema.mediaItems.updatedAt, updatedAtWindow.updatedAfter)
+          : lte(schema.mediaItems.updatedAt, updatedAtWindow.updatedAtOrBefore),
+      );
     }
 
     if (cursor) {
       conditions.push(gt(schema.mediaItems.id, cursor));
     }
 
-    const result = await withDbError('fetch evaluation batch ids', this.logger, () =>
-      this.db
-        .select({ id: schema.mediaItems.id })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .orderBy(schema.mediaItems.id)
-        .limit(batchSize),
+    const result = await withDbError(
+      'fetch evaluation batch ids',
+      this.logger,
+      () =>
+        this.db
+          .select({ id: schema.mediaItems.id })
+          .from(schema.mediaItems)
+          .where(and(...conditions))
+          .orderBy(schema.mediaItems.id)
+          .limit(batchSize),
+      { cursor, batchSize },
     );
 
     return result.map((row) => row.id);

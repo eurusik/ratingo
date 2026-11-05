@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import {
   type ShowSyncDiff,
   createEmptyDiff,
@@ -10,6 +11,7 @@ import {
 import {
   TRACKED_SHOW_REPOSITORY,
   type ITrackedShowRepository,
+  type TrackedShow,
 } from '../../domain/repositories/tracked-show.repository.interface';
 
 import { SyncMediaService } from './sync-media.service';
@@ -37,6 +39,8 @@ export class TrackedSyncService {
   constructor(
     @Inject(TRACKED_SHOW_REPOSITORY)
     private readonly trackedShowRepository: ITrackedShowRepository,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
     private readonly syncMediaService: SyncMediaService,
   ) {}
 
@@ -60,11 +64,9 @@ export class TrackedSyncService {
     return this.buildCurrentStateDiff(tmdbId, snapshot, beforeStatus?.status ?? null);
   }
 
-  private async getShowStatus(
-    tmdbId: number,
-  ): Promise<{ mediaItemId: string; status: string | null } | null> {
+  private async getShowStatus(tmdbId: number): Promise<TrackedShow | null> {
     try {
-      return await this.trackedShowRepository.findShowStatus(tmdbId);
+      return await this.trackedShowRepository.findByTmdbId(tmdbId);
     } catch (error) {
       this.logger.warn(`Failed to get show status for tmdbId=${tmdbId}: ${error.message}`);
       return null;
@@ -73,18 +75,21 @@ export class TrackedSyncService {
 
   private async getShowSnapshot(tmdbId: number): Promise<ShowSnapshot | null> {
     try {
-      const show = await this.trackedShowRepository.findShowCore(tmdbId);
+      const show = await this.trackedShowRepository.findByTmdbId(tmdbId);
 
       if (!show) {
         return null;
       }
 
-      const lastEpisode = await this.trackedShowRepository.findLastAiredEpisode(tmdbId);
+      const lastEpisode = await this.trackedShowRepository.findLatestEpisodeAiredBy(
+        tmdbId,
+        this.clock.now(),
+      );
 
       const lastEpisodeKey = lastEpisode
         ? formatEpisodeKey(lastEpisode.seasonNumber, lastEpisode.episodeNumber)
         : null;
-      const lastEpisodeAirDate = lastEpisode ? lastEpisode.airDate : null;
+      const lastEpisodeAirDate = lastEpisode?.airDate ?? null;
 
       return {
         mediaItemId: show.mediaItemId,

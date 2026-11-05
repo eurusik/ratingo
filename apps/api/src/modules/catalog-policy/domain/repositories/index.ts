@@ -6,6 +6,7 @@ export {
   POLICY_INPUT_REPOSITORY,
   type IPolicyInputRepository,
   type FetchBatchIdsOptions,
+  type UpdatedAtWindow,
 } from './policy-input.repository.interface';
 
 export {

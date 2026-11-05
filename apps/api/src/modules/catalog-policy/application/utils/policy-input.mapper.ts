@@ -2,7 +2,7 @@
  * Policy Input Mapper
  *
  * Shared utility for mapping database rows to PolicyEngineInput.
- * Used by CatalogEvaluationService and DryRunService.
+ * Used by PolicyInputRepository and DryRunService.
  */
 
 import { type Logger } from '@nestjs/common';

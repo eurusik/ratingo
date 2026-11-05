@@ -27,6 +27,7 @@ import {
   POLICY_INPUT_REPOSITORY,
   type ICatalogEvaluationRunRepository,
   type IPolicyInputRepository,
+  type UpdatedAtWindow,
 } from '../../../domain/repositories';
 import { RunFinalizeService } from '../../services/run-finalize.service';
 import type { ReEvaluateAllPayload, EvaluateCatalogItemPayload } from '../types/job-payloads';
@@ -81,6 +82,11 @@ export class ReEvaluateAllHandler {
       return;
     }
 
+    const updatedAtWindow = this.toUpdatedAtWindow(run.snapshotCutoff, afterSnapshot);
+    if (!updatedAtWindow) {
+      this.logger.warn(`Run ${runId} has no snapshotCutoff, no items will be dispatched`);
+    }
+
     let { cursor } = payload;
     let totalDispatched = 0;
 
@@ -91,7 +97,9 @@ export class ReEvaluateAllHandler {
         return;
       }
 
-      const batch = await this.fetchBatch(run.snapshotCutoff!, batchSize, cursor, afterSnapshot);
+      const batch = updatedAtWindow
+        ? await this.policyInputRepository.fetchBatchIds({ batchSize, cursor, updatedAtWindow })
+        : [];
 
       if (batch.length === 0) {
         if (afterSnapshot) {
@@ -137,22 +145,12 @@ export class ReEvaluateAllHandler {
     }
   }
 
-  /**
-   * Fetches batch of media items for evaluation.
-   * Snapshot mode: items updated at or before the cutoff.
-   * After-snapshot mode: items updated after the cutoff (synced while the run was in progress).
-   */
-  private fetchBatch(
-    snapshotCutoff: Date,
-    batchSize: number,
-    cursor?: string,
-    afterSnapshot = false,
-  ): Promise<string[]> {
-    return this.policyInputRepository.fetchBatchIds({
-      batchSize,
-      cursor,
-      ...(afterSnapshot ? { updatedAfter: snapshotCutoff } : { snapshotCutoff }),
-    });
+  private toUpdatedAtWindow(
+    snapshotCutoff: Date | null,
+    afterSnapshot: boolean,
+  ): UpdatedAtWindow | null {
+    if (!snapshotCutoff) return null;
+    return afterSnapshot ? { updatedAfter: snapshotCutoff } : { updatedAtOrBefore: snapshotCutoff };
   }
 
   /**

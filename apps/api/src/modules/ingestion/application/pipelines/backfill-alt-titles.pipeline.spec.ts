@@ -6,16 +6,16 @@ import { formatUtcDayId } from '@/common/utils/date.util';
 
 import { MEDIA_REPOSITORY } from '../../../catalog/public';
 import { TmdbAdapter } from '../../../tmdb/public';
-import { MEDIA_BACKFILL_REPOSITORY } from '../../domain/repositories/media-backfill.repository.interface';
+import { ALT_TITLES_BACKFILL_REPOSITORY } from '../../domain/repositories/alt-titles-backfill.repository.interface';
 import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
 
 import { BackfillAltTitlesPipeline } from './backfill-alt-titles.pipeline';
 
-function buildRepositoryMock(selectBatches: Array<Array<Record<string, unknown>>>) {
+function buildRepositoryMock(candidateBatches: Array<Array<Record<string, unknown>>>) {
   let batchIndex = 0;
   return {
-    findAltTitlesBackfillCandidates: jest.fn().mockImplementation(() => {
-      const batch = selectBatches[batchIndex] ?? [];
+    findCandidates: jest.fn().mockImplementation(() => {
+      const batch = candidateBatches[batchIndex] ?? [];
       batchIndex += 1;
       return Promise.resolve(batch);
     }),
@@ -26,13 +26,16 @@ describe('BackfillAltTitlesPipeline', () => {
   let pipeline: BackfillAltTitlesPipeline;
   let queueAddBulk: jest.Mock;
 
-  const setupPipeline = async (selectBatches: Array<Array<Record<string, unknown>>>) => {
+  const setupPipeline = async (candidateBatches: Array<Array<Record<string, unknown>>>) => {
     queueAddBulk = jest.fn().mockResolvedValue([]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BackfillAltTitlesPipeline,
-        { provide: MEDIA_BACKFILL_REPOSITORY, useValue: buildRepositoryMock(selectBatches) },
+        {
+          provide: ALT_TITLES_BACKFILL_REPOSITORY,
+          useValue: buildRepositoryMock(candidateBatches),
+        },
         { provide: getQueueToken(BACKFILL_QUEUE), useValue: { addBulk: queueAddBulk } },
         { provide: TmdbAdapter, useValue: { getAlternativeTitles: jest.fn() } },
         { provide: MEDIA_REPOSITORY, useValue: { updateAlternativeTitles: jest.fn() } },

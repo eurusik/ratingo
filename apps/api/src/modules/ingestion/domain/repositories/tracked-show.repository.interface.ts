@@ -1,27 +1,19 @@
-export interface TrackedShowStatus {
-  mediaItemId: string;
-  status: string | null;
-}
-
-export interface TrackedShowCore {
+export interface TrackedShow {
   mediaItemId: string;
   status: string | null;
   totalSeasons: number | null;
   nextAirDate: Date | null;
 }
 
-export interface LastAiredEpisode {
+export interface AiredEpisode {
   seasonNumber: number;
   episodeNumber: number;
   airDate: Date | null;
 }
 
 export interface ITrackedShowRepository {
-  findShowStatus(tmdbId: number): Promise<TrackedShowStatus | null>;
-
-  findShowCore(tmdbId: number): Promise<TrackedShowCore | null>;
-
-  findLastAiredEpisode(tmdbId: number): Promise<LastAiredEpisode | null>;
+  findByTmdbId(tmdbId: number): Promise<TrackedShow | null>;
+  findLatestEpisodeAiredBy(tmdbId: number, airedBy: Date): Promise<AiredEpisode | null>;
 }
 
 export const TRACKED_SHOW_REPOSITORY = Symbol('TRACKED_SHOW_REPOSITORY');

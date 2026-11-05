@@ -151,6 +151,11 @@ describe('ReEvaluateAllHandler', () => {
 
         await handler.handle(validPayload);
 
+        expect(mockPolicyInputRepository.fetchBatchIds).toHaveBeenCalledWith({
+          batchSize: 100,
+          cursor: undefined,
+          updatedAtWindow: { updatedAtOrBefore: mockRun.snapshotCutoff },
+        });
         expect(mockQueue.addBulk).toHaveBeenCalledWith(
           expect.arrayContaining([
             expect.objectContaining({
@@ -256,7 +261,7 @@ describe('ReEvaluateAllHandler', () => {
         expect(mockPolicyInputRepository.fetchBatchIds).toHaveBeenCalledWith({
           batchSize: 100,
           cursor: undefined,
-          updatedAfter: mockRun.snapshotCutoff,
+          updatedAtWindow: { updatedAfter: mockRun.snapshotCutoff },
         });
         expect(mockRunRepository.update).not.toHaveBeenCalled();
         expect(mockFinalizeService.finalizeRun).not.toHaveBeenCalled();
@@ -272,6 +277,17 @@ describe('ReEvaluateAllHandler', () => {
 
         await handler.handle(validPayload);
 
+        expect(mockFinalizeService.finalizeRun).toHaveBeenCalledWith('run-123');
+      });
+
+      it('should finalize without fetching when the run has no snapshot cutoff', async () => {
+        mockRunRepository.findById.mockResolvedValue({ ...mockRun, snapshotCutoff: null });
+        mockFinalizeService.finalizeRun.mockResolvedValue({ finalized: true });
+
+        await handler.handle(validPayload);
+
+        expect(mockPolicyInputRepository.fetchBatchIds).not.toHaveBeenCalled();
+        expect(mockQueue.addBulk).not.toHaveBeenCalled();
         expect(mockFinalizeService.finalizeRun).toHaveBeenCalledWith('run-123');
       });
 

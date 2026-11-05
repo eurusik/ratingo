@@ -12,14 +12,14 @@ const buildDb = (orderByResult: Promise<unknown>) => {
 };
 
 describe('DrizzleSitemapRepository', () => {
-  it('maps rows to slug and ISO updatedAt', async () => {
+  it('returns ready items ordered by slug', async () => {
     const updatedAt = new Date('2026-01-02T03:04:05.000Z');
     const { db, where, orderBy } = buildDb(Promise.resolve([{ slug: 'dune', updatedAt }]));
     const repository = new DrizzleSitemapRepository(db as never);
 
     const items = await repository.findReadyItems(MediaType.MOVIE);
 
-    expect(items).toEqual([{ slug: 'dune', updatedAt: '2026-01-02T03:04:05.000Z' }]);
+    expect(items).toEqual([{ slug: 'dune', updatedAt }]);
     expect(where).toHaveBeenCalledTimes(1);
     expect(orderBy).toHaveBeenCalledTimes(1);
   });

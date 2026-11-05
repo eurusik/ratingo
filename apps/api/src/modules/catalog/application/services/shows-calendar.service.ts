@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import {
   WATCHING_SHOWS_COUNT_PORT,
-  type WatchingShowsCountPort,
+  type IWatchingShowsCountPort,
 } from '../../domain/ports/watching-shows-count.port';
 
 /**
@@ -13,7 +13,7 @@ import {
 export class ShowsCalendarService {
   constructor(
     @Inject(WATCHING_SHOWS_COUNT_PORT)
-    private readonly watchingShowsCount: WatchingShowsCountPort,
+    private readonly watchingShowsCounter: IWatchingShowsCountPort,
   ) {}
 
   /**
@@ -25,6 +25,6 @@ export class ShowsCalendarService {
    * @returns Count of shows the user is currently watching
    */
   getWatchingShowsCount(userId: string): Promise<number> {
-    return this.watchingShowsCount.execute(userId);
+    return this.watchingShowsCounter.countWatchingShows(userId);
   }
 }

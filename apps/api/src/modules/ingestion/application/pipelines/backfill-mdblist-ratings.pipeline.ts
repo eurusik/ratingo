@@ -9,14 +9,15 @@ import { formatUtcDayId } from '@/common/utils/date.util';
 
 import { buildMdblistRatingsJobId } from '../../domain/job-ids';
 import {
+  hasRottenTomatoesRatings,
   ROTTEN_TOMATOES_RATINGS_PORT,
   type RottenTomatoesRatingsPort,
 } from '../../domain/ports/rotten-tomatoes-ratings.port';
 import {
-  MEDIA_BACKFILL_REPOSITORY,
-  type IMediaBackfillRepository,
-  type RtBackfillCandidate,
-} from '../../domain/repositories/media-backfill.repository.interface';
+  ROTTEN_TOMATOES_BACKFILL_REPOSITORY,
+  type IRottenTomatoesBackfillRepository,
+  type RottenTomatoesBackfillCandidate,
+} from '../../domain/repositories/rotten-tomatoes-backfill.repository.interface';
 import {
   BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
   IngestionJob,
@@ -47,16 +48,17 @@ interface PendingJobsSnapshot {
  *     to 40/hour) calls MDBList and writes the two RT fields directly.
  *
  * Writes bypass the full persistence mapper — this is a targeted rating
- * update, not a full media re-sync. Direct UPDATE keeps other columns
- * untouched and avoids any risk of regressing the sync flow.
+ * update, not a full media re-sync. `updatedAt` is bumped only when rating
+ * data changed, so cache invalidation keyed on it is not flooded by every
+ * rtFetchedAt stamp.
  */
 @Injectable()
 export class BackfillMdblistRatingsPipeline {
   private readonly logger = new Logger(BackfillMdblistRatingsPipeline.name);
 
   constructor(
-    @Inject(MEDIA_BACKFILL_REPOSITORY)
-    private readonly mediaBackfillRepository: IMediaBackfillRepository,
+    @Inject(ROTTEN_TOMATOES_BACKFILL_REPOSITORY)
+    private readonly backfillRepository: IRottenTomatoesBackfillRepository,
     @InjectQueue(RATINGS_BACKFILL_QUEUE)
     private readonly queue: Queue,
     @Inject(ROTTEN_TOMATOES_RATINGS_PORT)
@@ -66,11 +68,8 @@ export class BackfillMdblistRatingsPipeline {
   /**
    * Dispatcher: finds items missing RT data and queues MDBList item jobs.
    *
-   * Selection criteria:
-   *   - tmdbId IS NOT NULL                              (MDBList lookup is TMDB-keyed)
-   *   - (ratingRottenTomatoes IS NULL OR ratingRottenTomatoesAudience IS NULL)
-   *   - rtFetchedAt IS NULL OR older than refresh window
-   *   - deletedAt IS NULL
+   * Candidates have a TMDB id, at least one missing RT score and no fetch
+   * within the refresh window.
    *
    * The `rtFetchedAt` check is critical for free-tier cadence: without it,
    * items that MDBList legitimately has no RT data for would be re-polled
@@ -96,11 +95,11 @@ export class BackfillMdblistRatingsPipeline {
     let cursor: string | undefined;
 
     while (remainingBudget > 0) {
-      const candidates = await this.mediaBackfillRepository.findRtBackfillCandidates(
-        staleBefore,
+      const candidates = await this.backfillRepository.findCandidates({
+        fetchedBefore: staleBefore,
         cursor,
-        BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
-      );
+        limit: BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
+      });
       if (candidates.length === 0) break;
 
       const jobs = candidates
@@ -134,7 +133,7 @@ export class BackfillMdblistRatingsPipeline {
     return { jobCount, mediaItemIds };
   }
 
-  private toItemJob(candidate: RtBackfillCandidate, day: string) {
+  private toItemJob(candidate: RottenTomatoesBackfillCandidate, day: string) {
     return {
       name: IngestionJob.BACKFILL_MDBLIST_RATINGS_ITEM,
       data: {
@@ -162,7 +161,7 @@ export class BackfillMdblistRatingsPipeline {
   }
 
   /**
-   * Item job: fetches RT ratings from MDBList and updates DB directly.
+   * Item job: fetches RT ratings from MDBList and saves them with the fetch stamp.
    *
    * Stamps `rtFetchedAt` only after a successful fetch or a genuine not-found
    * (adapter returns null fields for 404 / no RT entries), so the dispatcher
@@ -190,10 +189,7 @@ export class BackfillMdblistRatingsPipeline {
 
     // Pre-check: skip if this row was already processed within the refresh
     // window. Saves an MDBList quota unit per redundant job.
-    const rtFetchedAt = await this.mediaBackfillRepository.findRtFetchedAt(
-      data.mediaItemId,
-      data.tmdbId,
-    );
+    const rtFetchedAt = await this.backfillRepository.findLastFetchedAt(data.mediaItemId);
 
     if (rtFetchedAt) {
       const staleBefore = new Date(Date.now() - MDBLIST_RATINGS_REFRESH_DAYS * MS_PER_DAY);
@@ -210,10 +206,13 @@ export class BackfillMdblistRatingsPipeline {
       data.type,
     );
 
-    await this.mediaBackfillRepository.markRtFetched(data.mediaItemId, data.tmdbId, ratings);
-
-    const wroteRatings =
-      ratings.rottenTomatoesCritics != null || ratings.rottenTomatoesAudience != null;
+    const wroteRatings = hasRottenTomatoesRatings(ratings);
+    const fetchedAt = new Date();
+    await this.backfillRepository.saveFetchResult(data.mediaItemId, {
+      fetchedAt,
+      ratings,
+      ratingsChangedAt: wroteRatings ? fetchedAt : null,
+    });
 
     if (wroteRatings) {
       this.logger.debug(

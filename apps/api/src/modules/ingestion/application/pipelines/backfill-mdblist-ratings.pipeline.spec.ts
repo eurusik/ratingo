@@ -7,7 +7,7 @@ import {
   ROTTEN_TOMATOES_RATINGS_PORT,
   type RottenTomatoesRatingsPort,
 } from '../../domain/ports/rotten-tomatoes-ratings.port';
-import { MEDIA_BACKFILL_REPOSITORY } from '../../domain/repositories/media-backfill.repository.interface';
+import { ROTTEN_TOMATOES_BACKFILL_REPOSITORY } from '../../domain/repositories/rotten-tomatoes-backfill.repository.interface';
 import {
   BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
   IngestionJob,
@@ -19,22 +19,22 @@ import {
 import { BackfillMdblistRatingsPipeline } from './backfill-mdblist-ratings.pipeline';
 
 interface RepositorySetup {
-  selectBatches?: Array<Array<Record<string, unknown>>>;
+  candidateBatches?: Array<Array<Record<string, unknown>>>;
   rtFetchedAt?: Date | null;
 }
 
 function buildRepositoryMock(options: RepositorySetup) {
-  const { selectBatches = [[]], rtFetchedAt = null } = options;
+  const { candidateBatches = [[]], rtFetchedAt = null } = options;
   let batchIndex = 0;
 
   return {
-    findRtBackfillCandidates: jest.fn().mockImplementation(() => {
-      const batch = selectBatches[batchIndex] ?? [];
+    findCandidates: jest.fn().mockImplementation(() => {
+      const batch = candidateBatches[batchIndex] ?? [];
       batchIndex += 1;
       return Promise.resolve(batch);
     }),
-    findRtFetchedAt: jest.fn().mockResolvedValue(rtFetchedAt),
-    markRtFetched: jest.fn().mockResolvedValue(undefined),
+    findLastFetchedAt: jest.fn().mockResolvedValue(rtFetchedAt),
+    saveFetchResult: jest.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -57,7 +57,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
   let repository: ReturnType<typeof buildRepositoryMock>;
   let queueAddBulk: jest.Mock;
   let queueGetJobs: jest.Mock;
-  let mdblistAdapter: jest.Mocked<RottenTomatoesRatingsPort>;
+  let rottenTomatoesRatings: jest.Mocked<RottenTomatoesRatingsPort>;
 
   const setupPipeline = async (
     repositorySetup: RepositorySetup = {},
@@ -68,7 +68,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
     queueAddBulk = jest.fn().mockResolvedValue([]);
     queueGetJobs = jest.fn().mockResolvedValue(queuedJobs);
 
-    mdblistAdapter = {
+    rottenTomatoesRatings = {
       getRottenTomatoesRatings: jest.fn(),
       isConfigured: jest.fn().mockReturnValue(true),
     };
@@ -76,12 +76,12 @@ describe('BackfillMdblistRatingsPipeline', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BackfillMdblistRatingsPipeline,
-        { provide: MEDIA_BACKFILL_REPOSITORY, useValue: repository },
+        { provide: ROTTEN_TOMATOES_BACKFILL_REPOSITORY, useValue: repository },
         {
           provide: getQueueToken(RATINGS_BACKFILL_QUEUE),
           useValue: { addBulk: queueAddBulk, getJobs: queueGetJobs },
         },
-        { provide: ROTTEN_TOMATOES_RATINGS_PORT, useValue: mdblistAdapter },
+        { provide: ROTTEN_TOMATOES_RATINGS_PORT, useValue: rottenTomatoesRatings },
       ],
     }).compile();
 
@@ -91,7 +91,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
   describe('dispatch', () => {
     it('queues item jobs for rows returned by the DB batch', async () => {
       await setupPipeline({
-        selectBatches: [
+        candidateBatches: [
           [
             { id: 'media-1', tmdbId: 101, type: MediaType.MOVIE },
             { id: 'media-2', tmdbId: 202, type: MediaType.SHOW },
@@ -117,7 +117,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
     it('encodes the UTC day into jobId so stuck jobs do not block next day', async () => {
       await setupPipeline({
-        selectBatches: [[{ id: 'media-1', tmdbId: 101, type: MediaType.MOVIE }], []],
+        candidateBatches: [[{ id: 'media-1', tmdbId: 101, type: MediaType.MOVIE }], []],
       });
 
       await pipeline.dispatch();
@@ -128,7 +128,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
     it('paginates through multiple batches using id cursor', async () => {
       await setupPipeline({
-        selectBatches: [
+        candidateBatches: [
           [
             { id: 'media-1', tmdbId: 1, type: MediaType.MOVIE },
             { id: 'media-2', tmdbId: 2, type: MediaType.MOVIE },
@@ -140,7 +140,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
       await pipeline.dispatch();
 
-      expect(repository.findRtBackfillCandidates).toHaveBeenCalledTimes(3);
+      expect(repository.findCandidates).toHaveBeenCalledTimes(3);
       expect(queueAddBulk).toHaveBeenCalledTimes(2);
       expect(queueAddBulk.mock.calls[0][0]).toHaveLength(2);
       expect(queueAddBulk.mock.calls[1][0]).toHaveLength(1);
@@ -148,18 +148,18 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
     it('skips the run without querying or queueing when MDBLIST_API_KEY is missing', async () => {
       await setupPipeline({
-        selectBatches: [[{ id: 'media-1', tmdbId: 1, type: MediaType.MOVIE }]],
+        candidateBatches: [[{ id: 'media-1', tmdbId: 1, type: MediaType.MOVIE }]],
       });
-      mdblistAdapter.isConfigured.mockReturnValue(false);
+      rottenTomatoesRatings.isConfigured.mockReturnValue(false);
 
       await pipeline.dispatch();
 
-      expect(repository.findRtBackfillCandidates).not.toHaveBeenCalled();
+      expect(repository.findCandidates).not.toHaveBeenCalled();
       expect(queueAddBulk).not.toHaveBeenCalled();
     });
 
     it('does not queue anything when no rows match the filter', async () => {
-      await setupPipeline({ selectBatches: [[]] });
+      await setupPipeline({ candidateBatches: [[]] });
 
       await pipeline.dispatch();
 
@@ -168,7 +168,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
     it('defensively filters out rows with null tmdbId', async () => {
       await setupPipeline({
-        selectBatches: [
+        candidateBatches: [
           [
             { id: 'media-1', tmdbId: 101, type: MediaType.MOVIE },
             { id: 'media-2', tmdbId: null, type: MediaType.SHOW },
@@ -194,7 +194,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
         type: MediaType.MOVIE,
       }));
       const manyBatches = Array.from({ length: 20 }, () => batch);
-      await setupPipeline({ selectBatches: manyBatches });
+      await setupPipeline({ candidateBatches: manyBatches });
 
       await pipeline.dispatch();
 
@@ -209,7 +209,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
     });
 
     it('looks up queued jobs in every pending state but not failed or completed', async () => {
-      await setupPipeline({ selectBatches: [[]] });
+      await setupPipeline({ candidateBatches: [[]] });
 
       await pipeline.dispatch();
 
@@ -224,7 +224,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
     it('does not re-queue items that already have a pending job from an earlier day', async () => {
       await setupPipeline(
         {
-          selectBatches: [
+          candidateBatches: [
             [
               { id: 'media-1', tmdbId: 101, type: MediaType.MOVIE },
               { id: 'media-2', tmdbId: 202, type: MediaType.SHOW },
@@ -245,13 +245,13 @@ describe('BackfillMdblistRatingsPipeline', () => {
     it('counts already-queued items toward the daily budget', async () => {
       const batch = candidateRows(100);
       await setupPipeline(
-        { selectBatches: [batch, batch, []] },
+        { candidateBatches: [batch, batch, []] },
         pendingJobs(MDBLIST_DAILY_BUDGET - 50),
       );
 
       await pipeline.dispatch();
 
-      expect(repository.findRtBackfillCandidates).toHaveBeenCalledTimes(1);
+      expect(repository.findCandidates).toHaveBeenCalledTimes(1);
       expect(queueAddBulk).toHaveBeenCalledTimes(1);
       expect(queueAddBulk.mock.calls[0][0]).toHaveLength(50);
     });
@@ -260,7 +260,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
       const duplicate = {
         data: { mediaItemId: 'duplicated-item', tmdbId: 400_000, type: MediaType.MOVIE },
       };
-      await setupPipeline({ selectBatches: [candidateRows(100), []] }, [
+      await setupPipeline({ candidateBatches: [candidateRows(100), []] }, [
         duplicate,
         duplicate,
         ...pendingJobs(MDBLIST_DAILY_BUDGET - 52),
@@ -273,7 +273,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
     it('queues a show whose tmdbId matches an already-queued movie', async () => {
       await setupPipeline(
-        { selectBatches: [[{ id: 'show-101', tmdbId: 101, type: MediaType.SHOW }], []] },
+        { candidateBatches: [[{ id: 'show-101', tmdbId: 101, type: MediaType.SHOW }], []] },
         [{ data: { mediaItemId: 'movie-101', tmdbId: 101, type: MediaType.MOVIE } }],
       );
 
@@ -286,7 +286,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
     it('gives a movie and a show with the same tmdbId distinct jobIds', async () => {
       await setupPipeline({
-        selectBatches: [
+        candidateBatches: [
           [
             { id: 'movie-101', tmdbId: 101, type: MediaType.MOVIE },
             { id: 'show-101', tmdbId: 101, type: MediaType.SHOW },
@@ -302,26 +302,26 @@ describe('BackfillMdblistRatingsPipeline', () => {
     });
 
     it('scans the DB in full batches even when little budget is left', async () => {
-      await setupPipeline({ selectBatches: [[]] }, pendingJobs(MDBLIST_DAILY_BUDGET - 20));
+      await setupPipeline({ candidateBatches: [[]] }, pendingJobs(MDBLIST_DAILY_BUDGET - 20));
 
       await pipeline.dispatch();
 
-      expect(repository.findRtBackfillCandidates).toHaveBeenCalledWith(
-        expect.any(Date),
-        undefined,
-        BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
-      );
+      expect(repository.findCandidates).toHaveBeenCalledWith({
+        fetchedBefore: expect.any(Date),
+        cursor: undefined,
+        limit: BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
+      });
     });
 
     it('queues nothing when the backlog already covers the daily budget', async () => {
       await setupPipeline(
-        { selectBatches: [[{ id: 'media-1', tmdbId: 101, type: MediaType.MOVIE }], []] },
+        { candidateBatches: [[{ id: 'media-1', tmdbId: 101, type: MediaType.MOVIE }], []] },
         pendingJobs(MDBLIST_DAILY_BUDGET),
       );
 
       await pipeline.dispatch();
 
-      expect(repository.findRtBackfillCandidates).not.toHaveBeenCalled();
+      expect(repository.findCandidates).not.toHaveBeenCalled();
       expect(queueAddBulk).not.toHaveBeenCalled();
     });
   });
@@ -335,87 +335,104 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
     it('writes both critics and audience when MDBList returns both', async () => {
       await setupPipeline();
-      mdblistAdapter.getRottenTomatoesRatings.mockResolvedValue({
+      rottenTomatoesRatings.getRottenTomatoesRatings.mockResolvedValue({
         rottenTomatoesCritics: 78,
         rottenTomatoesAudience: 76,
       });
 
       await pipeline.processItem(payload);
 
-      expect(repository.markRtFetched).toHaveBeenCalledWith('media-1', 101, {
-        rottenTomatoesCritics: 78,
-        rottenTomatoesAudience: 76,
+      expect(repository.saveFetchResult).toHaveBeenCalledWith('media-1', {
+        fetchedAt: expect.any(Date),
+        ratings: { rottenTomatoesCritics: 78, rottenTomatoesAudience: 76 },
+        ratingsChangedAt: expect.any(Date),
       });
     });
 
     it('writes only critics when audience is missing', async () => {
       await setupPipeline();
-      mdblistAdapter.getRottenTomatoesRatings.mockResolvedValue({
+      rottenTomatoesRatings.getRottenTomatoesRatings.mockResolvedValue({
         rottenTomatoesCritics: 78,
         rottenTomatoesAudience: null,
       });
 
       await pipeline.processItem(payload);
 
-      expect(repository.markRtFetched).toHaveBeenCalledWith('media-1', 101, {
-        rottenTomatoesCritics: 78,
-        rottenTomatoesAudience: null,
+      expect(repository.saveFetchResult).toHaveBeenCalledWith('media-1', {
+        fetchedAt: expect.any(Date),
+        ratings: { rottenTomatoesCritics: 78, rottenTomatoesAudience: null },
+        ratingsChangedAt: expect.any(Date),
       });
     });
 
     it('writes only audience when critics is missing', async () => {
       await setupPipeline();
-      mdblistAdapter.getRottenTomatoesRatings.mockResolvedValue({
+      rottenTomatoesRatings.getRottenTomatoesRatings.mockResolvedValue({
         rottenTomatoesCritics: null,
         rottenTomatoesAudience: 80,
       });
 
       await pipeline.processItem(payload);
 
-      expect(repository.markRtFetched).toHaveBeenCalledWith('media-1', 101, {
-        rottenTomatoesCritics: null,
-        rottenTomatoesAudience: 80,
+      expect(repository.saveFetchResult).toHaveBeenCalledWith('media-1', {
+        fetchedAt: expect.any(Date),
+        ratings: { rottenTomatoesCritics: null, rottenTomatoesAudience: 80 },
+        ratingsChangedAt: expect.any(Date),
       });
     });
 
     it('stamps rtFetchedAt when MDBList returned nothing (genuine not-found, critical for quota)', async () => {
       await setupPipeline();
-      mdblistAdapter.getRottenTomatoesRatings.mockResolvedValue({
+      rottenTomatoesRatings.getRottenTomatoesRatings.mockResolvedValue({
         rottenTomatoesCritics: null,
         rottenTomatoesAudience: null,
       });
 
       await pipeline.processItem(payload);
 
-      expect(repository.markRtFetched).toHaveBeenCalledTimes(1);
-      expect(repository.markRtFetched).toHaveBeenCalledWith('media-1', 101, {
-        rottenTomatoesCritics: null,
+      expect(repository.saveFetchResult).toHaveBeenCalledTimes(1);
+      expect(repository.saveFetchResult).toHaveBeenCalledWith('media-1', {
+        fetchedAt: expect.any(Date),
+        ratings: { rottenTomatoesCritics: null, rottenTomatoesAudience: null },
+        ratingsChangedAt: null,
+      });
+    });
+
+    it('bumps ratingsChangedAt to the fetch time only when ratings were written', async () => {
+      await setupPipeline();
+      rottenTomatoesRatings.getRottenTomatoesRatings.mockResolvedValue({
+        rottenTomatoesCritics: 78,
         rottenTomatoesAudience: null,
       });
+
+      await pipeline.processItem(payload);
+
+      const [, result] = repository.saveFetchResult.mock.calls[0];
+      expect(result.ratingsChangedAt).toBe(result.fetchedAt);
     });
 
     it('does NOT stamp rtFetchedAt and propagates the error when the adapter throws', async () => {
       await setupPipeline();
-      mdblistAdapter.getRottenTomatoesRatings.mockRejectedValue(new Error('MDBList 429'));
+      rottenTomatoesRatings.getRottenTomatoesRatings.mockRejectedValue(new Error('MDBList 429'));
 
       await expect(pipeline.processItem(payload)).rejects.toThrow('MDBList 429');
 
-      expect(repository.markRtFetched).not.toHaveBeenCalled();
+      expect(repository.saveFetchResult).not.toHaveBeenCalled();
     });
 
     it('skips without fetching or stamping when MDBLIST_API_KEY is not configured', async () => {
       await setupPipeline();
-      mdblistAdapter.isConfigured.mockReturnValue(false);
+      rottenTomatoesRatings.isConfigured.mockReturnValue(false);
 
       await pipeline.processItem(payload);
 
-      expect(mdblistAdapter.getRottenTomatoesRatings).not.toHaveBeenCalled();
-      expect(repository.markRtFetched).not.toHaveBeenCalled();
+      expect(rottenTomatoesRatings.getRottenTomatoesRatings).not.toHaveBeenCalled();
+      expect(repository.saveFetchResult).not.toHaveBeenCalled();
     });
 
     it('calls adapter with the correct tmdbId and type', async () => {
       await setupPipeline();
-      mdblistAdapter.getRottenTomatoesRatings.mockResolvedValue({
+      rottenTomatoesRatings.getRottenTomatoesRatings.mockResolvedValue({
         rottenTomatoesCritics: null,
         rottenTomatoesAudience: null,
       });
@@ -426,19 +443,19 @@ describe('BackfillMdblistRatingsPipeline', () => {
         type: MediaType.SHOW,
       });
 
-      expect(mdblistAdapter.getRottenTomatoesRatings).toHaveBeenCalledWith(42, MediaType.SHOW);
+      expect(rottenTomatoesRatings.getRottenTomatoesRatings).toHaveBeenCalledWith(
+        42,
+        MediaType.SHOW,
+      );
     });
 
     it('skips MDBList call when rtFetchedAt is within refresh window (duplicate quota protection)', async () => {
-      // Seed the select mock with a "fresh" rt_fetched_at row so the
-      // pre-check short-circuits before the adapter is called.
       await setupPipeline({ rtFetchedAt: new Date() });
 
       await pipeline.processItem(payload);
 
-      expect(mdblistAdapter.getRottenTomatoesRatings).not.toHaveBeenCalled();
-      // Pre-check should NOT issue an UPDATE either.
-      expect(repository.markRtFetched).not.toHaveBeenCalled();
+      expect(rottenTomatoesRatings.getRottenTomatoesRatings).not.toHaveBeenCalled();
+      expect(repository.saveFetchResult).not.toHaveBeenCalled();
     });
 
     it('proceeds with MDBList call when rtFetchedAt is older than refresh window', async () => {
@@ -446,15 +463,15 @@ describe('BackfillMdblistRatingsPipeline', () => {
         Date.now() - (MDBLIST_RATINGS_REFRESH_DAYS + 1) * 24 * 60 * 60 * 1000,
       );
       await setupPipeline({ rtFetchedAt: staleDate });
-      mdblistAdapter.getRottenTomatoesRatings.mockResolvedValue({
+      rottenTomatoesRatings.getRottenTomatoesRatings.mockResolvedValue({
         rottenTomatoesCritics: 80,
         rottenTomatoesAudience: 75,
       });
 
       await pipeline.processItem(payload);
 
-      expect(mdblistAdapter.getRottenTomatoesRatings).toHaveBeenCalledTimes(1);
-      expect(repository.markRtFetched).toHaveBeenCalled();
+      expect(rottenTomatoesRatings.getRottenTomatoesRatings).toHaveBeenCalledTimes(1);
+      expect(repository.saveFetchResult).toHaveBeenCalled();
     });
   });
 });

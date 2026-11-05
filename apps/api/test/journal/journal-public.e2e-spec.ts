@@ -27,6 +27,7 @@ import {
 import {
   CreateJournalPostData,
   FindPublishedFilters,
+  type IJournalRepository,
   JOURNAL_REPOSITORY,
   PaginatedPostsResult,
   UpdateJournalPostData,
@@ -39,7 +40,7 @@ import { InMemoryRefreshTokensRepository, InMemoryUsersRepository } from '../use
 /**
  * In-memory journal repository for testing.
  */
-class InMemoryJournalRepository {
+class InMemoryJournalRepository implements IJournalRepository {
   private posts: JournalPost[] = [];
   private idCounter = 0;
 

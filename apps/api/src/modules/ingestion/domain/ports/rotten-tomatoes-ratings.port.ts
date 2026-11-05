@@ -5,6 +5,9 @@ export interface RottenTomatoesRatings {
   rottenTomatoesAudience: number | null;
 }
 
+export const hasRottenTomatoesRatings = (ratings: RottenTomatoesRatings): boolean =>
+  ratings.rottenTomatoesCritics != null || ratings.rottenTomatoesAudience != null;
+
 export interface RottenTomatoesRatingsPort {
   isConfigured(): boolean;
   getRottenTomatoesRatings(tmdbId: number, type: MediaType): Promise<RottenTomatoesRatings>;

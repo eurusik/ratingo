@@ -11,9 +11,9 @@ import { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../../../tmdb/public';
 import { TmdbAdapter } from '../../../tmdb/public';
 import { buildAltTitlesBackfillJobId } from '../../domain/job-ids';
 import {
-  MEDIA_BACKFILL_REPOSITORY,
-  type IMediaBackfillRepository,
-} from '../../domain/repositories/media-backfill.repository.interface';
+  ALT_TITLES_BACKFILL_REPOSITORY,
+  type IAltTitlesBackfillRepository,
+} from '../../domain/repositories/alt-titles-backfill.repository.interface';
 import {
   BACKFILL_ALT_TITLES_BATCH_SIZE,
   BACKFILL_QUEUE,
@@ -35,8 +35,8 @@ export class BackfillAltTitlesPipeline {
   private readonly logger = new Logger(BackfillAltTitlesPipeline.name);
 
   constructor(
-    @Inject(MEDIA_BACKFILL_REPOSITORY)
-    private readonly mediaBackfillRepository: IMediaBackfillRepository,
+    @Inject(ALT_TITLES_BACKFILL_REPOSITORY)
+    private readonly altTitlesBackfillRepository: IAltTitlesBackfillRepository,
     @InjectQueue(BACKFILL_QUEUE)
     private readonly queue: Queue,
     private readonly tmdbAdapter: TmdbAdapter,
@@ -58,10 +58,10 @@ export class BackfillAltTitlesPipeline {
       const remaining = TMDB_BACKFILL_RUN_CAP - totalQueued;
       const batchSize = Math.min(BACKFILL_ALT_TITLES_BATCH_SIZE, remaining);
 
-      const rows = await this.mediaBackfillRepository.findAltTitlesBackfillCandidates(
+      const rows = await this.altTitlesBackfillRepository.findCandidates({
         cursor,
-        batchSize,
-      );
+        limit: batchSize,
+      });
 
       if (rows.length === 0) break;
 

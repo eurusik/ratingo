@@ -23,8 +23,8 @@ export class DrizzleSitemapRepository implements ISitemapRepository {
   ) {}
 
   findReadyItems(type: MediaType): Promise<SitemapItem[]> {
-    return withDbError(`fetch ${type} sitemap items`, this.logger, async () => {
-      const rows = await this.db
+    return withDbError(`fetch ${type} sitemap items`, this.logger, () =>
+      this.db
         .select({
           slug: schema.mediaItems.slug,
           updatedAt: schema.mediaItems.updatedAt,
@@ -37,12 +37,7 @@ export class DrizzleSitemapRepository implements ISitemapRepository {
             isNull(schema.mediaItems.deletedAt),
           ),
         )
-        .orderBy(asc(schema.mediaItems.slug));
-
-      return rows.map((row) => ({
-        slug: row.slug,
-        updatedAt: row.updatedAt.toISOString(),
-      }));
-    });
+        .orderBy(asc(schema.mediaItems.slug)),
+    );
   }
 }

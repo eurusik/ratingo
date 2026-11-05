@@ -9,7 +9,7 @@ import {
 
 /**
  * Provides lightweight slug + updatedAt lists for sitemap generation.
- * Returns all non-deleted, fully-ingested items of the requested type.
+ * Returns all non-deleted, fully-ingested movies or shows.
  */
 @Injectable()
 export class CatalogSitemapService {

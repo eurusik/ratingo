@@ -119,12 +119,12 @@ export class TvMazeEnrichmentService {
 
   /** Merges TVMaze episodes with TMDB season metadata. */
   private mergeSeasons(
-    tvMazeEpisodes: ScheduledEpisode[],
+    scheduledEpisodes: ScheduledEpisode[],
     tmdbSeasons?: NormalizedSeason[],
   ): NormalizedSeason[] {
     // Group episodes by season
     const seasonMap = new Map<number, ScheduledEpisode[]>();
-    for (const ep of tvMazeEpisodes) {
+    for (const ep of scheduledEpisodes) {
       if (!seasonMap.has(ep.seasonNumber)) {
         seasonMap.set(ep.seasonNumber, []);
       }

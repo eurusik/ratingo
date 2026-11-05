@@ -114,7 +114,10 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     ShowDetailsQuery,
     CalendarEpisodesQuery,
     NewEpisodesQuery,
-    { provide: WATCHING_SHOWS_COUNT_PORT, useClass: WatchingShowsCountQuery },
+    {
+      provide: WATCHING_SHOWS_COUNT_PORT,
+      useClass: WatchingShowsCountQuery,
+    },
 
     // Query Objects - Movies
     MovieDetailsQuery,

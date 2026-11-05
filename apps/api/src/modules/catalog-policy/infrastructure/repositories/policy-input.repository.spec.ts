@@ -4,11 +4,19 @@
 
 import { Test } from '@nestjs/testing';
 
+import { type SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
+
 import { DatabaseException } from '../../../../common/exceptions';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { MEDIA_WATCH_OFFERS_REPOSITORY } from '../../../provider/public';
 
 import { PolicyInputRepository } from './policy-input.repository';
+
+const renderWhere = (where: jest.Mock) => {
+  const [condition] = where.mock.calls[0] as [SQL];
+  return new PgDialect().sqlToQuery(condition);
+};
 
 describe('PolicyInputRepository', () => {
   let repository: PolicyInputRepository;
@@ -268,7 +276,7 @@ describe('PolicyInputRepository', () => {
       expect(result).toEqual([]);
     });
 
-    it('should apply snapshotCutoff filter when provided', async () => {
+    it('should keep items updated at or before the window bound', async () => {
       const mockIds = [{ id: 'media-1' }];
       const queryMock = {
         from: jest.fn().mockReturnThis(),
@@ -278,18 +286,19 @@ describe('PolicyInputRepository', () => {
       };
       mockDb.select.mockReturnValue(queryMock);
 
-      const snapshotCutoff = new Date('2024-01-01');
+      const cutoff = new Date('2024-01-01');
       const result = await repository.fetchBatchIds({
         batchSize: 10,
-        snapshotCutoff,
+        updatedAtWindow: { updatedAtOrBefore: cutoff },
       });
 
       expect(result).toEqual(['media-1']);
-      // The where clause should include the snapshotCutoff condition
-      expect(queryMock.where).toHaveBeenCalled();
+      const { sql, params } = renderWhere(queryMock.where);
+      expect(sql).toContain('"updated_at" <= $');
+      expect(params).toContain(cutoff.toISOString());
     });
 
-    it('should apply updatedAfter filter when provided', async () => {
+    it('should keep only items updated after the window bound', async () => {
       const queryMock = {
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
@@ -298,13 +307,17 @@ describe('PolicyInputRepository', () => {
       };
       mockDb.select.mockReturnValue(queryMock);
 
+      const cutoff = new Date('2024-01-01');
       const result = await repository.fetchBatchIds({
         batchSize: 10,
-        updatedAfter: new Date('2024-01-01'),
+        updatedAtWindow: { updatedAfter: cutoff },
       });
 
       expect(result).toEqual(['media-7']);
-      expect(queryMock.where).toHaveBeenCalled();
+      const { sql, params } = renderWhere(queryMock.where);
+      expect(sql).toContain('"updated_at" > $');
+      expect(sql).not.toContain('"updated_at" <=');
+      expect(params).toContain(cutoff.toISOString());
     });
   });
 

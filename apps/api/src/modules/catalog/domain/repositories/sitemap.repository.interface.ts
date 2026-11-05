@@ -2,7 +2,7 @@ import { type MediaType } from '../../../../common/enums/media-type.enum';
 
 export interface SitemapItem {
   slug: string;
-  updatedAt: string;
+  updatedAt: Date;
 }
 
 export interface ISitemapRepository {

@@ -8,9 +8,9 @@ import { formatUtcDayId } from '@/common/utils/date.util';
 
 import { TmdbAdapter } from '../../../tmdb/public';
 import {
-  MEDIA_BACKFILL_REPOSITORY,
-  type IMediaBackfillRepository,
-} from '../../domain/repositories/media-backfill.repository.interface';
+  IMDB_BACKFILL_REPOSITORY,
+  type IImdbBackfillRepository,
+} from '../../domain/repositories/imdb-backfill.repository.interface';
 import { BACKFILL_QUEUE, IngestionJob, TMDB_BACKFILL_RUN_CAP } from '../../ingestion.constants';
 
 /**
@@ -26,7 +26,7 @@ const BACKFILL_BATCH_SIZE = 100;
  *
  * This pipeline:
  * 1. Dispatcher: finds all shows with NULL imdb_id and queues item jobs
- * 2. Item job: fetches external IDs from TMDB (single API call) + direct DB update
+ * 2. Item job: fetches external IDs from TMDB (single API call) and saves the IMDb id
  *
  * TMDB-only: no Trakt/OMDb/TVMaze calls. Safe for high-throughput backfill queue.
  */
@@ -35,8 +35,8 @@ export class BackfillImdbPipeline {
   private readonly logger = new Logger(BackfillImdbPipeline.name);
 
   constructor(
-    @Inject(MEDIA_BACKFILL_REPOSITORY)
-    private readonly mediaBackfillRepository: IMediaBackfillRepository,
+    @Inject(IMDB_BACKFILL_REPOSITORY)
+    private readonly imdbBackfillRepository: IImdbBackfillRepository,
     @InjectQueue(BACKFILL_QUEUE)
     private readonly queue: Queue,
     private readonly tmdbAdapter: TmdbAdapter,
@@ -60,7 +60,10 @@ export class BackfillImdbPipeline {
       const remaining = TMDB_BACKFILL_RUN_CAP - totalQueued;
       const batchSize = Math.min(BACKFILL_BATCH_SIZE, remaining);
 
-      const rows = await this.mediaBackfillRepository.findShowsMissingImdbId(cursor, batchSize);
+      const rows = await this.imdbBackfillRepository.findShowCandidates({
+        cursor,
+        limit: batchSize,
+      });
 
       if (rows.length === 0) break;
 
@@ -104,7 +107,7 @@ export class BackfillImdbPipeline {
       return;
     }
 
-    await this.mediaBackfillRepository.setShowImdbId(tmdbId, result.imdbId);
+    await this.imdbBackfillRepository.saveShowImdbId(tmdbId, result.imdbId);
 
     this.logger.debug(`[${jobId}] Updated imdbId for tmdbId=${tmdbId} → ${result.imdbId}`);
   }
