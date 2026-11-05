@@ -20,6 +20,7 @@ export interface FetchBatchIdsOptions {
   cursor?: string;
   /** Only fetch items updated before this date (snapshot cutoff) */
   snapshotCutoff?: Date;
+  updatedAfter?: Date;
 }
 
 /**

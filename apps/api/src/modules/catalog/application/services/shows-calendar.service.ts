@@ -1,6 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
-import { WatchingShowsCountQuery } from '../../infrastructure/queries/watching-shows-count.query';
+import {
+  WATCHING_SHOWS_COUNT_PORT,
+  type WatchingShowsCountPort,
+} from '../../domain/ports/watching-shows-count.port';
 
 /**
  * Application service for show calendar features.
@@ -8,7 +11,10 @@ import { WatchingShowsCountQuery } from '../../infrastructure/queries/watching-s
  */
 @Injectable()
 export class ShowsCalendarService {
-  constructor(private readonly watchingShowsCountQuery: WatchingShowsCountQuery) {}
+  constructor(
+    @Inject(WATCHING_SHOWS_COUNT_PORT)
+    private readonly watchingShowsCount: WatchingShowsCountPort,
+  ) {}
 
   /**
    * Returns the number of shows a user is currently watching.
@@ -19,6 +25,6 @@ export class ShowsCalendarService {
    * @returns Count of shows the user is currently watching
    */
   getWatchingShowsCount(userId: string): Promise<number> {
-    return this.watchingShowsCountQuery.execute(userId);
+    return this.watchingShowsCount.execute(userId);
   }
 }

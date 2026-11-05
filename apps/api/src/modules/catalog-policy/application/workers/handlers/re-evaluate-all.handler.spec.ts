@@ -9,8 +9,10 @@ import {
 } from '../../../catalog-policy.constants';
 import { EvaluationContext, RunStatus } from '../../../domain/constants/evaluation.constants';
 import { RunNotFoundError } from '../../../domain/errors';
-import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../../domain/repositories';
-import { DATABASE_CONNECTION } from '../../../../../database/database.module';
+import {
+  CATALOG_EVALUATION_RUN_REPOSITORY,
+  POLICY_INPUT_REPOSITORY,
+} from '../../../domain/repositories';
 import { RunFinalizeService } from '../../services/run-finalize.service';
 import type { ReEvaluateAllPayload } from '../types/job-payloads';
 
@@ -18,8 +20,8 @@ import { ReEvaluateAllHandler } from './re-evaluate-all.handler';
 
 describe('ReEvaluateAllHandler', () => {
   let handler: ReEvaluateAllHandler;
-  let mockDb: {
-    select: jest.Mock;
+  let mockPolicyInputRepository: {
+    fetchBatchIds: jest.Mock;
   };
   let mockRunRepository: {
     findById: jest.Mock;
@@ -33,16 +35,8 @@ describe('ReEvaluateAllHandler', () => {
   };
 
   beforeEach(async () => {
-    // Mock chainable Drizzle query builder
-    const mockQueryBuilder = {
-      from: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue([]),
-    };
-
-    mockDb = {
-      select: jest.fn().mockReturnValue(mockQueryBuilder),
+    mockPolicyInputRepository = {
+      fetchBatchIds: jest.fn().mockResolvedValue([]),
     };
 
     mockRunRepository = {
@@ -62,8 +56,8 @@ describe('ReEvaluateAllHandler', () => {
       providers: [
         ReEvaluateAllHandler,
         {
-          provide: DATABASE_CONNECTION,
-          useValue: mockDb,
+          provide: POLICY_INPUT_REPOSITORY,
+          useValue: mockPolicyInputRepository,
         },
         {
           provide: CATALOG_EVALUATION_RUN_REPOSITORY,
@@ -144,18 +138,14 @@ describe('ReEvaluateAllHandler', () => {
 
     describe('batch dispatching', () => {
       it('should dispatch evaluation jobs for each item in batch', async () => {
-        const mockItems = [{ id: 'item-1' }, { id: 'item-2' }, { id: 'item-3' }];
+        const mockItems = ['item-1', 'item-2', 'item-3'];
 
         mockRunRepository.findById.mockResolvedValue(mockRun);
 
         // First call returns items, second call returns empty (end of items)
-        const mockQueryBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValueOnce(mockItems).mockResolvedValueOnce([]),
-        };
-        mockDb.select.mockReturnValue(mockQueryBuilder);
+        mockPolicyInputRepository.fetchBatchIds
+          .mockResolvedValueOnce(mockItems)
+          .mockResolvedValueOnce([]);
 
         mockFinalizeService.finalizeRun.mockResolvedValue({ finalized: true });
 
@@ -183,17 +173,13 @@ describe('ReEvaluateAllHandler', () => {
       });
 
       it('should include context in job ID for uniqueness', async () => {
-        const mockItems = [{ id: 'item-1' }];
+        const mockItems = ['item-1'];
 
         mockRunRepository.findById.mockResolvedValue(mockRun);
 
-        const mockQueryBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValueOnce(mockItems).mockResolvedValueOnce([]),
-        };
-        mockDb.select.mockReturnValue(mockQueryBuilder);
+        mockPolicyInputRepository.fetchBatchIds
+          .mockResolvedValueOnce(mockItems)
+          .mockResolvedValueOnce([]);
 
         mockFinalizeService.finalizeRun.mockResolvedValue({ finalized: true });
 
@@ -213,13 +199,9 @@ describe('ReEvaluateAllHandler', () => {
       it('should configure retries with backoff on item jobs', async () => {
         mockRunRepository.findById.mockResolvedValue(mockRun);
 
-        const mockQueryBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValueOnce([{ id: 'item-1' }]).mockResolvedValueOnce([]),
-        };
-        mockDb.select.mockReturnValue(mockQueryBuilder);
+        mockPolicyInputRepository.fetchBatchIds
+          .mockResolvedValueOnce(['item-1'])
+          .mockResolvedValueOnce([]);
         mockFinalizeService.finalizeRun.mockResolvedValue({ finalized: true });
 
         await handler.handle(validPayload);
@@ -235,17 +217,13 @@ describe('ReEvaluateAllHandler', () => {
       });
 
       it('should update cursor after each batch', async () => {
-        const mockItems = [{ id: 'item-1' }, { id: 'item-2' }];
+        const mockItems = ['item-1', 'item-2'];
 
         mockRunRepository.findById.mockResolvedValue(mockRun);
 
-        const mockQueryBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValueOnce(mockItems).mockResolvedValueOnce([]),
-        };
-        mockDb.select.mockReturnValue(mockQueryBuilder);
+        mockPolicyInputRepository.fetchBatchIds
+          .mockResolvedValueOnce(mockItems)
+          .mockResolvedValueOnce([]);
 
         mockFinalizeService.finalizeRun.mockResolvedValue({ finalized: true });
 
@@ -263,13 +241,9 @@ describe('ReEvaluateAllHandler', () => {
       it('should dispatch distinct job IDs, skip cursor persistence and skip finalization', async () => {
         mockRunRepository.findById.mockResolvedValue({ ...mockRun, status: RunStatus.PROMOTED });
 
-        const mockQueryBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValueOnce([{ id: 'item-9' }]).mockResolvedValueOnce([]),
-        };
-        mockDb.select.mockReturnValue(mockQueryBuilder);
+        mockPolicyInputRepository.fetchBatchIds
+          .mockResolvedValueOnce(['item-9'])
+          .mockResolvedValueOnce([]);
 
         await handler.handle(postSnapshotPayload);
 
@@ -279,6 +253,11 @@ describe('ReEvaluateAllHandler', () => {
             opts: expect.objectContaining({ jobId: 'eval_post_run-123_item-9_catalog' }),
           }),
         ]);
+        expect(mockPolicyInputRepository.fetchBatchIds).toHaveBeenCalledWith({
+          batchSize: 100,
+          cursor: undefined,
+          updatedAfter: mockRun.snapshotCutoff,
+        });
         expect(mockRunRepository.update).not.toHaveBeenCalled();
         expect(mockFinalizeService.finalizeRun).not.toHaveBeenCalled();
       });
@@ -288,14 +267,7 @@ describe('ReEvaluateAllHandler', () => {
       it('should attempt finalization when all items dispatched', async () => {
         mockRunRepository.findById.mockResolvedValue(mockRun);
 
-        const mockQueryBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]), // No items
-        };
-        mockDb.select.mockReturnValue(mockQueryBuilder);
-
+        mockPolicyInputRepository.fetchBatchIds.mockResolvedValue([]);
         mockFinalizeService.finalizeRun.mockResolvedValue({ finalized: true });
 
         await handler.handle(validPayload);
@@ -306,13 +278,7 @@ describe('ReEvaluateAllHandler', () => {
       it('should not throw when finalization fails', async () => {
         mockRunRepository.findById.mockResolvedValue(mockRun);
 
-        const mockQueryBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
-        };
-        mockDb.select.mockReturnValue(mockQueryBuilder);
+        mockPolicyInputRepository.fetchBatchIds.mockResolvedValue([]);
 
         mockFinalizeService.finalizeRun.mockRejectedValue(new Error('Finalize failed'));
 
@@ -322,13 +288,7 @@ describe('ReEvaluateAllHandler', () => {
       it('should log warning when finalization fails', async () => {
         mockRunRepository.findById.mockResolvedValue(mockRun);
 
-        const mockQueryBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
-        };
-        mockDb.select.mockReturnValue(mockQueryBuilder);
+        mockPolicyInputRepository.fetchBatchIds.mockResolvedValue([]);
 
         mockFinalizeService.finalizeRun.mockRejectedValue(new Error('Finalize failed'));
         const warnSpy = jest.spyOn(Logger.prototype, 'warn');
@@ -341,20 +301,14 @@ describe('ReEvaluateAllHandler', () => {
 
     describe('cancellation during processing', () => {
       it('should stop when run becomes cancelled mid-processing', async () => {
-        const mockItems = [{ id: 'item-1' }];
+        const mockItems = ['item-1'];
 
         // First call: running, second call: cancelled
         mockRunRepository.findById
           .mockResolvedValueOnce(mockRun)
           .mockResolvedValueOnce({ ...mockRun, status: RunStatus.CANCELLED });
 
-        const mockQueryBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue(mockItems),
-        };
-        mockDb.select.mockReturnValue(mockQueryBuilder);
+        mockPolicyInputRepository.fetchBatchIds.mockResolvedValue(mockItems);
 
         await handler.handle(validPayload);
 

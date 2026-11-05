@@ -1,12 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
-import { TvMazeAdapter } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
+import {
+  EPISODE_SCHEDULE_PORT,
+  type EpisodeSchedulePort,
+} from '../../domain/ports/episode-schedule.port';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { NormalizedMedia } from '../../domain/models/normalized-media.model';
 
 describe('TvMazeEnrichmentService', () => {
   let service: TvMazeEnrichmentService;
-  let tvMazeAdapter: jest.Mocked<TvMazeAdapter>;
+  let tvMazeAdapter: jest.Mocked<EpisodeSchedulePort>;
 
   const mockShow: NormalizedMedia = {
     type: MediaType.SHOW,
@@ -32,11 +35,14 @@ describe('TvMazeEnrichmentService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TvMazeEnrichmentService, { provide: TvMazeAdapter, useValue: mockTvMazeAdapter }],
+      providers: [
+        TvMazeEnrichmentService,
+        { provide: EPISODE_SCHEDULE_PORT, useValue: mockTvMazeAdapter },
+      ],
     }).compile();
 
     service = module.get<TvMazeEnrichmentService>(TvMazeEnrichmentService);
-    tvMazeAdapter = module.get(TvMazeAdapter);
+    tvMazeAdapter = module.get(EPISODE_SCHEDULE_PORT);
   });
 
   describe('enrich', () => {

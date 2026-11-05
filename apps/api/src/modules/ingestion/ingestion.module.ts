@@ -37,13 +37,20 @@ import { TvMazeEnrichmentService } from './application/services/tvmaze-enrichmen
 import { BackfillWorker } from './application/workers/backfill.worker';
 import { RatingsBackfillWorker } from './application/workers/ratings-backfill.worker';
 import { SyncWorker } from './application/workers/sync.worker';
+import { AGGREGATED_RATINGS_PORT } from './domain/ports/aggregated-ratings.port';
+import { EPISODE_SCHEDULE_PORT } from './domain/ports/episode-schedule.port';
+import { ROTTEN_TOMATOES_RATINGS_PORT } from './domain/ports/rotten-tomatoes-ratings.port';
 import { WEB_PAGE_CACHE_PORT } from './domain/ports/web-page-cache.port';
+import { MEDIA_BACKFILL_REPOSITORY } from './domain/repositories/media-backfill.repository.interface';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
+import { TRACKED_SHOW_REPOSITORY } from './domain/repositories/tracked-show.repository.interface';
 import { MdblistAdapter } from './infrastructure/adapters/mdblist/mdblist.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { NextRevalidateAdapter } from './infrastructure/adapters/web-page-cache/next-revalidate.adapter';
+import { MediaBackfillRepository } from './infrastructure/repositories/media-backfill.repository';
 import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
+import { TrackedShowRepository } from './infrastructure/repositories/tracked-show.repository';
 import {
   BACKFILL_QUEUE,
   DEFAULT_INGESTION_JOB_OPTIONS,
@@ -98,14 +105,16 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       provide: SNAPSHOTS_REPOSITORY,
       useClass: SnapshotsRepository,
     },
+    { provide: MEDIA_BACKFILL_REPOSITORY, useClass: MediaBackfillRepository },
+    { provide: TRACKED_SHOW_REPOSITORY, useClass: TrackedShowRepository },
     {
       provide: WEB_PAGE_CACHE_PORT,
       useClass: NextRevalidateAdapter,
     },
     MediaPageCacheService,
-    OmdbAdapter,
-    MdblistAdapter,
-    TvMazeAdapter,
+    { provide: AGGREGATED_RATINGS_PORT, useClass: OmdbAdapter },
+    { provide: ROTTEN_TOMATOES_RATINGS_PORT, useClass: MdblistAdapter },
+    { provide: EPISODE_SCHEDULE_PORT, useClass: TvMazeAdapter },
     TvMazeEnrichmentService,
     BulkJobService,
     SyncMediaService,

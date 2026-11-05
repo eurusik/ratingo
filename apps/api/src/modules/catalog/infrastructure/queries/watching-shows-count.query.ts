@@ -8,6 +8,7 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { USER_MEDIA_STATE } from '../../../user-media/public';
+import { type WatchingShowsCountPort } from '../../domain/ports/watching-shows-count.port';
 
 /**
  * Counts the number of shows a user is currently watching.
@@ -19,7 +20,7 @@ import { USER_MEDIA_STATE } from '../../../user-media/public';
  * @throws {DatabaseException} When database query fails
  */
 @Injectable()
-export class WatchingShowsCountQuery {
+export class WatchingShowsCountQuery implements WatchingShowsCountPort {
   private readonly logger = new Logger(WatchingShowsCountQuery.name);
 
   constructor(

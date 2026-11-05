@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import {
   type JournalPost,
@@ -6,19 +6,24 @@ import {
 } from '../../domain/interfaces/journal-post.interface';
 import {
   type CreateJournalPostData,
+  type FindAllPostsFilters,
   type FindPublishedFilters,
-  JournalRepository,
+  type IJournalRepository,
+  JOURNAL_REPOSITORY,
   type PaginatedPostsResult,
   type UpdateJournalPostData,
-} from '../../infrastructure/journal.repository';
+} from '../../domain/repositories/journal.repository.interface';
 
 /**
  * Application service for journal post operations.
- * Orchestrates domain logic and delegates persistence to JournalRepository.
+ * Orchestrates domain logic and delegates persistence to the journal repository port.
  */
 @Injectable()
 export class JournalService {
-  constructor(private readonly repository: JournalRepository) {}
+  constructor(
+    @Inject(JOURNAL_REPOSITORY)
+    private readonly repository: IJournalRepository,
+  ) {}
 
   /**
    * Returns paginated list of published posts.
@@ -86,11 +91,7 @@ export class JournalService {
   /**
    * Finds all posts for admin (includes drafts, supports status filter).
    */
-  findAll(filters: {
-    page: number;
-    limit: number;
-    status?: 'draft' | 'published' | 'scheduled';
-  }): Promise<PaginatedPostsResult> {
+  findAll(filters: FindAllPostsFilters): Promise<PaginatedPostsResult> {
     return this.repository.findAll(filters);
   }
 }

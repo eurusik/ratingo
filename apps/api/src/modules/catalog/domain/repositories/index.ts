@@ -3,3 +3,4 @@ export * from './media.repository.interface';
 export * from './movie.repository.interface';
 export * from './show.repository.interface';
 export * from './providers.repository.interface';
+export * from './sitemap.repository.interface';

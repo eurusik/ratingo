@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import {
   type NormalizedMedia,
@@ -6,9 +6,10 @@ import {
   type NormalizedEpisode,
 } from '../../domain/models/normalized-media.model';
 import {
-  TvMazeAdapter,
-  type TvMazeEpisode,
-} from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
+  EPISODE_SCHEDULE_PORT,
+  type EpisodeSchedulePort,
+  type ScheduledEpisode,
+} from '../../domain/ports/episode-schedule.port';
 
 /** Maximum year difference allowed when matching shows by name search. */
 const MAX_YEAR_TOLERANCE = 1;
@@ -24,7 +25,10 @@ const MAX_YEAR_TOLERANCE = 1;
 export class TvMazeEnrichmentService {
   private readonly logger = new Logger(TvMazeEnrichmentService.name);
 
-  constructor(private readonly tvMazeAdapter: TvMazeAdapter) {}
+  constructor(
+    @Inject(EPISODE_SCHEDULE_PORT)
+    private readonly episodeSchedule: EpisodeSchedulePort,
+  ) {}
 
   /**
    * Enriches show with TVMaze episode data.
@@ -74,11 +78,11 @@ export class TvMazeEnrichmentService {
   /**
    * Fetches episodes from TVMaze: first by IMDb ID, then by show name.
    */
-  private async fetchEpisodes(media: NormalizedMedia): Promise<TvMazeEpisode[]> {
+  private async fetchEpisodes(media: NormalizedMedia): Promise<ScheduledEpisode[]> {
     const imdbId = media.externalIds?.imdbId;
 
     if (imdbId) {
-      const episodes = await this.tvMazeAdapter.getEpisodesByImdbId(imdbId);
+      const episodes = await this.episodeSchedule.getEpisodesByImdbId(imdbId);
       if (episodes.length > 0) return episodes;
     }
 
@@ -86,7 +90,7 @@ export class TvMazeEnrichmentService {
     const namesToTry = [...new Set([media.originalTitle, media.title].filter(Boolean))] as string[];
 
     for (const name of namesToTry) {
-      const episodes = await this.tvMazeAdapter.getEpisodesByShowName(name);
+      const episodes = await this.episodeSchedule.getEpisodesByShowName(name);
       if (episodes.length === 0) continue;
 
       // Validate year match to prevent wrong show association
@@ -115,11 +119,11 @@ export class TvMazeEnrichmentService {
 
   /** Merges TVMaze episodes with TMDB season metadata. */
   private mergeSeasons(
-    tvMazeEpisodes: TvMazeEpisode[],
+    tvMazeEpisodes: ScheduledEpisode[],
     tmdbSeasons?: NormalizedSeason[],
   ): NormalizedSeason[] {
     // Group episodes by season
-    const seasonMap = new Map<number, TvMazeEpisode[]>();
+    const seasonMap = new Map<number, ScheduledEpisode[]>();
     for (const ep of tvMazeEpisodes) {
       if (!seasonMap.has(ep.seasonNumber)) {
         seasonMap.set(ep.seasonNumber, []);
@@ -176,7 +180,7 @@ export class TvMazeEnrichmentService {
   }
 
   /** Finds next air date from future episodes. */
-  private findNextAirDate(episodes: TvMazeEpisode[]): Date | null {
+  private findNextAirDate(episodes: ScheduledEpisode[]): Date | null {
     const now = new Date();
     const future = episodes.filter((e) => e.airDate && e.airDate > now);
 
@@ -188,7 +192,7 @@ export class TvMazeEnrichmentService {
   }
 
   /** Finds last air date from already-aired episodes. */
-  private findLastAirDate(episodes: TvMazeEpisode[]): Date | null {
+  private findLastAirDate(episodes: ScheduledEpisode[]): Date | null {
     const now = new Date();
     const aired = episodes.filter((e) => e.airDate && e.airDate <= now);
 

@@ -25,11 +25,13 @@ import { COOLDOWN_GATE_PORT } from './domain/ports/cooldown-gate.port';
 import { IMPORT_JOB_PORT } from './domain/ports/import-job.port';
 import { MEDIA_METADATA_PORT } from './domain/ports/media-metadata.port';
 import { USER_STATE_PROVIDER } from './domain/ports/user-state-provider.port';
+import { WATCHING_SHOWS_COUNT_PORT } from './domain/ports/watching-shows-count.port';
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
 import { MEDIA_REPOSITORY } from './domain/repositories/media.repository.interface';
 import { MOVIE_REPOSITORY } from './domain/repositories/movie.repository.interface';
 import { PROVIDERS_REPOSITORY } from './domain/repositories/providers.repository.interface';
 import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
+import { SITEMAP_REPOSITORY } from './domain/repositories/sitemap.repository.interface';
 import { BullMQImportJobAdapter } from './infrastructure/adapters/bullmq-import-job.adapter';
 import { HeroRepositoryAdapter } from './infrastructure/adapters/hero.repository.adapter';
 import {
@@ -58,6 +60,7 @@ import { DrizzleGenreRepository } from './infrastructure/repositories/drizzle-ge
 import { DrizzleMediaRepository } from './infrastructure/repositories/drizzle-media.repository';
 import { DrizzleMovieRepository } from './infrastructure/repositories/drizzle-movie.repository';
 import { DrizzleShowRepository } from './infrastructure/repositories/drizzle-show.repository';
+import { DrizzleSitemapRepository } from './infrastructure/repositories/drizzle-sitemap.repository';
 import { DrizzleProvidersRepository } from './infrastructure/repositories/providers.repository';
 import { CatalogMoviesController } from './presentation/controllers/catalog.movies.controller';
 import { CatalogProvidersController } from './presentation/controllers/catalog.providers.controller';
@@ -111,7 +114,7 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     ShowDetailsQuery,
     CalendarEpisodesQuery,
     NewEpisodesQuery,
-    WatchingShowsCountQuery,
+    { provide: WATCHING_SHOWS_COUNT_PORT, useClass: WatchingShowsCountQuery },
 
     // Query Objects - Movies
     MovieDetailsQuery,
@@ -149,6 +152,10 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     {
       provide: PROVIDERS_REPOSITORY,
       useClass: DrizzleProvidersRepository,
+    },
+    {
+      provide: SITEMAP_REPOSITORY,
+      useClass: DrizzleSitemapRepository,
     },
     // Adapters
     {

@@ -9,14 +9,9 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
-import { eq, and, isNull, lte, gt } from 'drizzle-orm';
-import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { toError } from '@/common/utils/error.utils';
 
-import { IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
-import { DATABASE_CONNECTION } from '../../../../../database/database.module';
-import * as schema from '../../../../../database/schema';
 import {
   CATALOG_POLICY_QUEUE,
   CATALOG_POLICY_JOBS,
@@ -29,7 +24,9 @@ import {
 import { RunNotFoundError } from '../../../domain/errors';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
+  POLICY_INPUT_REPOSITORY,
   type ICatalogEvaluationRunRepository,
+  type IPolicyInputRepository,
 } from '../../../domain/repositories';
 import { RunFinalizeService } from '../../services/run-finalize.service';
 import type { ReEvaluateAllPayload, EvaluateCatalogItemPayload } from '../types/job-payloads';
@@ -42,8 +39,8 @@ export class ReEvaluateAllHandler {
   private readonly logger = new Logger(ReEvaluateAllHandler.name);
 
   constructor(
-    @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    @Inject(POLICY_INPUT_REPOSITORY)
+    private readonly policyInputRepository: IPolicyInputRepository,
     @Inject(CATALOG_EVALUATION_RUN_REPOSITORY)
     private readonly runRepository: ICatalogEvaluationRunRepository,
     private readonly finalizeService: RunFinalizeService,
@@ -112,16 +109,16 @@ export class ReEvaluateAllHandler {
         `Fetched batch of ${batch.length} items for run=${runId}, context=${context}`,
       );
 
-      const jobs = batch.map((item) => ({
+      const jobs = batch.map((mediaItemId) => ({
         name: CATALOG_POLICY_JOBS.EVALUATE_CATALOG_ITEM,
         data: {
           runId,
           policyVersion,
-          mediaItemId: item.id,
+          mediaItemId,
           context,
         } as EvaluateCatalogItemPayload,
         opts: {
-          jobId: `${afterSnapshot ? 'eval_post' : 'eval'}_${runId}_${item.id}_${context}`,
+          jobId: `${afterSnapshot ? 'eval_post' : 'eval'}_${runId}_${mediaItemId}_${context}`,
           ...EVALUATE_ITEM_JOB_OPTIONS,
         },
       }));
@@ -129,7 +126,7 @@ export class ReEvaluateAllHandler {
       await this.catalogQueue.addBulk(jobs);
       totalDispatched += batch.length;
 
-      cursor = batch[batch.length - 1].id;
+      cursor = batch[batch.length - 1];
       if (!afterSnapshot) {
         await this.runRepository.update(runId, { cursor });
       }
@@ -145,30 +142,17 @@ export class ReEvaluateAllHandler {
    * Snapshot mode: items updated at or before the cutoff.
    * After-snapshot mode: items updated after the cutoff (synced while the run was in progress).
    */
-  private async fetchBatch(
+  private fetchBatch(
     snapshotCutoff: Date,
     batchSize: number,
     cursor?: string,
     afterSnapshot = false,
-  ): Promise<Array<{ id: string }>> {
-    const conditions = [
-      eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
-      isNull(schema.mediaItems.deletedAt),
-      afterSnapshot
-        ? gt(schema.mediaItems.updatedAt, snapshotCutoff)
-        : lte(schema.mediaItems.updatedAt, snapshotCutoff),
-    ];
-
-    if (cursor) {
-      conditions.push(gt(schema.mediaItems.id, cursor));
-    }
-
-    return this.db
-      .select({ id: schema.mediaItems.id })
-      .from(schema.mediaItems)
-      .where(and(...conditions))
-      .orderBy(schema.mediaItems.id)
-      .limit(batchSize);
+  ): Promise<string[]> {
+    return this.policyInputRepository.fetchBatchIds({
+      batchSize,
+      cursor,
+      ...(afterSnapshot ? { updatedAfter: snapshotCutoff } : { snapshotCutoff }),
+    });
   }
 
   /**

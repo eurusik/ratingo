@@ -288,6 +288,24 @@ describe('PolicyInputRepository', () => {
       // The where clause should include the snapshotCutoff condition
       expect(queryMock.where).toHaveBeenCalled();
     });
+
+    it('should apply updatedAfter filter when provided', async () => {
+      const queryMock = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([{ id: 'media-7' }]),
+      };
+      mockDb.select.mockReturnValue(queryMock);
+
+      const result = await repository.fetchBatchIds({
+        batchSize: 10,
+        updatedAfter: new Date('2024-01-01'),
+      });
+
+      expect(result).toEqual(['media-7']);
+      expect(queryMock.where).toHaveBeenCalled();
+    });
   });
 
   describe('database error wrapping', () => {

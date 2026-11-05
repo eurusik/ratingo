@@ -14,6 +14,10 @@ import {
   HttpError,
 } from '../../../../../common/http/resilient-http.client';
 import omdbConfig from '../../../../../config/omdb.config';
+import {
+  type AggregatedRatings,
+  type AggregatedRatingsPort,
+} from '../../../domain/ports/aggregated-ratings.port';
 
 /**
  * OMDb API rating source entry.
@@ -53,7 +57,7 @@ const OMDB_RETRY_CONFIG: Partial<RetryConfig> = {
  * Used primarily for fetching additional ratings (IMDb, Rotten Tomatoes, Metacritic).
  */
 @Injectable()
-export class OmdbAdapter {
+export class OmdbAdapter implements AggregatedRatingsPort {
   private readonly logger = new Logger(OmdbAdapter.name);
   private readonly httpClient: ResilientHttpClient;
 
@@ -128,16 +132,7 @@ export class OmdbAdapter {
    * @param {MediaType} type - Type of content (MOVIE or SHOW)
    * @returns {Promise<{ imdbRating: number | null; imdbVotes: number | null; rottenTomatoes: number | null; metacritic: number | null; metascore: number | null }>} Object containing available ratings
    */
-  async getAggregatedRatings(
-    imdbId: string,
-    type: MediaType,
-  ): Promise<{
-    imdbRating: number | null;
-    imdbVotes: number | null;
-    rottenTomatoes: number | null;
-    metacritic: number | null;
-    metascore: number | null;
-  }> {
+  async getAggregatedRatings(imdbId: string, type: MediaType): Promise<AggregatedRatings> {
     try {
       const omdbType = this.TYPE_MAPPING[type];
       const data = await this.fetch<OmdbResponse>({ i: imdbId, type: omdbType });

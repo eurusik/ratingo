@@ -5,7 +5,10 @@ import { SyncMediaService } from './sync-media.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '../../../tmdb/public';
 import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '../../../trakt/public';
-import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
+import {
+  AGGREGATED_RATINGS_PORT,
+  type AggregatedRatingsPort,
+} from '../../domain/ports/aggregated-ratings.port';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import { NormalizationService } from '@/modules/provider/public';
@@ -18,7 +21,7 @@ describe('SyncMediaService', () => {
   let service: SyncMediaService;
   let tmdbAdapter: jest.Mocked<TmdbAdapter>;
   let traktAdapter: jest.Mocked<TraktRatingsPort>;
-  let omdbAdapter: jest.Mocked<OmdbAdapter>;
+  let omdbAdapter: jest.Mocked<AggregatedRatingsPort>;
   let tvMazeEnrichment: jest.Mocked<TvMazeEnrichmentService>;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
   let normalizationService: jest.Mocked<NormalizationService>;
@@ -96,7 +99,7 @@ describe('SyncMediaService', () => {
         SyncMediaService,
         { provide: TmdbAdapter, useValue: mockTmdbAdapter },
         { provide: TRAKT_RATINGS_PORT, useValue: mockTraktAdapter },
-        { provide: OmdbAdapter, useValue: mockOmdbAdapter },
+        { provide: AGGREGATED_RATINGS_PORT, useValue: mockOmdbAdapter },
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: NormalizationService, useValue: mockNormalizationService },
@@ -110,7 +113,7 @@ describe('SyncMediaService', () => {
     service = module.get<SyncMediaService>(SyncMediaService);
     tmdbAdapter = module.get(TmdbAdapter);
     traktAdapter = module.get(TRAKT_RATINGS_PORT);
-    omdbAdapter = module.get(OmdbAdapter);
+    omdbAdapter = module.get(AGGREGATED_RATINGS_PORT);
     tvMazeEnrichment = module.get(TvMazeEnrichmentService);
     scoreCalculator = module.get(ScoreCalculatorService);
     normalizationService = module.get(NormalizationService);

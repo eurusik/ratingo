@@ -23,13 +23,14 @@ import {
   type MediaItemRow,
   mapRowToPolicyEngineInput,
   mapRowsToPolicyEngineInputs,
-  POLICY_EVALUATION_SELECT_FIELDS,
 } from '../../application/utils/policy-input.mapper';
 import {
   type IPolicyInputRepository,
   type FetchBatchIdsOptions,
 } from '../../domain/repositories/policy-input.repository.interface';
 import { type PolicyEngineInput, type NormalizedOffer } from '../../domain/types/policy.types';
+
+import { POLICY_EVALUATION_SELECT_FIELDS } from './policy-evaluation-select-fields';
 
 @Injectable()
 export class PolicyInputRepository implements IPolicyInputRepository {
@@ -143,7 +144,7 @@ export class PolicyInputRepository implements IPolicyInputRepository {
    * Uses cursor-based pagination with ordered results.
    */
   async fetchBatchIds(options: FetchBatchIdsOptions): Promise<string[]> {
-    const { batchSize, cursor, snapshotCutoff } = options;
+    const { batchSize, cursor, snapshotCutoff, updatedAfter } = options;
 
     const conditions = [
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
@@ -152,6 +153,10 @@ export class PolicyInputRepository implements IPolicyInputRepository {
 
     if (snapshotCutoff) {
       conditions.push(lte(schema.mediaItems.updatedAt, snapshotCutoff));
+    }
+
+    if (updatedAfter) {
+      conditions.push(gt(schema.mediaItems.updatedAt, updatedAfter));
     }
 
     if (cursor) {
