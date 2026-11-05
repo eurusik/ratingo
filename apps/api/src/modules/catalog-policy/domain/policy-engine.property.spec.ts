@@ -702,12 +702,12 @@ describe('Global Quality Gate Properties', () => {
 
           const result = evaluateEligibility(input, policy);
 
-          const passesGate = !(score === null || score < threshold);
+          const passesGate = score !== null && score >= threshold;
 
           expectGlobalGateOutcome(result, passesGate, 'minQualityScoreNormalized');
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 100, examples: [[0.5, NaN]] },
     );
   });
 

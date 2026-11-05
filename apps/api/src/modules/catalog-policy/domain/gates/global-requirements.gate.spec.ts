@@ -167,6 +167,19 @@ describe('GlobalRequirementsGate', () => {
         expect(result.passes).toBe(false);
         expect(result.failedChecks).toContain(GlobalGateCheck.MIN_QUALITY_SCORE);
       });
+
+      it('should fail when quality score is NaN', () => {
+        const input = createInput(
+          {},
+          { qualityScore: NaN, popularityScore: 0.5, freshnessScore: 0.3, ratingoScore: null },
+        );
+        const requirements: GlobalRequirements = { minQualityScoreNormalized: 0.5 };
+
+        const result = checkGlobalRequirements(input, requirements);
+
+        expect(result.passes).toBe(false);
+        expect(result.failedChecks).toContain(GlobalGateCheck.MIN_QUALITY_SCORE);
+      });
     });
 
     describe('requireAnyOfRatingsPresent', () => {

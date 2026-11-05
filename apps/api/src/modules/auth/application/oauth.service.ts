@@ -289,7 +289,7 @@ export class OAuthService {
     }
 
     // Truncate to leave room for suffix
-    base = base.slice(0, USERNAME_MAX_BASE_LENGTH);
+    base = base.slice(0, USERNAME_MAX_BASE_LENGTH).replace(/_$/, '');
 
     // Check if base username is available
     let username = base;
