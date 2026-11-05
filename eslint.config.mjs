@@ -69,9 +69,23 @@ const applicationInfrastructureZone = {
   message:
     'Application must not depend on infrastructure: inject a domain port or repository token instead',
 };
+const applicationPresentationZone = {
+  target: './apps/api/src/modules/**/application/**/*',
+  from: './apps/api/src/modules/**/presentation/**/*',
+  message:
+    'Application must not depend on presentation: return domain types and map them to DTOs in the controller',
+};
+const infrastructureApplicationZone = {
+  target: './apps/api/src/modules/**/infrastructure/**/*',
+  from: './apps/api/src/modules/**/application/**/*',
+  message:
+    'Infrastructure must not depend on application: move shared types to domain and row mappers to infrastructure',
+};
 const moduleBoundaryZones = [
   domainInfrastructureZone,
   applicationInfrastructureZone,
+  applicationPresentationZone,
+  infrastructureApplicationZone,
   {
     target: './apps/api/src/modules/shared/contracts/**/*',
     from: './apps/api/src',

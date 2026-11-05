@@ -4,7 +4,7 @@
 
 import { type MediaWatchOfferView } from '../../../provider/public';
 
-import { mapOffersToNormalized } from './offer-mapper';
+import { mapOffersByMediaItemToNormalized, mapOffersToNormalized } from './offer.mapper';
 
 describe('mapOffersToNormalized', () => {
   it('should map empty array to empty array', () => {
@@ -117,5 +117,43 @@ describe('mapOffersToNormalized', () => {
 
     expect(result[0].distributionChannel).toBe('apple_tv_channel');
     expect(result[0].isAdsTier).toBe(true);
+  });
+});
+
+describe('mapOffersByMediaItemToNormalized', () => {
+  it('should normalize offers per media item and keep every key', () => {
+    const offersByMediaItem = new Map<string, MediaWatchOfferView[]>([
+      [
+        'm1',
+        [
+          {
+            providerId: 'netflix',
+            offerType: 'flatrate',
+            distributionChannel: 'direct',
+            variantIsAdsTier: true,
+          },
+        ],
+      ],
+      ['m2', []],
+    ]);
+
+    const result = mapOffersByMediaItemToNormalized(offersByMediaItem);
+
+    expect(result).toEqual(
+      new Map([
+        [
+          'm1',
+          [
+            {
+              providerId: 'netflix',
+              offerType: 'flatrate',
+              distributionChannel: 'direct',
+              isAdsTier: true,
+            },
+          ],
+        ],
+        ['m2', []],
+      ]),
+    );
   });
 });

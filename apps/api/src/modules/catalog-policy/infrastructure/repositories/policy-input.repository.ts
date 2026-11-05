@@ -18,17 +18,17 @@ import {
   type IMediaWatchOffersRepository,
   MEDIA_WATCH_OFFERS_REPOSITORY,
 } from '../../../provider/public';
-import { mapOffersToNormalized } from '../../application/utils/offer-mapper';
-import {
-  type MediaItemRow,
-  mapRowToPolicyEngineInput,
-  mapRowsToPolicyEngineInputs,
-} from '../../application/utils/policy-input.mapper';
 import {
   type IPolicyInputRepository,
   type FetchBatchIdsOptions,
 } from '../../domain/repositories/policy-input.repository.interface';
-import { type PolicyEngineInput, type NormalizedOffer } from '../../domain/types/policy.types';
+import { type PolicyEngineInput } from '../../domain/types/policy.types';
+import { mapOffersByMediaItemToNormalized, mapOffersToNormalized } from '../mappers/offer.mapper';
+import {
+  type MediaItemRow,
+  mapRowToPolicyEngineInput,
+  mapRowsToPolicyEngineInputs,
+} from '../mappers/policy-input.mapper';
 
 import { POLICY_EVALUATION_SELECT_FIELDS } from './policy-evaluation-select-fields';
 
@@ -110,13 +110,11 @@ export class PolicyInputRepository implements IPolicyInputRepository {
       { count: mediaItemIds.length },
     );
 
-    // Convert MediaWatchOfferView to NormalizedOffer
-    const normalizedOffersMap = new Map<string, NormalizedOffer[]>();
-    for (const [id, offers] of offersMap) {
-      normalizedOffersMap.set(id, mapOffersToNormalized(offers));
-    }
-
-    return mapRowsToPolicyEngineInputs(result as MediaItemRow[], normalizedOffersMap, this.logger);
+    return mapRowsToPolicyEngineInputs(
+      result as MediaItemRow[],
+      mapOffersByMediaItemToNormalized(offersMap),
+      this.logger,
+    );
   }
 
   /**

@@ -19,6 +19,11 @@ export {
   USER_MEDIA_WATCHLIST_STATES,
 } from '../domain/entities/user-media-state.entity';
 export type { UserMediaState } from '../domain/entities/user-media-state.entity';
+export { USER_MEDIA_LIST_SORT } from '../domain/repositories/user-media-state.repository.interface';
+export type {
+  UserMediaListSort,
+  UserMediaSummary,
+} from '../domain/repositories/user-media-state.repository.interface';
 
 // Domain events
 export { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';

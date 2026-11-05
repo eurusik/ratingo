@@ -6,33 +6,10 @@
  */
 
 import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type PolicyEngineInput } from '../types/policy.types';
 
 /** DI token for IDryRunRepository */
 export const DRY_RUN_REPOSITORY = Symbol('DRY_RUN_REPOSITORY');
-
-/**
- * Raw media item data for dry-run evaluation.
- * Contains all fields needed for policy engine input.
- */
-export interface DryRunMediaItem {
-  id: string;
-  title?: string;
-  overview?: string | null;
-  originCountries: string[] | null;
-  originalLanguage: string | null;
-  contentClass: string | null;
-  ratingImdb: number | null;
-  ratingMetacritic: number | null;
-  ratingRottenTomatoes: number | null;
-  ratingTrakt: number | null;
-  voteCountImdb: number | null;
-  voteCountTrakt: number | null;
-  qualityScore: number | null;
-  popularityScore: number | null;
-  freshnessScore: number | null;
-  ratingoScore: number | null;
-  watchersCount: number | null;
-}
 
 /**
  * Current evaluation status for a media item.
@@ -54,9 +31,9 @@ export interface IDryRunRepository {
    *
    * @param limit - Maximum number of items to return
    * @param samplePercent - Percentage of table to sample (BERNOULLI)
-   * @returns Array of media items for evaluation
+   * @returns Policy engine inputs for evaluation
    */
-  fetchSampleItems(limit: number, samplePercent: number): Promise<DryRunMediaItem[]>;
+  fetchSampleItems(limit: number, samplePercent: number): Promise<PolicyEngineInput[]>;
 
   /**
    * Fetches top media items by popularity score.
@@ -64,7 +41,7 @@ export interface IDryRunRepository {
    * @param limit - Maximum number of items to return
    * @returns Array of media items ordered by popularity
    */
-  fetchTopItems(limit: number): Promise<DryRunMediaItem[]>;
+  fetchTopItems(limit: number): Promise<PolicyEngineInput[]>;
 
   /**
    * Fetches media items filtered by type (movie/show).
@@ -73,7 +50,7 @@ export interface IDryRunRepository {
    * @param limit - Maximum number of items to return
    * @returns Array of media items of specified type
    */
-  fetchByTypeItems(mediaType: MediaType, limit: number): Promise<DryRunMediaItem[]>;
+  fetchByTypeItems(mediaType: MediaType, limit: number): Promise<PolicyEngineInput[]>;
 
   /**
    * Fetches media items filtered by origin country.
@@ -82,7 +59,7 @@ export interface IDryRunRepository {
    * @param limit - Maximum number of items to return
    * @returns Array of media items from specified country
    */
-  fetchByCountryItems(country: string, limit: number): Promise<DryRunMediaItem[]>;
+  fetchByCountryItems(country: string, limit: number): Promise<PolicyEngineInput[]>;
 
   /**
    * Fetches current evaluation statuses for media items.

@@ -13,12 +13,18 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
+import {
+  type IMediaWatchOffersRepository,
+  MEDIA_WATCH_OFFERS_REPOSITORY,
+} from '../../../provider/public';
 import { DEFAULT_EVALUATION_CONTEXT } from '../../domain/constants/evaluation.constants';
 import {
   type IDryRunRepository,
-  type DryRunMediaItem,
   type CurrentEvaluation,
 } from '../../domain/repositories/dry-run.repository.interface';
+import { type PolicyEngineInput } from '../../domain/types/policy.types';
+import { mapOffersByMediaItemToNormalized } from '../mappers/offer.mapper';
+import { type MediaItemRow, mapRowsToPolicyEngineInputs } from '../mappers/policy-input.mapper';
 
 const EVALUATION_BATCH_SIZE = 1000;
 
@@ -49,9 +55,11 @@ export class DryRunRepository implements IDryRunRepository {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
+    @Inject(MEDIA_WATCH_OFFERS_REPOSITORY)
+    private readonly watchOffersRepository: IMediaWatchOffersRepository,
   ) {}
 
-  async fetchSampleItems(limit: number, samplePercent: number): Promise<DryRunMediaItem[]> {
+  async fetchSampleItems(limit: number, samplePercent: number): Promise<PolicyEngineInput[]> {
     const result = await withDbError('fetch dry-run sample items', this.logger, () =>
       this.db.execute(sql`
       SELECT
@@ -80,65 +88,65 @@ export class DryRunRepository implements IDryRunRepository {
     `),
     );
 
-    return result as unknown as DryRunMediaItem[];
+    return this.toPolicyEngineInputs(result as unknown as MediaItemRow[]);
   }
 
-  async fetchTopItems(limit: number): Promise<DryRunMediaItem[]> {
+  async fetchTopItems(limit: number): Promise<PolicyEngineInput[]> {
     const result = await withDbError('fetch dry-run top items', this.logger, () =>
       this.db
-      .select(DRY_RUN_SELECT_FIELDS)
-      .from(schema.mediaItems)
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(
-        and(isNull(schema.mediaItems.deletedAt), eq(schema.mediaItems.ingestionStatus, 'ready')),
-      )
-      .orderBy(sql`${schema.mediaStats.popularityScore} DESC NULLS LAST`)
-      .limit(limit),
+        .select(DRY_RUN_SELECT_FIELDS)
+        .from(schema.mediaItems)
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(
+          and(isNull(schema.mediaItems.deletedAt), eq(schema.mediaItems.ingestionStatus, 'ready')),
+        )
+        .orderBy(sql`${schema.mediaStats.popularityScore} DESC NULLS LAST`)
+        .limit(limit),
     );
 
-    return result as DryRunMediaItem[];
+    return this.toPolicyEngineInputs(result);
   }
 
-  async fetchByTypeItems(mediaType: MediaType, limit: number): Promise<DryRunMediaItem[]> {
+  async fetchByTypeItems(mediaType: MediaType, limit: number): Promise<PolicyEngineInput[]> {
     const result = await withDbError('fetch dry-run items by type', this.logger, () =>
       this.db
-      .select(DRY_RUN_SELECT_FIELDS)
-      .from(schema.mediaItems)
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(
-        and(
-          isNull(schema.mediaItems.deletedAt),
-          eq(schema.mediaItems.ingestionStatus, 'ready'),
-          eq(schema.mediaItems.type, mediaType),
-        ),
-      )
-      .orderBy(sql`${schema.mediaStats.popularityScore} DESC NULLS LAST`)
-      .limit(limit),
+        .select(DRY_RUN_SELECT_FIELDS)
+        .from(schema.mediaItems)
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(
+          and(
+            isNull(schema.mediaItems.deletedAt),
+            eq(schema.mediaItems.ingestionStatus, 'ready'),
+            eq(schema.mediaItems.type, mediaType),
+          ),
+        )
+        .orderBy(sql`${schema.mediaStats.popularityScore} DESC NULLS LAST`)
+        .limit(limit),
     );
 
-    return result as DryRunMediaItem[];
+    return this.toPolicyEngineInputs(result);
   }
 
-  async fetchByCountryItems(country: string, limit: number): Promise<DryRunMediaItem[]> {
+  async fetchByCountryItems(country: string, limit: number): Promise<PolicyEngineInput[]> {
     const countryUpper = country.toUpperCase();
 
     const result = await withDbError('fetch dry-run items by country', this.logger, () =>
       this.db
-      .select(DRY_RUN_SELECT_FIELDS)
-      .from(schema.mediaItems)
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(
-        and(
-          isNull(schema.mediaItems.deletedAt),
-          eq(schema.mediaItems.ingestionStatus, 'ready'),
-          sql`${schema.mediaItems.originCountries} @> ${JSON.stringify([countryUpper])}::jsonb`,
-        ),
-      )
-      .orderBy(sql`${schema.mediaStats.popularityScore} DESC NULLS LAST`)
-      .limit(limit),
+        .select(DRY_RUN_SELECT_FIELDS)
+        .from(schema.mediaItems)
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(
+          and(
+            isNull(schema.mediaItems.deletedAt),
+            eq(schema.mediaItems.ingestionStatus, 'ready'),
+            sql`${schema.mediaItems.originCountries} @> ${JSON.stringify([countryUpper])}::jsonb`,
+          ),
+        )
+        .orderBy(sql`${schema.mediaStats.popularityScore} DESC NULLS LAST`)
+        .limit(limit),
     );
 
-    return result as DryRunMediaItem[];
+    return this.toPolicyEngineInputs(result);
   }
 
   async getCurrentEvaluations(mediaItemIds: string[]): Promise<Map<string, CurrentEvaluation>> {
@@ -178,5 +186,28 @@ export class DryRunRepository implements IDryRunRepository {
     }
 
     return map;
+  }
+
+  private async toPolicyEngineInputs(rows: MediaItemRow[]): Promise<PolicyEngineInput[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const mediaItemIds = rows.map((row) => row.id);
+    const offersByMediaItem = await withDbError(
+      'fetch watch offers for dry-run',
+      this.logger,
+      () =>
+        this.watchOffersRepository.getOffersForMediaBatch(mediaItemIds, {
+          includeVariantInfo: true,
+        }),
+      { count: mediaItemIds.length },
+    );
+
+    return mapRowsToPolicyEngineInputs(
+      rows,
+      mapOffersByMediaItemToNormalized(offersByMediaItem),
+      this.logger,
+    );
   }
 }
