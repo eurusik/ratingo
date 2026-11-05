@@ -18,9 +18,10 @@ export interface FetchBatchIdsOptions {
   batchSize: number;
   /** Cursor (last ID) for pagination */
   cursor?: string;
-  /** Only fetch items updated before this date (snapshot cutoff) */
-  snapshotCutoff?: Date;
+  updatedAtWindow?: UpdatedAtWindow;
 }
+
+export type UpdatedAtWindow = { updatedAtOrBefore: Date } | { updatedAfter: Date };
 
 /**
  * Repository port for fetching policy engine input data.

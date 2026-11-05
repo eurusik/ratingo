@@ -5,7 +5,10 @@ import { SyncMediaService } from './sync-media.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '../../../tmdb/public';
 import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '../../../trakt/public';
-import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
+import {
+  AGGREGATED_RATINGS_PORT,
+  type AggregatedRatingsPort,
+} from '../../domain/ports/aggregated-ratings.port';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import { NormalizationService } from '@/modules/provider/public';
@@ -18,7 +21,7 @@ describe('SyncMediaService', () => {
   let service: SyncMediaService;
   let tmdbAdapter: jest.Mocked<TmdbAdapter>;
   let traktAdapter: jest.Mocked<TraktRatingsPort>;
-  let omdbAdapter: jest.Mocked<OmdbAdapter>;
+  let aggregatedRatings: jest.Mocked<AggregatedRatingsPort>;
   let tvMazeEnrichment: jest.Mocked<TvMazeEnrichmentService>;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
   let normalizationService: jest.Mocked<NormalizationService>;
@@ -59,7 +62,7 @@ describe('SyncMediaService', () => {
       getShowRatingsByTmdbId: jest.fn(),
     };
 
-    const mockOmdbAdapter = {
+    const mockAggregatedRatings = {
       getAggregatedRatings: jest.fn(),
     };
 
@@ -96,7 +99,7 @@ describe('SyncMediaService', () => {
         SyncMediaService,
         { provide: TmdbAdapter, useValue: mockTmdbAdapter },
         { provide: TRAKT_RATINGS_PORT, useValue: mockTraktAdapter },
-        { provide: OmdbAdapter, useValue: mockOmdbAdapter },
+        { provide: AGGREGATED_RATINGS_PORT, useValue: mockAggregatedRatings },
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: NormalizationService, useValue: mockNormalizationService },
@@ -110,7 +113,7 @@ describe('SyncMediaService', () => {
     service = module.get<SyncMediaService>(SyncMediaService);
     tmdbAdapter = module.get(TmdbAdapter);
     traktAdapter = module.get(TRAKT_RATINGS_PORT);
-    omdbAdapter = module.get(OmdbAdapter);
+    aggregatedRatings = module.get(AGGREGATED_RATINGS_PORT);
     tvMazeEnrichment = module.get(TvMazeEnrichmentService);
     scoreCalculator = module.get(ScoreCalculatorService);
     normalizationService = module.get(NormalizationService);
@@ -127,7 +130,7 @@ describe('SyncMediaService', () => {
         watchers: 100,
         totalWatchers: 5000,
       });
-      omdbAdapter.getAggregatedRatings.mockResolvedValue({
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue({
         imdbRating: 8.8,
         imdbVotes: 2000000,
         metacritic: 66,
@@ -139,7 +142,10 @@ describe('SyncMediaService', () => {
 
       expect(tmdbAdapter.getMovie).toHaveBeenCalledWith(550);
       expect(traktAdapter.getMovieRatingsByTmdbId).toHaveBeenCalledWith(550);
-      expect(omdbAdapter.getAggregatedRatings).toHaveBeenCalledWith('tt0137523', MediaType.MOVIE);
+      expect(aggregatedRatings.getAggregatedRatings).toHaveBeenCalledWith(
+        'tt0137523',
+        MediaType.MOVIE,
+      );
       expect(scoreCalculator.calculate).toHaveBeenCalled();
       expect(mediaRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -183,7 +189,7 @@ describe('SyncMediaService', () => {
     it('should scope ingestion status updates and lookups by media type (show)', async () => {
       tmdbAdapter.getShow.mockResolvedValue({ ...mockMedia, type: MediaType.SHOW });
       traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
 
       await service.syncShow(550);
 
@@ -217,7 +223,7 @@ describe('SyncMediaService', () => {
     it('should keep stored score inputs when Trakt and OMDb fail (no degraded score overwrite)', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null); // transient failure
-      omdbAdapter.getAggregatedRatings.mockResolvedValue({
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue({
         imdbRating: null,
         imdbVotes: null,
         metacritic: null,
@@ -260,7 +266,7 @@ describe('SyncMediaService', () => {
         watchers: 100,
         totalWatchers: 5000,
       });
-      omdbAdapter.getAggregatedRatings.mockResolvedValue({
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue({
         imdbRating: 8.8,
         imdbVotes: 2000000,
         metacritic: 66,
@@ -289,7 +295,7 @@ describe('SyncMediaService', () => {
     it('should score with fetched data only when the stored-values lookup fails', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByIdForScoring.mockRejectedValue(new Error('DB down'));
 
       await service.syncMovie(550);
@@ -300,7 +306,7 @@ describe('SyncMediaService', () => {
     it('should sync with trending data when provided', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
 
       await service.syncMovie(550, { score: 9999, rank: 1 });
 
@@ -324,14 +330,14 @@ describe('SyncMediaService', () => {
 
       await service.syncMovie(550);
 
-      expect(omdbAdapter.getAggregatedRatings).not.toHaveBeenCalled();
+      expect(aggregatedRatings.getAggregatedRatings).not.toHaveBeenCalled();
       expect(mediaRepository.upsert).toHaveBeenCalled();
     });
 
     it('should handle null ratings from external sources', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
 
       await service.syncMovie(550);
 
@@ -346,7 +352,7 @@ describe('SyncMediaService', () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
       // OMDb-like partial response: imdb present, but RT/MC/votes missing
-      omdbAdapter.getAggregatedRatings.mockResolvedValue({
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue({
         imdbRating: 8.2,
         imdbVotes: null,
         metacritic: null,
@@ -388,7 +394,7 @@ describe('SyncMediaService', () => {
 
       // Mock other calls with empty/default values
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
 
       await service.syncMovie(550);
 
@@ -416,7 +422,7 @@ describe('SyncMediaService', () => {
         watchers: 200,
         totalWatchers: 10000,
       });
-      omdbAdapter.getAggregatedRatings.mockResolvedValue({
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue({
         imdbRating: 9.0,
         imdbVotes: 1500000,
         metacritic: 80,
@@ -428,7 +434,10 @@ describe('SyncMediaService', () => {
 
       expect(tmdbAdapter.getShow).toHaveBeenCalledWith(1000);
       expect(traktAdapter.getShowRatingsByTmdbId).toHaveBeenCalledWith(1000);
-      expect(omdbAdapter.getAggregatedRatings).toHaveBeenCalledWith('tt0137523', MediaType.SHOW);
+      expect(aggregatedRatings.getAggregatedRatings).toHaveBeenCalledWith(
+        'tt0137523',
+        MediaType.SHOW,
+      );
       expect(mediaRepository.upsert).toHaveBeenCalled();
     });
 
@@ -479,7 +488,7 @@ describe('SyncMediaService', () => {
       );
 
       traktAdapter.getMovieRatingsByTmdbId.mockReturnValue(traktPromise);
-      omdbAdapter.getAggregatedRatings.mockReturnValue(omdbPromise);
+      aggregatedRatings.getAggregatedRatings.mockReturnValue(omdbPromise);
 
       const start = Date.now();
       await service.syncMovie(550);
@@ -504,7 +513,7 @@ describe('SyncMediaService', () => {
         watchers: 80,
         totalWatchers: 3000,
       });
-      omdbAdapter.getAggregatedRatings.mockResolvedValue({
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue({
         imdbRating: 7.5,
         imdbVotes: 50000,
         metacritic: 65,
@@ -603,7 +612,7 @@ describe('SyncMediaService', () => {
 
     beforeEach(() => {
       traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
     });
 
     it('should fill episodes from TMDB when TVMaze returns empty', async () => {
@@ -747,7 +756,7 @@ describe('SyncMediaService', () => {
       };
       tmdbAdapter.getMovie.mockResolvedValue(mediaWithProviders);
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
 
       await service.syncMovie(550);
@@ -761,7 +770,7 @@ describe('SyncMediaService', () => {
     it('should skip normalization when providers are not part of the payload (undefined)', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProvidersRaw: undefined });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
 
       await service.syncMovie(550);
 
@@ -776,7 +785,7 @@ describe('SyncMediaService', () => {
       async (_n, raw) => {
         tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProvidersRaw: raw });
         traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-        omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+        aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
 
         await service.syncMovie(550);
 
@@ -796,7 +805,7 @@ describe('SyncMediaService', () => {
       };
       tmdbAdapter.getMovie.mockResolvedValue(mediaWithProviders);
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
       normalizationService.normalizeWatchProviders.mockRejectedValue(new Error('DB Error'));
 
@@ -815,7 +824,7 @@ describe('SyncMediaService', () => {
       };
       tmdbAdapter.getMovie.mockResolvedValue(mediaWithProviders);
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByTmdbId.mockResolvedValue(null);
 
       await service.syncMovie(550);
@@ -828,7 +837,7 @@ describe('SyncMediaService', () => {
     it('should evaluate only catalog context when not trending', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
 
       await service.syncMovie(550);
@@ -843,7 +852,7 @@ describe('SyncMediaService', () => {
     it('should evaluate both catalog and trending contexts when trending data provided', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
 
       await service.syncMovie(550, { score: 9999, rank: 1 });
@@ -862,7 +871,7 @@ describe('SyncMediaService', () => {
     it('should not evaluate trending context when trending score is 0', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
 
       await service.syncMovie(550, { score: 0, rank: 100 });
@@ -877,7 +886,7 @@ describe('SyncMediaService', () => {
     it('should handle evaluation failure gracefully', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
       catalogEvaluator.evaluateOne.mockRejectedValue(new Error('Evaluation failed'));
 
@@ -890,7 +899,7 @@ describe('SyncMediaService', () => {
     it('should skip evaluation when media item not found after persist', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       // First call for normalization, second for evaluation
       mediaRepository.findByTmdbId.mockResolvedValue(null);
 
@@ -911,7 +920,7 @@ describe('SyncMediaService', () => {
     it('should emit media.synced with correct data after successful syncMovie', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
 
       await service.syncMovie(550);
@@ -935,7 +944,7 @@ describe('SyncMediaService', () => {
       };
       tmdbAdapter.getShow.mockResolvedValue(mockShow);
       traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       mediaRepository.findByTmdbId.mockResolvedValue({ id: 'show-456' });
 
       await service.syncShow(1000);
@@ -953,7 +962,7 @@ describe('SyncMediaService', () => {
     it('should NOT emit media.synced when mediaItem is null after persist', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
-      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(null);
       // findByTmdbId returns null — mediaItem not found after upsert
       mediaRepository.findByTmdbId.mockResolvedValue(null);
 

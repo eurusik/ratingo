@@ -27,10 +27,11 @@ import {
 import {
   CreateJournalPostData,
   FindPublishedFilters,
-  JournalRepository,
+  type IJournalRepository,
+  JOURNAL_REPOSITORY,
   PaginatedPostsResult,
   UpdateJournalPostData,
-} from '../../src/modules/journal/infrastructure/journal.repository';
+} from '../../src/modules/journal/domain/repositories/journal.repository.interface';
 import { JournalModule } from '../../src/modules/journal/journal.module';
 import { USERS_REPOSITORY } from '../../src/modules/users/domain/repositories/users.repository.interface';
 import { UsersModule } from '../../src/modules/users/users.module';
@@ -39,7 +40,7 @@ import { InMemoryRefreshTokensRepository, InMemoryUsersRepository } from '../use
 /**
  * In-memory journal repository for testing.
  */
-class InMemoryJournalRepository {
+class InMemoryJournalRepository implements IJournalRepository {
   private posts: JournalPost[] = [];
   private idCounter = 0;
 
@@ -254,7 +255,7 @@ describe('Journal Public Endpoints e2e', () => {
       .useClass(InMemoryRefreshTokensRepository)
       .overrideProvider(DATABASE_CONNECTION)
       .useValue({})
-      .overrideProvider(JournalRepository)
+      .overrideProvider(JOURNAL_REPOSITORY)
       .useClass(InMemoryJournalRepository)
       .overrideProvider(JournalImageService)
       .useValue({
@@ -264,7 +265,7 @@ describe('Journal Public Endpoints e2e', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    journalRepo = app.get(JournalRepository) as unknown as InMemoryJournalRepository;
+    journalRepo = app.get(JOURNAL_REPOSITORY) as unknown as InMemoryJournalRepository;
 
     app.setGlobalPrefix('api');
     app.useGlobalPipes(

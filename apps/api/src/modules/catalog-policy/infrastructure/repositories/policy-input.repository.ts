@@ -23,13 +23,14 @@ import {
   type MediaItemRow,
   mapRowToPolicyEngineInput,
   mapRowsToPolicyEngineInputs,
-  POLICY_EVALUATION_SELECT_FIELDS,
 } from '../../application/utils/policy-input.mapper';
 import {
   type IPolicyInputRepository,
   type FetchBatchIdsOptions,
 } from '../../domain/repositories/policy-input.repository.interface';
 import { type PolicyEngineInput, type NormalizedOffer } from '../../domain/types/policy.types';
+
+import { POLICY_EVALUATION_SELECT_FIELDS } from './policy-evaluation-select-fields';
 
 @Injectable()
 export class PolicyInputRepository implements IPolicyInputRepository {
@@ -143,28 +144,36 @@ export class PolicyInputRepository implements IPolicyInputRepository {
    * Uses cursor-based pagination with ordered results.
    */
   async fetchBatchIds(options: FetchBatchIdsOptions): Promise<string[]> {
-    const { batchSize, cursor, snapshotCutoff } = options;
+    const { batchSize, cursor, updatedAtWindow } = options;
 
     const conditions = [
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       isNull(schema.mediaItems.deletedAt),
     ];
 
-    if (snapshotCutoff) {
-      conditions.push(lte(schema.mediaItems.updatedAt, snapshotCutoff));
+    if (updatedAtWindow) {
+      conditions.push(
+        'updatedAfter' in updatedAtWindow
+          ? gt(schema.mediaItems.updatedAt, updatedAtWindow.updatedAfter)
+          : lte(schema.mediaItems.updatedAt, updatedAtWindow.updatedAtOrBefore),
+      );
     }
 
     if (cursor) {
       conditions.push(gt(schema.mediaItems.id, cursor));
     }
 
-    const result = await withDbError('fetch evaluation batch ids', this.logger, () =>
-      this.db
-        .select({ id: schema.mediaItems.id })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .orderBy(schema.mediaItems.id)
-        .limit(batchSize),
+    const result = await withDbError(
+      'fetch evaluation batch ids',
+      this.logger,
+      () =>
+        this.db
+          .select({ id: schema.mediaItems.id })
+          .from(schema.mediaItems)
+          .where(and(...conditions))
+          .orderBy(schema.mediaItems.id)
+          .limit(batchSize),
+      { cursor, batchSize },
     );
 
     return result.map((row) => row.id);

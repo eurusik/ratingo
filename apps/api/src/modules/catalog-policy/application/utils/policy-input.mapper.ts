@@ -2,12 +2,11 @@
  * Policy Input Mapper
  *
  * Shared utility for mapping database rows to PolicyEngineInput.
- * Used by CatalogEvaluationService and DryRunService.
+ * Used by PolicyInputRepository and DryRunService.
  */
 
 import { type Logger } from '@nestjs/common';
 
-import * as schema from '../../../../database/schema';
 import { type ContentClass, isValidContentClass } from '../../domain/classification.service';
 import { type PolicyEngineInput, type NormalizedOffer } from '../../domain/types/policy.types';
 
@@ -37,30 +36,6 @@ export interface MediaItemRow {
   ratingoScore: number | null;
   watchersCount: number | null;
 }
-
-/**
- * Common SELECT fields for policy evaluation queries.
- * Used by CatalogEvaluationService and DryRunService.
- */
-export const POLICY_EVALUATION_SELECT_FIELDS = {
-  id: schema.mediaItems.id,
-  title: schema.mediaItems.title,
-  overview: schema.mediaItems.overview,
-  originCountries: schema.mediaItems.originCountries,
-  originalLanguage: schema.mediaItems.originalLanguage,
-  contentClass: schema.mediaItems.contentClass,
-  ratingImdb: schema.mediaItems.ratingImdb,
-  ratingMetacritic: schema.mediaItems.ratingMetacritic,
-  ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-  ratingTrakt: schema.mediaItems.ratingTrakt,
-  voteCountImdb: schema.mediaItems.voteCountImdb,
-  voteCountTrakt: schema.mediaItems.voteCountTrakt,
-  qualityScore: schema.mediaStats.qualityScore,
-  popularityScore: schema.mediaStats.popularityScore,
-  freshnessScore: schema.mediaStats.freshnessScore,
-  ratingoScore: schema.mediaStats.ratingoScore,
-  watchersCount: schema.mediaStats.watchersCount,
-};
 
 const DEFAULT_CONTENT_CLASS: ContentClass = 'mainstream';
 

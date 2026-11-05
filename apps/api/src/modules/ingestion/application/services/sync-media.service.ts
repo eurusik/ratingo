@@ -17,7 +17,10 @@ import { TmdbAdapter } from '../../../tmdb/public';
 import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../trakt/public';
 import { MediaSyncedEvent } from '../../domain/events/media-synced.event';
 import { type NormalizedMedia } from '../../domain/models/normalized-media.model';
-import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
+import {
+  AGGREGATED_RATINGS_PORT,
+  type AggregatedRatingsPort,
+} from '../../domain/ports/aggregated-ratings.port';
 
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 
@@ -60,7 +63,8 @@ export class SyncMediaService {
     private readonly tmdbAdapter: TmdbAdapter,
     @Inject(TRAKT_RATINGS_PORT)
     private readonly traktRatingsAdapter: TraktRatingsPort,
-    private readonly omdbAdapter: OmdbAdapter,
+    @Inject(AGGREGATED_RATINGS_PORT)
+    private readonly aggregatedRatings: AggregatedRatingsPort,
     private readonly tvMazeEnrichment: TvMazeEnrichmentService,
     private readonly scoreCalculator: ScoreCalculatorService,
     private readonly normalizationService: NormalizationService,
@@ -332,7 +336,7 @@ export class SyncMediaService {
       type === MediaType.MOVIE
         ? this.traktRatingsAdapter.getMovieRatingsByTmdbId(tmdbId)
         : this.traktRatingsAdapter.getShowRatingsByTmdbId(tmdbId),
-      imdbId ? this.omdbAdapter.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
+      imdbId ? this.aggregatedRatings.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
     ]);
 
     // NOTE: per-field null-guard is critical. OMDb often returns `null` for RT/Metacritic

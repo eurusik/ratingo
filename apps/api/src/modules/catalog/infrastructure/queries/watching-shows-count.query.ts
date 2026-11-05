@@ -8,6 +8,7 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { USER_MEDIA_STATE } from '../../../user-media/public';
+import { type IWatchingShowsCountPort } from '../../domain/ports/watching-shows-count.port';
 
 /**
  * Counts the number of shows a user is currently watching.
@@ -19,7 +20,7 @@ import { USER_MEDIA_STATE } from '../../../user-media/public';
  * @throws {DatabaseException} When database query fails
  */
 @Injectable()
-export class WatchingShowsCountQuery {
+export class WatchingShowsCountQuery implements IWatchingShowsCountPort {
   private readonly logger = new Logger(WatchingShowsCountQuery.name);
 
   constructor(
@@ -34,7 +35,7 @@ export class WatchingShowsCountQuery {
    * @returns {Promise<number>} Count of shows currently being watched
    * @throws {DatabaseException} When database query fails
    */
-  async execute(userId: string): Promise<number> {
+  async countWatchingShows(userId: string): Promise<number> {
     try {
       const [result] = await this.db
         .select({ count: count() })

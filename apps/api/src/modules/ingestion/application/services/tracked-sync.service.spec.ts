@@ -1,20 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { parseSeasonFromEpisodeKey } from '../../domain/interfaces/show-sync-diff.interface';
+import { CLOCK_PORT } from '../../../shared/clock';
+import { TRACKED_SHOW_REPOSITORY } from '../../domain/repositories/tracked-show.repository.interface';
 import { TrackedSyncService } from './tracked-sync.service';
 import { SyncMediaService } from './sync-media.service';
 
 describe('TrackedSyncService', () => {
   let service: TrackedSyncService;
 
-  const mockDb = {
-    select: jest.fn().mockReturnThis(),
-    from: jest.fn().mockReturnThis(),
-    innerJoin: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockResolvedValue([]),
+  const mockTrackedShowRepository = {
+    findByTmdbId: jest.fn().mockResolvedValue(null),
+    findLatestEpisodeAiredBy: jest.fn().mockResolvedValue(null),
   };
 
   const mockSyncMediaService = {
@@ -25,7 +22,8 @@ describe('TrackedSyncService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TrackedSyncService,
-        { provide: DATABASE_CONNECTION, useValue: mockDb },
+        { provide: TRACKED_SHOW_REPOSITORY, useValue: mockTrackedShowRepository },
+        { provide: CLOCK_PORT, useValue: { now: () => new Date('2026-01-01T00:00:00.000Z') } },
         { provide: SyncMediaService, useValue: mockSyncMediaService },
       ],
     }).compile();

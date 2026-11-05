@@ -15,6 +15,10 @@ import {
   HttpError,
 } from '../../../../../common/http/resilient-http.client';
 import mdblistConfig from '../../../../../config/mdblist.config';
+import {
+  type RottenTomatoesRatings,
+  type RottenTomatoesRatingsPort,
+} from '../../../domain/ports/rotten-tomatoes-ratings.port';
 
 /**
  * Single rating entry in MDBList response.
@@ -72,20 +76,6 @@ const MDBLIST_RETRY_CONFIG: Partial<RetryConfig> = {
 };
 
 /**
- * Ratings returned by the MDBList adapter.
- *
- * MDBList also returns IMDb/Metacritic/Trakt values, but this adapter
- * scopes itself to Rotten Tomatoes fields only — other sources are already
- * owned by OMDb / Trakt adapters and mixing ownership causes churn.
- */
-export interface MdblistRatings {
-  /** Rotten Tomatoes critics score (Tomatometer) — 0-100 or null if unavailable */
-  rottenTomatoesCritics: number | null;
-  /** Rotten Tomatoes audience score (Popcornmeter) — 0-100 or null if unavailable */
-  rottenTomatoesAudience: number | null;
-}
-
-/**
  * Adapter for MDBList API.
  *
  * Complements OMDb for Rotten Tomatoes coverage: OMDb frequently omits RT
@@ -96,7 +86,7 @@ export interface MdblistRatings {
  * used by backfill pipelines rather than the main sync flow.
  */
 @Injectable()
-export class MdblistAdapter {
+export class MdblistAdapter implements RottenTomatoesRatingsPort {
   private readonly logger = new Logger(MdblistAdapter.name);
   private readonly httpClient: ResilientHttpClient;
 
@@ -126,7 +116,7 @@ export class MdblistAdapter {
    * @returns RT critics and audience scores (each 0-100 or null)
    * @throws MdblistApiException on any failure other than not-found
    */
-  async getRottenTomatoesRatings(tmdbId: number, type: MediaType): Promise<MdblistRatings> {
+  async getRottenTomatoesRatings(tmdbId: number, type: MediaType): Promise<RottenTomatoesRatings> {
     // Defensive runtime validation — BullMQ payloads are JSON and TypeScript
     // types do not survive serialisation, so a malformed payload (e.g. from
     // an older schema or a manual re-queue) could otherwise template a

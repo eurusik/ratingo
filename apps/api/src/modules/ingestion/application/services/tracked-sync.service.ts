@@ -1,11 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, and, desc, isNotNull, lte } from 'drizzle-orm';
-import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import {
   type ShowSyncDiff,
   createEmptyDiff,
@@ -13,6 +8,11 @@ import {
   formatSeasonKey,
   formatDateToIso,
 } from '../../domain/interfaces/show-sync-diff.interface';
+import {
+  TRACKED_SHOW_REPOSITORY,
+  type ITrackedShowRepository,
+  type TrackedShow,
+} from '../../domain/repositories/tracked-show.repository.interface';
 
 import { SyncMediaService } from './sync-media.service';
 
@@ -37,8 +37,10 @@ export class TrackedSyncService {
   private readonly logger = new Logger(TrackedSyncService.name);
 
   constructor(
-    @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    @Inject(TRACKED_SHOW_REPOSITORY)
+    private readonly trackedShowRepository: ITrackedShowRepository,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
     private readonly syncMediaService: SyncMediaService,
   ) {}
 
@@ -62,23 +64,9 @@ export class TrackedSyncService {
     return this.buildCurrentStateDiff(tmdbId, snapshot, beforeStatus?.status ?? null);
   }
 
-  private async getShowStatus(
-    tmdbId: number,
-  ): Promise<{ mediaItemId: string; status: string | null } | null> {
+  private async getShowStatus(tmdbId: number): Promise<TrackedShow | null> {
     try {
-      const result = await this.db
-        .select({
-          mediaItemId: schema.mediaItems.id,
-          status: schema.shows.status,
-        })
-        .from(schema.mediaItems)
-        .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-        .where(
-          and(eq(schema.mediaItems.tmdbId, tmdbId), eq(schema.mediaItems.type, MediaType.SHOW)),
-        )
-        .limit(1);
-
-      return result.length > 0 ? result[0] : null;
+      return await this.trackedShowRepository.findByTmdbId(tmdbId);
     } catch (error) {
       this.logger.warn(`Failed to get show status for tmdbId=${tmdbId}: ${error.message}`);
       return null;
@@ -87,53 +75,21 @@ export class TrackedSyncService {
 
   private async getShowSnapshot(tmdbId: number): Promise<ShowSnapshot | null> {
     try {
-      const showResult = await this.db
-        .select({
-          mediaItemId: schema.mediaItems.id,
-          status: schema.shows.status,
-          totalSeasons: schema.shows.totalSeasons,
-          nextAirDate: schema.shows.nextAirDate,
-        })
-        .from(schema.mediaItems)
-        .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-        .where(
-          and(eq(schema.mediaItems.tmdbId, tmdbId), eq(schema.mediaItems.type, MediaType.SHOW)),
-        )
-        .limit(1);
+      const show = await this.trackedShowRepository.findByTmdbId(tmdbId);
 
-      if (showResult.length === 0) {
+      if (!show) {
         return null;
       }
 
-      const show = showResult[0];
+      const lastEpisode = await this.trackedShowRepository.findLatestEpisodeAiredBy(
+        tmdbId,
+        this.clock.now(),
+      );
 
-      const lastEpisodeResult = await this.db
-        .select({
-          seasonNumber: schema.seasons.number,
-          episodeNumber: schema.episodes.number,
-          airDate: schema.episodes.airDate,
-        })
-        .from(schema.episodes)
-        .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
-        .innerJoin(schema.shows, eq(schema.shows.id, schema.seasons.showId))
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.shows.mediaItemId))
-        .where(
-          and(
-            eq(schema.mediaItems.tmdbId, tmdbId),
-            isNotNull(schema.episodes.airDate),
-            lte(schema.episodes.airDate, new Date()),
-          ),
-        )
-        .orderBy(desc(schema.seasons.number), desc(schema.episodes.number))
-        .limit(1);
-
-      let lastEpisodeKey: string | null = null;
-      let lastEpisodeAirDate: Date | null = null;
-      if (lastEpisodeResult.length > 0) {
-        const ep = lastEpisodeResult[0];
-        lastEpisodeKey = formatEpisodeKey(ep.seasonNumber, ep.episodeNumber);
-        lastEpisodeAirDate = ep.airDate;
-      }
+      const lastEpisodeKey = lastEpisode
+        ? formatEpisodeKey(lastEpisode.seasonNumber, lastEpisode.episodeNumber)
+        : null;
+      const lastEpisodeAirDate = lastEpisode?.airDate ?? null;
 
       return {
         mediaItemId: show.mediaItemId,

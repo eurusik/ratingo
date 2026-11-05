@@ -8,7 +8,10 @@ import {
   type RetryConfig,
 } from '../../../../../common/http/resilient-http.client';
 import tvmazeConfig from '../../../../../config/tvmaze.config';
-import { type NormalizedEpisode } from '../../../domain/models/normalized-media.model';
+import {
+  type EpisodeSchedulePort,
+  type ScheduledEpisode,
+} from '../../../domain/ports/episode-schedule.port';
 
 const TVMAZE_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 2,
@@ -41,17 +44,10 @@ interface TvMazeEpisodeResponse {
 }
 
 /**
- * TVMaze episode with season number.
- */
-export interface TvMazeEpisode extends NormalizedEpisode {
-  seasonNumber: number;
-}
-
-/**
  * TVMaze adapter for fetching episodes schedule by IMDb ID.
  */
 @Injectable()
-export class TvMazeAdapter {
+export class TvMazeAdapter implements EpisodeSchedulePort {
   private readonly logger = new Logger(TvMazeAdapter.name);
   private readonly httpClient = new ResilientHttpClient(TVMAZE_RETRY_CONFIG);
 
@@ -65,9 +61,9 @@ export class TvMazeAdapter {
    * Returns flat list of all episodes with normalized data and season number.
    *
    * @param {string} imdbId - IMDb ID (e.g. 'tt0944947')
-   * @returns {Promise<TvMazeEpisode[]>} Episodes list
+   * @returns {Promise<ScheduledEpisode[]>} Episodes list
    */
-  async getEpisodesByImdbId(imdbId: string): Promise<TvMazeEpisode[]> {
+  async getEpisodesByImdbId(imdbId: string): Promise<ScheduledEpisode[]> {
     try {
       // Lookup Show ID via IMDb ID (Follows redirects)
       const show = await this.fetch<TvMazeShow>(`/lookup/shows?imdb=${imdbId}`);
@@ -101,7 +97,7 @@ export class TvMazeAdapter {
    * Maps TVMaze episode response to normalized episode model.
    * Strips HTML tags from summary and normalizes fields.
    */
-  private mapEpisode(ep: TvMazeEpisodeResponse): TvMazeEpisode {
+  private mapEpisode(ep: TvMazeEpisodeResponse): ScheduledEpisode {
     return {
       seasonNumber: ep.season,
       number: ep.number,
@@ -120,9 +116,9 @@ export class TvMazeAdapter {
    * Intended as fallback when IMDb lookup is unavailable.
    *
    * @param {string} showName - Show name to search for
-   * @returns {Promise<TvMazeEpisode[]>} Episodes list
+   * @returns {Promise<ScheduledEpisode[]>} Episodes list
    */
-  async getEpisodesByShowName(showName: string): Promise<TvMazeEpisode[]> {
+  async getEpisodesByShowName(showName: string): Promise<ScheduledEpisode[]> {
     try {
       const show = await this.fetch<TvMazeShow | null>(
         `/singlesearch/shows?q=${encodeURIComponent(showName)}`,

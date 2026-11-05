@@ -2,16 +2,15 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { Queue } from 'bullmq';
-import { and, eq, gt, isNull } from 'drizzle-orm';
-import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
-import { withDbError } from '@/common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '@/database/database.module';
-import * as schema from '@/database/schema';
 
 import { TmdbAdapter } from '../../../tmdb/public';
+import {
+  IMDB_BACKFILL_REPOSITORY,
+  type IImdbBackfillRepository,
+} from '../../domain/repositories/imdb-backfill.repository.interface';
 import { BACKFILL_QUEUE, IngestionJob, TMDB_BACKFILL_RUN_CAP } from '../../ingestion.constants';
 
 /**
@@ -27,7 +26,7 @@ const BACKFILL_BATCH_SIZE = 100;
  *
  * This pipeline:
  * 1. Dispatcher: finds all shows with NULL imdb_id and queues item jobs
- * 2. Item job: fetches external IDs from TMDB (single API call) + direct DB update
+ * 2. Item job: fetches external IDs from TMDB (single API call) and saves the IMDb id
  *
  * TMDB-only: no Trakt/OMDb/TVMaze calls. Safe for high-throughput backfill queue.
  */
@@ -36,8 +35,8 @@ export class BackfillImdbPipeline {
   private readonly logger = new Logger(BackfillImdbPipeline.name);
 
   constructor(
-    @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    @Inject(IMDB_BACKFILL_REPOSITORY)
+    private readonly imdbBackfillRepository: IImdbBackfillRepository,
     @InjectQueue(BACKFILL_QUEUE)
     private readonly queue: Queue,
     private readonly tmdbAdapter: TmdbAdapter,
@@ -58,30 +57,13 @@ export class BackfillImdbPipeline {
     // single run and duplicate them on the next manual trigger because
     // the day-scoped jobId would differ.
     while (totalQueued < TMDB_BACKFILL_RUN_CAP) {
-      const conditions = [
-        eq(schema.mediaItems.type, MediaType.SHOW),
-        isNull(schema.mediaItems.imdbId),
-        isNull(schema.mediaItems.deletedAt),
-      ];
-
-      if (cursor) {
-        conditions.push(gt(schema.mediaItems.id, cursor));
-      }
-
       const remaining = TMDB_BACKFILL_RUN_CAP - totalQueued;
       const batchSize = Math.min(BACKFILL_BATCH_SIZE, remaining);
 
-      const rows = await withDbError('find IMDb backfill candidates', this.logger, () =>
-        this.db
-          .select({
-            id: schema.mediaItems.id,
-            tmdbId: schema.mediaItems.tmdbId,
-          })
-          .from(schema.mediaItems)
-          .where(and(...conditions))
-          .orderBy(schema.mediaItems.id)
-          .limit(batchSize),
-      );
+      const rows = await this.imdbBackfillRepository.findShowCandidates({
+        cursor,
+        limit: batchSize,
+      });
 
       if (rows.length === 0) break;
 
@@ -125,18 +107,7 @@ export class BackfillImdbPipeline {
       return;
     }
 
-    await withDbError(
-      'persist IMDb id',
-      this.logger,
-      () =>
-        this.db
-          .update(schema.mediaItems)
-          .set({ imdbId: result.imdbId })
-          .where(
-            and(eq(schema.mediaItems.tmdbId, tmdbId), eq(schema.mediaItems.type, MediaType.SHOW)),
-          ),
-      { tmdbId, imdbId: result.imdbId },
-    );
+    await this.imdbBackfillRepository.saveShowImdbId(tmdbId, result.imdbId);
 
     this.logger.debug(`[${jobId}] Updated imdbId for tmdbId=${tmdbId} → ${result.imdbId}`);
   }
