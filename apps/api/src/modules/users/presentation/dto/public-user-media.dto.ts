@@ -5,16 +5,14 @@ import { IsIn, IsOptional } from 'class-validator';
 import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../common/dtos';
 import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { type UserMediaState, USER_MEDIA_STATE_VALUES } from '../../../user-media/public';
+import {
+  USER_MEDIA_LIST_SORT,
+  type UserMediaListSort,
+  type UserMediaState,
+  USER_MEDIA_STATE_VALUES,
+} from '../../../user-media/public';
 
-export const USER_MEDIA_LIST_SORT = {
-  RECENT: 'recent',
-  RATING: 'rating',
-  RELEASE_DATE: 'releaseDate',
-} as const;
-
-export type UserMediaListSort = (typeof USER_MEDIA_LIST_SORT)[keyof typeof USER_MEDIA_LIST_SORT];
-export const USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
+const USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
 
 /**
  * Query DTO for public user media lists.

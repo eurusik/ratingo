@@ -1,19 +1,17 @@
 import { Controller, Get, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { DEFAULT_PAGE_SIZE } from '@/common/constants';
-
 import { CurrentUser } from '../../../auth/public';
 import { OptionalJwtAuthGuard } from '../../../auth/public';
 import { PublicUserMediaService } from '../../application/public-user-media.service';
 import { type ViewerContext } from '../../application/user-profile-visibility.policy';
 import { UsersService } from '../../application/users.service';
 import {
-  type PublicUserMediaListItemDto,
   PublicUserMediaListQueryDto,
   PaginatedPublicUserMediaResponseDto,
 } from '../dto/public-user-media.dto';
 import { type PublicUserProfileDto } from '../dto/public-user-profile.dto';
+import { toPaginatedPublicUserMediaResponseDto } from '../mappers/public-user-media-page.mapper';
 
 /**
  * Exposes public user profile and list endpoints.
@@ -68,20 +66,7 @@ export class PublicUsersController {
     const result = await this.publicUserMediaService.getRatings(username, viewer, query);
     if (!result) throw new NotFoundException('User not found');
 
-    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
-    const offset = query?.offset ?? 0;
-    const items = result.data as PublicUserMediaListItemDto[];
-
-    return {
-      data: items,
-      meta: {
-        count: items.length,
-        total: result.total,
-        limit,
-        offset,
-        hasMore: offset + items.length < result.total,
-      },
-    };
+    return toPaginatedPublicUserMediaResponseDto(result, query);
   }
 
   /**
@@ -104,20 +89,7 @@ export class PublicUsersController {
     const result = await this.publicUserMediaService.getWatchlist(username, viewer, query);
     if (!result) throw new NotFoundException('User not found');
 
-    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
-    const offset = query?.offset ?? 0;
-    const items = result.data as PublicUserMediaListItemDto[];
-
-    return {
-      data: items,
-      meta: {
-        count: items.length,
-        total: result.total,
-        limit,
-        offset,
-        hasMore: offset + items.length < result.total,
-      },
-    };
+    return toPaginatedPublicUserMediaResponseDto(result, query);
   }
 
   /**
@@ -140,19 +112,6 @@ export class PublicUsersController {
     const result = await this.publicUserMediaService.getHistory(username, viewer, query);
     if (!result) throw new NotFoundException('User not found');
 
-    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
-    const offset = query?.offset ?? 0;
-    const items = result.data as PublicUserMediaListItemDto[];
-
-    return {
-      data: items,
-      meta: {
-        count: items.length,
-        total: result.total,
-        limit,
-        offset,
-        hasMore: offset + items.length < result.total,
-      },
-    };
+    return toPaginatedPublicUserMediaResponseDto(result, query);
   }
 }

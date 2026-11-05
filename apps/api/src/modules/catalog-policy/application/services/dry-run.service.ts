@@ -9,11 +9,6 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
-  type IMediaWatchOffersRepository,
-  MEDIA_WATCH_OFFERS_REPOSITORY,
-  type MediaWatchOfferView,
-} from '../../../provider/public';
-import {
   EligibilityStatus,
   type EligibilityStatusType,
   type EvaluationReasonType,
@@ -28,13 +23,10 @@ import { evaluateEligibility, computeRelevance } from '../../domain/policy-engin
 import {
   DRY_RUN_REPOSITORY,
   type IDryRunRepository,
-  type DryRunMediaItem,
   type CurrentEvaluation,
 } from '../../domain/repositories';
 import { type DryRunMode } from '../../domain/types/dry-run.types';
-import { type PolicyConfig } from '../../domain/types/policy.types';
-import { mapOffersToNormalized } from '../utils/offer-mapper';
-import { mapRowToPolicyEngineInput } from '../utils/policy-input.mapper';
+import { type PolicyConfig, type PolicyEngineInput } from '../../domain/types/policy.types';
 
 import { CatalogPolicyService } from './catalog-policy.service';
 
@@ -97,10 +89,9 @@ interface EvaluationCounters {
 }
 
 interface EvaluationContext {
-  items: DryRunMediaItem[];
+  inputs: PolicyEngineInput[];
   policy: PolicyConfig;
   currentEvaluations: Map<string, CurrentEvaluation>;
-  offersMap: Map<string, MediaWatchOfferView[]>;
   startTime: number;
 }
 
@@ -125,8 +116,6 @@ export class DryRunService {
     @Inject(DRY_RUN_REPOSITORY)
     private readonly dryRunRepository: IDryRunRepository,
     private readonly policyService: CatalogPolicyService,
-    @Inject(MEDIA_WATCH_OFFERS_REPOSITORY)
-    private readonly watchOffersRepository: IMediaWatchOffersRepository,
   ) {}
 
   async execute(proposedPolicy: PolicyConfig, options: DryRunOptions): Promise<DryRunResult> {
@@ -136,12 +125,12 @@ export class DryRunService {
     this.logger.log(`Starting dry-run: mode=${options.mode}, limit=${limit}`);
     this.validateOptions(options);
 
-    const items = await this.fetchItems(options, limit);
-    if (items.length === 0) {
+    const inputs = await this.fetchInputs(options, limit);
+    if (inputs.length === 0) {
       return this.buildEmptyResult(options.mode, limit, Date.now() - startTime);
     }
 
-    const context = await this.prepareEvaluationContext(items, proposedPolicy, startTime);
+    const context = await this.prepareEvaluationContext(inputs, proposedPolicy, startTime);
     const { results, counters, timedOut } = this.evaluateItems(context);
     const executionTimeMs = Date.now() - startTime;
 
@@ -184,7 +173,7 @@ export class DryRunService {
     }
   }
 
-  private async fetchItems(options: DryRunOptions, limit: number): Promise<DryRunMediaItem[]> {
+  private async fetchInputs(options: DryRunOptions, limit: number): Promise<PolicyEngineInput[]> {
     switch (options.mode) {
       case 'sample':
         return this.dryRunRepository.fetchSampleItems(
@@ -206,16 +195,13 @@ export class DryRunService {
   }
 
   private async prepareEvaluationContext(
-    items: DryRunMediaItem[],
+    inputs: PolicyEngineInput[],
     policy: PolicyConfig,
     startTime: number,
   ): Promise<EvaluationContext> {
-    const mediaItemIds = items.map((i) => i.id);
-    const [currentEvaluations, offersMap] = await Promise.all([
-      this.dryRunRepository.getCurrentEvaluations(mediaItemIds),
-      this.watchOffersRepository.getOffersForMediaBatch(mediaItemIds, { includeVariantInfo: true }),
-    ]);
-    return { items, policy, currentEvaluations, offersMap, startTime };
+    const mediaItemIds = inputs.map((input) => input.mediaItem.id);
+    const currentEvaluations = await this.dryRunRepository.getCurrentEvaluations(mediaItemIds);
+    return { inputs, policy, currentEvaluations, startTime };
   }
 
   private evaluateItems(ctx: EvaluationContext): EvaluationLoopResult {
@@ -223,14 +209,14 @@ export class DryRunService {
     const counters = this.createEmptyCounters();
     let timedOut = false;
 
-    for (const item of ctx.items) {
+    for (const input of ctx.inputs) {
       if (this.isTimedOut(ctx.startTime)) {
         this.logger.warn(`Dry-run timeout reached after ${results.length} items`);
         timedOut = true;
         break;
       }
 
-      const result = this.evaluateSingleItem(item, ctx, counters);
+      const result = this.evaluateSingleItem(input, ctx, counters);
       results.push(result);
     }
 
@@ -238,16 +224,15 @@ export class DryRunService {
   }
 
   private evaluateSingleItem(
-    item: DryRunMediaItem,
+    input: PolicyEngineInput,
     ctx: EvaluationContext,
     counters: EvaluationCounters,
   ): DryRunItemResult {
-    const normalizedOffers = mapOffersToNormalized(ctx.offersMap.get(item.id) ?? []);
-    const input = mapRowToPolicyEngineInput(item, normalizedOffers, this.logger);
+    const { id: mediaItemId, title } = input.mediaItem;
     const evalResult = evaluateEligibility(input, ctx.policy);
     const relevanceScore = computeRelevance(input, ctx.policy);
 
-    const currentEval = ctx.currentEvaluations.get(item.id);
+    const currentEval = ctx.currentEvaluations.get(mediaItemId);
     const currentStatus = currentEval?.status || null;
     const isNewItem = currentStatus === null;
     const statusChanged = currentStatus !== evalResult.status;
@@ -256,8 +241,8 @@ export class DryRunService {
     this.countReasons(counters, evalResult.reasons);
 
     return {
-      mediaItemId: item.id,
-      title: item.title ?? '',
+      mediaItemId,
+      title: title ?? '',
       currentStatus: currentStatus as EligibilityStatusType | null,
       proposedStatus: evalResult.status,
       reasons: evalResult.reasons,
