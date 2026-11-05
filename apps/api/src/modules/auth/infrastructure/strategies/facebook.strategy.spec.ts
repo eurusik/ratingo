@@ -48,7 +48,7 @@ describe('FacebookStrategy', () => {
     it('should return correct OAuthUserPayload with provider="facebook"', async () => {
       const profile = buildFacebookProfile();
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result).toEqual({
         provider: OAUTH_PROVIDER.FACEBOOK,
@@ -62,10 +62,10 @@ describe('FacebookStrategy', () => {
     it('should throw UnauthorizedException when email is missing (no emails array)', async () => {
       const profile = buildFacebookProfile({ emails: undefined });
 
-      await expect(strategy.validate('access-token', 'refresh-token', profile)).rejects.toThrow(
+      expect(() => strategy.validate('access-token', 'refresh-token', profile)).toThrow(
         UnauthorizedException,
       );
-      await expect(strategy.validate('access-token', 'refresh-token', profile)).rejects.toThrow(
+      expect(() => strategy.validate('access-token', 'refresh-token', profile)).toThrow(
         OAuthErrorCode.EMAIL_NOT_VERIFIED,
       );
     });
@@ -73,10 +73,10 @@ describe('FacebookStrategy', () => {
     it('should throw UnauthorizedException when emails array is empty', async () => {
       const profile = buildFacebookProfile({ emails: [] });
 
-      await expect(strategy.validate('access-token', 'refresh-token', profile)).rejects.toThrow(
+      expect(() => strategy.validate('access-token', 'refresh-token', profile)).toThrow(
         UnauthorizedException,
       );
-      await expect(strategy.validate('access-token', 'refresh-token', profile)).rejects.toThrow(
+      expect(() => strategy.validate('access-token', 'refresh-token', profile)).toThrow(
         OAuthErrorCode.EMAIL_NOT_VERIFIED,
       );
     });
@@ -84,7 +84,7 @@ describe('FacebookStrategy', () => {
     it('should extract displayName correctly', async () => {
       const profile = buildFacebookProfile({ displayName: 'Jane Doe' });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.name).toBe('Jane Doe');
     });
@@ -92,7 +92,7 @@ describe('FacebookStrategy', () => {
     it('should fallback to empty string when displayName is missing', async () => {
       const profile = buildFacebookProfile({ displayName: '' });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.name).toBe('');
     });
@@ -102,7 +102,7 @@ describe('FacebookStrategy', () => {
         photos: [{ value: 'https://example.com/photo.jpg' }],
       });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.picture).toBe('https://example.com/photo.jpg');
     });
@@ -110,7 +110,7 @@ describe('FacebookStrategy', () => {
     it('should return null picture when photos array is missing', async () => {
       const profile = buildFacebookProfile({ photos: undefined });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.picture).toBeNull();
     });
@@ -118,7 +118,7 @@ describe('FacebookStrategy', () => {
     it('should return null picture when photos array is empty', async () => {
       const profile = buildFacebookProfile({ photos: [] });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.picture).toBeNull();
     });
@@ -128,7 +128,7 @@ describe('FacebookStrategy', () => {
         emails: [{ value: 'primary@example.com' }, { value: 'secondary@example.com' }],
       });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.email).toBe('primary@example.com');
     });
@@ -141,7 +141,7 @@ describe('FacebookStrategy', () => {
         ],
       });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.picture).toBe('https://example.com/photo1.jpg');
     });
@@ -149,7 +149,7 @@ describe('FacebookStrategy', () => {
     it('should use profile.id as providerAccountId', async () => {
       const profile = buildFacebookProfile({ id: 'fb-unique-999' });
 
-      const result = await strategy.validate('access-token', 'refresh-token', profile);
+      const result = strategy.validate('access-token', 'refresh-token', profile);
 
       expect(result.providerAccountId).toBe('fb-unique-999');
     });

@@ -7,6 +7,8 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { destroyTraktRateLimiter } from '../../../trakt/infrastructure/adapters/base-trakt-http';
 import { DEFAULT_REGION } from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { INGESTION_JOB_STATUS_PORT } from '../../domain/ports/ingestion-job-status.port';
+import { BullMqIngestionJobStatusAdapter } from '../../infrastructure/adapters/job-status/bullmq-ingestion-job-status.adapter';
 
 // Cleanup rate limiter interval to prevent Jest from hanging
 afterAll(() => {
@@ -40,6 +42,7 @@ describe('IngestionController', () => {
       providers: [
         { provide: getQueueToken(INGESTION_QUEUE), useValue: mockQueue },
         { provide: SyncMediaService, useValue: mockSyncService },
+        { provide: INGESTION_JOB_STATUS_PORT, useClass: BullMqIngestionJobStatusAdapter },
       ],
     }).compile();
 
@@ -330,15 +333,13 @@ describe('IngestionController', () => {
 
     it('returns slug when job is completed and has tmdbId', async () => {
       const finishedOn = Date.now();
-      mockQueue.getJob = jest
-        .fn()
-        .mockResolvedValue(
-          makeJob('completed', {
-            finishedOn,
-            name: IngestionJob.SYNC_MOVIE,
-            data: { tmdbId: 550 },
-          }),
-        );
+      mockQueue.getJob = jest.fn().mockResolvedValue(
+        makeJob('completed', {
+          finishedOn,
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId: 550 },
+        }),
+      );
       mockSyncService.getSlugByTmdbId.mockResolvedValue('test-movie-slug');
 
       const res = await controller.getJobStatus('job-42');

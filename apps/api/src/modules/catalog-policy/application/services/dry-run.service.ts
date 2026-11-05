@@ -6,8 +6,10 @@
  */
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
+import { type ConfigType } from '@nestjs/config';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import dryRunConfig from '../../../../config/dry-run.config';
 import {
   EligibilityStatus,
   type EligibilityStatusType,
@@ -106,7 +108,6 @@ const DEFAULT_LIMIT = 1000;
 const MAX_SAMPLE_PERCENT = 100;
 const DEFAULT_SAMPLE_PERCENT = 10;
 const MIN_SAMPLE_PERCENT = 1;
-const TIMEOUT_MS = parseInt(process.env.DRY_RUN_TIMEOUT_MS || '60000', 10);
 
 @Injectable()
 export class DryRunService {
@@ -116,6 +117,8 @@ export class DryRunService {
     @Inject(DRY_RUN_REPOSITORY)
     private readonly dryRunRepository: IDryRunRepository,
     private readonly policyService: CatalogPolicyService,
+    @Inject(dryRunConfig.KEY)
+    private readonly config: ConfigType<typeof dryRunConfig>,
   ) {}
 
   async execute(proposedPolicy: PolicyConfig, options: DryRunOptions): Promise<DryRunResult> {
@@ -354,6 +357,6 @@ export class DryRunService {
   }
 
   private isTimedOut(startTime: number): boolean {
-    return Date.now() - startTime > TIMEOUT_MS;
+    return Date.now() - startTime > this.config.timeoutMs;
   }
 }

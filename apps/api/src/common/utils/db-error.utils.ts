@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { type Logger } from '@nestjs/common';
 
 import { PG_ERROR_CODE } from '../constants/database.constants';
 import { AppException } from '../exceptions/app.exception';

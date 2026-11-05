@@ -33,7 +33,7 @@ export class DropOffService {
     try {
       // Fetch episode data from Trakt
       const episodeData = await this.traktRatingsPort.getShowEpisodesForAnalysis(tmdbId);
-      if (!episodeData || !episodeData.seasons.length) {
+      if (!episodeData?.seasons.length) {
         this.logger.warn(`No episode data for show ${tmdbId}`);
         return null;
       }

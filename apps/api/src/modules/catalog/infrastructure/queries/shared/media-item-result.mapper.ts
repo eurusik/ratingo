@@ -1,4 +1,4 @@
-import { MediaType } from '@/common/enums/media-type.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
 
 /**
  * Base row with potentially nullable TMDB ID from database query.

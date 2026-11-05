@@ -169,9 +169,12 @@ Profile name → normalize (ASCII, lowercase, underscores)
 auth/
 ├── presentation/                # HTTP layer
 │   ├── controllers/             # AuthController (16 endpoints)
+│   ├── decorators/              # @CurrentUser() param decorator
 │   ├── dto/                     # 11 DTOs (login, register, tokens, me, OAuth, etc.)
 │   ├── filters/                 # OAuthExceptionFilter (redirect vs JSON errors)
+│   ├── guards/                  # 6 guards (JWT, Local, Admin, Optional, Google, Facebook)
 │   ├── mappers/                 # MeMapper (User entity → MeDto)
+│   ├── types/                   # Fastify request augmentation for OAuth state
 │   └── validators/              # PASSWORD_REGEX, PASSWORD_MESSAGE
 │
 ├── application/                 # Business logic orchestration
@@ -185,12 +188,9 @@ auth/
 │
 ├── infrastructure/              # External integrations
 │   ├── adapters/                # BcryptPasswordHasher
-│   ├── decorators/              # @CurrentUser() param decorator
-│   ├── guards/                  # 6 guards (JWT, Local, Admin, Optional, Google, Facebook)
 │   ├── jobs/                    # CleanupExchangeCodesJob (scheduled)
 │   ├── repositories/            # 3 Drizzle ORM implementations
-│   ├── strategies/              # 4 Passport strategies (JWT, Local, Google, Facebook)
-│   └── types/                   # Infrastructure-specific OAuth types
+│   └── strategies/              # 4 Passport strategies (JWT, Local, Google, Facebook)
 │
 ├── auth.module.ts               # NestJS module wiring
 └── auth.constants.ts            # OAuth URLs, scopes, error codes, TTLs

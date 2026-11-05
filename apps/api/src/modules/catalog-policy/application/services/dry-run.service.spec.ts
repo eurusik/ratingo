@@ -4,6 +4,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { DryRunService, DryRunOptions } from './dry-run.service';
+import dryRunConfig from '../../../../config/dry-run.config';
 import { CatalogPolicyService } from './catalog-policy.service';
 import { PolicyConfig, PolicyEngineInput } from '../../domain/types/policy.types';
 import { DRY_RUN_REPOSITORY } from '../../domain/repositories';
@@ -50,6 +51,7 @@ describe('DryRunService', () => {
         DryRunService,
         { provide: DRY_RUN_REPOSITORY, useValue: mockDryRunRepository },
         { provide: CatalogPolicyService, useValue: mockPolicyService },
+        { provide: dryRunConfig.KEY, useValue: { timeoutMs: 60000 } },
       ],
     }).compile();
 

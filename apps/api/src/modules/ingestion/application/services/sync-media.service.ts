@@ -197,7 +197,7 @@ export class SyncMediaService {
       await this.evaluateCatalog(mediaItem, logPrefix, isTrending);
 
       // Step 11: Emit domain event for cross-module consumers (e.g. link pending import items)
-      await this.emitMediaSynced(tmdbId, type, mediaItem, logPrefix);
+      this.emitMediaSynced(tmdbId, type, mediaItem, logPrefix);
 
       this.logger.log(
         `${logPrefix} Synced: ${classified.title} (Ratingo: ${((classified.ratingoScore ?? 0) * SCORE_PERCENT_MULTIPLIER).toFixed(1)})`,
@@ -573,12 +573,12 @@ export class SyncMediaService {
    * Uses the pre-fetched mediaItem from processMedia to avoid a redundant DB query.
    * Best-effort: logs warning on failure, does not rethrow.
    */
-  private async emitMediaSynced(
+  private emitMediaSynced(
     tmdbId: number,
     type: MediaType,
     mediaItem: { id: string } | null,
     logPrefix: string,
-  ): Promise<void> {
+  ): void {
     if (!mediaItem) {
       this.logger.warn(`${logPrefix} Cannot emit media.synced: media item not found`);
       return;

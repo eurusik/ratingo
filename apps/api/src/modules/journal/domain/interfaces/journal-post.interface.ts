@@ -1,4 +1,4 @@
-import { PostType } from '../constants/post-types';
+import { type PostType } from '../constants/post-types';
 
 /**
  * Journal post domain entity.
