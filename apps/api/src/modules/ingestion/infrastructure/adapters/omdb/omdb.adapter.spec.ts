@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OmdbAdapter } from './omdb.adapter';
 import omdbConfig from '@/config/omdb.config';
 import { MediaType } from '@/common/enums/media-type.enum';
-import { OmdbApiException } from '@/common/exceptions';
 
 // Mock global fetch
 const mockFetch = jest.fn();

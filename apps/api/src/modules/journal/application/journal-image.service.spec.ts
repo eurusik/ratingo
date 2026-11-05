@@ -86,19 +86,16 @@ describe('JournalImageService', () => {
       it('should include error code in exception details', () => {
         const file = createValidFile({ mimetype: 'application/pdf' });
 
-        try {
-          service.validateFile(file);
-          fail('Expected ValidationException to be thrown');
-        } catch (error) {
-          expect(error).toBeInstanceOf(ValidationException);
-          expect((error as ValidationException).details).toEqual(
-            expect.objectContaining({
+        expect(() => service.validateFile(file)).toThrow(ValidationException);
+        expect(() => service.validateFile(file)).toThrow(
+          expect.objectContaining({
+            details: expect.objectContaining({
               code: JOURNAL_ERRORS.INVALID_IMAGE_TYPE,
               mimetype: 'application/pdf',
               allowedTypes: [...ALLOWED_IMAGE_TYPES],
             }),
-          );
-        }
+          }),
+        );
       });
     });
 
@@ -123,19 +120,16 @@ describe('JournalImageService', () => {
       it('should include error code in exception details for oversized files', () => {
         const oversizedFile = createValidFile({ size: MAX_IMAGE_SIZE + 1000 });
 
-        try {
-          service.validateFile(oversizedFile);
-          fail('Expected ValidationException to be thrown');
-        } catch (error) {
-          expect(error).toBeInstanceOf(ValidationException);
-          expect((error as ValidationException).details).toEqual(
-            expect.objectContaining({
+        expect(() => service.validateFile(oversizedFile)).toThrow(ValidationException);
+        expect(() => service.validateFile(oversizedFile)).toThrow(
+          expect.objectContaining({
+            details: expect.objectContaining({
               code: JOURNAL_ERRORS.IMAGE_TOO_LARGE,
               size: MAX_IMAGE_SIZE + 1000,
               maxSize: MAX_IMAGE_SIZE,
             }),
-          );
-        }
+          }),
+        );
       });
 
       it('should accept small files', () => {

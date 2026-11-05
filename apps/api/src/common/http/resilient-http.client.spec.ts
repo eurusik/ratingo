@@ -402,49 +402,39 @@ describe('ResilientHttpClient', () => {
         });
       });
 
-      it('should handle different HTTP error status codes', async () => {
-        const testCases = [
-          { status: 400, shouldRetry: false },
-          { status: 401, shouldRetry: false },
-          { status: 403, shouldRetry: false },
-          { status: 429, shouldRetry: true },
-          { status: 500, shouldRetry: true },
-          { status: 502, shouldRetry: true },
-          { status: 503, shouldRetry: true },
-          { status: 504, shouldRetry: true },
-        ];
-
-        for (const testCase of testCases) {
-          mockFetch.mockClear();
-          const mockResponse = {
-            ok: false,
-            status: testCase.status,
-            statusText: 'Error',
-            headers: new Headers(),
-          };
-          mockFetch.mockResolvedValue(mockResponse as any);
-
-          if (testCase.shouldRetry) {
-            // Start the request
-            const resultPromise = client.get('https://api.example.com/test');
-
-            // Fast-forward through all the retry delays
-            for (let i = 0; i < DEFAULT_RETRY_CONFIG.maxRetries; i++) {
-              await jest.advanceTimersByTimeAsync(5000);
-            }
-
-            const result = await resultPromise;
-            expect(result.success).toBe(false);
-            expect(result.isRetryable).toBe(true);
-            expect(mockFetch).toHaveBeenCalledTimes(DEFAULT_RETRY_CONFIG.maxRetries + 1);
-          } else {
-            const result = await client.get('https://api.example.com/test');
-            expect(result.success).toBe(false);
-            expect(result.isRetryable).toBe(false);
-            expect(mockFetch).toHaveBeenCalledTimes(1);
-          }
-        }
+      const errorResponse = (status: number) => ({
+        ok: false,
+        status,
+        statusText: 'Error',
+        headers: new Headers(),
       });
+
+      it.each([400, 401, 403])('should not retry HTTP %i', async (status) => {
+        mockFetch.mockResolvedValue(errorResponse(status) as any);
+
+        const result = await client.get('https://api.example.com/test');
+
+        expect(result.success).toBe(false);
+        expect(result.isRetryable).toBe(false);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+      });
+
+      it.each([429, 500, 502, 503, 504])(
+        'should retry HTTP %i until retries run out',
+        async (status) => {
+          mockFetch.mockResolvedValue(errorResponse(status) as any);
+
+          const resultPromise = client.get('https://api.example.com/test');
+          for (let i = 0; i < DEFAULT_RETRY_CONFIG.maxRetries; i++) {
+            await jest.advanceTimersByTimeAsync(5000);
+          }
+          const result = await resultPromise;
+
+          expect(result.success).toBe(false);
+          expect(result.isRetryable).toBe(true);
+          expect(mockFetch).toHaveBeenCalledTimes(DEFAULT_RETRY_CONFIG.maxRetries + 1);
+        },
+      );
     });
 
     describe('convenience methods', () => {

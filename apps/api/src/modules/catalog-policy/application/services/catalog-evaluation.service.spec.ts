@@ -10,7 +10,6 @@ import { Test } from '@nestjs/testing';
 import {
   EligibilityStatus,
   EvaluationContext,
-  EvaluationReason,
   type EvaluationContextType,
 } from '../../domain/constants/evaluation.constants';
 import {

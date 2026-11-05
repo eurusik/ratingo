@@ -98,7 +98,7 @@ describe('HERO_SELECT_FIELDS', () => {
 
   describe('Drizzle column references', () => {
     it('should reference valid Drizzle columns (not undefined)', () => {
-      Object.entries(HERO_SELECT_FIELDS).forEach(([key, value]) => {
+      Object.values(HERO_SELECT_FIELDS).forEach((value) => {
         expect(value).toBeDefined();
         expect(typeof value).toBe('object');
       });

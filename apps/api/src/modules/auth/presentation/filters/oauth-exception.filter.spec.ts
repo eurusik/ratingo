@@ -334,12 +334,14 @@ describe('OAuthExceptionFilter', () => {
       const reply = createMockReply();
       const host = createMockHost(request, reply);
 
+      let thrown: unknown;
       try {
         filter.catch(exception, host);
-        fail('Expected exception to be thrown');
       } catch (error) {
-        expect(error).toBe(exception);
+        thrown = error;
       }
+
+      expect(thrown).toBe(exception);
     });
 
     it('should re-throw for default UnauthorizedException (no custom message)', () => {

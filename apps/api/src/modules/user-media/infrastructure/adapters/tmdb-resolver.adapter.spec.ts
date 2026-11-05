@@ -1,7 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 
 import { TmdbApiException } from '../../../../common/exceptions/external-api.exception';
-import { ResilientHttpClient } from '../../../../common/http/resilient-http.client';
 
 import { TmdbResolverAdapter } from './tmdb-resolver.adapter';
 

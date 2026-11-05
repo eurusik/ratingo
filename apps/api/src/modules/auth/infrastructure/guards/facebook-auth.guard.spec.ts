@@ -51,7 +51,7 @@ describe('FacebookAuthGuard - returnTo Validation', () => {
       expect(getReturnToFromState(guard, '/user-profile/settings')).toBe('/user-profile/settings');
     });
 
-    it('should reject protocol-relative URLs (//) ', () => {
+    it('should reject protocol-relative URLs (//)', () => {
       expect(getReturnToFromState(guard, '//evil.com')).toBe('/');
       expect(getReturnToFromState(guard, '//evil.com/path')).toBe('/');
     });

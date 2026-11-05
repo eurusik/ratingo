@@ -2,7 +2,6 @@ import { PgDialect } from 'drizzle-orm/pg-core';
 
 import { DrizzleUserMediaStateRepository } from './drizzle-user-media-state.repository';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import * as schema from '../../../../database/schema';
 
 describe('DrizzleUserMediaStateRepository', () => {
   const dialect = new PgDialect();

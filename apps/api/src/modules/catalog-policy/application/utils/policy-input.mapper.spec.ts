@@ -121,14 +121,13 @@ describe('mapRowToPolicyEngineInput - stats', () => {
               (v) => v === null,
             );
 
-            if (allNull) {
-              expect(input.stats).toBeNull();
-              return;
-            }
-            expect(input.stats).not.toBeNull();
-            expect(input.stats?.qualityScore).toBe(quality === null ? null : quality / 100);
-            expect(input.stats?.freshnessScore).toBe(freshness === null ? null : freshness / 100);
-            expect(input.stats?.watchersCount).toBe(watchers);
+            const populatedStats = expect.objectContaining({
+              qualityScore: quality === null ? null : quality / 100,
+              freshnessScore: freshness === null ? null : freshness / 100,
+              watchersCount: watchers,
+            });
+
+            expect(input.stats).toEqual(allNull ? null : populatedStats);
           },
         ),
       );

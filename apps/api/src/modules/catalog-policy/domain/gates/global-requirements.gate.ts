@@ -145,14 +145,14 @@ export function checkGlobalRequirements(
   const { mediaItem } = input;
   let localMaturityOverrideApplied = false;
 
-  // Check minQualityScoreNormalized (null/undefined = fail)
+  // Check minQualityScoreNormalized (null/undefined/NaN = fail)
   if (requirements.minQualityScoreNormalized !== undefined) {
     const qualityScore = input.stats?.qualityScore;
-    if (
-      qualityScore === null ||
-      qualityScore === undefined ||
-      qualityScore < requirements.minQualityScoreNormalized
-    ) {
+    const meetsQualityScore =
+      qualityScore !== null &&
+      qualityScore !== undefined &&
+      qualityScore >= requirements.minQualityScoreNormalized;
+    if (!meetsQualityScore) {
       failedChecks.push(GlobalGateCheck.MIN_QUALITY_SCORE);
     }
   }

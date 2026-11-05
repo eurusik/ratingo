@@ -185,11 +185,7 @@ describe('OAuthService - Username Generation Property Tests', () => {
 
           const username = await service.generateUniqueUsername(name, email);
 
-          // No leading/trailing underscores (trimmed during normalization)
-          // Exception: suffix adds underscore before random chars
-          if (!username.includes('_')) {
-            expect(username).not.toMatch(/^_|_$/);
-          }
+          expect(username).not.toMatch(/^_|_$/);
         }),
         { numRuns: 100 },
       );

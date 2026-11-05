@@ -2,7 +2,6 @@ import { Test } from '@nestjs/testing';
 import { PublicUserMediaService } from './public-user-media.service';
 import { UsersService } from './users.service';
 import { UserMediaService } from '../../user-media/application/user-media.service';
-import { UserProfileVisibilityPolicy } from './user-profile-visibility.policy';
 import {
   USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_WATCHLIST_STATES,

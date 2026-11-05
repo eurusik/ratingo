@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MediaCatalogEvaluationRepository } from './media-catalog-evaluation.repository';
 import { MediaCatalogEvaluation } from '../../domain/types/policy.types';
-import { EligibilityStatusType } from '../../domain/constants/evaluation.constants';
 import { DatabaseException } from '../../../../common/exceptions';
 
 /**

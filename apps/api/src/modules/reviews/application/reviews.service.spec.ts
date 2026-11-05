@@ -1,7 +1,5 @@
-import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { AppException } from '../../../common/exceptions/app.exception';
 import { NotFoundException } from '../../../common/exceptions/not-found.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { MediaType } from '../../../common/enums/media-type.enum';

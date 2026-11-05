@@ -18,10 +18,7 @@ interface RunData {
 }
 
 type BlockingReason =
-  | 'RUN_NOT_SUCCESS'
-  | 'COVERAGE_NOT_MET'
-  | 'ERRORS_EXCEEDED'
-  | 'ALREADY_PROMOTED';
+  'RUN_NOT_SUCCESS' | 'COVERAGE_NOT_MET' | 'ERRORS_EXCEEDED' | 'ALREADY_PROMOTED';
 
 function calculateCoverage(run: RunData): number {
   return run.totalReadySnapshot > 0 ? run.processed / run.totalReadySnapshot : 0;
@@ -154,13 +151,13 @@ describe('Policy Activation - Property-Based Tests', () => {
           const ready = isReadyToPromote(run);
           const coverage = calculateCoverage(run);
 
-          if (ready) {
-            // If ready, all conditions must be true
-            expect(run.status).toBe('success');
-            expect(coverage).toBeGreaterThanOrEqual(1.0);
-            expect(run.errors).toBe(0);
-            expect(run.promotedAt).toBeNull();
-          }
+          const allConditionsMet =
+            run.status === 'success' &&
+            coverage >= 1.0 &&
+            run.errors === 0 &&
+            run.promotedAt === null;
+
+          expect(ready).toBe(allConditionsMet);
         }),
         { numRuns: 100 },
       );
@@ -177,7 +174,10 @@ describe('Policy Activation - Property-Based Tests', () => {
 
       fc.assert(
         fc.property(
-          validRunDataArb.map((run) => ({ ...run, status: 'running' as RunStatus })),
+          fc.tuple(validRunDataArb, nonSuccessStatusArb).map(([run, status]) => ({
+            ...run,
+            status,
+          })),
           (run) => {
             expect(isReadyToPromote(run)).toBe(false);
           },
@@ -300,14 +300,13 @@ describe('Policy Activation - Property-Based Tests', () => {
         fc.property(run95Arb, (run) => {
           const coverage = calculateCoverage(run);
 
-          // Only test if coverage is actually < 100%
-          if (coverage < 1.0) {
-            // Should fail with default 100% threshold
-            expect(canPromote(run).success).toBe(false);
+          expect(coverage).toBeLessThan(1.0);
 
-            // Should succeed with threshold <= actual coverage
-            expect(canPromote(run, { coverageThreshold: coverage }).success).toBe(true);
-          }
+          // Should fail with default 100% threshold
+          expect(canPromote(run).success).toBe(false);
+
+          // Should succeed with threshold <= actual coverage
+          expect(canPromote(run, { coverageThreshold: coverage }).success).toBe(true);
         }),
         { numRuns: 100 },
       );
@@ -611,12 +610,11 @@ describe('Policy Activation - Property-Based Tests', () => {
         fc.property(validContextArb, (targetContext) => {
           const result = simulateBackfill(targetContext, ACTIVE_EVALUATION_CONTEXTS);
 
-          // For each other context, verify it's not dispatched
-          for (const otherContext of ACTIVE_EVALUATION_CONTEXTS) {
-            if (otherContext !== targetContext) {
-              expect(result.dispatchedContext).not.toBe(otherContext);
-            }
-          }
+          const otherContexts = ACTIVE_EVALUATION_CONTEXTS.filter(
+            (context) => context !== targetContext,
+          );
+
+          expect(otherContexts).not.toContain(result.dispatchedContext);
         }),
         { numRuns: 100 },
       );

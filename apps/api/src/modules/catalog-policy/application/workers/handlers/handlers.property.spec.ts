@@ -33,7 +33,7 @@ describe('Worker Handlers - Property-Based Tests', () => {
   );
 
   describe('ReEvaluateAllPayload', () => {
-    const reEvaluateAllPayloadArb = fc.record({
+    const reEvaluateAllPayloadArb: fc.Arbitrary<ReEvaluateAllPayload> = fc.record({
       runId: runIdArb,
       policyVersion: policyVersionArb,
       context: validContextArb,
@@ -74,9 +74,8 @@ describe('Worker Handlers - Property-Based Tests', () => {
     it('should have positive batch size when defined', () => {
       fc.assert(
         fc.property(reEvaluateAllPayloadArb, (payload) => {
-          if (payload.batchSize !== undefined) {
-            expect(payload.batchSize).toBeGreaterThan(0);
-          }
+          fc.pre(payload.batchSize !== undefined);
+          expect(payload.batchSize).toBeGreaterThan(0);
         }),
         { numRuns: 100 },
       );
@@ -214,9 +213,7 @@ describe('Worker Handlers - Property-Based Tests', () => {
         fc.property(mediaItemIdArb, errorMessageArb, stackTraceArb, (mediaItemId, error, stack) => {
           const entry = createErrorSampleEntry(mediaItemId, error, stack);
 
-          if (entry.stack) {
-            expect(entry.stack.length).toBeLessThanOrEqual(500);
-          }
+          expect(entry.stack?.length ?? 0).toBeLessThanOrEqual(500);
         }),
         { numRuns: 100 },
       );

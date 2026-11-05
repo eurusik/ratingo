@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleMediaRepository } from './drizzle-media.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';

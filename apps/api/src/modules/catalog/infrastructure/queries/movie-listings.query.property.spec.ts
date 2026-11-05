@@ -56,13 +56,7 @@ describe('Movie Listings Query - Property-Based Tests', () => {
         fc.property(evaluationArb, (evaluation) => {
           const matches = matchesEligibilityCondition(evaluation, 'catalog');
 
-          if (evaluation.status === EligibilityStatus.ELIGIBLE) {
-            // Eligible items MUST match
-            expect(matches).toBe(true);
-          } else {
-            // Non-eligible items MUST NOT match
-            expect(matches).toBe(false);
-          }
+          expect(matches).toBe(evaluation.status === EligibilityStatus.ELIGIBLE);
         }),
         { numRuns: 100 },
       );
