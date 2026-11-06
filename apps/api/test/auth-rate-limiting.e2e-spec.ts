@@ -1,19 +1,13 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as request from 'supertest';
 
-import { ConfigModule } from '@nestjs/config';
-import authConfig from '../src/config/auth.config';
 import {
   buildThrottlerTiers,
   ThrottlerRealIpGuard,
 } from '../src/common/guards/throttler-realip.guard';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
-import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { DATABASE_CONNECTION } from '../src/database/database.module';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { REFRESH_TOKENS_REPOSITORY } from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { EXCHANGE_CODES_REPOSITORY } from '../src/modules/auth/domain/repositories/exchange-codes.repository.interface';
@@ -30,6 +24,7 @@ import type {
   ExchangeCodeRecord,
   IExchangeCodesRepository,
 } from '../src/modules/auth/domain/repositories/exchange-codes.repository.interface';
+import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
 
 // ─── In-memory Exchange Codes Repository ──────────────────────────────────────
 
@@ -68,10 +63,8 @@ class InMemoryExchangeCodesRepository implements IExchangeCodesRepository {
 const BASE_URL = '/api/auth';
 
 async function createThrottledApp(): Promise<INestApplication> {
-  const moduleFixture: TestingModule = await Test.createTestingModule({
+  const moduleFixture: TestingModule = await createE2eTestingModule({
     imports: [
-      ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
-      EventEmitterModule.forRoot(),
       // Same tiers (incl. skipIf) and guard as AppModule, so the module-level skipIf
       // semantics that previously disabled @Throttle on mutation routes are exercised.
       ThrottlerModule.forRoot({ throttlers: buildThrottlerTiers(600) }),
@@ -91,25 +84,9 @@ async function createThrottledApp(): Promise<INestApplication> {
     .useClass(InMemoryExchangeCodesRepository)
     .overrideProvider(OAUTH_ACCOUNTS_REPOSITORY)
     .useValue({})
-    .overrideProvider(DATABASE_CONNECTION)
-    .useValue({})
     .compile();
 
-  const app = moduleFixture.createNestApplication();
-  app.setGlobalPrefix('api');
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new ResponseInterceptor());
-
-  await app.init();
-  return app;
+  return createE2eApp(moduleFixture);
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

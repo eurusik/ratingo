@@ -1,4 +1,5 @@
 import { createCatalogApp, CatalogE2eContext } from './_harness';
+import { testUuid } from '../support/test-uuid';
 
 describe('Catalog E2E - Popular Shows', () => {
   let ctx: CatalogE2eContext;
@@ -22,11 +23,11 @@ describe('Catalog E2E - Popular Shows', () => {
     ).toBe(true);
 
     const token = await ctx.registerAndLogin();
-    await ctx.setUserState(token, 'sid-1');
+    await ctx.setUserState(token, testUuid('sid-1'));
 
     const auth = await ctx.get('/api/catalog/shows/popular', token).expect(200);
-    const withState = auth.body.data.data.find((m: any) => m.id === 'sid-1');
-    const withoutState = auth.body.data.data.find((m: any) => m.id === 'sid-2');
+    const withState = auth.body.data.data.find((m: any) => m.id === testUuid('sid-1'));
+    const withoutState = auth.body.data.data.find((m: any) => m.id === testUuid('sid-2'));
     expect(withState.userState).not.toBeNull();
     expect(withoutState.userState).toBeNull();
     expect(withState.card).toBeDefined();
@@ -35,57 +36,75 @@ describe('Catalog E2E - Popular Shows', () => {
 
   it('applies sorting (popularity desc default) and order asc', async () => {
     const desc = await ctx.get('/api/catalog/shows/popular').expect(200);
-    expect(desc.body.data.data.map((s: any) => s.id)).toEqual(['sid-1', 'sid-2']);
+    expect(desc.body.data.data.map((s: any) => s.id)).toEqual([
+      testUuid('sid-1'),
+      testUuid('sid-2'),
+    ]);
 
     const asc = await ctx.get('/api/catalog/shows/popular?sort=popularity&order=asc').expect(200);
-    expect(asc.body.data.data.map((s: any) => s.id)).toEqual(['sid-2', 'sid-1']);
+    expect(asc.body.data.data.map((s: any) => s.id)).toEqual([
+      testUuid('sid-2'),
+      testUuid('sid-1'),
+    ]);
   });
 
   it('applies filtering by genres and minVotes/voteSource', async () => {
     const genresRes = await ctx.get('/api/catalog/shows/popular?genres=action').expect(200);
-    expect(genresRes.body.data.data.map((s: any) => s.id)).toEqual(['sid-2']);
+    expect(genresRes.body.data.data.map((s: any) => s.id)).toEqual([testUuid('sid-2')]);
 
     const votesRes = await ctx
       .get('/api/catalog/shows/popular?voteSource=tmdb&minVotes=500')
       .expect(200);
-    expect(votesRes.body.data.data.map((s: any) => s.id)).toEqual(['sid-1']);
+    expect(votesRes.body.data.data.map((s: any) => s.id)).toEqual([testUuid('sid-1')]);
   });
 
   it('applies year filters', async () => {
     const yearRes = await ctx.get('/api/catalog/shows/popular?year=2024').expect(200);
-    expect(yearRes.body.data.data.map((s: any) => s.id)).toEqual(['sid-1']);
+    expect(yearRes.body.data.data.map((s: any) => s.id)).toEqual([testUuid('sid-1')]);
 
     const rangeRes = await ctx
       .get('/api/catalog/shows/popular?yearFrom=2023&yearTo=2024')
       .expect(200);
-    expect(rangeRes.body.data.data.map((s: any) => s.id)).toEqual(['sid-1']);
+    expect(rangeRes.body.data.data.map((s: any) => s.id)).toEqual([testUuid('sid-1')]);
   });
 
   it('applies minRatingo filter', async () => {
     const res = await ctx.get('/api/catalog/shows/popular?minRatingo=60').expect(200);
-    expect(res.body.data.data.map((s: any) => s.id)).toEqual(['sid-1']);
+    expect(res.body.data.data.map((s: any) => s.id)).toEqual([testUuid('sid-1')]);
   });
 
   it('supports sorting by releaseDate and tmdbPopularity', async () => {
     const byReleaseDesc = await ctx
       .get('/api/catalog/shows/popular?sort=releaseDate&order=desc')
       .expect(200);
-    expect(byReleaseDesc.body.data.data.map((s: any) => s.id)).toEqual(['sid-1', 'sid-2']);
+    expect(byReleaseDesc.body.data.data.map((s: any) => s.id)).toEqual([
+      testUuid('sid-1'),
+      testUuid('sid-2'),
+    ]);
 
     const byReleaseAsc = await ctx
       .get('/api/catalog/shows/popular?sort=releaseDate&order=asc')
       .expect(200);
-    expect(byReleaseAsc.body.data.data.map((s: any) => s.id)).toEqual(['sid-2', 'sid-1']);
+    expect(byReleaseAsc.body.data.data.map((s: any) => s.id)).toEqual([
+      testUuid('sid-2'),
+      testUuid('sid-1'),
+    ]);
 
     const byTmdbPopularityDesc = await ctx
       .get('/api/catalog/shows/popular?sort=tmdbPopularity&order=desc')
       .expect(200);
-    expect(byTmdbPopularityDesc.body.data.data.map((s: any) => s.id)).toEqual(['sid-1', 'sid-2']);
+    expect(byTmdbPopularityDesc.body.data.data.map((s: any) => s.id)).toEqual([
+      testUuid('sid-1'),
+      testUuid('sid-2'),
+    ]);
 
     const byTmdbPopularityAsc = await ctx
       .get('/api/catalog/shows/popular?sort=tmdbPopularity&order=asc')
       .expect(200);
-    expect(byTmdbPopularityAsc.body.data.data.map((s: any) => s.id)).toEqual(['sid-2', 'sid-1']);
+    expect(byTmdbPopularityAsc.body.data.data.map((s: any) => s.id)).toEqual([
+      testUuid('sid-2'),
+      testUuid('sid-1'),
+    ]);
   });
 
   it('returns correct meta total/hasMore across pages', async () => {

@@ -1,13 +1,9 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import { TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { ConfigModule } from '@nestjs/config';
-import authConfig from '../src/config/auth.config';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
 import { UserActionsModule } from '../src/modules/user-actions/user-actions.module';
-import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import {
   USERS_REPOSITORY,
   IUsersRepository,
@@ -18,7 +14,6 @@ import {
 } from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { User } from '../src/modules/users/domain/entities/user.entity';
 import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
-import { DATABASE_CONNECTION } from '../src/database/database.module';
 import {
   IUserMediaActionRepository,
   USER_MEDIA_ACTION_REPOSITORY,
@@ -41,6 +36,8 @@ import {
   SubscriptionTrigger,
 } from '../src/modules/user-actions/domain/entities/user-subscription.entity';
 import { MediaType } from '../src/common/enums/media-type.enum';
+import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
+import { testUuid } from './support/test-uuid';
 
 // In-memory repositories for E2E tests
 
@@ -461,20 +458,13 @@ describe('User Actions E2E', () => {
     const subscriptionRepo = new InMemorySubscriptionRepository();
     savedItemRepo.setSubscriptionRepo(subscriptionRepo);
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
-        AuthModule,
-        UsersModule,
-        UserActionsModule,
-      ],
+    const moduleFixture: TestingModule = await createE2eTestingModule({
+      imports: [AuthModule, UsersModule, UserActionsModule],
     })
       .overrideProvider(USERS_REPOSITORY)
       .useValue(usersRepo)
       .overrideProvider(REFRESH_TOKENS_REPOSITORY)
       .useValue(refreshTokensRepo)
-      .overrideProvider(DATABASE_CONNECTION)
-      .useValue({})
       .overrideProvider(USER_MEDIA_ACTION_REPOSITORY)
       .useValue(mediaActionRepo)
       .overrideProvider(USER_SAVED_ITEM_REPOSITORY)
@@ -483,12 +473,7 @@ describe('User Actions E2E', () => {
       .useValue(subscriptionRepo)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-    app.useGlobalInterceptors(new ResponseInterceptor());
-    app.useGlobalFilters(new AllExceptionsFilter());
-    await app.init();
+    app = await createE2eApp(moduleFixture);
   });
 
   afterAll(async () => {
@@ -498,7 +483,7 @@ describe('User Actions E2E', () => {
   describe('Saved Items', () => {
     it('should save item to for_later list', async () => {
       const token = await registerAndLogin('save1');
-      const mediaItemId = 'media-uuid-1';
+      const mediaItemId = testUuid('media-uuid-1');
 
       const res = await request(app.getHttpServer())
         .post(`${savedItemsUrl}/${mediaItemId}`)
@@ -512,7 +497,7 @@ describe('User Actions E2E', () => {
 
     it('should get save status for media', async () => {
       const token = await registerAndLogin('save2');
-      const mediaItemId = 'media-uuid-2';
+      const mediaItemId = testUuid('media-uuid-2');
 
       await request(app.getHttpServer())
         .post(`${savedItemsUrl}/${mediaItemId}`)
@@ -532,7 +517,7 @@ describe('User Actions E2E', () => {
 
       // Save first item
       const save1 = await request(app.getHttpServer())
-        .post(`${savedItemsUrl}/media-list-1`)
+        .post(`${savedItemsUrl}/${testUuid('media-list-1')}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ list: 'for_later' });
 
@@ -554,7 +539,7 @@ describe('User Actions E2E', () => {
 
     it('should unsave item from list', async () => {
       const token = await registerAndLogin('save4');
-      const mediaItemId = 'media-uuid-4';
+      const mediaItemId = testUuid('media-uuid-4');
 
       await request(app.getHttpServer())
         .post(`${savedItemsUrl}/${mediaItemId}`)
@@ -587,7 +572,7 @@ describe('User Actions E2E', () => {
     describe('Active Subscription Triggers in List', () => {
       it('should return empty triggers when no subscriptions', async () => {
         const token = await registerAndLogin('triggers1');
-        const mediaItemId = 'triggers-media-1';
+        const mediaItemId = testUuid('triggers-media-1');
 
         // Save item without subscription
         const saveRes = await request(app.getHttpServer())
@@ -610,7 +595,7 @@ describe('User Actions E2E', () => {
 
       it('should return single trigger when one subscription active', async () => {
         const token = await registerAndLogin('triggers2');
-        const mediaItemId = 'triggers-media-2';
+        const mediaItemId = testUuid('triggers-media-2');
 
         // Save item
         const saveRes = await request(app.getHttpServer())
@@ -639,7 +624,7 @@ describe('User Actions E2E', () => {
 
       it('should return multiple triggers when multiple subscriptions active', async () => {
         const token = await registerAndLogin('triggers3');
-        const mediaItemId = 'triggers-media-3';
+        const mediaItemId = testUuid('triggers-media-3');
 
         // Save item
         const saveRes = await request(app.getHttpServer())
@@ -675,7 +660,7 @@ describe('User Actions E2E', () => {
 
       it('should not include inactive subscriptions', async () => {
         const token = await registerAndLogin('triggers4');
-        const mediaItemId = 'triggers-media-4';
+        const mediaItemId = testUuid('triggers-media-4');
 
         // Save item
         const saveRes = await request(app.getHttpServer())
@@ -710,9 +695,9 @@ describe('User Actions E2E', () => {
     describe('Batch Status', () => {
       it('should get batch status for multiple media items', async () => {
         const token = await registerAndLogin('batch1');
-        const mediaId1 = 'batch-media-1';
-        const mediaId2 = 'batch-media-2';
-        const mediaId3 = 'batch-media-3';
+        const mediaId1 = testUuid('batch-media-1');
+        const mediaId2 = testUuid('batch-media-2');
+        const mediaId3 = testUuid('batch-media-3');
 
         // Save mediaId1 to for_later
         await request(app.getHttpServer())
@@ -749,7 +734,7 @@ describe('User Actions E2E', () => {
         });
       });
 
-      it('should return empty statuses for empty ids', async () => {
+      it('should reject empty ids', async () => {
         const token = await registerAndLogin('batch2');
 
         const res = await request(app.getHttpServer())
@@ -757,22 +742,19 @@ describe('User Actions E2E', () => {
           .query({ ids: '' })
           .set('Authorization', `Bearer ${token}`);
 
-        expect(res.status).toBe(200);
-        expect(res.body.data.statuses).toEqual({});
+        expect(res.status).toBe(400);
       });
 
-      it('should limit to 100 ids', async () => {
+      it('should reject more than 100 ids', async () => {
         const token = await registerAndLogin('batch3');
-        const manyIds = Array.from({ length: 150 }, (_, i) => `media-${i}`).join(',');
+        const manyIds = Array.from({ length: 150 }, (_, i) => testUuid(`media-${i}`)).join(',');
 
         const res = await request(app.getHttpServer())
           .get(`${savedItemsUrl}/status/batch`)
           .query({ ids: manyIds })
           .set('Authorization', `Bearer ${token}`);
 
-        expect(res.status).toBe(200);
-        // Should only have 100 entries max
-        expect(Object.keys(res.body.data.statuses).length).toBeLessThanOrEqual(100);
+        expect(res.status).toBe(400);
       });
 
       it('should require authentication for batch status', async () => {
@@ -788,7 +770,7 @@ describe('User Actions E2E', () => {
   describe('Subscriptions', () => {
     it('should subscribe to release notifications', async () => {
       const token = await registerAndLogin('sub1');
-      const mediaItemId = 'media-uuid-sub-1';
+      const mediaItemId = testUuid('media-uuid-sub-1');
 
       const res = await request(app.getHttpServer())
         .post(`${subscriptionsUrl}/${mediaItemId}`)
@@ -803,7 +785,7 @@ describe('User Actions E2E', () => {
 
     it('should get subscription status for media', async () => {
       const token = await registerAndLogin('sub2');
-      const mediaItemId = 'media-uuid-sub-2';
+      const mediaItemId = testUuid('media-uuid-sub-2');
 
       await request(app.getHttpServer())
         .post(`${subscriptionsUrl}/${mediaItemId}`)
@@ -822,7 +804,7 @@ describe('User Actions E2E', () => {
       const token = await registerAndLogin('sub3');
 
       const sub1 = await request(app.getHttpServer())
-        .post(`${subscriptionsUrl}/media-sub-list-1`)
+        .post(`${subscriptionsUrl}/${testUuid('media-sub-list-1')}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ trigger: 'release' });
 
@@ -840,7 +822,7 @@ describe('User Actions E2E', () => {
 
     it('should unsubscribe from notifications', async () => {
       const token = await registerAndLogin('sub4');
-      const mediaItemId = 'media-uuid-sub-4';
+      const mediaItemId = testUuid('media-uuid-sub-4');
 
       await request(app.getHttpServer())
         .post(`${subscriptionsUrl}/${mediaItemId}`)

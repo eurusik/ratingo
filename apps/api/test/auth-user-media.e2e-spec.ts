@@ -1,13 +1,9 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import { TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { ConfigModule } from '@nestjs/config';
-import authConfig from '../src/config/auth.config';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
 import { UserMediaModule } from '../src/modules/user-media/user-media.module';
-import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import {
   USERS_REPOSITORY,
   IUsersRepository,
@@ -18,7 +14,6 @@ import {
 } from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { User } from '../src/modules/users/domain/entities/user.entity';
 import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
-import { DATABASE_CONNECTION } from '../src/database/database.module';
 import {
   IUserMediaStateRepository,
   USER_MEDIA_STATE_REPOSITORY,
@@ -26,6 +21,8 @@ import {
 } from '../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
 import { UserMediaState } from '../src/modules/user-media/domain/entities/user-media-state.entity';
 import { MediaType } from '../src/common/enums/media-type.enum';
+import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
+import { testUuid } from './support/test-uuid';
 
 type MediaSummary = {
   id: string;
@@ -333,38 +330,18 @@ describe('User Media e2e', () => {
   };
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
-        AuthModule,
-        UsersModule,
-        UserMediaModule,
-      ],
+    const moduleFixture: TestingModule = await createE2eTestingModule({
+      imports: [AuthModule, UsersModule, UserMediaModule],
     })
       .overrideProvider(USERS_REPOSITORY)
       .useClass(InMemoryUsersRepository)
       .overrideProvider(REFRESH_TOKENS_REPOSITORY)
       .useClass(InMemoryRefreshTokensRepository)
-      .overrideProvider(DATABASE_CONNECTION)
-      .useValue({})
       .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
       .useClass(InMemoryUserMediaRepository)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-        transformOptions: { enableImplicitConversion: true },
-      }),
-    );
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalInterceptors(new ResponseInterceptor());
-
-    await app.init();
+    app = await createE2eApp(moduleFixture);
   });
 
   afterAll(async () => {
@@ -373,17 +350,19 @@ describe('User Media e2e', () => {
 
   it('rejects unauthenticated requests', async () => {
     await request(app.getHttpServer())
-      .patch(`${mediaUrl}/mid-unauth`)
+      .patch(`${mediaUrl}/${testUuid('mid-unauth')}`)
       .send({ state: 'watching' })
       .expect(401);
-    await request(app.getHttpServer()).get(`${mediaUrl}/mid-unauth`).expect(401);
+    await request(app.getHttpServer())
+      .get(`${mediaUrl}/${testUuid('mid-unauth')}`)
+      .expect(401);
     await request(app.getHttpServer()).get(`${mediaUrl}`).expect(401);
   });
 
   it('set/get/list with bearer', async () => {
     const token = await registerAndLogin();
 
-    const mediaItemId = 'mid-1';
+    const mediaItemId = testUuid('mid-1');
 
     const setRes = await request(app.getHttpServer())
       .patch(`${mediaUrl}/${mediaItemId}`)
@@ -418,7 +397,7 @@ describe('User Media e2e', () => {
 
   it('upsert updates existing state and supports nullable fields', async () => {
     const token = await registerAndLogin('upsert');
-    const mediaItemId = 'mid-upsert';
+    const mediaItemId = testUuid('mid-upsert');
 
     await request(app.getHttpServer())
       .patch(`${mediaUrl}/${mediaItemId}`)
@@ -439,7 +418,7 @@ describe('User Media e2e', () => {
 
   it('returns CONTINUE badge when progress.seasons exists', async () => {
     const token = await registerAndLogin('continue');
-    const mediaItemId = 'mid-continue';
+    const mediaItemId = testUuid('mid-continue');
 
     const res = await request(app.getHttpServer())
       .patch(`${mediaUrl}/${mediaItemId}`)
@@ -456,7 +435,7 @@ describe('User Media e2e', () => {
 
   it('auto-upgrades state to watching when progress is provided', async () => {
     const token = await registerAndLogin('progress-up');
-    const mediaItemId = 'mid-progress-upgrade';
+    const mediaItemId = testUuid('mid-progress-upgrade');
 
     const res = await request(app.getHttpServer())
       .patch(`${mediaUrl}/${mediaItemId}`)
@@ -473,13 +452,13 @@ describe('User Media e2e', () => {
     const token = await registerAndLogin('progress-reject');
 
     await request(app.getHttpServer())
-      .patch(`${mediaUrl}/mid-progress-completed`)
+      .patch(`${mediaUrl}/${testUuid('mid-progress-completed')}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ state: 'completed', progress: { seasons: { 1: 2 } } })
       .expect(400);
 
     await request(app.getHttpServer())
-      .patch(`${mediaUrl}/mid-progress-dropped`)
+      .patch(`${mediaUrl}/${testUuid('mid-progress-dropped')}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ state: 'dropped', progress: { seasons: { 1: 2 } } })
       .expect(400);
@@ -490,7 +469,7 @@ describe('User Media e2e', () => {
 
     for (let i = 0; i < 5; i++) {
       await request(app.getHttpServer())
-        .patch(`${mediaUrl}/mid-page-${i}`)
+        .patch(`${mediaUrl}/${testUuid(`mid-page-${i}`)}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ state: 'watching' })
         .expect(200);
@@ -514,13 +493,13 @@ describe('User Media e2e', () => {
     const token = await registerAndLogin('continue-list');
 
     await request(app.getHttpServer())
-      .patch(`${mediaUrl}/mid-continue-a`)
+      .patch(`${mediaUrl}/${testUuid('mid-continue-a')}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ state: 'watching', progress: { seasons: { 1: 1 } } })
       .expect(200);
 
     await request(app.getHttpServer())
-      .patch(`${mediaUrl}/mid-continue-b`)
+      .patch(`${mediaUrl}/${testUuid('mid-continue-b')}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ state: 'watching' })
       .expect(200);

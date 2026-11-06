@@ -6,16 +6,11 @@
  * - GET /journal/posts/:slug - single post with navigation
  */
 
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 
-import { AllExceptionsFilter } from '../../src/common/filters/all-exceptions.filter';
-import { ResponseInterceptor } from '../../src/common/interceptors/response.interceptor';
-import authConfig from '../../src/config/auth.config';
-import { DATABASE_CONNECTION } from '../../src/database/database.module';
 import { AuthModule } from '../../src/modules/auth/auth.module';
 import { REFRESH_TOKENS_REPOSITORY } from '../../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { JournalImageService } from '../../src/modules/journal/application/journal-image.service';
@@ -36,6 +31,7 @@ import { JournalModule } from '../../src/modules/journal/journal.module';
 import { USERS_REPOSITORY } from '../../src/modules/users/domain/repositories/users.repository.interface';
 import { UsersModule } from '../../src/modules/users/users.module';
 import { InMemoryRefreshTokensRepository, InMemoryUsersRepository } from '../users/_fakes';
+import { createE2eApp, createE2eTestingModule } from '../support/e2e-testing-module';
 
 /**
  * In-memory journal repository for testing.
@@ -241,20 +237,13 @@ describe('Journal Public Endpoints e2e', () => {
   const journalBase = '/api/journal/posts';
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
-        AuthModule,
-        UsersModule,
-        JournalModule,
-      ],
+    const moduleFixture: TestingModule = await createE2eTestingModule({
+      imports: [AuthModule, UsersModule, JournalModule],
     })
       .overrideProvider(USERS_REPOSITORY)
       .useClass(InMemoryUsersRepository)
       .overrideProvider(REFRESH_TOKENS_REPOSITORY)
       .useClass(InMemoryRefreshTokensRepository)
-      .overrideProvider(DATABASE_CONNECTION)
-      .useValue({})
       .overrideProvider(JOURNAL_REPOSITORY)
       .useClass(InMemoryJournalRepository)
       .overrideProvider(JournalImageService)
@@ -264,22 +253,8 @@ describe('Journal Public Endpoints e2e', () => {
       })
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    app = await createE2eApp(moduleFixture);
     journalRepo = app.get(JOURNAL_REPOSITORY) as unknown as InMemoryJournalRepository;
-
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-        transformOptions: { enableImplicitConversion: true },
-      }),
-    );
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalInterceptors(new ResponseInterceptor());
-
-    await app.init();
   });
 
   afterAll(async () => {
