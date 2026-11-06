@@ -1,21 +1,16 @@
 import './common/runtime/load-env';
 import './telemetry/register';
 
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { SwaggerModule } from '@nestjs/swagger';
 
-import fastifyCookie from '@fastify/cookie';
-import fastifyMultipart from '@fastify/multipart';
-
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { SlowRequestInterceptor } from './common/interceptors/slow-request.interceptor';
 import { createAppLogger } from './common/logging/app-logger';
 import { getAppRole, runsHttp } from './common/runtime/app-role';
 import { DevTiming } from './common/utils/dev-timing';
 import { errorMessage } from './common/utils/error.utils';
+import { configureHttpApp } from './http-app.setup';
 import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.config';
 import { registerHttpMetrics } from './telemetry/http-metrics';
 
@@ -47,15 +42,7 @@ async function bootstrap(): Promise<void> {
 
   registerHttpMetrics(app.getHttpAdapter().getInstance());
 
-  // Register Fastify cookie plugin for OAuth state management
-  await app.register(fastifyCookie);
-
-  // Register Fastify multipart plugin for file uploads (journal images)
-  await app.register(fastifyMultipart, {
-    limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB max file size
-    },
-  });
+  await configureHttpApp(app);
 
   // CORS configuration
   app.enableCors({
@@ -67,23 +54,6 @@ async function bootstrap(): Promise<void> {
     ],
     credentials: true,
   });
-
-  // Global configuration
-  app.setGlobalPrefix('api');
-
-  // Global pipes, filters, interceptors
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Strip unknown properties
-      forbidNonWhitelisted: true, // Throw error on unknown properties
-      transform: true, // Auto-transform payloads to DTO types
-      transformOptions: {
-        enableImplicitConversion: true, // Convert string "123" to number 123
-      },
-    }),
-  );
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new SlowRequestInterceptor(), new ResponseInterceptor());
 
   // Swagger Documentation Setup (shared config — see swagger.config.ts)
   const document = SwaggerModule.createDocument(app, buildSwaggerConfig());

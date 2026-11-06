@@ -1,40 +1,27 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { HomeController } from '../src/modules/home/presentation/home.controller';
 import { HomeService } from '../src/modules/home/application/home.service';
-import { MEDIA_REPOSITORY } from '../src/modules/catalog/domain/repositories/media.repository.interface';
-import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+import { HERO_REPOSITORY } from '../src/modules/home/public';
 import { MediaType } from '../src/common/enums/media-type.enum';
+import { createE2eApp } from './support/e2e-testing-module';
+import { testUuid } from './support/test-uuid';
 
 describe('Home e2e - Hero', () => {
   let app: INestApplication;
 
-  const mediaRepository = {
+  const heroRepository = {
     findHero: jest.fn(),
   };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [HomeController],
-      providers: [HomeService, { provide: MEDIA_REPOSITORY, useValue: mediaRepository }],
+      providers: [HomeService, { provide: HERO_REPOSITORY, useValue: heroRepository }],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-        transformOptions: { enableImplicitConversion: true },
-      }),
-    );
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalInterceptors(new ResponseInterceptor());
-
-    await app.init();
+    app = await createE2eApp(moduleFixture);
   });
 
   afterAll(async () => {
@@ -42,10 +29,10 @@ describe('Home e2e - Hero', () => {
   });
 
   it('returns hero items with explicit mediaItemId alias', async () => {
-    mediaRepository.findHero.mockResolvedValue([
+    heroRepository.findHero.mockResolvedValue([
       {
-        id: 'mid-1',
-        mediaItemId: 'mid-1',
+        id: testUuid('mid-1'),
+        mediaItemId: testUuid('mid-1'),
         type: MediaType.MOVIE,
         slug: 'movie-one',
         title: 'Movie One',

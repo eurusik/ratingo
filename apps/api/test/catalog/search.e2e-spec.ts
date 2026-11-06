@@ -1,4 +1,5 @@
 import { createCatalogApp, CatalogE2eContext } from './_harness';
+import { testUuid } from '../support/test-uuid';
 
 describe('Catalog E2E - Search', () => {
   let ctx: CatalogE2eContext;
@@ -15,7 +16,7 @@ describe('Catalog E2E - Search', () => {
     const res = await ctx.get('/api/catalog/search?query=mo').expect(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.local.length).toBe(1);
-    expect(res.body.data.local[0].id).toBe('mid-1');
+    expect(res.body.data.local[0].id).toBe(testUuid('mid-1'));
   });
 
   it('returns empty results for missing/too short query', async () => {

@@ -14,6 +14,8 @@ export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 export const DEFAULT_BATCH_SIZE = 50;
 
+export const MAX_UPLOAD_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+
 // Hero Block Thresholds
 export const HERO_MIN_QUALITY_SCORE = 60;
 export const HERO_MIN_POPULARITY_SCORE = 40;

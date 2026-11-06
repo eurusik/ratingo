@@ -1,19 +1,15 @@
-/* eslint-env node */
-/* eslint-disable no-undef */
+const unitConfig = require('./jest.config.js');
+
 module.exports = {
-  moduleFileExtensions: ['js', 'json', 'ts'],
+  ...unitConfig,
   rootDir: './',
   testRegex: 'test/.*\\.e2e-spec\\.ts$',
-  testPathIgnorePatterns: ['<rootDir>/test/catalog.e2e-spec.ts'],
-  transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
-  },
-  transformIgnorePatterns: ['/node_modules/(?!(nanoid|@exodus/bytes|marked)/)'],
-  collectCoverageFrom: ['**/*.(t|j)s'],
+  setupFiles: ['<rootDir>/test/support/e2e-env.setup.ts'],
+  collectCoverageFrom: ['src/**/*.(t|j)s'],
   coverageDirectory: './coverage-e2e',
-  testEnvironment: 'node',
   testTimeout: 20000,
   moduleNameMapper: {
+    ...unitConfig.moduleNameMapper,
     '^@/(.*)$': '<rootDir>/src/$1',
     '^isomorphic-dompurify$': '<rootDir>/__mocks__/isomorphic-dompurify.js',
   },

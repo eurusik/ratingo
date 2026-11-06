@@ -12,6 +12,7 @@ import {
   NewEpisodeItem,
 } from '../../src/modules/catalog/domain/repositories/show.repository.interface';
 import { moviesFixture, showsFixture, daysAgo } from './_fixtures';
+import { testUuid } from '../support/test-uuid';
 
 const matchesGenres = (list: { genres?: any[] }, genres?: string[]) => {
   if (!genres?.length) return true;
@@ -235,7 +236,7 @@ export class FakeShowRepository implements IShowRepository {
   async findEpisodesByDateRange(start: Date, end: Date): Promise<CalendarEpisode[]> {
     return [
       {
-        showId: 'sid-1',
+        showId: testUuid('sid-1'),
         showSlug: 'show-one',
         showTitle: 'Show One',
         posterPath: null,

@@ -58,6 +58,6 @@ describe('Users password e2e', () => {
     await ctx
       .patch(`${ctx.authBase}/password`, accessToken)
       .send({ currentPassword: 'WrongPass123', newPassword: 'Anoth3rS3cure' })
-      .expect(401);
+      .expect(403);
   });
 });
