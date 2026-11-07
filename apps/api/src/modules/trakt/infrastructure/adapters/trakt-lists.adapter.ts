@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { toError } from '../../../../common/utils/error.utils';
 import { type TraktListsPort } from '../../domain/ports/trakt-lists.port';
 
 import { BaseTraktHttp } from './base-trakt-http';
@@ -44,7 +45,7 @@ export class TraktListsAdapter extends BaseTraktHttp implements TraktListsPort {
           (item): item is { tmdbId: number; watchers: number; rank: number } => !!item.tmdbId,
         );
     } catch (error) {
-      this.logger.warn(`Failed to get trending ${endpoint}: ${error}`);
+      this.logger.warn(`Failed to get trending ${endpoint}: ${toError(error).toString()}`);
       return [];
     }
   }

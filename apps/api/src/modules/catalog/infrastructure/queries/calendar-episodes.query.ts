@@ -4,6 +4,7 @@ import { eq, and, gte, lte, asc } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
@@ -101,9 +102,10 @@ export class CalendarEpisodesQuery {
         stillPath: row.stillPath,
       }));
     } catch (error) {
-      this.logger.error(`Failed to find episodes by date range: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Failed to find episodes by date range: ${err.message}`, err.stack);
       throw new DatabaseException('Failed to fetch calendar episodes', {
-        originalError: error.message,
+        originalError: err.message,
       });
     }
   }

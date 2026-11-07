@@ -10,6 +10,7 @@ import { Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
+import { toError } from '../../../../common/utils/error.utils';
 import { WORKER_CONFIG } from '../../../../config/queue.config';
 import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
 
@@ -57,7 +58,8 @@ export class CatalogPolicyWorker extends WorkerHost {
           this.logger.warn(`Unknown job type: ${job.name}`);
       }
     } catch (error) {
-      this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Job ${job.id} failed: ${err.message}`, err.stack);
       throw error;
     }
   }

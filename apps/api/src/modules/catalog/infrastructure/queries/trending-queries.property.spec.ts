@@ -396,7 +396,8 @@ describe('Trending Queries - Freshness Gate Property Tests', () => {
     listContext: 'home' | 'catalog',
     sort: CatalogSort,
   ): number => {
-    return CONTEXT_FRESHNESS[listContext][sort] ?? 0;
+    const thresholdsBySort: Partial<Record<CatalogSort, number>> = CONTEXT_FRESHNESS[listContext];
+    return thresholdsBySort[sort] ?? 0;
   };
 
   const catalogSortArb = fc.constantFrom<CatalogSort>(

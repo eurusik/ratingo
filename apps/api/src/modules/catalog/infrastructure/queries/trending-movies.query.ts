@@ -4,6 +4,7 @@ import { eq, and, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EvaluationContext } from '../../../catalog-policy/public';
@@ -151,9 +152,10 @@ export class TrendingMoviesQuery {
       withTotal.meta = createSuccessMeta();
       return withTotal;
     } catch (error) {
-      this.logger.error(`Failed to find trending movies: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Failed to find trending movies: ${err.message}`, err.stack);
       throw new DatabaseException('Failed to fetch trending movies', {
-        originalError: error.message,
+        originalError: err.message,
       });
     }
   }

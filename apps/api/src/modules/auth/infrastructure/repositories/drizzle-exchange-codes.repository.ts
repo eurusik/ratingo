@@ -5,6 +5,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MS_PER_HOUR } from '../../../../common/constants';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
@@ -46,7 +47,8 @@ export class DrizzleExchangeCodesRepository implements IExchangeCodesRepository 
         .returning();
       return this.mapRow(row);
     } catch (error) {
-      this.logger.error(`create failed: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`create failed: ${err.message}`, err.stack);
       throw new DatabaseException('Failed to create exchange code', error, { userId: data.userId });
     }
   }
@@ -96,7 +98,8 @@ export class DrizzleExchangeCodesRepository implements IExchangeCodesRepository 
       // Should not reach here, but fallback to not_found
       return { success: false, reason: ConsumeCodeFailureReason.NOT_FOUND };
     } catch (error) {
-      this.logger.error(`consumeCode failed: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`consumeCode failed: ${err.message}`, err.stack);
       throw new DatabaseException('Failed to consume exchange code', error);
     }
   }
@@ -129,7 +132,8 @@ export class DrizzleExchangeCodesRepository implements IExchangeCodesRepository 
       }
       return count;
     } catch (error) {
-      this.logger.error(`cleanupExpired failed: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`cleanupExpired failed: ${err.message}`, err.stack);
       throw new DatabaseException('Failed to cleanup exchange codes', error);
     }
   }

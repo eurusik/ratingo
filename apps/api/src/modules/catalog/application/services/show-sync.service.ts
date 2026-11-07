@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { MS_PER_SECOND, SECONDS_PER_DAY } from '../../../../common/constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { errorMessage } from '../../../../common/utils/error.utils';
 import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import { ShowNotFoundError } from '../../domain/errors';
 import { COOLDOWN_GATE_PORT, type ICooldownGate } from '../../domain/ports/cooldown-gate.port';
@@ -65,7 +66,7 @@ export class ShowSyncService {
       // Release the cooldown lock so a transient queue failure doesn't block the user for 7 days.
       // Passes the fencing token to ensure we only release the lock we acquired.
       await this.cooldownGate.release(cooldownKey, token);
-      this.logger.warn(`Failed to queue sync for show ${slug}: ${error.message}`);
+      this.logger.warn(`Failed to queue sync for show ${slug}: ${errorMessage(error)}`);
       throw error;
     }
 

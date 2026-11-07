@@ -27,6 +27,7 @@ import { allOf, anyOf } from '@/database/sql-conditions';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
@@ -136,9 +137,10 @@ export class MovieListingsQuery {
       withTotal.total = total;
       return withTotal;
     } catch (error) {
-      this.logger.error(`Failed to find ${type} movies: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Failed to find ${type} movies: ${err.message}`, err.stack);
       throw new DatabaseException(`Failed to fetch ${type} movies`, {
-        originalError: error.message,
+        originalError: err.message,
       });
     }
   }

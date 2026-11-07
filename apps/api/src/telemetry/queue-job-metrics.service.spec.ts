@@ -14,7 +14,7 @@ class FakeWorkerHost extends WorkerHost {
     super();
   }
 
-  get worker() {
+  override get worker() {
     return this.fakeWorker as never;
   }
 

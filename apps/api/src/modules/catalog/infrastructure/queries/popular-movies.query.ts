@@ -5,6 +5,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
@@ -187,9 +188,10 @@ export class PopularMoviesQuery {
       withTotal.meta = { degraded: false };
       return withTotal;
     } catch (error) {
-      this.logger.error(`Failed to find popular movies: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Failed to find popular movies: ${err.message}`, err.stack);
       throw new DatabaseException('Failed to fetch popular movies', {
-        originalError: error.message,
+        originalError: err.message,
       });
     }
   }
