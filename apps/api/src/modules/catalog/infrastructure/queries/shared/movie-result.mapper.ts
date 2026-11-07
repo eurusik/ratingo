@@ -27,7 +27,7 @@ export class MovieResultMapper {
       ingestionStatus: row.ingestionStatus as MovieWithMedia['ingestionStatus'],
       poster: ImageMapper.toPoster(row.posterPath),
       backdrop: ImageMapper.toBackdrop(row.backdropPath),
-      popularity: row.popularity,
+      popularity: row.popularity ?? 0,
       releaseDate: row.releaseDate,
       theatricalReleaseDate: row.theatricalReleaseDate,
       digitalReleaseDate: row.digitalReleaseDate,
@@ -44,7 +44,7 @@ export class MovieResultMapper {
         communityRatingCount: null,
       },
       externalRatings: {
-        tmdb: { rating: row.rating, voteCount: row.voteCount },
+        tmdb: { rating: row.rating ?? 0, voteCount: row.voteCount },
         imdb: row.ratingImdb ? { rating: row.ratingImdb, voteCount: row.voteCountImdb } : null,
         trakt: row.ratingTrakt ? { rating: row.ratingTrakt, voteCount: row.voteCountTrakt } : null,
         metacritic: row.ratingMetacritic != null ? { rating: row.ratingMetacritic } : null,

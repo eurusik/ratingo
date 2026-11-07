@@ -33,6 +33,7 @@ export class VoteResultDto {
   action: 'added' | 'changed' | 'removed';
 
   @ApiProperty({
+    type: String,
     example: VOTE_TYPE.LIKE,
     nullable: true,
     description: 'Current vote type (null if removed)',

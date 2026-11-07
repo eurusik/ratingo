@@ -48,6 +48,7 @@ export class HeroItemDto {
   originalTitle: string;
 
   @ApiProperty({
+    type: String,
     example:
       'An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more.',
     nullable: true,
@@ -55,6 +56,7 @@ export class HeroItemDto {
   overview: string | null;
 
   @ApiProperty({
+    type: String,
     example: 'ogFrkWefoLQ',
     description: 'YouTube video key for primary trailer',
     required: false,
@@ -74,7 +76,7 @@ export class HeroItemDto {
   @ApiProperty({ type: ExternalRatingsDto, required: false })
   externalRatings?: ExternalRatingsDto;
 
-  @ApiProperty({ example: '1999-10-15T00:00:00.000Z', nullable: true })
+  @ApiProperty({ type: Date, example: '1999-10-15T00:00:00.000Z', nullable: true })
   releaseDate: Date | null;
 
   @ApiProperty({ example: false, description: 'True if released within last 90 days' })

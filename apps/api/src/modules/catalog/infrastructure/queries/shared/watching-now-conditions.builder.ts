@@ -1,8 +1,9 @@
-import { eq, lte, isNotNull, gte, isNull, or, and, type SQL } from 'drizzle-orm';
+import { eq, lte, isNotNull, gte, isNull, type SQL } from 'drizzle-orm';
 
 import { MS_PER_DAY } from '../../../../../common/constants';
 import { IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../../common/enums/media-type.enum';
+import { allOf, anyOf } from '../../../../../common/utils/sql-conditions.util';
 import * as schema from '../../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../../catalog-policy/public';
 import { WATCHING_NOW_THRESHOLDS } from '../../../domain/constants/catalog.constants';
@@ -58,16 +59,19 @@ export function buildWatchingNowConditions(options: WatchingNowConditionsOptions
     // Strict freshness gate:
     // - Movies: released within MAX_DAYS_SINCE_MOVIE_RELEASE days
     // - Shows: last episode within MAX_DAYS_SINCE_SHOW_EPISODE days OR has next episode
-    or(
+    anyOf(
       // Fresh movie
-      and(
+      allOf(
         eq(schema.mediaItems.type, MediaType.MOVIE),
         gte(schema.mediaItems.releaseDate, movieFreshnessCutoff),
       ),
       // Fresh show (recent episode or upcoming)
-      and(
+      allOf(
         eq(schema.mediaItems.type, MediaType.SHOW),
-        or(gte(schema.shows.lastAirDate, showFreshnessCutoff), isNotNull(schema.shows.nextAirDate)),
+        anyOf(
+          gte(schema.shows.lastAirDate, showFreshnessCutoff),
+          isNotNull(schema.shows.nextAirDate),
+        ),
       ),
     ),
   ];

@@ -96,7 +96,7 @@ export class ImportedItemDetailDto {
   @ApiProperty({ example: 'completed' })
   state!: string;
 
-  @ApiProperty({ example: 80, nullable: true })
+  @ApiProperty({ type: Number, example: 80, nullable: true })
   rating!: number | null;
 }
 

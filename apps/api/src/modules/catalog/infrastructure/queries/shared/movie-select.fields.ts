@@ -51,9 +51,9 @@ export type MovieSelectRow = {
   ingestionStatus: string;
   posterPath: string | null;
   backdropPath: string | null;
-  popularity: number;
-  rating: number;
-  voteCount: number;
+  popularity: number | null;
+  rating: number | null;
+  voteCount: number | null;
   releaseDate: Date | null;
   ratingImdb: number | null;
   voteCountImdb: number | null;

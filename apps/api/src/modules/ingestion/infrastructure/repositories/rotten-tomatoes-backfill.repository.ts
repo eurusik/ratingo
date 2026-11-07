@@ -1,9 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, eq, gt, isNotNull, isNull, lt, or } from 'drizzle-orm';
+import { and, eq, gt, isNotNull, isNull, lt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '../../../../common/utils/db-error.utils';
+import { anyOf } from '../../../../common/utils/sql-conditions.util';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { type BackfillPage } from '../../domain/repositories/backfill-page.interface';
@@ -30,11 +31,14 @@ export class RottenTomatoesBackfillRepository implements IRottenTomatoesBackfill
     const conditions = [
       isNotNull(schema.mediaItems.tmdbId),
       isNull(schema.mediaItems.deletedAt),
-      or(
+      anyOf(
         isNull(schema.mediaItems.ratingRottenTomatoes),
         isNull(schema.mediaItems.ratingRottenTomatoesAudience),
-      )!,
-      or(isNull(schema.mediaItems.rtFetchedAt), lt(schema.mediaItems.rtFetchedAt, fetchedBefore))!,
+      ),
+      anyOf(
+        isNull(schema.mediaItems.rtFetchedAt),
+        lt(schema.mediaItems.rtFetchedAt, fetchedBefore),
+      ),
     ];
 
     if (cursor) {

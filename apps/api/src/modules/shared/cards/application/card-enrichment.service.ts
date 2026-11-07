@@ -147,7 +147,7 @@ export class CardEnrichmentService {
   private isNewRelease(dates: Array<Date | null | undefined>, now: Date): boolean {
     const latest = dates
       // Ignore future dates (e.g. upcoming digital release) so they don't mask a recent past release
-      .filter((d): d is Date => Boolean(d) && d.getTime() <= now.getTime())
+      .filter((d): d is Date => d != null && d.getTime() <= now.getTime())
       .reduce<Date | null>((acc, d) => (!acc || d > acc ? d : acc), null);
 
     if (!latest) return false;

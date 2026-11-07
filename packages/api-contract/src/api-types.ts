@@ -3106,7 +3106,7 @@ export interface components {
             /** @example 1 */
             episodeNumber: number;
             /** @example Heavy Is the Crown */
-            title: string;
+            title: string | null;
             /** @example Overview... */
             overview?: string | null;
             /** Format: date-time */
@@ -3549,14 +3549,13 @@ export interface components {
             /** @description Present when not-found items have been queued for background auto-ingestion. Poll GET /user-media/import/status for progress updates. */
             pendingBatch?: components["schemas"]["PendingBatchSummaryDto"];
         };
-        Function: Record<string, never>;
         MeUserMediaSummaryDto: {
             id: string;
             /** @enum {string} */
             type: "movie" | "show";
             title: string;
             slug: string;
-            poster: components["schemas"]["Function"] | null;
+            poster: components["schemas"]["ImageDto"] | null;
             /** Format: date-time */
             releaseDate?: string | null;
             card?: components["schemas"]["CardMetaDto"];
@@ -5491,7 +5490,7 @@ export interface components {
             type: "movie" | "show";
             title: string;
             slug: string;
-            poster: components["schemas"]["Function"] | null;
+            poster: components["schemas"]["ImageDto"] | null;
             /** Format: date-time */
             releaseDate?: string | null;
         };

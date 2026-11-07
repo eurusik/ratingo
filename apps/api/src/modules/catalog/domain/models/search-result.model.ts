@@ -12,7 +12,7 @@ export interface LocalSearchResult {
   alternativeTitles: string[] | null;
   slug: string;
   posterPath: string | null;
-  rating: number;
+  rating: number | null;
   releaseDate: Date | null;
   ingestionStatus: string;
 }

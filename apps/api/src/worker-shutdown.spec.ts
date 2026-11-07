@@ -26,7 +26,7 @@ const buildApp = (
   {
     workerClose = async () => void calls.push('worker.close'),
     appClose = async () => undefined,
-  } = {},
+  }: { workerClose?: () => Promise<void>; appClose?: () => Promise<void> } = {},
 ) => {
   const postgresClient = { end: jest.fn(async () => void calls.push('pool.end')) };
   const discovery = {
@@ -87,7 +87,7 @@ describe('closeWorkerOnSignals', () => {
     signals.forEach((signal) =>
       process
         .listeners(signal)
-        .filter((listener) => !listenersBefore.get(signal).includes(listener))
+        .filter((listener) => !(listenersBefore.get(signal) ?? []).includes(listener))
         .forEach((listener) => process.removeListener(signal, listener)),
     );
     jest.restoreAllMocks();

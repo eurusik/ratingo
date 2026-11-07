@@ -155,10 +155,10 @@ export class TvMazeAdapter implements EpisodeSchedulePort {
     const result = await this.httpClient.get<T>(`${this.config.apiUrl}${endpoint}`);
 
     if (!result.success || result.data === null) {
-      const status =
-        result.error instanceof HttpError ? result.error.status : HttpStatus.INTERNAL_SERVER_ERROR;
+      const error = result.success ? undefined : result.error;
+      const status = error instanceof HttpError ? error.status : HttpStatus.INTERNAL_SERVER_ERROR;
       throw new TvMazeApiException(
-        result.error?.message ?? 'Request failed',
+        error?.message ?? 'Request failed',
         status ?? HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

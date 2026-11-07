@@ -19,14 +19,22 @@ export interface RetryConfig {
 /**
  * Result of a fetch operation with retry metadata.
  */
-export interface FetchResult<T> {
-  data: T | null;
-  success: boolean;
+export interface FetchSuccess<T> {
+  data: T;
+  success: true;
+  attempts: number;
+}
+
+export interface FetchFailure {
+  data: null;
+  success: false;
   attempts: number;
   error?: Error;
   /** True if error is retryable (429, 5xx, network) */
   isRetryable?: boolean;
 }
+
+export type FetchResult<T> = FetchSuccess<T> | FetchFailure;
 
 /**
  * Cloudflare-specific transient 5xx codes (520-524): unknown error, web server down,

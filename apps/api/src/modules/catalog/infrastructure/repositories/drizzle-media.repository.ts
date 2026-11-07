@@ -512,7 +512,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
     // CRITICAL: Only update totalWatchers if we have actual data
     // If totalWatchers is undefined in statsInsert, preserve existing DB value
-    if (statsInsert.totalWatchers !== undefined) {
+    if (statsInsert.totalWatchers != null) {
       // Safeguard: don't overwrite positive value with 0 (likely API error)
       updateSet.totalWatchers = preserveTotalWatchers(statsInsert.totalWatchers);
     }

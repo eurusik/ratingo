@@ -481,6 +481,10 @@ export class TmdbAdapter implements MetadataProviderPort {
     params: Record<string, string> = {},
     options: { skipLanguage?: boolean } = {},
   ): Promise<T> {
+    if (!this.config.apiKey) {
+      throw new TmdbApiException('API key is required');
+    }
+
     const url = new URL(`${this.config.apiUrl}${endpoint}`);
 
     // Default params

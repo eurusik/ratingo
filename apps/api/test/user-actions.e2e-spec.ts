@@ -183,17 +183,14 @@ class InMemorySavedItemRepository implements IUserSavedItemRepository {
     const paginated = sorted.slice(actualOffset, actualOffset + actualLimit);
 
     // Enrich with active subscription triggers
-    const result = [];
-    for (const item of paginated) {
-      const triggers = this.subscriptionRepo
-        ? await this.subscriptionRepo.findActiveTriggersForMedia(userId, item.mediaItemId)
-        : [];
-      result.push({
+    return Promise.all(
+      paginated.map(async (item) => ({
         ...item,
-        activeSubscriptionTriggers: triggers,
-      });
-    }
-    return result;
+        activeSubscriptionTriggers: this.subscriptionRepo
+          ? await this.subscriptionRepo.findActiveTriggersForMedia(userId, item.mediaItemId)
+          : [],
+      })),
+    );
   }
 
   async count(userId: string, list: SavedItemList): Promise<number> {

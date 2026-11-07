@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsIn, IsOptional } from 'class-validator';
 
 import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../common/dtos';
-import { type ImageDto } from '../../../../common/dtos/image.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { CardMetaDto } from '../../../shared/cards';
 import { type UserListCounts } from '../../domain/entities/user-list-counts.entity';
@@ -102,10 +102,10 @@ export class MeUserMediaSummaryDto {
   @ApiProperty()
   slug!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: () => ImageDto, nullable: true })
   poster!: ImageDto | null;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ type: Date, nullable: true })
   releaseDate?: Date | null;
 
   @ApiPropertyOptional({ type: CardMetaDto, required: false })

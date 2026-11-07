@@ -132,6 +132,7 @@ export class DryRunItemResultDto {
   relevanceScore: number;
 
   @ApiPropertyOptional({
+    type: String,
     description: 'Breakout rule ID if applicable',
     example: 'GLOBAL_HIT',
   })
@@ -260,6 +261,7 @@ export class DryRunResponseDto {
   items: DryRunItemResultDto[];
 
   @ApiPropertyOptional({
+    type: Number,
     description: 'Current active policy version (for diff mode)',
     example: 1,
   })

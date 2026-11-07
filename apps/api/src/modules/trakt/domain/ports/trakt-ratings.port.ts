@@ -97,18 +97,18 @@ export interface TraktRatingsPort {
    * Used for backfilling corrupted data.
    *
    * @param {number} tmdbId - TMDB ID
-   * @returns {Promise<{ watchers: number } | null>} Stats or null if not found
+   * @returns {Promise<{ watchers: number } | null | undefined>} Stats, undefined if not found, null on transient error
    */
-  getMovieStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null>;
+  getMovieStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null | undefined>;
 
   /**
    * Gets stats (total watchers) for a show by TMDB ID.
    * Used for backfilling corrupted data.
    *
    * @param {number} tmdbId - TMDB ID
-   * @returns {Promise<{ watchers: number } | null>} Stats or null if not found
+   * @returns {Promise<{ watchers: number } | null | undefined>} Stats, undefined if not found, null on transient error
    */
-  getShowStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null>;
+  getShowStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null | undefined>;
 
   /**
    * Gets total watchers count for multiple items by TMDB IDs.

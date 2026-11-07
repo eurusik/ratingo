@@ -14,7 +14,7 @@ export function toScoreInput(
   liveWatchers?: number | null,
 ): ScoreInput {
   return {
-    tmdbPopularity: scoreData.popularity,
+    tmdbPopularity: scoreData.popularity ?? 0,
     traktTotalWatchers: scoreData.totalWatchers ?? 0,
     traktLiveWatchers: liveWatchers ?? scoreData.watchersCount,
     imdbRating: scoreData.ratingImdb,

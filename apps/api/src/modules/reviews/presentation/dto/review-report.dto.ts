@@ -55,7 +55,7 @@ export class ReportResponseDto {
   @ApiProperty({ description: 'Report reason', enum: REPORT_REASON_VALUES })
   reason!: ReportReason;
 
-  @ApiPropertyOptional({ description: 'Additional details' })
+  @ApiPropertyOptional({ type: String, description: 'Additional details' })
   details!: string | null;
 
   @ApiProperty({ description: 'Report status', enum: REPORT_STATUS_VALUES })
@@ -117,13 +117,13 @@ export class ReportWithReviewDto extends ReportResponseDto {
   @ApiProperty({ description: 'Reporter info', type: ReporterDto })
   reporter!: ReporterDto;
 
-  @ApiPropertyOptional({ description: 'Moderator UUID who resolved' })
+  @ApiPropertyOptional({ type: String, description: 'Moderator UUID who resolved' })
   moderatorId!: string | null;
 
-  @ApiPropertyOptional({ description: 'Moderator notes' })
+  @ApiPropertyOptional({ type: String, description: 'Moderator notes' })
   moderatorNotes!: string | null;
 
-  @ApiPropertyOptional({ description: 'When report was resolved' })
+  @ApiPropertyOptional({ type: Date, description: 'When report was resolved' })
   resolvedAt!: Date | null;
 }
 

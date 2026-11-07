@@ -6,7 +6,7 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DatabaseException } from '../../../../common/exceptions';
@@ -118,7 +118,7 @@ export class ProviderMappingRepository implements IProviderMappingRepository {
     includeGlobal?: boolean;
   }): Promise<ProviderMapping[]> {
     try {
-      const conditions = [];
+      const conditions: SQL[] = [];
 
       if (options?.providerId) {
         conditions.push(eq(schema.providerMappings.providerId, options.providerId));

@@ -38,7 +38,11 @@ export class ProviderDto {
   @ApiProperty({ example: 'Netflix', description: 'Display name' })
   displayName: string;
 
-  @ApiPropertyOptional({ example: 'netflix', description: 'Brand group for variants' })
+  @ApiPropertyOptional({
+    type: String,
+    example: 'netflix',
+    description: 'Brand group for variants',
+  })
   brandGroup?: string | null;
 
   @ApiProperty({ example: true, description: 'Whether provider is active' })
@@ -70,7 +74,11 @@ export class MappingDto {
   @ApiProperty({ example: 'netflix', description: 'Canonical provider ID' })
   providerId: string;
 
-  @ApiPropertyOptional({ example: 'netflix_ads', description: 'Variant ID if applicable' })
+  @ApiPropertyOptional({
+    type: String,
+    example: 'netflix_ads',
+    description: 'Variant ID if applicable',
+  })
   variantId?: string | null;
 
   @ApiProperty({ example: 'direct', description: 'Distribution channel' })
@@ -140,7 +148,7 @@ export class UpdateMappingRequestDto {
   @MaxLength(100)
   providerId?: string;
 
-  @ApiPropertyOptional({ example: 'netflix_ads', description: 'Variant ID' })
+  @ApiPropertyOptional({ type: String, example: 'netflix_ads', description: 'Variant ID' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -228,7 +236,7 @@ export class ResolveResultDto {
   @ApiProperty({ example: 'US', description: 'Region used for resolution' })
   region: string;
 
-  @ApiPropertyOptional({ description: 'Resolved mapping if found' })
+  @ApiPropertyOptional({ type: () => MappingDto, description: 'Resolved mapping if found' })
   mapping?: MappingDto | null;
 
   @ApiProperty({ example: true, description: 'Whether mapping was found' })

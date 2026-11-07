@@ -6,7 +6,7 @@ import { UserStateAdapter } from './user-state.adapter';
 
 describe('UserStateAdapter', () => {
   let adapter: UserStateAdapter;
-  let userMediaService: jest.Mocked<Partial<UserMediaService>>;
+  let userMediaService: jest.Mocked<Pick<UserMediaService, 'getState' | 'findMany'>>;
 
   beforeEach(async () => {
     userMediaService = {
@@ -34,7 +34,7 @@ describe('UserStateAdapter', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      userMediaService.getState!.mockResolvedValue(mockState);
+      userMediaService.getState.mockResolvedValue(mockState);
 
       const result = await adapter.getState('user-1', 'media-1');
 
@@ -43,7 +43,7 @@ describe('UserStateAdapter', () => {
     });
 
     it('should return null when state not found', async () => {
-      userMediaService.getState!.mockResolvedValue(null);
+      userMediaService.getState.mockResolvedValue(null);
 
       const result = await adapter.getState('user-1', 'media-1');
 
@@ -77,7 +77,7 @@ describe('UserStateAdapter', () => {
           updatedAt: new Date(),
         },
       ];
-      userMediaService.findMany!.mockResolvedValue(mockStates);
+      userMediaService.findMany.mockResolvedValue(mockStates);
 
       const result = await adapter.findMany('user-1', ['media-1', 'media-2']);
 
@@ -86,7 +86,7 @@ describe('UserStateAdapter', () => {
     });
 
     it('should return empty array when no states found', async () => {
-      userMediaService.findMany!.mockResolvedValue([]);
+      userMediaService.findMany.mockResolvedValue([]);
 
       const result = await adapter.findMany('user-1', ['media-1']);
 

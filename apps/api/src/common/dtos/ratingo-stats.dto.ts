@@ -8,6 +8,7 @@ import { RecentRaterDto } from './recent-rater.dto';
  */
 export class RatingoStatsDto {
   @ApiProperty({
+    type: Number,
     example: 85.5,
     description: 'Composite Ratingo Score (0-100)',
     required: false,
@@ -16,6 +17,7 @@ export class RatingoStatsDto {
   ratingoScore?: number | null;
 
   @ApiProperty({
+    type: Number,
     example: 88.5,
     description: 'Quality Score (0-100)',
     required: false,
@@ -24,6 +26,7 @@ export class RatingoStatsDto {
   qualityScore?: number | null;
 
   @ApiProperty({
+    type: Number,
     example: 45.2,
     description: 'Popularity Score (0-100)',
     required: false,
@@ -32,6 +35,7 @@ export class RatingoStatsDto {
   popularityScore?: number | null;
 
   @ApiProperty({
+    type: Number,
     example: 6,
     description: 'Number of people watching right now (Live)',
     required: false,
@@ -40,6 +44,7 @@ export class RatingoStatsDto {
   liveWatchers?: number | null;
 
   @ApiProperty({
+    type: Number,
     example: 6423,
     description: 'Total unique watchers all time',
     required: false,
@@ -48,6 +53,7 @@ export class RatingoStatsDto {
   totalWatchers?: number | null;
 
   @ApiProperty({
+    type: Number,
     example: 78.5,
     description: 'Community average rating (0-100 scale)',
     required: false,
@@ -56,6 +62,7 @@ export class RatingoStatsDto {
   communityAverageRating?: number | null;
 
   @ApiProperty({
+    type: Number,
     example: 1240,
     description: 'Number of community ratings',
     required: false,

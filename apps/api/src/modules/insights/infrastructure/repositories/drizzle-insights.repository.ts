@@ -124,7 +124,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
         const growthPrev = tPrev - tPrev2;
         const delta = growthCurrent - growthPrev;
 
-        let deltaPercent = null;
+        let deltaPercent: number | null = null;
         if (growthPrev !== 0) {
           deltaPercent = (delta / Math.abs(growthPrev)) * PERCENT_MULTIPLIER;
         }

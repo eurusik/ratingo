@@ -14840,7 +14840,8 @@
           },
           "title": {
             "type": "string",
-            "example": "Heavy Is the Crown"
+            "example": "Heavy Is the Crown",
+            "nullable": true
           },
           "overview": {
             "type": "string",
@@ -15939,10 +15940,6 @@
           "details"
         ]
       },
-      "Function": {
-        "type": "object",
-        "properties": {}
-      },
       "MeUserMediaSummaryDto": {
         "type": "object",
         "properties": {
@@ -15966,7 +15963,7 @@
             "nullable": true,
             "allOf": [
               {
-                "$ref": "#/components/schemas/Function"
+                "$ref": "#/components/schemas/ImageDto"
               }
             ]
           },
@@ -19552,7 +19549,7 @@
             "nullable": true,
             "allOf": [
               {
-                "$ref": "#/components/schemas/Function"
+                "$ref": "#/components/schemas/ImageDto"
               }
             ]
           },

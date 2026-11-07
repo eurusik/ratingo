@@ -64,6 +64,7 @@ function toDatabaseException(
     case PG_ERROR_CODE.INVALID_TEXT_REPRESENTATION:
     case PG_ERROR_CODE.FOREIGN_KEY_VIOLATION:
       return new DatabaseInvalidInputException(error, context);
+    case undefined:
     default:
       return new DatabaseException(`Failed to ${operation}`, error, context);
   }
