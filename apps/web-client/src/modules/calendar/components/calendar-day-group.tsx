@@ -22,7 +22,7 @@ export interface CalendarEpisode {
   seasonNumber: number;
   episodeNumber: number;
   /** Episode title. */
-  title: string;
+  title: string | null;
   overview: string | null;
   airDate: string;
   runtime: number | null;

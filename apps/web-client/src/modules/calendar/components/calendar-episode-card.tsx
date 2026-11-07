@@ -21,7 +21,7 @@ export interface CalendarEpisodeCardProps {
   seasonNumber: number;
   episodeNumber: number;
   /** Episode title */
-  title: string;
+  title: string | null;
   runtime: number | null;
   minutesSuffix: string;
 }
