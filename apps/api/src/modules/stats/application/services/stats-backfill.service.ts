@@ -18,6 +18,7 @@ import { BACKFILL_CONFIG, STATS_JOBS, STATS_QUEUE } from '@/modules/stats/stats.
 import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '@/modules/trakt/public';
 
 import { type BackfillChunkItem } from '../types/backfill.types';
+import { type BackfillWatchersChunkJobData } from '../types/stats-job.types';
 
 /** Default limit for total watchers backfill */
 const DEFAULT_TOTAL_WATCHERS_LIMIT = 100;
@@ -183,7 +184,7 @@ export class StatsBackfillService {
           items: chunks[i],
           chunkIndex: i,
           totalChunks: chunks.length,
-        },
+        } satisfies BackfillWatchersChunkJobData,
         {
           delay: i * BACKFILL_CONFIG.CHUNK_DELAY_MS, // Stagger chunks
           attempts: BACKFILL_CONFIG.MAX_RETRIES,

@@ -15,6 +15,7 @@ describe('StatsWorker', () => {
   beforeEach(async () => {
     trendingSyncService = {
       syncTrendingStats: jest.fn(),
+      syncEligibleTrendingStats: jest.fn(),
     };
 
     statsBackfillService = {
@@ -59,6 +60,19 @@ describe('StatsWorker', () => {
       const job = { name: STATS_JOBS.SYNC_TRENDING, data: {}, id: '2' } as Job;
       await worker.process(job);
       expect(trendingSyncService.syncTrendingStats).toHaveBeenCalledWith(100);
+    });
+
+    it('should pass batchSize and afterId to SYNC_ELIGIBLE_TRENDING', async () => {
+      const job = {
+        name: STATS_JOBS.SYNC_ELIGIBLE_TRENDING,
+        data: { batchSize: 25, afterId: 'cursor-id' },
+        id: '5',
+      } as Job;
+      await worker.process(job);
+      expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenCalledWith({
+        batchSize: 25,
+        afterId: 'cursor-id',
+      });
     });
 
     it('should process ANALYZE_DROP_OFF job for single show', async () => {

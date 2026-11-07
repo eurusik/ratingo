@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
 
 /**
  * Query DTO for backfill total watchers endpoint.
@@ -168,15 +168,12 @@ export class SyncEligibleTrendingQueryDto {
   batchSize?: number = 50;
 
   @ApiPropertyOptional({
-    description: 'Offset for pagination',
-    example: 0,
-    default: 0,
+    description: 'Keyset cursor: sync only items with a media id greater than this one',
+    format: 'uuid',
   })
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  offset?: number = 0;
+  @IsUUID()
+  afterId?: string;
 }
 
 /**
