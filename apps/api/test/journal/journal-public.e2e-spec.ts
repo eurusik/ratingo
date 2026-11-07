@@ -7,7 +7,6 @@
  */
 
 import { INestApplication } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 

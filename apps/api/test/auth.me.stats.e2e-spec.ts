@@ -1,6 +1,10 @@
 import { UsersE2eContext, createUsersApp } from './users/_harness';
 import { testUuid } from './support/test-uuid';
 
+const RATED_MOVIE_ID = testUuid('rated-movie');
+const RATED_SHOW_ID = testUuid('rated-show');
+const PLANNED_MOVIE_ID = testUuid('planned-movie');
+
 describe('Auth /me stats e2e', () => {
   let ctx: UsersE2eContext;
 
@@ -19,24 +23,18 @@ describe('Auth /me stats e2e', () => {
   it('returns real stats after user-media updates', async () => {
     const { accessToken } = await ctx.registerAndLogin();
 
-    // movie rated
     await ctx
-      .patch(`/api/user-media/${testUuid('mid-1')}`, accessToken)
+      .patchUserMedia(RATED_MOVIE_ID, accessToken)
       .send({ state: 'completed', rating: 80 })
       .expect(200);
 
-    const showId = testUuid('sid-1');
-    ctx.userMediaRepo.registerShow(showId);
+    ctx.userMediaRepo.registerShow(RATED_SHOW_ID);
     await ctx
-      .patch(`/api/user-media/${showId}`, accessToken)
+      .patchUserMedia(RATED_SHOW_ID, accessToken)
       .send({ state: 'completed', rating: 90 })
       .expect(200);
 
-    // watchlist item (planned)
-    await ctx
-      .patch(`/api/user-media/${testUuid('mid-2')}`, accessToken)
-      .send({ state: 'planned' })
-      .expect(200);
+    await ctx.patchUserMedia(PLANNED_MOVIE_ID, accessToken).send({ state: 'planned' }).expect(200);
 
     const meRes = await ctx.get('/api/auth/me', accessToken).expect(200);
     expect(meRes.body.success).toBe(true);

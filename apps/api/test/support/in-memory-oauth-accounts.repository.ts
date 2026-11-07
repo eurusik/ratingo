@@ -14,23 +14,28 @@ export class InMemoryOAuthAccountsRepository implements IOAuthAccountsRepository
   ): Promise<OAuthAccount | null> {
     return (
       this.accounts.find(
-        (a) => a.provider === provider && a.providerAccountId === providerAccountId,
+        (account) =>
+          account.provider === provider && account.providerAccountId === providerAccountId,
       ) ?? null
     );
   }
 
   async findByUserId(userId: string): Promise<OAuthAccount[]> {
-    return this.accounts.filter((a) => a.userId === userId);
+    return this.accounts.filter((account) => account.userId === userId);
   }
 
   async findByUserAndProvider(
     userId: string,
     provider: OAuthProvider,
   ): Promise<OAuthAccount | null> {
-    return this.accounts.find((a) => a.userId === userId && a.provider === provider) ?? null;
+    return (
+      this.accounts.find((account) => account.userId === userId && account.provider === provider) ??
+      null
+    );
   }
 
   async create(data: CreateOAuthAccountData): Promise<OAuthAccount> {
+    const now = new Date();
     const account: OAuthAccount = {
       id: `oauth-${this.accounts.length + 1}`,
       userId: data.userId,
@@ -39,24 +44,26 @@ export class InMemoryOAuthAccountsRepository implements IOAuthAccountsRepository
       email: data.email,
       displayName: data.displayName,
       avatarUrl: data.avatarUrl,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     };
     this.accounts.push(account);
     return account;
   }
 
   async deleteByUserAndProvider(userId: string, provider: OAuthProvider): Promise<boolean> {
-    const idx = this.accounts.findIndex((a) => a.userId === userId && a.provider === provider);
-    if (idx >= 0) {
-      this.accounts.splice(idx, 1);
-      return true;
+    const index = this.accounts.findIndex(
+      (account) => account.userId === userId && account.provider === provider,
+    );
+    if (index === -1) {
+      return false;
     }
-    return false;
+    this.accounts.splice(index, 1);
+    return true;
   }
 
   async countByUserId(userId: string): Promise<number> {
-    return this.accounts.filter((a) => a.userId === userId).length;
+    return this.accounts.filter((account) => account.userId === userId).length;
   }
 
   clear(): void {

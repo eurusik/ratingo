@@ -9,13 +9,13 @@ import { USERS_REPOSITORY } from '../../src/modules/users/domain/repositories/us
 import { REFRESH_TOKENS_REPOSITORY } from '../../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { USER_MEDIA_STATE_REPOSITORY } from '../../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
 import { OBJECT_STORAGE_SERVICE } from '../../src/modules/users/domain/services/object-storage.service.interface';
+import { OAUTH_ACCOUNTS_REPOSITORY } from '../../src/modules/auth/domain/repositories/oauth-accounts.repository.interface';
 import {
   InMemoryRefreshTokensRepository,
   InMemoryUserMediaRepository,
   InMemoryUsersRepository,
 } from './_fakes';
 import { createE2eApp, createE2eTestingModule } from '../support/e2e-testing-module';
-import { OAUTH_ACCOUNTS_REPOSITORY } from '../../src/modules/auth/domain/repositories/oauth-accounts.repository.interface';
 import { InMemoryOAuthAccountsRepository } from '../support/in-memory-oauth-accounts.repository';
 
 export interface UsersE2eContext {
@@ -34,6 +34,7 @@ export interface UsersE2eContext {
   get: (path: string, token?: string) => any;
   post: (path: string, token?: string) => any;
   patch: (path: string, token?: string) => any;
+  patchUserMedia: (mediaItemId: string, token: string) => any;
   close: () => Promise<void>;
 }
 
@@ -116,6 +117,9 @@ export async function createUsersApp(): Promise<UsersE2eContext> {
     return token ? req.set('Authorization', `Bearer ${token}`) : req;
   };
 
+  const patchUserMedia = (mediaItemId: string, token: string) =>
+    patch(`/api/user-media/${mediaItemId}`, token);
+
   return {
     app,
     authBase,
@@ -127,6 +131,7 @@ export async function createUsersApp(): Promise<UsersE2eContext> {
     get,
     post,
     patch,
+    patchUserMedia,
     close: () => app.close(),
   };
 }

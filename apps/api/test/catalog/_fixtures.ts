@@ -1,14 +1,20 @@
 import { MovieWithMedia } from '../../src/modules/catalog/domain/repositories/movie.repository.interface';
-import { TrendingShowItem } from '../../src/modules/catalog/domain/repositories/show.repository.interface';
 import { MediaType } from '../../src/common/enums/media-type.enum';
 import { testUuid } from '../support/test-uuid';
+
+export const MOVIE_ONE_ID = testUuid('movie-one');
+export const MOVIE_TWO_ID = testUuid('movie-two');
+export const MOVIE_THREE_ID = testUuid('movie-three');
+export const MOVIE_FOUR_ID = testUuid('movie-four');
+export const SHOW_ONE_ID = testUuid('show-one');
+export const SHOW_TWO_ID = testUuid('show-two');
 
 export const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
 export const moviesFixture: MovieWithMedia[] = [
   {
-    id: testUuid('mid-1'),
-    mediaItemId: testUuid('mid-1'),
+    id: MOVIE_ONE_ID,
+    mediaItemId: MOVIE_ONE_ID,
     tmdbId: 1,
     title: 'Movie One',
     slug: 'movie-one',
@@ -42,8 +48,8 @@ export const moviesFixture: MovieWithMedia[] = [
     genres: [{ id: 'g-action', name: 'Action', slug: 'action' }] as any,
   },
   {
-    id: testUuid('mid-2'),
-    mediaItemId: testUuid('mid-2'),
+    id: MOVIE_TWO_ID,
+    mediaItemId: MOVIE_TWO_ID,
     tmdbId: 2,
     title: 'Movie Two',
     slug: 'movie-two',
@@ -77,8 +83,8 @@ export const moviesFixture: MovieWithMedia[] = [
     genres: [{ id: 'g-drama', name: 'Drama', slug: 'drama' }] as any,
   },
   {
-    id: testUuid('mid-3'),
-    mediaItemId: testUuid('mid-3'),
+    id: MOVIE_THREE_ID,
+    mediaItemId: MOVIE_THREE_ID,
     tmdbId: 3,
     title: 'Movie Three',
     slug: 'movie-three',
@@ -115,8 +121,8 @@ export const moviesFixture: MovieWithMedia[] = [
     ] as any,
   },
   {
-    id: testUuid('mid-4'),
-    mediaItemId: testUuid('mid-4'),
+    id: MOVIE_FOUR_ID,
+    mediaItemId: MOVIE_FOUR_ID,
     tmdbId: 4,
     title: 'Movie Four',
     slug: 'movie-four',
@@ -154,8 +160,8 @@ export const moviesFixture: MovieWithMedia[] = [
 // use any to allow extra fields (genres/popularity) for filtering/sorting fixtures
 export const showsFixture: any[] = [
   {
-    id: testUuid('sid-1'),
-    mediaItemId: testUuid('sid-1'),
+    id: SHOW_ONE_ID,
+    mediaItemId: SHOW_ONE_ID,
     type: MediaType.SHOW,
     slug: 'show-one',
     title: 'Show One',
@@ -197,8 +203,8 @@ export const showsFixture: any[] = [
     popularity: 90,
   },
   {
-    id: testUuid('sid-2'),
-    mediaItemId: testUuid('sid-2'),
+    id: SHOW_TWO_ID,
+    mediaItemId: SHOW_TWO_ID,
     type: MediaType.SHOW,
     slug: 'show-two',
     title: 'Show Two',

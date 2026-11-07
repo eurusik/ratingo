@@ -3,14 +3,14 @@ import './telemetry/register';
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { SwaggerModule } from '@nestjs/swagger';
 
 import { createAppLogger } from './common/logging/app-logger';
 import { getAppRole, runsHttp } from './common/runtime/app-role';
 import { DevTiming } from './common/utils/dev-timing';
 import { errorMessage } from './common/utils/error.utils';
-import { configureHttpApp } from './http-app.setup';
+import { configureHttpApp, createHttpAdapter } from './http-app.setup';
 import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.config';
 import { registerHttpMetrics } from './telemetry/http-metrics';
 
@@ -31,14 +31,9 @@ async function bootstrap(): Promise<void> {
   }
 
   const { AppModule } = await import('./app.module');
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter({
-      // Trust proxy headers for correct IP detection behind reverse proxies (nginx, Cloudflare, etc.)
-      trustProxy: true,
-    }),
-    { logger: createAppLogger() },
-  );
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, createHttpAdapter(), {
+    logger: createAppLogger(),
+  });
 
   registerHttpMetrics(app.getHttpAdapter().getInstance());
 

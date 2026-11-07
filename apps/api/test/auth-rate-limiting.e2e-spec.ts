@@ -20,43 +20,9 @@ import {
   InMemoryUserMediaRepository,
   InMemoryUsersRepository,
 } from './users/_fakes';
-import type {
-  ExchangeCodeRecord,
-  IExchangeCodesRepository,
-} from '../src/modules/auth/domain/repositories/exchange-codes.repository.interface';
 import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
-
-// ─── In-memory Exchange Codes Repository ──────────────────────────────────────
-
-class InMemoryExchangeCodesRepository implements IExchangeCodesRepository {
-  private records: ExchangeCodeRecord[] = [];
-
-  async create(
-    data: Omit<ExchangeCodeRecord, 'id' | 'usedAt' | 'createdAt'>,
-  ): Promise<ExchangeCodeRecord> {
-    const record: ExchangeCodeRecord = {
-      ...data,
-      id: `exc-${this.records.length + 1}`,
-      usedAt: null,
-      createdAt: new Date(),
-    };
-    this.records.push(record);
-    return record;
-  }
-
-  async consumeCode(codeHash: string) {
-    const record = this.records.find(
-      (r) => r.codeHash === codeHash && !r.usedAt && r.expiresAt > new Date(),
-    );
-    if (!record) return { success: false as const, reason: 'not_found' as const };
-    record.usedAt = new Date();
-    return { success: true as const, record };
-  }
-
-  async cleanupExpired(): Promise<number> {
-    return 0;
-  }
-}
+import { InMemoryExchangeCodesRepository } from './support/in-memory-exchange-codes.repository';
+import { InMemoryOAuthAccountsRepository } from './support/in-memory-oauth-accounts.repository';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -83,7 +49,7 @@ async function createThrottledApp(): Promise<INestApplication> {
     .overrideProvider(EXCHANGE_CODES_REPOSITORY)
     .useClass(InMemoryExchangeCodesRepository)
     .overrideProvider(OAUTH_ACCOUNTS_REPOSITORY)
-    .useValue({})
+    .useClass(InMemoryOAuthAccountsRepository)
     .compile();
 
   return createE2eApp(moduleFixture);

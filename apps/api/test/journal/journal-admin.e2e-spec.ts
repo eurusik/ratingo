@@ -35,7 +35,6 @@ import {
   UpdateJournalPostData,
 } from '../../src/modules/journal/domain/repositories/journal.repository.interface';
 import { JournalModule } from '../../src/modules/journal/journal.module';
-import { User } from '../../src/modules/users/domain/entities/user.entity';
 import { USERS_REPOSITORY } from '../../src/modules/users/domain/repositories/users.repository.interface';
 import { UsersModule } from '../../src/modules/users/users.module';
 import { InMemoryRefreshTokensRepository, InMemoryUsersRepository } from '../users/_fakes';

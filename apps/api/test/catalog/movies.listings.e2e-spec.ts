@@ -1,5 +1,5 @@
 import { createCatalogApp, CatalogE2eContext } from './_harness';
-import { testUuid } from '../support/test-uuid';
+import { MOVIE_ONE_ID, MOVIE_TWO_ID, MOVIE_THREE_ID, MOVIE_FOUR_ID } from './_fixtures';
 
 describe('Catalog E2E - Movies Listings', () => {
   let ctx: CatalogE2eContext;
@@ -17,24 +17,21 @@ describe('Catalog E2E - Movies Listings', () => {
       .get('/api/catalog/movies/now-playing?sort=tmdbPopularity&order=desc')
       .expect(200);
     expect(sorted.body.data.data.map((m: any) => m.id)).toEqual([
-      testUuid('mid-1'),
-      testUuid('mid-2'),
-      testUuid('mid-3'),
-      testUuid('mid-4'),
+      MOVIE_ONE_ID,
+      MOVIE_TWO_ID,
+      MOVIE_THREE_ID,
+      MOVIE_FOUR_ID,
     ]);
 
     const filtered = await ctx
       .get('/api/catalog/movies/now-playing?genres=action&minRatingo=70')
       .expect(200);
-    expect(filtered.body.data.data.map((m: any) => m.id)).toEqual([testUuid('mid-1')]);
+    expect(filtered.body.data.data.map((m: any) => m.id)).toEqual([MOVIE_ONE_ID]);
   });
 
   it('new-releases: daysBack window and filters', async () => {
     const within7 = await ctx.get('/api/catalog/movies/new-releases?daysBack=7').expect(200);
-    expect(within7.body.data.data.map((m: any) => m.id)).toEqual([
-      testUuid('mid-1'),
-      testUuid('mid-2'),
-    ]);
+    expect(within7.body.data.data.map((m: any) => m.id)).toEqual([MOVIE_ONE_ID, MOVIE_TWO_ID]);
     expect(
       within7.body.data.data.every(
         (m: any) =>
@@ -47,7 +44,7 @@ describe('Catalog E2E - Movies Listings', () => {
         '/api/catalog/movies/new-releases?genres=drama&minRatingo=50&voteSource=tmdb&minVotes=40',
       )
       .expect(200);
-    expect(filtered.body.data.data.map((m: any) => m.id)).toEqual([testUuid('mid-2')]);
+    expect(filtered.body.data.data.map((m: any) => m.id)).toEqual([MOVIE_TWO_ID]);
     expect(
       filtered.body.data.data.every(
         (m: any) =>
@@ -58,10 +55,7 @@ describe('Catalog E2E - Movies Listings', () => {
 
   it('new-on-digital: daysBack and filters', async () => {
     const within7 = await ctx.get('/api/catalog/movies/new-on-digital?daysBack=7').expect(200);
-    expect(within7.body.data.data.map((m: any) => m.id)).toEqual([
-      testUuid('mid-1'),
-      testUuid('mid-4'),
-    ]);
+    expect(within7.body.data.data.map((m: any) => m.id)).toEqual([MOVIE_ONE_ID, MOVIE_FOUR_ID]);
     expect(
       within7.body.data.data.every(
         (m: any) =>
@@ -74,7 +68,7 @@ describe('Catalog E2E - Movies Listings', () => {
     const filtered = await ctx
       .get('/api/catalog/movies/new-on-digital?genres=comedy&minRatingo=30')
       .expect(200);
-    expect(filtered.body.data.data.map((m: any) => m.id)).toEqual([testUuid('mid-4')]);
+    expect(filtered.body.data.data.map((m: any) => m.id)).toEqual([MOVIE_FOUR_ID]);
     expect(
       filtered.body.data.data.every(
         (m: any) =>

@@ -52,12 +52,14 @@ describe('Users password e2e', () => {
       .expect(400);
   });
 
-  it('change password: rejects wrong currentPassword', async () => {
-    const { accessToken } = await ctx.registerAndLogin();
+  it('change password: rejects wrong currentPassword and keeps the old one', async () => {
+    const { accessToken, email, password } = await ctx.registerAndLogin();
 
     await ctx
       .patch(`${ctx.authBase}/password`, accessToken)
       .send({ currentPassword: 'WrongPass123', newPassword: 'Anoth3rS3cure' })
       .expect(403);
+
+    await ctx.post(`${ctx.authBase}/login`).send({ email, password }).expect(200);
   });
 });
