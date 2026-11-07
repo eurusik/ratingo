@@ -1,6 +1,6 @@
-import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { type IngestionJobStatus } from '../../domain/ports/ingestion-job-status.port';
+import { JOB_STATUS } from '@/common/enums/job-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { type IngestionJobStatus } from '@/modules/ingestion/domain/ports/ingestion-job-status.port';
 
 import { IngestionJobStatusService } from './ingestion-job-status.service';
 import { type SyncMediaService } from './sync-media.service';

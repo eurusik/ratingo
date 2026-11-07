@@ -5,7 +5,7 @@
  */
 
 import { PolicyMapper } from './policy.mapper';
-import { type CatalogPolicy } from '../../domain/types/policy.types';
+import { type CatalogPolicy } from '@/modules/catalog-policy/domain/types/policy.types';
 
 describe('PolicyMapper', () => {
   const createMockPolicy = (overrides: Partial<CatalogPolicy> = {}): CatalogPolicy => ({

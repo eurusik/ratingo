@@ -1,10 +1,10 @@
-import { type IngestionStatus } from '../../../common/enums/ingestion-status.enum';
-import { type MediaType } from '../../../common/enums/media-type.enum';
+import { type IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
 import {
   type VideoSiteEnum,
   type VideoTypeEnum,
   type VideoLanguageEnum,
-} from '../../../common/enums/video.enum';
+} from '@/common/enums/video.enum';
 
 import { type ContentClass } from './content-class';
 

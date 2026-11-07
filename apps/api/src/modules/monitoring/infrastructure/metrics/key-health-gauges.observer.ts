@@ -13,20 +13,22 @@ import {
   type ObservableGauge,
 } from '@opentelemetry/api';
 
+import { MS_PER_SECOND } from '@/common/constants';
 import { errorMessage } from '@/common/utils/error.utils';
-
-import { MS_PER_SECOND } from '../../../../common/constants';
+import {
+  API_KEY_STATUS,
+  type ApiKeyStatus,
+} from '@/modules/monitoring/domain/constants/api-key-status.const';
+import {
+  KEY_HEALTH_REPOSITORY,
+  type KeyHealthRepository,
+} from '@/modules/monitoring/domain/repositories/key-health.repository';
 import {
   API_KEY_LAST_CHECKED_METRIC,
   API_KEY_PROBE_LATENCY_METRIC,
   API_KEY_STATUS_METRIC,
   METER_NAME,
-} from '../../../../telemetry/telemetry.constants';
-import { API_KEY_STATUS, type ApiKeyStatus } from '../../domain/constants/api-key-status.const';
-import {
-  KEY_HEALTH_REPOSITORY,
-  type KeyHealthRepository,
-} from '../../domain/repositories/key-health.repository';
+} from '@/telemetry/telemetry.constants';
 
 const STATUS_VALUE: Record<ApiKeyStatus, number> = {
   [API_KEY_STATUS.VALID]: 1,

@@ -1,15 +1,16 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
-import { DEFAULT_REGION } from '../../../../common/constants';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DEFAULT_REGION } from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   type IMediaRepository,
   MEDIA_REPOSITORY,
   type IMovieRepository,
   MOVIE_REPOSITORY,
-} from '../../../catalog/public';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { IngestionJob } from '../../ingestion.constants';
+} from '@/modules/catalog/public';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
+import { TmdbAdapter } from '@/modules/tmdb/public';
+
 import { BulkJobService } from '../services/bulk-job.service';
 
 /**

@@ -1,6 +1,6 @@
 import { sql, type SQL } from 'drizzle-orm';
 
-import * as schema from '../../../../database/schema';
+import * as schema from '@/database/schema';
 
 /**
  * Creates SQL CASE expression that preserves existing positive value

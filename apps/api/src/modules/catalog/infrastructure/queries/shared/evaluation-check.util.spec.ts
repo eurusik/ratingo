@@ -1,5 +1,5 @@
 import { checkContextEvaluationsExist } from './evaluation-check.util';
-import { EvaluationContext } from '../../../../catalog-policy/public';
+import { EvaluationContext } from '@/modules/catalog-policy/public';
 
 // Chainable thenable for Drizzle-like API
 const createThenable = (resolveWith: any = []) => {

@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { AppException } from '../../../common/exceptions/app.exception';
-import { NotFoundException } from '../../../common/exceptions/not-found.exception';
-import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { AppException } from '@/common/exceptions/app.exception';
+import { NotFoundException } from '@/common/exceptions/not-found.exception';
+import { ErrorCode } from '@/common/enums/error-code.enum';
 import { REVIEW_LIMITS } from '../domain/constants/review.constants';
 import { REVIEW_REPLY_REPOSITORY } from '../domain/repositories/review-reply.repository.interface';
 import { REVIEW_REPOSITORY } from '../domain/repositories/review.repository.interface';

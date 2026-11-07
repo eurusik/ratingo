@@ -1,4 +1,4 @@
-import { NotFoundException } from '../../../../common/exceptions/not-found.exception';
+import { NotFoundException } from '@/common/exceptions/not-found.exception';
 import { DrizzleReviewVoteRepository } from './drizzle-review-vote.repository';
 
 /** Fake tx that records the order of operations. */

@@ -4,12 +4,13 @@ import { type ConfigType } from '@nestjs/config';
 
 import { type Queue } from 'bullmq';
 
-import schedulerConfig from '../../../config/scheduler.config';
+import schedulerConfig from '@/config/scheduler.config';
 import {
   BACKFILL_QUEUE,
   DEFAULT_INGESTION_JOB_OPTIONS,
   IngestionJob,
-} from '../../shared/contracts';
+} from '@/modules/shared/contracts';
+
 import {
   LINK_PENDING_IMPORTS_INTERVAL_MS,
   LINK_PENDING_IMPORTS_SCHEDULER_ID,

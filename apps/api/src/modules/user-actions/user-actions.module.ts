@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { apiOnly } from '../../common/runtime/app-role';
-import { DatabaseModule } from '../../database/database.module';
+import { apiOnly } from '@/common/runtime/app-role';
+import { DatabaseModule } from '@/database/database.module';
 
 import { AutoResubscribeOnRestoreListener } from './application/listeners/auto-resubscribe-on-restore.listener';
 import { AutoUnsubscribeOnDropListener } from './application/listeners/auto-unsubscribe-on-drop.listener';

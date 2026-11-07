@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { parseSeasonFromEpisodeKey } from '@/modules/ingestion/public';
 
-import { parseSeasonFromEpisodeKey } from '../../ingestion/public';
 import { SUBSCRIPTION_CONTEXT } from '../domain/constants/subscription.constants';
 import { type UserSubscription, type SubscriptionTrigger } from '../domain/entities';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';

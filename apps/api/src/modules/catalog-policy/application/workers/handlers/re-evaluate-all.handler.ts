@@ -11,25 +11,25 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { type Queue } from 'bullmq';
 
 import { toError } from '@/common/utils/error.utils';
-
+import { RunFinalizeService } from '@/modules/catalog-policy/application/services/run-finalize.service';
 import {
   CATALOG_POLICY_QUEUE,
   CATALOG_POLICY_JOBS,
   EVALUATE_ITEM_JOB_OPTIONS,
-} from '../../../catalog-policy.constants';
+} from '@/modules/catalog-policy/catalog-policy.constants';
 import {
   RunStatus,
   type EvaluationContextType,
-} from '../../../domain/constants/evaluation.constants';
-import { RunNotFoundError } from '../../../domain/errors';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import { RunNotFoundError } from '@/modules/catalog-policy/domain/errors';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
   POLICY_INPUT_REPOSITORY,
   type ICatalogEvaluationRunRepository,
   type IPolicyInputRepository,
   type UpdatedAtWindow,
-} from '../../../domain/repositories';
-import { RunFinalizeService } from '../../services/run-finalize.service';
+} from '@/modules/catalog-policy/domain/repositories';
+
 import type { ReEvaluateAllPayload, EvaluateCatalogItemPayload } from '../types/job-payloads';
 import { validateContextPayload } from '../utils/context-validator';
 

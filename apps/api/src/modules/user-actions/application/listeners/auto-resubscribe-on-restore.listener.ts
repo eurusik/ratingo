@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { USER_MEDIA_STATE } from '../../../user-media/public';
-import { UserMediaStateChangedEvent } from '../../../user-media/public';
+import { USER_MEDIA_STATE } from '@/modules/user-media/public';
+import { UserMediaStateChangedEvent } from '@/modules/user-media/public';
+
 import { SubscriptionsService } from '../subscriptions.service';
 
 @Injectable()

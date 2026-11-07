@@ -16,12 +16,12 @@ import {
   type ValidationArguments,
 } from 'class-validator';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   USER_MEDIA_STATE,
   USER_MEDIA_STATE_VALUES,
   type UserMediaState,
-} from '../../domain/entities/user-media-state.entity';
+} from '@/modules/user-media/domain/entities/user-media-state.entity';
 
 @ValidatorConstraint({ name: 'atLeastOneField' })
 class AtLeastOneFieldConstraint implements ValidatorConstraintInterface {

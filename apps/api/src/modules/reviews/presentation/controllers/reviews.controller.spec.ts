@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
-import { REVIEW_SORT, VOTE_TYPE } from '../../domain/constants/review.constants';
-import { ReviewRepliesService } from '../../application/review-replies.service';
-import { ReviewVotesService } from '../../application/review-votes.service';
-import { ReviewsService } from '../../application/reviews.service';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { REVIEW_SORT, VOTE_TYPE } from '@/modules/reviews/domain/constants/review.constants';
+import { ReviewRepliesService } from '@/modules/reviews/application/review-replies.service';
+import { ReviewVotesService } from '@/modules/reviews/application/review-votes.service';
+import { ReviewsService } from '@/modules/reviews/application/reviews.service';
 import { ReviewsController } from './reviews.controller';
 
 describe('ReviewsController', () => {

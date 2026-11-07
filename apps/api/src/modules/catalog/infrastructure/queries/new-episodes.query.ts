@@ -4,13 +4,12 @@ import { sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
-
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
-import { TRENDING_THRESHOLDS } from '../../domain/constants/catalog.constants';
-import { type NewEpisodeItem } from '../../domain/repositories/show.repository.interface';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { TRENDING_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
+import { type NewEpisodeItem } from '@/modules/catalog/domain/repositories/show.repository.interface';
+import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
 import { type NewEpisodeRow, mapNewEpisodeRows } from './shared/new-episode.mapper';
 

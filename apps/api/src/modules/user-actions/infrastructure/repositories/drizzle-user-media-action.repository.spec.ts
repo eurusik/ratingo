@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { DrizzleUserMediaActionRepository } from './drizzle-user-media-action.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
   const thenable: any = {};

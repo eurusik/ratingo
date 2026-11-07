@@ -1,8 +1,8 @@
 import { type SQL } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 import { RottenTomatoesBackfillRepository } from './rotten-tomatoes-backfill.repository';
 

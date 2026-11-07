@@ -1,8 +1,8 @@
 import { ShowDetailsQuery } from './show-details.query';
 import { CreditsMapper } from '../mappers/credits.mapper';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { ImageMapper } from '@/common/mappers/image.mapper';
 import { MediaWatchOffersMapper } from '../mappers/media-watch-offers.mapper';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 // Chainable thenable for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {

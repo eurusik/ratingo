@@ -6,13 +6,16 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ACTIVE_EVALUATION_CONTEXTS, RunStatus } from '../../domain/constants/evaluation.constants';
+import {
+  ACTIVE_EVALUATION_CONTEXTS,
+  RunStatus,
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
   type ICatalogEvaluationRunRepository,
   type CatalogEvaluationRun,
-} from '../../domain/repositories';
-import { type RunProgressCounters } from '../../domain/types';
+} from '@/modules/catalog-policy/domain/repositories';
+import { type RunProgressCounters } from '@/modules/catalog-policy/domain/types';
 
 import { RunAggregationService } from './run-aggregation.service';
 import { RunFinalizeService } from './run-finalize.service';
@@ -45,7 +48,9 @@ describe('RunFinalizeService', () => {
   });
 
   // Default run: total=100 items, 2 active contexts => 200 expected evaluations
-  const createMockCounters = (overrides: Partial<RunProgressCounters> = {}): RunProgressCounters => ({
+  const createMockCounters = (
+    overrides: Partial<RunProgressCounters> = {},
+  ): RunProgressCounters => ({
     evaluations: 200,
     processed: 100,
     eligible: 80,

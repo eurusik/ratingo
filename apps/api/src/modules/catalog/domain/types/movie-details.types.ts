@@ -1,6 +1,7 @@
-import { type ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import type { CardMeta } from '../../../shared/cards';
-import type { MovieVerdict } from '../../../shared/verdict';
+import { type ReleaseStatus } from '@/common/enums/release-status.enum';
+import type { CardMeta } from '@/modules/shared/cards';
+import type { MovieVerdict } from '@/modules/shared/verdict';
+
 import type { UserState } from '../ports/user-state-provider.port';
 import type { MovieDetails } from '../repositories/movie.repository.interface';
 

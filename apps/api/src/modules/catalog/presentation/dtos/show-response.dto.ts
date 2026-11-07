@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { CardMetaDto } from '../../../shared/cards';
+import { ShowStatus } from '@/common/enums/show-status.enum';
+import { CardMetaDto } from '@/modules/shared/cards';
 
 import { MediaBaseDto } from './media-base.dto';
 import { ShowVerdictDto, ShowStatusHintDto } from './verdict.dto';

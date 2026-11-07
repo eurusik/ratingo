@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { toError } from '../../../../common/utils/error.utils';
-import { type TraktListsPort } from '../../domain/ports/trakt-lists.port';
+import { toError } from '@/common/utils/error.utils';
+import { type TraktListsPort } from '@/modules/trakt/domain/ports/trakt-lists.port';
 
 import { BaseTraktHttp } from './base-trakt-http';
 import {

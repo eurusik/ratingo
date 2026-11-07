@@ -1,6 +1,6 @@
 import { DrizzleOAuthAccountsRepository } from './drizzle-oauth-accounts.repository';
-import * as schema from '../../../../database/schema';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import * as schema from '@/database/schema';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 describe('DrizzleOAuthAccountsRepository', () => {
   const baseRow = {

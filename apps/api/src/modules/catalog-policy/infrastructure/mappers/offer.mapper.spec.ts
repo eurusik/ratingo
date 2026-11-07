@@ -2,7 +2,7 @@
  * Offer Mapper Utility Tests
  */
 
-import { type MediaWatchOfferView } from '../../../provider/public';
+import { type MediaWatchOfferView } from '@/modules/provider/public';
 
 import { mapOffersByMediaItemToNormalized, mapOffersToNormalized } from './offer.mapper';
 

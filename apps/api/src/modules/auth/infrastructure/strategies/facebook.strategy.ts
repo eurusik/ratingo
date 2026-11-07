@@ -4,9 +4,9 @@ import { PassportStrategy } from '@nestjs/passport';
 
 import { Strategy, type Profile as FacebookProfile } from 'passport-facebook';
 
-import facebookConfig from '../../../../config/facebook.config';
-import { OAuthErrorCode } from '../../auth.constants';
-import { OAUTH_PROVIDER, type OAuthUserPayload } from '../../domain/types';
+import facebookConfig from '@/config/facebook.config';
+import { OAuthErrorCode } from '@/modules/auth/auth.constants';
+import { OAUTH_PROVIDER, type OAuthUserPayload } from '@/modules/auth/domain/types';
 
 /**
  * Passport strategy for Facebook OAuth 2.0 authorization code flow.

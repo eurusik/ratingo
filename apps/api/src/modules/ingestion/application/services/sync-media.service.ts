@@ -1,27 +1,27 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { errorMessage, toError } from '../../../../common/utils/error.utils';
-import { generateSlug, type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { errorMessage, toError } from '@/common/utils/error.utils';
+import { generateSlug, type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import {
   type ICatalogPolicyEvaluator,
   CATALOG_POLICY_EVALUATOR,
   classifyContent,
   EvaluationContext,
-} from '../../../catalog-policy/public';
-import { NormalizationService } from '../../../provider/public';
-import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
-import { ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../trakt/public';
-import { MediaSyncedEvent } from '../../domain/events/media-synced.event';
-import { type NormalizedMedia } from '../../domain/models/normalized-media.model';
+} from '@/modules/catalog-policy/public';
+import { MediaSyncedEvent } from '@/modules/ingestion/domain/events/media-synced.event';
+import { type NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
 import {
   AGGREGATED_RATINGS_PORT,
   type AggregatedRatingsPort,
-} from '../../domain/ports/aggregated-ratings.port';
+} from '@/modules/ingestion/domain/ports/aggregated-ratings.port';
+import { NormalizationService } from '@/modules/provider/public';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
+import { ScoreCalculatorService, type ScoreInput } from '@/modules/shared/score-calculator';
+import { TmdbAdapter } from '@/modules/tmdb/public';
+import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '@/modules/trakt/public';
 
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 

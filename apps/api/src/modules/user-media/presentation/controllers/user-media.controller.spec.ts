@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
-import { ImportMediaService } from '../../application/import-media.service';
-import { ImportPendingService } from '../../application/import-pending.service';
-import { UserMediaService } from '../../application/user-media.service';
+import { USER_MEDIA_STATE } from '@/modules/user-media/domain/entities/user-media-state.entity';
+import { ImportMediaService } from '@/modules/user-media/application/import-media.service';
+import { ImportPendingService } from '@/modules/user-media/application/import-pending.service';
+import { UserMediaService } from '@/modules/user-media/application/user-media.service';
 
 import { UserMediaController } from './user-media.controller';
 

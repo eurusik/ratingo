@@ -1,13 +1,12 @@
 import { eq, lte, isNotNull, gte, isNull, type SQL } from 'drizzle-orm';
 
+import { MS_PER_DAY } from '@/common/constants';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import * as schema from '@/database/schema';
 import { allOf, anyOf } from '@/database/sql-conditions';
-
-import { MS_PER_DAY } from '../../../../../common/constants';
-import { IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../../common/enums/media-type.enum';
-import * as schema from '../../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../../catalog-policy/public';
-import { WATCHING_NOW_THRESHOLDS } from '../../../domain/constants/catalog.constants';
+import { WATCHING_NOW_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
+import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
 /**
  * Options for building watching now conditions.

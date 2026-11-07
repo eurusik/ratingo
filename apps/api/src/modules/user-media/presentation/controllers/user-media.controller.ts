@@ -26,13 +26,13 @@ import { Throttle } from '@nestjs/throttler';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { OffsetPaginationQueryDto } from '@/common/dtos/pagination.dto';
+import { CurrentUser } from '@/modules/auth/public';
+import { JwtAuthGuard } from '@/modules/auth/public';
+import { ImportMediaService } from '@/modules/user-media/application/import-media.service';
+import { ImportPendingService } from '@/modules/user-media/application/import-pending.service';
+import { UserMediaService } from '@/modules/user-media/application/user-media.service';
+import { normalizeExternalRating } from '@/modules/user-media/domain/value-objects/external-rating';
 
-import { CurrentUser } from '../../../auth/public';
-import { JwtAuthGuard } from '../../../auth/public';
-import { ImportMediaService } from '../../application/import-media.service';
-import { ImportPendingService } from '../../application/import-pending.service';
-import { UserMediaService } from '../../application/user-media.service';
-import { normalizeExternalRating } from '../../domain/value-objects/external-rating';
 import { BatchRatingsQueryDto, BatchRatingsResponseDto } from '../dto/batch-ratings.dto';
 import {
   CancelImportBatchesDto,

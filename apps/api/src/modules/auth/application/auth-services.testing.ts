@@ -1,7 +1,8 @@
 import { type JwtService } from '@nestjs/jwt';
-import { AuthService } from '../../src/modules/auth/application/auth.service';
-import { OAuthService } from '../../src/modules/auth/application/oauth.service';
-import { TokenService } from '../../src/modules/auth/application/token.service';
+
+import { AuthService } from './auth.service';
+import { OAuthService } from './oauth.service';
+import { TokenService } from './token.service';
 
 /**
  * Shape of all mock dependencies required to instantiate auth services in tests.
@@ -69,7 +70,7 @@ export function createAuthMocks(): AuthMocks {
     jwtService: {
       signAsync: jest.fn(),
       verifyAsync: jest.fn(),
-    } as any,
+    } as unknown as AuthMocks['jwtService'],
     passwordHasher: {
       hash: jest.fn(),
       compare: jest.fn(),
@@ -112,13 +113,14 @@ export function createAuthMocks(): AuthMocks {
  * Mirrors the real constructor parameter order.
  */
 export function createTokenService(mocks: AuthMocks): TokenService {
-  return new TokenService(
-    mocks.usersService as any,
-    mocks.config as any,
-    mocks.jwtService as any,
-    mocks.passwordHasher as any,
-    mocks.refreshTokensRepository as any,
-  );
+  const deps = [
+    mocks.usersService,
+    mocks.config,
+    mocks.jwtService,
+    mocks.passwordHasher,
+    mocks.refreshTokensRepository,
+  ] as unknown as ConstructorParameters<typeof TokenService>;
+  return new TokenService(...deps);
 }
 
 /**
@@ -130,7 +132,12 @@ export function createAuthService(
   mocks: AuthMocks,
   tokenService: TokenService = createTokenService(mocks),
 ): AuthService {
-  return new AuthService(mocks.usersService as any, mocks.passwordHasher as any, tokenService);
+  const deps = [
+    mocks.usersService,
+    mocks.passwordHasher,
+    tokenService,
+  ] as unknown as ConstructorParameters<typeof AuthService>;
+  return new AuthService(...deps);
 }
 
 /**
@@ -141,11 +148,12 @@ export function createOAuthService(
   mocks: AuthMocks,
   tokenService: TokenService = createTokenService(mocks),
 ): OAuthService {
-  return new OAuthService(
-    mocks.usersService as any,
-    mocks.config as any,
+  const deps = [
+    mocks.usersService,
+    mocks.config,
     tokenService,
-    mocks.exchangeCodesRepository as any,
-    mocks.oauthAccountsRepository as any,
-  );
+    mocks.exchangeCodesRepository,
+    mocks.oauthAccountsRepository,
+  ] as unknown as ConstructorParameters<typeof OAuthService>;
+  return new OAuthService(...deps);
 }

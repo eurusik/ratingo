@@ -1,10 +1,10 @@
 import * as fc from 'fast-check';
 
 import { HeroMediaQuery } from './hero-media.query';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { MS_PER_DAY } from '../../../../common/constants';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { MS_PER_DAY } from '@/common/constants';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { HERO_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
 
 // Chainable thenable factory for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {

@@ -1,5 +1,5 @@
-import { MediaType } from '../../../../../common/enums/media-type.enum';
-import { HERO_THRESHOLDS } from '../../../domain/constants/catalog.constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { HERO_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
 import { extractPrimaryTrailerKey, mapHeroResults, type HeroQueryRow } from './hero-item.mapper';
 
 describe('hero-item.mapper', () => {

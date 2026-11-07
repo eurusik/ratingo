@@ -1,14 +1,12 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 
 import { MediaType } from '@/common/enums/media-type.enum';
-
 import {
   type ICatalogPolicyEvaluator,
   CATALOG_POLICY_EVALUATOR,
   EvaluationContext,
-} from '../../../catalog-policy/public';
-import { TrendingSyncService, HOMEPAGE_REFRESH_CONFIG } from '../../../stats/public';
-import { buildSyncMediaJobId } from '../../domain/job-ids';
+} from '@/modules/catalog-policy/public';
+import { buildSyncMediaJobId } from '@/modules/ingestion/domain/job-ids';
 import {
   IngestionJob,
   TRENDING_STATS_DELAY_MS,
@@ -16,7 +14,9 @@ import {
   TRENDING_DEFAULT_STATS_LIMIT,
   TMDB_TRENDING_PAGE_SIZE,
   ELIGIBLE_BACKFILL_MAX_BATCHES,
-} from '../../ingestion.constants';
+} from '@/modules/ingestion/ingestion.constants';
+import { TrendingSyncService, HOMEPAGE_REFRESH_CONFIG } from '@/modules/stats/public';
+
 import { formatHourWindow } from '../helpers/queue.helpers';
 import { BulkJobService } from '../services/bulk-job.service';
 import { SyncMediaService } from '../services/sync-media.service';

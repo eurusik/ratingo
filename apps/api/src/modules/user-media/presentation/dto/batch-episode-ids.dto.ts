@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsUUID } from 'class-validator';
 
-import { MAX_BATCH_EPISODE_IDS } from '../../domain/constants/episode-progress.constants';
+import { MAX_BATCH_EPISODE_IDS } from '@/modules/user-media/domain/constants/episode-progress.constants';
 
 export class BatchEpisodeIdsDto {
   @ApiProperty({

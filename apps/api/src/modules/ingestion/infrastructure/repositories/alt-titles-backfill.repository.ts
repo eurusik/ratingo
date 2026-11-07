@@ -3,14 +3,14 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, gt, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type AltTitlesBackfillCandidate,
   type IAltTitlesBackfillRepository,
-} from '../../domain/repositories/alt-titles-backfill.repository.interface';
-import { type BackfillPage } from '../../domain/repositories/backfill-page.interface';
+} from '@/modules/ingestion/domain/repositories/alt-titles-backfill.repository.interface';
+import { type BackfillPage } from '@/modules/ingestion/domain/repositories/backfill-page.interface';
 
 @Injectable()
 export class AltTitlesBackfillRepository implements IAltTitlesBackfillRepository {

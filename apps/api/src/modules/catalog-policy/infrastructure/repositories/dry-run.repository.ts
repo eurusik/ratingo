@@ -9,20 +9,21 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { eq, and, isNull, inArray, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import {
-  type IMediaWatchOffersRepository,
-  MEDIA_WATCH_OFFERS_REPOSITORY,
-} from '../../../provider/public';
-import { DEFAULT_EVALUATION_CONTEXT } from '../../domain/constants/evaluation.constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { DEFAULT_EVALUATION_CONTEXT } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   type IDryRunRepository,
   type CurrentEvaluation,
-} from '../../domain/repositories/dry-run.repository.interface';
-import { type PolicyEngineInput } from '../../domain/types/policy.types';
+} from '@/modules/catalog-policy/domain/repositories/dry-run.repository.interface';
+import { type PolicyEngineInput } from '@/modules/catalog-policy/domain/types/policy.types';
+import {
+  type IMediaWatchOffersRepository,
+  MEDIA_WATCH_OFFERS_REPOSITORY,
+} from '@/modules/provider/public';
+
 import { mapOffersByMediaItemToNormalized } from '../mappers/offer.mapper';
 import { type MediaItemRow, mapRowsToPolicyEngineInputs } from '../mappers/policy-input.mapper';
 

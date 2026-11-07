@@ -1,7 +1,7 @@
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import type * as schema from '../../../../database/schema';
-import { type DatabaseTransaction } from '../../domain/types/transaction.type';
+import type * as schema from '@/database/schema';
+import { type DatabaseTransaction } from '@/modules/catalog/domain/types/transaction.type';
 
 /**
  * Drizzle-specific transaction type for infrastructure layer.

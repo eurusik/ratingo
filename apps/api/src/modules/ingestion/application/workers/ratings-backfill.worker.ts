@@ -7,8 +7,8 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import { MdblistApiException } from '@/common/exceptions';
 import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
+import { IngestionJob, RATINGS_BACKFILL_QUEUE } from '@/modules/ingestion/ingestion.constants';
 
-import { IngestionJob, RATINGS_BACKFILL_QUEUE } from '../../ingestion.constants';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 
 export interface MdblistItemPayload {

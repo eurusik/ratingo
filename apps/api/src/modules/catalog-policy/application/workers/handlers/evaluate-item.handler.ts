@@ -7,13 +7,13 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { toError } from '@/common/utils/error.utils';
-
-import { RunStatus } from '../../../domain/constants/evaluation.constants';
+import { CatalogEvaluationService } from '@/modules/catalog-policy/application/services/catalog-evaluation.service';
+import { RunStatus } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
   type ICatalogEvaluationRunRepository,
-} from '../../../domain/repositories';
-import { CatalogEvaluationService } from '../../services/catalog-evaluation.service';
+} from '@/modules/catalog-policy/domain/repositories';
+
 import type {
   EvaluateCatalogItemPayload,
   EvaluateItemAttemptInfo,

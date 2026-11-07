@@ -2,7 +2,7 @@
  * OAuth-related constants for authentication module.
  */
 
-import { MS_PER_MINUTE } from '../../common/constants';
+import { MS_PER_MINUTE } from '@/common/constants';
 
 /** Cookie name for OAuth state */
 export const OAUTH_STATE_COOKIE = 'oauth_state';

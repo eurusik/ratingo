@@ -1,7 +1,7 @@
 import { type InferInsertModel } from 'drizzle-orm';
 
-import type * as schema from '../../../../database/schema';
-import type { GenreData } from '../../domain/repositories/genre.repository.interface';
+import type * as schema from '@/database/schema';
+import type { GenreData } from '@/modules/catalog/domain/repositories/genre.repository.interface';
 
 /**
  * Maps domain GenreData to Drizzle insert payloads for persistence operations.

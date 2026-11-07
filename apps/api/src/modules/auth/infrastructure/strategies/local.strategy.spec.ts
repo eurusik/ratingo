@@ -1,6 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 
-import { type User } from '../../../users/domain/entities/user.entity';
+import { type User } from '@/modules/users/domain/entities/user.entity';
 import { LocalStrategy } from './local.strategy';
 
 describe('LocalStrategy', () => {

@@ -1,13 +1,13 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
-import { ShowsCalendarService } from '../../application/services/shows-calendar.service';
-import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
-import { ShowDetailsService } from '../../application/services/show-details.service';
-import { ShowSyncService } from '../../application/services/show-sync.service';
-import { ShowNotFoundError } from '../../domain/errors';
-import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
+import { CardEnrichmentService } from '@/modules/shared/cards/application/card-enrichment.service';
+import { ShowsCalendarService } from '@/modules/catalog/application/services/shows-calendar.service';
+import { CatalogUserStateEnricher } from '@/modules/catalog/application/services/catalog-userstate-enricher.service';
+import { ShowDetailsService } from '@/modules/catalog/application/services/show-details.service';
+import { ShowSyncService } from '@/modules/catalog/application/services/show-sync.service';
+import { ShowNotFoundError } from '@/modules/catalog/domain/errors';
+import { SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
 
 import { CatalogShowsController } from './catalog.shows.controller';
 

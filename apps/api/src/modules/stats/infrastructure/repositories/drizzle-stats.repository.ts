@@ -5,13 +5,12 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { withDbError } from '@/common/utils/db-error.utils';
-
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type IStatsRepository,
   type MediaStatsData,
-} from '../../domain/repositories/stats.repository.interface';
+} from '@/modules/stats/domain/repositories/stats.repository.interface';
 
 /**
  * Drizzle ORM implementation of the Stats Repository.

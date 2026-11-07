@@ -3,8 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { type Job } from 'bullmq';
 
-import { CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
-import { EvaluationContext } from '../../domain/constants/evaluation.constants';
+import { CATALOG_POLICY_JOBS } from '@/modules/catalog-policy/catalog-policy.constants';
+import { EvaluationContext } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 
 import { CatalogPolicyWorker } from './catalog-policy.worker';
 import { ReEvaluateAllHandler, EvaluateItemHandler, WatchdogHandler } from './handlers';

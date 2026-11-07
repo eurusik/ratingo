@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { IsIn } from 'class-validator';
 
-import { OAUTH_PROVIDER } from '../../domain/types';
+import { OAUTH_PROVIDER } from '@/modules/auth/domain/types';
 
 /**
  * Path parameter DTO for unlink endpoint.

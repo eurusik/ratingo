@@ -8,13 +8,13 @@ import {
 } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { type ImageDto } from '@/common/dtos/image.dto';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { CurrentUser } from '@/modules/auth/public';
+import { JwtAuthGuard } from '@/modules/auth/public';
+import { MeListsService } from '@/modules/user-media/application/me-lists.service';
+import { type UserMediaState } from '@/modules/user-media/domain/entities/user-media-state.entity';
 
-import { type ImageDto } from '../../../../common/dtos/image.dto';
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { CurrentUser } from '../../../auth/public';
-import { JwtAuthGuard } from '../../../auth/public';
-import { MeListsService } from '../../application/me-lists.service';
-import { type UserMediaState } from '../../domain/entities/user-media-state.entity';
 import { FavoriteUpdatesResponseDto } from '../dto/favorite-updates.dto';
 import {
   MeHistoryListQueryDto,

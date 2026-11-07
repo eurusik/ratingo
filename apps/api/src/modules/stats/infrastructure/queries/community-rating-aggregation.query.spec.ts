@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommunityRatingAggregationQuery } from './community-rating-aggregation.query';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { DatabaseException } from '../../../../common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DatabaseException } from '@/common/exceptions';
 
 describe('CommunityRatingAggregationQuery', () => {
   let query: CommunityRatingAggregationQuery;

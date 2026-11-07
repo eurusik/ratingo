@@ -3,11 +3,10 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, and, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { toError } from '../../../../common/utils/error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { EvaluationContext } from '../../../catalog-policy/public';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { toError } from '@/common/utils/error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type CatalogSort,
   type SortOrder,
@@ -15,10 +14,11 @@ import {
   CATALOG_SORT,
   SORT_ORDER,
   VOTE_SOURCE,
-} from '../../domain/constants/catalog-query.constants';
-import { LIST_CONTEXT } from '../../domain/constants/catalog.constants';
-import type { TrendingMovieItem } from '../../domain/repositories/movie.repository.interface';
-import type { TrendingQueryResult, ListContext } from '../../domain/types/query.types';
+} from '@/modules/catalog/domain/constants/catalog-query.constants';
+import { LIST_CONTEXT } from '@/modules/catalog/domain/constants/catalog.constants';
+import type { TrendingMovieItem } from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import type { TrendingQueryResult, ListContext } from '@/modules/catalog/domain/types/query.types';
+import { EvaluationContext } from '@/modules/catalog-policy/public';
 
 import {
   buildTrendingMovieConditions,

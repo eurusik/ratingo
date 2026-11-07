@@ -1,11 +1,12 @@
 import { Controller, Get, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/public';
-import { OptionalJwtAuthGuard } from '../../../auth/public';
-import { PublicUserMediaService } from '../../application/public-user-media.service';
-import { type ViewerContext } from '../../application/user-profile-visibility.policy';
-import { UsersService } from '../../application/users.service';
+import { CurrentUser } from '@/modules/auth/public';
+import { OptionalJwtAuthGuard } from '@/modules/auth/public';
+import { PublicUserMediaService } from '@/modules/users/application/public-user-media.service';
+import { type ViewerContext } from '@/modules/users/application/user-profile-visibility.policy';
+import { UsersService } from '@/modules/users/application/users.service';
+
 import {
   PublicUserMediaListQueryDto,
   PaginatedPublicUserMediaResponseDto,

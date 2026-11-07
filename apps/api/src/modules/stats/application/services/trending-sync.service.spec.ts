@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TrendingSyncService } from './trending-sync.service';
-import { STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
-import { MEDIA_REPOSITORY } from '../../../catalog/public';
-import { TRAKT_LISTS_PORT, TRAKT_RATINGS_PORT } from '../../../trakt/public';
-import { ScoreCalculatorService } from '../../../shared/score-calculator';
+import { STATS_REPOSITORY } from '@/modules/stats/domain/repositories/stats.repository.interface';
+import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import { TRAKT_LISTS_PORT, TRAKT_RATINGS_PORT } from '@/modules/trakt/public';
+import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('TrendingSyncService', () => {
@@ -145,7 +145,9 @@ describe('TrendingSyncService', () => {
         { tmdbId: 100, watchers: 500, rank: 1 },
       ]);
       traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([]);
-      mediaRepository.findManyByTmdbIds.mockResolvedValue([{ id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE }]);
+      mediaRepository.findManyByTmdbIds.mockResolvedValue([
+        { id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE },
+      ]);
       mediaRepository.findManyForScoring.mockResolvedValue([createScoreData('movie-1', 100)]);
 
       await service.syncTrendingStats(100);
@@ -166,7 +168,9 @@ describe('TrendingSyncService', () => {
         { tmdbId: 100, watchers: 500, rank: 1 },
       ]);
       traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([]);
-      mediaRepository.findManyByTmdbIds.mockResolvedValue([{ id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE }]);
+      mediaRepository.findManyByTmdbIds.mockResolvedValue([
+        { id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE },
+      ]);
       mediaRepository.findManyForScoring.mockResolvedValue([]); // No score data
 
       await service.syncTrendingStats(100);

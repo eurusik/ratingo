@@ -5,9 +5,8 @@ import {
   HttpError,
   type RetryConfig,
 } from '@/common/http/resilient-http.client';
-
-import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
-import { type KeyProbeResult } from '../../domain/ports/key-probe.port';
+import { API_KEY_STATUS } from '@/modules/monitoring/domain/constants/api-key-status.const';
+import { type KeyProbeResult } from '@/modules/monitoring/domain/ports/key-probe.port';
 
 export const PROBE_TIMEOUT_MS = 8_000;
 

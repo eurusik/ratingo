@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 
-import { EvaluationContext } from '../../../domain/constants/evaluation.constants';
+import { EvaluationContext } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 
 import { validateContextPayload } from './context-validator';
 

@@ -10,30 +10,30 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, desc, sql, and, lt, inArray, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   EligibilityStatus,
   EvaluationContext,
   RunStatus,
   type EvaluationContextType,
   type RunStatusType,
-} from '../../domain/constants/evaluation.constants';
-import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import { InvalidRunStatusError } from '@/modules/catalog-policy/domain/errors/policy.errors';
 import {
   type ICatalogEvaluationRunRepository,
   type CatalogEvaluationRun,
   type CreateRunInput,
   type UpdateRunInput,
   type IncrementCountersInput,
-} from '../../domain/repositories';
+} from '@/modules/catalog-policy/domain/repositories';
 import {
   type AggregatedCounters,
   type RunAnomaly,
   type RunProgressCounters,
-} from '../../domain/types';
+} from '@/modules/catalog-policy/domain/types';
 
 /** Context whose status decides an item's eligible/ineligible/review bucket. */
 const PRIMARY_BUCKET_CONTEXT = EvaluationContext.CATALOG;

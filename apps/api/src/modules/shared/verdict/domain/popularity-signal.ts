@@ -1,4 +1,4 @@
-import { BADGE_KEY, type BadgeKey } from '../../cards/domain/card.constants';
+import { BADGE_KEY, type BadgeKey } from '@/modules/shared/cards/domain/card.constants';
 
 /**
  * Popularity signal for verdict computation.

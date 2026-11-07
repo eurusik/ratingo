@@ -11,7 +11,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { DEFAULT_PROVIDER_PRIORITY } from '../../common/constants/provider.constants';
+import { DEFAULT_PROVIDER_PRIORITY } from '@/common/constants/provider.constants';
 
 import { mediaItems } from './media';
 

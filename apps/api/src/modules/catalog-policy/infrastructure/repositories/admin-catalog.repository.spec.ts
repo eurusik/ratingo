@@ -11,10 +11,10 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { EligibilityStatus } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 
 import { AdminCatalogRepository } from './admin-catalog.repository';
 

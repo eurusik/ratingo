@@ -1,17 +1,23 @@
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 
-import { InvalidEligibilityStatusError, InvalidBreakoutRuleError } from '../../domain/errors';
-import type { CatalogPolicy, PolicyConfig } from '../../domain/types/policy.types';
-import { CATALOG_POLICY_REPOSITORY } from '../../domain/repositories';
+import {
+  InvalidEligibilityStatusError,
+  InvalidBreakoutRuleError,
+} from '@/modules/catalog-policy/domain/errors';
+import type {
+  CatalogPolicy,
+  PolicyConfig,
+} from '@/modules/catalog-policy/domain/types/policy.types';
+import { CATALOG_POLICY_REPOSITORY } from '@/modules/catalog-policy/domain/repositories';
 
 import { CatalogPolicyService } from './catalog-policy.service';
 
-jest.mock('../../domain/validation/policy.schema', () => ({
+jest.mock('@/modules/catalog-policy/domain/validation/policy.schema', () => ({
   validatePolicyOrThrow: jest.fn((policy) => policy),
 }));
 
-import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
+import { validatePolicyOrThrow } from '@/modules/catalog-policy/domain/validation/policy.schema';
 
 describe('CatalogPolicyService', () => {
   let service: CatalogPolicyService;

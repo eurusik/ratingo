@@ -1,4 +1,4 @@
-import { type IClockPort } from '../../shared/clock';
+import { type IClockPort } from '@/modules/shared/clock';
 import {
   IMPORT_PENDING_STATUS,
   LINK_PENDING_IMPORTS_BATCH_SIZE,

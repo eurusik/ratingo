@@ -1,9 +1,9 @@
 import { ForbiddenException, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { AppException } from '../../../common/exceptions/app.exception';
-import { DatabaseException } from '../../../common/exceptions/database.exception';
-import { type AuthMocks, createAuthMocks, createAuthService } from '../../../../test/auth/_mocks';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { AppException } from '@/common/exceptions/app.exception';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { type AuthMocks, createAuthMocks, createAuthService } from './auth-services.testing';
 
 describe('AuthService', () => {
   let mocks: AuthMocks;

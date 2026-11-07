@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NewReleasesPipeline } from './new-releases.pipeline';
-import { TmdbAdapter } from '../../../tmdb/public';
+import { TmdbAdapter } from '@/modules/tmdb/public';
 import { BulkJobService } from '../services/bulk-job.service';
-import { MEDIA_REPOSITORY } from '../../../catalog/public';
-import { IngestionJob } from '../../ingestion.constants';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('NewReleasesPipeline', () => {
   let pipeline: NewReleasesPipeline;

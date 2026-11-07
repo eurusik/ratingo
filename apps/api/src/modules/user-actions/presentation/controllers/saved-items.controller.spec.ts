@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SavedItemsController } from './saved-items.controller';
-import { SavedItemsService } from '../../application/saved-items.service';
-import { SAVED_ITEM_LIST } from '../../domain/entities/user-saved-item.entity';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { SavedItemsService } from '@/modules/user-actions/application/saved-items.service';
+import { SAVED_ITEM_LIST } from '@/modules/user-actions/domain/entities/user-saved-item.entity';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('SavedItemsController', () => {
   let controller: SavedItemsController;

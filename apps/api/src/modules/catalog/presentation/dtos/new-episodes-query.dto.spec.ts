@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 
-import { CATALOG_MAX_CALENDAR_DAYS, MAX_PAGE_SIZE } from '../../../../common/constants';
+import { CATALOG_MAX_CALENDAR_DAYS, MAX_PAGE_SIZE } from '@/common/constants';
 
 import { NewEpisodesQueryDto } from './new-episodes-query.dto';
 

@@ -1,14 +1,12 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
-import {
-  NEW_RELEASES_REGION,
-  CATALOG_DEFAULT_NEW_RELEASE_DAYS,
-} from '../../../../common/constants';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { buildNewReleaseJobId } from '../../domain/job-ids';
-import { IngestionJob } from '../../ingestion.constants';
+import { NEW_RELEASES_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import { buildNewReleaseJobId } from '@/modules/ingestion/domain/job-ids';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
+import { TmdbAdapter } from '@/modules/tmdb/public';
+
 import { BulkJobService } from '../services/bulk-job.service';
 
 /**

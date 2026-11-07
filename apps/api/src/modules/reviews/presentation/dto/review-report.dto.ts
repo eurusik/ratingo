@@ -18,7 +18,7 @@ import {
   REPORT_STATUS_VALUES,
   type ReportReason,
   type ReportStatus,
-} from '../../domain/constants/review.constants';
+} from '@/modules/reviews/domain/constants/review.constants';
 
 /**
  * DTO for creating a report.

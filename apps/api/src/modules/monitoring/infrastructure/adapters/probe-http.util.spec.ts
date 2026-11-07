@@ -4,7 +4,7 @@ import * as fc from 'fast-check';
 
 import { type FetchFailure, HttpError } from '@/common/http/resilient-http.client';
 
-import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
+import { API_KEY_STATUS } from '@/modules/monitoring/domain/constants/api-key-status.const';
 
 import { mapHttpFailure } from './probe-http.util';
 

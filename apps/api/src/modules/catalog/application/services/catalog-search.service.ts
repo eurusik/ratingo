@@ -1,21 +1,21 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { toError } from '../../../../common/utils/error.utils';
-import { SEARCH_CONFIG } from '../../domain/constants/catalog.constants';
+import { toError } from '@/common/utils/error.utils';
+import { SEARCH_CONFIG } from '@/modules/catalog/domain/constants/catalog.constants';
 import {
   type IMediaMetadataPort,
   MEDIA_METADATA_PORT,
-} from '../../domain/ports/media-metadata.port';
+} from '@/modules/catalog/domain/ports/media-metadata.port';
 import {
   type IMediaRepository,
   MEDIA_REPOSITORY,
-} from '../../domain/repositories/media.repository.interface';
+} from '@/modules/catalog/domain/repositories/media.repository.interface';
 import {
   type HybridSearchResult,
   type LocalSearchResultItem,
   SEARCH_SOURCE,
   type TmdbSearchResultItem,
-} from '../../domain/types/search.types';
+} from '@/modules/catalog/domain/types/search.types';
 
 /**
  * Orchestrates search across local database and TMDB.

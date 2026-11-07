@@ -4,21 +4,20 @@ import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
-
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type UserSavedItem,
   type SavedItemList,
-} from '../../domain/entities/user-saved-item.entity';
+} from '@/modules/user-actions/domain/entities/user-saved-item.entity';
 import {
   type IUserSavedItemRepository,
   type UpsertSavedItemData,
   type SavedItemWithMedia,
-} from '../../domain/repositories/user-saved-item.repository.interface';
+} from '@/modules/user-actions/domain/repositories/user-saved-item.repository.interface';
 
 /**
  * Drizzle implementation of user saved item repository.

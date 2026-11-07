@@ -5,10 +5,10 @@ import {
   ScoreRecalculationService,
   StatsBackfillService,
   StatsQueryService,
-} from '../../application/services';
-import { CommunityRatingService } from '../../application/services/community-rating.service';
+} from '@/modules/stats/application/services';
+import { CommunityRatingService } from '@/modules/stats/application/services/community-rating.service';
 import { getQueueToken } from '@nestjs/bullmq';
-import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
+import { STATS_QUEUE, STATS_JOBS } from '@/modules/stats/stats.constants';
 import { StatsNotFoundException } from '@/common/exceptions';
 import { MediaType } from '@/common/enums/media-type.enum';
 

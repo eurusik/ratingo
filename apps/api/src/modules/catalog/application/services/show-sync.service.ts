@@ -1,16 +1,22 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { MS_PER_SECOND, SECONDS_PER_DAY } from '../../../../common/constants';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { errorMessage } from '../../../../common/utils/error.utils';
-import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
-import { ShowNotFoundError } from '../../domain/errors';
-import { COOLDOWN_GATE_PORT, type ICooldownGate } from '../../domain/ports/cooldown-gate.port';
-import { type IImportJobPort, IMPORT_JOB_PORT } from '../../domain/ports/import-job.port';
+import { MS_PER_SECOND, SECONDS_PER_DAY } from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { errorMessage } from '@/common/utils/error.utils';
+import { ShowNotFoundError } from '@/modules/catalog/domain/errors';
+import {
+  COOLDOWN_GATE_PORT,
+  type ICooldownGate,
+} from '@/modules/catalog/domain/ports/cooldown-gate.port';
+import {
+  type IImportJobPort,
+  IMPORT_JOB_PORT,
+} from '@/modules/catalog/domain/ports/import-job.port';
 import {
   SHOW_REPOSITORY,
   type IShowRepository,
-} from '../../domain/repositories/show.repository.interface';
+} from '@/modules/catalog/domain/repositories/show.repository.interface';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 
 export interface SyncRequestResult {
   queued: boolean;

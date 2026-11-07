@@ -1,5 +1,5 @@
 import { NewEpisodesQuery } from './new-episodes.query';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 describe('NewEpisodesQuery', () => {
   let query: NewEpisodesQuery;

@@ -1,10 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import {
-  AVAILABILITY_REGIONS,
-  type AvailabilityRegion,
-} from '../../../../common/constants/region.constants';
-import { ImageDto } from '../../../../common/dtos/image.dto';
+import { AVAILABILITY_REGIONS, type AvailabilityRegion } from '@/common/constants/region.constants';
+import { ImageDto } from '@/common/dtos/image.dto';
 
 export class WatchProviderDto {
   @ApiProperty({ example: 'netflix', description: 'Canonical provider ID' })

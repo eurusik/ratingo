@@ -6,19 +6,19 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { AVAILABILITY_REGIONS } from '../../../../common/constants/region.constants';
+import { AVAILABILITY_REGIONS } from '@/common/constants/region.constants';
 import {
   CreateWatchOfferInput,
   IMediaWatchOffersRepository,
   MEDIA_WATCH_OFFERS_REPOSITORY,
-} from '../../domain/repositories/media-watch-offers.repository.interface';
+} from '@/modules/provider/domain/repositories/media-watch-offers.repository.interface';
 import {
   IUnmappedTrackingRepository,
   RecordUnmappedInput,
   UNMAPPED_TRACKING_REPOSITORY,
-} from '../../domain/repositories/unmapped-tracking.repository.interface';
-import type { OfferType } from '../../domain/types/provider.types';
-import { normalizeRegion } from '../../domain/utils/region-normalizer';
+} from '@/modules/provider/domain/repositories/unmapped-tracking.repository.interface';
+import type { OfferType } from '@/modules/provider/domain/types/provider.types';
+import { normalizeRegion } from '@/modules/provider/domain/utils/region-normalizer';
 
 import { ProviderMappingService } from './provider-mapping.service';
 

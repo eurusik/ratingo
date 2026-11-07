@@ -1,15 +1,15 @@
-import { IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../../common/mappers/image.mapper';
-import * as mediaUtils from '../../../../../common/utils/media.utils';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import * as mediaUtils from '@/common/utils/media.utils';
 
 import { calculateReleaseFlags } from './release-flags.util';
 import { ShowResultMapper, type ShowProgress } from './show-result.mapper';
 import type { ShowSelectRow } from './show-select.fields';
 
 // Mock dependencies
-jest.mock('../../../../../common/mappers/image.mapper');
-jest.mock('../../../../../common/utils/media.utils');
+jest.mock('@/common/mappers/image.mapper');
+jest.mock('@/common/utils/media.utils');
 jest.mock('./release-flags.util');
 
 describe('ShowResultMapper', () => {

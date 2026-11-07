@@ -1,13 +1,13 @@
-import { type IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
-import { type MovieStatus } from '../../../../../common/enums/movie-status.enum';
-import { ImageMapper } from '../../../../../common/mappers/image.mapper';
-import { type MovieDetails } from '../../../domain/repositories/movie.repository.interface';
-import { type GenreInfo, type RecentRater } from '../../../domain/types/common.types';
-import { CreditsMapper } from '../../mappers/credits.mapper';
+import { type IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { type MovieStatus } from '@/common/enums/movie-status.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { type MovieDetails } from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import { type GenreInfo, type RecentRater } from '@/modules/catalog/domain/types/common.types';
+import { CreditsMapper } from '@/modules/catalog/infrastructure/mappers/credits.mapper';
 import {
   MediaWatchOffersMapper,
   type WatchOfferRow,
-} from '../../mappers/media-watch-offers.mapper';
+} from '@/modules/catalog/infrastructure/mappers/media-watch-offers.mapper';
 
 /**
  * Raw row type from movie details query.

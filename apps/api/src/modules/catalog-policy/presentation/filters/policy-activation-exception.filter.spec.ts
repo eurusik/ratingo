@@ -14,7 +14,7 @@ import {
   NoActivePolicyError,
   PolicyNotFoundError,
   RunNotFoundError,
-} from '../../domain/errors';
+} from '@/modules/catalog-policy/domain/errors';
 
 import { PolicyActivationExceptionFilter } from './policy-activation-exception.filter';
 

@@ -1,4 +1,4 @@
-import { MS_PER_DAY } from '../../../../common/constants';
+import { MS_PER_DAY } from '@/common/constants';
 import { BADGE_KEY, CARD_LIST_CONTEXT } from '../domain/card.constants';
 import { CardEnrichmentService } from './card-enrichment.service';
 

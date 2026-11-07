@@ -3,17 +3,16 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gt, isNotNull, isNull, lt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import { anyOf } from '@/database/sql-conditions';
-
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type BackfillPage } from '../../domain/repositories/backfill-page.interface';
+import { type BackfillPage } from '@/modules/ingestion/domain/repositories/backfill-page.interface';
 import {
   type IRottenTomatoesBackfillRepository,
   type RottenTomatoesBackfillCandidate,
   type RottenTomatoesFetchResult,
-} from '../../domain/repositories/rotten-tomatoes-backfill.repository.interface';
+} from '@/modules/ingestion/domain/repositories/rotten-tomatoes-backfill.repository.interface';
 
 @Injectable()
 export class RottenTomatoesBackfillRepository implements IRottenTomatoesBackfillRepository {

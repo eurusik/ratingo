@@ -7,8 +7,8 @@
 
 import { Module } from '@nestjs/common';
 
-import { apiOnly } from '../../common/runtime/app-role';
-import { DatabaseModule } from '../../database/database.module';
+import { apiOnly } from '@/common/runtime/app-role';
+import { DatabaseModule } from '@/database/database.module';
 
 import { NormalizationService } from './application/services/normalization.service';
 import { ProviderMappingService } from './application/services/provider-mapping.service';

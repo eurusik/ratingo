@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 
-import { UserMediaRatingChangedEvent } from '../../../user-media/domain/events/user-media-rating-changed.event';
+import { UserMediaRatingChangedEvent } from '@/modules/user-media/domain/events/user-media-rating-changed.event';
 import { CommunityRatingService } from '../services/community-rating.service';
 
 import { CommunityRatingChangedListener } from './community-rating-changed.listener';

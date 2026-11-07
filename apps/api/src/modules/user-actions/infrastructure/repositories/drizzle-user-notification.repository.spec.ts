@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DrizzleUserNotificationRepository } from './drizzle-user-notification.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 describe('DrizzleUserNotificationRepository', () => {
   let repository: DrizzleUserNotificationRepository;

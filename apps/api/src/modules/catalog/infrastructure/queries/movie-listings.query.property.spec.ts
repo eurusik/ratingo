@@ -1,5 +1,5 @@
 import * as fc from 'fast-check';
-import { EligibilityStatus, EvaluationReason } from '../../../catalog-policy/public';
+import { EligibilityStatus, EvaluationReason } from '@/modules/catalog-policy/public';
 import { EligibilityMode } from './movie-listings.query';
 
 function matchesEligibilityCondition(

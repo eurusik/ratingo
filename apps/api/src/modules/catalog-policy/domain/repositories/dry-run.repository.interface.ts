@@ -5,7 +5,8 @@
  * Implementation in infrastructure layer.
  */
 
-import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
+
 import { type PolicyEngineInput } from '../types/policy.types';
 
 /** DI token for IDryRunRepository */

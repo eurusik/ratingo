@@ -12,19 +12,19 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type EligibilityStatusType,
   DEFAULT_EVALUATION_CONTEXT,
   type EvaluationContextType,
-} from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   type IMediaCatalogEvaluationRepository,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
-} from '../../domain/repositories/media-catalog-evaluation.repository.interface';
-import { type MediaCatalogEvaluation } from '../../domain/types/policy.types';
+} from '@/modules/catalog-policy/domain/repositories/media-catalog-evaluation.repository.interface';
+import { type MediaCatalogEvaluation } from '@/modules/catalog-policy/domain/types/policy.types';
 
 // Re-export for backward compatibility
 export { MEDIA_CATALOG_EVALUATION_REPOSITORY, type IMediaCatalogEvaluationRepository };

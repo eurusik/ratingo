@@ -7,8 +7,14 @@
 
 import { type Logger } from '@nestjs/common';
 
-import { type ContentClass, isValidContentClass } from '../../domain/classification.service';
-import { type PolicyEngineInput, type NormalizedOffer } from '../../domain/types/policy.types';
+import {
+  type ContentClass,
+  isValidContentClass,
+} from '@/modules/catalog-policy/domain/classification.service';
+import {
+  type PolicyEngineInput,
+  type NormalizedOffer,
+} from '@/modules/catalog-policy/domain/types/policy.types';
 
 /** Divisor for normalizing scores from DB format (0-100) to policy engine format (0-1) */
 const SCORE_NORMALIZATION_DIVISOR = 100;

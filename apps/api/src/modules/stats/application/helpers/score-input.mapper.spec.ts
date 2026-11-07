@@ -1,6 +1,6 @@
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 import { toScoreInput } from './score-input.mapper';
-import { type MediaScoreDataWithTmdbId } from '../../../catalog/public';
+import { type MediaScoreDataWithTmdbId } from '@/modules/catalog/public';
 
 describe('toScoreInput', () => {
   const createScoreData = (

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { MediaSyncedEvent } from '../../../ingestion/public';
+import { MediaSyncedEvent } from '@/modules/ingestion/public';
+
 import { LinkPendingImportsService } from '../link-pending-imports.service';
 
 /**

@@ -6,7 +6,7 @@
  * NOT a direct TMDB genre mapping.
  */
 
-import { ContentClassValues, type ContentClass } from '../../shared/contracts';
+import { ContentClassValues, type ContentClass } from '@/modules/shared/contracts';
 
 import { TMDB_GENRE_IDS } from './constants/genre-mapping.constants';
 

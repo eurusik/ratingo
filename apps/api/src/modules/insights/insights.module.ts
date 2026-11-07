@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { DatabaseModule } from '../../database/database.module';
+import { DatabaseModule } from '@/database/database.module';
 
 import { InsightsService } from './application/services/insights.service';
 import { INSIGHTS_REPOSITORY } from './domain/repositories/insights.repository.interface';

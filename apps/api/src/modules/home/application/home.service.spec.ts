@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HomeService } from './home.service';
 import { HERO_REPOSITORY } from '../domain/repositories/hero.repository.interface';
-import { MediaType } from '../../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 import { HERO_CONFIG, WATCHING_NOW_CONFIG } from '../home.constants';
 
 describe('HomeService', () => {

@@ -4,7 +4,7 @@
  * Types for movie verdict computation.
  */
 
-import { type ReleaseStatus } from '../../../../common/enums/release-status.enum';
+import { type ReleaseStatus } from '@/common/enums/release-status.enum';
 
 import type { PopularitySignal } from './popularity-signal';
 import { type RatingSourceLabel, type BaseVerdict } from './verdict.types';

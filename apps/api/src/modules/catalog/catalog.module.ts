@@ -4,8 +4,9 @@ import { ConfigService } from '@nestjs/config';
 
 import IORedis from 'ioredis';
 
-import { buildRedisConnectionOptions } from '../../common/infrastructure/redis/redis-connection';
-import { apiOnly } from '../../common/runtime/app-role';
+import { buildRedisConnectionOptions } from '@/common/infrastructure/redis/redis-connection';
+import { apiOnly } from '@/common/runtime/app-role';
+
 import { HERO_REPOSITORY } from '../home/public';
 import { CardsModule } from '../shared/cards/cards.module';
 import { DEFAULT_INGESTION_JOB_OPTIONS, INGESTION_QUEUE } from '../shared/contracts';

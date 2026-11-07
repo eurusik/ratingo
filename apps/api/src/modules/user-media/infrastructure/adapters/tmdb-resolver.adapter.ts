@@ -1,14 +1,14 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 
-import { TmdbApiException } from '../../../../common/exceptions/external-api.exception';
+import { TmdbApiException } from '@/common/exceptions/external-api.exception';
 import {
   HttpError,
   ResilientHttpClient,
   type RetryConfig,
-} from '../../../../common/http/resilient-http.client';
-import tmdbConfig from '../../../../config/tmdb.config';
-import { type ITmdbResolverPort } from '../../domain/ports/tmdb-resolver.port';
+} from '@/common/http/resilient-http.client';
+import tmdbConfig from '@/config/tmdb.config';
+import { type ITmdbResolverPort } from '@/modules/user-media/domain/ports/tmdb-resolver.port';
 
 /**
  * TMDB Find API response for IMDB ID lookup.

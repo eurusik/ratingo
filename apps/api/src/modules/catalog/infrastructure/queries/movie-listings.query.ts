@@ -23,27 +23,26 @@ import {
   DIGITAL_RELEASE_MAX_AGE_DAYS,
   MS_PER_DAY,
 } from '@/common/constants';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { toError } from '@/common/utils/error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import { allOf, anyOf } from '@/database/sql-conditions';
-
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { toError } from '../../../../common/utils/error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import {
-  EligibilityStatus,
-  EvaluationContext,
-  EvaluationReason,
-} from '../../../catalog-policy/public';
 import {
   type CatalogSort,
   type SortOrder,
   type VoteSource,
-} from '../../domain/constants/catalog-query.constants';
+} from '@/modules/catalog/domain/constants/catalog-query.constants';
 import {
   type MovieWithMedia,
   type WithTotal,
-} from '../../domain/repositories/movie.repository.interface';
+} from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import {
+  EligibilityStatus,
+  EvaluationContext,
+  EvaluationReason,
+} from '@/modules/catalog-policy/public';
 
 import { GenreQuery } from './shared/genre.query';
 import { MovieResultMapper } from './shared/movie-result.mapper';

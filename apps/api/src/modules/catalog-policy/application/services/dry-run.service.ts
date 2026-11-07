@@ -8,31 +8,37 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import dryRunConfig from '../../../../config/dry-run.config';
+import { MediaType } from '@/common/enums/media-type.enum';
+import dryRunConfig from '@/config/dry-run.config';
 import {
   EligibilityStatus,
   type EligibilityStatusType,
   type EvaluationReasonType,
-} from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   MissingModeParameterError,
   InvalidLimitError,
   InvalidSamplePercentError,
   UnknownDryRunModeError,
-} from '../../domain/errors';
-import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
+} from '@/modules/catalog-policy/domain/errors';
+import {
+  evaluateEligibility,
+  computeRelevance,
+} from '@/modules/catalog-policy/domain/policy-engine';
 import {
   DRY_RUN_REPOSITORY,
   type IDryRunRepository,
   type CurrentEvaluation,
-} from '../../domain/repositories';
-import { type DryRunMode } from '../../domain/types/dry-run.types';
-import { type PolicyConfig, type PolicyEngineInput } from '../../domain/types/policy.types';
+} from '@/modules/catalog-policy/domain/repositories';
+import { type DryRunMode } from '@/modules/catalog-policy/domain/types/dry-run.types';
+import {
+  type PolicyConfig,
+  type PolicyEngineInput,
+} from '@/modules/catalog-policy/domain/types/policy.types';
 
 import { CatalogPolicyService } from './catalog-policy.service';
 
-export type { DryRunMode } from '../../domain/types/dry-run.types';
+export type { DryRunMode } from '@/modules/catalog-policy/domain/types/dry-run.types';
 
 export interface DryRunOptions {
   mode: DryRunMode;

@@ -6,11 +6,12 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 
-import { withDbError } from '../../../../common/utils/db-error.utils';
+import { withDbError } from '@/common/utils/db-error.utils';
 import {
   type IProvidersRepository,
   type ProviderInfo,
-} from '../../domain/repositories/providers.repository.interface';
+} from '@/modules/catalog/domain/repositories/providers.repository.interface';
+
 import { ProvidersQuery } from '../queries/providers.query';
 
 @Injectable()

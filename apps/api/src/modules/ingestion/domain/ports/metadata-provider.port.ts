@@ -1,4 +1,5 @@
-import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
+
 import { type NormalizedMedia } from '../models/normalized-media.model';
 
 /**

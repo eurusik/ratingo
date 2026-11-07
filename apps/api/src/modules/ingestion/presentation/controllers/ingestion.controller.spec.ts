@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { IngestionController } from './ingestion.controller';
-import { SyncMediaService } from '../../application/services/sync-media.service';
+import { SyncMediaService } from '@/modules/ingestion/application/services/sync-media.service';
 import { getQueueToken } from '@nestjs/bullmq';
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { destroyTraktRateLimiter } from '../../../trakt/infrastructure/adapters/base-trakt-http';
-import { DEFAULT_REGION } from '../../../../common/constants';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { IngestionJobStatusService } from '../../application/services/ingestion-job-status.service';
-import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
+import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { destroyTraktRateLimiter } from '@/modules/trakt/infrastructure/adapters/base-trakt-http';
+import { DEFAULT_REGION } from '@/common/constants';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { IngestionJobStatusService } from '@/modules/ingestion/application/services/ingestion-job-status.service';
+import { JOB_STATUS } from '@/common/enums/job-status.enum';
 
 // Cleanup rate limiter interval to prevent Jest from hanging
 afterAll(() => {

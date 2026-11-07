@@ -1,4 +1,4 @@
-import type { GenreInfo } from '../../../domain/types/common.types';
+import type { GenreInfo } from '@/modules/catalog/domain/types/common.types';
 
 /**
  * Raw row type from genres table query.

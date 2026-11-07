@@ -5,7 +5,7 @@ import { IsIn, IsOptional, IsString } from 'class-validator';
 import {
   SUBSCRIPTION_TRIGGER,
   type SubscriptionTrigger,
-} from '../../domain/entities/user-subscription.entity';
+} from '@/modules/user-actions/domain/entities/user-subscription.entity';
 
 const SUBSCRIPTION_TRIGGER_VALUES = Object.values(SUBSCRIPTION_TRIGGER);
 

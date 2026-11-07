@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import type { VoteType } from '../../domain/constants/review.constants';
+import type { VoteType } from '@/modules/reviews/domain/constants/review.constants';
 
 /**
  * Author information in review response.

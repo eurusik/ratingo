@@ -1,4 +1,4 @@
-import { UserMediaStateChangedEvent } from '../../../user-media/domain/events/user-media-state-changed.event';
+import { UserMediaStateChangedEvent } from '@/modules/user-media/domain/events/user-media-state-changed.event';
 import { SubscriptionsService } from '../subscriptions.service';
 
 import { AutoResubscribeOnRestoreListener } from './auto-resubscribe-on-restore.listener';

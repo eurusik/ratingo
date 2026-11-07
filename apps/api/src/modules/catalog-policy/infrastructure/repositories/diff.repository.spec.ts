@@ -4,9 +4,12 @@
 
 import { Test } from '@nestjs/testing';
 
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { EligibilityStatus, DIFF_STATUS_NONE } from '../../domain/constants/evaluation.constants';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import {
+  EligibilityStatus,
+  DIFF_STATUS_NONE,
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 
 import { DiffRepository } from './diff.repository';
 
@@ -250,16 +253,19 @@ describe('DiffRepository', () => {
       ['computeDiffCounts', (r: DiffRepository) => r.computeDiffCounts(2, 1)],
       ['getDiffSamples', (r: DiffRepository) => r.getDiffSamples(2, 1, 'regression', 5)],
       ['computeReasonBreakdown', (r: DiffRepository) => r.computeReasonBreakdown(2, 1)],
-    ])('%s should restrict both old and new evaluations to the catalog context', async (_n, call) => {
-      mockDb.execute.mockResolvedValue([]);
+    ])(
+      '%s should restrict both old and new evaluations to the catalog context',
+      async (_n, call) => {
+        mockDb.execute.mockResolvedValue([]);
 
-      await call(repository);
+        await call(repository);
 
-      const { text, params } = renderSql(mockDb.execute.mock.calls[0][0]);
-      // Both CTEs filter by context (baseline filter + target filter)
-      expect(text.match(/context = \?/g)).toHaveLength(2);
-      expect(params.filter((p) => p === 'catalog')).toHaveLength(2);
-    });
+        const { text, params } = renderSql(mockDb.execute.mock.calls[0][0]);
+        // Both CTEs filter by context (baseline filter + target filter)
+        expect(text.match(/context = \?/g)).toHaveLength(2);
+        expect(params.filter((p) => p === 'catalog')).toHaveLength(2);
+      },
+    );
 
     it.each([
       ['computeDiffCounts', (r: DiffRepository) => r.computeDiffCounts(2, 1)],

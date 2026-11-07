@@ -5,21 +5,20 @@ import { Queue } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
-
-import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../../../tmdb/public';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { buildAltTitlesBackfillJobId } from '../../domain/job-ids';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import { buildAltTitlesBackfillJobId } from '@/modules/ingestion/domain/job-ids';
 import {
   ALT_TITLES_BACKFILL_REPOSITORY,
   type IAltTitlesBackfillRepository,
-} from '../../domain/repositories/alt-titles-backfill.repository.interface';
+} from '@/modules/ingestion/domain/repositories/alt-titles-backfill.repository.interface';
 import {
   BACKFILL_ALT_TITLES_BATCH_SIZE,
   BACKFILL_QUEUE,
   IngestionJob,
   TMDB_BACKFILL_RUN_CAP,
-} from '../../ingestion.constants';
+} from '@/modules/ingestion/ingestion.constants';
+import { TmdbAdapter } from '@/modules/tmdb/public';
+import { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '@/modules/tmdb/public';
 
 /**
  * Pipeline for backfilling alternative titles from TMDB.

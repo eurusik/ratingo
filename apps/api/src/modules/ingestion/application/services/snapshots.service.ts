@@ -1,13 +1,17 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { type SnapshotCandidate } from '../../../catalog/public';
-import { type TraktRatingsPort, TRAKT_RATINGS_PORT, TRAKT_MEDIA_TYPE } from '../../../trakt/public';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { type SnapshotCandidate } from '@/modules/catalog/public';
 import {
   type ISnapshotsRepository,
   SNAPSHOTS_REPOSITORY,
   type SnapshotUpsertData,
-} from '../../domain/repositories/snapshots.repository.interface';
+} from '@/modules/ingestion/domain/repositories/snapshots.repository.interface';
+import {
+  type TraktRatingsPort,
+  TRAKT_RATINGS_PORT,
+  TRAKT_MEDIA_TYPE,
+} from '@/modules/trakt/public';
 
 /**
  * Result of batch snapshot sync operation.

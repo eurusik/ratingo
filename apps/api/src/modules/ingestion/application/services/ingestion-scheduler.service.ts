@@ -6,8 +6,8 @@ import { type ConfigType } from '@nestjs/config';
 
 import { type Queue, type JobSchedulerJson } from 'bullmq';
 
-import schedulerConfig, { type ScheduledJobConfig } from '../../../../config/scheduler.config';
-import { INGESTION_QUEUE } from '../../ingestion.constants';
+import schedulerConfig, { type ScheduledJobConfig } from '@/config/scheduler.config';
+import { INGESTION_QUEUE } from '@/modules/ingestion/ingestion.constants';
 
 /**
  * Manages automated ingestion jobs using BullMQ Job Schedulers.

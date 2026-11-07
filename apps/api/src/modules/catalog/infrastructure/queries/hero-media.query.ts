@@ -3,15 +3,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, desc, and, lte, isNotNull, gte, isNull, notInArray, or } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MS_PER_DAY } from '../../../../common/constants';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
-import { toError } from '../../../../common/utils/error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
-import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
+import { MS_PER_DAY } from '@/common/constants';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { type HeroMediaItem } from '@/common/types/hero-media.types';
+import { toError } from '@/common/utils/error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { HERO_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
+import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
 import { type HeroQueryRow, fetchShowProgress, mapHeroResults } from './shared/hero-item.mapper';
 import { HERO_SELECT_FIELDS } from './shared/hero-select-fields';

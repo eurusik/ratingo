@@ -11,7 +11,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-import { POST_TYPE_VALUES, PostType } from '../../domain/constants/post-types';
+import { POST_TYPE_VALUES, PostType } from '@/modules/journal/domain/constants/post-types';
 
 /**
  * DTO for creating a journal post.

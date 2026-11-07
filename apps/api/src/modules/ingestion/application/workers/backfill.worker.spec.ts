@@ -3,11 +3,11 @@ import { Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 
-import { LINK_PENDING_IMPORTS_SWEEP } from '../../../user-media/public';
-import { ResolveImportDispatcherPipeline } from '../../../user-media/application/pipelines/resolve-import-dispatcher.pipeline';
-import { ResolveImportItemPipeline } from '../../../user-media/application/pipelines/resolve-import-item.pipeline';
-import { IngestionJob } from '../../ingestion.constants';
-import { destroyTraktRateLimiter } from '../../../trakt/infrastructure/adapters/base-trakt-http';
+import { LINK_PENDING_IMPORTS_SWEEP } from '@/modules/user-media/public';
+import { ResolveImportDispatcherPipeline } from '@/modules/user-media/application/pipelines/resolve-import-dispatcher.pipeline';
+import { ResolveImportItemPipeline } from '@/modules/user-media/application/pipelines/resolve-import-item.pipeline';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
+import { destroyTraktRateLimiter } from '@/modules/trakt/infrastructure/adapters/base-trakt-http';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 

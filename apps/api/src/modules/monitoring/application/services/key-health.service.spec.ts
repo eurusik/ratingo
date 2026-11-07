@@ -1,14 +1,14 @@
-import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
+import { API_KEY_STATUS } from '@/modules/monitoring/domain/constants/api-key-status.const';
 import {
   MONITORED_PROVIDER,
   MONITORED_PROVIDERS,
-} from '../../domain/constants/monitored-provider.const';
-import { type KeyHealthSnapshot } from '../../domain/entities/key-health-snapshot.entity';
-import { type FailureCounterStore } from '../../domain/ports/failure-counter-store.port';
-import { type KeyHealthMetricsPort } from '../../domain/ports/key-health-metrics.port';
-import { type KeyProbe } from '../../domain/ports/key-probe.port';
-import { type RunLock } from '../../domain/ports/run-lock.port';
-import { type KeyHealthRepository } from '../../domain/repositories/key-health.repository';
+} from '@/modules/monitoring/domain/constants/monitored-provider.const';
+import { type KeyHealthSnapshot } from '@/modules/monitoring/domain/entities/key-health-snapshot.entity';
+import { type FailureCounterStore } from '@/modules/monitoring/domain/ports/failure-counter-store.port';
+import { type KeyHealthMetricsPort } from '@/modules/monitoring/domain/ports/key-health-metrics.port';
+import { type KeyProbe } from '@/modules/monitoring/domain/ports/key-probe.port';
+import { type RunLock } from '@/modules/monitoring/domain/ports/run-lock.port';
+import { type KeyHealthRepository } from '@/modules/monitoring/domain/repositories/key-health.repository';
 
 import { KeyHealthService } from './key-health.service';
 

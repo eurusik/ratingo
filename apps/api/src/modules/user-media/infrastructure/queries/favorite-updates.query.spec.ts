@@ -2,7 +2,7 @@ import { PgDialect } from 'drizzle-orm/pg-core';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as postgres from 'postgres';
 
-import * as schema from '../../../../database/schema';
+import * as schema from '@/database/schema';
 
 import { FavoriteUpdatesQuery } from './favorite-updates.query';
 

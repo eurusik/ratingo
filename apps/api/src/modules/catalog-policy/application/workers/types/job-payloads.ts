@@ -4,7 +4,7 @@
  * Shared interfaces for BullMQ job payloads.
  */
 
-import { type EvaluationContextType } from '../../../domain/constants/evaluation.constants';
+import { type EvaluationContextType } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 
 /**
  * Payload for RE_EVALUATE_ALL job.

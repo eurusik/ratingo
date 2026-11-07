@@ -5,15 +5,15 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   EXTERNAL_API_PROVIDER,
   emitExternalApiFailure,
-} from '../../../../common/events/external-api-failure.event';
-import { TraktApiException } from '../../../../common/exceptions/external-api.exception';
+} from '@/common/events/external-api-failure.event';
+import { TraktApiException } from '@/common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
   type RetryConfig,
   HttpError,
   parseRetryAfter,
-} from '../../../../common/http/resilient-http.client';
-import traktConfig from '../../../../config/trakt.config';
+} from '@/common/http/resilient-http.client';
+import traktConfig from '@/config/trakt.config';
 
 /**
  * Trakt-specific retry configuration.

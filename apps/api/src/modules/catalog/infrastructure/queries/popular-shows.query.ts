@@ -4,26 +4,25 @@ import { sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
-
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { toError } from '../../../../common/utils/error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { toError } from '@/common/utils/error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   CATALOG_SORT,
   SORT_ORDER,
   VOTE_SOURCE,
   type VoteSource,
-} from '../../domain/constants/catalog-query.constants';
-import { POPULAR_THRESHOLDS } from '../../domain/constants/catalog.constants';
+} from '@/modules/catalog/domain/constants/catalog-query.constants';
+import { POPULAR_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
 import {
   type TrendingShowItem,
   type TrendingShowsOptions,
-} from '../../domain/repositories/show.repository.interface';
-import type { TrendingQueryResult } from '../../domain/types/query.types';
+} from '@/modules/catalog/domain/repositories/show.repository.interface';
+import type { TrendingQueryResult } from '@/modules/catalog/domain/types/query.types';
+import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
 import { checkContextEvaluationsExist } from './shared/evaluation-check.util';
 import { ShowResultMapper } from './shared/show-result.mapper';

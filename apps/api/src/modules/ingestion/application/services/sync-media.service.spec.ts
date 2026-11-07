@@ -3,13 +3,13 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CLOCK_PORT } from '@/modules/shared/clock';
 import { SyncMediaService } from './sync-media.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '../../../trakt/public';
+import { TmdbAdapter } from '@/modules/tmdb/public';
+import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '@/modules/trakt/public';
 import {
   AGGREGATED_RATINGS_PORT,
   type AggregatedRatings,
   type AggregatedRatingsPort,
-} from '../../domain/ports/aggregated-ratings.port';
+} from '@/modules/ingestion/domain/ports/aggregated-ratings.port';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import { NormalizationService } from '@/modules/provider/public';

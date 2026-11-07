@@ -2,13 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { inArray } from 'drizzle-orm';
 
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import * as schema from '../../../../database/schema';
+import { withDbError } from '@/common/utils/db-error.utils';
+import * as schema from '@/database/schema';
 import {
   type IGenreRepository,
   type GenreData,
-} from '../../domain/repositories/genre.repository.interface';
-import { type DatabaseTransaction } from '../../domain/types/transaction.type';
+} from '@/modules/catalog/domain/repositories/genre.repository.interface';
+import { type DatabaseTransaction } from '@/modules/catalog/domain/types/transaction.type';
+
 import { GenrePersistenceMapper } from '../mappers/genre-persistence.mapper';
 import { toDrizzleTx } from '../utils/drizzle-transaction';
 

@@ -3,14 +3,17 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { ErrorCode } from '../../../../common/enums/error-code.enum';
-import { NotFoundException } from '../../../../common/exceptions/not-found.exception';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { VOTE_TYPE, type VoteType } from '../../domain/constants/review.constants';
-import type { ReviewVote, UpsertVoteInput } from '../../domain/entities/review-vote.entity';
-import type { IReviewVoteRepository } from '../../domain/repositories/review-vote.repository.interface';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { NotFoundException } from '@/common/exceptions/not-found.exception';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { VOTE_TYPE, type VoteType } from '@/modules/reviews/domain/constants/review.constants';
+import type {
+  ReviewVote,
+  UpsertVoteInput,
+} from '@/modules/reviews/domain/entities/review-vote.entity';
+import type { IReviewVoteRepository } from '@/modules/reviews/domain/repositories/review-vote.repository.interface';
 
 type ReviewVoteTx = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 

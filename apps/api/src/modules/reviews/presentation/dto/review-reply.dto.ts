@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { IsString, IsUUID, IsOptional, MinLength, MaxLength } from 'class-validator';
 
-import { REVIEW_LIMITS } from '../../domain/constants/review.constants';
+import { REVIEW_LIMITS } from '@/modules/reviews/domain/constants/review.constants';
 
 /**
  * DTO for creating a reply to a review.

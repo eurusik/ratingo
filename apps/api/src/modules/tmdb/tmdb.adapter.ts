@@ -10,19 +10,20 @@ import {
   NEW_RELEASES_REGION,
   NEW_RELEASES_MIN_VOTE_COUNT,
   NEW_RELEASES_MAX_PRIMARY_RELEASE_AGE_DAYS,
-} from '../../common/constants';
-import { MediaType } from '../../common/enums/media-type.enum';
+} from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   EXTERNAL_API_PROVIDER,
   emitExternalApiFailure,
-} from '../../common/events/external-api-failure.event';
-import { TmdbApiException } from '../../common/exceptions/external-api.exception';
+} from '@/common/events/external-api-failure.event';
+import { TmdbApiException } from '@/common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
   type RetryConfig,
   HttpError,
-} from '../../common/http/resilient-http.client';
-import tmdbConfig from '../../config/tmdb.config';
+} from '@/common/http/resilient-http.client';
+import tmdbConfig from '@/config/tmdb.config';
+
 import {
   type MetadataProviderPort,
   type NormalizedMedia,

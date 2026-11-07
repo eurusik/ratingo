@@ -4,7 +4,8 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import IORedis from 'ioredis';
 
-import { type RunLock } from '../../domain/ports/run-lock.port';
+import { type RunLock } from '@/modules/monitoring/domain/ports/run-lock.port';
+
 import { MONITORING_REDIS_CLIENT } from '../counters/redis-failure-counter.store';
 
 const LOCK_KEY = 'monitoring:runchecks:lock';

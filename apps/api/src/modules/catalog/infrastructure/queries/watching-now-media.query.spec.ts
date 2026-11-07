@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WatchingNowMediaQuery } from './watching-now-media.query';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { WATCHING_NOW_THRESHOLDS } from '../../domain/constants/catalog.constants';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { WATCHING_NOW_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
 import { type HeroQueryRow } from './shared/hero-item.mapper';
 
 describe('WatchingNowMediaQuery', () => {

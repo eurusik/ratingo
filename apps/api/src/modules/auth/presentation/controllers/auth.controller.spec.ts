@@ -3,16 +3,16 @@ import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AuthController } from './auth.controller';
-import { AuthService } from '../../application/auth.service';
-import { OAuthService } from '../../application/oauth.service';
-import { TokenService } from '../../application/token.service';
+import { AuthService } from '@/modules/auth/application/auth.service';
+import { OAuthService } from '@/modules/auth/application/oauth.service';
+import { TokenService } from '@/modules/auth/application/token.service';
 import { FacebookAuthGuard } from '../guards/facebook-auth.guard';
 import { GoogleAuthGuard } from '../guards/google-auth.guard';
-import { UsersService } from '../../../users/application/users.service';
-import { UserMediaService } from '../../../user-media/application/user-media.service';
-import facebookConfig from '../../../../config/facebook.config';
-import googleConfig from '../../../../config/google.config';
-import authConfig from '../../../../config/auth.config';
+import { UsersService } from '@/modules/users/application/users.service';
+import { UserMediaService } from '@/modules/user-media/application/user-media.service';
+import facebookConfig from '@/config/facebook.config';
+import googleConfig from '@/config/google.config';
+import authConfig from '@/config/auth.config';
 
 /**
  * Creates a mock FastifyRequest for testing.

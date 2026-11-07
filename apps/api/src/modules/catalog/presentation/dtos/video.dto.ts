@@ -1,10 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import {
-  VideoSiteEnum,
-  VideoTypeEnum,
-  VideoLanguageEnum,
-} from '../../../../common/enums/video.enum';
+import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '@/common/enums/video.enum';
 
 export class VideoDto {
   @ApiProperty({ example: 'dQw4w9WgXcQ', description: 'YouTube video key' })

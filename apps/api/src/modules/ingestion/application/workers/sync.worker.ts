@@ -6,9 +6,9 @@ import { type Job } from 'bullmq';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
+import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import { type SyncMediaJobData } from '@/modules/shared/contracts';
 
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';

@@ -1,8 +1,8 @@
+import { type IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { type HeroMediaItem } from '@/common/types/hero-media.types';
 import type { NormalizedMedia } from '@/modules/shared/contracts';
 
-import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
 import { type LocalSearchResult } from '../models/search-result.model';
 
 /**

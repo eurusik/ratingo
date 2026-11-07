@@ -3,9 +3,9 @@ import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import {
   EPISODE_SCHEDULE_PORT,
   type EpisodeSchedulePort,
-} from '../../domain/ports/episode-schedule.port';
+} from '@/modules/ingestion/domain/ports/episode-schedule.port';
 import { MediaType } from '@/common/enums/media-type.enum';
-import { NormalizedMedia } from '../../domain/models/normalized-media.model';
+import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
 
 describe('TvMazeEnrichmentService', () => {
   let service: TvMazeEnrichmentService;

@@ -2,8 +2,8 @@ import { type ConfigType } from '@nestjs/config';
 
 import { type Queue } from 'bullmq';
 
-import type schedulerConfig from '../../../config/scheduler.config';
-import { DEFAULT_INGESTION_JOB_OPTIONS, IngestionJob } from '../../shared/contracts';
+import type schedulerConfig from '@/config/scheduler.config';
+import { DEFAULT_INGESTION_JOB_OPTIONS, IngestionJob } from '@/modules/shared/contracts';
 import { LINK_PENDING_IMPORTS_INTERVAL_MS } from '../domain/constants/import-pending.constants';
 
 import { LinkPendingImportsScheduler } from './link-pending-imports.scheduler';

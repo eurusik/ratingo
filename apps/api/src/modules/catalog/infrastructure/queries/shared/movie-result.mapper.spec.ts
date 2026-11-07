@@ -1,6 +1,6 @@
 import { MovieResultMapper } from './movie-result.mapper';
 import type { MovieSelectRow } from './movie-select.fields';
-import type { GenreInfo } from '../../../domain/types/common.types';
+import type { GenreInfo } from '@/modules/catalog/domain/types/common.types';
 
 describe('MovieResultMapper', () => {
   const baseRow: MovieSelectRow = {

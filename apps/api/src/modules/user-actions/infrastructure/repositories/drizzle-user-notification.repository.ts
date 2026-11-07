@@ -4,22 +4,21 @@ import { and, desc, eq, sql, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
 import { withDbError } from '@/common/utils/db-error.utils';
-
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type UserNotification,
   type NotificationPayload,
-} from '../../domain/entities/user-notification.entity';
-import { type SubscriptionTrigger } from '../../domain/entities/user-subscription.entity';
+} from '@/modules/user-actions/domain/entities/user-notification.entity';
+import { type SubscriptionTrigger } from '@/modules/user-actions/domain/entities/user-subscription.entity';
 import {
   type IUserNotificationRepository,
   type CreateNotificationData,
   type NotificationWithMedia,
-} from '../../domain/repositories/user-notification.repository.interface';
+} from '@/modules/user-actions/domain/repositories/user-notification.repository.interface';
 
 /**
  * Drizzle implementation of user notification repository.

@@ -10,12 +10,15 @@
 
 import { Injectable, Inject } from '@nestjs/common';
 
-import { type EvaluationContextType } from '../../domain/constants/evaluation.constants';
+import { type EvaluationContextType } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
   type ICatalogEvaluationRunRepository,
-} from '../../domain/repositories';
-import { type AggregatedCounters, type RunProgressCounters } from '../../domain/types';
+} from '@/modules/catalog-policy/domain/repositories';
+import {
+  type AggregatedCounters,
+  type RunProgressCounters,
+} from '@/modules/catalog-policy/domain/types';
 
 @Injectable()
 export class RunAggregationService {

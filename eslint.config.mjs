@@ -6,6 +6,8 @@ import jestPlugin from 'eslint-plugin-jest';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import noDeepRelativeImports from './eslint-rules/no-deep-relative-imports.mjs';
+
 const jestRecommendedRulesAsErrors = Object.fromEntries(
   Object.keys(jestPlugin.configs['flat/recommended'].rules).map((rule) => [rule, 'error']),
 );
@@ -543,6 +545,22 @@ export default [
         },
       ],
       'import/no-cycle': ['error', { ignoreExternal: true }],
+    },
+  },
+  {
+    files: ['apps/api/src/**/*.ts'],
+    plugins: {
+      ratingo: { rules: { 'no-deep-relative-imports': noDeepRelativeImports } },
+    },
+    rules: {
+      'ratingo/no-deep-relative-imports': [
+        'error',
+        {
+          maxParentLevels: 1,
+          aliasRoot: path.join(tsconfigRootDir, 'apps/api/src'),
+          aliasPrefix: '@/',
+        },
+      ],
     },
   },
   {

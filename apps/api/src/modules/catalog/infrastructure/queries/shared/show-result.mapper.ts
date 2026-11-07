@@ -1,8 +1,8 @@
-import { type IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../../common/mappers/image.mapper';
-import { hasRecentEpisode } from '../../../../../common/utils/media.utils';
-import type { TrendingShowItem } from '../../../domain/repositories/show.repository.interface';
+import { type IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { hasRecentEpisode } from '@/common/utils/media.utils';
+import type { TrendingShowItem } from '@/modules/catalog/domain/repositories/show.repository.interface';
 
 import { calculateReleaseFlags } from './release-flags.util';
 import type { ShowSelectRow } from './show-select.fields';

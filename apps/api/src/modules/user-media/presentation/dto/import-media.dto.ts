@@ -21,7 +21,7 @@ import {
   IMPORT_LIMITS,
   IMPORT_SOURCE,
   type ImportSource,
-} from '../../domain/constants/import.constants';
+} from '@/modules/user-media/domain/constants/import.constants';
 
 /**
  * A single item in an import request, corresponding to one CSV row.

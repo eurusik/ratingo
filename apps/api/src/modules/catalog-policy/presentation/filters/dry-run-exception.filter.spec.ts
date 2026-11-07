@@ -11,7 +11,7 @@ import {
   InvalidLimitError,
   InvalidSamplePercentError,
   UnknownDryRunModeError,
-} from '../../domain/errors';
+} from '@/modules/catalog-policy/domain/errors';
 import { DRY_RUN_MODES } from '../dto/constants';
 
 import { DryRunExceptionFilter } from './dry-run-exception.filter';

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SavedItemsService, SAVED_ITEM_LIST } from '../../user-actions/public';
+import { SavedItemsService, SAVED_ITEM_LIST } from '@/modules/user-actions/public';
 import { MeListsService } from './me-lists.service';
 import { UserMediaService } from './user-media.service';
 import {
@@ -17,8 +17,8 @@ import {
   USER_MEDIA_WATCHLIST_STATES,
   USER_MEDIA_STATE,
 } from '../domain/entities/user-media-state.entity';
-import { MediaType } from '../../../common/enums/media-type.enum';
-import { CardMeta } from '../../shared/cards/domain/card.types';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { CardMeta } from '@/modules/shared/cards/domain/card.types';
 
 const mockCard: CardMeta = {
   badgeKey: null,
@@ -411,7 +411,14 @@ describe('MeListsService', () => {
       userMediaService.countWithMedia.mockResolvedValue(0);
       userMediaService.listWithMedia.mockResolvedValue([]);
 
-      await service.getHistory(userId, limit, offset, undefined, undefined, USER_MEDIA_STATE.COMPLETED);
+      await service.getHistory(
+        userId,
+        limit,
+        offset,
+        undefined,
+        undefined,
+        USER_MEDIA_STATE.COMPLETED,
+      );
 
       expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
         states: [USER_MEDIA_STATE.COMPLETED],

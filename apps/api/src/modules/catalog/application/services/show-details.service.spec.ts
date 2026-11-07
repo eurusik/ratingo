@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { CLOCK_PORT } from '../../../shared/clock';
-import { ShowNotFoundError } from '../../domain/errors';
-import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
+import { ShowStatus } from '@/common/enums/show-status.enum';
+import { CLOCK_PORT } from '@/modules/shared/clock';
+import { ShowNotFoundError } from '@/modules/catalog/domain/errors';
+import { SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
 
-import { hasRecentEpisode } from '../../../../common/utils/media.utils';
+import { hasRecentEpisode } from '@/common/utils/media.utils';
 
 import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
 import { ShowDetailsService } from './show-details.service';
 
-jest.mock('../../../../common/utils/media.utils', () => ({
-  ...jest.requireActual('../../../../common/utils/media.utils'),
+jest.mock('@/common/utils/media.utils', () => ({
+  ...jest.requireActual('@/common/utils/media.utils'),
   hasRecentEpisode: jest.fn(),
 }));
 

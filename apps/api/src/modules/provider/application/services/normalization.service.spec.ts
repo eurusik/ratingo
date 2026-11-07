@@ -3,12 +3,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   IMediaWatchOffersRepository,
   MEDIA_WATCH_OFFERS_REPOSITORY,
-} from '../../domain/repositories/media-watch-offers.repository.interface';
+} from '@/modules/provider/domain/repositories/media-watch-offers.repository.interface';
 import {
   IUnmappedTrackingRepository,
   UNMAPPED_TRACKING_REPOSITORY,
-} from '../../domain/repositories/unmapped-tracking.repository.interface';
-import type { ResolvedMapping } from '../../domain/types/provider.types';
+} from '@/modules/provider/domain/repositories/unmapped-tracking.repository.interface';
+import type { ResolvedMapping } from '@/modules/provider/domain/types/provider.types';
 import {
   NormalizationService,
   SUPPORTED_OFFER_TYPES,

@@ -3,21 +3,21 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gt, isNull, lt, or, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MS_PER_HOUR } from '../../../../common/constants';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { toError } from '../../../../common/utils/error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { MS_PER_HOUR } from '@/common/constants';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { toError } from '@/common/utils/error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   EXCHANGE_CODE_EXPIRED_RETENTION_HOURS,
   EXCHANGE_CODE_USED_RETENTION_HOURS,
-} from '../../auth.constants';
+} from '@/modules/auth/auth.constants';
 import {
   ConsumeCodeFailureReason,
   type ConsumeCodeResult,
   type ExchangeCodeRecord,
   type IExchangeCodesRepository,
-} from '../../domain/repositories/exchange-codes.repository.interface';
+} from '@/modules/auth/domain/repositories/exchange-codes.repository.interface';
 
 /**
  * Drizzle implementation for OAuth exchange code storage.

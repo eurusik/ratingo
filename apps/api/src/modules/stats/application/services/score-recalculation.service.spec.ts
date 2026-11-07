@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ScoreRecalculationService } from './score-recalculation.service';
-import { STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
-import { MEDIA_REPOSITORY } from '../../../catalog/public';
-import { ScoreCalculatorService } from '../../../shared/score-calculator';
+import { STATS_REPOSITORY } from '@/modules/stats/domain/repositories/stats.repository.interface';
+import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('ScoreRecalculationService', () => {

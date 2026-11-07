@@ -1,7 +1,7 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { UserMediaStateChangedEvent } from '../../domain/events/user-media-state-changed.event';
-import type { IUserMediaStateRepository } from '../../domain/repositories/user-media-state.repository.interface';
+import { UserMediaStateChangedEvent } from '@/modules/user-media/domain/events/user-media-state-changed.event';
+import type { IUserMediaStateRepository } from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
 
 import { CaughtUpTransitionListener } from './caught-up-transition.listener';
 

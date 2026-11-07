@@ -4,10 +4,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
 
-import { MEDIA_REPOSITORY } from '../../../catalog/public';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { ALT_TITLES_BACKFILL_REPOSITORY } from '../../domain/repositories/alt-titles-backfill.repository.interface';
-import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import { TmdbAdapter } from '@/modules/tmdb/public';
+import { ALT_TITLES_BACKFILL_REPOSITORY } from '@/modules/ingestion/domain/repositories/alt-titles-backfill.repository.interface';
+import { BACKFILL_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
 
 import { BackfillAltTitlesPipeline } from './backfill-alt-titles.pipeline';
 

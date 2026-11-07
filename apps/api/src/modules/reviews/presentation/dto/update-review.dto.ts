@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
-import { REVIEW_LIMITS } from '../../domain/constants/review.constants';
+import { REVIEW_LIMITS } from '@/modules/reviews/domain/constants/review.constants';
 
 /**
  * DTO for updating an existing review.

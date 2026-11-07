@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SyncWorker } from './sync.worker';
 import { SyncMediaService } from '../services/sync-media.service';
 import { MediaPageCacheService } from '../services/media-page-cache.service';
-import { IngestionJob } from '../../ingestion.constants';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import { Job } from 'bullmq';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
@@ -13,7 +13,7 @@ import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
-import { destroyTraktRateLimiter } from '../../../trakt/infrastructure/adapters/base-trakt-http';
+import { destroyTraktRateLimiter } from '@/modules/trakt/infrastructure/adapters/base-trakt-http';
 
 afterAll(() => {
   destroyTraktRateLimiter();

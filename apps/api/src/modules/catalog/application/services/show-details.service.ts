@@ -1,19 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { hasRecentEpisode, isNewRelease } from '../../../../common/utils/media.utils';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards';
-import { isHitQuality } from '../../../shared/cards';
-import { buildCardMeta, extractContinuePoint } from '../../../shared/cards';
-import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
-import { computeShowVerdict } from '../../../shared/verdict';
-import { mapBadgeToPopularitySignal } from '../../../shared/verdict';
-import { ShowNotFoundError } from '../../domain/errors';
+import { hasRecentEpisode, isNewRelease } from '@/common/utils/media.utils';
+import { ShowNotFoundError } from '@/modules/catalog/domain/errors';
 import {
   type IShowRepository,
   SHOW_REPOSITORY,
   type ShowDetails,
-} from '../../domain/repositories/show.repository.interface';
-import type { EnrichedShowDetails } from '../../domain/types/show-details.types';
+} from '@/modules/catalog/domain/repositories/show.repository.interface';
+import type { EnrichedShowDetails } from '@/modules/catalog/domain/types/show-details.types';
+import { CARD_LIST_CONTEXT } from '@/modules/shared/cards';
+import { isHitQuality } from '@/modules/shared/cards';
+import { buildCardMeta, extractContinuePoint } from '@/modules/shared/cards';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
+import { computeShowVerdict } from '@/modules/shared/verdict';
+import { mapBadgeToPopularitySignal } from '@/modules/shared/verdict';
 
 import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
 

@@ -12,16 +12,16 @@ import { AuthGuard, type IAuthModuleOptions } from '@nestjs/passport';
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 import { isObservable, lastValueFrom } from 'rxjs';
 
-import { MS_PER_SECOND } from '../../../../common/constants';
-import type authConfig from '../../../../config/auth.config';
+import { MS_PER_SECOND } from '@/common/constants';
+import type authConfig from '@/config/auth.config';
 import {
   OAUTH_NONCE_SIZE_BYTES,
   OAUTH_STATE_COOKIE,
   OAUTH_STATE_TTL_MS,
   OAuthErrorCode,
   RETURN_TO_PATTERN,
-} from '../../auth.constants';
-import { type OAuthProvider, type OAuthStatePayload } from '../../domain/types';
+} from '@/modules/auth/auth.constants';
+import { type OAuthProvider, type OAuthStatePayload } from '@/modules/auth/domain/types';
 // Import for module augmentation side effects (Fastify request extension)
 import '../types/oauth.types';
 

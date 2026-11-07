@@ -14,9 +14,13 @@ import {
 
 import { type FastifyReply } from 'fastify';
 
-import { type ErrorResponseDto } from '../../../../common/dtos/error-response.dto';
-import { ErrorResponseBuilder } from '../../../../common/utils/error-response.builder';
-import { CatalogDomainError, MovieNotFoundError, ShowNotFoundError } from '../../domain/errors';
+import { type ErrorResponseDto } from '@/common/dtos/error-response.dto';
+import { ErrorResponseBuilder } from '@/common/utils/error-response.builder';
+import {
+  CatalogDomainError,
+  MovieNotFoundError,
+  ShowNotFoundError,
+} from '@/modules/catalog/domain/errors';
 
 type CaughtError = CatalogDomainError;
 

@@ -1,5 +1,5 @@
 import * as fc from 'fast-check';
-import { RETURN_TO_PATTERN } from '../../auth.constants';
+import { RETURN_TO_PATTERN } from '@/modules/auth/auth.constants';
 
 function validateReturnTo(returnTo?: string): string | null {
   if (!returnTo) return null;

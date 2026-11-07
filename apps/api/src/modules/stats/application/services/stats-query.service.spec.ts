@@ -1,7 +1,7 @@
 import { MediaType } from '@/common/enums/media-type.enum';
 import { Test, TestingModule } from '@nestjs/testing';
 import { StatsQueryService } from './stats-query.service';
-import { STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
+import { STATS_REPOSITORY } from '@/modules/stats/domain/repositories/stats.repository.interface';
 import { StatsNotFoundException } from '@/common/exceptions';
 
 describe('StatsQueryService', () => {

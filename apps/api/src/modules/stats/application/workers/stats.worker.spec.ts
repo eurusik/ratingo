@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { StatsWorker } from './stats.worker';
 import { CommunityRatingService } from '../services/community-rating.service';
 import { DropOffService, StatsBackfillService, TrendingSyncService } from '../services';
-import { STATS_JOBS } from '../../stats.constants';
+import { STATS_JOBS } from '@/modules/stats/stats.constants';
 import { Job } from 'bullmq';
 
 describe('StatsWorker', () => {

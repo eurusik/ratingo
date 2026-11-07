@@ -1,32 +1,31 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { errorMessage } from '@/common/utils/error.utils';
-
-import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
+import { API_KEY_STATUS } from '@/modules/monitoring/domain/constants/api-key-status.const';
 import {
   MONITORED_PROVIDERS,
   type MonitoredProvider,
   isMonitoredProvider,
-} from '../../domain/constants/monitored-provider.const';
+} from '@/modules/monitoring/domain/constants/monitored-provider.const';
 import {
   type KeyHealthSnapshot,
   type ProviderKeyHealth,
   type SaveKeyHealthInput,
-} from '../../domain/entities/key-health-snapshot.entity';
+} from '@/modules/monitoring/domain/entities/key-health-snapshot.entity';
 import {
   FAILURE_COUNTER_STORE,
   type FailureCounterStore,
-} from '../../domain/ports/failure-counter-store.port';
+} from '@/modules/monitoring/domain/ports/failure-counter-store.port';
 import {
   KEY_HEALTH_METRICS,
   type KeyHealthMetricsPort,
-} from '../../domain/ports/key-health-metrics.port';
-import { KEY_PROBES, type KeyProbe } from '../../domain/ports/key-probe.port';
-import { KEY_HEALTH_RUN_LOCK, type RunLock } from '../../domain/ports/run-lock.port';
+} from '@/modules/monitoring/domain/ports/key-health-metrics.port';
+import { KEY_PROBES, type KeyProbe } from '@/modules/monitoring/domain/ports/key-probe.port';
+import { KEY_HEALTH_RUN_LOCK, type RunLock } from '@/modules/monitoring/domain/ports/run-lock.port';
 import {
   KEY_HEALTH_REPOSITORY,
   type KeyHealthRepository,
-} from '../../domain/repositories/key-health.repository';
+} from '@/modules/monitoring/domain/repositories/key-health.repository';
 
 @Injectable()
 export class KeyHealthService {

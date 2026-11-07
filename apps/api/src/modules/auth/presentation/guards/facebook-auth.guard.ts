@@ -1,15 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 
-import authConfig from '../../../../config/auth.config';
-import facebookConfig from '../../../../config/facebook.config';
+import authConfig from '@/config/auth.config';
+import facebookConfig from '@/config/facebook.config';
 import {
   FACEBOOK_AUTH_COOKIE_PATH,
   FACEBOOK_AUTH_URL,
   FACEBOOK_OAUTH_SCOPES,
   FacebookOAuthParams,
-} from '../../auth.constants';
-import { OAUTH_PROVIDER, type OAuthProvider } from '../../domain/types';
+} from '@/modules/auth/auth.constants';
+import { OAUTH_PROVIDER, type OAuthProvider } from '@/modules/auth/domain/types';
 
 import { createBaseOAuthGuard } from './base-oauth.guard';
 

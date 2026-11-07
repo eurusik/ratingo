@@ -5,13 +5,12 @@ import { type ConfigType } from '@nestjs/config';
 import { type Queue } from 'bullmq';
 
 import schedulerConfig, { getMonitoringKeyHealthOverride } from '@/config/scheduler.config';
-
 import {
   KEY_HEALTH_CHECK_PATTERN,
   KEY_HEALTH_SCHEDULER_ID,
   MONITORING_JOBS,
   MONITORING_QUEUE,
-} from '../../monitoring.constants';
+} from '@/modules/monitoring/monitoring.constants';
 
 @Injectable()
 export class MonitoringSchedulerService implements OnModuleInit {

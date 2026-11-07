@@ -14,4 +14,4 @@ export type {
   WatchProvider,
   WatchProviderRegion,
   WatchProvidersMap,
-} from '../../../shared/contracts';
+} from '@/modules/shared/contracts';

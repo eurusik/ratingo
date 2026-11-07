@@ -1,5 +1,5 @@
 import { PersistenceMapper } from './persistence.mapper';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 const baseMedia = {
   type: MediaType.MOVIE,

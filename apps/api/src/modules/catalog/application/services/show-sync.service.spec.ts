@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { CLOCK_PORT } from '../../../shared/clock';
-import { ShowNotFoundError } from '../../domain/errors';
-import { COOLDOWN_GATE_PORT } from '../../domain/ports/cooldown-gate.port';
-import { IMPORT_JOB_PORT } from '../../domain/ports/import-job.port';
-import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { CLOCK_PORT } from '@/modules/shared/clock';
+import { ShowNotFoundError } from '@/modules/catalog/domain/errors';
+import { COOLDOWN_GATE_PORT } from '@/modules/catalog/domain/ports/cooldown-gate.port';
+import { IMPORT_JOB_PORT } from '@/modules/catalog/domain/ports/import-job.port';
+import { SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
 
 import { ShowSyncService } from './show-sync.service';
 

@@ -7,7 +7,7 @@ import {
   REVIEW_SORT,
   REVIEW_SORT_VALUES,
   type ReviewSort,
-} from '../../domain/constants/review.constants';
+} from '@/modules/reviews/domain/constants/review.constants';
 
 /**
  * Query DTO for listing reviews.

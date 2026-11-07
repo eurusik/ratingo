@@ -5,10 +5,9 @@ import { HttpStatus, Inject, Injectable, Logger, type OnModuleDestroy } from '@n
 import IORedis from 'ioredis';
 
 import { errorMessage } from '@/common/utils/error.utils';
-
-import { type MonitoredProvider } from '../../domain/constants/monitored-provider.const';
-import { type ProviderFailureCounts } from '../../domain/entities/key-health-snapshot.entity';
-import { type FailureCounterStore } from '../../domain/ports/failure-counter-store.port';
+import { type MonitoredProvider } from '@/modules/monitoring/domain/constants/monitored-provider.const';
+import { type ProviderFailureCounts } from '@/modules/monitoring/domain/entities/key-health-snapshot.entity';
+import { type FailureCounterStore } from '@/modules/monitoring/domain/ports/failure-counter-store.port';
 
 export const MONITORING_REDIS_CLIENT = Symbol('MONITORING_REDIS_CLIENT');
 

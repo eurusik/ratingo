@@ -38,18 +38,19 @@ import { Throttle } from '@nestjs/throttler';
 
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 
-import { errorMessage } from '../../../../common/utils/error.utils';
-import authConfig from '../../../../config/auth.config';
-import facebookConfig from '../../../../config/facebook.config';
-import googleConfig from '../../../../config/google.config';
-import { UserMediaService } from '../../../user-media/public';
-import { UsersService } from '../../../users/public';
-import { type User } from '../../../users/public';
-import { AuthService } from '../../application/auth.service';
-import { OAuthService } from '../../application/oauth.service';
-import { TokenService } from '../../application/token.service';
-import { HTTP_REDIRECT_FOUND } from '../../auth.constants';
-import { type OAuthProvider, type OAuthUserPayload } from '../../domain/types';
+import { errorMessage } from '@/common/utils/error.utils';
+import authConfig from '@/config/auth.config';
+import facebookConfig from '@/config/facebook.config';
+import googleConfig from '@/config/google.config';
+import { AuthService } from '@/modules/auth/application/auth.service';
+import { OAuthService } from '@/modules/auth/application/oauth.service';
+import { TokenService } from '@/modules/auth/application/token.service';
+import { HTTP_REDIRECT_FOUND } from '@/modules/auth/auth.constants';
+import { type OAuthProvider, type OAuthUserPayload } from '@/modules/auth/domain/types';
+import { UserMediaService } from '@/modules/user-media/public';
+import { type User } from '@/modules/users/public';
+import { UsersService } from '@/modules/users/public';
+
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { AuthConfigDto } from '../dto/auth-config.dto';
 import { AuthTokensDto } from '../dto/auth-tokens.dto';

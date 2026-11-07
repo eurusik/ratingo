@@ -2,7 +2,7 @@ import { calculateReleaseFlags } from './release-flags.util';
 import {
   NEW_RELEASE_THRESHOLDS,
   CLASSIC_THRESHOLDS,
-} from '../../../domain/constants/catalog.constants';
+} from '@/modules/catalog/domain/constants/catalog.constants';
 
 describe('calculateReleaseFlags', () => {
   const fixedNow = new Date('2025-06-15');

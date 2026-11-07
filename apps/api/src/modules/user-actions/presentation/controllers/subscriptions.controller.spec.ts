@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionsController } from './subscriptions.controller';
-import { SubscriptionsService } from '../../application/subscriptions.service';
-import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
+import { SubscriptionsService } from '@/modules/user-actions/application/subscriptions.service';
+import { SUBSCRIPTION_TRIGGER } from '@/modules/user-actions/domain/entities/user-subscription.entity';
 
 describe('SubscriptionsController', () => {
   let controller: SubscriptionsController;

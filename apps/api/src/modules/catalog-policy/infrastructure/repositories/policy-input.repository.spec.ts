@@ -7,9 +7,9 @@ import { Test } from '@nestjs/testing';
 import { type SQL } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { MEDIA_WATCH_OFFERS_REPOSITORY } from '../../../provider/public';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { MEDIA_WATCH_OFFERS_REPOSITORY } from '@/modules/provider/public';
 
 import { PolicyInputRepository } from './policy-input.repository';
 

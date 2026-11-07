@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InsightsController } from './insights.controller';
-import { InsightsService } from '../../application/services/insights.service';
+import { InsightsService } from '@/modules/insights/application/services/insights.service';
 import { InsightsQueryDto, RiseFallResponseDto } from '../dtos/insights.dto';
 
 describe('InsightsController', () => {

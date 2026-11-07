@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeListsController } from './me-lists.controller';
-import { MeListsService } from '../../application/me-lists.service';
-import { USER_MEDIA_LIST_SORT } from '../../domain/repositories/user-media-state.repository.interface';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { CardMeta } from '../../../shared/cards/domain/card.types';
+import { MeListsService } from '@/modules/user-media/application/me-lists.service';
+import { USER_MEDIA_LIST_SORT } from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { CardMeta } from '@/modules/shared/cards/domain/card.types';
 
 const mockCard: CardMeta = {
   badgeKey: null,

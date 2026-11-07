@@ -6,15 +6,15 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import {
   ROTTEN_TOMATOES_RATINGS_PORT,
   type RottenTomatoesRatingsPort,
-} from '../../domain/ports/rotten-tomatoes-ratings.port';
-import { ROTTEN_TOMATOES_BACKFILL_REPOSITORY } from '../../domain/repositories/rotten-tomatoes-backfill.repository.interface';
+} from '@/modules/ingestion/domain/ports/rotten-tomatoes-ratings.port';
+import { ROTTEN_TOMATOES_BACKFILL_REPOSITORY } from '@/modules/ingestion/domain/repositories/rotten-tomatoes-backfill.repository.interface';
 import {
   BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
   IngestionJob,
   MDBLIST_DAILY_BUDGET,
   MDBLIST_RATINGS_REFRESH_DAYS,
   RATINGS_BACKFILL_QUEUE,
-} from '../../ingestion.constants';
+} from '@/modules/ingestion/ingestion.constants';
 
 import { BackfillMdblistRatingsPipeline } from './backfill-mdblist-ratings.pipeline';
 

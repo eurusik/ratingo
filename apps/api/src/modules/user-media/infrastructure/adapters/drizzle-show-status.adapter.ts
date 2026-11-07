@@ -3,11 +3,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type IShowStatusPort } from '../../domain/ports/show-status.port';
+import { ShowStatus } from '@/common/enums/show-status.enum';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type IShowStatusPort } from '@/modules/user-media/domain/ports/show-status.port';
 
 const ONGOING_STATUSES = new Set<string>([ShowStatus.RETURNING_SERIES, ShowStatus.IN_PRODUCTION]);
 

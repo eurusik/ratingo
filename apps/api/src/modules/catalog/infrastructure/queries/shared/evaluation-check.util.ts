@@ -1,8 +1,8 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import * as schema from '../../../../../database/schema';
-import { type EvaluationContextType } from '../../../../catalog-policy/public';
+import * as schema from '@/database/schema';
+import { type EvaluationContextType } from '@/modules/catalog-policy/public';
 
 /**
  * Checks if any evaluations exist for the given context with the active policy.

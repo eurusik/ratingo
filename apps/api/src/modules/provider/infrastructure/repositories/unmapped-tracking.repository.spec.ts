@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { UNMAPPED_TRACKING_REPOSITORY } from '../../domain/repositories/unmapped-tracking.repository.interface';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { UNMAPPED_TRACKING_REPOSITORY } from '@/modules/provider/domain/repositories/unmapped-tracking.repository.interface';
 import { UnmappedTrackingRepository } from './unmapped-tracking.repository';
 
 describe('UnmappedTrackingRepository', () => {

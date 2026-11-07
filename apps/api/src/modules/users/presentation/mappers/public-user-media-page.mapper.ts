@@ -1,6 +1,6 @@
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { type PublicUserMediaPage } from '@/modules/users/domain/read-models/public-user-media-list';
 
-import { type PublicUserMediaPage } from '../../domain/read-models/public-user-media-list';
 import {
   type PaginatedPublicUserMediaResponseDto,
   type PublicUserMediaListQueryDto,

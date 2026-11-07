@@ -3,12 +3,12 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type IMediaLookupPort } from '../../domain/ports/media-lookup.port';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type IMediaLookupPort } from '@/modules/user-media/domain/ports/media-lookup.port';
 
 // Self-contained: depends only on DatabaseModule (global), no CatalogModule needed.
 @Injectable()

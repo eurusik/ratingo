@@ -24,7 +24,7 @@ export {
   type IncrementCountersInput,
   CATALOG_POLICY_REPOSITORY,
   type ICatalogPolicyRepository,
-} from '../../domain/repositories';
+} from '@/modules/catalog-policy/domain/repositories';
 
 export {
   MediaCatalogEvaluationRepository,

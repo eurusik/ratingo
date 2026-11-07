@@ -1,9 +1,13 @@
 import type {
+  CreditsData,
+  CastMember,
+  CrewMember,
+} from '@/modules/catalog/domain/types/common.types';
+import type {
   Credits,
   CastMember as TmdbCastMember,
   CrewMember as TmdbCrewMember,
-} from '../../../shared/contracts';
-import type { CreditsData, CastMember, CrewMember } from '../../domain/types/common.types';
+} from '@/modules/shared/contracts';
 
 export class CreditsMapper {
   static toDto(credits: Credits | null): CreditsData | null {

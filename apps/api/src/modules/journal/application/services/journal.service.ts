@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   type JournalPost,
   type PostNavigation,
-} from '../../domain/interfaces/journal-post.interface';
+} from '@/modules/journal/domain/interfaces/journal-post.interface';
 import {
   type CreateJournalPostData,
   type FindAllPostsFilters,
@@ -12,7 +12,7 @@ import {
   JOURNAL_REPOSITORY,
   type PaginatedPostsResult,
   type UpdateJournalPostData,
-} from '../../domain/repositories/journal.repository.interface';
+} from '@/modules/journal/domain/repositories/journal.repository.interface';
 
 /**
  * Application service for journal post operations.

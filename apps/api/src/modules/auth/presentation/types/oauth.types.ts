@@ -1,6 +1,6 @@
-import { type OAuthStatePayload } from '../../domain/types';
+import { type OAuthStatePayload } from '@/modules/auth/domain/types';
 
-export type { OAuthStatePayload } from '../../domain/types';
+export type { OAuthStatePayload } from '@/modules/auth/domain/types';
 
 // Module augmentation for Fastify
 declare module 'fastify' {

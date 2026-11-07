@@ -1,16 +1,16 @@
 import { sql, type SQL } from 'drizzle-orm';
 
-import * as schema from '../../../../../database/schema';
+import * as schema from '@/database/schema';
 import {
   CATALOG_SORT,
   type CatalogSort,
   type SortOrder,
-} from '../../../domain/constants/catalog-query.constants';
+} from '@/modules/catalog/domain/constants/catalog-query.constants';
 import {
   MOVIE_TRENDING_WEIGHTS,
   SHOW_TRENDING_WEIGHTS,
   WATCHERS_FALLBACK,
-} from '../../../domain/constants/catalog.constants';
+} from '@/modules/catalog/domain/constants/catalog.constants';
 
 /**
  * Builds SQL ORDER BY clause for movie queries.

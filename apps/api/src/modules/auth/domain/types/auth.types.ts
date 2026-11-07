@@ -1,4 +1,4 @@
-import { type User } from '../../../users/public';
+import { type User } from '@/modules/users/public';
 
 export interface AuthTokens {
   accessToken: string;

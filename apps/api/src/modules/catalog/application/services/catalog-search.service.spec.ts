@@ -5,9 +5,9 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import {
   type IMediaMetadataPort,
   MEDIA_METADATA_PORT,
-} from '../../domain/ports/media-metadata.port';
-import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
-import { SEARCH_SOURCE } from '../../domain/types/search.types';
+} from '@/modules/catalog/domain/ports/media-metadata.port';
+import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
+import { SEARCH_SOURCE } from '@/modules/catalog/domain/types/search.types';
 
 import { CatalogSearchService } from './catalog-search.service';
 
@@ -173,7 +173,12 @@ describe('CatalogSearchService', () => {
   it('should enrich TMDB results with alternative titles from DB', async () => {
     metadataPort.searchMulti.mockResolvedValue([mockTmdbMovie]);
     mediaRepository.findManyByTmdbIds.mockResolvedValue([
-      { id: 'uuid-2', tmdbId: 200, type: MediaType.MOVIE, alternativeTitles: ['Alt Title 1', 'Alt Title 2'] },
+      {
+        id: 'uuid-2',
+        tmdbId: 200,
+        type: MediaType.MOVIE,
+        alternativeTitles: ['Alt Title 1', 'Alt Title 2'],
+      },
     ]);
 
     const result = await service.search('movie');

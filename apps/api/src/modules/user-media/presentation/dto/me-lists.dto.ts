@@ -2,19 +2,19 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { IsEnum, IsIn, IsOptional } from 'class-validator';
 
-import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../common/dtos';
-import { ImageDto } from '../../../../common/dtos/image.dto';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { CardMetaDto } from '../../../shared/cards';
-import { type UserListCounts } from '../../domain/entities/user-list-counts.entity';
+import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '@/common/dtos';
+import { ImageDto } from '@/common/dtos/image.dto';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { CardMetaDto } from '@/modules/shared/cards';
+import { type UserListCounts } from '@/modules/user-media/domain/entities/user-list-counts.entity';
 import {
   USER_MEDIA_HISTORY_STATES,
   type UserMediaHistoryState,
-} from '../../domain/entities/user-media-state.entity';
+} from '@/modules/user-media/domain/entities/user-media-state.entity';
 import {
   USER_MEDIA_LIST_SORT,
   type UserMediaListSort,
-} from '../../domain/repositories/user-media-state.repository.interface';
+} from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
 
 import { UserMediaStateDto } from './user-media-state.dto';
 

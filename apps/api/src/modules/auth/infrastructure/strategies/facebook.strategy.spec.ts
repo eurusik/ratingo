@@ -1,8 +1,8 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { type Profile as FacebookProfile } from 'passport-facebook';
 
-import { OAuthErrorCode } from '../../auth.constants';
-import { OAUTH_PROVIDER } from '../../domain/types';
+import { OAuthErrorCode } from '@/modules/auth/auth.constants';
+import { OAUTH_PROVIDER } from '@/modules/auth/domain/types';
 
 import { FacebookStrategy } from './facebook.strategy';
 

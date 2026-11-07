@@ -10,8 +10,8 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
 
 import { CatalogPolicyRepository } from './catalog-policy.repository';
 

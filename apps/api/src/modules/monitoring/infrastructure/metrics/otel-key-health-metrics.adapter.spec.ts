@@ -1,8 +1,8 @@
 import { metrics } from '@opentelemetry/api';
 
-import { EXTERNAL_API_FAILURES_METRIC } from '../../../../telemetry/telemetry.constants';
-import { createTestMeterProvider } from '../../../../telemetry/telemetry.testing';
-import { MONITORED_PROVIDER } from '../../domain/constants/monitored-provider.const';
+import { EXTERNAL_API_FAILURES_METRIC } from '@/telemetry/telemetry.constants';
+import { createTestMeterProvider } from '@/telemetry/telemetry.testing';
+import { MONITORED_PROVIDER } from '@/modules/monitoring/domain/constants/monitored-provider.const';
 
 import { OtelKeyHealthMetricsAdapter } from './otel-key-health-metrics.adapter';
 

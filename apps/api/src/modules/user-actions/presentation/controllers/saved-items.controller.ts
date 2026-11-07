@@ -21,11 +21,11 @@ import {
 } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { CurrentUser } from '@/modules/auth/public';
+import { JwtAuthGuard } from '@/modules/auth/public';
+import { SavedItemsService } from '@/modules/user-actions/application/saved-items.service';
+import { SAVED_ITEM_LIST } from '@/modules/user-actions/domain/entities/user-saved-item.entity';
 
-import { CurrentUser } from '../../../auth/public';
-import { JwtAuthGuard } from '../../../auth/public';
-import { SavedItemsService } from '../../application/saved-items.service';
-import { SAVED_ITEM_LIST } from '../../domain/entities/user-saved-item.entity';
 import {
   SaveItemDto,
   UnsaveItemDto,

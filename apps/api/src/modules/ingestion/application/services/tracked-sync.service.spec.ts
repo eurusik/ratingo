@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { parseSeasonFromEpisodeKey } from '../../domain/interfaces/show-sync-diff.interface';
-import { CLOCK_PORT } from '../../../shared/clock';
-import { TRACKED_SHOW_REPOSITORY } from '../../domain/repositories/tracked-show.repository.interface';
+import { parseSeasonFromEpisodeKey } from '@/modules/ingestion/domain/interfaces/show-sync-diff.interface';
+import { CLOCK_PORT } from '@/modules/shared/clock';
+import { TRACKED_SHOW_REPOSITORY } from '@/modules/ingestion/domain/repositories/tracked-show.repository.interface';
 import { TrackedSyncService } from './tracked-sync.service';
 import { SyncMediaService } from './sync-media.service';
 

@@ -1,8 +1,9 @@
-import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { type ShowStatus } from '../../../../common/enums/show-status.enum';
-import { type NormalizedSeason } from '../../../shared/contracts';
-import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
+import { type IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { type ShowStatus } from '@/common/enums/show-status.enum';
+import { type NormalizedSeason } from '@/modules/shared/contracts';
+import { type DropOffAnalysis } from '@/modules/shared/drop-off-analyzer';
+
 import type {
   ImageData,
   VideoData,
