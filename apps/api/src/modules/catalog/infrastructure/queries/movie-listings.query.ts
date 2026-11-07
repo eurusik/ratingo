@@ -10,7 +10,6 @@ import {
   isNull,
   inArray,
   and,
-  or,
   exists,
   sql,
   type SQL,
@@ -24,6 +23,7 @@ import {
   DIGITAL_RELEASE_MAX_AGE_DAYS,
   MS_PER_DAY,
 } from '@/common/constants';
+import { allOf, anyOf } from '@/database/sql-conditions';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -189,7 +189,10 @@ export class MovieListingsQuery {
       case MOVIE_LISTING_TYPE.NOW_PLAYING:
         return [
           eq(schema.movies.isNowPlaying, true),
-          or(isNull(schema.movies.digitalReleaseDate), gt(schema.movies.digitalReleaseDate, now)),
+          anyOf(
+            isNull(schema.movies.digitalReleaseDate),
+            gt(schema.movies.digitalReleaseDate, now),
+          ),
         ];
 
       case MOVIE_LISTING_TYPE.NEW_RELEASES: {
@@ -199,7 +202,10 @@ export class MovieListingsQuery {
           isNotNull(schema.movies.theatricalReleaseDate),
           gte(schema.movies.theatricalReleaseDate, cutoffDate),
           lte(schema.movies.theatricalReleaseDate, now),
-          or(isNull(schema.movies.digitalReleaseDate), gt(schema.movies.digitalReleaseDate, now)),
+          anyOf(
+            isNull(schema.movies.digitalReleaseDate),
+            gt(schema.movies.digitalReleaseDate, now),
+          ),
         ];
       }
 
@@ -304,9 +310,9 @@ export class MovieListingsQuery {
     }
 
     if (eligibilityMode === ELIGIBILITY_MODE.FRESHNESS) {
-      return or(
+      return anyOf(
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-        and(
+        allOf(
           eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.INELIGIBLE),
           sql`${schema.mediaCatalogEvaluations.reasons} = ARRAY[${EvaluationReason.MISSING_GLOBAL_SIGNALS}]::text[]`,
         ),

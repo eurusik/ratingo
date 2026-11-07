@@ -239,19 +239,15 @@ export class TrendingPipeline {
 
   private buildPageJobs(pages: number, window: string) {
     const types: MediaType[] = [MediaType.MOVIE, MediaType.SHOW];
-    const jobs = [];
+    const pageNumbers = Array.from({ length: pages }, (_, index) => index + 1);
 
-    for (const type of types) {
-      for (let page = 1; page <= pages; page++) {
-        jobs.push({
-          name: IngestionJob.SYNC_TRENDING_PAGE,
-          data: { type, page },
-          opts: { jobId: `trending_${type}_${page}_${window}` },
-        });
-      }
-    }
-
-    return jobs;
+    return types.flatMap((type) =>
+      pageNumbers.map((page) => ({
+        name: IngestionJob.SYNC_TRENDING_PAGE,
+        data: { type, page },
+        opts: { jobId: `trending_${type}_${page}_${window}` },
+      })),
+    );
   }
 
   /**

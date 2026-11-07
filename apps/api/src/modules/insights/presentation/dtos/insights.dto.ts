@@ -10,7 +10,7 @@ export class RiseFallStatsDto {
   @ApiProperty({ description: 'Absolute change in watchers count' })
   deltaWatchers: number;
 
-  @ApiProperty({ description: 'Percentage change in watchers count', nullable: true })
+  @ApiProperty({ type: Number, description: 'Percentage change in watchers count', nullable: true })
   deltaPercent: number | null;
 
   @ApiProperty({ description: 'Current total watchers count' })
@@ -45,7 +45,7 @@ export class RiseFallItemDto {
   @ApiProperty()
   title: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   originalTitle: string | null;
 
   @ApiProperty({ type: ImageDto, nullable: true })

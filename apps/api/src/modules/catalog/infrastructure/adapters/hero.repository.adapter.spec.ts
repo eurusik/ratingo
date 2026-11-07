@@ -9,8 +9,8 @@ import { HeroRepositoryAdapter } from './hero.repository.adapter';
 
 describe('HeroRepositoryAdapter', () => {
   let adapter: HeroRepositoryAdapter;
-  let heroMediaQuery: jest.Mocked<Partial<HeroMediaQuery>>;
-  let watchingNowMediaQuery: jest.Mocked<Partial<WatchingNowMediaQuery>>;
+  let heroMediaQuery: jest.Mocked<Pick<HeroMediaQuery, 'execute'>>;
+  let watchingNowMediaQuery: jest.Mocked<Pick<WatchingNowMediaQuery, 'execute'>>;
 
   const createMockHeroItem = (id: string): HeroMediaItem => ({
     id,
@@ -81,7 +81,7 @@ describe('HeroRepositoryAdapter', () => {
   describe('findHero', () => {
     it('should delegate to heroMediaQuery.execute with limit', async () => {
       const mockItems = [createMockHeroItem('1'), createMockHeroItem('2')];
-      heroMediaQuery.execute!.mockResolvedValue(mockItems);
+      heroMediaQuery.execute.mockResolvedValue(mockItems);
 
       const result = await adapter.findHero(5);
 
@@ -92,7 +92,7 @@ describe('HeroRepositoryAdapter', () => {
 
     it('should delegate to heroMediaQuery.execute with limit and type', async () => {
       const mockItems = [createMockHeroItem('1')];
-      heroMediaQuery.execute!.mockResolvedValue(mockItems);
+      heroMediaQuery.execute.mockResolvedValue(mockItems);
 
       const result = await adapter.findHero(3, MediaType.MOVIE);
 
@@ -104,7 +104,7 @@ describe('HeroRepositoryAdapter', () => {
     });
 
     it('should return empty array when no items found', async () => {
-      heroMediaQuery.execute!.mockResolvedValue([]);
+      heroMediaQuery.execute.mockResolvedValue([]);
 
       const result = await adapter.findHero(5);
 
@@ -112,7 +112,7 @@ describe('HeroRepositoryAdapter', () => {
     });
 
     it('should pass undefined type when not specified', async () => {
-      heroMediaQuery.execute!.mockResolvedValue([]);
+      heroMediaQuery.execute.mockResolvedValue([]);
 
       await adapter.findHero(10);
 
@@ -126,7 +126,7 @@ describe('HeroRepositoryAdapter', () => {
   describe('findWatchingNow', () => {
     it('should delegate to watchingNowMediaQuery.execute', async () => {
       const mockItems = [createMockHeroItem('1'), createMockHeroItem('2')];
-      watchingNowMediaQuery.execute!.mockResolvedValue(mockItems);
+      watchingNowMediaQuery.execute.mockResolvedValue(mockItems);
 
       const result = await adapter.findWatchingNow(3);
 
@@ -136,7 +136,7 @@ describe('HeroRepositoryAdapter', () => {
     });
 
     it('should return empty array when no items found', async () => {
-      watchingNowMediaQuery.execute!.mockResolvedValue([]);
+      watchingNowMediaQuery.execute.mockResolvedValue([]);
 
       const result = await adapter.findWatchingNow(3);
 

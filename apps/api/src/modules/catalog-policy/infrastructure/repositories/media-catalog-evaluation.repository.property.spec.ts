@@ -136,7 +136,7 @@ const reasonsArb = fc.array(
   { minLength: 0, maxLength: 5 },
 );
 
-const breakoutRuleIdArb = fc.option(fc.string({ minLength: 1, maxLength: 20 }), { nil: undefined });
+const breakoutRuleIdArb = fc.option(fc.string({ minLength: 1, maxLength: 20 }), { nil: null });
 
 const runIdArb = fc.option(fc.uuid(), { nil: undefined });
 
@@ -193,7 +193,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
                 reasons: [`reason-${i}`],
                 relevanceScore: i * 10,
                 policyVersion,
-                breakoutRuleId: undefined,
+                breakoutRuleId: null,
                 evaluatedAt: new Date(),
                 runId: undefined,
                 context,
@@ -234,7 +234,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
                 reasons: [],
                 relevanceScore: lastRelevanceScore,
                 policyVersion,
-                breakoutRuleId: undefined,
+                breakoutRuleId: null,
                 evaluatedAt: new Date(),
                 runId: undefined,
                 context,
@@ -265,7 +265,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
             reasons: [],
             relevanceScore: 50,
             policyVersion,
-            breakoutRuleId: undefined,
+            breakoutRuleId: null,
             evaluatedAt: new Date(),
             runId: undefined,
             context: EvaluationContext.CATALOG,
@@ -278,7 +278,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
             reasons: ['NO_PROVIDER'],
             relevanceScore: 30,
             policyVersion,
-            breakoutRuleId: undefined,
+            breakoutRuleId: null,
             evaluatedAt: new Date(),
             runId: undefined,
             context: EvaluationContext.TRENDING,
@@ -336,7 +336,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
               reasons: [],
               relevanceScore: 50,
               policyVersion: version1,
-              breakoutRuleId: undefined,
+              breakoutRuleId: null,
               evaluatedAt: new Date(),
               runId: undefined,
               context,
@@ -349,7 +349,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
               reasons: [],
               relevanceScore: 30,
               policyVersion: version2,
-              breakoutRuleId: undefined,
+              breakoutRuleId: null,
               evaluatedAt: new Date(),
               runId: undefined,
               context,
@@ -387,7 +387,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
                 reasons: [],
                 relevanceScore: i * 10,
                 policyVersion,
-                breakoutRuleId: undefined,
+                breakoutRuleId: null,
                 evaluatedAt: new Date(),
                 runId: undefined,
                 context,

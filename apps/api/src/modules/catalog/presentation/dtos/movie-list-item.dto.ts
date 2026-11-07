@@ -31,7 +31,7 @@ export class MovieListItemDto {
   })
   ingestionStatus: IngestionStatus;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   overview: string | null;
 
   @ApiProperty({ type: ImageDto, required: false, nullable: true })
@@ -43,16 +43,16 @@ export class MovieListItemDto {
   @ApiProperty({ example: 120.5 })
   popularity: number;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: Date, nullable: true })
   releaseDate: Date | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: Date, nullable: true })
   theatricalReleaseDate: Date | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: Date, nullable: true })
   digitalReleaseDate: Date | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: Number, nullable: true })
   runtime: number | null;
 
   @ApiProperty({ type: RatingoStatsDto })

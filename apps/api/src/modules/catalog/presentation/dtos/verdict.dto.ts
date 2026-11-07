@@ -17,6 +17,7 @@ class BaseVerdictDto {
   type: VerdictType;
 
   @ApiProperty({
+    type: String,
     example: 'IMDb: 6.3',
     nullable: true,
     required: false,
@@ -47,6 +48,7 @@ class BaseVerdictDto {
  */
 export class MovieVerdictDto extends BaseVerdictDto {
   @ApiProperty({
+    type: String,
     example: 'strongRatings',
     nullable: true,
     description: 'Message key for i18n lookup on client (details.verdict.movie.*)',

@@ -10,7 +10,7 @@ import { type LocalSearchResult } from '../models/search-result.model';
  */
 export interface MediaScoreData {
   id: string;
-  popularity: number;
+  popularity: number | null;
   releaseDate: Date | null;
   lastAirDate: Date | null;
   ratingImdb: number | null;

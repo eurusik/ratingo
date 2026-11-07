@@ -159,9 +159,9 @@ describe('PolicyMapper', () => {
 
     it('should handle zero countries', () => {
       const result = PolicyMapper.formatSummary({
-        eligibilityMode: 'STRICT',
+        ...createMockPolicy().policy,
         allowedCountries: [],
-      } as CatalogPolicy['policy']);
+      });
 
       expect(result).toBe('STRICT mode, 0 allowed countries');
     });

@@ -117,7 +117,7 @@ export class DrizzleShowRepository implements IShowRepository {
     drizzleTx: DrizzleTransaction,
     seasonId: string,
     showId: string,
-    episodes: ShowDetailsPayload['seasons'][number]['episodes'] | undefined,
+    episodes: NormalizedSeason['episodes'] | undefined,
   ): Promise<void> {
     if (!episodes?.length) return;
 

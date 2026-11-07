@@ -21,16 +21,17 @@ export class MediaBaseDto {
   @ApiProperty({ example: 'The Matrix' })
   title: string;
 
-  @ApiProperty({ example: 'The Matrix', required: false, nullable: true })
+  @ApiProperty({ type: String, example: 'The Matrix', required: false, nullable: true })
   originalTitle?: string | null;
 
   @ApiProperty({ example: 'the-matrix' })
   slug: string;
 
-  @ApiProperty({ example: 'Overview text...', required: false, nullable: true })
+  @ApiProperty({ type: String, example: 'Overview text...', required: false, nullable: true })
   overview?: string | null;
 
   @ApiProperty({
+    type: String,
     example: '/path/to/poster.jpg',
     required: false,
     nullable: true,
@@ -42,6 +43,7 @@ export class MediaBaseDto {
   poster?: ImageDto | null;
 
   @ApiProperty({
+    type: String,
     example: '/path/to/backdrop.jpg',
     required: false,
     nullable: true,

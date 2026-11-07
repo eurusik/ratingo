@@ -13,6 +13,7 @@ export class TrendingShowsQueryDto extends CatalogListQueryDto {}
 
 export class ShowProgressDto {
   @ApiProperty({
+    type: Number,
     required: false,
     nullable: true,
     description: 'Null for trending list optimization',
@@ -20,6 +21,7 @@ export class ShowProgressDto {
   season?: number | null;
 
   @ApiProperty({
+    type: Number,
     required: false,
     nullable: true,
     description: 'Null for trending list optimization',
@@ -27,6 +29,7 @@ export class ShowProgressDto {
   episode?: number | null;
 
   @ApiProperty({
+    type: String,
     required: false,
     nullable: true,
     example: 'S5E2',
@@ -34,10 +37,10 @@ export class ShowProgressDto {
   })
   label?: string | null;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: Date, required: false, nullable: true })
   lastAirDate: Date | null;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: Date, required: false, nullable: true })
   nextAirDate: Date | null;
 }
 
@@ -54,13 +57,13 @@ export class TrendingItemBaseDto {
   @ApiProperty()
   title: string;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: String, required: false, nullable: true })
   originalTitle?: string | null;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: String, required: false, nullable: true })
   overview?: string | null;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: String, required: false, nullable: true })
   primaryTrailerKey?: string | null;
 
   @ApiProperty({ type: ImageDto, required: false, nullable: true })
@@ -69,7 +72,7 @@ export class TrendingItemBaseDto {
   @ApiProperty({ type: ImageDto, required: false, nullable: true })
   backdrop?: ImageDto | null;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: Date, required: false, nullable: true })
   releaseDate: Date | null;
 
   @ApiProperty()

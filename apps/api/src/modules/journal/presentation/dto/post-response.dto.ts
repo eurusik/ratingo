@@ -68,6 +68,7 @@ export class PostListItemDto {
   type: PostType;
 
   @ApiPropertyOptional({
+    type: String,
     description: 'Featured image URL',
     example: 'https://cdn.ratingo.com/journal/featured.jpg',
     nullable: true,
@@ -104,6 +105,7 @@ export class PostDetailDto extends PostListItemDto {
   bodyHtml: string;
 
   @ApiPropertyOptional({
+    type: String,
     description: 'Context identifier',
     example: 'trending',
     nullable: true,
@@ -111,6 +113,7 @@ export class PostDetailDto extends PostListItemDto {
   contextId: string | null;
 
   @ApiPropertyOptional({
+    type: String,
     description: 'Meta title for SEO',
     example: 'Що нового в Ratingo | Журнал',
     nullable: true,
@@ -118,6 +121,7 @@ export class PostDetailDto extends PostListItemDto {
   metaTitle: string | null;
 
   @ApiPropertyOptional({
+    type: String,
     description: 'Meta description for SEO',
     example: 'Дізнайтеся про останні оновлення Ratingo...',
     nullable: true,

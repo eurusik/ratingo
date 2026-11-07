@@ -573,6 +573,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           desc(schema.userMediaState.id),
         ];
       case USER_MEDIA_LIST_SORT.RECENT:
+      case undefined:
       default:
         return [desc(schema.userMediaState.createdAt), desc(schema.userMediaState.id)];
     }

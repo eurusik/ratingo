@@ -213,9 +213,11 @@ describe('DrizzleImportPendingRepository', () => {
       expect(mockDb.set).toHaveBeenCalled();
       expect(mockDb.where).toHaveBeenCalled();
       expect(mockDb.returning).toHaveBeenCalled();
-      expect(result.completedCount).toBe(3);
-      expect(result.failedCount).toBe(1);
-      expect(result.status).toBe(IMPORT_BATCH_STATUS.COMPLETED);
+      expect(result).toMatchObject({
+        completedCount: 3,
+        failedCount: 1,
+        status: IMPORT_BATCH_STATUS.COMPLETED,
+      });
     });
   });
 

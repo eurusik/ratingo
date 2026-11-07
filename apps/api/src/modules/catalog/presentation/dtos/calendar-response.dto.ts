@@ -10,7 +10,7 @@ export class CalendarEpisodeDto {
   @ApiProperty({ example: 'Arcane' })
   showTitle: string;
 
-  @ApiProperty({ example: '/path/to/poster.jpg', required: false, nullable: true })
+  @ApiProperty({ type: String, example: '/path/to/poster.jpg', required: false, nullable: true })
   posterPath: string | null;
 
   @ApiProperty({ example: 2 })
@@ -19,19 +19,19 @@ export class CalendarEpisodeDto {
   @ApiProperty({ example: 1 })
   episodeNumber: number;
 
-  @ApiProperty({ example: 'Heavy Is the Crown' })
-  title: string;
+  @ApiProperty({ type: String, example: 'Heavy Is the Crown', nullable: true })
+  title: string | null;
 
-  @ApiProperty({ example: 'Overview...', required: false, nullable: true })
+  @ApiProperty({ type: String, example: 'Overview...', required: false, nullable: true })
   overview: string | null;
 
   @ApiProperty({ type: Date })
   airDate: Date;
 
-  @ApiProperty({ example: 45, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 45, required: false, nullable: true })
   runtime: number | null;
 
-  @ApiProperty({ example: 'http://image.com/1.jpg', required: false, nullable: true })
+  @ApiProperty({ type: String, example: 'http://image.com/1.jpg', required: false, nullable: true })
   stillPath: string | null;
 }
 

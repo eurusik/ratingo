@@ -18,19 +18,19 @@ class PrivacyDto {
 }
 
 class ProfileDto {
-  @ApiProperty({ example: 'Люблю жахи та sci-fi', nullable: true })
+  @ApiProperty({ type: String, example: 'Люблю жахи та sci-fi', nullable: true })
   bio!: string | null;
 
-  @ApiProperty({ example: 'Kyiv', nullable: true })
+  @ApiProperty({ type: String, example: 'Kyiv', nullable: true })
   location!: string | null;
 
-  @ApiProperty({ example: 'https://instagram.com/me', nullable: true })
+  @ApiProperty({ type: String, example: 'https://instagram.com/me', nullable: true })
   website!: string | null;
 
-  @ApiProperty({ example: 'uk', nullable: true })
+  @ApiProperty({ type: String, example: 'uk', nullable: true })
   preferredLanguage!: string | null;
 
-  @ApiProperty({ example: 'UA', nullable: true })
+  @ApiProperty({ type: String, example: 'UA', nullable: true })
   preferredRegion!: string | null;
 
   @ApiProperty({ type: PrivacyDto })
@@ -59,6 +59,7 @@ export class MeDto {
   username!: string;
 
   @ApiProperty({
+    type: String,
     example: 'https://cdn.ratingo/avatar.png',
     nullable: true,
   })

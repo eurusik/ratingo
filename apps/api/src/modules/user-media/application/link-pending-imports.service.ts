@@ -220,10 +220,11 @@ export class LinkPendingImportsService {
   private cachedBatchLookup(): BatchLookup {
     const batches = new Map<string, ImportBatch | null>();
     return async (batchId) => {
-      if (!batches.has(batchId)) {
-        batches.set(batchId, await this.pendingRepo.findBatchById(batchId));
-      }
-      return batches.get(batchId);
+      const cached = batches.get(batchId);
+      if (cached !== undefined) return cached;
+      const batch = await this.pendingRepo.findBatchById(batchId);
+      batches.set(batchId, batch);
+      return batch;
     };
   }
 

@@ -11,6 +11,7 @@ export class RecentRaterDto {
   username: string;
 
   @ApiProperty({
+    type: String,
     example: 'https://example.com/avatar.jpg',
     nullable: true,
     description: 'URL of the user avatar image',

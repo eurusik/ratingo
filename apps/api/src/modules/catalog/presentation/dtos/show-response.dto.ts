@@ -8,6 +8,7 @@ import { ShowVerdictDto, ShowStatusHintDto } from './verdict.dto';
 
 export class EpisodeDto {
   @ApiProperty({
+    type: String,
     example: '123e4567-e89b-12d3-a456-426614174000',
     required: false,
     nullable: true,
@@ -18,19 +19,19 @@ export class EpisodeDto {
   @ApiProperty({ example: 1 })
   number: number;
 
-  @ApiProperty({ example: 'The Beginning', required: false, nullable: true })
+  @ApiProperty({ type: String, example: 'The Beginning', required: false, nullable: true })
   title: string | null;
 
   @ApiProperty({ type: Date, required: false, nullable: true })
   airDate: Date | null;
 
-  @ApiProperty({ example: 52, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 52, required: false, nullable: true })
   runtime: number | null;
 
-  @ApiProperty({ example: '/path/to/still.jpg', required: false, nullable: true })
+  @ApiProperty({ type: String, example: '/path/to/still.jpg', required: false, nullable: true })
   stillPath: string | null;
 
-  @ApiProperty({ example: 8.5, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 8.5, required: false, nullable: true })
   voteAverage: number | null;
 }
 
@@ -38,13 +39,13 @@ export class SeasonDto {
   @ApiProperty({ example: 1 })
   number: number;
 
-  @ApiProperty({ example: 'Season 1', required: false, nullable: true })
+  @ApiProperty({ type: String, example: 'Season 1', required: false, nullable: true })
   name: string | null;
 
-  @ApiProperty({ example: 10, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 10, required: false, nullable: true })
   episodeCount: number | null;
 
-  @ApiProperty({ example: '/path/to/poster.jpg', required: false, nullable: true })
+  @ApiProperty({ type: String, example: '/path/to/poster.jpg', required: false, nullable: true })
   posterPath: string | null;
 
   @ApiProperty({ type: Date, required: false, nullable: true })
@@ -77,10 +78,10 @@ export class ShowResponseDto extends MediaBaseDto {
   })
   lastSyncedAt?: Date | null;
 
-  @ApiProperty({ example: 5, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 5, required: false, nullable: true })
   totalSeasons?: number | null;
 
-  @ApiProperty({ example: 62, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 62, required: false, nullable: true })
   totalEpisodes?: number | null;
 
   @ApiProperty({

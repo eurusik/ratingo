@@ -13,6 +13,7 @@ export class ReviewAuthorDto {
   username: string;
 
   @ApiProperty({
+    type: String,
     example: 'https://example.com/avatar.jpg',
     nullable: true,
   })
@@ -45,6 +46,7 @@ export class ReviewResponseDto {
   content: string;
 
   @ApiProperty({
+    type: Number,
     example: 85,
     nullable: true,
     description: 'Rating 0-100, null if author has showRatings=false',
@@ -73,6 +75,7 @@ export class ReviewResponseDto {
   author: ReviewAuthorDto;
 
   @ApiProperty({
+    type: String,
     example: 'like',
     nullable: true,
     description: 'Current user vote (null if not voted or not authenticated)',

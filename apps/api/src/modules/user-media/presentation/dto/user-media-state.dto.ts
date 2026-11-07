@@ -20,7 +20,7 @@ export class UserMediaStateDto implements UserMediaState {
   })
   state!: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused' | 'caught_up';
 
-  @ApiProperty({ example: 85, nullable: true, description: '0-100 rating' })
+  @ApiProperty({ type: Number, example: 85, nullable: true, description: '0-100 rating' })
   rating!: number | null;
 
   @ApiProperty({
@@ -30,7 +30,7 @@ export class UserMediaStateDto implements UserMediaState {
   })
   progress!: Record<string, unknown> | null;
 
-  @ApiProperty({ example: 'Must watch this weekend', nullable: true })
+  @ApiProperty({ type: String, example: 'Must watch this weekend', nullable: true })
   notes!: string | null;
 
   @ApiProperty({ example: '2025-12-11T12:00:00.000Z' })

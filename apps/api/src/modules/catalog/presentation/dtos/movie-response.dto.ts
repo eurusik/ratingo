@@ -8,13 +8,13 @@ import { MediaBaseDto } from './media-base.dto';
 import { MovieVerdictDto } from './verdict.dto';
 
 export class MovieResponseDto extends MediaBaseDto {
-  @ApiProperty({ example: 120, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 120, required: false, nullable: true })
   runtime?: number | null;
 
-  @ApiProperty({ example: 100000000, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 100000000, required: false, nullable: true })
   budget?: number | null;
 
-  @ApiProperty({ example: 500000000, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 500000000, required: false, nullable: true })
   revenue?: number | null;
 
   @ApiProperty({

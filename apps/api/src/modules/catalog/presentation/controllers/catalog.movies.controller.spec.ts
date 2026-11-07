@@ -136,7 +136,7 @@ describe('CatalogMoviesController', () => {
       expect(result.id).toBe('1');
       expect(result.userState).toBeNull();
       expect(result.card).toBeDefined();
-      expect(result.card.badgeKey).toBeNull();
+      expect(result.card?.badgeKey).toBeNull();
     });
 
     it('throws NotFoundException when not found', async () => {

@@ -48,12 +48,15 @@ describe('Policy Engine - Property-Based Tests', () => {
     name: fc.string({ minLength: 1, maxLength: 50 }),
     priority: fc.nat({ max: 100 }),
     requirements: fc.record({
-      minImdbVotes: fc.option(fc.nat({ max: 1000000 })),
-      minTraktVotes: fc.option(fc.nat({ max: 100000 })),
-      minQualityScoreNormalized: fc.option(fc.double({ min: 0, max: 1 })),
-      requireAnyOfProviders: fc.option(fc.array(fc.string(), { maxLength: 5 })),
+      minImdbVotes: fc.option(fc.nat({ max: 1000000 }), { nil: undefined }),
+      minTraktVotes: fc.option(fc.nat({ max: 100000 }), { nil: undefined }),
+      minQualityScoreNormalized: fc.option(fc.double({ min: 0, max: 1 }), { nil: undefined }),
+      requireAnyOfProviders: fc.option(fc.array(fc.string(), { maxLength: 5 }), {
+        nil: undefined,
+      }),
       requireAnyOfRatingsPresent: fc.option(
         fc.array(fc.constantFrom('imdb', 'metacritic', 'rt', 'trakt'), { maxLength: 4 }),
+        { nil: undefined },
       ),
     }),
   });
@@ -477,7 +480,7 @@ describe('Context-Aware Eligibility Properties', () => {
               name: fc.string({ minLength: 1, maxLength: 50 }),
               priority: fc.nat({ max: 100 }),
               requirements: fc.record({
-                minImdbVotes: fc.option(fc.nat({ max: 1000000 })),
+                minImdbVotes: fc.option(fc.nat({ max: 1000000 }), { nil: undefined }),
               }),
             }),
             { maxLength: 3 },

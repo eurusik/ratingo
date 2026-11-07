@@ -109,7 +109,7 @@ export interface CalendarEpisode {
   posterPath: string | null;
   seasonNumber: number;
   episodeNumber: number;
-  title: string;
+  title: string | null;
   overview: string | null;
   airDate: Date;
   runtime: number | null;
@@ -134,8 +134,8 @@ export interface EpisodeInfo {
  */
 export interface SeasonInfo {
   number: number;
-  name: string;
-  episodeCount: number;
+  name: string | null;
+  episodeCount: number | null;
   posterPath: string | null;
   airDate: Date | null;
   episodes?: EpisodeInfo[];

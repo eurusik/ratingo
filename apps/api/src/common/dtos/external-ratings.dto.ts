@@ -7,7 +7,7 @@ export class ExternalRatingItemDto {
   @ApiProperty({ example: 8.8 })
   rating: number;
 
-  @ApiProperty({ example: 2000000, required: false, nullable: true })
+  @ApiProperty({ type: Number, example: 2000000, required: false, nullable: true })
   voteCount?: number | null;
 }
 

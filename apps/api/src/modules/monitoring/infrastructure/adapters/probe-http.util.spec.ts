@@ -2,13 +2,13 @@ import { HttpStatus } from '@nestjs/common';
 
 import * as fc from 'fast-check';
 
-import { type FetchResult, HttpError } from '@/common/http/resilient-http.client';
+import { type FetchFailure, HttpError } from '@/common/http/resilient-http.client';
 
 import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
 
 import { mapHttpFailure } from './probe-http.util';
 
-function failedResult(error: Error): FetchResult<unknown> {
+function failedResult(error: Error): FetchFailure {
   return { data: null, success: false, attempts: 1, error };
 }
 

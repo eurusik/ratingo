@@ -606,7 +606,7 @@ describe('Google OAuth e2e', () => {
         .send({ email: 'find-by-gid@test.com', username: 'findbygid', password: 'Password123' })
         .expect(201);
       const passwordUser = await usersRepo.findByEmail('find-by-gid@test.com');
-      expect(passwordUser).not.toBeNull();
+      if (!passwordUser) throw new Error('Registered user was not persisted');
 
       const oauthPayload = {
         provider: 'google' as const,

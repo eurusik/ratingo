@@ -342,7 +342,7 @@ export class TmdbMapper {
       .map((c: TmdbCastMember, index: number) => ({
         tmdbId: c.id,
         name: c.name,
-        character: isMovie ? c.character : c.roles?.[0]?.character || 'Unknown',
+        character: isMovie ? (c.character ?? '') : c.roles?.[0]?.character || 'Unknown',
         profilePath: c.profile_path,
         order: c.order ?? index,
       }));

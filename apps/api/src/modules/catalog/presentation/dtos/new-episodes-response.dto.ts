@@ -13,7 +13,7 @@ export class NewEpisodeDto {
   @ApiProperty({ example: 'Arcane' })
   title: string;
 
-  @ApiProperty({ example: '/path/to/poster.jpg', required: false, nullable: true })
+  @ApiProperty({ type: String, example: '/path/to/poster.jpg', required: false, nullable: true })
   posterPath: string | null;
 
   @ApiProperty({ example: 2 })

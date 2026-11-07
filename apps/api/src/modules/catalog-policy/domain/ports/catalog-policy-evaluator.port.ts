@@ -40,7 +40,7 @@ export interface EvaluationResult {
     relevanceScore: number;
     policyVersion: number;
     breakoutRuleId: string | null;
-    evaluatedAt: Date;
+    evaluatedAt: Date | null;
     runId?: string;
   };
   /** True if status or policy version changed from previous evaluation. */

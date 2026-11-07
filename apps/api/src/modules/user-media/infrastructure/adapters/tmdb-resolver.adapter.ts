@@ -101,6 +101,10 @@ export class TmdbResolverAdapter implements ITmdbResolverPort {
   }
 
   private async fetch<T = unknown>(endpoint: string, params: Record<string, string>): Promise<T> {
+    if (!this.config.apiKey) {
+      throw new TmdbApiException('API key is required');
+    }
+
     const url = new URL(`${this.config.apiUrl}${endpoint}`);
     url.searchParams.append('api_key', this.config.apiKey);
 

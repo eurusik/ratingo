@@ -25,10 +25,10 @@ export class SearchItemDto {
   @ApiProperty()
   title: string;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: String, required: false, nullable: true })
   originalTitle?: string | null;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: Number, required: false, nullable: true })
   year?: number | null;
 
   @ApiProperty({ type: ImageDto, required: false, nullable: true })

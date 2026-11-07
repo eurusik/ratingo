@@ -4,7 +4,12 @@ export class CastMemberDto {
   @ApiProperty({ example: 'tmdb:123', description: 'Universal person identifier' })
   personId: string;
 
-  @ApiProperty({ example: 'brad-pitt', description: 'URL-friendly slug', nullable: true })
+  @ApiProperty({
+    type: String,
+    example: 'brad-pitt',
+    description: 'URL-friendly slug',
+    nullable: true,
+  })
   slug: string | null;
 
   @ApiProperty({ example: 123, deprecated: true })
@@ -16,7 +21,7 @@ export class CastMemberDto {
   @ApiProperty({ example: 'Tyler Durden' })
   character: string;
 
-  @ApiProperty({ example: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg', nullable: true })
+  @ApiProperty({ type: String, example: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg', nullable: true })
   profilePath: string | null;
 
   @ApiProperty({ example: 0 })
@@ -27,7 +32,12 @@ export class CrewMemberDto {
   @ApiProperty({ example: 'tmdb:456', description: 'Universal person identifier' })
   personId: string;
 
-  @ApiProperty({ example: 'david-fincher', description: 'URL-friendly slug', nullable: true })
+  @ApiProperty({
+    type: String,
+    example: 'david-fincher',
+    description: 'URL-friendly slug',
+    nullable: true,
+  })
   slug: string | null;
 
   @ApiProperty({ example: 456, deprecated: true })
@@ -42,7 +52,7 @@ export class CrewMemberDto {
   @ApiProperty({ example: 'Directing' })
   department: string;
 
-  @ApiProperty({ example: '/y.jpg', nullable: true })
+  @ApiProperty({ type: String, example: '/y.jpg', nullable: true })
   profilePath: string | null;
 }
 

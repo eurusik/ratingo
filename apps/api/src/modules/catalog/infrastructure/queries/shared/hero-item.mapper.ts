@@ -30,8 +30,8 @@ export interface HeroQueryRow {
   popularityScore: number | null;
   watchersCount: number | null;
   totalWatchers: number | null;
-  rating: number;
-  voteCount: number;
+  rating: number | null;
+  voteCount: number | null;
   ratingImdb: number | null;
   voteCountImdb: number | null;
   ratingTrakt: number | null;
@@ -93,7 +93,7 @@ export function mapHeroResults(
         totalWatchers: item.totalWatchers,
       },
       externalRatings: {
-        tmdb: { rating: item.rating, voteCount: item.voteCount },
+        tmdb: item.rating != null ? { rating: item.rating, voteCount: item.voteCount } : null,
         imdb: item.ratingImdb ? { rating: item.ratingImdb, voteCount: item.voteCountImdb } : null,
         trakt: item.ratingTrakt
           ? { rating: item.ratingTrakt, voteCount: item.voteCountTrakt }
