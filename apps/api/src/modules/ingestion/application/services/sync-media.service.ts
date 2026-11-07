@@ -3,6 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { errorMessage, toError } from '../../../../common/utils/error.utils';
 import { generateSlug, type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import {
   type ICatalogPolicyEvaluator,
@@ -203,8 +204,9 @@ export class SyncMediaService {
         `${logPrefix} Synced: ${classified.title} (Ratingo: ${((classified.ratingoScore ?? 0) * SCORE_PERCENT_MULTIPLIER).toFixed(1)})`,
       );
     } catch (error) {
-      this.logger.error(`${logPrefix} Failed: ${error.message}`, error.stack);
-      await this.markAsFailed(tmdbId, type, logPrefix, error.message);
+      const err = toError(error);
+      this.logger.error(`${logPrefix} Failed: ${err.message}`, err.stack);
+      await this.markAsFailed(tmdbId, type, logPrefix, err.message);
       throw error;
     }
   }
@@ -246,7 +248,7 @@ export class SyncMediaService {
     try {
       return await this.tvMazeEnrichment.enrich(media);
     } catch (err) {
-      this.logger.warn(`${logPrefix} TVMaze enrichment failed: ${err.message}`);
+      this.logger.warn(`${logPrefix} TVMaze enrichment failed: ${errorMessage(err)}`);
       return media;
     }
   }
@@ -540,7 +542,7 @@ export class SyncMediaService {
         this.logger.debug(`${logPrefix} Evaluated catalog eligibility`);
       }
     } catch (evalError) {
-      this.logger.warn(`${logPrefix} Catalog evaluation failed: ${evalError.message}`);
+      this.logger.warn(`${logPrefix} Catalog evaluation failed: ${errorMessage(evalError)}`);
     }
   }
 

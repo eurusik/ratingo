@@ -5,6 +5,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { type MovieDetails } from '../../domain/repositories';
@@ -77,9 +78,10 @@ export class MovieDetailsQuery {
 
       return mapMovieDetails(movie, genres, watchOffers, recentRaters);
     } catch (error) {
-      this.logger.error(`Failed to find movie by slug ${slug}: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Failed to find movie by slug ${slug}: ${err.message}`, err.stack);
       throw new DatabaseException(`Failed to fetch movie ${slug}`, {
-        originalError: error.message,
+        originalError: err.message,
       });
     }
   }

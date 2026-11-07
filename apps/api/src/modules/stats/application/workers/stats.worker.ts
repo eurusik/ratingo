@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 
 import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants';
+import { toError } from '../../../../common/utils/error.utils';
 import { WORKER_CONFIG } from '../../../../config/queue.config';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import { DropOffService, StatsBackfillService, TrendingSyncService } from '../services';
@@ -75,7 +76,8 @@ export class StatsWorker extends WorkerHost {
           this.logger.warn(`Unknown job type: ${job.name}`);
       }
     } catch (error) {
-      this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Job ${job.id} failed: ${err.message}`, err.stack);
       throw error; // Let BullMQ handle retry
     }
   }

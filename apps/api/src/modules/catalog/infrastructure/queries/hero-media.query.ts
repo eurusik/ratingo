@@ -7,6 +7,7 @@ import { MS_PER_DAY } from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
@@ -85,7 +86,8 @@ export class HeroMediaQuery {
       const showProgressMap = await fetchShowProgress(this.db, combined, now);
       return mapHeroResults(combined, showProgressMap, now);
     } catch (error) {
-      this.logger.error(`Failed to find hero items: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Failed to find hero items: ${err.message}`, err.stack);
       return [];
     }
   }

@@ -23,7 +23,7 @@ export class DatabaseException extends AppException {
    * The original error that caused this exception.
    * Preserved for debugging and logging purposes.
    */
-  public readonly cause: unknown;
+  public override readonly cause: unknown;
 
   /**
    * Creates a new DatabaseException.

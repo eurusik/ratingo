@@ -119,14 +119,14 @@ const ROUTE_SCOPED_TIERS: ReadonlySet<string> = new Set(Object.values(ROUTE_THRO
  */
 @Injectable()
 export class ThrottlerRealIpGuard extends ThrottlerGuard {
-  protected readonly logger = new Logger(ThrottlerRealIpGuard.name);
+  protected override readonly logger = new Logger(ThrottlerRealIpGuard.name);
 
-  protected getTracker(req: Record<string, unknown>): Promise<string> {
+  protected override getTracker(req: Record<string, unknown>): Promise<string> {
     const fastifyReq = req as unknown as FastifyRequest;
     return Promise.resolve(extractRealIp(fastifyReq));
   }
 
-  protected generateKey(context: ExecutionContext, suffix: string, name: string): string {
+  protected override generateKey(context: ExecutionContext, suffix: string, name: string): string {
     const req = context.switchToHttp().getRequest<FastifyRequest>();
     const ip = extractRealIp(req);
     const key = `${name}:${ip}:${suffix}`;
@@ -140,7 +140,7 @@ export class ThrottlerRealIpGuard extends ThrottlerGuard {
   /**
    * Override to add rate limit headers and detailed logging on 429.
    */
-  protected async throwThrottlingException(
+  protected override async throwThrottlingException(
     context: ExecutionContext,
     throttlerLimitDetail: ThrottlerLimitDetail,
   ): Promise<void> {

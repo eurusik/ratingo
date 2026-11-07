@@ -12,7 +12,7 @@ class FakeProcessor extends WorkerHost {
     super();
   }
 
-  get worker(): Worker {
+  override get worker(): Worker {
     return this.fakeWorker as Worker;
   }
 

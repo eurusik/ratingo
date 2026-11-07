@@ -11,7 +11,7 @@ export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
    * Override to suppress all auth errors and return null for unauthenticated requests.
    * Passport passes errors via `err` param OR `info` param depending on the failure type.
    */
-  handleRequest<TUser = unknown>(err: unknown, user: TUser, _info: unknown): TUser | null {
+  override handleRequest<TUser = unknown>(err: unknown, user: TUser, _info: unknown): TUser | null {
     // Any error or missing user means unauthenticated - return null, don't throw
     if (err || !user) {
       return null;

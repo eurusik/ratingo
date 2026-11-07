@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_BATCH_SIZE } from '../../../../common/constants';
+import { errorMessage } from '../../../../common/utils/error.utils';
 import { type IShowRepository, SHOW_REPOSITORY } from '../../../catalog/public';
 import { DropOffAnalyzerService, type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../trakt/public';
@@ -50,7 +51,7 @@ export class DropOffService {
 
       return analysis;
     } catch (error) {
-      this.logger.error(`Failed to analyze show ${tmdbId}: ${error.message}`);
+      this.logger.error(`Failed to analyze show ${tmdbId}: ${errorMessage(error)}`);
       return null;
     }
   }

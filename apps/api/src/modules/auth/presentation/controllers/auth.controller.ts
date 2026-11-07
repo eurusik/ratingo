@@ -38,6 +38,7 @@ import { Throttle } from '@nestjs/throttler';
 
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 
+import { errorMessage } from '../../../../common/utils/error.utils';
 import authConfig from '../../../../config/auth.config';
 import facebookConfig from '../../../../config/facebook.config';
 import googleConfig from '../../../../config/google.config';
@@ -302,9 +303,7 @@ export class AuthController {
       } catch (error) {
         const errorCode = error instanceof ConflictException ? 'ALREADY_LINKED' : 'LINK_FAILED';
         if (!(error instanceof ConflictException)) {
-          this.logger.error(
-            `Failed to link OAuth account: ${error instanceof Error ? error.message : error}`,
-          );
+          this.logger.error(`Failed to link OAuth account: ${errorMessage(error)}`);
         }
         await res.redirect(
           HTTP_REDIRECT_FOUND,

@@ -8,6 +8,7 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
@@ -249,9 +250,10 @@ export class PopularShowsQuery {
       withTotal.meta = { degraded: false };
       return withTotal;
     } catch (error) {
-      this.logger.error(`Failed to find popular shows: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Failed to find popular shows: ${err.message}`, err.stack);
       throw new DatabaseException('Failed to fetch popular shows', {
-        originalError: error.message,
+        originalError: err.message,
       });
     }
   }

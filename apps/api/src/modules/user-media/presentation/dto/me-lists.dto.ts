@@ -117,7 +117,7 @@ export class MeUserMediaSummaryDto {
  */
 export class MeUserMediaListItemDto extends UserMediaStateDto {
   @ApiProperty({ type: MeUserMediaSummaryDto })
-  mediaSummary!: MeUserMediaSummaryDto;
+  override mediaSummary!: MeUserMediaSummaryDto;
 
   @ApiPropertyOptional({
     type: ProgressSummaryDto,

@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { type MediaType } from '../../../common/enums/media-type.enum';
 import { type HeroMediaItem } from '../../../common/types/hero-media.types';
+import { errorMessage } from '../../../common/utils/error.utils';
 import {
   type IHeroRepository,
   HERO_REPOSITORY,
@@ -30,7 +31,7 @@ export class HomeService {
     try {
       return await this.heroRepository.findHero(HERO_CONFIG.DEFAULT_LIMIT, type);
     } catch (error) {
-      this.logger.error(`Failed to get hero items: ${error.message}`);
+      this.logger.error(`Failed to get hero items: ${errorMessage(error)}`);
       return [];
     }
   }
@@ -45,7 +46,7 @@ export class HomeService {
     try {
       return await this.heroRepository.findWatchingNow(WATCHING_NOW_CONFIG.DEFAULT_LIMIT);
     } catch (error) {
-      this.logger.error(`Failed to get watching now items: ${error.message}`);
+      this.logger.error(`Failed to get watching now items: ${errorMessage(error)}`);
       return [];
     }
   }

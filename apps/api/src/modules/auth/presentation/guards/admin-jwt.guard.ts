@@ -12,7 +12,7 @@ import { USER_ROLE } from '../../../users/public';
 
 @Injectable()
 export class AdminJwtGuard extends AuthGuard('jwt') implements CanActivate {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  override async canActivate(context: ExecutionContext): Promise<boolean> {
     // First, run standard JWT authentication
     const isAuthenticated = (await super.canActivate(context)) as boolean;
     if (!isAuthenticated) return false;

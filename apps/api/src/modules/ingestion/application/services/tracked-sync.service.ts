@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { errorMessage } from '../../../../common/utils/error.utils';
 import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
 import {
   type ShowSyncDiff,
@@ -68,7 +69,7 @@ export class TrackedSyncService {
     try {
       return await this.trackedShowRepository.findByTmdbId(tmdbId);
     } catch (error) {
-      this.logger.warn(`Failed to get show status for tmdbId=${tmdbId}: ${error.message}`);
+      this.logger.warn(`Failed to get show status for tmdbId=${tmdbId}: ${errorMessage(error)}`);
       return null;
     }
   }
@@ -100,7 +101,7 @@ export class TrackedSyncService {
         lastEpisodeAirDate,
       };
     } catch (error) {
-      this.logger.error(`Failed to get show snapshot for ${tmdbId}: ${error.message}`);
+      this.logger.error(`Failed to get show snapshot for ${tmdbId}: ${errorMessage(error)}`);
       return null;
     }
   }
