@@ -27,6 +27,12 @@ export function mapBullStateToJobStatus(state: string, finishedOn?: number | nul
   return finishedOn ? JOB_STATUS.READY : JOB_STATUS.FAILED;
 }
 
+export function jobTmdbId(job: { data: unknown }): number | null {
+  const { data } = job;
+  if (typeof data !== 'object' || data === null || !('tmdbId' in data)) return null;
+  return typeof data.tmdbId === 'number' ? data.tmdbId : null;
+}
+
 export function jobFailureReason(job: { failedReason?: string }): string | null {
   return job.failedReason ?? null;
 }

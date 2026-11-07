@@ -6,7 +6,7 @@
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsOptional,
@@ -19,6 +19,7 @@ import {
 } from 'class-validator';
 
 import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '@/common/dtos';
+import { TransformRawQueryBoolean } from '@/common/dtos/raw-boolean-query.transform';
 import {
   DISTRIBUTION_CHANNEL,
   type DistributionChannel,
@@ -267,7 +268,6 @@ export class MappingsQueryDto extends OffsetPaginationQueryDto {
   @ApiPropertyOptional({ example: true, description: 'Include global mappings' })
   @IsOptional()
   @IsBoolean()
-  // Raw value: Boolean("false") / implicit conversion would turn "false" into true
-  @Transform(({ obj, key }) => obj[key] === 'true' || obj[key] === true)
+  @TransformRawQueryBoolean()
   includeGlobal?: boolean = true;
 }

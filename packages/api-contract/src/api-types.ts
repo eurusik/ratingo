@@ -11391,8 +11391,8 @@ export interface operations {
             query?: {
                 /** @description Number of items per batch */
                 batchSize?: number;
-                /** @description Offset for pagination */
-                offset?: number;
+                /** @description Keyset cursor: sync only items with a media id greater than this one */
+                afterId?: string;
             };
             header?: never;
             path?: never;

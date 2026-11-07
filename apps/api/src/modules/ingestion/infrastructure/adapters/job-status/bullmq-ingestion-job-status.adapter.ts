@@ -7,6 +7,7 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import {
   mapBullStateToJobStatus,
   jobFailureReason,
+  jobTmdbId,
 } from '@/common/infrastructure/bullmq/job-status-mapper';
 import {
   type IngestionJobStatus,
@@ -37,7 +38,7 @@ export class BullMqIngestionJobStatusAdapter implements IngestionJobStatusPort {
       status: mapBullStateToJobStatus(state, job.finishedOn),
       errorMessage: jobFailureReason(job),
       updatedAt: lastActivityAt ? new Date(lastActivityAt) : null,
-      tmdbId: job.data?.tmdbId ?? null,
+      tmdbId: jobTmdbId(job),
       mediaType: SYNC_JOB_MEDIA_TYPE[job.name],
     };
   }

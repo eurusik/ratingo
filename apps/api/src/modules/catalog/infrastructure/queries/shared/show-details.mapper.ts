@@ -11,6 +11,7 @@ import {
   MediaWatchOffersMapper,
   type WatchOfferRow,
 } from '@/modules/catalog/infrastructure/mappers/media-watch-offers.mapper';
+import { extractPrimaryTrailer } from '@/modules/catalog/infrastructure/queries/shared/primary-trailer.mapper';
 
 /**
  * Raw row type from show details query.
@@ -96,14 +97,6 @@ function mapRatingoStats(row: ShowDetailsQueryRow, recentRaters: RecentRater[]) 
 }
 
 /**
- * Extracts primary trailer from videos array.
- */
-function extractPrimaryTrailer(videos: unknown) {
-  if (!Array.isArray(videos) || videos.length === 0) return null;
-  return videos[0] || null;
-}
-
-/**
  * Maps raw database row to ShowDetails domain object.
  *
  * @param row - Raw query result row
@@ -119,6 +112,7 @@ export function mapShowDetails(
   watchOffers: WatchOfferRow[],
   recentRaters: RecentRater[],
 ): ShowDetails {
+  const videos = row.videos as ShowDetails['videos'];
   return {
     id: row.id,
     showId: row.showId,
@@ -130,8 +124,8 @@ export function mapShowDetails(
     ingestionStatus: row.ingestionStatus as IngestionStatus,
     poster: ImageMapper.toPoster(row.posterPath),
     backdrop: ImageMapper.toBackdrop(row.backdropPath),
-    videos: row.videos as ShowDetails['videos'],
-    primaryTrailer: extractPrimaryTrailer(row.videos),
+    videos,
+    primaryTrailer: extractPrimaryTrailer(videos),
     credits: CreditsMapper.toDto(row.credits as Parameters<typeof CreditsMapper.toDto>[0]),
     availability: MediaWatchOffersMapper.toAvailability(
       watchOffers,

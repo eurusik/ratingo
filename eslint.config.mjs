@@ -348,6 +348,24 @@ export default [
       ],
     },
   },
+  {
+    files: ['apps/api/src/**/*.ts'],
+    ignores: [
+      '**/*.spec.ts',
+      '**/*.test.ts',
+      '**/*.e2e-spec.ts',
+      '**/*.testing.ts',
+      '**/__test__/**',
+      '**/__tests__/**',
+    ],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
+    },
+  },
   // Config/DTO/Common files — relaxed magic numbers (ports, TTL, validation limits, defaults)
   {
     files: [

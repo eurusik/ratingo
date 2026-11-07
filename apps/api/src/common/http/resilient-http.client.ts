@@ -375,7 +375,7 @@ export class ResilientHttpClient {
       // Must be awaited: otherwise `finally` clears the timeout before the body is read, so a
       // stalled body would hang past the timeout, and body-read AbortError/SyntaxError would
       // bypass the catch below.
-      return await response.json();
+      return (await response.json()) as T;
     } catch (error: unknown) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new HttpError('Request timeout', 408);

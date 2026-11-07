@@ -206,7 +206,7 @@ export class IngestionSchedulerService implements OnModuleInit {
   }
 
   private describeSchedulerChanges(
-    existing: JobSchedulerJson,
+    existing: JobSchedulerJson<unknown>,
     jobConfig: ScheduledJobConfig,
     timezone: string,
   ): string[] {

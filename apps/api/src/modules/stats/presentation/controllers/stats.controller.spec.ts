@@ -81,6 +81,19 @@ describe('StatsController', () => {
     });
   });
 
+  describe('syncEligibleTrending', () => {
+    it('should forward the afterId cursor to the job the worker reads', async () => {
+      const afterId = '550e8400-e29b-41d4-a716-446655440000';
+
+      await controller.syncEligibleTrending({ batchSize: 25, afterId });
+
+      expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.SYNC_ELIGIBLE_TRENDING, {
+        batchSize: 25,
+        afterId,
+      });
+    });
+  });
+
   describe('getStatsByTmdbId', () => {
     it('should return stats for valid TMDB ID', async () => {
       const mockStats = {

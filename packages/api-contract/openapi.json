@@ -8485,14 +8485,13 @@
             }
           },
           {
-            "name": "offset",
+            "name": "afterId",
             "required": false,
             "in": "query",
-            "description": "Offset for pagination",
+            "description": "Keyset cursor: sync only items with a media id greater than this one",
             "schema": {
-              "default": 0,
-              "example": 0,
-              "type": "number"
+              "format": "uuid",
+              "type": "string"
             }
           }
         ],

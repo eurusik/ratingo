@@ -43,7 +43,7 @@ export interface HeroQueryRow {
  */
 export function extractPrimaryTrailerKey(videos: unknown): string | null {
   if (!Array.isArray(videos) || videos.length === 0) return null;
-  const first = videos[0];
+  const first: unknown = videos[0];
   if (!first || typeof first !== 'object') return null;
   const { key } = first as Record<string, unknown>;
   return typeof key === 'string' ? key : null;
