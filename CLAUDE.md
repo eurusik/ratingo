@@ -36,10 +36,10 @@ npm run dev:client             # Frontend (port 3002)
 docker-compose up              # PostgreSQL (5434) + Redis (6379)
 
 # Quality
-npm run test:api               # Backend tests (--runInBand)
-npm run test:client            # Frontend tests
+npm run test:api                 # Backend tests (--runInBand)
+npm run test:client              # Frontend tests
 npm run test:e2e --workspace=api # Backend e2e (in-memory fakes, no Postgres/Redis needed)
-npm run lint:api:fix           # Auto-fix backend lint
+npm run lint:api:fix             # Auto-fix backend lint
 
 # Single test (from apps/api/ or apps/web-client/)
 npm test -- path/to/file.spec.ts

@@ -6,13 +6,11 @@ import {
 } from '../../src/modules/catalog/domain/repositories/movie.repository.interface';
 import {
   IShowRepository,
-  TrendingShowItem,
   TrendingShowsOptions,
   CalendarEpisode,
   NewEpisodeItem,
 } from '../../src/modules/catalog/domain/repositories/show.repository.interface';
-import { moviesFixture, showsFixture, daysAgo } from './_fixtures';
-import { testUuid } from '../support/test-uuid';
+import { SHOW_ONE_ID, daysAgo, moviesFixture, showsFixture } from './_fixtures';
 
 const matchesGenres = (list: { genres?: any[] }, genres?: string[]) => {
   if (!genres?.length) return true;
@@ -236,7 +234,7 @@ export class FakeShowRepository implements IShowRepository {
   async findEpisodesByDateRange(start: Date, end: Date): Promise<CalendarEpisode[]> {
     return [
       {
-        showId: testUuid('sid-1'),
+        showId: SHOW_ONE_ID,
         showSlug: 'show-one',
         showTitle: 'Show One',
         posterPath: null,

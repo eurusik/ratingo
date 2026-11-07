@@ -21,6 +21,7 @@ dist/
 # General
 build/
 coverage/
+coverage-e2e/
 
 # =============================================================================
 # ENVIRONMENT FILES

@@ -5,16 +5,8 @@ import { AuthModule } from '../../src/modules/auth/auth.module';
 import { UsersModule } from '../../src/modules/users/users.module';
 import { UserMediaModule } from '../../src/modules/user-media/user-media.module';
 import { CatalogModule } from '../../src/modules/catalog/catalog.module';
-import {
-  USERS_REPOSITORY,
-  IUsersRepository,
-} from '../../src/modules/users/domain/repositories/users.repository.interface';
-import {
-  IRefreshTokensRepository,
-  REFRESH_TOKENS_REPOSITORY,
-} from '../../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
-import { User } from '../../src/modules/users/domain/entities/user.entity';
-import { RefreshToken } from '../../src/modules/auth/domain/entities/refresh-token.entity';
+import { USERS_REPOSITORY } from '../../src/modules/users/domain/repositories/users.repository.interface';
+import { REFRESH_TOKENS_REPOSITORY } from '../../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import {
   IUserMediaStateRepository,
   USER_MEDIA_STATE_REPOSITORY,
@@ -24,93 +16,17 @@ import {
 } from '../../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
 import { UserMediaState } from '../../src/modules/user-media/domain/entities/user-media-state.entity';
 import { MediaType } from '../../src/common/enums/media-type.enum';
-import {
-  IMovieRepository,
-  MOVIE_REPOSITORY,
-} from '../../src/modules/catalog/domain/repositories/movie.repository.interface';
-import {
-  IShowRepository,
-  SHOW_REPOSITORY,
-} from '../../src/modules/catalog/domain/repositories/show.repository.interface';
+import { MOVIE_REPOSITORY } from '../../src/modules/catalog/domain/repositories/movie.repository.interface';
+import { SHOW_REPOSITORY } from '../../src/modules/catalog/domain/repositories/show.repository.interface';
 import { CatalogSearchService } from '../../src/modules/catalog/application/services/catalog-search.service';
 import { SearchResponseDto } from '../../src/modules/catalog/presentation/dtos/search.dto';
 import { MEDIA_REPOSITORY } from '../../src/modules/catalog/domain/repositories/media.repository.interface';
 import { TmdbAdapter } from '../../src/modules/tmdb/tmdb.adapter';
 import { FakeMovieRepository, FakeShowRepository } from './_fakes';
 import { createE2eApp, createE2eTestingModule } from '../support/e2e-testing-module';
+import { MOVIE_ONE_ID } from './_fixtures';
 import { testUuid } from '../support/test-uuid';
-
-class InMemoryUsersRepository implements IUsersRepository {
-  private users: User[] = [];
-  async findById(id: string): Promise<User | null> {
-    return this.users.find((u) => u.id === id) ?? null;
-  }
-  async findByEmail(email: string): Promise<User | null> {
-    return this.users.find((u) => u.email === email) ?? null;
-  }
-  async findByUsername(username: string): Promise<User | null> {
-    return this.users.find((u) => u.username === username) ?? null;
-  }
-  async create(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
-    const user: User = {
-      ...data,
-      id: `user-${this.users.length + 1}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      passwordHash: data.passwordHash,
-      avatarUrl: data.avatarUrl ?? null,
-      bio: data.bio ?? null,
-      location: data.location ?? null,
-      website: data.website ?? null,
-      preferredLanguage: data.preferredLanguage ?? null,
-      preferredRegion: data.preferredRegion ?? null,
-      isProfilePublic: data.isProfilePublic ?? true,
-      showWatchHistory: data.showWatchHistory ?? true,
-      showRatings: data.showRatings ?? true,
-      allowFollowers: data.allowFollowers ?? true,
-      autoSubscribeOnWatch: data.autoSubscribeOnWatch ?? true,
-      role: (data.role as User['role']) ?? 'user',
-    } as User;
-    this.users.push(user);
-    return user;
-  }
-  async updateProfile(): Promise<User> {
-    throw new Error('Not implemented');
-  }
-  async updatePassword(id: string, passwordHash: string): Promise<void> {
-    const user = this.users.find((u) => u.id === id);
-    if (user) user.passwordHash = passwordHash;
-  }
-}
-
-class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
-  private tokens: RefreshToken[] = [];
-  async issue(token: Omit<RefreshToken, 'createdAt'>): Promise<RefreshToken> {
-    const issued: RefreshToken = { ...token, createdAt: new Date() } as RefreshToken;
-    this.tokens.push(issued);
-    return issued;
-  }
-  async findById(id: string): Promise<RefreshToken | null> {
-    return this.tokens.find((t) => t.id === id) ?? null;
-  }
-  async findValidByUser(userId: string): Promise<RefreshToken[]> {
-    const now = new Date();
-    return this.tokens.filter((t) => t.userId === userId && !t.revokedAt && t.expiresAt >= now);
-  }
-  async revoke(id: string): Promise<void> {
-    const token = this.tokens.find((t) => t.id === id);
-    if (token) token.revokedAt = new Date();
-  }
-  async revokeIfActive(id: string): Promise<boolean> {
-    const token = this.tokens.find((t) => t.id === id);
-    if (!token || token.revokedAt) return false;
-    token.revokedAt = new Date();
-    return true;
-  }
-  async revokeAllForUser(userId: string): Promise<void> {
-    this.tokens = this.tokens.filter((t) => t.userId !== userId);
-  }
-}
+import { InMemoryRefreshTokensRepository, InMemoryUsersRepository } from '../users/_fakes';
 
 class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   private states: Array<
@@ -288,9 +204,11 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   }
 }
 
+const STUB_MEDIA_ID = testUuid('stub-media');
+
 class FakeMediaRepository {
   async upsertStub(): Promise<{ id: string; slug: string }> {
-    return { id: testUuid('mid-stub'), slug: 'stub' };
+    return { id: STUB_MEDIA_ID, slug: 'stub' };
   }
   async upsert(): Promise<void> {
     return;
@@ -327,7 +245,7 @@ class FakeCatalogSearchService {
         {
           source: 'local' as any,
           type: MediaType.MOVIE,
-          id: testUuid('mid-1'),
+          id: MOVIE_ONE_ID,
           slug: 'movie-one',
           tmdbId: 1,
           title: 'Movie One',
@@ -381,7 +299,6 @@ export async function createCatalogApp(): Promise<CatalogE2eContext> {
   const app = await createE2eApp(moduleFixture);
 
   const authBase = '/api/auth';
-  const catalogBase = '/api/catalog';
 
   const registerAndLogin = async () => {
     const email = `cat${Date.now()}@example.com`;
