@@ -35,7 +35,7 @@
     "lint:all": "turbo run lint",
     "lint:api": "turbo run lint --filter=api",
     "lint:api:fix": "eslint \"apps/api/src/**/*.ts\" --fix",
-    "test:eslint-rules": "node --test eslint-rules/",
+    "test:eslint-rules": "node --test eslint-rules/*.test.mjs",
     "lint:client": "turbo run lint --filter=web-client",
     "test:all": "turbo run test",
     "test:api": "turbo run test --filter=api -- --runInBand",
