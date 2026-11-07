@@ -3,12 +3,12 @@
  * These types are domain-specific and don't depend on presentation or infrastructure layers.
  */
 
-import { type AvailabilityRegion } from '../../../../common/constants/region.constants';
+import { type AvailabilityRegion } from '@/common/constants/region.constants';
 import {
   type VideoSiteEnum,
   type VideoTypeEnum,
   type VideoLanguageEnum,
-} from '../../../../common/enums/video.enum';
+} from '@/common/enums/video.enum';
 
 /**
  * Genre information for media items.

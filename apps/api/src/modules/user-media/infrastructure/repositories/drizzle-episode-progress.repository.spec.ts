@@ -1,5 +1,5 @@
 import { DrizzleEpisodeProgressRepository } from './drizzle-episode-progress.repository';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 describe('DrizzleEpisodeProgressRepository', () => {
   const makeDbMock = () => {

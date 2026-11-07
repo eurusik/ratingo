@@ -26,20 +26,21 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
-import { CATALOG_DEFAULT_CALENDAR_DAYS, CATALOG_MAX_CALENDAR_DAYS } from '../../../../common/constants';
-import { CurrentUser } from '../../../auth/public';
-import { JwtAuthGuard } from '../../../auth/public';
-import { OptionalJwtAuthGuard } from '../../../auth/public';
-import { CardEnrichmentService } from '../../../shared/cards';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards';
-import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
-import { ShowDetailsService } from '../../application/services/show-details.service';
-import { ShowSyncService } from '../../application/services/show-sync.service';
-import { ShowsCalendarService } from '../../application/services/shows-calendar.service';
+import { CATALOG_DEFAULT_CALENDAR_DAYS, CATALOG_MAX_CALENDAR_DAYS } from '@/common/constants';
+import { CurrentUser } from '@/modules/auth/public';
+import { JwtAuthGuard } from '@/modules/auth/public';
+import { OptionalJwtAuthGuard } from '@/modules/auth/public';
+import { CatalogUserStateEnricher } from '@/modules/catalog/application/services/catalog-userstate-enricher.service';
+import { ShowDetailsService } from '@/modules/catalog/application/services/show-details.service';
+import { ShowSyncService } from '@/modules/catalog/application/services/show-sync.service';
+import { ShowsCalendarService } from '@/modules/catalog/application/services/shows-calendar.service';
 import {
   type IShowRepository,
   SHOW_REPOSITORY,
-} from '../../domain/repositories/show.repository.interface';
+} from '@/modules/catalog/domain/repositories/show.repository.interface';
+import { CARD_LIST_CONTEXT } from '@/modules/shared/cards';
+import { CardEnrichmentService } from '@/modules/shared/cards';
+
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesQueryDto } from '../dtos/new-episodes-query.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';

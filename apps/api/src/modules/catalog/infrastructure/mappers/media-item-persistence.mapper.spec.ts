@@ -1,6 +1,6 @@
 import { MediaItemPersistenceMapper } from './media-item-persistence.mapper';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 
 const createBaseMedia = (overrides = {}) => ({
   type: MediaType.MOVIE,

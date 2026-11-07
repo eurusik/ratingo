@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsUUID } from 'class-validator';
 
-import { MAX_PAGE_SIZE } from '../../../../common/constants';
+import { MAX_PAGE_SIZE } from '@/common/constants';
 
 /**
  * Query DTO for batch ratings lookup.

@@ -1,7 +1,10 @@
 import * as fc from 'fast-check';
 
-import type { ProviderMapping, ResolvedMapping } from '../../domain/types/provider.types';
-import { GLOBAL_REGION, normalizeRegion } from '../../domain/utils/region-normalizer';
+import type {
+  ProviderMapping,
+  ResolvedMapping,
+} from '@/modules/provider/domain/types/provider.types';
+import { GLOBAL_REGION, normalizeRegion } from '@/modules/provider/domain/utils/region-normalizer';
 
 import { ProviderMappingService } from './provider-mapping.service';
 

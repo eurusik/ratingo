@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
-import { SHOW_EVENTS } from '../../../user-actions/public';
-import { UserMediaStateChangedEvent } from '../../domain/events/user-media-state-changed.event';
+import { SHOW_EVENTS } from '@/modules/user-actions/public';
+import { UserMediaStateChangedEvent } from '@/modules/user-media/domain/events/user-media-state-changed.event';
 import {
   USER_MEDIA_STATE_REPOSITORY,
   type IUserMediaStateRepository,
-} from '../../domain/repositories/user-media-state.repository.interface';
+} from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
 
 /**
  * Transitions caught_up → watching when a new episode is detected during sync.

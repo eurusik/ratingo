@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   IUserStateProvider,
   USER_STATE_PROVIDER,
-} from '../../domain/ports/user-state-provider.port';
+} from '@/modules/catalog/domain/ports/user-state-provider.port';
 
 import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
 

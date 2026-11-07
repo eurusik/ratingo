@@ -11,17 +11,18 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
-import { AdminJwtGuard } from '../../../auth/public';
-import { KeyHealthService } from '../../application/services/key-health.service';
+import { AdminJwtGuard } from '@/modules/auth/public';
+import { KeyHealthService } from '@/modules/monitoring/application/services/key-health.service';
 import {
   MONITORED_PROVIDERS,
   isMonitoredProvider,
-} from '../../domain/constants/monitored-provider.const';
+} from '@/modules/monitoring/domain/constants/monitored-provider.const';
 import {
   type KeyHealthSnapshot,
   type ProviderKeyHealth,
-} from '../../domain/entities/key-health-snapshot.entity';
-import { KEY_HEALTH_HISTORY_LIMIT } from '../../monitoring.constants';
+} from '@/modules/monitoring/domain/entities/key-health-snapshot.entity';
+import { KEY_HEALTH_HISTORY_LIMIT } from '@/modules/monitoring/monitoring.constants';
+
 import {
   KeyHealthDashboardDto,
   KeyHealthHistoryDto,

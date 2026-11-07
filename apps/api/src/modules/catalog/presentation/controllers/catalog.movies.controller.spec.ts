@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogMoviesController } from './catalog.movies.controller';
-import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
-import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
-import { MovieDetailsService } from '../../application/services/movie-details.service';
+import { MOVIE_REPOSITORY } from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import { CatalogUserStateEnricher } from '@/modules/catalog/application/services/catalog-userstate-enricher.service';
+import { MovieDetailsService } from '@/modules/catalog/application/services/movie-details.service';
 import { NotFoundException } from '@nestjs/common';
-import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards';
+import { CardEnrichmentService } from '@/modules/shared/cards/application/card-enrichment.service';
+import { CARD_LIST_CONTEXT } from '@/modules/shared/cards';
 
 describe('CatalogMoviesController', () => {
   let controller: CatalogMoviesController;

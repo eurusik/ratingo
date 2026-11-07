@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubscriptionTriggerService } from './subscription-trigger.service';
-import { ShowSyncDiff } from '../../ingestion/domain/interfaces/show-sync-diff.interface';
+import { ShowSyncDiff } from '@/modules/ingestion/domain/interfaces/show-sync-diff.interface';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 import { USER_NOTIFICATION_REPOSITORY } from '../domain/repositories/user-notification.repository.interface';
 import { USER_SUBSCRIPTION_REPOSITORY } from '../domain/repositories/user-subscription.repository.interface';

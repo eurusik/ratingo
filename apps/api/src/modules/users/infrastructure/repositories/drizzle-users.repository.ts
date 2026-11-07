@@ -4,15 +4,14 @@ import { eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '@/common/utils/db-error.utils';
-
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type User } from '../../domain/entities/user.entity';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type User } from '@/modules/users/domain/entities/user.entity';
 import {
   type CreateUserData,
   type IUsersRepository,
   type UpdateUserProfileData,
-} from '../../domain/repositories/users.repository.interface';
+} from '@/modules/users/domain/repositories/users.repository.interface';
 
 /**
  * Drizzle implementation of Users repository.

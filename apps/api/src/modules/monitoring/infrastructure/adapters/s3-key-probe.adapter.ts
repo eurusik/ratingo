@@ -3,9 +3,9 @@ import { ConfigService } from '@nestjs/config';
 
 import { HeadBucketCommand, S3Client } from '@aws-sdk/client-s3';
 
-import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
-import { MONITORED_PROVIDER } from '../../domain/constants/monitored-provider.const';
-import { type KeyProbeResult } from '../../domain/ports/key-probe.port';
+import { API_KEY_STATUS } from '@/modules/monitoring/domain/constants/api-key-status.const';
+import { MONITORED_PROVIDER } from '@/modules/monitoring/domain/constants/monitored-provider.const';
+import { type KeyProbeResult } from '@/modules/monitoring/domain/ports/key-probe.port';
 
 import { BaseKeyProbe } from './base-key-probe';
 import { PROBE_TIMEOUT_MS } from './probe-http.util';

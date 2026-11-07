@@ -12,15 +12,18 @@ import {
   CATALOG_POLICY_REPOSITORY,
   CATALOG_EVALUATION_RUN_REPOSITORY,
   POLICY_ACTIVATION_REPOSITORY,
-} from '../../domain/repositories';
-import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
-import { ACTIVE_EVALUATION_CONTEXTS } from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/repositories';
+import {
+  CATALOG_POLICY_QUEUE,
+  CATALOG_POLICY_JOBS,
+} from '@/modules/catalog-policy/catalog-policy.constants';
+import { ACTIVE_EVALUATION_CONTEXTS } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   PolicyNotFoundError,
   RunNotFoundError,
   PolicyAlreadyActiveError,
   RunAlreadyInProgressError,
-} from '../../domain/errors';
+} from '@/modules/catalog-policy/domain/errors';
 
 describe('PolicyActivationService', () => {
   let service: PolicyActivationService;

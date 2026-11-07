@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { USER_MEDIA_STATE } from '../../../user-media/public';
-import { UserMediaStateChangedEvent } from '../../../user-media/public';
-import { SUBSCRIPTION_CONTEXT } from '../../domain/constants/subscription.constants';
-import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
+import { SUBSCRIPTION_CONTEXT } from '@/modules/user-actions/domain/constants/subscription.constants';
+import { SUBSCRIPTION_TRIGGER } from '@/modules/user-actions/domain/entities/user-subscription.entity';
+import { USER_MEDIA_STATE } from '@/modules/user-media/public';
+import { UserMediaStateChangedEvent } from '@/modules/user-media/public';
+
 import { SubscriptionsService } from '../subscriptions.service';
 
 @Injectable()

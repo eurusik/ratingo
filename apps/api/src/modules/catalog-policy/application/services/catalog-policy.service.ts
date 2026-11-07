@@ -4,13 +4,16 @@
 
 import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 
-import { InvalidEligibilityStatusError, InvalidBreakoutRuleError } from '../../domain/errors';
+import {
+  InvalidEligibilityStatusError,
+  InvalidBreakoutRuleError,
+} from '@/modules/catalog-policy/domain/errors';
 import {
   CATALOG_POLICY_REPOSITORY,
   type ICatalogPolicyRepository,
-} from '../../domain/repositories';
-import { type CatalogPolicy } from '../../domain/types/policy.types';
-import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
+} from '@/modules/catalog-policy/domain/repositories';
+import { type CatalogPolicy } from '@/modules/catalog-policy/domain/types/policy.types';
+import { validatePolicyOrThrow } from '@/modules/catalog-policy/domain/validation/policy.schema';
 
 @Injectable()
 export class CatalogPolicyService {

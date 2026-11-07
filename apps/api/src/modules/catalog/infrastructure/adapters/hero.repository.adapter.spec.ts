@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { type HeroMediaItem } from '@/common/types/hero-media.types';
 import { HeroMediaQuery } from '../queries/hero-media.query';
 import { WatchingNowMediaQuery } from '../queries/watching-now-media.query';
 

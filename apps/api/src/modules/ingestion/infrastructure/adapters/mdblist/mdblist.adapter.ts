@@ -2,23 +2,23 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { PG_INT_MAX } from '../../../../../common/constants/database.constants';
-import { MediaType } from '../../../../../common/enums/media-type.enum';
+import { PG_INT_MAX } from '@/common/constants/database.constants';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   EXTERNAL_API_PROVIDER,
   emitExternalApiFailure,
-} from '../../../../../common/events/external-api-failure.event';
-import { MdblistApiException } from '../../../../../common/exceptions/external-api.exception';
+} from '@/common/events/external-api-failure.event';
+import { MdblistApiException } from '@/common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
   type RetryConfig,
   HttpError,
-} from '../../../../../common/http/resilient-http.client';
-import mdblistConfig from '../../../../../config/mdblist.config';
+} from '@/common/http/resilient-http.client';
+import mdblistConfig from '@/config/mdblist.config';
 import {
   type RottenTomatoesRatings,
   type RottenTomatoesRatingsPort,
-} from '../../../domain/ports/rotten-tomatoes-ratings.port';
+} from '@/modules/ingestion/domain/ports/rotten-tomatoes-ratings.port';
 
 /**
  * Single rating entry in MDBList response.

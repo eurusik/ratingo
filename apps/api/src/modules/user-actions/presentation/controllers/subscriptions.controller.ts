@@ -22,11 +22,11 @@ import {
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { OffsetPaginationQueryDto } from '@/common/dtos/pagination.dto';
+import { CurrentUser } from '@/modules/auth/public';
+import { JwtAuthGuard } from '@/modules/auth/public';
+import { SubscriptionsService } from '@/modules/user-actions/application/subscriptions.service';
+import { SUBSCRIPTION_TRIGGER } from '@/modules/user-actions/domain/entities/user-subscription.entity';
 
-import { CurrentUser } from '../../../auth/public';
-import { JwtAuthGuard } from '../../../auth/public';
-import { SubscriptionsService } from '../../application/subscriptions.service';
-import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
 import {
   SubscribeDto,
   UnsubscribeDto,

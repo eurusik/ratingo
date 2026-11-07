@@ -1,11 +1,12 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../../common/constants';
-import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { type MediaType } from '../../../common/enums/media-type.enum';
-import { AppException } from '../../../common/exceptions/app.exception';
-import { NotFoundException } from '../../../common/exceptions/not-found.exception';
-import { RATING_SYNC_PORT, type IRatingSyncPort } from '../../user-media/public';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/common/constants';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { AppException } from '@/common/exceptions/app.exception';
+import { NotFoundException } from '@/common/exceptions/not-found.exception';
+import { RATING_SYNC_PORT, type IRatingSyncPort } from '@/modules/user-media/public';
+
 import { REVIEW_LIMITS, REVIEW_SORT, type ReviewSort } from '../domain/constants/review.constants';
 import type {
   Review,

@@ -1,5 +1,5 @@
 import { CreditsMapper } from './credits.mapper';
-import { Credits } from '../../../shared/contracts';
+import { Credits } from '@/modules/shared/contracts';
 
 describe('CreditsMapper', () => {
   it('should map cast members correctly with slug and personId', () => {

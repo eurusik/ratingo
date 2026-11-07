@@ -15,15 +15,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, and, isNull, desc, asc, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   DEFAULT_EVALUATION_CONTEXT,
   type EligibilityStatusType,
-} from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 
 export const ADMIN_CATALOG_REPOSITORY = 'ADMIN_CATALOG_REPOSITORY';
 

@@ -1,5 +1,5 @@
 import { MovieVerdictService, computeMovieVerdict } from './movie-verdict.service';
-import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
+import { ReleaseStatus } from '@/common/enums/release-status.enum';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 
 const mockClock = { now: () => new Date() };

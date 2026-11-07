@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PublicUsersController } from './public-users.controller';
-import { UsersService } from '../../application/users.service';
+import { UsersService } from '@/modules/users/application/users.service';
 import { NotFoundException } from '@nestjs/common';
-import { PublicUserMediaService } from '../../application/public-user-media.service';
+import { PublicUserMediaService } from '@/modules/users/application/public-user-media.service';
 
 describe('PublicUsersController', () => {
   let controller: PublicUsersController;

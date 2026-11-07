@@ -1,4 +1,4 @@
-import * as schema from '../../../../../database/schema';
+import * as schema from '@/database/schema';
 
 import { type HeroQueryRow } from './hero-item.mapper';
 

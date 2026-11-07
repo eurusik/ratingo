@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import traktConfig from '../../config/trakt.config';
+import traktConfig from '@/config/trakt.config';
 
 import { TRAKT_LISTS_PORT } from './domain/ports/trakt-lists.port';
 import { TRAKT_RATINGS_PORT } from './domain/ports/trakt-ratings.port';

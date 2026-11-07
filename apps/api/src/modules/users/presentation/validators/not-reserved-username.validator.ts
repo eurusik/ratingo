@@ -4,7 +4,7 @@ import {
   type ValidationOptions,
 } from 'class-validator';
 
-import { RESERVED_USERNAMES } from '../../domain/constants/reserved-usernames';
+import { RESERVED_USERNAMES } from '@/modules/users/domain/constants/reserved-usernames';
 
 export function IsNotReservedUsername(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {

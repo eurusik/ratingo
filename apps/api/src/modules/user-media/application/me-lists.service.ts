@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { type MediaType } from '../../../common/enums/media-type.enum';
-import { SAVED_ITEM_LIST, SavedItemsService } from '../../user-actions/public';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { SAVED_ITEM_LIST, SavedItemsService } from '@/modules/user-actions/public';
+
 import {
   FAVORITE_UPDATES_DAYS_AHEAD,
   FAVORITE_UPDATES_DAYS_BACK,

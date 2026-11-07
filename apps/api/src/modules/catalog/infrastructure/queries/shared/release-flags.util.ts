@@ -1,7 +1,7 @@
 import {
   NEW_RELEASE_THRESHOLDS,
   CLASSIC_THRESHOLDS,
-} from '../../../domain/constants/catalog.constants';
+} from '@/modules/catalog/domain/constants/catalog.constants';
 
 /**
  * Release status flags for media items.

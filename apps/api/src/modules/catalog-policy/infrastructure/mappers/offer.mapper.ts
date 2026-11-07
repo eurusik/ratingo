@@ -5,8 +5,8 @@
  * Used by PolicyInputRepository and DryRunRepository.
  */
 
-import { type MediaWatchOfferView } from '../../../provider/public';
-import { type NormalizedOffer } from '../../domain/types/policy.types';
+import { type NormalizedOffer } from '@/modules/catalog-policy/domain/types/policy.types';
+import { type MediaWatchOfferView } from '@/modules/provider/public';
 
 /**
  * Maps MediaWatchOfferView array to NormalizedOffer array for policy engine.

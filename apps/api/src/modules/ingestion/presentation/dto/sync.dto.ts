@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
 
-import { DEFAULT_REGION, NEW_RELEASES_REGION } from '../../../../common/constants';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DEFAULT_REGION, NEW_RELEASES_REGION } from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 /**
  * DTO for single media sync request.

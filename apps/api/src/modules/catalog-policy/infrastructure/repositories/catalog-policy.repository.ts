@@ -7,12 +7,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, desc } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { PolicyNotFoundError } from '../../domain/errors';
-import type { ICatalogPolicyRepository } from '../../domain/repositories';
-import type { CatalogPolicy, PolicyConfig } from '../../domain/types/policy.types';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { PolicyNotFoundError } from '@/modules/catalog-policy/domain/errors';
+import type { ICatalogPolicyRepository } from '@/modules/catalog-policy/domain/repositories';
+import type {
+  CatalogPolicy,
+  PolicyConfig,
+} from '@/modules/catalog-policy/domain/types/policy.types';
 
 @Injectable()
 export class CatalogPolicyRepository implements ICatalogPolicyRepository {

@@ -7,19 +7,19 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { ErrorCode } from '../../../../common/enums/error-code.enum';
-import { NotFoundException } from '../../../../common/exceptions';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { NotFoundException } from '@/common/exceptions';
 import {
   type IProviderMappingRepository,
   PROVIDER_MAPPING_REPOSITORY,
-} from '../../domain/repositories/provider-mapping.repository.interface';
+} from '@/modules/provider/domain/repositories/provider-mapping.repository.interface';
 import type {
   ProviderMapping,
   CreateMappingDto,
   UpdateMappingDto,
   ResolvedMapping,
-} from '../../domain/types/provider.types';
-import { normalizeRegion } from '../../domain/utils/region-normalizer';
+} from '@/modules/provider/domain/types/provider.types';
+import { normalizeRegion } from '@/modules/provider/domain/utils/region-normalizer';
 
 @Injectable()
 export class ProviderMappingService {

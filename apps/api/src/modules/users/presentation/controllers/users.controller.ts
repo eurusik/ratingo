@@ -17,10 +17,11 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/public';
-import { JwtAuthGuard } from '../../../auth/public';
-import { AvatarUploadService } from '../../application/avatar-upload.service';
-import { UsersService } from '../../application/users.service';
+import { CurrentUser } from '@/modules/auth/public';
+import { JwtAuthGuard } from '@/modules/auth/public';
+import { AvatarUploadService } from '@/modules/users/application/avatar-upload.service';
+import { UsersService } from '@/modules/users/application/users.service';
+
 import { AvatarUploadUrlDto, CreateAvatarUploadUrlDto } from '../dto/avatar-upload.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 

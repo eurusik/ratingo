@@ -2,15 +2,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { IsIn, IsOptional } from 'class-validator';
 
-import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../common/dtos';
-import { ImageDto } from '../../../../common/dtos/image.dto';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '@/common/dtos';
+import { ImageDto } from '@/common/dtos/image.dto';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   USER_MEDIA_LIST_SORT,
   type UserMediaListSort,
   type UserMediaState,
   USER_MEDIA_STATE_VALUES,
-} from '../../../user-media/public';
+} from '@/modules/user-media/public';
 
 const USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
 

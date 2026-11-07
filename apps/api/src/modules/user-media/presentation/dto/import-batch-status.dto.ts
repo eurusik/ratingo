@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IMPORT_BATCH_STATUS,
   type ImportBatchStatus,
-} from '../../domain/constants/import-pending.constants';
+} from '@/modules/user-media/domain/constants/import-pending.constants';
 
 /**
  * Status of an auto-ingest import batch.

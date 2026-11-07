@@ -1,7 +1,7 @@
 import { HttpStatus, Logger, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import authConfig from '../../../../config/auth.config';
+import authConfig from '@/config/auth.config';
 import { OAuthExceptionFilter } from './oauth-exception.filter';
 
 // ---------------------------------------------------------------------------

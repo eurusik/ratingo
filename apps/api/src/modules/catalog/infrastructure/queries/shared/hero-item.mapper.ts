@@ -1,15 +1,12 @@
 import { and, desc, eq, inArray, lte } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MS_PER_DAY } from '../../../../../common/constants';
-import { MediaType } from '../../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../../common/mappers/image.mapper';
-import {
-  type HeroMediaItem,
-  type HeroShowProgress,
-} from '../../../../../common/types/hero-media.types';
-import * as schema from '../../../../../database/schema';
-import { HERO_THRESHOLDS } from '../../../domain/constants/catalog.constants';
+import { MS_PER_DAY } from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { type HeroMediaItem, type HeroShowProgress } from '@/common/types/hero-media.types';
+import * as schema from '@/database/schema';
+import { HERO_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
 
 /**
  * Raw row type from hero/watching-now queries.

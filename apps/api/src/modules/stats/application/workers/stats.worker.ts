@@ -3,10 +3,11 @@ import { Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
-import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants';
-import { toError } from '../../../../common/utils/error.utils';
-import { WORKER_CONFIG } from '../../../../config/queue.config';
-import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
+import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '@/common/constants';
+import { toError } from '@/common/utils/error.utils';
+import { WORKER_CONFIG } from '@/config/queue.config';
+import { STATS_QUEUE, STATS_JOBS } from '@/modules/stats/stats.constants';
+
 import { DropOffService, StatsBackfillService, TrendingSyncService } from '../services';
 import { CommunityRatingService } from '../services/community-rating.service';
 

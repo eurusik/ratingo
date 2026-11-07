@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 /**
  * Query DTO for the syncTrending endpoint.

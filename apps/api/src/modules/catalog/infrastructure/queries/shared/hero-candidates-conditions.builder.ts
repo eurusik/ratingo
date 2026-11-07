@@ -4,9 +4,8 @@ import { MS_PER_HOUR, MS_PER_DAY } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 import * as schema from '@/database/schema';
 import { allOf, anyOf } from '@/database/sql-conditions';
+import { HERO_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
 import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
-
-import { HERO_THRESHOLDS } from '../../../domain/constants/catalog.constants';
 
 /**
  * Options for building hero candidates conditions.

@@ -2,8 +2,11 @@ import { Logger } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../../catalog-policy.constants';
-import { RunFinalizeService } from '../../services/run-finalize.service';
+import {
+  CATALOG_POLICY_QUEUE,
+  CATALOG_POLICY_JOBS,
+} from '@/modules/catalog-policy/catalog-policy.constants';
+import { RunFinalizeService } from '@/modules/catalog-policy/application/services/run-finalize.service';
 
 import { WatchdogHandler } from './watchdog.handler';
 

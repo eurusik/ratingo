@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { type ImageDto } from '../../../../common/dtos/image.dto';
-import { type CardMetaDto } from '../../../shared/cards';
-import { type UserMediaState } from '../../domain/entities/user-media-state.entity';
+import { type ImageDto } from '@/common/dtos/image.dto';
+import { type CardMetaDto } from '@/modules/shared/cards';
+import { type UserMediaState } from '@/modules/user-media/domain/entities/user-media-state.entity';
 
 export class UserMediaStateDto implements UserMediaState {
   @ApiProperty({ example: '5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b' })

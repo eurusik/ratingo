@@ -13,12 +13,12 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import type * as schema from '../../../../database/schema';
-import type { Credits, WatchProvidersMap } from '../../../shared/contracts';
-import { TRENDING_GATE } from '../../catalog-policy.constants';
+import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '@/common/constants';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import type * as schema from '@/database/schema';
+import { TRENDING_GATE } from '@/modules/catalog-policy/catalog-policy.constants';
+import type { Credits, WatchProvidersMap } from '@/modules/shared/contracts';
 
 export const PUBLIC_CATALOG_REPOSITORY = 'PUBLIC_CATALOG_REPOSITORY';
 

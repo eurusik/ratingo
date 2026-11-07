@@ -1,5 +1,5 @@
-import { MS_PER_DAY } from '../../../../../common/constants';
-import { WATCHING_NOW_THRESHOLDS } from '../../../domain/constants/catalog.constants';
+import { MS_PER_DAY } from '@/common/constants';
+import { WATCHING_NOW_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
 
 import {
   buildWatchingNowConditions,

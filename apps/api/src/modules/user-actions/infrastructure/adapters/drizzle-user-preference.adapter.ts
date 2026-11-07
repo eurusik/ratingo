@@ -3,9 +3,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type IUserPreferencePort } from '../../domain/ports/user-preference.port';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type IUserPreferencePort } from '@/modules/user-actions/domain/ports/user-preference.port';
 
 @Injectable()
 export class DrizzleUserPreferenceAdapter implements IUserPreferencePort {

@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { REPORT_REASON } from '../../domain/constants/review.constants';
-import { ReviewReportsService } from '../../application/review-reports.service';
-import { ReviewsService } from '../../application/reviews.service';
+import { REPORT_REASON } from '@/modules/reviews/domain/constants/review.constants';
+import { ReviewReportsService } from '@/modules/reviews/application/review-reports.service';
+import { ReviewsService } from '@/modules/reviews/application/reviews.service';
 import { AdminReviewsController } from './admin-reviews.controller';
 
 describe('AdminReviewsController', () => {

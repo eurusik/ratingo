@@ -19,10 +19,11 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/public';
-import { AdminJwtGuard } from '../../../auth/public';
-import { ReviewReportsService } from '../../application/review-reports.service';
-import { ReviewsService } from '../../application/reviews.service';
+import { CurrentUser } from '@/modules/auth/public';
+import { AdminJwtGuard } from '@/modules/auth/public';
+import { ReviewReportsService } from '@/modules/reviews/application/review-reports.service';
+import { ReviewsService } from '@/modules/reviews/application/reviews.service';
+
 import {
   AdminReportQueryDto,
   AdminReportListResponseDto,

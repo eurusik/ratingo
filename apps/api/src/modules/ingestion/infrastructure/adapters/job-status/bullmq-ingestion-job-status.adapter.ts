@@ -3,13 +3,13 @@ import { Injectable } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
 
-import { MediaType } from '../../../../../common/enums/media-type.enum';
-import { mapBullStateToJobStatus } from '../../../../../common/infrastructure/bullmq/job-status-mapper';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { mapBullStateToJobStatus } from '@/common/infrastructure/bullmq/job-status-mapper';
 import {
   type IngestionJobStatus,
   type IngestionJobStatusPort,
-} from '../../../domain/ports/ingestion-job-status.port';
-import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion.constants';
+} from '@/modules/ingestion/domain/ports/ingestion-job-status.port';
+import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
 
 const SYNC_JOB_MEDIA_TYPE: Partial<Record<string, MediaType>> = {
   [IngestionJob.SYNC_MOVIE]: MediaType.MOVIE,

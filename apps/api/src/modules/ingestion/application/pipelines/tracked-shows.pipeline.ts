@@ -1,18 +1,18 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { toError } from '@/common/utils/error.utils';
-
-import {
-  SubscriptionTriggerService,
-  type IUserSubscriptionRepository,
-  USER_SUBSCRIPTION_REPOSITORY,
-} from '../../../user-actions/public';
 import {
   IngestionJob,
   TRACKED_SHOWS_CHUNK_SIZE,
   TRACKED_SHOWS_BULK_LIMIT,
   TMDB_REQUEST_DELAY_MS,
-} from '../../ingestion.constants';
+} from '@/modules/ingestion/ingestion.constants';
+import {
+  SubscriptionTriggerService,
+  type IUserSubscriptionRepository,
+  USER_SUBSCRIPTION_REPOSITORY,
+} from '@/modules/user-actions/public';
+
 import { hashIds, formatHourWindow, chunkArray } from '../helpers/queue.helpers';
 import { BulkJobService, type BulkEnqueueResult } from '../services/bulk-job.service';
 import { TrackedSyncService } from '../services/tracked-sync.service';

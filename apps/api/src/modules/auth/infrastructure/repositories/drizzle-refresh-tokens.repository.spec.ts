@@ -1,6 +1,6 @@
 import { DrizzleRefreshTokensRepository } from './drizzle-refresh-tokens.repository';
-import * as schema from '../../../../database/schema';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import * as schema from '@/database/schema';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 describe('DrizzleRefreshTokensRepository', () => {
   const baseRow = {

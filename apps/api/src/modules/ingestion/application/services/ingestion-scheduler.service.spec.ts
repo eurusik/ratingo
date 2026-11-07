@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { IngestionSchedulerService } from './ingestion-scheduler.service';
 import { getQueueToken } from '@nestjs/bullmq';
-import { INGESTION_QUEUE } from '../../ingestion.constants';
-import schedulerConfig from '../../../../config/scheduler.config';
+import { INGESTION_QUEUE } from '@/modules/ingestion/ingestion.constants';
+import schedulerConfig from '@/config/scheduler.config';
 
 describe('IngestionSchedulerService', () => {
   let service: IngestionSchedulerService;

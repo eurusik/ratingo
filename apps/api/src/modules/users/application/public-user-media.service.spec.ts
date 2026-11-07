@@ -1,11 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { PublicUserMediaService } from './public-user-media.service';
 import { UsersService } from './users.service';
-import { UserMediaService } from '../../user-media/application/user-media.service';
+import { UserMediaService } from '@/modules/user-media/application/user-media.service';
 import {
   USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_WATCHLIST_STATES,
-} from '../../user-media/domain/entities/user-media-state.entity';
+} from '@/modules/user-media/domain/entities/user-media-state.entity';
 
 describe('PublicUserMediaService', () => {
   const usersService = {

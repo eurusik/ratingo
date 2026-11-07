@@ -2,12 +2,9 @@ import { Injectable } from '@nestjs/common';
 
 import { type Counter, metrics } from '@opentelemetry/api';
 
-import {
-  EXTERNAL_API_FAILURES_METRIC,
-  METER_NAME,
-} from '../../../../telemetry/telemetry.constants';
-import { type MonitoredProvider } from '../../domain/constants/monitored-provider.const';
-import { type KeyHealthMetricsPort } from '../../domain/ports/key-health-metrics.port';
+import { type MonitoredProvider } from '@/modules/monitoring/domain/constants/monitored-provider.const';
+import { type KeyHealthMetricsPort } from '@/modules/monitoring/domain/ports/key-health-metrics.port';
+import { EXTERNAL_API_FAILURES_METRIC, METER_NAME } from '@/telemetry/telemetry.constants';
 
 @Injectable()
 export class OtelKeyHealthMetricsAdapter implements KeyHealthMetricsPort {

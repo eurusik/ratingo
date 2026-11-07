@@ -4,13 +4,13 @@ import { Injectable, Inject, Logger, UnauthorizedException } from '@nestjs/commo
 import { type ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
+import { MS_PER_SECOND, MS_PER_MINUTE, MS_PER_HOUR, MS_PER_DAY } from '@/common/constants';
+import { DevTiming } from '@/common/utils/dev-timing';
 import { errorMessage } from '@/common/utils/error.utils';
+import authConfig from '@/config/auth.config';
+import { UsersService } from '@/modules/users/public';
+import { type User } from '@/modules/users/public';
 
-import { MS_PER_SECOND, MS_PER_MINUTE, MS_PER_HOUR, MS_PER_DAY } from '../../../common/constants';
-import { DevTiming } from '../../../common/utils/dev-timing';
-import authConfig from '../../../config/auth.config';
-import { UsersService } from '../../users/public';
-import { type User } from '../../users/public';
 import {
   type IRefreshTokensRepository,
   REFRESH_TOKENS_REPOSITORY,

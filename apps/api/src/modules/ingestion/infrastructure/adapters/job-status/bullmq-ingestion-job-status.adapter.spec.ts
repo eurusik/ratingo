@@ -1,5 +1,5 @@
-import { MediaType } from '../../../../../common/enums/media-type.enum';
-import { IngestionJob } from '../../../ingestion.constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 
 import { BullMqIngestionJobStatusAdapter } from './bullmq-ingestion-job-status.adapter';
 

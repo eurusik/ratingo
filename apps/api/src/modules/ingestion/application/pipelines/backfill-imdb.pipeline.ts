@@ -5,13 +5,16 @@ import { Queue } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
-
-import { TmdbAdapter } from '../../../tmdb/public';
 import {
   IMDB_BACKFILL_REPOSITORY,
   type IImdbBackfillRepository,
-} from '../../domain/repositories/imdb-backfill.repository.interface';
-import { BACKFILL_QUEUE, IngestionJob, TMDB_BACKFILL_RUN_CAP } from '../../ingestion.constants';
+} from '@/modules/ingestion/domain/repositories/imdb-backfill.repository.interface';
+import {
+  BACKFILL_QUEUE,
+  IngestionJob,
+  TMDB_BACKFILL_RUN_CAP,
+} from '@/modules/ingestion/ingestion.constants';
+import { TmdbAdapter } from '@/modules/tmdb/public';
 
 /**
  * Batch size for backfill dispatcher pagination.

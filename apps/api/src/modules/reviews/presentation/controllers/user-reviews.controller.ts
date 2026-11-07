@@ -21,12 +21,13 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/public';
-import { JwtAuthGuard } from '../../../auth/public';
-import { ReviewRepliesService } from '../../application/review-replies.service';
-import { ReviewReportsService } from '../../application/review-reports.service';
-import { ReviewVotesService } from '../../application/review-votes.service';
-import { ReviewsService } from '../../application/reviews.service';
+import { CurrentUser } from '@/modules/auth/public';
+import { JwtAuthGuard } from '@/modules/auth/public';
+import { ReviewRepliesService } from '@/modules/reviews/application/review-replies.service';
+import { ReviewReportsService } from '@/modules/reviews/application/review-reports.service';
+import { ReviewVotesService } from '@/modules/reviews/application/review-votes.service';
+import { ReviewsService } from '@/modules/reviews/application/reviews.service';
+
 import {
   CreateReviewDto,
   UpdateReviewDto,

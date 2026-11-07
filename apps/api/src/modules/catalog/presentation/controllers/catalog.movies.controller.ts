@@ -1,21 +1,19 @@
 import { Controller, Get, Inject, Param, Query, UseFilters, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import {
-  CATALOG_DEFAULT_NEW_RELEASE_DAYS,
-  CATALOG_DEFAULT_DIGITAL_DAYS,
-} from '../../../../common/constants';
-import { CurrentUser } from '../../../auth/public';
-import { OptionalJwtAuthGuard } from '../../../auth/public';
-import { CardEnrichmentService } from '../../../shared/cards';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards';
-import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
-import { MovieDetailsService } from '../../application/services/movie-details.service';
+import { CATALOG_DEFAULT_NEW_RELEASE_DAYS, CATALOG_DEFAULT_DIGITAL_DAYS } from '@/common/constants';
+import { CurrentUser } from '@/modules/auth/public';
+import { OptionalJwtAuthGuard } from '@/modules/auth/public';
+import { CatalogUserStateEnricher } from '@/modules/catalog/application/services/catalog-userstate-enricher.service';
+import { MovieDetailsService } from '@/modules/catalog/application/services/movie-details.service';
 import {
   type IMovieRepository,
   MOVIE_REPOSITORY,
-} from '../../domain/repositories/movie.repository.interface';
-import type { EnrichedMovieDetails } from '../../domain/types';
+} from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import type { EnrichedMovieDetails } from '@/modules/catalog/domain/types';
+import { CARD_LIST_CONTEXT } from '@/modules/shared/cards';
+import { CardEnrichmentService } from '@/modules/shared/cards';
+
 import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
 import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 import { MovieResponseDto } from '../dtos/movie-response.dto';

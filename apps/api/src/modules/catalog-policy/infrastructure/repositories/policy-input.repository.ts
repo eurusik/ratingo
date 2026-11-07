@@ -10,19 +10,20 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { eq, inArray, isNull, and, gt, lte, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import {
-  type IMediaWatchOffersRepository,
-  MEDIA_WATCH_OFFERS_REPOSITORY,
-} from '../../../provider/public';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type IPolicyInputRepository,
   type FetchBatchIdsOptions,
-} from '../../domain/repositories/policy-input.repository.interface';
-import { type PolicyEngineInput } from '../../domain/types/policy.types';
+} from '@/modules/catalog-policy/domain/repositories/policy-input.repository.interface';
+import { type PolicyEngineInput } from '@/modules/catalog-policy/domain/types/policy.types';
+import {
+  type IMediaWatchOffersRepository,
+  MEDIA_WATCH_OFFERS_REPOSITORY,
+} from '@/modules/provider/public';
+
 import { mapOffersByMediaItemToNormalized, mapOffersToNormalized } from '../mappers/offer.mapper';
 import {
   type MediaItemRow,

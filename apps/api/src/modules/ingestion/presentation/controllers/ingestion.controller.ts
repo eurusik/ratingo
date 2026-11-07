@@ -24,25 +24,28 @@ import {
 
 import { type Queue } from 'bullmq';
 
-import { formatUtcDayId } from '@/common/utils/date.util';
-
 import {
   DEFAULT_REGION,
   CATALOG_DEFAULT_NEW_RELEASE_DAYS,
   NEW_RELEASES_REGION,
-} from '../../../../common/constants';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { AdminJwtGuard } from '../../../auth/public';
-import { normalizeRegion, formatHourWindow } from '../../application/helpers/queue.helpers';
-import { IngestionJobStatusService } from '../../application/services/ingestion-job-status.service';
-import { SyncMediaService } from '../../application/services/sync-media.service';
+} from '@/common/constants';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { formatUtcDayId } from '@/common/utils/date.util';
+import { AdminJwtGuard } from '@/modules/auth/public';
+import {
+  normalizeRegion,
+  formatHourWindow,
+} from '@/modules/ingestion/application/helpers/queue.helpers';
+import { IngestionJobStatusService } from '@/modules/ingestion/application/services/ingestion-job-status.service';
+import { SyncMediaService } from '@/modules/ingestion/application/services/sync-media.service';
 import {
   INGESTION_QUEUE,
   IngestionJob,
   TRENDING_DEFAULT_PAGES,
   TMDB_TRENDING_PAGE_SIZE,
-} from '../../ingestion.constants';
+} from '@/modules/ingestion/ingestion.constants';
+
 import {
   IngestionJobResponseDto,
   SyncDto,

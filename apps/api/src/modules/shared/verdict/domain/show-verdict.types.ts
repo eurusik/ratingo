@@ -4,7 +4,7 @@
  * Types for show verdict computation.
  */
 
-import { type ShowStatus } from '../../../../common/enums/show-status.enum';
+import { type ShowStatus } from '@/common/enums/show-status.enum';
 
 import type { PopularitySignal } from './popularity-signal';
 import { type ExternalRatings, type BaseVerdict } from './verdict.types';

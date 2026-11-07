@@ -1,6 +1,6 @@
 import { TrendingShowsQuery } from './trending-shows.query';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 const dateFrom = (offsetDays: number) => {
   const d = new Date();

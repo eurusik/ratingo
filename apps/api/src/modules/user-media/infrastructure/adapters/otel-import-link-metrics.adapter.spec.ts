@@ -1,7 +1,7 @@
 import { metrics } from '@opentelemetry/api';
 
-import { IMPORT_LINK_SWEEP_METRIC } from '../../../../telemetry/telemetry.constants';
-import { createTestMeterProvider } from '../../../../telemetry/telemetry.testing';
+import { IMPORT_LINK_SWEEP_METRIC } from '@/telemetry/telemetry.constants';
+import { createTestMeterProvider } from '@/telemetry/telemetry.testing';
 
 import { OtelImportLinkMetricsAdapter } from './otel-import-link-metrics.adapter';
 

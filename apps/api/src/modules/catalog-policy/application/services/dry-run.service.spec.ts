@@ -4,16 +4,19 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { DryRunService, DryRunOptions } from './dry-run.service';
-import dryRunConfig from '../../../../config/dry-run.config';
+import dryRunConfig from '@/config/dry-run.config';
 import { CatalogPolicyService } from './catalog-policy.service';
-import { PolicyConfig, PolicyEngineInput } from '../../domain/types/policy.types';
-import { DRY_RUN_REPOSITORY } from '../../domain/repositories';
+import {
+  PolicyConfig,
+  PolicyEngineInput,
+} from '@/modules/catalog-policy/domain/types/policy.types';
+import { DRY_RUN_REPOSITORY } from '@/modules/catalog-policy/domain/repositories';
 import {
   MissingModeParameterError,
   InvalidLimitError,
   InvalidSamplePercentError,
   UnknownDryRunModeError,
-} from '../../domain/errors';
+} from '@/modules/catalog-policy/domain/errors';
 
 describe('DryRunService', () => {
   let service: DryRunService;

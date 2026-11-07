@@ -6,7 +6,7 @@
  */
 
 // Re-export for convenience within verdict module
-export type { ExternalRatings } from '../../../../common/types/media.types';
+export type { ExternalRatings } from '@/common/types/media.types';
 
 /**
  * Verdict type for UI styling.

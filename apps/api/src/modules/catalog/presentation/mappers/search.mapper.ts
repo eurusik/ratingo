@@ -1,10 +1,10 @@
 import { ImageMapper } from '@/common/mappers/image.mapper';
-
 import {
   type HybridSearchResult,
   type LocalSearchResultItem,
   type TmdbSearchResultItem,
-} from '../../domain/types/search.types';
+} from '@/modules/catalog/domain/types/search.types';
+
 import { type SearchItemDto, type SearchResponseDto } from '../dtos/search.dto';
 
 /**

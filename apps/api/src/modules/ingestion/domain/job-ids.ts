@@ -1,4 +1,4 @@
-import { formatUtcDayId, formatUtcHourId } from '../../../common/utils/date.util';
+import { formatUtcDayId, formatUtcHourId } from '@/common/utils/date.util';
 
 export type SyncMediaJobScope = 'daily' | 'window' | 'oneshot';
 

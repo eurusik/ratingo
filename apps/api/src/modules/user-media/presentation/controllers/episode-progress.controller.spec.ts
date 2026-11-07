@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { EpisodeProgressService } from '../../application/episode-progress.service';
+import { EpisodeProgressService } from '@/modules/user-media/application/episode-progress.service';
 import { EpisodeProgressController } from './episode-progress.controller';
 
 describe('EpisodeProgressController', () => {

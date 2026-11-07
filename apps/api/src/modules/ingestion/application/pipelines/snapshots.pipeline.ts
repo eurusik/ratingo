@@ -1,9 +1,9 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { formatUtcDayId, utcDateFromDayId } from '@/common/utils/date.util';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import { SNAPSHOTS_BATCH_SIZE, SNAPSHOTS_RUN_CAP } from '@/modules/ingestion/ingestion.constants';
 
-import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { SNAPSHOTS_BATCH_SIZE, SNAPSHOTS_RUN_CAP } from '../../ingestion.constants';
 import { normalizeRegion } from '../helpers/queue.helpers';
 import { SnapshotsService } from '../services/snapshots.service';
 

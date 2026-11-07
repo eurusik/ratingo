@@ -9,17 +9,17 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, and, isNull, lte, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { RunStatus } from '../../domain/constants/evaluation.constants';
-import { InvalidRunStateTransitionError } from '../../domain/errors';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { RunStatus } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import { InvalidRunStateTransitionError } from '@/modules/catalog-policy/domain/errors';
 import {
   type IPolicyActivationRepository,
   type CreateRunWithSnapshotInput,
   type CreateRunWithSnapshotResult,
   type PromoteRunInput,
-} from '../../domain/repositories';
+} from '@/modules/catalog-policy/domain/repositories';
 
 @Injectable()
 export class PolicyActivationRepository implements IPolicyActivationRepository {

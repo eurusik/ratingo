@@ -5,12 +5,11 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 
 import { errorMessage } from '@/common/utils/error.utils';
-
-import authConfig from '../../../../config/auth.config';
+import authConfig from '@/config/auth.config';
 import {
   EXCHANGE_CODES_REPOSITORY,
   type IExchangeCodesRepository,
-} from '../../domain/repositories/exchange-codes.repository.interface';
+} from '@/modules/auth/domain/repositories/exchange-codes.repository.interface';
 
 /**
  * Scheduled job for cleaning up expired OAuth exchange codes.

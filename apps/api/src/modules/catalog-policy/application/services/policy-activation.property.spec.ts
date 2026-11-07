@@ -3,7 +3,7 @@ import * as fc from 'fast-check';
 import {
   ACTIVE_EVALUATION_CONTEXTS,
   type EvaluationContextType,
-} from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 
 type RunStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'promoted';
 

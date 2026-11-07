@@ -1,9 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleUserSavedItemRepository } from './drizzle-user-saved-item.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { SAVED_ITEM_LIST } from '../../domain/entities/user-saved-item.entity';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { SAVED_ITEM_LIST } from '@/modules/user-actions/domain/entities/user-saved-item.entity';
 
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
   const thenable: any = {};

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { OffsetPaginationMetaDto } from '../../../../common/dtos';
+import { OffsetPaginationMetaDto } from '@/common/dtos';
 
 import { MovieListItemDto } from './movie-list-item.dto';
 

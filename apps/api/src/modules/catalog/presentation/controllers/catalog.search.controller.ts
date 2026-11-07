@@ -11,11 +11,12 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { OptionalJwtAuthGuard } from '../../../auth/public';
-import { CatalogImportService } from '../../application/services/catalog-import.service';
-import { CatalogSearchService } from '../../application/services/catalog-search.service';
-import { type ImportResult } from '../../domain/types/import.types';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { OptionalJwtAuthGuard } from '@/modules/auth/public';
+import { CatalogImportService } from '@/modules/catalog/application/services/catalog-import.service';
+import { CatalogSearchService } from '@/modules/catalog/application/services/catalog-search.service';
+import { type ImportResult } from '@/modules/catalog/domain/types/import.types';
+
 import { ImportResultDto } from '../dtos/import-result.dto';
 import { SearchResponseDto } from '../dtos/search.dto';
 import { SearchMapper } from '../mappers/search.mapper';

@@ -3,15 +3,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, desc, eq, isNotNull, lte } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type AiredEpisode,
   type ITrackedShowRepository,
   type TrackedShow,
-} from '../../domain/repositories/tracked-show.repository.interface';
+} from '@/modules/ingestion/domain/repositories/tracked-show.repository.interface';
 
 @Injectable()
 export class TrackedShowRepository implements ITrackedShowRepository {

@@ -3,11 +3,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   COMMUNITY_RATING_AGGREGATION_PORT,
   type ICommunityRatingAggregationPort,
-} from '../../domain/ports/community-rating-aggregation.port';
+} from '@/modules/stats/domain/ports/community-rating-aggregation.port';
 import {
   STATS_REPOSITORY,
   type IStatsRepository,
-} from '../../domain/repositories/stats.repository.interface';
+} from '@/modules/stats/domain/repositories/stats.repository.interface';
 
 /** Multiplier for rounding to 2 decimal places. */
 const ROUNDING_PRECISION = 100;

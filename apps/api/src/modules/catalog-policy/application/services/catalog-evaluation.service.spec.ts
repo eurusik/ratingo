@@ -11,12 +11,15 @@ import {
   EligibilityStatus,
   EvaluationContext,
   type EvaluationContextType,
-} from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   POLICY_INPUT_REPOSITORY,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
-} from '../../domain/repositories';
-import type { PolicyEngineInput, PolicyConfig } from '../../domain/types/policy.types';
+} from '@/modules/catalog-policy/domain/repositories';
+import type {
+  PolicyEngineInput,
+  PolicyConfig,
+} from '@/modules/catalog-policy/domain/types/policy.types';
 
 import { CatalogEvaluationService } from './catalog-evaluation.service';
 import { CatalogPolicyService } from './catalog-policy.service';

@@ -5,8 +5,8 @@ import { BulkJobService } from '../services/bulk-job.service';
 import {
   SubscriptionTriggerService,
   USER_SUBSCRIPTION_REPOSITORY,
-} from '../../../user-actions/public';
-import { IngestionJob } from '../../ingestion.constants';
+} from '@/modules/user-actions/public';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 
 describe('TrackedShowsPipeline', () => {
   let pipeline: TrackedShowsPipeline;

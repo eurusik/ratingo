@@ -3,8 +3,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsNumber, IsOptional, Max, Min } from 'class-validator';
 
-import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
-import { ImageDto } from '../../../../common/dtos/image.dto';
+import { ExternalRatingsDto } from '@/common/dtos/external-ratings.dto';
+import { ImageDto } from '@/common/dtos/image.dto';
 
 export class RiseFallStatsDto {
   @ApiProperty({ description: 'Absolute change in watchers count' })

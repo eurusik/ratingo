@@ -1,20 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { getBestRating, isNewRelease } from '../../../../common/utils/media.utils';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards';
-import { isHitQuality } from '../../../shared/cards';
-import { buildCardMeta, extractContinuePoint } from '../../../shared/cards';
-import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
-import { MovieVerdictService } from '../../../shared/verdict';
-import { mapBadgeToPopularitySignal } from '../../../shared/verdict';
-import { MovieNotFoundError } from '../../domain/errors';
+import { getBestRating, isNewRelease } from '@/common/utils/media.utils';
+import { MovieNotFoundError } from '@/modules/catalog/domain/errors';
 import {
   type IMovieRepository,
   MOVIE_REPOSITORY,
   type MovieDetails,
-} from '../../domain/repositories/movie.repository.interface';
-import type { EnrichedMovieDetails } from '../../domain/types';
-import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
+} from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import type { EnrichedMovieDetails } from '@/modules/catalog/domain/types';
+import { computeReleaseStatus } from '@/modules/catalog/domain/utils/release-status.utils';
+import { CARD_LIST_CONTEXT } from '@/modules/shared/cards';
+import { isHitQuality } from '@/modules/shared/cards';
+import { buildCardMeta, extractContinuePoint } from '@/modules/shared/cards';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
+import { MovieVerdictService } from '@/modules/shared/verdict';
+import { mapBadgeToPopularitySignal } from '@/modules/shared/verdict';
 
 import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
 

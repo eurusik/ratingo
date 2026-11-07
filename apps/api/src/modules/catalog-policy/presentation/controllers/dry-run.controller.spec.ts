@@ -4,7 +4,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { DryRunController } from './dry-run.controller';
-import { DryRunService } from '../../application/services/dry-run.service';
+import { DryRunService } from '@/modules/catalog-policy/application/services/dry-run.service';
 
 describe('DryRunController', () => {
   let controller: DryRunController;

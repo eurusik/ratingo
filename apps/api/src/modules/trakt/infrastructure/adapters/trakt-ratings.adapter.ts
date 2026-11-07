@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 
-import { toError } from '../../../../common/utils/error.utils';
+import { toError } from '@/common/utils/error.utils';
 import {
   TRAKT_BATCH_CONCURRENCY,
   TRAKT_BULK_CHUNK_SIZE,
   TRAKT_BULK_CHUNK_DELAY_MS,
   MAX_SEASONS_FOR_ANALYSIS,
-} from '../../domain/constants/trakt.constants';
-import { type TraktRatingsPort } from '../../domain/ports/trakt-ratings.port';
+} from '@/modules/trakt/domain/constants/trakt.constants';
+import { type TraktRatingsPort } from '@/modules/trakt/domain/ports/trakt-ratings.port';
 
 import { BaseTraktHttp } from './base-trakt-http';
 import {

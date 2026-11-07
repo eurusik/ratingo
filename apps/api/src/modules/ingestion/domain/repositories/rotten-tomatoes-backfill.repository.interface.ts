@@ -1,4 +1,5 @@
-import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
+
 import { type RottenTomatoesRatings } from '../ports/rotten-tomatoes-ratings.port';
 
 import { type BackfillPage } from './backfill-page.interface';

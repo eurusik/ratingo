@@ -3,11 +3,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, and, inArray } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { AVAILABILITY_REGIONS } from '../../../../../common/constants/region.constants';
-import { withDbError } from '../../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../../database/database.module';
-import * as schema from '../../../../../database/schema';
-import { type WatchOfferRow } from '../../mappers/media-watch-offers.mapper';
+import { AVAILABILITY_REGIONS } from '@/common/constants/region.constants';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type WatchOfferRow } from '@/modules/catalog/infrastructure/mappers/media-watch-offers.mapper';
 
 /**
  * Shared query for fetching watch offers from media_watch_offers.

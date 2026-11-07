@@ -7,7 +7,8 @@ import {
   USERNAME_MAX_LENGTH,
   USERNAME_MESSAGE,
   USERNAME_REGEX,
-} from '../../../users/public';
+} from '@/modules/users/public';
+
 import { PASSWORD_REGEX, PASSWORD_MESSAGE } from '../validators/password.constants';
 
 export class RegisterDto {

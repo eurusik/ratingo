@@ -1,9 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleUserSubscriptionRepository } from './drizzle-user-subscription.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { SUBSCRIPTION_TRIGGER } from '@/modules/user-actions/domain/entities/user-subscription.entity';
 
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
   const thenable: any = {};

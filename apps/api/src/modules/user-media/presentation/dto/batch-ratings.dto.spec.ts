@@ -6,7 +6,7 @@ import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 
-import { MAX_PAGE_SIZE } from '../../../../common/constants';
+import { MAX_PAGE_SIZE } from '@/common/constants';
 
 import { BatchRatingsQueryDto } from './batch-ratings.dto';
 

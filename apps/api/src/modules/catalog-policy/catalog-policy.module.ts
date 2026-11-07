@@ -9,8 +9,9 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { apiOnly, workerOnly } from '../../common/runtime/app-role';
-import dryRunConfig from '../../config/dry-run.config';
+import { apiOnly, workerOnly } from '@/common/runtime/app-role';
+import dryRunConfig from '@/config/dry-run.config';
+
 import { ProviderModule } from '../provider/provider.module';
 
 import { CatalogEvaluationService } from './application/services/catalog-evaluation.service';

@@ -2,7 +2,7 @@ import type {
   UserMediaListSort,
   UserMediaState,
   UserMediaSummary,
-} from '../../../user-media/public';
+} from '@/modules/user-media/public';
 
 export interface PublicUserMediaListQuery {
   limit?: number;

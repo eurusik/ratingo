@@ -2,22 +2,22 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { MediaType } from '../../../../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   EXTERNAL_API_PROVIDER,
   emitExternalApiFailure,
-} from '../../../../../common/events/external-api-failure.event';
-import { OmdbApiException } from '../../../../../common/exceptions/external-api.exception';
+} from '@/common/events/external-api-failure.event';
+import { OmdbApiException } from '@/common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
   type RetryConfig,
   HttpError,
-} from '../../../../../common/http/resilient-http.client';
-import omdbConfig from '../../../../../config/omdb.config';
+} from '@/common/http/resilient-http.client';
+import omdbConfig from '@/config/omdb.config';
 import {
   type AggregatedRatings,
   type AggregatedRatingsPort,
-} from '../../../domain/ports/aggregated-ratings.port';
+} from '@/modules/ingestion/domain/ports/aggregated-ratings.port';
 
 /**
  * OMDb API rating source entry.

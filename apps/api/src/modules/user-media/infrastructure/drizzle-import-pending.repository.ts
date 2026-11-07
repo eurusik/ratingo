@@ -16,10 +16,11 @@ import {
 } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { IngestionStatus } from '../../../common/enums/ingestion-status.enum';
-import { withDbError } from '../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../database/database.module';
-import * as schema from '../../../database/schema';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+
 import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_FAILURE,

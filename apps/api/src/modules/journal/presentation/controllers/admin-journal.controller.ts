@@ -37,22 +37,19 @@ import type { MultipartFile } from '@fastify/multipart';
 import type { FastifyRequest } from 'fastify';
 
 import { ValidationException } from '@/common/exceptions';
+import { AdminJwtGuard, CurrentUser } from '@/modules/auth/public';
+import {
+  JournalImageService,
+  type UploadedFile,
+} from '@/modules/journal/application/journal-image.service';
+import {
+  generateExcerpt,
+  renderMarkdownAsync,
+} from '@/modules/journal/application/markdown-renderer';
+import { validatePostState } from '@/modules/journal/application/post-state.validation';
+import { JournalService } from '@/modules/journal/application/services/journal.service';
+import { ensureUniqueSlug, generateSlug } from '@/modules/journal/application/slug.utils';
 
-/**
- * Fastify request with multipart file method.
- * @fastify/multipart augments FastifyRequest at runtime.
- */
-interface MultipartRequest extends FastifyRequest {
-  file: () => Promise<MultipartFile | undefined>;
-}
-
-import { CurrentUser } from '../../../auth/public';
-import { AdminJwtGuard } from '../../../auth/public';
-import { JournalImageService, type UploadedFile } from '../../application/journal-image.service';
-import { generateExcerpt, renderMarkdownAsync } from '../../application/markdown-renderer';
-import { validatePostState } from '../../application/post-state.validation';
-import { JournalService } from '../../application/services/journal.service';
-import { ensureUniqueSlug, generateSlug } from '../../application/slug.utils';
 import {
   AdminPostDto,
   AdminPostListResponseDto,
@@ -61,6 +58,14 @@ import {
   ImageUploadResponseDto,
   UpdatePostDto,
 } from '../dto';
+
+/**
+ * Fastify request with multipart file method.
+ * @fastify/multipart augments FastifyRequest at runtime.
+ */
+interface MultipartRequest extends FastifyRequest {
+  file: () => Promise<MultipartFile | undefined>;
+}
 
 /** Default page limit for paginated queries */
 const DEFAULT_PAGE_LIMIT = 10;

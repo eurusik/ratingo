@@ -4,13 +4,12 @@ import { and, gt, isNotNull, eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '@/common/utils/db-error.utils';
-
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type CommunityRatingAggregation,
   type ICommunityRatingAggregationPort,
-} from '../../domain/ports/community-rating-aggregation.port';
+} from '@/modules/stats/domain/ports/community-rating-aggregation.port';
 
 /**
  * Drizzle-based implementation of the community rating aggregation port.

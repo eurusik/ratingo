@@ -3,12 +3,12 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, count, eq } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { USER_MEDIA_STATE } from '../../../user-media/public';
-import { type IWatchingShowsCountPort } from '../../domain/ports/watching-shows-count.port';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type IWatchingShowsCountPort } from '@/modules/catalog/domain/ports/watching-shows-count.port';
+import { USER_MEDIA_STATE } from '@/modules/user-media/public';
 
 /**
  * Counts the number of shows a user is currently watching.

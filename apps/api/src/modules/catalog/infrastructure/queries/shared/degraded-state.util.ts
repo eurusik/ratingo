@@ -1,4 +1,7 @@
-import type { TrendingQueryResult, TrendingQueryMeta } from '../../../domain/types/query.types';
+import type {
+  TrendingQueryResult,
+  TrendingQueryMeta,
+} from '@/modules/catalog/domain/types/query.types';
 
 /**
  * Creates a degraded response for trending queries.

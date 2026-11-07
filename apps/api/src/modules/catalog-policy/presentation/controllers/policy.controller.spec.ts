@@ -11,8 +11,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { PolicyController } from './policy.controller';
-import { PolicyActivationService } from '../../application/services/policy-activation.service';
-import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
+import { PolicyActivationService } from '@/modules/catalog-policy/application/services/policy-activation.service';
+import { CatalogPolicyService } from '@/modules/catalog-policy/application/services/catalog-policy.service';
 
 describe('PolicyController', () => {
   let controller: PolicyController;

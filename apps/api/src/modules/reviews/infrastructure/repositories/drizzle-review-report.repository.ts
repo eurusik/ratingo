@@ -4,17 +4,17 @@ import { eq, and, asc, sql, gte } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { reviewReports, reviews, users } from '../../../../database/schema';
-import type { ReportStatus } from '../../domain/constants/review.constants';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { reviewReports, reviews, users } from '@/database/schema';
+import type { ReportStatus } from '@/modules/reviews/domain/constants/review.constants';
 import type {
   ReviewReport,
   ReviewReportWithReview,
   CreateReportInput,
-} from '../../domain/entities/review-report.entity';
-import type { IReviewReportRepository } from '../../domain/repositories/review-report.repository.interface';
+} from '@/modules/reviews/domain/entities/review-report.entity';
+import type { IReviewReportRepository } from '@/modules/reviews/domain/repositories/review-report.repository.interface';
 
 @Injectable()
 export class DrizzleReviewReportRepository implements IReviewReportRepository {

@@ -3,12 +3,10 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import type { NormalizedSeason } from '../../../shared/contracts';
-import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type CalendarEpisode,
   type IShowRepository,
@@ -18,9 +16,12 @@ import {
   type ShowListItem,
   type TrendingShowItem,
   type TrendingShowsOptions,
-} from '../../domain/repositories/show.repository.interface';
-import type { TrendingQueryResult } from '../../domain/types/query.types';
-import { type DatabaseTransaction } from '../../domain/types/transaction.type';
+} from '@/modules/catalog/domain/repositories/show.repository.interface';
+import type { TrendingQueryResult } from '@/modules/catalog/domain/types/query.types';
+import { type DatabaseTransaction } from '@/modules/catalog/domain/types/transaction.type';
+import type { NormalizedSeason } from '@/modules/shared/contracts';
+import { type DropOffAnalysis } from '@/modules/shared/drop-off-analyzer';
+
 import { SeasonEpisodePersistenceMapper } from '../mappers/season-episode-persistence.mapper';
 import { ShowPersistenceMapper } from '../mappers/show-persistence.mapper';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';

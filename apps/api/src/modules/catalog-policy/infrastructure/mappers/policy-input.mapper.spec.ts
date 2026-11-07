@@ -5,9 +5,9 @@
 import * as fc from 'fast-check';
 
 import { type MediaItemRow, mapRowToPolicyEngineInput } from './policy-input.mapper';
-import { computeRelevance } from '../../domain/policy-engine';
-import { checkLocalMaturityOverride } from '../../domain/gates/global-requirements.gate';
-import { type PolicyConfig } from '../../domain/types/policy.types';
+import { computeRelevance } from '@/modules/catalog-policy/domain/policy-engine';
+import { checkLocalMaturityOverride } from '@/modules/catalog-policy/domain/gates/global-requirements.gate';
+import { type PolicyConfig } from '@/modules/catalog-policy/domain/types/policy.types';
 
 const createRow = (overrides: Partial<MediaItemRow> = {}): MediaItemRow => ({
   id: 'media-1',

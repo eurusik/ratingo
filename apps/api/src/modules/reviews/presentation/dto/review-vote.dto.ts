@@ -6,7 +6,7 @@ import {
   VOTE_TYPE,
   VOTE_TYPE_VALUES,
   type VoteType,
-} from '../../domain/constants/review.constants';
+} from '@/modules/reviews/domain/constants/review.constants';
 
 /**
  * DTO for voting on a review.

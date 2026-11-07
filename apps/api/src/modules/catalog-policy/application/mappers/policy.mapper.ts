@@ -5,8 +5,14 @@
  * Centralizes mapping logic for PolicyController.
  */
 
-import { PolicyStatus, type PolicyStatusType } from '../../catalog-policy.constants';
-import { type CatalogPolicy, type PolicyConfig } from '../../domain/types/policy.types';
+import {
+  PolicyStatus,
+  type PolicyStatusType,
+} from '@/modules/catalog-policy/catalog-policy.constants';
+import {
+  type CatalogPolicy,
+  type PolicyConfig,
+} from '@/modules/catalog-policy/domain/types/policy.types';
 
 /**
  * Policy list item DTO (for GET /admin/catalog-policies).

@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { CLOCK_PORT, type IClockPort } from '../../shared/clock';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
+
 import {
   IMPORT_PENDING_REPOSITORY,
   LINK_PENDING_IMPORTS_BATCH_SIZE,

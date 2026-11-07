@@ -1,13 +1,13 @@
 import { type Queue } from 'bullmq';
 
-import { IngestionJob } from '../../../ingestion/ingestion.constants';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_STATUS,
-} from '../../domain/constants/import-pending.constants';
-import { type ImportBatch } from '../../domain/entities/import-batch';
-import { type ImportPendingItem } from '../../domain/entities/import-pending-item';
-import { type IImportPendingRepository } from '../../domain/repositories/import-pending.repository.interface';
+} from '@/modules/user-media/domain/constants/import-pending.constants';
+import { type ImportBatch } from '@/modules/user-media/domain/entities/import-batch';
+import { type ImportPendingItem } from '@/modules/user-media/domain/entities/import-pending-item';
+import { type IImportPendingRepository } from '@/modules/user-media/domain/repositories/import-pending.repository.interface';
 
 import { ResolveImportDispatcherPipeline } from './resolve-import-dispatcher.pipeline';
 

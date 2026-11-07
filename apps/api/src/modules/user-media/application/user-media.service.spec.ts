@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 
-import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { AppException } from '../../../common/exceptions/app.exception';
-import { MediaType } from '../../../common/enums/media-type.enum';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { AppException } from '@/common/exceptions/app.exception';
+import { MediaType } from '@/common/enums/media-type.enum';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
 import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';
 import { UserMediaStateChangedEvent } from '../domain/events/user-media-state-changed.event';

@@ -6,13 +6,12 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
-
-import { type MonitoredProvider } from '../../domain/constants/monitored-provider.const';
+import { type MonitoredProvider } from '@/modules/monitoring/domain/constants/monitored-provider.const';
 import {
   type KeyHealthSnapshot,
   type SaveKeyHealthInput,
-} from '../../domain/entities/key-health-snapshot.entity';
-import { type KeyHealthRepository } from '../../domain/repositories/key-health.repository';
+} from '@/modules/monitoring/domain/entities/key-health-snapshot.entity';
+import { type KeyHealthRepository } from '@/modules/monitoring/domain/repositories/key-health.repository';
 
 type KeyHealthRow = typeof schema.keyHealthChecks.$inferSelect;
 

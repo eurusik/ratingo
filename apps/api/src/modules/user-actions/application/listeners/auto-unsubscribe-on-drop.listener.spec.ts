@@ -1,5 +1,5 @@
-import { UserMediaStateChangedEvent } from '../../../user-media/domain/events/user-media-state-changed.event';
-import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
+import { UserMediaStateChangedEvent } from '@/modules/user-media/domain/events/user-media-state-changed.event';
+import { SUBSCRIPTION_TRIGGER } from '@/modules/user-actions/domain/entities/user-subscription.entity';
 import { SubscriptionsService } from '../subscriptions.service';
 
 import { AutoUnsubscribeOnDropListener } from './auto-unsubscribe-on-drop.listener';

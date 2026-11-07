@@ -6,7 +6,7 @@ import { type Job } from 'bullmq';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { MdblistApiException } from '@/common/exceptions';
 
-import { IngestionJob } from '../../ingestion.constants';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 
 import { RatingsBackfillWorker, isValidMdblistItemPayload } from './ratings-backfill.worker';

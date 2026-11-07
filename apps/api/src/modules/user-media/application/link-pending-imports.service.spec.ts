@@ -1,4 +1,4 @@
-import { type SavedItemsService } from '../../user-actions/application/saved-items.service';
+import { type SavedItemsService } from '@/modules/user-actions/application/saved-items.service';
 import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_FAILURE,

@@ -1,7 +1,7 @@
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 
-import { type PublicUserMediaListItem } from '../../domain/read-models/public-user-media-list';
+import { type PublicUserMediaListItem } from '@/modules/users/domain/read-models/public-user-media-list';
 
 import { toPaginatedPublicUserMediaResponseDto } from './public-user-media-page.mapper';
 

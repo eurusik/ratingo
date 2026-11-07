@@ -3,14 +3,14 @@ import {
   FALLBACK_REGION,
   AVAILABILITY_REGIONS,
   type AvailabilityRegion,
-} from '../../../../common/constants/region.constants';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import type { WatchProvidersMap } from '../../../shared/contracts';
+} from '@/common/constants/region.constants';
+import { ImageMapper } from '@/common/mappers/image.mapper';
 import type {
   AvailabilityData,
   AvailabilityHint,
   WatchProvider,
-} from '../../domain/types/common.types';
+} from '@/modules/catalog/domain/types/common.types';
+import type { WatchProvidersMap } from '@/modules/shared/contracts';
 
 /** Fallback priority when provider has no priority set */
 const DEFAULT_PRIORITY_FALLBACK = 999;

@@ -1,5 +1,6 @@
-import { type ImageDto } from '../../../../common/dtos/image.dto';
-import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type ImageDto } from '@/common/dtos/image.dto';
+import { type MediaType } from '@/common/enums/media-type.enum';
+
 import { type UserMediaState } from '../entities/user-media-state.entity';
 
 export interface UserMediaSummary {

@@ -1,15 +1,15 @@
 import { eq, gte, isNotNull, inArray, and, exists, sql, isNull, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
-import * as schema from '../../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../../catalog-policy/public';
-import type { VoteSource } from '../../../domain/constants/catalog-query.constants';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import * as schema from '@/database/schema';
+import type { VoteSource } from '@/modules/catalog/domain/constants/catalog-query.constants';
 import {
   CONTEXT_FRESHNESS,
   TRENDING_THRESHOLDS,
-} from '../../../domain/constants/catalog.constants';
-import type { ListContext } from '../../../domain/types/query.types';
+} from '@/modules/catalog/domain/constants/catalog.constants';
+import type { ListContext } from '@/modules/catalog/domain/types/query.types';
+import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
 import { buildYearConditions } from './year-range.util';
 

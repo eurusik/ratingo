@@ -4,9 +4,9 @@ import { and, asc, count, desc, eq, gt, inArray, lt, lte, ne, or, sql } from 'dr
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 
-import { DATABASE_CONNECTION } from '../../../database/database.module';
-import * as schema from '../../../database/schema';
 import { type JournalPost, type PostNavigation } from '../domain/interfaces/journal-post.interface';
 import {
   type CreateJournalPostData,

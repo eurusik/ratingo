@@ -1,15 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 
-import { ErrorCode } from '../../../../../common/enums/error-code.enum';
-import { type MediaType } from '../../../../../common/enums/media-type.enum';
-import { ExternalApiException } from '../../../../../common/exceptions';
-import {
-  ResilientHttpClient,
-  type RetryConfig,
-} from '../../../../../common/http/resilient-http.client';
-import webRevalidationConfig from '../../../../../config/web-revalidation.config';
-import { type WebPageCachePort } from '../../../domain/ports/web-page-cache.port';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { ExternalApiException } from '@/common/exceptions';
+import { ResilientHttpClient, type RetryConfig } from '@/common/http/resilient-http.client';
+import webRevalidationConfig from '@/config/web-revalidation.config';
+import { type WebPageCachePort } from '@/modules/ingestion/domain/ports/web-page-cache.port';
 
 const REVALIDATE_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 2,

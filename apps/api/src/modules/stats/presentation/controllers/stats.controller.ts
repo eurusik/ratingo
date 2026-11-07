@@ -4,17 +4,18 @@ import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger'
 
 import { type Queue } from 'bullmq';
 
-import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { AdminJwtGuard } from '../../../auth/public';
+import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { AdminJwtGuard } from '@/modules/auth/public';
 import {
   DropOffService,
   ScoreRecalculationService,
   StatsBackfillService,
   StatsQueryService,
-} from '../../application/services';
-import { CommunityRatingService } from '../../application/services/community-rating.service';
-import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
+} from '@/modules/stats/application/services';
+import { CommunityRatingService } from '@/modules/stats/application/services/community-rating.service';
+import { STATS_QUEUE, STATS_JOBS } from '@/modules/stats/stats.constants';
+
 import {
   BackfillTotalWatchersQueryDto,
   BackfillWatchersCountQueryDto,

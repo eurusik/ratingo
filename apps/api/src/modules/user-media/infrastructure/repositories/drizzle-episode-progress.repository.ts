@@ -3,15 +3,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray, lte, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type EpisodeBatchValidation,
   type EpisodeMediaInfo,
   type IEpisodeProgressRepository,
   type SeasonProgressInfo,
-} from '../../domain/repositories/episode-progress.repository.interface';
+} from '@/modules/user-media/domain/repositories/episode-progress.repository.interface';
 
 @Injectable()
 export class DrizzleEpisodeProgressRepository implements IEpisodeProgressRepository {

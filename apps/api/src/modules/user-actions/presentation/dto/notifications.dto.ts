@@ -3,8 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
 
-import { ImageDto } from '../../../../common/dtos/image.dto';
-import { OffsetPaginationQueryDto } from '../../../../common/dtos/pagination.dto';
+import { ImageDto } from '@/common/dtos/image.dto';
+import { OffsetPaginationQueryDto } from '@/common/dtos/pagination.dto';
 
 /**
  * Query parameters for notification list endpoint.

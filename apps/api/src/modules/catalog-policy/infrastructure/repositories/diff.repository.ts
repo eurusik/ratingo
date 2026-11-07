@@ -10,21 +10,21 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   EligibilityStatus,
   DIFF_STATUS_NONE,
   EvaluationContext,
   type DiffStatus,
-} from '../../domain/constants/evaluation.constants';
-import { type IDiffRepository } from '../../domain/repositories/diff.repository.interface';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import { type IDiffRepository } from '@/modules/catalog-policy/domain/repositories/diff.repository.interface';
 import {
   type DiffCounts,
   type DiffSample,
   type ReasonBreakdown,
-} from '../../domain/types/diff.types';
+} from '@/modules/catalog-policy/domain/types/diff.types';
 
 /** Diff reports compare catalog-context evaluations only (one row per item per version). */
 const DIFF_CONTEXT = EvaluationContext.CATALOG;
@@ -69,11 +69,11 @@ export class DiffRepository implements IDiffRepository {
     // Note: Uses idx_media_catalog_evaluations_version_item_status index
     const result = await withDbError('compute diff counts', this.logger, () =>
       this.db.execute<{
-      regressions: string;
-      improvements: string;
-      unchanged: string;
-      still_ineligible: string;
-    }>(sql`
+        regressions: string;
+        improvements: string;
+        unchanged: string;
+        still_ineligible: string;
+      }>(sql`
       WITH old_evals AS (
         SELECT media_item_id, status
         FROM media_catalog_evaluations
@@ -124,12 +124,12 @@ export class DiffRepository implements IDiffRepository {
 
     const result = await withDbError('get diff samples', this.logger, () =>
       this.db.execute<{
-      media_item_id: string;
-      title: string | null;
-      old_status: string;
-      new_status: string;
-      trending_score: number | null;
-    }>(sql`
+        media_item_id: string;
+        title: string | null;
+        old_status: string;
+        new_status: string;
+        trending_score: number | null;
+      }>(sql`
       WITH old_evals AS (
         SELECT media_item_id, status
         FROM media_catalog_evaluations
@@ -198,10 +198,10 @@ export class DiffRepository implements IDiffRepository {
 
     const result = await withDbError('compute reason breakdown', this.logger, () =>
       this.db.execute<{
-      diff_type: string;
-      reason: string;
-      count: string;
-    }>(sql`
+        diff_type: string;
+        reason: string;
+        count: string;
+      }>(sql`
       WITH old_evals AS (
         SELECT media_item_id, status
         FROM media_catalog_evaluations

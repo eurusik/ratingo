@@ -1,4 +1,4 @@
-import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
 
 export interface RottenTomatoesRatings {
   rottenTomatoesCritics: number | null;

@@ -1,6 +1,9 @@
 import type { SQL } from 'drizzle-orm';
 
-import { CATALOG_SORT, SORT_ORDER } from '../../../domain/constants/catalog-query.constants';
+import {
+  CATALOG_SORT,
+  SORT_ORDER,
+} from '@/modules/catalog/domain/constants/catalog-query.constants';
 
 import { buildMovieSortOrder, buildShowSortOrder } from './sort-order.builder';
 

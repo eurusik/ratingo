@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 
-import { MS_PER_DAY } from '../../../common/constants';
-import scoreConfig from '../../../config/score.config';
+import { MS_PER_DAY } from '@/common/constants';
+import scoreConfig from '@/config/score.config';
 
 // Rating scale constants
 const RATING_SCALE_MAX = 10;

@@ -3,13 +3,13 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type ISnapshotsRepository,
   type SnapshotUpsertData,
-} from '../../domain/repositories/snapshots.repository.interface';
+} from '@/modules/ingestion/domain/repositories/snapshots.repository.interface';
 
 /**
  * Drizzle implementation of ISnapshotsRepository.

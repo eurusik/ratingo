@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { UnauthorizedException } from '@nestjs/common';
 import { TokenService } from './token.service';
-import { type AuthMocks, createAuthMocks, createTokenService } from '../../../../test/auth/_mocks';
+import { type AuthMocks, createAuthMocks, createTokenService } from './auth-services.testing';
 
 const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 

@@ -6,11 +6,10 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { PRESIGNED_URL_TTL_SECONDS } from '@/common/constants';
 import { FeatureDisabledException } from '@/common/exceptions';
-
 import {
   type IObjectStorageService,
   type PresignedPutUrlResult,
-} from '../../domain/services/object-storage.service.interface';
+} from '@/modules/users/domain/services/object-storage.service.interface';
 
 /**
  * Implements an S3-compatible object storage service.

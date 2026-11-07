@@ -11,9 +11,10 @@ import {
 } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 
-import authConfig from '../../../config/auth.config';
-import { UsersService } from '../../users/public';
-import { type User } from '../../users/public';
+import authConfig from '@/config/auth.config';
+import { UsersService } from '@/modules/users/public';
+import { type User } from '@/modules/users/public';
+
 import {
   EXCHANGE_CODE_SIZE_BYTES,
   EXCHANGE_CODE_TTL_MS,

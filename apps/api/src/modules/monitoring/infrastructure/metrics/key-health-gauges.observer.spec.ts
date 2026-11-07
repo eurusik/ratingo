@@ -4,15 +4,18 @@ import {
   API_KEY_LAST_CHECKED_METRIC,
   API_KEY_PROBE_LATENCY_METRIC,
   API_KEY_STATUS_METRIC,
-} from '../../../../telemetry/telemetry.constants';
-import { createTestMeterProvider } from '../../../../telemetry/telemetry.testing';
-import { API_KEY_STATUS, type ApiKeyStatus } from '../../domain/constants/api-key-status.const';
+} from '@/telemetry/telemetry.constants';
+import { createTestMeterProvider } from '@/telemetry/telemetry.testing';
+import {
+  API_KEY_STATUS,
+  type ApiKeyStatus,
+} from '@/modules/monitoring/domain/constants/api-key-status.const';
 import {
   MONITORED_PROVIDER,
   type MonitoredProvider,
-} from '../../domain/constants/monitored-provider.const';
-import { type KeyHealthSnapshot } from '../../domain/entities/key-health-snapshot.entity';
-import { type KeyHealthRepository } from '../../domain/repositories/key-health.repository';
+} from '@/modules/monitoring/domain/constants/monitored-provider.const';
+import { type KeyHealthSnapshot } from '@/modules/monitoring/domain/entities/key-health-snapshot.entity';
+import { type KeyHealthRepository } from '@/modules/monitoring/domain/repositories/key-health.repository';
 
 import { KeyHealthGaugesObserver } from './key-health-gauges.observer';
 

@@ -3,7 +3,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   INSIGHTS_REPOSITORY,
   type InsightsRepository,
-} from '../../domain/repositories/insights.repository.interface';
+} from '@/modules/insights/domain/repositories/insights.repository.interface';
+
 import { type RiseFallQuery, type RiseFallResult } from '../types/insights.types';
 
 // Window size mappings in days

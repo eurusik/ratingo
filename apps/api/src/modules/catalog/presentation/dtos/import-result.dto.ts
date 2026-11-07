@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   type ImportResult,
   type ImportStatus,
   IMPORT_STATUS_VALUES,
-} from '../../domain/types/import.types';
+} from '@/modules/catalog/domain/types/import.types';
 
 /**
  * DTO for import operation result.

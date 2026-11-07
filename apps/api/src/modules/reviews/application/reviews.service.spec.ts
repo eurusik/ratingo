@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { NotFoundException } from '../../../common/exceptions/not-found.exception';
-import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { MediaType } from '../../../common/enums/media-type.enum';
+import { NotFoundException } from '@/common/exceptions/not-found.exception';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 import { REVIEW_LIMITS, REVIEW_SORT } from '../domain/constants/review.constants';
 import { REVIEW_REPOSITORY } from '../domain/repositories/review.repository.interface';
 
-import { RATING_SYNC_PORT } from '../../user-media/domain/ports/rating-sync.port';
+import { RATING_SYNC_PORT } from '@/modules/user-media/domain/ports/rating-sync.port';
 
 import { ReviewsService } from './reviews.service';
 

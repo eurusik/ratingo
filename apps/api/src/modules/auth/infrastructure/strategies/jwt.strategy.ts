@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-import authConfig from '../../../../config/auth.config';
+import authConfig from '@/config/auth.config';
 
 /**
  * JWT strategy for access tokens.

@@ -29,7 +29,7 @@ export type {
   WatchProvider,
   WatchProviderRegion,
   WatchProvidersMap,
-} from '../../shared/contracts';
+} from '@/modules/shared/contracts';
 
 // Interfaces
 export type { ShowSyncDiff, ShowSyncChanges } from '../domain/interfaces/show-sync-diff.interface';
@@ -49,7 +49,7 @@ export {
   RATINGS_BACKFILL_QUEUE,
   IngestionJob,
   DEFAULT_INGESTION_JOB_OPTIONS,
-} from '../../shared/contracts';
+} from '@/modules/shared/contracts';
 
 // Domain events
 export { MediaSyncedEvent } from '../domain/events/media-synced.event';

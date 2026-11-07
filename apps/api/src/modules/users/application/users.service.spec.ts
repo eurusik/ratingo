@@ -1,8 +1,8 @@
 import { HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { AppException } from '../../../common/exceptions/app.exception';
-import { DatabaseException } from '../../../common/exceptions/database.exception';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { AppException } from '@/common/exceptions/app.exception';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 describe('UsersService', () => {
   const repo = {

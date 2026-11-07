@@ -1,4 +1,4 @@
-import { type CatalogSitemapService } from '../../application/services/catalog-sitemap.service';
+import { type CatalogSitemapService } from '@/modules/catalog/application/services/catalog-sitemap.service';
 
 import { CatalogSitemapController } from './catalog.sitemap.controller';
 

@@ -5,14 +5,14 @@ import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { JOB_STATUS } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
 
-import { IMPORT_JOB_PORT, IImportJobPort } from '../../domain/ports/import-job.port';
+import { IMPORT_JOB_PORT, IImportJobPort } from '@/modules/catalog/domain/ports/import-job.port';
 import {
   type IMediaMetadataPort,
   type MediaMetadata,
   MEDIA_METADATA_PORT,
-} from '../../domain/ports/media-metadata.port';
-import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
-import { IMPORT_STATUS } from '../../domain/types/import.types';
+} from '@/modules/catalog/domain/ports/media-metadata.port';
+import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
+import { IMPORT_STATUS } from '@/modules/catalog/domain/types/import.types';
 
 import { CatalogImportService } from './catalog-import.service';
 

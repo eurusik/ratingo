@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
-import { TmdbAdapter } from '@/modules/tmdb/public';
-
 import type {
   IMediaMetadataPort,
   MediaMetadata,
   MetadataSearchResult,
-} from '../../domain/ports/media-metadata.port';
+} from '@/modules/catalog/domain/ports/media-metadata.port';
+import { TmdbAdapter } from '@/modules/tmdb/public';
 
 /**
  * TMDB implementation of IMediaMetadataPort.

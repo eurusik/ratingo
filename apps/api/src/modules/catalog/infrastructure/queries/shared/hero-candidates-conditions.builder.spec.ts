@@ -1,4 +1,4 @@
-import { HERO_THRESHOLDS } from '../../../domain/constants/catalog.constants';
+import { HERO_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
 
 import {
   buildHeroCandidatesConditions,

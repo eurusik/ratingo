@@ -1,16 +1,17 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
-import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
-import { CurrentUser } from '../../../auth/public';
-import { OptionalJwtAuthGuard } from '../../../auth/public';
-import { ReviewRepliesService } from '../../application/review-replies.service';
-import { ReviewVotesService } from '../../application/review-votes.service';
-import { ReviewsService } from '../../application/reviews.service';
-import type { VoteType } from '../../domain/constants/review.constants';
-import type { ReviewReplyWithAuthor } from '../../domain/entities/review-reply.entity';
-import type { ReviewVote } from '../../domain/entities/review-vote.entity';
-import type { ReviewWithAuthor } from '../../domain/entities/review.entity';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { CurrentUser } from '@/modules/auth/public';
+import { OptionalJwtAuthGuard } from '@/modules/auth/public';
+import { ReviewRepliesService } from '@/modules/reviews/application/review-replies.service';
+import { ReviewVotesService } from '@/modules/reviews/application/review-votes.service';
+import { ReviewsService } from '@/modules/reviews/application/reviews.service';
+import type { VoteType } from '@/modules/reviews/domain/constants/review.constants';
+import type { ReviewReplyWithAuthor } from '@/modules/reviews/domain/entities/review-reply.entity';
+import type { ReviewVote } from '@/modules/reviews/domain/entities/review-vote.entity';
+import type { ReviewWithAuthor } from '@/modules/reviews/domain/entities/review.entity';
+
 import { ReviewQueryDto, ReviewResponseDto, ReviewListResponseDto, ReplyResponseDto } from '../dto';
 
 /**

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InsightsService } from './insights.service';
-import { INSIGHTS_REPOSITORY } from '../../domain/repositories/insights.repository.interface';
+import { INSIGHTS_REPOSITORY } from '@/modules/insights/domain/repositories/insights.repository.interface';
 import { RiseFallQuery } from '../types/insights.types';
 
 describe('InsightsService', () => {

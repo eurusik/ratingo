@@ -5,7 +5,8 @@
  * Centralizes mapping logic for RunController.
  */
 
-import { type DiffReport, type DiffSample } from '../../domain/types/diff.types';
+import { type DiffReport, type DiffSample } from '@/modules/catalog-policy/domain/types/diff.types';
+
 import { type RunStatus, type RunListItem } from '../services/policy-activation.service';
 
 /**

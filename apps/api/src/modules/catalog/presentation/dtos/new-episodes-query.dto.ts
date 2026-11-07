@@ -8,7 +8,7 @@ import {
   CATALOG_MAX_CALENDAR_DAYS,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
-} from '../../../../common/constants';
+} from '@/common/constants';
 
 /**
  * Query parameters for GET /catalog/shows/new-episodes (public route, so bounded).

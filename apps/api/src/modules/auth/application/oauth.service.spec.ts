@@ -8,7 +8,7 @@ import { OAuthService } from './oauth.service';
 import { USERNAME_MAX_BASE_LENGTH } from '../auth.constants';
 import { ConsumeCodeFailureReason } from '../domain/repositories/exchange-codes.repository.interface';
 import { type OAuthUserPayload } from '../domain/types';
-import { type AuthMocks, createAuthMocks, createOAuthService } from '../../../../test/auth/_mocks';
+import { type AuthMocks, createAuthMocks, createOAuthService } from './auth-services.testing';
 
 describe('OAuthService - Username Generation', () => {
   let mocks: AuthMocks;

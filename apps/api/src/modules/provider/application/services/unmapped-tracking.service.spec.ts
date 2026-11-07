@@ -3,8 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   IUnmappedTrackingRepository,
   UNMAPPED_TRACKING_REPOSITORY,
-} from '../../domain/repositories/unmapped-tracking.repository.interface';
-import type { UnmappedProvider } from '../../domain/types/provider.types';
+} from '@/modules/provider/domain/repositories/unmapped-tracking.repository.interface';
+import type { UnmappedProvider } from '@/modules/provider/domain/types/provider.types';
 import { UnmappedTrackingService } from './unmapped-tracking.service';
 
 describe('UnmappedTrackingService', () => {

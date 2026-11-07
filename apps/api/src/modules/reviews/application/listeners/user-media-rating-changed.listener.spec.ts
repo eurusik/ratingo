@@ -1,4 +1,4 @@
-import { UserMediaRatingChangedEvent } from '../../../user-media/domain/events/user-media-rating-changed.event';
+import { UserMediaRatingChangedEvent } from '@/modules/user-media/domain/events/user-media-rating-changed.event';
 
 import { UserMediaRatingChangedListener } from './user-media-rating-changed.listener';
 

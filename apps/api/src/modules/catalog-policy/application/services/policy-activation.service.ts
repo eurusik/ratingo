@@ -9,7 +9,10 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
 
-import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
+import {
+  CATALOG_POLICY_QUEUE,
+  CATALOG_POLICY_JOBS,
+} from '@/modules/catalog-policy/catalog-policy.constants';
 import {
   RunStatus as RunStatusEnum,
   type RunStatusType,
@@ -18,7 +21,7 @@ import {
   type BlockingReasonType,
   ACTIVE_EVALUATION_CONTEXTS,
   type EvaluationContextType,
-} from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   PolicyNotFoundError,
   RunNotFoundError,
@@ -26,7 +29,7 @@ import {
   RunAlreadyInProgressError,
   InvalidContextError,
   NoActivePolicyError,
-} from '../../domain/errors';
+} from '@/modules/catalog-policy/domain/errors';
 import {
   CATALOG_POLICY_REPOSITORY,
   type ICatalogPolicyRepository,
@@ -34,8 +37,8 @@ import {
   type ICatalogEvaluationRunRepository,
   POLICY_ACTIVATION_REPOSITORY,
   type IPolicyActivationRepository,
-} from '../../domain/repositories';
-import { resolveRunContextScope } from '../../domain/utils/run-contexts';
+} from '@/modules/catalog-policy/domain/repositories';
+import { resolveRunContextScope } from '@/modules/catalog-policy/domain/utils/run-contexts';
 
 import { CatalogPolicyService } from './catalog-policy.service';
 import { RunAggregationService } from './run-aggregation.service';

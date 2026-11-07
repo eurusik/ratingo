@@ -1,4 +1,4 @@
-import * as schema from '../../../../database/schema';
+import * as schema from '@/database/schema';
 
 export const POLICY_EVALUATION_SELECT_FIELDS = {
   id: schema.mediaItems.id,

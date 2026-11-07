@@ -3,13 +3,13 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
 
-import { BACKFILL_QUEUE, IngestionJob } from '../../../ingestion/public';
+import { BACKFILL_QUEUE, IngestionJob } from '@/modules/ingestion/public';
 import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_REPOSITORY,
   IMPORT_PENDING_STATUS,
-} from '../../domain/constants/import-pending.constants';
-import { type IImportPendingRepository } from '../../domain/repositories/import-pending.repository.interface';
+} from '@/modules/user-media/domain/constants/import-pending.constants';
+import { type IImportPendingRepository } from '@/modules/user-media/domain/repositories/import-pending.repository.interface';
 
 /** Stagger delay between RESOLVE_IMPORT_ITEM jobs to stay below TMDB's 4 req/s limit. */
 const RESOLVE_STAGGER_MS = 350;

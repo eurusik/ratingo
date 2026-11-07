@@ -11,14 +11,17 @@
 
 import * as fc from 'fast-check';
 
-import { EvaluationContext, type EvaluationContextType } from '../../../catalog-policy/public';
+import { EvaluationContext, type EvaluationContextType } from '@/modules/catalog-policy/public';
 import {
   CONTEXT_FRESHNESS,
   LIST_CONTEXT,
   TRENDING_THRESHOLDS,
-} from '../../domain/constants/catalog.constants';
-import type { TrendingQueryResult } from '../../domain/types/query.types';
-import { CATALOG_SORT, type CatalogSort } from '../../domain/constants/catalog-query.constants';
+} from '@/modules/catalog/domain/constants/catalog.constants';
+import type { TrendingQueryResult } from '@/modules/catalog/domain/types/query.types';
+import {
+  CATALOG_SORT,
+  type CatalogSort,
+} from '@/modules/catalog/domain/constants/catalog-query.constants';
 
 // ============================================================================
 // In-Memory Query Simulator for Property Testing

@@ -1,9 +1,9 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { SavedItemsService } from '../../user-actions/application/saved-items.service';
-import { SubscriptionsService } from '../../user-actions/application/subscriptions.service';
-import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities';
+import { SavedItemsService } from '@/modules/user-actions/application/saved-items.service';
+import { SubscriptionsService } from '@/modules/user-actions/application/subscriptions.service';
+import { SAVED_ITEM_LIST } from '@/modules/user-actions/domain/entities';
 import { UNSAVE_CONTEXT } from '../domain/constants/episode-progress.constants';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
 import { SHOW_STATUS_PORT, type IShowStatusPort } from '../domain/ports/show-status.port';

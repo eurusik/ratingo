@@ -1,19 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { errorMessage } from '../../../../common/utils/error.utils';
-import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
+import { errorMessage } from '@/common/utils/error.utils';
 import {
   type ShowSyncDiff,
   createEmptyDiff,
   formatEpisodeKey,
   formatSeasonKey,
   formatDateToIso,
-} from '../../domain/interfaces/show-sync-diff.interface';
+} from '@/modules/ingestion/domain/interfaces/show-sync-diff.interface';
 import {
   TRACKED_SHOW_REPOSITORY,
   type ITrackedShowRepository,
   type TrackedShow,
-} from '../../domain/repositories/tracked-show.repository.interface';
+} from '@/modules/ingestion/domain/repositories/tracked-show.repository.interface';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 
 import { SyncMediaService } from './sync-media.service';
 
