@@ -5,7 +5,6 @@ import {
   ConflictException,
   ForbiddenException,
   Inject,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -130,9 +129,6 @@ export class OAuthService {
       });
     }
 
-    if (!user) {
-      throw new InternalServerErrorException('Failed to resolve user for OAuth login');
-    }
     const tokens = await this.tokenService.issueTokens(user, clientMeta);
     return { user, tokens };
   }

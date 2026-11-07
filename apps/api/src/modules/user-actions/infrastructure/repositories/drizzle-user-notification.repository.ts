@@ -6,6 +6,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { ImageMapper } from '@/common/mappers/image.mapper';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -40,17 +41,19 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
       'create notification',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .insert(schema.userNotifications)
-          .values({
-            userId: data.userId,
-            mediaItemId: data.mediaItemId,
-            subscriptionId: data.subscriptionId,
-            trigger: data.trigger,
-            payload: data.payload ?? null,
-          })
-          .onConflictDoNothing()
-          .returning();
+        const row = firstOrUndefined(
+          await this.db
+            .insert(schema.userNotifications)
+            .values({
+              userId: data.userId,
+              mediaItemId: data.mediaItemId,
+              subscriptionId: data.subscriptionId,
+              trigger: data.trigger,
+              payload: data.payload ?? null,
+            })
+            .onConflictDoNothing()
+            .returning(),
+        );
 
         return row ? this.mapRow(row) : null;
       },
@@ -154,20 +157,22 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
       'count unread notifications',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.userNotifications)
-          .innerJoin(
-            schema.mediaItems,
-            eq(schema.mediaItems.id, schema.userNotifications.mediaItemId),
-          )
-          .where(
-            and(
-              eq(schema.userNotifications.userId, userId),
-              eq(schema.userNotifications.isRead, false),
-              isNull(schema.mediaItems.deletedAt),
+        const row = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.userNotifications)
+            .innerJoin(
+              schema.mediaItems,
+              eq(schema.mediaItems.id, schema.userNotifications.mediaItemId),
+            )
+            .where(
+              and(
+                eq(schema.userNotifications.userId, userId),
+                eq(schema.userNotifications.isRead, false),
+                isNull(schema.mediaItems.deletedAt),
+              ),
             ),
-          );
+        );
         return Number(row?.count ?? 0);
       },
       { userId },
@@ -191,14 +196,16 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
           conditions.push(eq(schema.userNotifications.isRead, false));
         }
 
-        const [row] = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.userNotifications)
-          .innerJoin(
-            schema.mediaItems,
-            eq(schema.mediaItems.id, schema.userNotifications.mediaItemId),
-          )
-          .where(and(...conditions));
+        const row = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.userNotifications)
+            .innerJoin(
+              schema.mediaItems,
+              eq(schema.mediaItems.id, schema.userNotifications.mediaItemId),
+            )
+            .where(and(...conditions)),
+        );
         return Number(row?.count ?? 0);
       },
       { userId, unread },

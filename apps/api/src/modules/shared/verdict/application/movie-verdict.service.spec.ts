@@ -191,7 +191,7 @@ describe('MovieVerdictService', () => {
       expect(result.messageKey).toBe('timelessFavorite');
     });
 
-    it('should return classicChoice for RISING badge on classic content without strong ratings', () => {
+    it('should return steadyInterest for RISING badge on classic content without strong ratings', () => {
       const classicDate = new Date();
       classicDate.setFullYear(classicDate.getFullYear() - 12); // 12 years old
 

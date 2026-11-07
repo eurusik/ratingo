@@ -195,7 +195,7 @@ export class ProvidersController {
   @ApiResponse({ status: 400, description: 'Invalid provider ID or mapping already exists' })
   async createMapping(@Body() dto: CreateMappingRequestDto): Promise<MappingDto> {
     // Validate provider exists
-    const provider = await this.registryService.findById(dto.providerId);
+    const provider = await this.registryService.findByIdOrNull(dto.providerId);
     if (!provider) {
       throw new BadRequestException(`Provider '${dto.providerId}' not found in registry`);
     }
@@ -233,7 +233,7 @@ export class ProvidersController {
   ): Promise<MappingDto> {
     // Validate provider if changing
     if (dto.providerId) {
-      const provider = await this.registryService.findById(dto.providerId);
+      const provider = await this.registryService.findByIdOrNull(dto.providerId);
       if (!provider) {
         throw new BadRequestException(`Provider '${dto.providerId}' not found in registry`);
       }

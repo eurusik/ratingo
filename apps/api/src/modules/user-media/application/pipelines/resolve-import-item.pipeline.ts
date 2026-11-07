@@ -163,7 +163,7 @@ export class ResolveImportItemPipeline {
     // BullMQ ignores add() when a job with the same jobId is retained and returns that job.
     // A retained 'failed' job will never run again, so remove it and enqueue a fresh one.
     // A retained 'completed' job means the media is already synced: linkIfMediaReady handles it.
-    if (job && (await job.getState()) === 'failed') {
+    if ((await job.getState()) === 'failed') {
       this.logger.warn(
         `[item] pendingItemId=${pendingItemId} jobId=${jobId} retained in failed state — removing and re-adding`,
       );

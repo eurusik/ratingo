@@ -152,7 +152,7 @@ describe('PolicyMapper', () => {
       const result = PolicyMapper.formatSummary({
         eligibilityMode: 'RELAXED',
         allowedCountries: ['US', 'GB'],
-      } as CatalogPolicy['policy']);
+      });
 
       expect(result).toBe('RELAXED mode, 2 allowed countries');
     });
@@ -169,7 +169,7 @@ describe('PolicyMapper', () => {
     it('should handle undefined allowedCountries', () => {
       const result = PolicyMapper.formatSummary({
         eligibilityMode: 'STRICT',
-      } as CatalogPolicy['policy']);
+      });
 
       expect(result).toBe('STRICT mode, 0 allowed countries');
     });

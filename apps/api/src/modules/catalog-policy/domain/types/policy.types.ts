@@ -430,7 +430,6 @@ export interface MediaCatalogEvaluation {
   runId?: string;
   /**
    * Display surface context for this evaluation.
-   * Defaults to 'catalog' for backward compatibility.
    */
   context: EvaluationContext;
 }

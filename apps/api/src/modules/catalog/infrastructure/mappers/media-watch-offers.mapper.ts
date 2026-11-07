@@ -48,11 +48,11 @@ export class MediaWatchOffersMapper {
    */
   static toAvailability(
     offers: WatchOfferRow[],
-    rawProviders?: WatchProvidersMap | null,
+    rawProviders?: Partial<WatchProvidersMap> | null,
   ): AvailabilityData {
     // Group offers by region
     const byRegion = new Map<string, WatchOfferRow[]>();
-    for (const offer of offers ?? []) {
+    for (const offer of offers) {
       const region = offer.region.toUpperCase();
       if (!byRegion.has(region)) {
         byRegion.set(region, []);
@@ -120,7 +120,7 @@ export class MediaWatchOffersMapper {
    * Computes availability hint from raw TMDB data when no normalized offers exist.
    * Checks if rent/buy exists in raw data for supported regions.
    */
-  private static computeFallbackHint(rawProviders?: WatchProvidersMap | null): {
+  private static computeFallbackHint(rawProviders?: Partial<WatchProvidersMap> | null): {
     hint: AvailabilityHint;
     tmdbWatchUrl: string | null;
   } {

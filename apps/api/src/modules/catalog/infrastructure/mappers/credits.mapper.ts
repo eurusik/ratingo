@@ -10,12 +10,12 @@ import type {
 } from '@/modules/shared/contracts';
 
 export class CreditsMapper {
-  static toDto(credits: Credits | null): CreditsData | null {
+  static toDto(credits: Partial<Credits> | null): CreditsData | null {
     if (!credits) return null;
 
     return {
-      cast: (credits.cast || []).map(this.mapCastMember),
-      crew: (credits.crew || []).map(this.mapCrewMember),
+      cast: (credits.cast ?? []).map(this.mapCastMember),
+      crew: (credits.crew ?? []).map(this.mapCrewMember),
     };
   }
 

@@ -69,7 +69,7 @@ export class TvMazeEnrichmentService {
       };
     } catch (err) {
       this.logger.warn(
-        `TVMaze enrichment failed for ${media.externalIds?.imdbId ?? media.title}: ${(err as Error).message}`,
+        `TVMaze enrichment failed for ${media.externalIds.imdbId ?? media.title}: ${(err as Error).message}`,
       );
       return media;
     }
@@ -79,7 +79,7 @@ export class TvMazeEnrichmentService {
    * Fetches episodes from TVMaze: first by IMDb ID, then by show name.
    */
   private async fetchEpisodes(media: NormalizedMedia): Promise<ScheduledEpisode[]> {
-    const imdbId = media.externalIds?.imdbId;
+    const { imdbId } = media.externalIds;
 
     if (imdbId) {
       const episodes = await this.episodeSchedule.getEpisodesByImdbId(imdbId);

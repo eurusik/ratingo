@@ -6,7 +6,7 @@
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsString, IsNumber, IsOptional, IsIn } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsIn, Max, Min } from 'class-validator';
 
 import { EVALUATION_CONTEXTS, type EvaluationContextType, RUN_STATUSES } from './constants';
 
@@ -31,7 +31,9 @@ export class BackfillRequestDto {
     maximum: 1000,
   })
   @IsOptional()
-  @IsNumber()
+  @IsInt()
+  @Min(1)
+  @Max(1000)
   batchSize?: number;
 }
 

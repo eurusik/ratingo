@@ -67,7 +67,7 @@ export class StatsController {
   })
   async syncTrendingStats(@Query() query: SyncTrendingQueryDto) {
     const job = await this.statsQueue.add(STATS_JOBS.SYNC_TRENDING, {
-      limit: query.limit || MAX_PAGE_SIZE,
+      limit: query.limit ?? MAX_PAGE_SIZE,
     });
 
     return {
@@ -96,16 +96,16 @@ export class StatsController {
   })
   async syncEligibleTrending(@Query() query: SyncEligibleTrendingQueryDto) {
     const job = await this.statsQueue.add(STATS_JOBS.SYNC_ELIGIBLE_TRENDING, {
-      batchSize: query.batchSize || DEFAULT_BATCH_SIZE,
-      offset: query.offset || 0,
+      batchSize: query.batchSize ?? DEFAULT_BATCH_SIZE,
+      offset: query.offset ?? 0,
     });
 
     return {
       message: 'Eligible trending sync job added to queue',
       jobId: job.id,
       params: {
-        batchSize: query.batchSize || DEFAULT_BATCH_SIZE,
-        offset: query.offset || 0,
+        batchSize: query.batchSize ?? DEFAULT_BATCH_SIZE,
+        offset: query.offset ?? 0,
       },
     };
   }
@@ -152,13 +152,13 @@ export class StatsController {
   async analyzeDropOff(@Query() query: AnalyzeDropOffQueryDto) {
     const job = await this.statsQueue.add(STATS_JOBS.ANALYZE_DROP_OFF, {
       tmdbId: query.tmdbId,
-      limit: query.limit || DEFAULT_BATCH_SIZE,
+      limit: query.limit ?? DEFAULT_BATCH_SIZE,
     });
 
     return {
       message: query.tmdbId
         ? `Drop-off analysis job for show ${query.tmdbId} added to queue`
-        : `Drop-off analysis job for ${query.limit || DEFAULT_BATCH_SIZE} shows added to queue`,
+        : `Drop-off analysis job for ${query.limit ?? DEFAULT_BATCH_SIZE} shows added to queue`,
       jobId: job.id,
     };
   }

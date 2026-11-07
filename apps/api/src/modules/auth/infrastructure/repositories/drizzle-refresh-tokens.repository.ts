@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gte, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -61,10 +62,9 @@ export class DrizzleRefreshTokensRepository implements IRefreshTokensRepository 
       'fetch refresh token',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.refreshTokens)
-          .where(eq(schema.refreshTokens.id, id));
+        const row = firstOrUndefined(
+          await this.db.select().from(schema.refreshTokens).where(eq(schema.refreshTokens.id, id)),
+        );
         return row ? this.mapRow(row) : null;
       },
       { id },

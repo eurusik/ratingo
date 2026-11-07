@@ -17,6 +17,7 @@ import {
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -146,11 +147,13 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       'find import batch by id',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.importBatches)
-          .where(eq(schema.importBatches.id, batchId))
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.importBatches)
+            .where(eq(schema.importBatches.id, batchId))
+            .limit(1),
+        );
         return row ? this.mapBatch(row) : null;
       },
       { batchId },
@@ -207,11 +210,13 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       'find pending item by id',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.importPendingItems)
-          .where(eq(schema.importPendingItems.id, itemId))
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.importPendingItems)
+            .where(eq(schema.importPendingItems.id, itemId))
+            .limit(1),
+        );
         return row ? this.mapItem(row) : null;
       },
       { itemId },
@@ -444,18 +449,19 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       'update batch counters atomic',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .update(schema.importBatches)
-          .set({
-            completedCount: sql<number>`(
+        const row = firstOrUndefined(
+          await this.db
+            .update(schema.importBatches)
+            .set({
+              completedCount: sql<number>`(
               SELECT COUNT(*) FROM ${schema.importPendingItems}
               WHERE batch_id = ${batchId} AND status = ${IMPORT_PENDING_STATUS.DONE}
             )`,
-            failedCount: sql<number>`(
+              failedCount: sql<number>`(
               SELECT COUNT(*) FROM ${schema.importPendingItems}
               WHERE batch_id = ${batchId} AND status = ${IMPORT_PENDING_STATUS.FAILED}
             )`,
-            status: sql<ImportBatchStatus>`CASE
+              status: sql<ImportBatchStatus>`CASE
               WHEN (
                 SELECT COUNT(*) FROM ${schema.importPendingItems}
                 WHERE batch_id = ${batchId}
@@ -463,15 +469,16 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
               ) = 0 THEN ${IMPORT_BATCH_STATUS.COMPLETED}::import_batch_status
               ELSE ${IMPORT_BATCH_STATUS.PROCESSING}::import_batch_status
             END`,
-            updatedAt: sql`now()`,
-          })
-          .where(
-            and(
-              eq(schema.importBatches.id, batchId),
-              ne(schema.importBatches.status, IMPORT_BATCH_STATUS.CANCELLED),
-            ),
-          )
-          .returning();
+              updatedAt: sql`now()`,
+            })
+            .where(
+              and(
+                eq(schema.importBatches.id, batchId),
+                ne(schema.importBatches.status, IMPORT_BATCH_STATUS.CANCELLED),
+              ),
+            )
+            .returning(),
+        );
 
         if (!row) {
           this.logger.warn(`[updateBatchCountersAtomic] batch not found: ${batchId}`);

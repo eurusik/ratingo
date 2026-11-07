@@ -41,7 +41,7 @@ async function bootstrap(): Promise<void> {
 
   // CORS configuration
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || [
+    origin: process.env.CORS_ORIGIN?.split(',') ?? [
       'http://localhost:3002',
       'http://localhost:3000',
       'https://new.ratingo.top',

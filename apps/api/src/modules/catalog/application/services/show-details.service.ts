@@ -87,7 +87,7 @@ export class ShowDetailsService {
         status: show.status,
         externalRatings: show.externalRatings,
         popularitySignal: mapBadgeToPopularitySignal(card?.badgeKey),
-        popularity: show.stats?.popularityScore ?? null,
+        popularity: show.stats.popularityScore ?? null,
         totalSeasons: show.totalSeasons,
         lastAirDate: show.lastAirDate,
         firstAirDate: show.releaseDate ?? null,

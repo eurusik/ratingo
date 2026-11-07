@@ -14,8 +14,6 @@ const WINDOW_DAYS = {
   '365d': 365,
 } as const;
 
-const DEFAULT_WINDOW_DAYS = 30;
-
 /**
  * Provides insights about watcher movements for media.
  *
@@ -36,7 +34,7 @@ export class InsightsService {
    * @returns {Promise<RiseFallResult>} Movements data for the given window
    */
   async getMovements(query: RiseFallQuery): Promise<RiseFallResult> {
-    const windowDays = WINDOW_DAYS[query.window as keyof typeof WINDOW_DAYS] || DEFAULT_WINDOW_DAYS;
+    const windowDays = WINDOW_DAYS[query.window];
 
     const { risers, fallers } = await this.insightsRepository.getMovements(windowDays, query.limit);
 

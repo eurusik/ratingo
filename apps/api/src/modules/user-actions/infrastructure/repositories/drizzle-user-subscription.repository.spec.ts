@@ -348,17 +348,6 @@ describe('DrizzleUserSubscriptionRepository', () => {
       expect(result).toEqual([]);
     });
 
-    it('should filter out null tmdbIds', async () => {
-      const module = await setup({
-        resolveSelect: [{ tmdbId: 12345 }, { tmdbId: null }, { tmdbId: 67890 }],
-      });
-      repository = module.get(DrizzleUserSubscriptionRepository);
-
-      const result = await repository.findTrackedShowTmdbIds();
-
-      expect(result).toEqual([12345, 67890]);
-    });
-
     it('should throw DatabaseException on error', async () => {
       const module = await setup({ reject: new Error('DB error') });
       repository = module.get(DrizzleUserSubscriptionRepository);

@@ -59,4 +59,57 @@ describe('ScoreCalculatorService (property-based)', () => {
       }),
     );
   });
+
+  it('totalVotes ignores invalid vote sources and never goes below a valid one', () => {
+    const invalidVotes = fc.oneof(
+      fc.constant(null),
+      fc.constant(undefined),
+      fc.constant(Number.NaN),
+      fc.integer({ min: -1000, max: 0 }),
+    );
+    const validVotes = fc.integer({ min: 1, max: 5_000_000 });
+
+    fc.assert(
+      fc.property(validVotes, invalidVotes, invalidVotes, (votes, invalidA, invalidB) => {
+        const withInvalidImdb = service.calculate({
+          ...base,
+          imdbVotes: invalidA,
+          traktVotes: votes,
+        });
+        const withOtherInvalidImdb = service.calculate({
+          ...base,
+          imdbVotes: invalidB,
+          traktVotes: votes,
+        });
+
+        expect(withInvalidImdb.totalVotes).toBe(votes);
+        expect(withOtherInvalidImdb.totalVotes).toBe(withInvalidImdb.totalVotes);
+      }),
+    );
+  });
+
+  it('totalVotes is finite and at least each valid vote source', () => {
+    const votes = fc.oneof(
+      fc.constant(null),
+      fc.constant(undefined),
+      fc.constant(Number.NaN),
+      fc.integer({ min: -1000, max: 5_000_000 }),
+    );
+
+    fc.assert(
+      fc.property(votes, votes, (imdbVotes, traktVotes) => {
+        const { totalVotes } = service.calculate({ ...base, imdbVotes, traktVotes });
+
+        expect(Number.isFinite(totalVotes)).toBe(true);
+        expect(totalVotes).toBeGreaterThanOrEqual(0);
+        const largestValidSource = Math.max(
+          0,
+          ...[imdbVotes, traktVotes].filter(
+            (source): source is number => typeof source === 'number' && source > 0,
+          ),
+        );
+        expect(totalVotes).toBeGreaterThanOrEqual(largestValidSource);
+      }),
+    );
+  });
 });

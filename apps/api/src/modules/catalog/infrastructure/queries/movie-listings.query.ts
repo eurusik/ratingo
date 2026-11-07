@@ -25,6 +25,7 @@ import {
 } from '@/common/constants';
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { DatabaseException } from '@/common/exceptions/database.exception';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { toError } from '@/common/utils/error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -378,30 +379,34 @@ export class MovieListingsQuery {
     eligibilityMode: EligibilityMode = ELIGIBILITY_MODE.CATALOG,
   ): Promise<number> {
     if (eligibilityMode === ELIGIBILITY_MODE.NONE) {
-      const [{ total }] = await this.db
+      const totalRow = firstOrUndefined(
+        await this.db
+          .select({ total: sql<number>`count(*)` })
+          .from(schema.movies)
+          .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+          .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+          .where(and(...conditions)),
+      );
+      return Number(totalRow?.total ?? 0);
+    }
+
+    const totalRow = firstOrUndefined(
+      await this.db
         .select({ total: sql<number>`count(*)` })
         .from(schema.movies)
         .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          and(
+            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
+          ),
+        )
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-        .where(and(...conditions));
-      return Number(total ?? 0);
-    }
-
-    const [{ total }] = await this.db
-      .select({ total: sql<number>`count(*)` })
-      .from(schema.movies)
-      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
-      .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-      .innerJoin(
-        schema.mediaCatalogEvaluations,
-        and(
-          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-          eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-          eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
-        ),
-      )
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(and(...conditions));
-    return Number(total ?? 0);
+        .where(and(...conditions)),
+    );
+    return Number(totalRow?.total ?? 0);
   }
 }

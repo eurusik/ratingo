@@ -30,7 +30,7 @@ const mockMarkedModule: MarkedModule = {
     parse: (markdown: string, options?: Record<string, unknown>): string => {
       if (!markdown) return '';
 
-      const renderer = (options?.renderer as MarkedRenderer) || new MockRenderer();
+      const renderer = (options?.renderer as MarkedRenderer | undefined) ?? new MockRenderer();
       let html = markdown;
 
       // Process images first (before links to avoid conflicts)

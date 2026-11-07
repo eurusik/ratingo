@@ -5,6 +5,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MS_PER_HOUR } from '@/common/constants';
 import { DatabaseException } from '@/common/exceptions/database.exception';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { toError } from '@/common/utils/error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -61,27 +62,31 @@ export class DrizzleExchangeCodesRepository implements IExchangeCodesRepository 
       const now = new Date();
 
       // Atomic update: find valid code and mark as used in one operation
-      const [updated] = await this.db
-        .update(schema.oauthExchangeCodes)
-        .set({ usedAt: now })
-        .where(
-          and(
-            eq(schema.oauthExchangeCodes.codeHash, codeHash),
-            isNull(schema.oauthExchangeCodes.usedAt),
-            gt(schema.oauthExchangeCodes.expiresAt, now),
-          ),
-        )
-        .returning();
+      const updated = firstOrUndefined(
+        await this.db
+          .update(schema.oauthExchangeCodes)
+          .set({ usedAt: now })
+          .where(
+            and(
+              eq(schema.oauthExchangeCodes.codeHash, codeHash),
+              isNull(schema.oauthExchangeCodes.usedAt),
+              gt(schema.oauthExchangeCodes.expiresAt, now),
+            ),
+          )
+          .returning(),
+      );
 
       if (updated) {
         return { success: true, record: this.mapRow(updated) };
       }
 
       // No rows updated - determine why
-      const [existing] = await this.db
-        .select()
-        .from(schema.oauthExchangeCodes)
-        .where(eq(schema.oauthExchangeCodes.codeHash, codeHash));
+      const existing = firstOrUndefined(
+        await this.db
+          .select()
+          .from(schema.oauthExchangeCodes)
+          .where(eq(schema.oauthExchangeCodes.codeHash, codeHash)),
+      );
 
       if (!existing) {
         return { success: false, reason: ConsumeCodeFailureReason.NOT_FOUND };

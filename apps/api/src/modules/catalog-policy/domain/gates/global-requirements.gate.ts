@@ -172,7 +172,7 @@ export function checkGlobalRequirements(
     const { sources, min } = requirements.minVotesAnyOf;
     const hasEnoughVotes = sources.some((source) => {
       const votes = source === VoteSource.IMDB ? mediaItem.voteCountImdb : mediaItem.voteCountTrakt;
-      return votes !== null && votes !== undefined && votes >= min;
+      return votes !== null && votes >= min;
     });
 
     if (!hasEnoughVotes) {

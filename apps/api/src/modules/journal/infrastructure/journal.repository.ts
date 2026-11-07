@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, asc, count, desc, eq, gt, inArray, lt, lte, ne, or, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -91,16 +92,18 @@ export class JournalRepository implements IJournalRepository {
       this.logger,
       async () => {
         const now = new Date();
-        const [row] = await this.db
-          .select()
-          .from(schema.journalPosts)
-          .where(
-            and(
-              eq(schema.journalPosts.slug, slug),
-              eq(schema.journalPosts.isDraft, false),
-              lte(schema.journalPosts.publishedAt, now),
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.journalPosts)
+            .where(
+              and(
+                eq(schema.journalPosts.slug, slug),
+                eq(schema.journalPosts.isDraft, false),
+                lte(schema.journalPosts.publishedAt, now),
+              ),
             ),
-          );
+        );
         return row ? this.mapRow(row) : null;
       },
       { slug },
@@ -118,10 +121,9 @@ export class JournalRepository implements IJournalRepository {
       'find post by id',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.journalPosts)
-          .where(eq(schema.journalPosts.id, id));
+        const row = firstOrUndefined(
+          await this.db.select().from(schema.journalPosts).where(eq(schema.journalPosts.id, id)),
+        );
         return row ? this.mapRow(row) : null;
       },
       { id },
@@ -141,18 +143,20 @@ export class JournalRepository implements IJournalRepository {
       this.logger,
       async () => {
         const now = new Date();
-        const [row] = await this.db
-          .select()
-          .from(schema.journalPosts)
-          .where(
-            and(
-              eq(schema.journalPosts.contextId, contextId),
-              eq(schema.journalPosts.isDraft, false),
-              lte(schema.journalPosts.publishedAt, now),
-            ),
-          )
-          .orderBy(desc(schema.journalPosts.publishedAt), desc(schema.journalPosts.createdAt))
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.journalPosts)
+            .where(
+              and(
+                eq(schema.journalPosts.contextId, contextId),
+                eq(schema.journalPosts.isDraft, false),
+                lte(schema.journalPosts.publishedAt, now),
+              ),
+            )
+            .orderBy(desc(schema.journalPosts.publishedAt), desc(schema.journalPosts.createdAt))
+            .limit(1),
+        );
         return row ? this.mapRow(row) : null;
       },
       { contextId },
@@ -176,10 +180,12 @@ export class JournalRepository implements IJournalRepository {
           conditions.push(sql`${schema.journalPosts.id} != ${excludeId}`);
         }
 
-        const [result] = await this.db
-          .select({ count: count() })
-          .from(schema.journalPosts)
-          .where(and(...conditions));
+        const result = firstOrUndefined(
+          await this.db
+            .select({ count: count() })
+            .from(schema.journalPosts)
+            .where(and(...conditions)),
+        );
 
         return (result?.count ?? 0) > 0;
       },
@@ -253,11 +259,13 @@ export class JournalRepository implements IJournalRepository {
         if (data.isDraft !== undefined) updatePayload.isDraft = data.isDraft;
         if (data.publishedAt !== undefined) updatePayload.publishedAt = data.publishedAt;
 
-        const [row] = await this.db
-          .update(schema.journalPosts)
-          .set(updatePayload)
-          .where(eq(schema.journalPosts.id, id))
-          .returning();
+        const row = firstOrUndefined(
+          await this.db
+            .update(schema.journalPosts)
+            .set(updatePayload)
+            .where(eq(schema.journalPosts.id, id))
+            .returning(),
+        );
 
         return row ? this.mapRow(row) : null;
       },

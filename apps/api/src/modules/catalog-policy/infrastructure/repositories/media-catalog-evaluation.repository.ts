@@ -39,7 +39,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
   ) {}
 
   async upsert(evaluation: MediaCatalogEvaluation): Promise<MediaCatalogEvaluation> {
-    const context = evaluation.context ?? DEFAULT_EVALUATION_CONTEXT;
+    const { context } = evaluation;
     try {
       const result = await this.db
         .insert(schema.mediaCatalogEvaluations)
