@@ -1,5 +1,5 @@
 import { createCatalogApp, CatalogE2eContext } from './_harness';
-import { testUuid } from '../support/test-uuid';
+import { MOVIE_ONE_ID, SHOW_ONE_ID } from './_fixtures';
 
 describe('Catalog E2E - Details (movies/shows)', () => {
   let ctx: CatalogE2eContext;
@@ -17,7 +17,7 @@ describe('Catalog E2E - Details (movies/shows)', () => {
     expect(anon.body.data.userState).toBeNull();
 
     const token = await ctx.registerAndLogin();
-    await ctx.setUserState(token, testUuid('mid-1'));
+    await ctx.setUserState(token, MOVIE_ONE_ID);
 
     const auth = await ctx.get('/api/catalog/movies/movie-one', token).expect(200);
     expect(auth.body.data.userState).not.toBeNull();
@@ -30,7 +30,7 @@ describe('Catalog E2E - Details (movies/shows)', () => {
     expect(anon.body.data.userState).toBeNull();
 
     const token = await ctx.registerAndLogin();
-    await ctx.setUserState(token, testUuid('sid-1'));
+    await ctx.setUserState(token, SHOW_ONE_ID);
 
     const auth = await ctx.get('/api/catalog/shows/show-one', token).expect(200);
     expect(auth.body.data.userState).not.toBeNull();

@@ -1,257 +1,23 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import { TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import googleConfig from '../src/config/google.config';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
 import { OAuthService } from '../src/modules/auth/application/oauth.service';
-import {
-  USERS_REPOSITORY,
-  IUsersRepository,
-} from '../src/modules/users/domain/repositories/users.repository.interface';
-import {
-  IRefreshTokensRepository,
-  REFRESH_TOKENS_REPOSITORY,
-} from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
-import {
-  IExchangeCodesRepository,
-  EXCHANGE_CODES_REPOSITORY,
-  ExchangeCodeRecord,
-  ConsumeCodeResult,
-  ConsumeCodeFailureReason,
-} from '../src/modules/auth/domain/repositories/exchange-codes.repository.interface';
+import { USERS_REPOSITORY } from '../src/modules/users/domain/repositories/users.repository.interface';
+import { REFRESH_TOKENS_REPOSITORY } from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
+import { EXCHANGE_CODES_REPOSITORY } from '../src/modules/auth/domain/repositories/exchange-codes.repository.interface';
 import { OAUTH_ACCOUNTS_REPOSITORY } from '../src/modules/auth/domain/repositories/oauth-accounts.repository.interface';
-import { User } from '../src/modules/users/domain/entities/user.entity';
-import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
-import {
-  IUserMediaStateRepository,
-  USER_MEDIA_STATE_REPOSITORY,
-} from '../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
+import { USER_MEDIA_STATE_REPOSITORY } from '../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
 import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
+import { InMemoryExchangeCodesRepository } from './support/in-memory-exchange-codes.repository';
 import { InMemoryOAuthAccountsRepository } from './support/in-memory-oauth-accounts.repository';
-
-type UserData = Omit<User, 'id' | 'createdAt' | 'updatedAt'> & {
-  id?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
-
-class InMemoryUsersRepository implements IUsersRepository {
-  private users: User[] = [];
-
-  async findById(id: string): Promise<User | null> {
-    return this.users.find((u) => u.id === id) ?? null;
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    return this.users.find((u) => u.email === email) ?? null;
-  }
-
-  async findByUsername(username: string): Promise<User | null> {
-    return this.users.find((u) => u.username === username) ?? null;
-  }
-
-  async create(data: UserData): Promise<User> {
-    const user: User = {
-      ...data,
-      id: `user-${this.users.length + 1}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      passwordHash: data.passwordHash,
-      avatarUrl: data.avatarUrl ?? null,
-      bio: data.bio ?? null,
-      location: data.location ?? null,
-      website: data.website ?? null,
-      preferredLanguage: data.preferredLanguage ?? null,
-      preferredRegion: data.preferredRegion ?? null,
-      isProfilePublic: data.isProfilePublic ?? true,
-      showWatchHistory: data.showWatchHistory ?? true,
-      showRatings: data.showRatings ?? true,
-      allowFollowers: data.allowFollowers ?? true,
-      autoSubscribeOnWatch: data.autoSubscribeOnWatch ?? true,
-      role: (data.role as User['role']) ?? 'user',
-    } as User;
-    this.users.push(user);
-    return user;
-  }
-
-  async updateProfile(id: string, data: Partial<User>): Promise<User> {
-    const user = this.users.find((u) => u.id === id);
-    if (user) {
-      Object.assign(user, data);
-      return user;
-    }
-    throw new Error('User not found');
-  }
-
-  async updatePassword(id: string, passwordHash: string): Promise<void> {
-    const user = this.users.find((u) => u.id === id);
-    if (user) {
-      user.passwordHash = passwordHash;
-    }
-  }
-
-  clear(): void {
-    this.users = [];
-  }
-}
-
-class InMemoryUserMediaRepository implements IUserMediaStateRepository {
-  async upsert(): Promise<any> {
-    throw new Error('Not implemented');
-  }
-  async updateStateIfIn(): Promise<any> {
-    return null;
-  }
-  async findOne(): Promise<any> {
-    return null;
-  }
-  async listByUser(): Promise<any[]> {
-    return [];
-  }
-  async findManyByMediaIds(): Promise<any[]> {
-    return [];
-  }
-  async getStats(): Promise<{ moviesRated: number; showsRated: number; watchlistCount: number }> {
-    return { moviesRated: 0, showsRated: 0, watchlistCount: 0 };
-  }
-  async listWithMedia(): Promise<any[]> {
-    return [];
-  }
-  async countWithMedia(): Promise<number> {
-    return 0;
-  }
-  async listActivityWithMedia(): Promise<any[]> {
-    return [];
-  }
-  async listContinueWithMedia(): Promise<any[]> {
-    return [];
-  }
-  async countActivityWithMedia(): Promise<number> {
-    return 0;
-  }
-  async countContinueWithMedia(): Promise<number> {
-    return 0;
-  }
-  async findOneWithMedia(): Promise<any> {
-    return null;
-  }
-  async delete(): Promise<void> {
-    // no-op
-  }
-
-  async listFavoriteUpdates(_userId: string, _options: any): Promise<any[]> {
-    return [];
-  }
-  async findByMediaAndState(): Promise<Array<{ userId: string }>> {
-    return [];
-  }
-  async bulkImport(
-    _userId: string,
-    _items: Array<{ mediaItemId: string; state: string; rating: number | null }>,
-    _overwrite: boolean,
-  ): Promise<{ imported: number; skipped: number; plannedMediaItemIds: string[] }> {
-    return { imported: 0, skipped: 0, plannedMediaItemIds: [] };
-  }
-
-  async upsertWithGuard(_data: any, guard: (existing: any) => void): Promise<any> {
-    guard(null);
-    return {} as any;
-  }
-
-  async bulkTransitionCaughtUpToWatching(_mediaItemId: string): Promise<any[]> {
-    return [];
-  }
-}
-
-class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
-  private tokens: RefreshToken[] = [];
-
-  async issue(token: Omit<RefreshToken, 'createdAt'>): Promise<RefreshToken> {
-    const issued: RefreshToken = { ...token, createdAt: new Date() } as RefreshToken;
-    this.tokens.push(issued);
-    return issued;
-  }
-
-  async findById(id: string): Promise<RefreshToken | null> {
-    return this.tokens.find((t) => t.id === id) ?? null;
-  }
-
-  async findValidByUser(userId: string): Promise<RefreshToken[]> {
-    const now = new Date();
-    return this.tokens.filter((t) => t.userId === userId && !t.revokedAt && t.expiresAt >= now);
-  }
-
-  async revoke(id: string): Promise<void> {
-    const token = this.tokens.find((t) => t.id === id);
-    if (token) token.revokedAt = new Date();
-  }
-
-  async revokeIfActive(id: string): Promise<boolean> {
-    const token = this.tokens.find((t) => t.id === id);
-    if (!token || token.revokedAt) return false;
-    token.revokedAt = new Date();
-    return true;
-  }
-
-  async revokeAllForUser(userId: string): Promise<void> {
-    this.tokens.forEach((t) => {
-      if (t.userId === userId) t.revokedAt = new Date();
-    });
-  }
-
-  clear(): void {
-    this.tokens = [];
-  }
-}
-
-class InMemoryExchangeCodesRepository implements IExchangeCodesRepository {
-  private codes: ExchangeCodeRecord[] = [];
-
-  async create(
-    data: Omit<ExchangeCodeRecord, 'id' | 'usedAt' | 'createdAt'>,
-  ): Promise<ExchangeCodeRecord> {
-    const record: ExchangeCodeRecord = {
-      ...data,
-      id: `code-${this.codes.length + 1}`,
-      usedAt: null,
-      createdAt: new Date(),
-    };
-    this.codes.push(record);
-    return record;
-  }
-
-  async consumeCode(codeHash: string): Promise<ConsumeCodeResult> {
-    const now = new Date();
-    const record = this.codes.find((c) => c.codeHash === codeHash);
-
-    if (!record) {
-      return { success: false, reason: ConsumeCodeFailureReason.NOT_FOUND };
-    }
-
-    if (record.usedAt) {
-      return { success: false, reason: ConsumeCodeFailureReason.ALREADY_USED };
-    }
-
-    if (record.expiresAt < now) {
-      return { success: false, reason: ConsumeCodeFailureReason.EXPIRED };
-    }
-
-    record.usedAt = now;
-    return { success: true, record };
-  }
-
-  async cleanupExpired(): Promise<number> {
-    const now = new Date();
-    const before = this.codes.length;
-    this.codes = this.codes.filter((c) => c.expiresAt > now && !c.usedAt);
-    return before - this.codes.length;
-  }
-
-  clear(): void {
-    this.codes = [];
-  }
-}
+import {
+  InMemoryRefreshTokensRepository,
+  InMemoryUserMediaRepository,
+  InMemoryUsersRepository,
+} from './users/_fakes';
 
 describe('Google OAuth e2e', () => {
   let app: INestApplication;
@@ -484,10 +250,10 @@ describe('Google OAuth e2e', () => {
   });
 
   describe('Exchange code - happy path', () => {
-    let authService: OAuthService;
+    let oauthService: OAuthService;
 
     beforeAll(() => {
-      authService = app.get(OAuthService);
+      oauthService = app.get(OAuthService);
     });
 
     it('should exchange a valid code for tokens', async () => {
@@ -508,7 +274,7 @@ describe('Google OAuth e2e', () => {
       expect(user).not.toBeNull();
 
       // 3. Generate exchange code via OAuthService
-      const code = await authService.generateExchangeCode(user!.id);
+      const code = await oauthService.generateExchangeCode(user!.id);
       expect(typeof code).toBe('string');
       expect(code.length).toBeGreaterThan(0);
 
@@ -537,7 +303,7 @@ describe('Google OAuth e2e', () => {
       expect(user).not.toBeNull();
 
       // 2. Generate and use exchange code
-      const code = await authService.generateExchangeCode(user!.id);
+      const code = await oauthService.generateExchangeCode(user!.id);
       const firstRes = await request(app.getHttpServer())
         .post(`${baseUrl}/oauth/exchange`)
         .send({ code })
@@ -567,7 +333,7 @@ describe('Google OAuth e2e', () => {
       expect(user).not.toBeNull();
 
       // 2. Generate exchange code and exchange for tokens
-      const code = await authService.generateExchangeCode(user!.id);
+      const code = await oauthService.generateExchangeCode(user!.id);
       const exchangeRes = await request(app.getHttpServer())
         .post(`${baseUrl}/oauth/exchange`)
         .send({ code })
@@ -602,7 +368,7 @@ describe('Google OAuth e2e', () => {
       expect(user).not.toBeNull();
 
       // 2. Generate exchange code and exchange for tokens
-      const code = await authService.generateExchangeCode(user!.id);
+      const code = await oauthService.generateExchangeCode(user!.id);
       const exchangeRes = await request(app.getHttpServer())
         .post(`${baseUrl}/oauth/exchange`)
         .send({ code })
@@ -625,10 +391,10 @@ describe('Google OAuth e2e', () => {
   });
 
   describe('Google OAuth - simulated flow', () => {
-    let authService: OAuthService;
+    let oauthService: OAuthService;
 
     beforeAll(() => {
-      authService = app.get(OAuthService);
+      oauthService = app.get(OAuthService);
     });
 
     it('should complete full OAuth flow: loginWithOAuth -> generateExchangeCode -> exchange -> tokens', async () => {
@@ -642,7 +408,7 @@ describe('Google OAuth e2e', () => {
         picture: 'https://example.com/avatar.jpg',
       };
 
-      const { user, tokens: loginTokens } = await authService.loginWithOAuth(oauthPayload);
+      const { user, tokens: loginTokens } = await oauthService.loginWithOAuth(oauthPayload);
       expect(user).toBeDefined();
       expect(user.email).toBe('googleflow@test.com');
       // Verify Google account is linked via oauth_accounts table
@@ -653,7 +419,7 @@ describe('Google OAuth e2e', () => {
       expect(loginTokens.accessToken).toBeDefined();
 
       // 2. Controller generates an exchange code (simulating googleCallback)
-      const code = await authService.generateExchangeCode(user.id);
+      const code = await oauthService.generateExchangeCode(user.id);
       expect(typeof code).toBe('string');
 
       // 3. Frontend exchanges the code for tokens via HTTP endpoint
@@ -686,7 +452,7 @@ describe('Google OAuth e2e', () => {
         picture: null,
       };
 
-      const { user } = await authService.loginWithOAuth(oauthPayload);
+      const { user } = await oauthService.loginWithOAuth(oauthPayload);
 
       expect(user).toBeDefined();
       expect(user.email).toBe('newgoogle@test.com');
@@ -714,21 +480,21 @@ describe('Google OAuth e2e', () => {
       };
 
       // First login - creates user
-      const first = await authService.loginWithOAuth(oauthPayload);
+      const first = await oauthService.loginWithOAuth(oauthPayload);
       const firstUserId = first.user.id;
 
       // Second login - returns same user
-      const second = await authService.loginWithOAuth(oauthPayload);
+      const second = await oauthService.loginWithOAuth(oauthPayload);
       expect(second.user.id).toBe(firstUserId);
       expect(second.user.email).toBe('returning@test.com');
     });
   });
 
   describe('Google OAuth - account linking', () => {
-    let authService: OAuthService;
+    let oauthService: OAuthService;
 
     beforeAll(() => {
-      authService = app.get(OAuthService);
+      oauthService = app.get(OAuthService);
     });
 
     it('should refuse to auto-link Google to an existing email/password account', async () => {
@@ -737,15 +503,18 @@ describe('Google OAuth e2e', () => {
         .send({ email: 'link-test@test.com', username: 'linktest', password: 'Password123' })
         .expect(201);
 
-      await expect(
-        authService.loginWithOAuth({
-          provider: 'google' as const,
+      const error = await oauthService
+        .loginWithOAuth({
+          provider: 'google',
           providerAccountId: 'google-link-999',
           email: 'link-test@test.com',
           name: 'Link Test',
           picture: 'https://example.com/linked-avatar.jpg',
-        }),
-      ).rejects.toThrow('OAUTH_ACCOUNT_EXISTS_PASSWORD');
+        })
+        .catch((rejection: unknown) => rejection);
+
+      expect(error).toBeInstanceOf(UnauthorizedException);
+      expect((error as UnauthorizedException).message).toBe('OAUTH_ACCOUNT_EXISTS_PASSWORD');
 
       expect(await oauthAccountsRepo.findByProviderAccount('google', 'google-link-999')).toBeNull();
 
@@ -761,10 +530,10 @@ describe('Google OAuth e2e', () => {
         username: 'avatarlink',
         passwordHash: null,
         avatarUrl: null,
-      } as UserData);
+      });
 
-      const { user: linkedUser } = await authService.loginWithOAuth({
-        provider: 'google' as const,
+      const { user: linkedUser } = await oauthService.loginWithOAuth({
+        provider: 'google',
         providerAccountId: 'google-avatar-111',
         email: 'avatar-link@test.com',
         name: 'Avatar Link',
@@ -773,11 +542,29 @@ describe('Google OAuth e2e', () => {
 
       expect(linkedUser.id).toBe(oauthOnlyUser.id);
       expect(linkedUser.avatarUrl).toBe('https://example.com/google-pic.jpg');
-      const oauthLink = await oauthAccountsRepo.findByProviderAccount(
-        'google',
-        'google-avatar-111',
-      );
-      expect(oauthLink!.userId).toBe(oauthOnlyUser.id);
+      expect(
+        await oauthAccountsRepo.findByProviderAccount('google', 'google-avatar-111'),
+      ).toMatchObject({ userId: oauthOnlyUser.id });
+    });
+
+    it('should keep the existing avatar when auto-linking Google to an OAuth-only account', async () => {
+      const oauthOnlyUser = await usersRepo.create({
+        email: 'keep-avatar@test.com',
+        username: 'keepavatar',
+        passwordHash: null,
+        avatarUrl: 'https://example.com/own-avatar.jpg',
+      });
+
+      const { user: linkedUser } = await oauthService.loginWithOAuth({
+        provider: 'google',
+        providerAccountId: 'google-keep-avatar-444',
+        email: 'keep-avatar@test.com',
+        name: 'Keep Avatar',
+        picture: 'https://example.com/google-pic.jpg',
+      });
+
+      expect(linkedUser.id).toBe(oauthOnlyUser.id);
+      expect(linkedUser.avatarUrl).toBe('https://example.com/own-avatar.jpg');
     });
 
     it('should create new user for unknown Google email', async () => {
@@ -789,7 +576,7 @@ describe('Google OAuth e2e', () => {
         picture: null,
       };
 
-      const { user } = await authService.loginWithOAuth(oauthPayload);
+      const { user } = await oauthService.loginWithOAuth(oauthPayload);
 
       expect(user).toBeDefined();
       expect(user.email).toBe('brandnew@test.com');
@@ -803,7 +590,7 @@ describe('Google OAuth e2e', () => {
       expect(oauthLink!.userId).toBe(user.id);
 
       // Verify the new user can get tokens via exchange code flow
-      const code = await authService.generateExchangeCode(user.id);
+      const code = await oauthService.generateExchangeCode(user.id);
       const res = await request(app.getHttpServer())
         .post(`${baseUrl}/oauth/exchange`)
         .send({ code })
@@ -819,6 +606,7 @@ describe('Google OAuth e2e', () => {
         .send({ email: 'find-by-gid@test.com', username: 'findbygid', password: 'Password123' })
         .expect(201);
       const passwordUser = await usersRepo.findByEmail('find-by-gid@test.com');
+      expect(passwordUser).not.toBeNull();
 
       const oauthPayload = {
         provider: 'google' as const,
@@ -827,10 +615,10 @@ describe('Google OAuth e2e', () => {
         name: 'Find By GID',
         picture: null,
       };
-      await authService.linkOAuthAccount(passwordUser!.id, oauthPayload);
+      await oauthService.linkOAuthAccount(passwordUser.id, oauthPayload);
 
-      const { user: oauthLogin } = await authService.loginWithOAuth(oauthPayload);
-      expect(oauthLogin.id).toBe(passwordUser!.id);
+      const { user: oauthLogin } = await oauthService.loginWithOAuth(oauthPayload);
+      expect(oauthLogin.id).toBe(passwordUser.id);
     });
   });
 });

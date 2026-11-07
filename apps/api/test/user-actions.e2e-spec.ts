@@ -4,16 +4,8 @@ import * as request from 'supertest';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
 import { UserActionsModule } from '../src/modules/user-actions/user-actions.module';
-import {
-  USERS_REPOSITORY,
-  IUsersRepository,
-} from '../src/modules/users/domain/repositories/users.repository.interface';
-import {
-  IRefreshTokensRepository,
-  REFRESH_TOKENS_REPOSITORY,
-} from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
-import { User } from '../src/modules/users/domain/entities/user.entity';
-import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
+import { USERS_REPOSITORY } from '../src/modules/users/domain/repositories/users.repository.interface';
+import { REFRESH_TOKENS_REPOSITORY } from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import {
   IUserMediaActionRepository,
   USER_MEDIA_ACTION_REPOSITORY,
@@ -37,98 +29,11 @@ import {
 } from '../src/modules/user-actions/domain/entities/user-subscription.entity';
 import { MediaType } from '../src/common/enums/media-type.enum';
 import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
+import { MAX_PAGE_SIZE } from '../src/common/constants';
 import { testUuid } from './support/test-uuid';
+import { InMemoryRefreshTokensRepository, InMemoryUsersRepository } from './users/_fakes';
 
 // In-memory repositories for E2E tests
-
-class InMemoryUsersRepository implements IUsersRepository {
-  private users: User[] = [];
-
-  async findById(id: string): Promise<User | null> {
-    return this.users.find((u) => u.id === id) ?? null;
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    return this.users.find((u) => u.email === email) ?? null;
-  }
-
-  async findByUsername(username: string): Promise<User | null> {
-    return this.users.find((u) => u.username === username) ?? null;
-  }
-
-  async create(data: any): Promise<User> {
-    const user: User = {
-      id: `user-${this.users.length + 1}`,
-      email: data.email,
-      username: data.username,
-      passwordHash: data.passwordHash,
-      avatarUrl: data.avatarUrl ?? null,
-      bio: data.bio ?? null,
-      location: data.location ?? null,
-      website: data.website ?? null,
-      preferredLanguage: data.preferredLanguage ?? null,
-      preferredRegion: data.preferredRegion ?? null,
-      isProfilePublic: data.isProfilePublic ?? true,
-      showWatchHistory: data.showWatchHistory ?? true,
-      showRatings: data.showRatings ?? true,
-      allowFollowers: data.allowFollowers ?? true,
-      autoSubscribeOnWatch: data.autoSubscribeOnWatch ?? true,
-      role: (data.role as User['role']) ?? 'user',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.users.push(user);
-    return user;
-  }
-
-  async updateProfile(): Promise<User> {
-    throw new Error('Not implemented');
-  }
-
-  async updatePassword(id: string, passwordHash: string): Promise<void> {
-    const user = this.users.find((u) => u.id === id);
-    if (user) {
-      user.passwordHash = passwordHash;
-    }
-  }
-}
-
-class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
-  private tokens: RefreshToken[] = [];
-
-  async issue(token: Omit<RefreshToken, 'createdAt'>): Promise<RefreshToken> {
-    const issued: RefreshToken = { ...token, createdAt: new Date() } as RefreshToken;
-    this.tokens.push(issued);
-    return issued;
-  }
-
-  async findById(id: string): Promise<RefreshToken | null> {
-    return this.tokens.find((t) => t.id === id) ?? null;
-  }
-
-  async findValidByUser(userId: string): Promise<RefreshToken[]> {
-    const now = new Date();
-    return this.tokens.filter((t) => t.userId === userId && !t.revokedAt && t.expiresAt >= now);
-  }
-
-  async revoke(id: string): Promise<void> {
-    const token = this.tokens.find((t) => t.id === id);
-    if (token) token.revokedAt = new Date();
-  }
-
-  async revokeIfActive(id: string): Promise<boolean> {
-    const token = this.tokens.find((t) => t.id === id);
-    if (!token || token.revokedAt) return false;
-    token.revokedAt = new Date();
-    return true;
-  }
-
-  async revokeAllForUser(userId: string): Promise<void> {
-    this.tokens.forEach((t) => {
-      if (t.userId === userId) t.revokedAt = new Date();
-    });
-  }
-}
 
 class InMemoryUserMediaActionRepository implements IUserMediaActionRepository {
   private actions: UserMediaAction[] = [];
@@ -429,6 +334,9 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
     return 0;
   }
 }
+
+const buildMediaIds = (count: number): string =>
+  Array.from({ length: count }, (_, index) => testUuid(`media-${index}`)).join(',');
 
 describe('User Actions E2E', () => {
   let app: INestApplication;
@@ -743,18 +651,31 @@ describe('User Actions E2E', () => {
           .set('Authorization', `Bearer ${token}`);
 
         expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
       });
 
-      it('should reject more than 100 ids', async () => {
+      it(`should accept exactly ${MAX_PAGE_SIZE} ids`, async () => {
         const token = await registerAndLogin('batch3');
-        const manyIds = Array.from({ length: 150 }, (_, i) => testUuid(`media-${i}`)).join(',');
 
         const res = await request(app.getHttpServer())
           .get(`${savedItemsUrl}/status/batch`)
-          .query({ ids: manyIds })
+          .query({ ids: buildMediaIds(MAX_PAGE_SIZE) })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(Object.keys(res.body.data.statuses)).toHaveLength(MAX_PAGE_SIZE);
+      });
+
+      it(`should reject more than ${MAX_PAGE_SIZE} ids`, async () => {
+        const token = await registerAndLogin('batch4');
+
+        const res = await request(app.getHttpServer())
+          .get(`${savedItemsUrl}/status/batch`)
+          .query({ ids: buildMediaIds(MAX_PAGE_SIZE + 1) })
           .set('Authorization', `Bearer ${token}`);
 
         expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
       });
 
       it('should require authentication for batch status', async () => {

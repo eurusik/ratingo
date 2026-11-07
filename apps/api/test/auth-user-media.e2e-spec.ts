@@ -4,16 +4,8 @@ import * as request from 'supertest';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
 import { UserMediaModule } from '../src/modules/user-media/user-media.module';
-import {
-  USERS_REPOSITORY,
-  IUsersRepository,
-} from '../src/modules/users/domain/repositories/users.repository.interface';
-import {
-  IRefreshTokensRepository,
-  REFRESH_TOKENS_REPOSITORY,
-} from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
-import { User } from '../src/modules/users/domain/entities/user.entity';
-import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
+import { USERS_REPOSITORY } from '../src/modules/users/domain/repositories/users.repository.interface';
+import { REFRESH_TOKENS_REPOSITORY } from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import {
   IUserMediaStateRepository,
   USER_MEDIA_STATE_REPOSITORY,
@@ -23,6 +15,7 @@ import { UserMediaState } from '../src/modules/user-media/domain/entities/user-m
 import { MediaType } from '../src/common/enums/media-type.enum';
 import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
 import { testUuid } from './support/test-uuid';
+import { InMemoryRefreshTokensRepository, InMemoryUsersRepository } from './users/_fakes';
 
 type MediaSummary = {
   id: string;
@@ -33,102 +26,6 @@ type MediaSummary = {
 };
 
 type MediaStateWithSummary = UserMediaState & { mediaSummary: MediaSummary };
-
-class InMemoryUsersRepository implements IUsersRepository {
-  private users: User[] = [];
-
-  async findById(id: string): Promise<User | null> {
-    return this.users.find((u) => u.id === id) ?? null;
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    return this.users.find((u) => u.email === email) ?? null;
-  }
-
-  async findByUsername(username: string): Promise<User | null> {
-    return this.users.find((u) => u.username === username) ?? null;
-  }
-
-  async create(data: any): Promise<User> {
-    const user: User = {
-      id: `user-${this.users.length + 1}`,
-      email: data.email,
-      username: data.username,
-      passwordHash: data.passwordHash,
-      avatarUrl: data.avatarUrl ?? null,
-      bio: data.bio ?? null,
-      location: data.location ?? null,
-      website: data.website ?? null,
-      preferredLanguage: data.preferredLanguage ?? null,
-      preferredRegion: data.preferredRegion ?? null,
-      isProfilePublic: data.isProfilePublic ?? true,
-      showWatchHistory: data.showWatchHistory ?? true,
-      showRatings: data.showRatings ?? true,
-      allowFollowers: data.allowFollowers ?? true,
-      autoSubscribeOnWatch: data.autoSubscribeOnWatch ?? true,
-      role: (data.role as User['role']) ?? 'user',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.users.push(user);
-    return user;
-  }
-
-  async updateProfile(): Promise<User> {
-    throw new Error('Not implemented');
-  }
-
-  async updatePassword(id: string, passwordHash: string): Promise<void> {
-    const user = this.users.find((u) => u.id === id);
-    if (user) {
-      user.passwordHash = passwordHash;
-    }
-  }
-  async bulkImport(
-    _userId: string,
-    _items: Array<{ mediaItemId: string; state: string; rating: number | null }>,
-    _overwrite: boolean,
-  ): Promise<{ imported: number; skipped: number; plannedMediaItemIds: string[] }> {
-    return { imported: 0, skipped: 0, plannedMediaItemIds: [] };
-  }
-}
-
-class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
-  private tokens: RefreshToken[] = [];
-
-  async issue(token: Omit<RefreshToken, 'createdAt'>): Promise<RefreshToken> {
-    const issued: RefreshToken = { ...token, createdAt: new Date() } as RefreshToken;
-    this.tokens.push(issued);
-    return issued;
-  }
-
-  async findById(id: string): Promise<RefreshToken | null> {
-    return this.tokens.find((t) => t.id === id) ?? null;
-  }
-
-  async findValidByUser(userId: string): Promise<RefreshToken[]> {
-    const now = new Date();
-    return this.tokens.filter((t) => t.userId === userId && !t.revokedAt && t.expiresAt >= now);
-  }
-
-  async revoke(id: string): Promise<void> {
-    const token = this.tokens.find((t) => t.id === id);
-    if (token) token.revokedAt = new Date();
-  }
-
-  async revokeIfActive(id: string): Promise<boolean> {
-    const token = this.tokens.find((t) => t.id === id);
-    if (!token || token.revokedAt) return false;
-    token.revokedAt = new Date();
-    return true;
-  }
-
-  async revokeAllForUser(userId: string): Promise<void> {
-    this.tokens.forEach((t) => {
-      if (t.userId === userId) t.revokedAt = new Date();
-    });
-  }
-}
 
 class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   private states: MediaStateWithSummary[] = [];
@@ -349,13 +246,12 @@ describe('User Media e2e', () => {
   });
 
   it('rejects unauthenticated requests', async () => {
+    const mediaItemId = testUuid('mid-unauth');
     await request(app.getHttpServer())
-      .patch(`${mediaUrl}/${testUuid('mid-unauth')}`)
+      .patch(`${mediaUrl}/${mediaItemId}`)
       .send({ state: 'watching' })
       .expect(401);
-    await request(app.getHttpServer())
-      .get(`${mediaUrl}/${testUuid('mid-unauth')}`)
-      .expect(401);
+    await request(app.getHttpServer()).get(`${mediaUrl}/${mediaItemId}`).expect(401);
     await request(app.getHttpServer()).get(`${mediaUrl}`).expect(401);
   });
 

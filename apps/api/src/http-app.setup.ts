@@ -1,5 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
-import { type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 
 import fastifyCookie from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
@@ -8,6 +8,8 @@ import { MAX_UPLOAD_FILE_SIZE_BYTES } from './common/constants';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { SlowRequestInterceptor } from './common/interceptors/slow-request.interceptor';
+
+export const createHttpAdapter = (): FastifyAdapter => new FastifyAdapter({ trustProxy: true });
 
 export async function configureHttpApp(app: NestFastifyApplication): Promise<void> {
   await app.register(fastifyCookie);

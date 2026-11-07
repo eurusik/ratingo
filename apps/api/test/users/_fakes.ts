@@ -1,4 +1,7 @@
-import { IUsersRepository } from '../../src/modules/users/domain/repositories/users.repository.interface';
+import {
+  type CreateUserData,
+  IUsersRepository,
+} from '../../src/modules/users/domain/repositories/users.repository.interface';
 import { User } from '../../src/modules/users/domain/entities/user.entity';
 import { IRefreshTokensRepository } from '../../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { RefreshToken } from '../../src/modules/auth/domain/entities/refresh-token.entity';
@@ -25,7 +28,7 @@ export class InMemoryUsersRepository implements IUsersRepository {
     return this.users.find((u) => u.username === username) ?? null;
   }
 
-  async create(data: UserData): Promise<User> {
+  async create(data: CreateUserData & Partial<UserData>): Promise<User> {
     const user: User = {
       ...data,
       id: `user-${this.users.length + 1}`,
@@ -67,11 +70,15 @@ export class InMemoryUsersRepository implements IUsersRepository {
       user.passwordHash = passwordHash;
     }
   }
+
+  clear(): void {
+    this.users = [];
+  }
 }
 
 export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   private states: any[] = [];
-  private showIds = new Set<string>();
+  private readonly showIds = new Set<string>();
 
   addState(state: any) {
     this.states.push(state);
