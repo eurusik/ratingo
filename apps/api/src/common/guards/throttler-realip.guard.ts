@@ -22,7 +22,7 @@ function extractRealIp(req: FastifyRequest): string {
   if (req.ip) return req.ip;
 
   // Fallback to raw socket
-  const rawSocket = (req.raw as { socket?: { remoteAddress?: string } })?.socket;
+  const rawSocket = (req.raw as { socket?: { remoteAddress?: string } }).socket;
   return rawSocket?.remoteAddress ?? 'unknown';
 }
 

@@ -102,7 +102,10 @@ export class DrizzleInsightsRepository implements InsightsRepository {
         );
 
       type MediaRow = Omit<(typeof rows)[0], 'snapshotDate' | 'totalWatchers'>;
-      const grouped = new Map<string, { media: MediaRow; snapshots: Record<string, number> }>();
+      const grouped = new Map<
+        string,
+        { media: MediaRow; snapshots: Partial<Record<string, number>> }
+      >();
 
       for (const row of rows) {
         const { snapshotDate, totalWatchers, ...media } = row;
@@ -172,7 +175,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
           if (i.stats.deltaWatchers >= 0) return false;
 
           if (i.stats.growthPrev < MIN_PREV_GROWTH) return false;
-          if ((i.stats.deltaPercent || 0) > MAX_DROP_PERCENT) return false;
+          if ((i.stats.deltaPercent ?? 0) > MAX_DROP_PERCENT) return false;
 
           return true;
         })

@@ -119,7 +119,7 @@ export class ScoreCalculatorService {
     );
     const avgRatingNorm = this.clamp(avgRating / RATING_SCALE_MAX, 0, 1);
 
-    const totalVotes = (input.imdbVotes || 0) + (input.traktVotes || 0);
+    const totalVotes = this.countedVotes(input.imdbVotes) + this.countedVotes(input.traktVotes);
     const voteConfidenceNorm = this.calculateVoteConfidence(input.imdbVotes, input.traktVotes);
 
     const effectiveDate = input.lastAirDate ?? input.releaseDate;
@@ -255,6 +255,10 @@ export class ScoreCalculatorService {
     return this.clamp(Math.max(expDecay, minFloor), 0, 1);
   }
 
+  private countedVotes(votes?: number | null): number {
+    return votes != null && votes > 0 ? votes : 0;
+  }
+
   /**
    * Calculates vote confidence based on available sources only.
    * Missing source ≠ negative signal — we only measure what we have.
@@ -262,11 +266,14 @@ export class ScoreCalculatorService {
   private calculateVoteConfidence(imdbVotes?: number | null, traktVotes?: number | null): number {
     const sources: Array<{ votes: number; k: number }> = [];
 
-    if (imdbVotes && imdbVotes > 0) {
-      sources.push({ votes: imdbVotes, k: IMDB_CONFIDENCE_K });
+    const imdbCount = this.countedVotes(imdbVotes);
+    const traktCount = this.countedVotes(traktVotes);
+
+    if (imdbCount > 0) {
+      sources.push({ votes: imdbCount, k: IMDB_CONFIDENCE_K });
     }
-    if (traktVotes && traktVotes > 0) {
-      sources.push({ votes: traktVotes, k: TRAKT_CONFIDENCE_K });
+    if (traktCount > 0) {
+      sources.push({ votes: traktCount, k: TRAKT_CONFIDENCE_K });
     }
 
     // No vote data = neutral confidence (not penalized)

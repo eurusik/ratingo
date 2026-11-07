@@ -5,6 +5,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { ErrorCode } from '@/common/enums/error-code.enum';
 import { NotFoundException } from '@/common/exceptions/not-found.exception';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -37,13 +38,15 @@ export class DrizzleReviewVoteRepository implements IReviewVoteRepository {
       'find vote',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.reviewVotes)
-          .where(
-            and(eq(schema.reviewVotes.userId, userId), eq(schema.reviewVotes.reviewId, reviewId)),
-          )
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.reviewVotes)
+            .where(
+              and(eq(schema.reviewVotes.userId, userId), eq(schema.reviewVotes.reviewId, reviewId)),
+            )
+            .limit(1),
+        );
 
         return row ? this.mapRow(row) : null;
       },
@@ -124,7 +127,7 @@ export class DrizzleReviewVoteRepository implements IReviewVoteRepository {
         for (const row of rows) {
           if (row.voteType === VOTE_TYPE.LIKE) {
             likes = Number(row.count);
-          } else if (row.voteType === VOTE_TYPE.DISLIKE) {
+          } else {
             dislikes = Number(row.count);
           }
         }
@@ -264,11 +267,13 @@ export class DrizzleReviewVoteRepository implements IReviewVoteRepository {
    * Locks the review row (SELECT ... FOR UPDATE) for the duration of the transaction.
    */
   private async lockReview(tx: ReviewVoteTx, reviewId: string): Promise<void> {
-    const [locked] = await tx
-      .select({ id: schema.reviews.id })
-      .from(schema.reviews)
-      .where(eq(schema.reviews.id, reviewId))
-      .for('update');
+    const locked = firstOrUndefined(
+      await tx
+        .select({ id: schema.reviews.id })
+        .from(schema.reviews)
+        .where(eq(schema.reviews.id, reviewId))
+        .for('update'),
+    );
 
     if (!locked) {
       throw new NotFoundException(ErrorCode.REVIEW_NOT_FOUND, 'Review not found', { reviewId });

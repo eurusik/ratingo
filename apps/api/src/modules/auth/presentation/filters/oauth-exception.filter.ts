@@ -88,7 +88,7 @@ export class OAuthExceptionFilter implements ExceptionFilter {
   }
 
   private extractErrorCode(exception: UnauthorizedException): string {
-    const response = exception.getResponse();
+    const response: unknown = exception.getResponse();
 
     // Handle string response (our OAuth error codes)
     if (typeof response === 'string') {

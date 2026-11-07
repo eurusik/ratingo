@@ -110,7 +110,7 @@ export class TmdbMapper {
       ),
       originalLanguage: normalizeOriginalLanguage(data.original_language),
 
-      genres: (data.genres || []).map((g) => ({
+      genres: (data.genres ?? []).map((g) => ({
         tmdbId: g.id,
         name: g.name,
         slug: this.generateGenreSlug(g.name),
@@ -176,15 +176,15 @@ export class TmdbMapper {
 
     // Movies use { titles: [...] }, Shows use { results: [...] }
     const rawTitles: TmdbAlternativeTitle[] = isMovie
-      ? altTitlesData.titles || []
-      : altTitlesData.results || [];
+      ? (altTitlesData.titles ?? [])
+      : (altTitlesData.results ?? []);
 
     if (rawTitles.length === 0) return [];
 
     // Include origin country titles
     const originCountries = isMovie
-      ? (data as TmdbMovieResponse).production_countries?.map((c) => c.iso_3166_1) || []
-      : (data as TmdbShowResponse).origin_country || [];
+      ? ((data as TmdbMovieResponse).production_countries?.map((c) => c.iso_3166_1) ?? [])
+      : ((data as TmdbShowResponse).origin_country ?? []);
 
     const allowedCountries = new Set([...ALT_TITLE_COUNTRIES, ...originCountries]);
 
@@ -235,7 +235,7 @@ export class TmdbMapper {
 
     for (const countryData of releaseDates) {
       const country = countryData.iso_3166_1;
-      for (const release of countryData.release_dates || []) {
+      for (const release of countryData.release_dates ?? []) {
         allReleases.push({
           country,
           type: release.type,
@@ -304,8 +304,8 @@ export class TmdbMapper {
 
     if (isMovie) {
       const movieData = data as TmdbMovieResponse;
-      const rawCast = movieData.credits?.cast || [];
-      const rawCrew = movieData.credits?.crew || [];
+      const rawCast = movieData.credits?.cast ?? [];
+      const rawCrew = movieData.credits?.crew ?? [];
 
       credits.cast = this.processCast(rawCast, true);
 
@@ -317,7 +317,7 @@ export class TmdbMapper {
       credits.crew = Array.from(processedCrew.values());
     } else {
       const showData = data as TmdbShowResponse;
-      const rawCast = showData.aggregate_credits?.cast || [];
+      const rawCast = showData.aggregate_credits?.cast ?? [];
 
       credits.cast = this.processCast(rawCast, false);
 

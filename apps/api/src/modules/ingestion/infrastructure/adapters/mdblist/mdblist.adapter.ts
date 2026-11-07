@@ -133,7 +133,7 @@ export class MdblistAdapter implements RottenTomatoesRatingsPort {
     }
 
     try {
-      const data = await this.fetch<MdblistResponse>(tmdbId, type);
+      const data = await this.fetch<MdblistResponse | null>(tmdbId, type);
 
       const ratings = Array.isArray(data?.ratings) ? data.ratings : [];
       return {
@@ -141,7 +141,8 @@ export class MdblistAdapter implements RottenTomatoesRatingsPort {
         rottenTomatoesAudience: this.extractScore(ratings, SOURCE.POPCORN),
       };
     } catch (error) {
-      const status = (error instanceof MdblistApiException && error.upstreamStatus) || 'unknown';
+      const status =
+        (error instanceof MdblistApiException ? error.upstreamStatus : undefined) ?? 'unknown';
       if (status === HttpStatus.NOT_FOUND) {
         this.logger.debug(`MDBList has no entry for tmdbId=${tmdbId} (404)`);
         return { rottenTomatoesCritics: null, rottenTomatoesAudience: null };
@@ -185,7 +186,7 @@ export class MdblistAdapter implements RottenTomatoesRatingsPort {
       );
     }
 
-    return result.data as T;
+    return result.data;
   }
 
   /**

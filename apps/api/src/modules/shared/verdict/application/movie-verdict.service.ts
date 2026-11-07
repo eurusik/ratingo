@@ -203,16 +203,8 @@ export class MovieVerdictService {
     }
 
     // Rising Hype - growing popularity
-    // For older content, frame as "classic choice" not "rising hype"
+    // For older content, frame as "steady interest" not "rising hype"
     if (popularitySignal === POPULARITY_SIGNAL.RISING) {
-      if (isClassic && isGoodQuality) {
-        return {
-          type: 'quality',
-          messageKey: 'classicChoice',
-          context: formatContext(avgRating),
-          hintKey: 'forLater',
-        };
-      }
       if (isOlderContent) {
         return {
           type: 'popularity',

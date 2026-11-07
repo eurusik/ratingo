@@ -57,7 +57,7 @@ const TMDB_THEATRICAL_RELEASE_TYPE = '3';
  * TMDB API response for paginated results.
  */
 interface TmdbPaginatedResponse {
-  results: TmdbResultItem[];
+  results?: TmdbResultItem[];
   total_pages: number;
   total_results: number;
   page: number;
@@ -117,13 +117,14 @@ export class TmdbAdapter implements MetadataProviderPort {
    */
   public async getMovie(tmdbId: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch<TmdbMediaResponse>(`/movie/${tmdbId}`, {
+      const data = await this.fetch<TmdbMediaResponse | null>(`/movie/${tmdbId}`, {
         append_to_response: 'credits,videos,release_dates,watch/providers,alternative_titles',
         include_video_language: 'uk,en',
       });
+      if (!data) return null;
       const result = TmdbMapper.toDomain(data, MediaType.MOVIE);
       // Fallback: if no localized data, create minimal object for import
-      if (!result && data?.id) {
+      if (!result && data.id) {
         const releaseDateStr = 'release_date' in data ? data.release_date : null;
         const movieData = data as TmdbMediaResponse & {
           production_countries?: Array<{ iso_3166_1: string }>;
@@ -153,7 +154,7 @@ export class TmdbAdapter implements MetadataProviderPort {
           watchProvidersRaw: {},
           isAdult: data.adult || false,
           // Preserve origin metadata even in fallback path
-          originCountries: movieData.production_countries?.map((c) => c.iso_3166_1) || null,
+          originCountries: movieData.production_countries?.map((c) => c.iso_3166_1) ?? null,
           originalLanguage: data.original_language || null,
           alternativeTitles: [],
         } as NormalizedMedia;
@@ -175,14 +176,15 @@ export class TmdbAdapter implements MetadataProviderPort {
    */
   public async getShow(tmdbId: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch<TmdbMediaResponse>(`/tv/${tmdbId}`, {
+      const data = await this.fetch<TmdbMediaResponse | null>(`/tv/${tmdbId}`, {
         append_to_response:
           'external_ids,aggregate_credits,videos,content_ratings,watch/providers,alternative_titles',
         include_video_language: 'uk,en',
       });
+      if (!data) return null;
       const result = TmdbMapper.toDomain(data, MediaType.SHOW);
       // Fallback: if no localized data, create minimal object for import
-      if (!result && data?.id) {
+      if (!result && data.id) {
         const releaseDateStr = 'first_air_date' in data ? data.first_air_date : null;
         const showData = data as TmdbMediaResponse & { origin_country?: string[] };
         return {
@@ -207,7 +209,7 @@ export class TmdbAdapter implements MetadataProviderPort {
           watchProvidersRaw: {},
           isAdult: data.adult || false,
           // Preserve origin metadata even in fallback path
-          originCountries: showData.origin_country || null,
+          originCountries: showData.origin_country ?? null,
           originalLanguage: data.original_language || null,
           alternativeTitles: [],
         } as NormalizedMedia;
@@ -243,7 +245,7 @@ export class TmdbAdapter implements MetadataProviderPort {
         results?: TmdbAlternativeTitle[];
       }>(endpoint, {}, { skipLanguage: true });
 
-      return data.titles || data.results || [];
+      return data.titles ?? data.results ?? [];
     } catch (error) {
       if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
         return [];
@@ -301,7 +303,7 @@ export class TmdbAdapter implements MetadataProviderPort {
 
     const data = await this.fetch<TmdbPaginatedResponse>(endpoint, { page: page.toString() });
 
-    return (data.results || [])
+    return (data.results ?? [])
       .filter((item) => item.media_type !== 'person')
       .map((item) => ({
         tmdbId: item.id,
@@ -329,7 +331,7 @@ export class TmdbAdapter implements MetadataProviderPort {
         page: page.toString(),
       });
 
-      const pageIds = (data.results || []).map((m) => m.id);
+      const pageIds = (data.results ?? []).map((m) => m.id);
       ids.push(...pageIds);
 
       pagesFetched = page;
@@ -369,7 +371,7 @@ export class TmdbAdapter implements MetadataProviderPort {
         page: page.toString(),
       });
 
-      const pageIds = (data.results || []).map((m) => m.id);
+      const pageIds = (data.results ?? []).map((m) => m.id);
       ids.push(...pageIds);
 
       pagesFetched = page;
@@ -460,7 +462,7 @@ export class TmdbAdapter implements MetadataProviderPort {
       include_adult: 'false',
     });
 
-    return (data.results || [])
+    return (data.results ?? [])
       .filter((item) => item.media_type === 'movie' || item.media_type === 'tv')
       .map((item) => ({
         externalIds: { tmdbId: item.id },
@@ -469,7 +471,7 @@ export class TmdbAdapter implements MetadataProviderPort {
         originalTitle: item.original_title || item.original_name || null,
         releaseDate: item.release_date || item.first_air_date || null,
         posterPath: item.poster_path || null,
-        rating: item.vote_average || 0,
+        rating: item.vote_average ?? 0,
       }));
   }
 

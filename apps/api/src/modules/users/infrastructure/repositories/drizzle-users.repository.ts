@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -36,7 +37,9 @@ export class DrizzleUsersRepository implements IUsersRepository {
       'fetch user by id',
       this.logger,
       async () => {
-        const [row] = await this.db.select().from(schema.users).where(eq(schema.users.id, id));
+        const row = firstOrUndefined(
+          await this.db.select().from(schema.users).where(eq(schema.users.id, id)),
+        );
         return row ? this.mapRow(row) : null;
       },
       { id },
@@ -54,10 +57,12 @@ export class DrizzleUsersRepository implements IUsersRepository {
       'fetch user by email',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.users)
-          .where(sql`lower(${schema.users.email}) = lower(${email})`);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.users)
+            .where(sql`lower(${schema.users.email}) = lower(${email})`),
+        );
         return row ? this.mapRow(row) : null;
       },
       { email },
@@ -75,12 +80,14 @@ export class DrizzleUsersRepository implements IUsersRepository {
       'fetch user by username',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.users)
-          .where(sql`lower(${schema.users.username}) = lower(${username})`)
-          .orderBy(sql`(${schema.users.username} = ${username}) desc`)
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.users)
+            .where(sql`lower(${schema.users.username}) = lower(${username})`)
+            .orderBy(sql`(${schema.users.username} = ${username}) desc`)
+            .limit(1),
+        );
         return row ? this.mapRow(row) : null;
       },
       { username },

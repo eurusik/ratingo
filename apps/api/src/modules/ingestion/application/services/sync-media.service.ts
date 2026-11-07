@@ -332,7 +332,7 @@ export class SyncMediaService {
     tmdbId: number,
     type: MediaType,
   ): Promise<NormalizedMedia> {
-    const imdbId = media.externalIds?.imdbId;
+    const { imdbId } = media.externalIds;
 
     const [traktRating, omdbRatings] = await Promise.all([
       type === MediaType.MOVIE
@@ -462,7 +462,7 @@ export class SyncMediaService {
 
   /** Classifies content for catalog policy filtering. */
   private classifyMedia(media: NormalizedMedia): NormalizedMedia {
-    const genreIds = media.genres?.map((g) => g.tmdbId) ?? [];
+    const genreIds = media.genres.map((g) => g.tmdbId);
 
     return {
       ...media,

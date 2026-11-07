@@ -45,7 +45,7 @@ describe('Service Error Mapping - Property-Based Tests', () => {
           }
 
           expect(thrownError).toBeInstanceOf(BadRequestException);
-          expect(thrownError?.message).toBe(domainError.message);
+          expect(thrownError.message).toBe(domainError.message);
         }),
         { numRuns: 100 },
       );
@@ -64,7 +64,7 @@ describe('Service Error Mapping - Property-Based Tests', () => {
           }
 
           expect(thrownError).toBeInstanceOf(BadRequestException);
-          expect(thrownError?.message).toBe(domainError.message);
+          expect(thrownError.message).toBe(domainError.message);
         }),
         { numRuns: 100 },
       );
@@ -83,7 +83,7 @@ describe('Service Error Mapping - Property-Based Tests', () => {
           }
 
           expect(thrownError).toBeInstanceOf(ConflictException);
-          expect(thrownError?.message).toBe(domainError.message);
+          expect(thrownError.message).toBe(domainError.message);
         }),
         { numRuns: 100 },
       );
@@ -123,7 +123,7 @@ describe('Service Error Mapping - Property-Based Tests', () => {
           }
 
           // The message should be preserved
-          expect(thrownError?.message).toContain(status);
+          expect(thrownError.message).toContain(status);
         }),
         { numRuns: 100 },
       );

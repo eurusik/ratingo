@@ -45,7 +45,7 @@ export interface TraktIds {
 export interface TraktMovie {
   title?: string;
   year?: number;
-  ids: TraktIds;
+  ids?: TraktIds;
 }
 
 /**
@@ -54,7 +54,7 @@ export interface TraktMovie {
 export interface TraktShow {
   title?: string;
   year?: number;
-  ids: TraktIds;
+  ids?: TraktIds;
 }
 
 /**
@@ -62,7 +62,7 @@ export interface TraktShow {
  */
 export interface TraktTrendingMovie {
   watchers: number;
-  movie: TraktMovie;
+  movie: TraktMovie | null;
 }
 
 /**
@@ -70,7 +70,7 @@ export interface TraktTrendingMovie {
  */
 export interface TraktTrendingShow {
   watchers: number;
-  show: TraktShow;
+  show: TraktShow | null;
 }
 
 /**
@@ -79,7 +79,7 @@ export interface TraktTrendingShow {
 export interface TraktSearchMovieResult {
   type: 'movie';
   score: number;
-  movie: TraktMovie;
+  movie: TraktMovie | null;
 }
 
 /**
@@ -88,7 +88,7 @@ export interface TraktSearchMovieResult {
 export interface TraktSearchShowResult {
   type: 'show';
   score: number;
-  show: TraktShow;
+  show: TraktShow | null;
 }
 
 /**

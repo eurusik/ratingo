@@ -781,9 +781,7 @@ describe('MeListsService', () => {
         return 0;
       });
       savedItemsService.countByList.mockImplementation(async (_userId, list) => {
-        if (list === SAVED_ITEM_LIST.FOR_LATER) return 10;
-        if (list === SAVED_ITEM_LIST.CONSIDERING) return 4;
-        return 0;
+        return list === SAVED_ITEM_LIST.FOR_LATER ? 10 : 4;
       });
 
       const result = await service.getListCounts(userId);

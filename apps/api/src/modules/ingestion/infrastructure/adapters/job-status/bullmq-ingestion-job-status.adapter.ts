@@ -32,7 +32,7 @@ export class BullMqIngestionJobStatusAdapter implements IngestionJobStatusPort {
     return {
       id: `${job.id}`,
       status: mapBullStateToJobStatus(state, job.finishedOn),
-      errorMessage: job.failedReason ?? null,
+      errorMessage: job.failedReason || null,
       updatedAt: lastActivityAt ? new Date(lastActivityAt) : null,
       tmdbId: job.data?.tmdbId ?? null,
       mediaType: SYNC_JOB_MEDIA_TYPE[job.name],

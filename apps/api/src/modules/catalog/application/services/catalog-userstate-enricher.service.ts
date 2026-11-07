@@ -34,7 +34,7 @@ export class CatalogUserStateEnricher {
 
     return items.map((item) => ({
       ...item,
-      userState: map.get(item.id) || null,
+      userState: map.get(item.id) ?? null,
     }));
   }
 
@@ -61,6 +61,6 @@ export class CatalogUserStateEnricher {
       return { ...item, userState: null };
     }
     const state = await this.userStateProvider.getState(userId, item.id);
-    return { ...item, userState: state || null };
+    return { ...item, userState: state ?? null };
   }
 }

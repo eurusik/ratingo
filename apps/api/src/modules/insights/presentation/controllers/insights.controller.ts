@@ -34,7 +34,7 @@ export class InsightsController {
   async getMovements(@Query() dto: InsightsQueryDto): Promise<RiseFallResponseDto> {
     const query: RiseFallQuery = {
       window: dto.window || DEFAULT_WINDOW,
-      limit: dto.limit || DEFAULT_LIMIT,
+      limit: dto.limit ?? DEFAULT_LIMIT,
     };
 
     const result = await this.insightsService.getMovements(query);

@@ -1,7 +1,7 @@
 import { RateLimiter } from './base-trakt-http';
 
 describe('RateLimiter', () => {
-  let limiter: RateLimiter;
+  let limiter: RateLimiter | undefined;
 
   const queueOf = (l: RateLimiter) => (l as unknown as { queue: unknown[] }).queue;
   const tokensOf = (l: RateLimiter) => (l as unknown as { tokens: number }).tokens;

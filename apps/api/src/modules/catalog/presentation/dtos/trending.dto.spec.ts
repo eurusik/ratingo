@@ -19,7 +19,7 @@ describe('TrendingShowsQueryDto', () => {
     });
     const errors = validateSync(dto);
     expect(errors.length).toBeGreaterThan(0);
-    const constraints = errors.flatMap((e) => Object.values(e.constraints || {}));
+    const constraints = errors.flatMap((e) => Object.values(e.constraints ?? {}));
     const message = constraints.join(' ');
     expect(message).toContain('limit must not be less than 1');
     expect(message).toContain('offset must not be less than 0');

@@ -5,6 +5,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -95,18 +96,20 @@ export class DrizzleMediaLookupAdapter implements IMediaLookupPort {
       'find ready media item by tmdb id',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select({ id: schema.mediaItems.id })
-          .from(schema.mediaItems)
-          .where(
-            and(
-              eq(schema.mediaItems.tmdbId, tmdbId),
-              eq(schema.mediaItems.type, type === 'movie' ? MediaType.MOVIE : MediaType.SHOW),
-              eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
-              isNull(schema.mediaItems.deletedAt),
-            ),
-          )
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select({ id: schema.mediaItems.id })
+            .from(schema.mediaItems)
+            .where(
+              and(
+                eq(schema.mediaItems.tmdbId, tmdbId),
+                eq(schema.mediaItems.type, type === 'movie' ? MediaType.MOVIE : MediaType.SHOW),
+                eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+                isNull(schema.mediaItems.deletedAt),
+              ),
+            )
+            .limit(1),
+        );
         return row?.id ?? null;
       },
       { tmdbId, type },
@@ -114,10 +117,12 @@ export class DrizzleMediaLookupAdapter implements IMediaLookupPort {
   }
 
   async findTypeById(mediaItemId: string): Promise<string | null> {
-    const [row] = await this.db
-      .select({ type: schema.mediaItems.type })
-      .from(schema.mediaItems)
-      .where(and(eq(schema.mediaItems.id, mediaItemId), isNull(schema.mediaItems.deletedAt)));
+    const row = firstOrUndefined(
+      await this.db
+        .select({ type: schema.mediaItems.type })
+        .from(schema.mediaItems)
+        .where(and(eq(schema.mediaItems.id, mediaItemId), isNull(schema.mediaItems.deletedAt))),
+    );
 
     return row?.type ?? null;
   }

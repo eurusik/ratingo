@@ -38,7 +38,7 @@ export class OmdbKeyProbe extends BaseKeyProbe {
     url.searchParams.set('apikey', this.config.apiKey);
     url.searchParams.set('i', PROBE_IMDB_ID);
 
-    const result = await this.http.get<OmdbProbeResponse>(url.toString());
+    const result = await this.http.get<OmdbProbeResponse | null>(url.toString());
     if (!result.success) {
       return mapHttpFailure(result);
     }

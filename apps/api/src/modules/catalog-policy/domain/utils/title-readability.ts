@@ -35,8 +35,8 @@ export function isReadableTitle(title: string): boolean {
   const latinCyrillicRegex = /[\p{Script=Latin}\p{Script=Cyrillic}]/gu;
   const cjkRegex = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu;
 
-  const latinCyrillicMatches = title.match(latinCyrillicRegex) || [];
-  const cjkMatches = title.match(cjkRegex) || [];
+  const latinCyrillicMatches = title.match(latinCyrillicRegex) ?? [];
+  const cjkMatches = title.match(cjkRegex) ?? [];
 
   const latinCyrillicCount = latinCyrillicMatches.length;
   const cjkCount = cjkMatches.length;

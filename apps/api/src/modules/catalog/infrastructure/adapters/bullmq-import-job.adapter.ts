@@ -90,7 +90,7 @@ export class BullMQImportJobAdapter implements IImportJobPort {
 
     return {
       status,
-      errorMessage: job.failedReason ?? null,
+      errorMessage: job.failedReason || null,
       tmdbId: job.data?.tmdbId ?? null,
       type: this.parseTypeFromJobId(jobId),
     };

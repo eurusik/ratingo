@@ -216,7 +216,7 @@ describe('Classification Service', () => {
         const input = {
           originCountries: ['US'],
           originalLanguage: 'en',
-          genreIds: null as unknown as number[],
+          genreIds: null,
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.MAINSTREAM);

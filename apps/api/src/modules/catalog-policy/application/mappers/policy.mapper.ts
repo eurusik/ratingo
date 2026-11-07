@@ -96,7 +96,9 @@ export const PolicyMapper = {
   /**
    * Formats summary from policy config.
    */
-  formatSummary(policy: PolicyConfig): string | undefined {
+  formatSummary(
+    policy: Partial<Pick<PolicyConfig, 'eligibilityMode' | 'allowedCountries'>>,
+  ): string | undefined {
     if (!policy.eligibilityMode) return undefined;
     const countryCount = policy.allowedCountries?.length ?? 0;
     return `${policy.eligibilityMode} mode, ${countryCount} allowed countries`;

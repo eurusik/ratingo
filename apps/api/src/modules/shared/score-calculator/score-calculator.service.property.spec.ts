@@ -59,4 +59,23 @@ describe('ScoreCalculatorService (property-based)', () => {
       }),
     );
   });
+
+  it('totalVotes is a finite non-negative sum of the valid vote sources', () => {
+    const votes = fc.oneof(
+      fc.constant(null),
+      fc.constant(undefined),
+      fc.constant(Number.NaN),
+      fc.integer({ min: -1000, max: 5_000_000 }),
+    );
+    const counted = (value: number | null | undefined): number =>
+      value != null && value > 0 ? value : 0;
+
+    fc.assert(
+      fc.property(votes, votes, (imdbVotes, traktVotes) => {
+        const { totalVotes } = service.calculate({ ...base, imdbVotes, traktVotes });
+        expect(Number.isFinite(totalVotes)).toBe(true);
+        expect(totalVotes).toBe(counted(imdbVotes) + counted(traktVotes));
+      }),
+    );
+  });
 });

@@ -6,6 +6,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { ImageMapper } from '@/common/mappers/image.mapper';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -114,17 +115,19 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
       'find saved item',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.userSavedItems)
-          .where(
-            and(
-              eq(schema.userSavedItems.userId, userId),
-              eq(schema.userSavedItems.mediaItemId, mediaItemId),
-              eq(schema.userSavedItems.list, list),
-            ),
-          )
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.userSavedItems)
+            .where(
+              and(
+                eq(schema.userSavedItems.userId, userId),
+                eq(schema.userSavedItems.mediaItemId, mediaItemId),
+                eq(schema.userSavedItems.list, list),
+              ),
+            )
+            .limit(1),
+        );
         return row ? this.mapRow(row) : null;
       },
       { userId, mediaItemId, list },
@@ -182,7 +185,9 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
         const subscriptionTriggersSubquery = this.db
           .select({
             mediaItemId: schema.userSubscriptions.mediaItemId,
-            triggers: sql<string[]>`array_agg(${schema.userSubscriptions.trigger})`.as('triggers'),
+            triggers: sql<string[] | null>`array_agg(${schema.userSubscriptions.trigger})`.as(
+              'triggers',
+            ),
           })
           .from(schema.userSubscriptions)
           .where(
@@ -264,11 +269,16 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
           whereParts.push(eq(schema.mediaItems.type, type));
         }
 
-        const [row] = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.userSavedItems)
-          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userSavedItems.mediaItemId))
-          .where(and(...whereParts));
+        const row = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.userSavedItems)
+            .innerJoin(
+              schema.mediaItems,
+              eq(schema.mediaItems.id, schema.userSavedItems.mediaItemId),
+            )
+            .where(and(...whereParts)),
+        );
         return Number(row?.count ?? 0);
       },
       { userId, list },

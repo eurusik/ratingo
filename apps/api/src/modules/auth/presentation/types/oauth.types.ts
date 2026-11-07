@@ -1,3 +1,5 @@
+import type {} from '@fastify/cookie';
+
 import { type OAuthStatePayload } from '@/modules/auth/domain/types';
 
 export type { OAuthStatePayload } from '@/modules/auth/domain/types';

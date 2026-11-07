@@ -4,6 +4,7 @@ import { and, desc, asc, eq, sql, gte } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DatabaseException } from '@/common/exceptions/database.exception';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -80,10 +81,12 @@ export class DrizzleReviewRepository implements IReviewRepository {
           .offset(offset);
 
         // Count total
-        const [countRow] = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.reviews)
-          .where(and(...conditions));
+        const countRow = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.reviews)
+            .where(and(...conditions)),
+        );
 
         return {
           reviews: rows.map((row) => this.mapRowWithAuthor(row.review, row.author)),
@@ -102,11 +105,13 @@ export class DrizzleReviewRepository implements IReviewRepository {
       'find review',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.reviews)
-          .where(and(eq(schema.reviews.id, id), eq(schema.reviews.isDeleted, false)))
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.reviews)
+            .where(and(eq(schema.reviews.id, id), eq(schema.reviews.isDeleted, false)))
+            .limit(1),
+        );
 
         return row ? this.mapRow(row) : null;
       },
@@ -122,21 +127,23 @@ export class DrizzleReviewRepository implements IReviewRepository {
       'find review with author',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select({
-            review: schema.reviews,
-            author: {
-              id: schema.users.id,
-              username: schema.users.username,
-              avatarUrl: schema.users.avatarUrl,
-              showRatings: schema.users.showRatings,
-              isProfilePublic: schema.users.isProfilePublic,
-            },
-          })
-          .from(schema.reviews)
-          .innerJoin(schema.users, eq(schema.users.id, schema.reviews.userId))
-          .where(and(eq(schema.reviews.id, id), eq(schema.reviews.isDeleted, false)))
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select({
+              review: schema.reviews,
+              author: {
+                id: schema.users.id,
+                username: schema.users.username,
+                avatarUrl: schema.users.avatarUrl,
+                showRatings: schema.users.showRatings,
+                isProfilePublic: schema.users.isProfilePublic,
+              },
+            })
+            .from(schema.reviews)
+            .innerJoin(schema.users, eq(schema.users.id, schema.reviews.userId))
+            .where(and(eq(schema.reviews.id, id), eq(schema.reviews.isDeleted, false)))
+            .limit(1),
+        );
 
         return row ? this.mapRowWithAuthor(row.review, row.author) : null;
       },
@@ -152,17 +159,19 @@ export class DrizzleReviewRepository implements IReviewRepository {
       'find user review',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.reviews)
-          .where(
-            and(
-              eq(schema.reviews.userId, userId),
-              eq(schema.reviews.mediaItemId, mediaItemId),
-              eq(schema.reviews.isDeleted, false),
-            ),
-          )
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.reviews)
+            .where(
+              and(
+                eq(schema.reviews.userId, userId),
+                eq(schema.reviews.mediaItemId, mediaItemId),
+                eq(schema.reviews.isDeleted, false),
+              ),
+            )
+            .limit(1),
+        );
 
         return row ? this.mapRow(row) : null;
       },
@@ -211,11 +220,13 @@ export class DrizzleReviewRepository implements IReviewRepository {
         if (input.rating !== undefined) updateData.rating = input.rating;
         if (input.hasSpoiler !== undefined) updateData.hasSpoiler = input.hasSpoiler;
 
-        const [row] = await this.db
-          .update(schema.reviews)
-          .set(updateData)
-          .where(eq(schema.reviews.id, id))
-          .returning();
+        const row = firstOrUndefined(
+          await this.db
+            .update(schema.reviews)
+            .set(updateData)
+            .where(eq(schema.reviews.id, id))
+            .returning(),
+        );
 
         if (!row) {
           throw new DatabaseException('Review not found during update', { id });
@@ -275,10 +286,14 @@ export class DrizzleReviewRepository implements IReviewRepository {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
-        const [row] = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.reviews)
-          .where(and(eq(schema.reviews.userId, userId), gte(schema.reviews.createdAt, todayStart)));
+        const row = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.reviews)
+            .where(
+              and(eq(schema.reviews.userId, userId), gte(schema.reviews.createdAt, todayStart)),
+            ),
+        );
 
         return Number(row?.count ?? 0);
       },

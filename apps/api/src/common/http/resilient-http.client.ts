@@ -282,7 +282,7 @@ export class ResilientHttpClient {
         // Don't retry non-retryable errors
         if (!canRetry) {
           this.logger.debug(
-            `Non-retryable error (${retryableError.status || retryableError.name}): ${redactSensitiveUrlParams(url)}`,
+            `Non-retryable error (${retryableError.status ?? retryableError.name}): ${redactSensitiveUrlParams(url)}`,
           );
           return {
             data: null,
@@ -314,7 +314,7 @@ export class ResilientHttpClient {
         }
 
         this.logger.debug(
-          `Retry ${attempt + 1}/${this.config.maxRetries} after ${delayMs}ms (${retryableError.status || retryableError.name}): ${redactSensitiveUrlParams(url)}`,
+          `Retry ${attempt + 1}/${this.config.maxRetries} after ${delayMs}ms (${retryableError.status ?? retryableError.name}): ${redactSensitiveUrlParams(url)}`,
         );
 
         await sleep(delayMs);

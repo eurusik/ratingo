@@ -477,9 +477,9 @@ export class DrizzleMediaRepository implements IMediaRepository {
     media: NormalizedMedia,
   ): Promise<void> {
     if (media.type === MediaType.MOVIE) {
-      await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
+      await this.movieRepository.upsertDetails(tx, mediaId, media.details ?? {});
     } else {
-      await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
+      await this.showRepository.upsertDetails(tx, mediaId, media.details ?? {});
     }
   }
 
@@ -898,10 +898,10 @@ export class DrizzleMediaRepository implements IMediaRepository {
           .limit(options.limit);
 
         return rows
-          .filter((r) => r.tmdbId !== null && r.voteCountTrakt !== null)
+          .filter((r) => r.voteCountTrakt !== null)
           .map((r) => ({
             id: r.id,
-            tmdbId: r.tmdbId!,
+            tmdbId: r.tmdbId,
             type: r.type,
             voteCountTrakt: r.voteCountTrakt!,
           }));
@@ -941,14 +941,12 @@ export class DrizzleMediaRepository implements IMediaRepository {
           .orderBy(desc(schema.mediaStats.totalWatchers))
           .limit(options.limit);
 
-        return rows
-          .filter((r) => r.tmdbId !== null)
-          .map((r) => ({
-            id: r.id,
-            tmdbId: r.tmdbId!,
-            type: r.type,
-            voteCountTrakt: r.voteCountTrakt ?? 0,
-          }));
+        return rows.map((r) => ({
+          id: r.id,
+          tmdbId: r.tmdbId,
+          type: r.type,
+          voteCountTrakt: r.voteCountTrakt ?? 0,
+        }));
       },
       { type: options.type, limit: options.limit, minTotalWatchers: options.minTotalWatchers },
     );

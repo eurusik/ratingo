@@ -6,6 +6,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { ImageMapper } from '@/common/mappers/image.mapper';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -87,16 +88,18 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
         return this.db.transaction(async (tx) => {
           // SELECT ... FOR UPDATE acquires a row-level lock, blocking concurrent
           // writers on the same (userId, mediaItemId) pair until the transaction commits.
-          const [lockedRow] = await tx
-            .select()
-            .from(schema.userMediaState)
-            .where(
-              and(
-                eq(schema.userMediaState.userId, data.userId),
-                eq(schema.userMediaState.mediaItemId, data.mediaItemId),
-              ),
-            )
-            .for('update');
+          const lockedRow = firstOrUndefined(
+            await tx
+              .select()
+              .from(schema.userMediaState)
+              .where(
+                and(
+                  eq(schema.userMediaState.userId, data.userId),
+                  eq(schema.userMediaState.mediaItemId, data.mediaItemId),
+                ),
+              )
+              .for('update'),
+          );
 
           const existing = lockedRow ? this.mapRow(lockedRow) : null;
 
@@ -146,16 +149,18 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       this.logger,
       async () => {
         return this.db.transaction(async (tx) => {
-          const [current] = await tx
-            .select({ state: schema.userMediaState.state })
-            .from(schema.userMediaState)
-            .where(
-              and(
-                eq(schema.userMediaState.userId, userId),
-                eq(schema.userMediaState.mediaItemId, mediaItemId),
-              ),
-            )
-            .for('update');
+          const current = firstOrUndefined(
+            await tx
+              .select({ state: schema.userMediaState.state })
+              .from(schema.userMediaState)
+              .where(
+                and(
+                  eq(schema.userMediaState.userId, userId),
+                  eq(schema.userMediaState.mediaItemId, mediaItemId),
+                ),
+              )
+              .for('update'),
+          );
 
           if (!current || !fromStates.includes(current.state as UserMediaState['state'])) {
             return null;
@@ -246,17 +251,22 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       'fetch user media stats',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select({
-            moviesRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.MOVIE} and ${schema.userMediaState.rating} is not null)`,
-            showsRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.SHOW} and ${schema.userMediaState.rating} is not null)`,
-            watchlistCount: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.userMediaState.state} = ${USER_MEDIA_STATE.PLANNED})`,
-          })
-          .from(schema.userMediaState)
-          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-          .where(
-            and(eq(schema.userMediaState.userId, userId), isNull(schema.mediaItems.deletedAt)),
-          );
+        const row = firstOrUndefined(
+          await this.db
+            .select({
+              moviesRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.MOVIE} and ${schema.userMediaState.rating} is not null)`,
+              showsRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.SHOW} and ${schema.userMediaState.rating} is not null)`,
+              watchlistCount: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.userMediaState.state} = ${USER_MEDIA_STATE.PLANNED})`,
+            })
+            .from(schema.userMediaState)
+            .innerJoin(
+              schema.mediaItems,
+              eq(schema.mediaItems.id, schema.userMediaState.mediaItemId),
+            )
+            .where(
+              and(eq(schema.userMediaState.userId, userId), isNull(schema.mediaItems.deletedAt)),
+            ),
+        );
 
         return {
           moviesRated: Number(row?.moviesRated ?? 0),
@@ -294,15 +304,17 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       'fetch user media state',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.userMediaState)
-          .where(
-            and(
-              eq(schema.userMediaState.userId, userId),
-              eq(schema.userMediaState.mediaItemId, mediaItemId),
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.userMediaState)
+            .where(
+              and(
+                eq(schema.userMediaState.userId, userId),
+                eq(schema.userMediaState.mediaItemId, mediaItemId),
+              ),
             ),
-          );
+        );
         return row ? this.mapRow(row) : null;
       },
       { userId, mediaItemId },
@@ -442,11 +454,16 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           whereParts.push(eq(schema.mediaItems.type, options.type));
         }
 
-        const [row] = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.userMediaState)
-          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-          .where(and(...whereParts));
+        const row = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.userMediaState)
+            .innerJoin(
+              schema.mediaItems,
+              eq(schema.mediaItems.id, schema.userMediaState.mediaItemId),
+            )
+            .where(and(...whereParts)),
+        );
 
         return Number(row?.count ?? 0);
       },
@@ -524,11 +541,16 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           whereParts.push(eq(schema.mediaItems.type, type));
         }
 
-        const [row] = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.userMediaState)
-          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-          .where(and(...whereParts));
+        const row = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.userMediaState)
+            .innerJoin(
+              schema.mediaItems,
+              eq(schema.mediaItems.id, schema.userMediaState.mediaItemId),
+            )
+            .where(and(...whereParts)),
+        );
         return Number(row?.count ?? 0);
       },
       { userId },
@@ -541,17 +563,22 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       'count continue items with media',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.userMediaState)
-          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-          .where(
-            and(
-              eq(schema.userMediaState.userId, userId),
-              isNotNull(schema.userMediaState.progress),
-              isNull(schema.mediaItems.deletedAt),
+        const row = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.userMediaState)
+            .innerJoin(
+              schema.mediaItems,
+              eq(schema.mediaItems.id, schema.userMediaState.mediaItemId),
+            )
+            .where(
+              and(
+                eq(schema.userMediaState.userId, userId),
+                isNotNull(schema.userMediaState.progress),
+                isNull(schema.mediaItems.deletedAt),
+              ),
             ),
-          );
+        );
         return Number(row?.count ?? 0);
       },
       { userId },
@@ -594,18 +621,19 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       'fetch user media state with media',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select({
-            state: schema.userMediaState,
-            media: {
-              id: schema.mediaItems.id,
-              type: schema.mediaItems.type,
-              title: schema.mediaItems.title,
-              slug: schema.mediaItems.slug,
-              posterPath: schema.mediaItems.posterPath,
-              releaseDate: schema.mediaItems.releaseDate,
-            },
-            progressTotal: sql<number | null>`
+        const row = firstOrUndefined(
+          await this.db
+            .select({
+              state: schema.userMediaState,
+              media: {
+                id: schema.mediaItems.id,
+                type: schema.mediaItems.type,
+                title: schema.mediaItems.title,
+                slug: schema.mediaItems.slug,
+                posterPath: schema.mediaItems.posterPath,
+                releaseDate: schema.mediaItems.releaseDate,
+              },
+              progressTotal: sql<number | null>`
               CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
                 SELECT COUNT(*)::int FROM ${schema.episodes} e
                 JOIN ${schema.seasons} s ON s.id = e.season_id
@@ -614,7 +642,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
                 AND s.number > 0
               ) ELSE NULL END
             `.as('progress_total'),
-            progressWatched: sql<number | null>`
+              progressWatched: sql<number | null>`
               CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
                 SELECT COUNT(*)::int FROM ${schema.userEpisodeProgress} uep
                 JOIN ${schema.episodes} e ON e.id = uep.episode_id
@@ -625,7 +653,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
                 AND s.number > 0
               ) ELSE NULL END
             `.as('progress_watched'),
-            continuePoint: sql<{ season: number; episode: number } | null>`
+              continuePoint: sql<{ season: number; episode: number } | null>`
               CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
                 WITH last_watched AS (
                   SELECT s.number AS sn, e.number AS en
@@ -660,16 +688,20 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
                 SELECT json_build_object('season', season, 'episode', episode) FROM next_episode
               ) ELSE NULL END
             `.as('continue_point'),
-          })
-          .from(schema.userMediaState)
-          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-          .where(
-            and(
-              eq(schema.userMediaState.userId, userId),
-              eq(schema.userMediaState.mediaItemId, mediaItemId),
-            ),
-          )
-          .limit(1);
+            })
+            .from(schema.userMediaState)
+            .innerJoin(
+              schema.mediaItems,
+              eq(schema.mediaItems.id, schema.userMediaState.mediaItemId),
+            )
+            .where(
+              and(
+                eq(schema.userMediaState.userId, userId),
+                eq(schema.userMediaState.mediaItemId, mediaItemId),
+              ),
+            )
+            .limit(1),
+        );
 
         if (!row) return null;
 

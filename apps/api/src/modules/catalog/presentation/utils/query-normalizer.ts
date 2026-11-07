@@ -18,11 +18,10 @@ export type NormalizedQuery<T extends CatalogListQueryDto> = T & { genres?: stri
  * @returns {NormalizedQuery<T>} Query with genres parsed into string array
  */
 export function normalizeListQuery<T extends CatalogListQueryDto>(query: T): NormalizedQuery<T> {
-  const genres =
-    query.genres
-      ?.split(',')
-      .map((g) => g.trim())
-      .filter((g) => g.length > 0) || undefined;
+  const genres = query.genres
+    ?.split(',')
+    .map((g) => g.trim())
+    .filter((g) => g.length > 0);
 
   return { ...query, genres } as NormalizedQuery<T>;
 }

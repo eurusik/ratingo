@@ -384,7 +384,7 @@ export class MovieListingsQuery {
         .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(and(...conditions));
-      return Number(total ?? 0);
+      return Number(total);
     }
 
     const [{ total }] = await this.db
@@ -402,6 +402,6 @@ export class MovieListingsQuery {
       )
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(and(...conditions));
-    return Number(total ?? 0);
+    return Number(total);
   }
 }

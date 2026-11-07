@@ -78,12 +78,12 @@ export class DryRunController {
       blockedCountryMode: dto.policy.blockedCountryMode || 'ANY',
       allowedLanguages: dto.policy.allowedLanguages,
       blockedLanguages: dto.policy.blockedLanguages,
-      globalProviders: dto.policy.globalProviders || [],
-      breakoutRules: dto.policy.breakoutRules || [],
+      globalProviders: dto.policy.globalProviders ?? [],
+      breakoutRules: dto.policy.breakoutRules ?? [],
       eligibilityMode: dto.policy.eligibilityMode || 'STRICT',
-      homepage: dto.policy.homepage || { minRelevanceScore: 50 },
+      homepage: dto.policy.homepage ?? { minRelevanceScore: 50 },
       globalRequirements: dto.policy.globalRequirements,
-      excludedContentClasses: dto.policy.excludedContentClasses || [],
+      excludedContentClasses: dto.policy.excludedContentClasses ?? [],
       contextRequirements: dto.policy.contextRequirements,
     });
   }
