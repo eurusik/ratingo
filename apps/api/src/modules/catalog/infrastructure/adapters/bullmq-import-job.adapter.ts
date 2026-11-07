@@ -7,6 +7,7 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import {
   mapBullStateToJobStatus,
   jobFailureReason,
+  jobTmdbId,
 } from '@/common/infrastructure/bullmq/job-status-mapper';
 import {
   IImportJobPort,
@@ -94,7 +95,7 @@ export class BullMQImportJobAdapter implements IImportJobPort {
     return {
       status,
       errorMessage: jobFailureReason(job),
-      tmdbId: job.data?.tmdbId ?? null,
+      tmdbId: jobTmdbId(job),
       type: this.parseTypeFromJobId(jobId),
     };
   }

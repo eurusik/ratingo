@@ -77,7 +77,7 @@ export function buildThrottlerTiers(defaultLimit: number): ThrottlerOptions[] {
       limit: defaultLimit, // browsing
       // Skip 'default' tier for mutation methods (they use 'strict')
       skipIf: (context) => {
-        const req = context.switchToHttp().getRequest();
+        const req = context.switchToHttp().getRequest<FastifyRequest>();
         return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
       },
     },
@@ -87,7 +87,7 @@ export function buildThrottlerTiers(defaultLimit: number): ThrottlerOptions[] {
       limit: 120, // 120 req/min - mutations (POST/PATCH/DELETE)
       // Skip 'strict' tier for read methods (they use 'default')
       skipIf: (context) => {
-        const req = context.switchToHttp().getRequest();
+        const req = context.switchToHttp().getRequest<FastifyRequest>();
         return ['GET', 'HEAD', 'OPTIONS'].includes(req.method);
       },
     },

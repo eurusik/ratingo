@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 
+import { TransformRawQueryBoolean } from '@/common/dtos/raw-boolean-query.transform';
 import {
   REVIEW_SORT,
   REVIEW_SORT_VALUES,
@@ -59,8 +60,7 @@ export class ReviewQueryDto {
     description: 'Hide reviews marked as spoilers',
   })
   @IsOptional()
-  // Read the raw value: with enableImplicitConversion, "false" is already coerced to true before @Transform
-  @Transform(({ obj, key }) => obj[key] === 'true' || obj[key] === true)
+  @TransformRawQueryBoolean()
   @IsBoolean()
   hideSpoilers?: boolean;
 }

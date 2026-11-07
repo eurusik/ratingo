@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
 
 import { ImageDto } from '@/common/dtos/image.dto';
 import { OffsetPaginationQueryDto } from '@/common/dtos/pagination.dto';
+import { TransformRawQueryBoolean } from '@/common/dtos/raw-boolean-query.transform';
 
 /**
  * Query parameters for notification list endpoint.
@@ -13,9 +13,7 @@ export class NotificationListQueryDto extends OffsetPaginationQueryDto {
   @ApiPropertyOptional({ description: 'Filter by unread only' })
   @IsOptional()
   @IsBoolean()
-  // Read the RAW value from `obj`: with `enableImplicitConversion: true` class-transformer
-  // coerces "false" -> true (Boolean("false")) BEFORE this transform sees `value`.
-  @Transform(({ obj, key }) => obj[key] === 'true' || obj[key] === true)
+  @TransformRawQueryBoolean()
   unread?: boolean;
 }
 
