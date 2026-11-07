@@ -42,7 +42,11 @@ export class AvailabilityDto {
   })
   isFallback: boolean;
 
-  @ApiProperty({ example: 'https://www.themoviedb.org/movie/123/watch?locale=UA', nullable: true })
+  @ApiProperty({
+    type: String,
+    example: 'https://www.themoviedb.org/movie/123/watch?locale=UA',
+    nullable: true,
+  })
   link: string | null;
 
   @ApiProperty({
@@ -73,6 +77,7 @@ export class AvailabilityDto {
   hint: 'svod' | 'tvod_only' | 'none';
 
   @ApiProperty({
+    type: String,
     example: 'https://www.themoviedb.org/movie/123/watch',
     required: false,
     nullable: true,

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DatabaseException } from '../../../../common/exceptions';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { type Provider } from '../../domain/types/provider.types';
+import type * as schema from '../../../../database/schema';
 import { ProviderRegistryRepository } from './provider-registry.repository';
 
 /**
@@ -25,7 +25,7 @@ describe('ProviderRegistryRepository', () => {
     returning: jest.Mock;
   };
 
-  const createMockDbRow = (overrides?: Partial<Provider>) => ({
+  const createMockDbRow = (overrides?: Partial<typeof schema.providerRegistry.$inferSelect>) => ({
     id: 'netflix',
     displayName: 'Netflix',
     brandGroup: null,

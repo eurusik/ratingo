@@ -511,9 +511,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    * Used for backfilling corrupted data.
    *
    * @param {number} tmdbId - TMDB ID
-   * @returns {Promise<{ watchers: number } | null>} Stats or null if not found
+   * @returns {Promise<{ watchers: number } | null | undefined>} Stats, undefined if not found, null on transient error
    */
-  async getMovieStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null> {
+  async getMovieStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null | undefined> {
     return this.getStatsByTmdbId(TRAKT_MEDIA_TYPE.MOVIE, tmdbId);
   }
 
@@ -522,9 +522,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    * Used for backfilling corrupted data.
    *
    * @param {number} tmdbId - TMDB ID
-   * @returns {Promise<{ watchers: number } | null>} Stats or null if not found
+   * @returns {Promise<{ watchers: number } | null | undefined>} Stats, undefined if not found, null on transient error
    */
-  async getShowStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null> {
+  async getShowStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null | undefined> {
     return this.getStatsByTmdbId(TRAKT_MEDIA_TYPE.SHOW, tmdbId);
   }
 

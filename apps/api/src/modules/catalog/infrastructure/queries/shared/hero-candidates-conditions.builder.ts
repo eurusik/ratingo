@@ -1,8 +1,9 @@
-import { eq, gte, gt, lt, isNull, isNotNull, or, and, type SQL } from 'drizzle-orm';
+import { eq, gte, gt, lt, isNull, isNotNull, type SQL } from 'drizzle-orm';
 
 import { MS_PER_HOUR, MS_PER_DAY } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 import * as schema from '@/database/schema';
+import { allOf, anyOf } from '@/database/sql-conditions';
 import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
 import { HERO_THRESHOLDS } from '../../../domain/constants/catalog.constants';
@@ -77,11 +78,14 @@ export function buildHeroCandidatesConditions(options: HeroCandidatesConditionsO
     // Type-specific freshness gate:
     // Movies: no freshness requirement (theatrical releases have different lifecycle)
     // Shows: must be fresh (recent episode OR upcoming episode announced)
-    or(
+    anyOf(
       eq(schema.mediaItems.type, MediaType.MOVIE),
-      and(
+      allOf(
         eq(schema.mediaItems.type, MediaType.SHOW),
-        or(gte(schema.shows.lastAirDate, showFreshnessCutoff), isNotNull(schema.shows.nextAirDate)),
+        anyOf(
+          gte(schema.shows.lastAirDate, showFreshnessCutoff),
+          isNotNull(schema.shows.nextAirDate),
+        ),
       ),
     ),
   ];

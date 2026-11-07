@@ -80,6 +80,7 @@ export class SavedItemResponseDto {
   list: SavedItemList;
 
   @ApiProperty({
+    type: String,
     example: 'trendingNow',
     required: false,
     nullable: true,

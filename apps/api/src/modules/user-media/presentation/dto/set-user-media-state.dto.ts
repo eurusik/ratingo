@@ -79,7 +79,14 @@ export class SetUserMediaStateDto {
   /**
    * Optional rating (0-100).
    */
-  @ApiProperty({ example: null, required: false, nullable: true, minimum: 0, maximum: 100 })
+  @ApiProperty({
+    type: Number,
+    example: null,
+    required: false,
+    nullable: true,
+    minimum: 0,
+    maximum: 100,
+  })
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
   @IsInt()
@@ -104,7 +111,12 @@ export class SetUserMediaStateDto {
   /**
    * Optional notes.
    */
-  @ApiProperty({ example: 'Rewatching with friends', required: false, nullable: true })
+  @ApiProperty({
+    type: String,
+    example: 'Rewatching with friends',
+    required: false,
+    nullable: true,
+  })
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
   @IsString()

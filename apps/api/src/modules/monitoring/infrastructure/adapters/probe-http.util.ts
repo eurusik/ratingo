@@ -1,6 +1,10 @@
 import { HttpStatus } from '@nestjs/common';
 
-import { type FetchResult, HttpError, type RetryConfig } from '@/common/http/resilient-http.client';
+import {
+  type FetchFailure,
+  HttpError,
+  type RetryConfig,
+} from '@/common/http/resilient-http.client';
 
 import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
 import { type KeyProbeResult } from '../../domain/ports/key-probe.port';
@@ -14,7 +18,7 @@ export const PROBE_RETRY_CONFIG: Partial<RetryConfig> = {
   timeoutMs: PROBE_TIMEOUT_MS,
 };
 
-export function mapHttpFailure(result: FetchResult<unknown>): KeyProbeResult {
+export function mapHttpFailure(result: FetchFailure): KeyProbeResult {
   const { error } = result;
   const statusCode = error instanceof HttpError ? error.status : null;
 

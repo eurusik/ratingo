@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsOptional } from 'class-validator';
 
 import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../common/dtos';
-import { type ImageDto } from '../../../../common/dtos/image.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
   USER_MEDIA_LIST_SORT,
@@ -47,10 +47,10 @@ export class PublicUserMediaSummaryDto {
   @ApiProperty()
   slug!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: ImageDto, nullable: true })
   poster!: ImageDto | null;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ type: Date, nullable: true })
   releaseDate?: Date | null;
 }
 
@@ -64,13 +64,13 @@ export class PublicUserMediaListItemDto {
   @ApiProperty({ enum: USER_MEDIA_STATE_VALUES })
   state!: UserMediaState['state'];
 
-  @ApiProperty({ nullable: true, description: '0-100 rating' })
+  @ApiProperty({ type: Number, nullable: true, description: '0-100 rating' })
   rating!: number | null;
 
   @ApiPropertyOptional({ nullable: true, description: 'Arbitrary progress payload (JSON)' })
   progress?: Record<string, unknown> | null;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ type: String, nullable: true })
   notes?: string | null;
 
   @ApiProperty()

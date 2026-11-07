@@ -8,6 +8,7 @@ export class LinkedAccountDto {
   provider: string;
 
   @ApiPropertyOptional({
+    type: String,
     example: 'user@gmail.com',
     nullable: true,
     description: 'Email from OAuth provider',
@@ -15,6 +16,7 @@ export class LinkedAccountDto {
   email: string | null;
 
   @ApiPropertyOptional({
+    type: String,
     example: 'John Doe',
     nullable: true,
     description: 'Display name from OAuth provider',

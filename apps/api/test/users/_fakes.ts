@@ -210,8 +210,9 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     if (options?.ratedOnly) {
       items = items.filter((s) => s.rating !== null);
     }
-    if (options?.states?.length) {
-      items = items.filter((s) => options.states.includes(s.state));
+    const states = options?.states;
+    if (states?.length) {
+      items = items.filter((s) => states.includes(s.state));
     }
 
     switch (options?.sort) {
@@ -245,8 +246,9 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
       items = items.filter((s) => s.rating !== null);
     }
 
-    if (options?.states?.length) {
-      items = items.filter((s) => options.states.includes(s.state));
+    const states = options?.states;
+    if (states?.length) {
+      items = items.filter((s) => states.includes(s.state));
     }
 
     return items.length;

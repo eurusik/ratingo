@@ -20,9 +20,10 @@ describe('DrizzleStatsRepository', () => {
       });
 
       // Make it thenable (awaitable)
-      if (options.rejectWith) {
+      const { rejectWith } = options;
+      if (rejectWith) {
         thenable.then = function (onFulfilled: any, onRejected: any) {
-          return Promise.reject(options.rejectWith).then(onFulfilled, onRejected);
+          return Promise.reject(rejectWith).then(onFulfilled, onRejected);
         };
       } else {
         thenable.then = function (onFulfilled: any, onRejected: any) {

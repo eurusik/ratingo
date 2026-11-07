@@ -40,7 +40,7 @@ export class ReplyAuthorDto {
   @ApiProperty({ description: 'Author username' })
   username!: string;
 
-  @ApiPropertyOptional({ description: 'Author avatar URL' })
+  @ApiPropertyOptional({ type: String, description: 'Author avatar URL' })
   avatarUrl!: string | null;
 
   @ApiProperty({ description: 'Whether author profile is public' })
@@ -57,10 +57,10 @@ export class ReplyResponseDto {
   @ApiProperty({ description: 'Review UUID this reply belongs to' })
   reviewId!: string;
 
-  @ApiPropertyOptional({ description: 'Parent reply UUID for nested replies' })
+  @ApiPropertyOptional({ type: String, description: 'Parent reply UUID for nested replies' })
   parentReplyId!: string | null;
 
-  @ApiPropertyOptional({ description: 'Username of the person being replied to' })
+  @ApiPropertyOptional({ type: String, description: 'Username of the person being replied to' })
   replyToUsername!: string | null;
 
   @ApiProperty({ description: 'Reply content' })
@@ -86,10 +86,10 @@ export class ReplyMutationResponseDto {
   @ApiProperty({ description: 'Review UUID' })
   reviewId!: string;
 
-  @ApiPropertyOptional({ description: 'Parent reply UUID' })
+  @ApiPropertyOptional({ type: String, description: 'Parent reply UUID' })
   parentReplyId!: string | null;
 
-  @ApiPropertyOptional({ description: 'Username of the person being replied to' })
+  @ApiPropertyOptional({ type: String, description: 'Username of the person being replied to' })
   replyToUsername!: string | null;
 
   @ApiProperty({ description: 'Reply content' })

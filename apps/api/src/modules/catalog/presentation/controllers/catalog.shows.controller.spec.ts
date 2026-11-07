@@ -181,7 +181,7 @@ describe('CatalogShowsController', () => {
       expect(result.id).toBe('2');
       expect(result.userState).toBeNull();
       expect(result.card).toBeDefined();
-      expect(result.card.badgeKey).toBeNull();
+      expect(result.card?.badgeKey).toBeNull();
     });
 
     it('delegates to ShowDetailsService with userId', async () => {

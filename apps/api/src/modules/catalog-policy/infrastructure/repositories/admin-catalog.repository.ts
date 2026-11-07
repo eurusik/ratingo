@@ -12,7 +12,7 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, and, isNull, desc, asc, sql } from 'drizzle-orm';
+import { eq, and, isNull, desc, asc, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
@@ -158,7 +158,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
 
     try {
       // Build conditions
-      const conditions = [];
+      const conditions: SQL[] = [];
 
       if (!options?.includeDeleted) {
         conditions.push(isNull(schema.mediaItems.deletedAt));
@@ -210,6 +210,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
             sortOrder(schema.mediaCatalogEvaluations.relevanceScore),
           ) as typeof query;
           break;
+        case undefined:
         default:
           query = query.orderBy(desc(schema.mediaItems.updatedAt)) as typeof query;
       }

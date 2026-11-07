@@ -158,7 +158,11 @@ function loadIsolated(): Loader {
   jest.isolateModules(() => {
     ISOLATED_PATHS.forEach((path) => isolated.set(path, jest.requireActual(path)));
   });
-  return <T>(path: string, exportName: string) => isolated.get(path)[exportName] as T;
+  return <T>(path: string, exportName: string) => {
+    const isolatedModule = isolated.get(path);
+    if (!isolatedModule) throw new Error(`Module ${path} was not loaded in isolation`);
+    return isolatedModule[exportName] as T;
+  };
 }
 
 async function bootModule(
@@ -210,6 +214,11 @@ describe('role composition', () => {
   const originalEnv = { ...process.env };
   let boot: RoleBoot | undefined;
 
+  const booted = (): RoleBoot => {
+    if (!boot) throw new Error('Role module was not booted');
+    return boot;
+  };
+
   const closeBoot = async () => {
     await boot?.app.close();
     boot = undefined;
@@ -223,18 +232,19 @@ describe('role composition', () => {
     afterAll(closeBoot);
 
     it('registers every processor, repeatable-job scheduler and job metric', () => {
-      expect(boot.composition.providers).toEqual(
+      expect(booted().composition.providers).toEqual(
         expect.arrayContaining([...WORKER_PROVIDERS, ...EVERY_ROLE_PROVIDERS]),
       );
     });
 
     it('registers no HTTP controllers at all', () => {
-      expect(boot.composition.controllers).toEqual([]);
+      expect(booted().composition.controllers).toEqual([]);
     });
 
     it('leaves AuthModule, Throttler and the exchange-code cleanup cron to the API', () => {
-      API_ONLY_MODULES.forEach((name) => expect(boot.composition.modules).not.toContain(name));
-      API_ONLY_PROVIDERS.forEach((name) => expect(boot.composition.providers).not.toContain(name));
+      const { composition } = booted();
+      API_ONLY_MODULES.forEach((name) => expect(composition.modules).not.toContain(name));
+      API_ONLY_PROVIDERS.forEach((name) => expect(composition.providers).not.toContain(name));
     });
 
     it('starts a BullMQ worker for every processor', () => {
@@ -242,9 +252,10 @@ describe('role composition', () => {
     });
 
     it('keeps the in-process listeners for events the worker emits', () => {
-      expect(boot.emitter.listenerCount(MediaSyncedEvent.eventName)).toBeGreaterThan(0);
-      expect(boot.emitter.listenerCount(SHOW_EVENTS.NEW_EPISODE)).toBeGreaterThan(0);
-      expect(boot.emitter.listenerCount(EXTERNAL_API_FAILURE_EVENT)).toBeGreaterThan(0);
+      const { emitter } = booted();
+      expect(emitter.listenerCount(MediaSyncedEvent.eventName)).toBeGreaterThan(0);
+      expect(emitter.listenerCount(SHOW_EVENTS.NEW_EPISODE)).toBeGreaterThan(0);
+      expect(emitter.listenerCount(EXTERNAL_API_FAILURE_EVENT)).toBeGreaterThan(0);
     });
   });
 
@@ -255,20 +266,23 @@ describe('role composition', () => {
     afterAll(closeBoot);
 
     it('registers no processor, repeatable-job scheduler or job metric', () => {
-      WORKER_PROVIDERS.forEach((name) => expect(boot.composition.providers).not.toContain(name));
+      WORKER_PROVIDERS.forEach((name) =>
+        expect(booted().composition.providers).not.toContain(name),
+      );
     });
 
     it('still reports runtime metrics', () => {
-      expect(boot.composition.providers).toEqual(expect.arrayContaining(EVERY_ROLE_PROVIDERS));
+      expect(booted().composition.providers).toEqual(expect.arrayContaining(EVERY_ROLE_PROVIDERS));
     });
 
     it('registers the role-gated controllers', () => {
-      expect(boot.composition.controllers).toEqual(expect.arrayContaining(GATED_CONTROLLERS));
+      expect(booted().composition.controllers).toEqual(expect.arrayContaining(GATED_CONTROLLERS));
     });
 
     it('owns AuthModule, Throttler and the exchange-code cleanup cron', () => {
-      expect(boot.composition.modules).toEqual(expect.arrayContaining(API_ONLY_MODULES));
-      expect(boot.composition.providers).toEqual(expect.arrayContaining(API_ONLY_PROVIDERS));
+      const { composition } = booted();
+      expect(composition.modules).toEqual(expect.arrayContaining(API_ONLY_MODULES));
+      expect(composition.providers).toEqual(expect.arrayContaining(API_ONLY_PROVIDERS));
     });
 
     it('starts no BullMQ workers', () => {
@@ -276,9 +290,10 @@ describe('role composition', () => {
     });
 
     it('keeps the in-process listeners for events the API emits', () => {
-      expect(boot.emitter.listenerCount(UserMediaRatingChangedEvent.eventName)).toBeGreaterThan(0);
-      expect(boot.emitter.listenerCount(UserMediaStateChangedEvent.eventName)).toBeGreaterThan(0);
-      expect(boot.emitter.listenerCount(EXTERNAL_API_FAILURE_EVENT)).toBeGreaterThan(0);
+      const { emitter } = booted();
+      expect(emitter.listenerCount(UserMediaRatingChangedEvent.eventName)).toBeGreaterThan(0);
+      expect(emitter.listenerCount(UserMediaStateChangedEvent.eventName)).toBeGreaterThan(0);
+      expect(emitter.listenerCount(EXTERNAL_API_FAILURE_EVENT)).toBeGreaterThan(0);
     });
   });
 
@@ -289,11 +304,12 @@ describe('role composition', () => {
     afterAll(closeBoot);
 
     it('registers every processor, scheduler and gated controller', () => {
-      expect(boot.composition.providers).toEqual(
+      const { composition } = booted();
+      expect(composition.providers).toEqual(
         expect.arrayContaining([...WORKER_PROVIDERS, ...API_ONLY_PROVIDERS]),
       );
-      expect(boot.composition.controllers).toEqual(expect.arrayContaining(GATED_CONTROLLERS));
-      expect(boot.composition.modules).toEqual(expect.arrayContaining(API_ONLY_MODULES));
+      expect(composition.controllers).toEqual(expect.arrayContaining(GATED_CONTROLLERS));
+      expect(composition.modules).toEqual(expect.arrayContaining(API_ONLY_MODULES));
     });
 
     it('starts the same BullMQ workers as the worker role', () => {
@@ -301,10 +317,11 @@ describe('role composition', () => {
     });
 
     it('keeps every in-process listener', () => {
-      expect(boot.emitter.listenerCount(MediaSyncedEvent.eventName)).toBeGreaterThan(0);
-      expect(boot.emitter.listenerCount(SHOW_EVENTS.NEW_EPISODE)).toBeGreaterThan(0);
-      expect(boot.emitter.listenerCount(UserMediaRatingChangedEvent.eventName)).toBeGreaterThan(0);
-      expect(boot.emitter.listenerCount(UserMediaStateChangedEvent.eventName)).toBeGreaterThan(0);
+      const { emitter } = booted();
+      expect(emitter.listenerCount(MediaSyncedEvent.eventName)).toBeGreaterThan(0);
+      expect(emitter.listenerCount(SHOW_EVENTS.NEW_EPISODE)).toBeGreaterThan(0);
+      expect(emitter.listenerCount(UserMediaRatingChangedEvent.eventName)).toBeGreaterThan(0);
+      expect(emitter.listenerCount(UserMediaStateChangedEvent.eventName)).toBeGreaterThan(0);
     });
   });
 });

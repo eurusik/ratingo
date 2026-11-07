@@ -13,13 +13,14 @@ export class EpisodeInfoDto {
   episodeNumber!: number;
 
   @ApiPropertyOptional({
+    type: String,
     description: 'Episode title',
     example: 'The Winds of Winter',
     nullable: true,
   })
   title!: string | null;
 
-  @ApiPropertyOptional({ description: 'Air date', nullable: true })
+  @ApiPropertyOptional({ type: Date, description: 'Air date', nullable: true })
   airDate!: Date | null;
 
   @ApiProperty({

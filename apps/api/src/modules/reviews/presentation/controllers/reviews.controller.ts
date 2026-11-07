@@ -84,7 +84,7 @@ export class ReviewsController {
   ): Promise<ReviewResponseDto> {
     const review = await this.reviewsService.getById(reviewId);
 
-    let currentUserVote = null;
+    let currentUserVote: VoteType | null = null;
     if (user) {
       const vote = await this.votesService.getUserVote(user.id, reviewId);
       currentUserVote = vote?.voteType ?? null;

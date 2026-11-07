@@ -505,14 +505,14 @@ export class DrizzleMediaRepository implements IMediaRepository {
     };
 
     // CRITICAL: Only update watchersCount if we have actual data
-    // If watchersCount is undefined in statsInsert, preserve existing DB value
-    if (statsInsert.watchersCount !== undefined) {
+    // If watchersCount is missing in statsInsert, preserve existing DB value
+    if (statsInsert.watchersCount != null) {
       updateSet.watchersCount = statsInsert.watchersCount;
     }
 
     // CRITICAL: Only update totalWatchers if we have actual data
-    // If totalWatchers is undefined in statsInsert, preserve existing DB value
-    if (statsInsert.totalWatchers !== undefined) {
+    // If totalWatchers is missing in statsInsert, preserve existing DB value
+    if (statsInsert.totalWatchers != null) {
       // Safeguard: don't overwrite positive value with 0 (likely API error)
       updateSet.totalWatchers = preserveTotalWatchers(statsInsert.totalWatchers);
     }

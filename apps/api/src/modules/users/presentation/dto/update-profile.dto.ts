@@ -11,7 +11,11 @@ import {
 } from 'class-validator';
 
 import { IsNotReservedUsername } from '../validators/not-reserved-username.validator';
-import { USERNAME_MAX_LENGTH, USERNAME_MESSAGE, USERNAME_REGEX } from '../validators/username.constants';
+import {
+  USERNAME_MAX_LENGTH,
+  USERNAME_MESSAGE,
+  USERNAME_REGEX,
+} from '../validators/username.constants';
 
 /**
  * Payload for updating user profile.
@@ -32,24 +36,28 @@ export class UpdateProfileDto {
   /**
    * Avatar URL.
    */
-  @ApiProperty({ example: 'https://cdn.example.com/avatar.png', required: false })
+  @ApiProperty({ type: String, example: 'https://cdn.example.com/avatar.png', required: false })
   @IsOptional()
   @IsUrl()
   avatarUrl?: string | null;
 
-  @ApiProperty({ example: 'Люблю фільми жахів та наукову фантастику', required: false })
+  @ApiProperty({
+    type: String,
+    example: 'Люблю фільми жахів та наукову фантастику',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(200)
   bio?: string | null;
 
-  @ApiProperty({ example: 'Kyiv, Ukraine', required: false })
+  @ApiProperty({ type: String, example: 'Kyiv, Ukraine', required: false })
   @IsOptional()
   @IsString()
   @MaxLength(100)
   location?: string | null;
 
-  @ApiProperty({ example: 'https://instagram.com/myprofile', required: false })
+  @ApiProperty({ type: String, example: 'https://instagram.com/myprofile', required: false })
   @IsOptional()
   @IsString()
   website?: string | null;

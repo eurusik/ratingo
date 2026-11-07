@@ -427,8 +427,8 @@ describe('TmdbMapper', () => {
       const movieNoDates = { ...mockMovie, release_dates: { results: [] } };
       const result = TmdbMapper.toDomain(movieNoDates, MediaType.MOVIE);
 
-      expect(result?.details.theatricalReleaseDate).toBeNull();
-      expect(result?.details.digitalReleaseDate).toBeNull();
+      expect(result?.details?.theatricalReleaseDate).toBeNull();
+      expect(result?.details?.digitalReleaseDate).toBeNull();
     });
 
     it('should fallback to any release type if specific type not found', () => {
@@ -446,7 +446,7 @@ describe('TmdbMapper', () => {
       // So it strictly looks for type 3.
 
       const result = TmdbMapper.toDomain(movieOnlyPhysical, MediaType.MOVIE);
-      expect(result?.details.theatricalReleaseDate).toBeNull();
+      expect(result?.details?.theatricalReleaseDate).toBeNull();
     });
 
     it('should fallback to other countries for release dates if primary regions missing', () => {
@@ -466,8 +466,8 @@ describe('TmdbMapper', () => {
       };
 
       const result = TmdbMapper.toDomain(movieOtherRegions, MediaType.MOVIE);
-      expect(result?.details.theatricalReleaseDate).toEqual(new Date('2001-01-01'));
-      expect(result?.details.digitalReleaseDate).toEqual(new Date('2001-02-01'));
+      expect(result?.details?.theatricalReleaseDate).toEqual(new Date('2001-01-01'));
+      expect(result?.details?.digitalReleaseDate).toEqual(new Date('2001-02-01'));
     });
 
     it('should extract credits for movies correctly', () => {
@@ -660,14 +660,14 @@ describe('TmdbMapper', () => {
 
       expect(result?.videos).toHaveLength(3);
       // 1. Official UK (key 5)
-      expect(result?.videos[0].key).toBe('5');
-      expect(result?.videos[0].language).toBe(VideoLanguageEnum.UK);
+      expect(result?.videos?.[0].key).toBe('5');
+      expect(result?.videos?.[0].language).toBe(VideoLanguageEnum.UK);
       // 2. Unofficial UK (key 3)
-      expect(result?.videos[1].key).toBe('3');
-      expect(result?.videos[1].language).toBe(VideoLanguageEnum.UK);
+      expect(result?.videos?.[1].key).toBe('3');
+      expect(result?.videos?.[1].language).toBe(VideoLanguageEnum.UK);
       // 3. Newest Official EN (key 4) - Note: Old Official EN (key 1) is older, Unofficial EN (key 2) is unofficial
-      expect(result?.videos[2].key).toBe('4');
-      expect(result?.videos[2].language).toBe(VideoLanguageEnum.EN);
+      expect(result?.videos?.[2].key).toBe('4');
+      expect(result?.videos?.[2].language).toBe(VideoLanguageEnum.EN);
     });
 
     it('should sort videos: Trailer > Teaser (when not UK)', () => {
@@ -701,9 +701,9 @@ describe('TmdbMapper', () => {
 
       const result = TmdbMapper.toDomain(movieWithTypes, MediaType.MOVIE);
       // Expect Trailer (key 2) first
-      expect(result?.videos[0].key).toBe('2');
-      expect(result?.videos[0].type).toBe('Trailer');
-      expect(result?.videos[1].key).toBe('1');
+      expect(result?.videos?.[0].key).toBe('2');
+      expect(result?.videos?.[0].type).toBe('Trailer');
+      expect(result?.videos?.[1].key).toBe('1');
     });
   });
 });

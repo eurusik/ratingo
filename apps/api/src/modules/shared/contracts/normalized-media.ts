@@ -162,10 +162,10 @@ export interface NormalizedMedia {
   freshnessScore?: number; // Time-based component (0-1)
 
   /** Number of active watchers (Trakt/Realtime) */
-  watchersCount?: number;
+  watchersCount?: number | null;
 
   /** Total unique watchers all time (Trakt stats) */
-  totalWatchers?: number;
+  totalWatchers?: number | null;
 
   /** First air date for shows */
   releaseDate?: Date | null;

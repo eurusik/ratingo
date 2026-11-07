@@ -386,8 +386,8 @@ export class DrizzleReviewRepository implements IReviewRepository {
       id: string;
       username: string;
       avatarUrl: string | null;
-      showRatings: boolean;
-      isProfilePublic: boolean;
+      showRatings: boolean | null;
+      isProfilePublic: boolean | null;
     },
   ): ReviewWithAuthor {
     return {
@@ -396,8 +396,8 @@ export class DrizzleReviewRepository implements IReviewRepository {
         id: author.id,
         username: author.username,
         avatarUrl: author.avatarUrl,
-        showRatings: author.showRatings,
-        isProfilePublic: author.isProfilePublic,
+        showRatings: author.showRatings ?? false,
+        isProfilePublic: author.isProfilePublic ?? false,
       },
     };
   }
