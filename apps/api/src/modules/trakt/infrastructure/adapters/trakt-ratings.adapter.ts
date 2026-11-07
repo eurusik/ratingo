@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { toError } from '../../../../common/utils/error.utils';
 import {
   TRAKT_BATCH_CONCURRENCY,
   TRAKT_BULK_CHUNK_SIZE,
@@ -60,7 +61,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const watchers = await this.fetch<TraktWatchingUser[]>(`/movies/${traktIdOrSlug}/watching`);
       return watchers.length;
     } catch (error) {
-      this.logger.warn(`Failed to get movie watchers for ${traktIdOrSlug}: ${error}`);
+      this.logger.warn(
+        `Failed to get movie watchers for ${traktIdOrSlug}: ${toError(error).toString()}`,
+      );
       return null;
     }
   }
@@ -75,7 +78,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
     try {
       return await this.fetch(`/movies/${traktIdOrSlug}/stats`);
     } catch (error) {
-      this.logger.warn(`Failed to get movie stats for ${traktIdOrSlug}: ${error}`);
+      this.logger.warn(
+        `Failed to get movie stats for ${traktIdOrSlug}: ${toError(error).toString()}`,
+      );
       return null;
     }
   }
@@ -91,7 +96,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const watchers = await this.fetch<TraktWatchingUser[]>(`/shows/${traktIdOrSlug}/watching`);
       return watchers.length;
     } catch (error) {
-      this.logger.warn(`Failed to get show watchers for ${traktIdOrSlug}: ${error}`);
+      this.logger.warn(
+        `Failed to get show watchers for ${traktIdOrSlug}: ${toError(error).toString()}`,
+      );
       return null;
     }
   }
@@ -106,7 +113,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
     try {
       return await this.fetch(`/shows/${traktIdOrSlug}/stats`);
     } catch (error) {
-      this.logger.warn(`Failed to get show stats for ${traktIdOrSlug}: ${error}`);
+      this.logger.warn(
+        `Failed to get show stats for ${traktIdOrSlug}: ${toError(error).toString()}`,
+      );
       return null;
     }
   }
@@ -196,7 +205,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
         totalWatchers,
       };
     } catch (error) {
-      this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${error}`);
+      this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${toError(error).toString()}`);
       return null;
     }
   }
@@ -242,7 +251,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const results = await this.fetch<TraktSearchShowResult[]>(`/search/tmdb/${tmdbId}?type=show`);
       return results[0]?.show?.ids?.trakt || null;
     } catch (error) {
-      this.logger.warn(`Failed to resolve traktId for tmdb ${tmdbId}: ${error}`);
+      this.logger.warn(
+        `Failed to resolve traktId for tmdb ${tmdbId}: ${toError(error).toString()}`,
+      );
       return null;
     }
   }
@@ -263,7 +274,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
           episodeCount: s.episode_count || 0,
         }));
     } catch (error) {
-      this.logger.warn(`Failed to get seasons for ${traktId}: ${error}`);
+      this.logger.warn(`Failed to get seasons for ${traktId}: ${toError(error).toString()}`);
       return [];
     }
   }
@@ -290,7 +301,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
         votes: ep.votes || 0,
       }));
     } catch (error) {
-      this.logger.warn(`Failed to get S${seasonNumber} episodes: ${error}`);
+      this.logger.warn(`Failed to get S${seasonNumber} episodes: ${toError(error).toString()}`);
       return [];
     }
   }
@@ -328,7 +339,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
         seasons: seasonData.filter((s) => s.episodes.length > 0),
       };
     } catch (error) {
-      this.logger.warn(`Failed to get episodes for TMDB ${tmdbId}: ${error}`);
+      this.logger.warn(`Failed to get episodes for TMDB ${tmdbId}: ${toError(error).toString()}`);
       return null;
     }
   }
@@ -382,7 +393,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
 
       return watchers.length;
     } catch (error) {
-      this.logger.warn(`Failed to get live watchers for ${type} TMDB ${tmdbId}: ${error}`);
+      this.logger.warn(
+        `Failed to get live watchers for ${type} TMDB ${tmdbId}: ${toError(error).toString()}`,
+      );
       return null; // Transient error - skip DB update
     }
   }
@@ -445,7 +458,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
             const watchers = await this.getLiveWatchersByTmdbId(type, tmdbId);
             return { tmdbId, watchers };
           } catch (error) {
-            this.logger.warn(`Unexpected error for ${type} ${tmdbId}: ${error}`);
+            this.logger.warn(
+              `Unexpected error for ${type} ${tmdbId}: ${toError(error).toString()}`,
+            );
             return { tmdbId, watchers: null as null };
           }
         });
@@ -566,7 +581,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const stats = await this.fetchBulk<TraktStatsResponse>(`/${endpoint}/${traktId}/stats`);
       return { watchers: stats.watchers };
     } catch (error) {
-      this.logger.warn(`Failed to get Trakt stats for ${type} TMDB ${tmdbId}: ${error}`);
+      this.logger.warn(
+        `Failed to get Trakt stats for ${type} TMDB ${tmdbId}: ${toError(error).toString()}`,
+      );
       return null; // Transient error
     }
   }

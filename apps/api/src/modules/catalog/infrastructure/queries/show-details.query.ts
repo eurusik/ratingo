@@ -5,6 +5,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { type ShowDetails } from '../../domain/repositories/show.repository.interface';
@@ -78,8 +79,9 @@ export class ShowDetailsQuery {
 
       return mapShowDetails(show, genres, seasons, watchOffers, recentRaters);
     } catch (error) {
-      this.logger.error(`Failed to find show by slug ${slug}: ${error.message}`, error.stack);
-      throw new DatabaseException(`Failed to fetch show ${slug}`, { originalError: error.message });
+      const err = toError(error);
+      this.logger.error(`Failed to find show by slug ${slug}: ${err.message}`, err.stack);
+      throw new DatabaseException(`Failed to fetch show ${slug}`, { originalError: err.message });
     }
   }
 

@@ -6,6 +6,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { toError } from '../../../../common/utils/error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EvaluationContext } from '../../../catalog-policy/public';
@@ -194,9 +195,10 @@ export class TrendingShowsQuery {
       withTotal.meta = createSuccessMeta();
       return withTotal;
     } catch (error) {
-      this.logger.error(`Failed to find trending shows: ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Failed to find trending shows: ${err.message}`, err.stack);
       throw new DatabaseException('Failed to fetch trending shows', {
-        originalError: error.message,
+        originalError: err.message,
       });
     }
   }

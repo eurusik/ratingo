@@ -21,7 +21,7 @@ describe('MediaWatchOffersRepository', () => {
     leftJoin: jest.Mock;
   };
 
-  const createMockDbRow = (overrides?: Partial<ReturnType<typeof createMockDbRow>>) => ({
+  const defaultDbRow = {
     id: 'offer-123',
     mediaItemId: 'media-123',
     providerId: 'netflix',
@@ -32,6 +32,10 @@ describe('MediaWatchOffersRepository', () => {
     link: 'https://netflix.com/watch/123',
     tmdbProviderId: 8,
     updatedAt: new Date('2024-01-15'),
+  };
+
+  const createMockDbRow = (overrides?: Partial<typeof defaultDbRow>) => ({
+    ...defaultDbRow,
     ...overrides,
   });
 
@@ -183,10 +187,11 @@ describe('MediaWatchOffersRepository', () => {
       mockDb.transaction.mockImplementation(async (fn) => fn(mockTx));
 
       // Only US has offers; UA is managed and must be cleared
-      await repository.upsertManyByRegions('media-123', [createOfferInput({ region: 'US' })], [
-        'UA',
-        'US',
-      ]);
+      await repository.upsertManyByRegions(
+        'media-123',
+        [createOfferInput({ region: 'US' })],
+        ['UA', 'US'],
+      );
 
       expect(mockDb.transaction).toHaveBeenCalledTimes(1);
       // 1 delete for stale UA + 1 delete/insert pair for US

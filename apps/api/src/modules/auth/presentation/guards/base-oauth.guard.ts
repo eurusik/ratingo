@@ -97,7 +97,7 @@ export function createBaseOAuthGuard(strategyName: string) {
       return this.getProvider().charAt(0).toUpperCase() + this.getProvider().slice(1);
     }
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
+    override async canActivate(context: ExecutionContext): Promise<boolean> {
       this.logger.debug('canActivate called');
 
       if (!this.isProviderEnabled()) {
@@ -160,7 +160,7 @@ export function createBaseOAuthGuard(strategyName: string) {
       return allowed;
     }
 
-    getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions {
+    override getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions {
       const req = context.switchToHttp().getRequest<FastifyRequest>();
       if (req.oauthState) {
         return { state: req.oauthState };
@@ -168,7 +168,7 @@ export function createBaseOAuthGuard(strategyName: string) {
       return {};
     }
 
-    handleRequest<TUser>(
+    override handleRequest<TUser>(
       err: Error | null,
       user: TUser,
       info: { message?: string } | undefined,

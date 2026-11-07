@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { toError } from '../../../../common/utils/error.utils';
 import { SEARCH_CONFIG } from '../../domain/constants/catalog.constants';
 import {
   type IMediaMetadataPort,
@@ -97,7 +98,8 @@ export class CatalogSearchService {
 
       return { query, local, tmdb };
     } catch (error) {
-      this.logger.error(`Search failed for "${query}": ${error.message}`, error.stack);
+      const err = toError(error);
+      this.logger.error(`Search failed for "${query}": ${err.message}`, err.stack);
       return { query, local: [], tmdb: [] };
     }
   }

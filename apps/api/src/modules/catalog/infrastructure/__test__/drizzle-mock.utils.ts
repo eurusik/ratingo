@@ -82,19 +82,15 @@ export function createMockDatabase(
   const updateChain = createDrizzleThenable(options.updateResult ?? [], options.rejectWith);
   const deleteChain = createDrizzleThenable(options.deleteResult ?? [], options.rejectWith);
 
-  const db = {
+  const operations = {
     select: jest.fn().mockReturnValue(selectChain),
     insert: jest.fn().mockReturnValue(insertChain),
     update: jest.fn().mockReturnValue(updateChain),
     delete: jest.fn().mockReturnValue(deleteChain),
-    transaction: jest.fn(async (cb: (tx: any) => Promise<any>) =>
-      cb({
-        select: db.select,
-        insert: db.insert,
-        update: db.update,
-        delete: db.delete,
-      }),
-    ),
+  };
+  const db = {
+    ...operations,
+    transaction: jest.fn(async (cb: (tx: any) => Promise<any>) => cb({ ...operations })),
   };
 
   return {

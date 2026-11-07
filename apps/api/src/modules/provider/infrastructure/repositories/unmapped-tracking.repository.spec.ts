@@ -19,7 +19,7 @@ describe('UnmappedTrackingRepository', () => {
     onConflictDoUpdate: jest.Mock;
   };
 
-  const createMockDbRow = (overrides?: Partial<ReturnType<typeof createMockDbRow>>) => ({
+  const defaultDbRow = {
     tmdbProviderId: 8,
     lastSeenName: 'Netflix',
     sampleNames: ['Netflix'],
@@ -27,6 +27,10 @@ describe('UnmappedTrackingRepository', () => {
     lastSeenAt: new Date('2024-01-15'),
     seenCount: 100,
     sampleRegions: ['US'],
+  };
+
+  const createMockDbRow = (overrides?: Partial<typeof defaultDbRow>) => ({
+    ...defaultDbRow,
     ...overrides,
   });
 
