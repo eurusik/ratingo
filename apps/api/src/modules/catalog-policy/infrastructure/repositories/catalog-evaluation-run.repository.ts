@@ -12,6 +12,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { DatabaseException } from '@/common/exceptions';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 import {
@@ -287,7 +288,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
     requiredContexts?: readonly EvaluationContextType[],
   ): Promise<RunProgressCounters> {
     try {
-      const contextsPerItem = requiredContexts?.length ? requiredContexts.length : 1;
+      const contextsPerItem = Math.max(requiredContexts?.length ?? 0, 1);
       const perItem = this.buildPerItemEvaluationsSql(runId, requiredContexts);
 
       const rows = await this.db.execute<{
@@ -312,7 +313,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
         FROM (${perItem}) AS per_item
       `);
 
-      const row = rows[0];
+      const row = firstOrUndefined(rows);
 
       // Get error count from run's errors column (atomic counter, source of truth)
       const run = await this.db
@@ -344,7 +345,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
     requiredContexts?: readonly EvaluationContextType[],
   ): Promise<AggregatedCounters> {
     try {
-      const contextsPerItem = requiredContexts?.length ? requiredContexts.length : 1;
+      const contextsPerItem = Math.max(requiredContexts?.length ?? 0, 1);
       const perItem = this.buildPerItemEvaluationsSql(runId, requiredContexts);
 
       // Atomic UPDATE with subqueries - no race condition between read and write
@@ -509,7 +510,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
       eligible: row.eligible ?? 0,
       ineligible: row.ineligible ?? 0,
       errors: row.errors ?? 0,
-      errorSample: (row.errorSample as CatalogEvaluationRun['errorSample']) ?? [],
+      errorSample: row.errorSample ?? [],
       promotedAt: row.promotedAt,
       promotedBy: row.promotedBy,
     };

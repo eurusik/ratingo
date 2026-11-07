@@ -217,7 +217,7 @@ export class IngestionController {
     }
 
     // Dispatcher mode (default and recommended)
-    const pagesCount = pages || TRENDING_DEFAULT_PAGES;
+    const pagesCount = pages ?? TRENDING_DEFAULT_PAGES;
     const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_DISPATCHER, {
       pages: pagesCount,
       syncStats,
@@ -299,8 +299,8 @@ export class IngestionController {
   @HttpCode(HttpStatus.ACCEPTED)
   async syncNewReleases(@Body() dto: SyncNewReleasesDto) {
     const region = dto.region || NEW_RELEASES_REGION;
-    const daysBack = dto.daysBack || CATALOG_DEFAULT_NEW_RELEASE_DAYS;
-    const force = dto.force || false;
+    const daysBack = dto.daysBack ?? CATALOG_DEFAULT_NEW_RELEASE_DAYS;
+    const force = dto.force ?? false;
 
     // Deduplication logic: one job per region/daysBack per day
     // jobId: new_releases_UA_30_20231025

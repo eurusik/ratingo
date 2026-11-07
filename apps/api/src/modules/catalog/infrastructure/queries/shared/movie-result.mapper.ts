@@ -78,7 +78,7 @@ export class MovieResultMapper {
    * Maps multiple rows with genres map to MovieWithMedia array.
    */
   static mapMany(rows: MovieSelectRow[], genresMap: Map<string, GenreInfo[]>): MovieWithMedia[] {
-    return rows.map((row) => this.toMovieWithMedia(row, genresMap.get(row.mediaItemId) || []));
+    return rows.map((row) => this.toMovieWithMedia(row, genresMap.get(row.mediaItemId) ?? []));
   }
 
   /**
@@ -88,6 +88,6 @@ export class MovieResultMapper {
     rows: MovieSelectRow[],
     genresMap: Map<string, GenreInfo[]>,
   ): TrendingMovieItem[] {
-    return rows.map((row) => this.toTrendingItem(row, genresMap.get(row.mediaItemId) || []));
+    return rows.map((row) => this.toTrendingItem(row, genresMap.get(row.mediaItemId) ?? []));
   }
 }

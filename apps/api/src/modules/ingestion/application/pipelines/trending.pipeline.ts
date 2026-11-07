@@ -78,9 +78,7 @@ export class TrendingPipeline {
     const rawItems = await this.syncService.getTrending(page, type);
     const items = rawItems.filter(
       (item): item is { tmdbId: number; type: MediaType } =>
-        typeof item.tmdbId === 'number' &&
-        item.tmdbId > 0 &&
-        (item.type === MediaType.MOVIE || item.type === MediaType.SHOW),
+        typeof item.tmdbId === 'number' && item.tmdbId > 0,
     );
 
     if (items.length === 0) {
@@ -102,7 +100,7 @@ export class TrendingPipeline {
   async processStats(since?: string, limit?: number): Promise<void> {
     const sinceDate = since ? new Date(since) : undefined;
     this.logger.log(
-      `Syncing Trakt stats (since: ${sinceDate?.toISOString() || 'all'}, limit: ${limit || 'default'})...`,
+      `Syncing Trakt stats (since: ${sinceDate?.toISOString() || 'all'}, limit: ${limit ?? 'default'})...`,
     );
 
     // Phase 0: Clear stale trending ranks from items not updated in this sync cycle
@@ -114,7 +112,7 @@ export class TrendingPipeline {
     // Phase 1: Sync stats for recently updated items (top trending from TMDB)
     const result = await this.trendingSyncService.syncTrendingStatsForUpdatedItems({
       since: sinceDate,
-      limit: limit || TRENDING_DEFAULT_STATS_LIMIT,
+      limit: limit ?? TRENDING_DEFAULT_STATS_LIMIT,
     });
 
     this.logger.log(`Phase 1 complete: ${result.movies} movies, ${result.shows} shows`);

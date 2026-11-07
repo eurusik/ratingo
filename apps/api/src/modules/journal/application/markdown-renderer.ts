@@ -80,9 +80,7 @@ export function setMarkedModule(module: MarkedModule | null): void {
  * Gets the marked module, loading it lazily.
  */
 async function getMarked(): Promise<MarkedModule> {
-  if (!cachedMarked) {
-    cachedMarked = (await dynamicImport('marked')) as MarkedModule;
-  }
+  cachedMarked ??= (await dynamicImport('marked')) as MarkedModule;
   return cachedMarked;
 }
 
@@ -126,11 +124,9 @@ let cachedSanitizer: HtmlSanitizer | null = null;
  * Gets the sanitizer instance.
  */
 export function getSanitizer(): HtmlSanitizer {
-  if (!cachedSanitizer) {
-    cachedSanitizer = {
-      sanitize: (html: string) => sanitizeHtml(html, SANITIZE_OPTIONS),
-    };
-  }
+  cachedSanitizer ??= {
+    sanitize: (html: string) => sanitizeHtml(html, SANITIZE_OPTIONS),
+  };
   return cachedSanitizer;
 }
 
@@ -173,7 +169,7 @@ async function getSecureRenderer(): Promise<MarkedRenderer> {
     }
 
     const isExternal =
-      href?.startsWith(ALLOWED_PROTOCOLS.HTTP) || href?.startsWith(ALLOWED_PROTOCOLS.HTTPS);
+      href.startsWith(ALLOWED_PROTOCOLS.HTTP) || href.startsWith(ALLOWED_PROTOCOLS.HTTPS);
     const relAttr = isExternal ? ` rel="${EXTERNAL_LINK_ATTRS.REL}"` : '';
     const targetAttr = isExternal ? ` target="${EXTERNAL_LINK_ATTRS.TARGET}"` : '';
     const titleAttr = title ? ` title="${title}"` : '';

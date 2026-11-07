@@ -117,7 +117,7 @@ export const applyStandardErrorResponses = (doc: OpenAPIObject): void => {
     ...doc.components.schemas,
   };
 
-  const operations = Object.values(doc.paths ?? {}).flatMap((pathItem) =>
+  const operations = Object.values(doc.paths).flatMap((pathItem) =>
     HTTP_METHODS.map((m) => (pathItem as Record<string, OperationLike | undefined>)[m]).filter(
       (op): op is OperationLike => Boolean(op),
     ),

@@ -72,7 +72,7 @@ export class CatalogPolicyWorker extends WorkerHost {
    * `attemptsMade` counts previously failed attempts, so the current one is attemptsMade + 1.
    */
   private isFinalAttempt(job: Job): boolean {
-    const maxAttempts = job.opts?.attempts ?? 1;
-    return (job.attemptsMade ?? 0) + 1 >= maxAttempts;
+    const maxAttempts = job.opts.attempts ?? 1;
+    return job.attemptsMade + 1 >= maxAttempts;
   }
 }

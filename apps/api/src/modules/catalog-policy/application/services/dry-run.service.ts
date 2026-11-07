@@ -129,7 +129,7 @@ export class DryRunService {
 
   async execute(proposedPolicy: PolicyConfig, options: DryRunOptions): Promise<DryRunResult> {
     const startTime = Date.now();
-    const limit = Math.min(options.limit || DEFAULT_LIMIT, MAX_ITEMS);
+    const limit = Math.min(options.limit ?? DEFAULT_LIMIT, MAX_ITEMS);
 
     this.logger.log(`Starting dry-run: mode=${options.mode}, limit=${limit}`);
     this.validateOptions(options);
@@ -157,7 +157,7 @@ export class DryRunService {
   ): Promise<DryRunResult & { currentPolicyVersion: number | null }> {
     const activePolicy = await this.policyService.getActive();
     const result = await this.execute(proposedPolicy, options);
-    return { ...result, currentPolicyVersion: activePolicy?.version || null };
+    return { ...result, currentPolicyVersion: activePolicy?.version ?? null };
   }
 
   private validateOptions(options: DryRunOptions): void {

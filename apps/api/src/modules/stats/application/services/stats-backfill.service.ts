@@ -307,7 +307,7 @@ export class StatsBackfillService {
 
         return stats; // Success or not found
       } catch (error: unknown) {
-        const err = error as { response?: { status?: number }; message?: string };
+        const err = error as { response?: { status?: number } } | null;
         const status = err?.response?.status;
         const isRateLimited = status === HTTP_STATUS_TOO_MANY_REQUESTS;
         const isServerError = status && status >= HTTP_STATUS_SERVER_ERROR_MIN;

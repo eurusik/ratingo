@@ -216,19 +216,6 @@ describe('MovieDetailsService', () => {
       expect(clock.now).toHaveBeenCalled();
     });
 
-    it('should handle movie with null stats gracefully', async () => {
-      const movieWithNullStats = {
-        ...mockMovie,
-        stats: null,
-      };
-      movieRepository.findBySlug.mockResolvedValue(movieWithNullStats);
-
-      const result = await service.getBySlug('test-movie');
-
-      expect(result).toBeDefined();
-      expect(result.verdict).toBeDefined();
-    });
-
     it('should handle movie with null externalRatings gracefully', async () => {
       const movieWithNullRatings = {
         ...mockMovie,

@@ -5,6 +5,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { DatabaseException } from '@/common/exceptions/database.exception';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 import { type IWatchingShowsCountPort } from '@/modules/catalog/domain/ports/watching-shows-count.port';
@@ -37,17 +38,19 @@ export class WatchingShowsCountQuery implements IWatchingShowsCountPort {
    */
   async countWatchingShows(userId: string): Promise<number> {
     try {
-      const [result] = await this.db
-        .select({ count: count() })
-        .from(schema.userMediaState)
-        .innerJoin(schema.mediaItems, eq(schema.userMediaState.mediaItemId, schema.mediaItems.id))
-        .where(
-          and(
-            eq(schema.userMediaState.userId, userId),
-            eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
-            eq(schema.mediaItems.type, MediaType.SHOW),
+      const result = firstOrUndefined(
+        await this.db
+          .select({ count: count() })
+          .from(schema.userMediaState)
+          .innerJoin(schema.mediaItems, eq(schema.userMediaState.mediaItemId, schema.mediaItems.id))
+          .where(
+            and(
+              eq(schema.userMediaState.userId, userId),
+              eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
+              eq(schema.mediaItems.type, MediaType.SHOW),
+            ),
           ),
-        );
+      );
 
       return result?.count ?? 0;
     } catch (error) {

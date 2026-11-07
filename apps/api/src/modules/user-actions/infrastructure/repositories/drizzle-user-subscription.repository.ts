@@ -7,6 +7,7 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { ShowStatus } from '@/common/enums/show-status.enum';
 import { ImageMapper } from '@/common/mappers/image.mapper';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -140,18 +141,20 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
       'find subscription',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.userSubscriptions)
-          .where(
-            and(
-              eq(schema.userSubscriptions.userId, userId),
-              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
-              eq(schema.userSubscriptions.trigger, trigger),
-              eq(schema.userSubscriptions.isActive, true),
-            ),
-          )
-          .limit(1);
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.userSubscriptions)
+            .where(
+              and(
+                eq(schema.userSubscriptions.userId, userId),
+                eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+                eq(schema.userSubscriptions.trigger, trigger),
+                eq(schema.userSubscriptions.isActive, true),
+              ),
+            )
+            .limit(1),
+        );
         return row ? this.mapRow(row) : null;
       },
       { userId, mediaItemId, trigger },
@@ -261,21 +264,23 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
       'count active subscriptions',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.userSubscriptions)
-          // Same join + filters as listActiveWithMedia — keep counts and lists consistent.
-          .innerJoin(
-            schema.mediaItems,
-            eq(schema.mediaItems.id, schema.userSubscriptions.mediaItemId),
-          )
-          .where(
-            and(
-              eq(schema.userSubscriptions.userId, userId),
-              eq(schema.userSubscriptions.isActive, true),
-              isNull(schema.mediaItems.deletedAt),
+        const row = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.userSubscriptions)
+            // Same join + filters as listActiveWithMedia — keep counts and lists consistent.
+            .innerJoin(
+              schema.mediaItems,
+              eq(schema.mediaItems.id, schema.userSubscriptions.mediaItemId),
+            )
+            .where(
+              and(
+                eq(schema.userSubscriptions.userId, userId),
+                eq(schema.userSubscriptions.isActive, true),
+                isNull(schema.mediaItems.deletedAt),
+              ),
             ),
-          );
+        );
         return Number(row?.count ?? 0);
       },
       { userId },
@@ -336,7 +341,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
         )
         .orderBy(schema.mediaItems.tmdbId);
 
-      return rows.map((r) => r.tmdbId).filter((id): id is number => id !== null);
+      return rows.map((r) => r.tmdbId);
     });
   }
 

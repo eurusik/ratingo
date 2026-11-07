@@ -10,6 +10,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -100,7 +101,7 @@ export class DiffRepository implements IDiffRepository {
     `),
     );
 
-    const row = result[0];
+    const row = firstOrUndefined(result);
     return {
       regressions: parseInt(row?.regressions ?? '0', 10),
       improvements: parseInt(row?.improvements ?? '0', 10),

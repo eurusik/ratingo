@@ -176,6 +176,6 @@ export class TrendingMoviesQuery {
       )
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(and(...conditions));
-    return Number(total ?? 0);
+    return Number(total);
   }
 }

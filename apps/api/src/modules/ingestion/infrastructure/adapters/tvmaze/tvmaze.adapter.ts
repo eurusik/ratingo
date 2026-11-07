@@ -68,7 +68,7 @@ export class TvMazeAdapter implements EpisodeSchedulePort {
       // Lookup Show ID via IMDb ID (Follows redirects)
       const show = await this.fetch<TvMazeShow>(`/lookup/shows?imdb=${imdbId}`);
 
-      if (!show?.id) {
+      if (!show.id) {
         return [];
       }
 

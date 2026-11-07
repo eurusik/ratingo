@@ -102,7 +102,7 @@ export interface TmdbReleaseDate {
  */
 export interface TmdbReleaseDatesCountry {
   iso_3166_1: string;
-  release_dates: TmdbReleaseDate[];
+  release_dates?: TmdbReleaseDate[];
 }
 
 /**
@@ -132,7 +132,7 @@ export interface TmdbCreator {
  */
 export interface TmdbAlternativeTitle {
   iso_3166_1: string;
-  title: string;
+  title?: string;
   type: string;
 }
 
@@ -166,7 +166,7 @@ export interface TmdbBaseResponse {
   aggregate_credits?: TmdbCredits; // For TV shows
   external_ids?: TmdbExternalIds;
   'watch/providers'?: {
-    results: Record<string, TmdbWatchProviderRegion>;
+    results: Partial<Record<string, TmdbWatchProviderRegion>>;
   };
   alternative_titles?: {
     titles?: TmdbAlternativeTitle[]; // Movies
@@ -203,7 +203,7 @@ export interface TmdbShowResponse extends TmdbBaseResponse {
   number_of_seasons: number;
   number_of_episodes: number;
   status: string;
-  origin_country: string[]; // Array of ISO 3166-1 alpha-2 codes
+  origin_country?: string[]; // Array of ISO 3166-1 alpha-2 codes
   created_by?: TmdbCreator[];
   seasons?: TmdbSeason[];
 }

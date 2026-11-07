@@ -103,7 +103,7 @@ export class UserMediaService implements IRatingSyncPort {
     // atomically — eliminating the TOCTOU window.
     const existing = await this.repo.findOne(data.userId, data.mediaItemId);
 
-    if (data.rating === null && !data.state && !data.progress && !existing) {
+    if (data.rating === null && !data.state && !existing) {
       return null;
     }
 
@@ -132,7 +132,7 @@ export class UserMediaService implements IRatingSyncPort {
       if (
         resolvedState === USER_MEDIA_STATE.DROPPED &&
         locked?.rating != null &&
-        locked?.progress != null &&
+        locked.progress != null &&
         trustedMediaType === MediaType.SHOW
       ) {
         throw new AppException(

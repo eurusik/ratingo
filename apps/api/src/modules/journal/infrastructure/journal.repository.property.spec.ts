@@ -463,9 +463,7 @@ describe('JournalRepository - Property Tests', () => {
           const visible = filterVisiblePosts(allPosts, now);
 
           // Visible count should equal published posts count (those with publishedAt <= now)
-          const expectedVisibleCount = published.filter(
-            (p) => p.publishedAt !== null && p.publishedAt <= now,
-          ).length;
+          const expectedVisibleCount = published.filter((p) => p.publishedAt <= now).length;
           expect(visible.length).toBe(expectedVisibleCount);
 
           // No scheduled or draft posts should be in visible

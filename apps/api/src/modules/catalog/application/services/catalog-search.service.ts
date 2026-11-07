@@ -61,7 +61,7 @@ export class CatalogSearchService {
         alternativeTitles: r.alternativeTitles,
         year: r.releaseDate ? new Date(r.releaseDate).getFullYear() || null : null,
         posterPath: r.posterPath,
-        rating: r.rating || 0,
+        rating: r.rating ?? 0,
       }));
 
       const filteredTmdb = tmdbResults

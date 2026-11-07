@@ -18,7 +18,7 @@ export { ContentClassValues, type ContentClass };
 export interface ClassificationInput {
   originCountries: string[] | null;
   originalLanguage: string | null;
-  genreIds: number[];
+  genreIds: number[] | null;
 }
 
 /**
@@ -47,7 +47,7 @@ export function classifyContent(input: ClassificationInput): ContentClass {
 
   // Rule 1: Anime = Animation + Japanese origin
   if (safeGenreIds.includes(TMDB_GENRE_IDS.ANIMATION)) {
-    const isJapanese = originCountries?.includes('JP') || originalLanguage === 'ja';
+    const isJapanese = (originCountries ?? []).includes('JP') || originalLanguage === 'ja';
 
     if (isJapanese) {
       return ContentClassValues.ANIME;

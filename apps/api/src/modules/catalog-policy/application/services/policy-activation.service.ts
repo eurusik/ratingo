@@ -163,7 +163,7 @@ export class PolicyActivationService {
         runId: run.id,
         policyVersion: policy.version,
         context,
-        batchSize: options?.batchSize || DEFAULT_BATCH_SIZE,
+        batchSize: options?.batchSize ?? DEFAULT_BATCH_SIZE,
         jobIdPrefix: 'reeval',
       });
     }
@@ -330,7 +330,7 @@ export class PolicyActivationService {
     return runs.map((run) => {
       const policy = run.targetPolicyId ? policyMap.get(run.targetPolicyId) : null;
       const isPrepared = run.status === RunStatusEnum.PREPARED;
-      const version = policy?.version ?? run.policyVersion ?? 0;
+      const version = policy?.version ?? run.policyVersion;
 
       return {
         id: run.id,
@@ -346,7 +346,7 @@ export class PolicyActivationService {
           errors: run.errors,
         },
         startedAt: run.startedAt,
-        finishedAt: run.finishedAt || undefined,
+        finishedAt: run.finishedAt ?? undefined,
         readyToPromote: isPrepared && run.errors === 0,
       };
     });
@@ -385,7 +385,7 @@ export class PolicyActivationService {
       runId: run.id,
       policyVersion: activePolicy.version,
       context,
-      batchSize: options?.batchSize || DEFAULT_BATCH_SIZE,
+      batchSize: options?.batchSize ?? DEFAULT_BATCH_SIZE,
       jobIdPrefix: BACKFILL_RUN_PREFIX,
     });
 

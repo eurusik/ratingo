@@ -3,6 +3,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { eq, and, asc, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -140,11 +141,13 @@ export class DrizzleReviewReplyRepository implements IReviewReplyRepository {
       async () => {
         return this.db.transaction(async (tx) => {
           const now = new Date();
-          const [deleted] = await tx
-            .update(reviewReplies)
-            .set({ isDeleted: true, updatedAt: now })
-            .where(and(eq(reviewReplies.id, id), eq(reviewReplies.isDeleted, false)))
-            .returning({ reviewId: reviewReplies.reviewId });
+          const deleted = firstOrUndefined(
+            await tx
+              .update(reviewReplies)
+              .set({ isDeleted: true, updatedAt: now })
+              .where(and(eq(reviewReplies.id, id), eq(reviewReplies.isDeleted, false)))
+              .returning({ reviewId: reviewReplies.reviewId }),
+          );
 
           if (!deleted) return false;
 
@@ -168,10 +171,12 @@ export class DrizzleReviewReplyRepository implements IReviewReplyRepository {
       'count replies by review',
       this.logger,
       async () => {
-        const [result] = await this.db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(reviewReplies)
-          .where(and(eq(reviewReplies.reviewId, reviewId), eq(reviewReplies.isDeleted, false)));
+        const result = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(reviewReplies)
+            .where(and(eq(reviewReplies.reviewId, reviewId), eq(reviewReplies.isDeleted, false))),
+        );
 
         return result?.count ?? 0;
       },

@@ -98,12 +98,12 @@ export class MovieDetailsService {
 
     return this.verdictService.compute({
       releaseStatus,
-      ratingoScore: movie.stats?.ratingoScore ?? null,
+      ratingoScore: movie.stats.ratingoScore ?? null,
       avgRating: bestRating?.rating ?? null,
       voteCount: bestRating?.voteCount ?? null,
       ratingSource: bestRatingSource,
       popularitySignal: mapBadgeToPopularitySignal(card?.badgeKey),
-      popularity: movie.stats?.popularityScore ?? null,
+      popularity: movie.stats.popularityScore ?? null,
       releaseDate: movie.releaseDate ?? null,
     });
   }

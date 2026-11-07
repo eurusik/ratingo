@@ -12,6 +12,8 @@ import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
+
 import * as schema from './schema';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
@@ -23,11 +25,13 @@ async function seed() {
   const db = drizzle(sql, { schema });
 
   // 1. Resolve test user
-  const [user] = await db
-    .select({ id: schema.users.id })
-    .from(schema.users)
-    .where(eq(schema.users.email, TEST_EMAIL))
-    .limit(1);
+  const user = firstOrUndefined(
+    await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.email, TEST_EMAIL))
+      .limit(1),
+  );
 
   if (!user) {
     console.error(`Test user ${TEST_EMAIL} not found. Register first via POST /api/auth/register.`);

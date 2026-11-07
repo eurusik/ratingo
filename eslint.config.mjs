@@ -338,6 +338,14 @@ export default [
       '@typescript-eslint/require-await': 'error',
       '@typescript-eslint/no-base-to-string': 'error',
       '@typescript-eslint/restrict-template-expressions': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': [
+        'error',
+        { ignorePrimitives: { string: true } },
+      ],
+      '@typescript-eslint/no-unnecessary-condition': [
+        'error',
+        { allowConstantLoopConditions: 'only-allowed-literals' },
+      ],
     },
   },
   // Config/DTO/Common files — relaxed magic numbers (ports, TTL, validation limits, defaults)

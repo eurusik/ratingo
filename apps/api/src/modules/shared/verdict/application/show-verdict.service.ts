@@ -324,19 +324,8 @@ export class ShowVerdictService {
     // ═══════════════════════════════════════════════════════════════
 
     // Rising Hype - growing popularity
-    // For older content, frame as "classic series" not "rising hype"
+    // For older content, frame as "steady interest" not "rising hype"
     if (popularitySignal === POPULARITY_SIGNAL.RISING) {
-      if (isClassic && isGoodQuality) {
-        return buildResult(
-          {
-            type: 'quality',
-            messageKey: 'classicSeries',
-            context: formatContext(consensusRating),
-            hintKey: 'forLater',
-          },
-          false,
-        );
-      }
       if (isOlderContent) {
         return buildResult(
           {
@@ -364,9 +353,7 @@ export class ShowVerdictService {
     // ═══════════════════════════════════════════════════════════════
 
     if (hasAnyRatings && !hasConfidentRating) {
-      const isEarlyBadRating =
-        (consensusRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_HIGH) <
-        RATING_THRESHOLDS.BELOW_AVERAGE;
+      const isEarlyBadRating = consensusRating < RATING_THRESHOLDS.BELOW_AVERAGE;
 
       if (isEarlyBadRating) {
         return buildResult(

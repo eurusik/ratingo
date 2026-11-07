@@ -122,7 +122,7 @@ export class BackfillAltTitlesPipeline {
    * (not stored in DB) and uses only hardcoded ALT_TITLE_COUNTRIES.
    */
   private filterAlternativeTitles(
-    rawTitles: { iso_3166_1: string; title: string }[],
+    rawTitles: { iso_3166_1: string; title?: string }[],
     title: string,
     originalTitle: string | null,
   ): string[] {
