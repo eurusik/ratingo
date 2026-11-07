@@ -1,7 +1,7 @@
 import { isGenericTitle } from '../episode.utils';
 
 describe('isGenericTitle', () => {
-  it.each(['Episode 5', 'Серія 12', 'TBA', 'TBD'])('treats %s as generic', (title) => {
+  it.each(['Episode 5', 'Серія 12', 'TBA', 'TBD', '', '  '])('treats %s as generic', (title) => {
     expect(isGenericTitle(title)).toBe(true);
   });
 
