@@ -176,7 +176,7 @@ export class BatchStatusQueryDto {
     example: 'id1,id2,id3',
     description: `Comma-separated list of media item UUIDs (max ${MAX_PAGE_SIZE})`,
   })
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string'
       ? value
           .split(',')

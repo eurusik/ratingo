@@ -108,7 +108,8 @@ export class NormalizationService {
     for (const [rawRegion, regionData] of Object.entries(rawProviders)) {
       const region = normalizeRegion(rawRegion);
       const link = regionData.link ?? null;
-      const regionMappings = mappingsByRegion.get(region) ?? new Map();
+      const regionMappings =
+        mappingsByRegion.get(region) ?? new Map<number, ResolvedMappingInternal>();
 
       this.processRegionOffers(
         mediaItemId,

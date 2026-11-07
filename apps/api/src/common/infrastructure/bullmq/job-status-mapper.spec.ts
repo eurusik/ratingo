@@ -1,6 +1,6 @@
 import { JOB_STATUS } from '@/common/enums/job-status.enum';
 
-import { mapBullStateToJobStatus } from './job-status-mapper';
+import { jobTmdbId, mapBullStateToJobStatus } from './job-status-mapper';
 
 describe('mapBullStateToJobStatus', () => {
   it.each([
@@ -24,4 +24,17 @@ describe('mapBullStateToJobStatus', () => {
     expect(mapBullStateToJobStatus('unknown-state')).toBe(JOB_STATUS.FAILED);
     expect(mapBullStateToJobStatus('unknown-state', null)).toBe(JOB_STATUS.FAILED);
   });
+});
+
+describe('jobTmdbId', () => {
+  it('should read a numeric tmdbId from the job payload', () => {
+    expect(jobTmdbId({ data: { tmdbId: 550 } })).toBe(550);
+  });
+
+  it.each([[undefined], [null], ['payload'], [{}], [{ tmdbId: '550' }]])(
+    'should return null for payload %p',
+    (data) => {
+      expect(jobTmdbId({ data })).toBeNull();
+    },
+  );
 });

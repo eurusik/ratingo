@@ -10,6 +10,7 @@ import { STATS_QUEUE, STATS_JOBS } from '@/modules/stats/stats.constants';
 
 import { DropOffService, StatsBackfillService, TrendingSyncService } from '../services';
 import { CommunityRatingService } from '../services/community-rating.service';
+import { type BackfillWatchersChunkJobData, type StatsJobData } from '../types/stats-job.types';
 
 /**
  * Background worker for processing stats-related jobs.
@@ -39,13 +40,13 @@ export class StatsWorker extends WorkerHost {
    * @param {Job} job - BullMQ job containing type and data
    * @returns {Promise<void>} Nothing
    */
-  async process(job: Job): Promise<void> {
+  async process(job: Job<StatsJobData>): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
 
     try {
       switch (job.name) {
         case STATS_JOBS.SYNC_TRENDING:
-          await this.trendingSyncService.syncTrendingStats(job.data.limit || MAX_PAGE_SIZE);
+          await this.trendingSyncService.syncTrendingStats(job.data.limit ?? MAX_PAGE_SIZE);
           break;
 
         case STATS_JOBS.SYNC_ELIGIBLE_TRENDING:
@@ -61,12 +62,12 @@ export class StatsWorker extends WorkerHost {
             await this.dropOffService.analyzeShow(job.data.tmdbId);
           } else {
             // Analyze all shows
-            await this.dropOffService.analyzeAllShows(job.data.limit || DEFAULT_BATCH_SIZE);
+            await this.dropOffService.analyzeAllShows(job.data.limit ?? DEFAULT_BATCH_SIZE);
           }
           break;
 
         case STATS_JOBS.BACKFILL_WATCHERS_CHUNK:
-          await this.processBackfillChunk(job);
+          await this.processBackfillChunk(job as Job<BackfillWatchersChunkJobData>);
           break;
 
         case STATS_JOBS.RECONCILE_COMMUNITY_RATINGS:
@@ -90,7 +91,7 @@ export class StatsWorker extends WorkerHost {
    * @param {Job} job - Job containing items array
    * @returns {Promise<void>}
    */
-  private async processBackfillChunk(job: Job): Promise<void> {
+  private async processBackfillChunk(job: Job<BackfillWatchersChunkJobData>): Promise<void> {
     const { items, chunkIndex, totalChunks } = job.data;
 
     this.logger.log(
