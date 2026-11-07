@@ -1,4 +1,5 @@
-import { type User } from '../../../users/public';
+import { type User } from '@/modules/users/public';
+
 import { type MeDto } from '../dto/me.dto';
 
 /**

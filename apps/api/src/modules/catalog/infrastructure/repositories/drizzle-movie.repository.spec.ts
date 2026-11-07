@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DrizzleMovieRepository } from './drizzle-movie.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 import { MovieDetailsQuery } from '../queries/movie-details.query';
 import { PopularMoviesQuery } from '../queries/popular-movies.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';

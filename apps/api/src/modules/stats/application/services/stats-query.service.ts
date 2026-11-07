@@ -2,11 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { StatsNotFoundException } from '@/common/exceptions';
-
 import {
   type IStatsRepository,
   STATS_REPOSITORY,
-} from '../../domain/repositories/stats.repository.interface';
+} from '@/modules/stats/domain/repositories/stats.repository.interface';
 
 /**
  * Service for querying media statistics.

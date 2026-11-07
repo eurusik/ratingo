@@ -11,7 +11,10 @@ export interface SeasonData {
   episode_count?: number;
 }
 
-export { type TraktMediaType, TRAKT_MEDIA_TYPE } from '../../../domain/constants/trakt.constants';
+export {
+  type TraktMediaType,
+  TRAKT_MEDIA_TYPE,
+} from '@/modules/trakt/domain/constants/trakt.constants';
 
 /**
  * Endpoint type literals for Trakt API.

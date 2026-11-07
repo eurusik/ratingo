@@ -16,8 +16,8 @@ import {
   EvaluationContext,
   type EligibilityStatusType,
   type EvaluationContextType,
-} from '../../domain/constants/evaluation.constants';
-import { type MediaCatalogEvaluation } from '../../domain/types/policy.types';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import { type MediaCatalogEvaluation } from '@/modules/catalog-policy/domain/types/policy.types';
 
 // ============================================================================
 // In-Memory Repository for Property Testing

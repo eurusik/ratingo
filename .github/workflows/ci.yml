@@ -52,7 +52,7 @@ jobs:
 
           match() { grep -qE "$1" <<< "$files" && echo true || echo false; }
 
-          if (( count >= 3000 )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|\.github/)') == true ]]; then
+          if (( count >= 3000 )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
             api=true; web=true; contracts=true; backup=true
           else
             api=$(match '^apps/api/')
@@ -81,7 +81,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Tool cache key
-        run: echo "TOOL_CACHE_KEY=api-tools-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}" >> "$GITHUB_ENV"
+        run: echo "TOOL_CACHE_KEY=api-tools-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json', 'eslint-rules/**') }}" >> "$GITHUB_ENV"
 
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
@@ -93,6 +93,9 @@ jobs:
 
       - name: Lint
         run: npm run lint --workspace=api -- --cache --cache-strategy content --cache-location "$GITHUB_WORKSPACE/.cache/eslint/api"
+
+      - name: Test ESLint rules
+        run: npm run test:eslint-rules
 
       - name: Typecheck
         run: npm run typecheck --workspace=api

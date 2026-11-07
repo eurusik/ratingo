@@ -1,5 +1,5 @@
-import { type MediaScoreDataWithTmdbId } from '../../../catalog/public';
-import { type ScoreInput } from '../../../shared/score-calculator';
+import { type MediaScoreDataWithTmdbId } from '@/modules/catalog/public';
+import { type ScoreInput } from '@/modules/shared/score-calculator';
 
 /**
  * Maps media score data to ScoreCalculator input format.

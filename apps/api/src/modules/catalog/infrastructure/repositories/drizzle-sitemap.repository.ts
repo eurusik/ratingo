@@ -3,15 +3,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type ISitemapRepository,
   type SitemapItem,
-} from '../../domain/repositories/sitemap.repository.interface';
+} from '@/modules/catalog/domain/repositories/sitemap.repository.interface';
 
 @Injectable()
 export class DrizzleSitemapRepository implements ISitemapRepository {

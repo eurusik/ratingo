@@ -4,10 +4,10 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import type { ProviderMapping } from '../../domain/types/provider.types';
-import { GLOBAL_REGION } from '../../domain/utils/region-normalizer';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import type { ProviderMapping } from '@/modules/provider/domain/types/provider.types';
+import { GLOBAL_REGION } from '@/modules/provider/domain/utils/region-normalizer';
 import { ProviderMappingRepository } from './provider-mapping.repository';
 
 describe('ProviderMappingRepository', () => {

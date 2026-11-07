@@ -4,7 +4,10 @@ import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 
 import IORedis from 'ioredis';
 
-import { type CooldownResult, type ICooldownGate } from '../../domain/ports/cooldown-gate.port';
+import {
+  type CooldownResult,
+  type ICooldownGate,
+} from '@/modules/catalog/domain/ports/cooldown-gate.port';
 
 export const COOLDOWN_REDIS_CLIENT = Symbol('COOLDOWN_REDIS_CLIENT');
 

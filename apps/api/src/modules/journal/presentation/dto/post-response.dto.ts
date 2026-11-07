@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { POST_TYPE_VALUES, PostType } from '../../domain/constants/post-types';
+import { POST_TYPE_VALUES, PostType } from '@/modules/journal/domain/constants/post-types';
 
 /**
  * Navigation link to adjacent post.

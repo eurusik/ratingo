@@ -3,12 +3,12 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, and, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { DatabaseException } from '../../../../common/exceptions';
-import { toError } from '../../../../common/utils/error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type MovieDetails } from '../../domain/repositories';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { DatabaseException } from '@/common/exceptions';
+import { toError } from '@/common/utils/error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type MovieDetails } from '@/modules/catalog/domain/repositories';
 
 import {
   GenreQuery,

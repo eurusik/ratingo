@@ -6,14 +6,14 @@ import { type Job } from 'bullmq';
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
-
+import { BACKFILL_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import {
   type ILinkPendingImportsSweep,
   LINK_PENDING_IMPORTS_SWEEP,
   ResolveImportDispatcherPipeline,
   ResolveImportItemPipeline,
-} from '../../../user-media/public';
-import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
+} from '@/modules/user-media/public';
+
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 

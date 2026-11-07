@@ -20,7 +20,8 @@ import {
   InvalidLimitError,
   InvalidSamplePercentError,
   UnknownDryRunModeError,
-} from '../../domain/errors';
+} from '@/modules/catalog-policy/domain/errors';
+
 import { DRY_RUN_MODES } from '../dto/constants';
 import { type ErrorResponseDto } from '../dto/error-response.dto';
 import { ErrorResponseBuilder } from '../utils';

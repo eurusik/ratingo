@@ -3,7 +3,8 @@ import { Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
-import { MONITORING_QUEUE, MONITORING_JOBS } from '../../monitoring.constants';
+import { MONITORING_QUEUE, MONITORING_JOBS } from '@/modules/monitoring/monitoring.constants';
+
 import { KeyHealthService } from '../services/key-health.service';
 
 @Processor(MONITORING_QUEUE, { concurrency: 1 })

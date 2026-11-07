@@ -3,14 +3,17 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { type ExternalRatings } from '../../../../common/types';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
-import { type RiseFallItem, type RiseFallMediaType } from '../../domain/models/rise-fall.model';
-import { type InsightsRepository } from '../../domain/repositories/insights.repository.interface';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { type ExternalRatings } from '@/common/types';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
+import {
+  type RiseFallItem,
+  type RiseFallMediaType,
+} from '@/modules/insights/domain/models/rise-fall.model';
+import { type InsightsRepository } from '@/modules/insights/domain/repositories/insights.repository.interface';
 
 // Fallers filtering thresholds
 const MIN_PREV_GROWTH = 100;

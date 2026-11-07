@@ -1,14 +1,14 @@
 import { type Queue } from 'bullmq';
 
-import { IngestionJob } from '../../../ingestion/ingestion.constants';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import {
   IMPORT_PENDING_FAILURE,
   IMPORT_PENDING_STATUS,
-} from '../../domain/constants/import-pending.constants';
-import { type ImportPendingItem } from '../../domain/entities/import-pending-item';
-import { type IMediaLookupPort } from '../../domain/ports/media-lookup.port';
-import { type ITmdbResolverPort } from '../../domain/ports/tmdb-resolver.port';
-import { type IImportPendingRepository } from '../../domain/repositories/import-pending.repository.interface';
+} from '@/modules/user-media/domain/constants/import-pending.constants';
+import { type ImportPendingItem } from '@/modules/user-media/domain/entities/import-pending-item';
+import { type IMediaLookupPort } from '@/modules/user-media/domain/ports/media-lookup.port';
+import { type ITmdbResolverPort } from '@/modules/user-media/domain/ports/tmdb-resolver.port';
+import { type IImportPendingRepository } from '@/modules/user-media/domain/repositories/import-pending.repository.interface';
 import { type LinkPendingImportsService } from '../link-pending-imports.service';
 
 import { ResolveImportItemPipeline } from './resolve-import-item.pipeline';

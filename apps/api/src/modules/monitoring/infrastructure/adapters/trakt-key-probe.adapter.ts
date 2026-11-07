@@ -3,10 +3,9 @@ import { type ConfigType } from '@nestjs/config';
 
 import { ResilientHttpClient } from '@/common/http/resilient-http.client';
 import traktConfig from '@/config/trakt.config';
-
-import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
-import { MONITORED_PROVIDER } from '../../domain/constants/monitored-provider.const';
-import { type KeyProbeResult } from '../../domain/ports/key-probe.port';
+import { API_KEY_STATUS } from '@/modules/monitoring/domain/constants/api-key-status.const';
+import { MONITORED_PROVIDER } from '@/modules/monitoring/domain/constants/monitored-provider.const';
+import { type KeyProbeResult } from '@/modules/monitoring/domain/ports/key-probe.port';
 
 import { BaseKeyProbe } from './base-key-probe';
 import { PROBE_RETRY_CONFIG, mapHttpFailure } from './probe-http.util';

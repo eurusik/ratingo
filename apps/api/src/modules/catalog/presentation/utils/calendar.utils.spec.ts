@@ -1,4 +1,4 @@
-import type { CalendarEpisode } from '../../domain/repositories/show.repository.interface';
+import type { CalendarEpisode } from '@/modules/catalog/domain/repositories/show.repository.interface';
 
 import { groupEpisodesByDate } from './calendar.utils';
 

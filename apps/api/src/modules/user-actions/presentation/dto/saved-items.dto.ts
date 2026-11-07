@@ -13,10 +13,13 @@ import {
   MaxLength,
 } from 'class-validator';
 
-import { MAX_PAGE_SIZE } from '../../../../common/constants';
-import { OffsetPaginationQueryDto } from '../../../../common/dtos';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { SAVED_ITEM_LIST, type SavedItemList } from '../../domain/entities/user-saved-item.entity';
+import { MAX_PAGE_SIZE } from '@/common/constants';
+import { OffsetPaginationQueryDto } from '@/common/dtos';
+import { MediaType } from '@/common/enums/media-type.enum';
+import {
+  SAVED_ITEM_LIST,
+  type SavedItemList,
+} from '@/modules/user-actions/domain/entities/user-saved-item.entity';
 
 const SAVED_ITEM_LIST_VALUES = Object.values(SAVED_ITEM_LIST);
 

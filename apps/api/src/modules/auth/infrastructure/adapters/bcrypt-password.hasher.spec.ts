@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
 import { BcryptPasswordHasher } from './bcrypt-password.hasher';
-import authConfig from '../../../../config/auth.config';
+import authConfig from '@/config/auth.config';
 import * as bcrypt from 'bcrypt';
 
 // Mock bcrypt

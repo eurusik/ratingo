@@ -5,7 +5,7 @@ import {
   LocalSearchResultItem,
   SEARCH_SOURCE,
   TmdbSearchResultItem,
-} from '../../domain/types/search.types';
+} from '@/modules/catalog/domain/types/search.types';
 
 import { SearchMapper } from './search.mapper';
 

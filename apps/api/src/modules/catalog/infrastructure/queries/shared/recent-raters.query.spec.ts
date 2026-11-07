@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RecentRatersQuery } from './recent-raters.query';
-import { DATABASE_CONNECTION } from '../../../../../database/database.module';
-import { DatabaseException } from '../../../../../common/exceptions/database.exception';
-import { createDrizzleThenable } from '../../__test__/drizzle-mock.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { createDrizzleThenable } from '@/modules/catalog/infrastructure/__test__/drizzle-mock.utils';
 
 describe('RecentRatersQuery', () => {
   let query: RecentRatersQuery;

@@ -16,29 +16,21 @@ import {
 } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { DB_CONSTRAINT } from '@/common/constants/database.constants';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { DatabaseException } from '@/common/exceptions';
+import { type HeroMediaItem } from '@/common/types/hero-media.types';
+import { withDbError } from '@/common/utils/db-error.utils';
 import { errorMessage } from '@/common/utils/error.utils';
-
-import { DB_CONSTRAINT } from '../../../../common/constants/database.constants';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions';
-import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { isSlugCollision, extractPgError } from '../../../../common/utils/pg-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import {
-  EligibilityStatus,
-  EvaluationReason,
-  DEFAULT_POLICY_VERSION,
-  EvaluationContext,
-} from '../../../catalog-policy/public';
-import type { NormalizedMedia } from '../../../shared/contracts';
-import { type LocalSearchResult } from '../../domain/models/search-result.model';
+import { isSlugCollision, extractPgError } from '@/common/utils/pg-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type LocalSearchResult } from '@/modules/catalog/domain/models/search-result.model';
 import {
   type IGenreRepository,
   GENRE_REPOSITORY,
-} from '../../domain/repositories/genre.repository.interface';
+} from '@/modules/catalog/domain/repositories/genre.repository.interface';
 import {
   type IMediaRepository,
   type MediaScoreData,
@@ -47,16 +39,24 @@ import {
   type CorruptedWatchersItem,
   type MediaSyncItem,
   type SnapshotCandidate,
-} from '../../domain/repositories/media.repository.interface';
+} from '@/modules/catalog/domain/repositories/media.repository.interface';
 import {
   type IMovieRepository,
   MOVIE_REPOSITORY,
-} from '../../domain/repositories/movie.repository.interface';
+} from '@/modules/catalog/domain/repositories/movie.repository.interface';
 import {
   type IShowRepository,
   SHOW_REPOSITORY,
-} from '../../domain/repositories/show.repository.interface';
-import { createRetrySlug, generateUniqueSlug } from '../../domain/utils/slug.utils';
+} from '@/modules/catalog/domain/repositories/show.repository.interface';
+import { createRetrySlug, generateUniqueSlug } from '@/modules/catalog/domain/utils/slug.utils';
+import {
+  EligibilityStatus,
+  EvaluationReason,
+  DEFAULT_POLICY_VERSION,
+  EvaluationContext,
+} from '@/modules/catalog-policy/public';
+import type { NormalizedMedia } from '@/modules/shared/contracts';
+
 import { MediaItemPersistenceMapper } from '../mappers/media-item-persistence.mapper';
 import { HeroMediaQuery } from '../queries/hero-media.query';
 import {

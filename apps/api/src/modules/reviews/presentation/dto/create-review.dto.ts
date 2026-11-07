@@ -12,8 +12,8 @@ import {
   Min,
 } from 'class-validator';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { REVIEW_LIMITS } from '../../domain/constants/review.constants';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { REVIEW_LIMITS } from '@/modules/reviews/domain/constants/review.constants';
 
 /**
  * DTO for creating a new review.

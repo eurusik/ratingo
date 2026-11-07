@@ -7,17 +7,17 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { ErrorCode } from '../../../../common/enums/error-code.enum';
-import { NotFoundException } from '../../../../common/exceptions';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { NotFoundException } from '@/common/exceptions';
 import {
   type IProviderRegistryRepository,
   PROVIDER_REGISTRY_REPOSITORY,
-} from '../../domain/repositories/provider-registry.repository.interface';
+} from '@/modules/provider/domain/repositories/provider-registry.repository.interface';
 import {
   type Provider,
   type CreateProviderDto,
   type UpdateProviderDto,
-} from '../../domain/types/provider.types';
+} from '@/modules/provider/domain/types/provider.types';
 
 @Injectable()
 export class ProviderRegistryService {

@@ -2,24 +2,24 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { MAX_PAGE_SIZE, MS_PER_MINUTE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
-
-import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { ScoreCalculatorService } from '../../../shared/score-calculator';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
+import {
+  type IStatsRepository,
+  type MediaStatsData,
+  STATS_REPOSITORY,
+} from '@/modules/stats/domain/repositories/stats.repository.interface';
+import {
+  type TrendingSyncOptions,
+  type WatchersAggregationResult,
+} from '@/modules/stats/domain/types/stats.types';
 import {
   type TraktListsPort,
   TRAKT_LISTS_PORT,
   type TraktRatingsPort,
   TRAKT_RATINGS_PORT,
-} from '../../../trakt/public';
-import {
-  type IStatsRepository,
-  type MediaStatsData,
-  STATS_REPOSITORY,
-} from '../../domain/repositories/stats.repository.interface';
-import {
-  type TrendingSyncOptions,
-  type WatchersAggregationResult,
-} from '../../domain/types/stats.types';
+} from '@/modules/trakt/public';
+
 import { toScoreInput } from '../helpers';
 
 // Stats sync constants
@@ -360,10 +360,7 @@ export class TrendingSyncService {
    * @param {string} options.afterId - Keyset cursor: only items with id greater than this (default: from start)
    * @returns {Promise<{ movies: number; shows: number; total: number; hasMore: boolean; lastId?: string }>} Sync result (lastId = cursor for the next batch)
    */
-  async syncEligibleTrendingStats(options: {
-    batchSize?: number;
-    afterId?: string;
-  }): Promise<{
+  async syncEligibleTrendingStats(options: { batchSize?: number; afterId?: string }): Promise<{
     movies: number;
     shows: number;
     total: number;

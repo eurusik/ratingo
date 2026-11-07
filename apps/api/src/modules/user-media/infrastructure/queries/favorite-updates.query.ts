@@ -17,17 +17,16 @@ import {
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MS_PER_DAY } from '@/common/constants';
-
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type FavoriteUpdateItem,
   type FavoriteUpdatesOptions,
   type UserMediaSummary,
-} from '../../domain/repositories/user-media-state.repository.interface';
+} from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
 
 /** Season number 0 is used for "Specials" — we exclude them from episode queries. */
 const SPECIALS_SEASON_NUMBER = 0;

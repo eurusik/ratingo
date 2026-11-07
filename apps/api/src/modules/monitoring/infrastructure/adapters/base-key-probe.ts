@@ -1,8 +1,11 @@
 import { Logger } from '@nestjs/common';
 
-import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
-import { type MonitoredProvider } from '../../domain/constants/monitored-provider.const';
-import { type KeyProbe, type KeyProbeResult } from '../../domain/ports/key-probe.port';
+import { API_KEY_STATUS } from '@/modules/monitoring/domain/constants/api-key-status.const';
+import { type MonitoredProvider } from '@/modules/monitoring/domain/constants/monitored-provider.const';
+import {
+  type KeyProbe,
+  type KeyProbeResult,
+} from '@/modules/monitoring/domain/ports/key-probe.port';
 
 export abstract class BaseKeyProbe implements KeyProbe {
   abstract readonly provider: MonitoredProvider;

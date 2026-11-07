@@ -3,8 +3,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   IUserStateProvider,
   USER_STATE_PROVIDER,
-} from '../../domain/ports/user-state-provider.port';
-import type { Identifiable, WithUserState } from '../../domain/types/enrichment.types';
+} from '@/modules/catalog/domain/ports/user-state-provider.port';
+import type { Identifiable, WithUserState } from '@/modules/catalog/domain/types/enrichment.types';
 
 /**
  * Application-level enricher for attaching user-specific media state.

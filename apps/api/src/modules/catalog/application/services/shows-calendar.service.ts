@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   WATCHING_SHOWS_COUNT_PORT,
   type IWatchingShowsCountPort,
-} from '../../domain/ports/watching-shows-count.port';
+} from '@/modules/catalog/domain/ports/watching-shows-count.port';
 
 /**
  * Application service for show calendar features.

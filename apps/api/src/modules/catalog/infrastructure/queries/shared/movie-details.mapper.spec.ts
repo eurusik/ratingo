@@ -1,9 +1,9 @@
-import { ImageMapper } from '../../../../../common/mappers/image.mapper';
-import { CreditsMapper } from '../../mappers/credits.mapper';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { CreditsMapper } from '@/modules/catalog/infrastructure/mappers/credits.mapper';
 import {
   MediaWatchOffersMapper,
   type WatchOfferRow,
-} from '../../mappers/media-watch-offers.mapper';
+} from '@/modules/catalog/infrastructure/mappers/media-watch-offers.mapper';
 
 import {
   type MovieDetailsQueryRow,

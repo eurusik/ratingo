@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { DrizzleStatsRepository } from './drizzle-stats.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { DatabaseException } from '../../../../common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DatabaseException } from '@/common/exceptions';
 
 describe('DrizzleStatsRepository', () => {
   let repository: DrizzleStatsRepository;

@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { SavedItemsService } from '../../user-actions/public';
-import { ACTION_CONTEXT } from '../../user-actions/public';
-import { SAVED_ITEM_LIST } from '../../user-actions/public';
+import { SavedItemsService } from '@/modules/user-actions/public';
+import { ACTION_CONTEXT } from '@/modules/user-actions/public';
+import { SAVED_ITEM_LIST } from '@/modules/user-actions/public';
+
 import { MEDIA_LOOKUP_PORT } from '../domain/constants/import.constants';
 import {
   type ExternalMediaEntry,

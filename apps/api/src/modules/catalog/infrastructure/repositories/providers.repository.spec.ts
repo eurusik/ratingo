@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DrizzleProvidersRepository } from './providers.repository';
 import { ProvidersQuery } from '../queries/providers.query';
-import { DatabaseException } from '../../../../common/exceptions';
+import { DatabaseException } from '@/common/exceptions';
 
 describe('DrizzleProvidersRepository', () => {
   let repository: DrizzleProvidersRepository;

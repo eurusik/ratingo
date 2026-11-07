@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
+import { JOB_STATUS } from '@/common/enums/job-status.enum';
 import {
   INGESTION_JOB_STATUS_PORT,
   type IngestionJobStatus,
   type IngestionJobStatusPort,
-} from '../../domain/ports/ingestion-job-status.port';
+} from '@/modules/ingestion/domain/ports/ingestion-job-status.port';
 
 import { SyncMediaService } from './sync-media.service';
 

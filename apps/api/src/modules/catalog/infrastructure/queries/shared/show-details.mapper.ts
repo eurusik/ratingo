@@ -1,16 +1,16 @@
-import { type IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
-import { type ShowStatus } from '../../../../../common/enums/show-status.enum';
-import { ImageMapper } from '../../../../../common/mappers/image.mapper';
+import { type IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { type ShowStatus } from '@/common/enums/show-status.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
 import {
   type ShowDetails,
   type SeasonInfo,
-} from '../../../domain/repositories/show.repository.interface';
-import { type GenreInfo, type RecentRater } from '../../../domain/types/common.types';
-import { CreditsMapper } from '../../mappers/credits.mapper';
+} from '@/modules/catalog/domain/repositories/show.repository.interface';
+import { type GenreInfo, type RecentRater } from '@/modules/catalog/domain/types/common.types';
+import { CreditsMapper } from '@/modules/catalog/infrastructure/mappers/credits.mapper';
 import {
   MediaWatchOffersMapper,
   type WatchOfferRow,
-} from '../../mappers/media-watch-offers.mapper';
+} from '@/modules/catalog/infrastructure/mappers/media-watch-offers.mapper';
 
 /**
  * Raw row type from show details query.

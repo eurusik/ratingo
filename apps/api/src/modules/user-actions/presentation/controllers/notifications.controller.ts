@@ -11,9 +11,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse, ApiParam } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../../auth/public';
-import { JwtAuthGuard } from '../../../auth/public';
-import { NotificationsService } from '../../application/notifications.service';
+import { CurrentUser } from '@/modules/auth/public';
+import { JwtAuthGuard } from '@/modules/auth/public';
+import { NotificationsService } from '@/modules/user-actions/application/notifications.service';
+
 import {
   NotificationListQueryDto,
   NotificationListResponseDto,

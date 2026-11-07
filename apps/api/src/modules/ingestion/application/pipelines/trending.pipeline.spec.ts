@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TrendingPipeline } from './trending.pipeline';
 import { SyncMediaService } from '../services/sync-media.service';
 import { BulkJobService } from '../services/bulk-job.service';
-import { TrendingSyncService } from '../../../stats/public';
-import { CATALOG_POLICY_EVALUATOR } from '../../../catalog-policy/public';
-import { IngestionJob } from '../../ingestion.constants';
+import { TrendingSyncService } from '@/modules/stats/public';
+import { CATALOG_POLICY_EVALUATOR } from '@/modules/catalog-policy/public';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('TrendingPipeline', () => {
@@ -140,7 +140,10 @@ describe('TrendingPipeline', () => {
       const jobs = bulkJobService.enqueueBulk.mock.calls[0][0] as Array<{
         opts: { jobId: string };
       }>;
-      expect(jobs.map((j) => j.opts.jobId)).toEqual(['movie_100_2026102904', 'show_200_2026102904']);
+      expect(jobs.map((j) => j.opts.jobId)).toEqual([
+        'movie_100_2026102904',
+        'show_200_2026102904',
+      ]);
     });
 
     it('should produce different sync job ids in different dispatch cycles', async () => {

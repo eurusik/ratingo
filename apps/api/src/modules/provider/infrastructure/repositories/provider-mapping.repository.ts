@@ -9,10 +9,10 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, and, inArray, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type IProviderMappingRepository } from '../../domain/repositories/provider-mapping.repository.interface';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type IProviderMappingRepository } from '@/modules/provider/domain/repositories/provider-mapping.repository.interface';
 import type {
   ProviderMapping,
   CreateMappingDto,
@@ -20,8 +20,8 @@ import type {
   ResolvedMapping,
   DistributionChannel,
   MappingSource,
-} from '../../domain/types/provider.types';
-import { normalizeRegion, GLOBAL_REGION } from '../../domain/utils/region-normalizer';
+} from '@/modules/provider/domain/types/provider.types';
+import { normalizeRegion, GLOBAL_REGION } from '@/modules/provider/domain/utils/region-normalizer';
 
 type DbMapping = typeof schema.providerMappings.$inferSelect;
 

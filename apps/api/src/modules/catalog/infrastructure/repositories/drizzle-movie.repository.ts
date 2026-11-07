@@ -3,9 +3,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, inArray } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type IMovieRepository,
   type MovieWithMedia,
@@ -15,8 +15,9 @@ import {
   type TrendingQueryResult,
   type WithTotal,
   type ReleaseInfo,
-} from '../../domain/repositories/movie.repository.interface';
-import { type DatabaseTransaction } from '../../domain/types/transaction.type';
+} from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import { type DatabaseTransaction } from '@/modules/catalog/domain/types/transaction.type';
+
 import { MoviePersistenceMapper } from '../mappers/movie-persistence.mapper';
 import { MovieDetailsQuery } from '../queries/movie-details.query';
 import {

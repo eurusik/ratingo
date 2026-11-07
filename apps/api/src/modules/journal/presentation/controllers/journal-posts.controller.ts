@@ -8,7 +8,8 @@
 import { Controller, Get, Header, NotFoundException, Param, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
-import { JournalService } from '../../application/services/journal.service';
+import { JournalService } from '@/modules/journal/application/services/journal.service';
+
 import {
   PostDetailDto,
   PostListItemDto,

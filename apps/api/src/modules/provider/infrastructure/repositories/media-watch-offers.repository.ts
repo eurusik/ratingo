@@ -9,22 +9,22 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { mediaWatchOffers, providerVariants } from '../../../../database/schema';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { mediaWatchOffers, providerVariants } from '@/database/schema';
 import type {
   CreateWatchOfferInput,
   FindOffersOptions,
   GetOffersForMediaBatchOptions,
   IMediaWatchOffersRepository,
   MediaWatchOfferView,
-} from '../../domain/repositories/media-watch-offers.repository.interface';
+} from '@/modules/provider/domain/repositories/media-watch-offers.repository.interface';
 import type {
   DistributionChannel,
   MediaWatchOffer,
   OfferType,
-} from '../../domain/types/provider.types';
+} from '@/modules/provider/domain/types/provider.types';
 
 @Injectable()
 export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {

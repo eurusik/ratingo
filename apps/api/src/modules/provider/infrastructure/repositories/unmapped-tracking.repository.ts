@@ -10,16 +10,16 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { desc, eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { providerUnmapped } from '../../../../database/schema';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { providerUnmapped } from '@/database/schema';
 import type {
   FindAllUnmappedOptions,
   FindAllUnmappedResult,
   IUnmappedTrackingRepository,
   RecordUnmappedInput,
-} from '../../domain/repositories/unmapped-tracking.repository.interface';
-import type { UnmappedProvider } from '../../domain/types/provider.types';
+} from '@/modules/provider/domain/repositories/unmapped-tracking.repository.interface';
+import type { UnmappedProvider } from '@/modules/provider/domain/types/provider.types';
 
 /** Maximum unique sample names to store per provider */
 const MAX_SAMPLE_NAMES = 5;

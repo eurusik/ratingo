@@ -3,21 +3,21 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, desc, asc, eq, sql, gte } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { REVIEW_SORT, type ReviewSort } from '../../domain/constants/review.constants';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { REVIEW_SORT, type ReviewSort } from '@/modules/reviews/domain/constants/review.constants';
 import type {
   Review,
   ReviewWithAuthor,
   CreateReviewInput,
   UpdateReviewInput,
-} from '../../domain/entities/review.entity';
+} from '@/modules/reviews/domain/entities/review.entity';
 import type {
   IReviewRepository,
   ReviewListOptions,
-} from '../../domain/repositories/review.repository.interface';
+} from '@/modules/reviews/domain/repositories/review.repository.interface';
 
 /**
  * Drizzle implementation of review repository.

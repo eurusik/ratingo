@@ -4,7 +4,7 @@ import { USER_SAVED_ITEM_REPOSITORY } from '../domain/repositories/user-saved-it
 import { USER_MEDIA_ACTION_REPOSITORY } from '../domain/repositories/user-media-action.repository.interface';
 import { SAVED_ITEM_LIST } from '../domain/entities/user-saved-item.entity';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
-import { MediaType } from '../../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('SavedItemsService', () => {
   let service: SavedItemsService;

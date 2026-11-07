@@ -13,8 +13,11 @@ import {
   DIFF_REPOSITORY,
   CATALOG_EVALUATION_RUN_REPOSITORY,
   CATALOG_POLICY_REPOSITORY,
-} from '../../domain/repositories';
-import { EligibilityStatus, DIFF_STATUS_NONE } from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/repositories';
+import {
+  EligibilityStatus,
+  DIFF_STATUS_NONE,
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import { DiffService, isDiffRegression, isDiffImprovement } from './diff.service';
 
 describe('DiffService', () => {

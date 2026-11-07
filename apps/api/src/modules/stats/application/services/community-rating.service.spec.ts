@@ -3,11 +3,11 @@ import { Test } from '@nestjs/testing';
 import {
   COMMUNITY_RATING_AGGREGATION_PORT,
   type ICommunityRatingAggregationPort,
-} from '../../domain/ports/community-rating-aggregation.port';
+} from '@/modules/stats/domain/ports/community-rating-aggregation.port';
 import {
   STATS_REPOSITORY,
   type IStatsRepository,
-} from '../../domain/repositories/stats.repository.interface';
+} from '@/modules/stats/domain/repositories/stats.repository.interface';
 
 import { CommunityRatingService } from './community-rating.service';
 

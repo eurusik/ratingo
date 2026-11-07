@@ -1,5 +1,5 @@
-import { type JobStatus } from '../../../../common/enums/job-status.enum';
-import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type JobStatus } from '@/common/enums/job-status.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
 
 export const INGESTION_JOB_STATUS_PORT = Symbol('INGESTION_JOB_STATUS_PORT');
 

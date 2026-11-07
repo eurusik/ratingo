@@ -1,9 +1,9 @@
-import { ImageMapper } from '../../../../../common/mappers/image.mapper';
+import { ImageMapper } from '@/common/mappers/image.mapper';
 import type {
   MovieWithMedia,
   TrendingMovieItem,
-} from '../../../domain/repositories/movie.repository.interface';
-import type { GenreInfo } from '../../../domain/types/common.types';
+} from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import type { GenreInfo } from '@/modules/catalog/domain/types/common.types';
 
 import type { MovieSelectRow } from './movie-select.fields';
 import { calculateReleaseFlags } from './release-flags.util';

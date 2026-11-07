@@ -1,4 +1,4 @@
-import { MediaSyncedEvent } from '../../../ingestion/public';
+import { MediaSyncedEvent } from '@/modules/ingestion/public';
 import { type LinkPendingImportsService } from '../link-pending-imports.service';
 
 import { LinkImportListener } from './link-import.listener';

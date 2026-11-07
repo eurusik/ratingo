@@ -7,7 +7,7 @@ import {
   USER_BATCHES_LIMIT,
 } from '../domain/constants/import-pending.constants';
 import { type ImportBatch } from '../domain/entities/import-batch';
-import { IngestionJob } from '../../ingestion/ingestion.constants';
+import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 
 import { ImportPendingService } from './import-pending.service';
 

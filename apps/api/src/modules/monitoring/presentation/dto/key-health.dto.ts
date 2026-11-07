@@ -3,9 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
-import { API_KEY_STATUS } from '../../domain/constants/api-key-status.const';
-import { MONITORED_PROVIDERS } from '../../domain/constants/monitored-provider.const';
-import { KEY_HEALTH_HISTORY_LIMIT } from '../../monitoring.constants';
+import { API_KEY_STATUS } from '@/modules/monitoring/domain/constants/api-key-status.const';
+import { MONITORED_PROVIDERS } from '@/modules/monitoring/domain/constants/monitored-provider.const';
+import { KEY_HEALTH_HISTORY_LIMIT } from '@/modules/monitoring/monitoring.constants';
 
 export class KeyHealthSnapshotDto {
   @ApiProperty({ enum: MONITORED_PROVIDERS, example: 'tmdb' })

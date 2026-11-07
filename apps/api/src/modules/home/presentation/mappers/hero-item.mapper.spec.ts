@@ -1,6 +1,6 @@
 import { HeroItemMapper } from './hero-item.mapper';
-import { HeroMediaItem } from '../../../../common/types/hero-media.types';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { HeroMediaItem } from '@/common/types/hero-media.types';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('HeroItemMapper', () => {
   const createMockHeroItem = (overrides: Partial<HeroMediaItem> = {}): HeroMediaItem => ({

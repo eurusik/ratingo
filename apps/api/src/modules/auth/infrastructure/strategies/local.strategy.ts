@@ -3,12 +3,12 @@ import { PassportStrategy } from '@nestjs/passport';
 
 import { Strategy } from 'passport-local';
 
-import { UsersService } from '../../../users/public';
-import { type User } from '../../../users/public';
 import {
   type PasswordHasher,
   PASSWORD_HASHER,
-} from '../../domain/services/password-hasher.interface';
+} from '@/modules/auth/domain/services/password-hasher.interface';
+import { UsersService } from '@/modules/users/public';
+import { type User } from '@/modules/users/public';
 
 /**
  * Local strategy for email/password login.

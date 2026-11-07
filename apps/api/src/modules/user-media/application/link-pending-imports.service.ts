@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { CLOCK_PORT, type IClockPort } from '../../shared/clock';
-import { ACTION_CONTEXT, SAVED_ITEM_LIST, SavedItemsService } from '../../user-actions/public';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
+import { ACTION_CONTEXT, SAVED_ITEM_LIST, SavedItemsService } from '@/modules/user-actions/public';
+
 import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_FAILURE,

@@ -1,8 +1,8 @@
 import { MovieDetailsQuery } from './movie-details.query';
 import { CreditsMapper } from '../mappers/credits.mapper';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { ImageMapper } from '@/common/mappers/image.mapper';
 import { MediaWatchOffersMapper } from '../mappers/media-watch-offers.mapper';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 describe('MovieDetailsQuery', () => {
   let query: MovieDetailsQuery;

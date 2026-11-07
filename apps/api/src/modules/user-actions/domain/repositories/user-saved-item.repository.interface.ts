@@ -1,5 +1,6 @@
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { type ImageData } from '../../../../common/types/media.types';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { type ImageData } from '@/common/types/media.types';
+
 import { type UserSavedItem, type SavedItemList } from '../entities/user-saved-item.entity';
 
 /**

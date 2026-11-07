@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
-import { type IHeroRepository } from '../../../home/public';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { type HeroMediaItem } from '@/common/types/hero-media.types';
+import { type IHeroRepository } from '@/modules/home/public';
+
 import { HeroMediaQuery } from '../queries/hero-media.query';
 import { WatchingNowMediaQuery } from '../queries/watching-now-media.query';
 

@@ -3,7 +3,7 @@ import * as fc from 'fast-check';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { GlobalRequirementsDto, MinVotesAnyOfDto } from './global-requirements.dto';
-import { RatingSource, VoteSource } from '../../domain/types/policy.types';
+import { RatingSource, VoteSource } from '@/modules/catalog-policy/domain/types/policy.types';
 
 const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt'];
 const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt'];

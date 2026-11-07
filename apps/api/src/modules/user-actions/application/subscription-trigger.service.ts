@@ -1,10 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
+import { ShowStatus } from '@/common/enums/show-status.enum';
 import { errorMessage } from '@/common/utils/error.utils';
+import type { ShowSyncDiff } from '@/modules/ingestion/public';
 
-import { ShowStatus } from '../../../common/enums/show-status.enum';
-import type { ShowSyncDiff } from '../../ingestion/public';
 import { SHOW_EVENTS } from '../domain/constants/events.constants';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 import {

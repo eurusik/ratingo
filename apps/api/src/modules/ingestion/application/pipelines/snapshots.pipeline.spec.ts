@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SnapshotsPipeline } from './snapshots.pipeline';
 import { SnapshotsService, SnapshotBatchResult } from '../services/snapshots.service';
-import { MEDIA_REPOSITORY, type SnapshotCandidate } from '../../../catalog/public';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { MEDIA_REPOSITORY, type SnapshotCandidate } from '@/modules/catalog/public';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('SnapshotsPipeline', () => {
   let pipeline: SnapshotsPipeline;

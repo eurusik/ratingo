@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { NotFoundException } from '../../../common/exceptions/not-found.exception';
-import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { NotFoundException } from '@/common/exceptions/not-found.exception';
+import { ErrorCode } from '@/common/enums/error-code.enum';
 import { VOTE_TYPE } from '../domain/constants/review.constants';
 import { REVIEW_REPOSITORY } from '../domain/repositories/review.repository.interface';
 import { REVIEW_VOTE_REPOSITORY } from '../domain/repositories/review-vote.repository.interface';

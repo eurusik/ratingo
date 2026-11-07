@@ -1,5 +1,6 @@
-import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { type MovieStatus } from '../../../../common/enums/movie-status.enum';
+import { type IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { type MovieStatus } from '@/common/enums/movie-status.enum';
+
 import type {
   ImageData,
   VideoData,

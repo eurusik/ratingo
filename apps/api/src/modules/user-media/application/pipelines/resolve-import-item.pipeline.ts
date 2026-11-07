@@ -3,19 +3,23 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { buildSyncMediaJobId, INGESTION_QUEUE, IngestionJob } from '../../../ingestion/public';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { buildSyncMediaJobId, INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/public';
 import {
   IMPORT_PENDING_FAILURE,
   IMPORT_PENDING_REPOSITORY,
   IMPORT_PENDING_STATUS,
-} from '../../domain/constants/import-pending.constants';
-import { MEDIA_LOOKUP_PORT } from '../../domain/constants/import.constants';
-import { type ImportPendingItem } from '../../domain/entities/import-pending-item';
-import { type CatalogMediaRef } from '../../domain/entities/ready-media';
-import { type IMediaLookupPort } from '../../domain/ports/media-lookup.port';
-import { type ITmdbResolverPort, TMDB_RESOLVER } from '../../domain/ports/tmdb-resolver.port';
-import { type IImportPendingRepository } from '../../domain/repositories/import-pending.repository.interface';
+} from '@/modules/user-media/domain/constants/import-pending.constants';
+import { MEDIA_LOOKUP_PORT } from '@/modules/user-media/domain/constants/import.constants';
+import { type ImportPendingItem } from '@/modules/user-media/domain/entities/import-pending-item';
+import { type CatalogMediaRef } from '@/modules/user-media/domain/entities/ready-media';
+import { type IMediaLookupPort } from '@/modules/user-media/domain/ports/media-lookup.port';
+import {
+  type ITmdbResolverPort,
+  TMDB_RESOLVER,
+} from '@/modules/user-media/domain/ports/tmdb-resolver.port';
+import { type IImportPendingRepository } from '@/modules/user-media/domain/repositories/import-pending.repository.interface';
+
 import { LinkPendingImportsService } from '../link-pending-imports.service';
 
 /**

@@ -9,10 +9,10 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DatabaseException } from '../../../../common/exceptions';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { RunStatus } from '../../domain/constants/evaluation.constants';
-import { InvalidRunStateTransitionError } from '../../domain/errors';
+import { DatabaseException } from '@/common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { RunStatus } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import { InvalidRunStateTransitionError } from '@/modules/catalog-policy/domain/errors';
 
 import { PolicyActivationRepository } from './policy-activation.repository';
 

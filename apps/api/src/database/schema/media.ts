@@ -14,13 +14,13 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { MediaType } from '../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   type VideoSiteEnum,
   type VideoTypeEnum,
   type VideoLanguageEnum,
-} from '../../common/enums/video.enum';
-import { type Credits, type WatchProvidersMap } from '../../modules/ingestion/public';
+} from '@/common/enums/video.enum';
+import { type Credits, type WatchProvidersMap } from '@/modules/ingestion/public';
 
 import { tsvector } from './shared';
 

@@ -14,7 +14,7 @@ import { USER_NOTIFICATION_REPOSITORY } from '../domain/repositories/user-notifi
 import { SHOW_STATE_PORT } from '../domain/ports/show-state.port';
 import { USER_PREFERENCE_PORT } from '../domain/ports/user-preference.port';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
-import type { ShowSyncDiff } from '../../ingestion/public';
+import type { ShowSyncDiff } from '@/modules/ingestion/public';
 
 describe('Notification Flow Integration', () => {
   let subscriptionsService: SubscriptionsService;

@@ -1,5 +1,5 @@
 import { movieSelectFields, type MovieSelectRow } from './movie-select.fields';
-import * as schema from '../../../../../database/schema';
+import * as schema from '@/database/schema';
 
 describe('movie-select.fields', () => {
   describe('movieSelectFields - schema mappings', () => {

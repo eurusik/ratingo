@@ -4,7 +4,7 @@ import {
   EligibilityStatus,
   DIFF_STATUS_NONE,
   DiffStatus,
-} from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 
 function filterAndLimitSamples(
   samples: DiffSample[],

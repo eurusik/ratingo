@@ -4,17 +4,16 @@ import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { JOB_STATUS, type JobStatus } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { generateSlug } from '@/common/utils/slug.util';
-
-import { IMPORT_JOB_PORT, IImportJobPort } from '../../domain/ports/import-job.port';
+import { IMPORT_JOB_PORT, IImportJobPort } from '@/modules/catalog/domain/ports/import-job.port';
 import {
   type IMediaMetadataPort,
   MEDIA_METADATA_PORT,
-} from '../../domain/ports/media-metadata.port';
+} from '@/modules/catalog/domain/ports/media-metadata.port';
 import {
   type IMediaRepository,
   MEDIA_REPOSITORY,
-} from '../../domain/repositories/media.repository.interface';
-import { IMPORT_STATUS, type ImportResult } from '../../domain/types/import.types';
+} from '@/modules/catalog/domain/repositories/media.repository.interface';
+import { IMPORT_STATUS, type ImportResult } from '@/modules/catalog/domain/types/import.types';
 
 /**
  * Service for on-demand import of media from TMDB.

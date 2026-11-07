@@ -1,5 +1,6 @@
-import type { CardMeta } from '../../../shared/cards';
-import type { ShowStatusHint, ShowVerdict } from '../../../shared/verdict';
+import type { CardMeta } from '@/modules/shared/cards';
+import type { ShowStatusHint, ShowVerdict } from '@/modules/shared/verdict';
+
 import type { UserState } from '../ports/user-state-provider.port';
 import type { ShowDetails } from '../repositories/show.repository.interface';
 

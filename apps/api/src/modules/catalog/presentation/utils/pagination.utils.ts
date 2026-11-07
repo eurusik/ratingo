@@ -1,5 +1,5 @@
-import { CATALOG_DEFAULT_LIMIT, CATALOG_DEFAULT_OFFSET } from '../../../../common/constants';
-import type { OffsetPaginationMeta } from '../../../../common/dtos/pagination.dto';
+import { CATALOG_DEFAULT_LIMIT, CATALOG_DEFAULT_OFFSET } from '@/common/constants';
+import type { OffsetPaginationMeta } from '@/common/dtos/pagination.dto';
 
 /**
  * Source data for pagination meta calculation.

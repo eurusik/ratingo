@@ -2,8 +2,8 @@ import { buildTrendingShowConditions, type ShowConditionsOptions } from './show-
 import {
   CONTEXT_FRESHNESS,
   TRENDING_THRESHOLDS,
-} from '../../../domain/constants/catalog.constants';
-import { VOTE_SOURCE } from '../../../domain/constants/catalog-query.constants';
+} from '@/modules/catalog/domain/constants/catalog.constants';
+import { VOTE_SOURCE } from '@/modules/catalog/domain/constants/catalog-query.constants';
 
 describe('show-conditions.builder', () => {
   describe('buildTrendingShowConditions', () => {

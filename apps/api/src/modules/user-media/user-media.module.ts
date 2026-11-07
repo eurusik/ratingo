@@ -2,10 +2,11 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { apiOnly, workerOnly } from '../../common/runtime/app-role';
-import schedulerConfig from '../../config/scheduler.config';
-import tmdbConfig from '../../config/tmdb.config';
-import { DatabaseModule } from '../../database/database.module';
+import { apiOnly, workerOnly } from '@/common/runtime/app-role';
+import schedulerConfig from '@/config/scheduler.config';
+import tmdbConfig from '@/config/tmdb.config';
+import { DatabaseModule } from '@/database/database.module';
+
 import {
   BACKFILL_QUEUE,
   DEFAULT_INGESTION_JOB_OPTIONS,

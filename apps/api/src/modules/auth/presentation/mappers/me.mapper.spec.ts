@@ -1,4 +1,4 @@
-import { type User } from '../../../users/domain/entities/user.entity';
+import { type User } from '@/modules/users/domain/entities/user.entity';
 import { MeMapper } from './me.mapper';
 
 describe('MeMapper', () => {

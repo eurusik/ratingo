@@ -3,9 +3,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, desc, and } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { type HeroMediaItem } from '@/common/types/hero-media.types';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 
 import { type HeroQueryRow, fetchShowProgress, mapHeroResults } from './shared/hero-item.mapper';
 import { HERO_SELECT_FIELDS } from './shared/hero-select-fields';

@@ -10,7 +10,7 @@ import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger'
 
 import type { FastifyReply } from 'fastify';
 
-import { JournalImageService } from '../../application/journal-image.service';
+import { JournalImageService } from '@/modules/journal/application/journal-image.service';
 
 /**
  * Journal images proxy controller.

@@ -1,5 +1,5 @@
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 import { DrizzleSitemapRepository } from './drizzle-sitemap.repository';
 

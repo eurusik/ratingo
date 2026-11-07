@@ -1,6 +1,6 @@
 import { PopularMoviesQuery } from './popular-movies.query';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 // Chainable thenable for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {

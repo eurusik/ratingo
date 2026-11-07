@@ -1,8 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 
-import { InsightsService } from '../../application/services/insights.service';
-import { type RiseFallQuery } from '../../application/types/insights.types';
+import { InsightsService } from '@/modules/insights/application/services/insights.service';
+import { type RiseFallQuery } from '@/modules/insights/application/types/insights.types';
+
 import { InsightsQueryDto, RiseFallResponseDto } from '../dtos/insights.dto';
 
 // Insights query defaults

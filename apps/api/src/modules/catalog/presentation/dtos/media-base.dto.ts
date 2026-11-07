@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
-import { ImageDto } from '../../../../common/dtos/image.dto';
-import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { ExternalRatingsDto } from '@/common/dtos/external-ratings.dto';
+import { ImageDto } from '@/common/dtos/image.dto';
+import { RatingoStatsDto } from '@/common/dtos/ratingo-stats.dto';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 
 import { AvailabilityDto } from './availability.dto';
 import { CreditsDto } from './credits.dto';

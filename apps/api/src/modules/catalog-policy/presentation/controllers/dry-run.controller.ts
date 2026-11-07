@@ -15,9 +15,13 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
-import { AdminJwtGuard } from '../../../auth/public';
-import { DryRunService, type DryRunResult } from '../../application/services/dry-run.service';
-import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
+import { AdminJwtGuard } from '@/modules/auth/public';
+import {
+  DryRunService,
+  type DryRunResult,
+} from '@/modules/catalog-policy/application/services/dry-run.service';
+import { validatePolicyOrThrow } from '@/modules/catalog-policy/domain/validation/policy.schema';
+
 import { DryRunRequestDto, DryRunResponseDto } from '../dto/dry-run.dto';
 import { DryRunExceptionFilter } from '../filters/dry-run-exception.filter';
 

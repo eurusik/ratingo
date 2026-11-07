@@ -6,7 +6,7 @@ import {
   type MovieVerdictMessageKey,
   type ShowQualityVerdictKey,
   type ShowStatusHintKey,
-} from '../../../shared/verdict';
+} from '@/modules/shared/verdict';
 
 class BaseVerdictDto {
   @ApiProperty({

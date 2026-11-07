@@ -6,8 +6,8 @@ import { IsArray, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-vali
 import {
   JOURNAL_DEFAULT_PAGE_SIZE,
   JOURNAL_MAX_PAGE_SIZE,
-} from '../../domain/constants/pagination';
-import { POST_TYPE_VALUES, PostType } from '../../domain/constants/post-types';
+} from '@/modules/journal/domain/constants/pagination';
+import { POST_TYPE_VALUES, PostType } from '@/modules/journal/domain/constants/post-types';
 
 /**
  * Query DTO for public journal posts listing.

@@ -3,7 +3,11 @@ import { Injectable, type Logger } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
 
-import { INGESTION_QUEUE, JOB_DEDUPE_CHECK_CONCURRENCY } from '../../ingestion.constants';
+import {
+  INGESTION_QUEUE,
+  JOB_DEDUPE_CHECK_CONCURRENCY,
+} from '@/modules/ingestion/ingestion.constants';
+
 import { preDedupeBulk, formatSample } from '../helpers/queue.helpers';
 
 /** Job definition for bulk enqueue. */

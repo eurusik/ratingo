@@ -6,7 +6,11 @@ import { type ArgumentsHost, HttpStatus } from '@nestjs/common';
 
 import { type FastifyReply } from 'fastify';
 
-import { CatalogDomainError, MovieNotFoundError, ShowNotFoundError } from '../../domain/errors';
+import {
+  CatalogDomainError,
+  MovieNotFoundError,
+  ShowNotFoundError,
+} from '@/modules/catalog/domain/errors';
 
 import { CatalogDomainExceptionFilter } from './catalog-domain-exception.filter';
 

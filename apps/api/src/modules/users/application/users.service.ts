@@ -1,9 +1,10 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
-import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { AppException } from '../../../common/exceptions/app.exception';
-import { DatabaseException } from '../../../common/exceptions/database.exception';
-import { isUniqueViolation } from '../../../common/utils/pg-error.utils';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { AppException } from '@/common/exceptions/app.exception';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { isUniqueViolation } from '@/common/utils/pg-error.utils';
+
 import { type User } from '../domain/entities/user.entity';
 import {
   type IUsersRepository,

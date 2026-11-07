@@ -1,9 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { EvaluationContext, RunStatus } from '../../../domain/constants/evaluation.constants';
-import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../../domain/repositories';
-import { CatalogEvaluationService } from '../../services/catalog-evaluation.service';
+import {
+  EvaluationContext,
+  RunStatus,
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import { CATALOG_EVALUATION_RUN_REPOSITORY } from '@/modules/catalog-policy/domain/repositories';
+import { CatalogEvaluationService } from '@/modules/catalog-policy/application/services/catalog-evaluation.service';
 import type { EvaluateCatalogItemPayload } from '../types/job-payloads';
 
 import { EvaluateItemHandler } from './evaluate-item.handler';

@@ -4,9 +4,12 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { NotFoundException } from '../../../../common/exceptions';
-import { PROVIDER_MAPPING_REPOSITORY } from '../../domain/repositories/provider-mapping.repository.interface';
-import type { ProviderMapping, ResolvedMapping } from '../../domain/types/provider.types';
+import { NotFoundException } from '@/common/exceptions';
+import { PROVIDER_MAPPING_REPOSITORY } from '@/modules/provider/domain/repositories/provider-mapping.repository.interface';
+import type {
+  ProviderMapping,
+  ResolvedMapping,
+} from '@/modules/provider/domain/types/provider.types';
 import { ProviderMappingService } from './provider-mapping.service';
 
 describe('ProviderMappingService', () => {

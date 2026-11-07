@@ -1,4 +1,4 @@
-import { type SavedItemsService } from '../../user-actions/application/saved-items.service';
+import { type SavedItemsService } from '@/modules/user-actions/application/saved-items.service';
 import { type IMediaLookupPort } from '../domain/ports/media-lookup.port';
 import { type IUserMediaStateRepository } from '../domain/repositories/user-media-state.repository.interface';
 

@@ -4,12 +4,12 @@ import {
   type NormalizedMedia,
   type NormalizedSeason,
   type NormalizedEpisode,
-} from '../../domain/models/normalized-media.model';
+} from '@/modules/ingestion/domain/models/normalized-media.model';
 import {
   EPISODE_SCHEDULE_PORT,
   type EpisodeSchedulePort,
   type ScheduledEpisode,
-} from '../../domain/ports/episode-schedule.port';
+} from '@/modules/ingestion/domain/ports/episode-schedule.port';
 
 /** Maximum year difference allowed when matching shows by name search. */
 const MAX_YEAR_TOLERANCE = 1;

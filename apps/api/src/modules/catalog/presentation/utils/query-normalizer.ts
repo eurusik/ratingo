@@ -2,7 +2,8 @@ import {
   CATALOG_DEFAULT_LIMIT,
   CATALOG_DEFAULT_OFFSET,
   CATALOG_MAX_DAYS_BACK,
-} from '../../../../common/constants';
+} from '@/common/constants';
+
 import { type CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 
 /**

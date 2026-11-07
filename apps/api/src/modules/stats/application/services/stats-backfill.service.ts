@@ -5,18 +5,18 @@ import { type Queue } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { errorMessage } from '@/common/utils/error.utils';
-
-import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../trakt/public';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import {
   type IStatsRepository,
   STATS_REPOSITORY,
-} from '../../domain/repositories/stats.repository.interface';
+} from '@/modules/stats/domain/repositories/stats.repository.interface';
 import {
   type BackfillTotalWatchersOptions,
   type QueueWatchersCountBackfillOptions,
-} from '../../domain/types/stats.types';
-import { BACKFILL_CONFIG, STATS_JOBS, STATS_QUEUE } from '../../stats.constants';
+} from '@/modules/stats/domain/types/stats.types';
+import { BACKFILL_CONFIG, STATS_JOBS, STATS_QUEUE } from '@/modules/stats/stats.constants';
+import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '@/modules/trakt/public';
+
 import { type BackfillChunkItem } from '../types/backfill.types';
 
 /** Default limit for total watchers backfill */

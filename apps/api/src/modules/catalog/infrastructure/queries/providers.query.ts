@@ -9,11 +9,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { toError } from '../../../../common/utils/error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type ProviderInfo } from '../../domain/repositories/providers.repository.interface';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { toError } from '@/common/utils/error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type ProviderInfo } from '@/modules/catalog/domain/repositories/providers.repository.interface';
 
 /**
  * Raw query result row from providers query.

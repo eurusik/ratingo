@@ -1,5 +1,5 @@
 import { DrizzleGenreRepository } from './drizzle-genre.repository';
-import { DatabaseException } from '../../../../common/exceptions';
+import { DatabaseException } from '@/common/exceptions';
 
 // Helper to create a chainable thenable for Drizzle-like calls
 const createThenable = (resolveWith: unknown = [], rejectWith?: Error) => {

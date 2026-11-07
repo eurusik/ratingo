@@ -3,13 +3,13 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, and, gte, lte, asc } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { toError } from '../../../../common/utils/error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
-import { USER_MEDIA_STATE } from '../../../user-media/public';
-import { type CalendarEpisode } from '../../domain/repositories/show.repository.interface';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { toError } from '@/common/utils/error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type CalendarEpisode } from '@/modules/catalog/domain/repositories/show.repository.interface';
+import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
+import { USER_MEDIA_STATE } from '@/modules/user-media/public';
 
 /**
  * Fetches episodes airing within a date range for calendar view.

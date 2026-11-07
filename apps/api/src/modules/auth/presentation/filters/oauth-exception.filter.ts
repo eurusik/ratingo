@@ -11,8 +11,8 @@ import { type ConfigType } from '@nestjs/config';
 
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 
-import authConfig from '../../../../config/auth.config';
-import { isOAuthProvider } from '../../domain/types';
+import authConfig from '@/config/auth.config';
+import { isOAuthProvider } from '@/modules/auth/domain/types';
 
 /**
  * OAuth error codes that should trigger a redirect to frontend.

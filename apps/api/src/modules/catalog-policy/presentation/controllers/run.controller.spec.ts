@@ -11,8 +11,8 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { RunController } from './run.controller';
-import { PolicyActivationService } from '../../application/services/policy-activation.service';
-import { DiffService } from '../../application/services/diff.service';
+import { PolicyActivationService } from '@/modules/catalog-policy/application/services/policy-activation.service';
+import { DiffService } from '@/modules/catalog-policy/application/services/diff.service';
 
 describe('RunController', () => {
   let controller: RunController;

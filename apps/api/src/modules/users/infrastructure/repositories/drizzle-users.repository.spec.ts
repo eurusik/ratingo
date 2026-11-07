@@ -1,7 +1,7 @@
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleUsersRepository } from './drizzle-users.repository';
-import * as schema from '../../../../database/schema';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import * as schema from '@/database/schema';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 describe('DrizzleUsersRepository', () => {
   const baseRow = {

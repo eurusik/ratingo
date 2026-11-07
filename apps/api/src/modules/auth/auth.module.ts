@@ -3,10 +3,11 @@ import { ConfigModule, ConfigService, type ConfigType } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 
-import authConfig from '../../config/auth.config';
-import facebookConfig from '../../config/facebook.config';
-import googleConfig from '../../config/google.config';
-import { DatabaseModule } from '../../database/database.module';
+import authConfig from '@/config/auth.config';
+import facebookConfig from '@/config/facebook.config';
+import googleConfig from '@/config/google.config';
+import { DatabaseModule } from '@/database/database.module';
+
 import { UserMediaModule } from '../user-media/user-media.module';
 import { UsersModule } from '../users/users.module';
 

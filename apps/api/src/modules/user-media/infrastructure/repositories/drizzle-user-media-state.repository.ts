@@ -4,16 +4,15 @@ import { and, desc, eq, inArray, isNotNull, isNull, or, sql, type SQL } from 'dr
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
-
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type UserMediaState,
   USER_MEDIA_STATE,
-} from '../../domain/entities/user-media-state.entity';
+} from '@/modules/user-media/domain/entities/user-media-state.entity';
 import {
   type BulkImportResult,
   type ContinuePoint,
@@ -26,7 +25,8 @@ import {
   type UserMediaStats,
   type UserMediaSummary,
   type UpsertUserMediaStateData,
-} from '../../domain/repositories/user-media-state.repository.interface';
+} from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
+
 import { FavoriteUpdatesQuery } from '../queries/favorite-updates.query';
 
 @Injectable()

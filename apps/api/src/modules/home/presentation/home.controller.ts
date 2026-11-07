@@ -1,7 +1,8 @@
 import { Controller, Get, ParseEnumPipe, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
-import { MediaType } from '../../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
+
 import { HomeService } from '../application/home.service';
 
 import { HeroItemDto } from './dtos/hero-item.dto';

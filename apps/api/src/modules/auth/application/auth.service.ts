@@ -1,9 +1,10 @@
 import { Injectable, ForbiddenException, HttpStatus, Inject } from '@nestjs/common';
 
-import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { AppException } from '../../../common/exceptions/app.exception';
-import { UsersService } from '../../users/public';
-import { type User } from '../../users/public';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { AppException } from '@/common/exceptions/app.exception';
+import { UsersService } from '@/modules/users/public';
+import { type User } from '@/modules/users/public';
+
 import { type PasswordHasher, PASSWORD_HASHER } from '../domain/services/password-hasher.interface';
 import { type AuthTokens, type ClientMeta } from '../domain/types';
 

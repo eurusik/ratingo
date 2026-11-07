@@ -11,9 +11,11 @@ import { type Queue } from 'bullmq';
 import type IORedis from 'ioredis';
 
 import { toError } from '@/common/utils/error.utils';
-
-import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../../catalog-policy.constants';
-import { RunFinalizeService } from '../../services/run-finalize.service';
+import { RunFinalizeService } from '@/modules/catalog-policy/application/services/run-finalize.service';
+import {
+  CATALOG_POLICY_QUEUE,
+  CATALOG_POLICY_JOBS,
+} from '@/modules/catalog-policy/catalog-policy.constants';
 
 const STALE_RUN_MAX_AGE_MINUTES = 1;
 const WATCHDOG_INTERVAL_MS = 60000;

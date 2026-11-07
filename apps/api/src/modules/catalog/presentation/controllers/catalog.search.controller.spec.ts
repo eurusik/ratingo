@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 
-import { CatalogImportService } from '../../application/services/catalog-import.service';
-import { CatalogSearchService } from '../../application/services/catalog-search.service';
-import { SEARCH_SOURCE } from '../../domain/types/search.types';
+import { CatalogImportService } from '@/modules/catalog/application/services/catalog-import.service';
+import { CatalogSearchService } from '@/modules/catalog/application/services/catalog-search.service';
+import { SEARCH_SOURCE } from '@/modules/catalog/domain/types/search.types';
 
 import { CatalogSearchController } from './catalog.search.controller';
 

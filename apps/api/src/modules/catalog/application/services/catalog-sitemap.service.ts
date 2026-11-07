@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   type ISitemapRepository,
   SITEMAP_REPOSITORY,
   type SitemapItem,
-} from '../../domain/repositories/sitemap.repository.interface';
+} from '@/modules/catalog/domain/repositories/sitemap.repository.interface';
 
 /**
  * Provides lightweight slug + updatedAt lists for sitemap generation.

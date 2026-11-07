@@ -4,7 +4,7 @@ import {
   InvalidEligibilityStatusError,
   InvalidBreakoutRuleError,
   InvalidRunStateTransitionError,
-} from '../../domain/errors';
+} from '@/modules/catalog-policy/domain/errors';
 
 function mapDomainErrorToHttpException(error: unknown): never {
   if (error instanceof InvalidEligibilityStatusError) {

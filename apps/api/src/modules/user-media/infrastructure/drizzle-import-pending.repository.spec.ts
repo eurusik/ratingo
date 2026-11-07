@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { sql, type SQL } from 'drizzle-orm';
 
-import { DATABASE_CONNECTION } from '../../../database/database.module';
+import { DATABASE_CONNECTION } from '@/database/database.module';
 import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_STATUS,

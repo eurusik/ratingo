@@ -1,5 +1,5 @@
-import { MS_PER_DAY, NEW_RELEASE_WINDOW_DAYS } from '../../../../common/constants';
-import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
+import { MS_PER_DAY, NEW_RELEASE_WINDOW_DAYS } from '@/common/constants';
+import { ReleaseStatus } from '@/common/enums/release-status.enum';
 
 /**
  * Computes the release status of a movie based on its release dates.

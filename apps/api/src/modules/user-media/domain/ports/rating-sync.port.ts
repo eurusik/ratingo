@@ -1,4 +1,4 @@
-import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type MediaType } from '@/common/enums/media-type.enum';
 
 /**
  * Port for syncing rating to the user-media state aggregate.

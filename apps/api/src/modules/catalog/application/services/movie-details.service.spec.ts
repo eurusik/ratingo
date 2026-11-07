@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { CLOCK_PORT } from '../../../shared/clock';
-import { MovieVerdictService } from '../../../shared/verdict';
-import { MovieNotFoundError } from '../../domain/errors';
-import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
+import { ReleaseStatus } from '@/common/enums/release-status.enum';
+import { CLOCK_PORT } from '@/modules/shared/clock';
+import { MovieVerdictService } from '@/modules/shared/verdict';
+import { MovieNotFoundError } from '@/modules/catalog/domain/errors';
+import { MOVIE_REPOSITORY } from '@/modules/catalog/domain/repositories/movie.repository.interface';
 
 import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
 import { MovieDetailsService } from './movie-details.service';

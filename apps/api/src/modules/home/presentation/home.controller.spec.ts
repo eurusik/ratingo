@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HomeController } from './home.controller';
 import { HomeService } from '../application/home.service';
-import { MediaType } from '../../../common/enums/media-type.enum';
-import { HeroMediaItem } from '../../../common/types/hero-media.types';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { HeroMediaItem } from '@/common/types/hero-media.types';
 
 describe('HomeController', () => {
   let controller: HomeController;

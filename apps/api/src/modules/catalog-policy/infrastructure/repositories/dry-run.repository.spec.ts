@@ -5,10 +5,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { DryRunRepository } from './dry-run.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions';
-import { MEDIA_WATCH_OFFERS_REPOSITORY } from '../../../provider/public';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { DatabaseException } from '@/common/exceptions';
+import { MEDIA_WATCH_OFFERS_REPOSITORY } from '@/modules/provider/public';
 
 describe('DryRunRepository', () => {
   let repository: DryRunRepository;

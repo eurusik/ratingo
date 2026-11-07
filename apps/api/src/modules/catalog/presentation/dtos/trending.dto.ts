@@ -1,11 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { OffsetPaginationMetaDto } from '../../../../common/dtos';
-import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
-import { ImageDto } from '../../../../common/dtos/image.dto';
-import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { CardMetaDto } from '../../../shared/cards';
+import { OffsetPaginationMetaDto } from '@/common/dtos';
+import { ExternalRatingsDto } from '@/common/dtos/external-ratings.dto';
+import { ImageDto } from '@/common/dtos/image.dto';
+import { RatingoStatsDto } from '@/common/dtos/ratingo-stats.dto';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { CardMetaDto } from '@/modules/shared/cards';
 
 import { CatalogListQueryDto } from './catalog-list-query.dto';
 

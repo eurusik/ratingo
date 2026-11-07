@@ -6,7 +6,7 @@
 
 import { type Logger } from '@nestjs/common';
 
-import { type EvaluationContextType } from '../../../domain/constants/evaluation.constants';
+import { type EvaluationContextType } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 
 interface PayloadWithContext {
   context?: EvaluationContextType;

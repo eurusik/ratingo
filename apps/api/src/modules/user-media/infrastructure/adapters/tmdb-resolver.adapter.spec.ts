@@ -1,6 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 
-import { TmdbApiException } from '../../../../common/exceptions/external-api.exception';
+import { TmdbApiException } from '@/common/exceptions/external-api.exception';
 
 import { TmdbResolverAdapter } from './tmdb-resolver.adapter';
 
@@ -8,7 +8,7 @@ import { TmdbResolverAdapter } from './tmdb-resolver.adapter';
 // without making real HTTP requests.
 const mockGet = jest.fn();
 
-jest.mock('../../../../common/http/resilient-http.client', () => {
+jest.mock('@/common/http/resilient-http.client', () => {
   return {
     ResilientHttpClient: jest.fn().mockImplementation(() => ({
       get: mockGet,
@@ -143,7 +143,7 @@ describe('TmdbResolverAdapter', () => {
 
     it('throws TmdbApiException on non-retryable non-404 HTTP error from client', async () => {
       // httpClient.get() returns a non-success, non-retryable result for a non-404 error
-      const { HttpError } = jest.requireMock('../../../../common/http/resilient-http.client');
+      const { HttpError } = jest.requireMock('@/common/http/resilient-http.client');
       const httpError = new HttpError('403 Forbidden', 403);
 
       mockGet.mockResolvedValue({
@@ -159,7 +159,7 @@ describe('TmdbResolverAdapter', () => {
     it('returns null when client returns non-success with 404 HttpError', async () => {
       // The adapter's fetch() converts a 404 HttpError into TmdbApiException(NOT_FOUND),
       // then findByImdbId catches TmdbApiException with NOT_FOUND statusCode and returns null.
-      const { HttpError } = jest.requireMock('../../../../common/http/resilient-http.client');
+      const { HttpError } = jest.requireMock('@/common/http/resilient-http.client');
       const httpError = new HttpError('404 Not Found', HttpStatus.NOT_FOUND);
 
       mockGet.mockResolvedValue({

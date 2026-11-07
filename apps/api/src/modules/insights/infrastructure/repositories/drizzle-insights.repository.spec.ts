@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { DATABASE_CONNECTION } from '@/database/database.module';
 import { DrizzleInsightsRepository } from './drizzle-insights.repository';
 
 // Mock Drizzle chain

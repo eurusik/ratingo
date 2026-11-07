@@ -12,9 +12,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { CatalogEvaluationRunRepository } from './catalog-evaluation-run.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
-import { DatabaseException } from '../../../../common/exceptions';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { InvalidRunStatusError } from '@/modules/catalog-policy/domain/errors/policy.errors';
+import { DatabaseException } from '@/common/exceptions';
 
 describe('CatalogEvaluationRunRepository', () => {
   let repository: CatalogEvaluationRunRepository;

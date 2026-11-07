@@ -7,7 +7,7 @@ import {
   type BadgeKey,
   type CardListContext,
   type PrimaryCta,
-} from '../../domain/card.constants';
+} from '@/modules/shared/cards/domain/card.constants';
 
 /**
  * Continue point payload for "Continue" UX.

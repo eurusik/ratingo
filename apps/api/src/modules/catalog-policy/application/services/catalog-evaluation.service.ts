@@ -7,21 +7,27 @@ import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
 import {
   DEFAULT_EVALUATION_CONTEXT,
   type EvaluationContextType,
-} from '../../domain/constants/evaluation.constants';
-import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import {
+  evaluateEligibility,
+  computeRelevance,
+} from '@/modules/catalog-policy/domain/policy-engine';
 import {
   type ICatalogPolicyEvaluator,
   type EvaluateOneInput,
   type EvaluationResult,
   type EligibilityStats,
-} from '../../domain/ports/catalog-policy-evaluator.port';
+} from '@/modules/catalog-policy/domain/ports/catalog-policy-evaluator.port';
 import {
   POLICY_INPUT_REPOSITORY,
   type IPolicyInputRepository,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
   type IMediaCatalogEvaluationRepository,
-} from '../../domain/repositories';
-import { type CatalogPolicy, type MediaCatalogEvaluation } from '../../domain/types/policy.types';
+} from '@/modules/catalog-policy/domain/repositories';
+import {
+  type CatalogPolicy,
+  type MediaCatalogEvaluation,
+} from '@/modules/catalog-policy/domain/types/policy.types';
 
 import { CatalogPolicyService } from './catalog-policy.service';
 

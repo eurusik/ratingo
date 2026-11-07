@@ -1,16 +1,16 @@
 import { Test } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleMediaRepository } from './drizzle-media.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { GENRE_REPOSITORY } from '../../domain/repositories/genre.repository.interface';
-import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
-import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import { GENRE_REPOSITORY } from '@/modules/catalog/domain/repositories/genre.repository.interface';
+import { MOVIE_REPOSITORY } from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import { SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
 import { HeroMediaQuery } from '../queries/hero-media.query';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { DatabaseException } from '../../../../common/exceptions';
-import { PG_ERROR_CODE, DB_CONSTRAINT } from '../../../../common/constants/database.constants';
-import { NormalizedMedia } from '../../../shared/contracts';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { DatabaseException } from '@/common/exceptions';
+import { PG_ERROR_CODE, DB_CONSTRAINT } from '@/common/constants/database.constants';
+import { NormalizedMedia } from '@/modules/shared/contracts';
 
 // Helper to create a chainable thenable for Drizzle-like fluent API
 const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {

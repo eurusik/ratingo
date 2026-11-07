@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { DatabaseModule } from '../../database/database.module';
+import { DatabaseModule } from '@/database/database.module';
+
 import { UserMediaModule } from '../user-media/user-media.module';
 
 import { AvatarUploadService } from './application/avatar-upload.service';

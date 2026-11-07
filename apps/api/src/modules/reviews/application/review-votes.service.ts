@@ -1,8 +1,9 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
-import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { AppException } from '../../../common/exceptions/app.exception';
-import { NotFoundException } from '../../../common/exceptions/not-found.exception';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { AppException } from '@/common/exceptions/app.exception';
+import { NotFoundException } from '@/common/exceptions/not-found.exception';
+
 import { type VoteType } from '../domain/constants/review.constants';
 import type { ReviewVote, VoteResult } from '../domain/entities/review-vote.entity';
 import {

@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
+import {
+  IUserStateProvider,
+  UserState,
+} from '@/modules/catalog/domain/ports/user-state-provider.port';
 import { UserMediaService } from '@/modules/user-media/public';
-
-import { IUserStateProvider, UserState } from '../../domain/ports/user-state-provider.port';
 
 /**
  * Adapter implementing IUserStateProvider using UserMediaService.

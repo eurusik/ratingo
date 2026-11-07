@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { type SQL } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { DATABASE_CONNECTION } from '@/database/database.module';
 
 import { DrizzleMediaLookupAdapter } from './drizzle-media-lookup.adapter';
 

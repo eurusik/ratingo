@@ -1,17 +1,17 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 
-import { TvMazeApiException } from '../../../../../common/exceptions/external-api.exception';
+import { TvMazeApiException } from '@/common/exceptions/external-api.exception';
 import {
   HttpError,
   ResilientHttpClient,
   type RetryConfig,
-} from '../../../../../common/http/resilient-http.client';
-import tvmazeConfig from '../../../../../config/tvmaze.config';
+} from '@/common/http/resilient-http.client';
+import tvmazeConfig from '@/config/tvmaze.config';
 import {
   type EpisodeSchedulePort,
   type ScheduledEpisode,
-} from '../../../domain/ports/episode-schedule.port';
+} from '@/modules/ingestion/domain/ports/episode-schedule.port';
 
 const TVMAZE_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 2,

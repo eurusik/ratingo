@@ -3,15 +3,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type BackfillPage } from '../../domain/repositories/backfill-page.interface';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type BackfillPage } from '@/modules/ingestion/domain/repositories/backfill-page.interface';
 import {
   type IImdbBackfillRepository,
   type ImdbBackfillCandidate,
-} from '../../domain/repositories/imdb-backfill.repository.interface';
+} from '@/modules/ingestion/domain/repositories/imdb-backfill.repository.interface';
 
 @Injectable()
 export class ImdbBackfillRepository implements IImdbBackfillRepository {

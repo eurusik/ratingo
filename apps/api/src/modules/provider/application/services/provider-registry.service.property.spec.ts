@@ -1,6 +1,6 @@
 import * as fc from 'fast-check';
 
-import type { Provider } from '../../domain/types/provider.types';
+import type { Provider } from '@/modules/provider/domain/types/provider.types';
 import { ProviderRegistryService } from './provider-registry.service';
 
 describe('Provider Registry Service - Property-Based Tests', () => {

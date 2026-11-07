@@ -1,14 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { MAX_PAGE_SIZE } from '../../../../common/constants';
-import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { ScoreCalculatorService } from '../../../shared/score-calculator';
+import { MAX_PAGE_SIZE } from '@/common/constants';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import {
   type IStatsRepository,
   type MediaStatsData,
   STATS_REPOSITORY,
-} from '../../domain/repositories/stats.repository.interface';
-import { type RecalculateScoresOptions } from '../../domain/types/stats.types';
+} from '@/modules/stats/domain/repositories/stats.repository.interface';
+import { type RecalculateScoresOptions } from '@/modules/stats/domain/types/stats.types';
+
 import { toScoreInput } from '../helpers';
 
 /**

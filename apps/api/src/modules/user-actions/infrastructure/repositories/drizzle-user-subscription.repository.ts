@@ -4,24 +4,23 @@ import { and, desc, eq, sql, isNull, inArray, or, ne, lt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
-
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { withDbError } from '../../../../common/utils/db-error.utils';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { ShowStatus } from '@/common/enums/show-status.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { withDbError } from '@/common/utils/db-error.utils';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
 import {
   type UserSubscription,
   type SubscriptionTrigger,
   SUBSCRIPTION_TRIGGER,
-} from '../../domain/entities/user-subscription.entity';
+} from '@/modules/user-actions/domain/entities/user-subscription.entity';
 import {
   type IUserSubscriptionRepository,
   type UpsertSubscriptionData,
   type SubscriptionWithMedia,
   type NotifiedSubscription,
-} from '../../domain/repositories/user-subscription.repository.interface';
+} from '@/modules/user-actions/domain/repositories/user-subscription.repository.interface';
 
 /**
  * Drizzle implementation of user subscription repository.

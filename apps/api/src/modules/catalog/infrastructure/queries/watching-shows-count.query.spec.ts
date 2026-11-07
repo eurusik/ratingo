@@ -1,5 +1,5 @@
 import { WatchingShowsCountQuery } from './watching-shows-count.query';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DatabaseException } from '@/common/exceptions/database.exception';
 
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
   const thenable: any = {};

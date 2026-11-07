@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { type MediaType } from '../../../common/enums/media-type.enum';
-import { type HeroMediaItem } from '../../../common/types/hero-media.types';
-import { errorMessage } from '../../../common/utils/error.utils';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { type HeroMediaItem } from '@/common/types/hero-media.types';
+import { errorMessage } from '@/common/utils/error.utils';
+
 import {
   type IHeroRepository,
   HERO_REPOSITORY,

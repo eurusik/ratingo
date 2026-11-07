@@ -2,13 +2,14 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { SECONDS_PER_DAY } from '../../common/constants';
-import { apiOnly, workerOnly } from '../../common/runtime/app-role';
-import mdblistConfig from '../../config/mdblist.config';
-import omdbConfig from '../../config/omdb.config';
-import schedulerConfig from '../../config/scheduler.config';
-import tvmazeConfig from '../../config/tvmaze.config';
-import webRevalidationConfig from '../../config/web-revalidation.config';
+import { SECONDS_PER_DAY } from '@/common/constants';
+import { apiOnly, workerOnly } from '@/common/runtime/app-role';
+import mdblistConfig from '@/config/mdblist.config';
+import omdbConfig from '@/config/omdb.config';
+import schedulerConfig from '@/config/scheduler.config';
+import tvmazeConfig from '@/config/tvmaze.config';
+import webRevalidationConfig from '@/config/web-revalidation.config';
+
 import { CatalogModule } from '../catalog/catalog.module';
 import { CatalogPolicyModule } from '../catalog-policy/catalog-policy.module';
 import { ProviderModule } from '../provider/provider.module';

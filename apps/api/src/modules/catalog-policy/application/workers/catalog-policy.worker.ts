@@ -10,9 +10,12 @@ import { Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
-import { toError } from '../../../../common/utils/error.utils';
-import { WORKER_CONFIG } from '../../../../config/queue.config';
-import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
+import { toError } from '@/common/utils/error.utils';
+import { WORKER_CONFIG } from '@/config/queue.config';
+import {
+  CATALOG_POLICY_QUEUE,
+  CATALOG_POLICY_JOBS,
+} from '@/modules/catalog-policy/catalog-policy.constants';
 
 import { ReEvaluateAllHandler, EvaluateItemHandler, WatchdogHandler } from './handlers';
 import type { ReEvaluateAllPayload, EvaluateCatalogItemPayload } from './types/job-payloads';

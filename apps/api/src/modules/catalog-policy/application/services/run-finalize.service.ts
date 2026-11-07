@@ -6,17 +6,17 @@
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
-import { MS_PER_MINUTE } from '../../../../common/constants';
+import { MS_PER_MINUTE } from '@/common/constants';
 import {
   DEFAULT_STALE_RUN_MAX_AGE_MINUTES,
   RunStatus,
-} from '../../domain/constants/evaluation.constants';
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
   type ICatalogEvaluationRunRepository,
-} from '../../domain/repositories';
-import { type FinalizeResult, type RunAnomaly } from '../../domain/types';
-import { resolveRunContextScope } from '../../domain/utils/run-contexts';
+} from '@/modules/catalog-policy/domain/repositories';
+import { type FinalizeResult, type RunAnomaly } from '@/modules/catalog-policy/domain/types';
+import { resolveRunContextScope } from '@/modules/catalog-policy/domain/utils/run-contexts';
 
 import { RunAggregationService } from './run-aggregation.service';
 

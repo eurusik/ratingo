@@ -1,15 +1,15 @@
-import { IngestionStatus } from '../../../../../common/enums/ingestion-status.enum';
-import { ShowStatus } from '../../../../../common/enums/show-status.enum';
-import { ImageMapper } from '../../../../../common/mappers/image.mapper';
-import { CreditsMapper } from '../../mappers/credits.mapper';
-import { MediaWatchOffersMapper } from '../../mappers/media-watch-offers.mapper';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { ShowStatus } from '@/common/enums/show-status.enum';
+import { ImageMapper } from '@/common/mappers/image.mapper';
+import { CreditsMapper } from '@/modules/catalog/infrastructure/mappers/credits.mapper';
+import { MediaWatchOffersMapper } from '@/modules/catalog/infrastructure/mappers/media-watch-offers.mapper';
 
 import { mapShowDetails, type ShowDetailsQueryRow } from './show-details.mapper';
 
 // Mock dependencies
-jest.mock('../../../../../common/mappers/image.mapper');
-jest.mock('../../mappers/credits.mapper');
-jest.mock('../../mappers/media-watch-offers.mapper');
+jest.mock('@/common/mappers/image.mapper');
+jest.mock('@/modules/catalog/infrastructure/mappers/credits.mapper');
+jest.mock('@/modules/catalog/infrastructure/mappers/media-watch-offers.mapper');
 
 describe('show-details.mapper', () => {
   const mockImageMapper = ImageMapper as jest.Mocked<typeof ImageMapper>;

@@ -9,7 +9,8 @@ import {
 
 import { type Queue } from 'bullmq';
 
-import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion/public';
+import { BACKFILL_QUEUE, IngestionJob } from '@/modules/ingestion/public';
+
 import {
   IMPORT_BATCH_STATUS,
   IMPORT_PENDING_REPOSITORY,

@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { DatabaseException } from '@/common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '@/database/database.module';
 import {
   CreateWatchOfferInput,
   MEDIA_WATCH_OFFERS_REPOSITORY,
-} from '../../domain/repositories/media-watch-offers.repository.interface';
+} from '@/modules/provider/domain/repositories/media-watch-offers.repository.interface';
 import { MediaWatchOffersRepository } from './media-watch-offers.repository';
 
 describe('MediaWatchOffersRepository', () => {

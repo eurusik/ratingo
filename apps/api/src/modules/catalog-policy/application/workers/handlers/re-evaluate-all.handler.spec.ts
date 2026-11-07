@@ -6,14 +6,17 @@ import {
   CATALOG_POLICY_QUEUE,
   CATALOG_POLICY_JOBS,
   EVALUATE_ITEM_JOB_OPTIONS,
-} from '../../../catalog-policy.constants';
-import { EvaluationContext, RunStatus } from '../../../domain/constants/evaluation.constants';
-import { RunNotFoundError } from '../../../domain/errors';
+} from '@/modules/catalog-policy/catalog-policy.constants';
+import {
+  EvaluationContext,
+  RunStatus,
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import { RunNotFoundError } from '@/modules/catalog-policy/domain/errors';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
   POLICY_INPUT_REPOSITORY,
-} from '../../../domain/repositories';
-import { RunFinalizeService } from '../../services/run-finalize.service';
+} from '@/modules/catalog-policy/domain/repositories';
+import { RunFinalizeService } from '@/modules/catalog-policy/application/services/run-finalize.service';
 import type { ReEvaluateAllPayload } from '../types/job-payloads';
 
 import { ReEvaluateAllHandler } from './re-evaluate-all.handler';

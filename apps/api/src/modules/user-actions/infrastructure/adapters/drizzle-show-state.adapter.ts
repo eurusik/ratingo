@@ -4,10 +4,9 @@ import { and, desc, eq, lte } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { errorMessage } from '@/common/utils/error.utils';
-
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { type IShowStatePort } from '../../domain/ports/show-state.port';
+import { DATABASE_CONNECTION } from '@/database/database.module';
+import * as schema from '@/database/schema';
+import { type IShowStatePort } from '@/modules/user-actions/domain/ports/show-state.port';
 
 @Injectable()
 export class DrizzleShowStateAdapter implements IShowStatePort {

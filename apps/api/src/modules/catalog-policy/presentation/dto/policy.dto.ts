@@ -9,7 +9,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsString, IsOptional, IsArray, ValidateNested, IsIn } from 'class-validator';
 
-import { PolicyStatus, type PolicyStatusType } from '../../catalog-policy.constants';
+import {
+  PolicyStatus,
+  type PolicyStatusType,
+} from '@/modules/catalog-policy/catalog-policy.constants';
 
 import { BreakoutRuleDto } from './breakout-rule.dto';
 import {

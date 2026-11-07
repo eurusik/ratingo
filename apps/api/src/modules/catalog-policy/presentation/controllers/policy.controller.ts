@@ -24,10 +24,11 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 
-import { AdminJwtGuard } from '../../../auth/public';
-import { PolicyMapper } from '../../application/mappers/policy.mapper';
-import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
-import { PolicyActivationService } from '../../application/services/policy-activation.service';
+import { AdminJwtGuard } from '@/modules/auth/public';
+import { PolicyMapper } from '@/modules/catalog-policy/application/mappers/policy.mapper';
+import { CatalogPolicyService } from '@/modules/catalog-policy/application/services/catalog-policy.service';
+import { PolicyActivationService } from '@/modules/catalog-policy/application/services/policy-activation.service';
+
 import {
   PrepareOptionsDto,
   PrepareResponseDto,

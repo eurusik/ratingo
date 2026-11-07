@@ -3,8 +3,8 @@ import { type ConfigType } from '@nestjs/config';
 
 import * as bcrypt from 'bcrypt';
 
-import authConfig from '../../../../config/auth.config';
-import { type PasswordHasher } from '../../domain/services/password-hasher.interface';
+import authConfig from '@/config/auth.config';
+import { type PasswordHasher } from '@/modules/auth/domain/services/password-hasher.interface';
 
 /**
  * Bcrypt-based password hashing adapter.

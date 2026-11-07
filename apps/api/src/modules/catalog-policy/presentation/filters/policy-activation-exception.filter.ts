@@ -23,7 +23,8 @@ import {
   NoActivePolicyError,
   PolicyNotFoundError,
   RunNotFoundError,
-} from '../../domain/errors';
+} from '@/modules/catalog-policy/domain/errors';
+
 import { type ErrorResponseDto } from '../dto/error-response.dto';
 import { ErrorResponseBuilder } from '../utils';
 

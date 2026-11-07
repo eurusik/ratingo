@@ -18,12 +18,12 @@ import {
   MaxLength,
 } from 'class-validator';
 
-import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../common/dtos';
+import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '@/common/dtos';
 import {
   DISTRIBUTION_CHANNEL,
   type DistributionChannel,
   type MappingSource,
-} from '../../domain/types/provider.types';
+} from '@/modules/provider/domain/types/provider.types';
 
 const DISTRIBUTION_CHANNEL_VALUES = Object.values(DISTRIBUTION_CHANNEL);
 

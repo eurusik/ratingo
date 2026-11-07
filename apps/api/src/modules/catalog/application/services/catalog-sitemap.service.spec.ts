@@ -1,5 +1,5 @@
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { type ISitemapRepository } from '../../domain/repositories/sitemap.repository.interface';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { type ISitemapRepository } from '@/modules/catalog/domain/repositories/sitemap.repository.interface';
 
 import { CatalogSitemapService } from './catalog-sitemap.service';
 

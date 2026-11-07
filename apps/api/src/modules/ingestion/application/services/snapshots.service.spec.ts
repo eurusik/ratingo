@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SnapshotsService } from './snapshots.service';
-import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '../../../trakt/public';
-import { SNAPSHOTS_REPOSITORY } from '../../domain/repositories/snapshots.repository.interface';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { type SnapshotCandidate } from '../../../catalog/public';
-import { TRAKT_MEDIA_TYPE } from '../../../trakt/public';
+import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '@/modules/trakt/public';
+import { SNAPSHOTS_REPOSITORY } from '@/modules/ingestion/domain/repositories/snapshots.repository.interface';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { type SnapshotCandidate } from '@/modules/catalog/public';
+import { TRAKT_MEDIA_TYPE } from '@/modules/trakt/public';
 
 describe('SnapshotsService', () => {
   let service: SnapshotsService;
@@ -78,9 +78,10 @@ describe('SnapshotsService', () => {
         TRAKT_MEDIA_TYPE.MOVIE,
         [101, 103],
       );
-      expect(traktAdapter.getTotalWatchersByTmdbIds).toHaveBeenCalledWith(TRAKT_MEDIA_TYPE.SHOW, [
-        102,
-      ]);
+      expect(traktAdapter.getTotalWatchersByTmdbIds).toHaveBeenCalledWith(
+        TRAKT_MEDIA_TYPE.SHOW,
+        [102],
+      );
 
       expect(snapshotsRepository.bulkUpsertSnapshots).toHaveBeenCalledWith([
         { mediaItemId: 'id1', snapshotDate, totalWatchers: 500, region: 'global' },

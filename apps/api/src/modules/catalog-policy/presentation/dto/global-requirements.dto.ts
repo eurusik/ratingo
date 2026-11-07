@@ -22,7 +22,7 @@ import {
   type EvaluationContext,
   type RatingSource,
   type VoteSource,
-} from '../../domain/types/policy.types';
+} from '@/modules/catalog-policy/domain/types/policy.types';
 
 /** Valid rating sources for validation */
 const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt'];

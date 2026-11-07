@@ -1,4 +1,4 @@
-import { USER_MEDIA_STATE } from '../../../user-media/domain/entities/user-media-state.entity';
+import { USER_MEDIA_STATE } from '@/modules/user-media/domain/entities/user-media-state.entity';
 import { BADGE_KEY, CARD_LIST_CONTEXT, PRIMARY_CTA } from './card.constants';
 import { buildCardMeta, extractContinuePoint, selectBadge, selectPrimaryCta } from './selectors';
 

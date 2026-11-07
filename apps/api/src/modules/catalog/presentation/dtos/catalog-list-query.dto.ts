@@ -13,7 +13,7 @@ import {
   Validate,
 } from 'class-validator';
 
-import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import {
   CATALOG_SORT,
   CATALOG_SORT_VALUES,
@@ -22,9 +22,10 @@ import {
   type SortOrder,
   VOTE_SOURCE,
   type VoteSource,
-} from '../../domain/constants/catalog-query.constants';
-import { LIST_CONTEXT } from '../../domain/constants/catalog.constants';
-import type { ListContext } from '../../domain/types/query.types';
+} from '@/modules/catalog/domain/constants/catalog-query.constants';
+import { LIST_CONTEXT } from '@/modules/catalog/domain/constants/catalog.constants';
+import type { ListContext } from '@/modules/catalog/domain/types/query.types';
+
 import { YearExclusiveConstraint, YearRangeConstraint } from '../validators/year-range.validator';
 
 const LIST_CONTEXT_VALUES = Object.values(LIST_CONTEXT);

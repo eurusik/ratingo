@@ -1,8 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { WEB_PAGE_CACHE_PORT, type WebPageCachePort } from '../../domain/ports/web-page-cache.port';
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import {
+  WEB_PAGE_CACHE_PORT,
+  type WebPageCachePort,
+} from '@/modules/ingestion/domain/ports/web-page-cache.port';
 
 @Injectable()
 export class MediaPageCacheService {

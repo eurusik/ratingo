@@ -1,4 +1,4 @@
-import { type RiseFallItem } from '../../domain/models/rise-fall.model';
+import { type RiseFallItem } from '@/modules/insights/domain/models/rise-fall.model';
 
 /**
  * Query input for rise/fall movements.

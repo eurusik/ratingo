@@ -1,7 +1,7 @@
 import { Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { createBaseOAuthGuard } from './base-oauth.guard';
-import { OAUTH_PROVIDER, type OAuthProvider } from '../../domain/types';
-import { OAuthErrorCode } from '../../auth.constants';
+import { OAUTH_PROVIDER, type OAuthProvider } from '@/modules/auth/domain/types';
+import { OAuthErrorCode } from '@/modules/auth/auth.constants';
 
 // Create a concrete test guard from the mixin
 const TestBaseGuard = createBaseOAuthGuard('test-strategy');

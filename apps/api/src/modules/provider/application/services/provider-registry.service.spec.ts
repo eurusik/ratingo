@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ErrorCode } from '../../../../common/enums/error-code.enum';
-import { NotFoundException } from '../../../../common/exceptions';
-import { PROVIDER_REGISTRY_REPOSITORY } from '../../domain/repositories/provider-registry.repository.interface';
-import { type Provider } from '../../domain/types/provider.types';
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { NotFoundException } from '@/common/exceptions';
+import { PROVIDER_REGISTRY_REPOSITORY } from '@/modules/provider/domain/repositories/provider-registry.repository.interface';
+import { type Provider } from '@/modules/provider/domain/types/provider.types';
 import { ProviderRegistryService } from './provider-registry.service';
 
 /**

@@ -1,8 +1,9 @@
 import { Controller, Get, UseFilters } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { CatalogSitemapService } from '../../application/services/catalog-sitemap.service';
-import { type SitemapItem } from '../../domain/repositories/sitemap.repository.interface';
+import { CatalogSitemapService } from '@/modules/catalog/application/services/catalog-sitemap.service';
+import { type SitemapItem } from '@/modules/catalog/domain/repositories/sitemap.repository.interface';
+
 import { type SitemapItemDto, SitemapResponseDto } from '../dtos/sitemap-item.dto';
 import { CatalogDomainExceptionFilter } from '../filters';
 

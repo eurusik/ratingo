@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { type MediaType } from '@/common/enums/media-type.enum';
 
-import { type MediaType } from '../../../common/enums/media-type.enum';
 import { type UserSavedItem, type SavedItemList, SAVED_ITEM_LIST } from '../domain/entities';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import {
