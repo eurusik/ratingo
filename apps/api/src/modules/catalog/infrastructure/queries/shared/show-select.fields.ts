@@ -22,8 +22,8 @@ export interface ShowSelectRow {
   release_date: Date | null;
   videos: unknown;
   ingestion_status: string;
-  rating: number;
-  vote_count: number;
+  rating: number | null;
+  vote_count: number | null;
   rating_imdb: number | null;
   vote_count_imdb: number | null;
   rating_trakt: number | null;

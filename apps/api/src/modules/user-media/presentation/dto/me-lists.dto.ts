@@ -102,7 +102,7 @@ export class MeUserMediaSummaryDto {
   @ApiProperty()
   slug!: string;
 
-  @ApiProperty({ type: () => ImageDto, nullable: true })
+  @ApiProperty({ type: ImageDto, nullable: true })
   poster!: ImageDto | null;
 
   @ApiPropertyOptional({ type: Date, nullable: true })

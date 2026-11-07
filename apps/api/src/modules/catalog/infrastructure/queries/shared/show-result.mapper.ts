@@ -85,7 +85,7 @@ export class ShowResultMapper {
         communityRatingCount: null,
       },
       externalRatings: {
-        tmdb: { rating: row.rating, voteCount: row.vote_count },
+        tmdb: row.rating != null ? { rating: row.rating, voteCount: row.vote_count } : null,
         imdb: row.rating_imdb ? { rating: row.rating_imdb, voteCount: row.vote_count_imdb } : null,
         trakt: row.rating_trakt
           ? { rating: row.rating_trakt, voteCount: row.vote_count_trakt }

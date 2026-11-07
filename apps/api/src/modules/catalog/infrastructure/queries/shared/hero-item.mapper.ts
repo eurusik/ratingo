@@ -93,7 +93,7 @@ export function mapHeroResults(
         totalWatchers: item.totalWatchers,
       },
       externalRatings: {
-        tmdb: { rating: item.rating ?? 0, voteCount: item.voteCount },
+        tmdb: item.rating != null ? { rating: item.rating, voteCount: item.voteCount } : null,
         imdb: item.ratingImdb ? { rating: item.ratingImdb, voteCount: item.voteCountImdb } : null,
         trakt: item.ratingTrakt
           ? { rating: item.ratingTrakt, voteCount: item.voteCountTrakt }

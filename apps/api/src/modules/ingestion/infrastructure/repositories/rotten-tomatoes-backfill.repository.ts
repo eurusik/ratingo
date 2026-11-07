@@ -3,8 +3,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gt, isNotNull, isNull, lt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { anyOf } from '@/database/sql-conditions';
+
 import { withDbError } from '../../../../common/utils/db-error.utils';
-import { anyOf } from '../../../../common/utils/sql-conditions.util';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { type BackfillPage } from '../../domain/repositories/backfill-page.interface';

@@ -76,10 +76,13 @@ describe('shutdownWorker', () => {
 
 describe('closeWorkerOnSignals', () => {
   const signals = ['SIGTERM', 'SIGINT'] as const;
-  let listenersBefore: Map<string, NodeJS.SignalsListener[]>;
+  let listenersBefore: Record<(typeof signals)[number], NodeJS.SignalsListener[]>;
 
   beforeEach(() => {
-    listenersBefore = new Map(signals.map((signal) => [signal, process.listeners(signal)]));
+    listenersBefore = {
+      SIGTERM: process.listeners('SIGTERM'),
+      SIGINT: process.listeners('SIGINT'),
+    };
     jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
   });
 
@@ -87,7 +90,7 @@ describe('closeWorkerOnSignals', () => {
     signals.forEach((signal) =>
       process
         .listeners(signal)
-        .filter((listener) => !(listenersBefore.get(signal) ?? []).includes(listener))
+        .filter((listener) => !listenersBefore[signal].includes(listener))
         .forEach((listener) => process.removeListener(signal, listener)),
     );
     jest.restoreAllMocks();

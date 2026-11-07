@@ -219,9 +219,9 @@ describe('ResilientHttpClient', () => {
 
         const result = await client.get('https://api.example.com/test');
 
-        expect(result.success).toBe(false);
+        const failure = expectFailure(result);
         expect(result.attempts).toBe(1);
-        expect(expectFailure(result).isRetryable).toBe(false);
+        expect(failure.isRetryable).toBe(false);
         expect(mockFetch).toHaveBeenCalledTimes(1);
       });
 
@@ -244,9 +244,9 @@ describe('ResilientHttpClient', () => {
 
         const result = await resultPromise;
 
-        expect(result.success).toBe(false);
+        const failure = expectFailure(result);
         expect(result.attempts).toBe(DEFAULT_RETRY_CONFIG.maxRetries + 1);
-        expect(expectFailure(result).isRetryable).toBe(true);
+        expect(failure.isRetryable).toBe(true);
         expect(mockFetch).toHaveBeenCalledTimes(DEFAULT_RETRY_CONFIG.maxRetries + 1);
       });
 
@@ -264,9 +264,9 @@ describe('ResilientHttpClient', () => {
 
         const result = await resultPromise;
 
-        expect(result.success).toBe(false);
+        const failure = expectFailure(result);
         expect(result.attempts).toBe(DEFAULT_RETRY_CONFIG.maxRetries + 1);
-        expect(expectFailure(result).isRetryable).toBe(true);
+        expect(failure.isRetryable).toBe(true);
       });
 
       it('should handle timeout errors', async () => {
@@ -283,9 +283,9 @@ describe('ResilientHttpClient', () => {
 
         const result = await resultPromise;
 
-        expect(result.success).toBe(false);
+        const failure = expectFailure(result);
         expect(result.attempts).toBe(DEFAULT_RETRY_CONFIG.maxRetries + 1);
-        expect(expectFailure(result).isRetryable).toBe(true);
+        expect(failure.isRetryable).toBe(true);
       });
 
       it('should not retry or classify malformed JSON as a retryable network error', async () => {
@@ -296,10 +296,10 @@ describe('ResilientHttpClient', () => {
 
         const result = await client.get('https://api.example.com/test');
 
-        expect(result.success).toBe(false);
+        const failure = expectFailure(result);
         expect(result.attempts).toBe(1);
-        expect(expectFailure(result).isRetryable).toBe(false);
-        expect(expectFailure(result).error).toBeInstanceOf(SyntaxError);
+        expect(failure.isRetryable).toBe(false);
+        expect(failure.error).toBeInstanceOf(SyntaxError);
         expect(mockFetch).toHaveBeenCalledTimes(1);
       });
 
@@ -325,10 +325,10 @@ describe('ResilientHttpClient', () => {
         await jest.advanceTimersByTimeAsync(1000);
         const result = await resultPromise;
 
-        expect(result.success).toBe(false);
-        expect(expectFailure(result).error).toBeInstanceOf(HttpError);
-        expect((expectFailure(result).error as HttpError).status).toBe(408);
-        expect(expectFailure(result).isRetryable).toBe(true);
+        const failure = expectFailure(result);
+        expect(failure.error).toBeInstanceOf(HttpError);
+        expect(failure.error).toMatchObject({ status: 408 });
+        expect(failure.isRetryable).toBe(true);
       });
 
       it('should respect retry-after header', async () => {
@@ -421,8 +421,8 @@ describe('ResilientHttpClient', () => {
 
         const result = await client.get('https://api.example.com/test');
 
-        expect(result.success).toBe(false);
-        expect(expectFailure(result).isRetryable).toBe(false);
+        const failure = expectFailure(result);
+        expect(failure.isRetryable).toBe(false);
         expect(mockFetch).toHaveBeenCalledTimes(1);
       });
 
@@ -437,8 +437,8 @@ describe('ResilientHttpClient', () => {
           }
           const result = await resultPromise;
 
-          expect(result.success).toBe(false);
-          expect(expectFailure(result).isRetryable).toBe(true);
+          const failure = expectFailure(result);
+          expect(failure.isRetryable).toBe(true);
           expect(mockFetch).toHaveBeenCalledTimes(DEFAULT_RETRY_CONFIG.maxRetries + 1);
         },
       );

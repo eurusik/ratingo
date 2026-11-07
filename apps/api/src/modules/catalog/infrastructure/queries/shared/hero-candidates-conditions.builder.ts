@@ -2,8 +2,8 @@ import { eq, gte, gt, lt, isNull, isNotNull, type SQL } from 'drizzle-orm';
 
 import { MS_PER_HOUR, MS_PER_DAY } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
-import { allOf, anyOf } from '@/common/utils/sql-conditions.util';
 import * as schema from '@/database/schema';
+import { allOf, anyOf } from '@/database/sql-conditions';
 import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
 import { HERO_THRESHOLDS } from '../../../domain/constants/catalog.constants';

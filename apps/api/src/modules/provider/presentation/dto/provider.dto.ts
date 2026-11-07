@@ -236,7 +236,7 @@ export class ResolveResultDto {
   @ApiProperty({ example: 'US', description: 'Region used for resolution' })
   region: string;
 
-  @ApiPropertyOptional({ type: () => MappingDto, description: 'Resolved mapping if found' })
+  @ApiPropertyOptional({ type: MappingDto, description: 'Resolved mapping if found' })
   mapping?: MappingDto | null;
 
   @ApiProperty({ example: true, description: 'Whether mapping was found' })

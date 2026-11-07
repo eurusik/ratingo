@@ -154,13 +154,14 @@ export class TvMazeAdapter implements EpisodeSchedulePort {
   private async fetch<T>(endpoint: string): Promise<T> {
     const result = await this.httpClient.get<T>(`${this.config.apiUrl}${endpoint}`);
 
-    if (!result.success || result.data === null) {
-      const error = result.success ? undefined : result.error;
+    if (!result.success) {
+      const { error } = result;
       const status = error instanceof HttpError ? error.status : HttpStatus.INTERNAL_SERVER_ERROR;
-      throw new TvMazeApiException(
-        error?.message ?? 'Request failed',
-        status ?? HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new TvMazeApiException(error?.message ?? 'Request failed', status);
+    }
+
+    if (result.data === null) {
+      throw new TvMazeApiException('Request failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     return result.data;

@@ -30,8 +30,8 @@ export interface ShowDetailsQueryRow {
   videos: unknown;
   credits: unknown;
   watchProvidersRaw: unknown;
-  rating: number;
-  voteCount: number;
+  rating: number | null;
+  voteCount: number | null;
   releaseDate: Date | null;
   lastSyncedAt: Date | null;
 
@@ -67,7 +67,7 @@ export interface ShowDetailsQueryRow {
  */
 function mapExternalRatings(row: ShowDetailsQueryRow) {
   return {
-    tmdb: { rating: row.rating, voteCount: row.voteCount },
+    tmdb: row.rating != null ? { rating: row.rating, voteCount: row.voteCount } : null,
     imdb: row.ratingImdb ? { rating: row.ratingImdb, voteCount: row.voteCountImdb } : null,
     trakt: row.ratingTrakt ? { rating: row.ratingTrakt, voteCount: row.voteCountTrakt } : null,
     metacritic: row.ratingMetacritic != null ? { rating: row.ratingMetacritic } : null,

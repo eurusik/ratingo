@@ -23,7 +23,7 @@ import {
   DIGITAL_RELEASE_MAX_AGE_DAYS,
   MS_PER_DAY,
 } from '@/common/constants';
-import { allOf, anyOf } from '@/common/utils/sql-conditions.util';
+import { allOf, anyOf } from '@/database/sql-conditions';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
