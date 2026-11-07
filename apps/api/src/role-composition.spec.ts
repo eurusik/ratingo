@@ -189,7 +189,7 @@ function snapshotComposition(app: INestApplicationContext, load: Loader): Compos
     load<Type<ModulesContainer>>('@nestjs/core', 'ModulesContainer'),
   );
   return {
-    modules: [...modulesContainer.values()].map((module) => module.metatype?.name),
+    modules: [...modulesContainer.values()].map((module) => module.metatype.name),
     providers: discovery.getProviders().map((wrapper) => wrapper.name),
     controllers: discovery.getControllers().map((wrapper) => wrapper.name),
   };

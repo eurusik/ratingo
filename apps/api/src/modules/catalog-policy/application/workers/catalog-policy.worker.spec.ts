@@ -61,6 +61,8 @@ describe('CatalogPolicyWorker', () => {
         const job = {
           id: 'job-1',
           name: CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
+          opts: {},
+          attemptsMade: 0,
           data: payload,
         } as Job;
 
@@ -75,6 +77,8 @@ describe('CatalogPolicyWorker', () => {
         const job = {
           id: 'job-1',
           name: CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
+          opts: {},
+          attemptsMade: 0,
           data: {},
         } as Job;
 
@@ -95,6 +99,8 @@ describe('CatalogPolicyWorker', () => {
         const job = {
           id: 'job-2',
           name: CATALOG_POLICY_JOBS.EVALUATE_CATALOG_ITEM,
+          opts: {},
+          attemptsMade: 0,
           data: payload,
         } as Job;
 
@@ -111,6 +117,8 @@ describe('CatalogPolicyWorker', () => {
         const job = {
           id: 'job-2',
           name: CATALOG_POLICY_JOBS.EVALUATE_CATALOG_ITEM,
+          opts: {},
+          attemptsMade: 0,
           data: {},
         } as Job;
 
@@ -125,6 +133,8 @@ describe('CatalogPolicyWorker', () => {
         const job = {
           id: 'job-3',
           name: CATALOG_POLICY_JOBS.WATCHDOG,
+          opts: {},
+          attemptsMade: 0,
           data: {},
         } as Job;
 
@@ -139,6 +149,8 @@ describe('CatalogPolicyWorker', () => {
         const job = {
           id: 'job-3',
           name: CATALOG_POLICY_JOBS.WATCHDOG,
+          opts: {},
+          attemptsMade: 0,
           data: {},
         } as Job;
 
@@ -153,6 +165,8 @@ describe('CatalogPolicyWorker', () => {
         const job = {
           id: 'job-4',
           name: 'unknown-job-type',
+          opts: {},
+          attemptsMade: 0,
           data: {},
         } as Job;
         const warnSpy = jest.spyOn(Logger.prototype, 'warn');
@@ -171,6 +185,8 @@ describe('CatalogPolicyWorker', () => {
         const job = {
           id: 'job-error',
           name: CATALOG_POLICY_JOBS.WATCHDOG,
+          opts: {},
+          attemptsMade: 0,
           data: {},
         } as Job;
         const error = new Error('Test error');
@@ -194,11 +210,15 @@ describe('CatalogPolicyWorker', () => {
           {
             id: 'job-1',
             name: CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
+            opts: {},
+            attemptsMade: 0,
             data: { runId: 'r1', policyVersion: 1, context: EvaluationContext.CATALOG },
           },
           {
             id: 'job-2',
             name: CATALOG_POLICY_JOBS.EVALUATE_CATALOG_ITEM,
+            opts: {},
+            attemptsMade: 0,
             data: {
               runId: 'r1',
               policyVersion: 1,
@@ -209,6 +229,8 @@ describe('CatalogPolicyWorker', () => {
           {
             id: 'job-3',
             name: CATALOG_POLICY_JOBS.WATCHDOG,
+            opts: {},
+            attemptsMade: 0,
             data: {},
           },
         ] as Job[];

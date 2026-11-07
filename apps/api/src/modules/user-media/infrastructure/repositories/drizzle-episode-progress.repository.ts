@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray, lte, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -148,7 +149,7 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
         >();
 
         for (const row of rows) {
-          const existing = seasonMap.get(row.seasonNumber) || {
+          const existing = seasonMap.get(row.seasonNumber) ?? {
             total: 0,
             watched: 0,
             watchedIds: [],
@@ -183,13 +184,15 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
       'validate episode batch',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select({
-            existingCount: sql<number>`count(*)`,
-            distinctShowCount: sql<number>`count(distinct ${schema.episodes.showId})`,
-          })
-          .from(schema.episodes)
-          .where(inArray(schema.episodes.id, episodeIds));
+        const row = firstOrUndefined(
+          await this.db
+            .select({
+              existingCount: sql<number>`count(*)`,
+              distinctShowCount: sql<number>`count(distinct ${schema.episodes.showId})`,
+            })
+            .from(schema.episodes)
+            .where(inArray(schema.episodes.id, episodeIds)),
+        );
 
         return {
           existingCount: Number(row?.existingCount ?? 0),

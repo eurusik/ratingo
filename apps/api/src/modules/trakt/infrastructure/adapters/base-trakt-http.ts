@@ -92,7 +92,7 @@ export class RateLimiter {
 
     // Allow Node process (and Jest) to exit even if this interval is still active.
     // The limiter is best-effort; keeping the process alive is not desired.
-    if (this._intervalId && typeof this._intervalId.unref === 'function') {
+    if (typeof this._intervalId.unref === 'function') {
       this._intervalId.unref();
     }
   }

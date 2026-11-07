@@ -41,7 +41,7 @@ export class S3KeyProbe extends BaseKeyProbe implements OnModuleDestroy {
       );
       return { status: API_KEY_STATUS.VALID };
     } catch (error) {
-      const statusCode = (error as { $metadata?: { httpStatusCode?: number } })?.$metadata
+      const statusCode = (error as { $metadata?: { httpStatusCode?: number } } | null)?.$metadata
         ?.httpStatusCode;
       const detail = error instanceof Error ? error.message : 'S3 HeadBucket failed';
 

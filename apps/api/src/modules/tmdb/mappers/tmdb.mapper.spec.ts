@@ -415,7 +415,7 @@ describe('TmdbMapper', () => {
       const result = TmdbMapper.toDomain(movieWithManyRegions, MediaType.MOVIE);
 
       expect(result?.watchProvidersRaw).toBeDefined();
-      expect(Object.keys(result?.watchProvidersRaw || {})).toEqual([DEFAULT_REGION, 'US']);
+      expect(Object.keys(result?.watchProvidersRaw ?? {})).toEqual([DEFAULT_REGION, 'US']);
       expect(result?.watchProvidersRaw?.[DEFAULT_REGION]?.flatrate?.[0].name).toBe('UA Provider');
       expect(result?.watchProvidersRaw?.['US']?.rent?.[0].name).toBe('US Provider');
       expect(result?.watchProvidersRaw?.['AR']).toBeUndefined();

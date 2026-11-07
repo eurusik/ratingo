@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -33,15 +34,17 @@ export class DrizzleOAuthAccountsRepository implements IOAuthAccountsRepository 
       'fetch oauth account by provider',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.oauthAccounts)
-          .where(
-            and(
-              eq(schema.oauthAccounts.provider, provider),
-              eq(schema.oauthAccounts.providerAccountId, providerAccountId),
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.oauthAccounts)
+            .where(
+              and(
+                eq(schema.oauthAccounts.provider, provider),
+                eq(schema.oauthAccounts.providerAccountId, providerAccountId),
+              ),
             ),
-          );
+        );
         return row ? this.mapRow(row) : null;
       },
       { provider, providerAccountId },
@@ -71,15 +74,17 @@ export class DrizzleOAuthAccountsRepository implements IOAuthAccountsRepository 
       'fetch oauth account by user and provider',
       this.logger,
       async () => {
-        const [row] = await this.db
-          .select()
-          .from(schema.oauthAccounts)
-          .where(
-            and(
-              eq(schema.oauthAccounts.userId, userId),
-              eq(schema.oauthAccounts.provider, provider),
+        const row = firstOrUndefined(
+          await this.db
+            .select()
+            .from(schema.oauthAccounts)
+            .where(
+              and(
+                eq(schema.oauthAccounts.userId, userId),
+                eq(schema.oauthAccounts.provider, provider),
+              ),
             ),
-          );
+        );
         return row ? this.mapRow(row) : null;
       },
       { userId, provider },
@@ -133,10 +138,12 @@ export class DrizzleOAuthAccountsRepository implements IOAuthAccountsRepository 
       'count oauth accounts',
       this.logger,
       async () => {
-        const [result] = await this.db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(schema.oauthAccounts)
-          .where(eq(schema.oauthAccounts.userId, userId));
+        const result = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(schema.oauthAccounts)
+            .where(eq(schema.oauthAccounts.userId, userId)),
+        );
         return result?.count ?? 0;
       },
       { userId },

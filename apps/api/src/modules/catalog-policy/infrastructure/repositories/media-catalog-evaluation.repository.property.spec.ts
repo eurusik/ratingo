@@ -43,16 +43,12 @@ class InMemoryEvaluationRepository {
    * Mirrors the real repository's ON CONFLICT DO UPDATE behavior.
    */
   upsert(evaluation: MediaCatalogEvaluation): MediaCatalogEvaluation {
-    const key = this.makeKey(
-      evaluation.mediaItemId,
-      evaluation.policyVersion,
-      evaluation.context ?? EvaluationContext.CATALOG,
-    );
+    const key = this.makeKey(evaluation.mediaItemId, evaluation.policyVersion, evaluation.context);
 
     // ON CONFLICT DO UPDATE - always overwrites with new values
     this.evaluations.set(key, {
       ...evaluation,
-      context: evaluation.context ?? EvaluationContext.CATALOG,
+      context: evaluation.context,
     });
 
     return this.evaluations.get(key)!;
@@ -426,7 +422,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
           const afterMultiple = repository.findByKey(
             evaluation.mediaItemId,
             evaluation.policyVersion,
-            evaluation.context ?? EvaluationContext.CATALOG,
+            evaluation.context,
           );
 
           // Clear and do single upsert
@@ -436,7 +432,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
           const afterSingle = repository.findByKey(
             evaluation.mediaItemId,
             evaluation.policyVersion,
-            evaluation.context ?? EvaluationContext.CATALOG,
+            evaluation.context,
           );
 
           // Results should be identical

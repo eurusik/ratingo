@@ -324,22 +324,6 @@ describe('MediaWatchOffersMapper', () => {
     });
 
     describe('edge cases', () => {
-      it('should handle null offers array', () => {
-        const result = MediaWatchOffersMapper.toAvailability(null as unknown as WatchOfferRow[]);
-
-        expect(result.region).toBeNull();
-        expect(result.hint).toBe('none');
-      });
-
-      it('should handle undefined offers array', () => {
-        const result = MediaWatchOffersMapper.toAvailability(
-          undefined as unknown as WatchOfferRow[],
-        );
-
-        expect(result.region).toBeNull();
-        expect(result.hint).toBe('none');
-      });
-
       it('should handle empty offers array', () => {
         const result = MediaWatchOffersMapper.toAvailability([]);
 

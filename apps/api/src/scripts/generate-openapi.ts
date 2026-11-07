@@ -99,7 +99,7 @@ const isSuccessStatus = (code: string) => code.startsWith('2');
 const isAlreadyWrapped = (schema: JsonSchema) =>
   schema.type === 'object' &&
   schema.properties?.success !== undefined &&
-  schema.properties?.data !== undefined;
+  schema.properties.data !== undefined;
 
 /**
  * Wrap a response schema into the standardized API success format.
@@ -117,7 +117,7 @@ const wrapSchema = (schema: JsonSchema): JsonSchema => ({
  * Collect all operation objects from all paths.
  */
 const getOperations = (doc: OpenAPIObject): OperationObject[] =>
-  Object.values(doc.paths ?? {}).flatMap(
+  Object.values(doc.paths).flatMap(
     (pathItem) =>
       HTTP_METHODS.map((method) => (pathItem as PathItemObject)[method]).filter(
         Boolean,

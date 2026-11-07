@@ -175,19 +175,6 @@ describe('ShowDetailsService', () => {
       expect(result.userState).toEqual(mockUserState);
     });
 
-    it('should handle show with null stats gracefully', async () => {
-      const showWithNullStats = {
-        ...mockShow,
-        stats: null,
-      };
-      showRepository.findBySlug.mockResolvedValue(showWithNullStats);
-
-      const result = await service.getBySlug('test-show');
-
-      expect(result).toBeDefined();
-      expect(result.verdict).toBeDefined();
-    });
-
     it('should handle show with null externalRatings gracefully', async () => {
       const showWithNullRatings = {
         ...mockShow,

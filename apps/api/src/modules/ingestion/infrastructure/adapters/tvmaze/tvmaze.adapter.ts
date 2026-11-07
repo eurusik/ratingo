@@ -68,7 +68,7 @@ export class TvMazeAdapter implements EpisodeSchedulePort {
       // Lookup Show ID via IMDb ID (Follows redirects)
       const show = await this.fetch<TvMazeShow>(`/lookup/shows?imdb=${imdbId}`);
 
-      if (!show?.id) {
+      if (!show.id) {
         return [];
       }
 
@@ -120,11 +120,11 @@ export class TvMazeAdapter implements EpisodeSchedulePort {
    */
   async getEpisodesByShowName(showName: string): Promise<ScheduledEpisode[]> {
     try {
-      const show = await this.fetch<TvMazeShow | null>(
+      const show = await this.fetch<TvMazeShow>(
         `/singlesearch/shows?q=${encodeURIComponent(showName)}`,
       );
 
-      if (!show?.id) return [];
+      if (!show.id) return [];
 
       const episodes = await this.fetch<TvMazeEpisodeResponse[]>(`/shows/${show.id}/episodes`);
 

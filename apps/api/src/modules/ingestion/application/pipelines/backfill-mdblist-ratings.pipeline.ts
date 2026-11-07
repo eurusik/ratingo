@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { type JobType, Queue } from 'bullmq';
+import { type Job, type JobType, Queue } from 'bullmq';
 
 import { MS_PER_DAY } from '@/common/constants';
 import { type MediaType } from '@/common/enums/media-type.enum';
@@ -120,7 +120,7 @@ export class BackfillMdblistRatingsPipeline {
   }
 
   private async getPendingJobs(): Promise<PendingJobsSnapshot> {
-    const jobs = await this.queue.getJobs(PENDING_JOB_STATES);
+    const jobs: Array<Job | undefined> = await this.queue.getJobs(PENDING_JOB_STATES);
     const mediaItemIds = new Set<string>();
     let jobCount = 0;
     for (const job of jobs) {

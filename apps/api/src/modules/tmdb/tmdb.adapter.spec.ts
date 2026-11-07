@@ -1,3 +1,4 @@
+import { HttpStatus } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TmdbAdapter } from './tmdb.adapter';
@@ -233,17 +234,16 @@ describe('TmdbAdapter', () => {
       expect(result?.originalLanguage).toBe('de');
     });
 
-    it('should return null when TMDB returns no data', async () => {
+    it('should throw a retryable error when TMDB returns an empty body', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(null),
       });
 
-      mockToDomain.mockReturnValue(null);
-
-      const result = await adapter.getMovie(99999);
-
-      expect(result).toBeNull();
+      await expect(adapter.getMovie(99999)).rejects.toMatchObject({
+        details: { statusCode: HttpStatus.BAD_GATEWAY },
+      });
+      expect(mockToDomain).not.toHaveBeenCalled();
     });
   });
 

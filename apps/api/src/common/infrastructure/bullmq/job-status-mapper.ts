@@ -4,7 +4,7 @@ import { JOB_STATUS, type JobStatus } from '@/common/enums/job-status.enum';
  * Maps BullMQ internal states to public JobStatus.
  * Infrastructure concern - only used by BullMQ adapters/controllers.
  */
-const BULL_STATE_TO_JOB_STATUS: Record<string, JobStatus> = {
+const BULL_STATE_TO_JOB_STATUS: Partial<Record<string, JobStatus>> = {
   waiting: JOB_STATUS.QUEUED,
   prioritized: JOB_STATUS.QUEUED,
   delayed: JOB_STATUS.QUEUED,
@@ -25,4 +25,8 @@ export function mapBullStateToJobStatus(state: string, finishedOn?: number | nul
 
   // Unknown state: infer from finishedOn timestamp
   return finishedOn ? JOB_STATUS.READY : JOB_STATUS.FAILED;
+}
+
+export function jobFailureReason(job: { failedReason?: string }): string | null {
+  return job.failedReason ?? null;
 }

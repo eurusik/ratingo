@@ -309,6 +309,27 @@ describe('ScoreCalculatorService', () => {
       expect(result.totalVotes).toBe(15000);
     });
 
+    it.each([
+      { imdbVotes: Number.NaN, traktVotes: 5000, expected: 5000 },
+      { imdbVotes: null, traktVotes: 5000, expected: 5000 },
+      { imdbVotes: 0, traktVotes: 5000, expected: 5000 },
+      { imdbVotes: -50, traktVotes: 5000, expected: 5000 },
+      { imdbVotes: 10000, traktVotes: Number.NaN, expected: 10000 },
+    ])(
+      'should count only valid vote sources in totalVotes ($imdbVotes + $traktVotes)',
+      ({ imdbVotes, traktVotes, expected }) => {
+        const result = service.calculate({
+          tmdbPopularity: 100,
+          traktTotalWatchers: 500,
+          imdbVotes,
+          traktVotes,
+          releaseDate: new Date(),
+        });
+
+        expect(result.totalVotes).toBe(expected);
+      },
+    );
+
     it('should return avgRating of 5.0 when no ratings provided', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,

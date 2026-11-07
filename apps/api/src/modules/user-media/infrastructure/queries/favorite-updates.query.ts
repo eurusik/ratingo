@@ -275,8 +275,8 @@ export class FavoriteUpdatesQuery {
       const next = nextMap.get(row.showId);
 
       const hasRecentOrUpcoming =
-        (latest?.airDate && latest.airDate >= pastDate) ||
-        (next?.airDate && next.airDate <= futureDate);
+        (latest?.airDate != null && latest.airDate >= pastDate) ||
+        (next?.airDate != null && next.airDate <= futureDate);
 
       if (!hasRecentOrUpcoming) continue;
       if (row.rating == null) continue;

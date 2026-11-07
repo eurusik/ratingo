@@ -4,7 +4,10 @@ import { Injectable } from '@nestjs/common';
 import { type Queue } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
-import { mapBullStateToJobStatus } from '@/common/infrastructure/bullmq/job-status-mapper';
+import {
+  mapBullStateToJobStatus,
+  jobFailureReason,
+} from '@/common/infrastructure/bullmq/job-status-mapper';
 import {
   type IngestionJobStatus,
   type IngestionJobStatusPort,
@@ -32,7 +35,7 @@ export class BullMqIngestionJobStatusAdapter implements IngestionJobStatusPort {
     return {
       id: `${job.id}`,
       status: mapBullStateToJobStatus(state, job.finishedOn),
-      errorMessage: job.failedReason ?? null,
+      errorMessage: jobFailureReason(job),
       updatedAt: lastActivityAt ? new Date(lastActivityAt) : null,
       tmdbId: job.data?.tmdbId ?? null,
       mediaType: SYNC_JOB_MEDIA_TYPE[job.name],

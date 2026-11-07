@@ -351,7 +351,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
       deletedAt: row.deletedAt as Date | null,
       // Evaluation fields - status is already in canonical lowercase format
       eligibilityStatus: row.eligibilityStatus as EligibilityStatusType | null,
-      evaluationReasons: (row.evaluationReasons as string[]) ?? [],
+      evaluationReasons: (row.evaluationReasons as string[] | null) ?? [],
       relevanceScore: row.relevanceScore as number | null,
       policyVersion: row.policyVersion as number | null,
       breakoutRuleId: row.breakoutRuleId as string | null,

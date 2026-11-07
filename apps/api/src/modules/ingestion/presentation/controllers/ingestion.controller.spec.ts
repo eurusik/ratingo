@@ -20,7 +20,7 @@ describe('IngestionController', () => {
   let mockQueue: any;
   let mockSyncService: any;
   let mockJobStatusService: { getJobStatus: jest.Mock };
-  let moduleRef: TestingModule;
+  let moduleRef: TestingModule | undefined;
 
   beforeEach(async () => {
     mockQueue = {

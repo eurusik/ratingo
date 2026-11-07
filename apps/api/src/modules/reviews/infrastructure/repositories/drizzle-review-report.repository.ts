@@ -4,6 +4,7 @@ import { eq, and, asc, sql, gte } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -169,10 +170,12 @@ export class DrizzleReviewReportRepository implements IReviewReportRepository {
       async () => {
         const conditions = status ? [eq(reviewReports.status, status)] : [];
 
-        const [result] = await this.db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(reviewReports)
-          .where(conditions.length > 0 ? and(...conditions) : undefined);
+        const result = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(reviewReports)
+            .where(conditions.length > 0 ? and(...conditions) : undefined),
+        );
 
         return result?.count ?? 0;
       },
@@ -212,10 +215,12 @@ export class DrizzleReviewReportRepository implements IReviewReportRepository {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const [result] = await this.db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(reviewReports)
-          .where(and(eq(reviewReports.reporterId, userId), gte(reviewReports.createdAt, today)));
+        const result = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(reviewReports)
+            .where(and(eq(reviewReports.reporterId, userId), gte(reviewReports.createdAt, today))),
+        );
 
         return result?.count ?? 0;
       },

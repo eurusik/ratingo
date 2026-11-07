@@ -45,13 +45,6 @@ type ReplyWithCookies = FastifyReply & {
 };
 
 /**
- * Type for Fastify request with cookies (added by @fastify/cookie plugin).
- */
-type RequestWithCookies = FastifyRequest & {
-  cookies?: Record<string, string>;
-};
-
-/**
  * Creates an abstract base OAuth guard class parameterized by Passport strategy name.
  *
  * Handles CSRF protection via signed state cookie, redirect orchestration,
@@ -259,7 +252,7 @@ export function createBaseOAuthGuard(strategyName: string) {
     }
 
     getStateCookie(req: FastifyRequest): string | undefined {
-      return (req as RequestWithCookies).cookies?.[OAUTH_STATE_COOKIE];
+      return req.cookies[OAUTH_STATE_COOKIE];
     }
 
     clearStateCookie(res: FastifyReply): void {

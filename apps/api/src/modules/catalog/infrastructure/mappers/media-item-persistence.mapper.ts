@@ -30,7 +30,7 @@ const EXTERNAL_RATING_FIELDS = [
 export class MediaItemPersistenceMapper {
   static toMediaItemInsert(media: NormalizedMedia): MediaItemInsert {
     // Ensure slug is never empty (required by UNIQUE NOT NULL constraint)
-    const slug = media.slug?.trim() || `${media.type}-${media.externalIds.tmdbId}`;
+    const slug = media.slug.trim() || `${media.type}-${media.externalIds.tmdbId}`;
 
     return {
       type: media.type,
@@ -44,9 +44,9 @@ export class MediaItemPersistenceMapper {
       ingestionStatus: media.ingestionStatus,
       posterPath: media.posterPath,
       backdropPath: media.backdropPath,
-      videos: media.videos || null,
-      credits: media.credits || null,
-      watchProvidersRaw: media.watchProvidersRaw || null,
+      videos: media.videos ?? null,
+      credits: media.credits,
+      watchProvidersRaw: media.watchProvidersRaw ?? null,
 
       // Metrics
       rating: media.rating,
@@ -68,7 +68,7 @@ export class MediaItemPersistenceMapper {
       releaseDate: toDateOrNull(media.releaseDate),
 
       // Origin metadata for catalog policy
-      originCountries: media.originCountries || null,
+      originCountries: media.originCountries ?? null,
       originalLanguage: media.originalLanguage || null,
 
       updatedAt: new Date(),
@@ -103,9 +103,9 @@ export class MediaItemPersistenceMapper {
       ratingRottenTomatoesAudience: media.ratingRottenTomatoesAudience,
       posterPath: media.posterPath,
       backdropPath: media.backdropPath,
-      videos: media.videos || null,
-      credits: media.credits || null,
-      watchProvidersRaw: media.watchProvidersRaw || null,
+      videos: media.videos ?? null,
+      credits: media.credits,
+      watchProvidersRaw: media.watchProvidersRaw ?? null,
       releaseDate,
       updatedAt: new Date(),
       ...(media.trendingScore !== undefined && {
@@ -119,13 +119,13 @@ export class MediaItemPersistenceMapper {
       ...(media.originCountries !== undefined && { originCountries: media.originCountries }),
       ...(media.originalLanguage !== undefined && { originalLanguage: media.originalLanguage }),
       ...(media.alternativeTitles !== undefined && {
-        alternativeTitles: media.alternativeTitles?.length ? media.alternativeTitles : null,
+        alternativeTitles: media.alternativeTitles.length ? media.alternativeTitles : null,
       }),
     };
 
     // Filter out undefined values
     const filtered = Object.fromEntries(
-      Object.entries(update).filter(([, v]) => v !== undefined),
+      (Object.entries(update) as Array<[string, unknown]>).filter(([, v]) => v !== undefined),
     ) as Partial<MediaItemInsert>;
 
     // Defensive: never clobber existing external ratings with null on update.

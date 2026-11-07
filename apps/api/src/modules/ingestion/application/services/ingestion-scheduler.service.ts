@@ -99,7 +99,7 @@ export class IngestionSchedulerService implements OnModuleInit {
    * @returns {boolean} True if scheduler key starts with env prefix
    */
   private isOurScheduler(scheduler: JobSchedulerJson): boolean {
-    return scheduler.key?.startsWith(`${this.envPrefix}:`) ?? false;
+    return scheduler.key.startsWith(`${this.envPrefix}:`);
   }
 
   /**

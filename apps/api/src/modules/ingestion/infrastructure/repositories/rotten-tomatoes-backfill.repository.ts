@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gt, isNotNull, isNull, lt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -60,16 +61,18 @@ export class RottenTomatoesBackfillRepository implements IRottenTomatoesBackfill
   }
 
   async findLastFetchedAt(mediaItemId: string): Promise<Date | null> {
-    const [existing] = await withDbError(
-      'read MDBList rtFetchedAt',
-      this.logger,
-      () =>
-        this.db
-          .select({ rtFetchedAt: schema.mediaItems.rtFetchedAt })
-          .from(schema.mediaItems)
-          .where(eq(schema.mediaItems.id, mediaItemId))
-          .limit(1),
-      { mediaItemId },
+    const existing = firstOrUndefined(
+      await withDbError(
+        'read MDBList rtFetchedAt',
+        this.logger,
+        () =>
+          this.db
+            .select({ rtFetchedAt: schema.mediaItems.rtFetchedAt })
+            .from(schema.mediaItems)
+            .where(eq(schema.mediaItems.id, mediaItemId))
+            .limit(1),
+        { mediaItemId },
+      ),
     );
 
     return existing?.rtFetchedAt ?? null;

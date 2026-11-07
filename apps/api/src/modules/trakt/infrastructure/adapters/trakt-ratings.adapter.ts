@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { toError } from '@/common/utils/error.utils';
 import {
   TRAKT_BATCH_CONCURRENCY,
@@ -145,7 +146,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const results = await this.fetchBulk<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
         `/search/tmdb/${tmdbId}?type=${type}`,
       );
-      const firstResult = results[0];
+      const firstResult = firstOrUndefined(results);
       let traktId: number | undefined;
 
       if (firstResult) {
@@ -249,7 +250,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
   async getTraktIdByTmdbId(tmdbId: number): Promise<number | null> {
     try {
       const results = await this.fetch<TraktSearchShowResult[]>(`/search/tmdb/${tmdbId}?type=show`);
-      return results[0]?.show?.ids?.trakt || null;
+      return firstOrUndefined(results)?.show?.ids?.trakt ?? null;
     } catch (error) {
       this.logger.warn(
         `Failed to resolve traktId for tmdb ${tmdbId}: ${toError(error).toString()}`,
@@ -271,7 +272,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
         .filter((s) => s.number > 0)
         .map((s) => ({
           number: s.number,
-          episodeCount: s.episode_count || 0,
+          episodeCount: s.episode_count ?? 0,
         }));
     } catch (error) {
       this.logger.warn(`Failed to get seasons for ${traktId}: ${toError(error).toString()}`);
@@ -367,7 +368,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
         `/search/tmdb/${tmdbId}?type=${type}`,
       );
 
-      const firstResult = results[0];
+      const firstResult = firstOrUndefined(results);
       let traktId: number | undefined;
 
       if (firstResult) {
@@ -560,7 +561,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const results = await this.fetchBulk<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
         `/search/tmdb/${tmdbId}?type=${type}`,
       );
-      const firstResult = results[0];
+      const firstResult = firstOrUndefined(results);
       let traktId: number | undefined;
 
       if (firstResult) {
