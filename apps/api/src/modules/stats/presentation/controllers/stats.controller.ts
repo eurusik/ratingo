@@ -14,7 +14,11 @@ import {
   StatsQueryService,
 } from '@/modules/stats/application/services';
 import { CommunityRatingService } from '@/modules/stats/application/services/community-rating.service';
-import { type StatsJobData } from '@/modules/stats/application/types/stats-job.types';
+import {
+  type AnalyzeDropOffJobData,
+  type SyncEligibleTrendingJobData,
+  type SyncTrendingJobData,
+} from '@/modules/stats/application/types/stats-job.types';
 import { STATS_QUEUE, STATS_JOBS } from '@/modules/stats/stats.constants';
 
 import {
@@ -69,7 +73,7 @@ export class StatsController {
   async syncTrendingStats(@Query() query: SyncTrendingQueryDto) {
     const job = await this.statsQueue.add(STATS_JOBS.SYNC_TRENDING, {
       limit: query.limit ?? MAX_PAGE_SIZE,
-    } satisfies StatsJobData);
+    } satisfies SyncTrendingJobData);
 
     return {
       message: 'Stats sync job added to queue',
@@ -99,7 +103,7 @@ export class StatsController {
     const job = await this.statsQueue.add(STATS_JOBS.SYNC_ELIGIBLE_TRENDING, {
       batchSize: query.batchSize ?? DEFAULT_BATCH_SIZE,
       afterId: query.afterId,
-    } satisfies StatsJobData);
+    } satisfies SyncEligibleTrendingJobData);
 
     return {
       message: 'Eligible trending sync job added to queue',
@@ -154,7 +158,7 @@ export class StatsController {
     const job = await this.statsQueue.add(STATS_JOBS.ANALYZE_DROP_OFF, {
       tmdbId: query.tmdbId,
       limit: query.limit ?? DEFAULT_BATCH_SIZE,
-    } satisfies StatsJobData);
+    } satisfies AnalyzeDropOffJobData);
 
     return {
       message: query.tmdbId
@@ -182,7 +186,7 @@ export class StatsController {
   async analyzeDropOffById(@Param('tmdbId') tmdbId: number) {
     const job = await this.statsQueue.add(STATS_JOBS.ANALYZE_DROP_OFF, {
       tmdbId,
-    } satisfies StatsJobData);
+    } satisfies AnalyzeDropOffJobData);
 
     return {
       message: `Drop-off analysis job for show ${tmdbId} added to queue`,

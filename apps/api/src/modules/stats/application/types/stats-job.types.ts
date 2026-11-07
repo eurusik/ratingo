@@ -1,11 +1,22 @@
 import { type BackfillChunkItem } from './backfill.types';
 
-export interface StatsJobData {
+export interface SyncTrendingJobData {
   limit?: number;
+}
+
+export interface SyncEligibleTrendingJobData {
   batchSize?: number;
   afterId?: string;
-  tmdbId?: number;
 }
+
+export interface AnalyzeDropOffJobData {
+  tmdbId?: number;
+  limit?: number;
+}
+
+export type StatsJobData = SyncTrendingJobData &
+  SyncEligibleTrendingJobData &
+  AnalyzeDropOffJobData;
 
 export interface BackfillWatchersChunkJobData {
   items: BackfillChunkItem[];

@@ -5,7 +5,7 @@ describe('extractPrimaryTrailer', () => {
     expect(extractPrimaryTrailer([{ key: 'a' }, { key: 'b' }])).toEqual({ key: 'a' });
   });
 
-  it.each([[[]], [null], [undefined], ['abc'], [{ key: 'a' }], [[null]]])(
+  it.each([[[]], [null], [undefined], ['abc'], [{ key: 'a' }], [[null]], [[7]], [['trailer']]])(
     'returns null for %p',
     (videos) => {
       expect(extractPrimaryTrailer(videos)).toBeNull();
