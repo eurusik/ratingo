@@ -4,7 +4,10 @@ import { Injectable } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
-import { mapBullStateToJobStatus } from '@/common/infrastructure/bullmq/job-status-mapper';
+import {
+  mapBullStateToJobStatus,
+  jobFailureReason,
+} from '@/common/infrastructure/bullmq/job-status-mapper';
 import {
   IImportJobPort,
   JobStatusResult,
@@ -90,7 +93,7 @@ export class BullMQImportJobAdapter implements IImportJobPort {
 
     return {
       status,
-      errorMessage: job.failedReason || null,
+      errorMessage: jobFailureReason(job),
       tmdbId: job.data?.tmdbId ?? null,
       type: this.parseTypeFromJobId(jobId),
     };

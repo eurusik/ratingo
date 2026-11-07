@@ -121,7 +121,7 @@ export class TmdbAdapter implements MetadataProviderPort {
         append_to_response: 'credits,videos,release_dates,watch/providers,alternative_titles',
         include_video_language: 'uk,en',
       });
-      if (!data) return null;
+      if (!data) throw new TmdbApiException('Empty response body', HttpStatus.BAD_GATEWAY);
       const result = TmdbMapper.toDomain(data, MediaType.MOVIE);
       // Fallback: if no localized data, create minimal object for import
       if (!result && data.id) {
@@ -181,7 +181,7 @@ export class TmdbAdapter implements MetadataProviderPort {
           'external_ids,aggregate_credits,videos,content_ratings,watch/providers,alternative_titles',
         include_video_language: 'uk,en',
       });
-      if (!data) return null;
+      if (!data) throw new TmdbApiException('Empty response body', HttpStatus.BAD_GATEWAY);
       const result = TmdbMapper.toDomain(data, MediaType.SHOW);
       // Fallback: if no localized data, create minimal object for import
       if (!result && data.id) {

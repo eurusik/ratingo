@@ -5,6 +5,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { DatabaseException } from '@/common/exceptions/database.exception';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { toError } from '@/common/utils/error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -197,21 +198,23 @@ export class PopularMoviesQuery {
   }
 
   private async countTotal(conditions: SQL[]): Promise<number> {
-    const [{ total }] = await this.db
-      .select({ total: sql<number>`count(*)` })
-      .from(schema.movies)
-      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
-      .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-      .innerJoin(
-        schema.mediaCatalogEvaluations,
-        and(
-          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-          eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-          eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
-        ),
-      )
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(and(...conditions));
-    return Number(total);
+    const totalRow = firstOrUndefined(
+      await this.db
+        .select({ total: sql<number>`count(*)` })
+        .from(schema.movies)
+        .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          and(
+            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
+          ),
+        )
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(and(...conditions)),
+    );
+    return Number(totalRow?.total ?? 0);
   }
 }

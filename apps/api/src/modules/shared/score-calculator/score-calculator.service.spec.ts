@@ -313,6 +313,7 @@ describe('ScoreCalculatorService', () => {
       { imdbVotes: Number.NaN, traktVotes: 5000, expected: 5000 },
       { imdbVotes: null, traktVotes: 5000, expected: 5000 },
       { imdbVotes: 0, traktVotes: 5000, expected: 5000 },
+      { imdbVotes: -50, traktVotes: 5000, expected: 5000 },
       { imdbVotes: 10000, traktVotes: Number.NaN, expected: 10000 },
     ])(
       'should count only valid vote sources in totalVotes ($imdbVotes + $traktVotes)',

@@ -23,7 +23,7 @@ describe('catalog-policy batchSize validation', () => {
       expect(errors).toHaveLength(0);
     });
 
-    it.each([0, -1, 1001])('rejects batchSize %d', async (batchSize) => {
+    it.each([0, -1, 1001, 1.5])('rejects batchSize %d', async (batchSize) => {
       const errors = await validate(build(batchSize));
       expect(errors.map((e) => e.property)).toEqual(['batchSize']);
     });

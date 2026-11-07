@@ -18,7 +18,7 @@ export { ContentClassValues, type ContentClass };
 export interface ClassificationInput {
   originCountries: string[] | null;
   originalLanguage: string | null;
-  genreIds: number[] | null;
+  genreIds: number[];
 }
 
 /**
@@ -42,11 +42,8 @@ export interface ClassificationInput {
 export function classifyContent(input: ClassificationInput): ContentClass {
   const { originCountries, originalLanguage, genreIds } = input;
 
-  // Handle null/undefined genreIds gracefully
-  const safeGenreIds = genreIds ?? [];
-
   // Rule 1: Anime = Animation + Japanese origin
-  if (safeGenreIds.includes(TMDB_GENRE_IDS.ANIMATION)) {
+  if (genreIds.includes(TMDB_GENRE_IDS.ANIMATION)) {
     const isJapanese = (originCountries ?? []).includes('JP') || originalLanguage === 'ja';
 
     if (isJapanese) {
@@ -55,18 +52,18 @@ export function classifyContent(input: ClassificationInput): ContentClass {
   }
 
   // Rule 2: Documentary
-  if (safeGenreIds.includes(TMDB_GENRE_IDS.DOCUMENTARY)) {
+  if (genreIds.includes(TMDB_GENRE_IDS.DOCUMENTARY)) {
     return ContentClassValues.DOCUMENTARY;
   }
 
   // Rule 3: Reality
-  if (safeGenreIds.includes(TMDB_GENRE_IDS.REALITY)) {
+  if (genreIds.includes(TMDB_GENRE_IDS.REALITY)) {
     return ContentClassValues.REALITY;
   }
 
   // Rule 4: Kids - ONLY explicit Kids genre, NOT Family
   // Family (10751) stays mainstream until target_audience is implemented
-  if (safeGenreIds.includes(TMDB_GENRE_IDS.KIDS)) {
+  if (genreIds.includes(TMDB_GENRE_IDS.KIDS)) {
     return ContentClassValues.KIDS;
   }
 

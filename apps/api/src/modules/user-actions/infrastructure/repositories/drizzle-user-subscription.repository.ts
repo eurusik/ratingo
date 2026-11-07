@@ -333,8 +333,6 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             eq(schema.mediaItems.type, MediaType.SHOW),
             // Not ended or canceled (status is in shows table)
             sql`${schema.shows.status} NOT IN (${ShowStatus.ENDED}, ${ShowStatus.CANCELED})`,
-            // Valid tmdbId
-            sql`${schema.mediaItems.tmdbId} IS NOT NULL`,
             // Not soft-deleted
             isNull(schema.mediaItems.deletedAt),
           ),

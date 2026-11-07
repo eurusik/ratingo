@@ -201,26 +201,6 @@ describe('Classification Service', () => {
         // ja language is enough for anime classification
         expect(classifyContent(input)).toBe(ContentClassValues.ANIME);
       });
-
-      it('should handle undefined genreIds as empty array', () => {
-        const input = {
-          originCountries: ['US'],
-          originalLanguage: 'en',
-          genreIds: undefined as unknown as number[],
-        };
-
-        expect(classifyContent(input)).toBe(ContentClassValues.MAINSTREAM);
-      });
-
-      it('should handle null genreIds as empty array', () => {
-        const input = {
-          originCountries: ['US'],
-          originalLanguage: 'en',
-          genreIds: null,
-        };
-
-        expect(classifyContent(input)).toBe(ContentClassValues.MAINSTREAM);
-      });
     });
 
     describe('Priority order', () => {

@@ -6,7 +6,7 @@
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
 
 import { RUN_STATUSES } from './constants';
 
@@ -22,7 +22,7 @@ export class PrepareOptionsDto {
     maximum: 1000,
   })
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   @Min(1)
   @Max(1000)
   batchSize?: number;

@@ -160,7 +160,7 @@ export class OmdbAdapter implements AggregatedRatingsPort {
     } catch (error) {
       // Best-effort: log warning but don't fail the job
       const status =
-        (error instanceof OmdbApiException ? error.upstreamStatus : undefined) ?? 'unknown';
+        error instanceof OmdbApiException ? (error.upstreamStatus ?? 'unknown') : 'unknown';
       this.logger.warn(`OMDb enrichment skipped for ${imdbId} (status=${status})`);
       return {
         imdbRating: null,

@@ -250,7 +250,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
   async getTraktIdByTmdbId(tmdbId: number): Promise<number | null> {
     try {
       const results = await this.fetch<TraktSearchShowResult[]>(`/search/tmdb/${tmdbId}?type=show`);
-      return results[0]?.show?.ids?.trakt ?? null;
+      return firstOrUndefined(results)?.show?.ids?.trakt ?? null;
     } catch (error) {
       this.logger.warn(
         `Failed to resolve traktId for tmdb ${tmdbId}: ${toError(error).toString()}`,

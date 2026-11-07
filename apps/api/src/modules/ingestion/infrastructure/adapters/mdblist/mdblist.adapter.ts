@@ -142,7 +142,7 @@ export class MdblistAdapter implements RottenTomatoesRatingsPort {
       };
     } catch (error) {
       const status =
-        (error instanceof MdblistApiException ? error.upstreamStatus : undefined) ?? 'unknown';
+        error instanceof MdblistApiException ? (error.upstreamStatus ?? 'unknown') : 'unknown';
       if (status === HttpStatus.NOT_FOUND) {
         this.logger.debug(`MDBList has no entry for tmdbId=${tmdbId} (404)`);
         return { rottenTomatoesCritics: null, rottenTomatoesAudience: null };

@@ -167,7 +167,7 @@ export class DryRunService {
     if (options.mode === 'byCountry' && !options.country) {
       throw new MissingModeParameterError('byCountry', 'country');
     }
-    if (options.limit && (options.limit < 1 || options.limit > MAX_ITEMS)) {
+    if (options.limit !== undefined && (options.limit < 1 || options.limit > MAX_ITEMS)) {
       throw new InvalidLimitError(options.limit, 1, MAX_ITEMS);
     }
     if (

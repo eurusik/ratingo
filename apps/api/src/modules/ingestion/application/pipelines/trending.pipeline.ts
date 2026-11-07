@@ -76,10 +76,7 @@ export class TrendingPipeline {
     this.logger.log(`${logPrefix} Processing...`);
 
     const rawItems = await this.syncService.getTrending(page, type);
-    const items = rawItems.filter(
-      (item): item is { tmdbId: number; type: MediaType } =>
-        typeof item.tmdbId === 'number' && item.tmdbId > 0,
-    );
+    const items = rawItems.filter((item) => Number.isInteger(item.tmdbId) && item.tmdbId > 0);
 
     if (items.length === 0) {
       this.logger.log(`${logPrefix} found=0`);
