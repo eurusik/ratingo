@@ -23,7 +23,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "lint:migrations": "ts-node --transpile-only src/scripts/lint-migrations.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",
@@ -95,6 +96,7 @@
     "eslint-plugin-import": "^2.32.0",
     "fast-check": "^4.5.2",
     "jest": "^29.7.0",
+    "squawk-cli": "2.70.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.0.0",
