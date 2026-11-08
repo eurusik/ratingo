@@ -1,21 +1,13 @@
 import { writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 
-import { BullRegistrar, getQueueToken } from '@nestjs/bullmq';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 
 import { type AppRole } from '../common/runtime/app-role';
 import { DATABASE_CONNECTION } from '../database/database.module';
-import { HEALTH_QUEUE } from '../health/health.constants';
-import { COOLDOWN_REDIS_CLIENT } from '../modules/catalog/infrastructure/adapters/redis-cooldown-gate.adapter';
-import { CATALOG_POLICY_QUEUE } from '../modules/catalog-policy/catalog-policy.constants';
-import { INGESTION_QUEUE } from '../modules/ingestion/ingestion.constants';
-import { MONITORING_REDIS_CLIENT } from '../modules/monitoring/infrastructure/counters/redis-failure-counter.store';
-import { MONITORING_QUEUE } from '../modules/monitoring/monitoring.constants';
-import { BACKFILL_QUEUE, RATINGS_BACKFILL_QUEUE } from '../modules/shared/contracts';
-import { STATS_QUEUE } from '../modules/stats/stats.constants';
+import { replaceRedisWithStubs } from '../offline-redis';
 import {
   applyStandardErrorResponses,
   buildSwaggerConfig,
@@ -23,16 +15,6 @@ import {
 } from '../swagger.config';
 
 const GLOBAL_PREFIX = 'api';
-
-const QUEUES = [
-  INGESTION_QUEUE,
-  STATS_QUEUE,
-  BACKFILL_QUEUE,
-  RATINGS_BACKFILL_QUEUE,
-  CATALOG_POLICY_QUEUE,
-  HEALTH_QUEUE,
-  MONITORING_QUEUE,
-];
 
 const OUTPUT_PATH = path.resolve(__dirname, '../../../../packages/api-contract/openapi.json');
 
@@ -152,22 +134,12 @@ const wrapSuccessResponses = (doc: OpenAPIObject): void => {
 
 const createApp = async (): Promise<NestFastifyApplication> => {
   const { AppModule } = await import('../app.module');
-  const noopBullRegistrar = { onModuleInit: () => {}, register: () => {} };
-  const noopRedisClient = { quit: () => Promise.resolve('OK'), disconnect: () => {} };
-
-  const builder = Test.createTestingModule({ imports: [AppModule] })
-    .overrideProvider(DATABASE_CONNECTION)
-    .useValue({})
-    .overrideProvider(COOLDOWN_REDIS_CLIENT)
-    .useValue(noopRedisClient)
-    .overrideProvider(MONITORING_REDIS_CLIENT)
-    .useValue(noopRedisClient)
-    .overrideProvider(BullRegistrar)
-    .useValue(noopBullRegistrar);
-
-  for (const queue of QUEUES) {
-    builder.overrideProvider(getQueueToken(queue)).useValue({});
-  }
+  const builder = replaceRedisWithStubs(
+    Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(DATABASE_CONNECTION)
+      .useValue({}),
+    () => ({}),
+  );
 
   const moduleRef = await builder.compile();
 
