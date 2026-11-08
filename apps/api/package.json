@@ -61,7 +61,7 @@
     "cron": "^4.4.0",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.0",
-    "drizzle-orm": "^0.44.0",
+    "drizzle-orm": "^0.45.4",
     "fastify": "4.28.1",
     "he": "^1.2.0",
     "ioredis": "^5.8.2",
