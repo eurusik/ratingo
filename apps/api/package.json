@@ -24,7 +24,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "lint:migrations": "ts-node --transpile-only src/scripts/lint-migrations.ts"
+    "lint:migrations": "ts-node --transpile-only src/scripts/lint-migrations.ts",
+    "lint:dead-code": "cd ../.. && knip --workspace apps/api"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",
@@ -57,9 +58,11 @@
     "bullmq": "^5.65.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "cron": "^4.4.0",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.0",
     "drizzle-orm": "^0.44.0",
+    "fastify": "4.28.1",
     "he": "^1.2.0",
     "ioredis": "^5.8.2",
     "joi": "^18.0.2",
@@ -80,7 +83,6 @@
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
     "@nestjs/platform-express": "^10.4.20",
-    "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@types/bcrypt": "^5.0.2",
     "@types/he": "^1.2.3",
@@ -92,10 +94,9 @@
     "@types/passport-local": "^1.0.38",
     "@types/sanitize-html": "^2.16.0",
     "@types/supertest": "^6.0.3",
-    "eslint-import-resolver-typescript": "^4.4.4",
-    "eslint-plugin-import": "^2.32.0",
     "fast-check": "^4.5.2",
     "jest": "^29.7.0",
+    "knip": "6.44.1",
     "squawk-cli": "2.70.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.1.0",

@@ -18,17 +18,6 @@ export class NotFoundException extends AppException {
 }
 
 /**
- * Exception for media not found errors.
- */
-export class MediaNotFoundException extends NotFoundException {
-  constructor(identifier: string | number, type: 'tmdbId' | 'id' = 'tmdbId') {
-    super(ErrorCode.MEDIA_NOT_FOUND, `Media with ${type} ${identifier} not found`, {
-      [type]: identifier,
-    });
-  }
-}
-
-/**
  * Exception for stats not found errors.
  */
 export class StatsNotFoundException extends NotFoundException {

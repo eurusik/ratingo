@@ -14,17 +14,8 @@ export const DISTRIBUTION_CHANNEL = {
 /** Distribution channel - how content is accessed */
 export type DistributionChannel = (typeof DISTRIBUTION_CHANNEL)[keyof typeof DISTRIBUTION_CHANNEL];
 
-/** Offer type values */
-export const OFFER_TYPE = {
-  FLATRATE: 'flatrate',
-  RENT: 'rent',
-  BUY: 'buy',
-  ADS: 'ads',
-  FREE: 'free',
-} as const;
-
 /** Offer type - type of availability */
-export type OfferType = (typeof OFFER_TYPE)[keyof typeof OFFER_TYPE];
+export type OfferType = 'flatrate' | 'rent' | 'buy' | 'ads' | 'free';
 
 /** Mapping source values */
 export const MAPPING_SOURCE = {
@@ -47,19 +38,6 @@ export interface Provider {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-}
-
-/**
- * Provider variant/tier from provider_variants.
- */
-export interface ProviderVariant {
-  id: string;
-  providerId: string;
-  displayLabel: string | null;
-  isAdsTier: boolean;
-  isPremiumTier: boolean;
-  priority: number;
-  createdAt: Date;
 }
 
 /**
@@ -113,13 +91,6 @@ export interface ResolvedMapping {
   providerId: string;
   variantId: string | null;
   distributionChannel: DistributionChannel;
-}
-
-/**
- * Provider with variants for full provider info.
- */
-export interface ProviderWithVariants extends Provider {
-  variants: ProviderVariant[];
 }
 
 /**

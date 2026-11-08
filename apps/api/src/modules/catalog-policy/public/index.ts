@@ -6,17 +6,17 @@
  *
  * @example
  * // Correct
- * import { ContentClass, classifyContent, EligibilityStatus } from '../catalog-policy/public';
+ * import { classifyContent, EligibilityStatus } from '../catalog-policy/public';
  *
  * // Wrong - breaks module boundaries
- * import { ContentClass } from '../catalog-policy/domain/classification.service';
+ * import { classifyContent } from '../catalog-policy/domain/classification.service';
  */
 
 // =============================================================================
 // Domain Types
 // =============================================================================
 
-export { type ContentClass, classifyContent } from '../domain/classification.service';
+export { classifyContent } from '../domain/classification.service';
 
 // =============================================================================
 // Evaluation Constants
@@ -24,31 +24,16 @@ export { type ContentClass, classifyContent } from '../domain/classification.ser
 
 export {
   EligibilityStatus,
-  type EligibilityStatusType,
   EvaluationReason,
-  type EvaluationReasonType,
   EvaluationContext,
   type EvaluationContextType,
-  DEFAULT_EVALUATION_CONTEXT,
   DEFAULT_POLICY_VERSION,
 } from '../domain/constants/evaluation.constants';
-
-// =============================================================================
-// Normalized Offer Type (for ingestion integration)
-// =============================================================================
-
-export type { NormalizedOffer, NormalizedOfferType } from '../domain/types/policy.types';
 
 // =============================================================================
 // Port (for cross-module DI)
 // =============================================================================
 
-export {
-  type ICatalogPolicyEvaluator,
-  CATALOG_POLICY_EVALUATOR,
-  type EvaluateOneInput,
-  type EvaluationResult,
-  type EligibilityStats,
-} from '../domain/ports';
+export { type ICatalogPolicyEvaluator, CATALOG_POLICY_EVALUATOR } from '../domain/ports';
 
 export { CATALOG_POLICY_QUEUE } from '../catalog-policy.constants';

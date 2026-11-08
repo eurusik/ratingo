@@ -14,7 +14,6 @@ export {
 } from '../presentation/validators/username.constants';
 
 // Domain constants & entities
-export { RESERVED_USERNAMES } from '../domain/constants/reserved-usernames';
 export { USER_ROLE } from '../domain/entities/user.entity';
 export type { User } from '../domain/entities/user.entity';
 

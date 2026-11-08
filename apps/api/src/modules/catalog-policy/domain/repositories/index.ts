@@ -5,7 +5,6 @@
 export {
   POLICY_INPUT_REPOSITORY,
   type IPolicyInputRepository,
-  type FetchBatchIdsOptions,
   type UpdatedAtWindow,
 } from './policy-input.repository.interface';
 
@@ -34,13 +33,11 @@ export {
   type CreateRunInput,
   type UpdateRunInput,
   type IncrementCountersInput,
-  type ErrorSample,
 } from './catalog-evaluation-run.repository.interface';
 
 export {
   POLICY_ACTIVATION_REPOSITORY,
   type IPolicyActivationRepository,
-  type SnapshotData,
   type CreateRunWithSnapshotInput,
   type CreateRunWithSnapshotResult,
   type PromoteRunInput,

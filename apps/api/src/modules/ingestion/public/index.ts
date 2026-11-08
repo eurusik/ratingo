@@ -12,35 +12,20 @@
  */
 
 // Ports (contracts for external providers)
-export {
-  MetadataProviderPort,
-  METADATA_PROVIDER_PORT,
-} from '../domain/ports/metadata-provider.port';
+export { MetadataProviderPort } from '../domain/ports/metadata-provider.port';
 
 // Models (contract types — defined in shared/contracts, re-exported for existing consumers)
 export type {
   NormalizedMedia,
-  NormalizedVideo,
-  NormalizedSeason,
   NormalizedEpisode,
   Credits,
-  CastMember,
-  CrewMember,
-  WatchProvider,
-  WatchProviderRegion,
   WatchProvidersMap,
 } from '@/modules/shared/contracts';
 
 // Interfaces
-export type { ShowSyncDiff, ShowSyncChanges } from '../domain/interfaces/show-sync-diff.interface';
+export type { ShowSyncDiff } from '../domain/interfaces/show-sync-diff.interface';
 
-export {
-  createEmptyDiff,
-  formatEpisodeKey,
-  formatSeasonKey,
-  formatDateToIso,
-  parseSeasonFromEpisodeKey,
-} from '../domain/interfaces/show-sync-diff.interface';
+export { parseSeasonFromEpisodeKey } from '../domain/interfaces/show-sync-diff.interface';
 
 // Constants (defined in shared/contracts, re-exported for existing consumers)
 export {
@@ -56,4 +41,3 @@ export { MediaSyncedEvent } from '../domain/events/media-synced.event';
 
 // Job ID utilities
 export { buildSyncMediaJobId } from '../domain/job-ids';
-export type { SyncMediaJobScope } from '../domain/job-ids';

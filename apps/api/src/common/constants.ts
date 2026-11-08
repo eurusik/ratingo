@@ -16,12 +16,6 @@ export const DEFAULT_BATCH_SIZE = 50;
 
 export const MAX_UPLOAD_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
-// Hero Block Thresholds
-export const HERO_MIN_QUALITY_SCORE = 60;
-export const HERO_MIN_POPULARITY_SCORE = 40;
-export const NEW_RELEASE_DAYS_THRESHOLD = 90;
-export const CLASSIC_YEARS_THRESHOLD = 5;
-
 // Catalog Defaults
 export const CATALOG_DEFAULT_LIMIT = DEFAULT_PAGE_SIZE;
 export const CATALOG_DEFAULT_OFFSET = 0;

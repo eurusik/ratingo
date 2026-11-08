@@ -3,11 +3,6 @@ import { type MediaType } from '@/common/enums/media-type.enum';
 import { type NormalizedMedia } from '../models/normalized-media.model';
 
 /**
- * Injection token for metadata provider port.
- */
-export const METADATA_PROVIDER_PORT = Symbol('METADATA_PROVIDER_PORT');
-
-/**
  * Port (Interface) for any external metadata provider.
  *
  * Whether it's TMDB, Trakt, or OMDb - they all must satisfy this contract.

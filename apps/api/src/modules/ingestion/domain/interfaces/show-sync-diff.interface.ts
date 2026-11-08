@@ -19,7 +19,7 @@ export interface ShowSyncDiff {
 /**
  * Individual change types that can be detected during sync.
  */
-export interface ShowSyncChanges {
+interface ShowSyncChanges {
   /**
    * New episode detected.
    * Triggers 'new_episode' subscription notifications.

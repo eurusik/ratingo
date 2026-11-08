@@ -27,9 +27,6 @@ const DEFAULT_QUALITY_CONTEXTS: EvaluationContextType[] = [
   EvaluationContext.SEARCH,
 ];
 
-/** @deprecated Use GlobalGateCheckType from policy.types instead */
-export type GlobalGateFailedCheck = GlobalGateCheckType;
-
 /**
  * Result of global requirements check.
  */

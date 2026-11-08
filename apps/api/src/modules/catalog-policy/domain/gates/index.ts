@@ -5,31 +5,13 @@
  */
 
 // Data Integrity Gate
-export { checkDataIntegrity, type DataIntegrityResult } from './data-integrity.gate';
+export { checkDataIntegrity } from './data-integrity.gate';
 
 // Display Gate
-export {
-  checkDisplayGates,
-  getContextRequirements,
-  getDefaultContextRequirements,
-  type DisplayGateResult,
-} from './display.gate';
+export { checkDisplayGates } from './display.gate';
 
 // Country-Language Gate
-export {
-  checkBlocked,
-  checkNeutral,
-  tryRelaxedModeEligibility,
-  type BlockedCheckResult,
-  type NeutralCheckResult,
-} from './country-language.gate';
+export { checkBlocked, checkNeutral, tryRelaxedModeEligibility } from './country-language.gate';
 
 // Global Requirements Gate
-export {
-  checkGlobalRequirements,
-  checkLocalMaturityOverride,
-  hasAnyRating,
-  shouldApplyGlobalGate,
-  type GlobalGateFailedCheck,
-  type GlobalRequirementsResult,
-} from './global-requirements.gate';
+export { checkGlobalRequirements, shouldApplyGlobalGate } from './global-requirements.gate';

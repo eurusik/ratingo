@@ -4,8 +4,6 @@ export const MONITORING_JOBS = {
   CHECK_KEYS: 'check-keys',
 } as const;
 
-export type MonitoringJob = (typeof MONITORING_JOBS)[keyof typeof MONITORING_JOBS];
-
 export const KEY_HEALTH_SCHEDULER_ID = 'scheduled-key-health';
 
 export const KEY_HEALTH_CHECK_PATTERN = '*/20 * * * *';

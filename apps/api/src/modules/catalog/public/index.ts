@@ -16,16 +16,10 @@
 export { MEDIA_REPOSITORY } from '../domain/repositories/media.repository.interface';
 export { MOVIE_REPOSITORY } from '../domain/repositories/movie.repository.interface';
 export { SHOW_REPOSITORY } from '../domain/repositories/show.repository.interface';
-export { GENRE_REPOSITORY } from '../domain/repositories/genre.repository.interface';
-export { PROVIDERS_REPOSITORY } from '../domain/repositories/providers.repository.interface';
-
 // Repository interfaces (type-only)
 export type { IMediaRepository } from '../domain/repositories/media.repository.interface';
 export type { IMovieRepository } from '../domain/repositories/movie.repository.interface';
 export type { IShowRepository } from '../domain/repositories/show.repository.interface';
-export type { IGenreRepository } from '../domain/repositories/genre.repository.interface';
-export type { IProvidersRepository } from '../domain/repositories/providers.repository.interface';
-
 // Domain types consumed by external modules
 export type {
   MediaScoreDataWithTmdbId,

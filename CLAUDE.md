@@ -39,6 +39,7 @@ docker-compose up              # PostgreSQL (5434) + Redis (6379)
 npm run test:api                 # Backend tests (--runInBand)
 npm run test:client              # Frontend tests
 npm run test:e2e --workspace=api # Backend e2e (in-memory fakes, no Postgres/Redis needed)
+npm run lint:dead-code --workspace=api # knip: unused files/exports/deps in the API (knip.json, Node >= 20.19)
 npm run lint:api:fix             # Auto-fix backend lint
 
 # Single test (from apps/api/ or apps/web-client/)

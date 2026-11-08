@@ -332,7 +332,6 @@ domain/
 │   ├── requirement-matchers.ts # Individual requirement checks
 │   └── breakout-rule.evaluator.ts # Rule matching logic
 ├── utils/
-│   ├── index.ts                # Barrel export
 │   ├── title-readability.ts    # CJK/Latin detection
 │   └── offer-filter.ts         # Streaming offer filtering
 ├── validation/                 # Policy schema validation
@@ -353,7 +352,6 @@ import {
   getContextRequirements,
   getDefaultContextRequirements,
   checkContentClassExcluded,
-  getReasonDescriptions,
 } from './policy-engine';
 ```
 

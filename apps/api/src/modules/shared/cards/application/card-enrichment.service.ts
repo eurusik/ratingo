@@ -14,7 +14,7 @@ import type { CardListContext } from '../domain/card.constants';
 import type { CardMeta, CardUserContext } from '../domain/card.types';
 import { buildCardMeta, extractContinuePoint } from '../domain/selectors';
 
-export type MediaSummary = {
+type MediaSummary = {
   id: string;
   type: MediaType;
   title: string;

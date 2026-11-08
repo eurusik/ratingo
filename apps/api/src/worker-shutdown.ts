@@ -10,7 +10,7 @@ import { POSTGRES_CLIENT } from './database/database.module';
 
 const SHUTDOWN_SIGNALS = ['SIGTERM', 'SIGINT'] as const;
 const POOL_CLOSE_TIMEOUT_SECONDS = 5;
-export const WORKER_SHUTDOWN_TIMEOUT_MS = 25_000;
+const WORKER_SHUTDOWN_TIMEOUT_MS = 25_000;
 
 const logger = new Logger('WorkerShutdown');
 

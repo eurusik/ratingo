@@ -26,12 +26,7 @@ export {
   isDiffRegression,
   isDiffImprovement,
 } from '@/modules/catalog-policy/domain/utils/diff.utils';
-export {
-  type DiffCounts,
-  type DiffSample,
-  type ReasonBreakdown,
-  type DiffReport,
-} from '@/modules/catalog-policy/domain/types/diff.types';
+export { type DiffSample, type DiffReport } from '@/modules/catalog-policy/domain/types/diff.types';
 
 @Injectable()
 export class DiffService {

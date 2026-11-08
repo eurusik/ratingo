@@ -1,7 +1,7 @@
 /**
  * Episode data for drop-off analysis.
  */
-export interface EpisodeAnalysisData {
+interface EpisodeAnalysisData {
   number: number;
   title: string;
   rating: number;
@@ -11,7 +11,7 @@ export interface EpisodeAnalysisData {
 /**
  * Season data for drop-off analysis.
  */
-export interface SeasonAnalysisData {
+interface SeasonAnalysisData {
   number: number;
   episodes: EpisodeAnalysisData[];
 }
@@ -19,7 +19,7 @@ export interface SeasonAnalysisData {
 /**
  * Show episodes payload for drop-off analysis.
  */
-export interface ShowEpisodesAnalysisPayload {
+interface ShowEpisodesAnalysisPayload {
   traktId: number;
   seasons: SeasonAnalysisData[];
 }
@@ -36,7 +36,7 @@ export interface ShowEpisodesAnalysisPayload {
 /**
  * Ratings and watchers payload for a single title.
  */
-export interface MediaRatingsPayload {
+interface MediaRatingsPayload {
   rating: number;
   votes: number;
   watchers: number | null;

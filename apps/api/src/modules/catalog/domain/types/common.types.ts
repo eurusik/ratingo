@@ -22,7 +22,7 @@ export interface GenreInfo {
 /**
  * External rating with optional vote count.
  */
-export interface ExternalRating {
+interface ExternalRating {
   rating: number;
   voteCount?: number | null;
 }

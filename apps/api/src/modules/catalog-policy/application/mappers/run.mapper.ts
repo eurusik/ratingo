@@ -12,7 +12,7 @@ import { type RunStatus, type RunListItem } from '../services/policy-activation.
 /**
  * Progress stats DTO structure.
  */
-export interface ProgressStatsDto {
+interface ProgressStatsDto {
   processed: number;
   total: number;
   eligible: number;
@@ -38,7 +38,7 @@ export interface EvaluationRunListDto {
 /**
  * Error sample DTO structure.
  */
-export interface ErrorSampleDto {
+interface ErrorSampleDto {
   mediaItemId: string;
   error: string;
   stack?: string;
@@ -76,7 +76,7 @@ export interface DiffSampleDto {
 /**
  * Diff counts DTO structure.
  */
-export interface DiffCountsDto {
+interface DiffCountsDto {
   regressions: number;
   improvements: number;
   netChange: number;

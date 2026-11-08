@@ -27,16 +27,6 @@ export interface CreateReportInput {
 }
 
 /**
- * Input for resolving a report (admin).
- */
-export interface ResolveReportInput {
-  reportId: string;
-  moderatorId: string;
-  status: Exclude<ReportStatus, 'pending'>;
-  moderatorNotes?: string;
-}
-
-/**
  * Report with related review info for moderation queue.
  */
 export interface ReviewReportWithReview extends ReviewReport {

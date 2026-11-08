@@ -1,0 +1,24 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "apps/api": {
+      "entry": [
+        "src/main.ts",
+        "src/worker.ts",
+        "src/scripts/*.ts",
+        "src/database/seed*.ts",
+        "test/**/*.e2e-spec.ts"
+      ],
+      "project": ["src/**/*.ts", "test/**/*.ts", "*.{js,ts}"],
+      "jest": {
+        "config": ["jest.config.js", "jest.e2e.config.js"]
+      },
+      "drizzle": {
+        "config": ["drizzle.config.{ts,js}"]
+      }
+    }
+  },
+  "ignoreIssues": {
+    "apps/api/src/common/constants.ts": ["duplicates"]
+  }
+}

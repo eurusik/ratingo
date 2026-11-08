@@ -294,39 +294,3 @@ export function computeRelevance(input: PolicyEngineInput, _policy: PolicyConfig
 
   return result;
 }
-
-/**
- * Returns human-readable descriptions for evaluation reasons.
- *
- * @param _reasons - List of evaluation reasons (unused, kept for API compatibility)
- * @returns Dictionary of reason descriptions
- */
-export function getReasonDescriptions(
-  _reasons: EvaluationReasonType[],
-): Record<EvaluationReasonType, string> {
-  return {
-    [EvaluationReason.MISSING_REQUIRED_METADATA]:
-      'Required metadata is missing (see specific reason for details)',
-    [EvaluationReason.MISSING_ORIGIN_COUNTRY]: 'Origin country information is missing',
-    [EvaluationReason.MISSING_ORIGINAL_LANGUAGE]: 'Original language information is missing',
-    [EvaluationReason.MISSING_TITLE]: 'Title is missing or empty',
-    [EvaluationReason.MISSING_TRANSLATED_TITLE]:
-      'Title is not readable for UA audience (CJK-heavy without Latin/Cyrillic translation)',
-    [EvaluationReason.MISSING_OVERVIEW]:
-      'Overview is missing or too short for this display context',
-    [EvaluationReason.BLOCKED_COUNTRY]: 'Content is from a blocked country',
-    [EvaluationReason.BLOCKED_LANGUAGE]: 'Content is in a blocked language',
-    [EvaluationReason.NEUTRAL_COUNTRY]: 'Content is from a neutral country (not in allowed list)',
-    [EvaluationReason.NEUTRAL_LANGUAGE]: 'Content is in a neutral language (not in allowed list)',
-    [EvaluationReason.MISSING_GLOBAL_SIGNALS]:
-      'Content lacks required global signals (ratings, votes, providers)',
-    [EvaluationReason.ALLOWED_LOCAL_MATURITY]:
-      'Content passed via local maturity override (fresh content with strong platform engagement)',
-    [EvaluationReason.BREAKOUT_ALLOWED]: 'Content meets breakout rule requirements',
-    [EvaluationReason.ALLOWED_COUNTRY]: 'Content is from an allowed country',
-    [EvaluationReason.ALLOWED_LANGUAGE]: 'Content is in an allowed language',
-    [EvaluationReason.NO_ACTIVE_POLICY]: 'No active policy is configured',
-    [EvaluationReason.EXCLUDED_CONTENT_CLASS]: 'Content class is excluded by policy',
-    [EvaluationReason.INVALID_CONTENT_CLASS]: 'Content has invalid or missing content class',
-  };
-}

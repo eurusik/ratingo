@@ -40,7 +40,7 @@ export class ContinuePointDto {
   episode!: number;
 }
 
-export const ME_USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
+const ME_USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
 
 /**
  * Query DTO for owner-only media lists.
