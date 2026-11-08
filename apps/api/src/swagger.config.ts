@@ -1,4 +1,6 @@
-import { DocumentBuilder, type OpenAPIObject } from '@nestjs/swagger';
+import { DocumentBuilder, type OpenAPIObject, type SwaggerDocumentOptions } from '@nestjs/swagger';
+
+export const SWAGGER_DOCUMENT_OPTIONS: SwaggerDocumentOptions = { autoTagControllers: false };
 
 /**
  * Shared Swagger/OpenAPI metadata used by both the runtime docs endpoint

@@ -61,6 +61,7 @@ export class MovieVerdictDto extends BaseVerdictDto {
  */
 export class ShowVerdictDto extends BaseVerdictDto {
   @ApiProperty({
+    type: String,
     example: 'IMDb: 8.2',
     nullable: true,
     required: false,

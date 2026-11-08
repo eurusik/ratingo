@@ -1,13 +1,16 @@
 import { registerAs } from '@nestjs/config';
+import type { JwtSignOptions } from '@nestjs/jwt';
+
+type JwtDuration = Extract<JwtSignOptions['expiresIn'], string>;
 
 /**
  * Auth config.
  */
 export default registerAs('auth', () => ({
   accessTokenSecret: process.env.ACCESS_TOKEN_SECRET || 'dev-access-secret',
-  accessTokenTtl: process.env.ACCESS_TOKEN_TTL || '24h',
+  accessTokenTtl: (process.env.ACCESS_TOKEN_TTL || '24h') as JwtDuration,
   refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || 'dev-refresh-secret',
-  refreshTokenTtl: process.env.REFRESH_TOKEN_TTL || '30d',
+  refreshTokenTtl: (process.env.REFRESH_TOKEN_TTL || '30d') as JwtDuration,
   bcryptSaltRounds: Number(process.env.BCRYPT_SALT_ROUNDS || 10),
   // OAuth exchange code pepper for HMAC-signing (separate from JWT secrets)
   exchangeCodePepper: process.env.OAUTH_EXCHANGE_CODE_PEPPER || 'dev-exchange-pepper',

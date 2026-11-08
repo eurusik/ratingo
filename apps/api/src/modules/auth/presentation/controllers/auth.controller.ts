@@ -300,15 +300,15 @@ export class AuthController {
       const provider = statePayload.provider || oauthUser.provider;
       try {
         await this.oauthService.linkOAuthAccount(statePayload.linkUserId, oauthUser);
-        await res.redirect(HTTP_REDIRECT_FOUND, `${frontendUrl}${returnTo}?linked=${provider}`);
+        await res.redirect(`${frontendUrl}${returnTo}?linked=${provider}`, HTTP_REDIRECT_FOUND);
       } catch (error) {
         const errorCode = error instanceof ConflictException ? 'ALREADY_LINKED' : 'LINK_FAILED';
         if (!(error instanceof ConflictException)) {
           this.logger.error(`Failed to link OAuth account: ${errorMessage(error)}`);
         }
         await res.redirect(
-          HTTP_REDIRECT_FOUND,
           `${frontendUrl}${returnTo}?linkError=${errorCode}&provider=${provider}`,
+          HTTP_REDIRECT_FOUND,
         );
       }
       return;
@@ -323,7 +323,7 @@ export class AuthController {
     const provider = statePayload?.provider || oauthUser.provider;
 
     const redirectUrl = `${frontendUrl}/auth/callback/${provider}?code=${encodeURIComponent(code)}&returnTo=${encodeURIComponent(returnTo)}`;
-    await res.redirect(HTTP_REDIRECT_FOUND, redirectUrl);
+    await res.redirect(redirectUrl, HTTP_REDIRECT_FOUND);
   }
 
   /**
@@ -363,7 +363,7 @@ export class AuthController {
     const signedState = this.googleAuthGuard.buildSignedStateForLink(userId, returnTo);
     this.googleAuthGuard.setStateCookie(res, signedState);
     const authUrl = this.googleAuthGuard.buildAuthUrl(signedState);
-    await res.redirect(HTTP_REDIRECT_FOUND, authUrl);
+    await res.redirect(authUrl, HTTP_REDIRECT_FOUND);
   }
 
   /**
@@ -384,7 +384,7 @@ export class AuthController {
     const signedState = this.facebookAuthGuard.buildSignedStateForLink(userId, returnTo);
     this.facebookAuthGuard.setStateCookie(res, signedState);
     const authUrl = this.facebookAuthGuard.buildAuthUrl(signedState);
-    await res.redirect(HTTP_REDIRECT_FOUND, authUrl);
+    await res.redirect(authUrl, HTTP_REDIRECT_FOUND);
   }
 
   /**

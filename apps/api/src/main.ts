@@ -11,7 +11,11 @@ import { getAppRole, runsHttp } from './common/runtime/app-role';
 import { DevTiming } from './common/utils/dev-timing';
 import { errorMessage } from './common/utils/error.utils';
 import { configureHttpApp, createHttpAdapter } from './http-app.setup';
-import { applyStandardErrorResponses, buildSwaggerConfig } from './swagger.config';
+import {
+  applyStandardErrorResponses,
+  buildSwaggerConfig,
+  SWAGGER_DOCUMENT_OPTIONS,
+} from './swagger.config';
 import { registerHttpMetrics } from './telemetry/http-metrics';
 
 const logger = new Logger('Bootstrap');
@@ -39,19 +43,12 @@ async function bootstrap(): Promise<void> {
 
   await configureHttpApp(app);
 
-  // CORS configuration
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') ?? [
-      'http://localhost:3002',
-      'http://localhost:3000',
-      'https://new.ratingo.top',
-      'https://ratingo.top',
-    ],
-    credentials: true,
-  });
-
   // Swagger Documentation Setup (shared config — see swagger.config.ts)
-  const document = SwaggerModule.createDocument(app, buildSwaggerConfig());
+  const document = SwaggerModule.createDocument(
+    app,
+    buildSwaggerConfig(),
+    SWAGGER_DOCUMENT_OPTIONS,
+  );
   applyStandardErrorResponses(document);
   SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
