@@ -16,7 +16,11 @@ import { MONITORING_REDIS_CLIENT } from '../modules/monitoring/infrastructure/co
 import { MONITORING_QUEUE } from '../modules/monitoring/monitoring.constants';
 import { BACKFILL_QUEUE, RATINGS_BACKFILL_QUEUE } from '../modules/shared/contracts';
 import { STATS_QUEUE } from '../modules/stats/stats.constants';
-import { applyStandardErrorResponses, buildSwaggerConfig } from '../swagger.config';
+import {
+  applyStandardErrorResponses,
+  buildSwaggerConfig,
+  SWAGGER_DOCUMENT_OPTIONS,
+} from '../swagger.config';
 
 const GLOBAL_PREFIX = 'api';
 
@@ -187,7 +191,7 @@ const generateOpenApi = async (): Promise<void> => {
   applyDefaultEnv();
 
   const app = await createApp();
-  const doc = SwaggerModule.createDocument(app, buildSwaggerConfig());
+  const doc = SwaggerModule.createDocument(app, buildSwaggerConfig(), SWAGGER_DOCUMENT_OPTIONS);
 
   wrapSuccessResponses(doc);
   applyStandardErrorResponses(doc);

@@ -1,5 +1,5 @@
 import { Module, type Provider } from '@nestjs/common';
-import { ConfigModule, ConfigService, type ConfigType } from '@nestjs/config';
+import { ConfigModule, type ConfigType } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -79,10 +79,10 @@ const facebookStrategyProvider: Provider = {
     ScheduleModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule.forFeature(authConfig)],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('auth.accessTokenSecret'),
-        signOptions: { expiresIn: configService.get<string>('auth.accessTokenTtl') },
+      inject: [authConfig.KEY],
+      useFactory: (config: ConfigType<typeof authConfig>) => ({
+        secret: config.accessTokenSecret,
+        signOptions: { expiresIn: config.accessTokenTtl },
       }),
     }),
     UsersModule,

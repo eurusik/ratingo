@@ -3,9 +3,8 @@
   "paths": {
     "/api/catalog/movies/trending": {
       "get": {
-        "operationId": "CatalogMoviesController_getTrendingMovies",
-        "summary": "Trending movies",
         "description": "Returns trending movies sorted by popularity and rating.",
+        "operationId": "CatalogMoviesController_getTrendingMovies",
         "parameters": [
           {
             "name": "limit",
@@ -35,6 +34,7 @@
             "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate)",
             "schema": {
               "default": "trending",
+              "type": "string",
               "enum": [
                 "trending",
                 "popularity",
@@ -42,8 +42,7 @@
                 "releaseDate",
                 "lastAirDate",
                 "tmdbPopularity"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -52,11 +51,11 @@
             "in": "query",
             "schema": {
               "default": "desc",
+              "type": "string",
               "enum": [
                 "asc",
                 "desc"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -84,11 +83,11 @@
             "description": "Vote source for minVotes filter",
             "schema": {
               "default": "tmdb",
+              "type": "string",
               "enum": [
                 "tmdb",
                 "trakt"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -135,11 +134,11 @@
             "description": "List context: home = stricter freshness filtering; catalog = permissive",
             "schema": {
               "default": "catalog",
+              "type": "string",
               "enum": [
                 "home",
                 "catalog"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -190,6 +189,7 @@
             }
           }
         },
+        "summary": "Trending movies",
         "tags": [
           "Public: Catalog"
         ]
@@ -197,9 +197,8 @@
     },
     "/api/catalog/movies/popular": {
       "get": {
-        "operationId": "CatalogMoviesController_getPopularMovies",
-        "summary": "Popular movies (Hits)",
         "description": "Returns historically popular movies. Includes classics.",
+        "operationId": "CatalogMoviesController_getPopularMovies",
         "parameters": [
           {
             "name": "limit",
@@ -229,6 +228,7 @@
             "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate)",
             "schema": {
               "default": "trending",
+              "type": "string",
               "enum": [
                 "trending",
                 "popularity",
@@ -236,8 +236,7 @@
                 "releaseDate",
                 "lastAirDate",
                 "tmdbPopularity"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -246,11 +245,11 @@
             "in": "query",
             "schema": {
               "default": "desc",
+              "type": "string",
               "enum": [
                 "asc",
                 "desc"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -278,11 +277,11 @@
             "description": "Vote source for minVotes filter",
             "schema": {
               "default": "tmdb",
+              "type": "string",
               "enum": [
                 "tmdb",
                 "trakt"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -329,11 +328,11 @@
             "description": "List context: home = stricter freshness filtering; catalog = permissive",
             "schema": {
               "default": "catalog",
+              "type": "string",
               "enum": [
                 "home",
                 "catalog"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -384,6 +383,7 @@
             }
           }
         },
+        "summary": "Popular movies (Hits)",
         "tags": [
           "Public: Catalog"
         ]
@@ -391,9 +391,8 @@
     },
     "/api/catalog/movies/now-playing": {
       "get": {
-        "operationId": "CatalogMoviesController_getNowPlaying",
-        "summary": "Movies currently in theaters",
         "description": "Returns movies currently playing in theaters. Data is synced from TMDB now_playing endpoint.",
+        "operationId": "CatalogMoviesController_getNowPlaying",
         "parameters": [
           {
             "name": "limit",
@@ -423,6 +422,7 @@
             "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate)",
             "schema": {
               "default": "trending",
+              "type": "string",
               "enum": [
                 "trending",
                 "popularity",
@@ -430,8 +430,7 @@
                 "releaseDate",
                 "lastAirDate",
                 "tmdbPopularity"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -440,11 +439,11 @@
             "in": "query",
             "schema": {
               "default": "desc",
+              "type": "string",
               "enum": [
                 "asc",
                 "desc"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -472,11 +471,11 @@
             "description": "Vote source for minVotes filter",
             "schema": {
               "default": "tmdb",
+              "type": "string",
               "enum": [
                 "tmdb",
                 "trakt"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -523,11 +522,11 @@
             "description": "List context: home = stricter freshness filtering; catalog = permissive",
             "schema": {
               "default": "catalog",
+              "type": "string",
               "enum": [
                 "home",
                 "catalog"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -578,6 +577,7 @@
             }
           }
         },
+        "summary": "Movies currently in theaters",
         "tags": [
           "Public: Catalog"
         ]
@@ -585,9 +585,8 @@
     },
     "/api/catalog/movies/new-releases": {
       "get": {
-        "operationId": "CatalogMoviesController_getNewReleases",
-        "summary": "Movies recently released in theaters",
         "description": "Returns movies with theatrical release in the specified period, sorted by popularity.",
+        "operationId": "CatalogMoviesController_getNewReleases",
         "parameters": [
           {
             "name": "limit",
@@ -617,6 +616,7 @@
             "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate)",
             "schema": {
               "default": "trending",
+              "type": "string",
               "enum": [
                 "trending",
                 "popularity",
@@ -624,8 +624,7 @@
                 "releaseDate",
                 "lastAirDate",
                 "tmdbPopularity"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -634,11 +633,11 @@
             "in": "query",
             "schema": {
               "default": "desc",
+              "type": "string",
               "enum": [
                 "asc",
                 "desc"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -666,11 +665,11 @@
             "description": "Vote source for minVotes filter",
             "schema": {
               "default": "tmdb",
+              "type": "string",
               "enum": [
                 "tmdb",
                 "trakt"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -717,11 +716,11 @@
             "description": "List context: home = stricter freshness filtering; catalog = permissive",
             "schema": {
               "default": "catalog",
+              "type": "string",
               "enum": [
                 "home",
                 "catalog"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -781,6 +780,7 @@
             }
           }
         },
+        "summary": "Movies recently released in theaters",
         "tags": [
           "Public: Catalog"
         ]
@@ -788,9 +788,8 @@
     },
     "/api/catalog/movies/new-on-digital": {
       "get": {
-        "operationId": "CatalogMoviesController_getNewOnDigital",
-        "summary": "Movies recently released on digital platforms",
         "description": "Returns movies with digital release in the last 14 days, sorted by popularity.",
+        "operationId": "CatalogMoviesController_getNewOnDigital",
         "parameters": [
           {
             "name": "limit",
@@ -820,6 +819,7 @@
             "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate)",
             "schema": {
               "default": "trending",
+              "type": "string",
               "enum": [
                 "trending",
                 "popularity",
@@ -827,8 +827,7 @@
                 "releaseDate",
                 "lastAirDate",
                 "tmdbPopularity"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -837,11 +836,11 @@
             "in": "query",
             "schema": {
               "default": "desc",
+              "type": "string",
               "enum": [
                 "asc",
                 "desc"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -869,11 +868,11 @@
             "description": "Vote source for minVotes filter",
             "schema": {
               "default": "tmdb",
+              "type": "string",
               "enum": [
                 "tmdb",
                 "trakt"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -920,11 +919,11 @@
             "description": "List context: home = stricter freshness filtering; catalog = permissive",
             "schema": {
               "default": "catalog",
+              "type": "string",
               "enum": [
                 "home",
                 "catalog"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -984,6 +983,7 @@
             }
           }
         },
+        "summary": "Movies recently released on digital platforms",
         "tags": [
           "Public: Catalog"
         ]
@@ -991,9 +991,8 @@
     },
     "/api/catalog/movies/{slug}": {
       "get": {
-        "operationId": "CatalogMoviesController_getMovieBySlug",
-        "summary": "Get movie details by slug",
         "description": "Returns full movie details including genres and stats.",
+        "operationId": "CatalogMoviesController_getMovieBySlug",
         "parameters": [
           {
             "name": "slug",
@@ -1061,6 +1060,7 @@
             }
           }
         },
+        "summary": "Get movie details by slug",
         "tags": [
           "Public: Catalog"
         ]
@@ -1068,9 +1068,8 @@
     },
     "/api/catalog/shows/trending": {
       "get": {
-        "operationId": "CatalogShowsController_getTrendingShows",
-        "summary": "Trending TV shows",
         "description": "Returns trending shows sorted by popularity and rating.",
+        "operationId": "CatalogShowsController_getTrendingShows",
         "parameters": [
           {
             "name": "limit",
@@ -1100,6 +1099,7 @@
             "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate)",
             "schema": {
               "default": "trending",
+              "type": "string",
               "enum": [
                 "trending",
                 "popularity",
@@ -1107,8 +1107,7 @@
                 "releaseDate",
                 "lastAirDate",
                 "tmdbPopularity"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -1117,11 +1116,11 @@
             "in": "query",
             "schema": {
               "default": "desc",
+              "type": "string",
               "enum": [
                 "asc",
                 "desc"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -1149,11 +1148,11 @@
             "description": "Vote source for minVotes filter",
             "schema": {
               "default": "tmdb",
+              "type": "string",
               "enum": [
                 "tmdb",
                 "trakt"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -1200,11 +1199,11 @@
             "description": "List context: home = stricter freshness filtering; catalog = permissive",
             "schema": {
               "default": "catalog",
+              "type": "string",
               "enum": [
                 "home",
                 "catalog"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -1255,6 +1254,7 @@
             }
           }
         },
+        "summary": "Trending TV shows",
         "tags": [
           "Public: Catalog"
         ]
@@ -1262,9 +1262,8 @@
     },
     "/api/catalog/shows/popular": {
       "get": {
-        "operationId": "CatalogShowsController_getPopularShows",
-        "summary": "Popular TV shows (Hits)",
         "description": "Returns historically popular shows. Includes classics.",
+        "operationId": "CatalogShowsController_getPopularShows",
         "parameters": [
           {
             "name": "limit",
@@ -1294,6 +1293,7 @@
             "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate)",
             "schema": {
               "default": "trending",
+              "type": "string",
               "enum": [
                 "trending",
                 "popularity",
@@ -1301,8 +1301,7 @@
                 "releaseDate",
                 "lastAirDate",
                 "tmdbPopularity"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -1311,11 +1310,11 @@
             "in": "query",
             "schema": {
               "default": "desc",
+              "type": "string",
               "enum": [
                 "asc",
                 "desc"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -1343,11 +1342,11 @@
             "description": "Vote source for minVotes filter",
             "schema": {
               "default": "tmdb",
+              "type": "string",
               "enum": [
                 "tmdb",
                 "trakt"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -1394,11 +1393,11 @@
             "description": "List context: home = stricter freshness filtering; catalog = permissive",
             "schema": {
               "default": "catalog",
+              "type": "string",
               "enum": [
                 "home",
                 "catalog"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -1449,6 +1448,7 @@
             }
           }
         },
+        "summary": "Popular TV shows (Hits)",
         "tags": [
           "Public: Catalog"
         ]
@@ -1456,9 +1456,8 @@
     },
     "/api/catalog/shows/new-episodes": {
       "get": {
-        "operationId": "CatalogShowsController_getNewEpisodes",
-        "summary": "Shows with new episodes",
         "description": "Returns shows that have aired new episodes recently. One entry per show with the latest episode.",
+        "operationId": "CatalogShowsController_getNewEpisodes",
         "parameters": [
           {
             "name": "days",
@@ -1532,6 +1531,7 @@
             }
           }
         },
+        "summary": "Shows with new episodes",
         "tags": [
           "Public: Catalog"
         ]
@@ -1539,9 +1539,8 @@
     },
     "/api/catalog/shows/calendar": {
       "get": {
-        "operationId": "CatalogShowsController_getCalendar",
-        "summary": "Global release calendar for TV shows",
         "description": "Returns episodes airing within the specified date range. Groups episodes by day.",
+        "operationId": "CatalogShowsController_getCalendar",
         "parameters": [
           {
             "name": "startDate",
@@ -1618,6 +1617,7 @@
             }
           }
         },
+        "summary": "Global release calendar for TV shows",
         "tags": [
           "Public: Catalog"
         ]
@@ -1625,9 +1625,8 @@
     },
     "/api/catalog/shows/{slug}": {
       "get": {
-        "operationId": "CatalogShowsController_getShowBySlug",
-        "summary": "Get show details by slug",
         "description": "Returns full show details including seasons list.",
+        "operationId": "CatalogShowsController_getShowBySlug",
         "parameters": [
           {
             "name": "slug",
@@ -1695,6 +1694,7 @@
             }
           }
         },
+        "summary": "Get show details by slug",
         "tags": [
           "Public: Catalog"
         ]
@@ -1702,9 +1702,8 @@
     },
     "/api/catalog/shows/{slug}/sync": {
       "post": {
-        "operationId": "CatalogShowsController_requestShowSync",
-        "summary": "Request metadata refresh for a show",
         "description": "Queues a full metadata re-sync from TMDB/TVMaze. Rate-limited to once per 7 days per show globally; 5 requests per minute per user.",
+        "operationId": "CatalogShowsController_requestShowSync",
         "parameters": [
           {
             "name": "slug",
@@ -1775,20 +1774,20 @@
             }
           }
         },
-        "tags": [
-          "Public: Catalog"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Request metadata refresh for a show",
+        "tags": [
+          "Public: Catalog"
         ]
       }
     },
     "/api/catalog/search": {
       "get": {
         "operationId": "CatalogSearchController_search",
-        "summary": "Search movies and shows",
         "parameters": [
           {
             "name": "query",
@@ -1846,6 +1845,7 @@
             }
           }
         },
+        "summary": "Search movies and shows",
         "tags": [
           "Public: Catalog"
         ]
@@ -1854,7 +1854,6 @@
     "/api/catalog/import/movie/{tmdbId}": {
       "post": {
         "operationId": "CatalogSearchController_importMovie",
-        "summary": "Import a movie from TMDB on-demand",
         "parameters": [
           {
             "name": "tmdbId",
@@ -1922,6 +1921,7 @@
             }
           }
         },
+        "summary": "Import a movie from TMDB on-demand",
         "tags": [
           "Public: Catalog"
         ]
@@ -1930,7 +1930,6 @@
     "/api/catalog/import/show/{tmdbId}": {
       "post": {
         "operationId": "CatalogSearchController_importShow",
-        "summary": "Import a show from TMDB on-demand",
         "parameters": [
           {
             "name": "tmdbId",
@@ -1998,6 +1997,7 @@
             }
           }
         },
+        "summary": "Import a show from TMDB on-demand",
         "tags": [
           "Public: Catalog"
         ]
@@ -2006,7 +2006,6 @@
     "/api/catalog/import/status/{jobId}": {
       "get": {
         "operationId": "CatalogSearchController_getImportStatus",
-        "summary": "Get import job status",
         "parameters": [
           {
             "name": "jobId",
@@ -2095,6 +2094,7 @@
             }
           }
         },
+        "summary": "Get import job status",
         "tags": [
           "Public: Catalog"
         ]
@@ -2102,9 +2102,8 @@
     },
     "/api/catalog/providers": {
       "get": {
-        "operationId": "CatalogProvidersController_getProviders",
-        "summary": "Get streaming providers",
         "description": "Returns streaming providers (Netflix, Max, etc.) sorted by available titles count.",
+        "operationId": "CatalogProvidersController_getProviders",
         "parameters": [],
         "responses": {
           "200": {
@@ -2143,6 +2142,7 @@
             }
           }
         },
+        "summary": "Get streaming providers",
         "tags": [
           "Public: Catalog"
         ]
@@ -2150,9 +2150,8 @@
     },
     "/api/catalog/sitemap/movies": {
       "get": {
-        "operationId": "CatalogSitemapController_getMovieSitemap",
-        "summary": "Movie sitemap data",
         "description": "Returns slug and updatedAt for all active movies. Intended for sitemap generation.",
+        "operationId": "CatalogSitemapController_getMovieSitemap",
         "parameters": [],
         "responses": {
           "200": {
@@ -2191,6 +2190,7 @@
             }
           }
         },
+        "summary": "Movie sitemap data",
         "tags": [
           "Public: Catalog"
         ]
@@ -2198,9 +2198,8 @@
     },
     "/api/catalog/sitemap/shows": {
       "get": {
-        "operationId": "CatalogSitemapController_getShowSitemap",
-        "summary": "Show sitemap data",
         "description": "Returns slug and updatedAt for all active shows. Intended for sitemap generation.",
+        "operationId": "CatalogSitemapController_getShowSitemap",
         "parameters": [],
         "responses": {
           "200": {
@@ -2239,6 +2238,7 @@
             }
           }
         },
+        "summary": "Show sitemap data",
         "tags": [
           "Public: Catalog"
         ]
@@ -2247,7 +2247,6 @@
     "/api/user-media/batch-ratings": {
       "get": {
         "operationId": "UserMediaController_batchRatings",
-        "summary": "Batch fetch user ratings (auth: Bearer)",
         "parameters": [
           {
             "name": "ids",
@@ -2303,20 +2302,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Batch fetch user ratings (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       }
     },
     "/api/user-media/continue": {
       "get": {
         "operationId": "UserMediaController_listContinue",
-        "summary": "List continue items with media summary (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -2390,20 +2389,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List continue items with media summary (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       }
     },
     "/api/user-media/import/status": {
       "get": {
         "operationId": "UserMediaController_getImportStatus",
-        "summary": "Get auto-ingest import batch statuses (auth: Bearer)",
         "parameters": [],
         "responses": {
           "200": {
@@ -2448,20 +2447,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get auto-ingest import batch statuses (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       }
     },
     "/api/user-media/import/cancel": {
       "post": {
         "operationId": "UserMediaController_cancelImportBatches",
-        "summary": "Cancel one or more import batches (auth: Bearer)",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -2516,20 +2515,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Cancel one or more import batches (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       }
     },
     "/api/user-media/{mediaItemId}": {
       "get": {
         "operationId": "UserMediaController_getState",
-        "summary": "Get user media state with media summary (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -2601,18 +2600,18 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get user media state with media summary (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       },
       "patch": {
         "operationId": "UserMediaController_setState",
-        "summary": "Upsert user media state with media summary (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -2694,20 +2693,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Upsert user media state with media summary (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       }
     },
     "/api/user-media": {
       "get": {
         "operationId": "UserMediaController_list",
-        "summary": "List user media states with media summary (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -2781,20 +2780,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List user media states with media summary (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       }
     },
     "/api/user-media/{mediaItemId}/pause": {
       "post": {
         "operationId": "UserMediaController_pauseMedia",
-        "summary": "Pause a media item (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -2859,20 +2858,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Pause a media item (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       }
     },
     "/api/user-media/{mediaItemId}/resume": {
       "post": {
         "operationId": "UserMediaController_resumeMedia",
-        "summary": "Resume a paused media item (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -2937,20 +2936,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Resume a paused media item (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       }
     },
     "/api/user-media/import": {
       "post": {
         "operationId": "UserMediaController_importMedia",
-        "summary": "Import ratings and watchlist from external source (auth: Bearer)",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3005,20 +3004,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Library"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Import ratings and watchlist from external source (auth: Bearer)",
+        "tags": [
+          "Me: Library"
         ]
       }
     },
     "/api/me/ratings": {
       "get": {
         "operationId": "MeListsController_ratings",
-        "summary": "My ratings (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -3044,12 +3043,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -3058,11 +3057,11 @@
             "in": "query",
             "description": "Filter by media type",
             "schema": {
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -3123,20 +3122,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Lists"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "My ratings (auth: Bearer)",
+        "tags": [
+          "Me: Lists"
         ]
       }
     },
     "/api/me/watchlist": {
       "get": {
         "operationId": "MeListsController_watchlist",
-        "summary": "My watchlist (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -3162,12 +3161,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -3176,11 +3175,11 @@
             "in": "query",
             "description": "Filter by media type",
             "schema": {
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -3241,20 +3240,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Lists"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "My watchlist (auth: Bearer)",
+        "tags": [
+          "Me: Lists"
         ]
       }
     },
     "/api/me/history": {
       "get": {
         "operationId": "MeListsController_history",
-        "summary": "My history (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -3280,12 +3279,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -3294,11 +3293,11 @@
             "in": "query",
             "description": "Filter by media type",
             "schema": {
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -3307,13 +3306,13 @@
             "in": "query",
             "description": "Narrow history to a single state (must be one of HISTORY_STATES).",
             "schema": {
+              "type": "string",
               "enum": [
                 "watching",
                 "completed",
                 "paused",
                 "caught_up"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -3374,20 +3373,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Lists"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "My history (auth: Bearer)",
+        "tags": [
+          "Me: Lists"
         ]
       }
     },
     "/api/me/activity": {
       "get": {
         "operationId": "MeListsController_activity",
-        "summary": "My activity (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -3413,12 +3412,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -3427,11 +3426,11 @@
             "in": "query",
             "description": "Filter by media type",
             "schema": {
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -3492,20 +3491,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Lists"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "My activity (auth: Bearer)",
+        "tags": [
+          "Me: Lists"
         ]
       }
     },
     "/api/me/paused": {
       "get": {
         "operationId": "MeListsController_paused",
-        "summary": "My paused items (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -3531,12 +3530,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -3545,11 +3544,11 @@
             "in": "query",
             "description": "Filter by media type",
             "schema": {
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -3610,20 +3609,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Lists"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "My paused items (auth: Bearer)",
+        "tags": [
+          "Me: Lists"
         ]
       }
     },
     "/api/me/caught-up": {
       "get": {
         "operationId": "MeListsController_caughtUp",
-        "summary": "My caught-up items (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -3649,12 +3648,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -3663,11 +3662,11 @@
             "in": "query",
             "description": "Filter by media type",
             "schema": {
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -3728,20 +3727,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Lists"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "My caught-up items (auth: Bearer)",
+        "tags": [
+          "Me: Lists"
         ]
       }
     },
     "/api/me/dropped": {
       "get": {
         "operationId": "MeListsController_dropped",
-        "summary": "My dropped items (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -3767,12 +3766,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -3781,11 +3780,11 @@
             "in": "query",
             "description": "Filter by media type",
             "schema": {
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -3846,20 +3845,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Lists"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "My dropped items (auth: Bearer)",
+        "tags": [
+          "Me: Lists"
         ]
       }
     },
     "/api/me/lists/counts": {
       "get": {
         "operationId": "MeListsController_listCounts",
-        "summary": "Counts of my lists (auth: Bearer)",
         "parameters": [],
         "responses": {
           "200": {
@@ -3908,20 +3907,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Lists"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Counts of my lists (auth: Bearer)",
+        "tags": [
+          "Me: Lists"
         ]
       }
     },
     "/api/me/favorites/updates": {
       "get": {
         "operationId": "MeListsController_favoriteUpdates",
-        "summary": "Updates for my favorite shows (auth: Bearer)",
         "parameters": [],
         "responses": {
           "200": {
@@ -3963,20 +3962,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Lists"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Updates for my favorite shows (auth: Bearer)",
+        "tags": [
+          "Me: Lists"
         ]
       }
     },
     "/api/user-media/episodes/batch/watch": {
       "post": {
         "operationId": "EpisodeProgressController_markBatchWatched",
-        "summary": "Batch mark episodes as watched (auth: Bearer)",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -4012,20 +4011,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Episode Progress"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Batch mark episodes as watched (auth: Bearer)",
+        "tags": [
+          "Me: Episode Progress"
         ]
       }
     },
     "/api/user-media/episodes/batch/unwatch": {
       "post": {
         "operationId": "EpisodeProgressController_markBatchUnwatched",
-        "summary": "Batch mark episodes as unwatched (auth: Bearer)",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -4061,20 +4060,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Episode Progress"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Batch mark episodes as unwatched (auth: Bearer)",
+        "tags": [
+          "Me: Episode Progress"
         ]
       }
     },
     "/api/user-media/episodes/{episodeId}/watch": {
       "post": {
         "operationId": "EpisodeProgressController_markWatched",
-        "summary": "Mark episode as watched (auth: Bearer)",
         "parameters": [
           {
             "name": "episodeId",
@@ -4117,18 +4116,18 @@
             }
           }
         },
-        "tags": [
-          "Me: Episode Progress"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Mark episode as watched (auth: Bearer)",
+        "tags": [
+          "Me: Episode Progress"
         ]
       },
       "delete": {
         "operationId": "EpisodeProgressController_markUnwatched",
-        "summary": "Mark episode as unwatched (auth: Bearer)",
         "parameters": [
           {
             "name": "episodeId",
@@ -4178,20 +4177,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Episode Progress"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Mark episode as unwatched (auth: Bearer)",
+        "tags": [
+          "Me: Episode Progress"
         ]
       }
     },
     "/api/user-media/shows/{showId}/progress": {
       "get": {
         "operationId": "EpisodeProgressController_getShowProgress",
-        "summary": "Get watch progress for a show (auth: Bearer)",
         "parameters": [
           {
             "name": "showId",
@@ -4263,20 +4262,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Episode Progress"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get watch progress for a show (auth: Bearer)",
+        "tags": [
+          "Me: Episode Progress"
         ]
       }
     },
     "/api/me/notifications": {
       "get": {
         "operationId": "NotificationsController_list",
-        "summary": "List notifications (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -4363,20 +4362,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Notifications"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List notifications (auth: Bearer)",
+        "tags": [
+          "Me: Notifications"
         ]
       }
     },
     "/api/me/notifications/unread-count": {
       "get": {
         "operationId": "NotificationsController_getUnreadCount",
-        "summary": "Get unread notification count (auth: Bearer)",
         "parameters": [],
         "responses": {
           "200": {
@@ -4425,20 +4424,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Notifications"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get unread notification count (auth: Bearer)",
+        "tags": [
+          "Me: Notifications"
         ]
       }
     },
     "/api/me/notifications/{notificationId}/read": {
       "post": {
         "operationId": "NotificationsController_markAsRead",
-        "summary": "Mark notification as read (auth: Bearer)",
         "parameters": [
           {
             "name": "notificationId",
@@ -4516,20 +4515,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Notifications"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Mark notification as read (auth: Bearer)",
+        "tags": [
+          "Me: Notifications"
         ]
       }
     },
     "/api/me/notifications/read-all": {
       "post": {
         "operationId": "NotificationsController_markAllAsRead",
-        "summary": "Mark all notifications as read (auth: Bearer)",
         "parameters": [],
         "responses": {
           "200": {
@@ -4578,20 +4577,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Notifications"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Mark all notifications as read (auth: Bearer)",
+        "tags": [
+          "Me: Notifications"
         ]
       }
     },
     "/api/me/saved-items/{mediaItemId}": {
       "post": {
         "operationId": "SavedItemsController_saveItem",
-        "summary": "Save media item to a list (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -4680,18 +4679,18 @@
             }
           }
         },
-        "tags": [
-          "Me: Saved Items"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Save media item to a list (auth: Bearer)",
+        "tags": [
+          "Me: Saved Items"
         ]
       },
       "delete": {
         "operationId": "SavedItemsController_unsaveItem",
-        "summary": "Remove media item from a list (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -4780,20 +4779,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Saved Items"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Remove media item from a list (auth: Bearer)",
+        "tags": [
+          "Me: Saved Items"
         ]
       }
     },
     "/api/me/saved-items/status/batch": {
       "get": {
         "operationId": "SavedItemsController_getBatchStatus",
-        "summary": "Get save status for multiple media items (auth: Bearer)",
         "parameters": [
           {
             "name": "ids",
@@ -4865,20 +4864,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Saved Items"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get save status for multiple media items (auth: Bearer)",
+        "tags": [
+          "Me: Saved Items"
         ]
       }
     },
     "/api/me/saved-items/{mediaItemId}/status": {
       "get": {
         "operationId": "SavedItemsController_getStatus",
-        "summary": "Get save status for media item (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -4957,20 +4956,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Saved Items"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get save status for media item (auth: Bearer)",
+        "tags": [
+          "Me: Saved Items"
         ]
       }
     },
     "/api/me/saved-items/for-later": {
       "get": {
         "operationId": "SavedItemsController_listForLater",
-        "summary": "List \"for later\" saved items (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -4996,11 +4995,11 @@
             "in": "query",
             "description": "Filter by media type",
             "schema": {
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -5064,20 +5063,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Saved Items"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List \"for later\" saved items (auth: Bearer)",
+        "tags": [
+          "Me: Saved Items"
         ]
       }
     },
     "/api/me/saved-items/considering": {
       "get": {
         "operationId": "SavedItemsController_listConsidering",
-        "summary": "List \"considering\" saved items (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -5103,11 +5102,11 @@
             "in": "query",
             "description": "Filter by media type",
             "schema": {
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -5171,20 +5170,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Saved Items"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List \"considering\" saved items (auth: Bearer)",
+        "tags": [
+          "Me: Saved Items"
         ]
       }
     },
     "/api/me/subscriptions/{mediaItemId}": {
       "post": {
         "operationId": "SubscriptionsController_subscribe",
-        "summary": "Subscribe to notifications for media item (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -5273,18 +5272,18 @@
             }
           }
         },
-        "tags": [
-          "Me: Subscriptions"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Subscribe to notifications for media item (auth: Bearer)",
+        "tags": [
+          "Me: Subscriptions"
         ]
       },
       "delete": {
         "operationId": "SubscriptionsController_unsubscribe",
-        "summary": "Unsubscribe from notifications for media item (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -5373,20 +5372,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Subscriptions"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Unsubscribe from notifications for media item (auth: Bearer)",
+        "tags": [
+          "Me: Subscriptions"
         ]
       }
     },
     "/api/me/subscriptions/{mediaItemId}/status": {
       "get": {
         "operationId": "SubscriptionsController_getStatus",
-        "summary": "Get subscription status for media item (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -5465,20 +5464,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Subscriptions"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get subscription status for media item (auth: Bearer)",
+        "tags": [
+          "Me: Subscriptions"
         ]
       }
     },
     "/api/me/subscriptions": {
       "get": {
         "operationId": "SubscriptionsController_listActive",
-        "summary": "List active subscriptions (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -5559,20 +5558,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Subscriptions"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List active subscriptions (auth: Bearer)",
+        "tags": [
+          "Me: Subscriptions"
         ]
       }
     },
     "/api/ingestion/jobs/{id}": {
       "get": {
         "operationId": "IngestionController_getJobStatus",
-        "summary": "Get ingestion job status",
         "parameters": [
           {
             "name": "id",
@@ -5687,20 +5686,20 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get ingestion job status",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/sync": {
       "post": {
         "operationId": "IngestionController_sync",
-        "summary": "Manually trigger sync for a specific media item",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -5757,21 +5756,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Manually trigger sync for a specific media item",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/trending": {
       "post": {
-        "operationId": "IngestionController_syncTrending",
-        "summary": "Trigger sync for trending movies and shows",
         "description": "Syncs trending content from TMDB using dispatcher pattern. Queues page jobs for movies and shows. With syncStats=true (default), also updates Trakt stats after ingestion.",
+        "operationId": "IngestionController_syncTrending",
         "parameters": [
           {
             "name": "pages",
@@ -5792,11 +5791,11 @@
             "description": "Media type filter — sync only movies or only shows",
             "schema": {
               "example": "movie",
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -5882,21 +5881,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Trigger sync for trending movies and shows",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/movies/now-playing": {
       "post": {
-        "operationId": "IngestionController_syncNowPlaying",
-        "summary": "Sync movies currently in theaters (ingestion only)",
         "description": "Fetches now playing movies from TMDB and queues them for sync. Does NOT update isNowPlaying flags - use /ingestion/movies/now-playing-flags for that.",
+        "operationId": "IngestionController_syncNowPlaying",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -5953,21 +5952,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Sync movies currently in theaters (ingestion only)",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/movies/now-playing-flags": {
       "post": {
-        "operationId": "IngestionController_updateNowPlayingFlags",
-        "summary": "Update isNowPlaying flags for movies",
         "description": "Updates isNowPlaying flags based on current TMDB now_playing list. Run this AFTER now-playing sync has completed.",
+        "operationId": "IngestionController_updateNowPlayingFlags",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -6024,21 +6023,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Update isNowPlaying flags for movies",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/movies/new-releases": {
       "post": {
-        "operationId": "IngestionController_syncNewReleases",
-        "summary": "Sync new theatrical movie releases",
         "description": "Fetches movies released in theaters within the specified period and syncs them.",
+        "operationId": "IngestionController_syncNewReleases",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -6095,21 +6094,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Sync new theatrical movie releases",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/snapshots": {
       "post": {
-        "operationId": "IngestionController_syncSnapshots",
-        "summary": "Trigger daily watchers snapshots sync",
         "description": "Updates daily watcher counts for all media items from Trakt.",
+        "operationId": "IngestionController_syncSnapshots",
         "parameters": [
           {
             "name": "region",
@@ -6175,21 +6174,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Trigger daily watchers snapshots sync",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/shows/tracked": {
       "post": {
-        "operationId": "IngestionController_syncTrackedShows",
-        "summary": "Trigger tracked shows sync",
         "description": "Syncs shows that have active subscriptions. Detects new episodes/seasons and triggers notifications.",
+        "operationId": "IngestionController_syncTrackedShows",
         "parameters": [
           {
             "name": "force",
@@ -6246,21 +6245,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Trigger tracked shows sync",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/backfill/imdb": {
       "post": {
-        "operationId": "IngestionController_backfillImdb",
-        "summary": "Re-sync shows missing IMDb ID",
         "description": "Finds all shows with missing IMDb ID and performs full re-sync. This fetches external_ids from TMDB (including imdb_id), then enriches each show with Trakt stats (watchers, ratings) and OMDb ratings (IMDb, Rotten Tomatoes, Metacritic). Use when shows were imported before external_ids fetching was implemented.",
+        "operationId": "IngestionController_backfillImdb",
         "parameters": [
           {
             "name": "force",
@@ -6339,21 +6338,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Re-sync shows missing IMDb ID",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/backfill/alt-titles": {
       "post": {
-        "operationId": "IngestionController_backfillAltTitles",
-        "summary": "Backfill alternative titles from TMDB",
         "description": "Finds all media items with missing alternative titles and fetches them from TMDB. Uses dedicated lightweight TMDB endpoints — no Trakt, OMDb, or TVMaze calls. One-time operation; future syncs populate alt titles automatically.",
+        "operationId": "IngestionController_backfillAltTitles",
         "parameters": [
           {
             "name": "force",
@@ -6432,21 +6431,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Backfill alternative titles from TMDB",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/ingestion/backfill/mdblist-ratings": {
       "post": {
-        "operationId": "IngestionController_backfillMdblistRatings",
-        "summary": "Backfill Rotten Tomatoes ratings from MDBList (admin-only)",
         "description": "Admin-only. Finds media items where either Rotten Tomatoes critics score or audience score is missing, or whose last MDBList check is older than the refresh window (rtFetchedAt > 90 days), and fetches critics + audience ratings from MDBList. Complements OMDb, which frequently omits RT values. Item jobs run on a dedicated rate-limited queue; dispatcher enforces an app-side daily cap of 900 items per run to fit the MDBList free-tier budget (1000 req/day; worker limiter ~40/hour).",
+        "operationId": "IngestionController_backfillMdblistRatings",
         "parameters": [
           {
             "name": "force",
@@ -6511,21 +6510,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Ingestion"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Backfill Rotten Tomatoes ratings from MDBList (admin-only)",
+        "tags": [
+          "Admin: Ingestion"
         ]
       }
     },
     "/api/admin/catalog-policies": {
       "get": {
-        "operationId": "PolicyController_getPolicies",
-        "summary": "Get list of policies",
         "description": "Returns list of all catalog policies with their status and metadata.",
+        "operationId": "PolicyController_getPolicies",
         "parameters": [],
         "responses": {
           "200": {
@@ -6584,19 +6583,19 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get list of policies",
+        "tags": [
+          "Admin: Policy"
         ]
       },
       "post": {
-        "operationId": "PolicyController_createPolicy",
-        "summary": "Create new policy",
         "description": "Creates a new policy draft with auto-incremented version. The policy is NOT activated automatically. Use POST /:id/prepare to start evaluation.",
+        "operationId": "PolicyController_createPolicy",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -6676,21 +6675,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Create new policy",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/{id}": {
       "get": {
-        "operationId": "PolicyController_getPolicyById",
-        "summary": "Get policy details",
         "description": "Returns a single policy with full configuration settings.",
+        "operationId": "PolicyController_getPolicyById",
         "parameters": [
           {
             "name": "id",
@@ -6772,21 +6771,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get policy details",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/{id}/prepare": {
       "post": {
-        "operationId": "PolicyController_preparePolicy",
-        "summary": "Prepare policy for activation",
         "description": "Creates an evaluation run and starts background job to pre-compute evaluations for all media items. Returns immediately with run ID for tracking progress.",
+        "operationId": "PolicyController_preparePolicy",
         "parameters": [
           {
             "name": "id",
@@ -6886,21 +6885,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Prepare policy for activation",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/runs": {
       "get": {
-        "operationId": "RunController_getRuns",
-        "summary": "Get list of evaluation runs",
         "description": "Returns list of all evaluation runs with their status and progress.",
+        "operationId": "RunController_getRuns",
         "parameters": [
           {
             "name": "limit",
@@ -6988,21 +6987,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get list of evaluation runs",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/runs/{runId}": {
       "get": {
-        "operationId": "RunController_getRunStatus",
-        "summary": "Get run status and progress",
         "description": "Returns detailed status of an evaluation run including progress, counters, and readyToPromote flag.",
+        "operationId": "RunController_getRunStatus",
         "parameters": [
           {
             "name": "runId",
@@ -7091,21 +7090,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get run status and progress",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/runs/{runId}/promote": {
       "post": {
-        "operationId": "RunController_promoteRun",
-        "summary": "Promote run to activate policy",
         "description": "Verifies run is successful and meets thresholds, then atomically activates the policy. This makes the new policy version active for the public catalog.",
+        "operationId": "RunController_promoteRun",
         "parameters": [
           {
             "name": "runId",
@@ -7205,21 +7204,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Promote run to activate policy",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/runs/{runId}/cancel": {
       "post": {
-        "operationId": "RunController_cancelRun",
-        "summary": "Cancel running evaluation",
         "description": "Cancels a running evaluation. Item jobs already in queue will be skipped. Preserves cursor and counters for potential resume.",
+        "operationId": "RunController_cancelRun",
         "parameters": [
           {
             "name": "runId",
@@ -7308,21 +7307,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Cancel running evaluation",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/runs/{runId}/diff": {
       "get": {
-        "operationId": "RunController_getDiff",
-        "summary": "Get diff report",
         "description": "Computes differences between current active policy and the prepared run. Shows regressions (items leaving catalog) and improvements (items entering catalog).",
+        "operationId": "RunController_getDiff",
         "parameters": [
           {
             "name": "runId",
@@ -7420,21 +7419,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get diff report",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/runs/backfill": {
       "post": {
-        "operationId": "RunController_backfillContext",
-        "summary": "Backfill evaluations for a specific context",
         "description": "Triggers re-evaluation for the specified context only, using the currently active policy. Use this to populate missing evaluation data for a specific context without affecting other contexts.",
+        "operationId": "RunController_backfillContext",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -7510,21 +7509,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Backfill evaluations for a specific context",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/dry-run": {
       "post": {
-        "operationId": "DryRunController_executeDryRun",
-        "summary": "Execute dry-run evaluation",
         "description": "Evaluates media items against a proposed policy WITHOUT persisting results. Supports multiple selection modes: sample (random), top (by popularity), byType, byCountry. Limits: max 10000 items, 60s timeout.",
+        "operationId": "DryRunController_executeDryRun",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -7603,21 +7602,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Execute dry-run evaluation",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/catalog-policies/dry-run/diff": {
       "post": {
-        "operationId": "DryRunController_executeDryRunDiff",
-        "summary": "Execute dry-run with diff",
         "description": "Same as dry-run but includes comparison against current active policy version.",
+        "operationId": "DryRunController_executeDryRunDiff",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -7696,21 +7695,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Policy"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Execute dry-run with diff",
+        "tags": [
+          "Admin: Policy"
         ]
       }
     },
     "/api/admin/providers": {
       "get": {
-        "operationId": "ProvidersController_listProviders",
-        "summary": "List providers",
         "description": "Returns all providers from the registry with their status.",
+        "operationId": "ProvidersController_listProviders",
         "parameters": [],
         "responses": {
           "200": {
@@ -7769,21 +7768,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Providers"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List providers",
+        "tags": [
+          "Admin: Providers"
         ]
       }
     },
     "/api/admin/providers/unmapped": {
       "get": {
-        "operationId": "ProvidersController_listUnmapped",
-        "summary": "List unmapped providers",
         "description": "Returns providers seen in TMDB data that have no mapping. Sorted by seen count descending.",
+        "operationId": "ProvidersController_listUnmapped",
         "parameters": [
           {
             "name": "limit",
@@ -7811,11 +7810,11 @@
             "schema": {
               "default": "count",
               "example": "count",
+              "type": "string",
               "enum": [
                 "count",
                 "lastSeen"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -7886,21 +7885,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Providers"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List unmapped providers",
+        "tags": [
+          "Admin: Providers"
         ]
       }
     },
     "/api/admin/providers/mappings": {
       "get": {
-        "operationId": "ProvidersController_listMappings",
-        "summary": "List mappings",
         "description": "Returns all provider mappings. Can filter by provider or region.",
+        "operationId": "ProvidersController_listMappings",
         "parameters": [
           {
             "name": "limit",
@@ -8018,19 +8017,19 @@
             }
           }
         },
-        "tags": [
-          "Admin: Providers"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List mappings",
+        "tags": [
+          "Admin: Providers"
         ]
       },
       "post": {
-        "operationId": "ProvidersController_createMapping",
-        "summary": "Create mapping",
         "description": "Creates a new TMDB to canonical provider mapping. After creation, affected media will be re-normalized on next sync.",
+        "operationId": "ProvidersController_createMapping",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -8102,21 +8101,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Providers"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Create mapping",
+        "tags": [
+          "Admin: Providers"
         ]
       }
     },
     "/api/admin/providers/mappings/{id}": {
       "put": {
-        "operationId": "ProvidersController_updateMapping",
-        "summary": "Update mapping",
         "description": "Updates an existing mapping. Only provided fields are updated.",
+        "operationId": "ProvidersController_updateMapping",
         "parameters": [
           {
             "name": "id",
@@ -8208,19 +8207,19 @@
             }
           }
         },
-        "tags": [
-          "Admin: Providers"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Update mapping",
+        "tags": [
+          "Admin: Providers"
         ]
       },
       "delete": {
-        "operationId": "ProvidersController_deleteMapping",
-        "summary": "Delete mapping",
         "description": "Deletes a mapping. The TMDB provider will become unmapped again.",
+        "operationId": "ProvidersController_deleteMapping",
         "parameters": [
           {
             "name": "id",
@@ -8280,21 +8279,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Providers"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Delete mapping",
+        "tags": [
+          "Admin: Providers"
         ]
       }
     },
     "/api/admin/providers/resolve": {
       "get": {
-        "operationId": "ProvidersController_resolveProvider",
-        "summary": "Debug resolution",
         "description": "Tests how a TMDB provider ID would be resolved to canonical provider. Useful for debugging mapping issues.",
+        "operationId": "ProvidersController_resolveProvider",
         "parameters": [
           {
             "name": "tmdbId",
@@ -8384,21 +8383,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Providers"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Debug resolution",
+        "tags": [
+          "Admin: Providers"
         ]
       }
     },
     "/api/stats/sync": {
       "post": {
-        "operationId": "StatsController_syncTrendingStats",
-        "summary": "Sync trending stats from Trakt",
         "description": "Adds a job to the queue to fetch current watchers count and trending rank from Trakt API.",
+        "operationId": "StatsController_syncTrendingStats",
         "parameters": [
           {
             "name": "limit",
@@ -8462,6 +8461,7 @@
             "bearer": []
           }
         ],
+        "summary": "Sync trending stats from Trakt",
         "tags": [
           "Admin: Stats"
         ]
@@ -8469,9 +8469,8 @@
     },
     "/api/stats/sync-eligible-trending": {
       "post": {
-        "operationId": "StatsController_syncEligibleTrending",
-        "summary": "Sync watchers for ELIGIBLE trending items",
         "description": "Adds a job to the queue to sync watchers data for ELIGIBLE items in trending context. Use this to backfill watchers for items that are never in Trakt trending top-100.",
+        "operationId": "StatsController_syncEligibleTrending",
         "parameters": [
           {
             "name": "batchSize",
@@ -8545,6 +8544,7 @@
             "bearer": []
           }
         ],
+        "summary": "Sync watchers for ELIGIBLE trending items",
         "tags": [
           "Admin: Stats"
         ]
@@ -8552,9 +8552,8 @@
     },
     "/api/stats/tmdb/{tmdbId}": {
       "get": {
-        "operationId": "StatsController_getStatsByTmdbId",
-        "summary": "Get stats by TMDB ID",
         "description": "Returns current watchers count and trending rank for a media item.",
+        "operationId": "StatsController_getStatsByTmdbId",
         "parameters": [
           {
             "name": "tmdbId",
@@ -8572,11 +8571,11 @@
             "description": "Media type (TMDB movie and TV ids overlap; recommended)",
             "schema": {
               "example": "movie",
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -8615,6 +8614,7 @@
             }
           }
         },
+        "summary": "Get stats by TMDB ID",
         "tags": [
           "Public: Stats"
         ]
@@ -8622,9 +8622,8 @@
     },
     "/api/stats/drop-off/analyze": {
       "post": {
-        "operationId": "StatsController_analyzeDropOff",
-        "summary": "Analyze drop-off for shows",
         "description": "Adds a job to analyze viewer drop-off for shows. Can analyze a single show or all shows.",
+        "operationId": "StatsController_analyzeDropOff",
         "parameters": [
           {
             "name": "tmdbId",
@@ -8698,6 +8697,7 @@
             "bearer": []
           }
         ],
+        "summary": "Analyze drop-off for shows",
         "tags": [
           "Admin: Stats"
         ]
@@ -8705,9 +8705,8 @@
     },
     "/api/stats/drop-off/analyze/{tmdbId}": {
       "post": {
-        "operationId": "StatsController_analyzeDropOffById",
-        "summary": "Analyze drop-off for a specific show",
         "description": "Analyzes viewer drop-off for a single show by TMDB ID. Runs in background.",
+        "operationId": "StatsController_analyzeDropOffById",
         "parameters": [
           {
             "name": "tmdbId",
@@ -8779,6 +8778,7 @@
             "bearer": []
           }
         ],
+        "summary": "Analyze drop-off for a specific show",
         "tags": [
           "Admin: Stats"
         ]
@@ -8786,9 +8786,8 @@
     },
     "/api/stats/drop-off/tmdb/{tmdbId}": {
       "get": {
-        "operationId": "StatsController_getDropOffAnalysis",
-        "summary": "Get drop-off analysis for a show",
         "description": "Returns pre-calculated drop-off analysis including drop-off point, engagement metrics, and insights.",
+        "operationId": "StatsController_getDropOffAnalysis",
         "parameters": [
           {
             "name": "tmdbId",
@@ -8835,6 +8834,7 @@
             }
           }
         },
+        "summary": "Get drop-off analysis for a show",
         "tags": [
           "Public: Stats"
         ]
@@ -8842,9 +8842,8 @@
     },
     "/api/stats/backfill/total-watchers": {
       "post": {
-        "operationId": "StatsController_backfillTotalWatchers",
-        "summary": "Backfill total_watchers for corrupted items",
         "description": "Finds items where total_watchers = 0 but have Trakt votes, then re-fetches from Trakt API.",
+        "operationId": "StatsController_backfillTotalWatchers",
         "parameters": [
           {
             "name": "type",
@@ -8853,11 +8852,11 @@
             "description": "Filter by media type",
             "schema": {
               "example": "show",
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -8933,6 +8932,7 @@
             "bearer": []
           }
         ],
+        "summary": "Backfill total_watchers for corrupted items",
         "tags": [
           "Admin: Stats"
         ]
@@ -8940,9 +8940,8 @@
     },
     "/api/stats/backfill/watchers-count": {
       "post": {
-        "operationId": "StatsController_backfillWatchersCount",
-        "summary": "Queue backfill jobs for watchers_count",
         "description": "Finds items where watchers_count = 0 but total_watchers > threshold, then queues chunk jobs to re-fetch live watchers from Trakt API with proper rate limiting and exponential backoff.",
+        "operationId": "StatsController_backfillWatchersCount",
         "parameters": [
           {
             "name": "type",
@@ -8951,11 +8950,11 @@
             "description": "Filter by media type",
             "schema": {
               "example": "show",
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -9031,6 +9030,7 @@
             "bearer": []
           }
         ],
+        "summary": "Queue backfill jobs for watchers_count",
         "tags": [
           "Admin: Stats"
         ]
@@ -9038,9 +9038,8 @@
     },
     "/api/stats/recalculate": {
       "post": {
-        "operationId": "StatsController_recalculateScores",
-        "summary": "Recalculate scores for all media items",
         "description": "Recalculates ratingo_score, quality_score, popularity_score, and freshness_score for all items. Use type=show to recalculate only shows.",
+        "operationId": "StatsController_recalculateScores",
         "parameters": [
           {
             "name": "type",
@@ -9049,11 +9048,11 @@
             "description": "Filter by media type",
             "schema": {
               "example": "show",
+              "type": "string",
               "enum": [
                 "movie",
                 "show"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -9118,6 +9117,7 @@
             "bearer": []
           }
         ],
+        "summary": "Recalculate scores for all media items",
         "tags": [
           "Admin: Stats"
         ]
@@ -9125,9 +9125,8 @@
     },
     "/api/stats/reconcile-community-ratings": {
       "post": {
-        "operationId": "StatsController_reconcileCommunityRatings",
-        "summary": "Reconcile community ratings",
         "description": "Aggregates all user ratings and updates community_average_rating / community_rating_count in media_stats.",
+        "operationId": "StatsController_reconcileCommunityRatings",
         "parameters": [],
         "responses": {
           "201": {
@@ -9169,6 +9168,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reconcile community ratings",
         "tags": [
           "Admin: Stats"
         ]
@@ -9177,7 +9177,6 @@
     "/api/home/hero": {
       "get": {
         "operationId": "HomeController_getHero",
-        "summary": "Get Hero block items (Top 4 hottest media)",
         "parameters": [
           {
             "name": "type",
@@ -9227,6 +9226,7 @@
             }
           }
         },
+        "summary": "Get Hero block items (Top 4 hottest media)",
         "tags": [
           "Public: Home"
         ]
@@ -9234,9 +9234,8 @@
     },
     "/api/home/watching-now": {
       "get": {
-        "operationId": "HomeController_getWatchingNow",
-        "summary": "Get \"Watching Now\" items (Top 3 fresh content by live watchers)",
         "description": "Returns fresh content with most live Trakt watchers. Movies: released within 45 days. Shows: last episode within 21 days or has upcoming episode.",
+        "operationId": "HomeController_getWatchingNow",
         "parameters": [],
         "responses": {
           "500": {
@@ -9263,6 +9262,7 @@
             }
           }
         },
+        "summary": "Get \"Watching Now\" items (Top 3 fresh content by live watchers)",
         "tags": [
           "Public: Home"
         ]
@@ -9270,9 +9270,8 @@
     },
     "/api/insights/movements": {
       "get": {
-        "operationId": "InsightsController_getMovements",
-        "summary": "Get biggest risers and fallers",
         "description": "Returns media items with the biggest change in watchers count over the specified window.",
+        "operationId": "InsightsController_getMovements",
         "parameters": [
           {
             "name": "window",
@@ -9280,12 +9279,12 @@
             "in": "query",
             "schema": {
               "default": "30d",
+              "type": "string",
               "enum": [
                 "30d",
                 "90d",
                 "365d"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -9345,6 +9344,7 @@
             }
           }
         },
+        "summary": "Get biggest risers and fallers",
         "tags": [
           "Public: Insights"
         ]
@@ -9353,7 +9353,6 @@
     "/api/auth/register": {
       "post": {
         "operationId": "AuthController_register",
-        "summary": "Register new user",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -9415,6 +9414,7 @@
             }
           }
         },
+        "summary": "Register new user",
         "tags": [
           "Auth"
         ]
@@ -9423,7 +9423,6 @@
     "/api/auth/login": {
       "post": {
         "operationId": "AuthController_login",
-        "summary": "Login with email/password",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -9488,6 +9487,7 @@
             }
           }
         },
+        "summary": "Login with email/password",
         "tags": [
           "Auth"
         ]
@@ -9496,7 +9496,6 @@
     "/api/auth/refresh": {
       "post": {
         "operationId": "AuthController_refresh",
-        "summary": "Refresh tokens",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -9558,6 +9557,7 @@
             }
           }
         },
+        "summary": "Refresh tokens",
         "tags": [
           "Auth"
         ]
@@ -9566,7 +9566,6 @@
     "/api/auth/logout": {
       "post": {
         "operationId": "AuthController_logout",
-        "summary": "Logout (revoke refresh tokens)",
         "parameters": [],
         "responses": {
           "204": {
@@ -9593,20 +9592,20 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Logout (revoke refresh tokens)",
+        "tags": [
+          "Auth"
         ]
       }
     },
     "/api/auth/password": {
       "patch": {
         "operationId": "AuthController_changePassword",
-        "summary": "Change current user password",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -9649,20 +9648,20 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Change current user password",
+        "tags": [
+          "Auth"
         ]
       }
     },
     "/api/auth/me": {
       "get": {
         "operationId": "AuthController_me",
-        "summary": "Get current user profile",
         "parameters": [],
         "responses": {
           "200": {
@@ -9704,20 +9703,20 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get current user profile",
+        "tags": [
+          "Auth"
         ]
       }
     },
     "/api/auth/google": {
       "get": {
         "operationId": "AuthController_googleAuth",
-        "summary": "Initiate Google OAuth flow",
         "parameters": [
           {
             "name": "returnTo",
@@ -9754,6 +9753,7 @@
             }
           }
         },
+        "summary": "Initiate Google OAuth flow",
         "tags": [
           "Auth"
         ]
@@ -9762,7 +9762,6 @@
     "/api/auth/facebook": {
       "get": {
         "operationId": "AuthController_facebookAuth",
-        "summary": "Initiate Facebook OAuth flow",
         "parameters": [
           {
             "name": "returnTo",
@@ -9799,6 +9798,7 @@
             }
           }
         },
+        "summary": "Initiate Facebook OAuth flow",
         "tags": [
           "Auth"
         ]
@@ -9807,7 +9807,6 @@
     "/api/auth/oauth/exchange": {
       "post": {
         "operationId": "AuthController_exchangeCode",
-        "summary": "Exchange one-time code for tokens",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -9872,6 +9871,7 @@
             }
           }
         },
+        "summary": "Exchange one-time code for tokens",
         "tags": [
           "Auth"
         ]
@@ -9880,7 +9880,6 @@
     "/api/auth/providers": {
       "get": {
         "operationId": "AuthController_getLinkedAccounts",
-        "summary": "Get linked OAuth providers",
         "parameters": [],
         "responses": {
           "200": {
@@ -9932,20 +9931,20 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get linked OAuth providers",
+        "tags": [
+          "Auth"
         ]
       }
     },
     "/api/auth/providers/{provider}": {
       "delete": {
         "operationId": "AuthController_unlinkProvider",
-        "summary": "Unlink OAuth provider",
         "parameters": [
           {
             "name": "provider",
@@ -9954,11 +9953,11 @@
             "description": "OAuth provider to unlink",
             "schema": {
               "example": "google",
+              "type": "string",
               "enum": [
                 "google",
                 "facebook"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -10010,20 +10009,20 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Unlink OAuth provider",
+        "tags": [
+          "Auth"
         ]
       }
     },
     "/api/auth/config": {
       "get": {
         "operationId": "AuthController_getConfig",
-        "summary": "Get auth configuration",
         "parameters": [],
         "responses": {
           "200": {
@@ -10062,6 +10061,7 @@
             }
           }
         },
+        "summary": "Get auth configuration",
         "tags": [
           "Auth"
         ]
@@ -10070,7 +10070,6 @@
     "/api/users/me": {
       "get": {
         "operationId": "UsersController_me",
-        "summary": "Get current user profile (auth: Bearer)",
         "parameters": [],
         "responses": {
           "401": {
@@ -10087,18 +10086,18 @@
             }
           }
         },
-        "tags": [
-          "Me: Profile"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get current user profile (auth: Bearer)",
+        "tags": [
+          "Me: Profile"
         ]
       },
       "patch": {
         "operationId": "UsersController_updateProfile",
-        "summary": "Update current user profile (auth: Bearer)",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -10135,20 +10134,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Profile"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Update current user profile (auth: Bearer)",
+        "tags": [
+          "Me: Profile"
         ]
       }
     },
     "/api/users/me/avatar/upload-url": {
       "post": {
         "operationId": "UsersController_createAvatarUploadUrl",
-        "summary": "Create presigned upload URL for avatar (auth: Bearer)",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -10210,20 +10209,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Profile"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Create presigned upload URL for avatar (auth: Bearer)",
+        "tags": [
+          "Me: Profile"
         ]
       }
     },
     "/api/users/{username}": {
       "get": {
         "operationId": "PublicUsersController_getPublicProfile",
-        "summary": "Get public user profile by username (auth optional, privacy aware)",
         "parameters": [
           {
             "name": "username",
@@ -10269,6 +10268,7 @@
             }
           }
         },
+        "summary": "Get public user profile by username (auth optional, privacy aware)",
         "tags": [
           "Public: Users"
         ]
@@ -10277,7 +10277,6 @@
     "/api/users/{username}/ratings": {
       "get": {
         "operationId": "PublicUsersController_getRatings",
-        "summary": "Get public user ratings (auth optional, privacy aware)",
         "parameters": [
           {
             "name": "username",
@@ -10311,12 +10310,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -10377,6 +10376,7 @@
             }
           }
         },
+        "summary": "Get public user ratings (auth optional, privacy aware)",
         "tags": [
           "Public: Users"
         ]
@@ -10385,7 +10385,6 @@
     "/api/users/{username}/watchlist": {
       "get": {
         "operationId": "PublicUsersController_getWatchlist",
-        "summary": "Get public user watchlist (auth optional, privacy aware)",
         "parameters": [
           {
             "name": "username",
@@ -10419,12 +10418,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -10485,6 +10484,7 @@
             }
           }
         },
+        "summary": "Get public user watchlist (auth optional, privacy aware)",
         "tags": [
           "Public: Users"
         ]
@@ -10493,7 +10493,6 @@
     "/api/users/{username}/history": {
       "get": {
         "operationId": "PublicUsersController_getHistory",
-        "summary": "Get public user watch history (auth optional, privacy aware)",
         "parameters": [
           {
             "name": "username",
@@ -10527,12 +10526,12 @@
             "in": "query",
             "schema": {
               "default": "recent",
+              "type": "string",
               "enum": [
                 "recent",
                 "rating",
                 "releaseDate"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -10593,6 +10592,7 @@
             }
           }
         },
+        "summary": "Get public user watch history (auth optional, privacy aware)",
         "tags": [
           "Public: Users"
         ]
@@ -10600,9 +10600,8 @@
     },
     "/api/journal/posts": {
       "get": {
-        "operationId": "JournalPostsController_getPosts",
-        "summary": "List journal posts",
         "description": "Returns paginated list of published journal posts. Supports filtering by type (comma-separated for union) and context.",
+        "operationId": "JournalPostsController_getPosts",
         "parameters": [
           {
             "name": "type",
@@ -10696,6 +10695,7 @@
             }
           }
         },
+        "summary": "List journal posts",
         "tags": [
           "Public: Journal"
         ]
@@ -10703,9 +10703,8 @@
     },
     "/api/journal/posts/{slug}": {
       "get": {
-        "operationId": "JournalPostsController_getPostBySlug",
-        "summary": "Get post by slug",
         "description": "Returns full post details including rendered HTML and navigation links.",
+        "operationId": "JournalPostsController_getPostBySlug",
         "parameters": [
           {
             "name": "slug",
@@ -10775,6 +10774,7 @@
             }
           }
         },
+        "summary": "Get post by slug",
         "tags": [
           "Public: Journal"
         ]
@@ -10782,9 +10782,8 @@
     },
     "/api/admin/journal/posts": {
       "get": {
-        "operationId": "AdminJournalController_getPosts",
-        "summary": "List all posts (admin)",
         "description": "Returns paginated list of all posts including drafts.",
+        "operationId": "AdminJournalController_getPosts",
         "parameters": [
           {
             "name": "type",
@@ -10837,12 +10836,12 @@
             "description": "Filter by post status",
             "schema": {
               "example": "draft",
+              "type": "string",
               "enum": [
                 "draft",
                 "published",
                 "scheduled"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -10913,19 +10912,19 @@
             }
           }
         },
-        "tags": [
-          "Admin: Journal"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List all posts (admin)",
+        "tags": [
+          "Admin: Journal"
         ]
       },
       "post": {
-        "operationId": "AdminJournalController_createPost",
-        "summary": "Create new post",
         "description": "Creates a new journal post. Auto-generates slug from title if not provided.",
+        "operationId": "AdminJournalController_createPost",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -11004,21 +11003,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Journal"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Create new post",
+        "tags": [
+          "Admin: Journal"
         ]
       }
     },
     "/api/admin/journal/posts/{id}": {
       "get": {
-        "operationId": "AdminJournalController_getPostById",
-        "summary": "Get post by ID (admin)",
         "description": "Returns full post details including draft content.",
+        "operationId": "AdminJournalController_getPostById",
         "parameters": [
           {
             "name": "id",
@@ -11107,19 +11106,19 @@
             }
           }
         },
-        "tags": [
-          "Admin: Journal"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get post by ID (admin)",
+        "tags": [
+          "Admin: Journal"
         ]
       },
       "patch": {
-        "operationId": "AdminJournalController_updatePost",
-        "summary": "Update post",
         "description": "Updates an existing journal post. Only provided fields are updated.",
+        "operationId": "AdminJournalController_updatePost",
         "parameters": [
           {
             "name": "id",
@@ -11218,19 +11217,19 @@
             }
           }
         },
-        "tags": [
-          "Admin: Journal"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Update post",
+        "tags": [
+          "Admin: Journal"
         ]
       },
       "delete": {
-        "operationId": "AdminJournalController_deletePost",
-        "summary": "Delete post",
         "description": "Permanently deletes a journal post.",
+        "operationId": "AdminJournalController_deletePost",
         "parameters": [
           {
             "name": "id",
@@ -11324,21 +11323,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Journal"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Delete post",
+        "tags": [
+          "Admin: Journal"
         ]
       }
     },
     "/api/admin/journal/posts/{id}/publish": {
       "post": {
-        "operationId": "AdminJournalController_publishPost",
-        "summary": "Publish post",
         "description": "Publishes a draft post immediately. For scheduled posts, publishes them now.",
+        "operationId": "AdminJournalController_publishPost",
         "parameters": [
           {
             "name": "id",
@@ -11427,21 +11426,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Journal"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Publish post",
+        "tags": [
+          "Admin: Journal"
         ]
       }
     },
     "/api/admin/journal/posts/{id}/unpublish": {
       "post": {
-        "operationId": "AdminJournalController_unpublishPost",
-        "summary": "Unpublish post",
         "description": "Converts a published post back to draft status.",
+        "operationId": "AdminJournalController_unpublishPost",
         "parameters": [
           {
             "name": "id",
@@ -11530,21 +11529,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Journal"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Unpublish post",
+        "tags": [
+          "Admin: Journal"
         ]
       }
     },
     "/api/admin/journal/posts/upload-image": {
       "post": {
-        "operationId": "AdminJournalController_uploadImage",
-        "summary": "Upload image",
         "description": "Uploads an image for use in journal posts. Returns CDN URL.",
+        "operationId": "AdminJournalController_uploadImage",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -11633,21 +11632,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Journal"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Upload image",
+        "tags": [
+          "Admin: Journal"
         ]
       }
     },
     "/api/journal/images/{filename}": {
       "get": {
-        "operationId": "JournalImagesController_getImage",
-        "summary": "Get journal image",
         "description": "Serves a journal image from storage. Images are cached for 1 year.",
+        "operationId": "JournalImagesController_getImage",
         "parameters": [
           {
             "name": "filename",
@@ -11701,6 +11700,7 @@
             }
           }
         },
+        "summary": "Get journal image",
         "tags": [
           "Public: Journal"
         ]
@@ -11708,9 +11708,8 @@
     },
     "/api/reviews/media/{mediaItemId}": {
       "get": {
-        "operationId": "ReviewsController_listForMedia",
-        "summary": "List reviews for a media item",
         "description": "Returns reviews for a movie/show with author info and optional current user vote.",
+        "operationId": "ReviewsController_listForMedia",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -11729,12 +11728,12 @@
             "schema": {
               "default": "newest",
               "example": "newest",
+              "type": "string",
               "enum": [
                 "newest",
                 "oldest",
                 "most_liked"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -11831,6 +11830,7 @@
             }
           }
         },
+        "summary": "List reviews for a media item",
         "tags": [
           "Public: Reviews"
         ]
@@ -11838,9 +11838,8 @@
     },
     "/api/reviews/{reviewId}": {
       "get": {
-        "operationId": "ReviewsController_getById",
-        "summary": "Get a single review",
         "description": "Returns a single review with author info and optional current user vote.",
+        "operationId": "ReviewsController_getById",
         "parameters": [
           {
             "name": "reviewId",
@@ -11909,6 +11908,7 @@
             }
           }
         },
+        "summary": "Get a single review",
         "tags": [
           "Public: Reviews"
         ]
@@ -11916,9 +11916,8 @@
     },
     "/api/reviews/{reviewId}/replies": {
       "get": {
-        "operationId": "ReviewsController_listReplies",
-        "summary": "List replies for a review",
         "description": "Returns all replies for a review with author info.",
+        "operationId": "ReviewsController_listReplies",
         "parameters": [
           {
             "name": "reviewId",
@@ -11990,6 +11989,7 @@
             }
           }
         },
+        "summary": "List replies for a review",
         "tags": [
           "Public: Reviews"
         ]
@@ -11998,7 +11998,6 @@
     "/api/me/reviews": {
       "post": {
         "operationId": "UserReviewsController_create",
-        "summary": "Create a review (auth: Bearer)",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -12067,20 +12066,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Create a review (auth: Bearer)",
+        "tags": [
+          "Me: Reviews"
         ]
       }
     },
     "/api/me/reviews/media/{mediaItemId}": {
       "get": {
         "operationId": "UserReviewsController_getMyReviewForMedia",
-        "summary": "Get my review for a media item (auth: Bearer)",
         "parameters": [
           {
             "name": "mediaItemId",
@@ -12159,20 +12158,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get my review for a media item (auth: Bearer)",
+        "tags": [
+          "Me: Reviews"
         ]
       }
     },
     "/api/me/reviews/{reviewId}": {
       "patch": {
         "operationId": "UserReviewsController_update",
-        "summary": "Update my review (auth: Bearer)",
         "parameters": [
           {
             "name": "reviewId",
@@ -12261,18 +12260,18 @@
             }
           }
         },
-        "tags": [
-          "Me: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Update my review (auth: Bearer)",
+        "tags": [
+          "Me: Reviews"
         ]
       },
       "delete": {
         "operationId": "UserReviewsController_delete",
-        "summary": "Delete my review (auth: Bearer)",
         "parameters": [
           {
             "name": "reviewId",
@@ -12329,20 +12328,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Delete my review (auth: Bearer)",
+        "tags": [
+          "Me: Reviews"
         ]
       }
     },
     "/api/me/reviews/{reviewId}/vote": {
       "post": {
         "operationId": "UserReviewsController_vote",
-        "summary": "Vote on a review (auth: Bearer)",
         "parameters": [
           {
             "name": "reviewId",
@@ -12431,18 +12430,18 @@
             }
           }
         },
-        "tags": [
-          "Me: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Vote on a review (auth: Bearer)",
+        "tags": [
+          "Me: Reviews"
         ]
       },
       "delete": {
         "operationId": "UserReviewsController_unvote",
-        "summary": "Remove vote from a review (auth: Bearer)",
         "parameters": [
           {
             "name": "reviewId",
@@ -12521,20 +12520,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Remove vote from a review (auth: Bearer)",
+        "tags": [
+          "Me: Reviews"
         ]
       }
     },
     "/api/me/reviews/{reviewId}/replies": {
       "post": {
         "operationId": "UserReviewsController_createReply",
-        "summary": "Create a reply to a review (auth: Bearer)",
         "parameters": [
           {
             "name": "reviewId",
@@ -12623,20 +12622,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Create a reply to a review (auth: Bearer)",
+        "tags": [
+          "Me: Reviews"
         ]
       }
     },
     "/api/me/reviews/replies/{replyId}": {
       "delete": {
         "operationId": "UserReviewsController_deleteReply",
-        "summary": "Delete my reply (auth: Bearer)",
         "parameters": [
           {
             "name": "replyId",
@@ -12693,20 +12692,20 @@
             }
           }
         },
-        "tags": [
-          "Me: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Delete my reply (auth: Bearer)",
+        "tags": [
+          "Me: Reviews"
         ]
       }
     },
     "/api/me/reviews/{reviewId}/report": {
       "post": {
         "operationId": "UserReviewsController_report",
-        "summary": "Report a review (auth: Bearer)",
         "parameters": [
           {
             "name": "reviewId",
@@ -12795,21 +12794,21 @@
             }
           }
         },
-        "tags": [
-          "Me: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Report a review (auth: Bearer)",
+        "tags": [
+          "Me: Reviews"
         ]
       }
     },
     "/api/admin/reviews/reports": {
       "get": {
-        "operationId": "AdminReviewsController_listReports",
-        "summary": "List reports",
         "description": "Returns paginated list of reports for moderation queue.",
+        "operationId": "AdminReviewsController_listReports",
         "parameters": [
           {
             "name": "status",
@@ -12817,13 +12816,13 @@
             "in": "query",
             "description": "Filter by status",
             "schema": {
+              "type": "string",
               "enum": [
                 "pending",
                 "reviewed",
                 "dismissed",
                 "actioned"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -12914,21 +12913,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List reports",
+        "tags": [
+          "Admin: Reviews"
         ]
       }
     },
     "/api/admin/reviews/reports/{reportId}": {
       "patch": {
-        "operationId": "AdminReviewsController_resolveReport",
-        "summary": "Resolve report",
         "description": "Resolves a report with given status. Can optionally hide the review.",
+        "operationId": "AdminReviewsController_resolveReport",
         "parameters": [
           {
             "name": "reportId",
@@ -13032,21 +13031,21 @@
             }
           }
         },
-        "tags": [
-          "Admin: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Resolve report",
+        "tags": [
+          "Admin: Reviews"
         ]
       }
     },
     "/api/admin/reviews/{reviewId}": {
       "delete": {
-        "operationId": "AdminReviewsController_forceDeleteReview",
-        "summary": "Force delete review",
         "description": "Soft deletes a review regardless of ownership.",
+        "operationId": "AdminReviewsController_forceDeleteReview",
         "parameters": [
           {
             "name": "reviewId",
@@ -13140,20 +13139,20 @@
             }
           }
         },
-        "tags": [
-          "Admin: Reviews"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Force delete review",
+        "tags": [
+          "Admin: Reviews"
         ]
       }
     },
     "/api/admin/monitoring/keys": {
       "get": {
         "operationId": "MonitoringController_getKeys",
-        "summary": "Current health of every monitored API key",
         "parameters": [],
         "responses": {
           "200": {
@@ -13202,20 +13201,20 @@
             }
           }
         },
-        "tags": [
-          "Admin Monitoring"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Current health of every monitored API key",
+        "tags": [
+          "Admin Monitoring"
         ]
       }
     },
     "/api/admin/monitoring/keys/check": {
       "post": {
         "operationId": "MonitoringController_checkNow",
-        "summary": "Probe all keys now and return the fresh dashboard",
         "parameters": [],
         "responses": {
           "200": {
@@ -13264,20 +13263,20 @@
             }
           }
         },
-        "tags": [
-          "Admin Monitoring"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Probe all keys now and return the fresh dashboard",
+        "tags": [
+          "Admin Monitoring"
         ]
       }
     },
     "/api/admin/monitoring/keys/{provider}/history": {
       "get": {
         "operationId": "MonitoringController_getHistory",
-        "summary": "Recent probe history for one provider",
         "parameters": [
           {
             "name": "provider",
@@ -13373,13 +13372,14 @@
             }
           }
         },
-        "tags": [
-          "Admin Monitoring"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Recent probe history for one provider",
+        "tags": [
+          "Admin Monitoring"
         ]
       }
     }
@@ -13672,6 +13672,7 @@
         "properties": {
           "tmdb": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalRatingItemDto"
@@ -13680,6 +13681,7 @@
           },
           "imdb": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalRatingItemDto"
@@ -13688,6 +13690,7 @@
           },
           "trakt": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalRatingItemDto"
@@ -13696,6 +13699,7 @@
           },
           "metacritic": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalRatingItemDto"
@@ -13705,6 +13709,7 @@
           "rottenTomatoes": {
             "nullable": true,
             "description": "Rotten Tomatoes critics score (Tomatometer, 0-100)",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalRatingItemDto"
@@ -13714,6 +13719,7 @@
           "rottenTomatoesAudience": {
             "nullable": true,
             "description": "Rotten Tomatoes audience score (Popcornmeter, 0-100)",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalRatingItemDto"
@@ -13802,6 +13808,7 @@
           },
           "continue": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ContinuePointDto"
@@ -13847,6 +13854,7 @@
           },
           "poster": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -13855,6 +13863,7 @@
           },
           "backdrop": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -14270,6 +14279,7 @@
           },
           "logo": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -14451,6 +14461,7 @@
           },
           "poster": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -14465,6 +14476,7 @@
           },
           "backdrop": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -14473,6 +14485,7 @@
           },
           "stats": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/RatingoStatsDto"
@@ -14481,6 +14494,7 @@
           },
           "externalRatings": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalRatingsDto"
@@ -14505,6 +14519,7 @@
           "userState": {
             "description": "User-specific state, present only when authenticated",
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/UserMediaStateDto"
@@ -14521,6 +14536,7 @@
           "primaryTrailer": {
             "nullable": true,
             "description": "Primary trailer (first UK or EN trailer)",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/VideoDto"
@@ -14529,6 +14545,7 @@
           },
           "credits": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/CreditsDto"
@@ -14538,6 +14555,7 @@
           "availability": {
             "nullable": true,
             "description": "Where to watch - UA primary with US fallback",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/AvailabilityDto"
@@ -14581,6 +14599,7 @@
           "card": {
             "nullable": true,
             "description": "Card metadata with badge and CTA info",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/CardMetaDto"
@@ -14602,6 +14621,7 @@
           "verdict": {
             "nullable": true,
             "description": "Computed verdict for movie details page. Clients use messageKey for i18n lookup.",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/MovieVerdictDto"
@@ -14667,6 +14687,7 @@
           },
           "poster": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -14675,6 +14696,7 @@
           },
           "backdrop": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -14707,6 +14729,7 @@
           },
           "showProgress": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ShowProgressDto"
@@ -15117,6 +15140,7 @@
           },
           "poster": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -15131,6 +15155,7 @@
           },
           "backdrop": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -15139,6 +15164,7 @@
           },
           "stats": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/RatingoStatsDto"
@@ -15147,6 +15173,7 @@
           },
           "externalRatings": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExternalRatingsDto"
@@ -15171,6 +15198,7 @@
           "userState": {
             "description": "User-specific state, present only when authenticated",
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/UserMediaStateDto"
@@ -15187,6 +15215,7 @@
           "primaryTrailer": {
             "nullable": true,
             "description": "Primary trailer (first UK or EN trailer)",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/VideoDto"
@@ -15195,6 +15224,7 @@
           },
           "credits": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/CreditsDto"
@@ -15204,6 +15234,7 @@
           "availability": {
             "nullable": true,
             "description": "Where to watch - UA primary with US fallback",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/AvailabilityDto"
@@ -15270,6 +15301,7 @@
           "card": {
             "nullable": true,
             "description": "Card metadata with badge and CTA info",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/CardMetaDto"
@@ -15279,6 +15311,7 @@
           "verdict": {
             "nullable": true,
             "description": "Show verdict - answers \"is it worth it?\"",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ShowVerdictDto"
@@ -15288,6 +15321,7 @@
           "statusHint": {
             "nullable": true,
             "description": "Status hint - explains \"why now?\" (secondary, optional)",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ShowStatusHintDto"
@@ -15373,6 +15407,7 @@
           },
           "poster": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -15960,6 +15995,7 @@
           },
           "poster": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -16075,6 +16111,7 @@
                 "original": "https://image.tmdb.org/t/p/original/poster.jpg"
               }
             },
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/MeUserMediaSummaryDto"
@@ -16084,6 +16121,7 @@
           "progressSummary": {
             "nullable": true,
             "description": "Episode progress summary (only for shows)",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ProgressSummaryDto"
@@ -16093,6 +16131,7 @@
           "continuePoint": {
             "nullable": true,
             "description": "Next episode to continue watching (only for shows with progress)",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ContinuePointDto"
@@ -16235,6 +16274,7 @@
           "latestEpisode": {
             "nullable": true,
             "description": "Most recent aired episode",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/EpisodeInfoDto"
@@ -16244,6 +16284,7 @@
           "nextEpisode": {
             "nullable": true,
             "description": "Next upcoming episode",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/EpisodeInfoDto"
@@ -16372,6 +16413,7 @@
           },
           "poster": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -16407,6 +16449,7 @@
           },
           "payload": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/NotificationPayloadDto"
@@ -19035,6 +19078,7 @@
           },
           "poster": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -19043,6 +19087,7 @@
           },
           "backdrop": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -19546,6 +19591,7 @@
           },
           "poster": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ImageDto"
@@ -19779,6 +19825,7 @@
           "prev": {
             "description": "Previous post (older)",
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/PostNavigationLinkDto"
@@ -19788,6 +19835,7 @@
           "next": {
             "description": "Next post (newer)",
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/PostNavigationLinkDto"
@@ -20994,6 +21042,7 @@
           },
           "latest": {
             "nullable": true,
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/KeyHealthSnapshotDto"
