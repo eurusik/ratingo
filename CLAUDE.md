@@ -76,8 +76,9 @@ module/
 Design all jobs as idempotent. Define job types in `*.constants.ts`.
 
 ### Database Migrations
-- Use `CREATE INDEX CONCURRENTLY` for new indexes on existing tables (avoids table locks)
+- New indexes on existing tables lock writes: `drizzle-kit migrate` wraps all pending migrations in one transaction, so `CONCURRENTLY` fails there — for a large table build the index by hand with `CREATE INDEX CONCURRENTLY` first and keep `IF NOT EXISTS` in the migration; for a small table add the `-- squawk-ignore require-concurrent-index-creation` directive above the statement (a Squawk directive, the one SQL comment this rule allows)
 - Follow expand/contract pattern for breaking schema changes: add nullable column first, backfill, then add constraint
+- Run `npm run lint:migrations --workspace=api` before pushing a migration: Squawk (`apps/api/.squawk.toml`) checks new/changed files in `drizzle_v2/` against `origin/development`, and CI's `migrations` job gates on it
 
 ## Frontend Architecture
 
