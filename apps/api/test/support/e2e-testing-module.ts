@@ -9,6 +9,9 @@ import authConfig from '../../src/config/auth.config';
 import { DATABASE_CONNECTION, POSTGRES_CLIENT } from '../../src/database/database.module';
 import { configureHttpApp, createHttpAdapter } from '../../src/http-app.setup';
 import { ClockModule } from '../../src/modules/shared/clock';
+import { replaceRedisWithStubs } from '../../src/offline-redis';
+
+import { InMemoryQueue } from './in-memory-queue';
 
 const buildE2eCoreImports = (extraConfigLoaders: ConfigFactory[]) => [
   ConfigModule.forRoot({
@@ -24,14 +27,17 @@ export const createE2eTestingModule = (
   { imports = [], ...metadata }: ModuleMetadata,
   extraConfigLoaders: ConfigFactory[] = [],
 ): TestingModuleBuilder =>
-  Test.createTestingModule({
-    ...metadata,
-    imports: [...buildE2eCoreImports(extraConfigLoaders), ...imports],
-  })
-    .overrideProvider(POSTGRES_CLIENT)
-    .useValue({})
-    .overrideProvider(DATABASE_CONNECTION)
-    .useValue({});
+  replaceRedisWithStubs(
+    Test.createTestingModule({
+      ...metadata,
+      imports: [...buildE2eCoreImports(extraConfigLoaders), ...imports],
+    })
+      .overrideProvider(POSTGRES_CLIENT)
+      .useValue({})
+      .overrideProvider(DATABASE_CONNECTION)
+      .useValue({}),
+    (queueName) => new InMemoryQueue(queueName),
+  );
 
 export const createE2eApp = async (
   moduleFixture: TestingModule,
