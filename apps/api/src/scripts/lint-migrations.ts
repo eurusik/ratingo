@@ -71,12 +71,18 @@ function asRunInsideDrizzleTransaction(file: string): string {
   return readFileSync(resolve(API_DIR, file), 'utf8') + DRIZZLE_TRANSACTION_SUFFIX;
 }
 
+function violationKey({ line, column, rule_name }: SquawkViolation): string {
+  return `${line}:${column}:${rule_name}`;
+}
+
 export function lintMigrationFile(file: string): SquawkViolation[] {
   const sql = asRunInsideDrizzleTransaction(file);
   const stdinArgs = ['--stdin-filepath', file];
   const safetyViolations = runSquawk(stdinArgs, sql);
+  const alreadyReported = new Set(safetyViolations.map(violationKey));
   const idempotencyViolations = runSquawk(['--no-assume-in-transaction', ...stdinArgs], sql).filter(
-    (violation) => violation.rule_name === IDEMPOTENCY_RULE,
+    (violation) =>
+      violation.rule_name === IDEMPOTENCY_RULE && !alreadyReported.has(violationKey(violation)),
   );
   return [...safetyViolations, ...idempotencyViolations];
 }

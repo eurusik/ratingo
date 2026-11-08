@@ -46,6 +46,12 @@ describe('lint-migrations', () => {
     expect(rules).toContain('ban-concurrent-index-creation-in-transaction');
   });
 
+  it('reports a violation found by both passes once', () => {
+    const rules = rulesViolatedBy('CREATE INDEX CONCURRENTLY "t_a" ON "t" ("a");\n');
+
+    expect(rules.filter((rule) => rule === 'prefer-robust-stmts')).toHaveLength(1);
+  });
+
   it('accepts a blocking index acknowledged with a squawk-ignore directive', () => {
     const rules = rulesViolatedBy(
       '-- squawk-ignore require-concurrent-index-creation\n' +
