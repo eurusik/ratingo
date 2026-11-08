@@ -46,7 +46,7 @@ jobs:
             echo "contracts=true" >> "$GITHUB_OUTPUT"
             echo "backup=true" >> "$GITHUB_OUTPUT"
             echo "migrations=true" >> "$GITHUB_OUTPUT"
-            echo "deps=true" >> "$GITHUB_OUTPUT"
+            echo "deps=$([[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -56,7 +56,9 @@ jobs:
 
           match() { grep -qE "$1" <<< "$files" && echo true || echo false; }
 
-          if (( count >= 3000 )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
+          large=$(( count >= 3000 ))
+
+          if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
             api=true; web=true; contracts=true; backup=true; migrations=true
           else
             api=$(match '^(apps/api/|knip\.json$)')
@@ -66,10 +68,10 @@ jobs:
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
           fi
 
-          if (( count >= 3000 )); then
+          if (( large )); then
             deps=true
           else
-            deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|apps/api/Dockerfile|\.github/workflows/ci\.yml)$')
+            deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
           fi
 
           echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations deps=$deps"
@@ -203,38 +205,26 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Read base images of the install stages from the Dockerfile
+      - name: Full (deps) and production (prod-deps) installs
         run: |
-          stage_image() { awk -v stage="$1" 'toupper($1) == "FROM" && tolower($4) == stage { print $2 }' "$DOCKERFILE"; }
-          deps_image=$(stage_image deps)
-          runner_image=$(stage_image runner)
-          if [[ -z "$deps_image" || -z "$runner_image" ]]; then
-            echo "::error file=$DOCKERFILE::Expected FROM ... AS deps and FROM ... AS runner stages"
+          docker build --progress=plain --platform linux/amd64 -f "$DOCKERFILE" --target deps --output type=cacheonly . > deps.log 2>&1 &
+          deps_build=$!
+          docker build --progress=plain --platform linux/amd64 -f "$DOCKERFILE" --target prod-deps -t api-prod-deps . > prod-deps.log 2>&1 &
+          prod_deps_build=$!
+          failed=""
+          wait "$deps_build" || failed="$failed deps"
+          wait "$prod_deps_build" || failed="$failed prod-deps"
+          for stage in deps prod-deps; do
+            echo "::group::$stage install log"; cat "$stage.log"; echo "::endgroup::"
+          done
+          if [[ -n "$failed" ]]; then
+            echo "::error file=$DOCKERFILE::npm ci failed in stage(s):$failed"
+            grep -h 'npm error' deps.log prod-deps.log | head -40
             exit 1
           fi
-          echo "deps=$deps_image runner=$runner_image"
-          echo "DEPS_IMAGE=$deps_image" >> "$GITHUB_ENV"
-          echo "RUNNER_IMAGE=$runner_image" >> "$GITHUB_ENV"
 
-      - name: Stage the files the Dockerfile copies before npm ci
-        run: |
-          mkdir -p "$RUNNER_TEMP/install/apps/api"
-          cp package.json package-lock.json "$RUNNER_TEMP/install/"
-          cp apps/api/package.json "$RUNNER_TEMP/install/apps/api/"
-
-      - name: Full install (deps stage)
-        run: |
-          docker run --rm --platform linux/amd64 -v "$RUNNER_TEMP/install:/app" -w /app "$DEPS_IMAGE" sh -euc '
-            npm ci --include-workspace-root --workspace=api
-            cd apps/api && node -e "require(\"bcrypt\").hashSync(\"x\", 4)"
-          '
-
-      - name: Production install (runner stage)
-        run: |
-          docker run --rm --platform linux/amd64 -e NODE_ENV=production -v "$RUNNER_TEMP/install:/app" -w /app "$RUNNER_IMAGE" sh -euc '
-            npm ci --omit=dev --include-workspace-root --workspace=api
-            cd apps/api && node -e "const b = require(\"bcrypt\"); if (!b.compareSync(\"x\", b.hashSync(\"x\", 4))) process.exit(1)"
-          '
+      - name: Load native modules from the production install
+        run: docker run --rm --platform linux/amd64 -v "$GITHUB_WORKSPACE/.github/scripts:/scripts:ro" api-prod-deps node /scripts/load-native-modules.cjs
 
   web:
     name: web
