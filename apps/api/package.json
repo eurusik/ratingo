@@ -24,7 +24,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "lint:migrations": "node scripts/lint-migrations.mjs"
+    "lint:migrations": "ts-node --transpile-only src/scripts/lint-migrations.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",

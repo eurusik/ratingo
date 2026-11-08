@@ -61,7 +61,7 @@ jobs:
             web=$(match '^(apps/web-client/|packages/(api-contract|fx-engine)/)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
-            migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|scripts/lint-migrations\.mjs$)')
+            migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
           fi
 
           echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations"
@@ -156,7 +156,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
       - uses: ./.github/actions/setup-deps
         with:
@@ -164,7 +164,7 @@ jobs:
 
       - name: Lint new and changed migrations with Squawk
         env:
-          MIGRATIONS_BASE: ${{ github.event.pull_request.base.sha || 'origin/development' }}
+          MIGRATIONS_BASE: HEAD^1
         run: npm run lint:migrations --workspace=api
 
   web:
