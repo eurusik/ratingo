@@ -1,1 +1,1 @@
-export { MONITORING_QUEUE, MONITORING_JOBS } from '../monitoring.constants';
+export { MONITORING_QUEUE } from '../monitoring.constants';

@@ -50,23 +50,3 @@ export function normalizeOriginalLanguage(language: string | null | undefined): 
 
   return LANGUAGE_CODE_PATTERN.test(normalized) ? normalized : null;
 }
-
-/**
- * Checks if a country code has valid ISO 3166-1 alpha-2 format.
- *
- * @param {string} code - Country code to validate
- * @returns {boolean} True if valid format
- */
-export function isValidCountryCode(code: string): boolean {
-  return COUNTRY_CODE_PATTERN.test(code.toUpperCase());
-}
-
-/**
- * Checks if a language code has valid ISO 639-1 format.
- *
- * @param {string} code - Language code to validate
- * @returns {boolean} True if valid format
- */
-export function isValidLanguageCode(code: string): boolean {
-  return LANGUAGE_CODE_PATTERN.test(code.toLowerCase());
-}

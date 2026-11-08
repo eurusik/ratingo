@@ -23,7 +23,7 @@ export interface ScheduledJobConfig {
 /**
  * Full scheduler configuration.
  */
-export interface SchedulerConfig {
+interface SchedulerConfig {
   /** Master switch to enable/disable all scheduled jobs */
   enabled: boolean;
   /** Timezone for all scheduled jobs */

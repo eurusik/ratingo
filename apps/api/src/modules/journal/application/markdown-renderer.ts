@@ -123,18 +123,11 @@ let cachedSanitizer: HtmlSanitizer | null = null;
 /**
  * Gets the sanitizer instance.
  */
-export function getSanitizer(): HtmlSanitizer {
+function getSanitizer(): HtmlSanitizer {
   cachedSanitizer ??= {
     sanitize: (html: string) => sanitizeHtml(html, SANITIZE_OPTIONS),
   };
   return cachedSanitizer;
-}
-
-/**
- * Sets a custom sanitizer (for testing).
- */
-export function setSanitizer(sanitizer: HtmlSanitizer | null): void {
-  cachedSanitizer = sanitizer;
 }
 
 /**

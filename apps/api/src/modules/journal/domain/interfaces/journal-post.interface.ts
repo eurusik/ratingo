@@ -29,10 +29,3 @@ export interface PostNavigation {
   prev: { slug: string; title: string } | null;
   next: { slug: string; title: string } | null;
 }
-
-/**
- * Response for single post endpoint with navigation.
- */
-export interface PostDetailResponse extends JournalPost {
-  navigation: PostNavigation;
-}

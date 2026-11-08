@@ -9,8 +9,6 @@ import type { MovieDetails } from '../repositories/movie.repository.interface';
  * Re-export MovieDetails from repository interface for backward compatibility.
  * MovieDetailsResult is an alias for MovieDetails.
  */
-export type { MovieDetails as MovieDetailsResult } from '../repositories/movie.repository.interface';
-
 /**
  * Enriched movie details with user state, card metadata, and verdict.
  * This is the result type for movie details queries.

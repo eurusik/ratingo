@@ -55,11 +55,6 @@ export const DIFFABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.PREPARED, RunSt
 export const CANCELLABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.RUNNING, RunStatus.PREPARED];
 
 /**
- * Run statuses that can be promoted.
- */
-export const PROMOTABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.PREPARED];
-
-/**
  * Blocking reason codes for run promotion.
  */
 export const BlockingReasonCode = {

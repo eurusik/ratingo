@@ -23,5 +23,3 @@ export const TMDB_GENRE_IDS = {
   /** Family genre - NOT auto-classified as kids (too broad) */
   FAMILY: 10751,
 } as const;
-
-export type TmdbGenreId = (typeof TMDB_GENRE_IDS)[keyof typeof TMDB_GENRE_IDS];

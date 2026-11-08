@@ -11,5 +11,3 @@ export const RESERVED_USERNAMES = [
   'trending',
   'home',
 ] as const;
-
-export type ReservedUsername = (typeof RESERVED_USERNAMES)[number];

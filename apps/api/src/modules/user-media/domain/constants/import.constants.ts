@@ -9,17 +9,4 @@ export const IMPORT_LIMITS = {
   MAX_ITEMS: 10_000,
 } as const;
 
-/**
- * State priority for no-downgrade rule.
- * Higher number = higher priority; import cannot replace a higher-priority state.
- */
-export const STATE_PRIORITY: Record<string, number> = {
-  planned: 1,
-  watching: 2,
-  paused: 3,
-  dropped: 4,
-  caught_up: 5,
-  completed: 6,
-};
-
 export const MEDIA_LOOKUP_PORT = Symbol('MEDIA_LOOKUP_PORT');

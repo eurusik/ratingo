@@ -155,7 +155,7 @@ export interface GlobalRequirements {
 /**
  * Diagnostic details for global gate failures.
  */
-export interface GlobalGateDetails {
+interface GlobalGateDetails {
   /** List of checks that failed */
   failedChecks: GlobalGateCheckType[];
 }
@@ -187,7 +187,7 @@ export const EligibilityMode = {
 /**
  * Eligibility mode type.
  */
-export type EligibilityModeType = (typeof EligibilityMode)[keyof typeof EligibilityMode];
+type EligibilityModeType = (typeof EligibilityMode)[keyof typeof EligibilityMode];
 
 /**
  * Blocked country mode constants.
@@ -207,7 +207,7 @@ export type BlockedCountryModeType = (typeof BlockedCountryMode)[keyof typeof Bl
 /**
  * Breakout rule requirements for provider filtering.
  */
-export interface BreakoutProviderRequirements {
+interface BreakoutProviderRequirements {
   /** Canonical provider IDs - at least one must be present */
   requireAnyOfProviders?: string[];
   /** Filter by availability mode. Defaults to 'subscription_only'. */
@@ -334,8 +334,7 @@ export const DistributionChannel = {
 /**
  * Distribution channel type.
  */
-export type DistributionChannelType =
-  (typeof DistributionChannel)[keyof typeof DistributionChannel];
+type DistributionChannelType = (typeof DistributionChannel)[keyof typeof DistributionChannel];
 
 /**
  * Normalized watch offer for policy evaluation.
@@ -432,28 +431,4 @@ export interface MediaCatalogEvaluation {
    * Display surface context for this evaluation.
    */
   context: EvaluationContext;
-}
-
-/**
- * Catalog evaluation run entity (database model).
- *
- * Lifecycle: running → prepared → promoted | cancelled | failed
- *
- * Note: Repository layer (infrastructure) extends this with additional fields.
- * This is the domain-level representation.
- *
- * Per Readability & Pending Reform: pending is always 0 for new runs.
- * PENDING is no longer returned by Policy Engine.
- */
-export interface CatalogEvaluationRun {
-  id: string;
-  policyVersion: number;
-  status: 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted';
-  startedAt: Date;
-  finishedAt: Date | null;
-  cursor: string | null;
-  processed: number;
-  eligible: number;
-  ineligible: number;
-  errors: number;
 }

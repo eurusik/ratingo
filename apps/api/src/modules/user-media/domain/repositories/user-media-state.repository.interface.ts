@@ -85,7 +85,7 @@ export interface FavoriteUpdatesOptions {
   limit: number;
 }
 
-export interface EpisodeInfo {
+interface EpisodeInfo {
   seasonNumber: number;
   episodeNumber: number;
   title: string | null;

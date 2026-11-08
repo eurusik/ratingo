@@ -120,7 +120,7 @@ export interface CalendarEpisode {
 /**
  * Episode info for show details.
  */
-export interface EpisodeInfo {
+interface EpisodeInfo {
   id: string;
   number: number;
   title: string | null;

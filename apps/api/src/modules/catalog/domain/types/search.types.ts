@@ -8,7 +8,7 @@ export const SEARCH_SOURCE = {
   TMDB: 'tmdb',
 } as const;
 
-export type SearchSource = (typeof SEARCH_SOURCE)[keyof typeof SEARCH_SOURCE];
+type SearchSource = (typeof SEARCH_SOURCE)[keyof typeof SEARCH_SOURCE];
 
 /**
  * Base search result item (common fields).
@@ -42,11 +42,6 @@ export interface TmdbSearchResultItem extends BaseSearchResultItem {
   source: typeof SEARCH_SOURCE.TMDB;
   isImported: boolean;
 }
-
-/**
- * Union type for any search result item.
- */
-export type SearchResultItem = LocalSearchResultItem | TmdbSearchResultItem;
 
 /**
  * Combined search results from multiple sources.

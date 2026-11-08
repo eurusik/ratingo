@@ -64,13 +64,6 @@ export const OAuthErrorCode = {
 } as const;
 
 /**
- * Google OAuth error responses from provider.
- */
-export const GoogleOAuthError = {
-  ACCESS_DENIED: 'access_denied',
-} as const;
-
-/**
  * Google OAuth request parameters.
  */
 export const GoogleOAuthParams = {
@@ -87,13 +80,6 @@ export const FACEBOOK_AUTH_COOKIE_PATH = '/api/auth';
 
 /** Facebook OAuth scopes */
 export const FACEBOOK_OAUTH_SCOPES = 'email';
-
-/**
- * Facebook OAuth error responses from provider.
- */
-export const FacebookOAuthError = {
-  ACCESS_DENIED: 'access_denied',
-} as const;
 
 /**
  * Facebook OAuth request parameters.

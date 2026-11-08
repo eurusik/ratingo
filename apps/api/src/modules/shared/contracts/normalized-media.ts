@@ -51,7 +51,7 @@ export interface WatchProvider {
 /**
  * Availability for a single region.
  */
-export interface WatchProviderRegion {
+interface WatchProviderRegion {
   link: string | null;
   flatrate?: WatchProvider[]; // TMDB calls this 'flatrate'
   rent?: WatchProvider[];

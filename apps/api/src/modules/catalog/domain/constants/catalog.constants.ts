@@ -37,7 +37,7 @@ export const NEW_RELEASE_THRESHOLDS = {
  * Freshness score floor (minimum value for very old content).
  * Matches score.config.ts freshnessMinFloor * 100.
  */
-export const FRESHNESS_FLOOR = 20;
+const FRESHNESS_FLOOR = 20;
 
 /**
  * List context for freshness filtering.

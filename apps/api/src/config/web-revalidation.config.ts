@@ -1,6 +1,6 @@
 import { registerAs } from '@nestjs/config';
 
-export const ALLOWED_WEB_HOSTNAMES: ReadonlySet<string> = new Set([
+const ALLOWED_WEB_HOSTNAMES: ReadonlySet<string> = new Set([
   'ratingo.top',
   'www.ratingo.top',
   'dev.ratingo.top',

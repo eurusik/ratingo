@@ -26,8 +26,5 @@ export {
 } from '../domain/repositories/user-subscription.repository.interface';
 
 // Entity types
-export type { SubscriptionTrigger } from '../domain/entities/user-subscription.entity';
-export { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
-export type { SavedItemList } from '../domain/entities';
 export { SAVED_ITEM_LIST } from '../domain/entities';
 export { ACTION_CONTEXT } from '../domain/entities/user-media-action.entity';

@@ -10,7 +10,7 @@ export const DEFAULT_API_URL = 'https://api.mdblist.com';
  * or internal host would otherwise leak the API key to that endpoint and
  * write attacker-controlled data into our DB.
  */
-export const ALLOWED_HOSTNAMES: ReadonlySet<string> = new Set(['api.mdblist.com']);
+const ALLOWED_HOSTNAMES: ReadonlySet<string> = new Set(['api.mdblist.com']);
 
 /**
  * Validates MDBList base URL. Enforces HTTPS and an allow-list of hosts.

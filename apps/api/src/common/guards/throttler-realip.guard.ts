@@ -32,7 +32,7 @@ const ONE_MINUTE_MS = 60_000;
  * Names of route-scoped throttler tiers. They are skipped everywhere except on routes that
  * opt in via `@Throttle({ <tier>: { limit, ttl } })`.
  */
-export const ROUTE_THROTTLE_TIER = {
+const ROUTE_THROTTLE_TIER = {
   /** Credential endpoints: register, login, OAuth code exchange. */
   AUTH: 'auth',
   /** Refresh-token rotation. */

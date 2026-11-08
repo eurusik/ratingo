@@ -27,6 +27,5 @@ export type {
   CastMember,
   CrewMember,
   WatchProvider,
-  WatchProviderRegion,
   WatchProvidersMap,
 } from './normalized-media';
