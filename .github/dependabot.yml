@@ -14,6 +14,18 @@ updates:
       actions:
         patterns: ['*']
 
+  - package-ecosystem: docker
+    directory: /apps/api
+    target-branch: development
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Kyiv
+    ignore:
+      - dependency-name: node
+        update-types: [version-update:semver-major]
+
   - package-ecosystem: npm
     directory: /
     target-branch: development

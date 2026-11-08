@@ -1,4 +1,4 @@
-FROM node:22-alpine AS deps
+FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS deps
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ COPY packages/*/package.json ./packages/
 RUN npm ci --include-workspace-root --workspace=api
 
 
-FROM node:22-alpine AS build
+FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS build
 
 WORKDIR /app
 
@@ -27,18 +27,25 @@ COPY . .
 RUN npm run build --workspace=api
 
 
-FROM node:22-alpine AS runner
+FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS prod-deps
 
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install production deps for API workspace (includes drizzle-kit now)
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/*/package.json ./apps/
 COPY packages/*/package.json ./packages/
 
 RUN npm ci --omit=dev --include-workspace-root --workspace=api
+
+
+FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS runner
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=prod-deps /app ./
 
 # Copy compiled API bundle
 COPY --from=build /app/apps/api/dist ./apps/api/dist

@@ -33,6 +33,7 @@ jobs:
       contracts: ${{ steps.filter.outputs.contracts }}
       backup: ${{ steps.filter.outputs.backup }}
       migrations: ${{ steps.filter.outputs.migrations }}
+      deps: ${{ steps.filter.outputs.deps }}
     steps:
       - id: filter
         env:
@@ -45,6 +46,7 @@ jobs:
             echo "contracts=true" >> "$GITHUB_OUTPUT"
             echo "backup=true" >> "$GITHUB_OUTPUT"
             echo "migrations=true" >> "$GITHUB_OUTPUT"
+            echo "deps=$([[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -54,7 +56,9 @@ jobs:
 
           match() { grep -qE "$1" <<< "$files" && echo true || echo false; }
 
-          if (( count >= 3000 )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
+          large=$(( count >= 3000 ))
+
+          if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
             api=true; web=true; contracts=true; backup=true; migrations=true
           else
             api=$(match '^(apps/api/|knip\.json$)')
@@ -64,12 +68,19 @@ jobs:
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
           fi
 
-          echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations"
+          if (( large )); then
+            deps=true
+          else
+            deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
+          fi
+
+          echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations deps=$deps"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "contracts=$contracts" >> "$GITHUB_OUTPUT"
           echo "backup=$backup" >> "$GITHUB_OUTPUT"
           echo "migrations=$migrations" >> "$GITHUB_OUTPUT"
+          echo "deps=$deps" >> "$GITHUB_OUTPUT"
 
   api:
     name: api
@@ -183,6 +194,38 @@ jobs:
           MIGRATIONS_BASE: HEAD^1
         run: npm run lint:migrations --workspace=api
 
+  api-prod-install:
+    name: api-prod-install
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DOCKERFILE: apps/api/Dockerfile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Full (deps) and production (prod-deps) installs
+        run: |
+          docker build --progress=plain --platform linux/amd64 -f "$DOCKERFILE" --target deps --output type=cacheonly . > deps.log 2>&1 &
+          deps_build=$!
+          docker build --progress=plain --platform linux/amd64 -f "$DOCKERFILE" --target prod-deps -t api-prod-deps . > prod-deps.log 2>&1 &
+          prod_deps_build=$!
+          failed=""
+          wait "$deps_build" || failed="$failed deps"
+          wait "$prod_deps_build" || failed="$failed prod-deps"
+          for stage in deps prod-deps; do
+            echo "::group::$stage install log"; cat "$stage.log"; echo "::endgroup::"
+          done
+          if [[ -n "$failed" ]]; then
+            echo "::error file=$DOCKERFILE::npm ci failed in stage(s):$failed"
+            grep -h 'npm error' deps.log prod-deps.log | head -40
+            exit 1
+          fi
+
+      - name: Load native modules from the production install
+        run: docker run --rm --platform linux/amd64 -v "$GITHUB_WORKSPACE/.github/scripts:/scripts:ro" api-prod-deps node /scripts/load-native-modules.cjs
+
   web:
     name: web
     needs: changes
@@ -276,7 +319,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, migrations, web, contracts, pg-backup]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, migrations, web, contracts, pg-backup]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
