@@ -9,8 +9,6 @@ export const USER_MEDIA_ACTION = {
   UNSAVE: 'unsave',
 } as const;
 
-export type UserMediaActionType = (typeof USER_MEDIA_ACTION)[keyof typeof USER_MEDIA_ACTION];
-
 /**
  * Context where the action originated.
  */
@@ -21,8 +19,6 @@ export const ACTION_CONTEXT = {
   HERO: 'hero',
   IMPORT: 'import',
 } as const;
-
-export type ActionContext = (typeof ACTION_CONTEXT)[keyof typeof ACTION_CONTEXT];
 
 /**
  * Represents a user action event on media.

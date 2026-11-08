@@ -25,7 +25,7 @@ export type AllowedImageType = (typeof ALLOWED_IMAGE_TYPES)[number];
 /**
  * Maximum file size for journal images (5MB).
  */
-export const MAX_IMAGE_SIZE_MB = 5;
+const MAX_IMAGE_SIZE_MB = 5;
 const BYTES_PER_KB = 1024;
 const BYTES_PER_MB = BYTES_PER_KB * BYTES_PER_KB;
 export const MAX_IMAGE_SIZE = MAX_IMAGE_SIZE_MB * BYTES_PER_MB;

@@ -56,14 +56,3 @@ export interface OffsetPaginationMeta {
   offset: number;
   hasMore?: boolean;
 }
-
-/**
- * Listing sort options.
- */
-export const LISTING_SORT = {
-  POPULARITY: 'popularity',
-  RELEASE_DATE: 'releaseDate',
-} as const;
-
-export type ListingSort = (typeof LISTING_SORT)[keyof typeof LISTING_SORT];
-export const LISTING_SORT_VALUES = Object.values(LISTING_SORT);

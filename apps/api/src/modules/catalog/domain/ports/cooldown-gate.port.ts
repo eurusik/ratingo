@@ -2,7 +2,7 @@
  * Result when cooldown was successfully acquired.
  * The token must be passed to release() to prevent releasing another acquirer's lock.
  */
-export interface CooldownAcquired {
+interface CooldownAcquired {
   acquired: true;
   token: string;
 }
@@ -10,7 +10,7 @@ export interface CooldownAcquired {
 /**
  * Result when cooldown is already active.
  */
-export interface CooldownBlocked {
+interface CooldownBlocked {
   acquired: false;
   expiresInSeconds: number;
 }

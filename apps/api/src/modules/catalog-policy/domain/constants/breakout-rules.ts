@@ -60,6 +60,3 @@ export const ANIME_TRAKT_HIT: BreakoutRule = {
     minImdbVotes: 25000,
   },
 };
-
-/** Default breakout rules for anime content class exclusion. */
-export const DEFAULT_ANIME_BREAKOUT_RULES: BreakoutRule[] = [ANIME_GLOBAL_HIT, ANIME_TRAKT_HIT];

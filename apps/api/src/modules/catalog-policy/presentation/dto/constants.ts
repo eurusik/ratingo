@@ -9,7 +9,6 @@
  * Run status values.
  */
 export const RUN_STATUSES = ['running', 'prepared', 'failed', 'cancelled', 'promoted'] as const;
-export type RunStatusType = (typeof RUN_STATUSES)[number];
 
 /**
  * Evaluation context values.
@@ -21,25 +20,21 @@ export type EvaluationContextType = (typeof EVALUATION_CONTEXTS)[number];
  * Media type values.
  */
 export const MEDIA_TYPES = ['movie', 'show'] as const;
-export type MediaTypeType = (typeof MEDIA_TYPES)[number];
 
 /**
  * Eligibility mode values.
  */
 export const ELIGIBILITY_MODES = ['STRICT', 'RELAXED'] as const;
-export type EligibilityModeType = (typeof ELIGIBILITY_MODES)[number];
 
 /**
  * Blocked country mode values.
  */
 export const BLOCKED_COUNTRY_MODES = ['ANY', 'MAJORITY'] as const;
-export type BlockedCountryModeType = (typeof BLOCKED_COUNTRY_MODES)[number];
 
 /**
  * Eligibility status values.
  */
 export const ELIGIBILITY_STATUSES = ['ELIGIBLE', 'INELIGIBLE', 'REVIEW'] as const;
-export type EligibilityStatusType = (typeof ELIGIBILITY_STATUSES)[number];
 
 /**
  * Rating source values.

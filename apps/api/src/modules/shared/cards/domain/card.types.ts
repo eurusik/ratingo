@@ -11,9 +11,7 @@ export interface CardUserContext {
 }
 
 // Re-export for convenience
-export type { CardUserState, BadgeKey } from './card.constants';
-
-export interface ContinuePoint {
+interface ContinuePoint {
   season: number;
   episode: number;
 }

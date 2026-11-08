@@ -32,7 +32,7 @@ export const TRAKT_ENDPOINT = {
 /**
  * Trakt IDs object.
  */
-export interface TraktIds {
+interface TraktIds {
   trakt?: number;
   slug?: string;
   imdb?: string;
@@ -42,7 +42,7 @@ export interface TraktIds {
 /**
  * Trakt movie object (minimal).
  */
-export interface TraktMovie {
+interface TraktMovie {
   title?: string;
   year?: number;
   ids?: TraktIds;
@@ -51,7 +51,7 @@ export interface TraktMovie {
 /**
  * Trakt show object (minimal).
  */
-export interface TraktShow {
+interface TraktShow {
   title?: string;
   year?: number;
   ids?: TraktIds;

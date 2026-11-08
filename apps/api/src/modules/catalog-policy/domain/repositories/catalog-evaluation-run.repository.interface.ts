@@ -34,7 +34,7 @@ export interface CatalogEvaluationRun {
 }
 
 /** Error sample captured during evaluation. */
-export interface ErrorSample {
+interface ErrorSample {
   mediaItemId: string;
   error: string;
   stack?: string;

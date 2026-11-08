@@ -12,13 +12,7 @@
  */
 
 // Application Services
-export {
-  DropOffService,
-  ScoreRecalculationService,
-  StatsBackfillService,
-  StatsQueryService,
-  TrendingSyncService,
-} from '../application/services';
+export { TrendingSyncService } from '../application/services';
 
 // Constants
 export { HOMEPAGE_REFRESH_CONFIG, STATS_QUEUE } from '../stats.constants';

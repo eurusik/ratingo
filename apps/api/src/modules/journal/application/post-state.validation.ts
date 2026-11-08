@@ -2,20 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 
 import { JOURNAL_ERRORS } from '../domain/constants/journal-errors';
 
-/**
- * Valid post states:
- * - Draft: isDraft=true, publishedAt=null
- * - Published/Scheduled: isDraft=false, publishedAt!=null
- *
- * Invalid states (rejected):
- * - isDraft=false with publishedAt=null (published without date)
- * - isDraft=true with publishedAt!=null (draft with date)
- */
-export interface PostStateInput {
-  isDraft: boolean;
-  publishedAt: Date | null;
-}
-
 export type PostState = 'draft' | 'published' | 'scheduled';
 
 /**

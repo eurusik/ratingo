@@ -3,9 +3,7 @@ import { type MediaType } from '../enums/media-type.enum';
 import { type ImageData, type ExternalRatings, type RatingoStats } from './media.types';
 
 // Re-export for backward compatibility
-export type { ImageData, ExternalRatings, RatingoStats } from './media.types';
-export type { ExternalRating } from './media.types';
-
+export type { ImageData, ExternalRatings } from './media.types';
 /**
  * Show progress information for hero items.
  */

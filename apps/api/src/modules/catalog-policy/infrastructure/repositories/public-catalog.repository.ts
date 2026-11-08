@@ -107,7 +107,7 @@ export interface PublicMediaItemRow {
   eligibilityStatus: string;
 }
 
-export interface PaginationOptions {
+interface PaginationOptions {
   limit?: number;
   offset?: number;
 }
@@ -125,7 +125,7 @@ export interface HomepageOptions {
   limit?: number;
 }
 
-export interface IPublicCatalogRepository {
+interface IPublicCatalogRepository {
   /**
    * Finds trending media items ordered by trending score.
    * Only returns ELIGIBLE items from public_media_items view.

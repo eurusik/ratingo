@@ -12,7 +12,7 @@ export const ConsumeCodeFailureReason = {
   ALREADY_USED: 'already_used',
 } as const;
 
-export type ConsumeCodeFailureReasonType =
+type ConsumeCodeFailureReasonType =
   (typeof ConsumeCodeFailureReason)[keyof typeof ConsumeCodeFailureReason];
 
 /**

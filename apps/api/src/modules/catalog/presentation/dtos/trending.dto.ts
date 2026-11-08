@@ -44,7 +44,7 @@ export class ShowProgressDto {
   nextAirDate: Date | null;
 }
 
-export class TrendingItemBaseDto {
+class TrendingItemBaseDto {
   @ApiProperty()
   id: string;
 
@@ -105,9 +105,4 @@ export class TrendingShowsResponseDto {
 
   @ApiProperty({ type: OffsetPaginationMetaDto })
   meta: OffsetPaginationMetaDto;
-}
-
-export class MovieTrendingItemDto extends TrendingItemBaseDto {
-  @ApiProperty({ example: MediaType.MOVIE, enum: [MediaType.MOVIE] })
-  type: MediaType.MOVIE;
 }

@@ -72,7 +72,7 @@ export interface AdminQueryOptions {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface IAdminCatalogRepository {
+interface IAdminCatalogRepository {
   /**
    * Finds all media items with their evaluations.
    * Supports filtering by type, eligibility status, and pagination.

@@ -8,7 +8,7 @@ export type RiseFallMediaType = 'movie' | 'show';
 /**
  * Statistics for a media item's watcher movement.
  */
-export type RiseFallStats = {
+type RiseFallStats = {
   /** Absolute change in watchers count (current window growth - previous window growth) */
   deltaWatchers: number;
   /** Percentage change relative to previous window growth */

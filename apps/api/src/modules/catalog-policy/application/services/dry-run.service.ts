@@ -64,7 +64,7 @@ export interface ReasonBreakdown {
   count: number;
 }
 
-export interface DryRunSummary {
+interface DryRunSummary {
   totalEvaluated: number;
   eligible: number;
   ineligible: number;

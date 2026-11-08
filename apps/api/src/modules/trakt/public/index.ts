@@ -16,11 +16,4 @@ export { TraktRatingsPort, TRAKT_RATINGS_PORT } from '../domain/ports/trakt-rati
 export { TraktListsPort, TRAKT_LISTS_PORT } from '../domain/ports/trakt-lists.port';
 
 // Domain constants
-export {
-  TRAKT_MEDIA_TYPE,
-  type TraktMediaType,
-  TRAKT_BATCH_CONCURRENCY,
-  TRAKT_BULK_CHUNK_SIZE,
-  TRAKT_BULK_CHUNK_DELAY_MS,
-  MAX_SEASONS_FOR_ANALYSIS,
-} from '../domain/constants/trakt.constants';
+export { TRAKT_MEDIA_TYPE } from '../domain/constants/trakt.constants';

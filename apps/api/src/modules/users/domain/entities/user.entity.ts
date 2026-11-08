@@ -33,4 +33,4 @@ export const USER_ROLE = {
 /**
  * User role union.
  */
-export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE];
+type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE];

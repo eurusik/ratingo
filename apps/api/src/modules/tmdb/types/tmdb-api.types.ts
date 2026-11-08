@@ -8,7 +8,7 @@
 /**
  * Production country object from TMDB API
  */
-export interface TmdbProductionCountry {
+interface TmdbProductionCountry {
   iso_3166_1: string; // ISO 3166-1 alpha-2 country code
   name: string;
 }
@@ -16,7 +16,7 @@ export interface TmdbProductionCountry {
 /**
  * Genre object from TMDB API
  */
-export interface TmdbGenre {
+interface TmdbGenre {
   id: number;
   name: string;
 }
@@ -61,7 +61,7 @@ export interface TmdbCrewMember {
 /**
  * Credits object from TMDB API
  */
-export interface TmdbCredits {
+interface TmdbCredits {
   cast?: TmdbCastMember[];
   crew?: TmdbCrewMember[];
 }
@@ -79,7 +79,7 @@ export interface TmdbWatchProvider {
 /**
  * Watch provider region data from TMDB API
  */
-export interface TmdbWatchProviderRegion {
+interface TmdbWatchProviderRegion {
   link?: string;
   flatrate?: TmdbWatchProvider[];
   rent?: TmdbWatchProvider[];
@@ -91,7 +91,7 @@ export interface TmdbWatchProviderRegion {
 /**
  * Release date object from TMDB API
  */
-export interface TmdbReleaseDate {
+interface TmdbReleaseDate {
   type: number; // 1=Premiere, 2=Theatrical (limited), 3=Theatrical, 4=Digital, 5=Physical, 6=TV
   release_date: string;
   certification?: string;
@@ -100,7 +100,7 @@ export interface TmdbReleaseDate {
 /**
  * Release dates by country from TMDB API
  */
-export interface TmdbReleaseDatesCountry {
+interface TmdbReleaseDatesCountry {
   iso_3166_1: string;
   release_dates?: TmdbReleaseDate[];
 }
@@ -139,7 +139,7 @@ export interface TmdbAlternativeTitle {
 /**
  * External IDs from TMDB API
  */
-export interface TmdbExternalIds {
+interface TmdbExternalIds {
   imdb_id?: string | null;
   tvdb_id?: number | null;
   freebase_id?: string | null;
@@ -148,7 +148,7 @@ export interface TmdbExternalIds {
 /**
  * Base TMDB API response (common fields for movies and TV shows)
  */
-export interface TmdbBaseResponse {
+interface TmdbBaseResponse {
   id: number;
   adult: boolean;
   backdrop_path: string | null;
@@ -211,7 +211,7 @@ export interface TmdbShowResponse extends TmdbBaseResponse {
 /**
  * Episode object from TMDB season detail endpoint
  */
-export interface TmdbEpisode {
+interface TmdbEpisode {
   id: number;
   episode_number: number;
   name: string;

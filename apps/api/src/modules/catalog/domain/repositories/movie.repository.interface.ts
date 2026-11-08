@@ -21,14 +21,7 @@ import type {
 import { type DatabaseTransaction } from '../types/transaction.type';
 
 // Re-export query types for convenience
-export type {
-  WithTotal,
-  TrendingQueryResult,
-  CatalogSort,
-  SortOrder,
-  VoteSource,
-  ListContext,
-} from '../types/query.types';
+export type { WithTotal, TrendingQueryResult } from '../types/query.types';
 
 /**
  * Release info for movies (theatrical/digital releases by region).

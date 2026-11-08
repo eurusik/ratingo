@@ -15,5 +15,3 @@ export const JOURNAL_ERRORS = {
   /** Invalid post state (e.g., published without publishedAt) */
   INVALID_POST_STATE: 'JOURNAL_INVALID_POST_STATE',
 } as const;
-
-export type JournalErrorCode = (typeof JOURNAL_ERRORS)[keyof typeof JOURNAL_ERRORS];

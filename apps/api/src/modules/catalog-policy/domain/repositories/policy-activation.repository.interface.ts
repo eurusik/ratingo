@@ -9,12 +9,6 @@ import { type RunStatusType } from '../constants/evaluation.constants';
 
 export const POLICY_ACTIVATION_REPOSITORY = Symbol('POLICY_ACTIVATION_REPOSITORY');
 
-export interface SnapshotData {
-  baselinePolicyVersion: number | null;
-  totalReadySnapshot: number;
-  snapshotCutoff: Date;
-}
-
 export interface CreateRunWithSnapshotInput {
   targetPolicyId: string;
   targetPolicyVersion: number;

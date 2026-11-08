@@ -23,8 +23,8 @@ export const CATALOG_POLICY_JOBS = {
  * Evaluation errors are rethrown so BullMQ retries; the error is recorded on the run
  * only on the final attempt (see EvaluateItemHandler).
  */
-export const EVALUATE_ITEM_JOB_MAX_ATTEMPTS = 3;
-export const EVALUATE_ITEM_JOB_BACKOFF_DELAY_MS = 2000;
+const EVALUATE_ITEM_JOB_MAX_ATTEMPTS = 3;
+const EVALUATE_ITEM_JOB_BACKOFF_DELAY_MS = 2000;
 
 export const EVALUATE_ITEM_JOB_OPTIONS = {
   attempts: EVALUATE_ITEM_JOB_MAX_ATTEMPTS,
