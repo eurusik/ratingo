@@ -33,6 +33,7 @@ jobs:
       contracts: ${{ steps.filter.outputs.contracts }}
       backup: ${{ steps.filter.outputs.backup }}
       migrations: ${{ steps.filter.outputs.migrations }}
+      deps: ${{ steps.filter.outputs.deps }}
     steps:
       - id: filter
         env:
@@ -45,6 +46,7 @@ jobs:
             echo "contracts=true" >> "$GITHUB_OUTPUT"
             echo "backup=true" >> "$GITHUB_OUTPUT"
             echo "migrations=true" >> "$GITHUB_OUTPUT"
+            echo "deps=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -64,12 +66,19 @@ jobs:
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
           fi
 
-          echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations"
+          if (( count >= 3000 )); then
+            deps=true
+          else
+            deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|apps/api/Dockerfile|\.github/workflows/ci\.yml)$')
+          fi
+
+          echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations deps=$deps"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "contracts=$contracts" >> "$GITHUB_OUTPUT"
           echo "backup=$backup" >> "$GITHUB_OUTPUT"
           echo "migrations=$migrations" >> "$GITHUB_OUTPUT"
+          echo "deps=$deps" >> "$GITHUB_OUTPUT"
 
   api:
     name: api
@@ -183,6 +192,50 @@ jobs:
           MIGRATIONS_BASE: HEAD^1
         run: npm run lint:migrations --workspace=api
 
+  api-prod-install:
+    name: api-prod-install
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DOCKERFILE: apps/api/Dockerfile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Read base images of the install stages from the Dockerfile
+        run: |
+          stage_image() { awk -v stage="$1" 'toupper($1) == "FROM" && tolower($4) == stage { print $2 }' "$DOCKERFILE"; }
+          deps_image=$(stage_image deps)
+          runner_image=$(stage_image runner)
+          if [[ -z "$deps_image" || -z "$runner_image" ]]; then
+            echo "::error file=$DOCKERFILE::Expected FROM ... AS deps and FROM ... AS runner stages"
+            exit 1
+          fi
+          echo "deps=$deps_image runner=$runner_image"
+          echo "DEPS_IMAGE=$deps_image" >> "$GITHUB_ENV"
+          echo "RUNNER_IMAGE=$runner_image" >> "$GITHUB_ENV"
+
+      - name: Stage the files the Dockerfile copies before npm ci
+        run: |
+          mkdir -p "$RUNNER_TEMP/install/apps/api"
+          cp package.json package-lock.json "$RUNNER_TEMP/install/"
+          cp apps/api/package.json "$RUNNER_TEMP/install/apps/api/"
+
+      - name: Full install (deps stage)
+        run: |
+          docker run --rm --platform linux/amd64 -v "$RUNNER_TEMP/install:/app" -w /app "$DEPS_IMAGE" sh -euc '
+            npm ci --include-workspace-root --workspace=api
+            cd apps/api && node -e "require(\"bcrypt\").hashSync(\"x\", 4)"
+          '
+
+      - name: Production install (runner stage)
+        run: |
+          docker run --rm --platform linux/amd64 -e NODE_ENV=production -v "$RUNNER_TEMP/install:/app" -w /app "$RUNNER_IMAGE" sh -euc '
+            npm ci --omit=dev --include-workspace-root --workspace=api
+            cd apps/api && node -e "const b = require(\"bcrypt\"); if (!b.compareSync(\"x\", b.hashSync(\"x\", 4))) process.exit(1)"
+          '
+
   web:
     name: web
     needs: changes
@@ -276,7 +329,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, migrations, web, contracts, pg-backup]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, migrations, web, contracts, pg-backup]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

@@ -25,7 +25,7 @@ After finishing each step, review the changed code before moving on, and fix wha
 ## Branches & Deploy
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`
 - `development` deploys to Railway dev, `main` deploys to Railway production; hotfixes go to `main`, then back-merge into `development`
-- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck, unit tests (2 shards) and e2e tests, web lint/typecheck/tests, contract drift, pg-backup lint/typecheck/tests. On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
+- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck, unit tests (2 shards) and e2e tests, web lint/typecheck/tests, contract drift, pg-backup lint/typecheck/tests, and `api-prod-install` (both `npm ci` runs of `apps/api/Dockerfile` inside its own base image, plus a bcrypt load; runs when a `package.json`, the lockfile, `.npmrc`, the API Dockerfile or `ci.yml` changes). On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
 - Make every migration statement safe to re-run against existing state (`IF NOT EXISTS` / `IF EXISTS`): dev runs migrations on a fresh DB, so state conflicts surface only in prod
 
 ## Commands
