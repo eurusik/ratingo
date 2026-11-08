@@ -524,8 +524,8 @@ describe('AuthController.linkGoogle', () => {
     expect(googleGuard.setStateCookie).toHaveBeenCalledWith(mockRes, 'signed-google-state');
     expect(googleGuard.buildAuthUrl).toHaveBeenCalledWith('signed-google-state');
     expect(mockRes.redirect).toHaveBeenCalledWith(
-      302,
       'https://accounts.google.com/o/oauth2/v2/auth?state=signed-google-state',
+      302,
     );
   });
 
@@ -573,8 +573,8 @@ describe('AuthController.linkFacebook', () => {
     expect(facebookGuard.setStateCookie).toHaveBeenCalledWith(mockRes, 'signed-facebook-state');
     expect(facebookGuard.buildAuthUrl).toHaveBeenCalledWith('signed-facebook-state');
     expect(mockRes.redirect).toHaveBeenCalledWith(
-      302,
       'https://www.facebook.com/v24.0/dialog/oauth?state=signed-facebook-state',
+      302,
     );
   });
 
@@ -708,7 +708,7 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
     );
 
     expect(oauthService.linkOAuthAccount).toHaveBeenCalledWith('user-123', defaultOAuthUser);
-    expect(mockRes.redirect).toHaveBeenCalledWith(302, `${frontendUrl}/settings?linked=google`);
+    expect(mockRes.redirect).toHaveBeenCalledWith(`${frontendUrl}/settings?linked=google`, 302);
   });
 
   it('should redirect with ?linkError=ALREADY_LINKED on conflict', async () => {
@@ -725,8 +725,8 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
 
     expect(oauthService.linkOAuthAccount).toHaveBeenCalledWith('user-123', defaultOAuthUser);
     expect(mockRes.redirect).toHaveBeenCalledWith(
-      302,
       `${frontendUrl}/settings?linkError=ALREADY_LINKED&provider=google`,
+      302,
     );
   });
 
@@ -741,8 +741,8 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
     );
 
     expect(mockRes.redirect).toHaveBeenCalledWith(
-      302,
       `${frontendUrl}/settings?linkError=LINK_FAILED&provider=google`,
+      302,
     );
   });
 
@@ -759,7 +759,7 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
     );
 
     expect(oauthService.linkOAuthAccount).toHaveBeenCalledWith('user-123', facebookOAuthUser);
-    expect(mockRes.redirect).toHaveBeenCalledWith(302, `${frontendUrl}/settings?linked=facebook`);
+    expect(mockRes.redirect).toHaveBeenCalledWith(`${frontendUrl}/settings?linked=facebook`, 302);
   });
 
   it('should use oauthUser.provider when statePayload.provider is missing', async () => {
@@ -770,7 +770,7 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
 
     await callOAuthCallback(facebookOAuthUser, { mode: 'link', linkUserId: 'user-123' }, mockRes);
 
-    expect(mockRes.redirect).toHaveBeenCalledWith(302, `${frontendUrl}/settings?linked=facebook`);
+    expect(mockRes.redirect).toHaveBeenCalledWith(`${frontendUrl}/settings?linked=facebook`, 302);
   });
 });
 
