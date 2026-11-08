@@ -32,6 +32,7 @@ jobs:
       web: ${{ steps.filter.outputs.web }}
       contracts: ${{ steps.filter.outputs.contracts }}
       backup: ${{ steps.filter.outputs.backup }}
+      migrations: ${{ steps.filter.outputs.migrations }}
     steps:
       - id: filter
         env:
@@ -43,6 +44,7 @@ jobs:
             echo "web=true" >> "$GITHUB_OUTPUT"
             echo "contracts=true" >> "$GITHUB_OUTPUT"
             echo "backup=true" >> "$GITHUB_OUTPUT"
+            echo "migrations=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -53,19 +55,21 @@ jobs:
           match() { grep -qE "$1" <<< "$files" && echo true || echo false; }
 
           if (( count >= 3000 )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
-            api=true; web=true; contracts=true; backup=true
+            api=true; web=true; contracts=true; backup=true; migrations=true
           else
             api=$(match '^apps/api/')
             web=$(match '^(apps/web-client/|packages/(api-contract|fx-engine)/)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
+            migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|scripts/lint-migrations\.mjs$)')
           fi
 
-          echo "api=$api web=$web contracts=$contracts backup=$backup"
+          echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "contracts=$contracts" >> "$GITHUB_OUTPUT"
           echo "backup=$backup" >> "$GITHUB_OUTPUT"
+          echo "migrations=$migrations" >> "$GITHUB_OUTPUT"
 
   api:
     name: api
@@ -142,6 +146,26 @@ jobs:
 
       - name: E2E tests
         run: npm run test:e2e --workspace=api -- --ci
+
+  migrations:
+    name: migrations
+    needs: changes
+    if: needs.changes.outputs.migrations == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Lint new and changed migrations with Squawk
+        env:
+          MIGRATIONS_BASE: ${{ github.event.pull_request.base.sha || 'origin/development' }}
+        run: npm run lint:migrations --workspace=api
 
   web:
     name: web
@@ -236,7 +260,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, web, contracts, pg-backup]
+    needs: [changes, api, api-test, api-e2e, migrations, web, contracts, pg-backup]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
