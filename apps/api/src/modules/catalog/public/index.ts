@@ -28,3 +28,5 @@ export type {
 
 // Domain utilities
 export { generateSlug } from '@/common/utils/slug.util';
+
+export { COOLDOWN_REDIS_CLIENT } from '../infrastructure/adapters/redis-cooldown-gate.adapter';
