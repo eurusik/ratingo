@@ -57,7 +57,7 @@ jobs:
           if (( count >= 3000 )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
             api=true; web=true; contracts=true; backup=true; migrations=true
           else
-            api=$(match '^apps/api/')
+            api=$(match '^(apps/api/|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/(api-contract|fx-engine)/)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
@@ -146,6 +146,22 @@ jobs:
 
       - name: E2E tests
         run: npm run test:e2e --workspace=api -- --ci
+
+  api-dead-code:
+    name: api-dead-code
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Find unused files, exports and dependencies with knip
+        run: npm run lint:dead-code --workspace=api
 
   migrations:
     name: migrations
@@ -260,7 +276,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, migrations, web, contracts, pg-backup]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, migrations, web, contracts, pg-backup]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
