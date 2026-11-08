@@ -41,5 +41,3 @@ export const RECENT_EPISODE_WINDOW_DAYS = 14;
 
 // TTL / Timeouts (seconds)
 export const PRESIGNED_URL_TTL_SECONDS = 300;
-
-export const KNIP_GATE_PROBE = 'unused';
