@@ -226,6 +226,23 @@ jobs:
       - name: Load native modules from the production install
         run: docker run --rm --platform linux/amd64 -v "$GITHUB_WORKSPACE/.github/scripts:/scripts:ro" api-prod-deps node /scripts/load-native-modules.cjs
 
+  api-audit:
+    name: api-audit
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+
+      - name: Audit API production dependencies for high and critical advisories
+        run: npm audit --omit=dev --workspace=api --audit-level=high
+
   web:
     name: web
     needs: changes
@@ -319,7 +336,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, migrations, web, contracts, pg-backup]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, contracts, pg-backup]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
