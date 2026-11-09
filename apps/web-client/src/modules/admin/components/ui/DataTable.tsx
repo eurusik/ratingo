@@ -8,6 +8,7 @@ import {
   getPaginationRowModel,
   flexRender,
   type ColumnDef,
+  type Header,
   type SortingState,
   type PaginationState,
 } from '@tanstack/react-table';
@@ -28,6 +29,41 @@ import { useTranslation } from '@/shared/i18n';
 import { DataTableProps } from '../../types';
 
 const SKELETON_ROW_KEYS = createPlaceholderKeys('skeleton-row', 5);
+
+function toAriaSort<T>(header: Header<T, unknown>): React.AriaAttributes['aria-sort'] {
+  if (!header.column.getCanSort()) return undefined;
+  const sortDirection = header.column.getIsSorted();
+  if (sortDirection === 'asc') return 'ascending';
+  if (sortDirection === 'desc') return 'descending';
+  return 'none';
+}
+
+function sortIconClassName(isActive: boolean, positionClassName?: string) {
+  return cn('h-3 w-3', positionClassName, isActive ? 'text-foreground' : 'text-muted-foreground');
+}
+
+function HeaderContent<T>({ header }: { header: Header<T, unknown> }) {
+  const label = flexRender(header.column.columnDef.header, header.getContext());
+
+  if (!header.column.getCanSort()) {
+    return <div className="flex items-center space-x-2">{label}</div>;
+  }
+
+  const sortDirection = header.column.getIsSorted();
+  return (
+    <button
+      type="button"
+      className="flex items-center space-x-2 cursor-pointer select-none"
+      onClick={header.column.getToggleSortingHandler()}
+    >
+      {label}
+      <span className="flex flex-col">
+        <ChevronUp className={sortIconClassName(sortDirection === 'asc')} />
+        <ChevronDown className={sortIconClassName(sortDirection === 'desc', '-mt-1')} />
+      </span>
+    </button>
+  );
+}
 
 function DataTable<T>({
   data,
@@ -226,38 +262,12 @@ function DataTable<T>({
                     sortable?: boolean;
                   };
                   return (
-                    <TableHead key={header.id} style={{ width: columnMeta?.width }}>
-                      {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                        <button
-                          type="button"
-                          className="flex items-center space-x-2 cursor-pointer select-none"
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          <span className="flex flex-col">
-                            <ChevronUp
-                              className={cn(
-                                'h-3 w-3',
-                                header.column.getIsSorted() === 'asc'
-                                  ? 'text-foreground'
-                                  : 'text-muted-foreground',
-                              )}
-                            />
-                            <ChevronDown
-                              className={cn(
-                                'h-3 w-3 -mt-1',
-                                header.column.getIsSorted() === 'desc'
-                                  ? 'text-foreground'
-                                  : 'text-muted-foreground',
-                              )}
-                            />
-                          </span>
-                        </button>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </div>
-                      )}
+                    <TableHead
+                      key={header.id}
+                      style={{ width: columnMeta?.width }}
+                      aria-sort={toAriaSort(header)}
+                    >
+                      {header.isPlaceholder ? null : <HeaderContent header={header} />}
                     </TableHead>
                   );
                 })}

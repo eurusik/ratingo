@@ -13,8 +13,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useShowCalendar, usePersonalizedShowCalendar } from '@/core/query';
 import { useAuth } from '@/core/auth';
-import { useStoredValue } from '@/shared/hooks/use-stored-value';
 import { useAuthModalStore } from '@/core/auth';
+import { useStoredValue } from '@/shared/hooks/use-stored-value';
 import type { components } from '@ratingo/api-contract';
 import { getDictionary, type Locale } from '@/shared/i18n';
 

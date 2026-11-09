@@ -84,7 +84,7 @@ export function RunHeader({
                   <TooltipContent>
                     <div className="space-y-1">
                       <p className="font-medium">{labels.blockingReasonsTitle}</p>
-                      {withOccurrenceKeys(blockingMessages, String).map(({ item: message, key }) => (
+                      {withOccurrenceKeys(blockingMessages, (blockingMessage) => blockingMessage).map(({ item: message, key }) => (
                         <p key={key} className="text-sm">
                           • {message}
                         </p>

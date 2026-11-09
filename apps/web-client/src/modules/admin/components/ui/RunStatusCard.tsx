@@ -185,7 +185,7 @@ export function RunStatusCard({
           <div className="space-y-2">
             <span className="text-sm font-medium text-destructive">Cannot promote</span>
             <ul className="text-sm text-muted-foreground space-y-1">
-              {withOccurrenceKeys(runStatus.blockingReasons.map(String), String).map(({ item: reason, key }) => (
+              {withOccurrenceKeys(runStatus.blockingReasons, (blockingReason) => blockingReason).map(({ item: reason, key }) => (
                 <li key={key}>• {reason}</li>
               ))}
             </ul>

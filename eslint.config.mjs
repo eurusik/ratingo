@@ -32,7 +32,6 @@ const webTestFiles = [
   'apps/web-client/src/**/*.test.{ts,tsx}',
   'apps/web-client/src/**/*.spec.{ts,tsx}',
   'apps/web-client/src/**/__tests__/**',
-  'apps/web-client/src/test/**',
 ];
 const webGeneratedUiPrimitives = ['apps/web-client/src/shared/ui/**'];
 const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];

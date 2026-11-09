@@ -9,7 +9,7 @@ function readNothingOnServer() {
   return null;
 }
 
-export function readStoredValue(key: string): string | null {
+function readStoredValue(key: string): string | null {
   try {
     return localStorage.getItem(key);
   } catch {
