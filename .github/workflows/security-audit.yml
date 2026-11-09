@@ -1,0 +1,84 @@
+name: Security audit
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: security-audit
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 22
+  AUDIT_COMMAND: npm audit --omit=dev --workspace=api --audit-level=high
+  ISSUE_LABEL: security
+  ISSUE_TITLE: 'npm audit: high or critical advisories in API production dependencies'
+
+jobs:
+  api-audit:
+    name: api-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+
+      - name: Audit API production dependencies
+        id: audit
+        run: |
+          set +e
+          $AUDIT_COMMAND > audit.txt 2>&1
+          echo "exit-code=$?" >> "$GITHUB_OUTPUT"
+          cat audit.txt
+
+      - name: Find the open audit issue
+        id: issue
+        run: |
+          number=$(gh issue list --label "$ISSUE_LABEL" --state open --search "\"$ISSUE_TITLE\" in:title" --json number --jq '.[0].number // empty')
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the audit issue
+        if: steps.audit.outputs.exit-code != '0'
+        env:
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        run: |
+          {
+            echo "\`$AUDIT_COMMAND\` on \`$GITHUB_REF_NAME\` found high or critical advisories."
+            echo
+            echo "Latest run: $RUN_URL"
+            echo
+            echo '```'
+            head -c 60000 audit.txt
+            echo
+            echo '```'
+          } > issue.md
+          if [[ -n "$ISSUE_NUMBER" ]]; then
+            gh issue edit "$ISSUE_NUMBER" --body-file issue.md
+            gh issue comment "$ISSUE_NUMBER" --body "Still failing: $RUN_URL"
+          else
+            gh label create "$ISSUE_LABEL" --color B60205 --description 'Security advisories and hardening' --force
+            gh issue create --title "$ISSUE_TITLE" --label "$ISSUE_LABEL" --body-file issue.md
+          fi
+          echo "::error::$AUDIT_COMMAND found high or critical advisories"
+          exit 1
+
+      - name: Close the audit issue
+        if: steps.audit.outputs.exit-code == '0' && steps.issue.outputs.number != ''
+        env:
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        run: |
+          gh issue close "$ISSUE_NUMBER" --reason completed --comment "Audit is clean again: $RUN_URL"
