@@ -2,7 +2,7 @@
  * Supported regions for watch providers.
  */
 
-export interface Region {
+interface Region {
   code: string;
   name: string;
   flag: string;
@@ -92,11 +92,3 @@ export const REGION_GROUPS: RegionGroup[] = [
     ],
   },
 ];
-
-/** Flat list of all regions. */
-export const ALL_REGIONS = REGION_GROUPS.flatMap((g) => g.regions);
-
-/** Get region by code. */
-export function getRegionByCode(code: string): Region | undefined {
-  return ALL_REGIONS.find((r) => r.code === code);
-}

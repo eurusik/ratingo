@@ -7,7 +7,7 @@ import type { Route } from 'next';
 import { cn } from '@/shared/utils';
 
 /** Container styles for card hover effects */
-export const cardContainerStyles = [
+const cardContainerStyles = [
   'group relative h-full flex flex-col',
   'bg-[#111113] rounded-xl overflow-hidden',
   'transition-all duration-300',

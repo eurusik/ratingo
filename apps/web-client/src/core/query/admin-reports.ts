@@ -11,7 +11,7 @@ import {
 } from '../api/admin-reports.client';
 
 // Query keys
-export const adminReportsKeys = {
+const adminReportsKeys = {
   all: ['admin-reports'] as const,
   list: (params?: ListReportsParams) => [...adminReportsKeys.all, 'list', params] as const,
 };
@@ -35,20 +35,6 @@ export function useResolveReport() {
 
   return useMutation({
     mutationFn: (params: ResolveReportParams) => adminReportsApi.resolveReport(params),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: adminReportsKeys.all });
-    },
-  });
-}
-
-/**
- * Force delete a review (admin).
- */
-export function useForceDeleteReview() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (reviewId: string) => adminReportsApi.forceDeleteReview(reviewId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: adminReportsKeys.all });
     },

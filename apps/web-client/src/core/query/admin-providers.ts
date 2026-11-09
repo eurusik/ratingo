@@ -16,14 +16,13 @@ import {
   type MappingsListResponse,
   type CreateMappingRequest,
   type UpdateMappingRequest,
-  type ResolveMappingResponse,
 } from '../api/admin-providers.client';
 
 // ============================================================================
 // Query Keys
 // ============================================================================
 
-export const adminProvidersKeys = {
+const adminProvidersKeys = {
   all: ['admin', 'providers'] as const,
   list: (limit?: number, offset?: number, search?: string) =>
     [...adminProvidersKeys.all, 'list', limit ?? null, offset ?? null, search ?? null] as const,
@@ -89,22 +88,6 @@ export function useMappings(
       params?.region,
     ),
     queryFn: () => adminProvidersApi.getMappings(params),
-    ...options,
-  });
-}
-
-/**
- * Hook for resolving a mapping.
- */
-export function useResolveMapping(
-  tmdbProviderId: number,
-  region: string,
-  options?: Omit<UseQueryOptions<ResolveMappingResponse>, 'queryKey' | 'queryFn'>,
-): UseQueryResult<ResolveMappingResponse> {
-  return useQuery({
-    queryKey: adminProvidersKeys.resolve(tmdbProviderId, region),
-    queryFn: () => adminProvidersApi.resolveMapping(tmdbProviderId, region),
-    enabled: tmdbProviderId > 0 && region.length > 0,
     ...options,
   });
 }

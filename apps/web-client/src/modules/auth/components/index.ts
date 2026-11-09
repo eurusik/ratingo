@@ -2,9 +2,4 @@
  * Auth components exports.
  */
 
-export { LoginForm } from './login-form';
-export { RegisterForm } from './register-form';
-export { AuthModal } from './auth-modal';
 export { GlobalAuthModal } from './global-auth-modal';
-export { GoogleButton } from './google-button';
-export { FacebookButton } from './facebook-button';

@@ -5,7 +5,7 @@
  * Domain types are in core/api/admin.ts.
  */
 
-import type { ReactNode, HTMLAttributes } from 'react';
+import type { ReactNode } from 'react';
 
 // ============================================================================
 // Navigation & Routing
@@ -40,11 +40,6 @@ export interface AdminShellProps {
   showSidebar?: boolean;
 }
 
-export interface StatusBadgeProps extends HTMLAttributes<HTMLDivElement> {
-  status: string;
-  variant?: 'default' | 'compact';
-}
-
 export interface FilterConfig {
   key: string;
   label: string;
@@ -60,51 +55,18 @@ export interface FilterBarProps {
   actions?: ReactNode;
 }
 
-export interface ConfirmActionDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description: string;
-  confirmText?: string;
-  requireTyping?: boolean;
-  onConfirm: () => Promise<void>;
-  variant?: 'default' | 'destructive';
-}
-
-export interface EmptyStateProps {
-  icon?: ReactNode;
-  title: string;
-  description?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-}
-
-export interface ErrorStateProps {
-  error: string | Error;
-  retry?: () => void;
-  fallback?: ReactNode;
-  variant?: 'page' | 'section' | 'inline';
-}
-
-export interface LoadingStateProps {
-  type: 'skeleton' | 'spinner' | 'progress';
-  message?: string;
-}
-
 // ============================================================================
 // DataTable
 // ============================================================================
 
-export interface PaginationConfig {
+interface PaginationConfig {
   page: number;
   limit: number;
   total: number;
   hasNext: boolean;
 }
 
-export interface SortingConfig {
+interface SortingConfig {
   column: string;
   direction: 'asc' | 'desc';
 }
@@ -173,34 +135,6 @@ export const POLICY_STATUS = {
   INACTIVE: 'inactive',
 } as const satisfies Record<string, PolicyStatusType>;
 
-// Terminal statuses (run has finished)
-export const TERMINAL_STATUSES = ['prepared', 'failed', 'cancelled', 'promoted'] as const;
-
-// Non-terminal statuses (run is in progress)
-export const NON_TERMINAL_STATUSES = ['running'] as const;
-
-// Blocking reason codes from backend
-export type BlockingReasonCode =
-  | 'RUN_NOT_SUCCESS'
-  | 'COVERAGE_NOT_MET'
-  | 'ERRORS_EXCEEDED'
-  | 'ALREADY_PROMOTED';
-
-/**
- * @deprecated Use i18n translations (dict.admin.runDetail.blockingReasons)
- */
-export const BLOCKING_REASON_MESSAGES: Record<BlockingReasonCode, string> = {
-  RUN_NOT_SUCCESS: 'Run ще не завершився',
-  COVERAGE_NOT_MET: 'Coverage < 100%',
-  ERRORS_EXCEEDED: 'Є помилки (errors > 0)',
-  ALREADY_PROMOTED: 'Run вже промоутнутий',
-};
-
-/** @deprecated Use RUN_STATUS instead */
-export const RunStatus = RUN_STATUS;
-/** @deprecated Use POLICY_STATUS instead */
-export const PolicyStatus = POLICY_STATUS;
-
 // ============================================================================
 // Domain types (used in pages) - DEPRECATED
 // ============================================================================
@@ -214,13 +148,4 @@ export interface ProgressStats {
   eligible: number;
   ineligible: number;
   errors: number;
-}
-
-/**
- * @deprecated Use BlockingReasonCode type instead
- */
-export interface BlockingReason {
-  type: 'coverage' | 'errors' | 'status' | 'permissions';
-  message: string;
-  details?: Record<string, unknown>;
 }

@@ -33,11 +33,6 @@ export interface RefreshDto {
   refreshToken: string;
 }
 
-/** OAuth exchange code request payload. */
-export interface ExchangeCodeDto {
-  code: string;
-}
-
 /** Auth configuration response. */
 export interface AuthConfigDto {
   google: {

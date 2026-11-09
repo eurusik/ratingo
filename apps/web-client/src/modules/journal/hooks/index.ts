@@ -4,8 +4,6 @@
 
 // Public hooks
 export { useJournalPosts } from './use-journal-posts';
-export { useJournalPost } from './use-journal-post';
-
 // Admin hooks
 export {
   useAdminJournalPosts,
@@ -18,4 +16,4 @@ export {
 } from './use-admin-journal';
 
 // Image upload
-export { useImageUpload, type UploadState, type UseImageUploadResult } from './use-image-upload';
+export { useImageUpload } from './use-image-upload';

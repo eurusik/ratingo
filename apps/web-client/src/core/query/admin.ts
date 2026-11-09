@@ -74,7 +74,7 @@ export function usePolicyDetail(policyId: string, enabled = true) {
  * @param enabled - Whether query is enabled (default: true)
  * @returns Query result with all runs
  */
-export function useRuns(enabled = true) {
+function useRuns(enabled = true) {
   return useQuery({
     queryKey: queryKeys.admin.runs.all,
     queryFn: () => adminApi.getRuns({ limit: 1000 }), // Large limit to get all runs

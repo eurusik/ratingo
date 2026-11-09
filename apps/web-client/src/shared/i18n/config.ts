@@ -14,15 +14,6 @@ export type Locale = 'uk' | 'en';
 /** Default locale. */
 export const DEFAULT_LOCALE: Locale = 'uk';
 
-/** All available locales. */
-export const LOCALES: Locale[] = ['uk', 'en'];
-
-/** Locale display names. */
-export const LOCALE_NAMES: Record<Locale, string> = {
-  uk: 'Українська',
-  en: 'English',
-};
-
 /** Translation dictionaries by locale. */
 const dictionaries: Record<Locale, typeof uk> = {
   uk,
@@ -66,22 +57,4 @@ export function getByPath(dict: TranslationKeys, path: string): string {
   }
 
   return typeof result === 'string' ? result : path;
-}
-
-/**
- * Create a translation function for a specific locale.
- *
- * @param locale - Target locale
- * @returns Translation function
- *
- * @example
- * const t = createTranslator('uk');
- * t('card.cta.details') // "Деталі"
- */
-export function createTranslator(locale: Locale = DEFAULT_LOCALE) {
-  const dict = getDictionary(locale);
-
-  return function t(path: string): string {
-    return getByPath(dict, path);
-  };
 }

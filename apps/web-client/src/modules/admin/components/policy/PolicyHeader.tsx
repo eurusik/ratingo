@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Loader2, Play, Pencil } from 'lucide-react';
 import { POLICY_STATUS } from '../../types';
 
-export interface PolicyHeaderLabels {
+interface PolicyHeaderLabels {
   active: string;
   inactive: string;
   lastUpdated: string;
