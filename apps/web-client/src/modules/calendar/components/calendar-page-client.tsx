@@ -13,7 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useShowCalendar, usePersonalizedShowCalendar } from '@/core/query';
 import { useAuth } from '@/core/auth';
-import { useClientSnapshot } from '@/shared/hooks/use-client-snapshot';
+import { useStoredValue } from '@/shared/hooks/use-stored-value';
 import { useAuthModalStore } from '@/core/auth';
 import type { components } from '@ratingo/api-contract';
 import { getDictionary, type Locale } from '@/shared/i18n';
@@ -202,14 +202,6 @@ const CALENDAR_MODE_KEY = 'ratingo:calendar-mode';
 const CALENDAR_MODE_COOKIE = 'ratingo-calendar-mode';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
-function readHasStoredPersonalizedMode(): boolean {
-  try {
-    return localStorage.getItem(CALENDAR_MODE_KEY) === 'personalized';
-  } catch {
-    return false;
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
@@ -242,7 +234,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk', in
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedMode, setSelectedMode] = useState<CalendarMode | null>(null);
   const [isPersonalizedLoading, setIsPersonalizedLoading] = useState(false);
-  const hasStoredPersonalizedMode = useClientSnapshot(readHasStoredPersonalizedMode, false);
+  const hasStoredPersonalizedMode = useStoredValue(CALENDAR_MODE_KEY) === 'personalized';
   const needsPersonalizedCookieMigration =
     hasStoredPersonalizedMode && initialMode !== 'personalized';
   const mode: CalendarMode =

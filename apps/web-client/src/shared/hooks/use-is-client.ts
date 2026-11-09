@@ -1,9 +1,17 @@
-import { useClientSnapshot } from './use-client-snapshot';
+import { useSyncExternalStore } from 'react';
+
+function subscribeToNothing() {
+  return () => {};
+}
 
 function readIsClient() {
   return true;
 }
 
+function readIsClientOnServer() {
+  return false;
+}
+
 export function useIsClient() {
-  return useClientSnapshot(readIsClient, false);
+  return useSyncExternalStore(subscribeToNothing, readIsClient, readIsClientOnServer);
 }

@@ -262,14 +262,13 @@ jobs:
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
-            .cache/eslint/web
             .cache/jest/web
             apps/web-client/tsconfig.typecheck.tsbuildinfo
           key: ${{ env.TOOL_CACHE_KEY }}-${{ github.sha }}
           restore-keys: ${{ env.TOOL_CACHE_KEY }}-
 
       - name: Lint
-        run: npm run lint --workspace=web-client -- --cache --cache-strategy content --cache-location "$GITHUB_WORKSPACE/.cache/eslint/web"
+        run: npm run lint --workspace=web-client
 
       - name: Typecheck
         run: npm run typecheck --workspace=web-client
@@ -281,7 +280,6 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
-            .cache/eslint/web
             .cache/jest/web
             apps/web-client/tsconfig.typecheck.tsbuildinfo
           key: ${{ env.TOOL_CACHE_KEY }}-${{ github.sha }}

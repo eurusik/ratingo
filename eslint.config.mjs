@@ -683,7 +683,7 @@ export default [
     },
     settings: {
       react: { version: 'detect' },
-      next: { rootDir: 'apps/web-client' },
+      next: { rootDir: path.join(tsconfigRootDir, 'apps/web-client') },
     },
     rules: {
       ...asErrors(reactHooksPlugin.configs['recommended-latest'].rules),

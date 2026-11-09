@@ -8,4 +8,4 @@ export { usePwaInstall } from './use-pwa-install';
 export { useOnlineStatus } from './use-online-status';
 export { useCarouselScrollState } from './use-carousel-scroll-state';
 export { useIsClient } from './use-is-client';
-export { useClientSnapshot } from './use-client-snapshot';
+export { useStoredValue } from './use-stored-value';
