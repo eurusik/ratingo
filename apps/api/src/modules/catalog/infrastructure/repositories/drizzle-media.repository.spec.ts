@@ -6,10 +6,13 @@ import { GENRE_REPOSITORY } from '@/modules/catalog/domain/repositories/genre.re
 import { MOVIE_REPOSITORY } from '@/modules/catalog/domain/repositories/movie.repository.interface';
 import { SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
 import { HeroMediaQuery } from '../queries/hero-media.query';
+import { MediaSearchQuery } from '../queries/media-search.query';
+import { MediaStubUpsertQuery } from '../queries/media-stub-upsert.query';
+import { MediaSyncCandidatesQuery } from '../queries/media-sync-candidates.query';
+import { MediaUpsertQuery } from '../queries/media-upsert.query';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { DatabaseException } from '@/common/exceptions';
-import { PG_ERROR_CODE, DB_CONSTRAINT } from '@/common/constants/database.constants';
 import { NormalizedMedia } from '@/modules/shared/contracts';
 
 // Helper to create a chainable thenable for Drizzle-like fluent API
@@ -74,6 +77,10 @@ describe('DrizzleMediaRepository', () => {
     return Test.createTestingModule({
       providers: [
         DrizzleMediaRepository,
+        MediaStubUpsertQuery,
+        MediaUpsertQuery,
+        MediaSearchQuery,
+        MediaSyncCandidatesQuery,
         { provide: DATABASE_CONNECTION, useValue: db },
         { provide: GENRE_REPOSITORY, useValue: genreRepo },
         { provide: MOVIE_REPOSITORY, useValue: movieRepo },
@@ -374,419 +381,33 @@ describe('DrizzleMediaRepository', () => {
     });
   });
 
-  describe('upsertStub', () => {
-    const stubPayload = {
-      tmdbId: 72350,
-      type: MediaType.SHOW,
-      title: 'Test Show',
-      slug: 'test-show',
-      ingestionStatus: IngestionStatus.IMPORTING,
-    };
-
-    it('should return id and slug on successful insert', async () => {
-      const insertChain = createThenable([{ id: 'new-id', slug: 'test-show' }]);
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          {
-            provide: DATABASE_CONNECTION,
-            useValue: { insert: jest.fn().mockReturnValue(insertChain) },
-          },
-          { provide: GENRE_REPOSITORY, useValue: {} },
-          { provide: MOVIE_REPOSITORY, useValue: {} },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
+  describe('write delegation', () => {
+    it('should delegate upsertStub to MediaStubUpsertQuery', async () => {
+      const module = await setup();
       repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.upsertStub(stubPayload);
-
-      expect(result).toEqual({ id: 'new-id', slug: 'test-show' });
-    });
-
-    it('should never downgrade a READY item on conflict (forced re-sync)', async () => {
-      const insertChain = createThenable([{ id: 'new-id', slug: 'test-show' }]);
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          {
-            provide: DATABASE_CONNECTION,
-            useValue: { insert: jest.fn().mockReturnValue(insertChain) },
-          },
-          { provide: GENRE_REPOSITORY, useValue: {} },
-          { provide: MOVIE_REPOSITORY, useValue: {} },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
-      repository = module.get(DrizzleMediaRepository);
-
-      await repository.upsertStub(stubPayload);
-
-      const { set } = insertChain.onConflictDoUpdate.mock.calls[0][0];
-      const { sql: statusSql, params } = new PgDialect().sqlToQuery(set.ingestionStatus);
-      expect(statusSql).toContain('CASE WHEN');
-      expect(statusSql).toContain('excluded.ingestion_status');
-      expect(params).toContain(IngestionStatus.READY);
-    });
-
-    it('should return existing record on race condition (same tmdbId)', async () => {
-      // Arrange: INSERT fails with slug constraint, SELECT returns same tmdbId
-      const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
-        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
-      });
-      const insertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([{ id: 'existing-id', slug: 'test-show', tmdbId: 72350 }]);
-
-      const mockDb = {
-        insert: jest.fn().mockReturnValue(insertChain),
-        select: jest.fn().mockReturnValue(selectChain),
+      const execute = jest
+        .spyOn(module.get(MediaStubUpsertQuery), 'execute')
+        .mockResolvedValue({ id: 'm1', slug: 'title' });
+      const payload = {
+        tmdbId: 1,
+        type: MediaType.MOVIE,
+        title: 'Title',
+        slug: 'title',
+        ingestionStatus: IngestionStatus.IMPORTING,
       };
 
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-          { provide: GENRE_REPOSITORY, useValue: {} },
-          { provide: MOVIE_REPOSITORY, useValue: {} },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
+      await expect(repository.upsertStub(payload)).resolves.toEqual({ id: 'm1', slug: 'title' });
+      expect(execute).toHaveBeenCalledWith(payload);
+    });
+
+    it('should delegate upsert to MediaUpsertQuery', async () => {
+      const module = await setup();
       repository = module.get(DrizzleMediaRepository);
+      const execute = jest.spyOn(module.get(MediaUpsertQuery), 'execute').mockResolvedValue();
 
-      // Act
-      const result = await repository.upsertStub(stubPayload);
+      await repository.upsert(baseMedia);
 
-      // Assert
-      expect(result).toEqual({ id: 'existing-id', slug: 'test-show' });
-      expect(mockDb.select).toHaveBeenCalled();
-    });
-
-    it('should retry with unique slug on real slug collision (different tmdbId)', async () => {
-      // Arrange: INSERT fails with slug constraint, SELECT returns different tmdbId
-      const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
-        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
-      });
-      const failingInsertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([{ id: 'other-id', slug: 'test-show', tmdbId: 99999 }]);
-      const retryInsertChain = createThenable([{ id: 'new-id', slug: 'test-show-72350' }]);
-
-      let insertCallCount = 0;
-      const mockDb = {
-        insert: jest.fn().mockImplementation(() => {
-          insertCallCount++;
-          return insertCallCount === 1 ? failingInsertChain : retryInsertChain;
-        }),
-        select: jest.fn().mockReturnValue(selectChain),
-      };
-
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-          { provide: GENRE_REPOSITORY, useValue: {} },
-          { provide: MOVIE_REPOSITORY, useValue: {} },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
-      repository = module.get(DrizzleMediaRepository);
-
-      // Act
-      const result = await repository.upsertStub(stubPayload);
-
-      // Assert
-      expect(result).toEqual({ id: 'new-id', slug: 'test-show-72350' });
-      expect(mockDb.insert).toHaveBeenCalledTimes(2);
-    });
-
-    it('should throw DatabaseException on non-slug constraint error', async () => {
-      const otherError = Object.assign(new Error('other_error'), {
-        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
-        constraint_name: 'media_type_tmdb_idx', // Different constraint
-      });
-      const insertChain = createThenable([], otherError);
-
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          {
-            provide: DATABASE_CONNECTION,
-            useValue: { insert: jest.fn().mockReturnValue(insertChain) },
-          },
-          { provide: GENRE_REPOSITORY, useValue: {} },
-          { provide: MOVIE_REPOSITORY, useValue: {} },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
-      repository = module.get(DrizzleMediaRepository);
-
-      await expect(repository.upsertStub(stubPayload)).rejects.toThrow(DatabaseException);
-    });
-
-    it('should handle error wrapped in cause (Drizzle style)', async () => {
-      // Drizzle wraps PostgreSQL errors in cause
-      const slugConflictError = Object.assign(new Error('wrapper'), {
-        cause: {
-          code: PG_ERROR_CODE.UNIQUE_VIOLATION,
-          constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
-        },
-      });
-      const insertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([{ id: 'existing-id', slug: 'test-show', tmdbId: 72350 }]);
-
-      const mockDb = {
-        insert: jest.fn().mockReturnValue(insertChain),
-        select: jest.fn().mockReturnValue(selectChain),
-      };
-
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-          { provide: GENRE_REPOSITORY, useValue: {} },
-          { provide: MOVIE_REPOSITORY, useValue: {} },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.upsertStub(stubPayload);
-
-      expect(result).toEqual({ id: 'existing-id', slug: 'test-show' });
-    });
-
-    it('should throw DatabaseException when slug conflict but SELECT returns empty', async () => {
-      // Edge case: constraint error says slug exists, but SELECT finds nothing
-      // (theoretically impossible, but defensive coding)
-      const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
-        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
-      });
-      const insertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([]); // Empty result
-
-      const mockDb = {
-        insert: jest.fn().mockReturnValue(insertChain),
-        select: jest.fn().mockReturnValue(selectChain),
-      };
-
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-          { provide: GENRE_REPOSITORY, useValue: {} },
-          { provide: MOVIE_REPOSITORY, useValue: {} },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
-      repository = module.get(DrizzleMediaRepository);
-
-      await expect(repository.upsertStub(stubPayload)).rejects.toThrow(DatabaseException);
-    });
-
-    it('should throw DatabaseException when retry with unique slug also fails', async () => {
-      // Arrange: first INSERT fails on slug, SELECT finds different tmdbId,
-      // retry INSERT also fails (e.g., unique slug already taken)
-      const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
-        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
-      });
-      const failingInsertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([{ id: 'other-id', slug: 'test-show', tmdbId: 99999 }]);
-      const retryFailError = new Error('Connection lost');
-      const retryInsertChain = createThenable([], retryFailError);
-
-      let insertCallCount = 0;
-      const mockDb = {
-        insert: jest.fn().mockImplementation(() => {
-          insertCallCount++;
-          return insertCallCount === 1 ? failingInsertChain : retryInsertChain;
-        }),
-        select: jest.fn().mockReturnValue(selectChain),
-      };
-
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-          { provide: GENRE_REPOSITORY, useValue: {} },
-          { provide: MOVIE_REPOSITORY, useValue: {} },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
-      repository = module.get(DrizzleMediaRepository);
-
-      await expect(repository.upsertStub(stubPayload)).rejects.toThrow('Connection lost');
-      expect(mockDb.insert).toHaveBeenCalledTimes(2);
-    });
-
-    it('should throw DatabaseException on generic DB error (not unique_violation)', async () => {
-      const genericError = new Error('Connection refused');
-      const insertChain = createThenable([], genericError);
-
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          {
-            provide: DATABASE_CONNECTION,
-            useValue: { insert: jest.fn().mockReturnValue(insertChain) },
-          },
-          { provide: GENRE_REPOSITORY, useValue: {} },
-          { provide: MOVIE_REPOSITORY, useValue: {} },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
-      repository = module.get(DrizzleMediaRepository);
-
-      await expect(repository.upsertStub(stubPayload)).rejects.toThrow(DatabaseException);
-    });
-  });
-
-  describe('upsert', () => {
-    const buildUpsertMock = (
-      options: {
-        slugOwnerTmdbId?: number | null;
-        txError?: Error;
-      } = {},
-    ) => {
-      const { slugOwnerTmdbId = null, txError } = options;
-      const resolveResult = slugOwnerTmdbId !== null ? [{ tmdbId: slugOwnerTmdbId }] : [];
-      const selectChain = createThenable(resolveResult);
-      const insertChain = createThenable([{ id: 'new-id' }], undefined, ['onConflictDoNothing']);
-
-      const txInternals = {
-        select: jest.fn().mockReturnValue(selectChain),
-        insert: jest.fn().mockReturnValue(insertChain),
-        update: jest.fn().mockReturnValue(createThenable()),
-      };
-
-      let txCallCount = 0;
-      const mockDb = {
-        select: jest.fn().mockReturnValue(selectChain),
-        insert: jest.fn().mockReturnValue(insertChain),
-        transaction: jest.fn(async (cb: any) => {
-          txCallCount++;
-          if (txError && txCallCount === 1) throw txError;
-          return cb(txInternals);
-        }),
-      };
-
-      return { mockDb, txInternals };
-    };
-
-    const buildUpsertRepo = async (mockDb: any) => {
-      const module = await Test.createTestingModule({
-        providers: [
-          DrizzleMediaRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-          { provide: GENRE_REPOSITORY, useValue: { syncGenres: jest.fn() } },
-          { provide: MOVIE_REPOSITORY, useValue: { upsertDetails: jest.fn() } },
-          { provide: SHOW_REPOSITORY, useValue: {} },
-          { provide: HeroMediaQuery, useValue: {} },
-        ],
-      }).compile();
-      return module.get(DrizzleMediaRepository);
-    };
-
-    it('should proactively resolve slug when taken by different tmdbId', async () => {
-      const { mockDb } = buildUpsertMock({ slugOwnerTmdbId: 100 });
-      repository = await buildUpsertRepo(mockDb);
-
-      const media = { ...baseMedia, slug: 'sandwich', externalIds: { tmdbId: 200, imdbId: null } };
-      await repository.upsert(media as NormalizedMedia);
-
-      expect(mockDb.select).toHaveBeenCalled();
-      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
-    });
-
-    it('should use original slug when not taken', async () => {
-      const { mockDb } = buildUpsertMock();
-      repository = await buildUpsertRepo(mockDb);
-
-      await repository.upsert(baseMedia as NormalizedMedia);
-
-      expect(mockDb.select).toHaveBeenCalled();
-      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
-    });
-
-    it('should use original slug when taken by same tmdbId (re-sync)', async () => {
-      const { mockDb } = buildUpsertMock({ slugOwnerTmdbId: baseMedia.externalIds.tmdbId });
-      repository = await buildUpsertRepo(mockDb);
-
-      await repository.upsert(baseMedia as NormalizedMedia);
-
-      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
-    });
-
-    it('should handle race condition via catch-and-retry', async () => {
-      const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
-        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
-      });
-      const { mockDb } = buildUpsertMock({ txError: slugConflictError });
-      repository = await buildUpsertRepo(mockDb);
-
-      await repository.upsert(baseMedia as NormalizedMedia);
-
-      expect(mockDb.transaction).toHaveBeenCalledTimes(2);
-    });
-
-    it('should throw DatabaseException when retry slug equals resolved slug', async () => {
-      // Slug already has tmdbId suffix → createRetrySlug returns the same slug
-      const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
-        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
-      });
-      // resolveSlug returns "title" (same tmdbId=1 owns it), but tx fails with slug collision
-      const { mockDb } = buildUpsertMock({
-        slugOwnerTmdbId: baseMedia.externalIds.tmdbId,
-        txError: slugConflictError,
-      });
-      repository = await buildUpsertRepo(mockDb);
-
-      // slug="title", tmdbId=1 → retrySlug = "title-1", which differs from "title" → retry happens
-      // But if slug were already "title-1", retrySlug would equal slug → DatabaseException
-      const media = {
-        ...baseMedia,
-        slug: `title-${baseMedia.externalIds.tmdbId}`,
-        externalIds: baseMedia.externalIds,
-      };
-
-      await expect(repository.upsert(media as NormalizedMedia)).rejects.toThrow(DatabaseException);
-      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
-    });
-
-    it('should throw DatabaseException on non-slug error', async () => {
-      const { mockDb } = buildUpsertMock({ txError: new Error('Connection refused') });
-      repository = await buildUpsertRepo(mockDb);
-
-      await expect(repository.upsert(baseMedia as NormalizedMedia)).rejects.toThrow(
-        DatabaseException,
-      );
-    });
-
-    it('should throw DatabaseException when resolveSlug SELECT fails', async () => {
-      const selectChain = createThenable([], new Error('Connection refused'));
-      const mockDb = {
-        select: jest.fn().mockReturnValue(selectChain),
-        transaction: jest.fn(),
-      };
-      repository = await buildUpsertRepo(mockDb);
-
-      await expect(repository.upsert(baseMedia as NormalizedMedia)).rejects.toThrow(
-        DatabaseException,
-      );
-      expect(mockDb.transaction).not.toHaveBeenCalled();
+      expect(execute).toHaveBeenCalledWith(baseMedia);
     });
   });
 
