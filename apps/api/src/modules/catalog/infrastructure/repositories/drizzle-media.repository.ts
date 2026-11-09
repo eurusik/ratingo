@@ -24,7 +24,10 @@ import type { NormalizedMedia } from '@/modules/shared/contracts';
 import { HeroMediaQuery } from '../queries/hero-media.query';
 import { MediaSearchQuery } from '../queries/media-search.query';
 import { type MediaStubPayload, MediaStubUpsertQuery } from '../queries/media-stub-upsert.query';
-import { MediaSyncCandidatesQuery } from '../queries/media-sync-candidates.query';
+import {
+  MediaSyncCandidatesQuery,
+  type SyncCandidateOptions,
+} from '../queries/media-sync-candidates.query';
 import { MediaUpsertQuery } from '../queries/media-upsert.query';
 import { toMediaIdItems } from '../queries/shared';
 
@@ -375,31 +378,31 @@ export class DrizzleMediaRepository implements IMediaRepository {
   }
 
   async findItemsWithMissingWatchers(
-    options: Parameters<IMediaRepository['findItemsWithMissingWatchers']>[0],
+    options: SyncCandidateOptions<'findItemsWithMissingWatchers'>,
   ): Promise<CorruptedWatchersItem[]> {
     return this.syncCandidatesQuery.findItemsWithMissingWatchers(options);
   }
 
   async findItemsWithCorruptedWatchersCount(
-    options: Parameters<IMediaRepository['findItemsWithCorruptedWatchersCount']>[0],
+    options: SyncCandidateOptions<'findItemsWithCorruptedWatchersCount'>,
   ): Promise<CorruptedWatchersItem[]> {
     return this.syncCandidatesQuery.findItemsWithCorruptedWatchersCount(options);
   }
 
   async findEligibleForTrending(
-    options: Parameters<IMediaRepository['findEligibleForTrending']>[0],
+    options: SyncCandidateOptions<'findEligibleForTrending'>,
   ): Promise<MediaSyncItem[]> {
     return this.syncCandidatesQuery.findEligibleForTrending(options);
   }
 
   async findSnapshotCandidates(
-    options: Parameters<IMediaRepository['findSnapshotCandidates']>[0],
+    options: SyncCandidateOptions<'findSnapshotCandidates'>,
   ): Promise<SnapshotCandidate[]> {
     return this.syncCandidatesQuery.findSnapshotCandidates(options);
   }
 
   async findHeroCandidatesForStatsRefresh(
-    options: Parameters<IMediaRepository['findHeroCandidatesForStatsRefresh']>[0],
+    options: SyncCandidateOptions<'findHeroCandidatesForStatsRefresh'>,
   ): Promise<MediaSyncItem[]> {
     return this.syncCandidatesQuery.findHeroCandidatesForStatsRefresh(options);
   }

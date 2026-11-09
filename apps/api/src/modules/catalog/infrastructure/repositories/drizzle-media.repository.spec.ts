@@ -299,85 +299,29 @@ describe('DrizzleMediaRepository', () => {
     });
   });
 
-  describe('search', () => {
-    it('should return results matching the query', async () => {
-      const module = await setup({ resolveSelect: [{ id: 'm1' }] });
+  describe('read delegation', () => {
+    it('should delegate search to MediaSearchQuery', async () => {
+      const module = await setup();
       repository = module.get(DrizzleMediaRepository);
+      const execute = jest.spyOn(module.get(MediaSearchQuery), 'execute').mockResolvedValue([]);
 
-      const result = await repository.search('test query', 10);
-      expect(result).toEqual([{ id: 'm1' }]);
-      expect(db.select).toHaveBeenCalled();
+      await repository.search('dune', 10);
+
+      expect(execute).toHaveBeenCalledWith('dune', 10);
     });
 
-    it('should call db.select twice: once for outer query and once for EXISTS subquery', async () => {
-      // The EXISTS subquery is built via this.db.select({ one: sql`1` }) nested inside
-      // the outer query's where clause. This means db.select is called twice per search call.
-      // Previously the method used innerJoin, which would only call db.select once.
-      const module = await setup({ resolveSelect: [{ id: 'm1' }] });
+    it('should delegate sync candidate lookups to MediaSyncCandidatesQuery', async () => {
+      const module = await setup();
       repository = module.get(DrizzleMediaRepository);
+      const syncQuery = module.get(MediaSyncCandidatesQuery);
+      const eligible = jest.spyOn(syncQuery, 'findEligibleForTrending').mockResolvedValue([]);
+      const snapshots = jest.spyOn(syncQuery, 'findSnapshotCandidates').mockResolvedValue([]);
 
-      await repository.search('test', 10);
+      await repository.findEligibleForTrending({ limit: 10, afterId: 'm0' });
+      await repository.findSnapshotCandidates({ limit: 5 });
 
-      // db.select called twice: outer query + EXISTS subquery construction
-      expect(db.select).toHaveBeenCalledTimes(2);
-    });
-
-    it('should escape LIKE wildcards and backslashes in the ILIKE pattern', async () => {
-      const module = await setup({ resolveSelect: [] });
-      repository = module.get(DrizzleMediaRepository);
-
-      await repository.search('100%_a\\b', 10);
-
-      // select chain is shared with the EXISTS subquery, whose where() is called first
-      const selectChain = db.select.mock.results[0].value;
-      const whereCalls = selectChain.where.mock.calls;
-      const { params } = new PgDialect().sqlToQuery(whereCalls[whereCalls.length - 1][0]);
-      // ILIKE pattern is escaped; the raw term (used by trigram %) stays unescaped
-      expect(params).toContain('%100\\%\\_a\\\\b%');
-      expect(params).toContain('100%_a\\b');
-    });
-
-    it('should not call innerJoin (EXISTS subquery replaces JOIN to avoid row multiplication)', async () => {
-      const module = await setup({ resolveSelect: [{ id: 'm1' }] });
-      repository = module.get(DrizzleMediaRepository);
-
-      await repository.search('test', 10);
-
-      // The Drizzle chain mock tracks all method calls on the thenable.
-      // innerJoin must not be called — it was removed in favour of EXISTS.
-      const selectChain = db.select.mock.results[0].value;
-      expect(selectChain.innerJoin).not.toHaveBeenCalled();
-    });
-
-    it('should return empty array and not throw when a DB error occurs', async () => {
-      const module = await setup({ reject: new Error('DB Error') });
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.search('bad', 5);
-      expect(result).toEqual([]);
-    });
-
-    it('should return empty array for a query that matches nothing', async () => {
-      const module = await setup({ resolveSelect: [] });
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.search('zzznomatch', 10);
-      expect(result).toEqual([]);
-    });
-
-    it('should respect the limit parameter', async () => {
-      const rows = Array.from({ length: 5 }, (_, i) => ({ id: `m${i}` }));
-      const module = await setup({ resolveSelect: rows });
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.search('popular', 5);
-      // The repository delegates limit enforcement to the DB; we assert the
-      // resolved rows are returned as-is without further slicing.
-      expect(result).toHaveLength(5);
-
-      // Verify .limit() was called with the correct parameter
-      const selectChain = db.select.mock.results[0].value;
-      expect(selectChain.limit).toHaveBeenCalledWith(5);
+      expect(eligible).toHaveBeenCalledWith({ limit: 10, afterId: 'm0' });
+      expect(snapshots).toHaveBeenCalledWith({ limit: 5 });
     });
   });
 
@@ -408,57 +352,6 @@ describe('DrizzleMediaRepository', () => {
       await repository.upsert(baseMedia);
 
       expect(execute).toHaveBeenCalledWith(baseMedia);
-    });
-  });
-
-  describe('findEligibleForTrending', () => {
-    it('should return eligible items with tmdbId and type', async () => {
-      const mockRows = [
-        { id: 'm1', tmdbId: 100, type: MediaType.MOVIE },
-        { id: 's1', tmdbId: 200, type: MediaType.SHOW },
-      ];
-      const module = await setup({ resolveSelect: mockRows });
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.findEligibleForTrending({ limit: 10 });
-
-      expect(result).toEqual([
-        { id: 'm1', tmdbId: 100, type: MediaType.MOVIE },
-        { id: 's1', tmdbId: 200, type: MediaType.SHOW },
-      ]);
-      expect(db.select).toHaveBeenCalled();
-    });
-
-    it('should return empty array when no items found', async () => {
-      const module = await setup({ resolveSelect: [] });
-      repository = module.get(DrizzleMediaRepository);
-
-      const result = await repository.findEligibleForTrending({ limit: 10 });
-
-      expect(result).toEqual([]);
-    });
-
-    it('should accept a keyset cursor instead of an offset', async () => {
-      const module = await setup({
-        resolveSelect: [{ id: 'm1', tmdbId: 100, type: MediaType.MOVIE }],
-      });
-      repository = module.get(DrizzleMediaRepository);
-
-      await repository.findEligibleForTrending({ limit: 50, afterId: 'm0' });
-
-      expect(db.select).toHaveBeenCalled();
-      const chain = db.select.mock.results[0].value;
-      expect(chain.limit).toHaveBeenCalledWith(50);
-      expect(chain.offset).not.toHaveBeenCalled();
-    });
-
-    it('should throw DatabaseException on error', async () => {
-      const module = await setup({ reject: new Error('DB Error') });
-      repository = module.get(DrizzleMediaRepository);
-
-      await expect(repository.findEligibleForTrending({ limit: 10 })).rejects.toThrow(
-        DatabaseException,
-      );
     });
   });
 });

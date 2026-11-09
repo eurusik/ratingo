@@ -3,12 +3,12 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, desc, eq, gt, isNotNull, isNull, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MediaType } from '@/common/enums/media-type.enum';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 import {
   type CorruptedWatchersItem,
+  type IMediaRepository,
   type MediaSyncItem,
   type SnapshotCandidate,
 } from '@/modules/catalog/domain/repositories/media.repository.interface';
@@ -23,6 +23,10 @@ import {
   buildHeroCandidatesEvaluationConditions,
 } from './shared';
 
+export type SyncCandidateOptions<TMethod extends keyof IMediaRepository> = Parameters<
+  IMediaRepository[TMethod]
+>[0];
+
 @Injectable()
 export class MediaSyncCandidatesQuery {
   private readonly logger = new Logger(MediaSyncCandidatesQuery.name);
@@ -36,11 +40,9 @@ export class MediaSyncCandidatesQuery {
    * Finds items with corrupted total_watchers data.
    * Items where total_watchers = 0 (or null) but have Trakt votes indicate API failure during sync.
    */
-  async findItemsWithMissingWatchers(options: {
-    type?: MediaType;
-    limit: number;
-    minVotes: number;
-  }): Promise<CorruptedWatchersItem[]> {
+  async findItemsWithMissingWatchers(
+    options: SyncCandidateOptions<'findItemsWithMissingWatchers'>,
+  ): Promise<CorruptedWatchersItem[]> {
     return withDbError(
       'find items with missing watchers',
       this.logger,
@@ -80,11 +82,9 @@ export class MediaSyncCandidatesQuery {
    * Finds items with corrupted watchers_count (live watchers).
    * Items where watchers_count = 0 but total_watchers > minTotalWatchers.
    */
-  async findItemsWithCorruptedWatchersCount(options: {
-    type?: MediaType;
-    limit: number;
-    minTotalWatchers: number;
-  }): Promise<CorruptedWatchersItem[]> {
+  async findItemsWithCorruptedWatchersCount(
+    options: SyncCandidateOptions<'findItemsWithCorruptedWatchersCount'>,
+  ): Promise<CorruptedWatchersItem[]> {
     return withDbError(
       'find items with corrupted watchers count',
       this.logger,
@@ -123,10 +123,9 @@ export class MediaSyncCandidatesQuery {
    * Only returns items with watchers_count = 0 or NULL (never synced or stale).
    * Used to backfill watchers data for items not in Trakt trending top-100.
    */
-  async findEligibleForTrending(options: {
-    limit: number;
-    afterId?: string;
-  }): Promise<MediaSyncItem[]> {
+  async findEligibleForTrending(
+    options: SyncCandidateOptions<'findEligibleForTrending'>,
+  ): Promise<MediaSyncItem[]> {
     return withDbError(
       'find eligible items for trending',
       this.logger,
@@ -173,12 +172,9 @@ export class MediaSyncCandidatesQuery {
    * Retrieves ELIGIBLE media items for snapshots sync with cursor pagination.
    * Filters to items that pass Policy Engine in TRENDING context.
    */
-  async findSnapshotCandidates(options: {
-    cursor?: string;
-    limit: number;
-    snapshotDate?: Date;
-    region?: string;
-  }): Promise<SnapshotCandidate[]> {
+  async findSnapshotCandidates(
+    options: SyncCandidateOptions<'findSnapshotCandidates'>,
+  ): Promise<SnapshotCandidate[]> {
     return withDbError(
       'find snapshot candidates',
       this.logger,
@@ -228,12 +224,9 @@ export class MediaSyncCandidatesQuery {
    * Targets items that may appear in Hero or Watching-Now sections.
    * Uses configurable quality threshold to cover both (hero@60, watching-now@50).
    */
-  async findHeroCandidatesForStatsRefresh(options: {
-    staleThresholdHours: number;
-    limit: number;
-    /** Minimum quality score (use 50 to cover both hero and watching-now) */
-    minQualityScore?: number;
-  }): Promise<MediaSyncItem[]> {
+  async findHeroCandidatesForStatsRefresh(
+    options: SyncCandidateOptions<'findHeroCandidatesForStatsRefresh'>,
+  ): Promise<MediaSyncItem[]> {
     return withDbError(
       'find homepage candidates for stats refresh',
       this.logger,

@@ -1,40 +1,10 @@
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { MediaStubUpsertQuery } from './media-stub-upsert.query';
+import { createDrizzleThenable } from '../__test__/drizzle-mock.utils';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { DatabaseException } from '@/common/exceptions';
 import { PG_ERROR_CODE, DB_CONSTRAINT } from '@/common/constants/database.constants';
-
-// Helper to create a chainable thenable for Drizzle-like fluent API
-const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {
-  const thenable: any = {};
-  const chainMethods = [
-    'select',
-    'from',
-    'where',
-    'limit',
-    'offset',
-    'innerJoin',
-    'leftJoin',
-    'insert',
-    'values',
-    'onConflictDoUpdate',
-    'update',
-    'orderBy',
-    'returning',
-    ...extraMethods,
-  ];
-  chainMethods.forEach((m) => {
-    thenable[m] = jest.fn().mockReturnValue(thenable);
-  });
-
-  if (rejectWith) {
-    thenable.then = (_res: any, rej: any) => Promise.reject(rejectWith).catch(rej);
-  } else {
-    thenable.then = (res: any) => Promise.resolve(resolveWith).then(res);
-  }
-  return thenable;
-};
 
 describe('MediaStubUpsertQuery', () => {
   describe('execute', () => {
@@ -47,7 +17,7 @@ describe('MediaStubUpsertQuery', () => {
     };
 
     it('should return id and slug on successful insert', async () => {
-      const insertChain = createThenable([{ id: 'new-id', slug: 'test-show' }]);
+      const insertChain = createDrizzleThenable([{ id: 'new-id', slug: 'test-show' }]);
       const query = new MediaStubUpsertQuery({
         insert: jest.fn().mockReturnValue(insertChain),
       } as any);
@@ -58,7 +28,7 @@ describe('MediaStubUpsertQuery', () => {
     });
 
     it('should never downgrade a READY item on conflict (forced re-sync)', async () => {
-      const insertChain = createThenable([{ id: 'new-id', slug: 'test-show' }]);
+      const insertChain = createDrizzleThenable([{ id: 'new-id', slug: 'test-show' }]);
       const query = new MediaStubUpsertQuery({
         insert: jest.fn().mockReturnValue(insertChain),
       } as any);
@@ -78,8 +48,10 @@ describe('MediaStubUpsertQuery', () => {
         code: PG_ERROR_CODE.UNIQUE_VIOLATION,
         constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
       });
-      const insertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([{ id: 'existing-id', slug: 'test-show', tmdbId: 72350 }]);
+      const insertChain = createDrizzleThenable([], slugConflictError);
+      const selectChain = createDrizzleThenable([
+        { id: 'existing-id', slug: 'test-show', tmdbId: 72350 },
+      ]);
 
       const mockDb = {
         insert: jest.fn().mockReturnValue(insertChain),
@@ -102,9 +74,11 @@ describe('MediaStubUpsertQuery', () => {
         code: PG_ERROR_CODE.UNIQUE_VIOLATION,
         constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
       });
-      const failingInsertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([{ id: 'other-id', slug: 'test-show', tmdbId: 99999 }]);
-      const retryInsertChain = createThenable([{ id: 'new-id', slug: 'test-show-72350' }]);
+      const failingInsertChain = createDrizzleThenable([], slugConflictError);
+      const selectChain = createDrizzleThenable([
+        { id: 'other-id', slug: 'test-show', tmdbId: 99999 },
+      ]);
+      const retryInsertChain = createDrizzleThenable([{ id: 'new-id', slug: 'test-show-72350' }]);
 
       let insertCallCount = 0;
       const mockDb = {
@@ -130,7 +104,7 @@ describe('MediaStubUpsertQuery', () => {
         code: PG_ERROR_CODE.UNIQUE_VIOLATION,
         constraint_name: 'media_type_tmdb_idx', // Different constraint
       });
-      const insertChain = createThenable([], otherError);
+      const insertChain = createDrizzleThenable([], otherError);
 
       const query = new MediaStubUpsertQuery({
         insert: jest.fn().mockReturnValue(insertChain),
@@ -147,8 +121,10 @@ describe('MediaStubUpsertQuery', () => {
           constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
         },
       });
-      const insertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([{ id: 'existing-id', slug: 'test-show', tmdbId: 72350 }]);
+      const insertChain = createDrizzleThenable([], slugConflictError);
+      const selectChain = createDrizzleThenable([
+        { id: 'existing-id', slug: 'test-show', tmdbId: 72350 },
+      ]);
 
       const mockDb = {
         insert: jest.fn().mockReturnValue(insertChain),
@@ -169,8 +145,8 @@ describe('MediaStubUpsertQuery', () => {
         code: PG_ERROR_CODE.UNIQUE_VIOLATION,
         constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
       });
-      const insertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([]); // Empty result
+      const insertChain = createDrizzleThenable([], slugConflictError);
+      const selectChain = createDrizzleThenable([]); // Empty result
 
       const mockDb = {
         insert: jest.fn().mockReturnValue(insertChain),
@@ -189,10 +165,12 @@ describe('MediaStubUpsertQuery', () => {
         code: PG_ERROR_CODE.UNIQUE_VIOLATION,
         constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
       });
-      const failingInsertChain = createThenable([], slugConflictError);
-      const selectChain = createThenable([{ id: 'other-id', slug: 'test-show', tmdbId: 99999 }]);
+      const failingInsertChain = createDrizzleThenable([], slugConflictError);
+      const selectChain = createDrizzleThenable([
+        { id: 'other-id', slug: 'test-show', tmdbId: 99999 },
+      ]);
       const retryFailError = new Error('Connection lost');
-      const retryInsertChain = createThenable([], retryFailError);
+      const retryInsertChain = createDrizzleThenable([], retryFailError);
 
       let insertCallCount = 0;
       const mockDb = {
@@ -211,7 +189,7 @@ describe('MediaStubUpsertQuery', () => {
 
     it('should throw DatabaseException on generic DB error (not unique_violation)', async () => {
       const genericError = new Error('Connection refused');
-      const insertChain = createThenable([], genericError);
+      const insertChain = createDrizzleThenable([], genericError);
 
       const query = new MediaStubUpsertQuery({
         insert: jest.fn().mockReturnValue(insertChain),

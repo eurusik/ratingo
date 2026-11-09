@@ -1,39 +1,9 @@
 import { MediaUpsertQuery } from './media-upsert.query';
+import { createDrizzleThenable } from '../__test__/drizzle-mock.utils';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { DatabaseException } from '@/common/exceptions';
 import { PG_ERROR_CODE, DB_CONSTRAINT } from '@/common/constants/database.constants';
 import { NormalizedMedia } from '@/modules/shared/contracts';
-
-// Helper to create a chainable thenable for Drizzle-like fluent API
-const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {
-  const thenable: any = {};
-  const chainMethods = [
-    'select',
-    'from',
-    'where',
-    'limit',
-    'offset',
-    'innerJoin',
-    'leftJoin',
-    'insert',
-    'values',
-    'onConflictDoUpdate',
-    'update',
-    'orderBy',
-    'returning',
-    ...extraMethods,
-  ];
-  chainMethods.forEach((m) => {
-    thenable[m] = jest.fn().mockReturnValue(thenable);
-  });
-
-  if (rejectWith) {
-    thenable.then = (_res: any, rej: any) => Promise.reject(rejectWith).catch(rej);
-  } else {
-    thenable.then = (res: any) => Promise.resolve(resolveWith).then(res);
-  }
-  return thenable;
-};
 
 const baseMedia: NormalizedMedia = {
   type: MediaType.MOVIE,
@@ -65,13 +35,15 @@ describe('MediaUpsertQuery', () => {
     ) => {
       const { slugOwnerTmdbId = null, txError } = options;
       const resolveResult = slugOwnerTmdbId !== null ? [{ tmdbId: slugOwnerTmdbId }] : [];
-      const selectChain = createThenable(resolveResult);
-      const insertChain = createThenable([{ id: 'new-id' }], undefined, ['onConflictDoNothing']);
+      const selectChain = createDrizzleThenable(resolveResult);
+      const insertChain = createDrizzleThenable([{ id: 'new-id' }], undefined, [
+        'onConflictDoNothing',
+      ]);
 
       const txInternals = {
         select: jest.fn().mockReturnValue(selectChain),
         insert: jest.fn().mockReturnValue(insertChain),
-        update: jest.fn().mockReturnValue(createThenable()),
+        update: jest.fn().mockReturnValue(createDrizzleThenable()),
       };
 
       let txCallCount = 0;
@@ -172,7 +144,7 @@ describe('MediaUpsertQuery', () => {
     });
 
     it('should throw DatabaseException when resolveSlug SELECT fails', async () => {
-      const selectChain = createThenable([], new Error('Connection refused'));
+      const selectChain = createDrizzleThenable([], new Error('Connection refused'));
       const mockDb = {
         select: jest.fn().mockReturnValue(selectChain),
         transaction: jest.fn(),

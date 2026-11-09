@@ -18,9 +18,10 @@ const apiTestFiles = [
   '**/__test__/**',
   '**/__tests__/**',
 ];
-const oversizedFilesToSplit = [
-  'apps/api/src/modules/user-media/infrastructure/repositories/drizzle-user-media-state.repository.ts',
-];
+const maxLinesOptions = { skipBlankLines: true, skipComments: true };
+const oversizedFilesToSplit = {
+  'apps/api/src/modules/user-media/infrastructure/repositories/drizzle-user-media-state.repository.ts': 826,
+};
 
 const jestRecommendedRulesAsErrors = Object.fromEntries(
   Object.keys(jestPlugin.configs['flat/recommended'].rules).map((rule) => [rule, 'error']),
@@ -629,13 +630,13 @@ export default [
     files: apiProductionFiles,
     ignores: apiTestFiles,
     rules: {
-      'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['error', { max: 500, ...maxLinesOptions }],
     },
   },
-  {
-    files: oversizedFilesToSplit,
+  ...Object.entries(oversizedFilesToSplit).map(([file, currentLines]) => ({
+    files: [file],
     rules: {
-      'max-lines': 'off',
+      'max-lines': ['error', { max: currentLines, ...maxLinesOptions }],
     },
-  },
+  })),
 ];
