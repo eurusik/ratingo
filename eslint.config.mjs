@@ -8,6 +8,20 @@ import { fileURLToPath } from 'node:url';
 
 import noDeepRelativeImports from './eslint-rules/no-deep-relative-imports.mjs';
 
+const apiProductionFiles = ['apps/api/src/**/*.ts'];
+const apiTestFiles = [
+  '**/*.spec.ts',
+  '**/*.test.ts',
+  '**/*.e2e-spec.ts',
+  '**/*.testing.ts',
+  '**/test/**',
+  '**/__test__/**',
+  '**/__tests__/**',
+];
+const oversizedFilesToSplit = [
+  'apps/api/src/modules/user-media/infrastructure/repositories/drizzle-user-media-state.repository.ts',
+];
+
 const jestRecommendedRulesAsErrors = Object.fromEntries(
   Object.keys(jestPlugin.configs['flat/recommended'].rules).map((rule) => [rule, 'error']),
 );
@@ -609,6 +623,19 @@ export default [
           varsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    files: apiProductionFiles,
+    ignores: apiTestFiles,
+    rules: {
+      'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
+    files: oversizedFilesToSplit,
+    rules: {
+      'max-lines': 'off',
     },
   },
 ];
