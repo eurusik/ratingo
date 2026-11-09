@@ -50,8 +50,6 @@ export function MediaCardServer(props: MediaCardServerProps) {
     title,
     poster,
     stats,
-    externalRatings,
-    showProgress: progress,
     releaseDate,
     rank,
     badgeKey,

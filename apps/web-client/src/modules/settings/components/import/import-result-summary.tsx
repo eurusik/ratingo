@@ -7,11 +7,18 @@ import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible';
+import { withOccurrenceKeys } from '@/shared/utils';
 import type { ImportResult } from '@/core/api/user-media.client';
 import { useImportBatchStatus, type ImportBatchStatus } from '../../hooks/use-import-batch-status';
 import { useCancelImportBatches } from '../../hooks/use-import-media';
 import { ImportPendingStatus, type ImportPendingStatusLabels } from './import-pending-status';
 import { BATCH_STATUS, type BatchStatus } from './types';
+
+type NotFoundItem = ImportResult['details']['notFound'][number];
+
+function notFoundItemKey(item: NotFoundItem): string {
+  return `${item.imdbId ?? ''}-${item.tmdbId ?? ''}-${item.title ?? ''}`;
+}
 
 function deriveStatus(
   hasPending: boolean,
@@ -128,8 +135,8 @@ export function ImportResultSummary({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <ul className="mt-2 max-h-48 overflow-y-auto divide-y divide-cinema-borderSoft rounded-md border border-cinema-borderSoft bg-cinema-card">
-              {result.details?.notFound?.map((item, idx) => (
-                <li key={idx} className="px-4 py-2 text-sm">
+              {withOccurrenceKeys(result.details.notFound, notFoundItemKey).map(({ item, key }) => (
+                <li key={key} className="px-4 py-2 text-sm">
                   <span className="text-cinema-text-primary">{item.title ?? '—'}</span>
                   {item.imdbId && (
                     <span className="ml-2 text-cinema-text-muted text-xs">{item.imdbId}</span>

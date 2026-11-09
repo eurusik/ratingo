@@ -5,7 +5,7 @@
  * Lets users choose which seasons to mark as watched.
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { components } from '@ratingo/api-contract';
 import type { ShowProgressDto } from '@/core/api/episode-progress.client';
 import type { getDictionary } from '@/shared/i18n';
@@ -84,14 +84,17 @@ export function CatchUpDialog({
     return new Set(seasonRows.map((r) => r.number));
   }, [seasonRows]);
 
-  const [selectedSeasons, setSelectedSeasons] = useState<Set<number>>(new Set());
+  const [selectedSeasons, setSelectedSeasons] = useState<Set<number>>(
+    () => new Set(open ? defaultSelected : []),
+  );
+  const [selectionSource, setSelectionSource] = useState({ open, defaultSelected });
 
-  // Reset selection every time the dialog opens (fixes stale state on re-open)
-  useEffect(() => {
+  if (selectionSource.open !== open || selectionSource.defaultSelected !== defaultSelected) {
+    setSelectionSource({ open, defaultSelected });
     if (open) {
       setSelectedSeasons(new Set(defaultSelected));
     }
-  }, [open, defaultSelected]);
+  }
 
   const toggleSeason = useCallback((seasonNumber: number) => {
     setSelectedSeasons((prev) => {

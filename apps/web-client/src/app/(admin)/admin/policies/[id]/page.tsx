@@ -68,8 +68,8 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
         </div>
         <Button
           onClick={() => {
-            refetchPolicy();
-            refetchRuns();
+            void refetchPolicy();
+            void refetchRuns();
           }}
         >
           {dict.admin.common.tryAgain}

@@ -17,20 +17,20 @@ import { retryUnlessUnauthorized } from './utils';
  * Used by all episode progress mutation hooks to ensure consistency.
  */
 function invalidateEpisodeProgressCaches(queryClient: QueryClient, showId: string) {
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: queryKeys.episodeProgress.showProgress(showId),
   });
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: queryKeys.userMedia.all,
   });
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: queryKeys.meLists.all,
   });
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: queryKeys.userActions.savedItems.all,
   });
-  queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
-  queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
 }
 
 // ============================================================================

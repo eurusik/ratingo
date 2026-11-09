@@ -8,7 +8,7 @@ import { useAutoUnsaveOnRating } from '../use-auto-unsave-on-rating';
 // ---------------------------------------------------------------------------
 
 const mockUnsaveItem = jest.fn<Promise<any>, [any]>();
-const mockSaveItem = jest.fn<Promise<any>, [any]>();
+const mockSaveItem = jest.fn<void, [any]>();
 
 jest.mock('sonner', () => ({
   toast: jest.fn(),
@@ -29,7 +29,7 @@ jest.mock('@/shared/i18n', () => ({
 
 jest.mock('@/core/query', () => ({
   useUnsaveItem: () => ({ mutateAsync: mockUnsaveItem }),
-  useSaveItem: () => ({ mutateAsync: mockSaveItem }),
+  useSaveItem: () => ({ mutate: mockSaveItem }),
 }));
 
 import { toast } from 'sonner';
@@ -77,7 +77,6 @@ describe('useAutoUnsaveOnRating', () => {
     queryClient = createQueryClient();
     jest.clearAllMocks();
     mockUnsaveItem.mockResolvedValue({ status: { isForLater: false, isConsidering: false } });
-    mockSaveItem.mockResolvedValue({ status: { isForLater: true, isConsidering: false } });
   });
 
   afterEach(() => {

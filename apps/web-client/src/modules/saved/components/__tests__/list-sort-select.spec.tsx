@@ -4,7 +4,6 @@
 
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ListSortSelect } from '../list-sort-select';
-import type { MeListSort } from '../../hooks/use-me-lists';
 
 /* ------------------------------------------------------------------ */
 /*  Mocks                                                             */

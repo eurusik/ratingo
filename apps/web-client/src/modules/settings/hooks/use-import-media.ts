@@ -19,10 +19,10 @@ export function useImportMedia() {
       // Mark as stale but don't refetch now — will refetch when user visits the page.
       // Prevents empty-state flash on /activity caused by aggressive background refetch.
       const opts = { refetchType: 'none' as const };
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all, ...opts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.all, ...opts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll, ...opts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all, ...opts });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all, ...opts });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.all, ...opts });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll, ...opts });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all, ...opts });
     },
 
     onError: (error) => {
@@ -36,7 +36,7 @@ export function useCancelImportBatches() {
   return useMutation<{ failedBatchIds: string[] }, Error, string[]>({
     mutationFn: (batchIds) => userMediaApi.cancelImportBatches(batchIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.importBatchStatus });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.importBatchStatus });
     },
   });
 }

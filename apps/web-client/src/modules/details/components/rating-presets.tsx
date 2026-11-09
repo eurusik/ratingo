@@ -105,7 +105,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
     openSlider();
     playVoteAnimation();
 
-    guard(async () => {
+    void guard(async () => {
       await setRating({ rating: preset.score, mediaType });
       showRatingToast(preset.score, preset.id);
       setSliderOverride(null);
@@ -128,7 +128,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
     triggerScoreAnimation('animate-score-commit');
     scheduleHide();
 
-    guard(async () => {
+    void guard(async () => {
       await setRating({ rating: score, mediaType });
       showRatingToast(score, committedPreset.id);
       setSliderOverride(null);
@@ -142,7 +142,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
     setDrawerOpen(false);
     setSliderOverride(null);
 
-    guard(async () => {
+    void guard(async () => {
       await setRating({ rating: null, mediaType });
       toast.success(dict.userRating.toast.cleared);
     });

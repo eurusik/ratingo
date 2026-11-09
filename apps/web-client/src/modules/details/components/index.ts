@@ -13,7 +13,6 @@ export {
   DataVerdictServer,
   type DataVerdictServerProps,
   type VerdictType,
-  type ConfidenceLevel,
 } from './data-verdict-server';
 export { DataVerdict, type DataVerdictProps } from './data-verdict';
 export { VerdictCtaButton } from './verdict-cta-button';

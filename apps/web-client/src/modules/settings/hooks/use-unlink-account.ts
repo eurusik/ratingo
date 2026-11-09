@@ -19,7 +19,7 @@ export function useUnlinkAccount() {
   return useMutation({
     mutationFn: (provider: string) => authApi.unlinkProvider(provider),
     onSuccess: () => {
-      refreshUser();
+      void refreshUser();
     },
   });
 }

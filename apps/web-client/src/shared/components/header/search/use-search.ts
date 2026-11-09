@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 
@@ -37,7 +38,7 @@ export function useSearch() {
       setQuery('');
       router.push(type === MediaType.MOVIE ? `/movies/${slug}` : `/shows/${slug}`);
     },
-    [router],
+    [router, setOpen],
   );
 
   // Import TMDB item
@@ -78,7 +79,7 @@ export function useSearch() {
           ...(result.jobId && { jobId: result.jobId }),
           ...(result.slug && { slug: result.slug }),
         });
-        router.push(`/import/${result.tmdbId}?${params.toString()}` as any);
+        router.push(`/import/${result.tmdbId}?${params.toString()}` as Route);
       }
       setImportingTmdbId(null);
       setImportingItem(null);

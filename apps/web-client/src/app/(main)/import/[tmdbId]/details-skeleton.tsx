@@ -7,7 +7,6 @@ interface DetailsSkeletonProps {
   title: string;
   poster?: string;
   year?: string;
-  type: 'movie' | 'show';
   statusMessage: string;
   statusHint: string;
 }
@@ -20,7 +19,6 @@ export function DetailsSkeleton({
   title,
   poster,
   year,
-  type,
   statusMessage,
   statusHint,
 }: DetailsSkeletonProps) {

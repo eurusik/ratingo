@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useShowCalendar, usePersonalizedShowCalendar } from '@/core/query';
 import { useAuth } from '@/core/auth';
 import { useAuthModalStore } from '@/core/auth';
+import { useStoredValue } from '@/shared/hooks/use-stored-value';
 import type { components } from '@ratingo/api-contract';
 import { getDictionary, type Locale } from '@/shared/i18n';
 
@@ -231,22 +232,19 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
  */
 export function CalendarPageClient({ initialData, serverToday, locale = 'uk', initialMode = 'all' }: CalendarPageClientProps) {
   const [weekOffset, setWeekOffset] = useState(0);
-  const [mode, setMode] = useState<CalendarMode>(initialMode);
+  const [selectedMode, setSelectedMode] = useState<CalendarMode | null>(null);
   const [isPersonalizedLoading, setIsPersonalizedLoading] = useState(false);
+  const hasStoredPersonalizedMode = useStoredValue(CALENDAR_MODE_KEY) === 'personalized';
+  const needsPersonalizedCookieMigration =
+    hasStoredPersonalizedMode && initialMode !== 'personalized';
+  const mode: CalendarMode =
+    selectedMode ?? (needsPersonalizedCookieMigration ? 'personalized' : initialMode);
 
-  // Migration: sync cookie for users who have localStorage but no cookie yet.
-  // After one visit, subsequent reloads use the cookie for flicker-free SSR.
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(CALENDAR_MODE_KEY);
-      if (stored === 'personalized' && mode !== 'personalized') {
-        setMode('personalized');
-        document.cookie = `${CALENDAR_MODE_COOKIE}=personalized; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
-      }
-    } catch {
-      // localStorage unavailable (private browsing, storage quota exceeded, etc.)
+    if (needsPersonalizedCookieMigration) {
+      document.cookie = `${CALENDAR_MODE_COOKIE}=personalized; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
     }
-  }, []);
+  }, [needsPersonalizedCookieMigration]);
 
   const dict = getDictionary(locale);
 
@@ -290,7 +288,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk', in
    * Persists the chosen mode to localStorage so it survives page reloads.
    */
   function handleModeChange(next: CalendarMode) {
-    setMode(next);
+    setSelectedMode(next);
     setWeekOffset(0);
     try {
       localStorage.setItem(CALENDAR_MODE_KEY, next);

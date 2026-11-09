@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 
 import { Button } from '@/shared/ui';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 import { useTranslation } from '@/shared/i18n';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
+import { useIsClient } from '@/shared/hooks/use-is-client';
 import { useSearch } from './use-search';
 import { SearchContent } from './search-content';
 
@@ -23,8 +23,7 @@ export function SearchCommand() {
   const search = useSearch();
   const { open, setOpen } = search;
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useIsClient();
 
   return (
     <>

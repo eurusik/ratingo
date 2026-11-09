@@ -47,7 +47,7 @@ export function useUpdateProfile() {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
   });
 }

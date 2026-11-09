@@ -96,13 +96,14 @@ export function ReviewsSection({ mediaItemId, className, initialData }: ReviewsS
     }
   };
 
-  const handleVoteError = async (error: unknown) => {
-    const code = await getApiErrorCode(error);
-    if (code === ErrorCode.FORBIDDEN) {
-      toast.error(dict.reviews.toast.voteOwnReview);
-    } else {
-      toast.error(dict.reviews.toast.voteError);
-    }
+  const handleVoteError = (error: unknown) => {
+    void getApiErrorCode(error).then((code) => {
+      toast.error(
+        code === ErrorCode.FORBIDDEN
+          ? dict.reviews.toast.voteOwnReview
+          : dict.reviews.toast.voteError,
+      );
+    });
   };
 
   const handleVote = (reviewId: string, voteType: VoteType) => {

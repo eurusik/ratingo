@@ -43,7 +43,7 @@ export function PromoteConfirmDialog({
       await onConfirm();
       setConfirmText('');
       onOpenChange(false);
-    } catch (error) {
+    } catch {
       // Error handled by parent component
     }
   };

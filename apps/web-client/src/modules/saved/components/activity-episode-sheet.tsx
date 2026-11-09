@@ -27,8 +27,10 @@ import { useShowDetails } from '@/core/query';
 import { EpisodesSection } from '@/modules/details';
 import type { MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import { useEpisodeSheetStore } from '../stores/episode-sheet.store';
+import { createPlaceholderKeys } from '@/shared/utils';
 
 const STALE_1_MIN = 60_000;
+const EPISODE_ROW_SKELETON_KEYS = createPlaceholderKeys('episode-row-skeleton', 6);
 
 export function ActivityEpisodeSheet() {
   const { isOpen, item, close } = useEpisodeSheetStore();
@@ -203,8 +205,8 @@ function EpisodeSheetSkeleton() {
       {/* Section title placeholder */}
       <div className="h-3 w-16 bg-cinema-elevated rounded" />
       {/* Episode row placeholders */}
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3">
+      {EPISODE_ROW_SKELETON_KEYS.map((key) => (
+        <div key={key} className="flex items-center gap-3">
           <div className="w-5 h-5 rounded-full bg-cinema-elevated shrink-0" />
           <div className="flex-1 space-y-1.5">
             <div className="h-3.5 w-40 bg-cinema-elevated rounded" />

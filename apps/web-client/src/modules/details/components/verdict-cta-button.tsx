@@ -7,7 +7,6 @@
 
 import type { components } from '@ratingo/api-contract';
 import { Bookmark, Check, ArrowRight, Info, Bell, BellOff } from 'lucide-react';
-import { SUBSCRIPTION_TRIGGER } from '@/core/query';
 import {
   type PrimaryCta,
   PRIMARY_CTA,

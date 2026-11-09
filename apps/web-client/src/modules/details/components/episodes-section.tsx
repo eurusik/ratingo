@@ -63,17 +63,18 @@ export function EpisodesSection({
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasAppliedContinue, setHasAppliedContinue] = useState(false);
+  const [now] = useState(() => Date.now());
 
-  useEffect(() => {
-    if (continueSeasonNumber && !hasAppliedContinue && validSeasons.length > 0) {
-      const targetSeason = validSeasons.find((s) => s.number === continueSeasonNumber);
-      if (targetSeason) {
-        setSelectedSeason(targetSeason);
-        setIsExpanded(true);
-        setHasAppliedContinue(true);
-      }
-    }
-  }, [continueSeasonNumber, hasAppliedContinue, validSeasons]);
+  const continueSeason =
+    continueSeasonNumber && !hasAppliedContinue
+      ? validSeasons.find((s) => s.number === continueSeasonNumber)
+      : undefined;
+
+  if (continueSeason) {
+    setSelectedSeason(continueSeason);
+    setIsExpanded(true);
+    setHasAppliedContinue(true);
+  }
 
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -96,7 +97,7 @@ export function EpisodesSection({
     return () => window.removeEventListener('expandEpisodes', handleExpandEpisodes);
   }, [validSeasons]);
 
-  const episodes = selectedSeason?.episodes || [];
+  const episodes = useMemo(() => selectedSeason?.episodes || [], [selectedSeason]);
 
   const progress = useEpisodeProgress(
     showId,
@@ -141,7 +142,6 @@ export function EpisodesSection({
   const lastAiredIndex = useMemo(() => {
     if (episodes.length === 0) return -1;
 
-    const now = Date.now();
     let lastIndex = -1;
     let hasUpcoming = false;
 
@@ -158,7 +158,7 @@ export function EpisodesSection({
     }
 
     return hasUpcoming ? lastIndex : -1;
-  }, [episodes]);
+  }, [episodes, now]);
 
   const EPISODE_CARD_HEIGHT = 76;
 

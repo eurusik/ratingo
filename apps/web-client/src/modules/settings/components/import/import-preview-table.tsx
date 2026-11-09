@@ -5,6 +5,7 @@ import { Star, Bookmark, AlertCircle, ChevronDown } from 'lucide-react';
 import { Badge } from '@/shared/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible';
+import { withOccurrenceKeys } from '@/shared/utils';
 import {
   Table,
   TableBody,
@@ -52,6 +53,10 @@ interface ImportPreviewTableProps {
   };
 }
 
+function parsedItemKey(item: ParsedItem): string {
+  return `${item.state}-${item.imdbId ?? ''}-${item.tmdbId ?? ''}`;
+}
+
 interface PreviewRowsProps {
   items: ParsedItem[];
   maxPreview: number;
@@ -92,8 +97,8 @@ function PreviewRows({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {preview.map((item, idx) => (
-            <TableRow key={`${item.imdbId ?? ''}${item.tmdbId ?? ''}-${idx}`} className="border-cinema-borderSoft hover:bg-cinema-elevated/30">
+          {withOccurrenceKeys(preview, parsedItemKey).map(({ item, key }) => (
+            <TableRow key={key} className="border-cinema-borderSoft hover:bg-cinema-elevated/30">
               <TableCell className="text-cinema-text-primary font-medium max-w-[180px] truncate">
                 {item.title ?? '—'}
               </TableCell>

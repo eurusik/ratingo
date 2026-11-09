@@ -11,6 +11,8 @@ export {
 } from './format';
 export { resolveMediaImageUrl, thumbnailUrl, IMAGE_SIZES, MEDIA_IMAGE_BASE } from './image';
 export { pluralize } from './pluralize';
+export { withOccurrenceKeys, type KeyedItem } from './occurrence-keys';
+export { createPlaceholderKeys } from './placeholder-keys';
 export {
   SEO_BASE_URL,
   createMediaMetadata,

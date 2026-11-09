@@ -6,6 +6,9 @@
  */
 
 import { Skeleton } from '@/shared/ui/skeleton';
+import { createPlaceholderKeys } from '@/shared/utils';
+
+const DAY_GROUP_SKELETON_KEYS = createPlaceholderKeys('day-group-skeleton', 5);
 
 /**
  * Skeleton placeholder for a single episode card row.
@@ -50,8 +53,8 @@ function DayGroupSkeleton() {
 export function CalendarSkeleton() {
   return (
     <div className="space-y-6">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <DayGroupSkeleton key={i} />
+      {DAY_GROUP_SKELETON_KEYS.map((key) => (
+        <DayGroupSkeleton key={key} />
       ))}
     </div>
   );

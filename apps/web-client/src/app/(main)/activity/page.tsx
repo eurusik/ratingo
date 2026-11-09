@@ -104,8 +104,8 @@ function ActivityPageContent() {
         <h1 className="text-2xl font-bold text-cinema-text-primary mb-4 md:mb-8">{dict.activity.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <div className="overflow-x-auto scrollbar-none mb-4 md:mb-6" onClick={handleTabClick}>
-            <TabsList className="bg-cinema-card border border-cinema-borderSoft h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-max">
+          <div className="overflow-x-auto scrollbar-none mb-4 md:mb-6">
+            <TabsList className="bg-cinema-card border border-cinema-borderSoft h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-max" onClick={handleTabClick}>
               <TabsTrigger value={TAB_VALUES.WATCHING} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
                 {dict.activity.tabs.watching}
                 {watchingTotal > 0 && <Badge as="span" variant="count">{watchingTotal}</Badge>}

@@ -1303,7 +1303,8 @@
           "providerPlaceholder": "Додати провайдера (напр., netflix)",
           "originCountries": "Країни походження (будь-яка з)",
           "originCountriesHint": "Коди країн ISO 3166-1 alpha-2, через кому",
-          "originCountriesPlaceholder": "напр., UA, PL, CZ"
+          "originCountriesPlaceholder": "напр., UA, PL, CZ",
+          "removeRule": "Видалити правило"
         },
         "globalRequirements": {
           "title": "Глобальний поріг якості",

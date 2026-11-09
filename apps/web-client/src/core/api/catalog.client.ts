@@ -8,7 +8,7 @@
  * const shows = await catalogApi.getTrendingShows({ limit: 20 });
  */
 
-import type { GetData, GetJson, GetArrayItem, GetQuery, components } from '@ratingo/api-contract';
+import type { GetData, GetArrayItem, GetQuery, components } from '@ratingo/api-contract';
 import { apiGet, apiPost } from './client';
 
 /**

@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
@@ -60,7 +60,6 @@ export function PostForm({ initialValues, onSubmit, isLoading, className }: Post
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     control,
     formState: { errors },
@@ -81,8 +80,8 @@ export function PostForm({ initialValues, onSubmit, isLoading, className }: Post
     },
   });
 
-  const body = watch('body');
-  const featuredImageUrl = watch('featuredImageUrl');
+  const body = useWatch({ control, name: 'body' });
+  const featuredImageUrl = useWatch({ control, name: 'featuredImageUrl' });
 
   const handleBodyChange = useCallback(
     (value: string) => {
@@ -100,12 +99,12 @@ export function PostForm({ initialValues, onSubmit, isLoading, className }: Post
 
   const handleSaveAsDraft = useCallback(() => {
     setValue('isDraft', true);
-    handleSubmit(onSubmit)();
+    void handleSubmit(onSubmit)();
   }, [setValue, handleSubmit, onSubmit]);
 
   const handlePublish = useCallback(() => {
     setValue('isDraft', false);
-    handleSubmit(onSubmit)();
+    void handleSubmit(onSubmit)();
   }, [setValue, handleSubmit, onSubmit]);
 
   return (

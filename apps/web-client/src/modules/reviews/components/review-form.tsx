@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useEffect, useRef } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Send, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
@@ -44,9 +44,8 @@ export function ReviewForm({
     control,
     register,
     handleSubmit,
-    watch,
     setValue,
-    formState: { errors, isValid },
+    formState: { isValid },
   } = useForm<ReviewFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -65,7 +64,7 @@ export function ReviewForm({
     }
   }, [initialValues?.rating, setValue]);
 
-  const content = watch('content');
+  const content = useWatch({ control, name: 'content' });
   const charactersRemaining = MAX_CONTENT_LENGTH - content.length;
   const hasContent = content.trim().length > 0;
   const textareaRef = useRef<HTMLTextAreaElement>(null);

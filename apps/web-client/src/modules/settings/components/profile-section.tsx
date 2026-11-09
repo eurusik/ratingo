@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
@@ -47,8 +47,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isDirty },
-    watch,
-    setValue,
+    control,
   } = useForm<ProfileFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -61,7 +60,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
     },
   });
 
-  const currentUsername = watch('username');
+  const currentUsername = useWatch({ control, name: 'username' });
   const usernameChanged = currentUsername !== user.username;
 
   // Expose isDirty for parent component (unsaved changes warning)
@@ -117,7 +116,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
     setPendingData(null);
   };
 
-  const handleAvatarUploadSuccess = (newUrl: string) => {
+  const handleAvatarUploadSuccess = () => {
     // Avatar is updated via optimistic update in the hook
     // Just show success feedback
     onSuccess();

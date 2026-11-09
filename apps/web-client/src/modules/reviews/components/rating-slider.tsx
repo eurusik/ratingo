@@ -46,19 +46,14 @@ export function RatingSlider({ value, onChange, disabled, className }: RatingSli
 
   const currentLabel = useMemo(() => getRatingLabel(value, labels), [value, labels]);
 
-  const [isLabelAnimating, setIsLabelAnimating] = useState(false);
   const [displayedLabel, setDisplayedLabel] = useState(currentLabel);
+  const isLabelAnimating = currentLabel !== displayedLabel;
 
   useEffect(() => {
-    if (currentLabel !== displayedLabel) {
-      setIsLabelAnimating(true);
-      const timeout = setTimeout(() => {
-        setDisplayedLabel(currentLabel);
-        setIsLabelAnimating(false);
-      }, 150);
-      return () => clearTimeout(timeout);
-    }
-  }, [currentLabel, displayedLabel]);
+    if (!isLabelAnimating) return;
+    const timeout = setTimeout(() => setDisplayedLabel(currentLabel), 150);
+    return () => clearTimeout(timeout);
+  }, [currentLabel, isLabelAnimating]);
 
   return (
     <div className={className}>

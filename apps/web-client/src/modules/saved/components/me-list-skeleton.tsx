@@ -1,4 +1,7 @@
 import { Skeleton } from '@/shared/ui';
+import { createPlaceholderKeys } from '@/shared/utils';
+
+const ME_LIST_SKELETON_KEYS = createPlaceholderKeys('me-list-skeleton', 6);
 
 /**
  * Loading skeleton for me-list pages (history, watchlist, paused).
@@ -7,8 +10,8 @@ import { Skeleton } from '@/shared/ui';
 export function MeListSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex gap-3 p-3 rounded-lg bg-cinema-card/50">
+      {ME_LIST_SKELETON_KEYS.map((key) => (
+        <div key={key} className="flex gap-3 p-3 rounded-lg bg-cinema-card/50">
           <Skeleton className="w-16 h-24 rounded-md shrink-0" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-5 w-3/4" />

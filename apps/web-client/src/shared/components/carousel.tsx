@@ -5,10 +5,11 @@
 
 'use client';
 
-import { useState, useCallback, useEffect, type ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
+import { useCarouselScrollState } from '@/shared/hooks/use-carousel-scroll-state';
 
 export interface CarouselProps {
   children: ReactNode;
@@ -33,14 +34,7 @@ export function Carousel({
     align: 'start',
     dragFree: true,
   });
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-  }, [emblaApi]);
+  const { canScrollPrev, canScrollNext } = useCarouselScrollState(emblaApi);
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
@@ -49,13 +43,6 @@ export function Carousel({
   const scrollNext = useCallback(() => {
     if (emblaApi) emblaApi.scrollNext();
   }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onSelect);
-  }, [emblaApi, onSelect]);
 
   const gapClasses = {
     sm: 'gap-2',

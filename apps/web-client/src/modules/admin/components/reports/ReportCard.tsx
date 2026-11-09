@@ -5,7 +5,7 @@ import { uk } from 'date-fns/locale';
 import { Flag, User, MessageSquare, Trash2, Check, X } from 'lucide-react';
 
 import type { ReportWithReviewDto } from '@/core/api/admin-reports.client';
-import { ReportStatus, ReportReason } from '@/core/api/report.constants';
+import { ReportStatus } from '@/core/api/report.constants';
 import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import { Button, Badge } from '@/shared/ui';

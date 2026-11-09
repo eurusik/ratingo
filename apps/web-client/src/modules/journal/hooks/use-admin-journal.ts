@@ -139,9 +139,9 @@ export function useCreatePost(): UseMutationResult<AdminJournalPost, Error, Crea
     },
     onSuccess: async (post) => {
       // Invalidate admin list
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
       // Invalidate public list (new post might be published)
-      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
       // Revalidate ISR cache
       await revalidateJournal(post.slug);
     },
@@ -167,8 +167,8 @@ export function useUpdatePost(): UseMutationResult<
       // Update cache for this post
       queryClient.setQueryData(queryKeys.admin.journal.detail(post.id), post);
       // Invalidate lists
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
       // Revalidate ISR cache
       await revalidateJournal(post.slug);
     },
@@ -187,8 +187,8 @@ export function useDeletePost(): UseMutationResult<void, Error, { id: string; sl
     },
     onSuccess: async (_data, variables) => {
       // Invalidate all lists
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
       // Revalidate ISR cache
       await revalidateJournal(variables.slug);
     },
@@ -210,8 +210,8 @@ export function usePublishPost(): UseMutationResult<AdminJournalPost, Error, str
       // Update cache for this post
       queryClient.setQueryData(queryKeys.admin.journal.detail(post.id), post);
       // Invalidate lists
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
       // Revalidate ISR cache
       await revalidateJournal(post.slug);
     },
@@ -233,8 +233,8 @@ export function useUnpublishPost(): UseMutationResult<AdminJournalPost, Error, s
       // Update cache for this post
       queryClient.setQueryData(queryKeys.admin.journal.detail(post.id), post);
       // Invalidate lists
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.journal.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.journal.all });
       // Revalidate ISR cache
       await revalidateJournal(post.slug);
     },

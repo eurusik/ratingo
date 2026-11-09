@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { use, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Route } from 'next';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -18,13 +18,14 @@ interface ImportPageProps {
 
 function useImportParams(params: ImportPageProps['params']) {
   const searchParams = useSearchParams();
+  const { tmdbId } = use(params);
 
   const typeParam = searchParams.get('type');
   const type =
     typeParam === MediaType.SHOW ? MediaType.SHOW : MediaType.MOVIE;
 
   return {
-    tmdbId: parseInt((params as any).tmdbId || '0', 10),
+    tmdbId: parseInt(tmdbId || '0', 10),
     type,
     title: searchParams.get('title') || '',
     poster: searchParams.get('poster') || '',
@@ -124,7 +125,6 @@ export default function ImportPage({ params }: ImportPageProps) {
       title={title}
       poster={poster}
       year={year}
-      type={type}
       statusMessage={dict.import?.importing || 'Додаємо...'}
       statusHint={dict.import?.importingHint || 'Збираємо інформацію з різних джерел'}
     />

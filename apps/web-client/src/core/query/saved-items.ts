@@ -22,10 +22,10 @@ function setSaveStatus(queryClient: QueryClient, mediaItemId: string, status: Me
 }
 
 function invalidateSavedItemLists(queryClient: QueryClient) {
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: [...queryKeys.userActions.savedItems.all, 'list'],
   });
-  queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
 }
 
 export function useSaveStatus(
@@ -89,7 +89,7 @@ export function useSaveItem() {
     },
 
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: queryKeys.userActions.savedItems.status(variables.mediaItemId),
       });
     },
@@ -145,7 +145,7 @@ export function useUnsaveItem() {
     },
 
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: queryKeys.userActions.savedItems.status(variables.mediaItemId),
       });
     },

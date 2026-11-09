@@ -23,9 +23,6 @@ export type VerdictType = ApiVerdictType | 'season_comparison' | 'user_context';
 /** Verdict hint key for CTA. */
 export type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
 
-/** Confidence level for verdict accuracy. */
-export type ConfidenceLevel = 'high' | 'medium' | 'low';
-
 /**
  * Checks if context string is a numeric rating (e.g., "8.4", "7", "8,4").
  * Used to determine if we should show "Aggregate rating" label.
@@ -41,8 +38,6 @@ export interface DataVerdictServerProps {
   message: string;
   /** Verdict message key (for reasonKey when saving). */
   messageKey?: string | null;
-  /** Confidence level (for future use). */
-  confidence?: ConfidenceLevel;
   /** Additional context text. */
   context?: string;
   /** Whether to show CTA button. */
@@ -140,7 +135,6 @@ const verdictConfig: Record<
 export function DataVerdictServer({
   type,
   message,
-  confidence,
   context,
   showCta = false,
   ctaProps,
@@ -148,9 +142,6 @@ export function DataVerdictServer({
 }: DataVerdictServerProps) {
   const config = verdictConfig[type];
   const Icon = config.icon;
-
-  // CTA-only mode: no message, just the CTA button in container
-  const isCtaOnly = !message && showCta && !!ctaProps;
 
   return (
     <section

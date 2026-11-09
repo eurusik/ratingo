@@ -120,14 +120,14 @@ export function usePauseMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.pauseMedia(mediaItemId),
     onSuccess: (_data, mediaItemId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
 }
@@ -138,14 +138,14 @@ export function useResumeMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.resumeMedia(mediaItemId),
     onSuccess: (_data, mediaItemId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
 }
@@ -157,16 +157,16 @@ export function useDropMedia() {
     mutationFn: ({ mediaItemId, mediaType }: { mediaItemId: string; mediaType: MediaType }) =>
       meListsApi.dropMedia(mediaItemId, mediaType),
     onSuccess: (_data, { mediaItemId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
 }
@@ -177,16 +177,16 @@ export function useRestoreMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.restoreMedia(mediaItemId),
     onSuccess: (_data, mediaItemId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
 }
@@ -250,18 +250,18 @@ export function useSetRating(mediaItemId: string) {
 
     onSettled: () => {
       // Backend syncs standalone rating → review rating
-      queryClient.invalidateQueries({ queryKey: queryKeys.reviews.myReview(mediaItemId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.reviews.mediaBase(mediaItemId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.myReview(mediaItemId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.mediaBase(mediaItemId) });
       // Refresh batch ratings so badges update immediately
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.batchRatingsAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.batchRatingsAll });
       // Rating changes may affect favorite updates (e.g. new show becomes favorite)
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.favoriteUpdates });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.favoriteUpdates });
       // First-time ratings auto-create a user_media_state row (completed for movies,
       // watching for shows). Refresh all affected list views so new entries appear immediately.
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
     },
   });
 }

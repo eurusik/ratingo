@@ -8,12 +8,13 @@ import {
   getPaginationRowModel,
   flexRender,
   type ColumnDef,
+  type Header,
   type SortingState,
   type PaginationState,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 
-import { cn } from '@/shared/utils';
+import { cn, createPlaceholderKeys } from '@/shared/utils';
 import { Button } from '@/shared/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
 import {
@@ -25,7 +26,44 @@ import {
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useTranslation } from '@/shared/i18n';
 
-import { DataTableProps, DropdownMenuItemProps, DataTableColumnDef } from '../../types';
+import { DataTableProps } from '../../types';
+
+const SKELETON_ROW_KEYS = createPlaceholderKeys('skeleton-row', 5);
+
+function toAriaSort<T>(header: Header<T, unknown>): React.AriaAttributes['aria-sort'] {
+  if (!header.column.getCanSort()) return undefined;
+  const sortDirection = header.column.getIsSorted();
+  if (sortDirection === 'asc') return 'ascending';
+  if (sortDirection === 'desc') return 'descending';
+  return 'none';
+}
+
+function sortIconClassName(isActive: boolean, positionClassName?: string) {
+  return cn('h-3 w-3', positionClassName, isActive ? 'text-foreground' : 'text-muted-foreground');
+}
+
+function HeaderContent<T>({ header }: { header: Header<T, unknown> }) {
+  const label = flexRender(header.column.columnDef.header, header.getContext());
+
+  if (!header.column.getCanSort()) {
+    return <div className="flex items-center space-x-2">{label}</div>;
+  }
+
+  const sortDirection = header.column.getIsSorted();
+  return (
+    <button
+      type="button"
+      className="flex items-center space-x-2 cursor-pointer select-none"
+      onClick={header.column.getToggleSortingHandler()}
+    >
+      {label}
+      <span className="flex flex-col">
+        <ChevronUp className={sortIconClassName(sortDirection === 'asc')} />
+        <ChevronDown className={sortIconClassName(sortDirection === 'desc', '-mt-1')} />
+      </span>
+    </button>
+  );
+}
 
 function DataTable<T>({
   data,
@@ -82,9 +120,9 @@ function DataTable<T>({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {actions.map((action, index) => (
+                {actions.map((action) => (
                   <DropdownMenuItem
-                    key={index}
+                    key={action.label}
                     onClick={action.onClick}
                     disabled={action.disabled}
                     className={cn(
@@ -172,8 +210,8 @@ function DataTable<T>({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={index}>
+              {SKELETON_ROW_KEYS.map((rowKey) => (
+                <TableRow key={rowKey}>
                   {tanstackColumns.map((column) => (
                     <TableCell key={column.id}>
                       <Skeleton className="h-4 w-full" />
@@ -224,38 +262,12 @@ function DataTable<T>({
                     sortable?: boolean;
                   };
                   return (
-                    <TableHead key={header.id} style={{ width: columnMeta?.width }}>
-                      {header.isPlaceholder ? null : (
-                        <div
-                          className={cn(
-                            'flex items-center space-x-2',
-                            header.column.getCanSort() && 'cursor-pointer select-none',
-                          )}
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {header.column.getCanSort() && (
-                            <div className="flex flex-col">
-                              <ChevronUp
-                                className={cn(
-                                  'h-3 w-3',
-                                  header.column.getIsSorted() === 'asc'
-                                    ? 'text-foreground'
-                                    : 'text-muted-foreground',
-                                )}
-                              />
-                              <ChevronDown
-                                className={cn(
-                                  'h-3 w-3 -mt-1',
-                                  header.column.getIsSorted() === 'desc'
-                                    ? 'text-foreground'
-                                    : 'text-muted-foreground',
-                                )}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
+                    <TableHead
+                      key={header.id}
+                      style={{ width: columnMeta?.width }}
+                      aria-sort={toAriaSort(header)}
+                    >
+                      {header.isPlaceholder ? null : <HeaderContent header={header} />}
                     </TableHead>
                   );
                 })}

@@ -1303,7 +1303,8 @@
           "providerPlaceholder": "Add provider (e.g., netflix)",
           "originCountries": "Origin Countries (any of)",
           "originCountriesHint": "ISO 3166-1 alpha-2 codes, comma-separated",
-          "originCountriesPlaceholder": "e.g., UA, PL, CZ"
+          "originCountriesPlaceholder": "e.g., UA, PL, CZ",
+          "removeRule": "Remove rule"
         },
         "globalRequirements": {
           "title": "Global Quality Gate",

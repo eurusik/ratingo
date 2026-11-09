@@ -10,6 +10,9 @@ import { formatRelativeDate } from '@/shared/utils/format';
 import type { FavoriteUpdateItem } from '@/core/api/me-lists.client';
 import { UserRatingBadge } from '@/shared/components/user-rating-badge';
 import { useFavoriteUpdates } from '../hooks/use-me-lists';
+import { createPlaceholderKeys } from '@/shared/utils';
+
+const FAVORITE_UPDATE_SKELETON_KEYS = createPlaceholderKeys('favorite-update-skeleton', 4);
 
 interface FavoriteUpdateCardProps {
   item: FavoriteUpdateItem;
@@ -94,8 +97,8 @@ export function FavoriteUpdates() {
       <div className="space-y-3 mb-8">
         <Skeleton className="h-6 w-64" />
         <div className="flex gap-4 overflow-hidden">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="w-[200px] h-[340px] rounded-lg shrink-0" />
+          {FAVORITE_UPDATE_SKELETON_KEYS.map((key) => (
+            <Skeleton key={key} className="w-[200px] h-[340px] rounded-lg shrink-0" />
           ))}
         </div>
       </div>
@@ -121,7 +124,6 @@ export function FavoriteUpdates() {
         className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-white/10"
         role="region"
         aria-label={dict.activity.favoriteUpdates.title}
-        tabIndex={0}
       >
         {items.map((item, index) => (
           <FavoriteUpdateCard key={item.mediaItemId} item={item} index={index} />

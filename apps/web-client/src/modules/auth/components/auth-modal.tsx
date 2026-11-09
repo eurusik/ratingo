@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { LoginForm } from './login-form';
@@ -25,13 +25,16 @@ interface AuthModalProps {
 export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
   const { dict } = useTranslation();
   const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [syncedIsOpen, setSyncedIsOpen] = useState(isOpen);
+  const [syncedInitialMode, setSyncedInitialMode] = useState(initialMode);
 
-  // Reset mode when modal opens
-  useEffect(() => {
+  if (syncedIsOpen !== isOpen || syncedInitialMode !== initialMode) {
+    setSyncedIsOpen(isOpen);
+    setSyncedInitialMode(initialMode);
     if (isOpen) {
       setMode(initialMode);
     }
-  }, [isOpen, initialMode]);
+  }
 
   const handleSuccess = useCallback(() => {
     onClose();

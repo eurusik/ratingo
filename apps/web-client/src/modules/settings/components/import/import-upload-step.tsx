@@ -74,7 +74,7 @@ export function ImportUploadStep({
         <CollapsibleContent>
           <ol className="mt-2 rounded-md border border-cinema-borderSoft bg-cinema-card p-4 space-y-2">
             {labels.howToSteps.map((step: string, idx: number) => (
-              <li key={idx} className="flex gap-2.5 text-sm text-cinema-text-muted">
+              <li key={step} className="flex gap-2.5 text-sm text-cinema-text-muted">
                 <span className="shrink-0 font-medium text-cinema-text-primary">{idx + 1}.</span>
                 <span>{step}</span>
               </li>

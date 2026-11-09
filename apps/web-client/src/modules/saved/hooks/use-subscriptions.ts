@@ -30,7 +30,7 @@ export function useSubscribe() {
       reasonKey?: string;
     }) => userActionsApi.subscribe(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
 }
@@ -42,7 +42,7 @@ export function useUnsubscribe() {
     mutationFn: (params: { mediaItemId: string; trigger: SubscriptionTrigger; context?: string }) =>
       userActionsApi.unsubscribe(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
 }

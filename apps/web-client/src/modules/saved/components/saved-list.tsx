@@ -11,6 +11,9 @@ import { EmptyState } from './empty-state';
 import { MediaTypeFilter } from './media-type-filter';
 import { SavedFilterIndicator } from './saved-filter-indicator';
 import { thumbnailUrl } from '@/shared/utils/image';
+import { createPlaceholderKeys } from '@/shared/utils';
+
+const CARD_SKELETON_KEYS = createPlaceholderKeys('saved-item-skeleton', 6);
 
 interface SavedListProps {
   list: 'for_later' | 'considering';
@@ -37,7 +40,7 @@ export function SavedList({ list, totalAcrossTypes = 0 }: SavedListProps) {
   }, []);
 
   const handleLoadMore = useCallback(() => {
-    fetchNextPage();
+    void fetchNextPage();
   }, [fetchNextPage]);
 
   const handleRemove = useCallback((mediaItemId: string) => {
@@ -52,8 +55,8 @@ export function SavedList({ list, totalAcrossTypes = 0 }: SavedListProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex gap-3 p-3 rounded-lg bg-cinema-card/50">
+        {CARD_SKELETON_KEYS.map((key) => (
+          <div key={key} className="flex gap-3 p-3 rounded-lg bg-cinema-card/50">
             <Skeleton className="w-16 h-24 rounded-md shrink-0" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-5 w-3/4" />

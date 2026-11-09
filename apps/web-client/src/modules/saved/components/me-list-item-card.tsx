@@ -95,7 +95,6 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
   const posterUrl = thumbnailUrl(media.poster);
 
   const stateInfo = stateConfig[item.state];
-  const StateIcon = stateInfo.icon;
   const stateLabel = dict.saved?.states?.[item.state as keyof typeof dict.saved.states] ?? item.state;
   const typeLabel = media.type === 'movie' ? dict.mediaType.movie : dict.mediaType.show;
 

@@ -31,7 +31,7 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
 
   if (!item) return null;
 
-  const { slug, type, title, poster, stats, externalRatings, showProgress, badgeKey, ctaType } =
+  const { slug, type, title, poster, stats, externalRatings, showProgress, ctaType } =
     item;
 
   // Use backdrop if available, otherwise poster

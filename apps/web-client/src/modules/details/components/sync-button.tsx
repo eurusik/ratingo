@@ -9,6 +9,7 @@ import { useAuth } from '@/core/auth/auth-context';
 import { useAuthModalStore } from '@/core/auth/auth-modal.store';
 import { useTranslation, useLocale } from '@/shared/i18n';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
+import { useStoredValue } from '@/shared/hooks/use-stored-value';
 import { cn } from '@/shared/utils';
 import { formatRelativeDate } from '@/shared/utils/format';
 
@@ -18,18 +19,16 @@ const SEVEN_DAYS_MS = 7 * 24 * 3600 * 1000;
 
 const lsKey = (slug: string) => `ratingo:sync-queued:${slug}`;
 
-function readPersistedQueuedAt(slug: string): string | null {
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
+
+function forgetPersistedQueuedAt(slug: string): void {
   try {
-    const stored = localStorage.getItem(lsKey(slug));
-    if (!stored) return null;
-    if (Date.now() - new Date(stored).getTime() >= SEVEN_DAYS_MS) {
-      localStorage.removeItem(lsKey(slug));
-      return null;
-    }
-    return stored;
-  } catch {
-    return null;
-  }
+    localStorage.removeItem(lsKey(slug));
+  } catch {}
+}
+
+function isWithinCooldown(syncedAt: string, referenceTime: number): boolean {
+  return referenceTime - new Date(syncedAt).getTime() < SEVEN_DAYS_MS;
 }
 
 interface SyncButtonProps {
@@ -48,23 +47,26 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
   // Persisted in localStorage so cooldown survives full page reloads.
   // lastSyncedAt from the server is set only after the job completes (async),
   // so we track the queue time locally to lock the button immediately.
-  // useEffect (not lazy initializer) because useState initializer runs on the server during SSR
-  // and React does NOT re-run it during hydration — localStorage would never be read on reload.
+  const storedQueuedAt = useStoredValue(lsKey(slug));
   const [justQueuedAt, setJustQueuedAt] = useState<string | null>(null);
-  useEffect(() => {
-    const stored = readPersistedQueuedAt(slug);
-    if (stored !== null) setJustQueuedAt(stored);
-  }, [slug]);
   const [cooldownExpiresAt, setCooldownExpiresAt] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
-  const effectiveLastSyncedAt = justQueuedAt ?? lastSyncedAt;
+  const isStoredQueuedAtExpired =
+    storedQueuedAt != null && !isWithinCooldown(storedQueuedAt, now);
+  const persistedQueuedAt = isStoredQueuedAtExpired ? null : storedQueuedAt;
+
+  useEffect(() => {
+    if (isStoredQueuedAtExpired) forgetPersistedQueuedAt(slug);
+  }, [isStoredQueuedAtExpired, slug]);
+
+  const effectiveLastSyncedAt = justQueuedAt ?? persistedQueuedAt ?? lastSyncedAt;
 
   const isInitiallyCooling =
-    effectiveLastSyncedAt != null &&
-    Date.now() - new Date(effectiveLastSyncedAt).getTime() < SEVEN_DAYS_MS;
+    effectiveLastSyncedAt != null && isWithinCooldown(effectiveLastSyncedAt, now);
 
   const hasActiveServerCooldown =
-    cooldownExpiresAt != null && new Date(cooldownExpiresAt).getTime() > Date.now();
+    cooldownExpiresAt != null && new Date(cooldownExpiresAt).getTime() > now;
   const isOnCooldown = hasActiveServerCooldown || isInitiallyCooling;
 
   // Disable at HTML level only for authenticated users — guests must always click to open login modal
@@ -78,10 +80,11 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
     if (isPending || isOnCooldown) return;
     mutate(undefined, {
       onSuccess: (result) => {
+        setNow(Date.now());
         if (result.queued) {
-          const now = new Date().toISOString();
-          setJustQueuedAt(now);
-          try { localStorage.setItem(lsKey(slug), now); } catch { /* ignore */ }
+          const queuedAt = new Date().toISOString();
+          setJustQueuedAt(queuedAt);
+          try { localStorage.setItem(lsKey(slug), queuedAt); } catch { /* ignore */ }
         } else if (result.cooldownExpiresAt) {
           setCooldownExpiresAt(result.cooldownExpiresAt);
         }
@@ -97,6 +100,17 @@ export function SyncButton({ slug, lastSyncedAt, totalWatchers }: SyncButtonProp
     (isInitiallyCooling && effectiveLastSyncedAt
       ? new Date(new Date(effectiveLastSyncedAt).getTime() + SEVEN_DAYS_MS).toISOString()
       : null);
+
+  const cooldownEndsAt = isOnCooldown && cooldownDate ? new Date(cooldownDate).getTime() : null;
+
+  useEffect(() => {
+    if (cooldownEndsAt == null) return;
+    const timer = setTimeout(
+      () => setNow(Date.now()),
+      Math.min(Math.max(cooldownEndsAt - now, 0), MAX_TIMER_DELAY_MS),
+    );
+    return () => clearTimeout(timer);
+  }, [cooldownEndsAt, now]);
 
   const isUntracked = totalWatchers != null && totalWatchers === 0;
 

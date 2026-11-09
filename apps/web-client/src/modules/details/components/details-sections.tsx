@@ -116,7 +116,7 @@ export function CastCrewSection({ cast, crew }: CastCrewSectionProps) {
   return (
     <>
       <div className="space-y-8">
-        {hasCast && <CastCarousel cast={cast} crew={crew || []} />}
+        {hasCast && <CastCarousel cast={cast} />}
         {hasCrew && <CrewCarousel crew={crew} />}
       </div>
       <Separator className="my-12 bg-cinema-elevated/50" />
