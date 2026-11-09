@@ -17,8 +17,8 @@ declare global {
       toBeInvalid(): R;
       toBeValid(): R;
       toHaveDisplayValue(value: string | RegExp | (string | RegExp)[]): R;
-      toHaveFormValues(expectedValues: Record<string, any>): R;
-      toHaveStyle(css: string | Record<string, any>): R;
+      toHaveFormValues(expectedValues: Record<string, unknown>): R;
+      toHaveStyle(css: string | Record<string, unknown>): R;
       toHaveAccessibleDescription(expectedAccessibleDescription?: string | RegExp): R;
       toHaveAccessibleName(expectedAccessibleName?: string | RegExp): R;
       toHaveErrorMessage(expectedErrorMessage?: string | RegExp): R;

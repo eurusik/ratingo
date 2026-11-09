@@ -88,28 +88,25 @@ export function ReviewReportDialog({
               className="space-y-2"
             >
               {Object.values(REPORT_REASONS).map((reasonValue) => (
-                <div
+                <Label
                   key={reasonValue}
+                  htmlFor={reasonValue}
                   className={cn(
                     'flex items-center space-x-3 px-3 py-2.5 rounded-lg border transition-colors cursor-pointer',
                     reason === reasonValue
                       ? 'border-red-500/50 bg-red-500/10'
                       : 'border-cinema-borderSoft hover:border-cinema-border',
                   )}
-                  onClick={() => setReason(reasonValue)}
                 >
                   <RadioGroupItem
                     value={reasonValue}
                     id={reasonValue}
                     className="border-cinema-border text-red-500"
                   />
-                  <Label
-                    htmlFor={reasonValue}
-                    className="text-sm text-cinema-text-secondary cursor-pointer flex-1"
-                  >
+                  <span className="text-sm text-cinema-text-secondary flex-1">
                     {dict.reviews.report.reasons[reasonValue]}
-                  </Label>
-                </div>
+                  </span>
+                </Label>
               ))}
             </RadioGroup>
           </div>

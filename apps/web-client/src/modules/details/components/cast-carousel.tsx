@@ -13,7 +13,6 @@ import type { CastMember, CrewMember } from '../types';
 
 export interface CastCarouselProps {
   cast: CastMember[];
-  crew?: CrewMember[];
 }
 
 // Actor Avatar Component
@@ -74,7 +73,7 @@ function PersonAvatar({
   );
 }
 
-export function CastCarousel({ cast, crew }: CastCarouselProps) {
+export function CastCarousel({ cast }: CastCarouselProps) {
   const { t } = useTranslation();
 
   // Sort by order

@@ -93,7 +93,7 @@ export function ReplyItem({
               isSubmitting={isCreating}
               parentReplyId={replyingTo.parentId}
               replyToUsername={replyingTo.username}
-              autoFocus
+              focusOnMount
             />
           </div>
         </div>
@@ -252,7 +252,7 @@ function NestedReplyItem({
             isSubmitting={isCreating}
             parentReplyId={replyingTo.parentId}
             replyToUsername={replyingTo.username}
-            autoFocus
+            focusOnMount
           />
         </div>
       )}

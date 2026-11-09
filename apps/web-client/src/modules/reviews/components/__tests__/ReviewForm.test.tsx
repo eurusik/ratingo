@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { I18nProvider } from '@/shared/i18n/context';
 import { ReviewForm } from '../review-form';
-import { REVIEW_FORM_MODE, MAX_CONTENT_LENGTH } from '../../schemas';
+import { REVIEW_FORM_MODE } from '../../schemas';
 
 // Wrapper with I18nProvider for tests
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (

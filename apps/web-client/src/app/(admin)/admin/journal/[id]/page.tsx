@@ -5,7 +5,7 @@
  */
 
 import { useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -24,7 +24,6 @@ import {
 
 export default function EditJournalPostPage() {
   const params = useParams();
-  const router = useRouter();
   const { t } = useTranslation();
   const postId = params.id as string;
 

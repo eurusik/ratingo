@@ -84,7 +84,7 @@ export function ConnectedAccountsSection() {
     const token = tokenStorage.getAccessToken();
     if (!token) return;
     const params = new URLSearchParams({ token, returnTo: '/settings' });
-    window.location.href = getApiUrl(`auth/link/${provider}?${params.toString()}`);
+    window.location.assign(getApiUrl(`auth/link/${provider}?${params.toString()}`));
   };
 
   const handleUnlink = async (provider: string) => {

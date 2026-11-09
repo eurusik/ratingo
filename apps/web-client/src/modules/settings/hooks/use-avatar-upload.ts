@@ -86,7 +86,7 @@ export function useAvatarUpload() {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
   });
 }

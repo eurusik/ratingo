@@ -9,7 +9,6 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -58,15 +57,16 @@ function ConfirmActionDialog({
   const [isLoading, setIsLoading] = React.useState(false);
   const [typedText, setTypedText] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
+  const [wasOpen, setWasOpen] = React.useState(open);
 
-  // Reset state when dialog opens/closes
-  React.useEffect(() => {
+  if (wasOpen !== open) {
+    setWasOpen(open);
     if (!open) {
       setIsLoading(false);
       setTypedText('');
       setError(null);
     }
-  }, [open]);
+  }
 
   const handleConfirm = async () => {
     if (requireTyping && typedText !== confirmText) {

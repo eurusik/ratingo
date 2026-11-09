@@ -8,8 +8,11 @@
  * Ratingo is a discovery tool, not a player.
  */
 
-import { cn } from '@/shared/utils';
+import { cn, createPlaceholderKeys } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
+
+const MAX_SEGMENT_DOTS = 12;
+const SEGMENT_DOT_KEYS = createPlaceholderKeys('segment-dot', MAX_SEGMENT_DOTS);
 
 interface SeasonProgressProps {
   /** Season number. */
@@ -44,14 +47,14 @@ export function SeasonProgress({
 
   if (variant === 'segments') {
     // Segment dots: ●●●●○○○○
-    const maxDots = Math.min(total, 12); // Cap at 12 for UI
+    const maxDots = Math.min(total, MAX_SEGMENT_DOTS);
     const filledDots = Math.round((current / total) * maxDots);
 
     return (
       <div className={cn('flex items-center gap-0.5', className)}>
-        {Array.from({ length: maxDots }).map((_, i) => (
+        {SEGMENT_DOT_KEYS.slice(0, maxDots).map((key, i) => (
           <div
-            key={i}
+            key={key}
             className={cn(
               'w-1.5 h-1.5 rounded-full',
               i < filledDots ? 'bg-blue-400' : 'bg-cinema-border',

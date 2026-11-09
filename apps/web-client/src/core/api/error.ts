@@ -103,7 +103,7 @@ export async function getApiErrorCode(error: unknown): Promise<string | null> {
 
   if (error instanceof HTTPError) {
     try {
-      const body = await error.response.clone().json();
+      const body = (await error.response.clone().json()) as { error?: Partial<ApiErrorDetail> } | null;
       return body?.error?.code ?? null;
     } catch {
       return null;

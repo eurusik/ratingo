@@ -13,7 +13,7 @@ export function useAutoUnsaveOnRating(mediaItemId: string) {
   const queryClient = useQueryClient();
   const { dict } = useTranslation();
   const { mutateAsync: unsaveItem } = useUnsaveItem();
-  const { mutateAsync: saveItem } = useSaveItem();
+  const { mutate: saveItem } = useSaveItem();
 
   /**
    * @param preRatingState - user media state captured BEFORE the rating mutation,

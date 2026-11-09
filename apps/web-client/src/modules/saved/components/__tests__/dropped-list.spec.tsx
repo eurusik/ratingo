@@ -2,7 +2,7 @@
  * Tests for DroppedList component: loading, empty state, and items rendering.
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 jest.mock('ky', () => ({ __esModule: true, HTTPError: class HTTPError extends Error {} }));
 
@@ -86,7 +86,7 @@ jest.mock('@/shared/i18n', () => ({
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ fill, ...props }: Record<string, unknown>) => <img {...props} />,
+  default: ({ fill: _fill, ...props }: Record<string, unknown>) => <img {...props} />,
 }));
 
 const mockPush = jest.fn();

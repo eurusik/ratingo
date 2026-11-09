@@ -137,7 +137,14 @@ export function ComboboxTagInput({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent
+          className="w-[300px] p-0"
+          align="start"
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            inputRef.current?.focus();
+          }}
+        >
           <div className="p-2 border-b">
             <Input
               ref={inputRef}
@@ -146,7 +153,6 @@ export function ComboboxTagInput({
               onKeyDown={handleKeyDown}
               placeholder={searchPlaceholder}
               className="h-8 text-sm"
-              autoFocus
             />
           </div>
 

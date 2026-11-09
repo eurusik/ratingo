@@ -74,7 +74,7 @@ jest.mock('@/shared/i18n', () => ({
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ fill, ...props }: Record<string, unknown>) => <img {...props} />,
+  default: ({ fill: _fill, ...props }: Record<string, unknown>) => <img {...props} />,
 }));
 
 const mockPush = jest.fn();

@@ -47,7 +47,7 @@ export function ImageUploader({ value, onChange, className }: ImageUploaderProps
 
     const file = e.dataTransfer.files[0];
     if (file?.type.startsWith('image/')) {
-      handleFile(file);
+      void handleFile(file);
     }
   };
 
@@ -64,7 +64,7 @@ export function ImageUploader({ value, onChange, className }: ImageUploaderProps
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleFile(file);
+      void handleFile(file);
     }
   };
 

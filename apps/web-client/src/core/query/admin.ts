@@ -213,9 +213,9 @@ export function usePreparePolicy() {
     }) => adminApi.preparePolicy(params.policyId, params.options),
     onSuccess: (_, variables) => {
       // R16.1: Invalidate runs.all, policies.all, policies.detail(policyId)
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.policies.all });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.policies.all });
+      void queryClient.invalidateQueries({
         queryKey: queryKeys.admin.policies.detail(variables.policyId),
       });
     },
@@ -241,10 +241,10 @@ export function usePromoteRun() {
     }) => adminApi.promoteRun(params.runId, params.options),
     onSuccess: (_, variables) => {
       // R16.2: Invalidate runs.all, runs.status(runId), policies.all, policies.detail(policyId)
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.status(variables.runId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.policies.all });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.status(variables.runId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.policies.all });
+      void queryClient.invalidateQueries({
         queryKey: queryKeys.admin.policies.detail(variables.policyId),
       });
     },
@@ -266,8 +266,8 @@ export function useCancelRun() {
     mutationFn: (runId: string) => adminApi.cancelRun(runId),
     onSuccess: (_, runId) => {
       // R16.3: Invalidate runs.all, runs.status(runId)
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.status(runId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.runs.status(runId) });
     },
   });
 }
@@ -287,7 +287,7 @@ export function useCreatePolicy() {
     mutationFn: (body: Parameters<typeof adminApi.createPolicy>[0]) => adminApi.createPolicy(body),
     onSuccess: () => {
       // R16.4: Invalidate policies.all
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.policies.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.policies.all });
     },
   });
 }

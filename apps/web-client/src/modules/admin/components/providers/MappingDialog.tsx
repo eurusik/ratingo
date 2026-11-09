@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,17 @@ export interface MappingFormData {
   variantId: string;
   distributionChannel: string;
   region: string;
+}
+
+function toMappingFormData(initialData?: Partial<MappingFormData>): MappingFormData {
+  return {
+    tmdbProviderId: initialData?.tmdbProviderId ?? 0,
+    tmdbProviderName: initialData?.tmdbProviderName ?? '',
+    providerId: initialData?.providerId ?? '',
+    variantId: initialData?.variantId ?? '',
+    distributionChannel: initialData?.distributionChannel ?? 'direct',
+    region: initialData?.region ?? '',
+  };
 }
 
 export interface MappingDialogProps {
@@ -77,40 +88,18 @@ export function MappingDialog({
   mode,
   labels,
 }: MappingDialogProps) {
-  const [formData, setFormData] = useState<MappingFormData>({
-    tmdbProviderId: 0,
-    tmdbProviderName: '',
-    providerId: '',
-    variantId: '',
-    distributionChannel: 'direct',
-    region: '',
-  });
+  const [formData, setFormData] = useState<MappingFormData>(() => toMappingFormData(initialData));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [wasOpen, setWasOpen] = useState(open);
 
   const { data: providers = [], isLoading: providersLoading } = useProviders();
 
-  // Reset form when dialog opens with initial data
-  useEffect(() => {
-    if (open && initialData) {
-      setFormData({
-        tmdbProviderId: initialData.tmdbProviderId ?? 0,
-        tmdbProviderName: initialData.tmdbProviderName ?? '',
-        providerId: initialData.providerId ?? '',
-        variantId: initialData.variantId ?? '',
-        distributionChannel: initialData.distributionChannel ?? 'direct',
-        region: initialData.region ?? '',
-      });
-    } else if (open) {
-      setFormData({
-        tmdbProviderId: 0,
-        tmdbProviderName: '',
-        providerId: '',
-        variantId: '',
-        distributionChannel: 'direct',
-        region: '',
-      });
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) {
+      setFormData(toMappingFormData(initialData));
     }
-  }, [open, initialData]);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

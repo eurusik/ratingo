@@ -122,7 +122,7 @@ export function useCreateMapping() {
   return useMutation({
     mutationFn: (data: CreateMappingRequest) => adminProvidersApi.createMapping(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminProvidersKeys.all });
+      void queryClient.invalidateQueries({ queryKey: adminProvidersKeys.all });
     },
   });
 }
@@ -137,7 +137,7 @@ export function useUpdateMapping() {
     mutationFn: ({ id, data }: { id: string; data: UpdateMappingRequest }) =>
       adminProvidersApi.updateMapping(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminProvidersKeys.all });
+      void queryClient.invalidateQueries({ queryKey: adminProvidersKeys.all });
     },
   });
 }
@@ -151,7 +151,7 @@ export function useDeleteMapping() {
   return useMutation({
     mutationFn: (id: string) => adminProvidersApi.deleteMapping(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminProvidersKeys.all });
+      void queryClient.invalidateQueries({ queryKey: adminProvidersKeys.all });
     },
   });
 }

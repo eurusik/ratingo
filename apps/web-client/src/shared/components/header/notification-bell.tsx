@@ -8,7 +8,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bell, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,9 +31,11 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  useEffect(() => {
+  const [previousPathname, setPreviousPathname] = useState(pathname);
+  if (previousPathname !== pathname) {
+    setPreviousPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   const handleNotificationClick = (notificationId: string, isRead: boolean) => {
     if (!isRead) {

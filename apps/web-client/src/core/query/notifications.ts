@@ -4,7 +4,7 @@ import { queryKeys } from './keys';
 import { retryUnlessUnauthorized } from './utils';
 
 function invalidateNotificationCaches(queryClient: QueryClient) {
-  queryClient.invalidateQueries({ queryKey: queryKeys.userActions.notifications.all });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.userActions.notifications.all });
 }
 
 export function useNotifications(enabled = true) {

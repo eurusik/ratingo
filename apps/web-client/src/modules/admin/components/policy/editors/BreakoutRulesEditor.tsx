@@ -29,6 +29,7 @@ interface BreakoutRulesEditorProps {
     originCountries?: string;
     originCountriesHint?: string;
     originCountriesPlaceholder?: string;
+    removeRule?: string;
   };
 }
 
@@ -74,6 +75,10 @@ export function BreakoutRulesEditor({ rules, onChange, labels }: BreakoutRulesEd
     setExpandedRule(newRule.id);
   };
 
+  const toggleRule = (ruleId: string) => {
+    setExpandedRule((current) => (current === ruleId ? null : ruleId));
+  };
+
   const removeRule = (ruleId: string) => {
     onChange(rules.filter((r) => r.id !== ruleId));
   };
@@ -106,24 +111,24 @@ export function BreakoutRulesEditor({ rules, onChange, labels }: BreakoutRulesEd
       <div className="space-y-3">
         {rules.map((rule) => (
           <div key={rule.id} className="border rounded-lg">
-            <div
-              className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50"
-              onClick={() => setExpandedRule(expandedRule === rule.id ? null : rule.id)}
-            >
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2 p-3 hover:bg-muted/50">
+              <button
+                type="button"
+                aria-expanded={expandedRule === rule.id}
+                className="flex flex-1 items-center gap-2 text-left cursor-pointer"
+                onClick={() => toggleRule(rule.id)}
+              >
                 <GripVertical className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium text-sm">{rule.name}</span>
                 <Badge variant="outline" className="text-xs">
                   {labels?.priority ?? 'Priority'}: {rule.priority}
                 </Badge>
-              </div>
+              </button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeRule(rule.id);
-                }}
+                aria-label={labels?.removeRule ?? 'Remove rule'}
+                onClick={() => removeRule(rule.id)}
               >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>

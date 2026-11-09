@@ -140,7 +140,6 @@ const verdictConfig: Record<
 export function DataVerdictServer({
   type,
   message,
-  confidence,
   context,
   showCta = false,
   ctaProps,
@@ -148,9 +147,6 @@ export function DataVerdictServer({
 }: DataVerdictServerProps) {
   const config = verdictConfig[type];
   const Icon = config.icon;
-
-  // CTA-only mode: no message, just the CTA button in container
-  const isCtaOnly = !message && showCta && !!ctaProps;
 
   return (
     <section

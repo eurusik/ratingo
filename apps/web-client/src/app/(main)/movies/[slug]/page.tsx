@@ -78,6 +78,13 @@ type EnrichedMovieDetails = MovieDetailsDto & {
   digitalReleaseDate?: string | null;
 };
 
+function readDigitalReleaseDate(movie: MovieDetailsDto): string | null {
+  if (!('digitalReleaseDate' in movie) || typeof movie.digitalReleaseDate !== 'string') {
+    return null;
+  }
+  return movie.digitalReleaseDate || null;
+}
+
 /**
  * Enriches API response with computed UI fields.
  */
@@ -105,8 +112,7 @@ function enrichMovieDetails(movie: MovieDetailsDto): EnrichedMovieDetails {
   // Use card.badgeKey from API
   const badgeKey = movie.card?.badgeKey || undefined;
 
-  // Use digitalReleaseDate from API (cast to any since contract may not have it yet)
-  const digitalReleaseDate = (movie as any).digitalReleaseDate || null;
+  const digitalReleaseDate = readDigitalReleaseDate(movie);
 
   return {
     ...movie,
@@ -249,7 +255,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           <MovieRelease
             releaseDate={movie.releaseDate}
             digitalReleaseDate={movie.digitalReleaseDate ?? undefined}
-            runtime={(movie as any).runtime ?? undefined}
+            runtime={movie.runtime ?? undefined}
             dict={dict}
           />
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { components } from '@ratingo/api-contract';
 import { useShowProgress } from '@/core/query';
 
@@ -27,6 +27,7 @@ export function useEpisodeProgress(
   selectedSeasonNumber: number | undefined,
 ): EpisodeProgressData {
   const { data: progressData } = useShowProgress(showId, { enabled });
+  const [now] = useState(() => Date.now());
 
   const currentSeasonProgress = progressData?.seasons.find(
     (s) => s.seasonNumber === selectedSeasonNumber
@@ -49,7 +50,6 @@ export function useEpisodeProgress(
   }, [progressData]);
 
   const { allEpisodesBySeasonNumber, totalEpisodesCount, totalAllEpisodes, lastAiredEpisodeInfo } = useMemo(() => {
-    const now = Date.now();
     const map = new Map<number, string[]>();
     let airedCount = 0;
     let allCount = 0;
@@ -81,7 +81,7 @@ export function useEpisodeProgress(
       totalAllEpisodes: allCount,
       lastAiredEpisodeInfo: { season: lastSeason, episode: lastEpisode },
     };
-  }, [validSeasons]);
+  }, [validSeasons, now]);
 
   return {
     progressData,

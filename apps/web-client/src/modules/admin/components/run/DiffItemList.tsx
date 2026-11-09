@@ -31,8 +31,8 @@ export function DiffItemList({ items, variant, labels }: DiffItemListProps) {
 
   return (
     <div className="space-y-2">
-      {items.map((item, idx) => (
-        <div key={idx} className={`p-3 border rounded-lg ${bgClass}`}>
+      {items.map((item) => (
+        <div key={item.mediaItemId} className={`p-3 border rounded-lg ${bgClass}`}>
           <div className="font-medium">{item.title}</div>
           <div className="text-sm text-muted-foreground">
             {labels.mediaId}: {item.mediaItemId}

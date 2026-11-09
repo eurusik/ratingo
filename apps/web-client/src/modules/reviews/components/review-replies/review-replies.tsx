@@ -142,7 +142,7 @@ export function ReviewReplies({
                 onSubmit={handleCreateReply}
                 onCancel={() => setShowReplyForm(false)}
                 isSubmitting={createReply.isPending}
-                autoFocus
+                focusOnMount
               />
             ) : (
               <button

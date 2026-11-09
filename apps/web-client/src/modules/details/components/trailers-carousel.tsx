@@ -6,6 +6,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Play } from 'lucide-react';
 import { Carousel } from '@/shared/components/carousel';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/ui';
@@ -43,10 +44,12 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
             className="group relative flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden bg-cinema-card border border-cinema-borderSoft hover:border-blue-500 transition-all"
           >
             {/* Thumbnail */}
-            <img
+            <Image
               src={getYouTubeThumbnail(video.key)}
               alt={video.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              fill
+              sizes="256px"
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
 
             {/* Overlay */}

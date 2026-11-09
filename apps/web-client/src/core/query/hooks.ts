@@ -4,7 +4,6 @@ import {
   catalogApi,
   type ShowDetailsDto,
   type TrendingShowsDto,
-  type CalendarResponseDto,
   type ProviderDto,
 } from '../api/catalog.client';
 import { queryKeys } from './keys';

@@ -19,6 +19,9 @@ import {
   type JournalPostsResult,
   type JournalPostListItem,
 } from '@/modules/journal';
+import { createPlaceholderKeys } from '@/shared/utils';
+
+const LIST_SKELETON_KEYS = createPlaceholderKeys('journal-list-skeleton', 4);
 
 interface JournalPageClientProps {
   initialData: PostListResponseDto | null;
@@ -94,9 +97,9 @@ export function JournalPageClient({ initialData }: JournalPageClientProps) {
 
           {/* List items skeleton */}
           <div className="space-y-0">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {LIST_SKELETON_KEYS.map((skeletonKey) => (
               <div
-                key={i}
+                key={skeletonKey}
                 className="flex items-center gap-6 py-5 border-b border-border/50"
               >
                 <Skeleton className="h-4 w-20" />

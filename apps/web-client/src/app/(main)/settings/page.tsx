@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect, useRef, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { useAuth } from '@/core/auth';
@@ -47,8 +47,7 @@ function SettingsPageContent() {
   const searchParams = useSearchParams();
 
   // Parse link params once on mount to survive URL cleanup
-  const linkParamsRef = useRef(parseLinkParams(searchParams));
-  const { initialTab, linkNotification } = linkParamsRef.current;
+  const [{ initialTab, linkNotification }] = useState(() => parseLinkParams(searchParams));
 
   // Clean URL params without triggering React re-render/remount
   useEffect(() => {

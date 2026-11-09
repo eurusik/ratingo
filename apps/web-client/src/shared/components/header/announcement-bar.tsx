@@ -24,6 +24,7 @@ import { cn } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { usePwaInstallStore } from '@/shared/stores/pwa-install.store';
+import { useIsClient } from '@/shared/hooks/use-is-client';
 
 const STORAGE_KEY = 'ratingo:dismissed-announcements-v2';
 const ANNOUNCEMENT_BAR_HEIGHT = 40; // px, matches py-1.5 + button height
@@ -55,11 +56,18 @@ export function useAnnouncementBar() {
   return useContext(AnnouncementContext);
 }
 
+function parseDismissedIds(stored: string): string[] {
+  const parsed: unknown = JSON.parse(stored);
+  return Array.isArray(parsed)
+    ? parsed.filter((id): id is string => typeof id === 'string')
+    : [];
+}
+
 function getDismissedAnnouncements(): string[] {
   if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    return stored ? parseDismissedIds(stored) : [];
   } catch {
     return [];
   }
@@ -104,6 +112,46 @@ function isMobileDevice(): boolean {
     || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1);
 }
 
+type PwaPromptKind = 'android' | 'ios' | false;
+
+interface DeviceEnvironment {
+  isStandalone: boolean;
+  isMobile: boolean;
+  isIosSafari: boolean;
+}
+
+function readDeviceEnvironment(): DeviceEnvironment {
+  return {
+    isStandalone: isStandalone(),
+    isMobile: isMobileDevice(),
+    isIosSafari: isIosSafari(),
+  };
+}
+
+function resolvePwaPromptKind(
+  device: DeviceEnvironment,
+  dismissedIds: string[],
+  isInstallable: boolean,
+): PwaPromptKind {
+  if (device.isStandalone || !device.isMobile || dismissedIds.includes(PWA_BANNER_ID)) {
+    return false;
+  }
+  if (isInstallable) return 'android';
+  if (device.isIosSafari) return 'ios';
+  return false;
+}
+
+const SHARE_ICON_PLACEHOLDER = '{shareIcon}';
+
+function splitAtShareIcon(text: string): [string, string | undefined] {
+  const placeholderIndex = text.indexOf(SHARE_ICON_PLACEHOLDER);
+  if (placeholderIndex === -1) return [text, undefined];
+  return [
+    text.slice(0, placeholderIndex),
+    text.slice(placeholderIndex + SHARE_ICON_PLACEHOLDER.length),
+  ];
+}
+
 interface AnnouncementBarProviderProps {
   children: React.ReactNode;
 }
@@ -112,15 +160,36 @@ export function AnnouncementBarProvider({
   children,
 }: AnnouncementBarProviderProps) {
   const { dict } = useTranslation();
-  const [isVisible, setIsVisible] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [showPwaPrompt, setShowPwaPrompt] = useState<'android' | 'ios' | false>(false);
+  const isClient = useIsClient();
+  const [device] = useState(readDeviceEnvironment);
+  const [dismissedIds, setDismissedIds] = useState(getDismissedAnnouncements);
+  const [isHidden, setIsHidden] = useState(false);
 
   const bannerRef = useRef<HTMLDivElement>(null);
   const [measuredHeight, setMeasuredHeight] = useState(ANNOUNCEMENT_BAR_HEIGHT);
 
   const isInstallable = usePwaInstallStore((s) => s.isInstallable);
   const promptInstall = usePwaInstallStore((s) => s.promptInstall);
+
+  const [previousIsInstallable, setPreviousIsInstallable] = useState(isInstallable);
+  if (previousIsInstallable !== isInstallable) {
+    setPreviousIsInstallable(isInstallable);
+    setIsHidden(false);
+  }
+
+  const showPwaPrompt = isClient
+    ? resolvePwaPromptKind(device, dismissedIds, isInstallable)
+    : false;
+  const isVisible =
+    isClient &&
+    !isHidden &&
+    (showPwaPrompt !== false || !dismissedIds.includes(CURRENT_ANNOUNCEMENT.id));
+
+  const hideAndRemember = useCallback((id: string) => {
+    setIsHidden(true);
+    setDismissedIds((previous) => (previous.includes(id) ? previous : [...previous, id]));
+    dismissAnnouncement(id);
+  }, []);
 
   // Measure actual banner height (accounts for safe-area-inset-top on PWA)
   useEffect(() => {
@@ -136,76 +205,39 @@ export function AnnouncementBarProvider({
   useEffect(() => {
     const handleInstalled = () => {
       if (showPwaPrompt) {
-        setShowPwaPrompt(false);
-        setIsVisible(false);
-        dismissAnnouncement(PWA_BANNER_ID);
+        hideAndRemember(PWA_BANNER_ID);
       }
     };
     window.addEventListener('appinstalled', handleInstalled);
     return () => window.removeEventListener('appinstalled', handleInstalled);
-  }, [showPwaPrompt]);
-
-  useEffect(() => {
-    setIsMounted(true);
-    const dismissed = getDismissedAnnouncements();
-
-    // Never show PWA prompt if already running as installed app
-    if (isStandalone()) {
-      setShowPwaPrompt(false);
-      setIsVisible(!dismissed.includes(CURRENT_ANNOUNCEMENT.id));
-      return;
-    }
-
-    // Check PWA install eligibility (mobile only, not dismissed)
-    if (isMobileDevice() && !dismissed.includes(PWA_BANNER_ID)) {
-      if (isInstallable) {
-        setShowPwaPrompt('android');
-        setIsVisible(true);
-        return;
-      }
-      if (isIosSafari()) {
-        setShowPwaPrompt('ios');
-        setIsVisible(true);
-        return;
-      }
-    }
-
-    // Fallback to regular announcement
-    setShowPwaPrompt(false);
-    setIsVisible(!dismissed.includes(CURRENT_ANNOUNCEMENT.id));
-  }, [isInstallable]);
+  }, [showPwaPrompt, hideAndRemember]);
 
   const handleDismiss = useCallback(() => {
-    setIsVisible(false);
-    if (showPwaPrompt) {
-      dismissAnnouncement(PWA_BANNER_ID);
-    } else {
-      dismissAnnouncement(CURRENT_ANNOUNCEMENT.id);
-    }
-  }, [showPwaPrompt]);
+    hideAndRemember(showPwaPrompt ? PWA_BANNER_ID : CURRENT_ANNOUNCEMENT.id);
+  }, [showPwaPrompt, hideAndRemember]);
 
   const handleInstall = useCallback(async () => {
     const outcome = await promptInstall();
     if (outcome === 'accepted') {
-      setIsVisible(false);
-      dismissAnnouncement(PWA_BANNER_ID);
+      hideAndRemember(PWA_BANNER_ID);
     }
-  }, [promptInstall]);
+  }, [promptInstall, hideAndRemember]);
 
   const contextValue = useMemo(
     () => ({
-      isVisible: isMounted && isVisible,
-      height: isMounted && isVisible ? measuredHeight : 0,
+      isVisible,
+      height: isVisible ? measuredHeight : 0,
     }),
-    [isMounted, isVisible, measuredHeight],
+    [isVisible, measuredHeight],
   );
 
   const { i18nKey, href } = CURRENT_ANNOUNCEMENT;
   const texts = dict.announcement[i18nKey];
+  const [iosTextBeforeShareIcon, iosTextAfterShareIcon] = splitAtShareIcon(dict.pwa.installBannerIos);
 
   return (
     <AnnouncementContext.Provider value={contextValue}>
-      {isMounted && isVisible && (
+      {isVisible && (
         <div
           ref={bannerRef}
           role="banner"
@@ -237,13 +269,12 @@ export function AnnouncementBarProvider({
                     </>
                   ) : (
                     <p className="truncate font-medium">
-                      {dict.pwa.installBannerIos.split('{shareIcon}').map((part, i) =>
-                        i === 0 ? part : (
-                          <span key={i}>
-                            <Share className="inline h-4 w-4 text-cinema-400 -mt-0.5" aria-label="Share" />
-                            {part}
-                          </span>
-                        ),
+                      {iosTextBeforeShareIcon}
+                      {iosTextAfterShareIcon !== undefined && (
+                        <span>
+                          <Share className="inline h-4 w-4 text-cinema-400 -mt-0.5" aria-label="Share" />
+                          {iosTextAfterShareIcon}
+                        </span>
                       )}
                     </p>
                   )}

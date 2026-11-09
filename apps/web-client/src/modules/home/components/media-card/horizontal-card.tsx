@@ -11,7 +11,7 @@ import type { Route } from 'next';
 import { Activity, Calendar, Eye } from 'lucide-react';
 import { cn, thumbnailUrl } from '@/shared/utils';
 import { formatYear, formatRating } from '@/shared/utils/format';
-import { getDictionary, type Locale } from '@/shared/i18n';
+import { getDictionary } from '@/shared/i18n';
 import type { MediaCardServerProps } from './media-card-server';
 
 /** Card display variants */

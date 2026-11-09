@@ -1,7 +1,7 @@
 // Property-based tests for query keys using fast-check
 
 import * as fc from 'fast-check';
-import { queryKeys, createBatchHash } from './keys';
+import { queryKeys } from './keys';
 
 function isPrimitive(value: unknown): boolean {
   return (

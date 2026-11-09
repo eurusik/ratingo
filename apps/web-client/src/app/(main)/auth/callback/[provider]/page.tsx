@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams, useParams, notFound } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { tokenStorage } from '@/core/auth';
@@ -51,79 +51,55 @@ function validateReturnTo(returnTo: string | null): string {
  * Inner component that uses useSearchParams.
  * Wrapped in Suspense boundary in the main export.
  */
-function OAuthCallbackContent({ provider }: { provider: SupportedProvider }) {
+function OAuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { dict } = useTranslation();
-  const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(true);
+  const [exchangeErrorCode, setExchangeErrorCode] = useState<string | null>(null);
+
+  const code = searchParams.get('code');
+  const providerErrorCode = searchParams.get('error');
+  const returnTo = validateReturnTo(searchParams.get('returnTo'));
+  const requestErrorCode = providerErrorCode ?? (code ? null : 'OAUTH_EXCHANGE_EXPIRED');
+  const errorCode = requestErrorCode ?? exchangeErrorCode;
 
   /**
    * Maps error code to localized message.
    */
-  const getErrorMessage = useCallback(
-    (code: string): string => {
-      const key = errorCodeToKey[code] || 'unknown';
-      return (
-        dict.auth.oauth.errors[key as keyof typeof dict.auth.oauth.errors] ||
-        dict.auth.oauth.errors.unknown
-      );
-    },
-    [dict],
-  );
-
-  const handleOAuthCallback = useCallback(async () => {
-    const code = searchParams.get('code');
-    const errorCode = searchParams.get('error');
-    const returnTo = validateReturnTo(searchParams.get('returnTo'));
-
-    // Handle error from OAuth provider
-    if (errorCode) {
-      setError(getErrorMessage(errorCode));
-      setIsProcessing(false);
-      return;
-    }
-
-    // Missing code
-    if (!code) {
-      setError(getErrorMessage('OAUTH_EXCHANGE_EXPIRED'));
-      setIsProcessing(false);
-      return;
-    }
-
-    try {
-      // Exchange code for tokens
-      const tokens = await authApi.exchangeOAuthCode(code);
-
-      // Store tokens
-      tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
-
-      // Redirect to destination -- AuthProvider will fetch user on mount
-      window.location.href = returnTo;
-    } catch (err) {
-      // Extract error code from ApiError
-      const errorCode =
-        err && typeof err === 'object' && 'code' in err ? String(err.code) : 'UNKNOWN';
-      setError(getErrorMessage(errorCode));
-      setIsProcessing(false);
-    }
-  }, [searchParams, getErrorMessage]);
+  const getErrorMessage = (errorCodeToMap: string): string => {
+    const key = errorCodeToKey[errorCodeToMap] || 'unknown';
+    return (
+      dict.auth.oauth.errors[key as keyof typeof dict.auth.oauth.errors] ||
+      dict.auth.oauth.errors.unknown
+    );
+  };
 
   useEffect(() => {
-    handleOAuthCallback();
-  }, [handleOAuthCallback]);
+    if (!code || providerErrorCode) return;
+
+    authApi
+      .exchangeOAuthCode(code)
+      .then((tokens) => {
+        tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
+        window.location.href = returnTo;
+      })
+      .catch((err: unknown) => {
+        setExchangeErrorCode(
+          err && typeof err === 'object' && 'code' in err ? String(err.code) : 'UNKNOWN',
+        );
+      });
+  }, [code, providerErrorCode, returnTo]);
 
   const handleRetry = () => {
     router.push('/');
   };
 
-  // Error state
-  if (error) {
+  if (errorCode) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-4">
         <div className="text-center">
           <h1 className="text-xl font-semibold text-foreground mb-2">{dict.auth.oauth.failed}</h1>
-          <p className="text-muted-foreground">{error}</p>
+          <p className="text-muted-foreground">{getErrorMessage(errorCode)}</p>
         </div>
         <Button onClick={handleRetry} variant="outline">
           {dict.auth.oauth.tryAgain}
@@ -132,17 +108,12 @@ function OAuthCallbackContent({ provider }: { provider: SupportedProvider }) {
     );
   }
 
-  // Loading state
-  if (isProcessing) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        <p className="text-muted-foreground">{dict.auth.oauth.completing}</p>
-      </div>
-    );
-  }
-
-  return null;
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <p className="text-muted-foreground">{dict.auth.oauth.completing}</p>
+    </div>
+  );
 }
 
 /**
@@ -171,7 +142,7 @@ export default function OAuthCallbackPage() {
         </div>
       }
     >
-      <OAuthCallbackContent provider={params.provider} />
+      <OAuthCallbackContent />
     </Suspense>
   );
 }
