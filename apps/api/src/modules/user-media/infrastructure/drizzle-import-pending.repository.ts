@@ -40,6 +40,12 @@ import {
   type UpdatePendingItemInput,
 } from '../domain/repositories/import-pending.repository.interface';
 
+import {
+  toImportBatch,
+  toImportPendingItem,
+  toPendingItemUpdateValues,
+} from './mappers/import-pending.mapper';
+
 type CreatePendingItemWithoutBatchId = Omit<CreatePendingItemInput, 'batchId'>;
 
 @Injectable()
@@ -66,7 +72,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
             totalItems: input.totalItems,
           })
           .returning();
-        return this.mapBatch(row);
+        return toImportBatch(row);
       },
       { userId: input.userId, source: input.source },
     );
@@ -135,7 +141,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
             }
           }
 
-          return this.mapBatch(batchRow);
+          return toImportBatch(batchRow);
         });
       },
       { userId: batchInput.userId, source: batchInput.source, itemCount: items.length },
@@ -154,7 +160,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
             .where(eq(schema.importBatches.id, batchId))
             .limit(1),
         );
-        return row ? this.mapBatch(row) : null;
+        return row ? toImportBatch(row) : null;
       },
       { batchId },
     );
@@ -176,7 +182,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
           )
           .orderBy(desc(schema.importBatches.createdAt))
           .limit(limit);
-        return rows.map((r) => this.mapBatch(r));
+        return rows.map((r) => toImportBatch(r));
       },
       { userId },
     );
@@ -199,7 +205,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
               eq(schema.importPendingItems.status, status),
             ),
           );
-        return rows.map((r) => this.mapItem(r));
+        return rows.map((r) => toImportPendingItem(r));
       },
       { batchId, status },
     );
@@ -217,7 +223,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
             .where(eq(schema.importPendingItems.id, itemId))
             .limit(1),
         );
-        return row ? this.mapItem(row) : null;
+        return row ? toImportPendingItem(row) : null;
       },
       { itemId },
     );
@@ -242,7 +248,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
               eq(schema.importPendingItems.status, status),
             ),
           );
-        return rows.map((r) => this.mapItem(r));
+        return rows.map((r) => toImportPendingItem(r));
       },
       { resolvedTmdbId, mediaType, status },
     );
@@ -264,7 +270,10 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
           .where(this.isLinkable(ingestingBefore, staleLinkingBefore))
           .orderBy(asc(schema.importPendingItems.updatedAt))
           .limit(limit);
-        return rows.map((row) => ({ item: this.mapItem(row.item), mediaItemId: row.mediaItemId }));
+        return rows.map((row) => ({
+          item: toImportPendingItem(row.item),
+          mediaItemId: row.mediaItemId,
+        }));
       },
       {
         ingestingBefore: ingestingBefore.toISOString(),
@@ -347,7 +356,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       async () => {
         await this.db
           .update(schema.importPendingItems)
-          .set(this.toItemUpdateValues(update))
+          .set(toPendingItemUpdateValues(update))
           .where(eq(schema.importPendingItems.id, itemId));
       },
       { itemId, status: update.status },
@@ -364,7 +373,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       async () => {
         const result = await this.db
           .update(schema.importPendingItems)
-          .set(this.toItemUpdateValues(update))
+          .set(toPendingItemUpdateValues(update))
           .where(
             and(
               eq(schema.importPendingItems.id, itemId),
@@ -390,7 +399,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       async () => {
         const result = await this.db
           .update(schema.importPendingItems)
-          .set(this.toItemUpdateValues(update))
+          .set(toPendingItemUpdateValues(update))
           .where(
             and(
               eq(schema.importPendingItems.id, itemId),
@@ -485,7 +494,7 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
           return null;
         }
 
-        return this.mapBatch(row);
+        return toImportBatch(row);
       },
       { batchId },
     );
@@ -515,52 +524,5 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
       ),
       this.isStaleLinking(staleLinkingBefore),
     );
-  }
-
-  private toItemUpdateValues(update: UpdatePendingItemInput): Record<string, unknown> {
-    const setValues: Record<string, unknown> = {
-      status: update.status,
-      updatedAt: new Date(),
-    };
-
-    if (update.resolvedTmdbId !== undefined) setValues.resolvedTmdbId = update.resolvedTmdbId;
-    if (update.mediaType !== undefined) setValues.mediaType = update.mediaType;
-    if (update.failureReason !== undefined) setValues.failureReason = update.failureReason;
-    if (update.mediaItemId !== undefined) setValues.mediaItemId = update.mediaItemId;
-
-    return setValues;
-  }
-
-  private mapBatch(row: typeof schema.importBatches.$inferSelect): ImportBatch {
-    return {
-      id: row.id,
-      userId: row.userId,
-      source: row.source,
-      totalItems: row.totalItems,
-      completedCount: row.completedCount,
-      failedCount: row.failedCount,
-      status: row.status as ImportBatchStatus,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    };
-  }
-
-  private mapItem(row: typeof schema.importPendingItems.$inferSelect): ImportPendingItem {
-    return {
-      id: row.id,
-      batchId: row.batchId,
-      imdbId: row.imdbId,
-      tmdbId: row.tmdbId,
-      resolvedTmdbId: row.resolvedTmdbId,
-      mediaType: row.mediaType as 'movie' | 'show' | null,
-      title: row.title,
-      rating: row.rating,
-      state: row.state as 'completed' | 'planned',
-      status: row.status as ImportPendingItemStatus,
-      failureReason: row.failureReason as ImportPendingItem['failureReason'],
-      mediaItemId: row.mediaItemId,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    };
   }
 }

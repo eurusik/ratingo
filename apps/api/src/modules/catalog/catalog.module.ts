@@ -43,6 +43,10 @@ import { TmdbMetadataAdapter } from './infrastructure/adapters/tmdb-metadata.ada
 import { UserStateAdapter } from './infrastructure/adapters/user-state.adapter';
 import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
+import { MediaSearchQuery } from './infrastructure/queries/media-search.query';
+import { MediaStubUpsertQuery } from './infrastructure/queries/media-stub-upsert.query';
+import { MediaSyncCandidatesQuery } from './infrastructure/queries/media-sync-candidates.query';
+import { MediaUpsertQuery } from './infrastructure/queries/media-upsert.query';
 import { MovieDetailsQuery } from './infrastructure/queries/movie-details.query';
 import { MovieListingsQuery } from './infrastructure/queries/movie-listings.query';
 import { NewEpisodesQuery } from './infrastructure/queries/new-episodes.query';
@@ -129,6 +133,10 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     // Query Objects - Mixed Media
     HeroMediaQuery,
     WatchingNowMediaQuery,
+    MediaStubUpsertQuery,
+    MediaUpsertQuery,
+    MediaSearchQuery,
+    MediaSyncCandidatesQuery,
 
     // Query Objects - Shared
     GenreQuery,
