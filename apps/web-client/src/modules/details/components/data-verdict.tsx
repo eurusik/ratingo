@@ -5,12 +5,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import type { components } from '@ratingo/api-contract';
 import { toast } from 'sonner';
 import { type PrimaryCta, PRIMARY_CTA, type MediaType } from '@/shared/types';
 import type { SavedItemList } from '@/core/api';
 import { useAuth, useAuthModalStore } from '@/core/auth';
+import { useIsClient } from '@/shared/hooks/use-is-client';
 import { DataVerdictServer, type DataVerdictServerProps } from './data-verdict-server';
 import {
   useSaveStatus,
@@ -24,7 +24,6 @@ import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import {
   getSubscriptionTrigger,
   type ShowStatus,
-  type SubscriptionUnavailableReason,
 } from '../utils';
 
 type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
@@ -65,11 +64,7 @@ export function DataVerdict({
 }: DataVerdictProps) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const openLogin = useAuthModalStore((s) => s.openLogin);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  const isHydrated = useIsClient();
 
   const { data: saveStatus, isFetched } = useSaveStatus(mediaItemId, {
     enabled: isAuthenticated && !!mediaItemId,

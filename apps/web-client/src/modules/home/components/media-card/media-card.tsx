@@ -69,7 +69,6 @@ export type MediaCardProps = ShowCardProps | MovieCardProps;
 export function MediaCard(props: MediaCardProps) {
   const { t } = useTranslation();
   const {
-    id,
     title,
     posterUrl,
     rating,

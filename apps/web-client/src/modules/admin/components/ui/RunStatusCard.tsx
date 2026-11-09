@@ -14,6 +14,7 @@ import { StatusBadge } from './StatusBadge';
 import { useTranslation } from '@/shared/i18n';
 import { useRunStatus, usePromoteRun, useCancelRun } from '@/core/query';
 import { toast } from 'sonner';
+import { withOccurrenceKeys } from '@/shared/utils';
 
 interface RunStatusCardProps {
   runId: string;
@@ -82,7 +83,7 @@ export function RunStatusCard({
   };
 
   const handleRefresh = () => {
-    refetch();
+    void refetch();
   };
 
   if (isLoading && !runStatus) {
@@ -184,8 +185,8 @@ export function RunStatusCard({
           <div className="space-y-2">
             <span className="text-sm font-medium text-destructive">Cannot promote</span>
             <ul className="text-sm text-muted-foreground space-y-1">
-              {runStatus.blockingReasons.map((reason, index) => (
-                <li key={index}>• {String(reason)}</li>
+              {withOccurrenceKeys(runStatus.blockingReasons, (blockingReason) => blockingReason).map(({ item: reason, key }) => (
+                <li key={key}>• {reason}</li>
               ))}
             </ul>
           </div>

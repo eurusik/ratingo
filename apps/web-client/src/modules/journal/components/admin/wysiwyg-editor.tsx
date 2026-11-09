@@ -129,13 +129,14 @@ export function WysiwygEditor({ value, onChange, placeholder, className }: Wysiw
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleImageUpload(file);
+      void handleImageUpload(file);
     }
   };
 
   const addLink = () => {
     if (!editor) return;
-    const previousUrl = editor.getAttributes('link').href;
+    const previousHref: unknown = editor.getAttributes('link').href;
+    const previousUrl = typeof previousHref === 'string' ? previousHref : undefined;
     const url = window.prompt('URL', previousUrl);
 
     if (url === null) return;

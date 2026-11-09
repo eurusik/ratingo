@@ -27,13 +27,13 @@ import { retryUnlessUnauthorized } from './utils';
  * Covers: review lists, user's own review, and standalone rating state.
  */
 function invalidateReviewCaches(queryClient: QueryClient, mediaItemId: string) {
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: queryKeys.reviews.mediaBase(mediaItemId),
   });
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: queryKeys.reviews.myReview(mediaItemId),
   });
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: queryKeys.userMedia.state(mediaItemId),
   });
 }
@@ -43,10 +43,10 @@ function invalidateReplyCaches(
   reviewId: string,
   mediaItemId: string,
 ) {
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: queryKeys.reviews.replies(reviewId),
   });
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: queryKeys.reviews.mediaBase(mediaItemId),
   });
 }
@@ -132,7 +132,7 @@ function createOptimisticVoteHandlers<TVariables>(
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: baseKey });
+      void queryClient.invalidateQueries({ queryKey: baseKey });
     },
   };
 }

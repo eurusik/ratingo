@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import { fc } from '@fast-check/jest';
 import { DataTable } from '../ui/DataTable';
 import { DataTableColumnDef, DropdownMenuItemProps } from '../../types';
@@ -47,7 +47,7 @@ const mockColumns: DataTableColumnDef<any>[] = [
   },
 ];
 
-const mockRowActions = (row: any): DropdownMenuItemProps[] => [
+const mockRowActions = (): DropdownMenuItemProps[] => [
   {
     label: 'View',
     onClick: jest.fn(),

@@ -91,7 +91,7 @@ export function DetailsHero({
                   {genres && genres.length > 0 && ` • ${genres.map((g) => g.name).join(', ')}`}
                 </p>
                 {slug && mediaType === 'show' && (
-                  <SyncButton slug={slug} lastSyncedAt={lastSyncedAt} totalWatchers={totalWatchers} />
+                  <SyncButton key={slug} slug={slug} lastSyncedAt={lastSyncedAt} totalWatchers={totalWatchers} />
                 )}
               </div>
 

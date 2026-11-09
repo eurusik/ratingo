@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shar
 import { StatusBadge } from '../ui';
 import { RUN_STATUS } from '../../types';
 import type { RunHeaderLabels } from './labels.types';
+import { withOccurrenceKeys } from '@/shared/utils';
 
 interface RunHeaderProps {
   id: string;
@@ -83,8 +84,8 @@ export function RunHeader({
                   <TooltipContent>
                     <div className="space-y-1">
                       <p className="font-medium">{labels.blockingReasonsTitle}</p>
-                      {blockingMessages.map((message, index) => (
-                        <p key={index} className="text-sm">
+                      {withOccurrenceKeys(blockingMessages, (blockingMessage) => blockingMessage).map(({ item: message, key }) => (
+                        <p key={key} className="text-sm">
                           • {message}
                         </p>
                       ))}

@@ -87,6 +87,33 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+type SessionRestoreResult =
+  | { status: 'authenticated'; user: MeDto }
+  | { status: 'signed-out' }
+  | { status: 'unchanged' };
+
+async function restoreSession(): Promise<SessionRestoreResult> {
+  if (!tokenStorage.hasTokens()) return { status: 'unchanged' };
+
+  try {
+    // The afterResponse hook in client.ts transparently handles
+    // 401 → refresh → retry. If me() throws, refresh already failed.
+    const user = await authApi.me();
+    return { status: 'authenticated', user };
+  } catch (error) {
+    // Definitive auth failures (ApiError 401): client.ts already cleared
+    // tokens before throwing; reflect that in React state.
+    // Transient failures (network down, 5xx — including ApiError 5xx):
+    // tokens are still in storage, so keep the user logged in.
+    const isDefinitiveAuthFailure =
+      error instanceof ApiError && error.statusCode === 401;
+    if (isDefinitiveAuthFailure || !tokenStorage.hasTokens()) {
+      return { status: 'signed-out' };
+    }
+    return { status: 'unchanged' };
+  }
+}
+
 /**
  * Authentication provider component.
  *
@@ -135,39 +162,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [queryClient]);
 
+  const applySessionRestore = useCallback((result: SessionRestoreResult) => {
+    if (result.status === 'authenticated') {
+      setUser(result.user);
+      scheduleProactiveRefresh();
+    } else if (result.status === 'signed-out') {
+      setUser(null);
+    }
+    setIsLoading(false);
+  }, []);
+
   /**
    * Fetches current user and restores auth state.
    * Called on mount and after OAuth callback.
    */
-  const fetchUser = useCallback(async () => {
-    if (!tokenStorage.hasTokens()) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // The afterResponse hook in client.ts transparently handles
-      // 401 → refresh → retry. If me() throws, refresh already failed.
-      const me = await authApi.me();
-      setUser(me);
-      scheduleProactiveRefresh();
-    } catch (error) {
-      // Definitive auth failures (ApiError 401): client.ts already cleared
-      // tokens before throwing; reflect that in React state.
-      // Transient failures (network down, 5xx — including ApiError 5xx):
-      // tokens are still in storage, so keep the user logged in.
-      const isDefinitiveAuthFailure =
-        error instanceof ApiError && error.statusCode === 401;
-      if (isDefinitiveAuthFailure || !tokenStorage.hasTokens()) {
-        setUser(null);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const fetchUser = useCallback(
+    () => restoreSession().then(applySessionRestore),
+    [applySessionRestore],
+  );
 
   useEffect(() => {
-    fetchUser();
+    void fetchUser();
   }, [fetchUser]);
 
   // Handle unauthorized events from API client (401 after failed refresh)
@@ -191,7 +206,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Handle tokens-updated events (e.g., from OAuth callback)
   useEffect(() => {
     const handleTokensUpdated = () => {
-      fetchUser();
+      void fetchUser();
     };
 
     window.addEventListener('auth:tokens-updated', handleTokensUpdated);

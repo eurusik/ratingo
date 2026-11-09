@@ -11,11 +11,11 @@ import { useAdminProviders } from '@/core/query/admin-providers';
  */
 export function useProviderNames() {
   const { data } = useAdminProviders({ limit: 100 });
-  const providers = data?.data ?? [];
+  const providers = data?.data;
 
   const providerMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const provider of providers) {
+    for (const provider of providers ?? []) {
       map.set(provider.id, provider.name);
     }
     return map;

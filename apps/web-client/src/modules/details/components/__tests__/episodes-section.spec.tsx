@@ -190,7 +190,7 @@ describe('EpisodesSection', () => {
       const seasons = [
         createSeason(1, [createEpisode(1, 'Episode 1', '2024-01-01')]),
       ];
-      const { container } = render(
+      render(
         <EpisodesSection seasons={seasons} dict={mockDict} />,
       );
 

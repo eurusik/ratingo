@@ -8,7 +8,7 @@ import { useTranslation } from '@/shared/i18n';
 import { toast } from 'sonner';
 
 interface JsonViewerProps {
-  data: any;
+  data: unknown;
   title?: string;
   className?: string;
 }
@@ -30,7 +30,7 @@ export function JsonViewer({ data, title, className }: JsonViewerProps) {
       toast.success(dict.admin.common.copyToClipboard);
 
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    } catch {
       toast.error(dict.admin.common.copyFailed);
     }
   };

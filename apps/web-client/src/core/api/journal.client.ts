@@ -16,7 +16,7 @@ import type {
   AdminPostsQueryParams,
 } from '@/modules/journal/types';
 
-import { apiGet, apiPost, apiPatch, apiDelete } from './client';
+import { apiGet, apiPost, apiPatch, apiDelete, type ApiResponse } from './client';
 import { getApiUrl } from '../config/env';
 import { tokenStorage } from '../auth/token-storage';
 
@@ -185,9 +185,9 @@ export const journalApi = {
       throw new Error(`Upload failed: ${response.statusText}`);
     }
 
-    const result = await response.json();
+    const result = (await response.json()) as ApiResponse<ImageUploadResponseDto>;
 
-    if (!result.success) {
+    if (!result.success || !result.data) {
       throw new Error(result.error?.message || 'Upload failed');
     }
 

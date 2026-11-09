@@ -63,6 +63,10 @@ export function initCrossTabSync(callbacks: {
         tokenStorage.clearTokens();
         onLogout?.();
         break;
+
+      case 'REFRESH_START':
+      case 'REFRESH_FAILED':
+        break;
     }
   };
 }

@@ -20,6 +20,11 @@ interface BrowseInfiniteListProps {
   loadingText?: string;
 }
 
+interface BrowsePageResponse {
+  items: MediaCardServerProps[];
+  hasMore: boolean;
+}
+
 /**
  * Infinite scroll list that loads more items client-side.
  */
@@ -46,7 +51,7 @@ export function BrowseInfiniteList({
       const response = await fetch(`/api/browse/${category}?page=${page}&limit=${pageSize}${sortParam}`);
       if (!response.ok) throw new Error('Failed to fetch');
 
-      const data = await response.json();
+      const data = (await response.json()) as BrowsePageResponse;
 
       setItems((prev) => [...prev, ...data.items]);
       setHasMore(data.hasMore);

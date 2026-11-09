@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 
 import { Button } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
+import { useIsClient } from '@/shared/hooks/use-is-client';
 import { useSearch } from './use-search';
 import { SearchContent } from './search-content';
 
@@ -25,8 +26,7 @@ export function MobileSearchOverlay() {
   const search = useSearch();
   const { open, setOpen } = search;
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useIsClient();
 
   const visible = mounted && isMobile && open;
 

@@ -12,6 +12,9 @@ import { useSubscriptions, useUnsubscribe } from '../hooks';
 import { SubscriptionCard } from './subscription-card';
 import { EmptyState } from './empty-state';
 import { thumbnailUrl } from '@/shared/utils/image';
+import { createPlaceholderKeys } from '@/shared/utils';
+
+const CARD_SKELETON_KEYS = createPlaceholderKeys('subscription-skeleton', 6);
 
 export function SubscriptionsList() {
   const { dict } = useTranslation();
@@ -31,8 +34,8 @@ export function SubscriptionsList() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex gap-3 p-3 rounded-lg bg-cinema-card/50">
+        {CARD_SKELETON_KEYS.map((key) => (
+          <div key={key} className="flex gap-3 p-3 rounded-lg bg-cinema-card/50">
             <Skeleton className="w-16 h-24 rounded-md shrink-0" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-5 w-3/4" />

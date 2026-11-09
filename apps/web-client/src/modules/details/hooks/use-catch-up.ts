@@ -147,7 +147,7 @@ export function useCatchUp({
 
   const handleMarkAllClick = useCallback(() => {
     if (validSeasons.length <= 1) {
-      handleCatchUpConfirm(allEpisodesBySeasonNumber, new Map());
+      void handleCatchUpConfirm(allEpisodesBySeasonNumber, new Map());
     } else {
       setShowConfirmDialog(true);
     }

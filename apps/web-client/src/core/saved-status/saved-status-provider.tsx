@@ -49,7 +49,7 @@ export function SavedStatusProvider({ mediaItemIds, children }: SavedStatusProvi
   );
 
   const invalidate = useCallback(() => {
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: queryKeys.userActions.savedItems.batch(batchHash),
     });
   }, [queryClient, batchHash]);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer, useCallback } from 'react';
+import { useReducer, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/shared/i18n';
 import { SOURCE_PARSERS, type ParsedItem } from '../../utils/csv-parsers';
@@ -255,7 +255,10 @@ export function ImportWizard({ source }: ImportWizardProps) {
   // --- Active batches check ---
   // Only poll when on the upload step — polling is irrelevant on preview/result steps.
   const { data: activeBatches } = useImportBatchStatus({ enabled: state.step === 'upload' });
-  const processingBatches = activeBatches?.filter((b) => b.status === BATCH_STATUS.PROCESSING) ?? [];
+  const processingBatches = useMemo(
+    () => activeBatches?.filter((b) => b.status === BATCH_STATUS.PROCESSING) ?? [],
+    [activeBatches],
+  );
   const hasProcessingBatches = processingBatches.length > 0 && state.step === 'upload';
 
   const aggregated = hasProcessingBatches

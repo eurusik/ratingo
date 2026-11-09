@@ -132,7 +132,7 @@ export function SeasonSelector({
 
   return (
     <>
-      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className="fixed inset-0 z-10" aria-hidden="true" onClick={onClose} />
       <div className="absolute top-full left-0 mt-2 z-20 w-64 bg-cinema-card rounded-xl border border-cinema-borderSoft shadow-xl overflow-hidden">
         <div className="max-h-[400px] overflow-y-auto">
           {/* Quick access */}

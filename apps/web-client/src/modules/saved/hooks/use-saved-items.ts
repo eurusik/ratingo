@@ -67,8 +67,8 @@ export function useSaveItem() {
       reasonKey?: string;
     }) => userActionsApi.saveItem(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
+      void queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
     },
   });
 }
@@ -80,8 +80,8 @@ export function useUnsaveItem() {
     mutationFn: (params: { mediaItemId: string; list: SavedItemList; context?: string }) =>
       userActionsApi.unsaveItem(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
+      void queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
     },
   });
 }

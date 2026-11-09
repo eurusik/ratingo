@@ -8,7 +8,6 @@ import {
   adminReportsApi,
   type ListReportsParams,
   type ResolveReportParams,
-  type AdminReportListResponseDto,
 } from '../api/admin-reports.client';
 
 // Query keys
@@ -37,7 +36,7 @@ export function useResolveReport() {
   return useMutation({
     mutationFn: (params: ResolveReportParams) => adminReportsApi.resolveReport(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminReportsKeys.all });
+      void queryClient.invalidateQueries({ queryKey: adminReportsKeys.all });
     },
   });
 }
@@ -51,7 +50,7 @@ export function useForceDeleteReview() {
   return useMutation({
     mutationFn: (reviewId: string) => adminReportsApi.forceDeleteReview(reviewId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminReportsKeys.all });
+      void queryClient.invalidateQueries({ queryKey: adminReportsKeys.all });
     },
   });
 }

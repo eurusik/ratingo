@@ -6,14 +6,7 @@ import { useDebounce } from 'use-debounce';
 
 import { cn } from '@/shared/utils';
 import { Input } from '@/shared/ui/input';
-import { Button } from '@/shared/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/shared/ui/dropdown-menu';
 import { useTranslation } from '@/shared/i18n';
 
 import { FilterBarProps, FilterConfig } from '../../types';
@@ -26,6 +19,11 @@ function FilterBar({
   className,
 }: FilterBarProps & { className?: string }) {
   const [internalSearchValue, setInternalSearchValue] = React.useState(searchValue);
+  const [syncedSearchValue, setSyncedSearchValue] = React.useState(searchValue);
+  if (syncedSearchValue !== searchValue) {
+    setSyncedSearchValue(searchValue);
+    setInternalSearchValue(searchValue);
+  }
   const [debouncedSearchValue] = useDebounce(internalSearchValue, 300);
   const { dict } = useTranslation();
 
@@ -35,11 +33,6 @@ function FilterBar({
       onSearchChange(debouncedSearchValue);
     }
   }, [debouncedSearchValue, onSearchChange, searchValue]);
-
-  // Update internal value when prop changes
-  React.useEffect(() => {
-    setInternalSearchValue(searchValue);
-  }, [searchValue]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInternalSearchValue(event.target.value);

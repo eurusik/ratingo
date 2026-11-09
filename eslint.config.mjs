@@ -3,6 +3,10 @@ import tseslint from 'typescript-eslint';
 import prettierConfig from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
 import jestPlugin from 'eslint-plugin-jest';
+import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import nextPlugin from '@next/eslint-plugin-next';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,6 +26,29 @@ const maxLinesOptions = { skipBlankLines: true, skipComments: true };
 const oversizedFilesToSplit = {
   'apps/api/src/modules/user-media/infrastructure/repositories/drizzle-user-media-state.repository.ts': 826,
 };
+
+const webSourceFiles = ['apps/web-client/src/**/*.{ts,tsx}'];
+const webTestFiles = [
+  'apps/web-client/src/**/*.test.{ts,tsx}',
+  'apps/web-client/src/**/*.spec.{ts,tsx}',
+  'apps/web-client/src/**/__tests__/**',
+];
+const webGeneratedUiPrimitives = ['apps/web-client/src/shared/ui/**'];
+const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];
+const oversizedWebFilesToSplit = {
+  'apps/web-client/src/modules/settings/utils/csv-parsers.ts': 519,
+};
+
+const severityOf = (entry) => (Array.isArray(entry) ? entry[0] : entry);
+const isDisabled = (entry) => [0, 'off'].includes(severityOf(entry));
+const withErrorSeverity = (entry) =>
+  Array.isArray(entry) ? ['error', ...entry.slice(1)] : 'error';
+const asErrors = (rules) =>
+  Object.fromEntries(
+    Object.entries(rules)
+      .filter(([, entry]) => !isDisabled(entry))
+      .map(([rule, entry]) => [rule, withErrorSeverity(entry)]),
+  );
 
 const jestRecommendedRulesAsErrors = Object.fromEntries(
   Object.keys(jestPlugin.configs['flat/recommended'].rules).map((rule) => [rule, 'error']),
@@ -634,6 +661,84 @@ export default [
     },
   },
   ...Object.entries(oversizedFilesToSplit).map(([file, currentLines]) => ({
+    files: [file],
+    rules: {
+      'max-lines': ['error', { max: currentLines, ...maxLinesOptions }],
+    },
+  })),
+  {
+    files: webSourceFiles,
+    plugins: {
+      'react-hooks': reactHooksPlugin,
+      '@next/next': nextPlugin,
+      'jsx-a11y': jsxA11yPlugin,
+      react: reactPlugin,
+    },
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    settings: {
+      react: { version: 'detect' },
+      next: { rootDir: path.join(tsconfigRootDir, 'apps/web-client') },
+    },
+    rules: {
+      ...asErrors(reactHooksPlugin.configs['recommended-latest'].rules),
+      ...asErrors(nextPlugin.configs['core-web-vitals'].rules),
+      ...asErrors(jsxA11yPlugin.flatConfigs.recommended.rules),
+      'jsx-a11y/no-redundant-roles': ['error', { nav: ['navigation'], ol: ['list'], ul: ['list'] }],
+      'react/jsx-key': 'error',
+      'react/no-array-index-key': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        { checksVoidReturn: { attributes: false } },
+      ],
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+    },
+  },
+  {
+    files: tanstackTableFiles,
+    rules: {
+      'react-hooks/incompatible-library': 'off',
+    },
+  },
+  {
+    files: webTestFiles,
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@next/next/no-img-element': 'off',
+      'jsx-a11y/alt-text': 'off',
+    },
+  },
+  {
+    files: webSourceFiles,
+    ignores: webTestFiles,
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
+    },
+  },
+  {
+    files: webSourceFiles,
+    ignores: [...webTestFiles, ...webGeneratedUiPrimitives],
+    rules: {
+      'max-lines': ['error', { max: 500, ...maxLinesOptions }],
+    },
+  },
+  ...Object.entries(oversizedWebFilesToSplit).map(([file, currentLines]) => ({
     files: [file],
     rules: {
       'max-lines': ['error', { max: currentLines, ...maxLinesOptions }],

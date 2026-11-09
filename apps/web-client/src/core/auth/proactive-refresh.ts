@@ -25,6 +25,17 @@ const MIN_REFRESH_DELAY_MS = 5 * 1000;
 /** Timer ID for scheduled refresh */
 let refreshTimerId: ReturnType<typeof setTimeout> | null = null;
 
+async function refreshAndReschedule(): Promise<void> {
+  try {
+    await refreshTokens();
+    // Schedule next refresh after successful refresh
+    scheduleProactiveRefresh();
+  } catch {
+    // Refresh failed - user will be logged out on next 401
+    // Don't retry here to avoid infinite loops
+  }
+}
+
 /**
  * Schedules proactive token refresh before expiration.
  *
@@ -49,15 +60,8 @@ export function scheduleProactiveRefresh(): void {
     const refreshAtMs = expiresAtMs - REFRESH_BUFFER_MS;
     const delay = Math.max(MIN_REFRESH_DELAY_MS, refreshAtMs - Date.now());
 
-    refreshTimerId = setTimeout(async () => {
-      try {
-        await refreshTokens();
-        // Schedule next refresh after successful refresh
-        scheduleProactiveRefresh();
-      } catch {
-        // Refresh failed - user will be logged out on next 401
-        // Don't retry here to avoid infinite loops
-      }
+    refreshTimerId = setTimeout(() => {
+      void refreshAndReschedule();
     }, delay);
   } catch {
     // Invalid token format, ignore

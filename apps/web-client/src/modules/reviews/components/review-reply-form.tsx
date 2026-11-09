@@ -14,7 +14,6 @@ interface ReviewReplyFormProps {
   isSubmitting?: boolean;
   parentReplyId?: string;
   replyToUsername?: string;
-  autoFocus?: boolean;
 }
 
 export function ReviewReplyForm({
@@ -23,11 +22,14 @@ export function ReviewReplyForm({
   isSubmitting = false,
   parentReplyId,
   replyToUsername,
-  autoFocus = false,
 }: ReviewReplyFormProps) {
   const { dict } = useTranslation();
   const [content, setContent] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -79,7 +81,6 @@ export function ReviewReplyForm({
               'text-cinema-text-primary placeholder:text-cinema-text-disabled focus-visible:ring-0 shadow-none',
             )}
             disabled={isSubmitting}
-            autoFocus={autoFocus}
           />
 
           {/* Bottom bar with actions */}

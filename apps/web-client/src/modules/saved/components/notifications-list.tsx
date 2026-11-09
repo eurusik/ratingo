@@ -20,6 +20,7 @@ import {
 import { queryKeys } from '@/core/query/keys';
 import { NotificationCard } from './notification-card';
 import { NotificationsEmptyState } from './notifications-empty-state';
+import { createPlaceholderKeys } from '@/shared/utils';
 
 interface NotificationPage {
   data: Array<{ id: string; isRead: boolean; trigger: unknown; payload: unknown; createdAt: string; mediaSummary: unknown }>;
@@ -28,11 +29,13 @@ interface NotificationPage {
   hasMore: boolean;
 }
 
+const NOTIFICATION_SKELETON_KEYS = createPlaceholderKeys('notification-skeleton', 6);
+
 function NotificationsListSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-cinema-card/50">
+      {NOTIFICATION_SKELETON_KEYS.map((key) => (
+        <div key={key} className="flex items-start gap-3 p-3 rounded-xl bg-cinema-card/50">
           <Skeleton className="w-16 h-24 rounded-md shrink-0" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-3 w-20" />
@@ -63,7 +66,10 @@ export function NotificationsList() {
 
   const markAllAsRead = useMarkAllNotificationsAsRead();
   const markAllAsReadRef = useRef(markAllAsRead.mutate);
-  markAllAsReadRef.current = markAllAsRead.mutate;
+
+  useEffect(() => {
+    markAllAsReadRef.current = markAllAsRead.mutate;
+  }, [markAllAsRead.mutate]);
 
   useEffect(() => {
     return () => {
@@ -133,7 +139,7 @@ export function NotificationsList() {
           queryClient.setQueryData(unreadKey, previousUnread);
           queryClient.setQueryData(allKey, previousAll);
           queryClient.setQueryData(unreadCountKey, previousUnreadCount);
-          queryClient.invalidateQueries({ queryKey: queryKeys.userActions.notifications.all });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.userActions.notifications.all });
         },
       },
       duration: 5000,

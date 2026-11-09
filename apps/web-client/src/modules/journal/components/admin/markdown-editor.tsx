@@ -186,7 +186,7 @@ export function MarkdownEditor({ value, onChange, placeholder, className }: Mark
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleImageUpload(file);
+      void handleImageUpload(file);
     }
   };
 
@@ -197,7 +197,7 @@ export function MarkdownEditor({ value, onChange, placeholder, className }: Mark
         e.preventDefault();
         const file = item.getAsFile();
         if (file) {
-          handleImageUpload(file);
+          void handleImageUpload(file);
         }
         return;
       }
@@ -208,7 +208,7 @@ export function MarkdownEditor({ value, onChange, placeholder, className }: Mark
     const file = e.dataTransfer.files[0];
     if (file?.type.startsWith('image/')) {
       e.preventDefault();
-      handleImageUpload(file);
+      void handleImageUpload(file);
     }
   };
 

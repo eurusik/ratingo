@@ -36,7 +36,7 @@ export function setTokenGetter(getter: TokenGetter): void {
 }
 
 /** API response wrapper from backend. */
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: ApiErrorDetail;

@@ -5,7 +5,7 @@
  */
 
 import { AdminApiClient, PolicyDetailDto } from '../admin.client';
-import { apiGet, apiPost } from '../client';
+import { apiGet } from '../client';
 
 // Mock the client module
 jest.mock('../client', () => ({
@@ -14,7 +14,6 @@ jest.mock('../client', () => ({
 }));
 
 const mockApiGet = apiGet as jest.MockedFunction<typeof apiGet>;
-const mockApiPost = apiPost as jest.MockedFunction<typeof apiPost>;
 
 describe('AdminApiClient', () => {
   let client: AdminApiClient;
