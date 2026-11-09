@@ -339,12 +339,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+      - name: Require every check to have run or been skipped by the path filter
+        env:
+          NEEDS: ${{ toJSON(needs) }}
         run: |
-          echo "results: $RESULTS"
-          for r in $RESULTS; do
-            if [[ "$r" == "failure" || "$r" == "cancelled" ]]; then
-              exit 1
-            fi
-          done
+          results=$(echo "$NEEDS" | jq -c 'map_values(if (.result // "") == "" then "none" else .result end)')
+          echo "$results" | jq -r 'to_entries[] | "\(.key): \(.value)"'
+
+          changes_result=$(echo "$results" | jq -r '.changes // "none"')
+          if [[ "$changes_result" != "success" ]]; then
+            echo "::error::changes ended '$changes_result', so no check ran on this commit"
+            exit 1
+          fi
+
+          not_passed=$(echo "$results" | jq -r '
+            to_entries[]
+            | select(.key != "changes")
+            | select(.value != "success" and .value != "skipped")
+            | "\(.key): \(.value)"')
+          if [[ -n "$not_passed" ]]; then
+            while IFS= read -r job; do
+              echo "::error::$job"
+            done <<< "$not_passed"
+            exit 1
+          fi
