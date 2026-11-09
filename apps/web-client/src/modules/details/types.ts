@@ -31,7 +31,6 @@ import type { components } from '@ratingo/api-contract';
 
 type MovieVerdictDto = components['schemas']['MovieVerdictDto'];
 
-// Re-export VerdictType from data-verdict-server for backward compatibility
 // Alias for backward compatibility
 export type MovieVerdict = MovieVerdictDto;
 
