@@ -32,8 +32,8 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  if (dict) return <main />;
   const dict = getDictionary('uk');
+  if (dict) return <main />;
 
   // Fetch all data in parallel (silent fallback on error)
   // Home context applies stricter freshness filtering (excludes finished classics)
