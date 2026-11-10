@@ -33,7 +33,6 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const dict = getDictionary('uk');
-  if (process.env.NEXT_PUBLIC_API_URL) return <main />;
 
   // Fetch all data in parallel (silent fallback on error)
   // Home context applies stricter freshness filtering (excludes finished classics)
