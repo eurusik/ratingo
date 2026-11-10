@@ -378,6 +378,7 @@ jobs:
     permissions:
       contents: read
       deployments: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -393,7 +394,8 @@ jobs:
         timeout-minutes: 16
         env:
           GH_TOKEN: ${{ github.token }}
-          PREVIEW_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: .github/scripts/wait-for-vercel-preview.sh
 
       - name: Smoke tests against the preview
