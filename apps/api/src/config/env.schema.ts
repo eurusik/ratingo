@@ -58,6 +58,8 @@ const httpEnvKeys = {
 
   // Rate Limiting
   THROTTLE_LIMIT: Joi.number().default(600),
+
+  CORS_ALLOW_VERCEL_PREVIEWS: Joi.string().valid('true', 'false').optional(),
 };
 
 export const buildEnvSchema = (role: AppRole): Joi.ObjectSchema =>

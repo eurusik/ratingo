@@ -25,7 +25,8 @@ After finishing each step, review the changed code before moving on, and fix wha
 ## Branches & Deploy
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`
 - `development` deploys to Railway dev, `main` deploys to Railway production; hotfixes go to `main`, then back-merge into `development`
-- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck, unit tests (2 shards) and e2e tests, web lint/typecheck/tests, dead code in api and web (`api-dead-code`/`web-dead-code`, knip), contract drift, pg-backup lint/typecheck/tests, and `api-prod-install` (builds the `deps` and `prod-deps` stages of `apps/api/Dockerfile` and loads every installed native module; runs when a `package.json`, the lockfile, `.npmrc`, `.dockerignore`, the API Dockerfile or `ci.yml` changes; on the same changes `api-audit` and `web-audit` fail on high/critical `npm audit` findings in API and web-client production deps, and `security-audit.yml` reruns both audits weekly on `main` and keeps one open `security` issue per workspace while it fails). On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
+- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck, unit tests (2 shards) and e2e tests, web lint/typecheck/tests, dead code in api and web (`api-dead-code`/`web-dead-code`, knip), contract drift, pg-backup lint/typecheck/tests, `web-smoke` (on PRs that touch the web client or `e2e/smoke/`: waits up to 15 min for the PR's Vercel preview, then runs the Playwright smoke suite against it with the `VERCEL_AUTOMATION_BYPASS_SECRET` repo secret; a missing preview fails the job), and `api-prod-install` (builds the `deps` and `prod-deps` stages of `apps/api/Dockerfile` and loads every installed native module; runs when a `package.json`, the lockfile, `.npmrc`, `.dockerignore`, the API Dockerfile or `ci.yml` changes; on the same changes `api-audit` and `web-audit` fail on high/critical `npm audit` findings in API and web-client production deps, and `security-audit.yml` reruns both audits weekly on `main` and keeps one open `security` issue per workspace while it fails). On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
+- Vercel previews call the dev API (`api-dev.ratingo.top`), which allows `https://ratingo-<9-char hash>-eurusik.vercel.app` origins only because dev sets `CORS_ALLOW_VERCEL_PREVIEWS=true`; never set it on prod. Branch-alias URLs (`ratingo-git-*`) are not allowed — open the deployment URL
 - Make every migration statement safe to re-run against existing state (`IF NOT EXISTS` / `IF EXISTS`): dev runs migrations on a fresh DB, so state conflicts surface only in prod
 
 ## Commands
@@ -41,6 +42,7 @@ npm run test:client              # Frontend tests
 npm run test:e2e --workspace=api # Backend e2e (in-memory fakes, no Postgres/Redis needed)
 npm run lint:dead-code --workspace=api # knip: unused files/exports/deps in the API (knip.json, Node >= 20.19)
 npm run lint:dead-code --workspace=web-client # knip: same for the web client
+BASE_URL=https://<preview>.vercel.app npm run test:smoke # read-only Playwright smoke suite (e2e/smoke) against any deployed URL; protected previews also need VERCEL_AUTOMATION_BYPASS_SECRET
 npm run lint:api:fix             # Auto-fix backend lint
 
 # Single test (from apps/api/ or apps/web-client/)
