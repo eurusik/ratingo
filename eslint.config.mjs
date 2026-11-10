@@ -7,6 +7,7 @@ import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import nextPlugin from '@next/eslint-plugin-next';
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -57,6 +58,53 @@ const jestRecommendedRulesAsErrors = Object.fromEntries(
 const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
 
 const ratingoPlugin = { rules: { 'no-deep-relative-imports': noDeepRelativeImports } };
+
+const webSrc = './apps/web-client/src';
+const webModules = fs
+  .readdirSync(path.join(tsconfigRootDir, 'apps/web-client/src/modules'), {
+    withFileTypes: true,
+  })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name);
+const webLayerZones = [
+  {
+    target: `${webSrc}/shared/**/*`,
+    from: [`${webSrc}/modules/**/*`, `${webSrc}/app/**/*`],
+    message:
+      'shared must not depend on modules or app: move the code into shared or pass it in as a prop.',
+  },
+  {
+    target: `${webSrc}/core/**/*`,
+    from: [`${webSrc}/modules/**/*`, `${webSrc}/app/**/*`],
+    message: 'core must not depend on modules or app: move the shared types or hooks into core.',
+  },
+  {
+    target: `${webSrc}/modules/**/*`,
+    from: `${webSrc}/app/**/*`,
+    message: 'modules must not depend on app routes.',
+  },
+];
+const webModuleInternalsZones = (module) => [
+  {
+    target: [`${webSrc}/app/**/*`, `${webSrc}/modules/!(${module})/**/*`],
+    from: [`${webSrc}/modules/${module}/*/**/*`, `${webSrc}/modules/${module}/!(index).{ts,tsx}`],
+    message: `Import from @/modules/${module} (its index.ts) instead of internal files.`,
+  },
+];
+const webBoundaryZones = (allowedInternalsOf) => [
+  ...webLayerZones,
+  ...webModules.filter((module) => module !== allowedInternalsOf).flatMap(webModuleInternalsZones),
+];
+const webModuleInternalImportsToRemove = {
+  'apps/web-client/src/app/(main)/settings/import/page.tsx': 'settings',
+  'apps/web-client/src/modules/journal/components/admin/admin-post-list.tsx': 'admin',
+};
+const webImportSettings = {
+  'import/resolver': {
+    typescript: { project: path.join(tsconfigRootDir, 'apps/web-client/tsconfig.json') },
+    node: true,
+  },
+};
 
 const apiImportSettings = {
   'import/parsers': {
@@ -139,7 +187,10 @@ const presentationInfrastructureZone = {
 };
 const domainOuterLayersZone = {
   target: './apps/api/src/modules/**/domain/**/*',
-  from: ['./apps/api/src/modules/**/application/**/*', './apps/api/src/modules/**/presentation/**/*'],
+  from: [
+    './apps/api/src/modules/**/application/**/*',
+    './apps/api/src/modules/**/presentation/**/*',
+  ],
   message: 'Domain must not depend on application or presentation',
 };
 const infrastructurePresentationZone = {
@@ -498,7 +549,8 @@ export default [
         },
         {
           selector: "MemberExpression[object.name='process'][property.name='env']",
-          message: 'Read environment variables in apps/api/src/config and inject the config instead',
+          message:
+            'Read environment variables in apps/api/src/config and inject the config instead',
         },
         {
           selector: 'ForInStatement',
@@ -728,6 +780,22 @@ export default [
       ],
     },
   },
+  {
+    files: webSourceFiles,
+    plugins: {
+      import: importPlugin,
+    },
+    settings: webImportSettings,
+    rules: {
+      'import/no-restricted-paths': ['error', { zones: webBoundaryZones() }],
+    },
+  },
+  ...Object.entries(webModuleInternalImportsToRemove).map(([file, module]) => ({
+    files: [file],
+    rules: {
+      'import/no-restricted-paths': ['error', { zones: webBoundaryZones(module) }],
+    },
+  })),
   {
     files: tanstackTableFiles,
     rules: {

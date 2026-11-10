@@ -18,10 +18,6 @@ jest.mock('@/core/query', () => ({
   useMarkAllEpisodesWatched: () => ({ mutate: jest.fn(), isPending: false }),
   useUnmarkEpisodes: () => ({ mutate: jest.fn(), isPending: false }),
   useResetSeason: () => ({ mutate: jest.fn(), isPending: false }),
-}));
-
-// Mock user media state hook
-jest.mock('@/modules/saved/hooks/use-me-lists', () => ({
   useUserMediaState: () => ({ data: null }),
 }));
 

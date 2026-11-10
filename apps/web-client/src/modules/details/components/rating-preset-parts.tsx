@@ -8,7 +8,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from '@/shared/ui/drawer';
-import { RATING_PRESETS, type RatingPresetId } from '../constants/rating-presets';
+import { RATING_PRESETS, type RatingPresetId } from '@/shared/constants';
 
 export type RatingPreset = (typeof RATING_PRESETS)[number];
 

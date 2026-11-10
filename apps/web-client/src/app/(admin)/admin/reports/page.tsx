@@ -1,4 +1,4 @@
-import { ReportsQueue } from '@/modules/admin/components/reports';
+import { ReportsQueue } from '@/modules/admin';
 
 export default function AdminReportsPage() {
   return <ReportsQueue />;

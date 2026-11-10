@@ -21,7 +21,7 @@ import {
   AlertDialogCancel,
 } from '@/shared/ui';
 import { useAuth } from '@/core/auth';
-import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
+import { useUserMediaState } from '@/core/query';
 import { useEpisodeProgress } from '../hooks/use-episode-progress';
 import { useCatchUp } from '../hooks/use-catch-up';
 import { useEpisodeToggle } from '../hooks/use-episode-toggle';

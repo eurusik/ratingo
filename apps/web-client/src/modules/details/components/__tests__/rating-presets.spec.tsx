@@ -9,7 +9,7 @@
 import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RatingPresets } from '../rating-presets';
-import { RATING_PRESETS } from '@/modules/details/constants/rating-presets';
+import { RATING_PRESETS } from '@/shared/constants';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -57,7 +57,7 @@ jest.mock('@/shared/i18n', () => ({
   }),
 }));
 
-jest.mock('@/modules/saved/hooks/use-me-lists', () => ({
+jest.mock('@/core/query', () => ({
   useUserMediaState: () => ({ data: mockUserMediaState }),
   useSetRating: () => ({
     mutateAsync: mockSetRating,
