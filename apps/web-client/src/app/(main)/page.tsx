@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  throw new Error('scratch: deliberately broken home page');
+  if (dict) return <main />;
   const dict = getDictionary('uk');
 
   // Fetch all data in parallel (silent fallback on error)
