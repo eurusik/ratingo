@@ -5,7 +5,7 @@
  * under admin.policyDetail.form
  */
 
-export interface CountriesLabels {
+interface CountriesLabels {
   title?: string;
   description?: string;
   allowed?: string;
@@ -14,7 +14,7 @@ export interface CountriesLabels {
   blockedPlaceholder?: string;
 }
 
-export interface LanguagesLabels {
+interface LanguagesLabels {
   title?: string;
   description?: string;
   allowed?: string;
@@ -23,7 +23,7 @@ export interface LanguagesLabels {
   blockedPlaceholder?: string;
 }
 
-export interface ProvidersLabels {
+interface ProvidersLabels {
   title?: string;
   description?: string;
   placeholder?: string;
@@ -31,7 +31,7 @@ export interface ProvidersLabels {
   emptyText?: string;
 }
 
-export interface SettingsLabels {
+interface SettingsLabels {
   title?: string;
   description?: string;
   eligibilityMode?: string;
@@ -50,7 +50,7 @@ export interface SettingsLabels {
   minRelevanceScoreHint?: string;
 }
 
-export interface BreakoutRulesLabels {
+interface BreakoutRulesLabels {
   title?: string;
   description?: string;
   addRule?: string;
@@ -67,7 +67,7 @@ export interface BreakoutRulesLabels {
   originCountriesPlaceholder?: string;
 }
 
-export interface GlobalRequirementsLabels {
+interface GlobalRequirementsLabels {
   title?: string;
   description?: string;
   minQualityScore?: string;
@@ -81,7 +81,7 @@ export interface GlobalRequirementsLabels {
   appliesToHint?: string;
 }
 
-export interface ContentClassesLabels {
+interface ContentClassesLabels {
   title?: string;
   description?: string;
   hint?: string;

@@ -1,18 +1,3 @@
-/**
- * Browse categories configuration.
- * Single source of truth for all browse pages.
- *
- * API Structure:
- * - /api/catalog/movies/trending
- * - /api/catalog/movies/now-playing
- * - /api/catalog/movies/new-releases
- * - /api/catalog/movies/new-on-digital
- * - /api/catalog/shows/trending
- * - /api/catalog/search
- */
-
-import type { Route } from 'next';
-
 export type BrowseCategory =
   | 'shows-trending' // Shows trending
   | 'shows-popular' // Shows popular (hits)
@@ -26,7 +11,7 @@ export type BrowseCategory =
 
 export type PoolType = 'trending' | 'popular';
 
-export const CATALOG_SORT = {
+const CATALOG_SORT = {
   RATINGO: 'ratingo',
   RELEASE_DATE: 'releaseDate',
   LAST_AIR_DATE: 'lastAirDate',
@@ -36,7 +21,7 @@ export type CatalogSort = (typeof CATALOG_SORT)[keyof typeof CATALOG_SORT];
 
 export const CATALOG_SORT_OPTIONS = [CATALOG_SORT.RATINGO, CATALOG_SORT.RELEASE_DATE] as const;
 
-export const SHOW_SORT_OPTIONS = [
+const SHOW_SORT_OPTIONS = [
   CATALOG_SORT.RATINGO,
   CATALOG_SORT.RELEASE_DATE,
   CATALOG_SORT.LAST_AIR_DATE,
@@ -81,7 +66,7 @@ export interface CategoryConfig {
  * Category configurations.
  * Easy to extend with new categories.
  */
-export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
+const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
   // Shows
   'shows-trending': {
     slug: 'shows-trending',
@@ -203,12 +188,4 @@ export function getCategoryConfig(slug: string): CategoryConfig | null {
  */
 export function getValidCategorySlugs(): BrowseCategory[] {
   return Object.keys(BROWSE_CATEGORIES) as BrowseCategory[];
-}
-
-/**
- * Build browse page URL.
- */
-export function buildBrowseUrl(category: BrowseCategory, page?: number): Route {
-  const base = `/browse/${category}`;
-  return (page && page > 1 ? `${base}?page=${page}` : base) as Route;
 }

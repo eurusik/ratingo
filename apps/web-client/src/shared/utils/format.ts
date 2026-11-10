@@ -65,16 +65,6 @@ export function formatYear(dateString: string | null | undefined): string {
   return new Date(dateString).getFullYear().toString();
 }
 
-/**
- * Format episode code.
- *
- * @example
- * formatEpisode(4, 9) // "S4E9"
- */
-export function formatEpisode(season: number, episode: number): string {
-  return `S${season}E${episode}`;
-}
-
 /** Freshness level for relative dates. */
 export type DateFreshness = 'fresh' | 'recent' | 'older';
 

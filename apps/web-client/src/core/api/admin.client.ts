@@ -31,20 +31,8 @@ export type ContentClass = NonNullable<PolicyConfigDto['excludedContentClasses']
 /** Breakout rule DTO from API contract. */
 export type BreakoutRuleDto = components['schemas']['BreakoutRuleDto'];
 
-/** Breakout rule requirements DTO from API contract. */
-export type BreakoutRuleRequirementsDto = components['schemas']['BreakoutRuleRequirementsDto'];
-
-/** Homepage config DTO from API contract. */
-export type HomepageConfigDto = components['schemas']['HomepageConfigDto'];
-
 /** Global requirements DTO from API contract. */
 export type GlobalRequirementsDto = components['schemas']['GlobalRequirementsDto'];
-
-/** Min votes any-of DTO from API contract. */
-export type MinVotesAnyOfDto = components['schemas']['MinVotesAnyOfDto'];
-
-/** Evaluation context type from API contract. */
-export type EvaluationContext = NonNullable<GlobalRequirementsDto['appliesTo']>[number];
 
 /** Evaluation run DTO from API contract. */
 export type EvaluationRunDto = components['schemas']['EvaluationRunDto'];
@@ -61,9 +49,6 @@ export type ActionResponseDto = components['schemas']['ActionResponseDto'];
 /** Diff report DTO from API contract. */
 export type DiffReportDto = components['schemas']['DiffReportDto'];
 
-/** Progress statistics DTO from API contract. */
-export type ProgressStatsDto = components['schemas']['ProgressStatsDto'];
-
 /** Create policy DTO from API contract. */
 export type CreatePolicyDto = components['schemas']['CreatePolicyDto'];
 
@@ -71,10 +56,10 @@ export type CreatePolicyDto = components['schemas']['CreatePolicyDto'];
 export type CreatePolicyResponseDto = components['schemas']['CreatePolicyResponseDto'];
 
 /** Policies list response DTO from API contract. */
-export type PoliciesListDto = components['schemas']['PoliciesListDto'];
+type PoliciesListDto = components['schemas']['PoliciesListDto'];
 
 /** Runs list response DTO from API contract. */
-export type RunsListDto = components['schemas']['RunsListDto'];
+type RunsListDto = components['schemas']['RunsListDto'];
 
 // ============================================================================
 // Backfill types (generated from API contract)
@@ -88,22 +73,10 @@ export type BackfillJobDto = components['schemas']['IngestionJobResponseDto'];
 // ============================================================================
 
 /** Terminal statuses where polling should stop. */
-export const TERMINAL_STATUSES = ['prepared', 'failed', 'cancelled', 'promoted'] as const;
+const TERMINAL_STATUSES = ['prepared', 'failed', 'cancelled', 'promoted'] as const;
 
 /** Terminal status type. */
 export type TerminalStatus = (typeof TERMINAL_STATUSES)[number];
-
-/** Non-terminal statuses where polling should continue. */
-export const NON_TERMINAL_STATUSES = ['running'] as const;
-
-/** Non-terminal status type. */
-export type NonTerminalStatus = (typeof NON_TERMINAL_STATUSES)[number];
-
-/** All run status values. */
-export type RunStatus = TerminalStatus | NonTerminalStatus;
-
-/** Policy status values. */
-export type PolicyStatus = 'active' | 'inactive';
 
 /**
  * Checks if a run status is terminal.

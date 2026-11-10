@@ -1,2 +1,1 @@
-export { env, getApiUrl } from './env';
-export { routes } from './routes';
+export { getApiUrl } from './env';

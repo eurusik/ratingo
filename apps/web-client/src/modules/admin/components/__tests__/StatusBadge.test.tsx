@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import * as fc from 'fast-check';
 import { StatusBadge, statusVariantMap } from '../ui/StatusBadge';
-import { RunStatus, PolicyStatus } from '../../types';
+import { RUN_STATUS, POLICY_STATUS } from '../../types';
 import { I18nProvider } from '@/shared/i18n/context';
 
 // Wrapper with I18nProvider for tests
@@ -25,21 +25,21 @@ describe('StatusBadge', () => {
     // Define the expected mapping according to requirements (lowercase values)
     const expectedMapping: Record<string, string> = {
       // RunStatus mapping
-      [RunStatus.RUNNING]: 'default', // blue styling
-      [RunStatus.PREPARED]: 'success', // green styling (prepared = success)
-      [RunStatus.FAILED]: 'destructive', // red styling
-      [RunStatus.CANCELLED]: 'secondary', // gray styling
-      [RunStatus.PROMOTED]: 'outline', // purple/special styling
+      [RUN_STATUS.RUNNING]: 'default', // blue styling
+      [RUN_STATUS.PREPARED]: 'success', // green styling (prepared = success)
+      [RUN_STATUS.FAILED]: 'destructive', // red styling
+      [RUN_STATUS.CANCELLED]: 'secondary', // gray styling
+      [RUN_STATUS.PROMOTED]: 'outline', // purple/special styling
 
       // PolicyStatus mapping
-      [PolicyStatus.ACTIVE]: 'success', // green styling
-      [PolicyStatus.INACTIVE]: 'secondary', // gray styling
+      [POLICY_STATUS.ACTIVE]: 'success', // green styling
+      [POLICY_STATUS.INACTIVE]: 'secondary', // gray styling
     };
 
     // Property: For any status value, the StatusBadge should map it to the correct variant
     fc.assert(
       fc.property(
-        fc.constantFrom(...Object.values(RunStatus), ...Object.values(PolicyStatus)),
+        fc.constantFrom(...Object.values(RUN_STATUS), ...Object.values(POLICY_STATUS)),
         (status: string) => {
           // Render the StatusBadge with the generated status
           const { container } = renderWithI18n(<StatusBadge status={status} />);
@@ -64,10 +64,10 @@ describe('StatusBadge', () => {
   // Additional unit test for specific examples
   test('renders specific status examples correctly', () => {
     const testCases = [
-      { status: RunStatus.RUNNING, expectedVariant: 'default' },
-      { status: RunStatus.PREPARED, expectedVariant: 'success' },
-      { status: RunStatus.FAILED, expectedVariant: 'destructive' },
-      { status: PolicyStatus.ACTIVE, expectedVariant: 'success' },
+      { status: RUN_STATUS.RUNNING, expectedVariant: 'default' },
+      { status: RUN_STATUS.PREPARED, expectedVariant: 'success' },
+      { status: RUN_STATUS.FAILED, expectedVariant: 'destructive' },
+      { status: POLICY_STATUS.ACTIVE, expectedVariant: 'success' },
     ];
 
     testCases.forEach(({ status, expectedVariant }) => {
@@ -81,7 +81,7 @@ describe('StatusBadge', () => {
 
   test('supports compact variant', () => {
     const { container } = renderWithI18n(
-      <StatusBadge status={RunStatus.PREPARED} variant="compact" />,
+      <StatusBadge status={RUN_STATUS.PREPARED} variant="compact" />,
     );
     const badge = container.querySelector('[data-testid="status-badge"]');
 

@@ -31,18 +31,8 @@ export type UpdateMappingRequest = components['schemas']['UpdateMappingRequestDt
 /** Distribution channel type. */
 export type DistributionChannel = CreateMappingRequest['distributionChannel'];
 
-/** Provider from registry with media count. */
-export type ProviderListItem = components['schemas']['ProviderDto'];
-
 /** Providers list response. */
 export type ProvidersListResponse = components['schemas']['ProvidersListDto'];
-
-/** Resolved mapping result. */
-export interface ResolvedMapping {
-  providerId: string;
-  variantId: string;
-  distributionChannel: string;
-}
 
 /** Resolve mapping response. */
 export interface ResolveMappingResponse {

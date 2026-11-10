@@ -7,7 +7,7 @@ import { ConfirmActionDialog } from '../dialogs/ConfirmActionDialog';
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { LoadingState } from '../ui/LoadingState';
-import { RunStatus, PolicyStatus, DataTableColumnDef } from '../../types';
+import { RUN_STATUS, POLICY_STATUS, DataTableColumnDef } from '../../types';
 import { I18nProvider } from '@/shared/i18n/context';
 
 // Wrapper with I18nProvider for tests
@@ -25,9 +25,9 @@ const renderWithI18n = (ui: React.ReactElement) => render(ui, { wrapper: TestWra
 describe('Building Blocks Checkpoint', () => {
   test('StatusBadge renders without errors', () => {
     expect(() => {
-      renderWithI18n(<StatusBadge status={RunStatus.RUNNING} />);
-      renderWithI18n(<StatusBadge status={PolicyStatus.ACTIVE} />);
-      renderWithI18n(<StatusBadge status={RunStatus.PROMOTED} variant="compact" />);
+      renderWithI18n(<StatusBadge status={RUN_STATUS.RUNNING} />);
+      renderWithI18n(<StatusBadge status={POLICY_STATUS.ACTIVE} />);
+      renderWithI18n(<StatusBadge status={RUN_STATUS.PROMOTED} variant="compact" />);
     }).not.toThrow();
   });
 
@@ -133,14 +133,14 @@ describe('Building Blocks Checkpoint', () => {
 
   test('TypeScript interfaces are properly defined', () => {
     // Test that status constants are properly defined (lowercase values)
-    expect(RunStatus.RUNNING).toBe('running');
-    expect(RunStatus.PREPARED).toBe('prepared');
-    expect(RunStatus.FAILED).toBe('failed');
-    expect(RunStatus.CANCELLED).toBe('cancelled');
-    expect(RunStatus.PROMOTED).toBe('promoted');
+    expect(RUN_STATUS.RUNNING).toBe('running');
+    expect(RUN_STATUS.PREPARED).toBe('prepared');
+    expect(RUN_STATUS.FAILED).toBe('failed');
+    expect(RUN_STATUS.CANCELLED).toBe('cancelled');
+    expect(RUN_STATUS.PROMOTED).toBe('promoted');
 
-    expect(PolicyStatus.ACTIVE).toBe('active');
-    expect(PolicyStatus.INACTIVE).toBe('inactive');
+    expect(POLICY_STATUS.ACTIVE).toBe('active');
+    expect(POLICY_STATUS.INACTIVE).toBe('inactive');
 
     // Test that interfaces can be used for type checking
     const mockProgressStats = {
@@ -168,7 +168,7 @@ describe('Building Blocks Checkpoint', () => {
     // expected shadcn/ui class patterns
 
     const { container: statusContainer } = renderWithI18n(
-      <StatusBadge status={RunStatus.PROMOTED} />,
+      <StatusBadge status={RUN_STATUS.PROMOTED} />,
     );
     expect(statusContainer.querySelector('[data-testid="status-badge"]')).toBeInTheDocument();
 

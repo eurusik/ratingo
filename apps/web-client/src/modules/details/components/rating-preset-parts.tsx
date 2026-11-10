@@ -23,7 +23,7 @@ interface PresetButtonProps {
   className?: string;
 }
 
-export function PresetButton({
+function PresetButton({
   preset,
   label,
   isActive,

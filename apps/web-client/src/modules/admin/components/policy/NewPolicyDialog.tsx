@@ -10,7 +10,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { FileText, FilePlus } from 'lucide-react';
 
-export interface NewPolicyDialogLabels {
+interface NewPolicyDialogLabels {
   title: string;
   description: string;
   fromActive: string;

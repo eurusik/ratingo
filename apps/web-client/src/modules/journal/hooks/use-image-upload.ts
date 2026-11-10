@@ -13,7 +13,7 @@ import type { ImageUploadResponseDto } from '../types';
 /**
  * Upload state for tracking progress.
  */
-export interface UploadState {
+interface UploadState {
   isUploading: boolean;
   progress: number;
   error: Error | null;

@@ -3,22 +3,9 @@ import type { components } from '@ratingo/api-contract';
 import {
   catalogApi,
   type ShowDetailsDto,
-  type TrendingShowsDto,
   type ProviderDto,
 } from '../api/catalog.client';
 import { queryKeys } from './keys';
-import type { TrendingShowsParams } from '../api/catalog.client';
-
-export function useTrendingShows(
-  params?: TrendingShowsParams,
-  options?: Omit<UseQueryOptions<TrendingShowsDto>, 'queryKey' | 'queryFn'>,
-): UseQueryResult<TrendingShowsDto> {
-  return useQuery({
-    queryKey: queryKeys.shows.trending(params?.limit, params?.offset, params?.sort),
-    queryFn: () => catalogApi.getTrendingShows(params),
-    ...options,
-  });
-}
 
 export function useShowDetails(
   slug: string,

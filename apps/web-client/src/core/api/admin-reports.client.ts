@@ -12,7 +12,7 @@ import { apiGet, apiPatch, apiDelete } from './client';
 
 export type ReportWithReviewDto = components['schemas']['ReportWithReviewDto'];
 export type AdminReportListResponseDto = components['schemas']['AdminReportListResponseDto'];
-export type ReportStatus = 'pending' | 'reviewed' | 'dismissed' | 'actioned';
+type ReportStatus = 'pending' | 'reviewed' | 'dismissed' | 'actioned';
 
 export interface ListReportsParams {
   status?: ReportStatus;

@@ -4,7 +4,7 @@
 
 import { NavigationItem } from './types';
 
-export const ADMIN_NAVIGATION: NavigationItem[] = [
+const ADMIN_NAVIGATION: NavigationItem[] = [
   {
     id: 'catalog',
     label: 'Каталог',

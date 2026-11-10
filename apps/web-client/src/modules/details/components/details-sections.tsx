@@ -25,53 +25,6 @@ function SectionTitle({ children }: SectionTitleProps) {
 }
 
 // ============================================
-// Suitable For Tags
-// ============================================
-
-interface SuitableForTagsProps {
-  tags: string[];
-  label: string;
-}
-
-export function SuitableForTags({ tags, label }: SuitableForTagsProps) {
-  if (!tags || tags.length === 0) return null;
-
-  return (
-    <section className="flex flex-wrap items-center gap-2">
-      <span className="text-xs text-cinema-text-muted uppercase tracking-wider">{label}:</span>
-      {tags.map((tag) => (
-        <span
-          key={tag}
-          className="px-3 py-1 text-xs font-medium text-cinema-text-secondary bg-cinema-elevated/60 rounded-full border border-cinema-border/50"
-        >
-          {tag}
-        </span>
-      ))}
-    </section>
-  );
-}
-
-// ============================================
-// Overview Section
-// ============================================
-
-interface OverviewSectionProps {
-  title: string;
-  overview?: string | null;
-}
-
-export function OverviewSection({ title, overview }: OverviewSectionProps) {
-  if (!overview) return null;
-
-  return (
-    <section id="overview-section" className="space-y-2 scroll-mt-8">
-      <h3 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">{title}</h3>
-      <p className="text-base md:text-lg text-cinema-text-secondary leading-relaxed">{overview}</p>
-    </section>
-  );
-}
-
-// ============================================
 // Trailers Section
 // ============================================
 

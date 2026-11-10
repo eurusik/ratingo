@@ -17,7 +17,7 @@ import {
   RadioGroupItem,
 } from '@/shared/ui';
 
-export const REPORT_REASONS = {
+const REPORT_REASONS = {
   spam: 'spam',
   harassment: 'harassment',
   hate_speech: 'hate_speech',

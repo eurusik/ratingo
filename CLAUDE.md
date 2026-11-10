@@ -25,7 +25,7 @@ After finishing each step, review the changed code before moving on, and fix wha
 ## Branches & Deploy
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`
 - `development` deploys to Railway dev, `main` deploys to Railway production; hotfixes go to `main`, then back-merge into `development`
-- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck, unit tests (2 shards) and e2e tests, web lint/typecheck/tests, contract drift, pg-backup lint/typecheck/tests, and `api-prod-install` (builds the `deps` and `prod-deps` stages of `apps/api/Dockerfile` and loads every installed native module; runs when a `package.json`, the lockfile, `.npmrc`, `.dockerignore`, the API Dockerfile or `ci.yml` changes; on the same changes `api-audit` fails on high/critical `npm audit` findings in API production deps, and `security-audit.yml` reruns that audit weekly on `main` and keeps one open `security` issue while it fails). On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
+- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck, unit tests (2 shards) and e2e tests, web lint/typecheck/tests, dead code in api and web (`api-dead-code`/`web-dead-code`, knip), contract drift, pg-backup lint/typecheck/tests, and `api-prod-install` (builds the `deps` and `prod-deps` stages of `apps/api/Dockerfile` and loads every installed native module; runs when a `package.json`, the lockfile, `.npmrc`, `.dockerignore`, the API Dockerfile or `ci.yml` changes; on the same changes `api-audit` and `web-audit` fail on high/critical `npm audit` findings in API and web-client production deps, and `security-audit.yml` reruns both audits weekly on `main` and keeps one open `security` issue per workspace while it fails). On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
 - Make every migration statement safe to re-run against existing state (`IF NOT EXISTS` / `IF EXISTS`): dev runs migrations on a fresh DB, so state conflicts surface only in prod
 
 ## Commands
@@ -40,6 +40,7 @@ npm run test:api                 # Backend tests (--runInBand)
 npm run test:client              # Frontend tests
 npm run test:e2e --workspace=api # Backend e2e (in-memory fakes, no Postgres/Redis needed)
 npm run lint:dead-code --workspace=api # knip: unused files/exports/deps in the API (knip.json, Node >= 20.19)
+npm run lint:dead-code --workspace=web-client # knip: same for the web client
 npm run lint:api:fix             # Auto-fix backend lint
 
 # Single test (from apps/api/ or apps/web-client/)

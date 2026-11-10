@@ -24,12 +24,12 @@ export interface PaginationParams {
  * - home: stricter freshness (exclude classics)
  * - catalog: permissive (show all eligible content)
  */
-export type ListContext = 'home' | 'catalog';
+type ListContext = 'home' | 'catalog';
 
 /**
  * All sort options accepted by the backend catalog API.
  */
-export type CatalogSortParam =
+type CatalogSortParam =
   | 'trending'
   | 'ratingo'
   | 'popularity'
@@ -73,29 +73,14 @@ export type MovieDetailsDto = GetData<'/api/catalog/movies/{slug}'>;
 export type HeroData = GetArrayItem<'/api/home/hero'>[];
 
 /**
- * Hero block item.
- */
-export type HeroItemDto = GetArrayItem<'/api/home/hero'>;
-
-/**
  * Watching Now data (array unwrapped from {success, data} by apiGet).
  */
 export type WatchingNowData = GetArrayItem<'/api/home/watching-now'>[];
 
 /**
- * Watching Now item (Top 3 fresh content by live watchers).
- */
-export type WatchingNowItemDto = GetArrayItem<'/api/home/watching-now'>;
-
-/**
  * Trending shows response (has {data, meta} structure).
  */
 export type TrendingShowsDto = GetData<'/api/catalog/shows/trending'>;
-
-/**
- * Trending show list item.
- */
-export type ShowTrendingItemDto = components['schemas']['ShowTrendingItemDto'];
 
 /**
  * Calendar response.
