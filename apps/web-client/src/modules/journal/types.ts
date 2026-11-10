@@ -1,7 +1,7 @@
 /**
  * Journal module types.
  *
- * Re-exports types from @ratingo/api-contract for type safety.
+ * Re-exports the journal API types from core/api/journal.types.
  * Domain types for use in components and hooks.
  */
 

@@ -1,5 +1,3 @@
-'use client';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { meListsApi, type MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import type { MediaType } from '@/shared/types';
