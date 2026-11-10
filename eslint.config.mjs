@@ -59,9 +59,10 @@ const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
 
 const ratingoPlugin = { rules: { 'no-deep-relative-imports': noDeepRelativeImports } };
 
-const webSrc = './apps/web-client/src';
+const webSrcDir = 'apps/web-client/src';
+const webSrc = `./${webSrcDir}`;
 const webModules = fs
-  .readdirSync(path.join(tsconfigRootDir, 'apps/web-client/src/modules'), {
+  .readdirSync(path.join(tsconfigRootDir, webSrcDir, 'modules'), {
     withFileTypes: true,
   })
   .filter((entry) => entry.isDirectory())
@@ -84,16 +85,19 @@ const webLayerZones = [
     message: 'modules must not depend on app routes.',
   },
 ];
-const webModuleInternalsZones = (module) => [
-  {
-    target: [`${webSrc}/app/**/*`, `${webSrc}/modules/!(${module})/**/*`],
-    from: [`${webSrc}/modules/${module}/*/**/*`, `${webSrc}/modules/${module}/!(index).{ts,tsx}`],
-    message: `Import from @/modules/${module} (its index.ts) instead of internal files.`,
-  },
-];
-const webBoundaryZones = (allowedInternalsOf) => [
+const webModuleInternalsZone = (moduleName) => ({
+  target: [`${webSrc}/app/**/*`, `${webSrc}/modules/!(${moduleName})/**/*`],
+  from: [
+    `${webSrc}/modules/${moduleName}/*/**/*`,
+    `${webSrc}/modules/${moduleName}/!(index).{ts,tsx}`,
+  ],
+  message: `Import from @/modules/${moduleName} (its index.ts) instead of internal files.`,
+});
+const webBoundaryZones = (moduleWithAllowedInternals) => [
   ...webLayerZones,
-  ...webModules.filter((module) => module !== allowedInternalsOf).flatMap(webModuleInternalsZones),
+  ...webModules
+    .filter((moduleName) => moduleName !== moduleWithAllowedInternals)
+    .map(webModuleInternalsZone),
 ];
 const webModuleInternalImportsToRemove = {
   'apps/web-client/src/app/(main)/settings/import/page.tsx': 'settings',
@@ -774,7 +778,7 @@ export default [
         'error',
         {
           maxParentLevels: 1,
-          aliasRoot: path.join(tsconfigRootDir, 'apps/web-client/src'),
+          aliasRoot: path.join(tsconfigRootDir, webSrcDir),
           aliasPrefix: '@/',
         },
       ],
@@ -790,10 +794,10 @@ export default [
       'import/no-restricted-paths': ['error', { zones: webBoundaryZones() }],
     },
   },
-  ...Object.entries(webModuleInternalImportsToRemove).map(([file, module]) => ({
+  ...Object.entries(webModuleInternalImportsToRemove).map(([file, moduleName]) => ({
     files: [file],
     rules: {
-      'import/no-restricted-paths': ['error', { zones: webBoundaryZones(module) }],
+      'import/no-restricted-paths': ['error', { zones: webBoundaryZones(moduleName) }],
     },
   })),
   {

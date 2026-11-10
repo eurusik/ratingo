@@ -57,7 +57,7 @@ jest.mock('@/shared/i18n', () => ({
   }),
 }));
 
-jest.mock('@/core/query', () => ({
+jest.mock('@/core/query/user-media-state', () => ({
   useUserMediaState: () => ({ data: mockUserMediaState }),
   useSetRating: () => ({
     mutateAsync: mockSetRating,

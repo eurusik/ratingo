@@ -8,7 +8,7 @@ import { cn } from '@/shared/utils';
 import { Slider } from '@/shared/ui';
 import type { MediaType } from '@/shared/types';
 import { Skeleton } from '@/shared/ui';
-import { useUserMediaState, useSetRating } from '@/core/query';
+import { useUserMediaState, useSetRating } from '@/core/query/user-media-state';
 import { getRatingColor } from '@/modules/reviews';
 import { RATING_PRESETS, findPresetByScore, type RatingPresetId } from '@/shared/constants';
 import { useMutationGuard } from '../hooks/use-mutation-guard';
