@@ -135,5 +135,13 @@ describe('MarkWatchedPopover', () => {
       const checkbox = screen.getByRole('checkbox');
       expect(checkbox).toBeDisabled();
     });
+
+    it('should disable the dropdown trigger while loading even when disabled is not set', () => {
+      const { container } = render(
+        <MarkWatchedPopover {...defaultProps} unwatchedPreviousCount={3} isLoading={true} />,
+      );
+
+      expect(container.querySelector('[data-disabled]')).toBeInTheDocument();
+    });
   });
 });

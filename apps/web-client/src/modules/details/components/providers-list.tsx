@@ -70,9 +70,9 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
 
   // SVOD: has normalized providers
   const allProviders = [
-    ...(providers.stream || []),
-    ...(providers.rent || []),
-    ...(providers.buy || []),
+    ...(providers.stream ?? []),
+    ...(providers.rent ?? []),
+    ...(providers.buy ?? []),
   ];
 
   if (allProviders.length === 0) {
@@ -91,11 +91,11 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
       )}
 
       {/* Categories */}
-      <ProvidersCategory title={dict.details.providers.stream} providers={providers.stream || []} />
+      <ProvidersCategory title={dict.details.providers.stream} providers={providers.stream ?? []} />
 
-      <ProvidersCategory title={dict.details.providers.rent} providers={providers.rent || []} />
+      <ProvidersCategory title={dict.details.providers.rent} providers={providers.rent ?? []} />
 
-      <ProvidersCategory title={dict.details.providers.buy} providers={providers.buy || []} />
+      <ProvidersCategory title={dict.details.providers.buy} providers={providers.buy ?? []} />
 
       {/* Footer */}
       <div className="pt-4 border-t border-cinema-borderSoft/50 space-y-3">

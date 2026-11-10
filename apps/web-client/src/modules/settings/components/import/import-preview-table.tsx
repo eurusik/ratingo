@@ -119,7 +119,7 @@ function PreviewRows({
                 )}
               </TableCell>
               <TableCell className="text-right text-cinema-text-muted text-sm tabular-nums">
-                {item.rating != null ? item.rating : '—'}
+                {item.rating ?? '—'}
               </TableCell>
             </TableRow>
           ))}

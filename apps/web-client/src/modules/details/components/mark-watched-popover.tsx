@@ -45,7 +45,7 @@ export interface MarkWatchedPopoverProps {
 export function MarkWatchedPopover({
   isWatched,
   isLoading,
-  disabled,
+  disabled = false,
   unwatchedPreviousCount,
   onMarkThis,
   onMarkWithPrevious,

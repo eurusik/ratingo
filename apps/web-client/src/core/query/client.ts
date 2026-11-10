@@ -46,8 +46,6 @@ export function getQueryClient(): QueryClient {
   if (isServer) {
     return makeQueryClient();
   }
-  if (!browserQueryClient) {
-    browserQueryClient = makeQueryClient();
-  }
+  browserQueryClient ??= makeQueryClient();
   return browserQueryClient;
 }

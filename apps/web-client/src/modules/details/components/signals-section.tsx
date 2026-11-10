@@ -84,9 +84,9 @@ export function SignalsSection({
   const hasGenres = genres && genres.length > 0;
 
   const hasExternalRatings =
-    externalRatings?.imdb?.rating ||
-    externalRatings?.tmdb?.rating ||
-    externalRatings?.trakt?.rating ||
+    (externalRatings?.imdb?.rating ?? 0) > 0 ||
+    (externalRatings?.tmdb?.rating ?? 0) > 0 ||
+    (externalRatings?.trakt?.rating ?? 0) > 0 ||
     externalRatings?.metacritic?.rating != null ||
     externalRatings?.rottenTomatoes?.rating != null ||
     externalRatings?.rottenTomatoesAudience?.rating != null;

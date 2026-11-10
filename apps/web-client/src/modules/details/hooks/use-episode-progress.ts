@@ -34,7 +34,7 @@ export function useEpisodeProgress(
   ) ?? null;
 
   const watchedEpisodeIds = useMemo(
-    () => new Set(currentSeasonProgress?.watchedEpisodeIds || []),
+    () => new Set(currentSeasonProgress?.watchedEpisodeIds ?? []),
     [currentSeasonProgress?.watchedEpisodeIds],
   );
 
@@ -57,7 +57,7 @@ export function useEpisodeProgress(
     let lastEpisode = 0;
 
     for (const season of validSeasons) {
-      const episodes = season.episodes || [];
+      const episodes = season.episodes ?? [];
       const ids: string[] = [];
       allCount += episodes.length;
 

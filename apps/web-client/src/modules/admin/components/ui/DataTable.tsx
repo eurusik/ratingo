@@ -84,7 +84,7 @@ function DataTable<T>({
 
   const [internalPagination, setInternalPagination] = React.useState<PaginationState>({
     pageIndex: pagination?.page ? pagination.page - 1 : 0,
-    pageSize: pagination?.limit || 10,
+    pageSize: pagination?.limit ?? 10,
   });
 
   const { dict } = useTranslation();
