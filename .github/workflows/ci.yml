@@ -62,7 +62,7 @@ jobs:
             api=true; web=true; contracts=true; backup=true; migrations=true
           else
             api=$(match '^(apps/api/|knip\.json$)')
-            web=$(match '^(apps/web-client/|packages/(api-contract|fx-engine)/)')
+            web=$(match '^(apps/web-client/|packages/api-contract/|knip\.json$)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
@@ -243,6 +243,23 @@ jobs:
       - name: Audit API production dependencies for high and critical advisories
         run: npm audit --omit=dev --workspace=api --audit-level=high
 
+  web-audit:
+    name: web-audit
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: ${{ env.WEB_NODE_VERSION }}
+          package-manager-cache: false
+
+      - name: Audit web-client production dependencies for high and critical advisories
+        run: npm audit --omit=dev --workspace=web-client --audit-level=high
+
   web:
     name: web
     needs: changes
@@ -283,6 +300,22 @@ jobs:
             .cache/jest/web
             apps/web-client/tsconfig.typecheck.tsbuildinfo
           key: ${{ env.TOOL_CACHE_KEY }}-${{ github.sha }}
+
+  web-dead-code:
+    name: web-dead-code
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.WEB_NODE_VERSION }}
+
+      - name: Find unused files, exports and dependencies with knip
+        run: npm run lint:dead-code --workspace=web-client
 
   contracts:
     name: contracts
@@ -334,7 +367,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, contracts, pg-backup]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, contracts, pg-backup]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

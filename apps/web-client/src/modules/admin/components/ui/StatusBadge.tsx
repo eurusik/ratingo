@@ -46,7 +46,7 @@ const statusVariantMap: Record<string, VariantProps<typeof statusBadgeVariants>[
   inactive: 'secondary', // gray styling
 };
 
-export interface StatusBadgeProps
+interface StatusBadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     Omit<VariantProps<typeof statusBadgeVariants>, 'variant'> {
   status: string | RunStatusType | PolicyStatusType;
@@ -90,4 +90,4 @@ function StatusBadge({ className, status, variant = 'default', ...props }: Statu
   );
 }
 
-export { StatusBadge, statusBadgeVariants, statusVariantMap };
+export { StatusBadge, statusVariantMap };

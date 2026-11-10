@@ -27,11 +27,6 @@ export type SubscribeActionResultDto = components['schemas']['SubscribeActionRes
 export type UnsubscribeActionResultDto = components['schemas']['UnsubscribeActionResultDto'];
 export type SubscriptionWithMediaResponseDto =
   components['schemas']['SubscriptionWithMediaResponseDto'];
-
-// Notification types from api-contract
-export type NotificationPayloadDto = components['schemas']['NotificationPayloadDto'];
-export type NotificationMediaSummaryDto = components['schemas']['NotificationMediaSummaryDto'];
-export type NotificationItemDto = components['schemas']['NotificationItemDto'];
 export type NotificationListResponseDto = components['schemas']['NotificationListResponseDto'];
 
 export interface PaginatedResponse<T> {

@@ -8,7 +8,6 @@ import type {
   GenreDto,
   RatingoStatsDto,
   ExternalRatingsDto,
-  ExternalRatingItemDto,
   VideoDto,
   CastMemberDto,
   CrewMemberDto,
@@ -20,7 +19,6 @@ export type ImageSet = ImageDto;
 export type Genre = GenreDto;
 export type Stats = RatingoStatsDto;
 export type ExternalRatings = ExternalRatingsDto;
-export type RatingSource = ExternalRatingItemDto;
 export type Video = VideoDto;
 export type CastMember = CastMemberDto;
 export type CrewMember = CrewMemberDto;
@@ -31,12 +29,7 @@ export type { BadgeKey };
  */
 import type { components } from '@ratingo/api-contract';
 
-export type MovieVerdictDto = components['schemas']['MovieVerdictDto'];
-export type ShowVerdictDto = components['schemas']['ShowVerdictDto'];
-export type VerdictHintKey = MovieVerdictDto['hintKey'];
-
-// Re-export VerdictType from data-verdict-server for backward compatibility
-export type { VerdictType } from './components/data-verdict-server';
+type MovieVerdictDto = components['schemas']['MovieVerdictDto'];
 
 // Alias for backward compatibility
 export type MovieVerdict = MovieVerdictDto;

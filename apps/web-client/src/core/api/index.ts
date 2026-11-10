@@ -1,5 +1,4 @@
-export { apiGet, apiPost, apiPatch, apiPut, apiDelete, setTokenGetter } from './client';
-export { ApiError, getApiErrorCode, isNotFoundError, mapAuthError, type ApiErrorDetail, type AuthErrorMessages } from './error';
+export { ApiError, getApiErrorCode, isNotFoundError } from './error';
 export { ErrorCode } from './error-codes';
 export * from './catalog.client';
 export * from './user-actions.client';

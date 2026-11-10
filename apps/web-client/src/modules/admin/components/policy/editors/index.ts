@@ -4,9 +4,6 @@
  * Provides reusable form components for editing policy configuration.
  */
 
-export { TagInput } from './TagInput';
-export { ComboboxTagInput } from './ComboboxTagInput';
-export type { ComboboxOption } from './ComboboxTagInput';
 export { CountriesEditor } from './CountriesEditor';
 export { LanguagesEditor } from './LanguagesEditor';
 export { ProvidersEditor } from './ProvidersEditor';

@@ -22,7 +22,7 @@ export function getRatingColor(value: number) {
   return 'text-red-500';
 }
 
-export function getRatingLabel(
+function getRatingLabel(
   value: number,
   labels: { excellent: string; good: string; okay: string; meh: string; bad: string },
 ) {

@@ -14,13 +14,11 @@ import { apiGet, apiPost, apiPatch, apiDelete } from './client';
 export type ReviewResponseDto = components['schemas']['ReviewResponseDto'];
 export type ReviewListResponseDto = components['schemas']['ReviewListResponseDto'];
 export type ReviewMutationResponseDto = components['schemas']['ReviewMutationResponseDto'];
-export type ReviewAuthorDto = components['schemas']['ReviewAuthorDto'];
 export type VoteResultDto = components['schemas']['VoteResultDto'];
 
 // Reply types
 export type ReplyResponseDto = components['schemas']['ReplyResponseDto'];
 export type ReplyMutationResponseDto = components['schemas']['ReplyMutationResponseDto'];
-export type ReplyAuthorDto = components['schemas']['ReplyAuthorDto'];
 
 // Report types
 export type ReportResponseDto = components['schemas']['ReportResponseDto'];

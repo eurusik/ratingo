@@ -31,8 +31,6 @@ export const USER_MEDIA_STATE = {
   PAUSED: 'paused',
   CAUGHT_UP: 'caught_up',
 } as const satisfies Record<string, UserMediaState>;
-
-export type EpisodeInfo = components['schemas']['EpisodeInfoDto'];
 export type FavoriteUpdateItem = components['schemas']['FavoriteUpdateItemDto'];
 export type FavoriteUpdatesResponse = components['schemas']['FavoriteUpdatesResponseDto'];
 export type BatchRatingsResponse = components['schemas']['BatchRatingsResponseDto'];

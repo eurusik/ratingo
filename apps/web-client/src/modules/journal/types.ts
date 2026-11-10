@@ -7,13 +7,6 @@
 
 import type { components } from '@ratingo/api-contract';
 
-// ============================================================================
-// API DTO Types (from OpenAPI spec)
-// ============================================================================
-
-/** Post list item from API */
-export type PostListItemDto = components['schemas']['PostListItemDto'];
-
 /** Post detail with navigation from API */
 export type PostDetailDto = components['schemas']['PostDetailDto'];
 
@@ -25,15 +18,6 @@ export type PostListResponseDto = components['schemas']['PostListResponseDto'];
 
 /** Admin paginated posts response from API */
 export type AdminPostListResponseDto = components['schemas']['AdminPostListResponseDto'];
-
-/** Pagination metadata from API */
-export type PostPaginationMetaDto = components['schemas']['PostPaginationMetaDto'];
-
-/** Navigation link from API */
-export type PostNavigationLinkDto = components['schemas']['PostNavigationLinkDto'];
-
-/** Navigation links from API */
-export type PostNavigationDto = components['schemas']['PostNavigationDto'];
 
 /** Create post input from API */
 export type CreatePostDto = components['schemas']['CreatePostDto'];
@@ -59,14 +43,9 @@ export const POST_TYPE_VALUES = ['update', 'explanation', 'fix', 'roadmap'] as c
 export type PostType = (typeof POST_TYPE_VALUES)[number];
 
 /**
- * Post status values as const for type safety.
- */
-export const POST_STATUS_VALUES = ['draft', 'published', 'scheduled'] as const;
-
-/**
  * Post status for admin views.
  */
-export type PostStatus = (typeof POST_STATUS_VALUES)[number];
+export type PostStatus = 'draft' | 'published' | 'scheduled';
 
 /**
  * Query params for public posts list.
@@ -92,7 +71,7 @@ export interface AdminPostsQueryParams extends PostsQueryParams {
 /**
  * Navigation link to adjacent post (domain type).
  */
-export interface PostNavigationLink {
+interface PostNavigationLink {
   slug: string;
   title: string;
 }

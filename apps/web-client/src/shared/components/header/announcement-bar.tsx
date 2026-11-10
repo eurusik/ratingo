@@ -314,8 +314,3 @@ export function AnnouncementBarProvider({
     </AnnouncementContext.Provider>
   );
 }
-
-/** @deprecated Use AnnouncementBarProvider instead */
-export function AnnouncementBar() {
-  return null;
-}

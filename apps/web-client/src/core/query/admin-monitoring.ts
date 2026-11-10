@@ -6,17 +6,13 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 
-import {
-  adminMonitoringApi,
-  type KeyHealthDashboard,
-  type KeyHealthHistory,
-} from '../api/admin-monitoring.client';
+import { adminMonitoringApi, type KeyHealthDashboard } from '../api/admin-monitoring.client';
 
 import { retryUnlessUnauthorized } from './utils';
 
 const DASHBOARD_REFETCH_INTERVAL_MS = 60_000;
 
-export const adminMonitoringKeys = {
+const adminMonitoringKeys = {
   all: ['admin', 'monitoring'] as const,
   dashboard: () => [...adminMonitoringKeys.all, 'keys'] as const,
   history: (provider: string, limit?: number) =>
@@ -30,19 +26,6 @@ export function useKeyHealth(
     queryKey: adminMonitoringKeys.dashboard(),
     queryFn: () => adminMonitoringApi.getKeys(),
     refetchInterval: DASHBOARD_REFETCH_INTERVAL_MS,
-    retry: retryUnlessUnauthorized,
-    ...options,
-  });
-}
-
-export function useKeyHealthHistory(
-  provider: string,
-  limit?: number,
-  options?: Omit<UseQueryOptions<KeyHealthHistory>, 'queryKey' | 'queryFn'>,
-): UseQueryResult<KeyHealthHistory> {
-  return useQuery({
-    queryKey: adminMonitoringKeys.history(provider, limit),
-    queryFn: () => adminMonitoringApi.getHistory(provider, limit),
     retry: retryUnlessUnauthorized,
     ...options,
   });

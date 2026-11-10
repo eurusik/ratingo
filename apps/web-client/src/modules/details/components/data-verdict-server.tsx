@@ -18,10 +18,10 @@ import { VerdictCtaButton } from './verdict-cta-button';
 type ApiVerdictType = components['schemas']['MovieVerdictDto']['type'];
 
 /** Extended verdict type with UI-only variants. */
-export type VerdictType = ApiVerdictType | 'season_comparison' | 'user_context';
+type VerdictType = ApiVerdictType | 'season_comparison' | 'user_context';
 
 /** Verdict hint key for CTA. */
-export type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
+type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
 
 /**
  * Checks if context string is a numeric rating (e.g., "8.4", "7", "8,4").

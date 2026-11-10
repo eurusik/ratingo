@@ -1,36 +1,14 @@
 // Layout components
-export { AdminLayout, AdminShell, Sidebar, SidebarTrigger } from './components/layout';
+export { AdminLayout } from './components/layout';
 
 // UI primitives
-export {
-  DataTable,
-  StatusBadge,
-  statusBadgeVariants,
-  statusVariantMap,
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  JsonViewer,
-  FilterBar,
-  ProgressWithStats,
-  RunStatusCard,
-} from './components/ui';
+export { DataTable, StatusBadge, ProgressWithStats } from './components/ui';
 
 // Dialogs
-export {
-  ConfirmActionDialog,
-  CancelConfirmDialog,
-  PromoteConfirmDialog,
-} from './components/dialogs';
+export { ConfirmActionDialog } from './components/dialogs';
 
 // Policy feature components
 export {
-  CountriesCard,
-  LanguagesCard,
-  ProvidersCard,
-  SettingsCard,
-  BreakoutRulesCard,
-  GlobalRequirementsCard,
   PolicyHeader,
   PolicyRunsTab,
   PolicyConfigTab,
@@ -38,18 +16,10 @@ export {
   NewPolicyDialog,
   DraftHeader,
   type PolicyFormData,
-  type PolicyHeaderLabels,
-  type NewPolicyDialogLabels,
 } from './components/policy';
 
 // Provider feature components
-export {
-  MappingDialog,
-  UnmappedProvidersTable,
-  MappingsTable,
-  type MappingDialogProps,
-  type MappingFormData,
-} from './components/providers';
+export { UnmappedProvidersTable, MappingsTable } from './components/providers';
 
 // Run feature components
 export { RunHeader, RunDiffTab, RunErrorsTab } from './components/run';
@@ -57,7 +27,5 @@ export { RunHeader, RunDiffTab, RunErrorsTab } from './components/run';
 export { KeysHealthDashboard } from './components/monitoring';
 
 // Configuration
-export { ADMIN_NAVIGATION, getAdminNavigation } from './config';
-
 // Types
 export * from './types';

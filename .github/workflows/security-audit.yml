@@ -12,32 +12,43 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: 22
-  AUDIT_COMMAND: npm audit --omit=dev --workspace=api --audit-level=high
   ISSUE_LABEL: security
-  ISSUE_TITLE: 'npm audit: high or critical advisories in API production dependencies'
 
 jobs:
-  api-audit:
-    name: api-audit
+  audit:
+    name: ${{ matrix.job }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
       issues: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - job: api-audit
+            workspace: api
+            node-version: 22
+            issue-title: 'npm audit: high or critical advisories in API production dependencies'
+          - job: web-audit
+            workspace: web-client
+            node-version: 24
+            issue-title: 'npm audit: high or critical advisories in web-client production dependencies'
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      AUDIT_COMMAND: npm audit --omit=dev --workspace=${{ matrix.workspace }} --audit-level=high
+      ISSUE_TITLE: ${{ matrix.issue-title }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ matrix.node-version }}
           package-manager-cache: false
 
-      - name: Audit API production dependencies
+      - name: Audit ${{ matrix.workspace }} production dependencies
         id: audit
         run: |
           set +e
@@ -48,7 +59,7 @@ jobs:
       - name: Find the open audit issue
         id: issue
         run: |
-          number=$(gh issue list --label "$ISSUE_LABEL" --state open --search "\"$ISSUE_TITLE\" in:title" --json number --jq '.[0].number // empty')
+          number=$(gh issue list --label "$ISSUE_LABEL" --state open --search "\"$ISSUE_TITLE\" in:title" --json number,title --jq 'map(select(.title == env.ISSUE_TITLE))[0].number // empty')
           echo "number=$number" >> "$GITHUB_OUTPUT"
 
       - name: Open or update the audit issue
