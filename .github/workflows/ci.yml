@@ -34,6 +34,7 @@ jobs:
       backup: ${{ steps.filter.outputs.backup }}
       migrations: ${{ steps.filter.outputs.migrations }}
       deps: ${{ steps.filter.outputs.deps }}
+      smoke: ${{ steps.filter.outputs.smoke }}
     steps:
       - id: filter
         env:
@@ -47,6 +48,7 @@ jobs:
             echo "backup=true" >> "$GITHUB_OUTPUT"
             echo "migrations=true" >> "$GITHUB_OUTPUT"
             echo "deps=$([[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+            echo "smoke=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -59,13 +61,14 @@ jobs:
           large=$(( count >= 3000 ))
 
           if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
-            api=true; web=true; contracts=true; backup=true; migrations=true
+            api=true; web=true; contracts=true; backup=true; migrations=true; smoke=true
           else
             api=$(match '^(apps/api/|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/api-contract/|knip\.json$)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
+            smoke=$(match '^(apps/web-client/|packages/api-contract/|e2e/smoke/|playwright\.smoke\.config\.ts$)')
           fi
 
           if (( large )); then
@@ -74,13 +77,14 @@ jobs:
             deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
           fi
 
-          echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations deps=$deps"
+          echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "contracts=$contracts" >> "$GITHUB_OUTPUT"
           echo "backup=$backup" >> "$GITHUB_OUTPUT"
           echo "migrations=$migrations" >> "$GITHUB_OUTPUT"
           echo "deps=$deps" >> "$GITHUB_OUTPUT"
+          echo "smoke=$smoke" >> "$GITHUB_OUTPUT"
 
   api:
     name: api
@@ -365,9 +369,53 @@ jobs:
       - name: Unit tests
         run: npm test --workspace=pg-backup -- --ci
 
+  web-smoke:
+    name: web-smoke
+    needs: changes
+    if: needs.changes.outputs.smoke == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      deployments: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.WEB_NODE_VERSION }}
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps --only-shell chromium
+
+      - name: Wait for the Vercel preview
+        id: preview
+        timeout-minutes: 16
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_SHA: ${{ github.event.pull_request.head.sha }}
+        run: .github/scripts/wait-for-vercel-preview.sh
+
+      - name: Smoke tests against the preview
+        timeout-minutes: 5
+        env:
+          BASE_URL: ${{ steps.preview.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: npm run test:smoke
+
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: playwright-smoke-report
+          path: |
+            playwright-report/smoke
+            e2e/test-results/smoke
+          retention-days: 7
+          if-no-files-found: ignore
+
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, contracts, pg-backup]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, contracts, pg-backup, web-smoke]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

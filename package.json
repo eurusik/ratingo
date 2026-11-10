@@ -40,6 +40,7 @@
     "test:all": "turbo run test",
     "test:api": "turbo run test --filter=api -- --runInBand",
     "test:client": "turbo run test --filter=web-client",
+    "test:smoke": "playwright test -c playwright.smoke.config.ts",
     "format": "prettier --write \"apps/**/*.{ts,tsx,md,json}\"",
     "contracts:openapi": "npm run openapi:generate --workspace=api",
     "contracts:types": "npm run generate:types --workspace=@ratingo/api-contract",
