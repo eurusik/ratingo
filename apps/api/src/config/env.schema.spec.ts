@@ -51,4 +51,12 @@ describe('buildEnvSchema', () => {
     const { DATABASE_URL: _omitted, ...env } = BASE_ENV;
     expect(validate(role, { ...env, ...JWT_SECRETS }).error?.message).toMatch(/DATABASE_URL/);
   });
+
+  it('accepts only "true" or "false" for CORS_ALLOW_VERCEL_PREVIEWS', () => {
+    const env = { ...BASE_ENV, ...JWT_SECRETS };
+    expect(validate('api', { ...env, CORS_ALLOW_VERCEL_PREVIEWS: 'true' }).error).toBeUndefined();
+    expect(validate('api', { ...env, CORS_ALLOW_VERCEL_PREVIEWS: 'yes' }).error?.message).toMatch(
+      /CORS_ALLOW_VERCEL_PREVIEWS/,
+    );
+  });
 });
