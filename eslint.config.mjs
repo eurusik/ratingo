@@ -56,6 +56,8 @@ const jestRecommendedRulesAsErrors = Object.fromEntries(
 
 const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
 
+const ratingoPlugin = { rules: { 'no-deep-relative-imports': noDeepRelativeImports } };
+
 const apiImportSettings = {
   'import/parsers': {
     '@typescript-eslint/parser': ['.ts'],
@@ -618,7 +620,7 @@ export default [
   {
     files: ['apps/api/src/**/*.ts'],
     plugins: {
-      ratingo: { rules: { 'no-deep-relative-imports': noDeepRelativeImports } },
+      ratingo: ratingoPlugin,
     },
     rules: {
       'ratingo/no-deep-relative-imports': [
@@ -708,6 +710,22 @@ export default [
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
       'no-console': ['error', { allow: ['warn', 'error'] }],
+    },
+  },
+  {
+    files: webSourceFiles,
+    plugins: {
+      ratingo: ratingoPlugin,
+    },
+    rules: {
+      'ratingo/no-deep-relative-imports': [
+        'error',
+        {
+          maxParentLevels: 1,
+          aliasRoot: path.join(tsconfigRootDir, 'apps/web-client/src'),
+          aliasPrefix: '@/',
+        },
+      ],
     },
   },
   {

@@ -9,8 +9,8 @@ import { Button } from '@/shared/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible';
 import { withOccurrenceKeys } from '@/shared/utils';
 import type { ImportResult } from '@/core/api/user-media.client';
-import { useImportBatchStatus, type ImportBatchStatus } from '../../hooks/use-import-batch-status';
-import { useCancelImportBatches } from '../../hooks/use-import-media';
+import { useImportBatchStatus, type ImportBatchStatus } from '@/modules/settings/hooks/use-import-batch-status';
+import { useCancelImportBatches } from '@/modules/settings/hooks/use-import-media';
 import { ImportPendingStatus, type ImportPendingStatusLabels } from './import-pending-status';
 import { BATCH_STATUS, type BatchStatus } from './types';
 

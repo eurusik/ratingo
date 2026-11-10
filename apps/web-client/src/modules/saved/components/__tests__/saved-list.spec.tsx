@@ -84,7 +84,7 @@ jest.mock('../media-type-filter', () => ({
 const mockUseSavedForLater = jest.fn();
 const mockUseSavedConsidering = jest.fn();
 
-jest.mock('../../hooks', () => ({
+jest.mock('@/modules/saved/hooks', () => ({
   useSavedForLater: (args: unknown) => mockUseSavedForLater(args),
   useSavedConsidering: (args: unknown) => mockUseSavedConsidering(args),
   useUnsaveItem: () => ({ mutate: jest.fn(), isPending: false }),

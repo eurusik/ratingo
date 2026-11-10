@@ -95,7 +95,7 @@ const mockDropMutate = jest.fn();
 const mockRestoreMutate = jest.fn();
 let mockDropPending = false;
 
-jest.mock('../../hooks/use-me-lists', () => ({
+jest.mock('@/modules/saved/hooks/use-me-lists', () => ({
   usePauseMedia: () => ({ mutate: mockPauseMutate, isPending: false }),
   useResumeMedia: () => ({ mutate: mockResumeMutate, isPending: false }),
   useDropMedia: () => ({ mutate: mockDropMutate, isPending: mockDropPending }),

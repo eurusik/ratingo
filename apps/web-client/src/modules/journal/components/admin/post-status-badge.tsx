@@ -8,7 +8,7 @@ import { useTranslation } from '@/shared/i18n';
 import { Badge } from '@/shared/ui/badge';
 import { cn } from '@/shared/utils';
 
-import type { AdminJournalPost, PostStatus } from '../../types';
+import type { AdminJournalPost, PostStatus } from '@/modules/journal/types';
 
 export interface PostStatusBadgeProps {
   post: AdminJournalPost;

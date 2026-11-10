@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 import { StatusBadge } from '../ui';
-import { RUN_STATUS } from '../../types';
+import { RUN_STATUS } from '@/modules/admin/types';
 import type { RunHeaderLabels } from './labels.types';
 import { withOccurrenceKeys } from '@/shared/utils';
 

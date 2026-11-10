@@ -26,7 +26,7 @@ import {
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useTranslation } from '@/shared/i18n';
 
-import { DataTableProps } from '../../types';
+import { DataTableProps } from '@/modules/admin/types';
 
 const SKELETON_ROW_KEYS = createPlaceholderKeys('skeleton-row', 5);
 

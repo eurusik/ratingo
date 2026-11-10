@@ -35,16 +35,16 @@ describe('API Client 204 Handling', () => {
       );
     });
 
-    jest.doMock('../../config/env', () => ({
+    jest.doMock('@/core/config/env', () => ({
       env: { API_BASE_URL: 'http://localhost:3001' },
     }));
 
-    jest.doMock('../../auth/refresh', () => ({
+    jest.doMock('@/core/auth/refresh', () => ({
       refreshTokens: jest.fn(),
       isRefreshEndpoint: jest.fn(() => false),
     }));
 
-    jest.doMock('../../auth/token-storage', () => ({
+    jest.doMock('@/core/auth/token-storage', () => ({
       tokenStorage: { clearTokens: jest.fn() },
     }));
 
@@ -75,16 +75,16 @@ describe('API Client 204 Handling', () => {
       );
     });
 
-    jest.doMock('../../config/env', () => ({
+    jest.doMock('@/core/config/env', () => ({
       env: { API_BASE_URL: 'http://localhost:3001' },
     }));
 
-    jest.doMock('../../auth/refresh', () => ({
+    jest.doMock('@/core/auth/refresh', () => ({
       refreshTokens: jest.fn(),
       isRefreshEndpoint: jest.fn(() => false),
     }));
 
-    jest.doMock('../../auth/token-storage', () => ({
+    jest.doMock('@/core/auth/token-storage', () => ({
       tokenStorage: { clearTokens: jest.fn() },
     }));
 
@@ -113,16 +113,16 @@ describe('API Client 204 Handling', () => {
       );
     });
 
-    jest.doMock('../../config/env', () => ({
+    jest.doMock('@/core/config/env', () => ({
       env: { API_BASE_URL: 'http://localhost:3001' },
     }));
 
-    jest.doMock('../../auth/refresh', () => ({
+    jest.doMock('@/core/auth/refresh', () => ({
       refreshTokens: jest.fn(),
       isRefreshEndpoint: jest.fn(() => false),
     }));
 
-    jest.doMock('../../auth/token-storage', () => ({
+    jest.doMock('@/core/auth/token-storage', () => ({
       tokenStorage: { clearTokens: jest.fn() },
     }));
 
@@ -153,16 +153,16 @@ describe('API Client 204 Handling', () => {
       );
     });
 
-    jest.doMock('../../config/env', () => ({
+    jest.doMock('@/core/config/env', () => ({
       env: { API_BASE_URL: 'http://localhost:3001' },
     }));
 
-    jest.doMock('../../auth/refresh', () => ({
+    jest.doMock('@/core/auth/refresh', () => ({
       refreshTokens: jest.fn(),
       isRefreshEndpoint: jest.fn(() => false),
     }));
 
-    jest.doMock('../../auth/token-storage', () => ({
+    jest.doMock('@/core/auth/token-storage', () => ({
       tokenStorage: { clearTokens: jest.fn() },
     }));
 

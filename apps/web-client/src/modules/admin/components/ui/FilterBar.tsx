@@ -9,7 +9,7 @@ import { Input } from '@/shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { useTranslation } from '@/shared/i18n';
 
-import { FilterBarProps, FilterConfig } from '../../types';
+import { FilterBarProps, FilterConfig } from '@/modules/admin/types';
 
 function FilterBar({
   searchValue = '',

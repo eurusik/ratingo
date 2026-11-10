@@ -7,7 +7,7 @@ import { ConfirmActionDialog } from '../dialogs/ConfirmActionDialog';
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { LoadingState } from '../ui/LoadingState';
-import { RUN_STATUS, POLICY_STATUS, DataTableColumnDef } from '../../types';
+import { RUN_STATUS, POLICY_STATUS, DataTableColumnDef } from '@/modules/admin/types';
 import { I18nProvider } from '@/shared/i18n/context';
 
 // Wrapper with I18nProvider for tests
