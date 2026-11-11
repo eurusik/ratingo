@@ -10,8 +10,7 @@ import type { Route } from 'next';
 import { Pencil, Trash2, Eye, EyeOff, ExternalLink, Clock } from 'lucide-react';
 
 import { useTranslation } from '@/shared/i18n';
-import { DataTable } from '@/modules/admin/components/ui/DataTable';
-import type { DataTableColumnDef, DropdownMenuItemProps } from '@/modules/admin/types';
+import { DataTable, type DataTableColumnDef, type DropdownMenuItemProps } from '@/modules/admin';
 
 import type { AdminJournalPost } from '@/modules/journal/types';
 import { PostStatusBadge } from './post-status-badge';

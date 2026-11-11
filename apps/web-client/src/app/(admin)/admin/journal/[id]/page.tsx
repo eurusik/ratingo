@@ -15,12 +15,8 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { useTranslation } from '@/shared/i18n';
 import { toast } from 'sonner';
 
-import {
-  useAdminJournalPost,
-  useUpdatePost,
-  PostForm,
-  type PostFormValues,
-} from '@/modules/journal';
+import { useAdminJournalPost, useUpdatePost } from '@/modules/journal';
+import { PostForm, type PostFormValues } from '@/modules/journal/admin';
 
 export default function EditJournalPostPage() {
   const params = useParams();

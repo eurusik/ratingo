@@ -85,24 +85,26 @@ const webLayerZones = [
     message: 'modules must not depend on app routes.',
   },
 ];
-const webModuleInternalsZone = (moduleName) => ({
-  target: [`${webSrc}/app/**/*`, `${webSrc}/modules/!(${moduleName})/**/*`],
-  from: [
-    `${webSrc}/modules/${moduleName}/*/**/*`,
-    `${webSrc}/modules/${moduleName}/!(index).{ts,tsx}`,
-  ],
-  message: `Import from @/modules/${moduleName} (its index.ts) instead of internal files.`,
-});
-const webBoundaryZones = (moduleWithAllowedInternals) => [
-  ...webLayerZones,
-  ...webModules
-    .filter((moduleName) => moduleName !== moduleWithAllowedInternals)
-    .map(webModuleInternalsZone),
-];
-const webModuleInternalImportsToRemove = {
-  'apps/web-client/src/app/(main)/settings/import/page.tsx': 'settings',
-  'apps/web-client/src/modules/journal/components/admin/admin-post-list.tsx': 'admin',
+const webModuleExtraEntryPoints = {
+  journal: ['admin'],
+  settings: ['import'],
 };
+const webModuleInternalsZone = (moduleName) => {
+  const extraEntryPoints = webModuleExtraEntryPoints[moduleName] ?? [];
+  const allowedImports = [
+    `@/modules/${moduleName}`,
+    ...extraEntryPoints.map((entryPoint) => `@/modules/${moduleName}/${entryPoint}`),
+  ].join(' or ');
+  return {
+    target: [`${webSrc}/app/**/*`, `${webSrc}/modules/!(${moduleName})/**/*`],
+    from: [
+      `${webSrc}/modules/${moduleName}/*/**/*`,
+      `${webSrc}/modules/${moduleName}/!(${['index', ...extraEntryPoints].join('|')}).{ts,tsx}`,
+    ],
+    message: `Import from ${allowedImports} instead of internal files.`,
+  };
+};
+const webBoundaryZones = [...webLayerZones, ...webModules.map(webModuleInternalsZone)];
 const webImportSettings = {
   'import/resolver': {
     typescript: { project: path.join(tsconfigRootDir, 'apps/web-client/tsconfig.json') },
@@ -791,15 +793,12 @@ export default [
     },
     settings: webImportSettings,
     rules: {
-      'import/no-restricted-paths': ['error', { zones: webBoundaryZones() }],
+      'import/no-restricted-paths': [
+        'error',
+        { basePath: tsconfigRootDir, zones: webBoundaryZones },
+      ],
     },
   },
-  ...Object.entries(webModuleInternalImportsToRemove).map(([file, moduleName]) => ({
-    files: [file],
-    rules: {
-      'import/no-restricted-paths': ['error', { zones: webBoundaryZones(moduleName) }],
-    },
-  })),
   {
     files: tanstackTableFiles,
     rules: {

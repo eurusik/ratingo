@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { useTranslation } from '@/shared/i18n';
 import { toast } from 'sonner';
 
-import { useCreatePost, PostForm, type PostFormValues } from '@/modules/journal';
+import { useCreatePost } from '@/modules/journal';
+import { PostForm, type PostFormValues } from '@/modules/journal/admin';
 
 export default function NewJournalPostPage() {
   const router = useRouter();
