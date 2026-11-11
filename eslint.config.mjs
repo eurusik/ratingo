@@ -894,8 +894,9 @@ export default [
         {
           patterns: [
             {
-              regex: '^@/(pages|widgets|features|entities)/[^/]+/',
-              message: 'Route files import a slice through its public API (@/pages/<slice>), not its internals.',
+              regex: '^@/(pages|widgets|features|entities|shared)/[^/]+/',
+              message:
+                'Route files import a slice or shared segment through its public API (@/pages/<slice>, @/shared/<segment>), not its internals.',
             },
           ],
         },

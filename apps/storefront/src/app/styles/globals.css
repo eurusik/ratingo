@@ -100,13 +100,28 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
-.action:hover {
+@media (hover: hover) {
+  .action:hover {
+    border-color: var(--color-accent);
+  }
+}
+
+.action:active {
   border-color: var(--color-accent);
+  background: var(--color-border);
 }
 
 h1,
 h2,
 p {
   margin: 0;
+}
+
+h1,
+h2 {
   text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }

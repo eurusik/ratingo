@@ -12,7 +12,9 @@ function CallbackProgress() {
 
   return (
     <main className="page page--centered" aria-busy="true">
-      <p role="status">{dict.oauth.completing}</p>
+      <div role="status">
+        <h1>{dict.oauth.completing}</h1>
+      </div>
     </main>
   );
 }

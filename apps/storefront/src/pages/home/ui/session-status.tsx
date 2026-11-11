@@ -36,7 +36,7 @@ function SessionCard({ children }: { children: ReactNode }) {
   const { dict } = useTranslation();
 
   return (
-    <section className="card" aria-labelledby="session-heading" aria-live="polite">
+    <section className="card" aria-labelledby="session-heading">
       <h2 id="session-heading">{dict.session.heading}</h2>
       {children}
     </section>
@@ -51,7 +51,9 @@ export function SessionStatus() {
   if (isLoading) {
     return (
       <SessionCard>
-        <p className="muted">{dict.session.loading}</p>
+        <p className="muted" role="status">
+          {dict.session.loading}
+        </p>
       </SessionCard>
     );
   }
@@ -59,7 +61,7 @@ export function SessionStatus() {
   if (user) {
     return (
       <SessionCard>
-        <p>
+        <p role="status">
           {dict.session.signedInAs} <strong translate="no">{user.username}</strong>
         </p>
         <div className="actions">
@@ -73,7 +75,9 @@ export function SessionStatus() {
 
   return (
     <SessionCard>
-      <p className="muted">{dict.session.guest}</p>
+      <p className="muted" role="status">
+        {dict.session.guest}
+      </p>
       {origin ? <OAuthSignInLinks origin={origin} /> : null}
     </SessionCard>
   );
