@@ -62,7 +62,8 @@ export function formatDate(dateString: string | null | undefined): string {
  */
 export function formatYear(dateString: string | null | undefined): string {
   if (!dateString) return '';
-  return new Date(dateString).getFullYear().toString();
+  const year = new Date(dateString).getFullYear();
+  return Number.isNaN(year) ? '' : year.toString();
 }
 
 /** Freshness level for relative dates. */

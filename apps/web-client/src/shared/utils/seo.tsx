@@ -3,14 +3,86 @@
  */
 
 import type { Metadata } from 'next';
+import type { components } from '@ratingo/api-contract';
 import { getDictionary } from '@/shared/i18n';
+import { formatRating, formatYear } from './format';
+
+type CastMember = components['schemas']['CastMemberDto'];
+type ExternalRatingItem = components['schemas']['ExternalRatingItemDto'];
 
 /** Media item for SEO metadata generation. */
 export interface SeoMediaItem {
   title: string;
+  originalTitle?: string | null;
+  releaseDate?: string | null;
   overview?: string | null;
   poster?: { large?: string } | null;
   backdrop?: { large?: string } | null;
+  credits?: { cast?: ReadonlyArray<Pick<CastMember, 'name'>> } | null;
+  externalRatings?: { imdb?: Pick<ExternalRatingItem, 'rating'> | null } | null;
+}
+
+const SITE_TITLE_SUFFIX = ' | Ratingo';
+const SERP_TITLE_MAX_LENGTH = 60;
+const SEO_TITLE_MAX_LENGTH = SERP_TITLE_MAX_LENGTH - SITE_TITLE_SUFFIX.length;
+const SEO_DESCRIPTION_MAX_LENGTH = 160;
+const SEO_CAST_LIMIT = 2;
+const DESCRIPTION_SEPARATOR = ' · ';
+
+type SeoMediaDictionary = ReturnType<typeof getDictionary>['seo']['media'];
+
+function truncateAtWord(text: string, maxLength: number): string {
+  const chars = Array.from(text);
+  if (chars.length <= maxLength) return text;
+  const cut = chars.slice(0, maxLength - 1).join('');
+  const lastSpace = cut.lastIndexOf(' ');
+  const trimmed = lastSpace > cut.length * 0.6 ? cut.slice(0, lastSpace) : cut;
+  return `${trimmed.replace(/[\s,.;:—·-]+$/u, '')}…`;
+}
+
+function buildSeoTitle(
+  media: SeoMediaItem,
+  type: CreateMetadataOptions['type'],
+  year: string,
+  dict: SeoMediaDictionary,
+): string {
+  const base = year ? `${media.title} (${year})` : media.title;
+  const kind = dict.kind[type];
+  const candidates = [
+    `${base} — ${kind}: ${dict.titleSuffixFull}`,
+    `${base} — ${kind}: ${dict.titleSuffixShort}`,
+    `${media.title} — ${kind}: ${dict.titleSuffixShort}`,
+    `${base} — ${kind}`,
+  ];
+  return candidates.find((candidate) => candidate.length <= SEO_TITLE_MAX_LENGTH) ?? base;
+}
+
+function buildSeoDescription(
+  media: SeoMediaItem,
+  type: CreateMetadataOptions['type'],
+  year: string,
+  dict: SeoMediaDictionary,
+): string {
+  const originalTitle =
+    media.originalTitle && media.originalTitle !== media.title ? media.originalTitle : null;
+  const imdbRating = media.externalRatings?.imdb?.rating;
+  const cast = (media.credits?.cast ?? [])
+    .slice(0, SEO_CAST_LIMIT)
+    .map((member) => member.name.trim())
+    .filter(Boolean);
+
+  const facts = [
+    [originalTitle, year].filter(Boolean).join(', '),
+    imdbRating ? `IMDb ${formatRating(imdbRating)}` : '',
+    cast.length > 0 ? `${dict.castLabel}: ${cast.join(', ')}` : '',
+  ].filter(Boolean);
+
+  const overview = media.overview?.replace(/\s+/g, ' ').trim();
+  const titleFact = `${dict.kindCapitalized[type]} «${media.title}»`;
+  const leadFacts = overview && facts.length > 0 ? facts : [titleFact, ...facts];
+  const lead = `${leadFacts.join(DESCRIPTION_SEPARATOR)}.`;
+
+  return truncateAtWord(`${lead} ${overview || dict.watchOn}`, SEO_DESCRIPTION_MAX_LENGTH);
 }
 
 /** Options for metadata generation. */
@@ -49,8 +121,11 @@ export function createMediaMetadata(
     };
   }
 
-  const title = media.title;
-  const description = media.overview?.slice(0, 160) || `Дивіться ${title} на Ratingo`;
+  const dict = getDictionary('uk').seo.media;
+  const year = formatYear(media.releaseDate);
+  const title = buildSeoTitle(media, options.type, year, dict);
+  const shareTitle = year ? `${media.title} (${year})` : media.title;
+  const description = buildSeoDescription(media, options.type, year, dict);
   const posterUrl = media.poster?.large;
   const backdropUrl = media.backdrop?.large;
   const ogType = options.type === 'show' ? 'video.tv_show' : 'video.movie';
@@ -59,14 +134,16 @@ export function createMediaMetadata(
   const ogImage = backdropUrl || posterUrl;
 
   // Build canonical URL when slug is provided
-  const canonical = options.slug ? createCanonical(`/${options.type === 'show' ? 'shows' : 'movies'}/${options.slug}`) : undefined;
+  const canonical = options.slug
+    ? createCanonical(`/${options.type === 'show' ? 'shows' : 'movies'}/${options.slug}`)
+    : undefined;
 
   return {
     title,
     description,
     ...(canonical ?? {}),
     openGraph: {
-      title: `${title} | Ratingo`,
+      title: `${shareTitle}${SITE_TITLE_SUFFIX}`,
       description,
       type: ogType,
       images: ogImage
@@ -75,7 +152,7 @@ export function createMediaMetadata(
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: shareTitle,
       description,
       images: ogImage ? [ogImage] : [],
     },
@@ -101,7 +178,9 @@ export function createNotFoundMetadata(type: 'show' | 'movie'): Metadata {
  * Canonical base URL for the site.
  * Centralised here so all SEO helpers use the same env var.
  */
-export const SEO_BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo.top').trim().replace(/\/$/, '');
+export const SEO_BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo.top')
+  .trim()
+  .replace(/\/$/, '');
 
 export const IS_SEARCH_INDEXING_ENABLED = process.env.VERCEL_ENV === 'production';
 
