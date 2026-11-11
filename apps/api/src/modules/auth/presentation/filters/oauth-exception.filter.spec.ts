@@ -2,6 +2,7 @@ import { HttpStatus, Logger, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import authConfig from '@/config/auth.config';
+import { OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 import { OAuthExceptionFilter } from './oauth-exception.filter';
 
 // ---------------------------------------------------------------------------
@@ -12,6 +13,7 @@ const FRONTEND_URL = 'https://ratingo.com';
 
 const mockAuthConfig = {
   frontendUrl: FRONTEND_URL,
+  oauthReturnOrigins: [],
 };
 
 /**
@@ -22,7 +24,7 @@ function createMockRequest(
     ip: string;
     url: string;
     headers: Record<string, string>;
-    oauthStatePayload: { provider: string } | undefined;
+    oauthStatePayload: { provider: string; returnOrigin?: string } | undefined;
   }> = {},
 ) {
   return {
@@ -72,7 +74,11 @@ describe('OAuthExceptionFilter', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [OAuthExceptionFilter, { provide: authConfig.KEY, useValue: mockAuthConfig }],
+      providers: [
+        OAuthExceptionFilter,
+        OAuthReturnOriginResolver,
+        { provide: authConfig.KEY, useValue: mockAuthConfig },
+      ],
     }).compile();
 
     filter = module.get(OAuthExceptionFilter);
@@ -172,6 +178,20 @@ describe('OAuthExceptionFilter', () => {
 
       expect(reply.redirect).toHaveBeenCalledWith(
         `${FRONTEND_URL}/auth/callback/google?error=${encodeURIComponent(code)}`,
+      );
+    });
+
+    it('should redirect to the return origin carried in the verified state', () => {
+      const exception = new UnauthorizedException('OAUTH_EMAIL_NOT_VERIFIED');
+      const request = createMockRequest({
+        oauthStatePayload: { provider: 'google', returnOrigin: 'https://dev.ratingo.top' },
+      });
+      const reply = createMockReply();
+
+      filter.catch(exception, createMockHost(request, reply));
+
+      expect(reply.redirect).toHaveBeenCalledWith(
+        'https://dev.ratingo.top/auth/callback/google?error=OAUTH_EMAIL_NOT_VERIFIED',
       );
     });
 

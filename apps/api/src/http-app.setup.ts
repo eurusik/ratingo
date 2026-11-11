@@ -8,7 +8,7 @@ import { MAX_UPLOAD_FILE_SIZE_BYTES } from './common/constants';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { SlowRequestInterceptor } from './common/interceptors/slow-request.interceptor';
-import { resolveCorsOrigins } from './cors-origins';
+import { resolveCorsOrigins } from './config/allowed-origins';
 
 const CORS_ALLOWED_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
 

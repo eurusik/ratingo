@@ -3,6 +3,7 @@ import { type ConfigType } from '@nestjs/config';
 
 import authConfig from '@/config/auth.config';
 import facebookConfig from '@/config/facebook.config';
+import { OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 import {
   FACEBOOK_AUTH_COOKIE_PATH,
   FACEBOOK_AUTH_URL,
@@ -26,8 +27,9 @@ export class FacebookAuthGuard extends createBaseOAuthGuard('facebook') {
     private readonly config: ConfigType<typeof facebookConfig>,
     @Inject(authConfig.KEY)
     authCfg: ConfigType<typeof authConfig>,
+    returnOrigins: OAuthReturnOriginResolver,
   ) {
-    super(authCfg);
+    super(authCfg, returnOrigins);
   }
 
   getProvider(): OAuthProvider {
