@@ -1,5 +1,6 @@
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { GoogleAuthGuard } from './google-auth.guard';
+import { OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 
 describe('GoogleAuthGuard - returnTo Validation', () => {
   let guard: GoogleAuthGuard;
@@ -11,13 +12,18 @@ describe('GoogleAuthGuard - returnTo Validation', () => {
     callbackUrl: 'http://localhost:3000/api/auth/google/callback',
   };
 
+  const returnOrigins = new OAuthReturnOriginResolver({
+    frontendUrl: 'http://localhost:3002',
+    oauthReturnOrigins: [],
+  } as never);
+
   const authConfig = {
     stateSecret: 'test-state-secret-that-is-long-enough',
     isProduction: false,
   };
 
   beforeEach(() => {
-    guard = new GoogleAuthGuard(googleConfig as any, authConfig as any);
+    guard = new GoogleAuthGuard(googleConfig as any, authConfig as any, returnOrigins);
   });
 
   describe('validateReturnTo (via state generation)', () => {
@@ -84,6 +90,7 @@ describe('GoogleAuthGuard - returnTo Validation', () => {
       const disabledGuard = new GoogleAuthGuard(
         { ...googleConfig, enabled: false } as any,
         authConfig as any,
+        returnOrigins,
       );
 
       const mockContext = {

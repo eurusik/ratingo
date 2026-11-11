@@ -96,7 +96,7 @@ OAuth flows use a signed cookie-based state machine to prevent CSRF attacks:
 
 ```
 1. User clicks "Sign in with Google"
-2. Guard generates state: { nonce, returnTo, provider, exp, mode }
+2. Guard generates state: { nonce, returnTo, returnOrigin, provider, exp, mode }
 3. State signed with HMAC-SHA256, stored in httpOnly cookie
 4. User redirected to provider
 5. Callback: guard reads cookie, verifies signature + expiry
@@ -105,6 +105,22 @@ OAuth flows use a signed cookie-based state machine to prevent CSRF attacks:
 ```
 
 State also supports **link mode** (`mode: 'link'`, `linkUserId`) for attaching providers to existing accounts.
+
+### Return Origin (multiple frontends)
+
+Every OAuth start (`/auth/{provider}`, `/auth/link/{provider}`) accepts an optional `returnOrigin`
+query param, e.g. `?returnOrigin=https://storefront-dev.ratingo.top`. `OAuthReturnOriginResolver`
+checks it with the pure `evaluateReturnOrigin` policy against the allow-list:
+
+- `frontendUrl` (`NEXT_PUBLIC_SITE_URL`) — always allowed and the fallback
+- `OAUTH_RETURN_ORIGINS` — comma-separated bare origins
+- Vercel deployment URLs (`VERCEL_PREVIEW_DEPLOYMENT_ORIGIN`) when `CORS_ALLOW_VERCEL_PREVIEWS=true`
+
+The value must be a bare origin (no path, query, trailing slash or userinfo). A missing value falls back
+to `frontendUrl`; a rejected one also falls back and is logged with its reason (`MALFORMED_URL`,
+`NOT_A_BARE_ORIGIN`, `NOT_ALLOWED`). The validated origin is stored in the HMAC-signed state, so the
+callback, account-link redirects and `OAuthExceptionFilter` error redirects all use the server-validated
+value and never read an origin from the callback query.
 
 ### Token Lifecycle
 
@@ -140,7 +156,7 @@ Atomic `UPDATE...RETURNING` prevents double-use race conditions.
 Authenticated users can link OAuth providers from settings:
 
 ```
-Settings page → GET /auth/link/google?token=<jwt>&returnTo=/settings
+Settings page → GET /auth/link/google?token=<jwt>&returnTo=/settings[&returnOrigin=<origin>]
              → OAuth flow with mode='link'
              → Callback: linkOAuthAccount(userId, oauthPayload)
              → Redirect to /settings?linked=google (or ?linkError=ALREADY_LINKED)
@@ -220,7 +236,7 @@ POST /auth/login { email, password }
 GET /auth/google
 
 1. GoogleAuthGuard.canActivate()
-   → Generate state: { nonce, returnTo, provider: 'google', mode: 'login' }
+   → Generate state: { nonce, returnTo, returnOrigin, provider: 'google', mode: 'login' }
    → Sign state (HMAC-SHA256)
    → Set state cookie (httpOnly, signed)
    → Redirect to Google OAuth URL

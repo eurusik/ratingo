@@ -7,6 +7,9 @@ import { type AppRole, runsHttp } from '../common/runtime/app-role';
  */
 const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
 
+const ORIGIN_RE = String.raw`https?:\/\/[a-z0-9.-]+(:\d+)?`;
+const ORIGIN_LIST_RE = new RegExp(`^${ORIGIN_RE}(\\s*,\\s*${ORIGIN_RE})*$`);
+
 const sharedEnvKeys = {
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
 
@@ -60,6 +63,7 @@ const httpEnvKeys = {
   THROTTLE_LIMIT: Joi.number().default(600),
 
   CORS_ALLOW_VERCEL_PREVIEWS: Joi.string().valid('true', 'false').optional(),
+  OAUTH_RETURN_ORIGINS: Joi.string().trim().pattern(ORIGIN_LIST_RE).optional(),
 };
 
 export const buildEnvSchema = (role: AppRole): Joi.ObjectSchema =>

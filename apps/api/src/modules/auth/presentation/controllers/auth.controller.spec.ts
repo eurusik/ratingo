@@ -2,6 +2,7 @@ import { ConflictException, NotFoundException, UnauthorizedException } from '@ne
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 import { AuthController } from './auth.controller';
 import { AuthService } from '@/modules/auth/application/auth.service';
 import { OAuthService } from '@/modules/auth/application/oauth.service';
@@ -125,6 +126,7 @@ const mockAuthConfig = {
   refreshSecret: 'test-refresh-secret',
   refreshExpiresIn: '7d',
   frontendUrl: 'http://localhost:3000',
+  oauthReturnOrigins: ['https://storefront-dev.ratingo.top'],
   exchangeCodePepper: 'test-pepper',
   stateSecret: 'test-state-secret',
 };
@@ -170,6 +172,7 @@ async function buildTestModule(overrides?: {
       { provide: googleConfig.KEY, useValue: googleCfg },
       { provide: facebookConfig.KEY, useValue: facebookCfg },
       { provide: authConfig.KEY, useValue: mockAuthConfig },
+      OAuthReturnOriginResolver,
     ],
   }).compile();
 
@@ -517,10 +520,19 @@ describe('AuthController.linkGoogle', () => {
     jwtService.verifyAsync.mockResolvedValue({ sub: 'u1' });
     const mockRes = createMockReply();
 
-    await controller.linkGoogle('valid-token', '/settings', mockRes);
+    await controller.linkGoogle(
+      'valid-token',
+      '/settings',
+      'https://storefront-dev.ratingo.top',
+      mockRes,
+    );
 
     expect(jwtService.verifyAsync).toHaveBeenCalledWith('valid-token');
-    expect(googleGuard.buildSignedStateForLink).toHaveBeenCalledWith('u1', '/settings');
+    expect(googleGuard.buildSignedStateForLink).toHaveBeenCalledWith(
+      'u1',
+      '/settings',
+      'https://storefront-dev.ratingo.top',
+    );
     expect(googleGuard.setStateCookie).toHaveBeenCalledWith(mockRes, 'signed-google-state');
     expect(googleGuard.buildAuthUrl).toHaveBeenCalledWith('signed-google-state');
     expect(mockRes.redirect).toHaveBeenCalledWith(
@@ -534,7 +546,7 @@ describe('AuthController.linkGoogle', () => {
     const mockRes = createMockReply();
 
     await expect(
-      controller.linkGoogle('expired-token', '/settings', mockRes),
+      controller.linkGoogle('expired-token', '/settings', undefined, mockRes),
     ).rejects.toBeInstanceOf(UnauthorizedException);
 
     expect(googleGuard.buildSignedStateForLink).not.toHaveBeenCalled();
@@ -543,7 +555,7 @@ describe('AuthController.linkGoogle', () => {
   it('should throw UnauthorizedException when token is empty', async () => {
     const mockRes = createMockReply();
 
-    await expect(controller.linkGoogle('', undefined, mockRes)).rejects.toBeInstanceOf(
+    await expect(controller.linkGoogle('', undefined, undefined, mockRes)).rejects.toBeInstanceOf(
       UnauthorizedException,
     );
   });
@@ -566,10 +578,14 @@ describe('AuthController.linkFacebook', () => {
     jwtService.verifyAsync.mockResolvedValue({ sub: 'u2' });
     const mockRes = createMockReply();
 
-    await controller.linkFacebook('valid-token', '/settings', mockRes);
+    await controller.linkFacebook('valid-token', '/settings', undefined, mockRes);
 
     expect(jwtService.verifyAsync).toHaveBeenCalledWith('valid-token');
-    expect(facebookGuard.buildSignedStateForLink).toHaveBeenCalledWith('u2', '/settings');
+    expect(facebookGuard.buildSignedStateForLink).toHaveBeenCalledWith(
+      'u2',
+      '/settings',
+      undefined,
+    );
     expect(facebookGuard.setStateCookie).toHaveBeenCalledWith(mockRes, 'signed-facebook-state');
     expect(facebookGuard.buildAuthUrl).toHaveBeenCalledWith('signed-facebook-state');
     expect(mockRes.redirect).toHaveBeenCalledWith(
@@ -583,7 +599,7 @@ describe('AuthController.linkFacebook', () => {
     const mockRes = createMockReply();
 
     await expect(
-      controller.linkFacebook('expired-token', '/settings', mockRes),
+      controller.linkFacebook('expired-token', '/settings', undefined, mockRes),
     ).rejects.toBeInstanceOf(UnauthorizedException);
 
     expect(facebookGuard.buildSignedStateForLink).not.toHaveBeenCalled();
@@ -771,6 +787,79 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
     await callOAuthCallback(facebookOAuthUser, { mode: 'link', linkUserId: 'user-123' }, mockRes);
 
     expect(mockRes.redirect).toHaveBeenCalledWith(`${frontendUrl}/settings?linked=facebook`, 302);
+  });
+});
+
+describe('AuthController.handleOAuthCallback - return origin', () => {
+  const storefrontDev = 'https://storefront-dev.ratingo.top';
+  const oauthUser = {
+    provider: 'google' as const,
+    providerAccountId: 'gid-123',
+    email: 'user@gmail.com',
+    name: 'Test User',
+    picture: null,
+  };
+
+  const callback = async (
+    controller: AuthController,
+    statePayload: Record<string, unknown>,
+    res: ReturnType<typeof createMockReply>,
+  ) =>
+    controller.googleCallback(
+      oauthUser,
+      { ...createMockRequest(), oauthStatePayload: statePayload } as any,
+      res,
+    );
+
+  it('redirects a login to the return origin from the verified state', async () => {
+    const { controller, oauthService } = await buildTestModule();
+    oauthService.loginWithOAuth.mockResolvedValue({ user: { id: 'u1' } });
+    oauthService.generateExchangeCode.mockResolvedValue('one-time');
+    const res = createMockReply();
+
+    await callback(
+      controller,
+      { mode: 'login', provider: 'google', returnTo: '/', returnOrigin: storefrontDev },
+      res,
+    );
+
+    expect(res.redirect).toHaveBeenCalledWith(
+      `${storefrontDev}/auth/callback/google?code=one-time&returnTo=%2F`,
+      302,
+    );
+  });
+
+  it('redirects a link to the return origin from the verified state', async () => {
+    const { controller, oauthService } = await buildTestModule();
+    oauthService.linkOAuthAccount.mockResolvedValue(undefined);
+    const res = createMockReply();
+
+    await callback(
+      controller,
+      { mode: 'link', linkUserId: 'u1', provider: 'google', returnOrigin: storefrontDev },
+      res,
+    );
+
+    expect(res.redirect).toHaveBeenCalledWith(`${storefrontDev}/settings?linked=google`, 302);
+  });
+
+  it('ignores a return origin passed in the callback query', async () => {
+    const { controller, oauthService } = await buildTestModule();
+    oauthService.loginWithOAuth.mockResolvedValue({ user: { id: 'u1' } });
+    oauthService.generateExchangeCode.mockResolvedValue('one-time');
+    const res = createMockReply();
+    const req = {
+      ...createMockRequest(),
+      query: { returnOrigin: 'https://evil.test' },
+      oauthStatePayload: { mode: 'login', provider: 'google', returnTo: '/' },
+    } as any;
+
+    await controller.googleCallback(oauthUser, req, res);
+
+    expect(res.redirect).toHaveBeenCalledWith(
+      `${mockAuthConfig.frontendUrl}/auth/callback/google?code=one-time&returnTo=%2F`,
+      302,
+    );
   });
 });
 

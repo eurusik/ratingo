@@ -12297,6 +12297,8 @@ export interface operations {
             query?: {
                 /** @description URL to redirect after auth */
                 returnTo?: string;
+                /** @description Frontend origin to return to; must be on the OAuth return allow-list */
+                returnOrigin?: string;
             };
             header?: never;
             path?: never;
@@ -12336,6 +12338,8 @@ export interface operations {
             query?: {
                 /** @description URL to redirect after auth */
                 returnTo?: string;
+                /** @description Frontend origin to return to; must be on the OAuth return allow-list */
+                returnOrigin?: string;
             };
             header?: never;
             path?: never;

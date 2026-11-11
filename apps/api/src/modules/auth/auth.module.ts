@@ -12,6 +12,7 @@ import { UserMediaModule } from '../user-media/user-media.module';
 import { UsersModule } from '../users/users.module';
 
 import { AuthService } from './application/auth.service';
+import { OAuthReturnOriginResolver } from './application/oauth-return-origin.resolver';
 import { OAuthService } from './application/oauth.service';
 import { TokenService } from './application/token.service';
 import { EXCHANGE_CODES_REPOSITORY } from './domain/repositories/exchange-codes.repository.interface';
@@ -93,6 +94,7 @@ const facebookStrategyProvider: Provider = {
     AuthService,
     TokenService,
     OAuthService,
+    OAuthReturnOriginResolver,
     JwtStrategy,
     LocalStrategy,
     googleStrategyProvider,

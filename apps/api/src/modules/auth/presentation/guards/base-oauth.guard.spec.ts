@@ -2,6 +2,7 @@ import { Logger, NotFoundException, UnauthorizedException } from '@nestjs/common
 import { createBaseOAuthGuard } from './base-oauth.guard';
 import { OAUTH_PROVIDER, type OAuthProvider } from '@/modules/auth/domain/types';
 import { OAuthErrorCode } from '@/modules/auth/auth.constants';
+import { OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 
 // Create a concrete test guard from the mixin
 const TestBaseGuard = createBaseOAuthGuard('test-strategy');
@@ -52,10 +53,17 @@ describe('BaseOAuthGuard', () => {
     isProduction: false,
   };
 
+  const FRONTEND_URL = 'https://ratingo.top';
+  const STOREFRONT_DEV = 'https://storefront-dev.ratingo.top';
+  const returnOrigins = new OAuthReturnOriginResolver({
+    frontendUrl: FRONTEND_URL,
+    oauthReturnOrigins: [STOREFRONT_DEV],
+  } as never);
+
   let guard: TestGuard;
 
   beforeEach(() => {
-    guard = new TestGuard(authCfg as any);
+    guard = new TestGuard(authCfg as any, returnOrigins);
   });
 
   describe('state signing and verification', () => {
@@ -141,6 +149,42 @@ describe('BaseOAuthGuard', () => {
     it('should default returnTo to "/" for invalid paths', () => {
       const payload = guard.generateStatePayload('https://evil.com');
       expect(payload.returnTo).toBe('/');
+    });
+  });
+
+  describe('return origin', () => {
+    it('stores an allow-listed return origin in the login state', () => {
+      expect(guard.generateStatePayload('/', STOREFRONT_DEV).returnOrigin).toBe(STOREFRONT_DEV);
+    });
+
+    it('stores frontendUrl when the requested origin is missing or not allowed', () => {
+      expect(guard.generateStatePayload('/').returnOrigin).toBe(FRONTEND_URL);
+      expect(guard.generateStatePayload('/', 'https://evil.test').returnOrigin).toBe(FRONTEND_URL);
+    });
+
+    it('stores the validated return origin in the link state', () => {
+      const allowed = guard.verifyAndDecodeState(
+        guard.buildSignedStateForLink('user-1', '/settings', STOREFRONT_DEV),
+      );
+      const rejected = guard.verifyAndDecodeState(
+        guard.buildSignedStateForLink('user-1', '/settings', 'https://evil.test'),
+      );
+
+      expect(allowed!.returnOrigin).toBe(STOREFRONT_DEV);
+      expect(rejected!.returnOrigin).toBe(FRONTEND_URL);
+    });
+
+    it('invalidates the state when the return origin is tampered with', () => {
+      const signed = guard.signState(guard.generateStatePayload('/', STOREFRONT_DEV));
+      const [data, sig] = signed.split('.');
+      const tampered = Buffer.from(
+        JSON.stringify({
+          ...JSON.parse(Buffer.from(data, 'base64url').toString()),
+          returnOrigin: 'https://evil.test',
+        }),
+      ).toString('base64url');
+
+      expect(guard.verifyAndDecodeState(`${tampered}.${sig}`)).toBeNull();
     });
   });
 
@@ -262,7 +306,7 @@ describe('BaseOAuthGuard', () => {
     };
 
     it('should throw NotFoundException when provider is disabled', async () => {
-      const disabledGuard = new DisabledTestGuard(authCfg as any);
+      const disabledGuard = new DisabledTestGuard(authCfg as any, returnOrigins);
       const { context } = mockContext();
 
       await expect(disabledGuard.canActivate(context)).rejects.toThrow(NotFoundException);
@@ -304,6 +348,43 @@ describe('BaseOAuthGuard', () => {
 
       await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
       await expect(guard.canActivate(context)).rejects.toThrow(OAuthErrorCode.CANCELLED);
+    });
+
+    it('should read returnOrigin from the query on initiation', async () => {
+      const { context, res } = mockContext({ returnOrigin: STOREFRONT_DEV });
+
+      await guard.canActivate(context);
+
+      const stateArg = res.setCookie.mock.calls[0][1] as string;
+      expect(guard.verifyAndDecodeState(stateArg)!.returnOrigin).toBe(STOREFRONT_DEV);
+    });
+
+    it('should attach the verified state on access_denied so errors return to its origin', async () => {
+      const signedState = guard.signState(guard.generateStatePayload('/', STOREFRONT_DEV));
+      const { context, req, res } = mockContext({ error: 'access_denied', state: signedState });
+      req.cookies = { oauth_state: signedState };
+
+      await expect(guard.canActivate(context)).rejects.toThrow(OAuthErrorCode.CANCELLED);
+      expect(req.oauthStatePayload).toMatchObject({ returnOrigin: STOREFRONT_DEV });
+      expect(res.clearCookie).toHaveBeenCalledWith('oauth_state', { path: '/api/auth' });
+    });
+
+    it('should not attach a state on access_denied when it does not match the cookie', async () => {
+      const signedState = guard.signState(guard.generateStatePayload('/', STOREFRONT_DEV));
+      const { context, req } = mockContext({ error: 'access_denied', state: 'forged' });
+      req.cookies = { oauth_state: signedState };
+
+      await expect(guard.canActivate(context)).rejects.toThrow(OAuthErrorCode.CANCELLED);
+      expect(req.oauthStatePayload).toBeUndefined();
+    });
+
+    it('should not log a state rejection for a provider error without state', async () => {
+      const warn = jest.spyOn(guard.logger, 'warn').mockImplementation(() => undefined);
+      const { context } = mockContext({ error: 'access_denied' });
+
+      await expect(guard.canActivate(context)).rejects.toThrow(OAuthErrorCode.CANCELLED);
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
     });
 
     it('should throw STATE_INVALID when cookie is missing on callback', async () => {

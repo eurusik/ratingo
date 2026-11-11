@@ -3,6 +3,7 @@ import { type ConfigType } from '@nestjs/config';
 
 import authConfig from '@/config/auth.config';
 import googleConfig from '@/config/google.config';
+import { OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 import {
   GOOGLE_AUTH_COOKIE_PATH,
   GOOGLE_AUTH_URL,
@@ -26,8 +27,9 @@ export class GoogleAuthGuard extends createBaseOAuthGuard('google') {
     private readonly config: ConfigType<typeof googleConfig>,
     @Inject(authConfig.KEY)
     authCfg: ConfigType<typeof authConfig>,
+    returnOrigins: OAuthReturnOriginResolver,
   ) {
-    super(authCfg);
+    super(authCfg, returnOrigins);
   }
 
   getProvider(): OAuthProvider {

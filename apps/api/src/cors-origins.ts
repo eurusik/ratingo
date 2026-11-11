@@ -6,19 +6,40 @@ const DEFAULT_CORS_ORIGINS = [
 ];
 
 export const VERCEL_PREVIEW_DEPLOYMENT_ORIGIN =
-  /^https:\/\/ratingo-[a-z0-9]{9}-eurusik\.vercel\.app$/;
+  /^https:\/\/ratingo-(?:storefront-|admin-)?[a-z0-9]{9}-eurusik\.vercel\.app$/;
+
+export type AllowedOrigin = string | RegExp;
 
 interface CorsOriginEnv {
   CORS_ORIGIN?: string;
   CORS_ALLOW_VERCEL_PREVIEWS?: string;
 }
 
-const explicitOrigins = (corsOrigin: string | undefined): string[] =>
-  corsOrigin?.split(',').map((origin) => origin.trim()) ?? DEFAULT_CORS_ORIGINS;
+interface OAuthReturnOriginEnv {
+  OAUTH_RETURN_ORIGINS?: string;
+  CORS_ALLOW_VERCEL_PREVIEWS?: string;
+}
 
-export const resolveCorsOrigins = (env: CorsOriginEnv): (string | RegExp)[] => {
-  const origins = explicitOrigins(env.CORS_ORIGIN);
-  return env.CORS_ALLOW_VERCEL_PREVIEWS === 'true'
-    ? [...origins, VERCEL_PREVIEW_DEPLOYMENT_ORIGIN]
-    : origins;
-};
+const parseOriginList = (value: string | undefined): string[] | undefined =>
+  value
+    ?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const withVercelPreviews = (
+  origins: string[],
+  allowVercelPreviews: string | undefined,
+): AllowedOrigin[] =>
+  allowVercelPreviews === 'true' ? [...origins, VERCEL_PREVIEW_DEPLOYMENT_ORIGIN] : origins;
+
+export const resolveCorsOrigins = (env: CorsOriginEnv): AllowedOrigin[] =>
+  withVercelPreviews(
+    parseOriginList(env.CORS_ORIGIN) ?? DEFAULT_CORS_ORIGINS,
+    env.CORS_ALLOW_VERCEL_PREVIEWS,
+  );
+
+export const resolveOAuthReturnOrigins = (env: OAuthReturnOriginEnv): AllowedOrigin[] =>
+  withVercelPreviews(
+    parseOriginList(env.OAUTH_RETURN_ORIGINS) ?? [],
+    env.CORS_ALLOW_VERCEL_PREVIEWS,
+  );

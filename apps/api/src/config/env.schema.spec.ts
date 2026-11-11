@@ -59,4 +59,21 @@ describe('buildEnvSchema', () => {
       /CORS_ALLOW_VERCEL_PREVIEWS/,
     );
   });
+
+  it('accepts OAUTH_RETURN_ORIGINS only as a comma-separated list of origins', () => {
+    const env = { ...BASE_ENV, ...JWT_SECRETS };
+    const withOrigins = (value: string) => validate('api', { ...env, OAUTH_RETURN_ORIGINS: value });
+
+    expect(withOrigins('https://dev.ratingo.top').error).toBeUndefined();
+    expect(
+      withOrigins('https://dev.ratingo.top, http://localhost:3002,https://admin.ratingo.top').error,
+    ).toBeUndefined();
+    [
+      'dev.ratingo.top',
+      'https://dev.ratingo.top/',
+      'https://a.test,,https://b.test',
+      'https://Dev.ratingo.top',
+      'https://dev.ratingo.top?x=1',
+    ].forEach((value) => expect(withOrigins(value).error?.message).toMatch(/OAUTH_RETURN_ORIGINS/));
+  });
 });
