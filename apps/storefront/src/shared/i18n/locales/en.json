@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "Ratingo — what to watch now",
+    "description": "Movies and shows the world is watching right now: ratings, new episodes and what is worth your time."
+  },
+  "home": {
+    "title": "Ratingo",
+    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works."
+  },
+  "session": {
+    "heading": "Session",
+    "loading": "Checking your session…",
+    "guest": "You are not signed in.",
+    "signedInAs": "Signed in as",
+    "signInWith": {
+      "google": "Sign in with Google",
+      "facebook": "Sign in with Facebook"
+    },
+    "signOut": "Sign out"
+  },
+  "oauth": {
+    "completing": "Completing sign-in…",
+    "failed": "Sign-in failed",
+    "backHome": "Back to home",
+    "errors": {
+      "accountExistsPassword": "An account with this email already exists. Sign in with your password and link Google or Facebook in settings.",
+      "cancelled": "Sign-in was cancelled.",
+      "emailNotVerified": "Verify your email with the provider first.",
+      "exchangeExpired": "The sign-in link has expired. Please try again.",
+      "exchangeUsed": "This sign-in link was already used. Please try again.",
+      "providerError": "The provider returned an error. Please try again.",
+      "stateInvalid": "Security check failed. Please try again.",
+      "unknown": "Something went wrong. Please try again."
+    }
+  }
+}

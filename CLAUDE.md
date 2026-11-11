@@ -19,6 +19,7 @@ After finishing each step, review the changed code before moving on, and fix wha
 ## Layout
 - `apps/api/` — NestJS + Fastify + Drizzle ORM + PostgreSQL
 - `apps/web-client/` — Next.js 16 + React 19 + TanStack Query v5
+- `apps/storefront/` — the public site being rewritten (Next.js 16, FSD v2.1): routes in the root `app/`, FSD layers in `src/` (`app`, `pages`, `widgets`, `features`, `entities`, `shared`), boundaries checked by Steiger (`npm run lint:fsd --workspace=storefront`, Node >= 22.18); the empty root `pages/` keeps Next from routing `src/pages`. Env is read only in `src/shared/config`
 - `apps/pg-backup/` — daily `pg_dump` of prod to the Railway bucket (Railway cron service `Backup CRON`, own Dockerfile)
 - `packages/api-contract/` — Shared OpenAPI types (auto-generated)
 - `packages/web-core/` — Framework-agnostic web code shared by the web apps (`@ratingo/web-core/{api,auth,query,i18n,lib}`): no `next/*` imports, no `process.env`, config passed in by the app
@@ -26,7 +27,7 @@ After finishing each step, review the changed code before moving on, and fix wha
 ## Branches & Deploy
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`
 - `development` deploys to Railway dev, `main` deploys to Railway production; hotfixes go to `main`, then back-merge into `development`
-- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck, unit tests (2 shards) and e2e tests, web lint/typecheck/tests, dead code in api and web (`api-dead-code`/`web-dead-code`, knip), contract drift, pg-backup lint/typecheck/tests, `web-smoke` (on PRs that touch the web client or `e2e/smoke/`: waits up to 15 min for the PR's Vercel preview, then runs the Playwright smoke suite against it with the `VERCEL_AUTOMATION_BYPASS_SECRET` repo secret; a missing preview fails the job), and `api-prod-install` (builds the `deps` and `prod-deps` stages of `apps/api/Dockerfile` and loads every installed native module; runs when a `package.json`, the lockfile, `.npmrc`, `.dockerignore`, the API Dockerfile or `ci.yml` changes; on the same changes `api-audit` and `web-audit` fail on high/critical `npm audit` findings in API and web-client production deps, and `security-audit.yml` reruns both audits weekly on `main` and keeps one open `security` issue per workspace while it fails). On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
+- CI (`.github/workflows/ci.yml`) only validates: api lint/typecheck, unit tests (2 shards) and e2e tests, web lint/typecheck/tests, storefront lint + Steiger/typecheck/tests/build/knip, dead code in api and web (`api-dead-code`/`web-dead-code`, knip), contract drift, pg-backup lint/typecheck/tests, `web-smoke` (on PRs that touch the web client or `e2e/smoke/`: waits up to 15 min for the PR's Vercel preview, then runs the Playwright smoke suite against it with the `VERCEL_AUTOMATION_BYPASS_SECRET` repo secret; a missing preview fails the job), and `api-prod-install` (builds the `deps` and `prod-deps` stages of `apps/api/Dockerfile` and loads every installed native module; runs when a `package.json`, the lockfile, `.npmrc`, `.dockerignore`, the API Dockerfile or `ci.yml` changes; on the same changes `api-audit` and `web-audit` fail on high/critical `npm audit` findings in API, web-client and storefront production deps, and `security-audit.yml` reruns both audits weekly on `main` and keeps one open `security` issue per workspace while it fails). On PRs only jobs whose paths changed run; `ci` is the single required check. Railway and Vercel do the deploys
 - Vercel previews call the dev API (`api-dev.ratingo.top`), which allows `https://ratingo-<9-char hash>-eurusik.vercel.app` origins only because dev sets `CORS_ALLOW_VERCEL_PREVIEWS=true`; never set it on prod. Branch-alias URLs (`ratingo-git-*`) are not allowed — open the deployment URL
 - Make every migration statement safe to re-run against existing state (`IF NOT EXISTS` / `IF EXISTS`): dev runs migrations on a fresh DB, so state conflicts surface only in prod
 
@@ -35,11 +36,13 @@ After finishing each step, review the changed code before moving on, and fix wha
 # Dev
 npm run dev:api                # Backend (port 3001)
 npm run dev:client             # Frontend (port 3002)
+npm run dev:storefront         # New storefront (port 3003)
 docker-compose up              # PostgreSQL (5434) + Redis (6379)
 
 # Quality
 npm run test:api                 # Backend tests (--runInBand)
 npm run test:client              # Frontend tests
+npm run test:storefront          # Storefront tests
 npm run test:e2e --workspace=api # Backend e2e (in-memory fakes, no Postgres/Redis needed)
 npm run lint:dead-code --workspace=api # knip: unused files/exports/deps in the API (knip.json, Node >= 20.19)
 npm run lint:dead-code --workspace=web-client # knip: same for the web client
