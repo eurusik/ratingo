@@ -1,7 +1,3 @@
-/**
- * Auth module exports.
- */
-
-export { AuthProvider, useAuth } from './auth-context';
-export { tokenStorage } from './token-storage';
+export { AuthProvider } from './auth-provider';
+export { useAuth, tokenStorage } from '@ratingo/web-core/auth';
 export { useAuthModalStore } from './auth-modal.store';

@@ -9,7 +9,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
-import { formatDate } from '@/shared/utils/format';
+import { formatDate } from '@ratingo/web-core/lib';
 import {
   AlertDialog,
   AlertDialogContent,

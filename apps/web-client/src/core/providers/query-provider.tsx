@@ -9,7 +9,7 @@
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { getQueryClient } from '../query/client';
+import { getQueryClient } from '@ratingo/web-core/query';
 
 interface QueryProviderProps {
   children: React.ReactNode;

@@ -4,7 +4,7 @@
 
 import { Calendar, Clapperboard, Clock, Tv } from 'lucide-react';
 import type { getDictionary } from '@/shared/i18n';
-import { formatDate } from '@/shared/utils/format';
+import { formatDate } from '@ratingo/web-core/lib';
 
 export interface MovieReleaseProps {
   releaseDate?: string | null;

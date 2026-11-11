@@ -10,7 +10,7 @@ import {
   _resetRefreshState,
 } from '../refresh';
 import { tokenStorage } from '../token-storage';
-import { authApi } from '@/core/api/auth.client';
+import { authApi } from '../auth.client';
 import {
   broadcastRefreshStart,
   broadcastRefreshSuccess,
@@ -18,7 +18,7 @@ import {
 } from '../cross-tab-sync';
 
 // Mock ApiError to prevent transitive ky (ESM) import
-jest.mock('@/core/api/error', () => {
+jest.mock('../../api/error', () => {
   class ApiError extends Error {
     statusCode: number;
     constructor(message: string, statusCode: number) {
@@ -39,7 +39,7 @@ jest.mock('../token-storage', () => ({
   },
 }));
 
-jest.mock('@/core/api/auth.client', () => ({
+jest.mock('../auth.client', () => ({
   authApi: {
     refresh: jest.fn(),
   },
@@ -284,7 +284,7 @@ describe('Single-flight token refresh', () => {
    * Property: definitive auth failure (401) does NOT retry
    */
   it('does not retry on definitive auth failure (401)', async () => {
-    const { ApiError } = jest.requireMock('@/core/api/error') as { ApiError: new (msg: string, code: number) => Error };
+    const { ApiError } = jest.requireMock('../../api/error') as { ApiError: new (msg: string, code: number) => Error };
 
     await fc.assert(
       fc.asyncProperty(fc.string({ minLength: 1 }), async (refreshToken) => {

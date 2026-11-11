@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/core/auth';
-import { mapAuthError } from '@/core/api/error';
+import { mapAuthError } from '@ratingo/web-core/api';
 import { useTranslation } from '@/shared/i18n';
 import { Button, Input, Label, Alert, AlertDescription } from '@/shared/ui';
 import { createLoginSchema, type LoginFormData } from '../schemas';

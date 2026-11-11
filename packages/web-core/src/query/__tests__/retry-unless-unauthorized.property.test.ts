@@ -17,7 +17,7 @@ jest.mock('ky', () => {
 // Re-import the mocked HTTPError so we can construct instances in tests.
 import { HTTPError } from 'ky';
 
-import { retryUnlessUnauthorized } from '../utils';
+import { retryUnlessUnauthorized } from '../retry';
 
 function makeHTTPError(status: number): InstanceType<typeof HTTPError> {
   // The real HTTPError takes (response, request, options), but our mock

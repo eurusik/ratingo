@@ -16,14 +16,14 @@ import {
   useState,
   useCallback,
   useMemo,
+  useRef,
   type ReactNode,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { authApi, type MeDto, type LoginDto, type RegisterDto } from '../api/auth.client';
+import { authApi, type MeDto, type LoginDto, type RegisterDto } from './auth.client';
 import { tokenStorage } from './token-storage';
 import { setTokenGetter } from '../api/client';
 import { ApiError } from '../api/error';
-import { toast } from 'sonner';
 import { scheduleProactiveRefresh, cancelProactiveRefresh } from './proactive-refresh';
 import {
   initCrossTabSync,
@@ -85,6 +85,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
   children: ReactNode;
+  onSessionExpired?: () => void;
 }
 
 type SessionRestoreResult =
@@ -129,9 +130,16 @@ async function restoreSession(): Promise<SessionRestoreResult> {
  *   <App />
  * </AuthProvider>
  */
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children, onSessionExpired }: AuthProviderProps) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<MeDto | null>(null);
+  const userRef = useRef<MeDto | null>(null);
+  const onSessionExpiredRef = useRef(onSessionExpired);
+
+  useEffect(() => {
+    userRef.current = user;
+    onSessionExpiredRef.current = onSessionExpired;
+  }, [user, onSessionExpired]);
   const [isLoading, setIsLoading] = useState(true);
 
   const isAuthenticated = !!user;
@@ -190,13 +198,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const handleUnauthorized = () => {
       cancelProactiveRefresh();
       // tokens were already cleared by client.ts before this event was fired
-      setUser((prev) => {
-        if (prev !== null) {
-          // User was actively signed in — tell them their session expired
-          toast.error('Сесія закінчилась. Увійдіть знову.');
-        }
-        return null;
-      });
+      if (userRef.current !== null) {
+        onSessionExpiredRef.current?.();
+      }
+      setUser(null);
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);

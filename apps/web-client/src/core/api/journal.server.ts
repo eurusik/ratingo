@@ -5,7 +5,7 @@
 
 import ky from 'ky';
 import { env } from '../config/env';
-import { ApiError, isNotFoundError, type ApiErrorDetail } from './error';
+import { ApiError, isNotFoundError, type ApiErrorDetail } from '@ratingo/web-core/api';
 import type { PostListResponseDto, PostDetailDto, PostsQueryParams } from './journal.types';
 
 /** Server-side ky instance without auth (for public endpoints). */

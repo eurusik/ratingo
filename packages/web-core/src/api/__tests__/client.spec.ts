@@ -35,20 +35,17 @@ describe('API Client 204 Handling', () => {
       );
     });
 
-    jest.doMock('@/core/config/env', () => ({
-      env: { API_BASE_URL: 'http://localhost:3001' },
-    }));
-
-    jest.doMock('@/core/auth/refresh', () => ({
+    jest.doMock('../../auth/refresh', () => ({
       refreshTokens: jest.fn(),
       isRefreshEndpoint: jest.fn(() => false),
     }));
 
-    jest.doMock('@/core/auth/token-storage', () => ({
+    jest.doMock('../../auth/token-storage', () => ({
       tokenStorage: { clearTokens: jest.fn() },
     }));
 
-    const { apiPost } = await import('../client');
+    const { apiPost, configureApiClient } = await import('../client');
+    configureApiClient({ baseUrl: 'http://localhost:3001' });
     const result = await apiPost<void>('user-media/episodes/123/watch');
 
     expect(result).toBeUndefined();
@@ -75,20 +72,17 @@ describe('API Client 204 Handling', () => {
       );
     });
 
-    jest.doMock('@/core/config/env', () => ({
-      env: { API_BASE_URL: 'http://localhost:3001' },
-    }));
-
-    jest.doMock('@/core/auth/refresh', () => ({
+    jest.doMock('../../auth/refresh', () => ({
       refreshTokens: jest.fn(),
       isRefreshEndpoint: jest.fn(() => false),
     }));
 
-    jest.doMock('@/core/auth/token-storage', () => ({
+    jest.doMock('../../auth/token-storage', () => ({
       tokenStorage: { clearTokens: jest.fn() },
     }));
 
-    const { apiPost } = await import('../client');
+    const { apiPost, configureApiClient } = await import('../client');
+    configureApiClient({ baseUrl: 'http://localhost:3001' });
     const result = await apiPost<typeof mockData>('test/endpoint', { name: 'Test' });
 
     expect(result).toEqual(mockData);
@@ -113,20 +107,17 @@ describe('API Client 204 Handling', () => {
       );
     });
 
-    jest.doMock('@/core/config/env', () => ({
-      env: { API_BASE_URL: 'http://localhost:3001' },
-    }));
-
-    jest.doMock('@/core/auth/refresh', () => ({
+    jest.doMock('../../auth/refresh', () => ({
       refreshTokens: jest.fn(),
       isRefreshEndpoint: jest.fn(() => false),
     }));
 
-    jest.doMock('@/core/auth/token-storage', () => ({
+    jest.doMock('../../auth/token-storage', () => ({
       tokenStorage: { clearTokens: jest.fn() },
     }));
 
-    const { apiDelete } = await import('../client');
+    const { apiDelete, configureApiClient } = await import('../client');
+    configureApiClient({ baseUrl: 'http://localhost:3001' });
     const result = await apiDelete('user-media/episodes/123/watch');
 
     expect(result).toBeUndefined();
@@ -153,20 +144,17 @@ describe('API Client 204 Handling', () => {
       );
     });
 
-    jest.doMock('@/core/config/env', () => ({
-      env: { API_BASE_URL: 'http://localhost:3001' },
-    }));
-
-    jest.doMock('@/core/auth/refresh', () => ({
+    jest.doMock('../../auth/refresh', () => ({
       refreshTokens: jest.fn(),
       isRefreshEndpoint: jest.fn(() => false),
     }));
 
-    jest.doMock('@/core/auth/token-storage', () => ({
+    jest.doMock('../../auth/token-storage', () => ({
       tokenStorage: { clearTokens: jest.fn() },
     }));
 
-    const { apiDelete } = await import('../client');
+    const { apiDelete, configureApiClient } = await import('../client');
+    configureApiClient({ baseUrl: 'http://localhost:3001' });
     const result = await apiDelete<typeof mockData>('test/endpoint');
 
     expect(result).toEqual(mockData);

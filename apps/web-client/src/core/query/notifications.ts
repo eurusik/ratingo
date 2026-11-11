@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { userActionsApi } from '../api';
 import { queryKeys } from './keys';
-import { retryUnlessUnauthorized } from './utils';
+import { retryUnlessUnauthorized } from '@ratingo/web-core/query';
 
 function invalidateNotificationCaches(queryClient: QueryClient) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.userActions.notifications.all });

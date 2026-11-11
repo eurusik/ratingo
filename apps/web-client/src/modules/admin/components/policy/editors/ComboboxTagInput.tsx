@@ -6,7 +6,7 @@ import { Input } from '@/shared/ui/input';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
-import { cn } from '@/shared/utils/cn';
+import { cn } from '@ratingo/web-core/lib';
 
 /** Combobox option with optional count. */
 export interface ComboboxOption {

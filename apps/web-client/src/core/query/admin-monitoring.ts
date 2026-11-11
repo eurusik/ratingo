@@ -8,7 +8,7 @@ import {
 
 import { adminMonitoringApi, type KeyHealthDashboard } from '../api/admin-monitoring.client';
 
-import { retryUnlessUnauthorized } from './utils';
+import { retryUnlessUnauthorized } from '@ratingo/web-core/query';
 
 const DASHBOARD_REFETCH_INTERVAL_MS = 60_000;
 

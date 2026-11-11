@@ -1,5 +1,5 @@
 import { buildWebSiteJsonLd, createMediaMetadata, type SeoMediaItem } from '../seo';
-import { formatYear } from '../format';
+import { formatYear } from '@ratingo/web-core/lib';
 
 const outlander: SeoMediaItem = {
   title: 'Чужоземка',

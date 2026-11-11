@@ -11,6 +11,7 @@ const customJestConfig = {
   testEnvironment: 'jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@ratingo/web-core/(.*)$': '<rootDir>/../../packages/web-core/src/$1/index.ts',
   },
   testMatch: [
     '**/__tests__/**/*.(ts|tsx|js)',

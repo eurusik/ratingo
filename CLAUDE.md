@@ -21,6 +21,7 @@ After finishing each step, review the changed code before moving on, and fix wha
 - `apps/web-client/` — Next.js 16 + React 19 + TanStack Query v5
 - `apps/pg-backup/` — daily `pg_dump` of prod to the Railway bucket (Railway cron service `Backup CRON`, own Dockerfile)
 - `packages/api-contract/` — Shared OpenAPI types (auto-generated)
+- `packages/web-core/` — Framework-agnostic web code shared by the web apps (`@ratingo/web-core/{api,auth,query,i18n,lib}`): no `next/*` imports, no `process.env`, config passed in by the app
 
 ## Branches & Deploy
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`

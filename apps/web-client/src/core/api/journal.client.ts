@@ -18,7 +18,7 @@ import type {
 
 import { apiGet, apiPost, apiPatch, apiDelete, type ApiResponse } from './client';
 import { getApiUrl } from '../config/env';
-import { tokenStorage } from '../auth/token-storage';
+import { tokenStorage } from '@ratingo/web-core/auth';
 
 /**
  * Builds search params from query object.

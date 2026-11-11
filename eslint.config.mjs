@@ -35,6 +35,8 @@ const webTestFiles = [
   'apps/web-client/src/**/__tests__/**',
 ];
 const webGeneratedUiPrimitives = ['apps/web-client/src/shared/ui/**'];
+const webCoreSourceFiles = ['packages/web-core/src/**/*.{ts,tsx}'];
+const webCoreTestFiles = ['packages/web-core/src/**/__tests__/**'];
 const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];
 const oversizedWebFilesToSplit = {
   'apps/web-client/src/modules/settings/utils/csv-parsers.ts': 519,
@@ -829,6 +831,84 @@ export default [
     ignores: [...webTestFiles, ...webGeneratedUiPrimitives],
     rules: {
       'max-lines': ['error', { max: 500, ...maxLinesOptions }],
+    },
+  },
+  {
+    files: webCoreSourceFiles,
+    plugins: {
+      'react-hooks': reactHooksPlugin,
+      import: importPlugin,
+    },
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    settings: {
+      'import/resolver': {
+        typescript: { project: path.join(tsconfigRootDir, 'packages/web-core/tsconfig.json') },
+      },
+    },
+    rules: {
+      ...asErrors(reactHooksPlugin.configs['recommended-latest'].rules),
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['next', 'next/*', 'next-*', '@/*'],
+              message: 'web-core is shared by Next and Vite apps: no Next imports and no app aliases.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'web-core takes its config from the caller instead of reading process.env.',
+        },
+      ],
+      'import/no-restricted-paths': [
+        'error',
+        {
+          basePath: tsconfigRootDir,
+          zones: [
+            {
+              target: './packages/web-core/**/*',
+              from: './apps/**/*',
+              message: 'Packages never import apps.',
+            },
+          ],
+        },
+      ],
+      'max-lines': ['error', { max: 500, ...maxLinesOptions }],
+    },
+  },
+  {
+    files: webCoreTestFiles,
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: webCoreSourceFiles,
+    ignores: webCoreTestFiles,
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
     },
   },
   ...Object.entries(oversizedWebFilesToSplit).map(([file, currentLines]) => ({

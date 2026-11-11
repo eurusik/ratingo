@@ -11,7 +11,7 @@ import type {
   ShowProgressDto,
 } from '@/modules/home/types';
 import { cn } from '@/shared/utils';
-import { formatYear } from '@/shared/utils/format';
+import { formatYear } from '@ratingo/web-core/lib';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import { CardLayout, cardTitleStyles } from './card-layout';
 import { CardPoster } from './card-poster';
