@@ -14,7 +14,7 @@
 // Inline copy of types / constants from import-wizard.tsx
 // ---------------------------------------------------------------------------
 
-import type { ParsedItem } from '../../../utils/csv-parsers';
+import type { ParsedItem } from '@/modules/settings/utils/csv-parsers';
 import type { FileState } from '../types';
 
 type WizardStep = 'upload' | 'preview' | 'result';

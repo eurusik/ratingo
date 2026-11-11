@@ -98,7 +98,7 @@ function enrichMovieDetails(movie: MovieDetailsDto): EnrichedMovieDetails {
     : '';
 
   // Compute suitableFor from genres
-  const suitableFor = (movie.genres || []).map((g) => g.name).slice(0, 3);
+  const suitableFor = (movie.genres ?? []).map((g) => g.name).slice(0, 3);
 
   // Use API's primaryTrailer if available, fallback to first video
   const primaryTrailerKey = movie.primaryTrailer?.key || movie.videos?.[0]?.key;
@@ -203,13 +203,11 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
                 mediaItemId={movie.id}
                 mediaType="movie"
                 isReleased={!!movie.releaseDate && new Date(movie.releaseDate) <= new Date()}
-                hasStreamingProviders={
-                  !!(
-                    movie.availability?.stream?.length ||
-                    movie.availability?.rent?.length ||
-                    movie.availability?.buy?.length
-                  )
-                }
+                hasStreamingProviders={[
+                  movie.availability?.stream,
+                  movie.availability?.rent,
+                  movie.availability?.buy,
+                ].some((providers) => (providers?.length ?? 0) > 0)}
                 type={verdict.type}
                 message={verdictMessage}
                 messageKey={verdict.messageKey}

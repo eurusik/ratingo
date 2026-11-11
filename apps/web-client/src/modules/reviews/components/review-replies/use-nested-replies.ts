@@ -21,7 +21,7 @@ export function useNestedReplies(replies: ReplyResponseDto[] | undefined): Neste
       if (!reply.parentReplyId) {
         topLevel.push(reply);
       } else {
-        const siblings = childrenMap.get(reply.parentReplyId) || [];
+        const siblings = childrenMap.get(reply.parentReplyId) ?? [];
         siblings.push(reply);
         childrenMap.set(reply.parentReplyId, siblings);
       }

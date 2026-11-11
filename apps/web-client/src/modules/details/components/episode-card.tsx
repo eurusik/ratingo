@@ -115,7 +115,7 @@ export function EpisodeCard({
         ) : (
           <EpisodeCheckbox
             checked={isWatched}
-            onToggle={onToggleWatched || (() => {})}
+            onToggle={onToggleWatched ?? (() => {})}
             disabled={upcoming || !onToggleWatched}
             isLoading={isToggling}
             title={isWatched ? dict.details.showStatus.markUnwatched : dict.details.showStatus.markWatched}

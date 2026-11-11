@@ -22,7 +22,7 @@ import {
 } from '@/shared/ui/select';
 import { cn } from '@/shared/utils';
 
-import { POST_TYPE_VALUES, type AdminJournalPost } from '../../types';
+import { POST_TYPE_VALUES, type AdminJournalPost } from '@/modules/journal/types';
 import { ImageUploader } from './image-uploader';
 import { MarkdownEditor } from './markdown-editor';
 

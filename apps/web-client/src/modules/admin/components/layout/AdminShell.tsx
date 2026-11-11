@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '@/shared/utils';
-import { AdminShellProps, NavigationItem } from '../../types';
+import { AdminShellProps, NavigationItem } from '@/modules/admin/types';
 import {
   Breadcrumb,
   BreadcrumbItem,

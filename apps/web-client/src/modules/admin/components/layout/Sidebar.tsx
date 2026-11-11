@@ -6,7 +6,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { Menu, FileText, Play, Tv, Newspaper, LayoutDashboard, Plug, Shield, Flag, Database } from 'lucide-react';
 import { cn } from '@/shared/utils';
-import { NavigationItem } from '../../types';
+import { NavigationItem } from '@/modules/admin/types';
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 import { useTranslation } from '@/shared/i18n';

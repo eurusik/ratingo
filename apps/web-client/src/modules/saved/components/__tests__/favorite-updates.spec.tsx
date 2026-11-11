@@ -40,7 +40,7 @@ jest.mock('@/shared/utils/format', () => ({
 }));
 
 const mockUseFavoriteUpdates = jest.fn();
-jest.mock('../../hooks/use-me-lists', () => ({
+jest.mock('@/modules/saved/hooks/use-me-lists', () => ({
   useFavoriteUpdates: (...args: unknown[]) => mockUseFavoriteUpdates(...args),
 }));
 

@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shared/ui/alert-dialog';
-import { formatNumber } from '../../utils/format-number';
+import { formatNumber } from '@/modules/settings/utils/format-number';
 
 interface ImportConfirmDialogProps {
   open: boolean;

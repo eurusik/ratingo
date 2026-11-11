@@ -6,7 +6,7 @@
 import ky from 'ky';
 import { env } from '../config/env';
 import { ApiError, isNotFoundError, type ApiErrorDetail } from './error';
-import type { PostListResponseDto, PostDetailDto, PostsQueryParams } from '@/modules/journal/types';
+import type { PostListResponseDto, PostDetailDto, PostsQueryParams } from './journal.types';
 
 /** Server-side ky instance without auth (for public endpoints). */
 const serverApi = ky.create({

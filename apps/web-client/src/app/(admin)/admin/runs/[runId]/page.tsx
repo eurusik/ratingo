@@ -10,8 +10,8 @@ import {
   RunHeader,
   RunDiffTab,
   RunErrorsTab,
+  RUN_STATUS,
 } from '@/modules/admin';
-import { RUN_STATUS } from '@/modules/admin/types';
 import { toast } from 'sonner';
 import { useRunStatus, useRunDiff, usePromoteRun, useCancelRun } from '@/core/query/admin';
 import { useTranslation } from '@/shared/i18n';

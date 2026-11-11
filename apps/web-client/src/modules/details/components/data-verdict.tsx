@@ -19,8 +19,8 @@ import {
   useSubscriptionStatus,
   useSubscribe,
   useUnsubscribe,
+  useUserMediaState,
 } from '@/core/query';
-import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import {
   getSubscriptionTrigger,
   type ShowStatus,

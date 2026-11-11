@@ -1,68 +1,13 @@
 /**
  * Journal module types.
  *
- * Re-exports types from @ratingo/api-contract for type safety.
+ * Re-exports the journal API types from core/api/journal.types.
  * Domain types for use in components and hooks.
  */
 
-import type { components } from '@ratingo/api-contract';
+import type { PostType } from '@/core/api/journal.types';
 
-/** Post detail with navigation from API */
-export type PostDetailDto = components['schemas']['PostDetailDto'];
-
-/** Admin post with draft status from API */
-export type AdminPostDto = components['schemas']['AdminPostDto'];
-
-/** Paginated posts response from API */
-export type PostListResponseDto = components['schemas']['PostListResponseDto'];
-
-/** Admin paginated posts response from API */
-export type AdminPostListResponseDto = components['schemas']['AdminPostListResponseDto'];
-
-/** Create post input from API */
-export type CreatePostDto = components['schemas']['CreatePostDto'];
-
-/** Update post input from API */
-export type UpdatePostDto = components['schemas']['UpdatePostDto'];
-
-/** Image upload response from API */
-export type ImageUploadResponseDto = components['schemas']['ImageUploadResponseDto'];
-
-// ============================================================================
-// Domain Types (for use in components)
-// ============================================================================
-
-/**
- * Post type values as const for type safety.
- */
-export const POST_TYPE_VALUES = ['update', 'explanation', 'fix', 'roadmap'] as const;
-
-/**
- * Post type enum.
- */
-export type PostType = (typeof POST_TYPE_VALUES)[number];
-
-/**
- * Post status for admin views.
- */
-export type PostStatus = 'draft' | 'published' | 'scheduled';
-
-/**
- * Query params for public posts list.
- */
-export interface PostsQueryParams {
-  type?: PostType[];
-  context?: string;
-  page?: number;
-  limit?: number;
-}
-
-/**
- * Query params for admin posts list.
- */
-export interface AdminPostsQueryParams extends PostsQueryParams {
-  status?: PostStatus;
-}
+export * from '@/core/api/journal.types';
 
 // ============================================================================
 // Domain Types (mapped from DTOs in hooks)

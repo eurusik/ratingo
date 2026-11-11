@@ -26,6 +26,8 @@ export { RunHeader, RunDiffTab, RunErrorsTab } from './components/run';
 
 export { KeysHealthDashboard } from './components/monitoring';
 
+export { ReportsQueue } from './components/reports';
+
 // Configuration
 // Types
 export * from './types';

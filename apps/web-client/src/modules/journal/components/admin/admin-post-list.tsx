@@ -13,7 +13,7 @@ import { useTranslation } from '@/shared/i18n';
 import { DataTable } from '@/modules/admin/components/ui/DataTable';
 import type { DataTableColumnDef, DropdownMenuItemProps } from '@/modules/admin/types';
 
-import type { AdminJournalPost } from '../../types';
+import type { AdminJournalPost } from '@/modules/journal/types';
 import { PostStatusBadge } from './post-status-badge';
 import { PostTypeBadge } from '../post-type-badge';
 

@@ -10,7 +10,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { ConfirmActionDialog } from '../dialogs/ConfirmActionDialog';
 import { MappingDialog, type MappingFormData } from './MappingDialog';
 import { useMappings, useCreateMapping, useUpdateMapping, useDeleteMapping } from '@/core/query';
-import type { DataTableColumnDef } from '../../types';
+import type { DataTableColumnDef } from '@/modules/admin/types';
 import type { ProviderMapping, DistributionChannel } from '@/core/api/admin-providers.client';
 import { toast } from 'sonner';
 

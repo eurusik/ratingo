@@ -7,7 +7,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { CommunityRating } from '../community-rating';
-import { COMMUNITY_RATING_MIN_THRESHOLD } from '../../constants/community-rating';
+import { COMMUNITY_RATING_MIN_THRESHOLD } from '@/modules/details/constants/community-rating';
 
 // ---------------------------------------------------------------------------
 // Mocks

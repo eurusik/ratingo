@@ -93,7 +93,7 @@ function enrichShowDetails(show: ShowDetailsDto): EnrichedShowDetails {
     : '';
 
   // Compute suitableFor from genres (fallback until API provides it)
-  const suitableFor = (show.genres || []).map((g) => g.name).slice(0, 3);
+  const suitableFor = (show.genres ?? []).map((g) => g.name).slice(0, 3);
 
   // Use API's primaryTrailer if available, fallback to first video
   const primaryTrailerKey = show.primaryTrailer?.key || show.videos?.[0]?.key;

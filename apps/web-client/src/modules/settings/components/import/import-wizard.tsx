@@ -3,9 +3,9 @@
 import { useReducer, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/shared/i18n';
-import { SOURCE_PARSERS, type ParsedItem } from '../../utils/csv-parsers';
-import { useImportMedia, useCancelImportBatches, type ImportResult, type ImportRequest } from '../../hooks/use-import-media';
-import { useImportBatchStatus } from '../../hooks/use-import-batch-status';
+import { SOURCE_PARSERS, type ParsedItem } from '@/modules/settings/utils/csv-parsers';
+import { useImportMedia, useCancelImportBatches, type ImportResult, type ImportRequest } from '@/modules/settings/hooks/use-import-media';
+import { useImportBatchStatus } from '@/modules/settings/hooks/use-import-batch-status';
 import { ImportPendingStatus } from './import-pending-status';
 import { FILE_TOO_LARGE_SENTINEL } from './import-dropzone';
 import { ImportStepper } from './import-stepper';

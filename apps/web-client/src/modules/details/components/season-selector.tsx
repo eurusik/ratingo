@@ -37,7 +37,7 @@ function SeasonButton({
   label?: string;
   onClick: () => void;
 }) {
-  const episodeCount = season.episodeCount || season.episodes?.length || 0;
+  const episodeCount = season.episodeCount ?? season.episodes?.length ?? 0;
 
   return (
     <button

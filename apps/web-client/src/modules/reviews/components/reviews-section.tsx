@@ -10,9 +10,9 @@ import {
   useVoteReview,
   useUnvoteReview,
   useReportReview,
+  useUserMediaState,
 } from '@/core/query';
 import { useAuth, useAuthModalStore } from '@/core/auth';
-import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import { getApiErrorCode, ErrorCode } from '@/core/api';
 import { REVIEWS_DEFAULTS, type ReviewSort, type VoteType, type ReportReason, type ReviewListResponseDto } from '@/core/api/reviews.client';
 import { useTranslation } from '@/shared/i18n';

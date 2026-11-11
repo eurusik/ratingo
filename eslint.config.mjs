@@ -7,6 +7,7 @@ import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import nextPlugin from '@next/eslint-plugin-next';
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -55,6 +56,59 @@ const jestRecommendedRulesAsErrors = Object.fromEntries(
 );
 
 const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
+
+const ratingoPlugin = { rules: { 'no-deep-relative-imports': noDeepRelativeImports } };
+
+const webSrcDir = 'apps/web-client/src';
+const webSrc = `./${webSrcDir}`;
+const webModules = fs
+  .readdirSync(path.join(tsconfigRootDir, webSrcDir, 'modules'), {
+    withFileTypes: true,
+  })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name);
+const webLayerZones = [
+  {
+    target: `${webSrc}/shared/**/*`,
+    from: [`${webSrc}/modules/**/*`, `${webSrc}/app/**/*`],
+    message:
+      'shared must not depend on modules or app: move the code into shared or pass it in as a prop.',
+  },
+  {
+    target: `${webSrc}/core/**/*`,
+    from: [`${webSrc}/modules/**/*`, `${webSrc}/app/**/*`],
+    message: 'core must not depend on modules or app: move the shared types or hooks into core.',
+  },
+  {
+    target: `${webSrc}/modules/**/*`,
+    from: `${webSrc}/app/**/*`,
+    message: 'modules must not depend on app routes.',
+  },
+];
+const webModuleInternalsZone = (moduleName) => ({
+  target: [`${webSrc}/app/**/*`, `${webSrc}/modules/!(${moduleName})/**/*`],
+  from: [
+    `${webSrc}/modules/${moduleName}/*/**/*`,
+    `${webSrc}/modules/${moduleName}/!(index).{ts,tsx}`,
+  ],
+  message: `Import from @/modules/${moduleName} (its index.ts) instead of internal files.`,
+});
+const webBoundaryZones = (moduleWithAllowedInternals) => [
+  ...webLayerZones,
+  ...webModules
+    .filter((moduleName) => moduleName !== moduleWithAllowedInternals)
+    .map(webModuleInternalsZone),
+];
+const webModuleInternalImportsToRemove = {
+  'apps/web-client/src/app/(main)/settings/import/page.tsx': 'settings',
+  'apps/web-client/src/modules/journal/components/admin/admin-post-list.tsx': 'admin',
+};
+const webImportSettings = {
+  'import/resolver': {
+    typescript: { project: path.join(tsconfigRootDir, 'apps/web-client/tsconfig.json') },
+    node: true,
+  },
+};
 
 const apiImportSettings = {
   'import/parsers': {
@@ -137,7 +191,10 @@ const presentationInfrastructureZone = {
 };
 const domainOuterLayersZone = {
   target: './apps/api/src/modules/**/domain/**/*',
-  from: ['./apps/api/src/modules/**/application/**/*', './apps/api/src/modules/**/presentation/**/*'],
+  from: [
+    './apps/api/src/modules/**/application/**/*',
+    './apps/api/src/modules/**/presentation/**/*',
+  ],
   message: 'Domain must not depend on application or presentation',
 };
 const infrastructurePresentationZone = {
@@ -496,7 +553,8 @@ export default [
         },
         {
           selector: "MemberExpression[object.name='process'][property.name='env']",
-          message: 'Read environment variables in apps/api/src/config and inject the config instead',
+          message:
+            'Read environment variables in apps/api/src/config and inject the config instead',
         },
         {
           selector: 'ForInStatement',
@@ -618,7 +676,7 @@ export default [
   {
     files: ['apps/api/src/**/*.ts'],
     plugins: {
-      ratingo: { rules: { 'no-deep-relative-imports': noDeepRelativeImports } },
+      ratingo: ratingoPlugin,
     },
     rules: {
       'ratingo/no-deep-relative-imports': [
@@ -698,6 +756,10 @@ export default [
       ],
       '@typescript-eslint/await-thenable': 'error',
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': [
+        'error',
+        { ignorePrimitives: { string: true } },
+      ],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -706,6 +768,38 @@ export default [
       'no-console': ['error', { allow: ['warn', 'error'] }],
     },
   },
+  {
+    files: webSourceFiles,
+    plugins: {
+      ratingo: ratingoPlugin,
+    },
+    rules: {
+      'ratingo/no-deep-relative-imports': [
+        'error',
+        {
+          maxParentLevels: 1,
+          aliasRoot: path.join(tsconfigRootDir, webSrcDir),
+          aliasPrefix: '@/',
+        },
+      ],
+    },
+  },
+  {
+    files: webSourceFiles,
+    plugins: {
+      import: importPlugin,
+    },
+    settings: webImportSettings,
+    rules: {
+      'import/no-restricted-paths': ['error', { zones: webBoundaryZones() }],
+    },
+  },
+  ...Object.entries(webModuleInternalImportsToRemove).map(([file, moduleName]) => ({
+    files: [file],
+    rules: {
+      'import/no-restricted-paths': ['error', { zones: webBoundaryZones(moduleName) }],
+    },
+  })),
   {
     files: tanstackTableFiles,
     rules: {

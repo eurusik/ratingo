@@ -25,7 +25,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/utils';
 
-import { useImageUpload } from '../../hooks';
+import { useImageUpload } from '@/modules/journal/hooks';
 
 export interface WysiwygEditorProps {
   value: string;

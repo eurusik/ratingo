@@ -61,12 +61,12 @@ export function SeasonHeader({
   isResettingSeason = false,
 }: SeasonHeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const episodeCount = selectedSeason.episodeCount || selectedSeason.episodes?.length || 0;
+  const episodeCount = selectedSeason.episodeCount ?? selectedSeason.episodes?.length ?? 0;
   const progressTotal = totalCount ?? episodeCount;
 
   const isNestedControl = (target: HTMLElement) =>
-    target.closest('[data-season-dropdown]') ||
-    target.closest('[data-mark-all-button]') ||
+    target.closest('[data-season-dropdown]') ??
+    target.closest('[data-mark-all-button]') ??
     target.closest('[data-reset-season-button]');
 
   const handleContainerClick = (e: React.MouseEvent) => {

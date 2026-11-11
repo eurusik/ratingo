@@ -13,7 +13,7 @@ import { Button } from '@/shared/ui/button';
 import { Progress } from '@/shared/ui/progress';
 import { cn } from '@/shared/utils';
 
-import { useImageUpload } from '../../hooks';
+import { useImageUpload } from '@/modules/journal/hooks';
 
 export interface ImageUploaderProps {
   value?: string | null;

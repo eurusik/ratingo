@@ -14,8 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/shared/ui/table';
-import type { ParsedItem } from '../../utils/csv-parsers';
-import { formatNumber } from '../../utils/format-number';
+import type { ParsedItem } from '@/modules/settings/utils/csv-parsers';
+import { formatNumber } from '@/modules/settings/utils/format-number';
 
 const MAX_PREVIEW = 20;
 
@@ -119,7 +119,7 @@ function PreviewRows({
                 )}
               </TableCell>
               <TableCell className="text-right text-cinema-text-muted text-sm tabular-nums">
-                {item.rating != null ? item.rating : '—'}
+                {item.rating ?? '—'}
               </TableCell>
             </TableRow>
           ))}

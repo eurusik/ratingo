@@ -1,6 +1,6 @@
 import { User } from 'lucide-react';
 import { cn } from '@/shared/utils';
-import { findPresetByScore } from '@/modules/details/constants/rating-presets';
+import { findPresetByScore } from '@/shared/constants';
 
 interface UserRatingBadgeProps {
   rating: number;

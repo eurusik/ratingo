@@ -14,7 +14,7 @@ import type {
   ImageUploadResponseDto,
   PostsQueryParams,
   AdminPostsQueryParams,
-} from '@/modules/journal/types';
+} from './journal.types';
 
 import { apiGet, apiPost, apiPatch, apiDelete, type ApiResponse } from './client';
 import { getApiUrl } from '../config/env';

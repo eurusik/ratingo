@@ -99,21 +99,21 @@ export function GlobalRequirementsEditor({
   };
 
   const addRatingSource = (source: RatingSource) => {
-    const current = globalRequirements?.requireAnyOfRatingsPresent || [];
+    const current = globalRequirements?.requireAnyOfRatingsPresent ?? [];
     if (!current.includes(source)) {
       updateField('requireAnyOfRatingsPresent', [...current, source]);
     }
   };
 
   const removeRatingSource = (source: RatingSource) => {
-    const current = globalRequirements?.requireAnyOfRatingsPresent || [];
+    const current = globalRequirements?.requireAnyOfRatingsPresent ?? [];
     const updated = current.filter((s) => s !== source);
     updateField('requireAnyOfRatingsPresent', updated.length > 0 ? updated : undefined);
   };
 
   const toggleVoteSource = (source: VoteSource, checked: boolean) => {
     const current = globalRequirements?.minVotesAnyOf;
-    const currentSources = current?.sources || [];
+    const currentSources = current?.sources ?? [];
 
     let newSources: VoteSource[];
     if (checked) {
@@ -142,14 +142,14 @@ export function GlobalRequirementsEditor({
       }
     } else {
       updateField('minVotesAnyOf', {
-        sources: current?.sources || ['imdb', 'trakt'],
+        sources: current?.sources ?? ['imdb', 'trakt'],
         min,
       });
     }
   };
 
   const availableRatingSources = RATING_SOURCES.filter(
-    (source) => !(globalRequirements?.requireAnyOfRatingsPresent || []).includes(source),
+    (source) => !(globalRequirements?.requireAnyOfRatingsPresent ?? []).includes(source),
   );
 
   const toggleContext = (context: EvaluationContext, checked: boolean) => {
@@ -205,7 +205,7 @@ export function GlobalRequirementsEditor({
       <div className="space-y-2">
         <Label>{labels?.requireRatings ?? 'Required Rating Sources'}</Label>
         <div className="flex flex-wrap gap-2 mb-2">
-          {(globalRequirements?.requireAnyOfRatingsPresent || []).map((source) => (
+          {(globalRequirements?.requireAnyOfRatingsPresent ?? []).map((source) => (
             <Badge key={source} variant="secondary" className="gap-1">
               {RATING_SOURCE_LABELS[source]}
               <button

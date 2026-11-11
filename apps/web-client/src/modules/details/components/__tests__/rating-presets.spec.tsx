@@ -9,7 +9,7 @@
 import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RatingPresets } from '../rating-presets';
-import { RATING_PRESETS } from '../../constants/rating-presets';
+import { RATING_PRESETS } from '@/shared/constants';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -23,7 +23,7 @@ let mockUserMediaState: { rating: number | null } | undefined = undefined;
 let mockIsPending = false;
 
 const mockTryAutoUnsave = jest.fn().mockResolvedValue(undefined);
-jest.mock('../../hooks/use-auto-unsave-on-rating', () => ({
+jest.mock('@/modules/details/hooks/use-auto-unsave-on-rating', () => ({
   useAutoUnsaveOnRating: (_mediaItemId: string) => ({ tryAutoUnsave: mockTryAutoUnsave }),
 }));
 
@@ -57,7 +57,7 @@ jest.mock('@/shared/i18n', () => ({
   }),
 }));
 
-jest.mock('@/modules/saved/hooks/use-me-lists', () => ({
+jest.mock('@/core/query/user-media-state', () => ({
   useUserMediaState: () => ({ data: mockUserMediaState }),
   useSetRating: () => ({
     mutateAsync: mockSetRating,

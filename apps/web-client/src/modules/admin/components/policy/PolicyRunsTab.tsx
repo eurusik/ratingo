@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Progress } from '@/shared/ui/progress';
 import { DataTable } from '../ui';
 import { StatusBadge } from '../ui';
-import { DataTableColumnDef } from '../../types';
+import { DataTableColumnDef } from '@/modules/admin/types';
 import type { components } from '@ratingo/api-contract';
 
 type EvaluationRunDto = components['schemas']['EvaluationRunDto'];
