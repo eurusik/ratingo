@@ -626,16 +626,15 @@
       "show": "Серіал не знайдено"
     },
     "media": {
-      "kind": {
-        "movie": "фільм",
-        "show": "серіал"
-      },
       "kindCapitalized": {
         "movie": "Фільм",
         "show": "Серіал"
       },
-      "titleSuffixFull": "актори, рейтинг, де дивитись",
-      "titleSuffixShort": "актори, рейтинг",
+      "titleKeywords": {
+        "movie": "актори та рейтинг фільму",
+        "show": "актори та рейтинг серіалу"
+      },
+      "titleKeywordsShort": "актори",
       "castLabel": "У ролях",
       "watchOn": "Дивіться на Ratingo"
     }

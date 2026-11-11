@@ -14,6 +14,7 @@ import { getDictionary } from '@/shared/i18n';
 import {
   JsonLd,
   buildOrganizationJsonLd,
+  buildWebSiteJsonLd,
   IS_SEARCH_INDEXING_ENABLED,
   SEO_BASE_URL,
 } from '@/shared/utils/seo';
@@ -109,6 +110,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           }}
         />
         <JsonLd data={buildOrganizationJsonLd(baseUrl)} />
+        <JsonLd data={buildWebSiteJsonLd(baseUrl)} />
         <AppProviders>
           {children}
         </AppProviders>
