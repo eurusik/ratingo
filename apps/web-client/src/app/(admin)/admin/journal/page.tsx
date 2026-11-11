@@ -28,9 +28,9 @@ import {
   useDeletePost,
   usePublishPost,
   useUnpublishPost,
-  AdminPostList,
   type AdminJournalPost,
 } from '@/modules/journal';
+import { AdminPostList } from '@/modules/journal/admin';
 
 export default function AdminJournalPage() {
   const router = useRouter();
@@ -127,10 +127,7 @@ export default function AdminJournalPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog
-        open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog({ open })}
-      >
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open })}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('admin.journal.deleteConfirm.title')}</AlertDialogTitle>

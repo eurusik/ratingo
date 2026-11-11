@@ -7,9 +7,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { SOURCE_PARSERS } from '@/modules/settings/utils/csv-parsers';
-import { ImportWizard } from '@/modules/settings/components/import/import-wizard';
-import type { ImportSource } from '@/modules/settings/components/import/import-source-step';
+import { ImportWizard, SOURCE_PARSERS, type ImportSource } from '@/modules/settings/import';
 
 function ImportPageContent() {
   const { dict } = useTranslation();

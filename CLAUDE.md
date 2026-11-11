@@ -89,6 +89,7 @@ Design all jobs as idempotent. Define job types in `*.constants.ts`.
 - **Types**: Use `import type { components } from '@ratingo/api-contract'` for all API types
 - **i18n**: Ukrainian (default) + English. Server: `getDictionary(locale)`, client: `useTranslation()` hook
 - **State**: TanStack Query (server state) + Zustand (UI state) + React Context (auth, i18n)
+- **Module boundaries**: `app/` and other modules import a module in `src/modules/*` only through its `index.ts`. When a heavy, route-specific part would bloat every page that uses the barrel (admin journal UI, the CSV import wizard), give it its own top-level entry (`modules/journal/admin.ts` → `@/modules/journal/admin`) and add it to `webModuleExtraEntryPoints` in the root `eslint.config.mjs`. Never add per-file exceptions
 
 ## Constitution
 
