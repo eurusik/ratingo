@@ -7,8 +7,12 @@ import { type AppRole, runsHttp } from '../common/runtime/app-role';
  */
 const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
 
-const ORIGIN_RE = String.raw`https?:\/\/[a-z0-9.-]+(:\d+)?`;
-const ORIGIN_LIST_RE = new RegExp(`^${ORIGIN_RE}(\\s*,\\s*${ORIGIN_RE})*$`);
+const originListPattern = (scheme: string): RegExp => {
+  const origin = String.raw`${scheme}:\/\/[a-z0-9.-]+(:\d+)?`;
+  return new RegExp(`^${origin}(\\s*,\\s*${origin})*$`);
+};
+const ORIGIN_LIST_RE = originListPattern('https?');
+const HTTPS_ORIGIN_LIST_RE = originListPattern('https');
 
 const sharedEnvKeys = {
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
@@ -63,7 +67,21 @@ const httpEnvKeys = {
   THROTTLE_LIMIT: Joi.number().default(600),
 
   CORS_ALLOW_VERCEL_PREVIEWS: Joi.string().valid('true', 'false').optional(),
-  OAUTH_RETURN_ORIGINS: Joi.string().trim().pattern(ORIGIN_LIST_RE).optional(),
+  OAUTH_RETURN_ORIGINS: Joi.string()
+    .trim()
+    .when('NODE_ENV', {
+      is: 'production',
+      then: Joi.string().pattern(HTTPS_ORIGIN_LIST_RE, 'https origin list'),
+      otherwise: Joi.string().pattern(ORIGIN_LIST_RE, 'origin list'),
+    })
+    .optional(),
+  OAUTH_ALLOW_VERCEL_PREVIEWS: Joi.string()
+    .when('NODE_ENV', {
+      is: 'production',
+      then: Joi.valid('false'),
+      otherwise: Joi.valid('true', 'false'),
+    })
+    .optional(),
 };
 
 export const buildEnvSchema = (role: AppRole): Joi.ObjectSchema =>

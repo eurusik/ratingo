@@ -18,11 +18,13 @@ export class OAuthReturnOriginResolver {
   ) {}
 
   resolve(requestedOrigin: string | undefined): string {
-    const { frontendUrl, oauthReturnOrigins } = this.authCfg;
-    if (!requestedOrigin) return frontendUrl;
+    const fallback = this.frontendBase();
+    if (!requestedOrigin) return fallback;
 
-    const frontendOrigin = frontendUrl.replace(TRAILING_SLASHES, '');
-    const decision = evaluateReturnOrigin(requestedOrigin, [frontendOrigin, ...oauthReturnOrigins]);
+    const decision = evaluateReturnOrigin(requestedOrigin, [
+      fallback,
+      ...this.authCfg.oauthReturnOrigins,
+    ]);
     if (decision.allowed) return decision.origin;
 
     this.logger.warn(
@@ -30,10 +32,14 @@ export class OAuthReturnOriginResolver {
         requestedOrigin.slice(0, MAX_LOGGED_ORIGIN_LENGTH),
       )}); falling back to frontendUrl`,
     );
-    return frontendUrl;
+    return fallback;
   }
 
   redirectBase(statePayload: OAuthStatePayload | undefined): string {
-    return statePayload?.returnOrigin ?? this.authCfg.frontendUrl;
+    return statePayload?.returnOrigin ?? this.frontendBase();
+  }
+
+  private frontendBase(): string {
+    return this.authCfg.frontendUrl.replace(TRAILING_SLASHES, '');
   }
 }

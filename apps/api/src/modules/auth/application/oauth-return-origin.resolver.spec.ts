@@ -48,7 +48,7 @@ describe('OAuthReturnOriginResolver', () => {
     });
   });
 
-  it('accepts the frontend origin when frontendUrl ends with a slash', () => {
+  it('strips trailing slashes from frontendUrl for matching and fallback', () => {
     const resolver = new OAuthReturnOriginResolver({
       frontendUrl: `${FRONTEND_URL}/`,
       oauthReturnOrigins: [],
@@ -56,6 +56,9 @@ describe('OAuthReturnOriginResolver', () => {
 
     expect(resolver.resolve(FRONTEND_URL)).toBe(FRONTEND_URL);
     expect(warn).not.toHaveBeenCalled();
+    expect(resolver.resolve(undefined)).toBe(FRONTEND_URL);
+    expect(resolver.resolve('https://evil.test')).toBe(FRONTEND_URL);
+    expect(resolver.redirectBase(undefined)).toBe(FRONTEND_URL);
   });
 
   describe('redirectBase', () => {

@@ -1,5 +1,7 @@
 import * as fc from 'fast-check';
 
+import { matchesAllowedOrigin } from '@/common/utils/allowed-origin.util';
+
 import { evaluateReturnOrigin, RETURN_ORIGIN_REJECTION } from './oauth-return-origin.policy';
 
 const PREVIEW = /^https:\/\/ratingo-storefront-[a-z0-9]{9}-eurusik\.vercel\.app$/;
@@ -93,14 +95,7 @@ describe('evaluateReturnOrigin', () => {
         fc.oneof(fc.constantFrom(...ALLOW_LIST.map(String)), fc.string()),
         (candidate) => {
           const decision = evaluateReturnOrigin(candidate, ALLOW_LIST);
-          return (
-            !decision.allowed ||
-            ALLOW_LIST.some((allowed) =>
-              typeof allowed === 'string'
-                ? allowed === decision.origin
-                : allowed.test(decision.origin),
-            )
-          );
+          return !decision.allowed || matchesAllowedOrigin(decision.origin, ALLOW_LIST);
         },
       ),
     );

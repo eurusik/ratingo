@@ -1,4 +1,4 @@
-export type AllowedReturnOrigin = string | RegExp;
+import { type AllowedOrigin, matchesAllowedOrigin } from '@/common/utils/allowed-origin.util';
 
 export const RETURN_ORIGIN_REJECTION = {
   MALFORMED_URL: 'MALFORMED_URL',
@@ -19,12 +19,9 @@ const parseUrl = (candidate: string): URL | null => {
   }
 };
 
-const matchesAllowedOrigin = (origin: string, allowed: AllowedReturnOrigin): boolean =>
-  typeof allowed === 'string' ? allowed === origin : allowed.test(origin);
-
 export const evaluateReturnOrigin = (
   candidate: string,
-  allowList: readonly AllowedReturnOrigin[],
+  allowList: readonly AllowedOrigin[],
 ): ReturnOriginDecision => {
   const url = parseUrl(candidate);
   if (!url) {
@@ -33,7 +30,7 @@ export const evaluateReturnOrigin = (
   if (url.origin !== candidate) {
     return { allowed: false, reason: RETURN_ORIGIN_REJECTION.NOT_A_BARE_ORIGIN };
   }
-  if (!allowList.some((allowed) => matchesAllowedOrigin(url.origin, allowed))) {
+  if (!matchesAllowedOrigin(url.origin, allowList)) {
     return { allowed: false, reason: RETURN_ORIGIN_REJECTION.NOT_ALLOWED };
   }
   return { allowed: true, origin: url.origin };

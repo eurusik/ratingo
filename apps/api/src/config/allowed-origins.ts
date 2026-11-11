@@ -1,3 +1,5 @@
+import { type AllowedOrigin } from '../common/utils/allowed-origin.util';
+
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3002',
   'http://localhost:3000',
@@ -8,8 +10,6 @@ const DEFAULT_CORS_ORIGINS = [
 export const VERCEL_PREVIEW_DEPLOYMENT_ORIGIN =
   /^https:\/\/ratingo-(?:storefront-|admin-)?[a-z0-9]{9}-eurusik\.vercel\.app$/;
 
-export type AllowedOrigin = string | RegExp;
-
 interface CorsOriginEnv {
   CORS_ORIGIN?: string;
   CORS_ALLOW_VERCEL_PREVIEWS?: string;
@@ -17,7 +17,7 @@ interface CorsOriginEnv {
 
 interface OAuthReturnOriginEnv {
   OAUTH_RETURN_ORIGINS?: string;
-  CORS_ALLOW_VERCEL_PREVIEWS?: string;
+  OAUTH_ALLOW_VERCEL_PREVIEWS?: string;
 }
 
 const parseOriginList = (value: string | undefined): string[] | undefined =>
@@ -41,5 +41,5 @@ export const resolveCorsOrigins = (env: CorsOriginEnv): AllowedOrigin[] =>
 export const resolveOAuthReturnOrigins = (env: OAuthReturnOriginEnv): AllowedOrigin[] =>
   withVercelPreviews(
     parseOriginList(env.OAUTH_RETURN_ORIGINS) ?? [],
-    env.CORS_ALLOW_VERCEL_PREVIEWS,
+    env.OAUTH_ALLOW_VERCEL_PREVIEWS,
   );

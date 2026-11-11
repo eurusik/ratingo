@@ -112,15 +112,37 @@ Every OAuth start (`/auth/{provider}`, `/auth/link/{provider}`) accepts an optio
 query param, e.g. `?returnOrigin=https://storefront-dev.ratingo.top`. `OAuthReturnOriginResolver`
 checks it with the pure `evaluateReturnOrigin` policy against the allow-list:
 
-- `frontendUrl` (`NEXT_PUBLIC_SITE_URL`) — always allowed and the fallback
-- `OAUTH_RETURN_ORIGINS` — comma-separated bare origins
-- Vercel deployment URLs (`VERCEL_PREVIEW_DEPLOYMENT_ORIGIN`) when `CORS_ALLOW_VERCEL_PREVIEWS=true`
+- `frontendUrl` (`NEXT_PUBLIC_SITE_URL`, trailing slash stripped) — always allowed and the fallback
+- `OAUTH_RETURN_ORIGINS` — comma-separated bare origins; `https` only when `NODE_ENV=production`
+- Vercel deployment URLs (`VERCEL_PREVIEW_DEPLOYMENT_ORIGIN`) when `OAUTH_ALLOW_VERCEL_PREVIEWS=true`;
+  the env schema rejects `true` in production
 
 The value must be a bare origin (no path, query, trailing slash or userinfo). A missing value falls back
 to `frontendUrl`; a rejected one also falls back and is logged with its reason (`MALFORMED_URL`,
 `NOT_A_BARE_ORIGIN`, `NOT_ALLOWED`). The validated origin is stored in the HMAC-signed state, so the
 callback, account-link redirects and `OAuthExceptionFilter` error redirects all use the server-validated
 value and never read an origin from the callback query.
+
+The allow-list is deliberately separate from CORS. `CORS_ORIGIN` falls back to a default list that includes
+`localhost`, and `CORS_ALLOW_VERCEL_PREVIEWS` opens API calls to every preview deployment. Both are fine for
+API calls but would hand login codes to those origins. So a frontend that should finish OAuth must be listed
+in `OAUTH_RETURN_ORIGINS` (and in `CORS_ORIGIN` for its API calls), and previews receive codes only with
+`OAUTH_ALLOW_VERCEL_PREVIEWS=true`.
+
+#### Frontend redirect contract
+
+Every frontend on the allow-list must serve these routes (`<origin>` is the validated return origin):
+
+| Flow | Redirect | Frontend action |
+|------|----------|-----------------|
+| Login success | `<origin>/auth/callback/<provider>?code=<code>&returnTo=<path>` | `POST /auth/oauth/exchange { code }` within 60 s, then navigate to `returnTo` |
+| Login or flow error | `<origin>/auth/callback/<provider>?error=<OAUTH_*>` | Show the error (`OAUTH_CANCELLED`, `OAUTH_STATE_INVALID`, `OAUTH_PROVIDER_ERROR`, `OAUTH_EMAIL_NOT_VERIFIED`, `OAUTH_ACCOUNT_EXISTS_PASSWORD`) |
+| Link success | `<origin><returnTo>?linked=<provider>` (`returnTo` defaults to `/settings`) | Refresh linked providers |
+| Link failure | `<origin><returnTo>?linkError=ALREADY_LINKED\|LINK_FAILED&provider=<provider>` | Show the error |
+
+`<provider>` is `google` or `facebook`. A static SPA (admin) needs a rewrite so `/auth/callback/*` serves
+`index.html`. An error that happens before the state is verified (`OAUTH_STATE_INVALID`) always goes to
+`frontendUrl`, because the origin can't be trusted at that point.
 
 ### Token Lifecycle
 

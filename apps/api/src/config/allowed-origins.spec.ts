@@ -4,12 +4,11 @@ import {
   resolveCorsOrigins,
   resolveOAuthReturnOrigins,
   VERCEL_PREVIEW_DEPLOYMENT_ORIGIN,
-} from './cors-origins';
+} from './allowed-origins';
+import { type AllowedOrigin, matchesAllowedOrigin } from '../common/utils/allowed-origin.util';
 
-const allows = (origins: (string | RegExp)[], origin: string): boolean =>
-  origins.some((allowed) =>
-    typeof allowed === 'string' ? allowed === origin : allowed.test(origin),
-  );
+const allows = (origins: AllowedOrigin[], origin: string): boolean =>
+  matchesAllowedOrigin(origin, origins);
 
 describe('resolveCorsOrigins', () => {
   it('falls back to the default origins when CORS_ORIGIN is unset', () => {
@@ -60,14 +59,25 @@ describe('resolveOAuthReturnOrigins', () => {
     ).toEqual(['https://a.test', 'https://b.test']);
   });
 
-  it('adds the Vercel preview rule only when CORS_ALLOW_VERCEL_PREVIEWS is "true"', () => {
+  it('adds the Vercel preview rule only when OAUTH_ALLOW_VERCEL_PREVIEWS is "true"', () => {
     const preview = 'https://ratingo-storefront-f4wpg7gzz-eurusik.vercel.app';
     const env = { OAUTH_RETURN_ORIGINS: 'https://dev.ratingo.top' };
 
     expect(allows(resolveOAuthReturnOrigins(env), preview)).toBe(false);
     expect(
-      allows(resolveOAuthReturnOrigins({ ...env, CORS_ALLOW_VERCEL_PREVIEWS: 'true' }), preview),
+      allows(resolveOAuthReturnOrigins({ ...env, OAUTH_ALLOW_VERCEL_PREVIEWS: 'false' }), preview),
+    ).toBe(false);
+    expect(
+      allows(resolveOAuthReturnOrigins({ ...env, OAUTH_ALLOW_VERCEL_PREVIEWS: 'true' }), preview),
     ).toBe(true);
+  });
+
+  it('ignores CORS_ALLOW_VERCEL_PREVIEWS so CORS previews do not receive OAuth codes', () => {
+    const preview = 'https://ratingo-storefront-f4wpg7gzz-eurusik.vercel.app';
+
+    expect(
+      allows(resolveOAuthReturnOrigins({ CORS_ALLOW_VERCEL_PREVIEWS: 'true' } as never), preview),
+    ).toBe(false);
   });
 });
 

@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import type { JwtSignOptions } from '@nestjs/jwt';
 
-import { resolveOAuthReturnOrigins } from '../cors-origins';
+import { resolveOAuthReturnOrigins } from './allowed-origins';
 
 type JwtDuration = Extract<JwtSignOptions['expiresIn'], string>;
 
