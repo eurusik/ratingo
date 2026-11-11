@@ -30,6 +30,7 @@ jobs:
     outputs:
       api: ${{ steps.filter.outputs.api }}
       web: ${{ steps.filter.outputs.web }}
+      storefront: ${{ steps.filter.outputs.storefront }}
       contracts: ${{ steps.filter.outputs.contracts }}
       backup: ${{ steps.filter.outputs.backup }}
       migrations: ${{ steps.filter.outputs.migrations }}
@@ -44,6 +45,7 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]]; then
             echo "api=true" >> "$GITHUB_OUTPUT"
             echo "web=true" >> "$GITHUB_OUTPUT"
+            echo "storefront=true" >> "$GITHUB_OUTPUT"
             echo "contracts=true" >> "$GITHUB_OUTPUT"
             echo "backup=true" >> "$GITHUB_OUTPUT"
             echo "migrations=true" >> "$GITHUB_OUTPUT"
@@ -61,10 +63,11 @@ jobs:
           large=$(( count >= 3000 ))
 
           if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
-            api=true; web=true; contracts=true; backup=true; migrations=true; smoke=true
+            api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true
           else
             api=$(match '^(apps/api/|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|knip\.json$)')
+            storefront=$(match '^(apps/storefront/|packages/(api-contract|web-core)/|knip\.json$)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
@@ -77,9 +80,10 @@ jobs:
             deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
           fi
 
-          echo "api=$api web=$web contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke"
+          echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "storefront=$storefront" >> "$GITHUB_OUTPUT"
           echo "contracts=$contracts" >> "$GITHUB_OUTPUT"
           echo "backup=$backup" >> "$GITHUB_OUTPUT"
           echo "migrations=$migrations" >> "$GITHUB_OUTPUT"
@@ -261,8 +265,8 @@ jobs:
           node-version: ${{ env.WEB_NODE_VERSION }}
           package-manager-cache: false
 
-      - name: Audit web-client production dependencies for high and critical advisories
-        run: npm audit --omit=dev --workspace=web-client --workspace=@ratingo/web-core --audit-level=high
+      - name: Audit web-client and storefront production dependencies for high and critical advisories
+        run: npm audit --omit=dev --workspace=web-client --workspace=storefront --workspace=@ratingo/web-core --audit-level=high
 
   web:
     name: web
@@ -332,6 +336,34 @@ jobs:
 
       - name: Find unused files, exports and dependencies in web-core with knip
         run: npm run lint:dead-code --workspace=@ratingo/web-core
+
+  storefront:
+    name: storefront
+    needs: changes
+    if: needs.changes.outputs.storefront == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.WEB_NODE_VERSION }}
+
+      - name: Lint and FSD boundaries (Steiger)
+        run: npm run lint --workspace=storefront
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=storefront
+
+      - name: Unit tests
+        run: npm test --workspace=storefront -- --ci
+
+      - name: Production build
+        run: npm run build --workspace=storefront
+
+      - name: Find unused files, exports and dependencies with knip
+        run: npm run lint:dead-code --workspace=storefront
 
   contracts:
     name: contracts
@@ -429,7 +461,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, contracts, pg-backup, web-smoke]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, storefront, contracts, pg-backup, web-smoke]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
