@@ -9,7 +9,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { MediaCardServer, type MediaCardServerProps } from '@/modules/home';
 import { InfiniteScrollLoader } from '@/modules/browse';
 import type { BrowseCategory } from '@/modules/browse';
-import { useLocale } from '@/shared/i18n';
+import { useTranslation } from '@/shared/i18n';
 import { SavedStatusProvider } from '@/core/saved-status';
 
 interface BrowseInfiniteListProps {
@@ -35,7 +35,7 @@ export function BrowseInfiniteList({
   sort,
   loadingText = 'Завантаження...',
 }: BrowseInfiniteListProps) {
-  const locale = useLocale();
+  const { dict } = useTranslation();
   const [items, setItems] = useState<MediaCardServerProps[]>([]);
   const [page, setPage] = useState(initialPage + 1);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +73,7 @@ export function BrowseInfiniteList({
         <SavedStatusProvider mediaItemIds={mediaItemIds}>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
             {items.map((item) => (
-              <MediaCardServer key={item.id} {...item} locale={locale} />
+              <MediaCardServer key={item.id} {...item} labels={dict.card} />
             ))}
           </div>
         </SavedStatusProvider>

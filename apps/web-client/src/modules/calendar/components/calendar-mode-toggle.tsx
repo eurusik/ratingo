@@ -11,7 +11,7 @@
  * Activity page for visual consistency.
  */
 
-import { getDictionary, type Locale } from '@/shared/i18n';
+import { useTranslation } from '@/shared/i18n';
 import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
 
 export type CalendarMode = 'all' | 'personalized';
@@ -19,7 +19,6 @@ export type CalendarMode = 'all' | 'personalized';
 export interface CalendarModeToggleProps {
   mode: CalendarMode;
   onModeChange: (mode: CalendarMode) => void;
-  locale?: Locale;
 }
 
 /**
@@ -29,15 +28,13 @@ export interface CalendarModeToggleProps {
  * <CalendarModeToggle
  *   mode={mode}
  *   onModeChange={setMode}
- *   locale="uk"
  * />
  */
 export function CalendarModeToggle({
   mode,
   onModeChange,
-  locale = 'uk',
 }: CalendarModeToggleProps) {
-  const dict = getDictionary(locale);
+  const { dict } = useTranslation();
 
   return (
     <Tabs value={mode} onValueChange={(v) => onModeChange(v as CalendarMode)}>

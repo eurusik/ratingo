@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { render } from '@testing-library/react';
 import { toast } from 'sonner';
-import { I18nProvider, type Locale } from '@/shared/i18n';
+import { I18nProvider, getDictionary, type Locale } from '@/shared/i18n';
 import { AuthProvider } from '../auth-provider';
 
 const sessionProviderProps: { onSessionExpired?: () => void } = {};
@@ -23,7 +23,7 @@ jest.mock('sonner', () => ({
 
 function renderInLocale(locale: Locale) {
   render(
-    <I18nProvider locale={locale}>
+    <I18nProvider locale={locale} dictionary={getDictionary(locale)}>
       <AuthProvider>
         <span>app</span>
       </AuthProvider>

@@ -22,7 +22,7 @@ const STORED_TOKENS = { accessToken: 'access', refreshToken: 'refresh' };
 function callbackTree() {
   return (
     <StrictMode>
-      <I18nProvider locale="uk">
+      <I18nProvider locale="uk" dictionary={uk}>
         <OAuthCallbackPage />
       </I18nProvider>
     </StrictMode>

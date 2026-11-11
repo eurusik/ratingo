@@ -2,6 +2,7 @@ import { render, screen, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowseMediaGrid } from '../browse-media-grid';
 import type { MediaCardServerProps } from '@/modules/home';
+import { I18nProvider, getDictionary } from '@/shared/i18n';
 
 jest.mock('@/core/auth', () => ({
   useAuth: jest.fn(() => ({ isAuthenticated: true })),
@@ -28,7 +29,11 @@ function createQueryClient() {
 }
 
 function renderWithQueryClient(ui: React.ReactElement, queryClient: QueryClient) {
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(
+    <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+    </I18nProvider>,
+  );
 }
 
 const mockItems: MediaCardServerProps[] = [

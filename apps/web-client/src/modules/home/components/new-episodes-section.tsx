@@ -10,7 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Tv } from 'lucide-react';
 import { cn, formatRelativeDate, type DateFreshness } from '@/shared/utils';
-import { getDictionary, type Locale } from '@/shared/i18n';
+import { useTranslation, type Locale } from '@/shared/i18n';
 
 /** Initial items shown on mobile before expand */
 const MOBILE_INITIAL_COUNT = 6;
@@ -91,7 +91,7 @@ function EpisodeCard({ item, locale }: { item: NewEpisodeShowItem; locale: Local
 /** New Episodes Section — row grid with collapse. */
 export function NewEpisodesSection({ items, locale = 'uk', className }: NewEpisodesSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const dict = getDictionary(locale);
+  const { dict } = useTranslation();
 
   if (items.length === 0) return null;
 

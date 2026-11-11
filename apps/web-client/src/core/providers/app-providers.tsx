@@ -10,16 +10,17 @@ import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from 'sonner';
 import { QueryProvider } from './query-provider';
 import { AuthProvider } from '../auth';
-import { I18nProvider, type Locale, DEFAULT_LOCALE } from '@/shared/i18n';
+import { I18nProvider, type Locale, type TranslationKeys } from '@/shared/i18n';
 import { PwaInstallListener, NetworkStatusListener } from '@/shared/components';
 
 interface AppProvidersProps {
   children: React.ReactNode;
   /** Current locale. */
-  locale?: Locale;
+  locale: Locale;
+  dictionary: TranslationKeys;
 }
 
-export function AppProviders({ children, locale = DEFAULT_LOCALE }: AppProvidersProps) {
+export function AppProviders({ children, locale, dictionary }: AppProvidersProps) {
   return (
     <ThemeProvider
       attribute="class"
@@ -27,7 +28,7 @@ export function AppProviders({ children, locale = DEFAULT_LOCALE }: AppProviders
       forcedTheme="dark"
       disableTransitionOnChange
     >
-      <I18nProvider locale={locale}>
+      <I18nProvider locale={locale} dictionary={dictionary}>
         <QueryProvider>
           <AuthProvider>
             <NextTopLoader

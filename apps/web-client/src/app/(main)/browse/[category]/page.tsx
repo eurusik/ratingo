@@ -215,7 +215,7 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
         ) : (
           <>
             {/* SSR rendered grid with SavedStatusProvider */}
-            <BrowseMediaGrid items={items} locale="uk" />
+            <BrowseMediaGrid items={items} />
 
             {/* Client-side infinite scroll */}
             {hasMore && (
