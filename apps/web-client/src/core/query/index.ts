@@ -48,3 +48,4 @@ export {
   useMarkAllNotificationsAsRead,
   useNotificationsPage,
 } from './notifications';
+export { useUserMediaState } from './user-media-state';

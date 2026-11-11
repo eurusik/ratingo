@@ -21,7 +21,7 @@ import {
   AlertDialogCancel,
 } from '@/shared/ui';
 import { useAuth } from '@/core/auth';
-import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
+import { useUserMediaState } from '@/core/query/user-media-state';
 import { useEpisodeProgress } from '../hooks/use-episode-progress';
 import { useCatchUp } from '../hooks/use-catch-up';
 import { useEpisodeToggle } from '../hooks/use-episode-toggle';
@@ -52,7 +52,7 @@ export function EpisodesSection({
   const continueSeasonNumber = userMediaState?.continuePoint?.season;
 
   const validSeasons = useMemo(
-    () => seasons.filter((s) => s.number > 0 && (s.episodes?.length || 0) > 0),
+    () => seasons.filter((s) => s.number > 0 && (s.episodes?.length ?? 0) > 0),
     [seasons],
   );
 
@@ -97,7 +97,7 @@ export function EpisodesSection({
     return () => window.removeEventListener('expandEpisodes', handleExpandEpisodes);
   }, [validSeasons]);
 
-  const episodes = useMemo(() => selectedSeason?.episodes || [], [selectedSeason]);
+  const episodes = useMemo(() => selectedSeason?.episodes ?? [], [selectedSeason]);
 
   const progress = useEpisodeProgress(
     showId,
@@ -208,7 +208,7 @@ export function EpisodesSection({
           isExpanded={isExpanded}
           onToggleExpand={() => setIsExpanded((prev) => !prev)}
           dict={dict}
-          watchedCount={currentSeasonProgress?.watchedCount || 0}
+          watchedCount={currentSeasonProgress?.watchedCount ?? 0}
           totalCount={currentSeasonProgress?.totalCount}
           showProgress={isAuthenticated && !!showId}
           totalWatched={totalProgress.watched}

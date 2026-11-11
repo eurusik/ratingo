@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import * as fc from 'fast-check';
 import { StatusBadge, statusVariantMap } from '../ui/StatusBadge';
-import { RUN_STATUS, POLICY_STATUS } from '../../types';
+import { RUN_STATUS, POLICY_STATUS } from '@/modules/admin/types';
 import { I18nProvider } from '@/shared/i18n/context';
 
 // Wrapper with I18nProvider for tests

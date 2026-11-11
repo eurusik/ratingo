@@ -7,8 +7,8 @@ import { Switch } from '@/shared/ui/switch';
 import { Label } from '@/shared/ui/label';
 import { ImportPreviewTable } from './import-preview-table';
 import { ImportConfirmDialog } from './import-confirm-dialog';
-import type { ParsedItem } from '../../utils/csv-parsers';
-import { formatNumber } from '../../utils/format-number';
+import type { ParsedItem } from '@/modules/settings/utils/csv-parsers';
+import { formatNumber } from '@/modules/settings/utils/format-number';
 
 const CONFIRM_THRESHOLD = 100;
 

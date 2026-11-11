@@ -4,7 +4,7 @@
  * Verifies DTO → domain type conversion.
  */
 
-import type { PostListResponseDto, PostDetailDto, AdminPostDto } from '../../types';
+import type { PostListResponseDto, PostDetailDto, AdminPostDto } from '@/modules/journal/types';
 
 // Re-create mapper functions for testing (they're private in hooks)
 // This ensures the mapping logic is correct

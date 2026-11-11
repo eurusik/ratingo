@@ -152,9 +152,7 @@ let client: KyInstance | null = null;
 
 /** Gets or creates the ky client instance. */
 function getClient(): KyInstance {
-  if (!client) {
-    client = createClient();
-  }
+  client ??= createClient();
   return client;
 }
 
@@ -170,7 +168,7 @@ async function handleResponse<T>(promise: Promise<ApiResponse<T>>): Promise<T> {
 
   if (!response.success || !response.data) {
     throw ApiError.fromResponse(
-      response.error || { code: 'UNKNOWN', message: 'Unknown error', statusCode: 500 },
+      response.error ?? { code: 'UNKNOWN', message: 'Unknown error', statusCode: 500 },
     );
   }
 

@@ -93,7 +93,7 @@ export function useCatchUp({
         const now = Date.now();
         for (const season of validSeasons) {
           if (!toMark.has(season.number)) continue;
-          for (const ep of season.episodes || []) {
+          for (const ep of season.episodes ?? []) {
             if (ep.airDate && new Date(ep.airDate).getTime() > now) continue;
             selectedLastSeason = season.number;
             selectedLastEpisode = ep.number;

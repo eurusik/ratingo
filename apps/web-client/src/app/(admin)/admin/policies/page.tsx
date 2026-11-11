@@ -6,8 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 import { Plus, Play } from 'lucide-react';
-import { DataTable, ConfirmActionDialog, NewPolicyDialog } from '@/modules/admin';
-import { DataTableColumnDef, POLICY_STATUS } from '@/modules/admin/types';
+import {
+  DataTable,
+  ConfirmActionDialog,
+  NewPolicyDialog,
+  type DataTableColumnDef,
+  POLICY_STATUS,
+} from '@/modules/admin';
 import { useTranslation } from '@/shared/i18n';
 import { toast } from 'sonner';
 import { usePolicies, useActivePolicy, usePreparePolicy } from '@/core/query';

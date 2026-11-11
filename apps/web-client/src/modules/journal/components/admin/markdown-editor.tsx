@@ -23,8 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { Textarea } from '@/shared/ui/textarea';
 import { cn } from '@/shared/utils';
 
-import { useImageUpload } from '../../hooks';
-import { markdownToHtml, htmlToMarkdown } from '../../utils';
+import { useImageUpload } from '@/modules/journal/hooks';
+import { markdownToHtml, htmlToMarkdown } from '@/modules/journal/utils';
 import { WysiwygEditor } from './wysiwyg-editor';
 
 export interface MarkdownEditorProps {

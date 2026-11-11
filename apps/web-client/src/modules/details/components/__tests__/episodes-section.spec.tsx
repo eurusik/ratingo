@@ -20,8 +20,7 @@ jest.mock('@/core/query', () => ({
   useResetSeason: () => ({ mutate: jest.fn(), isPending: false }),
 }));
 
-// Mock user media state hook
-jest.mock('@/modules/saved/hooks/use-me-lists', () => ({
+jest.mock('@/core/query/user-media-state', () => ({
   useUserMediaState: () => ({ data: null }),
 }));
 

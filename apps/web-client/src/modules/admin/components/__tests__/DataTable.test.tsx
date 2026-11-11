@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react';
 import { fc } from '@fast-check/jest';
 import { DataTable } from '../ui/DataTable';
-import { DataTableColumnDef, DropdownMenuItemProps } from '../../types';
+import { DataTableColumnDef, DropdownMenuItemProps } from '@/modules/admin/types';
 import { I18nProvider } from '@/shared/i18n/context';
 
 // Clean up after each test to avoid multiple instances

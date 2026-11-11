@@ -5,8 +5,8 @@ import { type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/core/auth';
 import { AdminShell } from './AdminShell';
-import { getAdminNavigation } from '../../config';
-import { BreadcrumbItem } from '../../types';
+import { getAdminNavigation } from '@/modules/admin/config';
+import { BreadcrumbItem } from '@/modules/admin/types';
 
 interface AdminLayoutProps {
   children: ReactNode;

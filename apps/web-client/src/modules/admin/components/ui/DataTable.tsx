@@ -26,7 +26,7 @@ import {
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useTranslation } from '@/shared/i18n';
 
-import { DataTableProps } from '../../types';
+import { DataTableProps } from '@/modules/admin/types';
 
 const SKELETON_ROW_KEYS = createPlaceholderKeys('skeleton-row', 5);
 
@@ -84,7 +84,7 @@ function DataTable<T>({
 
   const [internalPagination, setInternalPagination] = React.useState<PaginationState>({
     pageIndex: pagination?.page ? pagination.page - 1 : 0,
-    pageSize: pagination?.limit || 10,
+    pageSize: pagination?.limit ?? 10,
   });
 
   const { dict } = useTranslation();

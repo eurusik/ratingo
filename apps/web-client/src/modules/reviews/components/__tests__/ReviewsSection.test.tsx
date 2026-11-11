@@ -19,7 +19,7 @@ jest.mock('@/core/auth', () => ({
   useAuthModalStore: () => ({ openLogin: jest.fn() }),
 }));
 
-jest.mock('@/modules/saved/hooks/use-me-lists', () => ({
+jest.mock('@/core/query/user-media-state', () => ({
   useUserMediaState: () => ({ data: undefined }),
 }));
 

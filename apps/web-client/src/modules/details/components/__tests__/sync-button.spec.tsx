@@ -7,7 +7,7 @@ type MutateOptions = { onSuccess: (result: SyncResult) => void; onError: () => v
 
 const mockMutate = jest.fn<void, [undefined, MutateOptions]>();
 
-jest.mock('../../hooks/use-show-sync', () => ({
+jest.mock('@/modules/details/hooks/use-show-sync', () => ({
   useShowSync: () => ({ mutate: mockMutate, isPending: false }),
 }));
 

@@ -12,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select';
-import { DataTable, StatusBadge } from '@/modules/admin';
-import { DataTableColumnDef, RUN_STATUS } from '@/modules/admin/types';
+import { DataTable, StatusBadge, type DataTableColumnDef, RUN_STATUS } from '@/modules/admin';
 import { useTranslation } from '@/shared/i18n';
 import { useFilteredRuns } from '@/core/query/admin';
 import { type EvaluationRunDto } from '@/core/api/admin.client';

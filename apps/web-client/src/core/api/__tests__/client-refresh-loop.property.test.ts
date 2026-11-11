@@ -23,7 +23,7 @@ jest.mock('../error', () => {
 });
 
 // Import after mocking
-import { isRefreshEndpoint } from '../../auth/refresh';
+import { isRefreshEndpoint } from '@/core/auth/refresh';
 
 describe('Refresh loop prevention', () => {
   /**

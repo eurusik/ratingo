@@ -15,9 +15,8 @@ import {
   useDropMedia,
   useRestoreMedia,
   useFavoriteUpdates,
-  useUserMediaState,
-  useSetRating,
 } from '../use-me-lists';
+import { useUserMediaState, useSetRating } from '@/core/query/user-media-state';
 import { queryKeys } from '@/core/query/keys';
 
 jest.mock('@/core/api/me-lists.client', () => ({

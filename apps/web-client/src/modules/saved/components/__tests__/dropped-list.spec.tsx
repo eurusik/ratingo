@@ -130,7 +130,7 @@ jest.mock('@/shared/ui', () => ({
 }));
 
 const mockUseDropped = jest.fn();
-jest.mock('../../hooks/use-me-lists', () => ({
+jest.mock('@/modules/saved/hooks/use-me-lists', () => ({
   useDropped: (...args: unknown[]) => mockUseDropped(...args),
   usePauseMedia: () => ({ mutate: jest.fn(), isPending: false }),
   useResumeMedia: () => ({ mutate: jest.fn(), isPending: false }),
@@ -138,7 +138,7 @@ jest.mock('../../hooks/use-me-lists', () => ({
   useRestoreMedia: () => ({ mutate: jest.fn(), isPending: false }),
 }));
 
-jest.mock('../../hooks/use-me-list-state', () => ({
+jest.mock('@/modules/saved/hooks/use-me-list-state', () => ({
   useMeListState: () => ({
     sort: 'recent',
     mediaType: 'all',

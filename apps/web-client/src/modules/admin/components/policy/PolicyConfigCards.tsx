@@ -165,9 +165,9 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
   if (!req) return null;
 
   const hasAnyRequirement =
-    (req.minQualityScoreNormalized && req.minQualityScoreNormalized > 0) ||
-    (req.requireAnyOfRatingsPresent && req.requireAnyOfRatingsPresent.length > 0) ||
-    (req.minVotesAnyOf?.min !== undefined && req.minVotesAnyOf.min > 0);
+    (req.minQualityScoreNormalized ?? 0) > 0 ||
+    (req.requireAnyOfRatingsPresent?.length ?? 0) > 0 ||
+    (req.minVotesAnyOf?.min ?? 0) > 0;
 
   if (!hasAnyRequirement) return null;
 

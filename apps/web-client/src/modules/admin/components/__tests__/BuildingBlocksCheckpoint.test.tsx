@@ -7,7 +7,7 @@ import { ConfirmActionDialog } from '../dialogs/ConfirmActionDialog';
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { LoadingState } from '../ui/LoadingState';
-import { RUN_STATUS, POLICY_STATUS, DataTableColumnDef } from '../../types';
+import { RUN_STATUS, POLICY_STATUS, DataTableColumnDef } from '@/modules/admin/types';
 import { I18nProvider } from '@/shared/i18n/context';
 
 // Wrapper with I18nProvider for tests
@@ -175,24 +175,24 @@ describe('Building Blocks Checkpoint', () => {
     const { container: emptyContainer } = render(<EmptyState title="Test" />);
     // EmptyState should use Card component (shadcn/ui) - check for card-like classes
     const emptyCard =
-      emptyContainer.querySelector('[class*="border"]') ||
-      emptyContainer.querySelector('[class*="rounded"]') ||
+      emptyContainer.querySelector('[class*="border"]') ??
+      emptyContainer.querySelector('[class*="rounded"]') ??
       emptyContainer.querySelector('[class*="shadow"]');
     expect(emptyCard).toBeInTheDocument();
 
     const { container: errorContainer } = render(<ErrorState error="Test" variant="section" />);
     // ErrorState should use Card component (shadcn/ui) - check for card-like classes
     const errorCard =
-      errorContainer.querySelector('[class*="border"]') ||
-      errorContainer.querySelector('[class*="rounded"]') ||
+      errorContainer.querySelector('[class*="border"]') ??
+      errorContainer.querySelector('[class*="rounded"]') ??
       errorContainer.querySelector('[class*="shadow"]');
     expect(errorCard).toBeInTheDocument();
 
     const { container: loadingContainer } = render(<LoadingState type="skeleton" />);
     // LoadingState should use Card component (shadcn/ui) - check for card-like classes
     const loadingCard =
-      loadingContainer.querySelector('[class*="border"]') ||
-      loadingContainer.querySelector('[class*="rounded"]') ||
+      loadingContainer.querySelector('[class*="border"]') ??
+      loadingContainer.querySelector('[class*="rounded"]') ??
       loadingContainer.querySelector('[class*="shadow"]');
     expect(loadingCard).toBeInTheDocument();
   });
