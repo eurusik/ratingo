@@ -9,4 +9,3 @@ export {
   type AuthConfigDto,
 } from './auth.client';
 export { tokenStorage } from './token-storage';
-export { refreshTokens, isRefreshEndpoint } from './refresh';

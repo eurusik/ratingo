@@ -33,6 +33,7 @@ let clientConfig: ApiClientConfig | null = null;
 let client: KyInstance | null = null;
 
 export function configureApiClient(config: ApiClientConfig): void {
+  if (clientConfig?.baseUrl === config.baseUrl) return;
   clientConfig = config;
   client = null;
 }

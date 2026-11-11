@@ -1,6 +1,5 @@
 export {
   configureApiClient,
-  setTokenGetter,
   apiGet,
   apiPost,
   apiPatch,
