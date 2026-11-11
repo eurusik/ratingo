@@ -111,7 +111,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
         <JsonLd data={buildOrganizationJsonLd(baseUrl)} />
         <JsonLd data={buildWebSiteJsonLd(baseUrl)} />
-        <AppProviders>
+        <AppProviders locale="uk" dictionary={dict}>
           {children}
         </AppProviders>
         <Analytics />

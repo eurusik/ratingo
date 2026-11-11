@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { I18nProvider } from '@/shared/i18n/context';
+import { I18nProvider, getDictionary } from '@/shared/i18n';
 
 // Mock the reviews client to avoid ESM issues
 jest.mock('@/core/api/reviews.client', () => ({
@@ -33,9 +33,13 @@ jest.mock('../review-replies', () => ({
 import { ReviewCard } from '../review-card';
 import { VOTE_TYPE } from '@/core/api/reviews.client';
 
+const UK_DICTIONARY = getDictionary('uk');
+
 // Wrapper with I18nProvider for tests
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <I18nProvider locale="uk">{children}</I18nProvider>
+  <I18nProvider locale="uk" dictionary={UK_DICTIONARY}>
+    {children}
+  </I18nProvider>
 );
 
 async function renderWithI18n(ui: React.ReactElement) {

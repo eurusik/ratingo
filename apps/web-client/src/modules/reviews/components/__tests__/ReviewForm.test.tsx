@@ -1,12 +1,16 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { I18nProvider } from '@/shared/i18n/context';
+import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { ReviewForm } from '../review-form';
 import { REVIEW_FORM_MODE } from '@/modules/reviews/schemas';
 
+const UK_DICTIONARY = getDictionary('uk');
+
 // Wrapper with I18nProvider for tests
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <I18nProvider locale="uk">{children}</I18nProvider>
+  <I18nProvider locale="uk" dictionary={UK_DICTIONARY}>
+    {children}
+  </I18nProvider>
 );
 
 async function renderWithI18n(ui: React.ReactElement) {

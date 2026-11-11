@@ -13,11 +13,13 @@ import { CalendarModeToggle } from '../calendar-mode-toggle';
 /* ------------------------------------------------------------------ */
 
 jest.mock('@/shared/i18n', () => ({
-  getDictionary: () => ({
-    calendar: {
-      title: 'Календар серій',
-      modeAll: 'Всі',
-      modePersonalized: 'Персоналізований',
+  useTranslation: () => ({
+    dict: {
+      calendar: {
+        title: 'Календар серій',
+        modeAll: 'Всі',
+        modePersonalized: 'Персоналізований',
+      },
     },
   }),
 }));

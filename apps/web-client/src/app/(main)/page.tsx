@@ -158,7 +158,7 @@ export default async function HomePage() {
                 key={item.id}
                 className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
               >
-                <MediaCardServer {...item} locale="uk" />
+                <MediaCardServer {...item} labels={dict.card} />
               </div>
             ))}
           </TrendingCarousel>
@@ -213,7 +213,7 @@ export default async function HomePage() {
                     key={item.id}
                     className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
                   >
-                    <MediaCardServer {...item} locale="uk" />
+                    <MediaCardServer {...item} labels={dict.card} />
                   </div>
                 ))}
               </TrendingCarousel>
@@ -238,7 +238,7 @@ export default async function HomePage() {
                     key={item.id}
                     className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
                   >
-                    <MediaCardServer {...item} locale="uk" />
+                    <MediaCardServer {...item} labels={dict.card} />
                   </div>
                 ))}
               </TrendingCarousel>
@@ -263,7 +263,7 @@ export default async function HomePage() {
                     key={item.id}
                     className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
                   >
-                    <MediaCardServer {...item} locale="uk" />
+                    <MediaCardServer {...item} labels={dict.card} />
                   </div>
                 ))}
               </TrendingCarousel>

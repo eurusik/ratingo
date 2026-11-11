@@ -30,7 +30,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang={DEFAULT_LOCALE}>
       <body>
-        <AppProviders locale={DEFAULT_LOCALE}>{children}</AppProviders>
+        <AppProviders locale={DEFAULT_LOCALE} dictionary={dict}>
+          {children}
+        </AppProviders>
       </body>
     </html>
   );

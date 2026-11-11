@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { Header } from '../header';
 import { HeaderContextProvider } from '../header-context';
-import { I18nProvider } from '@/shared/i18n';
+import { I18nProvider, getDictionary } from '@/shared/i18n';
 
 // Mock useScrollPosition hook
 const mockUseScrollPosition = jest.fn(() => false);
@@ -32,7 +32,7 @@ jest.mock('../header-nav-button', () => ({
 
 const renderHeader = () => {
   return render(
-    <I18nProvider locale="uk">
+    <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
       <HeaderContextProvider>
         <Header />
       </HeaderContextProvider>

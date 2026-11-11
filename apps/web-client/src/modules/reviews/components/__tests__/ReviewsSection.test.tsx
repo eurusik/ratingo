@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { I18nProvider } from '@/shared/i18n/context';
+import { I18nProvider, getDictionary } from '@/shared/i18n';
 
 jest.mock('ky', () => ({ __esModule: true, HTTPError: class HTTPError extends Error {} }));
 
@@ -64,13 +64,15 @@ function makeList(contents: string[]): ReviewListResponseDto {
   } as unknown as ReviewListResponseDto;
 }
 
+const UK_DICTIONARY = getDictionary('uk');
+
 function renderSection(initialData: ReviewListResponseDto) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 60 * 1000 } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <I18nProvider locale="uk">
+      <I18nProvider locale="uk" dictionary={UK_DICTIONARY}>
         <ReviewsSection mediaItemId={MEDIA_ID} initialData={initialData} />
       </I18nProvider>
     </QueryClientProvider>,

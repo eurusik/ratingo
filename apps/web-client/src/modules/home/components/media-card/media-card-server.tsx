@@ -12,7 +12,7 @@ import type {
 } from '@/modules/home/types';
 import { cn } from '@/shared/utils';
 import { formatYear } from '@ratingo/web-core/lib';
-import { getDictionary, type Locale } from '@/shared/i18n';
+import type { Locale, TranslationKeys } from '@/shared/i18n';
 import { CardLayout, cardTitleStyles } from './card-layout';
 import { CardPoster } from './card-poster';
 import { CardRating } from './card-rating';
@@ -38,11 +38,15 @@ export interface MediaCardServerProps {
   listContext?: string | null;
 }
 
+interface MediaCardServerViewProps extends MediaCardServerProps {
+  labels: TranslationKeys['card'];
+}
+
 /**
  * SSR-safe minimalist media card component.
  *
  */
-export function MediaCardServer(props: MediaCardServerProps) {
+export function MediaCardServer({ labels, ...props }: MediaCardServerViewProps) {
   const {
     id,
     slug,
@@ -53,11 +57,8 @@ export function MediaCardServer(props: MediaCardServerProps) {
     releaseDate,
     rank,
     badgeKey,
-    locale = 'uk',
     listContext,
   } = props;
-
-  const dict = getDictionary(locale);
 
   // Derived values
   const posterUrl = poster?.medium ?? null;
@@ -66,14 +67,14 @@ export function MediaCardServer(props: MediaCardServerProps) {
   const href = type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`;
 
   const posterSlot = (
-    <CardPoster src={posterUrl} alt={title} type={type} noPosterText={dict.card.noPoster}>
+    <CardPoster src={posterUrl} alt={title} type={type} noPosterText={labels.noPoster}>
       {/* ONE badge: Rank (№1-3) OR Status (🔥 Trending) */}
       {rank != null && rank <= 3 ? (
         <RankBadge rank={rank} />
       ) : badgeKey ? (
         <CardBadge
           badgeKey={badgeKey}
-          label={dict.card.badge[badgeLabelKeys[badgeKey]]}
+          label={labels.badge[badgeLabelKeys[badgeKey]]}
           position="top-right"
         />
       ) : null}
