@@ -624,6 +624,20 @@
     "notFound": {
       "movie": "Movie not found",
       "show": "Show not found"
+    },
+    "media": {
+      "kind": {
+        "movie": "movie",
+        "show": "TV series"
+      },
+      "kindCapitalized": {
+        "movie": "Movie",
+        "show": "TV series"
+      },
+      "titleSuffixFull": "cast, rating, where to watch",
+      "titleSuffixShort": "cast, rating",
+      "castLabel": "Starring",
+      "watchOn": "Watch on Ratingo"
     }
   },
   "saved": {
