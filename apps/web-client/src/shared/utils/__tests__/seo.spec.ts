@@ -1,4 +1,4 @@
-import { createMediaMetadata, type SeoMediaItem } from '../seo';
+import { buildWebSiteJsonLd, createMediaMetadata, type SeoMediaItem } from '../seo';
 import { formatYear } from '../format';
 
 const outlander: SeoMediaItem = {
@@ -18,32 +18,35 @@ const titleOf = (media: SeoMediaItem, type: 'show' | 'movie') =>
 
 describe('createMediaMetadata', () => {
   describe('title', () => {
-    it('uses the full keyword suffix when it fits with the site suffix', () => {
-      expect(titleOf({ title: 'Тед', releaseDate: null }, 'show')).toBe(
-        'Тед — серіал: актори, рейтинг, де дивитись',
-      );
+    it('reads as one phrase with the year and media kind', () => {
+      expect(titleOf(outlander, 'show')).toBe('Чужоземка (2014): актори та рейтинг серіалу');
+      expect(
+        titleOf({ title: 'Аферист із Tinder', releaseDate: '2022-02-02T12:00:00.000Z' }, 'movie'),
+      ).toBe('Аферист із Tinder (2022): актори та рейтинг фільму');
     });
 
-    it('drops "where to watch" first', () => {
-      expect(titleOf(outlander, 'show')).toBe('Чужоземка (2014) — серіал: актори, рейтинг');
+    it('uses a single separator before the site suffix', () => {
+      const title = titleOf(outlander, 'show') as string;
+
+      expect(title).not.toMatch(/[—|]/);
     });
 
-    it('drops the year before dropping the cast and rating keywords', () => {
+    it('drops the year before dropping the rating keywords', () => {
       expect(
         titleOf(
           { title: 'Заради всього людства', releaseDate: '2019-11-01T12:00:00.000Z' },
           'show',
         ),
-      ).toBe('Заради всього людства — серіал: актори, рейтинг');
+      ).toBe('Заради всього людства: актори та рейтинг серіалу');
     });
 
-    it('keeps the year and media kind when keywords do not fit', () => {
+    it('keeps only the cast keyword when the rating does not fit', () => {
       expect(
         titleOf(
           { title: 'Каратель: Останнє вбивство', releaseDate: '2026-05-12T12:00:00.000Z' },
           'movie',
         ),
-      ).toBe('Каратель: Останнє вбивство (2026) — фільм');
+      ).toBe('Каратель: Останнє вбивство: актори');
     });
 
     it('falls back to the bare title for very long names', () => {
@@ -60,7 +63,7 @@ describe('createMediaMetadata', () => {
 
     it('omits an invalid release year', () => {
       expect(titleOf({ title: 'Тед', releaseDate: 'not-a-date' }, 'movie')).toBe(
-        'Тед — фільм: актори, рейтинг, де дивитись',
+        'Тед: актори та рейтинг фільму',
       );
     });
   });
@@ -124,6 +127,18 @@ describe('createMediaMetadata', () => {
 
   it('returns fallback metadata when media is missing', () => {
     expect(createMediaMetadata(null, { type: 'movie' }).title).toBe('Не знайдено');
+  });
+});
+
+describe('buildWebSiteJsonLd', () => {
+  it('declares the site name for search results', () => {
+    expect(buildWebSiteJsonLd('https://ratingo.top')).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Ratingo',
+      url: 'https://ratingo.top',
+      inLanguage: 'uk',
+    });
   });
 });
 

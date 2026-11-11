@@ -47,12 +47,11 @@ function buildSeoTitle(
   dict: SeoMediaDictionary,
 ): string {
   const base = year ? `${media.title} (${year})` : media.title;
-  const kind = dict.kind[type];
+  const keywords = dict.titleKeywords[type];
   const candidates = [
-    `${base} — ${kind}: ${dict.titleSuffixFull}`,
-    `${base} — ${kind}: ${dict.titleSuffixShort}`,
-    `${media.title} — ${kind}: ${dict.titleSuffixShort}`,
-    `${base} — ${kind}`,
+    `${base}: ${keywords}`,
+    `${media.title}: ${keywords}`,
+    `${media.title}: ${dict.titleKeywordsShort}`,
   ];
   return candidates.find((candidate) => candidate.length <= SEO_TITLE_MAX_LENGTH) ?? base;
 }
@@ -230,5 +229,15 @@ export function buildOrganizationJsonLd(baseUrl: string): Record<string, unknown
     logo: `${baseUrl}/icon.png`,
     description: 'Український сервіс для відкриття стрімінгового контенту — серіали та фільми',
     sameAs: ['https://github.com/ratingo'],
+  };
+}
+
+export function buildWebSiteJsonLd(baseUrl: string): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Ratingo',
+    url: baseUrl,
+    inLanguage: 'uk',
   };
 }
