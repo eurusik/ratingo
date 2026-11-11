@@ -10,7 +10,7 @@
  * @module core/auth/refresh
  */
 
-import { authApi, type AuthTokensDto } from '../api/auth.client';
+import { authApi, type AuthTokensDto } from './auth.client';
 import { tokenStorage } from './token-storage';
 import {
   broadcastRefreshStart,

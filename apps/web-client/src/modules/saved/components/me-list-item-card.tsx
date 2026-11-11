@@ -25,8 +25,7 @@ import {
 } from '@/shared/ui';
 import type { MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import { USER_MEDIA_STATE } from '@/core/api/me-lists.client';
-import { ApiError } from '@/core/api/error';
-import { ErrorCode } from '@/core/api/error-codes';
+import { ApiError, ErrorCode } from '@ratingo/web-core/api';
 import { usePauseMedia, useResumeMedia, useDropMedia, useRestoreMedia } from '../hooks/use-me-lists';
 import { useEpisodeSheetStore } from '../stores/episode-sheet.store';
 

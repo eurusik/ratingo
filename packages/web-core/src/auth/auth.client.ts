@@ -3,7 +3,7 @@
  */
 
 import type { components } from '@ratingo/api-contract';
-import { apiGet, apiPost, apiDelete } from './client';
+import { apiGet, apiPost, apiDelete } from '../api/client';
 
 /** Auth tokens response. */
 export type AuthTokensDto = components['schemas']['AuthTokensDto'];

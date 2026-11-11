@@ -6,7 +6,7 @@ import {
 } from '../api';
 import { queryKeys } from './keys';
 import { updateBatchCaches } from '../saved-status/saved-status-provider';
-import { retryUnlessUnauthorized } from './utils';
+import { retryUnlessUnauthorized } from '@ratingo/web-core/query';
 
 const SAVED_ITEM_LIST: { FOR_LATER: SavedItemList; CONSIDERING: SavedItemList } = {
   FOR_LATER: 'for_later',

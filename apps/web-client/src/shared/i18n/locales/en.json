@@ -226,7 +226,8 @@
       "emailAlreadyExists": "This email is already registered",
       "usernameTaken": "This username is already taken",
       "tooManyRequests": "Too many attempts. Try again later",
-      "unknownError": "Something went wrong. Try again"
+      "unknownError": "Something went wrong. Try again",
+      "sessionExpired": "Your session has expired. Sign in again."
     }
   },
   "nav": {

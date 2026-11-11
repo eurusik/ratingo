@@ -9,7 +9,7 @@
 import Image from 'next/image';
 import type { Genre, ImageSet, Stats } from '../types';
 import type { MediaType } from '@/shared/types';
-import { formatYear } from '@/shared/utils/format';
+import { formatYear } from '@ratingo/web-core/lib';
 import { HeroBackdrop } from './hero-backdrop';
 import { RatingoScore } from './ratingo-score';
 import { CommunityRating } from './community-rating';

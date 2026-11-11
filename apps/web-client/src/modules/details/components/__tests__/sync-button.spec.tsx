@@ -11,7 +11,7 @@ jest.mock('@/modules/details/hooks/use-show-sync', () => ({
   useShowSync: () => ({ mutate: mockMutate, isPending: false }),
 }));
 
-jest.mock('@/core/auth/auth-context', () => ({
+jest.mock('@/core/auth', () => ({
   useAuth: () => ({ isAuthenticated: true }),
 }));
 
@@ -41,7 +41,8 @@ jest.mock('@/shared/i18n', () => ({
   }),
 }));
 
-jest.mock('@/shared/utils/format', () => ({
+jest.mock('@ratingo/web-core/lib', () => ({
+  ...jest.requireActual<object>('@ratingo/web-core/lib'),
   formatRelativeDate: (date: string) => ({ text: date }),
 }));
 

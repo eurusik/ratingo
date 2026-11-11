@@ -7,12 +7,7 @@
 
 import uk from './locales/uk.json';
 import en from './locales/en.json';
-
-/** Supported locales. */
-export type Locale = 'uk' | 'en';
-
-/** Default locale. */
-export const DEFAULT_LOCALE: Locale = 'uk';
+import { DEFAULT_LOCALE, type Locale } from '@ratingo/web-core/i18n';
 
 /** Translation dictionaries by locale. */
 const dictionaries: Record<Locale, typeof uk> = {
@@ -31,30 +26,4 @@ export type TranslationKeys = typeof uk;
  */
 export function getDictionary(locale: Locale = DEFAULT_LOCALE): TranslationKeys {
   return dictionaries[locale] ?? dictionaries[DEFAULT_LOCALE];
-}
-
-/**
- * Get nested translation value by dot-path.
- *
- * @param dict - Translation dictionary
- * @param path - Dot-separated path (e.g., "card.cta.details")
- * @returns Translated string or path as fallback
- *
- * @example
- * getByPath(dict, 'card.cta.details') // "Деталі"
- */
-export function getByPath(dict: TranslationKeys, path: string): string {
-  const keys = path.split('.');
-  let result: unknown = dict;
-
-  for (const key of keys) {
-    if (result && typeof result === 'object' && key in result) {
-      result = (result as Record<string, unknown>)[key];
-    } else {
-      // Return path as fallback (helps debug missing keys)
-      return path;
-    }
-  }
-
-  return typeof result === 'string' ? result : path;
 }

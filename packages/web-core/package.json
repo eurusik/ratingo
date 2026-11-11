@@ -1,0 +1,44 @@
+{
+  "name": "@ratingo/web-core",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    "./api": "./src/api/index.ts",
+    "./auth": "./src/auth/index.ts",
+    "./query": "./src/query/index.ts",
+    "./i18n": "./src/i18n/index.ts",
+    "./lib": "./src/lib/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "lint:dead-code": "cd ../.. && knip --workspace packages/web-core"
+  },
+  "dependencies": {
+    "@ratingo/api-contract": "*",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "jwt-decode": "^4.0.0",
+    "ky": "^1.8.1",
+    "tailwind-merge": "^3.4.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.80.6",
+    "react": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.80.6",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "fast-check": "^4.5.2",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "knip": "6.44.1",
+    "react": "^19.2.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5"
+  }
+}

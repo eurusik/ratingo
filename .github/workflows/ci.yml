@@ -64,11 +64,11 @@ jobs:
             api=true; web=true; contracts=true; backup=true; migrations=true; smoke=true
           else
             api=$(match '^(apps/api/|knip\.json$)')
-            web=$(match '^(apps/web-client/|packages/api-contract/|knip\.json$)')
+            web=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|knip\.json$)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
-            smoke=$(match '^(apps/web-client/|packages/api-contract/|e2e/smoke/|playwright\.smoke\.config\.ts$)')
+            smoke=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|e2e/smoke/|playwright\.smoke\.config\.ts$)')
           fi
 
           if (( large )); then
@@ -262,7 +262,7 @@ jobs:
           package-manager-cache: false
 
       - name: Audit web-client production dependencies for high and critical advisories
-        run: npm audit --omit=dev --workspace=web-client --audit-level=high
+        run: npm audit --omit=dev --workspace=web-client --workspace=@ratingo/web-core --audit-level=high
 
   web:
     name: web
@@ -297,6 +297,15 @@ jobs:
       - name: Unit tests
         run: npm test --workspace=web-client -- --ci --cacheDirectory "$GITHUB_WORKSPACE/.cache/jest/web"
 
+      - name: web-core lint
+        run: npm run lint --workspace=@ratingo/web-core
+
+      - name: web-core typecheck
+        run: npm run typecheck --workspace=@ratingo/web-core
+
+      - name: web-core unit tests
+        run: npm test --workspace=@ratingo/web-core -- --ci
+
       - if: success() && github.event_name == 'push'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
@@ -320,6 +329,9 @@ jobs:
 
       - name: Find unused files, exports and dependencies with knip
         run: npm run lint:dead-code --workspace=web-client
+
+      - name: Find unused files, exports and dependencies in web-core with knip
+        run: npm run lint:dead-code --workspace=@ratingo/web-core
 
   contracts:
     name: contracts

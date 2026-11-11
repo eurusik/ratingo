@@ -5,13 +5,13 @@ import { useEffect, useState } from 'react';
 import { RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useAuth } from '@/core/auth/auth-context';
+import { useAuth } from '@/core/auth';
 import { useAuthModalStore } from '@/core/auth/auth-modal.store';
 import { useTranslation, useLocale } from '@/shared/i18n';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 import { useStoredValue } from '@/shared/hooks/use-stored-value';
 import { cn } from '@/shared/utils';
-import { formatRelativeDate } from '@/shared/utils/format';
+import { formatRelativeDate } from '@ratingo/web-core/lib';
 
 import { useShowSync } from '../hooks/use-show-sync';
 

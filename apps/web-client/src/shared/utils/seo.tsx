@@ -5,7 +5,7 @@
 import type { Metadata } from 'next';
 import type { components } from '@ratingo/api-contract';
 import { getDictionary } from '@/shared/i18n';
-import { formatRating, formatYear } from './format';
+import { formatRating, formatYear } from '@ratingo/web-core/lib';
 
 type CastMember = components['schemas']['CastMemberDto'];
 type ExternalRatingItem = components['schemas']['ExternalRatingItemDto'];
