@@ -94,3 +94,20 @@ html[data-skip-view-transition]::view-transition-old(*),
 html[data-skip-view-transition]::view-transition-new(*) {
   animation: none !important;
 }
+
+html:active-view-transition-type(nav-back) [data-page-transition] {
+  view-transition-name: page;
+}
+
+html:active-view-transition-type(nav-back)::view-transition-old(page) {
+  z-index: 1;
+  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-to-right;
+}
+
+html:active-view-transition-type(nav-back)::view-transition-new(page) {
+  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-from-left-dim;
+}
+
+html:active-view-transition-type(nav-back)::view-transition-group(page) {
+  animation: none;
+}

@@ -15,7 +15,7 @@ const EXIT_BY_DIRECTION = {
 export function PageTransition({ children }: { children: ReactNode }) {
   return (
     <ViewTransition enter={ENTER_BY_DIRECTION} exit={EXIT_BY_DIRECTION} default="none">
-      <div className="min-h-dvh bg-background">{children}</div>
+      <div data-page-transition className="min-h-dvh bg-background">{children}</div>
     </ViewTransition>
   );
 }

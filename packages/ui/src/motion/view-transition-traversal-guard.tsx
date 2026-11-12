@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { consumeProgrammaticBack, installNavigationTransitionGuard } from './navigation-transition';
 
 const SKIP_ATTRIBUTE = 'data-skip-view-transition';
 const SKIP_WINDOW_MS = 1000;
@@ -14,8 +15,10 @@ export function ViewTransitionTraversalGuard() {
     const root = document.documentElement;
     let clearTimer: ReturnType<typeof setTimeout> | undefined;
 
+    installNavigationTransitionGuard();
+
     const onPopState = (event: PopStateEvent) => {
-      if (!browserMayHaveAnimated(event)) return;
+      if (consumeProgrammaticBack() || !browserMayHaveAnimated(event)) return;
       root.setAttribute(SKIP_ATTRIBUTE, '');
       clearTimeout(clearTimer);
       clearTimer = setTimeout(() => root.removeAttribute(SKIP_ATTRIBUTE), SKIP_WINDOW_MS);

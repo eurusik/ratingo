@@ -9,6 +9,7 @@ import { ThemeProvider } from '@ratingo/ui/theme';
 import { AuthProvider } from '@ratingo/web-core/auth';
 import { getQueryClient } from '@ratingo/web-core/query';
 import { configureStorefrontApi } from '@/shared/api';
+import { RouteCommitSignal } from '@/shared/lib';
 import { I18nProvider, type Dictionary, type Locale } from '@/shared/i18n';
 import { DeferredToastRegion } from './deferred-toast-region';
 
@@ -26,6 +27,7 @@ export function AppProviders({ locale, dictionary, children }: AppProvidersProps
   return (
     <ThemeProvider>
       <ViewTransitionTraversalGuard />
+      <RouteCommitSignal />
       <AriaI18nProvider locale={locale}>
         <RouterProvider navigate={(href) => router.push(href)}>
           <I18nProvider locale={locale} dictionary={dictionary}>

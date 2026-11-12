@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { BackLink } from '@/shared/ui';
 import { FEATURED_TITLE, KIND_LABELS, formatRating } from '../model/sample-titles';
 import { PageTransition } from './page-transition';
 import { SpikePoster } from './spike-poster';
@@ -7,13 +7,12 @@ export function UiSpikeDetailsPage() {
   return (
     <PageTransition>
       <main className="mx-auto flex max-w-2xl flex-col gap-4 px-4 pt-[max(1.5rem,var(--safe-top))] pb-[max(2rem,var(--safe-bottom))]">
-        <Link
-          href="/spike"
-          transitionTypes={['nav-back']}
+        <BackLink
+          fallbackHref="/spike"
           className="inline-flex min-h-tap items-center self-start text-accent"
         >
           ← Назад до spike
-        </Link>
+        </BackLink>
         <SpikePoster
           title={FEATURED_TITLE.title}
           className="aspect-[2/3] w-full max-w-xs text-2xl"
