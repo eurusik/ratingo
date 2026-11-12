@@ -11,7 +11,8 @@ const TRENDING_STALE_MS = 10 * 60 * 1000;
 
 interface TrendingToday {
   trending: TrendingMedia[];
-  top: TrendingMedia[];
+  topShows: TrendingMedia[];
+  topMovies: TrendingMedia[];
 }
 
 async function fetchTrendingToday(): Promise<TrendingToday> {
@@ -20,9 +21,11 @@ async function fetchTrendingToday(): Promise<TrendingToday> {
     catalogApi.getTrendingMovies(TRENDING_PER_TYPE),
   ]);
   const trendingShows = shows.map(fromTrendingShow);
+  const trendingMovies = movies.map(fromTrendingMovie);
   return {
-    trending: interleave(trendingShows, movies.map(fromTrendingMovie)),
-    top: trendingShows.slice(0, TOP_COUNT),
+    trending: interleave(trendingShows, trendingMovies),
+    topShows: trendingShows.slice(0, TOP_COUNT),
+    topMovies: trendingMovies.slice(0, TOP_COUNT),
   };
 }
 

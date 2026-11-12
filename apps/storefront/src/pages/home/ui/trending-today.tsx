@@ -7,6 +7,7 @@ import {
   TopRankTileSkeleton,
   TrendingCard,
   TrendingCardSkeleton,
+  type TrendingMedia,
 } from '@/entities/media';
 import { OwnScoreChip } from '@/entities/library';
 import { SaveButton } from '@/features/save-to-library';
@@ -40,13 +41,45 @@ function RailSkeleton({ label, count, Placeholder, isOrdered, desktop }: RailSke
   );
 }
 
+interface TopTenSectionProps {
+  id: string;
+  title: string;
+  items: TrendingMedia[] | undefined;
+}
+
+function TopTenSection({ id, title, items }: TopTenSectionProps) {
+  if (items?.length === 0) return null;
+
+  return (
+    <section aria-labelledby={id} className="flex flex-col gap-2">
+      <SectionHeader id={id} title={title} />
+      {items ? (
+        <Rail label={title} isOrdered desktop="grid">
+          {items.map((media, index) => (
+            <RailItem key={media.mediaItemId}>
+              <TopRankTile media={media} rank={index + 1} />
+            </RailItem>
+          ))}
+        </Rail>
+      ) : (
+        <RailSkeleton
+          label={title}
+          count={TOP_PLACEHOLDERS}
+          Placeholder={TopRankTileSkeleton}
+          isOrdered
+          desktop="grid"
+        />
+      )}
+    </section>
+  );
+}
+
 export function TrendingToday() {
   const { dict } = useTranslation();
   const { data, isPending, isError, refetch } = useTrendingToday();
   const trendingScroller = useRef<HTMLDivElement>(null);
   const hasFailed = isError && !data;
   const hasTrending = isPending || (data?.trending.length ?? 0) > 0;
-  const hasTop = isPending || (data?.top.length ?? 0) > 0;
 
   if (hasFailed) {
     return (
@@ -95,28 +128,8 @@ export function TrendingToday() {
           )}
         </section>
       ) : null}
-      {hasTop ? (
-        <section aria-labelledby="top-today" className="flex flex-col gap-2">
-          <SectionHeader id="top-today" title={dict.home.topToday} />
-          {data ? (
-            <Rail label={dict.home.topToday} isOrdered desktop="grid">
-              {data.top.map((media, index) => (
-                <RailItem key={media.mediaItemId}>
-                  <TopRankTile media={media} rank={index + 1} />
-                </RailItem>
-              ))}
-            </Rail>
-          ) : (
-            <RailSkeleton
-              label={dict.home.topToday}
-              count={TOP_PLACEHOLDERS}
-              Placeholder={TopRankTileSkeleton}
-              isOrdered
-              desktop="grid"
-            />
-          )}
-        </section>
-      ) : null}
+      <TopTenSection id="top-shows" title={dict.home.topShows} items={data?.topShows} />
+      <TopTenSection id="top-movies" title={dict.home.topMovies} items={data?.topMovies} />
     </div>
   );
 }

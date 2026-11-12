@@ -46,7 +46,7 @@ describe('TrendingToday', () => {
     jest.mocked(useAuth).mockReturnValue({ isAuthenticated: false } as ReturnType<typeof useAuth>);
   });
 
-  it('shows trending titles with a save control and the top ten in order', async () => {
+  it('shows mixed trending titles with a save control and a top ten per type', async () => {
     jest.mocked(catalogApi.getTrendingShows).mockResolvedValue([SHOW]);
     jest.mocked(catalogApi.getTrendingMovies).mockResolvedValue([MOVIE]);
     renderToday();
@@ -56,9 +56,12 @@ describe('TrendingToday', () => {
     expect(within(trending).getByRole('button', { name: 'Зберегти «Андор»' })).toBeInTheDocument();
     expect(within(trending).getByRole('button', { name: 'Зберегти «Дюна»' })).toBeInTheDocument();
 
-    const top = screen.getByRole('list', { name: 'Топ-10 сьогодні' });
-    expect(top.tagName).toBe('OL');
-    expect(within(top).getByRole('listitem')).toHaveTextContent(/^1Андор$/);
+    const topShows = screen.getByRole('list', { name: 'Топ-10 серіалів' });
+    expect(topShows.tagName).toBe('OL');
+    expect(within(topShows).getByRole('listitem')).toHaveTextContent(/^1Андор$/);
+
+    const topMovies = screen.getByRole('list', { name: 'Топ-10 фільмів' });
+    expect(within(topMovies).getByRole('listitem')).toHaveTextContent(/^1Дюна$/);
   });
 
   it('says so when trending titles cannot load', async () => {
@@ -75,14 +78,24 @@ describe('TrendingToday', () => {
     expect(await screen.findByRole('list', { name: 'Зараз у тренді' })).toBeInTheDocument();
   });
 
-  it('shows placeholders for both sections while loading', () => {
+  it('hides a top ten that has no titles', async () => {
+    jest.mocked(catalogApi.getTrendingShows).mockResolvedValue([SHOW]);
+    jest.mocked(catalogApi.getTrendingMovies).mockResolvedValue([]);
+    renderToday();
+
+    expect(await screen.findByRole('list', { name: 'Топ-10 серіалів' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Топ-10 фільмів' })).not.toBeInTheDocument();
+  });
+
+  it('shows placeholders for every section while loading', () => {
     jest.mocked(catalogApi.getTrendingShows).mockReturnValue(new Promise(() => {}));
     jest.mocked(catalogApi.getTrendingMovies).mockReturnValue(new Promise(() => {}));
     renderToday();
 
     expect(screen.getByRole('status')).toHaveTextContent('Завантаження…');
     expect(screen.getByRole('heading', { name: 'Зараз у тренді' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Топ-10 сьогодні' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Топ-10 серіалів' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Топ-10 фільмів' })).toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 });
