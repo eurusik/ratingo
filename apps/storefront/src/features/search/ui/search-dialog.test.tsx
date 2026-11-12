@@ -138,6 +138,34 @@ describe('SearchDialog', () => {
     expect(window.localStorage.getItem('ratingo:recent-titles:v1')).toContain('dune-2021');
   });
 
+  it('opens the first result with Enter from the field', async () => {
+    renderSearch();
+    await typeQuery('дюна');
+    await screen.findByRole('row', { name: /^Дюна, Фільм · 2021/ });
+
+    fireEvent.keyDown(screen.getByRole('searchbox', { name: uk.search.title }), { key: 'Enter' });
+
+    expect(push).toHaveBeenCalledWith('/movies/dune-2021');
+  });
+
+  it('moves between the field and the results with the arrow keys', async () => {
+    renderSearch();
+    await typeQuery('дюна');
+    const firstRow = await screen.findByRole('row', { name: /^Дюна, Фільм · 2021/ });
+    const field = screen.getByRole('searchbox', { name: uk.search.title });
+
+    fireEvent.keyDown(field, { key: 'ArrowDown' });
+    expect(firstRow).toHaveFocus();
+
+    fireEvent.keyDown(firstRow, { key: 'ArrowUp' });
+    expect(field).toHaveFocus();
+
+    fireEvent.keyDown(field, { key: 'ArrowDown' });
+    fireEvent.keyDown(firstRow, { key: 'Enter' });
+    fireEvent.keyUp(firstRow, { key: 'Enter' });
+    expect(push).toHaveBeenCalledWith('/movies/dune-2021');
+  });
+
   it('imports a TMDB title on tap and opens it when the page is ready', async () => {
     jest
       .mocked(catalogApi.importMedia)

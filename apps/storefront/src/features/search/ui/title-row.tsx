@@ -5,7 +5,10 @@ import { MediaPoster, ScoreChip, useScoreLabel } from '@/entities/media';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import type { SearchTitle } from '../model/search-title';
 
-const ROW_CLASS = listboxItemVariants().item({ className: 'min-h-tap gap-3 px-2 py-2' });
+const ROW_CLASS = listboxItemVariants().item({
+  className:
+    'min-h-tap gap-3 px-2 py-2 outline-none data-[focused=true]:bg-surface-secondary data-[hovered=true]:bg-surface-secondary data-[focus-visible=true]:shadow-none data-[focus-visible=true]:outline-2 data-[focus-visible=true]:-outline-offset-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-solid',
+});
 
 interface TitleRowProps {
   title: SearchTitle;

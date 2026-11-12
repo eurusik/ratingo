@@ -16,6 +16,7 @@ import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
 import { SegmentedFilter } from '@/shared/ui';
 import { useCatalogSearch, type SearchFilter, type SearchResults } from '../model/catalog-search';
 import { useOpenTitle } from '../model/open-title';
+import { useResultsKeyboard } from '../model/results-keyboard';
 import { usePopularTitles } from '../model/popular-titles';
 import { clearRecentTitles, forgetTitle, useRecentTitles } from '../model/recent-titles';
 import type { SearchTitle } from '../model/search-title';
@@ -150,6 +151,15 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
   const recentTitles = useRecentTitles();
   const popularTitles = usePopularTitles();
   const { open, titleImport, cancelImport } = useOpenTitle(onClose);
+  const shownTitles = search.isActive
+    ? [...search.results.catalog, ...search.results.more]
+    : [...recentTitles, ...popularTitles];
+  const { inputRef, listRef, onInputKeyDown } = useResultsKeyboard(() => {
+    const [firstTitle] = shownTitles;
+    if (!firstTitle) return false;
+    open(firstTitle);
+    return true;
+  });
 
   if (titleImport) {
     return (
@@ -162,9 +172,6 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
   }
 
   const announcement = searchAnnouncement(search, dict);
-  const shownTitles = search.isActive
-    ? [...search.results.catalog, ...search.results.more]
-    : [...recentTitles, ...popularTitles];
   const titlesByKey = new Map(shownTitles.map((title) => [title.key, title]));
 
   const renderEmptyState = () => {
@@ -204,6 +211,8 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
           <SearchField.Group className="h-12">
             <SearchField.SearchIcon />
             <SearchField.Input
+              ref={inputRef}
+              onKeyDown={onInputKeyDown}
               placeholder={dict.search.placeholder}
               autoComplete="off"
               className="text-base"
@@ -239,6 +248,7 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
           </div>
         ) : null}
         <GridList
+          ref={listRef}
           aria-label={search.isActive ? dict.search.results : dict.search.title}
           className={LIST_CLASS}
           onAction={(key) => {
