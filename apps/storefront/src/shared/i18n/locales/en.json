@@ -224,7 +224,12 @@
       "NEW_ON_STREAMING": "New on streaming"
     },
     "imdbLabel": "IMDb rating {score}",
-    "criticsLabel": "Rotten Tomatoes: {percent}% of critics"
+    "criticsLabel": "Rotten Tomatoes: {percent}% of critics",
+    "watchingNow": {
+      "one": "{count} person is watching now",
+      "few": "{count} people are watching now",
+      "many": "{count} people are watching now"
+    }
   },
   "library": {
     "yourScore": "Your score {score}"

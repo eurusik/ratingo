@@ -224,7 +224,12 @@
       "NEW_ON_STREAMING": "Нове на стрімінгу"
     },
     "imdbLabel": "Оцінка IMDb {score}",
-    "criticsLabel": "Rotten Tomatoes: {percent}% критиків"
+    "criticsLabel": "Rotten Tomatoes: {percent}% критиків",
+    "watchingNow": {
+      "one": "Зараз дивиться {count} людина",
+      "few": "Зараз дивляться {count} людини",
+      "many": "Зараз дивляться {count} людей"
+    }
   },
   "library": {
     "yourScore": "Твоя оцінка {score}"

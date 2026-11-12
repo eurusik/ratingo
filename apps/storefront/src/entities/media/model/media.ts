@@ -17,6 +17,8 @@ export interface MediaSummary {
   posterUrl?: string;
 }
 
+export const MIN_WATCHING_NOW = 25;
+
 export const MEDIA_EVENTS = [
   'NEW_EPISODE',
   'NEW_RELEASE',
@@ -29,6 +31,7 @@ export type MediaEvent = (typeof MEDIA_EVENTS)[number];
 export interface TrendingMedia extends MediaSummary {
   imdbRating?: number;
   criticsPercent?: number;
+  watchingNow?: number;
   verdict?: RatingVerdict;
   backdropUrl?: string;
   event?: MediaEvent;
@@ -44,6 +47,11 @@ function verdictOf(qualityPercent: number | null | undefined): RatingVerdict | u
   return quality === undefined ? undefined : ratingVerdict(quality);
 }
 
+function watchingNowOf(liveWatchers: number | null | undefined): number | undefined {
+  const watching = positiveNumber(liveWatchers);
+  return watching !== undefined && watching >= MIN_WATCHING_NOW ? watching : undefined;
+}
+
 function toTrendingMedia(item: TrendingMovie | TrendingShow, type: MediaType): TrendingMedia {
   return {
     mediaItemId: item.mediaItemId,
@@ -55,6 +63,7 @@ function toTrendingMedia(item: TrendingMovie | TrendingShow, type: MediaType): T
     backdropUrl: item.backdrop?.medium,
     imdbRating: positiveNumber(item.externalRatings.imdb?.rating),
     criticsPercent: positiveNumber(item.externalRatings.rottenTomatoes?.rating),
+    watchingNow: watchingNowOf(item.stats.liveWatchers),
     verdict: verdictOf(item.stats.qualityScore),
     event: toMediaEvent(item.card?.badgeKey),
     providers: [],

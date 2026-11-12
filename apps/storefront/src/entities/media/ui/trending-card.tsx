@@ -9,6 +9,7 @@ import { EventBadge } from './event-badge';
 import { ExternalRatings } from './external-ratings';
 import { ProviderLogos } from './provider-logos';
 import { VerdictChip } from './verdict-chip';
+import { WatchingNowChip } from './watching-now-chip';
 
 interface TrendingCardProps {
   media: TrendingMedia;
@@ -30,6 +31,11 @@ export function TrendingCard({ media, isPriority = false, actions, footer }: Tre
           criticsPercent={media.criticsPercent}
           className="absolute start-3 top-3"
         />
+        {media.watchingNow === undefined ? null : (
+          <div className="absolute start-3 bottom-3">
+            <WatchingNowChip count={media.watchingNow} />
+          </div>
+        )}
       </div>
       <Card.Header className="gap-1.5 px-4 pt-3.5 pb-4">
         <div className="flex items-center gap-2.5">

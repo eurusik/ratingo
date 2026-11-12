@@ -1,6 +1,12 @@
 import fc from 'fast-check';
 import type { MediaBadge, TrendingMovie, TrendingShow } from '@/shared/api';
-import { MEDIA_EVENTS, fromTrendingMovie, fromTrendingShow, toMediaEvent } from './media';
+import {
+  MEDIA_EVENTS,
+  MIN_WATCHING_NOW,
+  fromTrendingMovie,
+  fromTrendingShow,
+  toMediaEvent,
+} from './media';
 
 const POSTER = {
   thumb: 'https://image.tmdb.org/t/p/w154/a.jpg',
@@ -17,7 +23,7 @@ const MOVIE = {
   releaseDate: '2021-09-15',
   poster: POSTER,
   backdrop: POSTER,
-  stats: { ratingoScore: 94, qualityScore: 62 },
+  stats: { ratingoScore: 94, qualityScore: 62, liveWatchers: 192 },
   externalRatings: { imdb: { rating: 8.3, voteCount: 131558 }, rottenTomatoes: { rating: 76 } },
   card: { badgeKey: 'IN_THEATERS', primaryCta: 'SAVE' },
 } as TrendingMovie;
@@ -57,6 +63,7 @@ describe('trending mappers', () => {
       backdropUrl: POSTER.medium,
       imdbRating: 8.3,
       criticsPercent: 76,
+      watchingNow: 192,
       verdict: 'mixed',
       event: 'IN_THEATERS',
       providers: [],
@@ -71,6 +78,7 @@ describe('trending mappers', () => {
       backdropUrl: undefined,
       imdbRating: undefined,
       criticsPercent: undefined,
+      watchingNow: undefined,
       verdict: undefined,
       event: undefined,
     });
@@ -93,6 +101,18 @@ describe('toMediaEvent', () => {
         const event = toMediaEvent(badge);
         expect(event === undefined || MEDIA_EVENTS.includes(event)).toBe(true);
         expect(event !== undefined).toBe(MEDIA_EVENTS.some((known) => known === badge));
+      }),
+    );
+  });
+});
+
+describe('watching now', () => {
+  it('shows the count only from the threshold up', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 100_000 }), (liveWatchers) => {
+        const movie = { ...MOVIE, stats: { ...MOVIE.stats, liveWatchers } };
+        const { watchingNow } = fromTrendingMovie(movie);
+        expect(watchingNow).toBe(liveWatchers >= MIN_WATCHING_NOW ? liveWatchers : undefined);
       }),
     );
   });

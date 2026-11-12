@@ -24,6 +24,7 @@ const ANDOR: TrendingMedia = {
   posterUrl: 'https://image.tmdb.org/t/p/w342/andor.jpg',
   imdbRating: 8.3,
   criticsPercent: 76,
+  watchingNow: 192,
   verdict: 'good',
   event: 'NEW_EPISODE',
   providers: [
@@ -44,6 +45,7 @@ describe('TrendingCard', () => {
     expect(screen.getByText('Оцінка IMDb 8,3')).toBeInTheDocument();
     expect(screen.getByText('76%')).toHaveAttribute('aria-hidden');
     expect(screen.getByText('Rotten Tomatoes: 76% критиків')).toBeInTheDocument();
+    expect(screen.getByText('Зараз дивляться 192 людини')).toBeInTheDocument();
     expect(screen.getByText('Нова серія')).toBeInTheDocument();
     expect(screen.getByText('Варто')).toBeInTheDocument();
     expect(screen.getByText('Вердикт Ratingo:')).toBeInTheDocument();
@@ -67,6 +69,7 @@ describe('TrendingCard', () => {
           ...ANDOR,
           imdbRating: undefined,
           criticsPercent: undefined,
+          watchingNow: undefined,
           verdict: undefined,
           event: undefined,
           providers: [],
@@ -77,6 +80,7 @@ describe('TrendingCard', () => {
 
     expect(screen.queryByText(/IMDb/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Rotten Tomatoes/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/дивляться/)).not.toBeInTheDocument();
     expect(screen.queryByText('Нова серія')).not.toBeInTheDocument();
     expect(screen.queryByText('Варто')).not.toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
