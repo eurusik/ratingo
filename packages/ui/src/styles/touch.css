@@ -1,0 +1,27 @@
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior-y: none;
+  }
+}
+
+button,
+a,
+[role='button'],
+[role='tab'],
+[role='switch'],
+[role='checkbox'],
+[role='option'],
+[role='menuitem'] {
+  touch-action: manipulation;
+}

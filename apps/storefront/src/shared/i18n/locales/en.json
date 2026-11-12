@@ -5,7 +5,8 @@
   },
   "home": {
     "title": "Ratingo",
-    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works."
+    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works.",
+    "uiSpikeLink": "UI spike page"
   },
   "session": {
     "heading": "Session",

@@ -1,0 +1,64 @@
+:root {
+  --vt-duration-exit: 150ms;
+  --vt-duration-enter: 210ms;
+  --vt-duration-move: 400ms;
+  --vt-slide-distance: 60px;
+}
+
+::view-transition-old(.nav-forward) {
+  --vt-slide-offset: calc(var(--vt-slide-distance) * -1);
+  animation:
+    var(--vt-duration-exit) ease-in both vt-fade reverse,
+    var(--vt-duration-move) ease-in-out both vt-slide reverse;
+}
+
+::view-transition-new(.nav-forward) {
+  --vt-slide-offset: var(--vt-slide-distance);
+  animation:
+    var(--vt-duration-enter) ease-out var(--vt-duration-exit) both vt-fade,
+    var(--vt-duration-move) ease-in-out both vt-slide;
+}
+
+::view-transition-old(.nav-back) {
+  --vt-slide-offset: var(--vt-slide-distance);
+  animation:
+    var(--vt-duration-exit) ease-in both vt-fade reverse,
+    var(--vt-duration-move) ease-in-out both vt-slide reverse;
+}
+
+::view-transition-new(.nav-back) {
+  --vt-slide-offset: calc(var(--vt-slide-distance) * -1);
+  animation:
+    var(--vt-duration-enter) ease-out var(--vt-duration-exit) both vt-fade,
+    var(--vt-duration-move) ease-in-out both vt-slide;
+}
+
+::view-transition-group(.morph) {
+  animation-duration: var(--vt-duration-move);
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-slide {
+  from {
+    translate: var(--vt-slide-offset);
+  }
+  to {
+    translate: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

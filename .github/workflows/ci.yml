@@ -67,7 +67,7 @@ jobs:
           else
             api=$(match '^(apps/api/|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|knip\.json$)')
-            storefront=$(match '^(apps/storefront/|packages/(api-contract|web-core)/|knip\.json$)')
+            storefront=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui)/|knip\.json$)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
@@ -266,7 +266,7 @@ jobs:
           package-manager-cache: false
 
       - name: Audit web-client and storefront production dependencies for high and critical advisories
-        run: npm audit --omit=dev --workspace=web-client --workspace=storefront --workspace=@ratingo/web-core --audit-level=high
+        run: npm audit --omit=dev --workspace=web-client --workspace=storefront --workspace=@ratingo/web-core --workspace=@ratingo/ui --audit-level=high
 
   web:
     name: web
@@ -364,6 +364,15 @@ jobs:
 
       - name: Find unused files, exports and dependencies with knip
         run: npm run lint:dead-code --workspace=storefront
+
+      - name: ui lint
+        run: npm run lint --workspace=@ratingo/ui
+
+      - name: ui typecheck
+        run: npm run typecheck --workspace=@ratingo/ui
+
+      - name: Find unused files, exports and dependencies in ui with knip
+        run: npm run lint:dead-code --workspace=@ratingo/ui
 
   contracts:
     name: contracts
