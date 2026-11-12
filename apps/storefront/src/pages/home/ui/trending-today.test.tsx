@@ -70,4 +70,15 @@ describe('TrendingToday', () => {
       await screen.findByText('Не вдалося завантажити тренди. Онови сторінку.'),
     ).toBeInTheDocument();
   });
+
+  it('shows placeholders for both sections while loading', () => {
+    jest.mocked(catalogApi.getTrendingShows).mockReturnValue(new Promise(() => {}));
+    jest.mocked(catalogApi.getTrendingMovies).mockReturnValue(new Promise(() => {}));
+    renderToday();
+
+    expect(screen.getByRole('status')).toHaveTextContent('Завантаження…');
+    expect(screen.getByRole('heading', { name: 'Зараз у тренді' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Топ-10 сьогодні' })).toBeInTheDocument();
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+  });
 });

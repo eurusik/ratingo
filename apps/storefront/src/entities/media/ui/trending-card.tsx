@@ -21,7 +21,7 @@ export function TrendingCard({ media, actions, footer }: TrendingCardProps) {
   const details = [dict.media.type[media.type], media.year].filter(Boolean).join(' · ');
 
   return (
-    <Card className="relative w-77.5 gap-0 overflow-hidden rounded-3xl p-0">
+    <Card className="relative w-77.5 gap-0 overflow-hidden rounded-3xl p-0 md:w-full">
       <div className="relative">
         <MediaBackdrop type={media.type} backdropUrl={media.backdropUrl} />
         <ExternalRatings

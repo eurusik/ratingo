@@ -244,5 +244,9 @@
       "failed": "Could not update your saved titles. Try again.",
       "linkCopied": "Link copied"
     }
+  },
+  "rail": {
+    "previous": "Previous",
+    "next": "Next"
   }
 }
