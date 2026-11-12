@@ -7,7 +7,7 @@ import type { SearchTitle } from '../model/search-title';
 
 const ROW_CLASS = listboxItemVariants().item({
   className:
-    'min-h-tap gap-3 px-2 py-2 outline-none data-[focused=true]:bg-surface-secondary data-[hovered=true]:bg-surface-secondary data-[focus-visible=true]:shadow-none data-[focus-visible=true]:outline-2 data-[focus-visible=true]:-outline-offset-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-solid',
+    'min-h-tap gap-3 px-2 py-2 outline-none data-[focused=true]:bg-surface-secondary data-[hovered=true]:bg-surface-secondary data-[focus-visible=true]:ring-0! data-[focus-visible=true]:ring-offset-0! data-[focus-visible=true]:outline-2 data-[focus-visible=true]:-outline-offset-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-solid',
 });
 
 interface TitleRowProps {

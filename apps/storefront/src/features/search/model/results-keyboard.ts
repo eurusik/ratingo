@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, type KeyboardEvent } from 'react';
 
-const ROW_SELECTOR = '[role="row"]';
+const ROW_SELECTOR = '[role="row"][data-key]';
 
 export function useResultsKeyboard(openFirstResult: () => boolean) {
   const inputRef = useRef<HTMLInputElement>(null);
