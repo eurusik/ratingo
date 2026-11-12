@@ -22,7 +22,7 @@ export function SampleList() {
 
   return (
     <PullToRefresh onRefresh={restoreAll}>
-      <p className="muted px-4 pb-4">{dict.my.sampleHint}</p>
+      <p className="muted px-4 pb-4 md:px-0">{dict.my.sampleHint}</p>
       <ul className="border-y border-separator">
         {ids.map((id) => (
           <li key={id} className="border-b border-separator last:border-b-0">
@@ -37,7 +37,7 @@ export function SampleList() {
                 </Button>
               }
             >
-              <div className="flex min-h-14 items-center px-4">
+              <div className="flex min-h-14 items-center px-4 md:px-0">
                 {dict.my.sampleItem.replace('{number}', String(id))}
               </div>
             </SwipeableRow>

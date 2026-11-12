@@ -198,7 +198,7 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 md:min-h-96">
       <Autocomplete.Filter inputValue={query} onInputChange={setQuery}>
         <div className="flex items-center gap-2">
           <SearchField

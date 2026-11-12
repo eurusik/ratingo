@@ -7,7 +7,7 @@ export function KeyboardHints() {
   return (
     <dl
       aria-label={dict.search.hints.label}
-      className="hidden items-center gap-4 border-t border-separator pt-3 text-xs text-muted md:flex"
+      className="hidden items-center gap-4 border-t border-separator pt-3 text-xs text-muted md:mt-auto md:flex"
     >
       <div className="flex items-center gap-1.5">
         <dt className="flex gap-1">

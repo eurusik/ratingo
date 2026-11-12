@@ -12,6 +12,7 @@ function DesktopModal({
   onOpenChange,
   title,
   isHeaderless = false,
+  isWide = false,
   footer,
   children,
 }: DialogSurfaceProps) {
@@ -21,7 +22,7 @@ function DesktopModal({
     <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
-          <Modal.Dialog>
+          <Modal.Dialog className={isWide ? 'max-w-2xl' : undefined}>
             <ViewportBottomFill tone="backdrop" />
             <DismissOnSystemBack />
             {isHeaderless ? null : <Modal.CloseTrigger aria-label={dict.common.close} />}

@@ -10,6 +10,7 @@ export interface DialogSurfaceProps {
   onOpenChange?: (isOpen: boolean) => void;
   title: string;
   isHeaderless?: boolean;
+  isWide?: boolean;
   size?: SheetSize;
   footer?: ReactNode;
   children: ReactNode;

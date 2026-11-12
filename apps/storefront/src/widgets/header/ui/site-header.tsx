@@ -7,6 +7,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { openAuth } from '@/shared/auth';
 import { HOME_ROUTE, MY_ROUTE, NAV_ROUTES, isNavRouteActive } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
+import { Container } from '@/shared/ui';
 import { NotificationBell } from './notification-bell';
 import { ProfileMenu } from './profile-menu';
 import { SearchTrigger } from './search-trigger';
@@ -44,7 +45,7 @@ export function SiteHeader() {
 
   return (
     <header className="pt-safe-top pr-safe-right pl-safe-left md:sticky md:top-0 md:z-30 md:border-b md:border-separator md:bg-background/90 md:backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 md:px-8">
+      <Container className="flex h-16 items-center gap-4">
         <Link
           href={HOME_ROUTE}
           aria-label={dict.nav.home}
@@ -79,7 +80,7 @@ export function SiteHeader() {
         <div className={`items-center gap-1 ${showsAccountOnPhone ? 'flex' : 'hidden md:flex'}`}>
           <AccountControls />
         </div>
-      </div>
+      </Container>
     </header>
   );
 }

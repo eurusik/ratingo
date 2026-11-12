@@ -16,6 +16,7 @@ export function SearchDialog({ renderActions }: { renderActions?: RenderTitleAct
       title={dict.search.title}
       size="full"
       isHeaderless
+      isWide
     >
       <SearchPanel renderActions={renderActions} onClose={() => setSearchOpen(false)} />
     </ResponsiveDialog>

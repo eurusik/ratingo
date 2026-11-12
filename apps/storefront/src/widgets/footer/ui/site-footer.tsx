@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ABOUT_ROUTE, EXTERNAL_LINKS, JOURNAL_ROUTE } from '@/shared/config';
 import type { Dictionary } from '@/shared/i18n';
+import { Container } from '@/shared/ui';
 
 const LINK_CLASS =
   'text-sm text-muted no-underline transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-focus';
@@ -26,7 +27,7 @@ function ExternalLink({
 export function SiteFooter({ dict }: { dict: Dictionary }) {
   return (
     <footer className="mt-16 hidden border-t border-separator md:block">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-8 py-10">
+      <Container className="flex flex-col gap-6 py-10">
         <div className="flex items-start justify-between gap-12">
           <div className="flex max-w-md flex-col gap-2">
             <span translate="no" className="text-lg font-extrabold tracking-tight">
@@ -61,7 +62,7 @@ export function SiteFooter({ dict }: { dict: Dictionary }) {
             {dict.footer.authorName}
           </ExternalLink>
         </div>
-      </div>
+      </Container>
     </footer>
   );
 }
