@@ -2,7 +2,12 @@
 
 import type { ComponentType } from 'react';
 import { buttonVariants } from '@heroui/react';
-import { buildOAuthStartUrl, type OAuthProvider } from '@/shared/auth';
+import {
+  buildOAuthStartUrl,
+  rememberPendingIntent,
+  useAuthRequest,
+  type OAuthProvider,
+} from '@/shared/auth';
 import { API_BASE_URL } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { useBrowserOrigin, useBrowserPath } from '@/shared/lib';
@@ -50,6 +55,7 @@ export function OAuthButtons() {
   const providers = useEnabledOAuthProviders();
   const origin = useBrowserOrigin();
   const returnTo = useBrowserPath();
+  const intent = useAuthRequest()?.intent;
 
   if (!origin || !returnTo || providers.length === 0) return null;
 
@@ -67,6 +73,7 @@ export function OAuthButtons() {
               returnOrigin: origin,
             })}
             className={buttonVariants({ variant: 'tertiary', size: 'lg', fullWidth: true })}
+            onClick={intent ? () => rememberPendingIntent(intent) : undefined}
           >
             <Mark />
             {dict.auth.continueWith[provider]}

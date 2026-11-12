@@ -1,0 +1,84 @@
+import { render, screen, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { I18nProvider, getDictionary } from '@/shared/i18n';
+import type { TrendingMedia } from '../model/media';
+import { ProviderLogos } from './provider-logos';
+import { TopRankTile } from './top-rank-tile';
+import { TrendingCard } from './trending-card';
+
+function Wrapper({ children }: { children: ReactNode }) {
+  return (
+    <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
+      {children}
+    </I18nProvider>
+  );
+}
+
+const ANDOR: TrendingMedia = {
+  mediaItemId: 'andor-id',
+  type: 'show',
+  slug: 'andor',
+  title: 'Андор',
+  year: 2022,
+  backdropUrl: 'https://image.tmdb.org/t/p/w300/andor.jpg',
+  posterUrl: 'https://image.tmdb.org/t/p/w342/andor.jpg',
+  score: 8.6,
+  badge: 'RISING',
+  rankChange: { kind: 'up', places: 2 },
+  providers: [
+    { id: 'disney', name: 'Disney+' },
+    { id: 'megogo', name: 'Megogo' },
+  ],
+};
+
+describe('TrendingCard', () => {
+  it('links the title and shows badge, score, details and where to watch', () => {
+    render(<TrendingCard media={ANDOR} actions={<button type="button">Дія</button>} />, {
+      wrapper: Wrapper,
+    });
+
+    expect(screen.getByRole('link', { name: 'Андор' })).toHaveAttribute('href', '/shows/andor');
+    expect(screen.getByText('Злітає')).toBeInTheDocument();
+    expect(screen.getByText('8,6 · Варто')).toBeInTheDocument();
+    expect(screen.getByText('Серіал · 2022')).toBeInTheDocument();
+    const providers = screen.getByRole('list', { name: 'Де дивитись' });
+    expect(within(providers).getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Дія' })).toBeInTheDocument();
+  });
+
+  it('leaves out what the title does not have', () => {
+    render(
+      <TrendingCard media={{ ...ANDOR, badge: undefined, score: undefined, providers: [] }} />,
+      { wrapper: Wrapper },
+    );
+
+    expect(screen.queryByText('Злітає')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Варто/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+  });
+});
+
+describe('TopRankTile', () => {
+  it('names the rank, the title and the move for screen readers', () => {
+    render(<TopRankTile media={ANDOR} rank={3} />, { wrapper: Wrapper });
+
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/shows/andor');
+    expect(link).toHaveTextContent('№3 Андор');
+    expect(within(link).getByText('піднявся на 2')).toBeInTheDocument();
+  });
+});
+
+describe('ProviderLogos', () => {
+  it('shows three services and counts the rest', () => {
+    const providers = ['Netflix', 'Megogo', 'Prime', 'Apple TV+', 'Sweet.tv'].map((name) => ({
+      id: name,
+      name,
+    }));
+    render(<ProviderLogos providers={providers} />, { wrapper: Wrapper });
+
+    const list = screen.getByRole('list', { name: 'Де дивитись' });
+    expect(within(list).getAllByRole('listitem')).toHaveLength(4);
+    expect(within(list).getByText('ще 2')).toBeInTheDocument();
+  });
+});

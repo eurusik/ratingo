@@ -1,3 +1,4 @@
+import { scoreFromPercent } from '@/entities/media';
 import type { MediaType, SearchItem, TrendingMovie, TrendingShow } from '@/shared/api';
 
 export interface SearchTitle {
@@ -17,12 +18,6 @@ export interface SearchTitle {
 function yearOf(date: string | null | undefined): number | undefined {
   const year = date ? Number.parseInt(date.slice(0, 4), 10) : Number.NaN;
   return Number.isFinite(year) ? year : undefined;
-}
-
-const PERCENT_TO_TEN_POINTS = 10;
-
-function toTenPointScale(score: number | null | undefined): number | undefined {
-  return score == null ? undefined : score / PERCENT_TO_TEN_POINTS;
 }
 
 function positive(value: number | null | undefined): number | undefined {
@@ -55,6 +50,6 @@ export function fromTrending(item: TrendingMovie | TrendingShow, type: MediaType
     title: item.title,
     year: yearOf(item.releaseDate),
     posterUrl: item.poster?.thumb,
-    rating: positive(toTenPointScale(item.stats.ratingoScore)),
+    rating: scoreFromPercent(item.stats.ratingoScore),
   };
 }

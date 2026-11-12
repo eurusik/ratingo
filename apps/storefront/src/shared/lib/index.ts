@@ -1,3 +1,4 @@
+export { createBatchLoader } from './batch-loader';
 export { useBrowserOrigin, useBrowserPath } from './browser-origin';
 export { useDebouncedValue } from './debounced-value';
 export { replaceDocumentLocation } from './document-location';

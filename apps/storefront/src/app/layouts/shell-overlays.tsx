@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { SaveButton, useReplaySaveAfterSignIn } from '@/features/save-to-library';
 import { SearchShortcut, useIsSearchOpen, type SearchTitle } from '@/features/search';
 import { useAuthRequest } from '@/shared/auth';
 import { InstallPromptCapture } from '@/shared/lib';
-import { GuestSaveButton } from './guest-save-button';
 
 const AuthDialog = dynamic(
   () => import('@/features/authenticate').then((module) => module.AuthDialog),
@@ -17,10 +17,9 @@ const SearchDialog = dynamic(
   { ssr: false },
 );
 
-const saveBeforeSaveMediaExists = () => {};
-
-function renderSearchActions(title: SearchTitle) {
-  return <GuestSaveButton title={title} onSave={saveBeforeSaveMediaExists} />;
+function renderSearchActions({ isInCatalog, mediaItemId, slug, title, type }: SearchTitle) {
+  if (!isInCatalog || !mediaItemId || !slug) return null;
+  return <SaveButton media={{ mediaItemId, slug, title, type }} />;
 }
 
 function useHasOpened(isOpen: boolean): boolean {
@@ -32,6 +31,7 @@ function useHasOpened(isOpen: boolean): boolean {
 export function ShellOverlays() {
   const hasOpenedSearch = useHasOpened(useIsSearchOpen());
   const hasOpenedAuth = useHasOpened(useAuthRequest() !== null);
+  useReplaySaveAfterSignIn();
 
   return (
     <>

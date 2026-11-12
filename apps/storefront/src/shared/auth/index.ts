@@ -7,3 +7,4 @@ export {
   type AuthMode,
   type AuthRequest,
 } from './auth-opener';
+export { rememberPendingIntent, takePendingIntent } from './pending-intent';

@@ -5,7 +5,10 @@
   },
   "home": {
     "title": "Ratingo",
-    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works."
+    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works.",
+    "trending": "Trending now",
+    "topToday": "Top 10 today",
+    "trendingFailed": "Could not load what is trending. Refresh the page."
   },
   "session": {
     "heading": "Session",
@@ -67,10 +70,6 @@
     "results": "Results",
     "otherResults": "More results",
     "alsoKnownAs": "also: {title}",
-    "type": {
-      "movie": "Movie",
-      "show": "Show"
-    },
     "searching": "Searching…",
     "noResults": "Nothing found for “{query}”",
     "failed": "Search failed.",
@@ -83,7 +82,6 @@
       "open": "open",
       "close": "close"
     },
-    "save": "Save “{title}”",
     "backToSearch": "Back to search",
     "resultsCount": "Found: {count}"
   },
@@ -104,6 +102,13 @@
       "good": "Worth it",
       "mixed": "Mixed",
       "bad": "Weak"
+    },
+    "change": {
+      "newShort": "NEW",
+      "new": "new in the top",
+      "up": "up {places}",
+      "down": "down {places}",
+      "same": "no change"
     }
   },
   "auth": {
@@ -209,5 +214,44 @@
     "github": "GitHub",
     "madeIn": "Made in Ukraine 🇺🇦",
     "authorName": "Yevhen Rusakov"
+  },
+  "media": {
+    "type": {
+      "movie": "Movie",
+      "show": "Show"
+    },
+    "providers": "Where to watch",
+    "moreProviders": "{count} more",
+    "badge": {
+      "NEW_EPISODE": "New episode",
+      "CONTINUE": "Continue",
+      "IN_WATCHLIST": "Saved",
+      "HIT": "Hit",
+      "NEW_RELEASE": "New release",
+      "RISING": "Rising",
+      "TRENDING": "Trending",
+      "IN_THEATERS": "In theaters",
+      "NEW_ON_STREAMING": "New on streaming"
+    },
+    "rank": "No. {rank}"
+  },
+  "library": {
+    "yourScore": "Your score {score}"
+  },
+  "saveToLibrary": {
+    "save": "Save “{title}”",
+    "menu": {
+      "save": "Save",
+      "unsave": "Remove from saved",
+      "open": "Open",
+      "share": "Share"
+    },
+    "toast": {
+      "saved": "“{title}” saved",
+      "removed": "“{title}” removed",
+      "undo": "Undo",
+      "failed": "Could not update your saved titles. Try again.",
+      "linkCopied": "Link copied"
+    }
   }
 }
