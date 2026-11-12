@@ -13,22 +13,30 @@
   }
 }
 
-.viewport-bottom-fill[data-tone='panel'] {
+.viewport-bottom-edge {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: calc(var(--z-index-toast) + 1);
+  width: 100%;
+  height: var(--viewport-bottom-edge-height);
+  pointer-events: none;
+}
+
+:is(.viewport-bottom-fill, .viewport-bottom-edge)[data-tone='panel'] {
   background: var(--overlay);
 }
 
-.viewport-bottom-fill[data-tone='backdrop'] {
+:is(.viewport-bottom-fill, .viewport-bottom-edge)[data-tone='backdrop'] {
   background: var(--backdrop);
 }
 
 @supports (-webkit-touch-callout: none) {
-  .viewport-bottom-fill {
+  .viewport-bottom-fill,
+  .viewport-bottom-edge {
     display: block;
   }
-}
-
-html:has([data-exiting]) .viewport-bottom-fill {
-  opacity: 0;
 }
 
 .sheet__content--bottom:not([data-detached]) {

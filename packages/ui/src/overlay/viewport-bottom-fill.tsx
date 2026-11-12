@@ -1,7 +1,8 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useContext, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import { OverlayTriggerStateContext } from 'react-aria-components';
 
 export type ViewportBottomFillTone = 'panel' | 'backdrop';
 
@@ -23,16 +24,20 @@ function readNothingOnServer(): null {
 }
 
 export function ViewportBottomFill({ tone }: { tone: ViewportBottomFillTone }) {
+  const overlay = useContext(OverlayTriggerStateContext);
   const top = useSyncExternalStore(
     subscribeToViewport,
     readLayoutViewportBottom,
     readNothingOnServer,
   );
 
-  if (top === null) return null;
+  if (top === null || overlay?.isOpen === false) return null;
 
   return createPortal(
-    <div aria-hidden className="viewport-bottom-fill" data-tone={tone} style={{ top }} />,
+    <>
+      <div aria-hidden className="viewport-bottom-fill" data-tone={tone} style={{ top }} />
+      <div aria-hidden className="viewport-bottom-edge" data-tone={tone} />
+    </>,
     document.body,
   );
 }

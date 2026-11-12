@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Button, Sheet } from '@heroui/react';
 import { DismissOnSystemBack, ViewportBottomFill } from '@ratingo/ui/overlay';
 
@@ -9,17 +8,15 @@ const EPISODE_COUNT = 24;
 const EPISODE_NUMBERS = Array.from({ length: EPISODE_COUNT }, (_, index) => index + 1);
 
 export function EpisodesSheet() {
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
-    <Sheet snapPoints={SHEET_SNAP_POINTS} isOpen={isOpen} onOpenChange={setIsOpen}>
-      {isOpen ? <ViewportBottomFill tone="panel" /> : null}
+    <Sheet snapPoints={SHEET_SNAP_POINTS}>
       <Sheet.Trigger>
         <Button variant="secondary">Sheet зі snap points</Button>
       </Sheet.Trigger>
       <Sheet.Backdrop>
         <Sheet.Content>
           <Sheet.Dialog>
+            <ViewportBottomFill tone="panel" />
             <DismissOnSystemBack />
             <Sheet.Handle />
             <Sheet.CloseTrigger aria-label="Закрити" />
