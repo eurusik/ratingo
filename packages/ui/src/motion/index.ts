@@ -4,3 +4,4 @@ export {
   runNavigationTransition,
 } from './navigation-transition';
 export { ViewTransitionTraversalGuard } from './view-transition-traversal-guard';
+export { animateSpring } from './spring';

@@ -10,8 +10,8 @@ export type ColorTheme = (typeof COLOR_THEMES)[number];
 const DEFAULT_COLOR_THEME: ColorTheme = 'dark';
 
 const THEME_COLORS: Record<ColorTheme, string> = {
-  dark: '#0b0d10',
-  light: '#f5f5f5',
+  dark: '#0e1621',
+  light: '#f0f2f5',
 };
 
 const THEME_ATTRIBUTES: ['class', 'data-theme'] = ['class', 'data-theme'];
