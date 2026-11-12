@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button, Sheet } from '@heroui/react';
-import { ViewportBottomFill } from '@ratingo/ui/overlay';
+import { DismissOnSystemBack, ViewportBottomFill } from '@ratingo/ui/overlay';
 
 const SHEET_SNAP_POINTS = ['45%', '90%'];
 const EPISODE_COUNT = 24;
@@ -20,6 +20,7 @@ export function EpisodesSheet() {
       <Sheet.Backdrop>
         <Sheet.Content>
           <Sheet.Dialog>
+            <DismissOnSystemBack />
             <Sheet.Handle />
             <Sheet.CloseTrigger aria-label="Закрити" />
             <Sheet.Header>
