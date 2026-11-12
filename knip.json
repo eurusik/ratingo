@@ -34,6 +34,7 @@
   },
   "ignoreIssues": {
     "apps/api/src/common/constants.ts": ["duplicates"],
-    "apps/web-client/src/shared/ui/**": ["exports", "types"]
+    "apps/web-client/src/shared/ui/**": ["exports", "types"],
+    "apps/storefront/src/shared/ui/**": ["exports"]
   }
 }

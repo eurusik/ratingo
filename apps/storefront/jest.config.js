@@ -2,7 +2,7 @@ const nextJest = require('next/jest');
 
 const createJestConfig = nextJest({ dir: __dirname });
 
-const ESM_ONLY_PACKAGES = ['ky'];
+const ESM_ONLY_PACKAGES = ['ky', '@heroui', 'react-aria-components', '@react-aria', '@react-stately', '@internationalized', 'tailwind-variants', 'tailwind-merge', 'lucide-react'];
 const NODE_MODULES_PATTERN_PREFIX = '/node_modules/';
 
 const storefrontJestConfig = createJestConfig({

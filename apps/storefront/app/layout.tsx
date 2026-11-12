@@ -16,10 +16,15 @@ export const metadata: Metadata = {
   },
   description: dict.meta.description,
   robots: { index: false, follow: false },
+  appleWebApp: {
+    capable: true,
+    title: dict.home.title,
+    statusBarStyle: 'black-translucent',
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0b0d10',
+  themeColor: '#0e1621',
   colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,

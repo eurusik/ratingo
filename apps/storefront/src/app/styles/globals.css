@@ -39,8 +39,7 @@
     gap: 1.5rem;
     max-width: 40rem;
     margin: 0 auto;
-    padding: max(2rem, var(--safe-top)) max(1rem, var(--safe-right)) max(2rem, var(--safe-bottom))
-      max(1rem, var(--safe-left));
+    padding: 2rem max(1rem, var(--safe-right)) 2rem max(1rem, var(--safe-left));
   }
 
   .page--centered {
