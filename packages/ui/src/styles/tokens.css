@@ -55,3 +55,9 @@
   --spacing-safe-bottom: var(--safe-bottom);
   --spacing-safe-left: var(--safe-left);
 }
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light, [data-theme='light']) {
+    color-scheme: dark;
+  }
+}
