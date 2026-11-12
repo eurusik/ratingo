@@ -1,6 +1,8 @@
-import { Button, Drawer, Modal, Popover, Tooltip } from '@heroui/react';
+import { Button, Modal, Popover, Tooltip } from '@heroui/react';
 import { DismissOnSystemBack, ViewportBottomFill } from '@ratingo/ui/overlay';
 import { EpisodesSheet } from './episodes-sheet';
+import { FiltersSheet } from './filters-sheet';
+import { SearchSheet } from './search-sheet';
 import { SpikeSection } from './spike-section';
 
 export function OverlaysSection() {
@@ -34,31 +36,9 @@ export function OverlaysSection() {
           </Modal.Backdrop>
         </Modal>
 
-        <Drawer>
-          <Button variant="secondary">Drawer знизу</Button>
-          <Drawer.Backdrop>
-            <Drawer.Content placement="bottom">
-              <Drawer.Dialog>
-                <ViewportBottomFill tone="panel" />
-                <DismissOnSystemBack />
-                <Drawer.Handle />
-                <Drawer.Header>
-                  <Drawer.Heading>Фільтри</Drawer.Heading>
-                </Drawer.Header>
-                <Drawer.Body>
-                  <p>Потягніть за ручку або заголовок вниз, щоб закрити.</p>
-                </Drawer.Body>
-                <Drawer.Footer>
-                  <Button slot="close" fullWidth>
-                    Застосувати
-                  </Button>
-                </Drawer.Footer>
-              </Drawer.Dialog>
-            </Drawer.Content>
-          </Drawer.Backdrop>
-        </Drawer>
-
+        <FiltersSheet />
         <EpisodesSheet />
+        <SearchSheet />
 
         <Popover>
           <Button variant="secondary">Popover</Button>
