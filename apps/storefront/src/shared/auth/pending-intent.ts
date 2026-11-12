@@ -65,6 +65,14 @@ export function forgetPendingIntent(): void {
   }
 }
 
+export function hasPendingIntent(): boolean {
+  try {
+    return sessionStore()?.getItem(STORAGE_KEY) != null;
+  } catch {
+    return false;
+  }
+}
+
 export function takePendingIntent(now = Date.now()): AuthIntent | null {
   const intent = parsePendingIntent(sessionStore()?.getItem(STORAGE_KEY) ?? null, now);
   forgetPendingIntent();

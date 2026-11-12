@@ -38,7 +38,7 @@ export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
   const href = mediaRoute(media.type, media.slug);
   const toggleLabel = saved ? dict.saveToLibrary.menu.unsave : dict.saveToLibrary.menu.save;
 
-  const press = () => {
+  const toggleOrAskToSignIn = () => {
     if (isAuthenticated) toggleSaved(savable);
     else runSignedIn(() => save(savable), { kind: 'save', ...savable });
   };
@@ -50,7 +50,7 @@ export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
   };
 
   const onMenuAction = (key: Key) => {
-    if (key === MENU_KEYS.toggle) press();
+    if (key === MENU_KEYS.toggle) toggleOrAskToSignIn();
     if (key === MENU_KEYS.share) void share();
   };
 
@@ -59,7 +59,7 @@ export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
       <ToggleButton
         isIconOnly
         isSelected={saved}
-        onPress={press}
+        onPress={toggleOrAskToSignIn}
         aria-label={interpolate(dict.saveToLibrary.save, { title: media.title })}
         className={`size-11 shrink-0 rounded-full select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground ${TONE_CLASSES[tone]}`}
       >

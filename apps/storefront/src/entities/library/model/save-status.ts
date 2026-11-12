@@ -15,8 +15,10 @@ const saveStatusLoader = createBatchLoader(
   MAX_IDS_PER_REQUEST,
 );
 
+export const LIBRARY_QUERY_KEY = ['library'] as const;
+
 function saveStatusKey(mediaItemId: string) {
-  return ['library', 'save-status', mediaItemId] as const;
+  return [...LIBRARY_QUERY_KEY, 'save-status', mediaItemId] as const;
 }
 
 export function isSaved(status: MediaSaveStatus): boolean {
@@ -36,6 +38,7 @@ export function useSaveStatus(mediaItemId: string): MediaSaveStatus {
 export interface LibraryStore {
   read(mediaItemId: string): MediaSaveStatus;
   write(mediaItemId: string, status: MediaSaveStatus): void;
+  refresh(mediaItemId: string): void;
 }
 
 export function useLibraryStore(): LibraryStore {
@@ -49,6 +52,9 @@ export function useLibraryStore(): LibraryStore {
         const queryKey = saveStatusKey(mediaItemId);
         void queryClient.cancelQueries({ queryKey }, { revert: false });
         queryClient.setQueryData(queryKey, status);
+      },
+      refresh: (mediaItemId) => {
+        void queryClient.invalidateQueries({ queryKey: saveStatusKey(mediaItemId) });
       },
     }),
     [queryClient],

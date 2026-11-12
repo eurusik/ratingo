@@ -29,7 +29,9 @@ export function TrendingToday() {
       <section aria-labelledby="trending-now" className="flex flex-col gap-2">
         <SectionHeader id="trending-now" title={dict.home.trending} />
         {isPending ? <TrendingSkeleton /> : null}
-        {isError ? <p className="px-4 text-sm text-muted">{dict.home.trendingFailed}</p> : null}
+        {isError && !data ? (
+          <p className="px-4 text-sm text-muted">{dict.home.trendingFailed}</p>
+        ) : null}
         {data ? (
           <Rail label={dict.home.trending}>
             {data.trending.map((media) => (

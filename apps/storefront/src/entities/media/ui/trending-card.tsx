@@ -36,7 +36,7 @@ export function TrendingCard({ media, actions, footer }: TrendingCardProps) {
           <Card.Title className="min-w-0 flex-1 truncate text-xl font-extrabold tracking-tight">
             <Link
               href={mediaRoute(media.type, media.slug)}
-              className="text-foreground no-underline after:absolute after:inset-0 after:content-['']"
+              className="text-foreground no-underline outline-none after:absolute after:inset-0 after:rounded-3xl after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
             >
               {media.title}
             </Link>

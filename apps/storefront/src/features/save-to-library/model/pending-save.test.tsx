@@ -8,7 +8,9 @@ import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { useReplaySaveAfterSignIn } from './pending-save';
 
 jest.mock('@ratingo/web-core/auth', () => ({ useAuth: jest.fn() }));
-jest.mock('@/shared/api', () => ({ libraryApi: { save: jest.fn(), unsave: jest.fn() } }));
+jest.mock('@/shared/api', () => ({
+  libraryApi: { getSaveStatuses: jest.fn(), save: jest.fn(), unsave: jest.fn() },
+}));
 
 const ANDOR = { kind: 'save', title: 'Андор', mediaItemId: 'andor-id' } as const;
 
@@ -28,6 +30,7 @@ function Wrapper({ children }: { children: ReactNode }) {
 
 describe('useReplaySaveAfterSignIn', () => {
   beforeEach(() => {
+    jest.mocked(libraryApi.getSaveStatuses).mockResolvedValue({});
     jest.mocked(libraryApi.save).mockResolvedValue({ isForLater: true, isConsidering: false });
   });
 

@@ -14,7 +14,7 @@ jest.mock('@/shared/api', () => ({
 
 const ANDOR = { mediaItemId: 'andor-id', title: 'Андор', type: 'show', slug: 'andor' } as const;
 const NOT_SAVED = { isForLater: false, isConsidering: false };
-const FOR_LATER = { isForLater: true, isConsidering: false };
+const FOR_LATER_ONLY = { isForLater: true, isConsidering: false };
 
 function signIn(isAuthenticated: boolean) {
   jest.mocked(useAuth).mockReturnValue({ isAuthenticated } as ReturnType<typeof useAuth>);
@@ -36,10 +36,21 @@ function renderButton() {
 }
 
 describe('SaveButton', () => {
+  let server = NOT_SAVED;
+
   beforeEach(() => {
-    jest.mocked(libraryApi.getSaveStatuses).mockResolvedValue({ 'andor-id': NOT_SAVED });
-    jest.mocked(libraryApi.save).mockResolvedValue(FOR_LATER);
-    jest.mocked(libraryApi.unsave).mockResolvedValue(NOT_SAVED);
+    server = NOT_SAVED;
+    jest
+      .mocked(libraryApi.getSaveStatuses)
+      .mockImplementation(async () => ({ 'andor-id': server }));
+    jest.mocked(libraryApi.save).mockImplementation(async (_id, list) => {
+      server = { ...server, [list === 'for_later' ? 'isForLater' : 'isConsidering']: true };
+      return server;
+    });
+    jest.mocked(libraryApi.unsave).mockImplementation(async (_id, list) => {
+      server = { ...server, [list === 'for_later' ? 'isForLater' : 'isConsidering']: false };
+      return server;
+    });
   });
 
   afterEach(() => {
@@ -62,13 +73,45 @@ describe('SaveButton', () => {
 
     await waitFor(() => expect(libraryApi.unsave).toHaveBeenCalledWith('andor-id', 'for_later'));
     await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'false'));
+    expect(server).toEqual(NOT_SAVED);
+  });
+
+  it('undo keeps a list the title was already in before a guest saved it', async () => {
+    signIn(false);
+    server = { isForLater: false, isConsidering: true };
+    const { result } = renderHook(() => useAuthRequest());
+    const button = renderButton();
+
+    fireEvent.click(button);
+    signIn(true);
+    act(() => result.current?.onSignedIn?.());
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Скасувати' }));
+
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalledTimes(2));
+    expect(server).toEqual({ isForLater: false, isConsidering: true });
+    expect(libraryApi.save).not.toHaveBeenCalled();
+    expect(libraryApi.unsave).not.toHaveBeenCalled();
+  });
+
+  it('settles on the last of several quick taps', async () => {
+    signIn(true);
+    const button = renderButton();
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
+
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    await waitFor(() => expect(server).toEqual(FOR_LATER_ONLY));
+    await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+    expect(screen.getAllByRole('button', { name: 'Скасувати' })).toHaveLength(1);
   });
 
   it('removes a saved title from every list it is in', async () => {
     signIn(true);
-    jest
-      .mocked(libraryApi.getSaveStatuses)
-      .mockResolvedValue({ 'andor-id': { isForLater: true, isConsidering: true } });
+    server = { isForLater: true, isConsidering: true };
     const button = renderButton();
     await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
 
@@ -86,7 +129,7 @@ describe('SaveButton', () => {
   it('rolls back and explains when the save fails', async () => {
     signIn(true);
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    jest.mocked(libraryApi.save).mockRejectedValue(new Error('offline'));
+    jest.mocked(libraryApi.save).mockRejectedValueOnce(new Error('offline'));
     const button = renderButton();
     await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
 
