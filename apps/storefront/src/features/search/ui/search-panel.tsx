@@ -55,7 +55,7 @@ function RecentRemoveButton({ title }: { title: SearchTitle }) {
 
 function StatusMessage({ children }: { children: ReactNode }) {
   return (
-    <div className="flex items-center justify-center gap-2 px-2 py-8 text-center text-sm text-muted">
+    <div className="flex flex-col items-center justify-center gap-3 px-2 py-8 text-center text-sm text-muted">
       {children}
     </div>
   );
@@ -200,30 +200,20 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
   return (
     <div className="flex flex-col gap-3 md:min-h-96">
       <Autocomplete.Filter inputValue={query} onInputChange={setQuery}>
-        <div className="flex items-center gap-2">
-          <SearchField
-            aria-label={dict.search.title}
-            variant="secondary"
-            autoFocus
-            className="min-w-0 flex-1"
-          >
-            <SearchField.Group>
-              <SearchField.SearchIcon />
-              <SearchField.Input
-                placeholder={dict.search.placeholder}
-                autoComplete="off"
-                className="text-base"
-              />
-              <SearchField.ClearButton className="phone-tap-target" />
-              <Kbd className="me-2 hidden md:inline-flex" aria-hidden>
-                <Kbd.Content>esc</Kbd.Content>
-              </Kbd>
-            </SearchField.Group>
-          </SearchField>
-          <Button variant="ghost" className="phone-tap-target shrink-0 md:hidden" onPress={onClose}>
-            {dict.search.cancel}
-          </Button>
-        </div>
+        <SearchField aria-label={dict.search.title} variant="secondary" autoFocus fullWidth>
+          <SearchField.Group className="h-12">
+            <SearchField.SearchIcon />
+            <SearchField.Input
+              placeholder={dict.search.placeholder}
+              autoComplete="off"
+              className="text-base"
+            />
+            <SearchField.ClearButton className="phone-tap-target" />
+            <Kbd className="me-2 hidden md:inline-flex" aria-hidden>
+              <Kbd.Content>esc</Kbd.Content>
+            </Kbd>
+          </SearchField.Group>
+        </SearchField>
         {search.isActive ? (
           <SegmentedFilter
             label={dict.search.filterLabel}
