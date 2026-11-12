@@ -223,7 +223,8 @@
       "NEW_ON_STREAMING": "Нове на стрімінгу"
     },
     "rank": "№{rank}",
-    "imdbLabel": "Оцінка IMDb {score}"
+    "imdbLabel": "Оцінка IMDb {score}",
+    "criticsLabel": "Rotten Tomatoes: {percent}% критиків"
   },
   "library": {
     "yourScore": "Твоя оцінка {score}"

@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { Card, Chip } from '@heroui/react';
+import { Card } from '@heroui/react';
 import { mediaRoute } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import type { TrendingMedia } from '../model/media';
 import { MediaBackdrop } from './media-backdrop';
-import { ImdbChip } from './imdb-chip';
+import { EventBadge } from './event-badge';
+import { ExternalRatings } from './external-ratings';
 import { ProviderLogos } from './provider-logos';
 import { VerdictChip } from './verdict-chip';
 
@@ -23,16 +24,11 @@ export function TrendingCard({ media, actions, footer }: TrendingCardProps) {
     <Card className="relative w-77.5 gap-0 overflow-hidden rounded-3xl p-0">
       <div className="relative">
         <MediaBackdrop type={media.type} backdropUrl={media.backdropUrl} />
-        {media.imdbRating !== undefined || media.eventBadge ? (
-          <div className="absolute start-3 top-3 flex flex-wrap gap-1.5 pe-16">
-            {media.imdbRating === undefined ? null : <ImdbChip rating={media.imdbRating} />}
-            {media.eventBadge ? (
-              <Chip size="md" className="bg-black/80 text-xs font-extrabold text-white">
-                {dict.media.badge[media.eventBadge]}
-              </Chip>
-            ) : null}
-          </div>
-        ) : null}
+        <ExternalRatings
+          imdbRating={media.imdbRating}
+          criticsPercent={media.criticsPercent}
+          className="absolute start-3 top-3"
+        />
       </div>
       <Card.Header className="gap-1.5 px-4 pt-3.5 pb-4">
         <div className="flex items-center gap-2.5">
@@ -47,9 +43,12 @@ export function TrendingCard({ media, actions, footer }: TrendingCardProps) {
           {media.verdict ? <VerdictChip verdict={media.verdict} /> : null}
         </div>
         <div className="flex min-h-6 items-center gap-2.5">
-          <Card.Description className="min-w-0 flex-1 truncate text-sm tabular-nums">
-            {details}
-          </Card.Description>
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            <Card.Description className="min-w-0 truncate text-sm tabular-nums">
+              {details}
+            </Card.Description>
+            {media.eventBadge ? <EventBadge event={media.eventBadge} /> : null}
+          </div>
           {footer}
           <ProviderLogos providers={media.providers} />
         </div>

@@ -23,6 +23,7 @@ const ANDOR: TrendingMedia = {
   backdropUrl: 'https://image.tmdb.org/t/p/w300/andor.jpg',
   posterUrl: 'https://image.tmdb.org/t/p/w342/andor.jpg',
   imdbRating: 8.3,
+  criticsPercent: 76,
   verdict: 'good',
   eventBadge: 'NEW_EPISODE',
   providers: [
@@ -41,6 +42,8 @@ describe('TrendingCard', () => {
     expect(screen.getByText('IMDb')).toHaveAttribute('aria-hidden');
     expect(screen.getByText('8,3')).toHaveAttribute('aria-hidden');
     expect(screen.getByText('Оцінка IMDb 8,3')).toBeInTheDocument();
+    expect(screen.getByText('76%')).toHaveAttribute('aria-hidden');
+    expect(screen.getByText('Rotten Tomatoes: 76% критиків')).toBeInTheDocument();
     expect(screen.getByText('Нова серія')).toBeInTheDocument();
     expect(screen.getByText('Варто')).toBeInTheDocument();
     expect(screen.getByText('Вердикт Ratingo:')).toBeInTheDocument();
@@ -50,12 +53,20 @@ describe('TrendingCard', () => {
     expect(screen.getByRole('button', { name: 'Дія' })).toBeInTheDocument();
   });
 
+  it('shows only IMDb when there is no critics score', () => {
+    render(<TrendingCard media={{ ...ANDOR, criticsPercent: undefined }} />, { wrapper: Wrapper });
+
+    expect(screen.getByText('Оцінка IMDb 8,3')).toBeInTheDocument();
+    expect(screen.queryByText(/Rotten Tomatoes/)).not.toBeInTheDocument();
+  });
+
   it('leaves out what the title does not have', () => {
     render(
       <TrendingCard
         media={{
           ...ANDOR,
           imdbRating: undefined,
+          criticsPercent: undefined,
           verdict: undefined,
           eventBadge: undefined,
           providers: [],
@@ -65,6 +76,7 @@ describe('TrendingCard', () => {
     );
 
     expect(screen.queryByText(/IMDb/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Rotten Tomatoes/)).not.toBeInTheDocument();
     expect(screen.queryByText('Нова серія')).not.toBeInTheDocument();
     expect(screen.queryByText('Варто')).not.toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();

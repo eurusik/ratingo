@@ -18,7 +18,7 @@ const MOVIE = {
   poster: POSTER,
   backdrop: POSTER,
   stats: { ratingoScore: 94, qualityScore: 62 },
-  externalRatings: { imdb: { rating: 8.3, voteCount: 131558 } },
+  externalRatings: { imdb: { rating: 8.3, voteCount: 131558 }, rottenTomatoes: { rating: 76 } },
   card: { badgeKey: 'IN_THEATERS', primaryCta: 'SAVE' },
 } as TrendingMovie;
 
@@ -46,7 +46,7 @@ const ALL_BADGES: MediaBadge[] = [
 ];
 
 describe('trending mappers', () => {
-  it('takes the IMDb rating, judges by quality rather than popularity and keeps event badges', () => {
+  it('takes the IMDb rating and critics score, judges by quality rather than popularity and keeps event badges', () => {
     expect(fromTrendingMovie(MOVIE)).toEqual({
       mediaItemId: 'movie-1',
       type: 'movie',
@@ -56,6 +56,7 @@ describe('trending mappers', () => {
       posterUrl: POSTER.small,
       backdropUrl: POSTER.small,
       imdbRating: 8.3,
+      criticsPercent: 76,
       verdict: 'mixed',
       eventBadge: 'IN_THEATERS',
       providers: [],
@@ -69,6 +70,7 @@ describe('trending mappers', () => {
       posterUrl: undefined,
       backdropUrl: undefined,
       imdbRating: undefined,
+      criticsPercent: undefined,
       verdict: undefined,
       eventBadge: undefined,
     });

@@ -27,6 +27,7 @@ export type EventBadge = (typeof EVENT_BADGES)[number];
 
 export interface TrendingMedia extends MediaSummary {
   imdbRating?: number;
+  criticsPercent?: number;
   verdict?: RatingVerdict;
   backdropUrl?: string;
   eventBadge?: EventBadge;
@@ -61,6 +62,7 @@ function toTrendingMedia(item: TrendingMovie | TrendingShow, type: MediaType): T
     posterUrl: item.poster?.small,
     backdropUrl: item.backdrop?.small,
     imdbRating: positiveRating(item.externalRatings.imdb?.rating),
+    criticsPercent: positiveRating(item.externalRatings.rottenTomatoes?.rating),
     verdict: verdictOf(item.stats.qualityScore),
     eventBadge: toEventBadge(item.card?.badgeKey),
     providers: [],
