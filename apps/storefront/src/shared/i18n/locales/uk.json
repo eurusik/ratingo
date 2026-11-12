@@ -102,7 +102,8 @@
       "good": "Варто",
       "mixed": "Сумнівно",
       "bad": "Слабко"
-    }
+    },
+    "verdictLabel": "Вердикт Ratingo:"
   },
   "auth": {
     "loginTitle": "Вхід у Ratingo",
@@ -217,16 +218,12 @@
     "moreProviders": "ще {count}",
     "badge": {
       "NEW_EPISODE": "Нова серія",
-      "CONTINUE": "Продовжити",
-      "IN_WATCHLIST": "Збережено",
-      "HIT": "Хіт",
       "NEW_RELEASE": "Прем’єра",
-      "RISING": "Злітає",
-      "TRENDING": "У тренді",
       "IN_THEATERS": "У кіно",
       "NEW_ON_STREAMING": "Нове на стрімінгу"
     },
-    "rank": "№{rank}"
+    "rank": "№{rank}",
+    "imdbLabel": "Оцінка IMDb {score}"
   },
   "library": {
     "yourScore": "Твоя оцінка {score}"

@@ -1,5 +1,9 @@
 @import '@ratingo/ui/styles.css';
 
+@theme {
+  --color-imdb: #f5c518;
+}
+
 @layer base {
   body {
     background: var(--background);

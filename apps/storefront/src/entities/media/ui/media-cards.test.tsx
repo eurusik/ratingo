@@ -22,8 +22,9 @@ const ANDOR: TrendingMedia = {
   year: 2022,
   backdropUrl: 'https://image.tmdb.org/t/p/w300/andor.jpg',
   posterUrl: 'https://image.tmdb.org/t/p/w342/andor.jpg',
-  score: 8.6,
-  badge: 'RISING',
+  imdbRating: 8.3,
+  verdict: 'good',
+  eventBadge: 'NEW_EPISODE',
   providers: [
     { id: 'disney', name: 'Disney+' },
     { id: 'megogo', name: 'Megogo' },
@@ -31,14 +32,18 @@ const ANDOR: TrendingMedia = {
 };
 
 describe('TrendingCard', () => {
-  it('links the title and shows badge, score, details and where to watch', () => {
+  it('links the title and shows IMDb, the event, the verdict, details and where to watch', () => {
     render(<TrendingCard media={ANDOR} actions={<button type="button">Дія</button>} />, {
       wrapper: Wrapper,
     });
 
     expect(screen.getByRole('link', { name: 'Андор' })).toHaveAttribute('href', '/shows/andor');
-    expect(screen.getByText('Злітає')).toBeInTheDocument();
-    expect(screen.getByText('8,6 · Варто')).toBeInTheDocument();
+    expect(screen.getByText('IMDb')).toHaveAttribute('aria-hidden');
+    expect(screen.getByText('8,3')).toHaveAttribute('aria-hidden');
+    expect(screen.getByText('Оцінка IMDb 8,3')).toBeInTheDocument();
+    expect(screen.getByText('Нова серія')).toBeInTheDocument();
+    expect(screen.getByText('Варто')).toBeInTheDocument();
+    expect(screen.getByText('Вердикт Ratingo:')).toBeInTheDocument();
     expect(screen.getByText('Серіал · 2022')).toBeInTheDocument();
     const providers = screen.getByRole('list', { name: 'Де дивитись' });
     expect(within(providers).getAllByRole('listitem')).toHaveLength(2);
@@ -47,12 +52,21 @@ describe('TrendingCard', () => {
 
   it('leaves out what the title does not have', () => {
     render(
-      <TrendingCard media={{ ...ANDOR, badge: undefined, score: undefined, providers: [] }} />,
+      <TrendingCard
+        media={{
+          ...ANDOR,
+          imdbRating: undefined,
+          verdict: undefined,
+          eventBadge: undefined,
+          providers: [],
+        }}
+      />,
       { wrapper: Wrapper },
     );
 
-    expect(screen.queryByText('Злітає')).not.toBeInTheDocument();
-    expect(screen.queryByText(/Варто/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/IMDb/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Нова серія')).not.toBeInTheDocument();
+    expect(screen.queryByText('Варто')).not.toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 });

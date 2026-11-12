@@ -1,6 +1,6 @@
 import fc from 'fast-check';
-import type { TrendingMovie, TrendingShow } from '@/shared/api';
-import { fromTrendingMovie, fromTrendingShow } from './media';
+import type { MediaBadge, TrendingMovie, TrendingShow } from '@/shared/api';
+import { EVENT_BADGES, fromTrendingMovie, fromTrendingShow, toEventBadge } from './media';
 
 const POSTER = {
   thumb: 'https://image.tmdb.org/t/p/w154/a.jpg',
@@ -17,8 +17,9 @@ const MOVIE = {
   releaseDate: '2021-09-15',
   poster: POSTER,
   backdrop: POSTER,
-  stats: { ratingoScore: 84 },
-  card: { badgeKey: 'HIT', primaryCta: 'SAVE' },
+  stats: { ratingoScore: 94, qualityScore: 62 },
+  externalRatings: { imdb: { rating: 8.3, voteCount: 131558 } },
+  card: { badgeKey: 'IN_THEATERS', primaryCta: 'SAVE' },
 } as TrendingMovie;
 
 const SHOW = {
@@ -27,12 +28,25 @@ const SHOW = {
   title: 'Андор',
   releaseDate: null,
   poster: null,
-  isNew: true,
-  stats: { ratingoScore: null },
+  stats: { ratingoScore: null, qualityScore: null },
+  externalRatings: { imdb: null },
+  card: { badgeKey: 'TRENDING', primaryCta: 'SAVE' },
 } as unknown as TrendingShow;
 
+const ALL_BADGES: MediaBadge[] = [
+  'NEW_EPISODE',
+  'CONTINUE',
+  'IN_WATCHLIST',
+  'HIT',
+  'NEW_RELEASE',
+  'RISING',
+  'TRENDING',
+  'IN_THEATERS',
+  'NEW_ON_STREAMING',
+];
+
 describe('trending mappers', () => {
-  it('maps a movie with its score, year, poster and badge', () => {
+  it('takes the IMDb rating, judges by quality rather than popularity and keeps event badges', () => {
     expect(fromTrendingMovie(MOVIE)).toEqual({
       mediaItemId: 'movie-1',
       type: 'movie',
@@ -41,20 +55,22 @@ describe('trending mappers', () => {
       year: 2021,
       posterUrl: POSTER.small,
       backdropUrl: POSTER.small,
-      score: 8.4,
-      badge: 'HIT',
+      imdbRating: 8.3,
+      verdict: 'mixed',
+      eventBadge: 'IN_THEATERS',
       providers: [],
     });
   });
 
-  it('maps a show and leaves missing data out', () => {
+  it('leaves out what a show does not have and hides the trending badge', () => {
     expect(fromTrendingShow(SHOW)).toMatchObject({
       type: 'show',
-      backdropUrl: undefined,
       year: undefined,
       posterUrl: undefined,
-      score: undefined,
-      badge: undefined,
+      backdropUrl: undefined,
+      imdbRating: undefined,
+      verdict: undefined,
+      eventBadge: undefined,
     });
   });
 
@@ -63,6 +79,18 @@ describe('trending mappers', () => {
       fc.property(fc.integer({ min: 1888, max: 2100 }), (year) => {
         const movie = { ...MOVIE, releaseDate: `${year}-01-01` };
         expect(fromTrendingMovie(movie).year).toBe(year);
+      }),
+    );
+  });
+});
+
+describe('toEventBadge', () => {
+  it('keeps only badges that tell about an event', () => {
+    fc.assert(
+      fc.property(fc.constantFrom(...ALL_BADGES, null, undefined), (badge) => {
+        const event = toEventBadge(badge);
+        expect(event === undefined || EVENT_BADGES.includes(event)).toBe(true);
+        expect(event !== undefined).toBe(EVENT_BADGES.some((known) => known === badge));
       }),
     );
   });

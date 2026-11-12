@@ -102,7 +102,8 @@
       "good": "Worth it",
       "mixed": "Mixed",
       "bad": "Weak"
-    }
+    },
+    "verdictLabel": "Ratingo verdict:"
   },
   "auth": {
     "loginTitle": "Sign in to Ratingo",
@@ -217,16 +218,12 @@
     "moreProviders": "{count} more",
     "badge": {
       "NEW_EPISODE": "New episode",
-      "CONTINUE": "Continue",
-      "IN_WATCHLIST": "Saved",
-      "HIT": "Hit",
       "NEW_RELEASE": "New release",
-      "RISING": "Rising",
-      "TRENDING": "Trending",
       "IN_THEATERS": "In theaters",
       "NEW_ON_STREAMING": "New on streaming"
     },
-    "rank": "No. {rank}"
+    "rank": "No. {rank}",
+    "imdbLabel": "IMDb rating {score}"
   },
   "library": {
     "yourScore": "Your score {score}"

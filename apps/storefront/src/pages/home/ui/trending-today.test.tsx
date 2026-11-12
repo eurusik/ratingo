@@ -17,8 +17,8 @@ const SHOW = {
   slug: 'andor',
   title: 'Андор',
   releaseDate: '2022-09-21',
-  isNew: true,
-  stats: { ratingoScore: 86 },
+  stats: { ratingoScore: 86, qualityScore: 88 },
+  externalRatings: { imdb: { rating: 8.4 } },
 } as unknown as TrendingShow;
 
 const MOVIE = {
@@ -26,7 +26,8 @@ const MOVIE = {
   slug: 'dune',
   title: 'Дюна',
   releaseDate: '2021-09-15',
-  stats: { ratingoScore: 81 },
+  stats: { ratingoScore: 81, qualityScore: 80 },
+  externalRatings: {},
 } as unknown as TrendingMovie;
 
 function renderToday() {

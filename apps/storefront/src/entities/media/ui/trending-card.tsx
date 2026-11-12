@@ -5,8 +5,9 @@ import { mediaRoute } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import type { TrendingMedia } from '../model/media';
 import { MediaBackdrop } from './media-backdrop';
+import { ImdbChip } from './imdb-chip';
 import { ProviderLogos } from './provider-logos';
-import { ScoreChip } from './score-chip';
+import { VerdictChip } from './verdict-chip';
 
 interface TrendingCardProps {
   media: TrendingMedia;
@@ -22,13 +23,15 @@ export function TrendingCard({ media, actions, footer }: TrendingCardProps) {
     <Card className="relative w-77.5 gap-0 overflow-hidden rounded-3xl p-0">
       <div className="relative">
         <MediaBackdrop type={media.type} backdropUrl={media.backdropUrl} />
-        {media.badge ? (
-          <Chip
-            size="md"
-            className="absolute start-3 top-3 bg-black/80 text-xs font-extrabold text-white"
-          >
-            {dict.media.badge[media.badge]}
-          </Chip>
+        {media.imdbRating !== undefined || media.eventBadge ? (
+          <div className="absolute start-3 top-3 flex flex-wrap gap-1.5 pe-16">
+            {media.imdbRating === undefined ? null : <ImdbChip rating={media.imdbRating} />}
+            {media.eventBadge ? (
+              <Chip size="md" className="bg-black/80 text-xs font-extrabold text-white">
+                {dict.media.badge[media.eventBadge]}
+              </Chip>
+            ) : null}
+          </div>
         ) : null}
       </div>
       <Card.Header className="gap-1.5 px-4 pt-3.5 pb-4">
@@ -41,7 +44,7 @@ export function TrendingCard({ media, actions, footer }: TrendingCardProps) {
               {media.title}
             </Link>
           </Card.Title>
-          {media.score === undefined ? null : <ScoreChip score={media.score} size="md" />}
+          {media.verdict ? <VerdictChip verdict={media.verdict} /> : null}
         </div>
         <div className="flex min-h-6 items-center gap-2.5">
           <Card.Description className="min-w-0 flex-1 truncate text-sm tabular-nums">

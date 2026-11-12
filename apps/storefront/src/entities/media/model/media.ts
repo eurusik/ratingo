@@ -1,5 +1,5 @@
 import type { MediaBadge, MediaType, TrendingMovie, TrendingShow } from '@/shared/api';
-import { scoreFromPercent } from './score';
+import { ratingVerdict, scoreFromPercent, type RatingVerdict } from './score';
 
 export interface WatchProvider {
   id: string;
@@ -16,11 +16,34 @@ export interface MediaSummary {
   posterUrl?: string;
 }
 
+export const EVENT_BADGES = [
+  'NEW_EPISODE',
+  'NEW_RELEASE',
+  'IN_THEATERS',
+  'NEW_ON_STREAMING',
+] as const;
+
+export type EventBadge = (typeof EVENT_BADGES)[number];
+
 export interface TrendingMedia extends MediaSummary {
-  score?: number;
+  imdbRating?: number;
+  verdict?: RatingVerdict;
   backdropUrl?: string;
-  badge?: MediaBadge;
+  eventBadge?: EventBadge;
   providers: WatchProvider[];
+}
+
+export function toEventBadge(badge: MediaBadge | null | undefined): EventBadge | undefined {
+  return EVENT_BADGES.find((event) => event === badge);
+}
+
+function positiveRating(rating: number | null | undefined): number | undefined {
+  return rating != null && Number.isFinite(rating) && rating > 0 ? rating : undefined;
+}
+
+function verdictOf(qualityPercent: number | null | undefined): RatingVerdict | undefined {
+  const quality = scoreFromPercent(qualityPercent);
+  return quality === undefined ? undefined : ratingVerdict(quality);
 }
 
 function yearOf(date: string | null | undefined): number | undefined {
@@ -37,8 +60,9 @@ function toTrendingMedia(item: TrendingMovie | TrendingShow, type: MediaType): T
     year: yearOf(item.releaseDate),
     posterUrl: item.poster?.small,
     backdropUrl: item.backdrop?.small,
-    score: scoreFromPercent(item.stats.ratingoScore),
-    badge: item.card?.badgeKey ?? undefined,
+    imdbRating: positiveRating(item.externalRatings.imdb?.rating),
+    verdict: verdictOf(item.stats.qualityScore),
+    eventBadge: toEventBadge(item.card?.badgeKey),
     providers: [],
   };
 }
