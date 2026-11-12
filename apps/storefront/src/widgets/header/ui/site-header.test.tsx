@@ -31,10 +31,10 @@ const USER = {
   stats: { moviesRated: 42, showsRated: 18, watchlistCount: 77 },
 } as MeDto;
 
-function mockSession(user: MeDto | null) {
+function mockSession(user: MeDto | null, isLoading = false) {
   jest.mocked(useAuth).mockReturnValue({
     user,
-    isLoading: false,
+    isLoading,
     isAdmin: false,
     logout: jest.fn(),
   } as unknown as ReturnType<typeof useAuth>);
@@ -112,5 +112,13 @@ describe('SiteHeader', () => {
 
     const accountControls = screen.getByRole('button', { name: uk.header.profile }).parentElement;
     expect(accountControls).toHaveClass('hidden', 'md:flex');
+  });
+
+  it('keeps the sign-in space but hides it while the session is being checked', () => {
+    mockSession(null, true);
+    renderHeader();
+
+    expect(screen.queryByRole('button', { name: uk.header.signIn })).not.toBeInTheDocument();
+    expect(screen.getByText(uk.header.signIn).closest('[aria-hidden]')).toHaveClass('invisible');
   });
 });
