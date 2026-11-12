@@ -59,4 +59,20 @@ describe('SegmentedFilter', () => {
     expect(onChange).not.toHaveBeenCalled();
     expect(selectionOf('Усе')).toBe('true');
   });
+
+  it('lets a surface with its own padding drop the page inset', () => {
+    render(
+      <SegmentedFilter
+        label="Тип"
+        options={OPTIONS}
+        value="all"
+        onChange={jest.fn()}
+        className="px-0"
+      />,
+    );
+
+    const group = screen.getByRole('radiogroup', { name: 'Тип' });
+    expect(group).toHaveClass('px-0');
+    expect(group).not.toHaveClass('px-4');
+  });
 });

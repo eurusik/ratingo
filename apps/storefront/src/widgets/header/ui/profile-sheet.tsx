@@ -41,7 +41,7 @@ function SettingRow({
     <div className={ROW_CLASS}>
       <RowIcon icon={icon} />
       <span className="flex-1">{label}</span>
-      <div className="[&_[role=group]]:px-0">{children}</div>
+      <div>{children}</div>
     </div>
   );
 }
@@ -75,6 +75,7 @@ export function ProfileSheet({ user }: { user: MeDto }) {
                 options={COLOR_THEMES.map((id) => ({ id, label: dict.profile.themes[id] }))}
                 value={actions.theme}
                 onChange={actions.setTheme}
+                className="px-0"
               />
             </SettingRow>
           </li>
@@ -85,6 +86,7 @@ export function ProfileSheet({ user }: { user: MeDto }) {
                 options={LOCALES.map((id) => ({ id, label: dict.profile.languageNames[id] }))}
                 value={actions.locale}
                 onChange={actions.changeLocale}
+                className="px-0"
               />
             </SettingRow>
           </li>

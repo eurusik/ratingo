@@ -1,6 +1,7 @@
 'use client';
 
 import { ToggleButton, ToggleButtonGroup, type Key } from '@heroui/react';
+import { cn } from '@ratingo/web-core/lib';
 
 interface SegmentedFilterOption<T extends string> {
   id: T;
@@ -12,6 +13,7 @@ interface SegmentedFilterProps<T extends string> {
   options: readonly SegmentedFilterOption<T>[];
   value: T;
   onChange: (value: T) => void;
+  className?: string;
 }
 
 export function SegmentedFilter<T extends string>({
@@ -19,6 +21,7 @@ export function SegmentedFilter<T extends string>({
   options,
   value,
   onChange,
+  className,
 }: SegmentedFilterProps<T>) {
   const onSelectionChange = (keys: Set<Key>) => {
     const [selected] = keys;
@@ -35,7 +38,7 @@ export function SegmentedFilter<T extends string>({
       size="sm"
       selectedKeys={[value]}
       onSelectionChange={onSelectionChange}
-      className="px-4"
+      className={cn('px-4', className)}
     >
       {options.map((option) => (
         <ToggleButton key={option.id} id={option.id} className="min-h-tap rounded-full px-4">

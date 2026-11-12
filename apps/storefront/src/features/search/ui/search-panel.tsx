@@ -205,8 +205,7 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
             aria-label={dict.search.title}
             variant="secondary"
             autoFocus
-            fullWidth
-            className="flex-1"
+            className="min-w-0 flex-1"
           >
             <SearchField.Group>
               <SearchField.SearchIcon />
@@ -221,7 +220,7 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
               </Kbd>
             </SearchField.Group>
           </SearchField>
-          <Button variant="ghost" className="phone-tap-target md:hidden" onPress={onClose}>
+          <Button variant="ghost" className="phone-tap-target shrink-0 md:hidden" onPress={onClose}>
             {dict.search.cancel}
           </Button>
         </div>
@@ -231,6 +230,7 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
             options={SEARCH_FILTERS.map((id) => ({ id, label: dict.search.filters[id] }))}
             value={filter}
             onChange={setFilter}
+            className="px-0"
           />
         ) : null}
         {!search.isActive && recentTitles.length > 0 ? (
