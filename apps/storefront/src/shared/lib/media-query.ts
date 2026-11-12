@@ -2,6 +2,8 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 
+export const DESKTOP_MEDIA_QUERY = '(min-width: 48rem)';
+
 const readServerMatch = () => false;
 
 export function useMediaQuery(query: string): boolean {

@@ -72,4 +72,25 @@ describe('ResponsiveDialog', () => {
 
     expect(await screen.findByRole('dialog', { name: 'Пошук' })).toHaveClass('modal__dialog');
   });
+
+  it.each([
+    ['phone', false],
+    ['desktop', true],
+  ])(
+    'keeps the title for screen readers but drops the header when headerless on %s',
+    async (_viewport, isDesktop) => {
+      mockViewport({ isDesktop });
+      render(
+        <I18nProvider locale="uk" dictionary={uk}>
+          <ResponsiveDialog isOpen title="Пошук" isHeaderless>
+            <p>Результати</p>
+          </ResponsiveDialog>
+        </I18nProvider>,
+      );
+
+      expect(await screen.findByRole('dialog', { name: 'Пошук' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Пошук' }).parentElement).toHaveClass('sr-only');
+      expect(screen.queryByRole('button', { name: uk.common.close })).not.toBeInTheDocument();
+    },
+  );
 });

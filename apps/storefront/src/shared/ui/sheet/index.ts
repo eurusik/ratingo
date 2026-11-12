@@ -1,2 +1,2 @@
 export { Sheet } from './sheet';
-export type { DialogSurfaceProps, PressableElement } from './dialog-surface-props';
+export type { DialogSurfaceProps } from './dialog-surface-props';

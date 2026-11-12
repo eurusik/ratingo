@@ -1,3 +1,5 @@
+import { MY_ROUTE } from './routes';
+
 export type NavSection = 'today' | 'browse' | 'calendar' | 'my';
 
 export interface NavRoute {
@@ -11,7 +13,7 @@ export const NAV_ROUTES: readonly NavRoute[] = [
   { section: 'today', href: HOME_ROUTE },
   { section: 'browse', href: '/browse' },
   { section: 'calendar', href: '/calendar' },
-  { section: 'my', href: '/my' },
+  { section: 'my', href: MY_ROUTE },
 ];
 
 export function isNavRouteActive(route: NavRoute, pathname: string): boolean {

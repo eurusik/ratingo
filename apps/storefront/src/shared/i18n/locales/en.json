@@ -35,7 +35,9 @@
   },
   "common": {
     "close": "Close",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "retry": "Try again",
+    "loading": "Loading…"
   },
   "nav": {
     "label": "Main navigation",
@@ -48,7 +50,39 @@
   },
   "search": {
     "title": "Search",
-    "comingSoon": "Search is coming soon."
+    "trigger": "Find a movie or show",
+    "placeholder": "Movie or show…",
+    "cancel": "Cancel",
+    "recent": "Recently opened",
+    "clearRecent": "Clear",
+    "removeRecent": "Remove “{title}” from recent",
+    "popular": "Popular now",
+    "filterLabel": "What to search",
+    "filters": {
+      "all": "All",
+      "movie": "Movies",
+      "show": "Shows"
+    },
+    "results": "Results",
+    "otherResults": "More results",
+    "alsoKnownAs": "also: {title}",
+    "type": {
+      "movie": "Movie",
+      "show": "Show"
+    },
+    "searching": "Searching…",
+    "noResults": "Nothing found for “{query}”",
+    "failed": "Search failed.",
+    "preparing": "Preparing the page…",
+    "preparingHint": "Adding “{title}” to Ratingo. It takes a few seconds.",
+    "importFailed": "Couldn't add “{title}”. Try again later.",
+    "hints": {
+      "label": "Keys",
+      "navigate": "select",
+      "open": "open",
+      "close": "close"
+    },
+    "save": "Save “{title}”"
   },
   "placeholder": {
     "comingSoon": "This section is coming soon."
@@ -60,5 +94,119 @@
     "sampleItem": "Sample #{number}",
     "remove": "Remove",
     "sampleHint": "Temporary list: swipe a row left to remove it. In the installed app, pull the page down to bring everything back."
+  },
+  "rating": {
+    "label": "Rating {score}: {verdict}",
+    "verdict": {
+      "good": "Worth it",
+      "mixed": "Mixed",
+      "bad": "Weak"
+    }
+  },
+  "auth": {
+    "loginTitle": "Sign in to Ratingo",
+    "registerTitle": "Create an account",
+    "intent": {
+      "save": "Sign in to save “{title}”"
+    },
+    "loginLead": "Your saved titles, new episodes and calendar follow you on every device.",
+    "registerLead": "It's free and takes a minute.",
+    "continueWith": {
+      "google": "Continue with Google",
+      "facebook": "Continue with Facebook"
+    },
+    "orEmail": "or with email",
+    "email": "Email",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "username": "Ratingo name",
+    "usernameHint": "Shown on your reviews. Change it now or later in settings.",
+    "usernameSuggested": "suggested",
+    "submitLogin": "Sign in",
+    "submitRegister": "Create account",
+    "noAccount": "No account yet?",
+    "createAccount": "Create one",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "emailTaken": "This email is already registered.",
+    "signInInstead": "Sign in?",
+    "passwordRules": {
+      "label": "Password requirements",
+      "met": "done",
+      "length": "At least 8 characters",
+      "case": "Upper and lower case letters",
+      "digit": "At least one digit"
+    },
+    "errors": {
+      "invalidCredentials": "Wrong email or password. Check the keyboard layout and Caps Lock.",
+      "emailAlreadyExists": "This email is already registered.",
+      "usernameTaken": "This name is taken. Try another one.",
+      "tooManyRequests": "Too many attempts. Wait a minute and try again.",
+      "unknownError": "Something went wrong. Try again."
+    },
+    "validation": {
+      "emailInvalid": "Enter a valid email",
+      "passwordRequired": "Enter your password",
+      "usernameLength": "3 to 20 characters",
+      "usernameFormat": "Latin letters, digits and _ only",
+      "passwordWeak": "The password doesn't meet the requirements yet"
+    }
+  },
+  "header": {
+    "signIn": "Sign in",
+    "profile": "Profile"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "Notifications: unread",
+    "markAllRead": "Mark all read",
+    "viewAll": "All notifications",
+    "empty": "No new notifications yet.",
+    "failed": "Couldn't load notifications.",
+    "events": {
+      "release": "In cinemas",
+      "new_season": "Season returns",
+      "new_episode": "New episode out",
+      "on_streaming": "Now streaming",
+      "status_changed": "Status changed"
+    }
+  },
+  "profile": {
+    "stats": {
+      "label": "Your stats",
+      "moviesRated": "movies rated",
+      "showsRated": "shows rated",
+      "watchlist": "saved"
+    },
+    "theme": "Theme",
+    "themes": {
+      "dark": "Dark",
+      "light": "Light"
+    },
+    "language": "Language",
+    "languages": {
+      "uk": "UA",
+      "en": "EN"
+    },
+    "languageNames": {
+      "uk": "Українська",
+      "en": "English"
+    },
+    "settings": "Settings",
+    "install": "Install the app",
+    "installHint": "to the home screen",
+    "admin": "Admin panel",
+    "signOut": "Sign out"
+  },
+  "footer": {
+    "label": "About the site",
+    "description": "What to watch now: trends, ratings and new episodes of your shows.",
+    "sources": "Data from TMDB, Trakt, IMDb and other sources.",
+    "about": "About Ratingo",
+    "journal": "Journal",
+    "github": "GitHub",
+    "madeIn": "Made in Ukraine 🇺🇦",
+    "authorName": "Yevhen Rusakov"
   }
 }

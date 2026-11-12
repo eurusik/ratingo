@@ -1,1 +1,8 @@
-export { OAUTH_PROVIDERS, buildOAuthStartUrl, toSafeReturnPath } from './oauth';
+export { OAUTH_PROVIDERS, buildOAuthStartUrl, toSafeReturnPath, type OAuthProvider } from './oauth';
+export {
+  closeAuth,
+  openAuth,
+  useAuthRequest,
+  type AuthMode,
+  type AuthRequest,
+} from './auth-opener';

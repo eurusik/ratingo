@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from 'react';
 
-export type PressableElement = ReactElement<{ onPress?: () => void }>;
+type PressableElement = ReactElement<{ onPress?: () => void }>;
 
 type SheetSize = 'content' | 'full';
 
@@ -9,6 +9,7 @@ export interface DialogSurfaceProps {
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   title: string;
+  isHeaderless?: boolean;
   size?: SheetSize;
   footer?: ReactNode;
   children: ReactNode;

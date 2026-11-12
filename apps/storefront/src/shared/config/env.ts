@@ -8,3 +8,7 @@ function withoutTrailingSlashes(url: string): string {
 const API_ORIGIN = withoutTrailingSlashes(process.env.NEXT_PUBLIC_API_URL || LOCAL_API_ORIGIN);
 
 export const API_BASE_URL = `${API_ORIGIN}/api`;
+
+const LEGACY_ADMIN_URL = 'https://ratingo.top/admin';
+
+export const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL || LEGACY_ADMIN_URL;
