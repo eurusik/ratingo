@@ -25,9 +25,9 @@ describe('Rail', () => {
     expect(screen.getByRole('list', { name: 'Топ-10' }).tagName).toBe('OL');
   });
 
-  it('keeps one list when it turns into a grid on desktop', () => {
+  it('sizes tiles for denser rails', () => {
     render(
-      <Rail label="Топ-10" isOrdered desktop="grid">
+      <Rail label="Топ-10" isOrdered itemSize="tile">
         <RailItem>Перший</RailItem>
         <RailItem>Другий</RailItem>
       </Rail>,
@@ -35,6 +35,6 @@ describe('Rail', () => {
 
     const list = screen.getByRole('list', { name: 'Топ-10' });
     expect(within(list).getAllByRole('listitem')).toHaveLength(2);
-    expect(list).toHaveClass('md:grid');
+    expect(list.className).toContain('--rail-columns:8');
   });
 });

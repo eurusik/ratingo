@@ -15,7 +15,7 @@ import { useTranslation } from '@/shared/i18n';
 import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import { useTrendingToday } from '../model/trending';
 
-const TRENDING_PLACEHOLDERS = 6;
+const TRENDING_PLACEHOLDERS = 4;
 const TOP_PLACEHOLDERS = 10;
 const PRIORITY_CARDS = 2;
 
@@ -24,13 +24,13 @@ interface RailSkeletonProps {
   count: number;
   Placeholder: ComponentType;
   isOrdered?: boolean;
-  desktop?: 'peek' | 'grid';
+  itemSize?: 'card' | 'tile';
 }
 
-function RailSkeleton({ label, count, Placeholder, isOrdered, desktop }: RailSkeletonProps) {
+function RailSkeleton({ label, count, Placeholder, isOrdered, itemSize }: RailSkeletonProps) {
   return (
     <div aria-hidden>
-      <Rail label={label} isOrdered={isOrdered} desktop={desktop}>
+      <Rail label={label} isOrdered={isOrdered} itemSize={itemSize}>
         {Array.from({ length: count }, (_, index) => (
           <RailItem key={index}>
             <Placeholder />
@@ -48,13 +48,19 @@ interface TopTenSectionProps {
 }
 
 function TopTenSection({ id, title, items }: TopTenSectionProps) {
+  const scroller = useRef<HTMLDivElement>(null);
+
   if (items?.length === 0) return null;
 
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2">
-      <SectionHeader id={id} title={title} />
+      <SectionHeader
+        id={id}
+        title={title}
+        trailing={items ? <RailPager scrollerRef={scroller} /> : null}
+      />
       {items ? (
-        <Rail label={title} isOrdered desktop="grid">
+        <Rail label={title} isOrdered itemSize="tile" scrollerRef={scroller}>
           {items.map((media, index) => (
             <RailItem key={media.mediaItemId}>
               <TopRankTile media={media} rank={index + 1} />
@@ -67,7 +73,7 @@ function TopTenSection({ id, title, items }: TopTenSectionProps) {
           count={TOP_PLACEHOLDERS}
           Placeholder={TopRankTileSkeleton}
           isOrdered
-          desktop="grid"
+          itemSize="tile"
         />
       )}
     </section>
