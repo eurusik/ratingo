@@ -1,57 +1,83 @@
 :root {
-  --vt-duration-exit: 150ms;
-  --vt-duration-enter: 210ms;
-  --vt-duration-move: 400ms;
-  --vt-slide-distance: 60px;
+  --vt-push-duration: 380ms;
+  --vt-push-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --vt-morph-duration: 380ms;
 }
 
-::view-transition-old(.nav-forward) {
-  --vt-slide-offset: calc(var(--vt-slide-distance) * -1);
-  animation:
-    var(--vt-duration-exit) ease-in both vt-fade reverse,
-    var(--vt-duration-move) ease-in-out both vt-slide reverse;
-}
-
-::view-transition-new(.nav-forward) {
-  --vt-slide-offset: var(--vt-slide-distance);
-  animation:
-    var(--vt-duration-enter) ease-out var(--vt-duration-exit) both vt-fade,
-    var(--vt-duration-move) ease-in-out both vt-slide;
-}
-
-::view-transition-old(.nav-back) {
-  --vt-slide-offset: var(--vt-slide-distance);
-  animation:
-    var(--vt-duration-exit) ease-in both vt-fade reverse,
-    var(--vt-duration-move) ease-in-out both vt-slide reverse;
-}
-
-::view-transition-new(.nav-back) {
-  --vt-slide-offset: calc(var(--vt-slide-distance) * -1);
-  animation:
-    var(--vt-duration-enter) ease-out var(--vt-duration-exit) both vt-fade,
-    var(--vt-duration-move) ease-in-out both vt-slide;
+::view-transition-group(.push-enter),
+::view-transition-group(.pop-exit) {
+  z-index: 2;
 }
 
 ::view-transition-group(.morph) {
-  animation-duration: var(--vt-duration-move);
+  z-index: 3;
+  animation-duration: var(--vt-morph-duration);
+  animation-timing-function: var(--vt-push-ease);
 }
 
-@keyframes vt-fade {
+::view-transition-old(.morph) {
+  display: none;
+}
+
+::view-transition-new(.morph) {
+  width: 100%;
+  height: 100%;
+  animation: none;
+}
+
+::view-transition-new(.push-enter) {
+  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-from-right;
+}
+
+::view-transition-old(.push-exit) {
+  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-to-left-dim;
+}
+
+::view-transition-new(.pop-enter) {
+  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-from-left-dim;
+}
+
+::view-transition-old(.pop-exit) {
+  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-to-right;
+}
+
+@keyframes vt-from-right {
   from {
-    opacity: 0;
+    transform: translateX(100%);
   }
   to {
-    opacity: 1;
+    transform: translateX(0);
   }
 }
 
-@keyframes vt-slide {
+@keyframes vt-to-right {
   from {
-    translate: var(--vt-slide-offset);
+    transform: translateX(0);
   }
   to {
-    translate: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes vt-to-left-dim {
+  from {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+  to {
+    transform: translateX(-25%);
+    filter: brightness(0.7);
+  }
+}
+
+@keyframes vt-from-left-dim {
+  from {
+    transform: translateX(-25%);
+    filter: brightness(0.7);
+  }
+  to {
+    transform: translateX(0);
+    filter: brightness(1);
   }
 }
 
