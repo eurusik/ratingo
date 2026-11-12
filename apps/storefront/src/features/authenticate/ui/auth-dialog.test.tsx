@@ -56,9 +56,11 @@ describe('AuthDialog', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Увійди, щоб зберегти «Андор»' });
     const google = await within(dialog).findByRole('link', { name: uk.auth.continueWith.google });
     expect(google.getAttribute('href')).toContain('/auth/google?returnTo=%2Fbrowse%3Ftype%3Dshow');
-    expect(
-      within(dialog).queryByRole('link', { name: uk.auth.continueWith.facebook }),
-    ).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        within(dialog).queryByRole('link', { name: uk.auth.continueWith.facebook }),
+      ).not.toBeInTheDocument(),
+    );
     expect(within(dialog).getByLabelText(uk.auth.email, { selector: 'input' })).toHaveAttribute(
       'autocomplete',
       'username',
@@ -67,6 +69,20 @@ describe('AuthDialog', () => {
       'autocomplete',
       'current-password',
     );
+  });
+
+  it('offers both providers at once while the config is still loading', async () => {
+    jest.mocked(authApi.getAuthConfig).mockReturnValue(new Promise(() => {}));
+    renderDialog();
+    act(() => openAuth());
+
+    const dialog = await screen.findByRole('dialog', { name: uk.auth.loginTitle });
+    expect(
+      within(dialog).getByRole('link', { name: uk.auth.continueWith.google }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('link', { name: uk.auth.continueWith.facebook }),
+    ).toBeInTheDocument();
   });
 
   it('shows one error banner when the credentials are wrong', async () => {
