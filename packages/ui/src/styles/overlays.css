@@ -35,6 +35,11 @@ html:has([data-exiting]) .viewport-bottom-fill {
   background: var(--overlay);
 }
 
+.sheet__content--bottom:not([data-detached]) .sheet__dialog,
+.drawer__content--bottom .drawer__dialog {
+  box-shadow: var(--edge-panel-shadow);
+}
+
 .sheet__overlay[data-position='bottom'] > .sheet__backdrop[data-stack-index='0'] {
   animation-range: entry 0% entry var(--sheet-backdrop-full-at) !important;
 }

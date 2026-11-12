@@ -11,6 +11,7 @@
   --safe-left: env(safe-area-inset-left, 0px);
   --viewport-bottom-fill-height: 10rem;
   --sheet-backdrop-full-at: 30%;
+  --edge-panel-shadow: 0 -6px 24px 0 rgba(0, 0, 0, 0.08);
 }
 
 .dark,
@@ -43,6 +44,7 @@
   --focus: oklch(0.69 0.16 252);
 
   --backdrop: rgba(0, 0, 0, 0.6);
+  --edge-panel-shadow: none;
 }
 
 @theme inline {
