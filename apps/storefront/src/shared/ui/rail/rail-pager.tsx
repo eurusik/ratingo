@@ -33,7 +33,12 @@ function useScrollEdges(scrollerRef: RefObject<HTMLElement | null>): ScrollEdges
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
-    const update = () => setEdges(readEdges(scroller));
+    const update = () => {
+      const next = readEdges(scroller);
+      setEdges((current) =>
+        current.atStart === next.atStart && current.atEnd === next.atEnd ? current : next,
+      );
+    };
     update();
     scroller.addEventListener('scroll', update, { passive: true });
     const resizeObserver = new ResizeObserver(update);
@@ -65,30 +70,27 @@ export function RailPager({ scrollerRef }: { scrollerRef: RefObject<HTMLElement 
 
   if (atStart && atEnd) return null;
 
+  const buttons = [
+    { direction: -1, label: dict.rail.previous, isDisabled: atStart, Icon: ChevronLeft },
+    { direction: 1, label: dict.rail.next, isDisabled: atEnd, Icon: ChevronRight },
+  ] as const;
+
   return (
     <div className="hidden gap-1.5 md:pointer-fine:flex">
-      <Button
-        isIconOnly
-        size="sm"
-        variant="tertiary"
-        className="rounded-full"
-        aria-label={dict.rail.previous}
-        isDisabled={atStart}
-        onPress={() => page(-1)}
-      >
-        <ChevronLeft aria-hidden className="size-4" />
-      </Button>
-      <Button
-        isIconOnly
-        size="sm"
-        variant="tertiary"
-        className="rounded-full"
-        aria-label={dict.rail.next}
-        isDisabled={atEnd}
-        onPress={() => page(1)}
-      >
-        <ChevronRight aria-hidden className="size-4" />
-      </Button>
+      {buttons.map(({ direction, label, isDisabled, Icon }) => (
+        <Button
+          key={direction}
+          isIconOnly
+          size="sm"
+          variant="tertiary"
+          className="rounded-full"
+          aria-label={label}
+          isDisabled={isDisabled}
+          onPress={() => page(direction)}
+        >
+          <Icon aria-hidden className="size-4" />
+        </Button>
+      ))}
     </div>
   );
 }

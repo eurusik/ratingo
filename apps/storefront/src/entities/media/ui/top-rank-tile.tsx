@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { mediaRoute } from '@/shared/config';
-import { interpolate, useTranslation } from '@/shared/i18n';
 import type { TrendingMedia } from '../model/media';
 import { MediaPoster } from './media-poster';
 
@@ -10,8 +9,6 @@ interface TopRankTileProps {
 }
 
 export function TopRankTile({ media, rank }: TopRankTileProps) {
-  const { dict } = useTranslation();
-
   return (
     <Link
       href={mediaRoute(media.type, media.slug)}
@@ -27,7 +24,6 @@ export function TopRankTile({ media, rank }: TopRankTileProps) {
         </span>
       </span>
       <span className="line-clamp-2 min-h-[2lh] text-xs leading-tight font-semibold break-words md:text-sm">
-        <span className="sr-only">{interpolate(dict.media.rank, { rank })} </span>
         {media.title}
       </span>
     </Link>

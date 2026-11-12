@@ -1,5 +1,5 @@
-import { scoreFromPercent } from '@/entities/media';
 import type { MediaType, SearchItem, TrendingMovie, TrendingShow } from '@/shared/api';
+import { positiveNumber, scoreFromPercent, yearFromDate } from '@/shared/lib';
 
 export interface SearchTitle {
   key: string;
@@ -12,16 +12,7 @@ export interface SearchTitle {
   alsoKnownAs?: string;
   year?: number;
   posterUrl?: string;
-  rating?: number;
-}
-
-function yearOf(date: string | null | undefined): number | undefined {
-  const year = date ? Number.parseInt(date.slice(0, 4), 10) : Number.NaN;
-  return Number.isFinite(year) ? year : undefined;
-}
-
-function positive(value: number | null | undefined): number | undefined {
-  return value && value > 0 ? value : undefined;
+  score?: number;
 }
 
 export function fromSearchItem(item: SearchItem): SearchTitle {
@@ -34,9 +25,9 @@ export function fromSearchItem(item: SearchItem): SearchTitle {
     slug: item.slug,
     title: item.title,
     alsoKnownAs: item.matchedAlternativeTitle ?? undefined,
-    year: positive(item.year),
+    year: positiveNumber(item.year),
     posterUrl: item.poster?.thumb,
-    rating: item.source === 'local' ? positive(item.rating) : undefined,
+    score: item.source === 'local' ? positiveNumber(item.rating) : undefined,
   };
 }
 
@@ -48,8 +39,8 @@ export function fromTrending(item: TrendingMovie | TrendingShow, type: MediaType
     mediaItemId: item.mediaItemId,
     slug: item.slug,
     title: item.title,
-    year: yearOf(item.releaseDate),
+    year: yearFromDate(item.releaseDate),
     posterUrl: item.poster?.thumb,
-    rating: scoreFromPercent(item.stats.ratingoScore),
+    score: scoreFromPercent(item.stats.ratingoScore),
   };
 }

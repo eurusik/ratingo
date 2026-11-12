@@ -5,8 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ratingo/web-core/auth';
 import { libraryApi, type MediaSaveStatus } from '@/shared/api';
 import { createBatchLoader } from '@/shared/lib';
-
-const MAX_IDS_PER_REQUEST = 100;
+import { MAX_IDS_PER_REQUEST, saveStatusKey } from './library-keys';
 
 export const NOT_SAVED: MediaSaveStatus = { isForLater: false, isConsidering: false };
 
@@ -14,12 +13,6 @@ const saveStatusLoader = createBatchLoader(
   (ids) => libraryApi.getSaveStatuses(ids),
   MAX_IDS_PER_REQUEST,
 );
-
-export const LIBRARY_QUERY_KEY = ['library'] as const;
-
-function saveStatusKey(mediaItemId: string) {
-  return [...LIBRARY_QUERY_KEY, 'save-status', mediaItemId] as const;
-}
 
 export function isSaved(status: MediaSaveStatus): boolean {
   return status.isForLater || status.isConsidering;

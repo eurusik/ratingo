@@ -5,7 +5,13 @@ import { MediaTypeIcon } from './media-poster';
 const BACKDROP_WIDTH = 310;
 const BACKDROP_HEIGHT = 250;
 
-export function MediaBackdrop({ type, backdropUrl }: { type: MediaType; backdropUrl?: string }) {
+interface MediaBackdropProps {
+  type: MediaType;
+  backdropUrl?: string;
+  isPriority: boolean;
+}
+
+export function MediaBackdrop({ type, backdropUrl, isPriority }: MediaBackdropProps) {
   if (!backdropUrl) {
     return (
       <span className="flex h-62.5 w-full items-center justify-center bg-surface-secondary text-muted">
@@ -21,6 +27,8 @@ export function MediaBackdrop({ type, backdropUrl }: { type: MediaType; backdrop
       width={BACKDROP_WIDTH}
       height={BACKDROP_HEIGHT}
       unoptimized
+      loading={isPriority ? 'eager' : 'lazy'}
+      fetchPriority={isPriority ? 'high' : 'auto'}
       className="h-62.5 w-full bg-surface-secondary object-cover"
     />
   );

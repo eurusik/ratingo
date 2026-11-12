@@ -10,10 +10,8 @@ export function useReplaySaveAfterSignIn(): void {
   const { save } = useLibrarySave();
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !isAuthenticated) return;
     const intent = takePendingIntent();
-    if (intent?.kind === 'save' && isAuthenticated) {
-      save({ mediaItemId: intent.mediaItemId, title: intent.title });
-    }
+    if (intent?.kind === 'save') save({ mediaItemId: intent.mediaItemId, title: intent.title });
   }, [isLoading, isAuthenticated, save]);
 }

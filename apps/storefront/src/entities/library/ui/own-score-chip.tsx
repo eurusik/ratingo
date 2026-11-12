@@ -3,19 +3,16 @@
 import { Chip } from '@heroui/react';
 import { Star } from 'lucide-react';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { useOwnRating } from '../model/own-rating';
-
-const PERCENT_PER_POINT = 10;
+import { formatScore } from '@/shared/lib';
+import { useOwnScore } from '../model/own-score';
 
 export function OwnScoreChip({ mediaItemId }: { mediaItemId: string }) {
   const { dict, locale } = useTranslation();
-  const rating = useOwnRating(mediaItemId);
+  const ownScore = useOwnScore(mediaItemId);
 
-  if (rating === undefined) return null;
+  if (ownScore === undefined) return null;
 
-  const score = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
-    rating / PERCENT_PER_POINT,
-  );
+  const score = formatScore(locale, ownScore);
 
   return (
     <Chip size="sm" variant="soft" color="accent" className="shrink-0 tabular-nums">

@@ -22,8 +22,9 @@ export function ProviderLogos({ providers }: { providers: WatchProvider[] }) {
         <li key={provider.id}>
           <Avatar size="sm" className="size-6 rounded-md bg-surface-secondary">
             {provider.logoUrl ? <Avatar.Image src={provider.logoUrl} alt={provider.name} /> : null}
-            <Avatar.Fallback className="text-[10px] font-extrabold" aria-label={provider.name}>
-              {initials(provider.name)}
+            <Avatar.Fallback className="text-[10px] font-extrabold">
+              <span aria-hidden>{initials(provider.name)}</span>
+              {provider.logoUrl ? null : <span className="sr-only">{provider.name}</span>}
             </Avatar.Fallback>
           </Avatar>
         </li>

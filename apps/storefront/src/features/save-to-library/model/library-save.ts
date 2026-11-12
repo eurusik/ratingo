@@ -3,22 +3,24 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient, type Mutation } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
-import { NOT_SAVED, isSaved, useLibraryStore } from '@/entities/library';
+import { LIBRARY_QUERY_KEY, NOT_SAVED, isSaved, useLibraryStore } from '@/entities/library';
 import { libraryApi, type MediaSaveStatus } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { planListChanges, toggledStatus } from './save-plan';
-import { showUndoToast } from './undo-toast';
+import { ensureSaved, planListChanges } from './save-plan';
+import { closeUndoToast, showUndoToast } from './undo-toast';
 
 export interface SavableMedia {
   mediaItemId: string;
   title: string;
 }
 
-type NextStatus = (current: MediaSaveStatus) => MediaSaveStatus;
+type SaveIntent =
+  { kind: 'save' } | { kind: 'remove' } | { kind: 'restore'; previous: Promise<MediaSaveStatus> };
 
 interface StatusChange {
   media: SavableMedia;
-  next: NextStatus;
+  intent: SaveIntent;
+  optimistic: MediaSaveStatus;
 }
 
 interface AppliedChange {
@@ -26,23 +28,26 @@ interface AppliedChange {
   after: MediaSaveStatus;
 }
 
-const SAVE_MUTATION_KEY = ['library', 'save'] as const;
+const SAVE_MUTATION_KEY = [...LIBRARY_QUERY_KEY, 'save'] as const;
 
-async function applyChange({ media, next }: StatusChange): Promise<AppliedChange> {
+async function targetFor(intent: SaveIntent, before: MediaSaveStatus): Promise<MediaSaveStatus> {
+  if (intent.kind === 'save') return ensureSaved(before);
+  if (intent.kind === 'remove') return NOT_SAVED;
+  return intent.previous;
+}
+
+async function applyChange({ media, intent }: StatusChange): Promise<AppliedChange> {
   const statuses = await libraryApi.getSaveStatuses([media.mediaItemId]);
   const before = statuses[media.mediaItemId] ?? NOT_SAVED;
+  const target = await targetFor(intent, before);
   let after = before;
-  for (const { list, action } of planListChanges(before, next(before))) {
+  for (const { list, action } of planListChanges(before, target)) {
     after =
       action === 'save'
         ? await libraryApi.save(media.mediaItemId, list)
         : await libraryApi.unsave(media.mediaItemId, list);
   }
   return { before, after };
-}
-
-function keepOrSave(current: MediaSaveStatus): MediaSaveStatus {
-  return isSaved(current) ? current : toggledStatus(current);
 }
 
 function changesMedia(mediaItemId: string) {
@@ -68,23 +73,30 @@ export function useLibrarySave() {
     mutationKey: SAVE_MUTATION_KEY,
     scope: { id: 'save-to-library' },
     mutationFn: applyChange,
-    onMutate: ({ media, next }) =>
-      store.write(media.mediaItemId, next(store.read(media.mediaItemId))),
+    onMutate: ({ media, optimistic }) => store.write(media.mediaItemId, optimistic),
     onSuccess: ({ after }, { media }) => {
       if (isLatestChange(media.mediaItemId)) store.write(media.mediaItemId, after);
     },
     onError: (error, { media }) => {
       console.error('Updating the library failed', { mediaItemId: media.mediaItemId, error });
+      closeUndoToast(media.mediaItemId);
       if (isLatestChange(media.mediaItemId)) store.refresh(media.mediaItemId);
       toast.danger(dict.saveToLibrary.toast.failed);
     },
   });
 
+  const change = useCallback(
+    (media: SavableMedia, intent: SaveIntent, optimistic: MediaSaveStatus) =>
+      mutateAsync({ media, intent, optimistic }).catch(() => null),
+    [mutateAsync],
+  );
+
   const changeWithUndo = useCallback(
-    (media: SavableMedia, next: NextStatus) => {
+    (media: SavableMedia, intent: SaveIntent) => {
       const shown = store.read(media.mediaItemId);
-      const applied = mutateAsync({ media, next }).catch(() => null);
-      const message = isSaved(next(shown))
+      const optimistic = intent.kind === 'remove' ? NOT_SAVED : ensureSaved(shown);
+      const applied = change(media, intent, optimistic);
+      const message = isSaved(optimistic)
         ? dict.saveToLibrary.toast.saved
         : dict.saveToLibrary.toast.removed;
 
@@ -93,22 +105,23 @@ export function useLibrarySave() {
         message: interpolate(message, { title: media.title }),
         undoLabel: dict.saveToLibrary.toast.undo,
         onUndo: () => {
-          store.write(media.mediaItemId, shown);
-          void applied.then((change) =>
-            change ? mutateAsync({ media, next: () => change.before }).catch(() => null) : null,
-          );
+          const previous = applied.then((result) => result?.before ?? shown);
+          void change(media, { kind: 'restore', previous }, shown);
         },
       });
     },
-    [dict, mutateAsync, store],
+    [change, dict, store],
   );
 
   const toggleSaved = useCallback(
-    (media: SavableMedia) => changeWithUndo(media, toggledStatus),
-    [changeWithUndo],
+    (media: SavableMedia) =>
+      changeWithUndo(media, {
+        kind: isSaved(store.read(media.mediaItemId)) ? 'remove' : 'save',
+      }),
+    [changeWithUndo, store],
   );
   const save = useCallback(
-    (media: SavableMedia) => changeWithUndo(media, keepOrSave),
+    (media: SavableMedia) => changeWithUndo(media, { kind: 'save' }),
     [changeWithUndo],
   );
 

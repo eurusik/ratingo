@@ -25,7 +25,7 @@ const ANDOR: TrendingMedia = {
   imdbRating: 8.3,
   criticsPercent: 76,
   verdict: 'good',
-  eventBadge: 'NEW_EPISODE',
+  event: 'NEW_EPISODE',
   providers: [
     { id: 'disney', name: 'Disney+' },
     { id: 'megogo', name: 'Megogo' },
@@ -68,7 +68,7 @@ describe('TrendingCard', () => {
           imdbRating: undefined,
           criticsPercent: undefined,
           verdict: undefined,
-          eventBadge: undefined,
+          event: undefined,
           providers: [],
         }}
       />,
@@ -84,12 +84,12 @@ describe('TrendingCard', () => {
 });
 
 describe('TopRankTile', () => {
-  it('names the rank and the title for screen readers', () => {
+  it('links the title and shows the rank once, leaving the position to the list', () => {
     render(<TopRankTile media={ANDOR} rank={3} />, { wrapper: Wrapper });
 
     const link = screen.getByRole('link');
     expect(link).toHaveAttribute('href', '/shows/andor');
-    expect(link).toHaveTextContent('№3 Андор');
+    expect(link).toHaveTextContent(/^3Андор$/);
   });
 });
 

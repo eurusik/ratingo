@@ -222,7 +222,6 @@
       "IN_THEATERS": "In theaters",
       "NEW_ON_STREAMING": "New on streaming"
     },
-    "rank": "No. {rank}",
     "imdbLabel": "IMDb rating {score}",
     "criticsLabel": "Rotten Tomatoes: {percent}% of critics"
   },
@@ -242,7 +241,8 @@
       "removed": "“{title}” removed",
       "undo": "Undo",
       "failed": "Could not update your saved titles. Try again.",
-      "linkCopied": "Link copied"
+      "linkCopied": "Link copied",
+      "shareFailed": "Could not share the link."
     }
   },
   "rail": {

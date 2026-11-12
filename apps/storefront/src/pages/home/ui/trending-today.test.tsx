@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@ratingo/web-core/auth';
 import { catalogApi, type TrendingMovie, type TrendingShow } from '@/shared/api';
@@ -58,7 +58,7 @@ describe('TrendingToday', () => {
 
     const top = screen.getByRole('list', { name: 'Топ-10 сьогодні' });
     expect(top.tagName).toBe('OL');
-    expect(within(top).getByRole('link')).toHaveTextContent('№1 Андор');
+    expect(within(top).getByRole('listitem')).toHaveTextContent(/^1Андор$/);
   });
 
   it('says so when trending titles cannot load', async () => {
@@ -66,9 +66,13 @@ describe('TrendingToday', () => {
     jest.mocked(catalogApi.getTrendingMovies).mockResolvedValue([]);
     renderToday();
 
-    expect(
-      await screen.findByText('Не вдалося завантажити тренди. Онови сторінку.'),
-    ).toBeInTheDocument();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Не вдалося завантажити тренди. Онови сторінку.');
+
+    jest.mocked(catalogApi.getTrendingShows).mockResolvedValue([SHOW]);
+    fireEvent.click(within(alert).getByRole('button', { name: 'Спробувати ще раз' }));
+
+    expect(await screen.findByRole('list', { name: 'Зараз у тренді' })).toBeInTheDocument();
   });
 
   it('shows placeholders for both sections while loading', () => {

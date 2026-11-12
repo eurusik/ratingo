@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ratingo/web-core/auth';
-import { LIBRARY_QUERY_KEY } from './save-status';
+import { LIBRARY_QUERY_KEY } from './library-keys';
 
 export function useForgetLibraryOnUserChange(): void {
   const queryClient = useQueryClient();

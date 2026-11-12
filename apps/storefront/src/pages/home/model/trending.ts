@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { fromTrendingMovie, fromTrendingShow, type TrendingMedia } from '@/entities/media';
 import { catalogApi } from '@/shared/api';
+import { interleave } from '@/shared/lib';
 
 const TRENDING_PER_TYPE = 10;
 const TOP_COUNT = 10;
@@ -11,13 +12,6 @@ const TRENDING_STALE_MS = 10 * 60 * 1000;
 interface TrendingToday {
   trending: TrendingMedia[];
   top: TrendingMedia[];
-}
-
-function interleave(first: TrendingMedia[], second: TrendingMedia[]): TrendingMedia[] {
-  const length = Math.max(first.length, second.length);
-  return Array.from({ length }, (_, index) => [first[index], second[index]])
-    .flat()
-    .filter((media): media is TrendingMedia => media !== undefined);
 }
 
 async function fetchTrendingToday(): Promise<TrendingToday> {

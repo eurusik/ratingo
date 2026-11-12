@@ -12,18 +12,19 @@ import { VerdictChip } from './verdict-chip';
 
 interface TrendingCardProps {
   media: TrendingMedia;
+  isPriority?: boolean;
   actions?: ReactNode;
   footer?: ReactNode;
 }
 
-export function TrendingCard({ media, actions, footer }: TrendingCardProps) {
+export function TrendingCard({ media, isPriority = false, actions, footer }: TrendingCardProps) {
   const { dict } = useTranslation();
   const details = [dict.media.type[media.type], media.year].filter(Boolean).join(' · ');
 
   return (
     <Card className="relative w-77.5 gap-0 overflow-hidden rounded-3xl p-0 md:w-full">
       <div className="relative">
-        <MediaBackdrop type={media.type} backdropUrl={media.backdropUrl} />
+        <MediaBackdrop type={media.type} backdropUrl={media.backdropUrl} isPriority={isPriority} />
         <ExternalRatings
           imdbRating={media.imdbRating}
           criticsPercent={media.criticsPercent}
@@ -47,7 +48,7 @@ export function TrendingCard({ media, actions, footer }: TrendingCardProps) {
             <Card.Description className="min-w-0 truncate text-sm tabular-nums">
               {details}
             </Card.Description>
-            {media.eventBadge ? <EventBadge event={media.eventBadge} /> : null}
+            {media.event ? <EventBadge event={media.event} /> : null}
           </div>
           {footer}
           <ProviderLogos providers={media.providers} />

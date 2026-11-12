@@ -1,11 +1,10 @@
 import { Chip } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { useScoreFormat } from './score-format';
+import { formatScore } from '@/shared/lib';
 
 export function ImdbChip({ rating }: { rating: number }) {
-  const { dict } = useTranslation();
-  const formatScore = useScoreFormat();
-  const score = formatScore(rating);
+  const { dict, locale } = useTranslation();
+  const score = formatScore(locale, rating);
 
   return (
     <Chip

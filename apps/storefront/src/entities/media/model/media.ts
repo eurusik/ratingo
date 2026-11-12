@@ -1,5 +1,6 @@
 import type { MediaBadge, MediaType, TrendingMovie, TrendingShow } from '@/shared/api';
-import { ratingVerdict, scoreFromPercent, type RatingVerdict } from './score';
+import { positiveNumber, scoreFromPercent, yearFromDate } from '@/shared/lib';
+import { ratingVerdict, type RatingVerdict } from './score';
 
 export interface WatchProvider {
   id: string;
@@ -16,40 +17,31 @@ export interface MediaSummary {
   posterUrl?: string;
 }
 
-export const EVENT_BADGES = [
+export const MEDIA_EVENTS = [
   'NEW_EPISODE',
   'NEW_RELEASE',
   'IN_THEATERS',
   'NEW_ON_STREAMING',
 ] as const;
 
-export type EventBadge = (typeof EVENT_BADGES)[number];
+export type MediaEvent = (typeof MEDIA_EVENTS)[number];
 
 export interface TrendingMedia extends MediaSummary {
   imdbRating?: number;
   criticsPercent?: number;
   verdict?: RatingVerdict;
   backdropUrl?: string;
-  eventBadge?: EventBadge;
+  event?: MediaEvent;
   providers: WatchProvider[];
 }
 
-export function toEventBadge(badge: MediaBadge | null | undefined): EventBadge | undefined {
-  return EVENT_BADGES.find((event) => event === badge);
-}
-
-function positiveRating(rating: number | null | undefined): number | undefined {
-  return rating != null && Number.isFinite(rating) && rating > 0 ? rating : undefined;
+export function toMediaEvent(badge: MediaBadge | null | undefined): MediaEvent | undefined {
+  return MEDIA_EVENTS.find((event) => event === badge);
 }
 
 function verdictOf(qualityPercent: number | null | undefined): RatingVerdict | undefined {
   const quality = scoreFromPercent(qualityPercent);
   return quality === undefined ? undefined : ratingVerdict(quality);
-}
-
-function yearOf(date: string | null | undefined): number | undefined {
-  const year = date ? Number.parseInt(date.slice(0, 4), 10) : Number.NaN;
-  return Number.isFinite(year) && year > 0 ? year : undefined;
 }
 
 function toTrendingMedia(item: TrendingMovie | TrendingShow, type: MediaType): TrendingMedia {
@@ -58,13 +50,13 @@ function toTrendingMedia(item: TrendingMovie | TrendingShow, type: MediaType): T
     type,
     slug: item.slug,
     title: item.title,
-    year: yearOf(item.releaseDate),
+    year: yearFromDate(item.releaseDate),
     posterUrl: item.poster?.small,
-    backdropUrl: item.backdrop?.small,
-    imdbRating: positiveRating(item.externalRatings.imdb?.rating),
-    criticsPercent: positiveRating(item.externalRatings.rottenTomatoes?.rating),
+    backdropUrl: item.backdrop?.medium,
+    imdbRating: positiveNumber(item.externalRatings.imdb?.rating),
+    criticsPercent: positiveNumber(item.externalRatings.rottenTomatoes?.rating),
     verdict: verdictOf(item.stats.qualityScore),
-    eventBadge: toEventBadge(item.card?.badgeKey),
+    event: toMediaEvent(item.card?.badgeKey),
     providers: [],
   };
 }

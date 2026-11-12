@@ -54,12 +54,12 @@ describe('useReplaySaveAfterSignIn', () => {
     expect(takePendingIntent()).toBeNull();
   });
 
-  it('drops the intent when the redirect came back signed out', () => {
+  it('keeps the intent while the session is not restored yet', () => {
     rememberPendingIntent(ANDOR);
     setAuth({ isLoading: false, isAuthenticated: false });
     renderHook(() => useReplaySaveAfterSignIn(), { wrapper: Wrapper });
 
     expect(libraryApi.save).not.toHaveBeenCalled();
-    expect(takePendingIntent()).toBeNull();
+    expect(takePendingIntent()).toEqual(ANDOR);
   });
 });

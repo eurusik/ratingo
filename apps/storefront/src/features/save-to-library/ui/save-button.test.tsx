@@ -202,4 +202,63 @@ describe('SaveButton', () => {
     jest.useRealTimers();
     Reflect.deleteProperty(window, 'PointerEvent');
   });
+
+  it('never removes a title the server already has when its status has not loaded yet', async () => {
+    signIn(true);
+    server = FOR_LATER_ONLY;
+    let calls = 0;
+    jest.mocked(libraryApi.getSaveStatuses).mockImplementation(() => {
+      calls += 1;
+      return calls === 1 ? new Promise(() => {}) : Promise.resolve({ 'andor-id': server });
+    });
+    const button = renderButton();
+
+    fireEvent.click(button);
+
+    await waitFor(() => expect(calls).toBe(2));
+    await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+    expect(libraryApi.unsave).not.toHaveBeenCalled();
+    expect(server).toEqual(FOR_LATER_ONLY);
+  });
+
+  it('undo pressed while the save is still in flight ends unsaved', async () => {
+    signIn(true);
+    let finishSave: () => void = () => {};
+    jest.mocked(libraryApi.save).mockImplementation(
+      (_id, list) =>
+        new Promise((resolve) => {
+          finishSave = () => {
+            server = { ...server, [list === 'for_later' ? 'isForLater' : 'isConsidering']: true };
+            resolve(server);
+          };
+        }),
+    );
+    const button = renderButton();
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
+
+    fireEvent.click(button);
+    fireEvent.click(await screen.findByRole('button', { name: 'Скасувати' }));
+    await waitFor(() => expect(libraryApi.save).toHaveBeenCalled());
+    act(() => finishSave());
+
+    await waitFor(() => expect(server).toEqual(NOT_SAVED));
+    await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'false'));
+  });
+
+  it('takes the undo offer away when the change fails', async () => {
+    signIn(true);
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.mocked(libraryApi.save).mockRejectedValueOnce(new Error('offline'));
+    const button = renderButton();
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
+
+    fireEvent.click(button);
+
+    expect(
+      await screen.findByText('Не вдалося оновити збережене. Спробуй ще раз.'),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Скасувати' })).not.toBeInTheDocument(),
+    );
+  });
 });

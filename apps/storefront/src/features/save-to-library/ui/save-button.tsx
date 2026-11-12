@@ -47,6 +47,7 @@ export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
     if (!origin) return;
     const outcome = await shareLink({ url: new URL(href, origin).href, title: media.title });
     if (outcome === 'copied') toast(dict.saveToLibrary.toast.linkCopied);
+    if (outcome === 'failed') toast.danger(dict.saveToLibrary.toast.shareFailed);
   };
 
   const onMenuAction = (key: Key) => {
@@ -61,7 +62,7 @@ export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
         isSelected={saved}
         onPress={toggleOrAskToSignIn}
         aria-label={interpolate(dict.saveToLibrary.save, { title: media.title })}
-        className={`size-11 shrink-0 rounded-full select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground ${TONE_CLASSES[tone]}`}
+        className={`size-11 shrink-0 touch-manipulation rounded-full select-none [-webkit-touch-callout:none] data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground ${TONE_CLASSES[tone]}`}
       >
         {saved ? <Check aria-hidden className="size-5" /> : <Plus aria-hidden className="size-5" />}
       </ToggleButton>

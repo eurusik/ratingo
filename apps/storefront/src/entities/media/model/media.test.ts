@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import type { MediaBadge, TrendingMovie, TrendingShow } from '@/shared/api';
-import { EVENT_BADGES, fromTrendingMovie, fromTrendingShow, toEventBadge } from './media';
+import { MEDIA_EVENTS, fromTrendingMovie, fromTrendingShow, toMediaEvent } from './media';
 
 const POSTER = {
   thumb: 'https://image.tmdb.org/t/p/w154/a.jpg',
@@ -54,11 +54,11 @@ describe('trending mappers', () => {
       title: 'Дюна',
       year: 2021,
       posterUrl: POSTER.small,
-      backdropUrl: POSTER.small,
+      backdropUrl: POSTER.medium,
       imdbRating: 8.3,
       criticsPercent: 76,
       verdict: 'mixed',
-      eventBadge: 'IN_THEATERS',
+      event: 'IN_THEATERS',
       providers: [],
     });
   });
@@ -72,7 +72,7 @@ describe('trending mappers', () => {
       imdbRating: undefined,
       criticsPercent: undefined,
       verdict: undefined,
-      eventBadge: undefined,
+      event: undefined,
     });
   });
 
@@ -86,13 +86,13 @@ describe('trending mappers', () => {
   });
 });
 
-describe('toEventBadge', () => {
+describe('toMediaEvent', () => {
   it('keeps only badges that tell about an event', () => {
     fc.assert(
       fc.property(fc.constantFrom(...ALL_BADGES, null, undefined), (badge) => {
-        const event = toEventBadge(badge);
-        expect(event === undefined || EVENT_BADGES.includes(event)).toBe(true);
-        expect(event !== undefined).toBe(EVENT_BADGES.some((known) => known === badge));
+        const event = toMediaEvent(badge);
+        expect(event === undefined || MEDIA_EVENTS.includes(event)).toBe(true);
+        expect(event !== undefined).toBe(MEDIA_EVENTS.some((known) => known === badge));
       }),
     );
   });

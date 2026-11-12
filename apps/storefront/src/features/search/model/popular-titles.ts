@@ -2,18 +2,12 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { catalogApi } from '@/shared/api';
+import { interleave } from '@/shared/lib';
 import { fromTrending, type SearchTitle } from './search-title';
 
 const POPULAR_COUNT = 3;
 const PER_TYPE_COUNT = 2;
 const POPULAR_STALE_MS = 10 * 60 * 1000;
-
-function interleave(first: SearchTitle[], second: SearchTitle[]): SearchTitle[] {
-  const length = Math.max(first.length, second.length);
-  return Array.from({ length }, (_, index) => [first[index], second[index]])
-    .flat()
-    .filter((title): title is SearchTitle => title !== undefined);
-}
 
 async function fetchPopularTitles(): Promise<SearchTitle[]> {
   const [shows, movies] = await Promise.all([

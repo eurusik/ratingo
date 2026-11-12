@@ -1,8 +1,8 @@
 import { Chip } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
-import type { EventBadge as EventBadgeKey } from '../model/media';
+import type { MediaEvent } from '../model/media';
 
-export function EventBadge({ event }: { event: EventBadgeKey }) {
+export function EventBadge({ event }: { event: MediaEvent }) {
   const { dict } = useTranslation();
 
   return (

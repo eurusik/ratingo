@@ -31,3 +31,10 @@ export function showUndoToast({ mediaItemId, message, undoLabel, onUndo }: UndoT
   });
   openToastByMedia.set(mediaItemId, toastId);
 }
+
+export function closeUndoToast(mediaItemId: string): void {
+  const toastId = openToastByMedia.get(mediaItemId);
+  if (!toastId) return;
+  toast.close(toastId);
+  openToastByMedia.delete(mediaItemId);
+}

@@ -12,7 +12,7 @@ interface RailProps {
 }
 
 const SCROLLER_BASE =
-  '@container snap-x snap-mandatory scroll-px-4 overflow-y-hidden overscroll-x-contain';
+  '@container -my-1 snap-x snap-mandatory scroll-px-4 overflow-y-hidden overscroll-x-contain md:my-0';
 
 const SCROLLER_CLASSES: Record<DesktopLayout, string> = {
   peek: `${SCROLLER_BASE} md:mx-[calc(var(--page-gutter)*-1)] md:scroll-px-(--page-gutter)`,
@@ -20,8 +20,8 @@ const SCROLLER_CLASSES: Record<DesktopLayout, string> = {
 };
 
 const LIST_CLASSES: Record<DesktopLayout, string> = {
-  peek: 'flex w-max gap-3 px-4 md:px-(--page-gutter) md:[--rail-columns:2] lg:[--rail-columns:3] 2xl:[--rail-columns:4] md:*:w-[calc((100cqw-var(--page-gutter)-var(--rail-columns)*0.75rem)/(var(--rail-columns)+0.4))]',
-  grid: 'flex w-max gap-3 px-4 md:grid md:w-full md:grid-cols-5 md:gap-x-4 md:gap-y-6 md:px-0 xl:grid-cols-10',
+  peek: 'flex w-max gap-3 px-4 py-1 md:px-(--page-gutter) md:py-0 md:[--rail-columns:2] lg:[--rail-columns:3] 2xl:[--rail-columns:4] md:*:w-[calc((100cqw-var(--page-gutter)-var(--rail-columns)*0.75rem)/(var(--rail-columns)+0.4))]',
+  grid: 'flex w-max gap-3 px-4 py-1 md:grid md:py-0 md:w-full md:grid-cols-5 md:gap-x-4 md:gap-y-6 md:px-0 xl:grid-cols-10',
 };
 
 export function Rail({

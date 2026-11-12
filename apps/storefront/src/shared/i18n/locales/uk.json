@@ -222,7 +222,6 @@
       "IN_THEATERS": "У кіно",
       "NEW_ON_STREAMING": "Нове на стрімінгу"
     },
-    "rank": "№{rank}",
     "imdbLabel": "Оцінка IMDb {score}",
     "criticsLabel": "Rotten Tomatoes: {percent}% критиків"
   },
@@ -242,7 +241,8 @@
       "removed": "«{title}» прибрано",
       "undo": "Скасувати",
       "failed": "Не вдалося оновити збережене. Спробуй ще раз.",
-      "linkCopied": "Посилання скопійовано"
+      "linkCopied": "Посилання скопійовано",
+      "shareFailed": "Не вдалося поділитися посиланням."
     }
   },
   "rail": {

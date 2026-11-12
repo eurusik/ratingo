@@ -18,7 +18,7 @@ interface TitleRowProps {
 
 export function TitleRow({ title, rank, trailing }: TitleRowProps) {
   const { dict } = useTranslation();
-  const ratingLabel = useScoreLabel();
+  const scoreLabel = useScoreLabel();
   const details = [dict.media.type[title.type], title.year].filter(Boolean).join(' · ');
   const alsoKnownAs = title.alsoKnownAs
     ? interpolate(dict.search.alsoKnownAs, { title: title.alsoKnownAs })
@@ -27,7 +27,7 @@ export function TitleRow({ title, rank, trailing }: TitleRowProps) {
     rank === undefined ? title.title : `${rank}. ${title.title}`,
     alsoKnownAs,
     details,
-    title.rating === undefined ? undefined : ratingLabel(title.rating),
+    title.score === undefined ? undefined : scoreLabel(title.score),
   ]
     .filter(Boolean)
     .join(', ');
@@ -48,7 +48,7 @@ export function TitleRow({ title, rank, trailing }: TitleRowProps) {
         {alsoKnownAs ? <span className="truncate text-xs text-muted">{alsoKnownAs}</span> : null}
         <span className="text-xs text-muted tabular-nums">{details}</span>
       </span>
-      {title.rating === undefined ? null : <ScoreChip score={title.rating} />}
+      {title.score === undefined ? null : <ScoreChip score={title.score} />}
       {trailing}
     </GridListItem>
   );

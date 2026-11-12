@@ -155,9 +155,9 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
     ? [...search.results.catalog, ...search.results.more]
     : [...recentTitles, ...popularTitles];
   const { inputRef, listRef, onInputKeyDown } = useResultsKeyboard(() => {
-    const [firstTitle] = shownTitles;
-    if (!firstTitle) return false;
-    open(firstTitle);
+    const [firstResult] = [...search.results.catalog, ...search.results.more];
+    if (!firstResult || !search.showsResultsFor(query)) return false;
+    open(firstResult);
     return true;
   });
 

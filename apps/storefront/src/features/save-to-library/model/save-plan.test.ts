@@ -1,43 +1,41 @@
 import fc from 'fast-check';
-import { NOT_SAVED, isSaved } from '@/entities/library';
-import { applyListChanges, planListChanges, toggledStatus } from './save-plan';
+import { isSaved } from '@/entities/library';
+import type { MediaSaveStatus } from '@/shared/api';
+import { ensureSaved, planListChanges } from './save-plan';
 
 const statuses = fc.record({ isForLater: fc.boolean(), isConsidering: fc.boolean() });
+
+function applyPlan(from: MediaSaveStatus, to: MediaSaveStatus): MediaSaveStatus {
+  return planListChanges(from, to).reduce<MediaSaveStatus>(
+    (status, { list, action }) => ({
+      ...status,
+      [list === 'for_later' ? 'isForLater' : 'isConsidering']: action === 'save',
+    }),
+    from,
+  );
+}
 
 describe('save plan', () => {
   it('reaches the wanted status from any status', () => {
     fc.assert(
-      fc.property(statuses, statuses, (from, to) => {
-        expect(applyListChanges(from, planListChanges(from, to))).toEqual(to);
-      }),
+      fc.property(statuses, statuses, (from, to) => expect(applyPlan(from, to)).toEqual(to)),
     );
   });
 
   it('touches only the lists that differ', () => {
     fc.assert(
-      fc.property(statuses, (status) => {
-        expect(planListChanges(status, status)).toEqual([]);
-      }),
+      fc.property(statuses, (status) => expect(planListChanges(status, status)).toEqual([])),
     );
   });
 
-  it('undoes a change by planning back to the previous status', () => {
-    fc.assert(
-      fc.property(statuses, (previous) => {
-        const next = toggledStatus(previous);
-        const afterUndo = applyListChanges(next, planListChanges(next, previous));
-        expect(afterUndo).toEqual(previous);
-      }),
-    );
-  });
-
-  it('toggles between saved for later and nothing saved', () => {
+  it('saving keeps every list a title is already in', () => {
     fc.assert(
       fc.property(statuses, (status) => {
-        const next = toggledStatus(status);
-        expect(isSaved(next)).toBe(!isSaved(status));
+        const saved = ensureSaved(status);
+        expect(isSaved(saved)).toBe(true);
+        if (isSaved(status)) expect(saved).toEqual(status);
+        expect(planListChanges(status, saved).every(({ action }) => action === 'save')).toBe(true);
       }),
     );
-    expect(toggledStatus(NOT_SAVED)).toEqual({ isForLater: true, isConsidering: false });
   });
 });

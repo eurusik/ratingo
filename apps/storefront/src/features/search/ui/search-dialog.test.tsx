@@ -169,6 +169,17 @@ describe('SearchDialog', () => {
     expect(push).toHaveBeenCalledWith('/movies/dune-2021');
   });
 
+  it('does not open a stale result when Enter comes before the new results', async () => {
+    renderSearch();
+    await typeQuery('дюна');
+    await screen.findByRole('row', { name: /^Дюна, Фільм · 2021/ });
+
+    await typeQuery('андор');
+    fireEvent.keyDown(screen.getByRole('searchbox', { name: uk.search.title }), { key: 'Enter' });
+
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it('moves between the field and the results with the arrow keys', async () => {
     renderSearch();
     await typeQuery('дюна');
