@@ -43,6 +43,15 @@
   background: var(--overlay);
 }
 
+[data-sheet-scroll]:has(.sheet__content--bottom[data-fully-open]) {
+  overscroll-behavior-y: none !important;
+}
+
+.sheet__content[data-fully-open] .sheet__body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .sheet__content--bottom:not([data-detached]) .sheet__dialog,
 .drawer__content--bottom .drawer__dialog {
   box-shadow: var(--edge-panel-shadow);
@@ -56,4 +65,23 @@
   .viewport-bottom-fill {
     transition: none;
   }
+}
+
+.keyboard-inset {
+  display: block;
+  flex-shrink: 0;
+  min-height: max(0px, calc(var(--keyboard-height, 0px) - var(--safe-bottom)));
+  transition: min-height 150ms ease-out;
+}
+
+.full-height-sheet {
+  height: calc(100% - 2rem);
+}
+
+.full-height-sheet .sheet__dialog {
+  height: 100%;
+}
+
+.sheet__footer {
+  padding-bottom: max(1rem, var(--safe-bottom));
 }
