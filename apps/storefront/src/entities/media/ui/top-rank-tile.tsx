@@ -27,7 +27,7 @@ export function TopRankTile({ media, rank }: TopRankTileProps) {
           {rank}
         </span>
       </span>
-      <span className="truncate text-xs font-semibold">
+      <span className="line-clamp-2 min-h-[2lh] text-xs leading-tight font-semibold break-words">
         <span className="sr-only">{interpolate(dict.media.rank, { rank })} </span>
         {media.title}
       </span>
