@@ -14,7 +14,7 @@ export function Rail({ label, isOrdered = false, children }: RailProps) {
     <ScrollShadow
       orientation="horizontal"
       hideScrollBar
-      className="snap-x snap-mandatory scroll-px-4 overscroll-x-contain"
+      className="snap-x snap-mandatory scroll-px-4 overflow-y-hidden overscroll-x-contain"
     >
       {isOrdered ? (
         <ol aria-label={label} className={LIST_CLASS}>

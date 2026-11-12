@@ -102,13 +102,6 @@
       "good": "Worth it",
       "mixed": "Mixed",
       "bad": "Weak"
-    },
-    "change": {
-      "newShort": "NEW",
-      "new": "new in the top",
-      "up": "up {places}",
-      "down": "down {places}",
-      "same": "no change"
     }
   },
   "auth": {

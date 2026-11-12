@@ -24,7 +24,6 @@ const ANDOR: TrendingMedia = {
   posterUrl: 'https://image.tmdb.org/t/p/w342/andor.jpg',
   score: 8.6,
   badge: 'RISING',
-  rankChange: { kind: 'up', places: 2 },
   providers: [
     { id: 'disney', name: 'Disney+' },
     { id: 'megogo', name: 'Megogo' },
@@ -59,13 +58,12 @@ describe('TrendingCard', () => {
 });
 
 describe('TopRankTile', () => {
-  it('names the rank, the title and the move for screen readers', () => {
+  it('names the rank and the title for screen readers', () => {
     render(<TopRankTile media={ANDOR} rank={3} />, { wrapper: Wrapper });
 
     const link = screen.getByRole('link');
     expect(link).toHaveAttribute('href', '/shows/andor');
     expect(link).toHaveTextContent('№3 Андор');
-    expect(within(link).getByText('піднявся на 2')).toBeInTheDocument();
   });
 });
 

@@ -1,5 +1,4 @@
 import type { MediaBadge, MediaType, TrendingMovie, TrendingShow } from '@/shared/api';
-import type { RankChange } from './rank-change';
 import { scoreFromPercent } from './score';
 
 export interface WatchProvider {
@@ -21,7 +20,6 @@ export interface TrendingMedia extends MediaSummary {
   score?: number;
   backdropUrl?: string;
   badge?: MediaBadge;
-  rankChange?: RankChange;
   providers: WatchProvider[];
 }
 
@@ -50,8 +48,5 @@ export function fromTrendingMovie(movie: TrendingMovie): TrendingMedia {
 }
 
 export function fromTrendingShow(show: TrendingShow): TrendingMedia {
-  return {
-    ...toTrendingMedia(show, 'show'),
-    rankChange: show.isNew ? { kind: 'new' } : undefined,
-  };
+  return toTrendingMedia(show, 'show');
 }

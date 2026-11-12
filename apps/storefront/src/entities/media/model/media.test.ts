@@ -47,10 +47,9 @@ describe('trending mappers', () => {
     });
   });
 
-  it('marks a new show as new in the top and leaves missing data out', () => {
+  it('maps a show and leaves missing data out', () => {
     expect(fromTrendingShow(SHOW)).toMatchObject({
       type: 'show',
-      rankChange: { kind: 'new' },
       backdropUrl: undefined,
       year: undefined,
       posterUrl: undefined,

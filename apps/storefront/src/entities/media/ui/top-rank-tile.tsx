@@ -3,7 +3,6 @@ import { mediaRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import type { TrendingMedia } from '../model/media';
 import { MediaPoster } from './media-poster';
-import { RankChangeBadge } from './rank-change-badge';
 
 interface TopRankTileProps {
   media: TrendingMedia;
@@ -31,7 +30,6 @@ export function TopRankTile({ media, rank }: TopRankTileProps) {
         <span className="sr-only">{interpolate(dict.media.rank, { rank })} </span>
         {media.title}
       </span>
-      {media.rankChange ? <RankChangeBadge change={media.rankChange} /> : null}
     </Link>
   );
 }
