@@ -2,7 +2,7 @@
   display: none;
   position: absolute;
   left: 0;
-  z-index: 60;
+  z-index: var(--z-index-overlay);
   width: 100%;
   height: var(--viewport-bottom-fill-height);
   pointer-events: none;
