@@ -62,3 +62,9 @@
     animation: none !important;
   }
 }
+
+html[data-skip-view-transition]::view-transition-group(*),
+html[data-skip-view-transition]::view-transition-old(*),
+html[data-skip-view-transition]::view-transition-new(*) {
+  animation: none !important;
+}

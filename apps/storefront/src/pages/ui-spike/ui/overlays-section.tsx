@@ -1,4 +1,5 @@
 import { Button, Drawer, Modal, Popover, Tooltip } from '@heroui/react';
+import { ViewportBottomFill } from '@ratingo/ui/overlay';
 import { EpisodesSheet } from './episodes-sheet';
 import { SpikeSection } from './spike-section';
 
@@ -11,6 +12,7 @@ export function OverlaysSection() {
           <Modal.Backdrop>
             <Modal.Container>
               <Modal.Dialog>
+                <ViewportBottomFill tone="backdrop" />
                 <Modal.CloseTrigger aria-label="Закрити" />
                 <Modal.Header>
                   <Modal.Heading>Видалити зі збереженого?</Modal.Heading>
@@ -36,6 +38,7 @@ export function OverlaysSection() {
           <Drawer.Backdrop>
             <Drawer.Content placement="bottom">
               <Drawer.Dialog>
+                <ViewportBottomFill tone="panel" />
                 <Drawer.Handle />
                 <Drawer.Header>
                   <Drawer.Heading>Фільтри</Drawer.Heading>

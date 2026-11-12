@@ -7,7 +7,9 @@
   ],
   "exports": {
     "./styles.css": "./src/styles.css",
-    "./theme": "./src/theme/index.ts"
+    "./theme": "./src/theme/index.ts",
+    "./overlay": "./src/overlay/index.ts",
+    "./motion": "./src/motion/index.ts"
   },
   "scripts": {
     "lint": "eslint src",

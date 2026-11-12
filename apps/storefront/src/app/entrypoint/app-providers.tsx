@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { I18nProvider as AriaI18nProvider, RouterProvider } from '@heroui/react';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { ViewTransitionTraversalGuard } from '@ratingo/ui/motion';
 import { ThemeProvider } from '@ratingo/ui/theme';
 import { AuthProvider } from '@ratingo/web-core/auth';
 import { getQueryClient } from '@ratingo/web-core/query';
@@ -24,6 +25,7 @@ export function AppProviders({ locale, dictionary, children }: AppProvidersProps
 
   return (
     <ThemeProvider>
+      <ViewTransitionTraversalGuard />
       <AriaI18nProvider locale={locale}>
         <RouterProvider navigate={(href) => router.push(href)}>
           <I18nProvider locale={locale} dictionary={dictionary}>

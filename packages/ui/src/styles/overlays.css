@@ -1,0 +1,46 @@
+.viewport-bottom-fill {
+  display: none;
+  position: absolute;
+  left: 0;
+  z-index: 60;
+  width: 100%;
+  height: var(--viewport-bottom-fill-height);
+  pointer-events: none;
+  transition: opacity 200ms cubic-bezier(0.32, 0.72, 0, 1);
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+.viewport-bottom-fill[data-tone='panel'] {
+  background: var(--overlay);
+}
+
+.viewport-bottom-fill[data-tone='backdrop'] {
+  background: var(--backdrop);
+}
+
+@supports (-webkit-touch-callout: none) {
+  .viewport-bottom-fill {
+    display: block;
+  }
+}
+
+html:has([data-exiting]) .viewport-bottom-fill {
+  opacity: 0;
+}
+
+.sheet__content--bottom:not([data-detached]) {
+  background: var(--overlay);
+}
+
+.sheet__overlay[data-position='bottom'] > .sheet__backdrop[data-stack-index='0'] {
+  animation-range: entry 0% entry var(--sheet-backdrop-full-at) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport-bottom-fill {
+    transition: none;
+  }
+}
