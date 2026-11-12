@@ -9,7 +9,7 @@ const POSTER_SIZES: Record<PosterSize, { width: number; height: number; classNam
   rank: {
     width: 154,
     height: 231,
-    className: 'h-27 w-19 rounded-xl md:aspect-2/3 md:h-auto md:w-full',
+    className: 'h-36 w-24 rounded-xl md:aspect-2/3 md:h-auto md:w-full',
   },
 };
 

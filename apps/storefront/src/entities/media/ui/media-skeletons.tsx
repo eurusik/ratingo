@@ -17,9 +17,9 @@ export function TrendingCardSkeleton() {
 
 export function TopRankTileSkeleton() {
   return (
-    <div className="flex w-19 flex-col gap-1.25 md:w-full md:gap-2">
-      <Skeleton className="h-27 w-19 rounded-xl md:aspect-2/3 md:h-auto md:w-full" />
-      <div className="flex min-h-[2lh] flex-col justify-around text-xs leading-tight md:text-sm">
+    <div className="flex w-24 flex-col gap-1.5 md:w-full md:gap-2">
+      <Skeleton className="h-36 w-24 rounded-xl md:aspect-2/3 md:h-auto md:w-full" />
+      <div className="flex min-h-[2lh] flex-col justify-around text-[13px] leading-tight md:text-sm">
         <Skeleton className="h-[0.8em] w-4/5 rounded-full" />
         <Skeleton className="h-[0.8em] w-1/2 rounded-full" />
       </div>
