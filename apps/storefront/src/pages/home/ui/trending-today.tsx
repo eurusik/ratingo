@@ -49,7 +49,7 @@ export function TrendingToday() {
       {data && data.top.length > 0 ? (
         <section aria-labelledby="top-today" className="flex flex-col gap-2">
           <SectionHeader id="top-today" title={dict.home.topToday} />
-          <Rail label={dict.home.topToday} isOrdered>
+          <Rail label={dict.home.topToday} isOrdered desktop="grid">
             {data.top.map((media, index) => (
               <RailItem key={media.mediaItemId}>
                 <TopRankTile media={media} rank={index + 1} />

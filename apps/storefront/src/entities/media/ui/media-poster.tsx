@@ -6,7 +6,11 @@ type PosterSize = 'row' | 'rank';
 
 const POSTER_SIZES: Record<PosterSize, { width: number; height: number; className: string }> = {
   row: { width: 40, height: 60, className: 'h-15 w-10 rounded-lg' },
-  rank: { width: 76, height: 108, className: 'h-27 w-19 rounded-xl' },
+  rank: {
+    width: 154,
+    height: 231,
+    className: 'h-27 w-19 rounded-xl md:aspect-2/3 md:h-auto md:w-full',
+  },
 };
 
 interface MediaPosterProps {
