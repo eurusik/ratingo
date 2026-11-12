@@ -7,14 +7,14 @@ interface RailProps {
   children: ReactNode;
 }
 
-const LIST_CLASS = 'flex w-max gap-3 px-4';
+const LIST_CLASS = 'flex w-max gap-3 px-4 md:px-(--page-gutter)';
 
 export function Rail({ label, isOrdered = false, children }: RailProps) {
   return (
     <ScrollShadow
       orientation="horizontal"
       hideScrollBar
-      className="snap-x snap-mandatory scroll-px-4 overflow-y-hidden overscroll-x-contain"
+      className="snap-x snap-mandatory scroll-px-4 overflow-y-hidden overscroll-x-contain md:mx-[calc(var(--page-gutter)*-1)] md:scroll-px-(--page-gutter)"
     >
       {isOrdered ? (
         <ol aria-label={label} className={LIST_CLASS}>
