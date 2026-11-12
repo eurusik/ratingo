@@ -6,26 +6,18 @@ import { useForgetLibraryOnUserChange } from '@/entities/library';
 import { SearchShortcut, useIsSearchOpen, type SearchTitle } from '@/features/search';
 import { hasPendingIntent, useAuthRequest } from '@/shared/auth';
 import { InstallPromptCapture } from '@/shared/lib';
+import {
+  loadAuthDialog,
+  loadPendingSaveReplay,
+  loadSaveButton,
+  loadSearchDialog,
+  useWarmOverlays,
+} from './overlay-loaders';
 
-const AuthDialog = dynamic(
-  () => import('@/features/authenticate').then((module) => module.AuthDialog),
-  { ssr: false },
-);
-
-const SearchDialog = dynamic(
-  () => import('@/features/search').then((module) => module.SearchDialog),
-  { ssr: false },
-);
-
-const SaveButton = dynamic(
-  () => import('@/features/save-to-library').then((module) => module.SaveButton),
-  { ssr: false },
-);
-
-const PendingSaveReplay = dynamic(
-  () => import('@/features/save-to-library').then((module) => module.PendingSaveReplay),
-  { ssr: false },
-);
+const AuthDialog = dynamic(loadAuthDialog, { ssr: false });
+const SearchDialog = dynamic(loadSearchDialog, { ssr: false });
+const SaveButton = dynamic(loadSaveButton, { ssr: false });
+const PendingSaveReplay = dynamic(loadPendingSaveReplay, { ssr: false });
 
 function renderSearchActions({ isInCatalog, mediaItemId, slug, title, type }: SearchTitle) {
   if (!isInCatalog || !mediaItemId || !slug) return null;
@@ -50,14 +42,15 @@ export function ShellOverlays() {
     readNoIntentOnServer,
   );
   useForgetLibraryOnUserChange();
+  const isWarm = useWarmOverlays();
 
   return (
     <>
       <SearchShortcut />
       <InstallPromptCapture />
       {hasIntentFromRedirect ? <PendingSaveReplay /> : null}
-      {hasOpenedSearch ? <SearchDialog renderActions={renderSearchActions} /> : null}
-      {hasOpenedAuth ? <AuthDialog /> : null}
+      {isWarm || hasOpenedSearch ? <SearchDialog renderActions={renderSearchActions} /> : null}
+      {isWarm || hasOpenedAuth ? <AuthDialog /> : null}
     </>
   );
 }
