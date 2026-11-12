@@ -2,17 +2,20 @@ import { catalogApi, type ImportJobStatus, type ImportResult, type MediaType } f
 
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLLS = 40;
+const MAX_FAILED_POLLS_IN_A_ROW = 3;
+
+export type TitleImportFailure = 'not-found' | 'failed' | 'timeout' | 'unreachable';
 
 export class TitleImportError extends Error {
-  constructor() {
-    super('The title could not be imported');
+  constructor(readonly reason: TitleImportFailure) {
+    super(`The title could not be imported: ${reason}`);
     this.name = 'TitleImportError';
   }
 }
 
 export interface ImportGateway {
   importMedia(type: MediaType, tmdbId: number): Promise<ImportResult>;
-  getImportStatus(jobId: string): Promise<ImportJobStatus>;
+  getImportStatus(jobId: string, signal: AbortSignal): Promise<ImportJobStatus>;
   wait(ms: number, signal: AbortSignal): Promise<void>;
 }
 
@@ -45,18 +48,34 @@ function readySlug(result: ImportResult): string | null {
   return isAvailable && result.slug && result.ingestionStatus !== 'importing' ? result.slug : null;
 }
 
+async function pollOnce(
+  jobId: string,
+  signal: AbortSignal,
+  gateway: ImportGateway,
+): Promise<ImportJobStatus | null> {
+  try {
+    return await gateway.getImportStatus(jobId, signal);
+  } catch (error) {
+    if (signal.aborted) throw error;
+    return null;
+  }
+}
+
 async function pollUntilReady(
   jobId: string,
   signal: AbortSignal,
   gateway: ImportGateway,
 ): Promise<string> {
+  let failedPollsInARow = 0;
   for (let attempt = 0; attempt < MAX_POLLS; attempt += 1) {
     await gateway.wait(POLL_INTERVAL_MS, signal);
-    const job = await gateway.getImportStatus(jobId);
-    if (job.status === 'ready' && job.slug) return job.slug;
-    if (job.status === 'failed') throw new TitleImportError();
+    const job = await pollOnce(jobId, signal, gateway);
+    failedPollsInARow = job ? 0 : failedPollsInARow + 1;
+    if (failedPollsInARow >= MAX_FAILED_POLLS_IN_A_ROW) throw new TitleImportError('unreachable');
+    if (job?.status === 'ready' && job.slug) return job.slug;
+    if (job?.status === 'failed') throw new TitleImportError('failed');
   }
-  throw new TitleImportError();
+  throw new TitleImportError('timeout');
 }
 
 export async function importUntilReady(
@@ -68,6 +87,7 @@ export async function importUntilReady(
   const result = await gateway.importMedia(type, tmdbId);
   const slug = readySlug(result);
   if (slug) return slug;
-  if (!result.jobId) throw new TitleImportError();
+  if (!result.jobId)
+    throw new TitleImportError(result.status === 'not_found' ? 'not-found' : 'failed');
   return pollUntilReady(result.jobId, signal, gateway);
 }

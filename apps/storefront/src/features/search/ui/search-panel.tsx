@@ -12,7 +12,7 @@ import {
   listboxVariants,
 } from '@heroui/react';
 import { X } from 'lucide-react';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
 import { SegmentedFilter } from '@/shared/ui';
 import { useCatalogSearch, type SearchFilter, type SearchResults } from '../model/catalog-search';
 import { useOpenTitle } from '../model/open-title';
@@ -44,6 +44,7 @@ function RecentRemoveButton({ title }: { title: SearchTitle }) {
       isIconOnly
       size="sm"
       variant="ghost"
+      className="phone-tap-target"
       aria-label={interpolate(dict.search.removeRecent, { title: title.title })}
       onPress={() => forgetTitle(title)}
     >
@@ -54,10 +55,7 @@ function RecentRemoveButton({ title }: { title: SearchTitle }) {
 
 function StatusMessage({ children }: { children: ReactNode }) {
   return (
-    <div
-      role="status"
-      className="flex items-center justify-center gap-2 px-2 py-8 text-center text-sm text-muted"
-    >
+    <div className="flex items-center justify-center gap-2 px-2 py-8 text-center text-sm text-muted">
       {children}
     </div>
   );
@@ -134,6 +132,16 @@ function StartSections({ recentTitles, popularTitles, renderActions }: StartSect
   );
 }
 
+function searchAnnouncement(search: ReturnType<typeof useCatalogSearch>, dict: Dictionary): string {
+  if (!search.isActive) return '';
+  if (search.isError) return dict.search.failed;
+  if (search.isSearching) return dict.search.searching;
+  const count = search.results.catalog.length + search.results.more.length;
+  return count === 0
+    ? interpolate(dict.search.noResults, { query: search.term })
+    : interpolate(dict.search.resultsCount, { count });
+}
+
 export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
   const { dict } = useTranslation();
   const [query, setQuery] = useState('');
@@ -153,6 +161,7 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
     );
   }
 
+  const announcement = searchAnnouncement(search, dict);
   const shownTitles = search.isActive
     ? [...search.results.catalog, ...search.results.more]
     : [...recentTitles, ...popularTitles];
@@ -164,7 +173,12 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
       return (
         <StatusMessage>
           {dict.search.failed}
-          <Button size="sm" variant="secondary" onPress={() => void search.retry()}>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="phone-tap-target"
+            onPress={() => void search.retry()}
+          >
             {dict.common.retry}
           </Button>
         </StatusMessage>
@@ -201,13 +215,13 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
                 autoComplete="off"
                 className="text-base"
               />
-              <SearchField.ClearButton />
+              <SearchField.ClearButton className="phone-tap-target" />
               <Kbd className="me-2 hidden md:inline-flex" aria-hidden>
                 <Kbd.Content>esc</Kbd.Content>
               </Kbd>
             </SearchField.Group>
           </SearchField>
-          <Button variant="ghost" className="md:hidden" onPress={onClose}>
+          <Button variant="ghost" className="phone-tap-target md:hidden" onPress={onClose}>
             {dict.search.cancel}
           </Button>
         </div>
@@ -224,7 +238,12 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
             <span aria-hidden className="text-sm font-bold text-muted">
               {dict.search.recent}
             </span>
-            <Button size="sm" variant="ghost" onPress={clearRecentTitles}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="phone-tap-target"
+              onPress={clearRecentTitles}
+            >
               {dict.search.clearRecent}
             </Button>
           </div>
@@ -249,6 +268,9 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
           )}
         </GridList>
       </Autocomplete.Filter>
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
       <KeyboardHints />
     </div>
   );

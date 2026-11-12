@@ -63,15 +63,66 @@ describe('recent titles across tabs', () => {
     const { result } = renderHook(() => useRecentTitles());
 
     window.localStorage.setItem(
-      'ratingo:recent-titles',
+      'ratingo:recent-titles:v1',
       JSON.stringify([
         { key: 'k', isInCatalog: true, type: 'movie', slug: 'sinners', title: 'Грішники' },
       ]),
     );
     act(() => {
-      window.dispatchEvent(new StorageEvent('storage', { key: 'ratingo:recent-titles' }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'ratingo:recent-titles:v1' }));
     });
 
     expect(result.current.map((item) => item.slug)).toEqual(['sinners']);
+  });
+});
+
+describe('recent titles storage events', () => {
+  it('keeps listening to other tabs while another subscriber remains', () => {
+    clearRecentTitles();
+    const first = renderHook(() => useRecentTitles());
+    const second = renderHook(() => useRecentTitles());
+    first.unmount();
+
+    window.localStorage.setItem(
+      'ratingo:recent-titles:v1',
+      JSON.stringify([
+        { key: 'k', isInCatalog: true, type: 'show', slug: 'andor', title: 'Андор' },
+      ]),
+    );
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'ratingo:recent-titles:v1' }));
+    });
+
+    expect(second.result.current.map((item) => item.slug)).toEqual(['andor']);
+  });
+
+  it('ignores changes to other storage keys', () => {
+    clearRecentTitles();
+    const { result } = renderHook(() => useRecentTitles());
+    const before = result.current;
+
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'theme' }));
+    });
+
+    expect(result.current).toBe(before);
+  });
+
+  it('stores only what the recent list shows', () => {
+    clearRecentTitles();
+    rememberTitle({
+      key: 'local-movie-1',
+      isInCatalog: true,
+      type: 'movie',
+      slug: 'dune',
+      title: 'Пісок',
+      alsoKnownAs: 'Dune',
+      mediaItemId: 'm-1',
+      tmdbId: 1,
+    });
+
+    const stored = JSON.parse(window.localStorage.getItem('ratingo:recent-titles:v1') ?? '[]');
+    expect(stored[0]).not.toHaveProperty('alsoKnownAs');
+    expect(stored[0]).not.toHaveProperty('mediaItemId');
   });
 });

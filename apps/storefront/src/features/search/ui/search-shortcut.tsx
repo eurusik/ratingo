@@ -24,6 +24,7 @@ export function SearchShortcut() {
 
 export function SearchShortcutKbd({ className }: { className?: string }) {
   const isApple = useIsApplePlatform();
+  if (isApple === null) return null;
 
   return (
     <Kbd className={className} aria-hidden>

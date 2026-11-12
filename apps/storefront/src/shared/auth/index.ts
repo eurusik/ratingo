@@ -3,6 +3,7 @@ export {
   closeAuth,
   openAuth,
   useAuthRequest,
+  useSignedInAction,
   type AuthMode,
   type AuthRequest,
 } from './auth-opener';

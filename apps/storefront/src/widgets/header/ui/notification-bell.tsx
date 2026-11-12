@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Badge, Button, Popover } from '@heroui/react';
 import { Bell } from 'lucide-react';
-import { useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation } from '@/shared/i18n';
 import { DESKTOP_MEDIA_QUERY, useMediaQuery } from '@/shared/lib';
 import { Sheet } from '@/shared/ui';
 import { useLatestNotifications } from '../model/notifications';
@@ -14,7 +14,8 @@ export function NotificationBell() {
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
   const [isOpen, setIsOpen] = useState(false);
   const { data } = useLatestNotifications();
-  const hasUnread = (data?.unreadCount ?? 0) > 0;
+  const unreadCount = data?.unreadCount ?? 0;
+  const hasUnread = unreadCount > 0;
   const close = () => setIsOpen(false);
 
   const trigger = (
@@ -22,7 +23,11 @@ export function NotificationBell() {
       isIconOnly
       variant="ghost"
       className="size-11 rounded-full"
-      aria-label={hasUnread ? dict.notifications.unread : dict.notifications.title}
+      aria-label={
+        hasUnread
+          ? interpolate(dict.notifications.unread, { count: unreadCount })
+          : dict.notifications.title
+      }
     >
       <Badge.Anchor>
         <Bell aria-hidden className="size-5" />

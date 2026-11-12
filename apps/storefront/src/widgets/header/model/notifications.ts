@@ -6,11 +6,13 @@ import { notificationsApi } from '@/shared/api';
 const LATEST_COUNT = 5;
 const NOTIFICATIONS_KEY = ['notifications'] as const;
 const LATEST_KEY = [...NOTIFICATIONS_KEY, 'latest', LATEST_COUNT] as const;
+const LATEST_STALE_MS = 60 * 1000;
 
 export function useLatestNotifications() {
   return useQuery({
     queryKey: LATEST_KEY,
     queryFn: () => notificationsApi.list(LATEST_COUNT),
+    staleTime: LATEST_STALE_MS,
   });
 }
 

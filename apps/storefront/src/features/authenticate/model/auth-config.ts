@@ -6,13 +6,18 @@ import { OAUTH_PROVIDERS, type OAuthProvider } from '@/shared/auth';
 
 const AUTH_CONFIG_KEY = ['auth', 'config'] as const;
 
-export function useEnabledOAuthProviders(): OAuthProvider[] {
-  const { data } = useQuery({
+interface EnabledOAuthProviders {
+  providers: OAuthProvider[];
+  isPending: boolean;
+}
+
+export function useEnabledOAuthProviders(): EnabledOAuthProviders {
+  const { data, isPending } = useQuery({
     queryKey: AUTH_CONFIG_KEY,
     queryFn: () => authApi.getAuthConfig(),
     staleTime: Infinity,
   });
 
-  if (!data) return [];
-  return OAUTH_PROVIDERS.filter((provider) => data[provider].enabled);
+  const providers = data ? OAUTH_PROVIDERS.filter((provider) => data[provider].enabled) : [];
+  return { providers, isPending };
 }

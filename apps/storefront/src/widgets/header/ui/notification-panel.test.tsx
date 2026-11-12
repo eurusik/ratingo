@@ -43,7 +43,9 @@ describe('NotificationPanel', () => {
 
     const list = await screen.findByRole('listbox', { name: uk.notifications.title });
     const item = await within(list).findByRole('option', {
-      name: `${uk.notifications.events.new_episode} Андор`,
+      name: new RegExp(
+        `${uk.notifications.events.new_episode} Андор\\s*, ${uk.notifications.unreadItem}`,
+      ),
     });
     expect(item).toHaveAttribute('href', '/shows/andor');
     expect(notificationsApi.list).toHaveBeenCalledWith(5);

@@ -36,6 +36,27 @@ describe('importUntilReady', () => {
     expect(api.getImportStatus).toHaveBeenCalledTimes(3);
   });
 
+  it('rides out a couple of failed polls', async () => {
+    const api = gateway({ status: 'importing', type: 'show', tmdbId: 5, jobId: 'job-5' });
+    jest
+      .mocked(api.getImportStatus)
+      .mockRejectedValueOnce(new Error('network'))
+      .mockRejectedValueOnce(new Error('502'))
+      .mockResolvedValueOnce({ status: 'ready', slug: 'andor' });
+
+    await expect(importUntilReady('show', 5, signal, api)).resolves.toBe('andor');
+  });
+
+  it('gives up when the status endpoint keeps failing', async () => {
+    const api = gateway({ status: 'importing', type: 'show', tmdbId: 6, jobId: 'job-6' });
+    jest.mocked(api.getImportStatus).mockRejectedValue(new Error('network'));
+
+    await expect(importUntilReady('show', 6, signal, api)).rejects.toMatchObject({
+      reason: 'unreachable',
+    });
+    expect(api.getImportStatus).toHaveBeenCalledTimes(3);
+  });
+
   it.each<[string, ImportResult, ImportJobStatus[]]>([
     [
       'the job fails',

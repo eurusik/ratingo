@@ -1,8 +1,27 @@
-import { Link } from '@heroui/react';
+import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { ABOUT_ROUTE, EXTERNAL_LINKS, JOURNAL_ROUTE } from '@/shared/config';
 import type { Dictionary } from '@/shared/i18n';
 
-const LINK_CLASS = 'text-sm text-muted no-underline hover:text-foreground';
+const LINK_CLASS =
+  'text-sm text-muted no-underline transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-focus';
+
+function ExternalLink({
+  href,
+  newTabCue,
+  children,
+}: {
+  href: string;
+  newTabCue: string;
+  children: ReactNode;
+}) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
+      {children}
+      <span className="sr-only">{` ${newTabCue}`}</span>
+    </a>
+  );
+}
 
 export function SiteFooter({ dict }: { dict: Dictionary }) {
   return (
@@ -29,28 +48,18 @@ export function SiteFooter({ dict }: { dict: Dictionary }) {
                 </Link>
               </li>
               <li>
-                <Link
-                  href={EXTERNAL_LINKS.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={LINK_CLASS}
-                >
+                <ExternalLink href={EXTERNAL_LINKS.github} newTabCue={dict.common.opensInNewTab}>
                   {dict.footer.github}
-                </Link>
+                </ExternalLink>
               </li>
             </ul>
           </nav>
         </div>
         <div className="flex items-center justify-between border-t border-separator pt-4 text-xs text-muted">
           <span>{dict.footer.madeIn}</span>
-          <Link
-            href={EXTERNAL_LINKS.author}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={LINK_CLASS}
-          >
+          <ExternalLink href={EXTERNAL_LINKS.author} newTabCue={dict.common.opensInNewTab}>
             {dict.footer.authorName}
-          </Link>
+          </ExternalLink>
         </div>
       </div>
     </footer>

@@ -1,10 +1,10 @@
-import Link from 'next/link';
 import type { MeDto } from '@ratingo/web-core/auth';
-import { MY_ROUTE } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { UserAvatar } from './user-avatar';
 
 type StatKey = 'moviesRated' | 'showsRated' | 'watchlist';
+
+const STAT_KEYS: readonly StatKey[] = ['moviesRated', 'showsRated', 'watchlist'];
 
 function statValues(stats: MeDto['stats']): Record<StatKey, number> {
   return {
@@ -14,11 +14,10 @@ function statValues(stats: MeDto['stats']): Record<StatKey, number> {
   };
 }
 
-const STAT_KEYS: readonly StatKey[] = ['moviesRated', 'showsRated', 'watchlist'];
-
-export function ProfileSummary({ user, onNavigate }: { user: MeDto; onNavigate: () => void }) {
-  const { dict } = useTranslation();
+export function ProfileSummary({ user }: { user: MeDto }) {
+  const { dict, locale } = useTranslation();
   const values = statValues(user.stats);
+  const formatCount = new Intl.NumberFormat(locale);
 
   return (
     <div className="flex flex-col gap-4">
@@ -33,22 +32,19 @@ export function ProfileSummary({ user, onNavigate }: { user: MeDto; onNavigate: 
           </span>
         </div>
       </div>
-      <nav aria-label={dict.profile.stats.label}>
-        <ul className="grid grid-cols-3 gap-2">
-          {STAT_KEYS.map((key) => (
-            <li key={key}>
-              <Link
-                href={MY_ROUTE}
-                onClick={onNavigate}
-                className="flex min-h-tap flex-col rounded-2xl bg-surface-secondary px-3 py-2.5 text-foreground no-underline transition-colors hover:bg-default focus-visible:outline-2 focus-visible:outline-focus"
-              >
-                <span className="text-xl font-extrabold tabular-nums">{values[key]}</span>
-                <span className="text-xs text-muted">{dict.profile.stats[key]}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <dl aria-label={dict.profile.stats.label} className="grid grid-cols-3 gap-2">
+        {STAT_KEYS.map((key) => (
+          <div
+            key={key}
+            className="flex flex-col-reverse rounded-2xl bg-surface-secondary px-3 py-2.5"
+          >
+            <dt className="text-xs text-muted">{dict.profile.stats[key]}</dt>
+            <dd className="text-xl font-extrabold tabular-nums">
+              {formatCount.format(values[key])}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }

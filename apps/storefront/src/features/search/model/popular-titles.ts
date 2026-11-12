@@ -5,6 +5,7 @@ import { catalogApi } from '@/shared/api';
 import { fromTrending, type SearchTitle } from './search-title';
 
 const POPULAR_COUNT = 3;
+const PER_TYPE_COUNT = 2;
 const POPULAR_STALE_MS = 10 * 60 * 1000;
 
 function interleave(first: SearchTitle[], second: SearchTitle[]): SearchTitle[] {
@@ -16,8 +17,8 @@ function interleave(first: SearchTitle[], second: SearchTitle[]): SearchTitle[] 
 
 async function fetchPopularTitles(): Promise<SearchTitle[]> {
   const [shows, movies] = await Promise.all([
-    catalogApi.getTrendingShows(POPULAR_COUNT),
-    catalogApi.getTrendingMovies(POPULAR_COUNT),
+    catalogApi.getTrendingShows(PER_TYPE_COUNT),
+    catalogApi.getTrendingMovies(PER_TYPE_COUNT),
   ]);
   return interleave(
     shows.map((show) => fromTrending(show, 'show')),

@@ -57,7 +57,8 @@ export function RegisterForm({ onSignedIn, onLogin }: RegisterFormProps) {
 
   const changeEmail = (value: string) => {
     setEmail(value);
-    if (conflict === 'email') setConflict(null);
+    const isSuggestionChanging = conflict === 'username' && editedUsername === null;
+    if (conflict === 'email' || isSuggestionChanging) setConflict(null);
   };
 
   const changeUsername = (value: string) => {
@@ -86,7 +87,7 @@ export function RegisterForm({ onSignedIn, onLogin }: RegisterFormProps) {
       <TextField
         name="email"
         type="email"
-        autoComplete="email"
+        autoComplete="username"
         inputMode="email"
         value={email}
         onChange={changeEmail}
@@ -97,22 +98,18 @@ export function RegisterForm({ onSignedIn, onLogin }: RegisterFormProps) {
       >
         <Label>{dict.auth.email}</Label>
         <Input variant="secondary" spellCheck="false" className="text-base" />
-        <FieldError>
-          {conflict === 'email' ? (
-            <>
-              {dict.auth.emailTaken}{' '}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto min-h-0 p-0 font-semibold text-accent"
-                onPress={onLogin}
-              >
-                {dict.auth.signInInstead}
-              </Button>
-            </>
-          ) : undefined}
-        </FieldError>
+        <FieldError>{conflict === 'email' ? dict.auth.emailTaken : undefined}</FieldError>
       </TextField>
+      {conflict === 'email' ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="phone-tap-target -mt-2 self-start px-1 font-semibold text-accent"
+          onPress={onLogin}
+        >
+          {dict.auth.signInInstead}
+        </Button>
+      ) : null}
       <TextField
         name="username"
         autoComplete="nickname"

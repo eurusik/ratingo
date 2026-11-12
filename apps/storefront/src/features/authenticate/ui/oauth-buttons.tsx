@@ -1,8 +1,8 @@
 'use client';
 
 import type { ComponentType } from 'react';
-import { buttonVariants } from '@heroui/react';
-import { buildOAuthStartUrl, type OAuthProvider } from '@/shared/auth';
+import { Skeleton, buttonVariants } from '@heroui/react';
+import { OAUTH_PROVIDERS, buildOAuthStartUrl, type OAuthProvider } from '@/shared/auth';
 import { API_BASE_URL } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { useBrowserOrigin, useBrowserPath } from '@/shared/lib';
@@ -47,10 +47,20 @@ const PROVIDER_MARKS: Record<OAuthProvider, ComponentType> = {
 
 export function OAuthButtons() {
   const { dict } = useTranslation();
-  const providers = useEnabledOAuthProviders();
+  const { providers, isPending } = useEnabledOAuthProviders();
   const origin = useBrowserOrigin();
   const returnTo = useBrowserPath();
 
+  if (isPending) {
+    return (
+      <div aria-hidden className="flex flex-col gap-2.5">
+        {OAUTH_PROVIDERS.map((provider) => (
+          <Skeleton key={provider} className="h-12 w-full rounded-full" />
+        ))}
+        <Skeleton className="mx-auto my-2 h-5 w-32 rounded-full" />
+      </div>
+    );
+  }
   if (!origin || !returnTo || providers.length === 0) return null;
 
   return (

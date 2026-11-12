@@ -20,7 +20,7 @@ export function useOpenTitle(onOpened: () => void) {
   useEffect(() => () => activeImport.current?.abort(), []);
 
   const navigate = (title: SearchTitle, slug: string) => {
-    rememberTitle({ ...title, slug, isInCatalog: true, alsoKnownAs: undefined });
+    rememberTitle({ ...title, slug });
     onOpened();
     router.push(mediaRoute(title.type, slug));
   };
@@ -37,8 +37,10 @@ export function useOpenTitle(onOpened: () => void) {
         setTitleImport(null);
         navigate(title, slug);
       })
-      .catch(() => {
-        if (!controller.signal.aborted) setTitleImport({ title, hasFailed: true });
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        console.error('Title import failed', { type: title.type, tmdbId, error });
+        setTitleImport({ title, hasFailed: true });
       });
   };
 

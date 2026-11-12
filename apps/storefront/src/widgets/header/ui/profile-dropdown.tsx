@@ -42,7 +42,7 @@ export function ProfileDropdown({ user }: { user: MeDto }) {
       </Dropdown.Trigger>
       <Dropdown.Popover placement="bottom end" className="w-80">
         <div className="p-3">
-          <ProfileSummary user={user} onNavigate={() => setIsOpen(false)} />
+          <ProfileSummary user={user} />
         </div>
         <Dropdown.Menu aria-label={dict.header.profile} onAction={onAction}>
           <Dropdown.Section

@@ -59,15 +59,15 @@ describe('ProfileMenu', () => {
 
     const sheet = await screen.findByRole('dialog', { name: uk.header.profile });
     expect(within(sheet).getByText('ivan@example.com')).toBeInTheDocument();
-    expect(
-      within(sheet).getByRole('link', { name: `42 ${uk.profile.stats.moviesRated}` }),
-    ).toHaveAttribute('href', '/my');
+    expect(within(sheet).getByText(uk.profile.stats.moviesRated).nextSibling).toHaveTextContent(
+      '42',
+    );
     expect(within(sheet).queryByRole('link', { name: uk.profile.admin })).not.toBeInTheDocument();
 
     fireEvent.click(within(sheet).getByRole('radio', { name: uk.profile.themes.light }));
     expect(setTheme).toHaveBeenCalledWith('light');
 
-    fireEvent.click(within(sheet).getByRole('radio', { name: uk.profile.languages.en }));
+    fireEvent.click(within(sheet).getByRole('radio', { name: uk.profile.languageNames.en }));
     expect(document.cookie).toContain('ratingo-locale=en');
     expect(refresh).toHaveBeenCalledTimes(1);
 

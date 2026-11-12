@@ -2,7 +2,7 @@ const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 const DISALLOWED_CHARACTERS = /[^a-zA-Z0-9_]+/g;
 const EDGE_UNDERSCORES = /^_+|_+$/g;
 const MIN_USERNAME_LENGTH = 3;
-const MAX_USERNAME_LENGTH = 20;
+const MAX_USERNAME_LENGTH = 30;
 const FALLBACK_USERNAME = 'ratingo_fan';
 
 export type UsernameProblem = 'length' | 'format';

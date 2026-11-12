@@ -23,7 +23,7 @@ export function PasswordChecklist({ id, password }: { id: string; password: stri
           >
             <Icon aria-hidden className="size-3.5" strokeWidth={2.4} />
             {dict.auth.passwordRules[rule]}
-            {isMet ? <span className="sr-only">{`, ${dict.auth.passwordRules.met}`}</span> : null}
+            <span className="sr-only">{`, ${isMet ? dict.auth.passwordRules.met : dict.auth.passwordRules.unmet}`}</span>
           </li>
         );
       })}

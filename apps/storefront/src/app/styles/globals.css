@@ -98,3 +98,13 @@
     background: var(--default);
   }
 }
+
+@utility phone-tap-target {
+  min-height: var(--spacing-tap);
+  min-width: var(--spacing-tap);
+
+  @variant md {
+    min-height: 0;
+    min-width: 0;
+  }
+}

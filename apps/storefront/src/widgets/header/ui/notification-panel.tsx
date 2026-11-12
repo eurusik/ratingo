@@ -40,6 +40,9 @@ function NotificationRow({ item }: { item: NotificationItem }) {
       <span className="flex min-w-0 flex-col">
         <span className="text-xs text-muted">{dict.notifications.events[item.trigger]}</span>
         <span className="truncate text-sm font-semibold text-foreground">{media.title}</span>
+        {item.isRead ? null : (
+          <span className="sr-only">{`, ${dict.notifications.unreadItem}`}</span>
+        )}
       </span>
     </ListBox.Item>
   );
@@ -69,7 +72,7 @@ export function NotificationPanel({ onNavigate }: { onNavigate: () => void }) {
         <Button
           size="sm"
           variant="ghost"
-          className="self-end"
+          className="phone-tap-target self-end"
           isPending={markAllRead.isPending}
           onPress={() => markAllRead.mutate()}
         >

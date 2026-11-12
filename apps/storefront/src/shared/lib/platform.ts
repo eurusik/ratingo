@@ -6,8 +6,8 @@ const APPLE_PLATFORM = /Mac|iPhone|iPad|iPod/;
 
 const subscribeToNothing = () => () => {};
 const readIsApple = () => APPLE_PLATFORM.test(navigator.platform || navigator.userAgent);
-const readServerIsApple = () => true;
+const readServerIsApple = () => null;
 
-export function useIsApplePlatform(): boolean {
+export function useIsApplePlatform(): boolean | null {
   return useSyncExternalStore(subscribeToNothing, readIsApple, readServerIsApple);
 }

@@ -19,14 +19,14 @@ describe('SiteFooter', () => {
       'href',
       '/journal',
     );
-    expect(within(links).getByRole('link', { name: uk.footer.github })).toHaveAttribute(
-      'target',
-      '_blank',
-    );
-    expect(within(footer).getByRole('link', { name: uk.footer.authorName })).toHaveAttribute(
-      'rel',
-      'noopener noreferrer',
-    );
+    expect(
+      within(links).getByRole('link', { name: `${uk.footer.github} ${uk.common.opensInNewTab}` }),
+    ).toHaveAttribute('target', '_blank');
+    expect(
+      within(footer).getByRole('link', {
+        name: `${uk.footer.authorName} ${uk.common.opensInNewTab}`,
+      }),
+    ).toHaveAttribute('rel', 'noopener noreferrer');
     expect(footer).toHaveTextContent(uk.footer.madeIn);
   });
 });

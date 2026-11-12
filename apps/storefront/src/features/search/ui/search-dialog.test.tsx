@@ -115,7 +115,7 @@ describe('SearchDialog', () => {
 
     const results = await screen.findByRole('grid', { name: uk.search.results });
     const dune = await within(results).findByRole('row', { name: /^Дюна, Фільм · 2021/ });
-    expect(dune).toHaveAccessibleName('Дюна, Фільм · 2021, Оцінка 8.0: Варто');
+    expect(dune).toHaveAccessibleName('Дюна, Фільм · 2021, Оцінка 8,0: Варто');
     fireEvent.click(within(dune).getByRole('button', { name: 'Зберегти Дюна' }));
     expect(push).not.toHaveBeenCalled();
     expect(within(results).getByText(uk.search.otherResults)).toBeInTheDocument();
@@ -135,7 +135,7 @@ describe('SearchDialog', () => {
     fireEvent.click(await screen.findByRole('row', { name: /^Дюна, Фільм · 2021/ }));
 
     expect(push).toHaveBeenCalledWith('/movies/dune-2021');
-    expect(window.localStorage.getItem('ratingo:recent-titles')).toContain('dune-2021');
+    expect(window.localStorage.getItem('ratingo:recent-titles:v1')).toContain('dune-2021');
   });
 
   it('imports a TMDB title on tap and opens it when the page is ready', async () => {

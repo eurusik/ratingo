@@ -23,7 +23,7 @@ function AccountControls() {
   if (isLoading) return <span aria-hidden className="size-11" />;
   if (!user) {
     return (
-      <Button size="sm" onPress={() => openAuth()}>
+      <Button size="sm" className="phone-tap-target" onPress={() => openAuth()}>
         {dict.header.signIn}
       </Button>
     );

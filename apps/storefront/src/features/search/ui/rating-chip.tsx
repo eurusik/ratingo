@@ -8,17 +8,28 @@ const VERDICT_COLORS: Record<RatingVerdict, 'success' | 'warning' | 'danger'> = 
   bad: 'danger',
 };
 
+function useScoreFormat(): (rating: number) => string {
+  const { locale } = useTranslation();
+  const format = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+  return (rating) => format.format(rating);
+}
+
 export function useRatingLabel(): (rating: number) => string {
   const { dict } = useTranslation();
+  const formatScore = useScoreFormat();
   return (rating) =>
     interpolate(dict.rating.label, {
-      score: rating.toFixed(1),
+      score: formatScore(rating),
       verdict: dict.rating.verdict[ratingVerdict(rating)],
     });
 }
 
 export function RatingChip({ rating }: { rating: number }) {
   const { dict } = useTranslation();
+  const formatScore = useScoreFormat();
   const verdict = ratingVerdict(rating);
 
   return (
@@ -28,7 +39,7 @@ export function RatingChip({ rating }: { rating: number }) {
       color={VERDICT_COLORS[verdict]}
       className="shrink-0 tabular-nums"
     >
-      {`${rating.toFixed(1)} · ${dict.rating.verdict[verdict]}`}
+      {`${formatScore(rating)} · ${dict.rating.verdict[verdict]}`}
     </Chip>
   );
 }

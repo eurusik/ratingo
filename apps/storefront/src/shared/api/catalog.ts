@@ -23,8 +23,8 @@ export const catalogApi = {
     return apiPost<ImportResult>(`${IMPORT_PATHS[type]}/${tmdbId}`);
   },
 
-  getImportStatus(jobId: string): Promise<ImportJobStatus> {
-    return apiGet<ImportJobStatus>(`catalog/import/status/${jobId}`);
+  getImportStatus(jobId: string, signal?: AbortSignal): Promise<ImportJobStatus> {
+    return apiGet<ImportJobStatus>(`catalog/import/status/${jobId}`, { signal });
   },
 
   async getTrendingMovies(limit: number): Promise<TrendingMovie[]> {

@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import type { SearchTitle } from './search-title';
 
-const STORAGE_KEY = 'ratingo:recent-titles';
+const STORAGE_KEY = 'ratingo:recent-titles:v1';
 const MAX_RECENT_TITLES = 8;
 const EMPTY: readonly SearchTitle[] = [];
 
@@ -39,6 +39,14 @@ function readStorage(): string | null {
   }
 }
 
+function persist(titles: readonly SearchTitle[]): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(titles));
+  } catch (error) {
+    if (!(error instanceof DOMException)) throw error;
+  }
+}
+
 function readRecentTitles(): readonly SearchTitle[] {
   cached ??= parseRecentTitles(readStorage());
   return cached;
@@ -48,31 +56,18 @@ function notify(): void {
   listeners.forEach((listener) => listener());
 }
 
-function reloadFromStorage(): void {
+function reloadOnOwnKey(event: StorageEvent): void {
+  if (event.key !== STORAGE_KEY && event.key !== null) return;
   cached = null;
   notify();
 }
 
-function persist(titles: readonly SearchTitle[]): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(titles));
-  } catch (error) {
-    if (!(error instanceof DOMException)) throw error;
-  }
-}
-
-function writeRecentTitles(titles: readonly SearchTitle[]): void {
-  cached = titles;
-  persist(titles);
-  notify();
-}
-
 function subscribe(listener: () => void): () => void {
+  if (listeners.size === 0) window.addEventListener('storage', reloadOnOwnKey);
   listeners.add(listener);
-  window.addEventListener('storage', reloadFromStorage);
   return () => {
     listeners.delete(listener);
-    window.removeEventListener('storage', reloadFromStorage);
+    if (listeners.size === 0) window.removeEventListener('storage', reloadOnOwnKey);
   };
 }
 
@@ -82,8 +77,27 @@ export function useRecentTitles(): readonly SearchTitle[] {
   return useSyncExternalStore(subscribe, readRecentTitles, readServerTitles);
 }
 
+function writeRecentTitles(titles: readonly SearchTitle[]): void {
+  cached = titles;
+  persist(titles);
+  notify();
+}
+
 function sameTitle(a: SearchTitle, b: SearchTitle): boolean {
   return a.type === b.type && a.slug === b.slug;
+}
+
+function toStoredTitle({ type, slug, title, year, posterUrl, rating }: SearchTitle): SearchTitle {
+  return {
+    key: `recent-${type}-${slug}`,
+    isInCatalog: true,
+    type,
+    slug,
+    title,
+    year,
+    posterUrl,
+    rating,
+  };
 }
 
 export function withRecentTitle(titles: readonly SearchTitle[], title: SearchTitle): SearchTitle[] {
@@ -94,9 +108,7 @@ export function withRecentTitle(titles: readonly SearchTitle[], title: SearchTit
 }
 
 export function rememberTitle(title: SearchTitle): void {
-  writeRecentTitles(
-    withRecentTitle(readRecentTitles(), { ...title, key: `recent-${title.type}-${title.slug}` }),
-  );
+  writeRecentTitles(withRecentTitle(readRecentTitles(), toStoredTitle(title)));
 }
 
 export function forgetTitle(title: SearchTitle): void {

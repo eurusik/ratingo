@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { Button, Separator } from '@heroui/react';
+import { Button } from '@heroui/react';
 import {
   ChevronRight,
   Download,
@@ -66,8 +66,8 @@ export function ProfileSheet({ user }: { user: MeDto }) {
   return (
     <Sheet trigger={trigger} isOpen={isOpen} onOpenChange={setIsOpen} title={dict.header.profile}>
       <div className="flex flex-col gap-2">
-        <ProfileSummary user={user} onNavigate={close} />
-        <ul className="mt-2 flex flex-col">
+        <ProfileSummary user={user} />
+        <ul className="mt-2 flex flex-col divide-y divide-separator">
           <li>
             <SettingRow icon={Moon} label={dict.profile.theme}>
               <SegmentedFilter
@@ -78,18 +78,16 @@ export function ProfileSheet({ user }: { user: MeDto }) {
               />
             </SettingRow>
           </li>
-          <Separator />
           <li>
             <SettingRow icon={Globe} label={dict.profile.language}>
               <SegmentedFilter
                 label={dict.profile.language}
-                options={LOCALES.map((id) => ({ id, label: dict.profile.languages[id] }))}
+                options={LOCALES.map((id) => ({ id, label: dict.profile.languageNames[id] }))}
                 value={actions.locale}
                 onChange={actions.changeLocale}
               />
             </SettingRow>
           </li>
-          <Separator />
           <li>
             <Link href={SETTINGS_ROUTE} onClick={close} className={ROW_CLASS}>
               <RowIcon icon={Settings} />
@@ -98,33 +96,27 @@ export function ProfileSheet({ user }: { user: MeDto }) {
             </Link>
           </li>
           {actions.installApp ? (
-            <>
-              <Separator />
-              <li>
-                <Button
-                  variant="ghost"
-                  fullWidth
-                  onPress={actions.installApp}
-                  className={`${ROW_CLASS} h-auto justify-start rounded-none px-0 font-normal`}
-                >
-                  <RowIcon icon={Download} />
-                  <span className="flex-1 text-start">{dict.profile.install}</span>
-                  <span className="text-sm text-muted">{dict.profile.installHint}</span>
-                </Button>
-              </li>
-            </>
+            <li>
+              <Button
+                variant="ghost"
+                fullWidth
+                onPress={actions.installApp}
+                className={`${ROW_CLASS} h-auto justify-start rounded-none px-0 font-normal`}
+              >
+                <RowIcon icon={Download} />
+                <span className="flex-1 text-start">{dict.profile.install}</span>
+                <span className="text-sm text-muted">{dict.profile.installHint}</span>
+              </Button>
+            </li>
           ) : null}
           {actions.isAdmin ? (
-            <>
-              <Separator />
-              <li>
-                <a href={ADMIN_URL} className={ROW_CLASS}>
-                  <RowIcon icon={Shield} />
-                  <span className="flex-1">{dict.profile.admin}</span>
-                  <ChevronRight aria-hidden className="size-[18px] text-muted" />
-                </a>
-              </li>
-            </>
+            <li>
+              <a href={ADMIN_URL} className={ROW_CLASS}>
+                <RowIcon icon={Shield} />
+                <span className="flex-1">{dict.profile.admin}</span>
+                <ChevronRight aria-hidden className="size-[18px] text-muted" />
+              </a>
+            </li>
           ) : null}
         </ul>
         <Button

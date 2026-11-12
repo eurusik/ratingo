@@ -22,7 +22,7 @@ export function TitleRow({ title, rank, trailing }: TitleRowProps) {
     ? interpolate(dict.search.alsoKnownAs, { title: title.alsoKnownAs })
     : undefined;
   const label = [
-    title.title,
+    rank === undefined ? title.title : `${rank}. ${title.title}`,
     alsoKnownAs,
     details,
     title.rating === undefined ? undefined : ratingLabel(title.rating),

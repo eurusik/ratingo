@@ -23,7 +23,8 @@ describe('suggestUsername', () => {
 describe('findUsernameProblem', () => {
   it.each([
     ['ab', 'length'],
-    ['a'.repeat(21), 'length'],
+    ['a'.repeat(30), null],
+    ['a'.repeat(31), 'length'],
     ['іван_42', 'format'],
     ['ivan 42', 'format'],
     ['ivan_42', null],

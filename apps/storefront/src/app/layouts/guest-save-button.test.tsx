@@ -16,17 +16,22 @@ const ANDOR: SearchTitle = {
   title: 'Андор',
 };
 
+const onSave = jest.fn();
+
 function renderButton(isAuthenticated: boolean, title = ANDOR) {
   jest.mocked(useAuth).mockReturnValue({ isAuthenticated } as ReturnType<typeof useAuth>);
   render(
     <I18nProvider locale="uk" dictionary={uk}>
-      <GuestSaveButton title={title} />
+      <GuestSaveButton title={title} onSave={onSave} />
     </I18nProvider>,
   );
 }
 
 describe('GuestSaveButton', () => {
-  afterEach(() => act(() => closeAuth()));
+  afterEach(() => {
+    act(() => closeAuth());
+    onSave.mockClear();
+  });
 
   it('asks a guest to sign in to save the title', () => {
     const { result } = renderHook(() => useAuthRequest());
@@ -35,6 +40,10 @@ describe('GuestSaveButton', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Зберегти «Андор»' }));
 
     expect(result.current).toMatchObject({ intent: { kind: 'save', title: 'Андор' } });
+    expect(onSave).not.toHaveBeenCalled();
+
+    act(() => result.current?.onSignedIn?.());
+    expect(onSave).toHaveBeenCalledWith(ANDOR);
   });
 
   it('leaves the slot to the real save button once signed in', () => {

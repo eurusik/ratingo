@@ -46,6 +46,7 @@ export function PasswordField({
             isIconOnly
             size="sm"
             variant="ghost"
+            className="phone-tap-target"
             aria-label={isVisible ? dict.auth.hidePassword : dict.auth.showPassword}
             aria-pressed={isVisible}
             onPress={() => setIsVisible((visible) => !visible)}

@@ -99,7 +99,7 @@ describe('SiteHeader', () => {
     renderHeader();
 
     expect(
-      await screen.findByRole('button', { name: uk.notifications.unread }),
+      await screen.findByRole('button', { name: 'Сповіщення, непрочитаних: 2' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: uk.header.profile })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: uk.header.signIn })).not.toBeInTheDocument();
