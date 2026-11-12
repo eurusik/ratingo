@@ -187,7 +187,13 @@ export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
     <div className="flex flex-col gap-3">
       <Autocomplete.Filter inputValue={query} onInputChange={setQuery}>
         <div className="flex items-center gap-2">
-          <SearchField aria-label={dict.search.title} autoFocus fullWidth className="flex-1">
+          <SearchField
+            aria-label={dict.search.title}
+            variant="secondary"
+            autoFocus
+            fullWidth
+            className="flex-1"
+          >
             <SearchField.Group>
               <SearchField.SearchIcon />
               <SearchField.Input

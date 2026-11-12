@@ -50,7 +50,7 @@ export function LoginForm({ onSignedIn, onRegister }: LoginFormProps) {
         fullWidth
       >
         <Label>{dict.auth.email}</Label>
-        <Input spellCheck="false" className="text-base" />
+        <Input variant="secondary" spellCheck="false" className="text-base" />
         <FieldError />
       </TextField>
       <PasswordField

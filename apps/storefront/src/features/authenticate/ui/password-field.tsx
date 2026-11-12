@@ -39,7 +39,7 @@ export function PasswordField({
       aria-describedby={describedBy}
     >
       <Label>{dict.auth.password}</Label>
-      <InputGroup fullWidth>
+      <InputGroup variant="secondary" fullWidth>
         <InputGroup.Input className="text-base" />
         <InputGroup.Suffix>
           <Button

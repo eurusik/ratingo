@@ -96,7 +96,7 @@ export function RegisterForm({ onSignedIn, onLogin }: RegisterFormProps) {
         fullWidth
       >
         <Label>{dict.auth.email}</Label>
-        <Input spellCheck="false" className="text-base" />
+        <Input variant="secondary" spellCheck="false" className="text-base" />
         <FieldError>
           {conflict === 'email' ? (
             <>
@@ -128,7 +128,7 @@ export function RegisterForm({ onSignedIn, onLogin }: RegisterFormProps) {
         fullWidth
       >
         <Label>{dict.auth.username}</Label>
-        <InputGroup fullWidth>
+        <InputGroup variant="secondary" fullWidth>
           <InputGroup.Input autoCapitalize="none" className="text-base" />
           {isUsernameSuggested && username ? (
             <InputGroup.Suffix>
