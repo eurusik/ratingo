@@ -25,7 +25,7 @@ export function BrowseLayout({
   resultsLabel,
   isBusy = false,
 }: BrowseLayoutProps) {
-  const hasFiltersPanel = filtersPanel !== undefined;
+  const hasFiltersPanel = filtersPanel != null;
 
   return (
     <>
@@ -39,7 +39,7 @@ export function BrowseLayout({
 
         <div className="sticky top-0 z-20 -mt-px flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.75rem,var(--safe-top))] pb-3 backdrop-blur-xl md:top-16 md:px-0 md:pt-3 lg:static lg:mt-0 lg:min-w-0 lg:flex-1 lg:border-b-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
           {pools}
-          {filtersButton === undefined ? null : <div className="lg:hidden">{filtersButton}</div>}
+          {filtersButton == null ? null : <div className="lg:hidden">{filtersButton}</div>}
         </div>
       </div>
 
