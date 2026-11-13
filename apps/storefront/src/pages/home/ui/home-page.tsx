@@ -3,11 +3,9 @@ import { getDictionary, type Locale } from '@/shared/i18n';
 import { preloadHomeFeed } from '../api/load-home-feed';
 import {
   HeroSection,
-  MovieListSection,
   NewEpisodesSection,
+  NewReleasesSection,
   TopTenSection,
-  TrendingSection,
-  WatchingNowSection,
 } from './home-sections';
 import {
   CardRailSkeleton,
@@ -34,26 +32,14 @@ export function HomePage({ locale }: { locale: Locale }) {
       >
         <HeroSection />
       </Suspense>
-      <Suspense fallback={<CardRailSkeleton />}>
-        <TrendingSection />
-      </Suspense>
       <Suspense fallback={<TileRailSkeleton />}>
-        <TopTenSection type="show" />
-      </Suspense>
-      <Suspense fallback={<TopThreeSkeleton />}>
-        <WatchingNowSection />
+        <TopTenSection />
       </Suspense>
       <Suspense fallback={<TileRailSkeleton />}>
         <NewEpisodesSection />
       </Suspense>
-      <Suspense fallback={<TileRailSkeleton />}>
-        <TopTenSection type="movie" />
-      </Suspense>
       <Suspense fallback={<CardRailSkeleton />}>
-        <MovieListSection list="nowPlaying" />
-      </Suspense>
-      <Suspense fallback={<CardRailSkeleton />}>
-        <MovieListSection list="newOnDigital" />
+        <NewReleasesSection />
       </Suspense>
       <TrackShowsCard />
     </div>

@@ -1,20 +1,17 @@
-import type { MediaType } from '@/shared/api';
 import {
   loadHero,
   loadNewEpisodes,
   loadNewOnDigital,
   loadNowPlaying,
   loadTrending,
-  loadWatchingNow,
 } from '../api/load-home-feed';
-import { buildHighlights, buildHomeHero, buildWatchingNow, titleIds } from '../model/home-feed';
+import { buildHomeHero } from '../model/home-feed';
 import { HeroBanner } from './hero-banner';
-import { MovieListRail, type MovieList } from './movie-list-rail';
 import { NewEpisodes } from './new-episodes';
-import { TrendingError } from './trending-error';
+import { NewReleases } from './new-releases';
 import { TopTen } from './top-ten';
+import { TopTenError } from './top-ten-error';
 import { TopThree } from './top-three';
-import { TrendingNow } from './trending-now';
 
 export async function HeroSection() {
   const hero = await loadHero();
@@ -25,37 +22,16 @@ export async function HeroSection() {
   return (
     <>
       {lead ? <HeroBanner hero={lead} /> : null}
-      <TopThree list="picks" items={picks} />
+      <TopThree items={picks} />
     </>
   );
 }
 
-export async function TrendingSection() {
-  const [trending, hero] = await Promise.all([loadTrending(), loadHero()]);
-  if (!trending.ok) return <TrendingError />;
-
-  const excluded = titleIds(hero.ok ? hero.data : []);
-  return (
-    <TrendingNow
-      highlights={buildHighlights(trending.data.shows, trending.data.movies, excluded)}
-    />
-  );
-}
-
-export async function TopTenSection({ type }: { type: MediaType }) {
+export async function TopTenSection() {
   const trending = await loadTrending();
-  if (!trending.ok) return null;
+  if (!trending.ok) return <TopTenError />;
 
-  const items = type === 'show' ? trending.data.shows : trending.data.movies;
-  return <TopTen type={type} items={items} />;
-}
-
-export async function WatchingNowSection() {
-  const [watching, hero] = await Promise.all([loadWatchingNow(), loadHero()]);
-  if (!watching.ok) return null;
-
-  const excluded = titleIds(hero.ok ? hero.data : []);
-  return <TopThree list="watchingNow" items={buildWatchingNow(watching.data, excluded)} />;
+  return <TopTen shows={trending.data.shows} movies={trending.data.movies} />;
 }
 
 export async function NewEpisodesSection() {
@@ -63,9 +39,15 @@ export async function NewEpisodesSection() {
   return releases.ok ? <NewEpisodes releases={releases.data} /> : null;
 }
 
-const MOVIE_LOADERS = { nowPlaying: loadNowPlaying, newOnDigital: loadNewOnDigital };
+export async function NewReleasesSection() {
+  const [nowPlaying, newOnDigital] = await Promise.all([loadNowPlaying(), loadNewOnDigital()]);
 
-export async function MovieListSection({ list }: { list: MovieList }) {
-  const movies = await MOVIE_LOADERS[list]();
-  return movies.ok ? <MovieListRail list={list} items={movies.data} /> : null;
+  return (
+    <NewReleases
+      lists={{
+        nowPlaying: nowPlaying.ok ? nowPlaying.data : [],
+        newOnDigital: newOnDigital.ok ? newOnDigital.data : [],
+      }}
+    />
+  );
 }

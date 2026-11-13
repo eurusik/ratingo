@@ -9,24 +9,23 @@
     "leadBadge": "№1 зараз",
     "details": "Детальніше",
     "picks": "Також у топі",
-    "trending": "Зараз у тренді",
-    "trendingFailed": "Не вдалося завантажити тренди.",
+    "topTen": "Топ-10",
+    "topTenFailed": "Не вдалося завантажити топ-10.",
     "typeFilter": {
       "label": "Що показати",
-      "all": "Усе",
       "show": "Серіали",
       "movie": "Фільми"
     },
-    "topShows": "Топ-10 серіалів",
-    "topMovies": "Топ-10 фільмів",
-    "watchingNow": "Зараз дивляться",
-    "watchingNowCaption": "Свіжі прем’єри й серії, які дивиться найбільше людей",
     "newEpisodes": "Нові серії",
     "newEpisodesCaption": "Що вийшло за останній тиждень",
     "episodeCode": "С{season} · Е{episode}",
     "episodeLabel": "Сезон {season}, серія {episode}",
-    "nowPlaying": "Зараз у кіно",
-    "newOnDigital": "Нове на стримінгах",
+    "newReleases": "Новинки",
+    "releaseFilter": {
+      "label": "Де дивитися",
+      "nowPlaying": "У кіно",
+      "newOnDigital": "На стримінгах"
+    },
     "track": {
       "title": "Відстежуй свої серіали",
       "body": "Додай серіали, які дивишся, і ми покажемо нові серії, щойно вони вийдуть, та де ти зупинився.",

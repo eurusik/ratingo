@@ -9,24 +9,23 @@
     "leadBadge": "No. 1 right now",
     "details": "Details",
     "picks": "Also on top",
-    "trending": "Trending now",
-    "trendingFailed": "Could not load what is trending.",
+    "topTen": "Top 10",
+    "topTenFailed": "Could not load the top 10.",
     "typeFilter": {
       "label": "What to show",
-      "all": "All",
       "show": "Shows",
       "movie": "Movies"
     },
-    "topShows": "Top 10 shows",
-    "topMovies": "Top 10 movies",
-    "watchingNow": "Watching right now",
-    "watchingNowCaption": "Fresh premieres and episodes with the most viewers",
     "newEpisodes": "New episodes",
     "newEpisodesCaption": "Out in the last week",
     "episodeCode": "S{season} · E{episode}",
     "episodeLabel": "Season {season}, episode {episode}",
-    "nowPlaying": "In cinemas now",
-    "newOnDigital": "New on streaming",
+    "newReleases": "New releases",
+    "releaseFilter": {
+      "label": "Where to watch",
+      "nowPlaying": "In cinemas",
+      "newOnDigital": "On streaming"
+    },
     "track": {
       "title": "Track your shows",
       "body": "Add the shows you watch and we will show new episodes as soon as they air, and where you left off.",

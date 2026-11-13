@@ -88,8 +88,4 @@ export const catalogApi = {
   getHomeHero(cache?: CatalogCache): Promise<HomeItem[]> {
     return apiGet<HomeItem[]>('home/hero', cacheOptions(cache));
   },
-
-  getWatchingNow(cache?: CatalogCache): Promise<HomeItem[]> {
-    return apiGet<HomeItem[]>('home/watching-now', cacheOptions(cache));
-  },
 } as const;

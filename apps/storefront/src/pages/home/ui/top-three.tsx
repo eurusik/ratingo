@@ -14,12 +14,7 @@ import { mediaRoute } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { SectionHeader } from '@/shared/ui';
 
-type TopThreeList = 'picks' | 'watchingNow';
-
-const SECTION_IDS: Record<TopThreeList, string> = {
-  picks: 'top-picks',
-  watchingNow: 'watching-now',
-};
+const SECTION_ID = 'top-picks';
 
 function TopThreeCard({ media, rank }: { media: TrendingMedia; rank: number }) {
   const { dict } = useTranslation();
@@ -57,17 +52,15 @@ function TopThreeCard({ media, rank }: { media: TrendingMedia; rank: number }) {
   );
 }
 
-export function TopThree({ list, items }: { list: TopThreeList; items: TrendingMedia[] }) {
+export function TopThree({ items }: { items: TrendingMedia[] }) {
   const { dict } = useTranslation();
-  const id = SECTION_IDS[list];
-  const title = dict.home[list];
-  const caption = list === 'watchingNow' ? dict.home.watchingNowCaption : undefined;
+  const title = dict.home.picks;
 
   if (items.length === 0) return null;
 
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-2">
-      <SectionHeader id={id} title={title} caption={caption} />
+    <section aria-labelledby={SECTION_ID} className="flex flex-col gap-2">
+      <SectionHeader id={SECTION_ID} title={title} />
       <ol aria-label={title} className="grid gap-2 px-4 md:grid-cols-3 md:gap-3 md:px-0">
         {items.map((media, index) => (
           <li key={media.mediaItemId}>

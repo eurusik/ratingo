@@ -1,29 +1,42 @@
 'use client';
 
-import { useRef } from 'react';
 import { TopRankTile, type TrendingMedia } from '@/entities/media';
 import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
+import { RailFilterBar, useRailFilter } from './rail-filter';
+
+const SECTION_ID = 'top-ten';
+const TYPES: readonly [MediaType, ...MediaType[]] = ['show', 'movie'];
 
 interface TopTenProps {
-  type: MediaType;
-  items: TrendingMedia[];
+  shows: TrendingMedia[];
+  movies: TrendingMedia[];
 }
 
-export function TopTen({ type, items }: TopTenProps) {
+export function TopTen({ shows, movies }: TopTenProps) {
   const { dict } = useTranslation();
-  const scroller = useRef<HTMLDivElement>(null);
-  const id = `top-${type}s`;
-  const title = type === 'show' ? dict.home.topShows : dict.home.topMovies;
+  const filter = useRailFilter({ show: shows, movie: movies }, TYPES);
+  const title = dict.home.topTen;
 
-  if (items.length === 0) return null;
+  if (!filter.active) return null;
 
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-2">
-      <SectionHeader id={id} title={title} trailing={<RailPager scrollerRef={scroller} />} />
-      <Rail label={title} isOrdered itemSize="tile" scrollerRef={scroller}>
-        {items.map((media, index) => (
+    <section aria-labelledby={SECTION_ID} className="flex flex-col gap-2">
+      <SectionHeader
+        id={SECTION_ID}
+        title={title}
+        trailing={<RailPager scrollerRef={filter.scrollerRef} />}
+      />
+      <RailFilterBar
+        label={dict.home.typeFilter.label}
+        labels={dict.home.typeFilter}
+        available={filter.available}
+        active={filter.active}
+        onSelect={filter.select}
+      />
+      <Rail label={title} isOrdered itemSize="tile" scrollerRef={filter.scrollerRef}>
+        {filter.items.map((media, index) => (
           <RailItem key={media.mediaItemId}>
             <TopRankTile media={media} rank={index + 1} />
           </RailItem>

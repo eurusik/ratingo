@@ -1,15 +1,6 @@
 import fc from 'fast-check';
-import type { TrendingMedia } from '@/entities/media';
 import type { HomeItem, NewEpisode } from '@/shared/api';
-import {
-  HIGHLIGHTS_PER_TYPE,
-  buildHighlights,
-  buildHomeHero,
-  buildWatchingNow,
-  titleIds,
-  toAiredAt,
-  toEpisodeRelease,
-} from './home-feed';
+import { buildHomeHero, chooseList, toAiredAt, toEpisodeRelease } from './home-feed';
 
 const IMAGE = {
   thumb: 'https://img.test/w154/a.jpg',
@@ -38,15 +29,6 @@ function homeItem(id: string, type: HomeItem['type'] = 'show'): HomeItem {
   } as unknown as HomeItem;
 }
 
-function media(id: string, type: TrendingMedia['type']): TrendingMedia {
-  return { mediaItemId: id, type, slug: id, title: id, providers: [] };
-}
-
-const mediaIds = (count: number, prefix: string) =>
-  fc
-    .uniqueArray(fc.integer({ min: 0, max: 50 }), { maxLength: count })
-    .map((numbers) => numbers.map((number) => `${prefix}${number}`));
-
 describe('buildHomeHero', () => {
   it('leads with the first title, with its overview and a wide backdrop, and picks the next three', () => {
     const hero = buildHomeHero(['a', 'b', 'c', 'd', 'e'].map((id) => homeItem(id)));
@@ -65,47 +47,28 @@ describe('buildHomeHero', () => {
   });
 });
 
-describe('buildWatchingNow', () => {
-  it('skips titles already shown above and keeps three', () => {
-    const items = ['a', 'b', 'c', 'd', 'e'].map((id) => homeItem(id));
-    const watching = buildWatchingNow(items, titleIds([homeItem('b')]));
+describe('chooseList', () => {
+  const ORDER = ['show', 'movie'] as const;
+  const counts = fc.record({ show: fc.nat({ max: 3 }), movie: fc.nat({ max: 3 }) });
 
-    expect(watching.map((item) => item.mediaItemId)).toEqual(['a', 'c', 'd']);
-  });
-});
-
-describe('buildHighlights', () => {
-  it('never repeats a featured title and mixes shows and movies', () => {
+  it('keeps the chosen list while it has titles and otherwise falls back to the first one that does', () => {
     fc.assert(
-      fc.property(
-        mediaIds(10, 's'),
-        mediaIds(10, 'm'),
-        fc.uniqueArray(fc.integer({ min: 0, max: 50 }), { maxLength: 6 }),
-        (showIds, movieIds, featured) => {
-          const excluded = new Set(featured.flatMap((number) => [`s${number}`, `m${number}`]));
-          const shows = showIds.map((id) => media(id, 'show'));
-          const movies = movieIds.map((id) => media(id, 'movie'));
-          const highlights = buildHighlights(shows, movies, excluded);
-          const all = [...highlights.all, ...highlights.show, ...highlights.movie];
+      fc.property(counts, fc.constantFrom(...ORDER), (sizes, chosen) => {
+        const lists = { show: Array(sizes.show).fill(0), movie: Array(sizes.movie).fill(0) };
+        const { available, active } = chooseList(lists, ORDER, chosen);
 
-          expect(all.some((item) => excluded.has(item.mediaItemId))).toBe(false);
-          expect(highlights.show.every((item) => item.type === 'show')).toBe(true);
-          expect(highlights.movie.every((item) => item.type === 'movie')).toBe(true);
-          expect(highlights.all.length).toBeLessThanOrEqual(HIGHLIGHTS_PER_TYPE * 2);
-          expect(highlights.show.length).toBeLessThanOrEqual(HIGHLIGHTS_PER_TYPE * 2);
-        },
-      ),
+        expect(available).toEqual(ORDER.filter((key) => sizes[key] > 0));
+        if (sizes[chosen] > 0) expect(active).toBe(chosen);
+        else expect(active).toBe(available[0]);
+      }),
     );
   });
 
-  it('alternates a show and a movie in the mixed rail', () => {
-    const highlights = buildHighlights(
-      [media('s1', 'show'), media('s2', 'show')],
-      [media('m1', 'movie'), media('m2', 'movie')],
-      new Set(),
-    );
-
-    expect(highlights.all.map((item) => item.mediaItemId)).toEqual(['s1', 'm1', 's2', 'm2']);
+  it('has nothing to show when every list is empty', () => {
+    expect(chooseList({ show: [], movie: [] }, ORDER, 'show')).toEqual({
+      available: [],
+      active: undefined,
+    });
   });
 });
 

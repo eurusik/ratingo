@@ -6,12 +6,13 @@ import type { TrendingMedia } from '@/entities/media';
 import { openSearch } from '@/features/search';
 import { openAuth } from '@/shared/auth';
 import { I18nProvider, getDictionary, type Locale } from '@/shared/i18n';
-import type { EpisodeRelease, TrendingHighlights } from '../model/home-feed';
+import type { EpisodeRelease } from '../model/home-feed';
 import { NewEpisodes } from './new-episodes';
-import { TrendingError } from './trending-error';
+import { NewReleases } from './new-releases';
+import { TopTen } from './top-ten';
+import { TopTenError } from './top-ten-error';
 import { TopThree } from './top-three';
 import { TrackShowsCard } from './track-shows-card';
-import { TrendingNow } from './trending-now';
 
 const refresh = jest.fn();
 
@@ -34,6 +35,7 @@ function media(id: string, type: TrendingMedia['type'], extra?: Partial<Trending
 
 const ANDOR = media('Андор', 'show', { verdict: 'good', watchingNow: 340 });
 const DUNE = media('Дюна', 'movie');
+const BARBIE = media('Барбі', 'movie');
 
 function renderIn(ui: ReactNode, locale: Locale = 'uk') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -54,60 +56,77 @@ beforeEach(() => {
   } as unknown as ReturnType<typeof useAuth>);
 });
 
-describe('TrendingNow', () => {
-  const highlights: TrendingHighlights = { all: [ANDOR, DUNE], show: [ANDOR], movie: [DUNE] };
+describe('TopTen', () => {
+  it('ranks shows first and switches to movies', () => {
+    renderIn(<TopTen shows={[ANDOR]} movies={[DUNE, BARBIE]} />);
 
-  it('shows mixed titles with a save control and filters them by type', () => {
-    renderIn(<TrendingNow highlights={highlights} />);
-
-    const rail = screen.getByRole('list', { name: uk.home.trending });
-    expect(within(rail).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(rail).getByRole('button', { name: 'Зберегти «Андор»' })).toBeInTheDocument();
+    const shows = screen.getByRole('list', { name: uk.home.topTen });
+    expect(within(shows).getAllByRole('listitem')).toHaveLength(1);
+    expect(within(shows).getByRole('link', { name: /Андор/ })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('radio', { name: uk.home.typeFilter.movie }));
 
-    const movies = screen.getByRole('list', { name: uk.home.trending });
-    expect(within(movies).getAllByRole('listitem')).toHaveLength(1);
-    expect(within(movies).getByRole('link', { name: 'Дюна' })).toHaveAttribute(
+    const movies = screen.getByRole('list', { name: uk.home.topTen });
+    expect(movies.tagName).toBe('OL');
+    expect(within(movies).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(movies).getByRole('link', { name: /Дюна/ })).toHaveAttribute(
       'href',
       '/movies/%D0%94%D1%8E%D0%BD%D0%B0',
     );
   });
 
-  it('falls back to all titles when the chosen type runs out after a refresh', () => {
-    const { rerender } = renderIn(<TrendingNow highlights={highlights} />);
-    fireEvent.click(screen.getByRole('radio', { name: uk.home.typeFilter.movie }));
-
-    rerender(
-      <QueryClientProvider client={new QueryClient()}>
-        <I18nProvider locale="uk" dictionary={uk}>
-          <TrendingNow highlights={{ all: [ANDOR], show: [ANDOR], movie: [] }} />
-        </I18nProvider>
-      </QueryClientProvider>,
-    );
-
-    const rail = screen.getByRole('list', { name: uk.home.trending });
-    expect(within(rail).getByRole('link', { name: 'Андор' })).toBeInTheDocument();
-  });
-
-  it('hides the type filter when one type is missing', () => {
-    renderIn(<TrendingNow highlights={{ all: [ANDOR], show: [ANDOR], movie: [] }} />);
+  it('shows the only type that loaded, without a filter', () => {
+    renderIn(<TopTen shows={[]} movies={[DUNE]} />);
 
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Дюна/ })).toBeInTheDocument();
   });
 
-  it('renders nothing when nothing is trending', () => {
-    const { container } = renderIn(<TrendingNow highlights={{ all: [], show: [], movie: [] }} />);
+  it('renders nothing when nothing is ranked', () => {
+    const { container } = renderIn(<TopTen shows={[]} movies={[]} />);
 
     expect(container).toBeEmptyDOMElement();
   });
 });
 
+describe('NewReleases', () => {
+  it('opens on cinemas with a save control and switches to streaming', () => {
+    renderIn(<NewReleases lists={{ nowPlaying: [DUNE], newOnDigital: [BARBIE] }} />);
+
+    const cinemas = screen.getByRole('list', { name: uk.home.newReleases });
+    expect(within(cinemas).getByRole('button', { name: 'Зберегти «Дюна»' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('radio', { name: uk.home.releaseFilter.newOnDigital }));
+
+    const streaming = screen.getByRole('list', { name: uk.home.newReleases });
+    expect(within(streaming).getByRole('link', { name: 'Барбі' })).toBeInTheDocument();
+    expect(within(streaming).queryByRole('link', { name: 'Дюна' })).not.toBeInTheDocument();
+  });
+
+  it('falls back to the list that still has titles after a refresh', () => {
+    const { rerender } = renderIn(
+      <NewReleases lists={{ nowPlaying: [DUNE], newOnDigital: [BARBIE] }} />,
+    );
+    fireEvent.click(screen.getByRole('radio', { name: uk.home.releaseFilter.newOnDigital }));
+
+    rerender(
+      <QueryClientProvider client={new QueryClient()}>
+        <I18nProvider locale="uk" dictionary={uk}>
+          <NewReleases lists={{ nowPlaying: [DUNE], newOnDigital: [] }} />
+        </I18nProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Дюна' })).toBeInTheDocument();
+  });
+});
+
 describe('TopThree', () => {
   it('ranks titles in order and says how many people are watching', () => {
-    renderIn(<TopThree list="watchingNow" items={[ANDOR, DUNE]} />, 'en');
+    renderIn(<TopThree items={[ANDOR, DUNE]} />, 'en');
 
-    const list = screen.getByRole('list', { name: 'Watching right now' });
+    const list = screen.getByRole('list', { name: 'Also on top' });
     expect(list.tagName).toBe('OL');
     expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('1Андор');
     expect(within(list).getByText('340 people are watching now')).toBeInTheDocument();
@@ -170,12 +189,12 @@ describe('TrackShowsCard', () => {
   });
 });
 
-describe('TrendingError', () => {
+describe('TopTenError', () => {
   it('reloads the server data on retry', () => {
-    renderIn(<TrendingError />);
+    renderIn(<TopTenError />);
 
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent(uk.home.trendingFailed);
+    expect(alert).toHaveTextContent(uk.home.topTenFailed);
     fireEvent.click(within(alert).getByRole('button', { name: uk.common.retry }));
     expect(refresh).toHaveBeenCalled();
   });

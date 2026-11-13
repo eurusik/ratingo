@@ -28,10 +28,6 @@ export const loadHero = cache((): Promise<Loaded<HomeItem[]>> =>
   settle('hero', () => catalogApi.getHomeHero(HOME_CACHE)),
 );
 
-export const loadWatchingNow = cache((): Promise<Loaded<HomeItem[]>> =>
-  settle('watching now', () => catalogApi.getWatchingNow(HOME_CACHE)),
-);
-
 export const loadTrending = cache((): Promise<Loaded<TrendingLists>> =>
   settle('trending', async () => {
     const [shows, movies] = await Promise.all([
@@ -67,7 +63,6 @@ export const loadNewOnDigital = cache((): Promise<Loaded<TrendingMedia[]>> =>
 
 export function preloadHomeFeed(): void {
   void loadHero();
-  void loadWatchingNow();
   void loadTrending();
   void loadNewEpisodes();
   void loadNowPlaying();

@@ -7,7 +7,7 @@ const PHONE = { width: 360, height: 780 };
 test('home lists both shows and movies', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByRole('heading', { name: /тренд|trending/i }).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: /топ-10|top 10/i }).first()).toBeVisible();
   await expect(page.locator(SHOW_LINK).first()).toBeVisible();
   await expect(page.locator(MOVIE_LINK).first()).toBeAttached();
 });
