@@ -41,6 +41,8 @@ const storefrontTestFiles = [`${storefrontDir}/{app,src}/**/*.test.{ts,tsx}`];
 const storefrontRouteFiles = [`${storefrontDir}/app/**/*.{ts,tsx}`];
 const storefrontEnvReaders = [`${storefrontDir}/src/shared/config/**`];
 const webCoreSourceFiles = ['packages/web-core/src/**/*.{ts,tsx}'];
+const uiSourceFiles = ['packages/ui/src/**/*.{ts,tsx}'];
+const heroUiAutoFocusRule = { 'jsx-a11y/no-autofocus': ['error', { ignoreNonDOM: true }] };
 const webCoreTestFiles = ['packages/web-core/src/**/__tests__/**'];
 const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];
 const oversizedWebFilesToSplit = {
@@ -855,6 +857,7 @@ export default [
     },
     rules: {
       ...nextAppRules,
+      ...heroUiAutoFocusRule,
       'ratingo/no-deep-relative-imports': [
         'error',
         {
@@ -985,6 +988,72 @@ export default [
     files: webCoreSourceFiles,
     ignores: webCoreTestFiles,
     rules: typeSafetyRules,
+  },
+  {
+    files: uiSourceFiles,
+    plugins: {
+      'react-hooks': reactHooksPlugin,
+      'jsx-a11y': jsxA11yPlugin,
+      react: reactPlugin,
+      import: importPlugin,
+    },
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    settings: {
+      react: { version: 'detect' },
+      'import/resolver': {
+        typescript: { project: path.join(tsconfigRootDir, 'packages/ui/tsconfig.json') },
+      },
+    },
+    rules: {
+      ...asErrors(reactHooksPlugin.configs['recommended-latest'].rules),
+      ...asErrors(jsxA11yPlugin.flatConfigs.recommended.rules),
+      ...heroUiAutoFocusRule,
+      'react/jsx-key': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['next', 'next/*', '@/*'],
+              message: 'ui is shared by Next and Vite apps: no Next imports and no app aliases.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'ui takes its config from the caller instead of reading process.env.',
+        },
+      ],
+      'import/no-restricted-paths': [
+        'error',
+        {
+          basePath: tsconfigRootDir,
+          zones: [
+            {
+              target: './packages/ui/**/*',
+              from: './apps/**/*',
+              message: 'Packages never import apps.',
+            },
+          ],
+        },
+      ],
+      'max-lines': ['error', { max: 500, ...maxLinesOptions }],
+      ...typeSafetyRules,
+    },
   },
   ...Object.entries(oversizedWebFilesToSplit).map(([file, currentLines]) => ({
     files: [file],

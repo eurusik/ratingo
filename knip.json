@@ -25,6 +25,9 @@
       "entry": ["steiger.config.mjs"],
       "project": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}", "*.{js,mjs,ts}"]
     },
+    "packages/ui": {
+      "project": ["src/**/*.{ts,tsx,css}"]
+    },
     "packages/web-core": {
       "project": ["src/**/*.{ts,tsx}", "*.{cjs,ts}"]
     }
