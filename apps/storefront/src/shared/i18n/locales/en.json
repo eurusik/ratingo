@@ -1,7 +1,14 @@
 {
   "meta": {
     "title": "Ratingo — what to watch now",
-    "description": "Movies and shows the world is watching right now: ratings, new episodes and what is worth your time."
+    "description": "Movies and shows the world is watching right now: ratings, new episodes and what is worth your time.",
+    "keywords": {
+      "shows": "shows",
+      "movies": "movies",
+      "trending": "trending",
+      "ratings": "ratings",
+      "country": "ukraine"
+    }
   },
   "home": {
     "title": "Ratingo",
@@ -254,5 +261,30 @@
   "rail": {
     "previous": "Previous",
     "next": "Next"
+  },
+  "seo": {
+    "notFound": {
+      "movie": "Movie not found",
+      "show": "Show not found"
+    },
+    "media": {
+      "kindCapitalized": {
+        "movie": "Movie",
+        "show": "TV series"
+      },
+      "titleKeywords": {
+        "movie": "movie cast and rating",
+        "show": "TV series cast and rating"
+      },
+      "titleKeywordsShort": "cast",
+      "castLabel": "Starring",
+      "watchOn": "Watch on Ratingo"
+    }
+  },
+  "offline": {
+    "title": "You’re offline",
+    "description": "It looks like there’s no internet connection. Check your connection and try again.",
+    "retry": "Try again",
+    "home": "Go home"
   }
 }

@@ -1,0 +1,71 @@
+/// <reference no-default-lib="true" />
+/// <reference lib="esnext" />
+/// <reference lib="webworker" />
+import { defaultCache } from '@serwist/turbopack/worker';
+import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist';
+import { Serwist, CacheFirst, NetworkOnly, ExpirationPlugin } from 'serwist';
+
+declare global {
+  interface WorkerGlobalScope extends SerwistGlobalConfig {
+    __SW_MANIFEST: (PrecacheEntry | string)[] | undefined;
+  }
+}
+
+declare const self: ServiceWorkerGlobalScope;
+
+const CORS_IMAGE_FETCH: RequestInit = { mode: 'cors', credentials: 'omit' };
+const ONE_WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
+
+const serwist = new Serwist({
+  precacheEntries: self.__SW_MANIFEST,
+  skipWaiting: true,
+  clientsClaim: true,
+  navigationPreload: true,
+  runtimeCaching: [
+    {
+      matcher: /^https:\/\/img\.ratingo\.top\/tmdb\/.*/i,
+      handler: new CacheFirst({
+        cacheName: 'tmdb-images',
+        fetchOptions: CORS_IMAGE_FETCH,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 200,
+            maxAgeSeconds: ONE_WEEK_IN_SECONDS,
+            purgeOnQuotaError: true,
+          }),
+        ],
+      }),
+    },
+    {
+      matcher: /^https:\/\/(static\.tvmaze\.com|img\.ratingo\.top\/tvmaze)\/.*/i,
+      handler: new CacheFirst({
+        cacheName: 'tvmaze-images',
+        fetchOptions: CORS_IMAGE_FETCH,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 100,
+            maxAgeSeconds: ONE_WEEK_IN_SECONDS,
+            purgeOnQuotaError: true,
+          }),
+        ],
+      }),
+    },
+    {
+      matcher: /^https:\/\/(.*\.(google-analytics|analytics\.google|googletagmanager)\.com|va\.vercel-scripts\.com)\/.*/i,
+      handler: new NetworkOnly(),
+    },
+    ...defaultCache,
+  ],
+  fallbacks: {
+    entries: [
+      {
+        url: '/~offline',
+        matcher({ request }) {
+          return request.destination === 'document';
+        },
+      },
+    ],
+  },
+});
+
+serwist.addEventListeners();

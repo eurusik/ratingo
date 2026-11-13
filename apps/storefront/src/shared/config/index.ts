@@ -1,4 +1,12 @@
-export { ADMIN_URL, API_BASE_URL } from './env';
+export {
+  ADMIN_URL,
+  API_BASE_URL,
+  GA_MEASUREMENT_ID,
+  IS_PRODUCTION_SITE,
+  SERVICE_WORKER_ENABLED,
+  SITE_URL,
+  buildRevision,
+} from './env';
 export { HOME_ROUTE, NAV_ROUTES, isNavRouteActive, type NavSection } from './navigation';
 export {
   ABOUT_ROUTE,

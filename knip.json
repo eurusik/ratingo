@@ -22,7 +22,7 @@
       "project": ["src/**/*.{ts,tsx,css}", "*.{js,mjs,ts}"]
     },
     "apps/storefront": {
-      "entry": ["steiger.config.mjs"],
+      "entry": ["steiger.config.mjs", "src/app/service-worker/sw.ts"],
       "project": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}", "*.{js,mjs,ts}"]
     },
     "packages/ui": {
