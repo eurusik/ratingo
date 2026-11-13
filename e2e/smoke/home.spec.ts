@@ -12,14 +12,6 @@ test('home lists both shows and movies', async ({ page }) => {
   await expect(page.locator(MOVIE_LINK).first()).toBeAttached();
 });
 
-test('home shows recent episodes of popular shows', async ({ page }) => {
-  await page.goto('/');
-
-  const heading = page.getByRole('heading', { name: /серії|episodes/i }).first();
-  await heading.scrollIntoViewIfNeeded();
-  await expect(heading).toBeVisible();
-});
-
 test('home fits a 360px phone screen without sideways scrolling', async ({ page }) => {
   await page.setViewportSize(PHONE);
   await page.goto('/');

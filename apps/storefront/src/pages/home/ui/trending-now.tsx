@@ -18,6 +18,8 @@ export function TrendingNow({ highlights }: { highlights: TrendingHighlights }) 
 
   if (highlights.all.length === 0) return null;
 
+  const activeFilter = highlights[filter].length > 0 ? filter : 'all';
+
   const changeFilter = (next: TypeFilter) => {
     setFilter(next);
     if (scroller.current) scroller.current.scrollLeft = 0;
@@ -27,15 +29,14 @@ export function TrendingNow({ highlights }: { highlights: TrendingHighlights }) 
     <MediaRail
       id="trending-now"
       title={dict.home.trending}
-      items={highlights[filter]}
+      items={highlights[activeFilter]}
       scrollerRef={scroller}
-      isAboveFold
       toolbar={
         options.length > 2 ? (
           <SegmentedFilter
             label={labels.label}
             options={options}
-            value={filter}
+            value={activeFilter}
             onChange={changeFilter}
             className="md:px-0"
           />

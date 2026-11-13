@@ -10,7 +10,7 @@
     "details": "Details",
     "picks": "Also on top",
     "trending": "Trending now",
-    "trendingFailed": "Could not load what is trending. Refresh the page.",
+    "trendingFailed": "Could not load what is trending.",
     "typeFilter": {
       "label": "What to show",
       "all": "All",
@@ -19,7 +19,6 @@
     },
     "topShows": "Top 10 shows",
     "topMovies": "Top 10 movies",
-    "rank": "No. {rank}",
     "watchingNow": "Watching right now",
     "watchingNowCaption": "Fresh premieres and episodes with the most viewers",
     "newEpisodes": "New episodes",

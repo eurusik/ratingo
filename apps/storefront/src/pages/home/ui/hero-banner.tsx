@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { getImageProps } from 'next/image';
 import { Chip } from '@heroui/react';
 import { EventBadge, ExternalRatings, VerdictChip } from '@/entities/media';
 import { OwnScoreChip } from '@/entities/library';
@@ -11,21 +10,25 @@ import { useTranslation } from '@/shared/i18n';
 import type { HeroMedia } from '../model/home-feed';
 
 const WIDE_SCREEN = '(min-width: 48rem)';
+const BACKDROP_WIDTH = 780;
+const BACKDROP_HEIGHT = 439;
 
 function HeroBackdrop({ hero }: { hero: HeroMedia }) {
   const narrowUrl = hero.backdropUrl ?? hero.wideBackdropUrl;
   if (!narrowUrl) return <span className="absolute inset-0 -z-10 bg-surface-secondary" />;
 
-  const common = { alt: '', unoptimized: true, loading: 'eager', fetchPriority: 'high' } as const;
-  const { props: narrow } = getImageProps({ ...common, src: narrowUrl, width: 780, height: 439 });
   const wideUrl = hero.wideBackdropUrl ?? narrowUrl;
 
   return (
     <picture>
       <source media={WIDE_SCREEN} srcSet={wideUrl} />
       <img
-        {...narrow}
+        src={narrowUrl}
         alt=""
+        width={BACKDROP_WIDTH}
+        height={BACKDROP_HEIGHT}
+        loading="eager"
+        fetchPriority="high"
         className="absolute inset-0 -z-10 size-full bg-surface-secondary object-cover object-top"
       />
     </picture>
@@ -45,6 +48,10 @@ export function HeroBanner({ hero }: { hero: HeroMedia }) {
       <span
         aria-hidden
         className="absolute inset-0 -z-10 bg-linear-to-t from-background via-background/70 to-transparent md:bg-linear-to-r md:via-background/50"
+      />
+      <span
+        aria-hidden
+        className="absolute inset-x-0 top-0 -z-10 h-32 bg-linear-to-b from-background/70 to-transparent"
       />
       <ExternalRatings
         imdbRating={hero.imdbRating}

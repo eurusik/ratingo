@@ -8,9 +8,9 @@ const NEW_EPISODE_DAYS = 7;
 const NEW_EPISODE_COUNT = 15;
 const MOVIE_RAIL_COUNT = 12;
 
-export type Loaded<T> = { ok: true; data: T } | { ok: false };
+type Loaded<T> = { ok: true; data: T } | { ok: false };
 
-export interface TrendingLists {
+interface TrendingLists {
   shows: TrendingMedia[];
   movies: TrendingMedia[];
 }

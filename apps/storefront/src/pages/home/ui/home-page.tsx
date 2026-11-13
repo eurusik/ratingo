@@ -24,16 +24,22 @@ export function HomePage({ locale }: { locale: Locale }) {
   return (
     <div className="flex flex-col gap-8 pb-8 md:gap-10 md:pt-4">
       <h1 className="sr-only">{dict.home.heading}</h1>
-      <Suspense fallback={<HeroSkeleton />}>
+      <Suspense
+        fallback={
+          <>
+            <HeroSkeleton />
+            <TopThreeSkeleton />
+          </>
+        }
+      >
         <HeroSection />
       </Suspense>
       <Suspense fallback={<CardRailSkeleton />}>
-        <TrendingSection locale={locale} />
+        <TrendingSection />
       </Suspense>
       <Suspense fallback={<TileRailSkeleton />}>
         <TopTenSection type="show" />
       </Suspense>
-      <TrackShowsCard />
       <Suspense fallback={<TopThreeSkeleton />}>
         <WatchingNowSection />
       </Suspense>
@@ -49,6 +55,7 @@ export function HomePage({ locale }: { locale: Locale }) {
       <Suspense fallback={<CardRailSkeleton />}>
         <MovieListSection list="newOnDigital" />
       </Suspense>
+      <TrackShowsCard />
     </div>
   );
 }

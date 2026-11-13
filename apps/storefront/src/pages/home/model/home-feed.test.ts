@@ -110,9 +110,12 @@ describe('buildHighlights', () => {
 });
 
 describe('new episodes', () => {
-  it('reads the API air time as UTC', () => {
+  it('turns the API air time into an ISO time every browser parses', () => {
     expect(toAiredAt('2026-11-13 03:00:00')).toBe('2026-11-13T03:00:00Z');
     expect(toAiredAt('2026-11-13T03:00')).toBe('2026-11-13T03:00Z');
+    expect(toAiredAt('2026-11-13 03:00:00+00')).toBe('2026-11-13T03:00:00+00:00');
+    expect(toAiredAt('2026-11-13 03:00:00.000Z')).toBe('2026-11-13T03:00:00.000Z');
+    expect(toAiredAt('2026-11-13T05:00:00+0200')).toBe('2026-11-13T05:00:00+02:00');
     expect(toAiredAt('2026-11-13')).toBe('2026-11-13');
   });
 

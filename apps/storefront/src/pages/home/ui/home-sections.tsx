@@ -1,5 +1,4 @@
 import type { MediaType } from '@/shared/api';
-import { getDictionary, type Locale } from '@/shared/i18n';
 import {
   loadHero,
   loadNewEpisodes,
@@ -12,7 +11,7 @@ import { buildHighlights, buildHomeHero, buildWatchingNow, titleIds } from '../m
 import { HeroBanner } from './hero-banner';
 import { MovieListRail, type MovieList } from './movie-list-rail';
 import { NewEpisodes } from './new-episodes';
-import { SectionError } from './section-error';
+import { TrendingError } from './trending-error';
 import { TopTen } from './top-ten';
 import { TopThree } from './top-three';
 import { TrendingNow } from './trending-now';
@@ -31,16 +30,11 @@ export async function HeroSection() {
   );
 }
 
-async function featuredIds(): Promise<Set<string>> {
-  const [hero, watching] = await Promise.all([loadHero(), loadWatchingNow()]);
-  return titleIds([...(hero.ok ? hero.data : []), ...(watching.ok ? watching.data : [])]);
-}
+export async function TrendingSection() {
+  const [trending, hero] = await Promise.all([loadTrending(), loadHero()]);
+  if (!trending.ok) return <TrendingError />;
 
-export async function TrendingSection({ locale }: { locale: Locale }) {
-  const [trending, excluded] = await Promise.all([loadTrending(), featuredIds()]);
-
-  if (!trending.ok) return <SectionError message={getDictionary(locale).home.trendingFailed} />;
-
+  const excluded = titleIds(hero.ok ? hero.data : []);
   return (
     <TrendingNow
       highlights={buildHighlights(trending.data.shows, trending.data.movies, excluded)}

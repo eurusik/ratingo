@@ -21,8 +21,15 @@ const IMPORT_PATHS: Record<MediaType, string> = {
   show: 'catalog/import/show',
 };
 
+const CACHED_REQUEST_TIMEOUT_MS = 5000;
+
 function cacheOptions(cache: CatalogCache | undefined) {
-  return cache ? { next: { revalidate: cache.revalidateSeconds } } : {};
+  if (!cache) return {};
+  return {
+    next: { revalidate: cache.revalidateSeconds },
+    timeout: CACHED_REQUEST_TIMEOUT_MS,
+    retry: { limit: 1 },
+  };
 }
 
 async function getMovieList(path: string, limit: number, cache?: CatalogCache) {

@@ -14,10 +14,12 @@ export function TrackShowsCard() {
   if (isLoading || user) return null;
 
   return (
-    <div className="px-4 md:px-0">
+    <section aria-labelledby="track-shows" className="px-4 md:px-0">
       <Card className="gap-3 rounded-3xl p-5 md:max-w-2xl md:p-6">
         <Card.Header className="gap-1.5 p-0">
-          <Card.Title className="text-xl font-extrabold tracking-tight">{copy.title}</Card.Title>
+          <h2 id="track-shows" className="text-xl font-extrabold tracking-tight">
+            {copy.title}
+          </h2>
           <Card.Description className="text-sm">{copy.body}</Card.Description>
         </Card.Header>
         <Card.Footer className="flex flex-wrap gap-2 p-0">
@@ -29,6 +31,6 @@ export function TrackShowsCard() {
           </Button>
         </Card.Footer>
       </Card>
-    </div>
+    </section>
   );
 }

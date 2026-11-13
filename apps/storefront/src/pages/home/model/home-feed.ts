@@ -34,7 +34,8 @@ export interface EpisodeRelease {
   airedAt: string;
 }
 
-const API_DATE_TIME = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)$/;
+const API_DATE_TIME =
+  /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)(Z|[+-]\d{2}(?::?\d{2})?)?$/;
 
 function toHeroMedia(item: HomeItem): HeroMedia {
   return {
@@ -89,9 +90,17 @@ export function buildHighlights(
   };
 }
 
+function toIsoOffset(zone: string | undefined): string {
+  if (!zone || zone === 'Z') return 'Z';
+  const digits = zone.slice(1).replace(':', '');
+  return `${zone[0]}${digits.slice(0, 2)}:${digits.slice(2) || '00'}`;
+}
+
 export function toAiredAt(airDate: string): string {
   const match = API_DATE_TIME.exec(airDate);
-  return match ? `${match[1]}T${match[2]}Z` : airDate;
+  if (!match) return airDate;
+  const [, date, time, zone] = match;
+  return `${date}T${time}${toIsoOffset(zone)}`;
 }
 
 export function toEpisodeRelease(item: NewEpisode): EpisodeRelease {

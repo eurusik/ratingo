@@ -11,10 +11,10 @@ import {
 } from '@/entities/media';
 import { SaveButton } from '@/features/save-to-library';
 import { mediaRoute } from '@/shared/config';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { useTranslation } from '@/shared/i18n';
 import { SectionHeader } from '@/shared/ui';
 
-export type TopThreeList = 'picks' | 'watchingNow';
+type TopThreeList = 'picks' | 'watchingNow';
 
 const SECTION_IDS: Record<TopThreeList, string> = {
   picks: 'top-picks',
@@ -40,7 +40,6 @@ function TopThreeCard({ media, rank }: { media: TrendingMedia; rank: number }) {
             href={mediaRoute(media.type, media.slug)}
             className="text-foreground no-underline outline-none after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
           >
-            <span className="sr-only">{interpolate(dict.home.rank, { rank })}. </span>
             {media.title}
           </Link>
         </Card.Title>

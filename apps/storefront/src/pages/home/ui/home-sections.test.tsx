@@ -8,7 +8,7 @@ import { openAuth } from '@/shared/auth';
 import { I18nProvider, getDictionary, type Locale } from '@/shared/i18n';
 import type { EpisodeRelease, TrendingHighlights } from '../model/home-feed';
 import { NewEpisodes } from './new-episodes';
-import { SectionError } from './section-error';
+import { TrendingError } from './trending-error';
 import { TopThree } from './top-three';
 import { TrackShowsCard } from './track-shows-card';
 import { TrendingNow } from './trending-now';
@@ -74,6 +74,22 @@ describe('TrendingNow', () => {
     );
   });
 
+  it('falls back to all titles when the chosen type runs out after a refresh', () => {
+    const { rerender } = renderIn(<TrendingNow highlights={highlights} />);
+    fireEvent.click(screen.getByRole('radio', { name: uk.home.typeFilter.movie }));
+
+    rerender(
+      <QueryClientProvider client={new QueryClient()}>
+        <I18nProvider locale="uk" dictionary={uk}>
+          <TrendingNow highlights={{ all: [ANDOR], show: [ANDOR], movie: [] }} />
+        </I18nProvider>
+      </QueryClientProvider>,
+    );
+
+    const rail = screen.getByRole('list', { name: uk.home.trending });
+    expect(within(rail).getByRole('link', { name: 'Андор' })).toBeInTheDocument();
+  });
+
   it('hides the type filter when one type is missing', () => {
     renderIn(<TrendingNow highlights={{ all: [ANDOR], show: [ANDOR], movie: [] }} />);
 
@@ -93,7 +109,7 @@ describe('TopThree', () => {
 
     const list = screen.getByRole('list', { name: 'Watching right now' });
     expect(list.tagName).toBe('OL');
-    expect(within(list).getByRole('link', { name: 'No. 1. Андор' })).toBeInTheDocument();
+    expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('1Андор');
     expect(within(list).getByText('340 people are watching now')).toBeInTheDocument();
   });
 });
@@ -154,9 +170,9 @@ describe('TrackShowsCard', () => {
   });
 });
 
-describe('SectionError', () => {
+describe('TrendingError', () => {
   it('reloads the server data on retry', () => {
-    renderIn(<SectionError message={uk.home.trendingFailed} />);
+    renderIn(<TrendingError />);
 
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent(uk.home.trendingFailed);
