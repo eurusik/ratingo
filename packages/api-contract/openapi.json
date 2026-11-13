@@ -9726,6 +9726,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "returnOrigin",
+            "required": false,
+            "in": "query",
+            "description": "Frontend origin to return to; must be on the OAuth return allow-list",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -9768,6 +9777,15 @@
             "required": false,
             "in": "query",
             "description": "URL to redirect after auth",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "returnOrigin",
+            "required": false,
+            "in": "query",
+            "description": "Frontend origin to return to; must be on the OAuth return allow-list",
             "schema": {
               "type": "string"
             }

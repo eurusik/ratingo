@@ -1,21 +1,20 @@
+'use client';
+
 /**
  * Empty state shown when no episodes are scheduled for the selected week.
- *
- * Server component — translations resolved synchronously via getDictionary.
  */
 
 import Link from 'next/link';
 import type { Route } from 'next';
 import { CalendarDays } from 'lucide-react';
-import { getDictionary, type Locale } from '@/shared/i18n';
+import { useTranslation } from '@/shared/i18n';
 
 interface CalendarEmptyStateProps {
-  locale?: Locale;
   variant?: 'global' | 'personalized' | 'noWatchingShows';
 }
 
-export function CalendarEmptyState({ locale = 'uk', variant = 'global' }: CalendarEmptyStateProps) {
-  const dict = getDictionary(locale);
+export function CalendarEmptyState({ variant = 'global' }: CalendarEmptyStateProps) {
+  const { dict } = useTranslation();
 
   let title: string;
   let subtitle: string;

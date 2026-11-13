@@ -35,7 +35,8 @@ jest.mock('@/shared/i18n', () => ({
   useLocale: () => 'uk',
 }));
 
-jest.mock('@/shared/utils/format', () => ({
+jest.mock('@ratingo/web-core/lib', () => ({
+  ...jest.requireActual<object>('@ratingo/web-core/lib'),
   formatRelativeDate: jest.fn(() => ({ text: '2 дні тому' })),
 }));
 

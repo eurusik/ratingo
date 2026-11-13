@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { Tv } from 'lucide-react';
 import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
-import { formatDate } from '@/shared/utils/format';
+import { formatDate } from '@ratingo/web-core/lib';
 import { cn, resolveMediaImageUrl, IMAGE_SIZES } from '@/shared/utils';
 import { ScorePill } from '@/shared/components/score-pill';
 import { EpisodeCheckbox } from './episode-checkbox';

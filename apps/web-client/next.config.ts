@@ -1,9 +1,12 @@
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 import type { NextConfig } from 'next';
 import withSerwistInit from '@serwist/next';
 
 const revision =
-  spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' }).stdout?.trim() ?? crypto.randomUUID();
+  process.env.RAILWAY_GIT_COMMIT_SHA ||
+  spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' }).stdout?.trim() ||
+  crypto.randomUUID();
 
 const withSerwist = withSerwistInit({
   swSrc: 'src/app/sw.ts',
@@ -13,7 +16,17 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [{ key: 'Cache-Control', value: 'no-store' }],
+      },
+    ];
+  },
   typedRoutes: true,
   // CDN stale-while-revalidate: serve stale for 1 hour max (default is 1 year)
   expireTime: 3600,
@@ -45,7 +58,7 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
-  transpilePackages: ['@ratingo/api-contract'],
+  transpilePackages: ['@ratingo/api-contract', '@ratingo/web-core'],
   // Serwist adds webpack config for SW bundling; empty turbopack config
   // tells Next.js 16 this is intentional and allows dev to use Turbopack
   turbopack: {},

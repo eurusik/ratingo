@@ -8,7 +8,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { getDictionary, type Locale } from '@/shared/i18n';
+import { useTranslation, type Locale } from '@/shared/i18n';
 import { cn, pluralize } from '@/shared/utils';
 import { CalendarEpisodeCard } from './calendar-episode-card';
 import { CalendarShowGroup } from './calendar-show-group';
@@ -120,7 +120,7 @@ export function CalendarDayGroup({
 }: CalendarDayGroupProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const dict = getDictionary(locale);
+  const { dict } = useTranslation();
   const headerLabel = formatDayHeader(date, locale);
 
   const showGroups = useMemo(() => groupEpisodesByShow(episodes), [episodes]);

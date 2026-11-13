@@ -226,7 +226,8 @@
       "emailAlreadyExists": "Цей email вже зареєстрований",
       "usernameTaken": "Це імʼя вже зайнято",
       "tooManyRequests": "Забагато спроб. Спробуйте пізніше",
-      "unknownError": "Щось пішло не так. Спробуйте ще"
+      "unknownError": "Щось пішло не так. Спробуйте ще",
+      "sessionExpired": "Сесія закінчилась. Увійдіть знову."
     }
   },
   "nav": {

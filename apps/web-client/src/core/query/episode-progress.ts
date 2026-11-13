@@ -10,7 +10,7 @@ import {
   type SeasonProgressDto,
 } from '../api/episode-progress.client';
 import { queryKeys } from './keys';
-import { retryUnlessUnauthorized } from './utils';
+import { retryUnlessUnauthorized } from '@ratingo/web-core/query';
 
 /**
  * Invalidates all caches affected by episode progress changes.

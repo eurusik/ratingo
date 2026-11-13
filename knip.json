@@ -20,6 +20,13 @@
     "apps/web-client": {
       "entry": ["src/app/sw.ts"],
       "project": ["src/**/*.{ts,tsx,css}", "*.{js,mjs,ts}"]
+    },
+    "apps/storefront": {
+      "entry": ["steiger.config.mjs"],
+      "project": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}", "*.{js,mjs,ts}"]
+    },
+    "packages/web-core": {
+      "project": ["src/**/*.{ts,tsx}", "*.{cjs,ts}"]
     }
   },
   "ignoreIssues": {

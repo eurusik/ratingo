@@ -1,8 +1,7 @@
-export { ApiError, getApiErrorCode, isNotFoundError } from './error';
-export { ErrorCode } from './error-codes';
+export { ApiError, getApiErrorCode, isNotFoundError, ErrorCode } from '@ratingo/web-core/api';
 export * from './catalog.client';
 export * from './user-actions.client';
-export * from './auth.client';
+export { authApi, type MeDto } from '@ratingo/web-core/auth';
 export * from './users.client';
 export * from './admin.client';
 export * from './admin-providers.client';

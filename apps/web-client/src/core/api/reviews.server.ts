@@ -5,7 +5,7 @@
 
 import ky from 'ky';
 import { env } from '../config/env';
-import type { ApiErrorDetail } from './error';
+import type { ApiErrorDetail } from '@ratingo/web-core/api';
 import { REVIEWS_DEFAULTS, type ReviewListResponseDto, type ReviewSort } from './reviews.client';
 
 /** Server-side ky instance without auth (for public endpoints). */

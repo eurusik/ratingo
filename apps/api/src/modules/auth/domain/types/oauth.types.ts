@@ -27,4 +27,5 @@ export interface OAuthStatePayload {
   mode?: 'login' | 'link';
   /** User ID when mode is 'link' (set from JWT before redirect) */
   linkUserId?: string;
+  returnOrigin?: string;
 }

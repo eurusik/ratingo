@@ -4,14 +4,12 @@ import {
   type ArgumentsHost,
   UnauthorizedException,
   Logger,
-  Inject,
   HttpStatus,
 } from '@nestjs/common';
-import { type ConfigType } from '@nestjs/config';
 
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 
-import authConfig from '@/config/auth.config';
+import { OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 import { isOAuthProvider } from '@/modules/auth/domain/types';
 
 /**
@@ -38,10 +36,7 @@ const JSON_ERROR_CODES = new Set(['OAUTH_EXCHANGE_EXPIRED', 'OAUTH_EXCHANGE_USED
 export class OAuthExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(OAuthExceptionFilter.name);
 
-  constructor(
-    @Inject(authConfig.KEY)
-    private readonly authCfg: ConfigType<typeof authConfig>,
-  ) {}
+  constructor(private readonly returnOrigins: OAuthReturnOriginResolver) {}
 
   catch(exception: UnauthorizedException, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -53,11 +48,11 @@ export class OAuthExceptionFilter implements ExceptionFilter {
     // Handle redirect errors (OAuth flow errors)
     if (REDIRECT_ERROR_CODES.has(errorCode)) {
       this.logOAuthError(errorCode, request);
-      const { frontendUrl } = this.authCfg;
+      const redirectBase = this.returnOrigins.redirectBase(request.oauthStatePayload);
       // Determine provider from state payload or infer from URL path
       const provider =
         request.oauthStatePayload?.provider || this.inferProviderFromUrl(request.url) || 'google';
-      const redirectUrl = `${frontendUrl}/auth/callback/${provider}?error=${encodeURIComponent(errorCode)}`;
+      const redirectUrl = `${redirectBase}/auth/callback/${provider}?error=${encodeURIComponent(errorCode)}`;
       void response.redirect(redirectUrl);
       return;
     }

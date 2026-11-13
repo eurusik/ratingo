@@ -35,6 +35,13 @@ const webTestFiles = [
   'apps/web-client/src/**/__tests__/**',
 ];
 const webGeneratedUiPrimitives = ['apps/web-client/src/shared/ui/**'];
+const storefrontDir = 'apps/storefront';
+const storefrontSourceFiles = [`${storefrontDir}/{app,src}/**/*.{ts,tsx}`];
+const storefrontTestFiles = [`${storefrontDir}/{app,src}/**/*.test.{ts,tsx}`];
+const storefrontRouteFiles = [`${storefrontDir}/app/**/*.{ts,tsx}`];
+const storefrontEnvReaders = [`${storefrontDir}/src/shared/config/**`];
+const webCoreSourceFiles = ['packages/web-core/src/**/*.{ts,tsx}'];
+const webCoreTestFiles = ['packages/web-core/src/**/__tests__/**'];
 const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];
 const oversizedWebFilesToSplit = {
   'apps/web-client/src/modules/settings/utils/csv-parsers.ts': 519,
@@ -56,6 +63,39 @@ const jestRecommendedRulesAsErrors = Object.fromEntries(
 );
 
 const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
+
+const nextAppPlugins = {
+  'react-hooks': reactHooksPlugin,
+  '@next/next': nextPlugin,
+  'jsx-a11y': jsxA11yPlugin,
+  react: reactPlugin,
+};
+const nextAppRules = {
+  ...asErrors(reactHooksPlugin.configs['recommended-latest'].rules),
+  ...asErrors(nextPlugin.configs['core-web-vitals'].rules),
+  ...asErrors(jsxA11yPlugin.flatConfigs.recommended.rules),
+  'jsx-a11y/no-redundant-roles': ['error', { nav: ['navigation'], ol: ['list'], ul: ['list'] }],
+  'react/jsx-key': 'error',
+  'react/no-array-index-key': 'error',
+  '@typescript-eslint/no-floating-promises': 'error',
+  '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
+  '@typescript-eslint/await-thenable': 'error',
+  '@typescript-eslint/switch-exhaustiveness-check': 'error',
+  '@typescript-eslint/prefer-nullish-coalescing': ['error', { ignorePrimitives: { string: true } }],
+  '@typescript-eslint/no-explicit-any': 'error',
+  '@typescript-eslint/no-unused-vars': [
+    'error',
+    { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+  ],
+  'no-console': ['error', { allow: ['warn', 'error'] }],
+};
+const typeSafetyRules = {
+  '@typescript-eslint/no-unsafe-assignment': 'error',
+  '@typescript-eslint/no-unsafe-member-access': 'error',
+  '@typescript-eslint/no-unsafe-call': 'error',
+  '@typescript-eslint/no-unsafe-return': 'error',
+  '@typescript-eslint/no-unsafe-argument': 'error',
+};
 
 const ratingoPlugin = { rules: { 'no-deep-relative-imports': noDeepRelativeImports } };
 
@@ -728,12 +768,7 @@ export default [
   })),
   {
     files: webSourceFiles,
-    plugins: {
-      'react-hooks': reactHooksPlugin,
-      '@next/next': nextPlugin,
-      'jsx-a11y': jsxA11yPlugin,
-      react: reactPlugin,
-    },
+    plugins: nextAppPlugins,
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -744,31 +779,7 @@ export default [
       react: { version: 'detect' },
       next: { rootDir: path.join(tsconfigRootDir, 'apps/web-client') },
     },
-    rules: {
-      ...asErrors(reactHooksPlugin.configs['recommended-latest'].rules),
-      ...asErrors(nextPlugin.configs['core-web-vitals'].rules),
-      ...asErrors(jsxA11yPlugin.flatConfigs.recommended.rules),
-      'jsx-a11y/no-redundant-roles': ['error', { nav: ['navigation'], ol: ['list'], ul: ['list'] }],
-      'react/jsx-key': 'error',
-      'react/no-array-index-key': 'error',
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-misused-promises': [
-        'error',
-        { checksVoidReturn: { attributes: false } },
-      ],
-      '@typescript-eslint/await-thenable': 'error',
-      '@typescript-eslint/switch-exhaustiveness-check': 'error',
-      '@typescript-eslint/prefer-nullish-coalescing': [
-        'error',
-        { ignorePrimitives: { string: true } },
-      ],
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
-      ],
-      'no-console': ['error', { allow: ['warn', 'error'] }],
-    },
+    rules: nextAppRules,
   },
   {
     files: webSourceFiles,
@@ -816,13 +827,7 @@ export default [
   {
     files: webSourceFiles,
     ignores: webTestFiles,
-    rules: {
-      '@typescript-eslint/no-unsafe-assignment': 'error',
-      '@typescript-eslint/no-unsafe-member-access': 'error',
-      '@typescript-eslint/no-unsafe-call': 'error',
-      '@typescript-eslint/no-unsafe-return': 'error',
-      '@typescript-eslint/no-unsafe-argument': 'error',
-    },
+    rules: typeSafetyRules,
   },
   {
     files: webSourceFiles,
@@ -830,6 +835,156 @@ export default [
     rules: {
       'max-lines': ['error', { max: 500, ...maxLinesOptions }],
     },
+  },
+  {
+    files: storefrontSourceFiles,
+    plugins: { ...nextAppPlugins, ratingo: ratingoPlugin, import: importPlugin },
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    settings: {
+      react: { version: 'detect' },
+      next: { rootDir: path.join(tsconfigRootDir, storefrontDir) },
+      'import/resolver': {
+        typescript: { project: path.join(tsconfigRootDir, storefrontDir, 'tsconfig.json') },
+        node: true,
+      },
+    },
+    rules: {
+      ...nextAppRules,
+      'ratingo/no-deep-relative-imports': [
+        'error',
+        {
+          maxParentLevels: 1,
+          aliasRoot: path.join(tsconfigRootDir, storefrontDir, 'src'),
+          aliasPrefix: '@/',
+        },
+      ],
+      'import/no-restricted-paths': [
+        'error',
+        {
+          basePath: tsconfigRootDir,
+          zones: [
+            {
+              target: `./${storefrontDir}/**/*`,
+              from: './apps/!(storefront)/**/*',
+              message: 'storefront must not import other apps: share the code through packages/*.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'Read environment variables in src/shared/config and import them from @/shared/config.',
+        },
+      ],
+      'max-lines': ['error', { max: 500, ...maxLinesOptions }],
+    },
+  },
+  {
+    files: storefrontRouteFiles,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^@/(pages|widgets|features|entities|shared)/[^/]+/',
+              message:
+                'Route files import a slice or shared segment through its public API (@/pages/<slice>, @/shared/<segment>), not its internals.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: storefrontEnvReaders,
+    rules: {
+      'no-restricted-syntax': 'off',
+    },
+  },
+  {
+    files: storefrontSourceFiles,
+    ignores: storefrontTestFiles,
+    rules: typeSafetyRules,
+  },
+  {
+    files: webCoreSourceFiles,
+    plugins: {
+      'react-hooks': reactHooksPlugin,
+      import: importPlugin,
+    },
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    settings: {
+      'import/resolver': {
+        typescript: { project: path.join(tsconfigRootDir, 'packages/web-core/tsconfig.json') },
+      },
+    },
+    rules: {
+      ...asErrors(reactHooksPlugin.configs['recommended-latest'].rules),
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['next', 'next/*', 'next-*', '@/*'],
+              message: 'web-core is shared by Next and Vite apps: no Next imports and no app aliases.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'web-core takes its config from the caller instead of reading process.env.',
+        },
+      ],
+      'import/no-restricted-paths': [
+        'error',
+        {
+          basePath: tsconfigRootDir,
+          zones: [
+            {
+              target: './packages/web-core/**/*',
+              from: './apps/**/*',
+              message: 'Packages never import apps.',
+            },
+          ],
+        },
+      ],
+      'max-lines': ['error', { max: 500, ...maxLinesOptions }],
+    },
+  },
+  {
+    files: webCoreTestFiles,
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: webCoreSourceFiles,
+    ignores: webCoreTestFiles,
+    rules: typeSafetyRules,
   },
   ...Object.entries(oversizedWebFilesToSplit).map(([file, currentLines]) => ({
     files: [file],

@@ -5,7 +5,7 @@ import {
   type SubscriptionTrigger,
 } from '../api';
 import { queryKeys } from './keys';
-import { retryUnlessUnauthorized } from './utils';
+import { retryUnlessUnauthorized } from '@ratingo/web-core/query';
 
 export const SUBSCRIPTION_TRIGGER: {
   RELEASE: SubscriptionTrigger;

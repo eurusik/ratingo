@@ -6,7 +6,7 @@ import { Star } from 'lucide-react';
 import { useTranslation, useLocale } from '@/shared/i18n';
 import { Skeleton } from '@/shared/ui';
 import { useAuth } from '@/core/auth';
-import { formatRelativeDate } from '@/shared/utils/format';
+import { formatRelativeDate } from '@ratingo/web-core/lib';
 import type { FavoriteUpdateItem } from '@/core/api/me-lists.client';
 import { UserRatingBadge } from '@/shared/components/user-rating-badge';
 import { useFavoriteUpdates } from '../hooks/use-me-lists';

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { Activity, Calendar, Eye } from 'lucide-react';
 import { cn, thumbnailUrl } from '@/shared/utils';
-import { formatYear, formatRating } from '@/shared/utils/format';
+import { formatYear, formatRating } from '@ratingo/web-core/lib';
 import { getDictionary } from '@/shared/i18n';
 import type { MediaCardServerProps } from './media-card-server';
 

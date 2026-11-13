@@ -18,7 +18,8 @@ jest.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => <div data-testid="next-image" {...props} />,
 }));
 
-jest.mock('@/shared/utils/format', () => ({
+jest.mock('@ratingo/web-core/lib', () => ({
+  ...jest.requireActual<object>('@ratingo/web-core/lib'),
   formatYear: (date: string) => date.slice(0, 4),
 }));
 

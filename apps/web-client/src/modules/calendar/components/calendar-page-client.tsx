@@ -16,7 +16,7 @@ import { useAuth } from '@/core/auth';
 import { useAuthModalStore } from '@/core/auth';
 import { useStoredValue } from '@/shared/hooks/use-stored-value';
 import type { components } from '@ratingo/api-contract';
-import { getDictionary, type Locale } from '@/shared/i18n';
+import { useTranslation, type Locale } from '@/shared/i18n';
 
 import { CalendarWeekNav } from './calendar-week-nav';
 import { CalendarDayGroup, type CalendarEpisode } from './calendar-day-group';
@@ -78,8 +78,8 @@ function normaliseEpisode(ep: components['schemas']['CalendarEpisodeDto']): Cale
  * Shown when the user is in personalized mode but not authenticated.
  * Provides a sign-in prompt using the global auth modal.
  */
-function CalendarLoginPrompt({ locale = 'uk' }: { locale?: Locale }) {
-  const dict = getDictionary(locale);
+function CalendarLoginPrompt() {
+  const { dict } = useTranslation();
   const openLogin = useAuthModalStore((s) => s.openLogin);
 
   return (
@@ -124,7 +124,7 @@ function PersonalizedCalendarContent({
   locale,
   onLoadingChange,
 }: PersonalizedCalendarContentProps) {
-  const dict = getDictionary(locale);
+  const { dict } = useTranslation();
 
   const { data, isLoading, isError, refetch } = usePersonalizedShowCalendar(
     { startDate, days: 7 },
@@ -169,7 +169,6 @@ function PersonalizedCalendarContent({
     const hasNoWatchingShows = data.watchingShowsCount === 0;
     return (
       <CalendarEmptyState
-        locale={locale}
         variant={hasNoWatchingShows ? 'noWatchingShows' : 'personalized'}
       />
     );
@@ -246,7 +245,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk', in
     }
   }, [needsPersonalizedCookieMigration]);
 
-  const dict = getDictionary(locale);
+  const { dict } = useTranslation();
 
   // useAuth is safe here: AuthProvider wraps the whole app.
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
@@ -302,7 +301,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk', in
     <>
       {/* Mode toggle sits above week navigation */}
       <div className="mb-5">
-        <CalendarModeToggle mode={mode} onModeChange={handleModeChange} locale={locale} />
+        <CalendarModeToggle mode={mode} onModeChange={handleModeChange} />
       </div>
 
       <CalendarWeekNav
@@ -334,7 +333,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk', in
                 onLoadingChange={setIsPersonalizedLoading}
               />
             )
-            : <CalendarLoginPrompt locale={locale} />
+            : <CalendarLoginPrompt />
       )}
 
       {/* Global (all) mode */}
@@ -363,7 +362,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk', in
             </button>
           </div>
         ) : isEmpty ? (
-          <CalendarEmptyState locale={locale} />
+          <CalendarEmptyState />
         ) : data ? (
           <div className="space-y-6 mt-6">
             {data.days.map((day) => (

@@ -14,6 +14,7 @@ import { isObservable, lastValueFrom } from 'rxjs';
 
 import { MS_PER_SECOND } from '@/common/constants';
 import type authConfig from '@/config/auth.config';
+import { type OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 import {
   OAUTH_NONCE_SIZE_BYTES,
   OAUTH_STATE_COOKIE,
@@ -69,7 +70,10 @@ export function createBaseOAuthGuard(strategyName: string) {
   abstract class BaseOAuthGuard extends AuthGuard(strategyName) {
     abstract readonly logger: Logger;
 
-    constructor(readonly authCfg: ConfigType<typeof authConfig>) {
+    constructor(
+      readonly authCfg: ConfigType<typeof authConfig>,
+      readonly returnOrigins: OAuthReturnOriginResolver,
+    ) {
       super();
     }
 
@@ -108,7 +112,7 @@ export function createBaseOAuthGuard(strategyName: string) {
       // On initiation: manually redirect to provider (bypass Passport's Express-specific redirect)
       if (!query.code && !query.error) {
         this.logger.debug('Initiation phase - redirecting to provider');
-        const statePayload = this.generateStatePayload(query.returnTo);
+        const statePayload = this.generateStatePayload(query.returnTo, query.returnOrigin);
         const signedState = this.signState(statePayload);
         this.setStateCookie(res, signedState);
 
@@ -117,32 +121,16 @@ export function createBaseOAuthGuard(strategyName: string) {
         return false; // Request handled, don't continue to controller
       }
 
-      // Handle user cancellation (access_denied)
+      const callbackCarriesState = Boolean(query.code || query.state);
+      const stateAttached = callbackCarriesState && this.attachVerifiedState(req, res, query.state);
+
       if (query.error === 'access_denied') {
         this.logger.debug('User cancelled OAuth');
         throw new UnauthorizedException(OAuthErrorCode.CANCELLED);
       }
 
-      // On callback: a valid state (query) matching the signed cookie is REQUIRED whenever a code is present
-      if (query.code) {
-        this.logger.debug('Callback phase - validating state');
-        const cookieState = this.getStateCookie(req);
-        this.logger.debug(`Cookie state present: ${!!cookieState}`);
-
-        if (!cookieState || !query.state || !this.safeCompare(cookieState, query.state)) {
-          this.logger.warn('State mismatch or missing cookie');
-          throw new UnauthorizedException(OAuthErrorCode.STATE_INVALID);
-        }
-        // Verify signature and expiration
-        const payload = this.verifyAndDecodeState(cookieState);
-        if (!payload) {
-          this.logger.warn('State verification failed');
-          throw new UnauthorizedException(OAuthErrorCode.STATE_INVALID);
-        }
-        // Store decoded payload for controller to access returnTo
-        req.oauthStatePayload = payload;
-        this.clearStateCookie(res);
-        this.logger.debug('State validated, calling Passport');
+      if (query.code && !stateAttached) {
+        throw new UnauthorizedException(OAuthErrorCode.STATE_INVALID);
       }
 
       // Let Passport handle the callback (token exchange)
@@ -178,7 +166,7 @@ export function createBaseOAuthGuard(strategyName: string) {
     /**
      * Builds a signed state for link mode (connecting a provider to an existing account).
      */
-    buildSignedStateForLink(userId: string, returnTo?: string): string {
+    buildSignedStateForLink(userId: string, returnTo?: string, returnOrigin?: string): string {
       const payload: OAuthStatePayload = {
         nonce: randomBytes(OAUTH_NONCE_SIZE_BYTES).toString('hex'),
         returnTo: this.validateReturnTo(returnTo) || '/settings',
@@ -186,20 +174,42 @@ export function createBaseOAuthGuard(strategyName: string) {
         provider: this.getProvider(),
         mode: 'link',
         linkUserId: userId,
+        returnOrigin: this.returnOrigins.resolve(returnOrigin),
       };
       return this.signState(payload);
     }
 
     // --- State management (shared across all providers) ---
 
-    generateStatePayload(returnTo?: string): OAuthStatePayload {
+    generateStatePayload(returnTo?: string, returnOrigin?: string): OAuthStatePayload {
       return {
         nonce: randomBytes(OAUTH_NONCE_SIZE_BYTES).toString('hex'),
         returnTo: this.validateReturnTo(returnTo) || '/',
         exp: Date.now() + OAUTH_STATE_TTL_MS,
         provider: this.getProvider(),
         mode: 'login',
+        returnOrigin: this.returnOrigins.resolve(returnOrigin),
       };
+    }
+
+    attachVerifiedState(
+      req: FastifyRequest,
+      res: FastifyReply,
+      queryState: string | undefined,
+    ): boolean {
+      const cookieState = this.getStateCookie(req);
+      if (!cookieState || !queryState || !this.safeCompare(cookieState, queryState)) {
+        this.logger.warn('OAuth state rejected: state mismatch or missing cookie');
+        return false;
+      }
+      const payload = this.verifyAndDecodeState(cookieState);
+      if (!payload) {
+        this.logger.warn('OAuth state rejected: bad signature or expired');
+        return false;
+      }
+      req.oauthStatePayload = payload;
+      this.clearStateCookie(res);
+      return true;
     }
 
     signState(payload: OAuthStatePayload): string {

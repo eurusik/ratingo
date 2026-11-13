@@ -13,15 +13,17 @@ import { CalendarEmptyState } from '../calendar-empty-state';
 /* ------------------------------------------------------------------ */
 
 jest.mock('@/shared/i18n', () => ({
-  getDictionary: () => ({
-    calendar: {
-      noEpisodesWeek: 'На цьому тижні немає запланованих серій',
-      tryAnotherWeek: 'Спробуйте інший тиждень',
-      noEpisodesPersonalized: 'Немає запланованих серій',
-      noEpisodesPersonalizedHint: 'У ваших серіалах немає нових серій на цьому тижні',
-      noWatchingShows: 'Ви ще не дивитесь жодного серіалу',
-      noWatchingShowsHint: 'Додайте серіали зі статусом «Дивлюсь», щоб бачити їх у персональному календарі',
-      browseCatalog: 'Переглянути каталог',
+  useTranslation: () => ({
+    dict: {
+      calendar: {
+        noEpisodesWeek: 'На цьому тижні немає запланованих серій',
+        tryAnotherWeek: 'Спробуйте інший тиждень',
+        noEpisodesPersonalized: 'Немає запланованих серій',
+        noEpisodesPersonalizedHint: 'У ваших серіалах немає нових серій на цьому тижні',
+        noWatchingShows: 'Ви ще не дивитесь жодного серіалу',
+        noWatchingShowsHint: 'Додайте серіали зі статусом «Дивлюсь», щоб бачити їх у персональному календарі',
+        browseCatalog: 'Переглянути каталог',
+      },
     },
   }),
 }));

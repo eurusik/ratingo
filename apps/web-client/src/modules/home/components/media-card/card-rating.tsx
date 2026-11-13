@@ -5,7 +5,7 @@
 
 import { Activity, TrendingUp } from 'lucide-react';
 import { cn } from '@/shared/utils';
-import { formatNumber, formatRating } from '@/shared/utils/format';
+import { formatNumber, formatRating } from '@ratingo/web-core/lib';
 
 interface CardRatingProps {
   /** Primary Ratingo score (qualityScore) - актуальність. */

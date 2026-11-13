@@ -39,10 +39,10 @@ import { Throttle } from '@nestjs/throttler';
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 
 import { errorMessage } from '@/common/utils/error.utils';
-import authConfig from '@/config/auth.config';
 import facebookConfig from '@/config/facebook.config';
 import googleConfig from '@/config/google.config';
 import { AuthService } from '@/modules/auth/application/auth.service';
+import { OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 import { OAuthService } from '@/modules/auth/application/oauth.service';
 import { TokenService } from '@/modules/auth/application/token.service';
 import { HTTP_REDIRECT_FOUND } from '@/modules/auth/auth.constants';
@@ -110,12 +110,11 @@ export class AuthController {
     private readonly googleAuthGuard: GoogleAuthGuard,
     private readonly facebookAuthGuard: FacebookAuthGuard,
     private readonly jwtService: JwtService,
+    private readonly returnOrigins: OAuthReturnOriginResolver,
     @Inject(googleConfig.KEY)
     private readonly googleCfg: ConfigType<typeof googleConfig>,
     @Inject(facebookConfig.KEY)
     private readonly facebookCfg: ConfigType<typeof facebookConfig>,
-    @Inject(authConfig.KEY)
-    private readonly authCfg: ConfigType<typeof authConfig>,
   ) {}
 
   /**
@@ -236,8 +235,13 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Initiate Google OAuth flow' })
   @ApiQuery({ name: 'returnTo', required: false, description: 'URL to redirect after auth' })
+  @ApiQuery({
+    name: 'returnOrigin',
+    required: false,
+    description: 'Frontend origin to return to; must be on the OAuth return allow-list',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to Google' })
-  googleAuth(@Query('returnTo') _returnTo?: string) {
+  googleAuth(@Query('returnTo') _returnTo?: string, @Query('returnOrigin') _returnOrigin?: string) {
     // Guard handles redirect to Google
     // returnTo is validated and stored in state by GoogleAuthGuard
   }
@@ -263,8 +267,16 @@ export class AuthController {
   @UseGuards(FacebookAuthGuard)
   @ApiOperation({ summary: 'Initiate Facebook OAuth flow' })
   @ApiQuery({ name: 'returnTo', required: false, description: 'URL to redirect after auth' })
+  @ApiQuery({
+    name: 'returnOrigin',
+    required: false,
+    description: 'Frontend origin to return to; must be on the OAuth return allow-list',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to Facebook' })
-  facebookAuth(@Query('returnTo') _returnTo?: string) {
+  facebookAuth(
+    @Query('returnTo') _returnTo?: string,
+    @Query('returnOrigin') _returnOrigin?: string,
+  ) {
     // Guard handles redirect to Facebook
     // returnTo is validated and stored in state by FacebookAuthGuard
   }
@@ -292,7 +304,7 @@ export class AuthController {
     res: FastifyReply,
   ): Promise<void> {
     const statePayload = req.oauthStatePayload;
-    const { frontendUrl } = this.authCfg;
+    const redirectBase = this.returnOrigins.redirectBase(statePayload);
 
     // Link mode: attach provider to existing user, redirect to settings
     if (statePayload?.mode === 'link' && statePayload.linkUserId) {
@@ -300,14 +312,14 @@ export class AuthController {
       const provider = statePayload.provider || oauthUser.provider;
       try {
         await this.oauthService.linkOAuthAccount(statePayload.linkUserId, oauthUser);
-        await res.redirect(`${frontendUrl}${returnTo}?linked=${provider}`, HTTP_REDIRECT_FOUND);
+        await res.redirect(`${redirectBase}${returnTo}?linked=${provider}`, HTTP_REDIRECT_FOUND);
       } catch (error) {
         const errorCode = error instanceof ConflictException ? 'ALREADY_LINKED' : 'LINK_FAILED';
         if (!(error instanceof ConflictException)) {
           this.logger.error(`Failed to link OAuth account: ${errorMessage(error)}`);
         }
         await res.redirect(
-          `${frontendUrl}${returnTo}?linkError=${errorCode}&provider=${provider}`,
+          `${redirectBase}${returnTo}?linkError=${errorCode}&provider=${provider}`,
           HTTP_REDIRECT_FOUND,
         );
       }
@@ -322,7 +334,7 @@ export class AuthController {
     const returnTo = statePayload?.returnTo || '/';
     const provider = statePayload?.provider || oauthUser.provider;
 
-    const redirectUrl = `${frontendUrl}/auth/callback/${provider}?code=${encodeURIComponent(code)}&returnTo=${encodeURIComponent(returnTo)}`;
+    const redirectUrl = `${redirectBase}/auth/callback/${provider}?code=${encodeURIComponent(code)}&returnTo=${encodeURIComponent(returnTo)}`;
     await res.redirect(redirectUrl, HTTP_REDIRECT_FOUND);
   }
 
@@ -352,15 +364,21 @@ export class AuthController {
   @ApiOperation({ summary: 'Link Google account to current user' })
   @ApiQuery({ name: 'token', required: true, description: 'Access token' })
   @ApiQuery({ name: 'returnTo', required: false })
+  @ApiQuery({ name: 'returnOrigin', required: false })
   @ApiResponse({ status: 302, description: 'Redirect to Google' })
   @ApiExcludeEndpoint()
   async linkGoogle(
     @Query('token') token: string,
     @Query('returnTo') returnTo: string | undefined,
+    @Query('returnOrigin') returnOrigin: string | undefined,
     @Res({ passthrough: false }) res: FastifyReply,
   ): Promise<void> {
     const userId = await this.verifyTokenFromQuery(token);
-    const signedState = this.googleAuthGuard.buildSignedStateForLink(userId, returnTo);
+    const signedState = this.googleAuthGuard.buildSignedStateForLink(
+      userId,
+      returnTo,
+      returnOrigin,
+    );
     this.googleAuthGuard.setStateCookie(res, signedState);
     const authUrl = this.googleAuthGuard.buildAuthUrl(signedState);
     await res.redirect(authUrl, HTTP_REDIRECT_FOUND);
@@ -373,15 +391,21 @@ export class AuthController {
   @ApiOperation({ summary: 'Link Facebook account to current user' })
   @ApiQuery({ name: 'token', required: true, description: 'Access token' })
   @ApiQuery({ name: 'returnTo', required: false })
+  @ApiQuery({ name: 'returnOrigin', required: false })
   @ApiResponse({ status: 302, description: 'Redirect to Facebook' })
   @ApiExcludeEndpoint()
   async linkFacebook(
     @Query('token') token: string,
     @Query('returnTo') returnTo: string | undefined,
+    @Query('returnOrigin') returnOrigin: string | undefined,
     @Res({ passthrough: false }) res: FastifyReply,
   ): Promise<void> {
     const userId = await this.verifyTokenFromQuery(token);
-    const signedState = this.facebookAuthGuard.buildSignedStateForLink(userId, returnTo);
+    const signedState = this.facebookAuthGuard.buildSignedStateForLink(
+      userId,
+      returnTo,
+      returnOrigin,
+    );
     this.facebookAuthGuard.setStateCookie(res, signedState);
     const authUrl = this.facebookAuthGuard.buildAuthUrl(signedState);
     await res.redirect(authUrl, HTTP_REDIRECT_FOUND);

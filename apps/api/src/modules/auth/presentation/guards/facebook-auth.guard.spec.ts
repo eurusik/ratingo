@@ -1,5 +1,6 @@
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { FacebookAuthGuard } from './facebook-auth.guard';
+import { OAuthReturnOriginResolver } from '@/modules/auth/application/oauth-return-origin.resolver';
 
 describe('FacebookAuthGuard - returnTo Validation', () => {
   let guard: FacebookAuthGuard;
@@ -11,13 +12,18 @@ describe('FacebookAuthGuard - returnTo Validation', () => {
     callbackUrl: 'http://localhost:3000/api/auth/facebook/callback',
   };
 
+  const returnOrigins = new OAuthReturnOriginResolver({
+    frontendUrl: 'http://localhost:3002',
+    oauthReturnOrigins: [],
+  } as never);
+
   const authConfig = {
     stateSecret: 'test-state-secret-that-is-long-enough',
     isProduction: false,
   };
 
   beforeEach(() => {
-    guard = new FacebookAuthGuard(facebookConfig as any, authConfig as any);
+    guard = new FacebookAuthGuard(facebookConfig as any, authConfig as any, returnOrigins);
   });
 
   describe('validateReturnTo (via state generation)', () => {
@@ -84,6 +90,7 @@ describe('FacebookAuthGuard - returnTo Validation', () => {
       const disabledGuard = new FacebookAuthGuard(
         { ...facebookConfig, enabled: false } as any,
         authConfig as any,
+        returnOrigins,
       );
 
       const mockContext = {

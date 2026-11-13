@@ -6,7 +6,7 @@
 'use client';
 
 import { Activity, Info } from 'lucide-react';
-import { formatRating } from '@/shared/utils/format';
+import { formatRating } from '@ratingo/web-core/lib';
 import { useTranslation } from '@/shared/i18n';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 

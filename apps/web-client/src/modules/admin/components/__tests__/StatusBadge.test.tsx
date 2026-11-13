@@ -3,11 +3,15 @@ import { render } from '@testing-library/react';
 import * as fc from 'fast-check';
 import { StatusBadge, statusVariantMap } from '../ui/StatusBadge';
 import { RUN_STATUS, POLICY_STATUS } from '@/modules/admin/types';
-import { I18nProvider } from '@/shared/i18n/context';
+import { I18nProvider, getDictionary } from '@/shared/i18n';
+
+const UK_DICTIONARY = getDictionary('uk');
 
 // Wrapper with I18nProvider for tests
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <I18nProvider locale="uk">{children}</I18nProvider>
+  <I18nProvider locale="uk" dictionary={UK_DICTIONARY}>
+    {children}
+  </I18nProvider>
 );
 
 const renderWithI18n = (ui: React.ReactElement) => render(ui, { wrapper: TestWrapper });

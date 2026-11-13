@@ -11,7 +11,7 @@
  */
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getDictionary, type Locale } from '@/shared/i18n';
+import { useTranslation, type Locale } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import { Button } from '@/shared/ui/button';
 
@@ -109,7 +109,7 @@ export function CalendarWeekNav({
   today: todayProp,
   locale = 'uk',
 }: CalendarWeekNavProps) {
-  const dict = getDictionary(locale);
+  const { dict } = useTranslation();
   const today = todayProp ?? getTodayDateString();
 
   // Offset of the current week's start relative to today (negative = past).

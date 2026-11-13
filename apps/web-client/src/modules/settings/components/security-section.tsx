@@ -14,7 +14,7 @@ import { cn } from '@/shared/utils';
 import { createPasswordSchema, type PasswordFormData } from '../schemas';
 import { useChangePassword } from '../hooks';
 import { ApiError } from '@/core/api';
-import { ErrorCode } from '@/core/api/error-codes';
+import { ErrorCode } from '@ratingo/web-core/api';
 
 /**
  * Password change form with validation.
