@@ -1,4 +1,5 @@
 export { AppShell } from './app-shell/app-shell';
+export { BrandMark } from './brand-mark/brand-mark';
 export { BackLink } from './back-link/back-link';
 export { Container } from './container/container';
 export { PageTransition } from './page-transition/page-transition';

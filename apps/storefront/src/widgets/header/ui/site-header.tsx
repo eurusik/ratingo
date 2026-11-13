@@ -7,7 +7,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { openAuth } from '@/shared/auth';
 import { HOME_ROUTE, MY_ROUTE, NAV_ROUTES, isNavRouteActive } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
-import { Container } from '@/shared/ui';
+import { BrandMark, Container } from '@/shared/ui';
 import { NotificationBell } from './notification-bell';
 import { ProfileMenu } from './profile-menu';
 import { SearchTrigger } from './search-trigger';
@@ -60,14 +60,7 @@ export function SiteHeader() {
           translate="no"
           className="inline-flex min-h-tap items-center gap-2 text-lg font-extrabold tracking-tight text-foreground no-underline"
         >
-          <span
-            aria-hidden
-            className="relative flex size-8 items-center justify-center rounded-[10px] bg-surface-tertiary text-[19px] leading-none font-black text-foreground"
-          >
-            R
-            <span className="absolute right-[5px] bottom-[6px] size-[5px] rounded-full bg-accent" />
-          </span>
-          Ratingo
+          <BrandMark />
         </Link>
         <nav aria-label={dict.nav.label} className="hidden flex-1 items-center gap-1 md:flex">
           {NAV_ROUTES.map((route) => (

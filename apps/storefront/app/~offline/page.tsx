@@ -7,5 +7,5 @@ const dict = getDictionary(DEFAULT_LOCALE);
 export const metadata: Metadata = { title: dict.offline.title };
 
 export default function OfflineRoute() {
-  return <OfflinePage locale={DEFAULT_LOCALE} />;
+  return <OfflinePage />;
 }

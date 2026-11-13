@@ -17,7 +17,9 @@ export {
   InstallPromptCapture,
   ServiceWorkerProvider,
   buildWebAppManifest,
+  useHasBrowserHistory,
   useInstallApp,
+  useIsOnline,
 } from './pwa';
 export { RouteCommitSignal, hasPreviousRoute, waitForRouteCommit } from './route-commit';
 export { createBatchLoader, isOnLightConnection, whenIdle } from './scheduling';

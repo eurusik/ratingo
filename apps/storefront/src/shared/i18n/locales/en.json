@@ -282,9 +282,11 @@
     }
   },
   "offline": {
-    "title": "You’re offline",
-    "description": "It looks like there’s no internet connection. Check your connection and try again.",
-    "retry": "Try again",
-    "home": "Go home"
+    "title": "No internet connection",
+    "description": "We’ll open the page as soon as you’re back online.",
+    "reload": "Reload now",
+    "back": "Back",
+    "restoredTitle": "You’re back online",
+    "restoredDescription": "Opening the page…"
   }
 }

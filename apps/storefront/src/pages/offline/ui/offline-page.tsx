@@ -1,31 +1,18 @@
-import { buttonVariants } from '@heroui/react';
-import { House, WifiOff } from 'lucide-react';
-import { HOME_ROUTE } from '@/shared/config';
-import { getDictionary, type Locale } from '@/shared/i18n';
-import { ReloadButton } from './reload-button';
+import { BrandMark } from '@/shared/ui';
+import { ConnectionRecovery } from './connection-recovery';
 
-export function OfflinePage({ locale }: { locale: Locale }) {
-  const { offline } = getDictionary(locale);
-
+export function OfflinePage() {
   return (
-    <div className="page min-h-[60dvh] items-center justify-center text-center">
-      <span
-        aria-hidden="true"
-        className="flex size-16 items-center justify-center rounded-full bg-surface-secondary"
+    <main className="flex min-h-dvh flex-col pt-safe-top pr-safe-right pb-safe-bottom pl-safe-left">
+      <div
+        translate="no"
+        className="flex h-16 items-center justify-center gap-2 text-lg font-extrabold tracking-tight md:justify-start md:px-[var(--page-gutter)]"
       >
-        <WifiOff className="size-8 text-muted" />
-      </span>
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">{offline.title}</h1>
-        <p className="muted">{offline.description}</p>
+        <BrandMark />
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <ReloadButton label={offline.retry} />
-        <a href={HOME_ROUTE} className={buttonVariants({ variant: 'secondary', size: 'lg' })}>
-          <House aria-hidden="true" className="size-4" />
-          {offline.home}
-        </a>
+      <div className="flex flex-1 flex-col items-center justify-center px-4 pb-16">
+        <ConnectionRecovery />
       </div>
-    </div>
+    </main>
   );
 }
