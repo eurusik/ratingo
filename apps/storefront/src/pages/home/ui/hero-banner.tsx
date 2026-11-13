@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { EventBadge, ExternalRatings, VerdictChip } from '@/entities/media';
+import { EventBadge, ExternalRatings, VerdictChip, MediaDetails } from '@/entities/media';
 import { OwnScoreChip } from '@/entities/library';
 import { SaveButton } from '@/features/save-to-library';
 import { mediaRoute } from '@/shared/config';
@@ -36,7 +36,6 @@ function HeroBackdrop({ hero }: { hero: HeroMedia }) {
 
 export function HeroBanner({ hero }: { hero: HeroMedia }) {
   const { dict } = useTranslation();
-  const details = [dict.media.type[hero.type], hero.year].filter(Boolean).join(' · ');
 
   return (
     <section
@@ -79,8 +78,10 @@ export function HeroBanner({ hero }: { hero: HeroMedia }) {
             {hero.title}
           </Link>
         </h2>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted tabular-nums">
-          <span>{details}</span>
+        <p className="text-sm text-muted tabular-nums">
+          <MediaDetails media={hero} />
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
           {hero.verdict ? <VerdictChip verdict={hero.verdict} /> : null}
           <ExternalRatings imdbRating={hero.imdbRating} criticsPercent={hero.criticsPercent} />
           <OwnScoreChip mediaItemId={hero.mediaItemId} />

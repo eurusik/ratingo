@@ -140,7 +140,12 @@ describe('TopThree', () => {
     expect(list.tagName).toBe('OL');
     expect(list).toHaveAttribute('start', '2');
     expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('2Андор');
-    expect(within(list).getByText('340 people are watching now')).toBeInTheDocument();
+    expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('Show · 340 watching');
+  });
+  it('says in words how many people are watching, with the Ukrainian plural', () => {
+    renderIn(<TopThree items={[{ ...ANDOR, year: 2022, watchingNow: 31 }]} firstRank={2} />);
+
+    expect(screen.getByRole('listitem')).toHaveTextContent('Серіал · 2022 · 31 дивиться');
   });
 });
 

@@ -240,6 +240,11 @@
       "one": "{count} person is watching now",
       "few": "{count} people are watching now",
       "many": "{count} people are watching now"
+    },
+    "watchingNowShort": {
+      "one": "{count} watching",
+      "few": "{count} watching",
+      "many": "{count} watching"
     }
   },
   "library": {

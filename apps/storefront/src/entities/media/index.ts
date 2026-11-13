@@ -13,4 +13,4 @@ export { ScoreChip, useScoreLabel } from './ui/score-chip';
 export { TopRankTile } from './ui/top-rank-tile';
 export { TrendingCard } from './ui/trending-card';
 export { VerdictChip } from './ui/verdict-chip';
-export { WatchingNowChip } from './ui/watching-now-chip';
+export { MediaDetails } from './ui/media-details';

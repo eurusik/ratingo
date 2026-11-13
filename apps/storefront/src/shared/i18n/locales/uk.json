@@ -240,6 +240,11 @@
       "one": "Зараз дивиться {count} людина",
       "few": "Зараз дивляться {count} людини",
       "many": "Зараз дивляться {count} людей"
+    },
+    "watchingNowShort": {
+      "one": "{count} дивиться",
+      "few": "{count} дивляться",
+      "many": "{count} дивляться"
     }
   },
   "library": {

@@ -6,7 +6,7 @@ import {
   ExternalRatings,
   MediaPoster,
   VerdictChip,
-  WatchingNowChip,
+  MediaDetails,
   type TrendingMedia,
 } from '@/entities/media';
 import { SaveButton } from '@/features/save-to-library';
@@ -17,9 +17,6 @@ import { SectionHeader } from '@/shared/ui';
 const SECTION_ID = 'top-picks';
 
 function TopThreeCard({ media, rank }: { media: TrendingMedia; rank: number }) {
-  const { dict } = useTranslation();
-  const details = [dict.media.type[media.type], media.year].filter(Boolean).join(' · ');
-
   return (
     <Card className="relative flex-row items-center gap-3 rounded-2xl p-3">
       <span
@@ -38,10 +35,11 @@ function TopThreeCard({ media, rank }: { media: TrendingMedia; rank: number }) {
             {media.title}
           </Link>
         </Card.Title>
-        <Card.Description className="text-sm tabular-nums">{details}</Card.Description>
-        <div className="flex flex-wrap items-center gap-1.5">
+        <Card.Description className="text-sm tabular-nums">
+          <MediaDetails media={media} />
+        </Card.Description>
+        <div className="flex min-h-7 items-center gap-1.5">
           {media.verdict ? <VerdictChip verdict={media.verdict} /> : null}
-          {media.watchingNow === undefined ? null : <WatchingNowChip count={media.watchingNow} />}
           <ExternalRatings imdbRating={media.imdbRating} />
         </div>
       </div>
