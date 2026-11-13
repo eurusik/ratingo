@@ -12,22 +12,35 @@
   },
   "home": {
     "title": "Ratingo",
-    "subtitle": "Новий Ratingo вже будується. Тут поки лише перевірка, що все працює.",
-    "trending": "Зараз у тренді",
-    "trendingFailed": "Не вдалося завантажити тренди. Онови сторінку.",
-    "topShows": "Топ-10 серіалів",
-    "topMovies": "Топ-10 фільмів"
-  },
-  "session": {
-    "heading": "Сесія",
-    "loading": "Перевіряємо сесію…",
-    "guest": "Ви не увійшли.",
-    "signedInAs": "Ви увійшли як",
-    "signInWith": {
-      "google": "Увійти через Google",
-      "facebook": "Увійти через Facebook"
+    "heading": "Що дивитися сьогодні",
+    "leadBadge": "№1 зараз",
+    "details": "Детальніше",
+    "picks": "Також у топі",
+    "topTen": "Топ-10",
+    "topTenCaption": "Усі дивляться — і не дарма",
+    "topTenFailed": "Не вдалося завантажити топ-10.",
+    "typeFilter": {
+      "label": "Що показати",
+      "show": "Серіали",
+      "movie": "Фільми"
     },
-    "signOut": "Вийти"
+    "newEpisodes": "Нові серії",
+    "newEpisodesCaption": "Що вийшло за останній тиждень",
+    "episodeCode": "С{season} · Е{episode}",
+    "episodeLabel": "Сезон {season}, серія {episode}",
+    "newReleases": "Новинки",
+    "newReleasesCaption": "Щойно в кіно та на стрімінгах",
+    "releaseFilter": {
+      "label": "Де дивитися",
+      "nowPlaying": "У кіно",
+      "newOnDigital": "На стримінгах"
+    },
+    "track": {
+      "title": "Відстежуй свої серіали",
+      "body": "Додай серіали, які дивишся, і ми покажемо нові серії, щойно вони вийдуть, та де ти зупинився.",
+      "signIn": "Увійти",
+      "find": "Знайти серіал"
+    }
   },
   "oauth": {
     "completing": "Завершуємо вхід…",
@@ -236,6 +249,11 @@
       "one": "Зараз дивиться {count} людина",
       "few": "Зараз дивляться {count} людини",
       "many": "Зараз дивляться {count} людей"
+    },
+    "watchingNowShort": {
+      "one": "{count} дивиться",
+      "few": "{count} дивляться",
+      "many": "{count} дивляться"
     }
   },
   "library": {

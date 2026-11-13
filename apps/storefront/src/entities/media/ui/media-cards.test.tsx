@@ -93,7 +93,14 @@ describe('TopRankTile', () => {
 
     const link = screen.getByRole('link');
     expect(link).toHaveAttribute('href', '/shows/andor');
-    expect(link).toHaveTextContent(/^3Андор$/);
+    expect(link).toHaveTextContent(/^3Андор/);
+  });
+
+  it('shows the IMDb and critics scores under the title', () => {
+    render(<TopRankTile media={ANDOR} rank={1} />, { wrapper: Wrapper });
+
+    expect(screen.getByText('Оцінка IMDb 8,3')).toBeInTheDocument();
+    expect(screen.getByText('Rotten Tomatoes: 76% критиків')).toBeInTheDocument();
   });
 });
 

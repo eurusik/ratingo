@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { mediaRoute } from '@/shared/config';
 import type { TrendingMedia } from '../model/media';
+import { ExternalRatings } from './external-ratings';
 import { MediaPoster } from './media-poster';
 
 interface TopRankTileProps {
@@ -25,6 +26,13 @@ export function TopRankTile({ media, rank }: TopRankTileProps) {
       </span>
       <span className="line-clamp-2 min-h-[2lh] text-[13px] leading-tight font-semibold break-words md:text-sm">
         {media.title}
+      </span>
+      <span className="min-h-7">
+        <ExternalRatings
+          imdbRating={media.imdbRating}
+          criticsPercent={media.criticsPercent}
+          className="flex-wrap"
+        />
       </span>
     </Link>
   );

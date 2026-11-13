@@ -1,17 +1,9 @@
 import { Chip } from '@heroui/react';
 import { Popcorn } from 'lucide-react';
-import { pluralize } from '@ratingo/web-core/lib';
-import { interpolate, useTranslation } from '@/shared/i18n';
-import { formatCompactCount } from '@/shared/lib';
-
-const SHORTENED_FROM = 1000;
+import { useWatchingNowLabel } from './media-details';
 
 export function WatchingNowChip({ count }: { count: number }) {
-  const { dict, locale } = useTranslation();
-  const shortCount = formatCompactCount(locale, count);
-  const forms = dict.media.watchingNow;
-  const template = count >= SHORTENED_FROM ? forms.many : pluralize(count, forms, locale);
-  const label = interpolate(template, { count: shortCount });
+  const { shortCount, label } = useWatchingNowLabel(count);
 
   return (
     <Chip

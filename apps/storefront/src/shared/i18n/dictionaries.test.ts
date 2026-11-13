@@ -23,6 +23,6 @@ describe('dictionaries', () => {
 
   it('defaults to Ukrainian', () => {
     expect(getDictionary()).toBe(getDictionary('uk'));
-    expect(getDictionary('en').home.subtitle).toBe(en.home.subtitle);
+    expect(getDictionary('en').home.heading).toBe(en.home.heading);
   });
 });

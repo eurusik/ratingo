@@ -83,17 +83,6 @@
     color: var(--muted);
   }
 
-  .card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 1rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    overflow-wrap: anywhere;
-  }
-
   .actions {
     display: flex;
     flex-wrap: wrap;

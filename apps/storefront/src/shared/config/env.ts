@@ -34,3 +34,10 @@ export const SERVICE_WORKER_ENABLED = process.env.NODE_ENV === 'production';
 export function buildRevision(): string {
   return process.env.VERCEL_GIT_COMMIT_SHA || crypto.randomUUID();
 }
+
+const TMDB_IMAGE_ORIGIN = 'https://image.tmdb.org/t/p';
+const IMAGE_PROXY_ORIGIN = process.env.NEXT_PUBLIC_IMAGE_PROXY_ORIGIN;
+
+export const TMDB_IMAGE_BASE_URL = IMAGE_PROXY_ORIGIN
+  ? `${withoutTrailingSlashes(IMAGE_PROXY_ORIGIN)}/tmdb`
+  : TMDB_IMAGE_ORIGIN;

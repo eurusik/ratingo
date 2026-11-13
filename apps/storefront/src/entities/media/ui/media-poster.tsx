@@ -2,10 +2,11 @@ import Image from 'next/image';
 import { Clapperboard, Tv } from 'lucide-react';
 import type { MediaType } from '@/shared/api';
 
-type PosterSize = 'row' | 'rank';
+type PosterSize = 'row' | 'list' | 'rank';
 
 const POSTER_SIZES: Record<PosterSize, { width: number; height: number; className: string }> = {
   row: { width: 40, height: 60, className: 'h-15 w-10 rounded-lg' },
+  list: { width: 154, height: 231, className: 'h-24 w-16 rounded-lg' },
   rank: {
     width: 154,
     height: 231,

@@ -10,7 +10,7 @@ import type { PostListResponseDto, PostDetailDto, PostsQueryParams } from './jou
 
 /** Server-side ky instance without auth (for public endpoints). */
 const serverApi = ky.create({
-  prefixUrl: env.API_BASE_URL,
+  prefixUrl: env.SERVER_API_BASE_URL,
   timeout: 15000,
   retry: {
     limit: 2,

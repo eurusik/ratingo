@@ -1,8 +1,9 @@
 import fc from 'fast-check';
-import type { MediaBadge, TrendingMovie, TrendingShow } from '@/shared/api';
+import type { HomeItem, MediaBadge, TrendingMovie, TrendingShow } from '@/shared/api';
 import {
   MEDIA_EVENTS,
   MIN_WATCHING_NOW,
+  fromHomeItem,
   fromTrendingMovie,
   fromTrendingShow,
   toMediaEvent,
@@ -91,6 +92,20 @@ describe('trending mappers', () => {
         expect(fromTrendingMovie(movie).year).toBe(year);
       }),
     );
+  });
+});
+
+describe('fromHomeItem', () => {
+  it('takes the type from the item and copes without external ratings', () => {
+    const item = { ...MOVIE, type: 'show', externalRatings: undefined } as unknown as HomeItem;
+
+    expect(fromHomeItem(item)).toMatchObject({
+      type: 'show',
+      mediaItemId: 'movie-1',
+      imdbRating: undefined,
+      criticsPercent: undefined,
+      watchingNow: 192,
+    });
   });
 });
 
