@@ -19,6 +19,7 @@ import { yearPresets, type YearPreset } from '../model/year-presets';
 import { ActiveFilters } from './active-filters';
 import { BackToTop } from './back-to-top';
 import { BrowseGridSkeleton } from './browse-grid';
+import { BrowseLayout } from './browse-layout';
 import { PoolNav, TypeSwitch } from './browse-nav';
 import { BrowseResults } from './browse-results';
 import { EmptyResults } from './empty-results';
@@ -120,80 +121,69 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
 
   return (
     <div className="flex flex-col pb-10">
-      <div className="contents lg:sticky lg:top-16 lg:z-20 lg:-mt-4 lg:flex lg:items-center lg:gap-5 lg:border-b lg:border-separator lg:bg-background/90 lg:py-4 lg:backdrop-blur-xl">
-        <header className="px-4 md:px-0 lg:shrink-0">
-          <h1 className="sr-only">{`${dict.browse.title}: ${title}`}</h1>
+      <BrowseLayout
+        heading={<h1 className="sr-only">{`${dict.browse.title}: ${title}`}</h1>}
+        typeSwitch={
           <TypeSwitch category={shownCategory} state={shownState} onOpen={navigation.open} />
-        </header>
-
-        <span aria-hidden className="hidden h-7 w-px shrink-0 bg-separator lg:block" />
-
-        <div className="sticky top-0 z-20 -mt-px flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.75rem,var(--safe-top))] pb-3 backdrop-blur-xl md:top-16 md:px-0 md:pt-3 lg:static lg:mt-0 lg:min-w-0 lg:flex-1 lg:border-b-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
-          <PoolNav category={shownCategory} state={shownState} onOpen={navigation.open} />
-          {category.isFilterable ? (
-            <div className="lg:hidden">
-              <FiltersDialog
-                category={category}
-                state={shownState}
-                loadedState={state}
-                firstPage={firstPage}
-                yearPresets={presets}
-                onApply={changeFilters}
-              />
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <div
-        className={
-          category.isFilterable
-            ? 'lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8 lg:pt-4'
-            : 'lg:pt-4'
         }
-      >
-        {category.isFilterable ? (
-          <FiltersPanel
-            category={category}
-            filters={shownState.filters}
-            yearPresets={presets}
-            onChange={changeFilters}
-          />
-        ) : null}
-
-        <section
-          aria-label={title}
-          aria-busy={isPending}
-          className={`flex min-w-0 flex-col gap-3 px-4 pt-3 transition-opacity md:px-0 lg:pt-0 ${isPending ? 'opacity-60' : ''}`}
-        >
-          <div className="flex min-h-tap items-center gap-2">
-            <p
-              aria-live="polite"
-              className="line-clamp-2 min-w-0 flex-1 text-sm leading-snug text-muted"
-            >
-              <Suspense fallback={dict.browse.pools[category.pool].caption}>
-                <ResultsSummary category={category} state={state} firstPage={firstPage} />
-              </Suspense>
-            </p>
-            <SortMenu options={sortsFor(category)} value={shownState.sort} onChange={changeSort} />
-          </div>
-          <ActiveFilters
-            filters={shownState.filters}
-            yearPresets={presets}
-            onChange={changeFilters}
-          />
-          <Suspense fallback={<BrowseGridSkeleton hasSidebar={category.isFilterable} />}>
-            <ResultsBody
+        pools={<PoolNav category={shownCategory} state={shownState} onOpen={navigation.open} />}
+        filtersButton={
+          category.isFilterable ? (
+            <FiltersDialog
               category={category}
-              state={state}
-              title={title}
+              state={shownState}
+              loadedState={state}
               firstPage={firstPage}
               yearPresets={presets}
-              onChangeFilters={changeFilters}
+              onApply={changeFilters}
             />
-          </Suspense>
-        </section>
-      </div>
+          ) : undefined
+        }
+        filtersPanel={
+          category.isFilterable ? (
+            <FiltersPanel
+              category={category}
+              filters={shownState.filters}
+              yearPresets={presets}
+              onChange={changeFilters}
+            />
+          ) : undefined
+        }
+        summary={
+          <p
+            aria-live="polite"
+            className="line-clamp-2 min-w-0 flex-1 text-sm leading-snug text-muted"
+          >
+            <Suspense fallback={dict.browse.pools[category.pool].caption}>
+              <ResultsSummary category={category} state={state} firstPage={firstPage} />
+            </Suspense>
+          </p>
+        }
+        sort={
+          <SortMenu options={sortsFor(category)} value={shownState.sort} onChange={changeSort} />
+        }
+        results={
+          <>
+            <ActiveFilters
+              filters={shownState.filters}
+              yearPresets={presets}
+              onChange={changeFilters}
+            />
+            <Suspense fallback={<BrowseGridSkeleton hasSidebar={category.isFilterable} />}>
+              <ResultsBody
+                category={category}
+                state={state}
+                title={title}
+                firstPage={firstPage}
+                yearPresets={presets}
+                onChangeFilters={changeFilters}
+              />
+            </Suspense>
+          </>
+        }
+        resultsLabel={title}
+        isBusy={isPending}
+      />
       <BackToTop />
     </div>
   );

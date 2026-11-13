@@ -18,10 +18,7 @@ export function FiltersPanel({ category, filters, yearPresets, onChange }: Filte
   const { dict } = useTranslation();
 
   return (
-    <aside
-      aria-label={dict.browse.filters.title}
-      className="sticky top-39 hidden max-h-[calc(100dvh-10.75rem)] flex-col gap-5 overflow-y-auto overscroll-contain rounded-3xl bg-surface p-5 lg:flex"
-    >
+    <aside aria-label={dict.browse.filters.title} className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-extrabold">{dict.browse.filters.title}</h2>
         <ResetFiltersButton filters={filters} variant="ghost" onReset={onChange} />

@@ -1,24 +1,109 @@
 import { Skeleton } from '@heroui/react';
 import { BrowseGridSkeleton } from './browse-grid';
+import { BrowseLayout } from './browse-layout';
+
+const POOL_CHIP_WIDTHS = ['w-32', 'w-40', 'w-24', 'w-32', 'w-36'] as const;
+const VISIBLE_POOL_CHIPS_ON_PHONE = 3;
+const GENRE_TAG_WIDTHS = [
+  'w-24',
+  'w-24',
+  'w-20',
+  'w-20',
+  'w-16',
+  'w-28',
+  'w-20',
+  'w-24',
+  'w-24',
+  'w-24',
+  'w-28',
+  'w-28',
+  'w-24',
+  'w-28',
+  'w-28',
+  'w-20',
+  'w-24',
+] as const;
+const YEAR_TAG_WIDTHS = ['w-28', 'w-16', 'w-16', 'w-20', 'w-20', 'w-20', 'w-24'] as const;
+
+function TypeSwitchSkeleton() {
+  return (
+    <div className="flex min-h-tap items-center gap-5">
+      <Skeleton className="h-8 w-32 rounded-lg md:h-9 md:w-40" />
+      <Skeleton className="h-8 w-28 rounded-lg md:h-9 md:w-36" />
+    </div>
+  );
+}
+
+function PoolsSkeleton() {
+  return (
+    <div className="flex min-w-0 flex-1 gap-2 overflow-hidden">
+      {Array.from(POOL_CHIP_WIDTHS, (width, index) => (
+        <Skeleton
+          key={index}
+          className={`h-10 shrink-0 rounded-full ${width} ${
+            index < VISIBLE_POOL_CHIPS_ON_PHONE ? '' : 'hidden sm:block'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function TagsSkeleton({ widths }: { widths: readonly string[] }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {Array.from(widths, (width, index) => (
+        <Skeleton key={index} className={`h-10 rounded-full ${width}`} />
+      ))}
+    </div>
+  );
+}
+
+function FiltersPanelSkeleton() {
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-6 w-20 rounded-full" />
+        <Skeleton className="h-8 w-16 rounded-full" />
+      </div>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2.5">
+          <Skeleton className="h-4 w-16 rounded-full" />
+          <Skeleton className="h-3 w-24 rounded-full" />
+          <TagsSkeleton widths={GENRE_TAG_WIDTHS} />
+        </div>
+        <div className="flex flex-col gap-2.5">
+          <Skeleton className="h-4 w-24 rounded-full" />
+          <TagsSkeleton widths={YEAR_TAG_WIDTHS} />
+        </div>
+        <div className="flex flex-col gap-2.5">
+          <Skeleton className="h-4 w-20 rounded-full" />
+          <Skeleton className="h-3 w-40 rounded-full" />
+          <Skeleton className="h-10 w-full rounded-full" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function BrowseSkeleton({ label }: { label: string }) {
   return (
-    <div role="status" className="flex flex-col gap-4 px-4 pb-10 md:px-0">
+    <div role="status" className="flex flex-col pb-10">
       <span className="sr-only">{label}</span>
-      <div aria-hidden className="flex items-center gap-3">
-        <Skeleton className="h-9 flex-1 rounded-full md:max-w-40" />
-        <Skeleton className="h-12 w-48 rounded-2xl md:w-56" />
-      </div>
-      <div aria-hidden className="flex gap-2">
-        <Skeleton className="h-10 w-32 rounded-full" />
-        <Skeleton className="h-10 w-36 rounded-full" />
-      </div>
-      <div aria-hidden className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8 lg:pt-2">
-        <Skeleton className="hidden h-96 rounded-3xl lg:block" />
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-4 w-56 rounded-full" />
-          <BrowseGridSkeleton hasSidebar />
-        </div>
+      <div aria-hidden className="contents">
+        <BrowseLayout
+          typeSwitch={<TypeSwitchSkeleton />}
+          pools={<PoolsSkeleton />}
+          filtersButton={<Skeleton className="h-10 w-10 rounded-full sm:w-28" />}
+          filtersPanel={<FiltersPanelSkeleton />}
+          summary={
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-4 w-56 max-w-full rounded-full" />
+            </div>
+          }
+          sort={<Skeleton className="h-5 w-36 shrink-0 rounded-full" />}
+          results={<BrowseGridSkeleton hasSidebar />}
+        />
       </div>
     </div>
   );

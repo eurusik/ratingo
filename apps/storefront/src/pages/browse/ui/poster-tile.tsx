@@ -71,7 +71,9 @@ export function PosterTileSkeleton() {
         <Skeleton className="h-[0.8em] w-4/5 rounded-full" />
         <Skeleton className="h-[0.8em] w-1/2 rounded-full" />
       </div>
-      <Skeleton className="h-6 w-24 rounded-full" />
+      <div className="flex min-h-6 items-center">
+        <Skeleton className="h-5 w-24 rounded-full" />
+      </div>
     </div>
   );
 }
