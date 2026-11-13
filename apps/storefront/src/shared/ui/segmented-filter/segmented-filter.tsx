@@ -13,6 +13,7 @@ interface SegmentedFilterProps<T extends string> {
   options: readonly SegmentedFilterOption<T>[];
   value: T;
   onChange: (value: T) => void;
+  descriptionId?: string;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export function SegmentedFilter<T extends string>({
   options,
   value,
   onChange,
+  descriptionId,
   className,
 }: SegmentedFilterProps<T>) {
   const onSelectionChange = (keys: Set<Key>) => {
@@ -32,6 +34,7 @@ export function SegmentedFilter<T extends string>({
   return (
     <ToggleButtonGroup
       aria-label={label}
+      aria-describedby={descriptionId}
       selectionMode="single"
       disallowEmptySelection
       isDetached

@@ -18,9 +18,11 @@
 
 :root {
   --page-gutter: 1rem;
+  scroll-padding-top: 5rem;
 
   @media (width >= 48rem) {
     --page-gutter: clamp(2rem, 4vw, 3.5rem);
+    scroll-padding-top: 9rem;
   }
 }
 

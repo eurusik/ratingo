@@ -1,13 +1,19 @@
 'use client';
 
+import { useId } from 'react';
 import { Description, Label, Tag, TagGroup, type Selection } from '@heroui/react';
 import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { SegmentedFilter } from '@/shared/ui';
 import { SCORE_THRESHOLDS, type BrowseFilters, type ScoreThreshold } from '../model/browse-state';
-import { genreLabel, yearPresetLabel } from '../model/filter-labels';
+import { genreLabel, yearPresetLabel } from '../model/browse-labels';
 import { GENRE_SLUGS, isGenreOf, type GenreSlug } from '../model/genres';
-import { matchYearPreset, type YearPreset, type YearRange } from '../model/year-presets';
+import {
+  hasYearRange,
+  matchYearPreset,
+  type YearPreset,
+  type YearRange,
+} from '../model/year-presets';
 
 const ANY = 'any';
 const TAG_CLASS = 'min-h-10 px-3.5';
@@ -58,6 +64,10 @@ interface YearFieldProps {
 function YearField({ presets, value, onChange }: YearFieldProps) {
   const { dict } = useTranslation();
 
+  const matched = matchYearPreset(presets, value)?.id;
+  const customRangeKeys = hasYearRange(value) ? [] : [ANY];
+  const selectedYearKeys = matched ? [matched] : customRangeKeys;
+
   const pick = (selection: Selection) => {
     const [id] = selectedKeys(selection);
     const preset = presets.find((candidate) => candidate.id === id);
@@ -67,8 +77,7 @@ function YearField({ presets, value, onChange }: YearFieldProps) {
   return (
     <TagGroup
       selectionMode="single"
-      disallowEmptySelection
-      selectedKeys={[matchYearPreset(presets, value)?.id ?? ANY]}
+      selectedKeys={selectedYearKeys}
       onSelectionChange={pick}
       className="flex flex-col gap-2.5"
     >
@@ -94,6 +103,7 @@ interface ScoreFieldProps {
 
 function ScoreField({ value, onChange }: ScoreFieldProps) {
   const { dict } = useTranslation();
+  const hintId = useId();
   const labels = dict.browse.filters;
   const options: { id: ScoreOption; label: string }[] = [
     { id: ANY, label: labels.scoreAny },
@@ -104,13 +114,16 @@ function ScoreField({ value, onChange }: ScoreFieldProps) {
     <div className="flex flex-col gap-2.5">
       <div className="flex flex-col gap-0.5">
         <span className="text-sm font-medium">{labels.score}</span>
-        <p className="text-xs text-muted">{labels.scoreHint[value ?? ANY]}</p>
+        <p id={hintId} className="text-xs text-muted">
+          {labels.scoreHint[value ?? ANY]}
+        </p>
       </div>
       <SegmentedFilter<ScoreOption>
         label={labels.score}
         options={options}
         value={value === undefined ? ANY : `${value}`}
         onChange={(option) => onChange(SCORE_THRESHOLDS.find((score) => `${score}` === option))}
+        descriptionId={hintId}
         className="px-0"
       />
     </div>

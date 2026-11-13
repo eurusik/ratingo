@@ -1,27 +1,40 @@
 import type { MediaType } from '@/shared/api';
-import { interpolate, type Dictionary, type Locale } from '@/shared/i18n';
-import type { BrowseFilters, ScoreThreshold } from './browse-state';
+import { interpolate, useTranslation, type Dictionary, type Locale } from '@/shared/i18n';
+import type { ScoreThreshold } from './browse-state';
 import type { FilterRemoval } from './filter-removals';
 import type { GenreSlug } from './genres';
 import { matchYearPreset, type YearPreset, type YearRange } from './year-presets';
 
 const CENTURY = 100;
-const pluralRules = new Map<Locale, Intl.PluralRules>();
+const GROUP_SEPARATOR = /\s/g;
+const NO_BREAK_SPACE = ' ';
 
-function pluralCategory(locale: Locale, count: number): Intl.LDMLPluralRule {
-  let rules = pluralRules.get(locale);
-  if (!rules) {
-    rules = new Intl.PluralRules(locale);
-    pluralRules.set(locale, rules);
-  }
-  return rules.select(count);
+const pluralRules = new Map<Locale, Intl.PluralRules>();
+const countFormats = new Map<Locale, Intl.NumberFormat>();
+
+function cached<T>(cache: Map<Locale, T>, locale: Locale, create: () => T): T {
+  const existing = cache.get(locale);
+  if (existing) return existing;
+  const created = create();
+  cache.set(locale, created);
+  return created;
+}
+
+function formatCount(locale: Locale, count: number): string {
+  const format = cached(countFormats, locale, () => new Intl.NumberFormat(locale));
+  return format.format(count).replace(GROUP_SEPARATOR, NO_BREAK_SPACE);
 }
 
 export function countLabel(dict: Dictionary, locale: Locale, type: MediaType, count: number) {
   const forms = dict.browse.count[type];
-  const category = pluralCategory(locale, count);
+  const category = cached(pluralRules, locale, () => new Intl.PluralRules(locale)).select(count);
   const form = category === 'zero' || category === 'two' ? forms.other : forms[category];
-  return interpolate(form, { count: count.toLocaleString(locale) });
+  return interpolate(form, { count: formatCount(locale, count) });
+}
+
+export function useCountLabel(type: MediaType): (count: number) => string {
+  const { dict, locale } = useTranslation();
+  return (count) => countLabel(dict, locale, type, count);
 }
 
 export function genreLabel(dict: Dictionary, slug: GenreSlug): string {
@@ -32,9 +45,8 @@ export function yearPresetLabel(dict: Dictionary, preset: YearPreset): string {
   const { filters } = dict.browse;
   if (preset.id === 'older') return filters.older;
   if (preset.id === 'current' || preset.id === 'previous') return String(preset.yearFrom);
-  const decade = preset.yearFrom ?? 0;
-  const template = decade % CENTURY === 0 ? filters.decadeMillennium : filters.decade;
-  return interpolate(template, { decade });
+  const template = preset.yearFrom % CENTURY === 0 ? filters.decadeMillennium : filters.decade;
+  return interpolate(template, { decade: preset.yearFrom });
 }
 
 export function yearRangeLabel(
@@ -57,10 +69,9 @@ function scoreLabel(dict: Dictionary, score: ScoreThreshold): string {
 export function removalLabel(
   dict: Dictionary,
   presets: readonly YearPreset[],
-  filters: BrowseFilters,
   removal: FilterRemoval,
 ): string {
   if (removal.kind === 'genre') return genreLabel(dict, removal.genre);
-  if (removal.kind === 'year') return yearRangeLabel(dict, presets, filters);
-  return filters.minScore === undefined ? '' : scoreLabel(dict, filters.minScore);
+  if (removal.kind === 'year') return yearRangeLabel(dict, presets, removal.range);
+  return scoreLabel(dict, removal.score);
 }

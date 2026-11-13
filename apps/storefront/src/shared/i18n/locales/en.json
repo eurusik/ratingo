@@ -408,7 +408,7 @@
       "active": "Active filters",
       "remove": "Remove filter “{label}”",
       "genres": "Genres",
-      "genresHint": "Pick any",
+      "genresHint": "Pick as many as you like",
       "year": "Release year",
       "yearAny": "Any",
       "decade": "{decade}s",
@@ -436,11 +436,11 @@
     "list": {
       "label": "{title}: list",
       "loading": "Loading more…",
-      "failed": "Couldn't load more",
+      "failed": "Couldn’t load more",
       "failedHint": "Check your connection and try again",
-      "firstFailed": "Couldn't load the list",
+      "firstFailed": "Couldn’t load the list",
       "retry": "Try again",
-      "end": "That's all: {result}"
+      "end": "That’s all: {result}"
     },
     "backToTop": "Back to top",
     "genres": {

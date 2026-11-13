@@ -1,11 +1,11 @@
 'use client';
 
-import { Button } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
 import type { BrowseCategory } from '../model/browse-category';
-import { NO_FILTERS, activeFilterCount, type BrowseFilters } from '../model/browse-state';
+import type { BrowseFilters } from '../model/browse-state';
 import type { YearPreset } from '../model/year-presets';
 import { FilterFields } from './filter-fields';
+import { ResetFiltersButton } from './reset-filters-button';
 
 interface FiltersPanelProps {
   category: BrowseCategory;
@@ -24,14 +24,7 @@ export function FiltersPanel({ category, filters, yearPresets, onChange }: Filte
     >
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-extrabold">{dict.browse.filters.title}</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          isDisabled={activeFilterCount(filters) === 0}
-          onPress={() => onChange(NO_FILTERS)}
-        >
-          {dict.browse.filters.reset}
-        </Button>
+        <ResetFiltersButton filters={filters} variant="ghost" onReset={onChange} />
       </div>
       <FilterFields
         type={category.type}

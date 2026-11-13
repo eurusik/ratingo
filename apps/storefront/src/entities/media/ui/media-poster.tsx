@@ -4,6 +4,8 @@ import type { MediaType } from '@/shared/api';
 
 type PosterSize = 'row' | 'list' | 'rank' | 'grid';
 
+export type PosterLoadPriority = 'high' | 'eager' | 'lazy';
+
 const POSTER_SIZES: Record<PosterSize, { width: number; height: number; className: string }> = {
   row: { width: 40, height: 60, className: 'h-15 w-10 rounded-lg' },
   list: { width: 154, height: 231, className: 'h-24 w-16 rounded-lg' },
@@ -19,7 +21,7 @@ interface MediaPosterProps {
   type: MediaType;
   posterUrl?: string;
   size?: PosterSize;
-  isPriority?: boolean;
+  loadPriority?: PosterLoadPriority;
 }
 
 export function MediaTypeIcon({ type, className }: { type: MediaType; className?: string }) {
@@ -27,7 +29,12 @@ export function MediaTypeIcon({ type, className }: { type: MediaType; className?
   return <Icon aria-hidden className={className} />;
 }
 
-export function MediaPoster({ type, posterUrl, size = 'row', isPriority = false }: MediaPosterProps) {
+export function MediaPoster({
+  type,
+  posterUrl,
+  size = 'row',
+  loadPriority = 'lazy',
+}: MediaPosterProps) {
   const { width, height, className } = POSTER_SIZES[size];
 
   if (!posterUrl) {
@@ -47,8 +54,8 @@ export function MediaPoster({ type, posterUrl, size = 'row', isPriority = false 
       width={width}
       height={height}
       unoptimized
-      loading={isPriority ? 'eager' : 'lazy'}
-      fetchPriority={isPriority ? 'high' : 'auto'}
+      loading={loadPriority === 'lazy' ? 'lazy' : 'eager'}
+      fetchPriority={loadPriority === 'high' ? 'high' : 'auto'}
       className={`shrink-0 bg-surface-secondary object-cover ${className}`}
     />
   );

@@ -4,9 +4,16 @@ import { useEffect, useState } from 'react';
 import { Button } from '@heroui/react';
 import { ArrowUp } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
+import { MAIN_CONTENT_ID } from '@/shared/ui';
 
 const VISIBLE_AFTER_SCREENS = 2;
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+function scrollToTop(): void {
+  const prefersReducedMotion = window.matchMedia(REDUCED_MOTION_QUERY).matches;
+  window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+  document.getElementById(MAIN_CONTENT_ID)?.focus({ preventScroll: true });
+}
 
 export function BackToTop() {
   const { dict } = useTranslation();
@@ -20,11 +27,6 @@ export function BackToTop() {
   }, []);
 
   if (!isVisible) return null;
-
-  const scrollToTop = () => {
-    const prefersReducedMotion = window.matchMedia(REDUCED_MOTION_QUERY).matches;
-    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
-  };
 
   return (
     <Button

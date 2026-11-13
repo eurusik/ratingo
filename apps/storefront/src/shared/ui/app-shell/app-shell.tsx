@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-const MAIN_CONTENT_ID = 'main-content';
+export const MAIN_CONTENT_ID = 'main-content';
 
 interface AppShellProps {
   header: ReactNode;

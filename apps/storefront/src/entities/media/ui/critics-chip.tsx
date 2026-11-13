@@ -30,7 +30,7 @@ export function CriticsChip({ percent, size = 'md' }: CriticsChipProps) {
   return (
     <Chip
       size={size}
-      className={`font-extrabold tabular-nums ${size === 'md' ? 'ps-2' : ''} ${RATING_CHIP_CLASSES[size].chip}`}
+      className={`font-extrabold tabular-nums ${RATING_CHIP_CLASSES[size].chip} ${RATING_CHIP_CLASSES[size].criticsChip}`}
     >
       <TomatoIcon className={RATING_CHIP_CLASSES[size].icon} />
       <span aria-hidden>{`${rounded}%`}</span>

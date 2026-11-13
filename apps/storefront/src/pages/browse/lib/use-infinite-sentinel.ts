@@ -4,7 +4,13 @@ import { useEffect, useRef } from 'react';
 
 const PRELOAD_MARGIN = '800px 0px';
 
-export function useInfiniteSentinel(onReach: () => void, isEnabled: boolean, loadedCount: number) {
+interface InfiniteSentinelOptions {
+  onReach: () => void;
+  isEnabled: boolean;
+  rearmKey: number;
+}
+
+export function useInfiniteSentinel({ onReach, isEnabled, rearmKey }: InfiniteSentinelOptions) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const onReachRef = useRef(onReach);
 
@@ -24,7 +30,7 @@ export function useInfiniteSentinel(onReach: () => void, isEnabled: boolean, loa
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [isEnabled, loadedCount]);
+  }, [isEnabled, rearmKey]);
 
   return sentinelRef;
 }

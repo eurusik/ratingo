@@ -1,6 +1,6 @@
 import { getDictionary } from '@/shared/i18n';
-import { countLabel, yearPresetLabel, yearRangeLabel } from './filter-labels';
-import { filterRemovals } from './filter-removals';
+import { countLabel, yearPresetLabel, yearRangeLabel } from './browse-labels';
+import { bestRemoval, filterRemovals } from './filter-removals';
 import { yearPresets } from './year-presets';
 
 const uk = getDictionary('uk');
@@ -49,7 +49,35 @@ describe('filterRemovals', () => {
 
     expect(removals.map((removal) => removal.id)).toEqual(['genre:drama', 'year', 'score']);
     expect(removals[0]?.next).toEqual({ ...filters, genres: [] });
+    expect(removals[1]).toMatchObject({ range: { yearFrom: 2020, yearTo: 2029 } });
     expect(removals[1]?.next).toMatchObject({ yearFrom: undefined, yearTo: undefined, minScore: 7 });
     expect(removals[2]?.next).toMatchObject({ minScore: undefined, genres: ['drama'] });
+  });
+});
+
+describe('bestRemoval', () => {
+  it('picks the removal that brings back the most titles and ignores empty ones', () => {
+    const [genre, year, score] = filterRemovals({
+      genres: ['drama'],
+      yearFrom: 2020,
+      yearTo: 2029,
+      minScore: 8,
+    });
+    if (!genre || !year || !score) throw new Error('Expected three removals');
+
+    expect(
+      bestRemoval([
+        { removal: genre, total: 4 },
+        { removal: year, total: 12 },
+        { removal: score, total: 0 },
+      ])?.removal.id,
+    ).toBe('year');
+    expect(bestRemoval([{ removal: score, total: 0 }])).toBeUndefined();
+  });
+});
+
+describe('countLabel grouping', () => {
+  it('groups thousands with a no-break space on both server and client', () => {
+    expect(countLabel(uk, 'uk', 'movie', 4210)).toBe('4\u00a0210 фільмів');
   });
 });

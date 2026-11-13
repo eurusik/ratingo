@@ -1,37 +1,75 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, use, useMemo, useState } from 'react';
 import { Button, Chip } from '@heroui/react';
 import { SlidersHorizontal } from 'lucide-react';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { ResponsiveDialog } from '@/shared/ui';
 import type { BrowseCategory } from '../model/browse-category';
-import {
-  NO_FILTERS,
-  activeFilterCount,
-  type BrowseFilters,
-  type BrowseState,
-} from '../model/browse-state';
-import { countLabel } from '../model/filter-labels';
+import { useCountLabel } from '../model/browse-labels';
+import { activeFilterCount, type BrowseFilters, type BrowseState } from '../model/browse-state';
+import type { FirstPageResult } from '../model/first-page';
 import { useBrowseCount } from '../model/use-browse-count';
 import type { YearPreset } from '../model/year-presets';
 import { FilterFields } from './filter-fields';
+import { ResetFiltersButton } from './reset-filters-button';
+
+interface ApplyButtonProps {
+  category: BrowseCategory;
+  state: BrowseState;
+  draft: BrowseState;
+  firstPage: Promise<FirstPageResult>;
+  onApply: () => void;
+}
+
+function ApplyButton({ category, state, draft, firstPage, onApply }: ApplyButtonProps) {
+  const { dict } = useTranslation();
+  const labels = dict.browse.filters;
+  const countLabel = useCountLabel(category.type);
+  const result = use(firstPage);
+  const knownTotal = result.status === 'loaded' ? { state, total: result.page.total } : undefined;
+  const { count, isUnavailable } = useBrowseCount(category.slug, draft, knownTotal, true);
+
+  const label = () => {
+    if (isUnavailable) return labels.showUncounted;
+    if (count === undefined) return labels.counting;
+    if (count === 0) return labels.nothingFound;
+    return interpolate(labels.show, { result: countLabel(count) });
+  };
+
+  return (
+    <>
+      <Button variant="primary" className="flex-1" onPress={onApply} isDisabled={count === 0}>
+        {label()}
+      </Button>
+      <span aria-live="polite" className="sr-only">
+        {label()}
+      </span>
+    </>
+  );
+}
 
 interface FiltersDialogProps {
   category: BrowseCategory;
   state: BrowseState;
+  firstPage: Promise<FirstPageResult>;
   yearPresets: readonly YearPreset[];
   onApply: (filters: BrowseFilters) => void;
 }
 
-export function FiltersDialog({ category, state, yearPresets, onApply }: FiltersDialogProps) {
-  const { dict, locale } = useTranslation();
+export function FiltersDialog({
+  category,
+  state,
+  firstPage,
+  yearPresets,
+  onApply,
+}: FiltersDialogProps) {
+  const { dict } = useTranslation();
   const labels = dict.browse.filters;
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState<BrowseFilters>(state.filters);
   const draftState = useMemo(() => ({ sort: state.sort, filters: draft }), [state.sort, draft]);
-  const { count, isUnavailable } = useBrowseCount(category.slug, draftState, isOpen);
-  const active = activeFilterCount(state.filters);
+  const activeCount = activeFilterCount(state.filters);
 
   const open = () => {
     setDraft(state.filters);
@@ -43,27 +81,22 @@ export function FiltersDialog({ category, state, yearPresets, onApply }: Filters
     onApply(draft);
   };
 
-  const applyLabel = () => {
-    if (isUnavailable) return labels.showUncounted;
-    if (count === undefined) return labels.counting;
-    if (count === 0) return labels.nothingFound;
-    return interpolate(labels.show, { result: countLabel(dict, locale, category.type, count) });
-  };
-
   return (
     <>
       <Button
         variant="outline"
         size="sm"
         onPress={open}
-        aria-label={active > 0 ? interpolate(labels.openActive, { count: active }) : labels.open}
+        aria-label={
+          activeCount > 0 ? interpolate(labels.openActive, { count: activeCount }) : labels.open
+        }
         className="min-h-10 shrink-0 gap-1.5 rounded-full px-3.5"
       >
         <SlidersHorizontal aria-hidden className="size-4" />
         {labels.open}
-        {active > 0 ? (
+        {activeCount > 0 ? (
           <Chip aria-hidden size="sm" color="accent" variant="primary" className="tabular-nums">
-            {active}
+            {activeCount}
           </Chip>
         ) : null}
       </Button>
@@ -73,16 +106,22 @@ export function FiltersDialog({ category, state, yearPresets, onApply }: Filters
         title={labels.title}
         footer={
           <div className="flex w-full gap-2">
-            <Button
-              variant="secondary"
-              onPress={() => setDraft(NO_FILTERS)}
-              isDisabled={activeFilterCount(draft) === 0}
+            <ResetFiltersButton filters={draft} variant="secondary" onReset={setDraft} />
+            <Suspense
+              fallback={
+                <Button variant="primary" className="flex-1" isDisabled>
+                  {labels.counting}
+                </Button>
+              }
             >
-              {labels.reset}
-            </Button>
-            <Button variant="primary" className="flex-1" onPress={apply} isDisabled={count === 0}>
-              {applyLabel()}
-            </Button>
+              <ApplyButton
+                category={category}
+                state={state}
+                draft={draftState}
+                firstPage={firstPage}
+                onApply={apply}
+              />
+            </Suspense>
           </div>
         }
       >

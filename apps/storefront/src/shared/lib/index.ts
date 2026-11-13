@@ -5,6 +5,7 @@ export { replaceDocumentLocation } from './document-location';
 export { interleave } from './interleave';
 export { DESKTOP_MEDIA_QUERY, useMediaQuery } from './media-query';
 export {
+  currentYear,
   formatCompactCount,
   formatScore,
   positiveNumber,

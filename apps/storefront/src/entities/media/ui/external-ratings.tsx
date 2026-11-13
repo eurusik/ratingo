@@ -1,6 +1,6 @@
 import { CriticsChip } from './critics-chip';
 import { ImdbChip } from './imdb-chip';
-import type { RatingChipSize } from './rating-chip-size';
+import { RATING_CHIP_CLASSES, type RatingChipSize } from './rating-chip-size';
 
 interface ExternalRatingsProps {
   imdbRating?: number;
@@ -18,7 +18,7 @@ export function ExternalRatings({
   if (imdbRating === undefined && criticsPercent === undefined) return null;
 
   return (
-    <div className={`flex ${size === 'md' ? 'gap-1.5' : 'gap-1'} ${className ?? ''}`}>
+    <div className={`flex ${RATING_CHIP_CLASSES[size].row} ${className ?? ''}`}>
       {imdbRating === undefined ? null : <ImdbChip rating={imdbRating} size={size} />}
       {criticsPercent === undefined ? null : <CriticsChip percent={criticsPercent} size={size} />}
     </div>

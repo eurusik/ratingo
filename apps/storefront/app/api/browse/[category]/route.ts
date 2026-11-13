@@ -1,4 +1,4 @@
-import { respondWithBrowsePage } from '@/pages/browse';
+import { respondWithBrowsePage } from '@/pages/browse/index.server';
 
 interface BrowseRouteContext {
   params: Promise<{ category: string }>;

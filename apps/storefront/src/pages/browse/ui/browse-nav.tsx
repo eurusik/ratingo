@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Tabs, buttonVariants } from '@heroui/react';
+import { buttonVariants } from '@heroui/react';
 import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import {
@@ -22,27 +22,28 @@ function hrefFor(target: BrowseCategory, state: BrowseState): string {
   return browseHref(target.slug, carryStateTo(target, state));
 }
 
-export function TypeTabs({ category, state }: BrowseNavProps) {
+export function TypeSwitch({ category, state }: BrowseNavProps) {
   const { dict } = useTranslation();
 
   return (
-    <Tabs selectedKey={category.type} className="w-48 shrink-0 md:w-56">
-      <Tabs.ListContainer>
-        <Tabs.List aria-label={dict.browse.typeLabel}>
-          {MEDIA_TYPES.map((type) => (
-            <Tabs.Tab
-              key={type}
-              id={type}
-              href={hrefFor(counterpartCategory(category, type), state)}
-              className="min-h-tap md:min-h-0"
-            >
-              {dict.browse.type[type]}
-              <Tabs.Indicator />
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-      </Tabs.ListContainer>
-    </Tabs>
+    <nav
+      aria-label={dict.browse.typeLabel}
+      className="grid w-48 shrink-0 grid-cols-2 gap-1 rounded-2xl bg-default p-1 md:w-56"
+    >
+      {MEDIA_TYPES.map((type) => {
+        const isCurrent = type === category.type;
+        return (
+          <Link
+            key={type}
+            href={hrefFor(counterpartCategory(category, type), state)}
+            aria-current={isCurrent ? 'page' : undefined}
+            className="flex min-h-tap items-center justify-center rounded-xl text-sm font-semibold text-muted no-underline transition-colors outline-none hover:text-foreground focus-visible:outline-2 focus-visible:outline-focus aria-[current=page]:bg-background aria-[current=page]:text-foreground aria-[current=page]:shadow-sm md:min-h-9"
+          >
+            {dict.browse.type[type]}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 

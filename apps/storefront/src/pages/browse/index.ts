@@ -1,4 +1,3 @@
-export { respondWithBrowsePage } from './api/browse-route';
 export {
   BROWSE_CATEGORY_SLUGS,
   DEFAULT_BROWSE_CATEGORY,

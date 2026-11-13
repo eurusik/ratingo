@@ -1,13 +1,14 @@
-type YearPresetId = 'current' | 'previous' | 'decade' | 'olderDecade' | 'oldestDecade' | 'older';
-
 export interface YearRange {
   yearFrom?: number;
   yearTo?: number;
 }
 
-export interface YearPreset extends YearRange {
-  id: YearPresetId;
-}
+type DecadePresetId = 'decade' | 'olderDecade' | 'oldestDecade';
+
+export type YearPreset =
+  | { id: 'current' | 'previous'; yearFrom: number; yearTo: number }
+  | { id: DecadePresetId; yearFrom: number; yearTo: number }
+  | { id: 'older'; yearFrom?: undefined; yearTo: number };
 
 const DECADE = 10;
 

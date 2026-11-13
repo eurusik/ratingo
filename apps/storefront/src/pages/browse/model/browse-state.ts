@@ -21,27 +21,28 @@ export interface BrowseState {
 
 export type BrowseSearchParams = Record<string, string | string[] | undefined>;
 
+type FilterQuery = Omit<CatalogListQuery, 'limit' | 'offset'>;
+
+const DEFAULT_SORT = 'recommended' satisfies BrowseSort;
 export const NO_FILTERS: BrowseFilters = { genres: [] };
+export const DEFAULT_BROWSE_STATE: BrowseState = { sort: DEFAULT_SORT, filters: NO_FILTERS };
 
 export const BROWSE_PAGE_SIZE = 24;
 
 const QUALITY_PER_SCORE_POINT = 10;
-const EARLIEST_YEAR = 1870;
+const API_EARLIEST_YEAR = 1900;
+const API_LATEST_YEAR = 2100;
 const LATEST_YEAR_AHEAD = 10;
 const LIST_SEPARATOR = ',';
-
-const PARAMS = {
-  sort: 'sort',
-  genres: 'genres',
-  yearFrom: 'yearFrom',
-  yearTo: 'yearTo',
-  minQuality: 'minQuality',
-} as const;
 
 export function sortsFor(category: BrowseCategory): BrowseSort[] {
   return category.type === 'show'
     ? ['recommended', 'releaseDate', 'lastAirDate']
     : ['recommended', 'releaseDate'];
+}
+
+function toMinQuality(score: ScoreThreshold): number {
+  return score * QUALITY_PER_SCORE_POINT;
 }
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -50,27 +51,26 @@ function firstValue(value: string | string[] | undefined): string | undefined {
 
 function parseYear(value: string | undefined, currentYear: number): number | undefined {
   const year = Number(value);
-  return Number.isInteger(year) && year >= EARLIEST_YEAR && year <= currentYear + LATEST_YEAR_AHEAD
-    ? year
-    : undefined;
+  const latest = Math.min(API_LATEST_YEAR, currentYear + LATEST_YEAR_AHEAD);
+  return Number.isInteger(year) && year >= API_EARLIEST_YEAR && year <= latest ? year : undefined;
 }
 
 function parseYearRange(params: BrowseSearchParams, currentYear: number): YearRange {
-  const yearFrom = parseYear(firstValue(params[PARAMS.yearFrom]), currentYear);
-  const yearTo = parseYear(firstValue(params[PARAMS.yearTo]), currentYear);
+  const yearFrom = parseYear(firstValue(params.yearFrom), currentYear);
+  const yearTo = parseYear(firstValue(params.yearTo), currentYear);
   if (yearFrom !== undefined && yearTo !== undefined && yearFrom > yearTo) return {};
   return { yearFrom, yearTo };
 }
 
 function parseGenres(category: BrowseCategory, params: BrowseSearchParams): GenreSlug[] {
-  const requested = firstValue(params[PARAMS.genres])?.split(LIST_SEPARATOR) ?? [];
+  const requested = firstValue(params.genres)?.split(LIST_SEPARATOR) ?? [];
   const known = requested.filter((slug): slug is GenreSlug => isGenreOf(category.type, slug));
   return [...new Set(known)];
 }
 
 function parseMinScore(params: BrowseSearchParams): ScoreThreshold | undefined {
-  const minQuality = Number(firstValue(params[PARAMS.minQuality]));
-  return SCORE_THRESHOLDS.find((score) => score * QUALITY_PER_SCORE_POINT === minQuality);
+  const minQuality = Number(firstValue(params.minQuality));
+  return SCORE_THRESHOLDS.find((score) => toMinQuality(score) === minQuality);
 }
 
 export function parseBrowseState(
@@ -78,8 +78,8 @@ export function parseBrowseState(
   params: BrowseSearchParams,
   currentYear: number,
 ): BrowseState {
-  const requestedSort = firstValue(params[PARAMS.sort]);
-  const sort = sortsFor(category).find((option) => option === requestedSort) ?? 'recommended';
+  const requestedSort = firstValue(params.sort);
+  const sort = sortsFor(category).find((option) => option === requestedSort) ?? DEFAULT_SORT;
   if (!category.isFilterable) return { sort, filters: NO_FILTERS };
 
   return {
@@ -100,25 +100,35 @@ export function activeFilterCount(filters: BrowseFilters): number {
   );
 }
 
-export function browseSearchParams({ sort, filters }: BrowseState): URLSearchParams {
+function toFilterQuery({ sort, filters }: BrowseState): FilterQuery {
+  return {
+    sort: sort === DEFAULT_SORT ? undefined : sort,
+    genres: filters.genres.length > 0 ? filters.genres.join(LIST_SEPARATOR) : undefined,
+    yearFrom: filters.yearFrom,
+    yearTo: filters.yearTo,
+    minQuality: filters.minScore === undefined ? undefined : toMinQuality(filters.minScore),
+  };
+}
+
+export function browseSearchParams(state: BrowseState): URLSearchParams {
   const params = new URLSearchParams();
-  if (sort !== 'recommended') params.set(PARAMS.sort, sort);
-  if (filters.genres.length > 0) params.set(PARAMS.genres, filters.genres.join(LIST_SEPARATOR));
-  if (filters.yearFrom !== undefined) params.set(PARAMS.yearFrom, String(filters.yearFrom));
-  if (filters.yearTo !== undefined) params.set(PARAMS.yearTo, String(filters.yearTo));
-  if (filters.minScore !== undefined) {
-    params.set(PARAMS.minQuality, String(filters.minScore * QUALITY_PER_SCORE_POINT));
+  for (const [name, value] of Object.entries(toFilterQuery(state))) {
+    if (value !== undefined) params.set(name, String(value));
   }
   return params;
 }
 
+export function browseStateKey(state: BrowseState): string {
+  return browseSearchParams(state).toString();
+}
+
 export function browseHref(slug: BrowseCategorySlug, state: BrowseState): string {
-  const query = browseSearchParams(state).toString();
+  const query = browseStateKey(state);
   return `${BROWSE_ROUTE}/${slug}${query ? `?${query}` : ''}`;
 }
 
 export function carryStateTo(target: BrowseCategory, { sort, filters }: BrowseState): BrowseState {
-  const carriedSort = sortsFor(target).includes(sort) ? sort : 'recommended';
+  const carriedSort = sortsFor(target).includes(sort) ? sort : DEFAULT_SORT;
   if (!target.isFilterable) return { sort: carriedSort, filters: NO_FILTERS };
   return {
     sort: carriedSort,
@@ -127,16 +137,8 @@ export function carryStateTo(target: BrowseCategory, { sort, filters }: BrowseSt
 }
 
 export function toCatalogQuery(
-  { sort, filters }: BrowseState,
+  state: BrowseState,
   page: { offset: number; limit: number },
 ): CatalogListQuery {
-  return {
-    ...page,
-    sort: sort === 'recommended' ? undefined : sort,
-    genres: filters.genres.length > 0 ? filters.genres.join(LIST_SEPARATOR) : undefined,
-    yearFrom: filters.yearFrom,
-    yearTo: filters.yearTo,
-    minQuality:
-      filters.minScore === undefined ? undefined : filters.minScore * QUALITY_PER_SCORE_POINT,
-  };
+  return { ...page, ...toFilterQuery(state) };
 }

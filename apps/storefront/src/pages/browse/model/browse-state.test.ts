@@ -67,6 +67,15 @@ describe('parseBrowseState', () => {
     );
   });
 
+  it('rejects years the API would refuse', () => {
+    const state = parseBrowseState(
+      category('movies-popular'),
+      { yearFrom: '1895', yearTo: '1899' },
+      CURRENT_YEAR,
+    );
+    expect(state.filters).toMatchObject({ yearFrom: undefined, yearTo: undefined });
+  });
+
   it('keeps a future decade end so the decade preset still matches', () => {
     const state = parseBrowseState(
       category('movies-trending'),

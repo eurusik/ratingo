@@ -1,11 +1,10 @@
-import type { TrendingMedia } from '@/entities/media';
 import type { CatalogPage } from '@/shared/api';
 import type { BrowseCategorySlug } from '../model/browse-category';
 import { browseSearchParams, type BrowseState } from '../model/browse-state';
+import type { GridMedia } from '../model/grid-media';
+import { BROWSE_LIMIT_PARAM, BROWSE_OFFSET_PARAM } from './browse-paging';
 
 const BROWSE_API_ROUTE = '/api/browse';
-export const BROWSE_OFFSET_PARAM = 'offset';
-export const BROWSE_LIMIT_PARAM = 'limit';
 
 interface BrowseFetch {
   slug: BrowseCategorySlug;
@@ -21,14 +20,14 @@ export async function fetchBrowsePage({
   offset,
   limit,
   signal,
-}: BrowseFetch): Promise<CatalogPage<TrendingMedia>> {
+}: BrowseFetch): Promise<CatalogPage<GridMedia>> {
   const params = browseSearchParams(state);
   params.set(BROWSE_OFFSET_PARAM, String(offset));
   params.set(BROWSE_LIMIT_PARAM, String(limit));
 
   const response = await fetch(`${BROWSE_API_ROUTE}/${slug}?${params}`, { signal });
   if (!response.ok) throw new Error(`Browse page request failed with ${response.status}`);
-  return (await response.json()) as CatalogPage<TrendingMedia>;
+  return (await response.json()) as CatalogPage<GridMedia>;
 }
 
 export async function fetchBrowseTotal(

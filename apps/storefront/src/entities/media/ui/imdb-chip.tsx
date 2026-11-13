@@ -15,7 +15,7 @@ export function ImdbChip({ rating, size = 'md' }: ImdbChipProps) {
   return (
     <Chip
       size={size}
-      className={`font-extrabold tabular-nums ${size === 'md' ? 'ps-1' : ''} ${RATING_CHIP_CLASSES[size].chip}`}
+      className={`font-extrabold tabular-nums ${RATING_CHIP_CLASSES[size].chip} ${RATING_CHIP_CLASSES[size].imdbChip}`}
     >
       <span
         aria-hidden

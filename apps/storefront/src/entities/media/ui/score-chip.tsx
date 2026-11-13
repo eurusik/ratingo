@@ -14,9 +14,9 @@ export function useScoreLabel(): (score: number) => string {
 
 type ScoreChipTone = 'surface' | 'overlay';
 
-const TONE_CLASSES: Record<ScoreChipTone, string> = {
-  surface: '',
-  overlay: 'bg-black/80 backdrop-blur-md',
+const TONES: Record<ScoreChipTone, { variant: 'soft' | 'tertiary'; className: string }> = {
+  surface: { variant: 'soft', className: '' },
+  overlay: { variant: 'tertiary', className: 'bg-black/80 backdrop-blur-md' },
 };
 
 interface ScoreChipProps {
@@ -31,9 +31,9 @@ export function ScoreChip({ score, tone = 'surface' }: ScoreChipProps) {
   return (
     <Chip
       size="sm"
-      variant={tone === 'overlay' ? 'tertiary' : 'soft'}
+      variant={TONES[tone].variant}
       color={VERDICT_TONES[verdict]}
-      className={`shrink-0 font-extrabold tabular-nums ${TONE_CLASSES[tone]}`}
+      className={`shrink-0 font-extrabold tabular-nums ${TONES[tone].className}`}
     >
       {`${formatScore(locale, score)} · ${dict.rating.verdict[verdict]}`}
     </Chip>

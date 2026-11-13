@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useOptimistic, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BrowseCategorySlug } from './browse-category';
 import { browseHref, type BrowseState } from './browse-state';
@@ -9,14 +9,18 @@ function scrollBackToTop(): void {
   if (window.scrollY > window.innerHeight) window.scrollTo({ top: 0 });
 }
 
-export function useBrowseNavigation(slug: BrowseCategorySlug) {
+export function useBrowseNavigation(slug: BrowseCategorySlug, state: BrowseState) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [shownState, showState] = useOptimistic(state);
 
-  const apply = (state: BrowseState) => {
+  const apply = (next: BrowseState) => {
     scrollBackToTop();
-    startTransition(() => router.replace(browseHref(slug, state), { scroll: false }));
+    startTransition(() => {
+      showState(next);
+      router.replace(browseHref(slug, next), { scroll: false });
+    });
   };
 
-  return { apply, isPending };
+  return { shownState, apply, isPending };
 }
