@@ -44,7 +44,7 @@ export function TypeSwitch({ category, state, onOpen }: BrowseNavProps) {
   return (
     <nav
       aria-label={dict.browse.typeLabel}
-      className="grid w-48 shrink-0 grid-cols-2 gap-1 rounded-2xl bg-default p-1 md:w-56"
+      className="flex items-baseline gap-5"
     >
       {MEDIA_TYPES.map((type) => {
         const next = locationOf(counterpartCategory(category, type), state);
@@ -54,7 +54,7 @@ export function TypeSwitch({ category, state, onOpen }: BrowseNavProps) {
             href={browseHref(next.slug, next.state)}
             onClick={openInPlace(next, onOpen)}
             aria-current={type === category.type ? 'page' : undefined}
-            className="flex min-h-tap items-center justify-center rounded-xl text-sm font-semibold text-muted no-underline transition-colors outline-none hover:text-foreground focus-visible:outline-2 focus-visible:outline-focus aria-[current=page]:bg-background aria-[current=page]:text-foreground aria-[current=page]:shadow-sm md:min-h-9"
+            className="flex min-h-tap items-center rounded-lg text-3xl font-extrabold tracking-tight text-muted no-underline transition-colors outline-none hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-[current=page]:text-foreground md:text-4xl"
           >
             {dict.browse.type[type]}
           </Link>

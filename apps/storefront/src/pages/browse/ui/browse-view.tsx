@@ -121,11 +121,8 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
 
   return (
     <div className="flex flex-col pb-10 md:pt-4">
-      <header className="flex items-center gap-3 px-4 pt-2 md:px-0 md:pt-0">
-        <h1 className="min-w-0 flex-1 truncate text-3xl font-extrabold tracking-tight md:text-4xl">
-          {dict.browse.title}
-          <span className="sr-only">{`: ${title}`}</span>
-        </h1>
+      <header className="px-4 pt-2 md:px-0 md:pt-0">
+        <h1 className="sr-only">{`${dict.browse.title}: ${title}`}</h1>
         <TypeSwitch category={shownCategory} state={shownState} onOpen={navigation.open} />
       </header>
 
