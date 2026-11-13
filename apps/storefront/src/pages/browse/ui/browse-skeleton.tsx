@@ -14,7 +14,7 @@ import { yearPresets } from '../model/year-presets';
 import { BrowseGridSkeleton } from './browse-grid';
 import { BrowseLayout } from './browse-layout';
 
-const CHIP_WIDTHS = ['w-32', 'w-40', 'w-24', 'w-32', 'w-36'] as const;
+const CHIP_WIDTHS = ['w-30', 'w-36', 'w-19', 'w-28', 'w-33'] as const;
 const TAG_WIDTHS = ['w-24', 'w-20', 'w-28', 'w-16', 'w-24', 'w-20', 'w-28'] as const;
 const VISIBLE_POOL_CHIPS_ON_PHONE = 3;
 const ANY_YEAR_TAGS = 1;
@@ -32,8 +32,8 @@ function useLoadingCategory(): BrowseCategory {
 function TypeSwitchSkeleton() {
   return (
     <div className="flex min-h-tap items-center gap-5">
-      <Skeleton className="h-8 w-32 rounded-lg md:h-9 md:w-40" />
-      <Skeleton className="h-8 w-28 rounded-lg md:h-9 md:w-36" />
+      <Skeleton className="h-8 w-29 rounded-lg md:h-9 md:w-35" />
+      <Skeleton className="h-8 w-27 rounded-lg md:h-9 md:w-32" />
     </div>
   );
 }
@@ -113,7 +113,7 @@ export function BrowseSkeleton({ label }: { label: string }) {
               <Skeleton className="h-4 w-56 max-w-full rounded-full" />
             </div>
           }
-          sort={<Skeleton className="h-5 w-36 shrink-0 rounded-full" />}
+          sort={<Skeleton className="h-5 w-40 shrink-0 rounded-full" />}
           results={<BrowseGridSkeleton hasSidebar={isFilterable} />}
         />
       </div>
