@@ -23,6 +23,10 @@ export function TopRankTileSkeleton() {
         <Skeleton className="h-[0.8em] w-4/5 rounded-full" />
         <Skeleton className="h-[0.8em] w-1/2 rounded-full" />
       </div>
+      <div className="flex flex-wrap gap-1.5">
+        <Skeleton className="h-7 w-16 rounded-full" />
+        <Skeleton className="h-7 w-14 rounded-full" />
+      </div>
     </div>
   );
 }
