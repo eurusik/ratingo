@@ -1,4 +1,4 @@
-import { animateSpring } from './spring';
+import { animateSpring } from '../motion/spring';
 
 const FLICK_VELOCITY_PX_PER_MS = 0.4;
 const DRAGGING_ATTRIBUTE = 'data-handle-dragging';

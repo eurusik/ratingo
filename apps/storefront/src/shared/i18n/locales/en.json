@@ -5,8 +5,7 @@
   },
   "home": {
     "title": "Ratingo",
-    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works.",
-    "uiSpikeLink": "UI spike page"
+    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works."
   },
   "session": {
     "heading": "Session",
@@ -33,5 +32,33 @@
       "stateInvalid": "Security check failed. Please try again.",
       "unknown": "Something went wrong. Please try again."
     }
+  },
+  "common": {
+    "close": "Close",
+    "skipToContent": "Skip to content"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "home": "Ratingo home",
+    "today": "Today",
+    "browse": "Browse",
+    "calendar": "Calendar",
+    "my": "My",
+    "search": "Search"
+  },
+  "search": {
+    "title": "Search",
+    "comingSoon": "Search is coming soon."
+  },
+  "placeholder": {
+    "comingSoon": "This section is coming soon."
+  },
+  "pullToRefresh": {
+    "refreshing": "Refreshing…"
+  },
+  "my": {
+    "sampleItem": "Sample #{number}",
+    "remove": "Remove",
+    "sampleHint": "Temporary list: swipe a row left to remove it. In the installed app, pull the page down to bring everything back."
   }
 }

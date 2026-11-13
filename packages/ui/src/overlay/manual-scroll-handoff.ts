@@ -1,4 +1,4 @@
-import { animateSpring } from './spring';
+import { animateSpring } from '../motion/spring';
 
 const FRICTION_PER_60HZ_FRAME = 0.95;
 const REFERENCE_FRAME_MS = 1000 / 60;

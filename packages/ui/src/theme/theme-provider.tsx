@@ -10,7 +10,7 @@ export type ColorTheme = (typeof COLOR_THEMES)[number];
 const DEFAULT_COLOR_THEME: ColorTheme = 'dark';
 
 const THEME_COLORS: Record<ColorTheme, string> = {
-  dark: '#0b0d10',
+  dark: '#060607',
   light: '#f5f5f5',
 };
 
