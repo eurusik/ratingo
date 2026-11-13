@@ -1,61 +1,52 @@
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
-# Install dependencies (monorepo workspace-aware)
 COPY package.json package-lock.json ./
 COPY apps/web-client/package.json apps/web-client/package.json
-COPY apps/*/package.json ./apps/
-COPY packages/*/package.json ./packages/
+COPY packages/web-core/package.json packages/web-core/package.json
+COPY packages/api-contract/package.json packages/api-contract/package.json
 
-RUN npm ci --include-workspace-root --workspace=web-client
+RUN npm ci --include-workspace-root --workspace=web-client --no-audit --no-fund
 
 
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SITE_URL
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_IMAGE_PROXY_ORIGIN
+ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
+ARG APP_ENV
+ARG RAILWAY_GIT_COMMIT_SHA
 
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV NEXT_TELEMETRY_DISABLED=1
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package.json ./package.json
-COPY --from=deps /app/package-lock.json ./package-lock.json
-COPY --from=deps /app/apps ./apps
-COPY --from=deps /app/packages ./packages
-
-# Copy the rest of the repo (sources)
+COPY --from=deps /app ./
 COPY . .
 
 RUN npm run build --workspace=web-client
 
 
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
-ENV NODE_ENV=production
 
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_SITE_URL
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000
 
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+RUN addgroup -S -g 1001 nodejs && adduser -S -u 1001 -G nodejs nextjs
 
-# Install production deps for web-client workspace
-COPY package.json package-lock.json ./
-COPY apps/web-client/package.json apps/web-client/package.json
-COPY apps/*/package.json ./apps/
-COPY packages/*/package.json ./packages/
+COPY --from=build --chown=nextjs:nodejs /app/apps/web-client/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /app/apps/web-client/.next/static ./apps/web-client/.next/static
+COPY --from=build --chown=nextjs:nodejs /app/apps/web-client/public ./apps/web-client/public
 
-RUN npm ci --omit=dev --include-workspace-root --workspace=web-client
+USER nextjs
 
-# Copy Next.js build output
-COPY --from=build /app/apps/web-client/.next ./apps/web-client/.next
-COPY --from=build /app/apps/web-client/next.config.js ./apps/web-client/next.config.js
+EXPOSE 3000
 
-EXPOSE 3002
-
-CMD ["npm", "run", "start", "--workspace=web-client"]
+CMD ["node", "apps/web-client/server.js"]

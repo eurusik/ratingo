@@ -6,8 +6,6 @@
 
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AppProviders } from '@/core/providers';
 import { GoogleAnalytics } from '@/shared/components';
 import { getDictionary } from '@/shared/i18n';
@@ -114,8 +112,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <AppProviders locale="uk" dictionary={dict}>
           {children}
         </AppProviders>
-        <Analytics />
-        <SpeedInsights />
         <GoogleAnalytics />
       </body>
     </html>

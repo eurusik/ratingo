@@ -50,7 +50,7 @@ const serwist = new Serwist({
       }),
     },
     {
-      matcher: /^https:\/\/(.*\.(google-analytics|analytics\.google|googletagmanager)\.com|va\.vercel-scripts\.com)\/.*/i,
+      matcher: /^https:\/\/(.*\.(google-analytics|analytics\.google|googletagmanager)\.com)\/.*/i,
       handler: new NetworkOnly(),
     },
     ...defaultCache,

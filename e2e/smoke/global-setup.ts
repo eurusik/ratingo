@@ -2,22 +2,13 @@ import { chromium, type FullConfig } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { protectionBypassHeaders, SMOKE_STORAGE_STATE } from './protection-bypass';
+import { SMOKE_STORAGE_STATE } from './storage-state';
 
-const VERCEL_LOGIN = /^https:\/\/vercel\.com\//;
-
-async function openTarget(baseURL: string, bypassSecret: string | undefined): Promise<void> {
+async function openTarget(baseURL: string): Promise<void> {
   const browser = await chromium.launch();
   try {
-    const context = await browser.newContext({
-      extraHTTPHeaders: bypassSecret ? protectionBypassHeaders(bypassSecret) : {},
-    });
+    const context = await browser.newContext();
     const response = await context.request.get(baseURL);
-    if (VERCEL_LOGIN.test(response.url())) {
-      throw new Error(
-        `${baseURL} is behind Vercel Deployment Protection: set a valid VERCEL_AUTOMATION_BYPASS_SECRET`,
-      );
-    }
     if (!response.ok()) {
       throw new Error(`${baseURL} answered HTTP ${response.status()}`);
     }
@@ -33,5 +24,5 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     throw new Error('Smoke tests need a base URL: set BASE_URL');
   }
   fs.mkdirSync(path.dirname(SMOKE_STORAGE_STATE), { recursive: true });
-  await openTarget(baseURL, process.env.VERCEL_AUTOMATION_BYPASS_SECRET);
+  await openTarget(baseURL);
 }

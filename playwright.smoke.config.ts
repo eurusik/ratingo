@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-import { SMOKE_STORAGE_STATE } from './e2e/smoke/protection-bypass';
+import { SMOKE_STORAGE_STATE } from './e2e/smoke/storage-state';
 
 const isCi = Boolean(process.env.CI);
 
