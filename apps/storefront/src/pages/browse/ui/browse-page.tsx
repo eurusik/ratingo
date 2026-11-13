@@ -9,16 +9,11 @@ interface BrowsePageProps {
   searchParams: BrowseSearchParams;
 }
 
-export function BrowsePage({ category, searchParams }: BrowsePageProps) {
+export async function BrowsePage({ category, searchParams }: BrowsePageProps) {
   const year = currentYear();
   const state = parseBrowseState(category, searchParams, year);
+  const firstPage = loadFirstBrowsePage(category, state);
+  await firstPage;
 
-  return (
-    <BrowseView
-      category={category}
-      state={state}
-      currentYear={year}
-      firstPage={loadFirstBrowsePage(category, state)}
-    />
-  );
+  return <BrowseView category={category} state={state} currentYear={year} firstPage={firstPage} />;
 }

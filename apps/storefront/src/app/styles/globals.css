@@ -139,3 +139,59 @@
   margin-inline: auto;
   padding-inline: var(--page-gutter);
 }
+
+:root:not(:active-view-transition-type(nav-forward, nav-back)) {
+  view-transition-name: none;
+}
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(site-header),
+::view-transition-group(browse-toolbar),
+::view-transition-group(mobile-dock) {
+  z-index: 1;
+  animation: none;
+}
+
+::view-transition-old(site-header),
+::view-transition-old(browse-toolbar),
+::view-transition-old(mobile-dock) {
+  display: none;
+}
+
+::view-transition-new(site-header),
+::view-transition-new(browse-toolbar),
+::view-transition-new(mobile-dock) {
+  animation: none;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(.content-fade) {
+    animation: fade-out 120ms ease-out both;
+  }
+
+  ::view-transition-new(.content-fade) {
+    animation: fade-in 180ms ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(.content-fade),
+  ::view-transition-new(.content-fade) {
+    animation: none;
+  }
+}

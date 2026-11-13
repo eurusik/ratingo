@@ -23,7 +23,7 @@ export function MobileDock() {
   const { dict } = useTranslation();
 
   return (
-    <div className="flex items-center gap-2.5 px-4 pr-[max(1rem,var(--safe-right))] pb-[calc(var(--safe-bottom)+0.75rem)] pl-[max(1rem,var(--safe-left))] select-none [-webkit-touch-callout:none]">
+    <div className="flex items-center gap-2.5 px-4 [view-transition-name:mobile-dock] pr-[max(1rem,var(--safe-right))] pb-[calc(var(--safe-bottom)+0.75rem)] pl-[max(1rem,var(--safe-left))] select-none [-webkit-touch-callout:none]">
       <nav
         aria-label={dict.nav.label}
         className={`flex h-tab-bar flex-1 items-center rounded-full px-1.5 ${FLOATING_SURFACE}`}
