@@ -144,6 +144,12 @@
   view-transition-name: none;
 }
 
+@supports not selector(:active-view-transition-type(nav-forward)) {
+  :root {
+    view-transition-name: none;
+  }
+}
+
 ::view-transition {
   pointer-events: none;
 }
@@ -153,33 +159,4 @@
 ::view-transition-group(mobile-dock) {
   z-index: 1;
   animation: none;
-}
-
-@keyframes fade-out {
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(.content-fade) {
-    animation: fade-out 120ms ease-out both;
-  }
-
-  ::view-transition-new(.content-fade) {
-    animation: fade-in 180ms ease-out both;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(.content-fade),
-  ::view-transition-new(.content-fade) {
-    animation: none;
-  }
 }

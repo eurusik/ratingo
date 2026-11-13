@@ -1,0 +1,32 @@
+@keyframes vt-content-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-content-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+::view-transition-group(.content-fade) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(.content-fade) {
+    animation: vt-content-fade-out 120ms ease-out both;
+  }
+
+  ::view-transition-new(.content-fade) {
+    animation: vt-content-fade-in 180ms ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(.content-fade),
+  ::view-transition-new(.content-fade) {
+    animation: none;
+  }
+}
