@@ -128,6 +128,9 @@
     "multer": "^2.5.0",
     "@serwist/next": {
       "zod": "^4.6.7"
+    },
+    "@serwist/turbopack": {
+      "zod": "^4.6.7"
     }
   },
   "workspaces": [

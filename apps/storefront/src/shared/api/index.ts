@@ -14,3 +14,4 @@ export {
 } from './catalog';
 export { notificationsApi, type NotificationItem } from './notifications';
 export { libraryApi, type MediaSaveStatus, type SaveList } from './library';
+export { sitemapApi } from './sitemap';

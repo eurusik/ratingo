@@ -2,6 +2,18 @@
 
 @theme {
   --color-imdb: #f5c518;
+  --animate-signal-ring: signal-ring 3s ease-out infinite;
+
+  @keyframes signal-ring {
+    from {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    to {
+      transform: scale(1.8);
+      opacity: 0;
+    }
+  }
 }
 
 :root {

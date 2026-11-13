@@ -1,4 +1,4 @@
-import { MY_ROUTE } from './routes';
+import { BROWSE_ROUTE, CALENDAR_ROUTE, MY_ROUTE } from './routes';
 
 export type NavSection = 'today' | 'browse' | 'calendar' | 'my';
 
@@ -11,8 +11,8 @@ export const HOME_ROUTE = '/';
 
 export const NAV_ROUTES: readonly NavRoute[] = [
   { section: 'today', href: HOME_ROUTE },
-  { section: 'browse', href: '/browse' },
-  { section: 'calendar', href: '/calendar' },
+  { section: 'browse', href: BROWSE_ROUTE },
+  { section: 'calendar', href: CALENDAR_ROUTE },
   { section: 'my', href: MY_ROUTE },
 ];
 
