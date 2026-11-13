@@ -120,7 +120,7 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
 
   return (
     <div className="flex flex-col pb-10">
-      <div className="contents lg:sticky lg:top-16 lg:z-20 lg:-mt-2.5 lg:flex lg:items-center lg:gap-5 lg:border-b lg:border-separator lg:bg-background/90 lg:py-2.5 lg:backdrop-blur-xl">
+      <div className="contents lg:sticky lg:top-16 lg:z-20 lg:-mt-4 lg:flex lg:items-center lg:gap-5 lg:border-b lg:border-separator lg:bg-background/90 lg:py-4 lg:backdrop-blur-xl">
         <header className="px-4 md:px-0 lg:shrink-0">
           <h1 className="sr-only">{`${dict.browse.title}: ${title}`}</h1>
           <TypeSwitch category={shownCategory} state={shownState} onOpen={navigation.open} />
@@ -148,8 +148,8 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
       <div
         className={
           category.isFilterable
-            ? 'lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8 lg:pt-6'
-            : 'lg:pt-6'
+            ? 'lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8 lg:pt-4'
+            : 'lg:pt-4'
         }
       >
         {category.isFilterable ? (

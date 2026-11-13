@@ -20,7 +20,7 @@ export function FiltersPanel({ category, filters, yearPresets, onChange }: Filte
   return (
     <aside
       aria-label={dict.browse.filters.title}
-      className="sticky top-36 hidden max-h-[calc(100dvh-10rem)] flex-col gap-5 overflow-y-auto overscroll-contain rounded-3xl bg-surface p-5 lg:flex"
+      className="sticky top-39 hidden max-h-[calc(100dvh-10.75rem)] flex-col gap-5 overflow-y-auto overscroll-contain rounded-3xl bg-surface p-5 lg:flex"
     >
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-extrabold">{dict.browse.filters.title}</h2>
