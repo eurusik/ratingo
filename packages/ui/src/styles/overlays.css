@@ -85,3 +85,34 @@
 .sheet__footer {
   padding-bottom: max(1rem, var(--safe-bottom));
 }
+
+.toast__indicator {
+  align-self: center;
+}
+
+.toast {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  row-gap: 0;
+}
+
+.toast__action {
+  grid-column-start: 3;
+  grid-row-start: 1;
+}
+
+.toast:not(:has(.toast__indicator)) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.toast:not(:has(.toast__indicator)) .toast__action {
+  grid-column-start: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton--shimmer::before,
+  .skeleton--shimmer::after,
+  .skeleton--pulse {
+    animation: none;
+  }
+}

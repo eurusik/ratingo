@@ -1,6 +1,7 @@
 export {
   configureApiClient,
   apiGet,
+  apiGetOrNull,
   apiPost,
   apiPatch,
   apiPut,

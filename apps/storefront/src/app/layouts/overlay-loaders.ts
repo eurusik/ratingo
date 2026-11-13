@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { isOnLightConnection, whenIdle } from '@/shared/lib';
+import { whenIdleOnFastConnection } from '@/shared/lib';
 
 export const loadAuthDialog = () =>
   import('@/features/authenticate').then((module) => module.AuthDialog);
@@ -19,8 +19,7 @@ export function useWarmOverlays(): boolean {
   const [isWarm, setIsWarm] = useState(false);
 
   useEffect(() => {
-    if (isOnLightConnection()) return;
-    return whenIdle(() => {
+    return whenIdleOnFastConnection(() => {
       void loadSaveButton().catch(ignoreFailedPreload);
       void Promise.all([loadSearchDialog(), loadAuthDialog()])
         .then(() => setIsWarm(true))

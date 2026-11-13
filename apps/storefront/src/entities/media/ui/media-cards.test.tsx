@@ -6,6 +6,8 @@ import { ProviderLogos } from './provider-logos';
 import { TopRankTile } from './top-rank-tile';
 import { TrendingCard } from './trending-card';
 
+jest.mock('next/navigation', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+
 function Wrapper({ children }: { children: ReactNode }) {
   return (
     <I18nProvider locale="uk" dictionary={getDictionary('uk')}>

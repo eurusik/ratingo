@@ -1,13 +1,14 @@
 export { SiteAnalytics } from './analytics';
 export { useBrowserOrigin, useBrowserPath } from './browser-origin';
 export { useDebouncedValue } from './debounced-value';
-export { replaceDocumentLocation } from './document-location';
 export { interleave } from './interleave';
-export { DESKTOP_MEDIA_QUERY, useMediaQuery } from './media-query';
+export { useMediaQuery } from './media-query';
 export {
   currentYear,
   formatCompactCount,
   formatScore,
+  percentFromScore,
+  scoreFromRating,
   positiveNumber,
   scoreFromPercent,
   yearFromDate,
@@ -20,8 +21,23 @@ export {
   buildWebAppManifest,
   useInstallApp,
 } from './pwa';
-export { RouteCommitSignal, hasPreviousRoute, waitForRouteCommit } from './route-commit';
-export { createBatchLoader, isOnLightConnection, whenIdle } from './scheduling';
+export {
+  RouteCommitSignal,
+  CONTENT_TRANSITION_ONLY,
+  SHARED_ART_SCOPE,
+  SHARED_ART_SOURCE,
+  SHARED_ART_TARGET,
+  hasPreviousRoute,
+  isPlainClick,
+  navigateForward,
+  nameArtLinkingTo,
+  nameArtOfLink,
+  pendingArtImageFor,
+  releaseSharedArt,
+  replaceDocumentLocation,
+  waitForRouteCommit,
+} from './navigation';
+export { createBatchLoader, preloadWhenIdle, whenIdleOnFastConnection } from './scheduling';
 export {
   JsonLd,
   buildOrganizationJsonLd,
@@ -29,4 +45,6 @@ export {
   buildRootMetadata,
   buildSitemap,
   buildWebSiteJsonLd,
+  createMediaMetadata,
 } from './seo';
+export { closeUndoToast, showUndoToast, useShareLink } from './toast';

@@ -62,7 +62,9 @@
     "skipToContent": "Skip to content",
     "retry": "Try again",
     "loading": "Loading…",
-    "opensInNewTab": "(opens in a new tab)"
+    "opensInNewTab": "(opens in a new tab)",
+    "linkCopied": "Link copied",
+    "shareFailed": "Could not share the link."
   },
   "nav": {
     "label": "Main navigation",
@@ -271,10 +273,9 @@
       "saved": "“{title}” saved",
       "removed": "“{title}” removed",
       "undo": "Undo",
-      "failed": "Could not update your saved titles. Try again.",
-      "linkCopied": "Link copied",
-      "shareFailed": "Could not share the link."
-    }
+      "failed": "Could not update your saved titles. Try again."
+    },
+    "wantToWatch": "Want to watch"
   },
   "rail": {
     "previous": "Previous",
@@ -466,6 +467,183 @@
       "viyskovyy": "War",
       "muzyka": "Music",
       "vestern": "Western"
+    }
+  },
+  "details": {
+    "back": "Back",
+    "share": "Share",
+    "breadcrumb": {
+      "label": "Breadcrumb",
+      "browse": "Browse",
+      "movie": "Movies",
+      "show": "Shows"
+    },
+    "watchingNow": "{watching} · Trakt",
+    "watchingNowLong": "{watching} on Trakt now",
+    "totalWatchers": "{count} watched",
+    "runtime": {
+      "hours": "{hours}h {minutes}m",
+      "wholeHours": "{hours}h",
+      "minutes": "{minutes}m"
+    },
+    "seasons": {
+      "one": "{count} season",
+      "few": "{count} seasons",
+      "many": "{count} seasons"
+    },
+    "episodes": {
+      "one": "{count} episode",
+      "few": "{count} episodes",
+      "many": "{count} episodes"
+    },
+    "showStatus": {
+      "Returning Series": "Returning",
+      "Ended": "Ended",
+      "Canceled": "Canceled",
+      "In Production": "In production",
+      "Planned": "Planned",
+      "Pilot": "Pilot"
+    },
+    "movieStatus": {
+      "Released": "Released",
+      "Post Production": "Post-production",
+      "In Production": "In production",
+      "Planned": "Planned",
+      "Rumored": "Rumored",
+      "Canceled": "Canceled"
+    },
+    "actions": {
+      "rate": "Rate",
+      "watched": "Watched · {score}",
+      "watchedLabel": "Watched · {score}. Change your score",
+      "myScore": "My score {score}",
+      "myScoreLabel": "My score {score}. Change your score"
+    },
+    "start": {
+      "title": "Not watching yet?"
+    },
+    "guest": {
+      "title": "Track episodes here",
+      "text": "Mark what you watched with one tap and get reminders about new episodes.",
+      "action": "Sign in and start",
+      "hint": "After signing in we bring you back here and finish what you tapped"
+    },
+    "ratings": {
+      "label": "Ratings",
+      "list": "Ratings",
+      "score": "Ratingo score {score} out of 10",
+      "howItWorks": "How the Ratingo score works",
+      "explainTitle": "Ratingo score",
+      "explain": "We bring IMDb, TMDB, Trakt, Metacritic and Rotten Tomatoes ratings onto one 10-point scale and weigh them by vote count: the more people rated, the more a source counts.",
+      "explainVerdict": "From 7 it is “Worth it”, from 5.5 “Mixed”, below that “Weak”.",
+      "noScore": "The Ratingo score is still forming",
+      "critics": "critics",
+      "audience": "audience",
+      "imdb": "IMDb {score}",
+      "rtCritics": "Rotten Tomatoes critics {percent}",
+      "rtAudience": "Rotten Tomatoes audience {percent}",
+      "metacritic": "Metacritic {score} out of 100",
+      "trakt": "Trakt {percent}"
+    },
+    "community": {
+      "label": "Ratingo community",
+      "ratedByMany": "Rated by {name} and {count} more",
+      "ratedByOne": "Rated by {name}",
+      "audience": "audience {score}"
+    },
+    "rate": {
+      "title": {
+        "movie": "Your movie score",
+        "show": "Your show score"
+      },
+      "showHint": "overall, not per season",
+      "presetsLabel": "Score",
+      "fineTune": "Fine-tune",
+      "outOf": "{score} out of 10",
+      "clear": "Remove",
+      "done": "Done",
+      "presets": {
+        "bad": "Awful",
+        "okay": "Okay",
+        "good": "Liked it",
+        "top": "Top"
+      },
+      "toast": {
+        "failed": "Could not save your score. Try again.",
+        "removedFromSaved": "{emoji} {score} · removed from saved",
+        "undo": "Undo",
+        "cleared": "Score removed"
+      },
+      "notRated": "Not rated"
+    },
+    "about": {
+      "movie": "About the movie",
+      "show": "About the show",
+      "more": "Read more",
+      "less": "Show less"
+    },
+    "trailers": {
+      "title": "Trailers",
+      "watch": "Watch: {title}"
+    },
+    "cast": {
+      "title": "Cast",
+      "directing": "Director",
+      "writing": "Writers",
+      "creators": "Created by"
+    },
+    "facts": {
+      "title": "Details",
+      "status": "Status",
+      "premiere": "Premiere",
+      "lastEpisode": "Last episode",
+      "budget": "Budget",
+      "revenue": "Box office"
+    },
+    "error": {
+      "title": "Could not load this page",
+      "text": "Check your connection and try again."
+    },
+    "verdict": {
+      "movie": {
+        "upcomingHit": "One of the most anticipated releases of the year",
+        "justReleased": "Now playing in theaters",
+        "nowStreaming": "Available to watch at home",
+        "criticsLoved": "Critics and audiences loved it",
+        "trendingNow": "Everyone's talking about it",
+        "strongRatings": "More liked than not",
+        "decentRatings": "Solid pick for the evening",
+        "risingHype": "Rapidly gaining interest",
+        "comingToStreaming": "Coming soon to watch at home",
+        "mixedReviews": "Opinions are divided",
+        "belowAverage": "Lots of mixed reactions",
+        "poorRatings": "Most viewers were disappointed",
+        "earlyReviews": "Ratings still forming",
+        "steadyInterest": "Still popular over time",
+        "classicChoice": "Time-tested choice",
+        "timelessFavorite": "A classic that's still loved"
+      },
+      "show": {
+        "cancelled": "Series cancelled",
+        "poorRatings": "Most viewers were disappointed",
+        "belowAverage": "Lots of mixed reactions",
+        "criticsLoved": "Critics and audiences loved it",
+        "strongRatings": "More liked than not",
+        "decentRatings": "Solid pick for the evening",
+        "longRunning": "Proven over time",
+        "trendingNow": "Everyone's talking about it",
+        "risingHype": "Rapidly gaining interest",
+        "earlyReviews": "Ratings still forming",
+        "mixedReviews": "Opinions are divided",
+        "noConsensusYet": "Ratings still forming",
+        "steadyInterest": "Still popular over time",
+        "classicSeries": "A classic of the genre",
+        "timelessFavorite": "A series that's still loved"
+      }
+    },
+    "money": {
+      "millions": "${amount}M",
+      "billions": "${amount}B"
     }
   }
 }

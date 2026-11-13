@@ -4,7 +4,8 @@ import { cloneElement, useState } from 'react';
 import { Modal } from '@heroui/react';
 import { DismissOnSystemBack, ViewportBottomFill } from '@ratingo/ui/overlay';
 import { useTranslation } from '@/shared/i18n';
-import { DESKTOP_MEDIA_QUERY, useMediaQuery } from '@/shared/lib';
+import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
+import { useMediaQuery } from '@/shared/lib';
 import { Sheet, type DialogSurfaceProps } from '../sheet';
 
 function DesktopModal({

@@ -9,8 +9,8 @@ import { ThemeProvider } from '@ratingo/ui/theme';
 import { AuthProvider } from '@ratingo/web-core/auth';
 import { getQueryClient } from '@ratingo/web-core/query';
 import { configureStorefrontApi } from '@/shared/api';
-import { SERVICE_WORKER_ENABLED } from '@/shared/config';
-import { RouteCommitSignal, ServiceWorkerProvider } from '@/shared/lib';
+import { SERVICE_WORKER_ENABLED, isMediaDetailsPath } from '@/shared/config';
+import { RouteCommitSignal, ServiceWorkerProvider, navigateForward } from '@/shared/lib';
 import { I18nProvider, type Dictionary, type Locale } from '@/shared/i18n';
 import { DeferredToastRegion } from './deferred-toast-region';
 
@@ -31,7 +31,12 @@ export function AppProviders({ locale, dictionary, children }: AppProvidersProps
         <ViewTransitionTraversalGuard />
         <RouteCommitSignal />
         <AriaI18nProvider locale={locale}>
-          <RouterProvider navigate={(href) => router.push(href)}>
+          <RouterProvider
+            navigate={(href) => {
+              if (isMediaDetailsPath(href)) void navigateForward(() => router.push(href));
+              else router.push(href);
+            }}
+          >
             <I18nProvider locale={locale} dictionary={dictionary}>
               <QueryClientProvider client={getQueryClient()}>
                 <AuthProvider>{children}</AuthProvider>

@@ -1,4 +1,5 @@
 export { configureStorefrontApi } from './configure';
+export { orNullWhenNotFound } from './not-found';
 export {
   catalogApi,
   type CatalogCache,
@@ -11,11 +12,19 @@ export {
   type ImportResult,
   type MediaBadge,
   type MediaType,
+  type MovieDetails,
   type NewEpisode,
   type SearchItem,
+  type ShowDetails,
   type TrendingMovie,
   type TrendingShow,
 } from './catalog';
 export { notificationsApi, type NotificationItem } from './notifications';
-export { libraryApi, type MediaSaveStatus, type SaveList } from './library';
+export {
+  libraryApi,
+  type MediaSaveStatus,
+  type SaveList,
+  type UserMediaState,
+  type WatchState,
+} from './library';
 export { sitemapApi } from './sitemap';

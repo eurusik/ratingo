@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { CONTENT_TRANSITION_ONLY } from '@/shared/lib';
 
 interface BrowseLayoutProps {
   heading?: ReactNode;
@@ -29,7 +30,10 @@ export function BrowseLayout({
 
   return (
     <>
-      <div className="contents lg:sticky lg:[view-transition-name:browse-toolbar] lg:top-16 lg:z-20 lg:-mt-4 lg:flex lg:items-center lg:gap-5 lg:border-b lg:border-separator lg:bg-background/90 lg:py-4 lg:backdrop-blur-xl">
+      <div
+        {...CONTENT_TRANSITION_ONLY}
+        className="contents lg:sticky lg:[view-transition-name:browse-toolbar] lg:top-16 lg:z-20 lg:-mt-4 lg:flex lg:items-center lg:gap-5 lg:border-b lg:border-separator lg:bg-background/90 lg:py-4 lg:backdrop-blur-xl"
+      >
         <header className="px-4 md:px-0 lg:shrink-0">
           {heading}
           {typeSwitch}
@@ -37,7 +41,10 @@ export function BrowseLayout({
 
         <span aria-hidden className="hidden h-7 w-px shrink-0 bg-separator lg:block" />
 
-        <div className="sticky top-0 z-20 -mt-px [view-transition-name:browse-toolbar] lg:[view-transition-name:none] flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.75rem,var(--safe-top))] pb-3 backdrop-blur-xl md:top-16 md:px-0 md:pt-3 lg:static lg:mt-0 lg:min-w-0 lg:flex-1 lg:border-b-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+        <div
+          {...CONTENT_TRANSITION_ONLY}
+          className="sticky top-0 z-20 -mt-px [view-transition-name:browse-toolbar] lg:[view-transition-name:none] flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.75rem,var(--safe-top))] pb-3 backdrop-blur-xl md:top-16 md:px-0 md:pt-3 lg:static lg:mt-0 lg:min-w-0 lg:flex-1 lg:border-b-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
+        >
           {pools}
           {filtersButton == null ? null : <div className="lg:hidden">{filtersButton}</div>}
         </div>

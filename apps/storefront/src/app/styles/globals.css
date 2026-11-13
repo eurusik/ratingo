@@ -2,6 +2,7 @@
 
 @theme {
   --color-imdb: #f5c518;
+  --color-metacritic: #ffcc34;
   --animate-signal-ring: signal-ring 3s ease-out infinite;
 
   @keyframes signal-ring {
@@ -17,6 +18,8 @@
 }
 
 :root {
+  overflow-x: clip;
+  --glow-veil-strength: 78%;
   --page-gutter: 1rem;
   --page-top: 1rem;
   scroll-padding-top: calc(5rem + var(--safe-top));
@@ -133,6 +136,63 @@
   }
 }
 
+:root:is(.dark, [data-theme='dark']) {
+  --glow-veil-strength: 55%;
+}
+
+@utility poster-glass {
+  background-color: color-mix(in oklab, var(--background) 85%, transparent);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+@utility glow-veil {
+  background-color: color-mix(in oklab, var(--surface) var(--glow-veil-strength), transparent);
+}
+
+@utility hero-fade {
+  background-image: linear-gradient(
+    to top,
+    var(--background),
+    color-mix(in oklab, var(--background) 60%, transparent) 35%,
+    transparent 70%
+  );
+}
+
+@utility hero-fade-side {
+  background-image: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--background) 85%, transparent),
+    color-mix(in oklab, var(--background) 40%, transparent) 30%,
+    transparent 60%
+  );
+}
+
+@utility inner-corner-curves {
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: radial-gradient(
+      circle at 100% 100%,
+      transparent 1.5rem,
+      var(--background) calc(1.5rem + 0.5px)
+    );
+  }
+
+  &::before {
+    inset-inline-start: 100%;
+    top: 0;
+  }
+
+  &::after {
+    inset-inline-start: 0;
+    top: 100%;
+  }
+}
+
 @utility page-container {
   width: 100%;
   max-width: 105rem;
@@ -140,18 +200,44 @@
   padding-inline: var(--page-gutter);
 }
 
-:root:not(:active-view-transition-type(nav-forward, nav-back)) {
-  view-transition-name: none;
+:root[data-nav-transition] {
+  view-transition-name: root;
 }
 
-@supports not selector(:active-view-transition-type(nav-forward)) {
-  :root {
-    view-transition-name: none;
-  }
+:root[data-nav-transition] [data-content-transition-only] {
+  view-transition-name: none;
 }
 
 ::view-transition {
   pointer-events: none;
+}
+
+:root[data-nav-transition] :is([data-shared-art-target], [data-shared-art-active]) {
+  view-transition-name: media-art;
+}
+
+::view-transition-group(media-art) {
+  z-index: 3;
+  animation-duration: var(--vt-morph-duration);
+  animation-timing-function: var(--vt-push-ease);
+}
+
+@media (width >= 48rem) {
+  ::view-transition-group(media-art) {
+    animation-duration: var(--vt-desktop-morph-duration);
+    animation-timing-function: var(--vt-desktop-morph-ease);
+  }
+}
+
+::view-transition-image-pair(media-art) {
+  overflow: clip;
+  border-radius: 0.875rem;
+}
+
+::view-transition-old(media-art),
+::view-transition-new(media-art) {
+  height: 100%;
+  object-fit: cover;
 }
 
 ::view-transition-group(site-header),

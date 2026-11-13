@@ -8,6 +8,7 @@ export {
   buildRevision,
 } from './env';
 export { BRAND_NAME } from './brand';
+export { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from './breakpoints';
 export { tmdbPosterUrl } from './images';
 export { HOME_ROUTE, NAV_ROUTES, isNavRouteActive, type NavSection } from './navigation';
 export {
@@ -20,5 +21,6 @@ export {
   NOTIFICATIONS_ROUTE,
   OFFLINE_ROUTE,
   SETTINGS_ROUTE,
+  isMediaDetailsPath,
   mediaRoute,
 } from './routes';

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { buttonVariants } from '@heroui/react';
 import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
+import { isPlainClick } from '@/shared/lib';
 import {
   browseCategoriesOfType,
   counterpartCategory,
@@ -26,10 +27,6 @@ function locationOf(target: BrowseCategory, state: BrowseState): BrowseLocation 
   return { slug: target.slug, state: carryStateTo(target, state) };
 }
 
-function isPlainClick(event: MouseEvent<HTMLAnchorElement>): boolean {
-  return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
-}
-
 function openInPlace(next: BrowseLocation, onOpen: (next: BrowseLocation) => void) {
   return (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainClick(event)) return;
@@ -42,10 +39,7 @@ export function TypeSwitch({ category, state, onOpen }: BrowseNavProps) {
   const { dict } = useTranslation();
 
   return (
-    <nav
-      aria-label={dict.browse.typeLabel}
-      className="flex items-baseline gap-5"
-    >
+    <nav aria-label={dict.browse.typeLabel} className="flex items-baseline gap-5">
       {MEDIA_TYPES.map((type) => {
         const next = locationOf(counterpartCategory(category, type), state);
         return (
