@@ -69,4 +69,12 @@ describe('ConnectionRecovery', () => {
     expect(reloadButton().closest('[inert]')).not.toBeNull();
     expect(reloadPage).toHaveBeenCalledTimes(1);
   });
+
+  it('reloads when the network came back before the page finished loading', () => {
+    jest.spyOn(window.history, 'length', 'get').mockReturnValue(1);
+    jest.spyOn(window.navigator, 'onLine', 'get').mockReturnValueOnce(false).mockReturnValue(true);
+    renderRecovery();
+
+    expect(reloadPage).toHaveBeenCalledTimes(1);
+  });
 });

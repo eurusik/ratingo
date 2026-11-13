@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next';
 import {
-  ABOUT_ROUTE,
   BROWSE_ROUTE,
   CALENDAR_ROUTE,
   HOME_ROUTE,
@@ -35,8 +34,6 @@ interface StaticPage {
 const STATIC_PAGES: readonly StaticPage[] = [
   { path: HOME_ROUTE, changeFrequency: 'daily', priority: 1.0 },
   { path: BROWSE_ROUTE, changeFrequency: 'daily', priority: 0.9 },
-  { path: JOURNAL_ROUTE, changeFrequency: 'daily', priority: 0.8 },
-  { path: ABOUT_ROUTE, changeFrequency: 'monthly', priority: 0.5 },
 ];
 
 const DETAIL_PAGE_CHANGE_FREQUENCY: ChangeFrequency = 'weekly';

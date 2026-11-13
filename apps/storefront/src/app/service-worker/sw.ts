@@ -12,8 +12,8 @@ declare global {
 }
 
 declare const self: ServiceWorkerGlobalScope;
+declare const OFFLINE_FALLBACK_URL: string;
 
-const OFFLINE_FALLBACK_URL = '/~offline';
 const CORS_IMAGE_FETCH: RequestInit = { mode: 'cors', credentials: 'omit' };
 const ONE_WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 const TMDB_IMAGE_URL = /^https:\/\/img\.ratingo\.top\/tmdb\/.*/i;

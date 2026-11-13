@@ -10,7 +10,10 @@ export function useHasBrowserHistory(): boolean {
   return useSyncExternalStore(subscribeToNothing, readHasHistory, readServerHasHistory);
 }
 
+const readStartedOffline = () => typeof navigator !== 'undefined' && !navigator.onLine;
+
 export function useReloadWhenOnline(): boolean {
+  const [startedOffline] = useState(readStartedOffline);
   const [reconnected, setReconnected] = useState(false);
 
   useEffect(() => {
@@ -18,9 +21,13 @@ export function useReloadWhenOnline(): boolean {
       setReconnected(true);
       window.location.reload();
     };
+    if (startedOffline && navigator.onLine) {
+      reloadPage();
+      return undefined;
+    }
     window.addEventListener('online', reloadPage);
     return () => window.removeEventListener('online', reloadPage);
-  }, []);
+  }, [startedOffline]);
 
   return reconnected;
 }

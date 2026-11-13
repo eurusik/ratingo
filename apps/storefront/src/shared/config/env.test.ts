@@ -31,7 +31,7 @@ describe('site environment gating', () => {
     ['the storefront dev domain', { VERCEL_ENV: 'production', VERCEL_PROJECT_PRODUCTION_URL: 'ratingo-storefront.vercel.app' }],
     ['a preview', { VERCEL_ENV: 'preview', VERCEL_PROJECT_PRODUCTION_URL: 'ratingo.top' }],
     ['a local build', {}],
-  ])('keeps %s out of search and analytics', (_name, deployment) => {
+  ])('keeps %s out of search and Google Analytics', (_name, deployment) => {
     const env = loadEnv({ ...deployment, NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-OVERRIDE' });
 
     expect(env.IS_PRODUCTION_SITE).toBe(false);
