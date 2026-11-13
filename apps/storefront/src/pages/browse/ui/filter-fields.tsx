@@ -43,7 +43,7 @@ function GenreField({ type, value, onChange }: GenreFieldProps) {
       className="flex flex-col gap-2.5"
     >
       <Label>{dict.browse.filters.genres}</Label>
-      <Description>{dict.browse.filters.genresHint}</Description>
+      <Description className="px-0">{dict.browse.filters.genresHint}</Description>
       <TagGroup.List className="flex flex-wrap gap-2">
         {GENRE_SLUGS[type].map((slug) => (
           <Tag key={slug} id={slug} className={TAG_CLASS}>

@@ -4,7 +4,7 @@ import { Suspense, use, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
-import type { BrowseCategory } from '../model/browse-category';
+import { findBrowseCategory, type BrowseCategory } from '../model/browse-category';
 import { useCountLabel } from '../model/browse-labels';
 import {
   activeFilterCount,
@@ -108,12 +108,16 @@ interface BrowseViewProps {
 
 export function BrowseView({ category, state, currentYear, firstPage }: BrowseViewProps) {
   const { dict } = useTranslation();
-  const { shownState, apply, isPending } = useBrowseNavigation(category.slug, state);
+  const navigation = useBrowseNavigation({ slug: category.slug, state });
+  const shownCategory = findBrowseCategory(navigation.shown.slug) ?? category;
+  const shownState = navigation.shown.state;
+  const isPending = navigation.isPending;
   const presets = yearPresets(currentYear);
   const title = dict.browse.categories[category.slug].title;
 
-  const changeFilters = (filters: BrowseFilters) => apply({ ...shownState, filters });
-  const changeSort = (sort: BrowseSort) => apply({ ...shownState, sort });
+  const changeFilters = (filters: BrowseFilters) =>
+    navigation.apply({ ...shownState, filters });
+  const changeSort = (sort: BrowseSort) => navigation.apply({ ...shownState, sort });
 
   return (
     <div className="flex flex-col pb-10 md:pt-4">
@@ -122,16 +126,17 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
           {dict.browse.title}
           <span className="sr-only">{`: ${title}`}</span>
         </h1>
-        <TypeSwitch category={category} state={shownState} />
+        <TypeSwitch category={shownCategory} state={shownState} onOpen={navigation.open} />
       </header>
 
       <div className="sticky top-0 z-20 -mt-px flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.625rem,var(--safe-top))] pb-2.5 backdrop-blur-xl md:top-16 md:mt-4 md:px-0 md:pt-2.5">
-        <PoolNav category={category} state={shownState} />
+        <PoolNav category={shownCategory} state={shownState} onOpen={navigation.open} />
         {category.isFilterable ? (
           <div className="lg:hidden">
             <FiltersDialog
               category={category}
               state={shownState}
+              loadedState={state}
               firstPage={firstPage}
               yearPresets={presets}
               onApply={changeFilters}

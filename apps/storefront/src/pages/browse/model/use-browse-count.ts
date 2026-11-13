@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useDebouncedValue } from '@/shared/lib';
 import type { BrowseCategorySlug } from './browse-category';
 import { browseCountQuery } from './browse-queries';
@@ -24,11 +25,21 @@ export function useBrowseCount(
   const isSettled = browseStateKey(debounced) === draftKey;
   const isKnown = known !== undefined && browseStateKey(known.state) === draftKey;
 
-  const query = useQuery({ ...browseCountQuery(slug, debounced), enabled: enabled && !isKnown });
+  const query = useQuery({
+    ...browseCountQuery(slug, debounced),
+    enabled: enabled && !isKnown,
+    placeholderData: keepPreviousData,
+  });
 
-  if (isKnown) return { count: known.total, isUnavailable: false };
+  const freshCount = isKnown ? known.total : query.data;
+  const [lastCount, setLastCount] = useState(freshCount);
+  if (freshCount !== undefined && freshCount !== lastCount) setLastCount(freshCount);
+
+  const isUpdating = !isKnown && (!isSettled || query.isPlaceholderData || query.isFetching);
+
   return {
-    count: isSettled ? query.data : undefined,
-    isUnavailable: isSettled && query.isError,
+    count: freshCount ?? lastCount,
+    isUpdating,
+    isUnavailable: !isKnown && isSettled && query.isError,
   };
 }

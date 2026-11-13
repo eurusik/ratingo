@@ -1,5 +1,6 @@
 'use client';
 
+import type { MouseEvent } from 'react';
 import Link from 'next/link';
 import { buttonVariants } from '@heroui/react';
 import type { MediaType } from '@/shared/api';
@@ -10,19 +11,35 @@ import {
   type BrowseCategory,
 } from '../model/browse-category';
 import { browseHref, carryStateTo, type BrowseState } from '../model/browse-state';
+import type { BrowseLocation } from '../model/use-browse-navigation';
 
 const MEDIA_TYPES: readonly MediaType[] = ['show', 'movie'];
 
 interface BrowseNavProps {
   category: BrowseCategory;
   state: BrowseState;
+  onOpen: (next: BrowseLocation) => void;
 }
 
-function hrefFor(target: BrowseCategory, state: BrowseState): string {
-  return browseHref(target.slug, carryStateTo(target, state));
+function locationOf(target: BrowseCategory, state: BrowseState): BrowseLocation {
+  return { slug: target.slug, state: carryStateTo(target, state) };
 }
 
-export function TypeSwitch({ category, state }: BrowseNavProps) {
+function isPlainClick(event: MouseEvent<HTMLAnchorElement>): boolean {
+  return (
+    event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
+  );
+}
+
+function openInPlace(next: BrowseLocation, onOpen: (next: BrowseLocation) => void) {
+  return (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!isPlainClick(event)) return;
+    event.preventDefault();
+    onOpen(next);
+  };
+}
+
+export function TypeSwitch({ category, state, onOpen }: BrowseNavProps) {
   const { dict } = useTranslation();
 
   return (
@@ -31,12 +48,13 @@ export function TypeSwitch({ category, state }: BrowseNavProps) {
       className="grid w-48 shrink-0 grid-cols-2 gap-1 rounded-2xl bg-default p-1 md:w-56"
     >
       {MEDIA_TYPES.map((type) => {
-        const isCurrent = type === category.type;
+        const next = locationOf(counterpartCategory(category, type), state);
         return (
           <Link
             key={type}
-            href={hrefFor(counterpartCategory(category, type), state)}
-            aria-current={isCurrent ? 'page' : undefined}
+            href={browseHref(next.slug, next.state)}
+            onClick={openInPlace(next, onOpen)}
+            aria-current={type === category.type ? 'page' : undefined}
             className="flex min-h-tap items-center justify-center rounded-xl text-sm font-semibold text-muted no-underline transition-colors outline-none hover:text-foreground focus-visible:outline-2 focus-visible:outline-focus aria-[current=page]:bg-background aria-[current=page]:text-foreground aria-[current=page]:shadow-sm md:min-h-9"
           >
             {dict.browse.type[type]}
@@ -47,7 +65,7 @@ export function TypeSwitch({ category, state }: BrowseNavProps) {
   );
 }
 
-export function PoolNav({ category, state }: BrowseNavProps) {
+export function PoolNav({ category, state, onOpen }: BrowseNavProps) {
   const { dict } = useTranslation();
 
   return (
@@ -57,10 +75,12 @@ export function PoolNav({ category, state }: BrowseNavProps) {
     >
       {browseCategoriesOfType(category.type).map((pool) => {
         const isCurrent = pool.slug === category.slug;
+        const next = locationOf(pool, state);
         return (
           <Link
             key={pool.slug}
-            href={hrefFor(pool, state)}
+            href={browseHref(next.slug, next.state)}
+            onClick={openInPlace(next, onOpen)}
             aria-current={isCurrent ? 'page' : undefined}
             className={buttonVariants({
               variant: isCurrent ? 'primary' : 'outline',

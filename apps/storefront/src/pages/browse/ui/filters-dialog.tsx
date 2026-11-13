@@ -16,19 +16,25 @@ import { ResetFiltersButton } from './reset-filters-button';
 
 interface ApplyButtonProps {
   category: BrowseCategory;
-  state: BrowseState;
+  loadedState: BrowseState;
   draft: BrowseState;
   firstPage: Promise<FirstPageResult>;
   onApply: () => void;
 }
 
-function ApplyButton({ category, state, draft, firstPage, onApply }: ApplyButtonProps) {
+function ApplyButton({ category, loadedState, draft, firstPage, onApply }: ApplyButtonProps) {
   const { dict } = useTranslation();
   const labels = dict.browse.filters;
   const countLabel = useCountLabel(category.type);
   const result = use(firstPage);
-  const knownTotal = result.status === 'loaded' ? { state, total: result.page.total } : undefined;
-  const { count, isUnavailable } = useBrowseCount(category.slug, draft, knownTotal, true);
+  const knownTotal =
+    result.status === 'loaded' ? { state: loadedState, total: result.page.total } : undefined;
+  const { count, isUpdating, isUnavailable } = useBrowseCount(
+    category.slug,
+    draft,
+    knownTotal,
+    true,
+  );
 
   const label = () => {
     if (isUnavailable) return labels.showUncounted;
@@ -39,11 +45,17 @@ function ApplyButton({ category, state, draft, firstPage, onApply }: ApplyButton
 
   return (
     <>
-      <Button variant="primary" className="flex-1" onPress={onApply} isDisabled={count === 0}>
+      <Button
+        variant="primary"
+        className="flex-1"
+        onPress={onApply}
+        isDisabled={count === 0 && !isUpdating}
+        aria-busy={isUpdating}
+      >
         {label()}
       </Button>
       <span aria-live="polite" className="sr-only">
-        {label()}
+        {isUpdating ? '' : label()}
       </span>
     </>
   );
@@ -52,6 +64,7 @@ function ApplyButton({ category, state, draft, firstPage, onApply }: ApplyButton
 interface FiltersDialogProps {
   category: BrowseCategory;
   state: BrowseState;
+  loadedState: BrowseState;
   firstPage: Promise<FirstPageResult>;
   yearPresets: readonly YearPreset[];
   onApply: (filters: BrowseFilters) => void;
@@ -60,6 +73,7 @@ interface FiltersDialogProps {
 export function FiltersDialog({
   category,
   state,
+  loadedState,
   firstPage,
   yearPresets,
   onApply,
@@ -116,7 +130,7 @@ export function FiltersDialog({
             >
               <ApplyButton
                 category={category}
-                state={state}
+                loadedState={loadedState}
                 draft={draftState}
                 firstPage={firstPage}
                 onApply={apply}

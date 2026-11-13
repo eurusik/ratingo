@@ -17,7 +17,6 @@ import { PosterTile, PosterTileSkeleton } from './poster-tile';
 
 const LOADING_TILES = 3;
 const HIGH_PRIORITY_TILES = 3;
-const EAGER_TILES = 7;
 
 type ListEndStatus = 'loading' | 'failed' | 'complete' | 'idle';
 
@@ -34,8 +33,7 @@ function listEndStatus(progress: ListProgress): ListEndStatus {
 }
 
 function loadPriorityAt(index: number): PosterLoadPriority {
-  if (index < HIGH_PRIORITY_TILES) return 'high';
-  return index < EAGER_TILES ? 'eager' : 'lazy';
+  return index < HIGH_PRIORITY_TILES ? 'high' : 'eager';
 }
 
 const BrowseTile = memo(function BrowseTile({
@@ -131,10 +129,7 @@ export function BrowseResults({ category, state, title, initialPage }: BrowseRes
         className={browseGridClass(category.isFilterable)}
       >
         {items.map((media, index) => (
-          <li
-            key={media.mediaItemId}
-            className="[contain-intrinsic-block-size:auto_16rem] [content-visibility:auto] md:[contain-intrinsic-block-size:auto_22rem]"
-          >
+          <li key={media.mediaItemId}>
             <BrowseTile media={media} loadPriority={loadPriorityAt(index)} />
           </li>
         ))}

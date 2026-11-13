@@ -33,12 +33,12 @@ export function ActiveFilters({ filters, yearPresets, onChange }: ActiveFiltersP
               key={removal.id}
               id={removal.id}
               textValue={label}
-              className="min-h-10 bg-accent-soft ps-3.5 pe-1 text-accent-soft-foreground md:min-h-8"
+              className="min-h-9 gap-0.5 bg-accent-soft ps-3.5 pe-0.5 text-accent-soft-foreground md:min-h-8"
             >
               {label}
               <Tag.RemoveButton
                 aria-label={interpolate(dict.browse.filters.remove, { label })}
-                className="phone-tap-target"
+                className="size-8 bg-transparent text-accent-soft-foreground [&_svg]:size-3.5"
               />
             </Tag>
           );
