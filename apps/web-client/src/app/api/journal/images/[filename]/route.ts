@@ -3,7 +3,7 @@ import ky from 'ky';
 import { env } from '@/core/config/env';
 
 const imageApi = ky.create({
-  prefixUrl: env.API_BASE_URL,
+  prefixUrl: env.SERVER_API_BASE_URL,
   timeout: 30000,
 });
 
