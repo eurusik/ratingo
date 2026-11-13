@@ -104,10 +104,10 @@ export function FiltersDialog({
         aria-label={
           activeCount > 0 ? interpolate(labels.openActive, { count: activeCount }) : labels.open
         }
-        className="min-h-10 shrink-0 gap-1.5 rounded-full px-3.5"
+        className="min-h-10 min-w-10 shrink-0 gap-1.5 rounded-full px-2.5 sm:px-3.5"
       >
         <SlidersHorizontal aria-hidden className="size-4" />
-        {labels.open}
+        <span className="hidden sm:inline">{labels.open}</span>
         {activeCount > 0 ? (
           <Chip aria-hidden size="sm" color="accent" variant="primary" className="tabular-nums">
             {activeCount}

@@ -12,6 +12,7 @@ import {
 } from '../model/browse-category';
 import { browseHref, carryStateTo, type BrowseState } from '../model/browse-state';
 import type { BrowseLocation } from '../model/use-browse-navigation';
+import { useHorizontalScroller } from '../lib/horizontal-scroller';
 
 const MEDIA_TYPES: readonly MediaType[] = ['show', 'movie'];
 
@@ -67,11 +68,15 @@ export function TypeSwitch({ category, state, onOpen }: BrowseNavProps) {
 
 export function PoolNav({ category, state, onOpen }: BrowseNavProps) {
   const { dict } = useTranslation();
+  const { ref: poolsRef, edges } = useHorizontalScroller<HTMLElement>(category.slug);
 
   return (
     <nav
+      ref={poolsRef}
       aria-label={dict.browse.poolsLabel}
-      className="flex min-w-0 flex-1 gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      data-more-before={edges.hasMoreBefore || undefined}
+      data-more-after={edges.hasMoreAfter || undefined}
+      className="relative flex min-w-0 flex-1 gap-2 overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_var(--fade-before),black_calc(100%-var(--fade-after)),transparent)] [scrollbar-width:none] [--fade-after:0px] [--fade-before:0px] data-[more-after]:[--fade-after:2.5rem] data-[more-before]:[--fade-before:2.5rem] [&::-webkit-scrollbar]:hidden"
     >
       {browseCategoriesOfType(category.type).map((pool) => {
         const isCurrent = pool.slug === category.slug;
