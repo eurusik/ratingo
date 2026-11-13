@@ -7,7 +7,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { AppProviders } from '@/core/providers';
-import { GoogleAnalytics } from '@/shared/components';
+import { CloudflareWebAnalytics, GoogleAnalytics } from '@/shared/components';
 import { getDictionary } from '@/shared/i18n';
 import {
   JsonLd,
@@ -113,6 +113,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           {children}
         </AppProviders>
         <GoogleAnalytics />
+        <CloudflareWebAnalytics />
       </body>
     </html>
   );
