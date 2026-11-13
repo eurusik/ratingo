@@ -9,6 +9,8 @@
 /** Backend API origin URL. */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+const SERVER_API_URL = process.env.API_INTERNAL_URL || API_URL;
+
 /** API path prefix. */
 const API_PREFIX = '/api';
 
@@ -20,6 +22,7 @@ export const env = {
   API_PREFIX,
   /** Full API base URL for ky prefixUrl (origin + prefix). */
   API_BASE_URL: `${API_URL}${API_PREFIX}`,
+  SERVER_API_BASE_URL: `${SERVER_API_URL}${API_PREFIX}`,
   /** Public site URL for meta tags and redirects. */
   SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002',
   /** Development mode flag. */
