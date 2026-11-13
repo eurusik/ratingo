@@ -128,7 +128,7 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
 
         <span aria-hidden className="hidden h-7 w-px shrink-0 bg-separator lg:block" />
 
-        <div className="sticky top-0 z-20 -mt-px flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.625rem,var(--safe-top))] pb-2.5 backdrop-blur-xl md:top-16 md:mt-4 md:px-0 md:pt-2.5 lg:static lg:mt-0 lg:min-w-0 lg:flex-1 lg:border-b-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+        <div className="sticky top-0 z-20 -mt-px flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.75rem,var(--safe-top))] pb-3 backdrop-blur-xl md:top-16 md:px-0 md:pt-3 lg:static lg:mt-0 lg:min-w-0 lg:flex-1 lg:border-b-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
           <PoolNav category={shownCategory} state={shownState} onOpen={navigation.open} />
           {category.isFilterable ? (
             <div className="lg:hidden">
@@ -164,7 +164,7 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
         <section
           aria-label={title}
           aria-busy={isPending}
-          className={`flex min-w-0 flex-col gap-3 px-4 pt-2 transition-opacity md:px-0 lg:pt-0 ${isPending ? 'opacity-60' : ''}`}
+          className={`flex min-w-0 flex-col gap-3 px-4 pt-3 transition-opacity md:px-0 lg:pt-0 ${isPending ? 'opacity-60' : ''}`}
         >
           <div className="flex min-h-tap items-center gap-2">
             <p
