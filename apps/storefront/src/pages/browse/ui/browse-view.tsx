@@ -115,31 +115,34 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
   const presets = yearPresets(currentYear);
   const title = dict.browse.categories[category.slug].title;
 
-  const changeFilters = (filters: BrowseFilters) =>
-    navigation.apply({ ...shownState, filters });
+  const changeFilters = (filters: BrowseFilters) => navigation.apply({ ...shownState, filters });
   const changeSort = (sort: BrowseSort) => navigation.apply({ ...shownState, sort });
 
   return (
     <div className="flex flex-col pb-10 md:pt-4">
-      <header className="px-4 pt-2 md:px-0 md:pt-0">
-        <h1 className="sr-only">{`${dict.browse.title}: ${title}`}</h1>
-        <TypeSwitch category={shownCategory} state={shownState} onOpen={navigation.open} />
-      </header>
+      <div className="contents lg:sticky lg:top-16 lg:z-20 lg:mt-4 lg:flex lg:items-center lg:gap-5 lg:border-b lg:border-separator lg:bg-background/90 lg:py-2.5 lg:backdrop-blur-xl">
+        <header className="px-4 pt-2 md:px-0 md:pt-0 lg:shrink-0">
+          <h1 className="sr-only">{`${dict.browse.title}: ${title}`}</h1>
+          <TypeSwitch category={shownCategory} state={shownState} onOpen={navigation.open} />
+        </header>
 
-      <div className="sticky top-0 z-20 -mt-px flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.625rem,var(--safe-top))] pb-2.5 backdrop-blur-xl md:top-16 md:mt-4 md:px-0 md:pt-2.5">
-        <PoolNav category={shownCategory} state={shownState} onOpen={navigation.open} />
-        {category.isFilterable ? (
-          <div className="lg:hidden">
-            <FiltersDialog
-              category={category}
-              state={shownState}
-              loadedState={state}
-              firstPage={firstPage}
-              yearPresets={presets}
-              onApply={changeFilters}
-            />
-          </div>
-        ) : null}
+        <span aria-hidden className="hidden h-7 w-px shrink-0 bg-separator lg:block" />
+
+        <div className="sticky top-0 z-20 -mt-px flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.625rem,var(--safe-top))] pb-2.5 backdrop-blur-xl md:top-16 md:mt-4 md:px-0 md:pt-2.5 lg:static lg:mt-0 lg:min-w-0 lg:flex-1 lg:border-b-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+          <PoolNav category={shownCategory} state={shownState} onOpen={navigation.open} />
+          {category.isFilterable ? (
+            <div className="lg:hidden">
+              <FiltersDialog
+                category={category}
+                state={shownState}
+                loadedState={state}
+                firstPage={firstPage}
+                yearPresets={presets}
+                onApply={changeFilters}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div
@@ -172,11 +175,7 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
                 <ResultsSummary category={category} state={state} firstPage={firstPage} />
               </Suspense>
             </p>
-            <SortMenu
-              options={sortsFor(category)}
-              value={shownState.sort}
-              onChange={changeSort}
-            />
+            <SortMenu options={sortsFor(category)} value={shownState.sort} onChange={changeSort} />
           </div>
           <ActiveFilters
             filters={shownState.filters}
