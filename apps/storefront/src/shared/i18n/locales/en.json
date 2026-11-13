@@ -10,6 +10,7 @@
     "details": "Details",
     "picks": "Also on top",
     "topTen": "Top 10",
+    "topTenCaption": "Popular right now and well rated",
     "topTenFailed": "Could not load the top 10.",
     "typeFilter": {
       "label": "What to show",
@@ -21,6 +22,7 @@
     "episodeCode": "S{season} · E{episode}",
     "episodeLabel": "Season {season}, episode {episode}",
     "newReleases": "New releases",
+    "newReleasesCaption": "Just out in cinemas and on streaming",
     "releaseFilter": {
       "label": "Where to watch",
       "nowPlaying": "In cinemas",

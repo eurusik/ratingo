@@ -26,6 +26,7 @@ export function TopTen({ shows, movies }: TopTenProps) {
       <SectionHeader
         id={SECTION_ID}
         title={title}
+        caption={dict.home.topTenCaption}
         trailing={<RailPager scrollerRef={filter.scrollerRef} />}
       />
       <RailFilterBar

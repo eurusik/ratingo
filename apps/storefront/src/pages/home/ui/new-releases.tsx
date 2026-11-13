@@ -25,6 +25,7 @@ export function NewReleases({ lists }: { lists: Record<ReleaseList, TrendingMedi
       <SectionHeader
         id={SECTION_ID}
         title={title}
+        caption={dict.home.newReleasesCaption}
         trailing={<RailPager scrollerRef={filter.scrollerRef} />}
       />
       <RailFilterBar

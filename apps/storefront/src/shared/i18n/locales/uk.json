@@ -10,6 +10,7 @@
     "details": "Детальніше",
     "picks": "Також у топі",
     "topTen": "Топ-10",
+    "topTenCaption": "Що зараз популярне й добре оцінене",
     "topTenFailed": "Не вдалося завантажити топ-10.",
     "typeFilter": {
       "label": "Що показати",
@@ -21,6 +22,7 @@
     "episodeCode": "С{season} · Е{episode}",
     "episodeLabel": "Сезон {season}, серія {episode}",
     "newReleases": "Новинки",
+    "newReleasesCaption": "Щойно в кіно та на стрімінгах",
     "releaseFilter": {
       "label": "Де дивитися",
       "nowPlaying": "У кіно",
