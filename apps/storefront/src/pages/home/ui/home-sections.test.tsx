@@ -7,6 +7,7 @@ import { openSearch } from '@/features/search';
 import { openAuth } from '@/shared/auth';
 import { I18nProvider, getDictionary, type Locale } from '@/shared/i18n';
 import type { EpisodeRelease } from '../model/home-feed';
+import { HeroBanner } from './hero-banner';
 import { NewEpisodes } from './new-episodes';
 import { NewReleases } from './new-releases';
 import { TopTen } from './top-ten';
@@ -119,6 +120,15 @@ describe('NewReleases', () => {
 
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Дюна' })).toBeInTheDocument();
+  });
+});
+
+describe('HeroBanner', () => {
+  it('names the lead as number one and keeps its ratings next to the verdict', () => {
+    renderIn(<HeroBanner hero={{ ...ANDOR, imdbRating: 8.3 }} />, 'en');
+
+    expect(screen.getByRole('heading', { name: 'No. 1 right now: Андор' })).toBeInTheDocument();
+    expect(screen.getByText('8.3')).toBeInTheDocument();
   });
 });
 

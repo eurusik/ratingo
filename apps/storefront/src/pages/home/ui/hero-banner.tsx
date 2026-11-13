@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Chip } from '@heroui/react';
 import { EventBadge, ExternalRatings, VerdictChip } from '@/entities/media';
 import { OwnScoreChip } from '@/entities/library';
 import { SaveButton } from '@/features/save-to-library';
@@ -47,27 +46,27 @@ export function HeroBanner({ hero }: { hero: HeroMedia }) {
       <HeroBackdrop hero={hero} />
       <span
         aria-hidden
-        className="absolute inset-0 -z-10 bg-linear-to-t from-background via-background/70 to-transparent md:bg-linear-to-r md:via-background/50"
+        className="absolute inset-0 -z-10 bg-linear-to-t from-background via-background/70 to-transparent md:bg-linear-to-r md:from-background/85 md:via-background/45"
       />
       <span
         aria-hidden
-        className="absolute inset-x-0 top-0 -z-10 h-32 bg-linear-to-b from-background/70 to-transparent"
+        className="absolute inset-x-0 top-0 -z-10 h-32 bg-linear-to-b from-background/70 to-transparent md:hidden"
       />
-      <ExternalRatings
-        imdbRating={hero.imdbRating}
-        criticsPercent={hero.criticsPercent}
-        className="absolute start-4 top-4 md:start-8 md:top-8"
-      />
+      <span
+        aria-hidden
+        className="absolute start-0 top-0 flex h-16 min-w-16 items-center justify-center rounded-ee-3xl bg-background px-3 text-5xl font-black tabular-nums md:h-20 md:min-w-20 md:text-6xl"
+      >
+        1
+      </span>
       <div className="absolute end-4 top-4 z-10 md:end-8 md:top-8">
         <SaveButton media={hero} tone="overlay" />
       </div>
       <div className="flex flex-col gap-2.5 px-4 pt-24 pb-5 md:max-w-xl md:px-8 md:pb-8">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Chip size="sm" color="accent" variant="primary" className="font-extrabold">
-            {dict.home.leadBadge}
-          </Chip>
-          {hero.event ? <EventBadge event={hero.event} /> : null}
-        </div>
+        {hero.event ? (
+          <div className="flex">
+            <EventBadge event={hero.event} />
+          </div>
+        ) : null}
         <h2
           id="home-hero"
           className="text-3xl leading-tight font-extrabold tracking-tight text-balance md:text-5xl"
@@ -76,12 +75,14 @@ export function HeroBanner({ hero }: { hero: HeroMedia }) {
             href={mediaRoute(hero.type, hero.slug)}
             className="text-foreground no-underline outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus md:after:rounded-3xl"
           >
+            <span className="sr-only">{dict.home.leadBadge}: </span>
             {hero.title}
           </Link>
         </h2>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted tabular-nums">
           <span>{details}</span>
           {hero.verdict ? <VerdictChip verdict={hero.verdict} /> : null}
+          <ExternalRatings imdbRating={hero.imdbRating} criticsPercent={hero.criticsPercent} />
           <OwnScoreChip mediaItemId={hero.mediaItemId} />
         </div>
         {hero.overview ? (
