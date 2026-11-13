@@ -30,3 +30,16 @@ export function TopRankTileSkeleton() {
     </div>
   );
 }
+
+export function PosterTileSkeleton() {
+  return (
+    <div className="flex flex-col gap-1.5 md:gap-2">
+      <Skeleton className="aspect-2/3 w-full rounded-xl" />
+      <div className="flex min-h-[2lh] flex-col justify-around text-[13px] leading-tight md:text-sm">
+        <Skeleton className="h-[0.8em] w-4/5 rounded-full" />
+        <Skeleton className="h-[0.8em] w-1/2 rounded-full" />
+      </div>
+      <Skeleton className="h-7 w-16 rounded-full" />
+    </div>
+  );
+}

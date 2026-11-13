@@ -2,6 +2,10 @@ export { configureStorefrontApi } from './configure';
 export {
   catalogApi,
   type CatalogCache,
+  type CatalogListQuery,
+  type CatalogPage,
+  type MovieListPath,
+  type ShowListPath,
   type HomeItem,
   type ImportJobStatus,
   type ImportResult,

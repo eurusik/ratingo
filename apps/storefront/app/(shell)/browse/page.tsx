@@ -1,11 +1,20 @@
 import type { Metadata } from 'next';
-import { SectionPlaceholderPage } from '@/pages/section-placeholder';
-import { DEFAULT_LOCALE, getDictionary } from '@/shared/i18n';
+import { getRequestLocale } from '@/app/entrypoint';
+import {
+  BrowsePage,
+  DEFAULT_BROWSE_CATEGORY,
+  browseMetadata,
+  type BrowseSearchParams,
+} from '@/pages/browse';
 
-const dict = getDictionary(DEFAULT_LOCALE);
+interface BrowseRouteProps {
+  searchParams: Promise<BrowseSearchParams>;
+}
 
-export const metadata: Metadata = { title: dict.nav.browse };
+export async function generateMetadata(): Promise<Metadata> {
+  return browseMetadata(await getRequestLocale(), DEFAULT_BROWSE_CATEGORY.slug);
+}
 
-export default function BrowseRoute() {
-  return <SectionPlaceholderPage locale={DEFAULT_LOCALE} section="browse" />;
+export default async function BrowseRoute({ searchParams }: BrowseRouteProps) {
+  return <BrowsePage category={DEFAULT_BROWSE_CATEGORY} searchParams={await searchParams} />;
 }

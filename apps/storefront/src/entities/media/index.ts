@@ -8,7 +8,12 @@ export {
 export { EventBadge } from './ui/event-badge';
 export { ExternalRatings } from './ui/external-ratings';
 export { MediaPoster } from './ui/media-poster';
-export { TopRankTileSkeleton, TrendingCardSkeleton } from './ui/media-skeletons';
+export { PosterTile } from './ui/poster-tile';
+export {
+  PosterTileSkeleton,
+  TopRankTileSkeleton,
+  TrendingCardSkeleton,
+} from './ui/media-skeletons';
 export { ScoreChip, useScoreLabel } from './ui/score-chip';
 export { TopRankTile } from './ui/top-rank-tile';
 export { TrendingCard } from './ui/trending-card';

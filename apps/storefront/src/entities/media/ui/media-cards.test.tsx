@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import type { TrendingMedia } from '../model/media';
+import { PosterTile } from './poster-tile';
 import { ProviderLogos } from './provider-logos';
 import { TopRankTile } from './top-rank-tile';
 import { TrendingCard } from './trending-card';
@@ -115,5 +116,30 @@ describe('ProviderLogos', () => {
     const list = screen.getByRole('list', { name: 'Де дивитись' });
     expect(within(list).getAllByRole('listitem')).toHaveLength(4);
     expect(within(list).getByText('ще 2')).toBeInTheDocument();
+  });
+});
+
+describe('PosterTile', () => {
+  it('links the poster and title, shows the Ratingo verdict and both outside ratings', () => {
+    render(
+      <PosterTile
+        media={{ ...ANDOR, score: 8.4 }}
+        actions={<button type="button">Зберегти</button>}
+      />,
+      { wrapper: Wrapper },
+    );
+
+    const link = screen.getByRole('link', { name: 'Андор' });
+    expect(link).toHaveAttribute('href', '/shows/andor');
+    expect(link).toHaveAccessibleDescription('8,4 · Варто');
+    expect(screen.getByText('Оцінка IMDb 8,3')).toBeInTheDocument();
+    expect(screen.getByText('Rotten Tomatoes: 76% критиків')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Зберегти' })).toBeInTheDocument();
+  });
+
+  it('leaves out the verdict when the title has no Ratingo score yet', () => {
+    render(<PosterTile media={{ ...ANDOR, score: undefined }} />, { wrapper: Wrapper });
+
+    expect(screen.queryByText(/Варто/)).not.toBeInTheDocument();
   });
 });

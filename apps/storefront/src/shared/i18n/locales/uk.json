@@ -306,5 +306,166 @@
     "back": "Назад",
     "restoredTitle": "Мережа повернулась",
     "restoredDescription": "Відкриваємо сторінку…"
+  },
+  "browse": {
+    "title": "Огляд",
+    "typeLabel": "Що показати",
+    "type": {
+      "show": "Серіали",
+      "movie": "Фільми"
+    },
+    "poolsLabel": "Добірки",
+    "pools": {
+      "trending": {
+        "label": "Цього тижня",
+        "caption": "Що найбільше дивляться цього тижня"
+      },
+      "popular": {
+        "label": "Найпопулярніші",
+        "caption": "Найпопулярніші за весь час"
+      },
+      "nowPlaying": {
+        "label": "У кіно",
+        "caption": "Зараз у кінотеатрах"
+      },
+      "newReleases": {
+        "label": "Нові релізи",
+        "caption": "Вийшли за останні тижні"
+      },
+      "digital": {
+        "label": "Нове на цифрі",
+        "caption": "Щойно з’явилися на стримінгах"
+      }
+    },
+    "categories": {
+      "shows-trending": {
+        "title": "Серіали цього тижня",
+        "description": "Серіали, які зараз найбільше дивляться"
+      },
+      "shows-popular": {
+        "title": "Найпопулярніші серіали",
+        "description": "Найпопулярніші серіали за весь час"
+      },
+      "movies-trending": {
+        "title": "Фільми цього тижня",
+        "description": "Фільми, які зараз найбільше дивляться"
+      },
+      "movies-popular": {
+        "title": "Найпопулярніші фільми",
+        "description": "Найпопулярніші фільми за весь час"
+      },
+      "movies-now-playing": {
+        "title": "Зараз у кіно",
+        "description": "Фільми, які зараз ідуть у кінотеатрах"
+      },
+      "movies-new-releases": {
+        "title": "Нові фільми",
+        "description": "Нещодавно випущені фільми"
+      },
+      "movies-digital": {
+        "title": "Нове на цифрі",
+        "description": "Фільми, які нещодавно з’явилися на стримінгах"
+      }
+    },
+    "count": {
+      "show": {
+        "one": "{count} серіал",
+        "few": "{count} серіали",
+        "many": "{count} серіалів",
+        "other": "{count} серіалу"
+      },
+      "movie": {
+        "one": "{count} фільм",
+        "few": "{count} фільми",
+        "many": "{count} фільмів",
+        "other": "{count} фільму"
+      }
+    },
+    "sort": {
+      "label": "Сортування",
+      "recommended": {
+        "label": "Рекомендовані",
+        "hint": "Популярність, оцінки й свіжість разом"
+      },
+      "releaseDate": {
+        "label": "Дата виходу",
+        "hint": "Спочатку найновіші"
+      },
+      "lastAirDate": {
+        "label": "Остання серія",
+        "hint": "Що виходило нещодавно"
+      }
+    },
+    "filters": {
+      "open": "Фільтри",
+      "openActive": "Фільтри, активних: {count}",
+      "title": "Фільтри",
+      "reset": "Скинути",
+      "show": "Показати {result}",
+      "showUncounted": "Показати",
+      "nothingFound": "Нічого не знайдено",
+      "counting": "Рахуємо…",
+      "active": "Активні фільтри",
+      "remove": "Прибрати фільтр «{label}»",
+      "genres": "Жанри",
+      "genresHint": "Можна кілька",
+      "year": "Рік виходу",
+      "yearAny": "Будь-який",
+      "decade": "{decade}-ті",
+      "decadeMillennium": "{decade}-ні",
+      "older": "Раніше",
+      "range": "{from}–{to}",
+      "score": "Оцінка Ratingo від",
+      "scoreAny": "Усі",
+      "scoreFrom": "Від {score}",
+      "scoreHint": {
+        "any": "Та сама оцінка, що на картках",
+        "6": "Без слабких: від 6 і вище",
+        "7": "7+ — усе з позначкою «Варто» на картках",
+        "8": "Лише найкраще: від 8"
+      }
+    },
+    "empty": {
+      "title": "Нічого не знайшли",
+      "body": "Разом ці фільтри нічого не дають. Найбільше відкриє:",
+      "remove": "Прибрати «{label}»",
+      "result": "знайдеться {result}",
+      "reset": "Скинути всі фільтри",
+      "plain": "Тут поки порожньо. Зазирни в іншу добірку."
+    },
+    "list": {
+      "label": "{title}: список",
+      "loading": "Завантажуємо ще…",
+      "failed": "Не вдалося завантажити далі",
+      "failedHint": "Перевір інтернет і спробуй ще раз",
+      "firstFailed": "Не вдалося завантажити список",
+      "retry": "Спробувати знову",
+      "end": "Це все: {result}"
+    },
+    "backToTop": "Нагору",
+    "genres": {
+      "drama": "Драма",
+      "komediya": "Комедія",
+      "kryminal": "Кримінал",
+      "detektyv": "Детектив",
+      "naukovo-fantastychnyy": "Фантастика",
+      "ekshn-i-pryhody": "Екшн і пригоди",
+      "multfilm": "Мультфільм",
+      "simeynyy": "Сімейний",
+      "dytyachyy": "Дитячий",
+      "realiti-shou": "Реаліті-шоу",
+      "polityka-ta-viyna": "Політика та війна",
+      "boyovyk": "Бойовик",
+      "tryler": "Трилер",
+      "zhakhy": "Жахи",
+      "fantastyka": "Фантастика",
+      "fentezi": "Фентезі",
+      "pryhody": "Пригоди",
+      "melodrama": "Мелодрама",
+      "istorychnyy": "Історичний",
+      "viyskovyy": "Військовий",
+      "muzyka": "Музика",
+      "vestern": "Вестерн"
+    }
   }
 }

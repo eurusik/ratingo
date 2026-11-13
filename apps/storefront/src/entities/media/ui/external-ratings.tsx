@@ -1,19 +1,26 @@
 import { CriticsChip } from './critics-chip';
 import { ImdbChip } from './imdb-chip';
+import type { RatingChipSize } from './rating-chip-size';
 
 interface ExternalRatingsProps {
   imdbRating?: number;
   criticsPercent?: number;
+  size?: RatingChipSize;
   className?: string;
 }
 
-export function ExternalRatings({ imdbRating, criticsPercent, className }: ExternalRatingsProps) {
+export function ExternalRatings({
+  imdbRating,
+  criticsPercent,
+  size = 'md',
+  className,
+}: ExternalRatingsProps) {
   if (imdbRating === undefined && criticsPercent === undefined) return null;
 
   return (
-    <div className={`flex gap-1.5 ${className ?? ''}`}>
-      {imdbRating === undefined ? null : <ImdbChip rating={imdbRating} />}
-      {criticsPercent === undefined ? null : <CriticsChip percent={criticsPercent} />}
+    <div className={`flex ${size === 'md' ? 'gap-1.5' : 'gap-1'} ${className ?? ''}`}>
+      {imdbRating === undefined ? null : <ImdbChip rating={imdbRating} size={size} />}
+      {criticsPercent === undefined ? null : <CriticsChip percent={criticsPercent} size={size} />}
     </div>
   );
 }

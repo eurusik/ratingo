@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { Clapperboard, Tv } from 'lucide-react';
 import type { MediaType } from '@/shared/api';
 
-type PosterSize = 'row' | 'list' | 'rank';
+type PosterSize = 'row' | 'list' | 'rank' | 'grid';
 
 const POSTER_SIZES: Record<PosterSize, { width: number; height: number; className: string }> = {
   row: { width: 40, height: 60, className: 'h-15 w-10 rounded-lg' },
@@ -12,12 +12,14 @@ const POSTER_SIZES: Record<PosterSize, { width: number; height: number; classNam
     height: 231,
     className: 'h-36 w-24 rounded-xl md:aspect-2/3 md:h-auto md:w-full',
   },
+  grid: { width: 342, height: 513, className: 'aspect-2/3 h-auto w-full rounded-xl' },
 };
 
 interface MediaPosterProps {
   type: MediaType;
   posterUrl?: string;
   size?: PosterSize;
+  isPriority?: boolean;
 }
 
 export function MediaTypeIcon({ type, className }: { type: MediaType; className?: string }) {
@@ -25,7 +27,7 @@ export function MediaTypeIcon({ type, className }: { type: MediaType; className?
   return <Icon aria-hidden className={className} />;
 }
 
-export function MediaPoster({ type, posterUrl, size = 'row' }: MediaPosterProps) {
+export function MediaPoster({ type, posterUrl, size = 'row', isPriority = false }: MediaPosterProps) {
   const { width, height, className } = POSTER_SIZES[size];
 
   if (!posterUrl) {
@@ -45,6 +47,8 @@ export function MediaPoster({ type, posterUrl, size = 'row' }: MediaPosterProps)
       width={width}
       height={height}
       unoptimized
+      loading={isPriority ? 'eager' : 'lazy'}
+      fetchPriority={isPriority ? 'high' : 'auto'}
       className={`shrink-0 bg-surface-secondary object-cover ${className}`}
     />
   );
