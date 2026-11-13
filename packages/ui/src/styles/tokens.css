@@ -1,0 +1,29 @@
+:root,
+:host {
+  --radius: 0.75rem;
+  --tooltip-delay: 600ms;
+  --tap-target: 44px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --viewport-bottom-fill-height: 10rem;
+  --viewport-bottom-edge-height: 12px;
+  --sheet-backdrop-full-at: 30%;
+  --edge-panel-shadow: 0 -6px 24px 0 rgba(0, 0, 0, 0.08);
+  --tab-bar-height: 4rem;
+}
+
+.dark,
+[data-theme='dark'] {
+  --edge-panel-shadow: none;
+}
+
+@theme inline {
+  --spacing-tap: var(--tap-target);
+  --spacing-tab-bar: var(--tab-bar-height);
+  --spacing-safe-top: var(--safe-top);
+  --spacing-safe-right: var(--safe-right);
+  --spacing-safe-bottom: var(--safe-bottom);
+  --spacing-safe-left: var(--safe-left);
+}

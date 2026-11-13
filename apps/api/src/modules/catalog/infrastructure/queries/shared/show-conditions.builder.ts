@@ -8,12 +8,14 @@ import {
   CONTEXT_FRESHNESS,
   TRENDING_THRESHOLDS,
 } from '@/modules/catalog/domain/constants/catalog.constants';
-import type { ListContext } from '@/modules/catalog/domain/types/query.types';
+import type { ListContext, ScoreFilterOptions } from '@/modules/catalog/domain/types/query.types';
 import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
-export interface ShowConditionsOptions {
+import { buildShowScoreConditions } from './score-conditions.builder';
+import { buildRawYearConditions } from './year-range.util';
+
+export interface ShowConditionsOptions extends ScoreFilterOptions {
   listContext?: ListContext;
-  minRatingo?: number;
   genres?: string[];
   voteSource?: VoteSource;
   minVotes?: number;
@@ -45,6 +47,7 @@ export function buildTrendingShowConditions(options: ShowConditionsOptions): SQL
   const {
     listContext = 'catalog',
     minRatingo,
+    minQuality,
     genres,
     voteSource,
     minVotes,
@@ -69,9 +72,7 @@ export function buildTrendingShowConditions(options: ShowConditionsOptions): SQL
   // Trending without audience is just "recent" - enforce minimum traction
   conditions.push(sql`COALESCE(ms.watchers_count, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS}`);
 
-  if (minRatingo !== undefined) {
-    conditions.push(sql`ms.ratingo_score >= ${minRatingo}`);
-  }
+  conditions.push(...buildShowScoreConditions({ minRatingo, minQuality }));
 
   if (genres?.length) {
     const genreList = sql.join(
@@ -95,26 +96,7 @@ export function buildTrendingShowConditions(options: ShowConditionsOptions): SQL
     }
   }
 
-  if (year !== undefined) {
-    conditions.push(
-      sql`mi.release_date IS NOT NULL`,
-      sql`mi.release_date >= ${new Date(Date.UTC(year, 0, 1))}`,
-      sql`mi.release_date < ${new Date(Date.UTC(year + 1, 0, 1))}`,
-    );
-  } else if (yearFrom !== undefined || yearTo !== undefined) {
-    if (yearFrom !== undefined) {
-      conditions.push(
-        sql`mi.release_date IS NOT NULL`,
-        sql`mi.release_date >= ${new Date(Date.UTC(yearFrom, 0, 1))}`,
-      );
-    }
-    if (yearTo !== undefined) {
-      conditions.push(
-        sql`mi.release_date IS NOT NULL`,
-        sql`mi.release_date < ${new Date(Date.UTC(yearTo + 1, 0, 1))}`,
-      );
-    }
-  }
+  conditions.push(...buildRawYearConditions(sql`mi.release_date`, year, yearFrom, yearTo));
 
   return conditions;
 }

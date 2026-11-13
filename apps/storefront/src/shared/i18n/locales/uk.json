@@ -1,22 +1,46 @@
 {
   "meta": {
     "title": "Ratingo — що дивитися зараз",
-    "description": "Фільми та серіали, які зараз дивиться світ: рейтинги, нові серії та що варто подивитися."
+    "description": "Фільми та серіали, які зараз дивиться світ: рейтинги, нові серії та що варто подивитися.",
+    "keywords": {
+      "shows": "серіали",
+      "movies": "фільми",
+      "trending": "тренди",
+      "ratings": "рейтинги",
+      "country": "україна"
+    }
   },
   "home": {
     "title": "Ratingo",
-    "subtitle": "Новий Ratingo вже будується. Тут поки лише перевірка, що все працює."
-  },
-  "session": {
-    "heading": "Сесія",
-    "loading": "Перевіряємо сесію…",
-    "guest": "Ви не увійшли.",
-    "signedInAs": "Ви увійшли як",
-    "signInWith": {
-      "google": "Увійти через Google",
-      "facebook": "Увійти через Facebook"
+    "heading": "Що дивитися сьогодні",
+    "leadBadge": "№1 зараз",
+    "details": "Детальніше",
+    "picks": "Також у топі",
+    "topTen": "Топ-10",
+    "topTenCaption": "Усі дивляться — і не дарма",
+    "topTenFailed": "Не вдалося завантажити топ-10.",
+    "typeFilter": {
+      "label": "Що показати",
+      "show": "Серіали",
+      "movie": "Фільми"
     },
-    "signOut": "Вийти"
+    "newEpisodes": "Нові серії",
+    "newEpisodesCaption": "Що вийшло за останній тиждень",
+    "episodeCode": "С{season} · Е{episode}",
+    "episodeLabel": "Сезон {season}, серія {episode}",
+    "newReleases": "Новинки",
+    "newReleasesCaption": "Щойно в кіно та на стрімінгах",
+    "releaseFilter": {
+      "label": "Де дивитися",
+      "nowPlaying": "У кіно",
+      "newOnDigital": "На стримінгах"
+    },
+    "track": {
+      "title": "Відстежуй свої серіали",
+      "body": "Додай серіали, які дивишся, і ми покажемо нові серії, щойно вони вийдуть, та де ти зупинився.",
+      "signIn": "Увійти",
+      "find": "Знайти серіал"
+    }
   },
   "oauth": {
     "completing": "Завершуємо вхід…",
@@ -31,6 +55,417 @@
       "providerError": "Провайдер повернув помилку. Спробуйте ще раз.",
       "stateInvalid": "Помилка безпеки. Спробуйте ще раз.",
       "unknown": "Щось пішло не так. Спробуйте ще раз."
+    }
+  },
+  "common": {
+    "close": "Закрити",
+    "skipToContent": "Перейти до змісту",
+    "retry": "Спробувати ще раз",
+    "loading": "Завантаження…",
+    "opensInNewTab": "(відкриється в новій вкладці)"
+  },
+  "nav": {
+    "label": "Основна навігація",
+    "home": "Ratingo — на головну",
+    "today": "Сьогодні",
+    "browse": "Огляд",
+    "calendar": "Календар",
+    "my": "Моє",
+    "search": "Пошук"
+  },
+  "search": {
+    "title": "Пошук",
+    "trigger": "Знайти фільм або серіал",
+    "placeholder": "Фільм або серіал…",
+    "cancel": "Скасувати",
+    "recent": "Нещодавно відкриті",
+    "clearRecent": "Очистити",
+    "removeRecent": "Прибрати «{title}» з нещодавніх",
+    "popular": "Популярне зараз",
+    "filterLabel": "Що шукати",
+    "filters": {
+      "all": "Усе",
+      "movie": "Фільми",
+      "show": "Серіали"
+    },
+    "results": "Результати",
+    "otherResults": "Інші результати",
+    "alsoKnownAs": "також: {title}",
+    "searching": "Шукаємо…",
+    "noResults": "Нічого не знайшли за запитом «{query}»",
+    "failed": "Не вдалося виконати пошук.",
+    "preparing": "Готуємо сторінку…",
+    "preparingHint": "Додаємо «{title}» до Ratingo. Це займе кілька секунд.",
+    "importFailed": "Не вдалося додати «{title}».",
+    "hints": {
+      "label": "Клавіші",
+      "navigate": "вибрати",
+      "open": "відкрити",
+      "close": "закрити"
+    },
+    "backToSearch": "Назад до пошуку",
+    "resultsCount": "Знайдено: {count}"
+  },
+  "placeholder": {
+    "comingSoon": "Цей розділ з’явиться найближчим часом."
+  },
+  "pullToRefresh": {
+    "refreshing": "Оновлюємо…"
+  },
+  "my": {
+    "sampleItem": "Приклад №{number}",
+    "remove": "Видалити",
+    "sampleHint": "Тимчасовий список: проведіть рядок ліворуч, щоб видалити. У встановленому застосунку потягніть сторінку вниз, щоб повернути все."
+  },
+  "rating": {
+    "label": "Оцінка {score}: {verdict}",
+    "verdict": {
+      "good": "Варто",
+      "mixed": "Сумнівно",
+      "bad": "Слабко"
+    },
+    "verdictLabel": "Вердикт Ratingo:"
+  },
+  "auth": {
+    "loginTitle": "Вхід у Ratingo",
+    "registerTitle": "Створити акаунт",
+    "intent": {
+      "save": "Увійди, щоб зберегти «{title}»"
+    },
+    "loginLead": "Збережене, нові серії й календар будуть з тобою на всіх пристроях.",
+    "registerLead": "Це безкоштовно і займе хвилину.",
+    "continueWith": {
+      "google": "Продовжити з Google",
+      "facebook": "Продовжити з Facebook"
+    },
+    "orEmail": "або через email",
+    "email": "Email",
+    "password": "Пароль",
+    "showPassword": "Показати пароль",
+    "hidePassword": "Сховати пароль",
+    "username": "Імʼя в Ratingo",
+    "usernameHint": "Видно у відгуках. Можна змінити зараз або потім у налаштуваннях.",
+    "usernameSuggested": "запропоновано",
+    "submitLogin": "Увійти",
+    "submitRegister": "Створити акаунт",
+    "noAccount": "Ще немає акаунта?",
+    "createAccount": "Створити",
+    "haveAccount": "Вже є акаунт?",
+    "signIn": "Увійти",
+    "emailTaken": "Цей email уже зареєстрований.",
+    "signInInstead": "Увійти?",
+    "passwordRules": {
+      "label": "Вимоги до пароля",
+      "met": "виконано",
+      "length": "Щонайменше 8 символів",
+      "case": "Велика й мала літери",
+      "digit": "Хоча б одна цифра",
+      "unmet": "ще не виконано"
+    },
+    "errors": {
+      "invalidCredentials": "Невірний email або пароль. Перевір розкладку і Caps Lock.",
+      "emailAlreadyExists": "Цей email уже зареєстрований.",
+      "usernameTaken": "Це імʼя вже зайняте. Спробуй інше.",
+      "tooManyRequests": "Забагато спроб. Зачекай хвилину й спробуй ще раз.",
+      "unknownError": "Щось пішло не так. Спробуй ще раз."
+    },
+    "validation": {
+      "emailInvalid": "Введи коректний email",
+      "passwordRequired": "Введи пароль",
+      "usernameLength": "Від 3 до 30 символів",
+      "usernameFormat": "Лише латинські літери, цифри та _",
+      "passwordWeak": "Пароль ще не відповідає вимогам"
+    }
+  },
+  "header": {
+    "signIn": "Увійти",
+    "profile": "Профіль"
+  },
+  "notifications": {
+    "title": "Сповіщення",
+    "unread": "Сповіщення, непрочитаних: {count}",
+    "markAllRead": "Прочитати всі",
+    "viewAll": "Усі сповіщення",
+    "empty": "Нових сповіщень поки немає.",
+    "failed": "Не вдалося завантажити сповіщення.",
+    "events": {
+      "release": "Вийшов у прокат",
+      "new_season": "Повертається сезон",
+      "new_episode": "Вийшов новий епізод",
+      "on_streaming": "Доступно на стрімінгу",
+      "status_changed": "Змінився статус"
+    },
+    "unreadItem": "непрочитане"
+  },
+  "profile": {
+    "stats": {
+      "label": "Твоя статистика",
+      "moviesRated": "оцінено фільмів",
+      "showsRated": "оцінено серіалів",
+      "watchlist": "у списку"
+    },
+    "theme": "Тема",
+    "themes": {
+      "dark": "Темна",
+      "light": "Світла"
+    },
+    "language": "Мова",
+    "languageNames": {
+      "uk": "Українська",
+      "en": "English"
+    },
+    "settings": "Налаштування",
+    "install": "Встановити додаток",
+    "installHint": "на головний екран",
+    "admin": "Адмін-панель",
+    "signOut": "Вийти"
+  },
+  "footer": {
+    "label": "Про сайт",
+    "description": "Що дивитися зараз: тренди, оцінки й нові серії твоїх серіалів.",
+    "sources": "Дані з TMDB, Trakt, IMDb та інших джерел.",
+    "about": "Про Ratingo",
+    "journal": "Журнал",
+    "github": "GitHub",
+    "madeIn": "Зроблено в Україні 🇺🇦",
+    "authorName": "Євген Русаков"
+  },
+  "media": {
+    "type": {
+      "movie": "Фільм",
+      "show": "Серіал"
+    },
+    "providers": "Де дивитись",
+    "moreProviders": "ще {count}",
+    "badge": {
+      "NEW_EPISODE": "Нова серія",
+      "NEW_RELEASE": "Прем’єра",
+      "IN_THEATERS": "У кіно",
+      "NEW_ON_STREAMING": "Нове на стрімінгу"
+    },
+    "imdbLabel": "Оцінка IMDb {score}",
+    "criticsLabel": "Rotten Tomatoes: {percent}% критиків",
+    "watchingNow": {
+      "one": "Зараз дивиться {count} людина",
+      "few": "Зараз дивляться {count} людини",
+      "many": "Зараз дивляться {count} людей"
+    },
+    "watchingNowShort": {
+      "one": "{count} дивиться",
+      "few": "{count} дивляться",
+      "many": "{count} дивляться"
+    }
+  },
+  "library": {
+    "yourScore": "Твоя оцінка {score}"
+  },
+  "saveToLibrary": {
+    "save": "Зберегти «{title}»",
+    "menu": {
+      "save": "Зберегти",
+      "unsave": "Прибрати зі збереженого",
+      "open": "Відкрити",
+      "share": "Поділитися"
+    },
+    "toast": {
+      "saved": "«{title}» збережено",
+      "removed": "«{title}» прибрано",
+      "undo": "Скасувати",
+      "failed": "Не вдалося оновити збережене. Спробуй ще раз.",
+      "linkCopied": "Посилання скопійовано",
+      "shareFailed": "Не вдалося поділитися посиланням."
+    }
+  },
+  "rail": {
+    "previous": "Попередні",
+    "next": "Наступні"
+  },
+  "seo": {
+    "notFound": {
+      "movie": "Фільм не знайдено",
+      "show": "Серіал не знайдено"
+    },
+    "media": {
+      "kindCapitalized": {
+        "movie": "Фільм",
+        "show": "Серіал"
+      },
+      "titleKeywords": {
+        "movie": "актори та рейтинг фільму",
+        "show": "актори та рейтинг серіалу"
+      },
+      "titleKeywordsShort": "актори",
+      "castLabel": "У ролях",
+      "watchOn": "Дивіться на Ratingo"
+    }
+  },
+  "offline": {
+    "title": "Немає інтернету",
+    "description": "Відкриємо сторінку, щойно з’явиться мережа.",
+    "reload": "Оновити зараз",
+    "back": "Назад",
+    "restoredTitle": "Мережа повернулась",
+    "restoredDescription": "Відкриваємо сторінку…"
+  },
+  "browse": {
+    "title": "Огляд",
+    "typeLabel": "Що показати",
+    "type": {
+      "show": "Серіали",
+      "movie": "Фільми"
+    },
+    "poolsLabel": "Добірки",
+    "pools": {
+      "trending": {
+        "label": "Цього тижня",
+        "caption": "Що найбільше дивляться цього тижня"
+      },
+      "popular": {
+        "label": "Найпопулярніші",
+        "caption": "Найпопулярніші за весь час"
+      },
+      "nowPlaying": {
+        "label": "У кіно",
+        "caption": "Зараз у кінотеатрах"
+      },
+      "newReleases": {
+        "label": "Нові релізи",
+        "caption": "Вийшли за останні тижні"
+      },
+      "digital": {
+        "label": "Нове на цифрі",
+        "caption": "Щойно з’явилися на стримінгах"
+      }
+    },
+    "categories": {
+      "shows-trending": {
+        "title": "Серіали цього тижня",
+        "description": "Серіали, які зараз найбільше дивляться"
+      },
+      "shows-popular": {
+        "title": "Найпопулярніші серіали",
+        "description": "Найпопулярніші серіали за весь час"
+      },
+      "movies-trending": {
+        "title": "Фільми цього тижня",
+        "description": "Фільми, які зараз найбільше дивляться"
+      },
+      "movies-popular": {
+        "title": "Найпопулярніші фільми",
+        "description": "Найпопулярніші фільми за весь час"
+      },
+      "movies-now-playing": {
+        "title": "Зараз у кіно",
+        "description": "Фільми, які зараз ідуть у кінотеатрах"
+      },
+      "movies-new-releases": {
+        "title": "Нові фільми",
+        "description": "Нещодавно випущені фільми"
+      },
+      "movies-digital": {
+        "title": "Нове на цифрі",
+        "description": "Фільми, які нещодавно з’явилися на стримінгах"
+      }
+    },
+    "count": {
+      "show": {
+        "one": "{count} серіал",
+        "few": "{count} серіали",
+        "many": "{count} серіалів",
+        "other": "{count} серіалу"
+      },
+      "movie": {
+        "one": "{count} фільм",
+        "few": "{count} фільми",
+        "many": "{count} фільмів",
+        "other": "{count} фільму"
+      }
+    },
+    "sort": {
+      "label": "Сортування",
+      "recommended": {
+        "label": "Рекомендовані",
+        "hint": "Популярність, оцінки й свіжість разом"
+      },
+      "releaseDate": {
+        "label": "Дата виходу",
+        "hint": "Спочатку найновіші"
+      },
+      "lastAirDate": {
+        "label": "Остання серія",
+        "hint": "Що виходило нещодавно"
+      }
+    },
+    "filters": {
+      "open": "Фільтри",
+      "openActive": "Фільтри, активних: {count}",
+      "title": "Фільтри",
+      "reset": "Скинути",
+      "show": "Показати {result}",
+      "showUncounted": "Показати",
+      "nothingFound": "Нічого не знайшли",
+      "counting": "Рахуємо…",
+      "active": "Активні фільтри",
+      "remove": "Прибрати фільтр «{label}»",
+      "genres": "Жанри",
+      "genresHint": "Можна кілька",
+      "year": "Рік виходу",
+      "yearAny": "Будь-який",
+      "decade": "{decade}-ті",
+      "decadeMillennium": "{decade}-ні",
+      "older": "Раніше",
+      "range": "{from}–{to}",
+      "score": "Оцінка Ratingo від",
+      "scoreAny": "Усі",
+      "scoreFrom": "Від {score}",
+      "scoreHint": {
+        "any": "Та сама оцінка, що на картках",
+        "6": "Без слабких: від 6 і вище",
+        "7": "7+ — усе з позначкою «Варто» на картках",
+        "8": "Лише найкраще: від 8"
+      }
+    },
+    "empty": {
+      "title": "Нічого не знайшли",
+      "body": "Разом ці фільтри нічого не дають. Найбільше відкриє:",
+      "remove": "Прибрати «{label}»",
+      "result": "результат: {result}",
+      "reset": "Скинути всі фільтри",
+      "plain": "Тут поки порожньо. Зазирни в іншу добірку."
+    },
+    "list": {
+      "label": "{title}: список",
+      "loading": "Завантажуємо ще…",
+      "failed": "Не вдалося завантажити далі",
+      "failedHint": "Перевір інтернет і спробуй ще раз",
+      "firstFailed": "Не вдалося завантажити список",
+      "retry": "Спробувати знову",
+      "end": "Це все: {result}"
+    },
+    "backToTop": "Нагору",
+    "genres": {
+      "drama": "Драма",
+      "komediya": "Комедія",
+      "kryminal": "Кримінал",
+      "detektyv": "Детектив",
+      "naukovo-fantastychnyy": "Фантастика",
+      "ekshn-i-pryhody": "Екшн і пригоди",
+      "multfilm": "Мультфільм",
+      "simeynyy": "Сімейний",
+      "dytyachyy": "Дитячий",
+      "realiti-shou": "Реаліті-шоу",
+      "polityka-ta-viyna": "Політика та війна",
+      "boyovyk": "Бойовик",
+      "tryler": "Трилер",
+      "zhakhy": "Жахи",
+      "fantastyka": "Фантастика",
+      "fentezi": "Фентезі",
+      "pryhody": "Пригоди",
+      "melodrama": "Мелодрама",
+      "istorychnyy": "Історичний",
+      "viyskovyy": "Військовий",
+      "muzyka": "Музика",
+      "vestern": "Вестерн"
     }
   }
 }

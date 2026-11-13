@@ -1,0 +1,87 @@
+.viewport-bottom-fill {
+  display: none;
+  position: absolute;
+  left: 0;
+  z-index: var(--z-index-overlay);
+  width: 100%;
+  height: var(--viewport-bottom-fill-height);
+  pointer-events: none;
+  transition: opacity 200ms cubic-bezier(0.32, 0.72, 0, 1);
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+.viewport-bottom-edge {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: calc(var(--z-index-toast) + 1);
+  width: 100%;
+  height: var(--viewport-bottom-edge-height);
+  pointer-events: none;
+}
+
+:is(.viewport-bottom-fill, .viewport-bottom-edge)[data-tone='panel'] {
+  background: var(--overlay);
+}
+
+:is(.viewport-bottom-fill, .viewport-bottom-edge)[data-tone='backdrop'] {
+  background: var(--backdrop);
+}
+
+@supports (-webkit-touch-callout: none) {
+  .viewport-bottom-fill,
+  .viewport-bottom-edge {
+    display: block;
+  }
+}
+
+.sheet__content--bottom:not([data-detached]) {
+  background: var(--overlay);
+}
+
+[data-sheet-scroll]:has(.sheet__content--bottom[data-fully-open]) {
+  overscroll-behavior-y: none !important;
+}
+
+.sheet__content[data-fully-open] .sheet__body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sheet__content--bottom:not([data-detached]) .sheet__dialog,
+.drawer__content--bottom .drawer__dialog {
+  box-shadow: var(--edge-panel-shadow);
+}
+
+.sheet__overlay[data-position='bottom'] > .sheet__backdrop[data-stack-index='0'] {
+  animation-range: entry 0% entry var(--sheet-backdrop-full-at) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport-bottom-fill {
+    transition: none;
+  }
+}
+
+.keyboard-inset {
+  display: block;
+  flex-shrink: 0;
+  min-height: max(0px, calc(var(--keyboard-height, 0px) - var(--safe-bottom)));
+  transition: min-height 150ms ease-out;
+}
+
+.full-height-sheet {
+  height: calc(100% - 2rem);
+}
+
+.full-height-sheet .sheet__dialog {
+  height: 100%;
+}
+
+.sheet__footer {
+  padding-bottom: max(1rem, var(--safe-bottom));
+}

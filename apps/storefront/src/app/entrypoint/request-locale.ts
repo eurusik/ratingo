@@ -1,0 +1,8 @@
+import { cache } from 'react';
+import { cookies } from 'next/headers';
+import { LOCALE_COOKIE, toLocale, type Locale } from '@/shared/i18n';
+
+export const getRequestLocale = cache(async (): Promise<Locale> => {
+  const store = await cookies();
+  return toLocale(store.get(LOCALE_COOKIE)?.value);
+});

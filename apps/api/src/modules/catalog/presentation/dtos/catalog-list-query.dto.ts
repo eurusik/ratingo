@@ -83,6 +83,19 @@ export class CatalogListQueryDto {
   minRatingo?: number;
 
   @ApiPropertyOptional({
+    type: Number,
+    minimum: 0,
+    maximum: 100,
+    description: 'Min qualityScore (0-100), the score behind the card verdict',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @Type(() => Number)
+  minQuality?: number;
+
+  @ApiPropertyOptional({
     description: 'Vote source for minVotes filter',
     enum: VOTE_SOURCE,
     default: VOTE_SOURCE.TMDB,

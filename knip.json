@@ -22,8 +22,11 @@
       "project": ["src/**/*.{ts,tsx,css}", "*.{js,mjs,ts}"]
     },
     "apps/storefront": {
-      "entry": ["steiger.config.mjs"],
+      "entry": ["steiger.config.mjs", "src/app/service-worker/sw.ts"],
       "project": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}", "*.{js,mjs,ts}"]
+    },
+    "packages/ui": {
+      "project": ["src/**/*.{ts,tsx,css}"]
     },
     "packages/web-core": {
       "project": ["src/**/*.{ts,tsx}", "*.{cjs,ts}"]
@@ -31,6 +34,7 @@
   },
   "ignoreIssues": {
     "apps/api/src/common/constants.ts": ["duplicates"],
-    "apps/web-client/src/shared/ui/**": ["exports", "types"]
+    "apps/web-client/src/shared/ui/**": ["exports", "types"],
+    "apps/storefront/src/shared/ui/**": ["exports"]
   }
 }

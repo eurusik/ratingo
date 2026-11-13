@@ -1,0 +1,36 @@
+'use client';
+
+import type { MouseEvent, ReactNode } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  NAV_BACK_TRANSITION,
+  markProgrammaticBack,
+  runNavigationTransition,
+} from '@ratingo/ui/motion';
+import { hasPreviousRoute, waitForRouteCommit } from '@/shared/lib';
+
+interface BackLinkProps {
+  fallbackHref: string;
+  className?: string;
+  children: ReactNode;
+}
+
+export function BackLink({ fallbackHref, className, children }: BackLinkProps) {
+  const router = useRouter();
+
+  const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
+      return;
+    if (!hasPreviousRoute()) return;
+    event.preventDefault();
+    markProgrammaticBack();
+    runNavigationTransition([NAV_BACK_TRANSITION], () => router.back(), waitForRouteCommit);
+  };
+
+  return (
+    <Link href={fallbackHref} className={className} onClick={onClick}>
+      {children}
+    </Link>
+  );
+}

@@ -345,6 +345,7 @@ import {
 | `sort` | enum | `trending` \| `popularity` \| `ratingo` \| `releaseDate` \| `tmdbPopularity` |
 | `order` | enum | `asc` \| `desc` |
 | `minRatingo` | number | Minimum Ratingo Score filter |
+| `minQuality` | number | Minimum Quality Score filter (the score behind the card verdict) |
 | `year` | number | Exact release year |
 | `yearFrom` | number | Release year range start |
 | `yearTo` | number | Release year range end |

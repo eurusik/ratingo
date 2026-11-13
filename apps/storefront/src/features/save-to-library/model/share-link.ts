@@ -1,0 +1,20 @@
+export type ShareOutcome = 'shared' | 'copied' | 'cancelled' | 'failed';
+
+function isUserCancel(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
+export async function shareLink(link: { url: string; title: string }): Promise<ShareOutcome> {
+  try {
+    if (typeof navigator.share === 'function') {
+      await navigator.share(link);
+      return 'shared';
+    }
+    await navigator.clipboard.writeText(link.url);
+    return 'copied';
+  } catch (error) {
+    if (isUserCancel(error)) return 'cancelled';
+    console.error('Sharing a title failed', { url: link.url, error });
+    return 'failed';
+  }
+}

@@ -1,22 +1,46 @@
 {
   "meta": {
     "title": "Ratingo — what to watch now",
-    "description": "Movies and shows the world is watching right now: ratings, new episodes and what is worth your time."
+    "description": "Movies and shows the world is watching right now: ratings, new episodes and what is worth your time.",
+    "keywords": {
+      "shows": "shows",
+      "movies": "movies",
+      "trending": "trending",
+      "ratings": "ratings",
+      "country": "ukraine"
+    }
   },
   "home": {
     "title": "Ratingo",
-    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works."
-  },
-  "session": {
-    "heading": "Session",
-    "loading": "Checking your session…",
-    "guest": "You are not signed in.",
-    "signedInAs": "Signed in as",
-    "signInWith": {
-      "google": "Sign in with Google",
-      "facebook": "Sign in with Facebook"
+    "heading": "What to watch today",
+    "leadBadge": "No. 1 right now",
+    "details": "Details",
+    "picks": "Also on top",
+    "topTen": "Top 10",
+    "topTenCaption": "Everyone’s watching — for good reason",
+    "topTenFailed": "Could not load the top 10.",
+    "typeFilter": {
+      "label": "What to show",
+      "show": "Shows",
+      "movie": "Movies"
     },
-    "signOut": "Sign out"
+    "newEpisodes": "New episodes",
+    "newEpisodesCaption": "Out in the last week",
+    "episodeCode": "S{season} · E{episode}",
+    "episodeLabel": "Season {season}, episode {episode}",
+    "newReleases": "New releases",
+    "newReleasesCaption": "Just out in cinemas and on streaming",
+    "releaseFilter": {
+      "label": "Where to watch",
+      "nowPlaying": "In cinemas",
+      "newOnDigital": "On streaming"
+    },
+    "track": {
+      "title": "Track your shows",
+      "body": "Add the shows you watch and we will show new episodes as soon as they air, and where you left off.",
+      "signIn": "Sign in",
+      "find": "Find a show"
+    }
   },
   "oauth": {
     "completing": "Completing sign-in…",
@@ -31,6 +55,417 @@
       "providerError": "The provider returned an error. Please try again.",
       "stateInvalid": "Security check failed. Please try again.",
       "unknown": "Something went wrong. Please try again."
+    }
+  },
+  "common": {
+    "close": "Close",
+    "skipToContent": "Skip to content",
+    "retry": "Try again",
+    "loading": "Loading…",
+    "opensInNewTab": "(opens in a new tab)"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "home": "Ratingo home",
+    "today": "Today",
+    "browse": "Browse",
+    "calendar": "Calendar",
+    "my": "My",
+    "search": "Search"
+  },
+  "search": {
+    "title": "Search",
+    "trigger": "Find a movie or show",
+    "placeholder": "Movie or show…",
+    "cancel": "Cancel",
+    "recent": "Recently opened",
+    "clearRecent": "Clear",
+    "removeRecent": "Remove “{title}” from recent",
+    "popular": "Popular now",
+    "filterLabel": "What to search",
+    "filters": {
+      "all": "All",
+      "movie": "Movies",
+      "show": "Shows"
+    },
+    "results": "Results",
+    "otherResults": "More results",
+    "alsoKnownAs": "also: {title}",
+    "searching": "Searching…",
+    "noResults": "Nothing found for “{query}”",
+    "failed": "Search failed.",
+    "preparing": "Preparing the page…",
+    "preparingHint": "Adding “{title}” to Ratingo. It takes a few seconds.",
+    "importFailed": "Couldn’t add “{title}”.",
+    "hints": {
+      "label": "Keys",
+      "navigate": "select",
+      "open": "open",
+      "close": "close"
+    },
+    "backToSearch": "Back to search",
+    "resultsCount": "Found: {count}"
+  },
+  "placeholder": {
+    "comingSoon": "This section is coming soon."
+  },
+  "pullToRefresh": {
+    "refreshing": "Refreshing…"
+  },
+  "my": {
+    "sampleItem": "Sample #{number}",
+    "remove": "Remove",
+    "sampleHint": "Temporary list: swipe a row left to remove it. In the installed app, pull the page down to bring everything back."
+  },
+  "rating": {
+    "label": "Rating {score}: {verdict}",
+    "verdict": {
+      "good": "Worth it",
+      "mixed": "Mixed",
+      "bad": "Weak"
+    },
+    "verdictLabel": "Ratingo verdict:"
+  },
+  "auth": {
+    "loginTitle": "Sign in to Ratingo",
+    "registerTitle": "Create an account",
+    "intent": {
+      "save": "Sign in to save “{title}”"
+    },
+    "loginLead": "Your saved titles, new episodes and calendar follow you on every device.",
+    "registerLead": "It’s free and takes a minute.",
+    "continueWith": {
+      "google": "Continue with Google",
+      "facebook": "Continue with Facebook"
+    },
+    "orEmail": "or with email",
+    "email": "Email",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "username": "Username",
+    "usernameHint": "Shown on your reviews. Change it now or later in settings.",
+    "usernameSuggested": "suggested",
+    "submitLogin": "Sign in",
+    "submitRegister": "Create account",
+    "noAccount": "No account yet?",
+    "createAccount": "Create one",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "emailTaken": "This email is already registered.",
+    "signInInstead": "Sign in?",
+    "passwordRules": {
+      "label": "Password requirements",
+      "met": "done",
+      "length": "At least 8 characters",
+      "case": "Upper and lower case letters",
+      "digit": "At least one digit",
+      "unmet": "not met yet"
+    },
+    "errors": {
+      "invalidCredentials": "Wrong email or password. Check the keyboard layout and Caps Lock.",
+      "emailAlreadyExists": "This email is already registered.",
+      "usernameTaken": "This name is taken. Try another one.",
+      "tooManyRequests": "Too many attempts. Wait a minute and try again.",
+      "unknownError": "Something went wrong. Try again."
+    },
+    "validation": {
+      "emailInvalid": "Enter a valid email",
+      "passwordRequired": "Enter your password",
+      "usernameLength": "3 to 30 characters",
+      "usernameFormat": "Latin letters, digits and _ only",
+      "passwordWeak": "The password doesn’t meet the requirements yet"
+    }
+  },
+  "header": {
+    "signIn": "Sign in",
+    "profile": "Profile"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "Notifications, unread: {count}",
+    "markAllRead": "Mark all as read",
+    "viewAll": "All notifications",
+    "empty": "No new notifications yet.",
+    "failed": "Couldn’t load notifications.",
+    "events": {
+      "release": "In cinemas",
+      "new_season": "Season returns",
+      "new_episode": "New episode out",
+      "on_streaming": "Now streaming",
+      "status_changed": "Status changed"
+    },
+    "unreadItem": "unread"
+  },
+  "profile": {
+    "stats": {
+      "label": "Your stats",
+      "moviesRated": "movies rated",
+      "showsRated": "shows rated",
+      "watchlist": "saved"
+    },
+    "theme": "Theme",
+    "themes": {
+      "dark": "Dark",
+      "light": "Light"
+    },
+    "language": "Language",
+    "languageNames": {
+      "uk": "Українська",
+      "en": "English"
+    },
+    "settings": "Settings",
+    "install": "Install the app",
+    "installHint": "to the home screen",
+    "admin": "Admin panel",
+    "signOut": "Sign out"
+  },
+  "footer": {
+    "label": "About the site",
+    "description": "What to watch now: trends, ratings and new episodes of your shows.",
+    "sources": "Data from TMDB, Trakt, IMDb and other sources.",
+    "about": "About Ratingo",
+    "journal": "Journal",
+    "github": "GitHub",
+    "madeIn": "Made in Ukraine 🇺🇦",
+    "authorName": "Yevhen Rusakov"
+  },
+  "media": {
+    "type": {
+      "movie": "Movie",
+      "show": "Show"
+    },
+    "providers": "Where to watch",
+    "moreProviders": "{count} more",
+    "badge": {
+      "NEW_EPISODE": "New episode",
+      "NEW_RELEASE": "New release",
+      "IN_THEATERS": "In theaters",
+      "NEW_ON_STREAMING": "New on streaming"
+    },
+    "imdbLabel": "IMDb rating {score}",
+    "criticsLabel": "Rotten Tomatoes: {percent}% of critics",
+    "watchingNow": {
+      "one": "{count} person is watching now",
+      "few": "{count} people are watching now",
+      "many": "{count} people are watching now"
+    },
+    "watchingNowShort": {
+      "one": "{count} watching",
+      "few": "{count} watching",
+      "many": "{count} watching"
+    }
+  },
+  "library": {
+    "yourScore": "Your score {score}"
+  },
+  "saveToLibrary": {
+    "save": "Save “{title}”",
+    "menu": {
+      "save": "Save",
+      "unsave": "Remove from saved",
+      "open": "Open",
+      "share": "Share"
+    },
+    "toast": {
+      "saved": "“{title}” saved",
+      "removed": "“{title}” removed",
+      "undo": "Undo",
+      "failed": "Could not update your saved titles. Try again.",
+      "linkCopied": "Link copied",
+      "shareFailed": "Could not share the link."
+    }
+  },
+  "rail": {
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "seo": {
+    "notFound": {
+      "movie": "Movie not found",
+      "show": "Show not found"
+    },
+    "media": {
+      "kindCapitalized": {
+        "movie": "Movie",
+        "show": "TV series"
+      },
+      "titleKeywords": {
+        "movie": "movie cast and rating",
+        "show": "TV series cast and rating"
+      },
+      "titleKeywordsShort": "cast",
+      "castLabel": "Starring",
+      "watchOn": "Watch on Ratingo"
+    }
+  },
+  "offline": {
+    "title": "No internet connection",
+    "description": "We’ll open the page as soon as you’re back online.",
+    "reload": "Reload now",
+    "back": "Back",
+    "restoredTitle": "You’re back online",
+    "restoredDescription": "Opening the page…"
+  },
+  "browse": {
+    "title": "Browse",
+    "typeLabel": "What to show",
+    "type": {
+      "show": "Shows",
+      "movie": "Movies"
+    },
+    "poolsLabel": "Collections",
+    "pools": {
+      "trending": {
+        "label": "This week",
+        "caption": "Most watched this week"
+      },
+      "popular": {
+        "label": "Most popular",
+        "caption": "Most popular of all time"
+      },
+      "nowPlaying": {
+        "label": "In theaters",
+        "caption": "Playing in theaters now"
+      },
+      "newReleases": {
+        "label": "New releases",
+        "caption": "Released in the last few weeks"
+      },
+      "digital": {
+        "label": "New on streaming",
+        "caption": "Just arrived on streaming"
+      }
+    },
+    "categories": {
+      "shows-trending": {
+        "title": "Shows this week",
+        "description": "Shows people are watching the most right now"
+      },
+      "shows-popular": {
+        "title": "Most popular shows",
+        "description": "Most popular shows of all time"
+      },
+      "movies-trending": {
+        "title": "Movies this week",
+        "description": "Movies people are watching the most right now"
+      },
+      "movies-popular": {
+        "title": "Most popular movies",
+        "description": "Most popular movies of all time"
+      },
+      "movies-now-playing": {
+        "title": "Now in theaters",
+        "description": "Movies currently playing in theaters"
+      },
+      "movies-new-releases": {
+        "title": "New movies",
+        "description": "Recently released movies"
+      },
+      "movies-digital": {
+        "title": "New on streaming",
+        "description": "Movies recently released on streaming platforms"
+      }
+    },
+    "count": {
+      "show": {
+        "one": "{count} show",
+        "few": "{count} shows",
+        "many": "{count} shows",
+        "other": "{count} shows"
+      },
+      "movie": {
+        "one": "{count} movie",
+        "few": "{count} movies",
+        "many": "{count} movies",
+        "other": "{count} movies"
+      }
+    },
+    "sort": {
+      "label": "Sort",
+      "recommended": {
+        "label": "Recommended",
+        "hint": "Popularity, ratings and freshness combined"
+      },
+      "releaseDate": {
+        "label": "Release date",
+        "hint": "Newest first"
+      },
+      "lastAirDate": {
+        "label": "Latest episode",
+        "hint": "Recently aired first"
+      }
+    },
+    "filters": {
+      "open": "Filters",
+      "openActive": "Filters, {count} active",
+      "title": "Filters",
+      "reset": "Reset",
+      "show": "Show {result}",
+      "showUncounted": "Show results",
+      "nothingFound": "Nothing found",
+      "counting": "Counting…",
+      "active": "Active filters",
+      "remove": "Remove filter “{label}”",
+      "genres": "Genres",
+      "genresHint": "Pick as many as you like",
+      "year": "Release year",
+      "yearAny": "Any",
+      "decade": "{decade}s",
+      "decadeMillennium": "{decade}s",
+      "older": "Earlier",
+      "range": "{from}–{to}",
+      "score": "Ratingo score from",
+      "scoreAny": "All",
+      "scoreFrom": "From {score}",
+      "scoreHint": {
+        "any": "The same score you see on cards",
+        "6": "No weak ones: 6 and up",
+        "7": "7+ means everything marked “Worth it”",
+        "8": "Only the best: 8 and up"
+      }
+    },
+    "empty": {
+      "title": "Nothing found",
+      "body": "These filters together match nothing. The biggest gain:",
+      "remove": "Remove “{label}”",
+      "result": "{result} will show up",
+      "reset": "Reset all filters",
+      "plain": "Nothing here yet. Try another collection."
+    },
+    "list": {
+      "label": "{title}: list",
+      "loading": "Loading more…",
+      "failed": "Couldn’t load more",
+      "failedHint": "Check your connection and try again",
+      "firstFailed": "Couldn’t load the list",
+      "retry": "Try again",
+      "end": "That’s all: {result}"
+    },
+    "backToTop": "Back to top",
+    "genres": {
+      "drama": "Drama",
+      "komediya": "Comedy",
+      "kryminal": "Crime",
+      "detektyv": "Mystery",
+      "naukovo-fantastychnyy": "Sci-Fi & Fantasy",
+      "ekshn-i-pryhody": "Action & Adventure",
+      "multfilm": "Animation",
+      "simeynyy": "Family",
+      "dytyachyy": "Kids",
+      "realiti-shou": "Reality",
+      "polityka-ta-viyna": "War & Politics",
+      "boyovyk": "Action",
+      "tryler": "Thriller",
+      "zhakhy": "Horror",
+      "fantastyka": "Science Fiction",
+      "fentezi": "Fantasy",
+      "pryhody": "Adventure",
+      "melodrama": "Romance",
+      "istorychnyy": "History",
+      "viyskovyy": "War",
+      "muzyka": "Music",
+      "vestern": "Western"
     }
   }
 }

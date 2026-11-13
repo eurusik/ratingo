@@ -82,6 +82,22 @@ describe('show-conditions.builder', () => {
       });
     });
 
+    describe('minQuality option', () => {
+      it('adds one condition when minQuality is provided', () => {
+        const without = buildTrendingShowConditions({});
+        const withQuality = buildTrendingShowConditions({ minQuality: 70 });
+
+        expect(withQuality.length).toBe(without.length + 1);
+      });
+
+      it('adds a separate condition alongside minRatingo', () => {
+        const withRatingo = buildTrendingShowConditions({ minRatingo: 70 });
+        const withBoth = buildTrendingShowConditions({ minRatingo: 70, minQuality: 0 });
+
+        expect(withBoth.length).toBe(withRatingo.length + 1);
+      });
+    });
+
     describe('minRatingo option', () => {
       it('does not add condition when minRatingo is undefined', () => {
         const optionsWithout: ShowConditionsOptions = {};
@@ -229,13 +245,7 @@ describe('show-conditions.builder', () => {
         };
         const conditions = buildTrendingShowConditions(options);
 
-        // 7 base + 3 year range (isNotNull from both + gte + lt) = 10
-        // Note: yearFrom adds isNotNull+gte (2), yearTo adds isNotNull+lt (2)
-        // but in show-conditions.builder it adds isNotNull once per block
-        // yearFrom: isNotNull + gte = 2
-        // yearTo: isNotNull + lt = 2
-        // So: 7 base + 2 + 2 = 11
-        expect(conditions.length).toBe(11);
+        expect(conditions.length).toBe(10);
       });
 
       it('year takes precedence over yearFrom/yearTo', () => {

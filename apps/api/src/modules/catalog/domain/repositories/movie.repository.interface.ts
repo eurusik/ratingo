@@ -17,6 +17,7 @@ import type {
   SortOrder,
   VoteSource,
   ListContext,
+  ScoreFilterOptions,
 } from '../types/query.types';
 import { type DatabaseTransaction } from '../types/transaction.type';
 
@@ -71,7 +72,7 @@ export type TrendingMovieItem = MovieWithMedia & {
 /**
  * Shared query options for movie list endpoints.
  */
-export interface MovieListQueryOptions {
+export interface MovieListQueryOptions extends ScoreFilterOptions {
   limit?: number;
   offset?: number;
   /** Number of days to look back (default: 30) */
@@ -80,7 +81,6 @@ export interface MovieListQueryOptions {
   sort?: CatalogSort;
   order?: SortOrder;
   genres?: string[];
-  minRatingo?: number;
   voteSource?: VoteSource;
   minVotes?: number;
   year?: number;

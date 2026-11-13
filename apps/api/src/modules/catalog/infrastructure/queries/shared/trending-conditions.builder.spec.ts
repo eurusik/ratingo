@@ -86,6 +86,32 @@ describe('trending-conditions.builder', () => {
       });
     });
 
+    describe('minQuality option', () => {
+      it('adds one condition when minQuality is provided', () => {
+        const without = buildTrendingMovieConditions(mockDb, { context: 'catalog' });
+        const withQuality = buildTrendingMovieConditions(mockDb, {
+          context: 'catalog',
+          minQuality: 70,
+        });
+
+        expect(withQuality.length).toBe(without.length + 1);
+      });
+
+      it('adds a separate condition alongside minRatingo', () => {
+        const withRatingo = buildTrendingMovieConditions(mockDb, {
+          context: 'catalog',
+          minRatingo: 70,
+        });
+        const withBoth = buildTrendingMovieConditions(mockDb, {
+          context: 'catalog',
+          minRatingo: 70,
+          minQuality: 0,
+        });
+
+        expect(withBoth.length).toBe(withRatingo.length + 1);
+      });
+    });
+
     describe('minRatingo option', () => {
       it('does not add condition when minRatingo is undefined', () => {
         const optionsWithout: TrendingMovieConditionsOptions = { context: 'catalog' };

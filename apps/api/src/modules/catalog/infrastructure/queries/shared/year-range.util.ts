@@ -1,4 +1,4 @@
-import { type SQL, gte, lt, isNotNull } from 'drizzle-orm';
+import { type SQL, gte, lt, isNotNull, sql } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 
 /**
@@ -60,5 +60,25 @@ export function buildYearConditions(
     }
   }
 
+  return conditions;
+}
+
+export function buildRawYearConditions(
+  releaseDate: SQL,
+  year?: number,
+  yearFrom?: number,
+  yearTo?: number,
+): SQL[] {
+  const from = year ?? yearFrom;
+  const to = year ?? yearTo;
+  if (from === undefined && to === undefined) return [];
+
+  const conditions: SQL[] = [sql`${releaseDate} IS NOT NULL`];
+  if (from !== undefined) {
+    conditions.push(sql`${releaseDate} >= ${buildYearStart(from).toISOString()}`);
+  }
+  if (to !== undefined) {
+    conditions.push(sql`${releaseDate} < ${buildYearStart(to + 1).toISOString()}`);
+  }
   return conditions;
 }
