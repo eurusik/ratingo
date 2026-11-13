@@ -16,6 +16,7 @@ export function Sheet({
   onOpenChange,
   title,
   size = 'content',
+  isHeaderless = false,
   footer,
   children,
 }: DialogSurfaceProps) {
@@ -31,8 +32,8 @@ export function Sheet({
             <DismissOnSystemBack />
             <SheetScrollUnlock />
             <HeroSheet.Handle />
-            <HeroSheet.CloseTrigger aria-label={dict.common.close} />
-            <HeroSheet.Header>
+            {isHeaderless ? null : <HeroSheet.CloseTrigger aria-label={dict.common.close} />}
+            <HeroSheet.Header className={isHeaderless ? 'sr-only' : undefined}>
               <HeroSheet.Heading>{title}</HeroSheet.Heading>
             </HeroSheet.Header>
             <HeroSheet.Body>{children}</HeroSheet.Body>

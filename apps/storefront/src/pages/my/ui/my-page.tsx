@@ -6,7 +6,7 @@ export function MyPage({ locale }: { locale: Locale }) {
 
   return (
     <div className="flex flex-col gap-4 pt-8">
-      <h1 className="px-4 text-2xl font-bold">{dict.nav.my}</h1>
+      <h1 className="px-4 text-2xl font-bold md:px-0">{dict.nav.my}</h1>
       <SampleList />
     </div>
   );

@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Button } from 'react-aria-components';
+import { Button } from '@heroui/react';
 import { CalendarDays, Compass, Library, Search, Star, type LucideIcon } from 'lucide-react';
-import { SearchDialog } from '@/features/search';
+import { openSearch } from '@/features/search';
 import { NAV_ROUTES, isNavRouteActive, type NavSection } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 
@@ -43,16 +43,15 @@ export function MobileDock() {
           );
         })}
       </nav>
-      <SearchDialog
-        trigger={
-          <Button
-            aria-label={dict.nav.search}
-            className={`flex size-tab-bar shrink-0 items-center justify-center rounded-full text-foreground transition-colors data-[pressed]:bg-default focus-visible:outline-2 focus-visible:outline-focus ${FLOATING_SURFACE}`}
-          >
-            <Search aria-hidden className="size-6" />
-          </Button>
-        }
-      />
+      <Button
+        isIconOnly
+        variant="ghost"
+        aria-label={dict.nav.search}
+        onPress={openSearch}
+        className={`size-tab-bar shrink-0 rounded-full text-foreground ${FLOATING_SURFACE}`}
+      >
+        <Search aria-hidden className="size-6" />
+      </Button>
     </div>
   );
 }

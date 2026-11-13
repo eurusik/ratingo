@@ -5,11 +5,20 @@ const MAIN_CONTENT_ID = 'main-content';
 interface AppShellProps {
   header: ReactNode;
   tabBar: ReactNode;
+  footer: ReactNode;
+  overlays: ReactNode;
   skipToContentLabel: string;
   children: ReactNode;
 }
 
-export function AppShell({ header, tabBar, skipToContentLabel, children }: AppShellProps) {
+export function AppShell({
+  header,
+  tabBar,
+  footer,
+  overlays,
+  skipToContentLabel,
+  children,
+}: AppShellProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <a
@@ -22,10 +31,11 @@ export function AppShell({ header, tabBar, skipToContentLabel, children }: AppSh
       <main
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
-        className="flex flex-1 flex-col pb-[calc(var(--spacing-tab-bar)+var(--safe-bottom)+1.5rem)] outline-none md:pb-0"
+        className="flex flex-1 flex-col pb-[calc(var(--spacing-tab-bar)+var(--safe-bottom)+1.5rem)] outline-none md:page-container md:pb-0"
       >
         {children}
       </main>
+      {footer}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-x-0 bottom-0 z-40 h-(--viewport-bottom-edge-height) bg-background md:hidden"
@@ -33,6 +43,7 @@ export function AppShell({ header, tabBar, skipToContentLabel, children }: AppSh
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 md:hidden [&>*]:pointer-events-auto">
         {tabBar}
       </div>
+      {overlays}
     </div>
   );
 }

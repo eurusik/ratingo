@@ -35,7 +35,10 @@
   },
   "common": {
     "close": "Закрити",
-    "skipToContent": "Перейти до змісту"
+    "skipToContent": "Перейти до змісту",
+    "retry": "Спробувати ще раз",
+    "loading": "Завантаження…",
+    "opensInNewTab": "(відкриється в новій вкладці)"
   },
   "nav": {
     "label": "Основна навігація",
@@ -48,7 +51,41 @@
   },
   "search": {
     "title": "Пошук",
-    "comingSoon": "Пошук з’явиться найближчим часом."
+    "trigger": "Знайти фільм або серіал",
+    "placeholder": "Фільм або серіал…",
+    "cancel": "Скасувати",
+    "recent": "Нещодавно відкриті",
+    "clearRecent": "Очистити",
+    "removeRecent": "Прибрати «{title}» з нещодавніх",
+    "popular": "Популярне зараз",
+    "filterLabel": "Що шукати",
+    "filters": {
+      "all": "Усе",
+      "movie": "Фільми",
+      "show": "Серіали"
+    },
+    "results": "Результати",
+    "otherResults": "Інші результати",
+    "alsoKnownAs": "також: {title}",
+    "type": {
+      "movie": "Фільм",
+      "show": "Серіал"
+    },
+    "searching": "Шукаємо…",
+    "noResults": "Нічого не знайшли за запитом «{query}»",
+    "failed": "Не вдалося виконати пошук.",
+    "preparing": "Готуємо сторінку…",
+    "preparingHint": "Додаємо «{title}» до Ratingo. Це займе кілька секунд.",
+    "importFailed": "Не вдалося додати «{title}».",
+    "hints": {
+      "label": "Клавіші",
+      "navigate": "вибрати",
+      "open": "відкрити",
+      "close": "закрити"
+    },
+    "save": "Зберегти «{title}»",
+    "backToSearch": "Назад до пошуку",
+    "resultsCount": "Знайдено: {count}"
   },
   "placeholder": {
     "comingSoon": "Цей розділ з’явиться найближчим часом."
@@ -60,5 +97,117 @@
     "sampleItem": "Приклад №{number}",
     "remove": "Видалити",
     "sampleHint": "Тимчасовий список: проведіть рядок ліворуч, щоб видалити. У встановленому застосунку потягніть сторінку вниз, щоб повернути все."
+  },
+  "rating": {
+    "label": "Оцінка {score}: {verdict}",
+    "verdict": {
+      "good": "Варто",
+      "mixed": "Сумнівно",
+      "bad": "Слабко"
+    }
+  },
+  "auth": {
+    "loginTitle": "Вхід у Ratingo",
+    "registerTitle": "Створити акаунт",
+    "intent": {
+      "save": "Увійди, щоб зберегти «{title}»"
+    },
+    "loginLead": "Збережене, нові серії й календар будуть з тобою на всіх пристроях.",
+    "registerLead": "Це безкоштовно і займе хвилину.",
+    "continueWith": {
+      "google": "Продовжити з Google",
+      "facebook": "Продовжити з Facebook"
+    },
+    "orEmail": "або через email",
+    "email": "Email",
+    "password": "Пароль",
+    "showPassword": "Показати пароль",
+    "hidePassword": "Сховати пароль",
+    "username": "Імʼя в Ratingo",
+    "usernameHint": "Видно у відгуках. Можна змінити зараз або потім у налаштуваннях.",
+    "usernameSuggested": "запропоновано",
+    "submitLogin": "Увійти",
+    "submitRegister": "Створити акаунт",
+    "noAccount": "Ще немає акаунта?",
+    "createAccount": "Створити",
+    "haveAccount": "Вже є акаунт?",
+    "signIn": "Увійти",
+    "emailTaken": "Цей email уже зареєстрований.",
+    "signInInstead": "Увійти?",
+    "passwordRules": {
+      "label": "Вимоги до пароля",
+      "met": "виконано",
+      "length": "Щонайменше 8 символів",
+      "case": "Велика й мала літери",
+      "digit": "Хоча б одна цифра",
+      "unmet": "ще не виконано"
+    },
+    "errors": {
+      "invalidCredentials": "Невірний email або пароль. Перевір розкладку і Caps Lock.",
+      "emailAlreadyExists": "Цей email уже зареєстрований.",
+      "usernameTaken": "Це імʼя вже зайняте. Спробуй інше.",
+      "tooManyRequests": "Забагато спроб. Зачекай хвилину й спробуй ще раз.",
+      "unknownError": "Щось пішло не так. Спробуй ще раз."
+    },
+    "validation": {
+      "emailInvalid": "Введи коректний email",
+      "passwordRequired": "Введи пароль",
+      "usernameLength": "Від 3 до 30 символів",
+      "usernameFormat": "Лише латинські літери, цифри та _",
+      "passwordWeak": "Пароль ще не відповідає вимогам"
+    }
+  },
+  "header": {
+    "signIn": "Увійти",
+    "profile": "Профіль"
+  },
+  "notifications": {
+    "title": "Сповіщення",
+    "unread": "Сповіщення, непрочитаних: {count}",
+    "markAllRead": "Прочитати всі",
+    "viewAll": "Усі сповіщення",
+    "empty": "Нових сповіщень поки немає.",
+    "failed": "Не вдалося завантажити сповіщення.",
+    "events": {
+      "release": "Вийшов у прокат",
+      "new_season": "Повертається сезон",
+      "new_episode": "Вийшов новий епізод",
+      "on_streaming": "Доступно на стрімінгу",
+      "status_changed": "Змінився статус"
+    },
+    "unreadItem": "непрочитане"
+  },
+  "profile": {
+    "stats": {
+      "label": "Твоя статистика",
+      "moviesRated": "оцінено фільмів",
+      "showsRated": "оцінено серіалів",
+      "watchlist": "у списку"
+    },
+    "theme": "Тема",
+    "themes": {
+      "dark": "Темна",
+      "light": "Світла"
+    },
+    "language": "Мова",
+    "languageNames": {
+      "uk": "Українська",
+      "en": "English"
+    },
+    "settings": "Налаштування",
+    "install": "Встановити додаток",
+    "installHint": "на головний екран",
+    "admin": "Адмін-панель",
+    "signOut": "Вийти"
+  },
+  "footer": {
+    "label": "Про сайт",
+    "description": "Що дивитися зараз: тренди, оцінки й нові серії твоїх серіалів.",
+    "sources": "Дані з TMDB, Trakt, IMDb та інших джерел.",
+    "about": "Про Ratingo",
+    "journal": "Журнал",
+    "github": "GitHub",
+    "madeIn": "Зроблено в Україні 🇺🇦",
+    "authorName": "Євген Русаков"
   }
 }

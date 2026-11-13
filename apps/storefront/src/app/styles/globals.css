@@ -42,6 +42,13 @@
     padding: 2rem max(1rem, var(--safe-right)) 2rem max(1rem, var(--safe-left));
   }
 
+  @media (width >= 48rem) {
+    .page {
+      margin: 0;
+      padding-inline: 0;
+    }
+  }
+
   .page--centered {
     min-height: 100dvh;
     justify-content: center;
@@ -96,5 +103,26 @@
   .action:active {
     border-color: var(--accent);
     background: var(--default);
+  }
+}
+
+@utility phone-tap-target {
+  min-height: var(--spacing-tap);
+  min-width: var(--spacing-tap);
+
+  @variant md {
+    min-height: 0;
+    min-width: 0;
+  }
+}
+
+@utility page-container {
+  width: 100%;
+  max-width: var(--container-6xl);
+  margin-inline: auto;
+  padding-inline: 1rem;
+
+  @variant md {
+    padding-inline: 2rem;
   }
 }

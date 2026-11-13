@@ -4,23 +4,29 @@ import { cloneElement, useState } from 'react';
 import { Modal } from '@heroui/react';
 import { DismissOnSystemBack, ViewportBottomFill } from '@ratingo/ui/overlay';
 import { useTranslation } from '@/shared/i18n';
-import { useMediaQuery } from '@/shared/lib';
+import { DESKTOP_MEDIA_QUERY, useMediaQuery } from '@/shared/lib';
 import { Sheet, type DialogSurfaceProps } from '../sheet';
 
-const DESKTOP_QUERY = '(min-width: 48rem)';
-
-function DesktopModal({ isOpen, onOpenChange, title, footer, children }: DialogSurfaceProps) {
+function DesktopModal({
+  isOpen,
+  onOpenChange,
+  title,
+  isHeaderless = false,
+  isWide = false,
+  footer,
+  children,
+}: DialogSurfaceProps) {
   const { dict } = useTranslation();
 
   return (
     <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
-          <Modal.Dialog>
+          <Modal.Dialog className={isWide ? 'max-w-2xl' : undefined}>
             <ViewportBottomFill tone="backdrop" />
             <DismissOnSystemBack />
-            <Modal.CloseTrigger aria-label={dict.common.close} />
-            <Modal.Header>
+            {isHeaderless ? null : <Modal.CloseTrigger aria-label={dict.common.close} />}
+            <Modal.Header className={isHeaderless ? 'sr-only' : undefined}>
               <Modal.Heading>{title}</Modal.Heading>
             </Modal.Header>
             <Modal.Body>{children}</Modal.Body>
@@ -32,8 +38,13 @@ function DesktopModal({ isOpen, onOpenChange, title, footer, children }: DialogS
   );
 }
 
-export function ResponsiveDialog({ trigger, isOpen, onOpenChange, ...surface }: DialogSurfaceProps) {
-  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+export function ResponsiveDialog({
+  trigger,
+  isOpen,
+  onOpenChange,
+  ...surface
+}: DialogSurfaceProps) {
+  const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
   const [isOpenUncontrolled, setIsOpenUncontrolled] = useState(false);
   const isControlled = isOpen !== undefined;
   const open = isControlled ? isOpen : isOpenUncontrolled;

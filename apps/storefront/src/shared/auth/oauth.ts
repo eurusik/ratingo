@@ -1,6 +1,6 @@
 export const OAUTH_PROVIDERS = ['google', 'facebook'] as const;
 
-type OAuthProvider = (typeof OAUTH_PROVIDERS)[number];
+export type OAuthProvider = (typeof OAUTH_PROVIDERS)[number];
 
 const FALLBACK_RETURN_PATH = '/';
 const PROBE_ORIGIN = 'https://return-path.invalid';
