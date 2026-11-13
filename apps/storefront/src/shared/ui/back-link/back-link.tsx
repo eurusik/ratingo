@@ -20,7 +20,8 @@ export function BackLink({ fallbackHref, className, children }: BackLinkProps) {
   const router = useRouter();
 
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
+      return;
     if (!hasPreviousRoute()) return;
     event.preventDefault();
     markProgrammaticBack();

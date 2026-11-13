@@ -13,10 +13,10 @@ export function SearchTrigger() {
       variant="tertiary"
       onPress={openSearch}
       aria-keyshortcuts="Meta+K Control+K"
-      className="w-80 justify-start gap-2.5 rounded-full pe-2 font-normal text-muted"
+      className="w-48 justify-start gap-2.5 rounded-full pe-2 font-normal text-muted lg:w-64 xl:w-80"
     >
       <Search aria-hidden className="size-4" />
-      <span className="flex-1 text-start">{dict.search.trigger}</span>
+      <span className="min-w-0 flex-1 truncate text-start">{dict.search.trigger}</span>
       <SearchShortcutKbd />
     </Button>
   );

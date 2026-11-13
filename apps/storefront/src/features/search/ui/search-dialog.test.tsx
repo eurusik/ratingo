@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Button } from '@heroui/react';
-import { catalogApi, type SearchItem } from '@/shared/api';
+import { catalogApi, type SearchItem, type TrendingShow } from '@/shared/api';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { openSearch, setSearchOpen } from '../model/search-dialog-state';
 import { clearRecentTitles, rememberTitle } from '../model/recent-titles';
@@ -55,6 +55,15 @@ const TMDB_DUNE: SearchItem = {
   rating: 6.3,
   isImported: false,
 };
+
+const TRENDING_SHOW = {
+  mediaItemId: 'andor-id',
+  slug: 'andor',
+  title: 'Андор',
+  releaseDate: '2022-09-21',
+  poster: null,
+  stats: { ratingoScore: 86 },
+} as unknown as TrendingShow;
 
 function renderSearch(renderActions?: Parameters<typeof SearchDialog>[0]['renderActions']) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -136,6 +145,57 @@ describe('SearchDialog', () => {
 
     expect(push).toHaveBeenCalledWith('/movies/dune-2021');
     expect(window.localStorage.getItem('ratingo:recent-titles:v1')).toContain('dune-2021');
+  });
+
+  it('skips the section header when moving down from an empty field', async () => {
+    jest.mocked(catalogApi.getTrendingShows).mockResolvedValue([TRENDING_SHOW]);
+    renderSearch();
+    const firstRow = await screen.findByRole('row', { name: /Андор/ });
+
+    fireEvent.keyDown(screen.getByRole('searchbox', { name: uk.search.title }), {
+      key: 'ArrowDown',
+    });
+
+    expect(firstRow).toHaveFocus();
+  });
+
+  it('opens the first result with Enter from the field', async () => {
+    renderSearch();
+    await typeQuery('дюна');
+    await screen.findByRole('row', { name: /^Дюна, Фільм · 2021/ });
+
+    fireEvent.keyDown(screen.getByRole('searchbox', { name: uk.search.title }), { key: 'Enter' });
+
+    expect(push).toHaveBeenCalledWith('/movies/dune-2021');
+  });
+
+  it('does not open a stale result when Enter comes before the new results', async () => {
+    renderSearch();
+    await typeQuery('дюна');
+    await screen.findByRole('row', { name: /^Дюна, Фільм · 2021/ });
+
+    await typeQuery('андор');
+    fireEvent.keyDown(screen.getByRole('searchbox', { name: uk.search.title }), { key: 'Enter' });
+
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('moves between the field and the results with the arrow keys', async () => {
+    renderSearch();
+    await typeQuery('дюна');
+    const firstRow = await screen.findByRole('row', { name: /^Дюна, Фільм · 2021/ });
+    const field = screen.getByRole('searchbox', { name: uk.search.title });
+
+    fireEvent.keyDown(field, { key: 'ArrowDown' });
+    expect(firstRow).toHaveFocus();
+
+    fireEvent.keyDown(firstRow, { key: 'ArrowUp' });
+    expect(field).toHaveFocus();
+
+    fireEvent.keyDown(field, { key: 'ArrowDown' });
+    fireEvent.keyDown(firstRow, { key: 'Enter' });
+    fireEvent.keyUp(firstRow, { key: 'Enter' });
+    expect(push).toHaveBeenCalledWith('/movies/dune-2021');
   });
 
   it('imports a TMDB title on tap and opens it when the page is ready', async () => {

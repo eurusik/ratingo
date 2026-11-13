@@ -8,6 +8,7 @@ export type ImportResult = components['schemas']['ImportResultDto'];
 export type ImportJobStatus = GetData<'/api/catalog/import/status/{jobId}'>;
 export type TrendingMovie = components['schemas']['MovieListItemDto'];
 export type TrendingShow = components['schemas']['ShowTrendingItemDto'];
+export type MediaBadge = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
 
 const IMPORT_PATHS: Record<MediaType, string> = {
   movie: 'catalog/import/movie',

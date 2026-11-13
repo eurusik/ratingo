@@ -1,7 +1,7 @@
 import { Button, Spinner } from '@heroui/react';
+import { MediaPoster } from '@/entities/media';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import type { TitleImport } from '../model/open-title';
-import { TitlePoster } from './title-poster';
 
 interface ImportProgressProps {
   titleImport: TitleImport;
@@ -15,7 +15,7 @@ export function ImportProgress({ titleImport, onRetry, onBack }: ImportProgressP
 
   return (
     <div className="flex flex-col items-center gap-4 py-10 text-center">
-      <TitlePoster type={title.type} posterUrl={title.posterUrl} />
+      <MediaPoster type={title.type} posterUrl={title.posterUrl} />
       {hasFailed ? (
         <>
           <p role="alert" className="text-base text-danger">

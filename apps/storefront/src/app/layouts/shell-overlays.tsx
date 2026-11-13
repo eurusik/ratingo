@@ -1,26 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
+import { useForgetLibraryOnUserChange } from '@/entities/library';
 import { SearchShortcut, useIsSearchOpen, type SearchTitle } from '@/features/search';
-import { useAuthRequest } from '@/shared/auth';
+import { hasPendingIntent, useAuthRequest } from '@/shared/auth';
 import { InstallPromptCapture } from '@/shared/lib';
-import { GuestSaveButton } from './guest-save-button';
+import {
+  loadAuthDialog,
+  loadPendingSaveReplay,
+  loadSaveButton,
+  loadSearchDialog,
+  useWarmOverlays,
+} from './overlay-loaders';
 
-const AuthDialog = dynamic(
-  () => import('@/features/authenticate').then((module) => module.AuthDialog),
-  { ssr: false },
-);
+const AuthDialog = dynamic(loadAuthDialog, { ssr: false });
+const SearchDialog = dynamic(loadSearchDialog, { ssr: false });
+const SaveButton = dynamic(loadSaveButton, { ssr: false });
+const PendingSaveReplay = dynamic(loadPendingSaveReplay, { ssr: false });
 
-const SearchDialog = dynamic(
-  () => import('@/features/search').then((module) => module.SearchDialog),
-  { ssr: false },
-);
-
-const saveBeforeSaveMediaExists = () => {};
-
-function renderSearchActions(title: SearchTitle) {
-  return <GuestSaveButton title={title} onSave={saveBeforeSaveMediaExists} />;
+function renderSearchActions({ isInCatalog, mediaItemId, slug, title, type }: SearchTitle) {
+  if (!isInCatalog || !mediaItemId || !slug) return null;
+  return <SaveButton media={{ mediaItemId, slug, title, type }} />;
 }
 
 function useHasOpened(isOpen: boolean): boolean {
@@ -29,16 +30,27 @@ function useHasOpened(isOpen: boolean): boolean {
   return hasOpened;
 }
 
+const subscribeToNothing = () => () => {};
+const readNoIntentOnServer = () => false;
+
 export function ShellOverlays() {
   const hasOpenedSearch = useHasOpened(useIsSearchOpen());
   const hasOpenedAuth = useHasOpened(useAuthRequest() !== null);
+  const hasIntentFromRedirect = useSyncExternalStore(
+    subscribeToNothing,
+    hasPendingIntent,
+    readNoIntentOnServer,
+  );
+  useForgetLibraryOnUserChange();
+  const isWarm = useWarmOverlays();
 
   return (
     <>
       <SearchShortcut />
       <InstallPromptCapture />
-      {hasOpenedSearch ? <SearchDialog renderActions={renderSearchActions} /> : null}
-      {hasOpenedAuth ? <AuthDialog /> : null}
+      {hasIntentFromRedirect ? <PendingSaveReplay /> : null}
+      {isWarm || hasOpenedSearch ? <SearchDialog renderActions={renderSearchActions} /> : null}
+      {isWarm || hasOpenedAuth ? <AuthDialog /> : null}
     </>
   );
 }

@@ -5,7 +5,11 @@
   },
   "home": {
     "title": "Ratingo",
-    "subtitle": "Новий Ratingo вже будується. Тут поки лише перевірка, що все працює."
+    "subtitle": "Новий Ratingo вже будується. Тут поки лише перевірка, що все працює.",
+    "trending": "Зараз у тренді",
+    "trendingFailed": "Не вдалося завантажити тренди. Онови сторінку.",
+    "topShows": "Топ-10 серіалів",
+    "topMovies": "Топ-10 фільмів"
   },
   "session": {
     "heading": "Сесія",
@@ -67,10 +71,6 @@
     "results": "Результати",
     "otherResults": "Інші результати",
     "alsoKnownAs": "також: {title}",
-    "type": {
-      "movie": "Фільм",
-      "show": "Серіал"
-    },
     "searching": "Шукаємо…",
     "noResults": "Нічого не знайшли за запитом «{query}»",
     "failed": "Не вдалося виконати пошук.",
@@ -83,7 +83,6 @@
       "open": "відкрити",
       "close": "закрити"
     },
-    "save": "Зберегти «{title}»",
     "backToSearch": "Назад до пошуку",
     "resultsCount": "Знайдено: {count}"
   },
@@ -104,7 +103,8 @@
       "good": "Варто",
       "mixed": "Сумнівно",
       "bad": "Слабко"
-    }
+    },
+    "verdictLabel": "Вердикт Ratingo:"
   },
   "auth": {
     "loginTitle": "Вхід у Ratingo",
@@ -209,5 +209,50 @@
     "github": "GitHub",
     "madeIn": "Зроблено в Україні 🇺🇦",
     "authorName": "Євген Русаков"
+  },
+  "media": {
+    "type": {
+      "movie": "Фільм",
+      "show": "Серіал"
+    },
+    "providers": "Де дивитись",
+    "moreProviders": "ще {count}",
+    "badge": {
+      "NEW_EPISODE": "Нова серія",
+      "NEW_RELEASE": "Прем’єра",
+      "IN_THEATERS": "У кіно",
+      "NEW_ON_STREAMING": "Нове на стрімінгу"
+    },
+    "imdbLabel": "Оцінка IMDb {score}",
+    "criticsLabel": "Rotten Tomatoes: {percent}% критиків",
+    "watchingNow": {
+      "one": "Зараз дивиться {count} людина",
+      "few": "Зараз дивляться {count} людини",
+      "many": "Зараз дивляться {count} людей"
+    }
+  },
+  "library": {
+    "yourScore": "Твоя оцінка {score}"
+  },
+  "saveToLibrary": {
+    "save": "Зберегти «{title}»",
+    "menu": {
+      "save": "Зберегти",
+      "unsave": "Прибрати зі збереженого",
+      "open": "Відкрити",
+      "share": "Поділитися"
+    },
+    "toast": {
+      "saved": "«{title}» збережено",
+      "removed": "«{title}» прибрано",
+      "undo": "Скасувати",
+      "failed": "Не вдалося оновити збережене. Спробуй ще раз.",
+      "linkCopied": "Посилання скопійовано",
+      "shareFailed": "Не вдалося поділитися посиланням."
+    }
+  },
+  "rail": {
+    "previous": "Попередні",
+    "next": "Наступні"
   }
 }

@@ -2,12 +2,14 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 import { useAuth } from '@ratingo/web-core/auth';
+import { forgetPendingIntent } from './pending-intent';
 
 export type AuthMode = 'login' | 'register';
 
 export interface AuthIntent {
   kind: 'save';
   title: string;
+  mediaItemId: string;
 }
 
 export interface AuthRequest {
@@ -37,6 +39,7 @@ export function openAuth({ mode = 'login', ...rest }: Partial<AuthRequest> = {})
 }
 
 export function closeAuth(): void {
+  forgetPendingIntent();
   publish(null);
 }
 

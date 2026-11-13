@@ -28,7 +28,12 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-export function attachPullDown({ root, content, indicator, onRelease }: PullDownOptions): () => void {
+export function attachPullDown({
+  root,
+  content,
+  indicator,
+  onRelease,
+}: PullDownOptions): () => void {
   let state: PullState = { kind: 'idle' };
   let pull = 0;
   let cancelSpring: (() => void) | null = null;
@@ -73,7 +78,11 @@ export function attachPullDown({ root, content, indicator, onRelease }: PullDown
     if (window.scrollY > 0) return;
     cancelSpring?.();
     cancelSpring = null;
-    state = { kind: 'pending', startX: touch.clientX, startY: touch.clientY - pull / PULL_RESISTANCE };
+    state = {
+      kind: 'pending',
+      startX: touch.clientX,
+      startY: touch.clientY - pull / PULL_RESISTANCE,
+    };
   };
 
   const onTouchMove = (event: TouchEvent) => {

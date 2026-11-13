@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError, ErrorCode } from '@ratingo/web-core/api';
 import { authApi, useAuth } from '@ratingo/web-core/auth';
-import { closeAuth, openAuth } from '@/shared/auth';
+import { closeAuth, openAuth, takePendingIntent } from '@/shared/auth';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { AuthDialog } from './auth-dialog';
 
@@ -51,11 +51,14 @@ describe('AuthDialog', () => {
   it('names the title a guest wanted to save and offers only enabled providers first', async () => {
     window.history.replaceState(null, '', '/browse?type=show');
     renderDialog();
-    act(() => openAuth({ intent: { kind: 'save', title: 'Андор' } }));
+    act(() => openAuth({ intent: { kind: 'save', title: 'Андор', mediaItemId: 'andor-id' } }));
 
     const dialog = await screen.findByRole('dialog', { name: 'Увійди, щоб зберегти «Андор»' });
     const google = await within(dialog).findByRole('link', { name: uk.auth.continueWith.google });
     expect(google.getAttribute('href')).toContain('/auth/google?returnTo=%2Fbrowse%3Ftype%3Dshow');
+    google.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(google);
+    expect(takePendingIntent()).toEqual({ kind: 'save', title: 'Андор', mediaItemId: 'andor-id' });
     await waitFor(() =>
       expect(
         within(dialog).queryByRole('link', { name: uk.auth.continueWith.facebook }),

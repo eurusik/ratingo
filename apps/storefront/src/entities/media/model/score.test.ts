@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { ratingVerdict, type RatingVerdict } from './rating-verdict';
+import { ratingVerdict, type RatingVerdict } from './score';
 
 const ORDER: Record<RatingVerdict, number> = { bad: 0, mixed: 1, good: 2 };
 
@@ -10,8 +10,8 @@ describe('ratingVerdict', () => {
     [6.9, 'mixed'],
     [5.5, 'mixed'],
     [5.4, 'bad'],
-  ])('rates %s as %s', (rating, verdict) => {
-    expect(ratingVerdict(rating)).toBe(verdict);
+  ])('rates %s as %s', (score, verdict) => {
+    expect(ratingVerdict(score)).toBe(verdict);
   });
 
   it('never rates a higher score worse', () => {

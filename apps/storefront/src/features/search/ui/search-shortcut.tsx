@@ -24,11 +24,14 @@ export function SearchShortcut() {
 
 export function SearchShortcutKbd({ className }: { className?: string }) {
   const isApple = useIsApplePlatform();
-  if (isApple === null) return null;
+  const visibility = isApple === null ? 'opacity-0' : 'opacity-100';
 
   return (
-    <Kbd className={className} aria-hidden>
-      <Kbd.Abbr keyValue={isApple ? 'command' : 'ctrl'} />
+    <Kbd
+      className={`motion-safe:transition-opacity motion-safe:duration-200 ${visibility} ${className ?? ''}`}
+      aria-hidden
+    >
+      <Kbd.Abbr keyValue={isApple === false ? 'ctrl' : 'command'} />
       <Kbd.Content>K</Kbd.Content>
     </Kbd>
   );

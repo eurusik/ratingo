@@ -38,5 +38,16 @@ export function useCatalogSearch(query: string, filter: SearchFilter) {
     more: (data?.tmdb ?? []).map(fromSearchItem).filter(keep),
   };
 
-  return { term, isActive, results, isSearching: isFetching, isError, retry: refetch };
+  const showsResultsFor = (typed: string) =>
+    isActive && !isFetching && !isError && typed.trim() === term;
+
+  return {
+    term,
+    isActive,
+    results,
+    isSearching: isFetching,
+    isError,
+    retry: refetch,
+    showsResultsFor,
+  };
 }

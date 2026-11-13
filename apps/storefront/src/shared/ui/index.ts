@@ -3,6 +3,7 @@ export { BackLink } from './back-link/back-link';
 export { Container } from './container/container';
 export { PageTransition } from './page-transition/page-transition';
 export { Rail, RailItem } from './rail/rail';
+export { RailPager } from './rail/rail-pager';
 export { ResponsiveDialog } from './responsive-dialog/responsive-dialog';
 export { SectionHeader } from './section-header/section-header';
 export { SegmentedFilter } from './segmented-filter/segmented-filter';

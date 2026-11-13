@@ -26,7 +26,9 @@ describe('auth opener', () => {
     const action = jest.fn();
     const { result } = renderHook(() => ({ run: useSignedInAction(), request: useAuthRequest() }));
 
-    act(() => result.current.run(action, { kind: 'save', title: 'Андор' }));
+    act(() =>
+      result.current.run(action, { kind: 'save', title: 'Андор', mediaItemId: 'andor-id' }),
+    );
 
     expect(action).toHaveBeenCalledTimes(1);
     expect(result.current.request).toBeNull();
@@ -37,12 +39,14 @@ describe('auth opener', () => {
     const action = jest.fn();
     const { result } = renderHook(() => ({ run: useSignedInAction(), request: useAuthRequest() }));
 
-    act(() => result.current.run(action, { kind: 'save', title: 'Андор' }));
+    act(() =>
+      result.current.run(action, { kind: 'save', title: 'Андор', mediaItemId: 'andor-id' }),
+    );
 
     expect(action).not.toHaveBeenCalled();
     expect(result.current.request).toMatchObject({
       mode: 'login',
-      intent: { kind: 'save', title: 'Андор' },
+      intent: { kind: 'save', title: 'Андор', mediaItemId: 'andor-id' },
     });
     result.current.request?.onSignedIn?.();
     expect(action).toHaveBeenCalledTimes(1);

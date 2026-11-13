@@ -21,7 +21,15 @@ function AccountControls() {
   const { dict } = useTranslation();
   const { user, isLoading } = useAuth();
 
-  if (isLoading) return <span aria-hidden className="size-11" />;
+  if (isLoading) {
+    return (
+      <span aria-hidden className="invisible">
+        <Button size="sm" className="phone-tap-target">
+          {dict.header.signIn}
+        </Button>
+      </span>
+    );
+  }
   if (!user) {
     return (
       <Button size="sm" className="phone-tap-target" onPress={() => openAuth()}>
@@ -77,7 +85,9 @@ export function SiteHeader() {
         <div className="hidden md:block">
           <SearchTrigger />
         </div>
-        <div className={`items-center gap-1 ${showsAccountOnPhone ? 'flex' : 'hidden md:flex'}`}>
+        <div
+          className={`items-center justify-end gap-1 md:min-w-23 ${showsAccountOnPhone ? 'flex' : 'hidden md:flex'}`}
+        >
           <AccountControls />
         </div>
       </Container>

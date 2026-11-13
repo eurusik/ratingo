@@ -87,7 +87,7 @@ function sameTitle(a: SearchTitle, b: SearchTitle): boolean {
   return a.type === b.type && a.slug === b.slug;
 }
 
-function toStoredTitle({ type, slug, title, year, posterUrl, rating }: SearchTitle): SearchTitle {
+function toStoredTitle({ type, slug, title, year, posterUrl, score }: SearchTitle): SearchTitle {
   return {
     key: `recent-${type}-${slug}`,
     isInCatalog: true,
@@ -96,7 +96,7 @@ function toStoredTitle({ type, slug, title, year, posterUrl, rating }: SearchTit
     title,
     year,
     posterUrl,
-    rating,
+    score,
   };
 }
 
