@@ -111,3 +111,19 @@ html:active-view-transition-type(nav-back)::view-transition-new(page) {
 html:active-view-transition-type(nav-back)::view-transition-group(page) {
   animation: none;
 }
+
+html:active-view-transition-type(nav-forward) [data-page-transition] {
+  view-transition-name: page;
+}
+
+html:active-view-transition-type(nav-forward)::view-transition-old(page) {
+  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-to-left-dim;
+}
+
+html:active-view-transition-type(nav-forward)::view-transition-new(page) {
+  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-from-right;
+}
+
+html:active-view-transition-type(nav-forward)::view-transition-group(page) {
+  animation: none;
+}

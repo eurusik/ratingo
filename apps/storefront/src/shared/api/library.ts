@@ -1,11 +1,15 @@
 import type { GetData, components } from '@ratingo/api-contract';
-import { apiDelete, apiGet, apiPost } from '@ratingo/web-core/api';
+import { apiDelete, apiGet, apiPatch, apiPost, isNotFoundError } from '@ratingo/web-core/api';
+import type { MediaType } from './catalog';
 
 export type MediaSaveStatus = components['schemas']['MediaSaveStatusDto'];
 export type SaveList = components['schemas']['SaveItemDto']['list'];
 type SaveResult = components['schemas']['SaveActionResultDto'];
 type UnsaveResult = components['schemas']['UnsaveActionResultDto'];
 type BatchRatings = GetData<'/api/user-media/batch-ratings'>;
+type SetUserMediaState = components['schemas']['SetUserMediaStateDto'];
+export type UserMediaState = components['schemas']['MeUserMediaListItemDto'];
+export type WatchState = UserMediaState['state'];
 
 interface BatchSaveStatuses {
   statuses: Record<string, MediaSaveStatus>;
@@ -39,5 +43,21 @@ export const libraryApi = {
       searchParams: { ids: mediaItemIds.join(',') },
     });
     return batch.ratings;
+  },
+
+  async getMediaState(mediaItemId: string): Promise<UserMediaState | null> {
+    try {
+      return await apiGet<UserMediaState>(`user-media/${mediaItemId}`);
+    } catch (error) {
+      if (await isNotFoundError(error)) return null;
+      throw error;
+    }
+  },
+
+  setRating(mediaItemId: string, rating: number | null, mediaType: MediaType) {
+    return apiPatch<UserMediaState>(`user-media/${mediaItemId}`, {
+      rating,
+      mediaType,
+    } satisfies SetUserMediaState);
   },
 } as const;

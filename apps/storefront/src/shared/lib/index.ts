@@ -1,7 +1,6 @@
 export { SiteAnalytics } from './analytics';
 export { useBrowserOrigin, useBrowserPath } from './browser-origin';
 export { useDebouncedValue } from './debounced-value';
-export { replaceDocumentLocation } from './document-location';
 export { interleave } from './interleave';
 export { DESKTOP_MEDIA_QUERY, useMediaQuery } from './media-query';
 export {
@@ -20,7 +19,19 @@ export {
   buildWebAppManifest,
   useInstallApp,
 } from './pwa';
-export { RouteCommitSignal, hasPreviousRoute, waitForRouteCommit } from './route-commit';
+export {
+  RouteCommitSignal,
+  SHARED_ART_SCOPE,
+  SHARED_ART_SOURCE,
+  SHARED_ART_TARGET,
+  clearSharedArt,
+  hasPreviousRoute,
+  nameArtLinkingTo,
+  nameArtOfLink,
+  replaceDocumentLocation,
+  waitForRouteCommit,
+} from './navigation';
+export { shareLink } from './share-link';
 export { createBatchLoader, isOnLightConnection, whenIdle } from './scheduling';
 export {
   JsonLd,
@@ -29,4 +40,6 @@ export {
   buildRootMetadata,
   buildSitemap,
   buildWebSiteJsonLd,
+  createMediaMetadata,
+  createNotFoundMetadata,
 } from './seo';

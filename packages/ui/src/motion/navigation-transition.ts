@@ -1,3 +1,4 @@
+export const NAV_FORWARD_TRANSITION = 'nav-forward';
 export const NAV_BACK_TRANSITION = 'nav-back';
 
 const PROGRAMMATIC_BACK_TTL_MS = 2000;
@@ -55,10 +56,10 @@ export function runNavigationTransition(
   types: string[],
   navigate: () => void,
   committed: () => Promise<void>,
-): void {
+): Promise<void> {
   if (!canAnimateNavigation()) {
     navigate();
-    return;
+    return Promise.resolve();
   }
 
   const start = document.startViewTransition.bind(document) as unknown as StartViewTransition;
@@ -73,11 +74,11 @@ export function runNavigationTransition(
     });
   } catch {
     navigate();
-    return;
+    return Promise.resolve();
   }
   activeNavigation = transition;
   transition.ready.catch(() => {});
-  transition.finished
+  return transition.finished
     .catch(() => {})
     .finally(() => {
       if (activeNavigation === transition) activeNavigation = null;

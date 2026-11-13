@@ -5,7 +5,13 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { openAuth } from '@/shared/auth';
-import { HOME_ROUTE, MY_ROUTE, NAV_ROUTES, isNavRouteActive } from '@/shared/config';
+import {
+  HOME_ROUTE,
+  MY_ROUTE,
+  NAV_ROUTES,
+  isMediaDetailsPath,
+  isNavRouteActive,
+} from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { BrandMark, Container } from '@/shared/ui';
 import { NotificationBell } from './notification-bell';
@@ -50,9 +56,12 @@ export function SiteHeader() {
   const pathname = usePathname() ?? '';
   const { dict } = useTranslation();
   const showsAccountOnPhone = PHONE_ACCOUNT_ROUTES.has(pathname);
+  const hidesOnPhone = isMediaDetailsPath(pathname);
 
   return (
-    <header className="pt-safe-top pr-safe-right pl-safe-left md:sticky md:top-0 md:z-30 md:[view-transition-name:site-header] md:border-b md:border-separator md:bg-background/90 md:backdrop-blur-xl">
+    <header
+      className={`${hidesOnPhone ? 'hidden md:block' : ''} pt-safe-top pr-safe-right pl-safe-left md:sticky md:top-0 md:z-30 md:[view-transition-name:site-header] md:border-b md:border-separator md:bg-background/90 md:backdrop-blur-xl`}
+    >
       <Container className="flex h-16 items-center gap-4">
         <Link
           href={HOME_ROUTE}

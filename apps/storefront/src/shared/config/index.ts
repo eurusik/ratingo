@@ -20,5 +20,6 @@ export {
   NOTIFICATIONS_ROUTE,
   OFFLINE_ROUTE,
   SETTINGS_ROUTE,
+  isMediaDetailsPath,
   mediaRoute,
 } from './routes';

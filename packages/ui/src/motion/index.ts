@@ -1,5 +1,6 @@
 export {
   NAV_BACK_TRANSITION,
+  NAV_FORWARD_TRANSITION,
   markProgrammaticBack,
   runNavigationTransition,
 } from './navigation-transition';

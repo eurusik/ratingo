@@ -9,3 +9,7 @@ export function saveStatusKey(mediaItemId: string) {
 export function ownScoreKey(mediaItemId: string) {
   return [...LIBRARY_QUERY_KEY, 'own-score', mediaItemId] as const;
 }
+
+export function mediaStateKey(mediaItemId: string) {
+  return [...LIBRARY_QUERY_KEY, 'media-state', mediaItemId] as const;
+}

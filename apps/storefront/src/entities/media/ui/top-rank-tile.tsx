@@ -1,5 +1,6 @@
-import Link from 'next/link';
 import { mediaRoute } from '@/shared/config';
+import { SHARED_ART_SOURCE } from '@/shared/lib';
+import { ForwardLink } from '@/shared/ui';
 import type { TrendingMedia } from '../model/media';
 import { ExternalRatings } from './external-ratings';
 import { MediaPoster } from './media-poster';
@@ -11,11 +12,11 @@ interface TopRankTileProps {
 
 export function TopRankTile({ media, rank }: TopRankTileProps) {
   return (
-    <Link
+    <ForwardLink
       href={mediaRoute(media.type, media.slug)}
       className="flex w-24 flex-col gap-1.5 text-foreground no-underline md:w-full md:gap-2"
     >
-      <span className="relative">
+      <span {...SHARED_ART_SOURCE} className="relative">
         <MediaPoster type={media.type} posterUrl={media.posterUrl} size="rank" />
         <span
           aria-hidden
@@ -34,6 +35,6 @@ export function TopRankTile({ media, rank }: TopRankTileProps) {
           className="flex-wrap"
         />
       </span>
-    </Link>
+    </ForwardLink>
   );
 }

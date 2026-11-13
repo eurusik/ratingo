@@ -10,6 +10,8 @@ export type TrendingMovie = components['schemas']['MovieListItemDto'];
 export type TrendingShow = components['schemas']['ShowTrendingItemDto'];
 export type HomeItem = components['schemas']['HeroItemDto'];
 export type NewEpisode = components['schemas']['NewEpisodeDto'];
+export type MovieDetails = components['schemas']['MovieResponseDto'];
+export type ShowDetails = components['schemas']['ShowResponseDto'];
 export type MediaBadge = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
 type PageMeta = components['schemas']['OffsetPaginationMetaDto'];
 
@@ -138,6 +140,14 @@ export const catalogApi = {
     cache?: CatalogCache,
   ): Promise<CatalogPage<TrendingShow>> {
     return getCatalogPage<TrendingShow>(path, query, cache);
+  },
+
+  getMovieBySlug(slug: string, cache?: CatalogCache): Promise<MovieDetails> {
+    return apiGet<MovieDetails>(`catalog/movies/${encodeURIComponent(slug)}`, cacheOptions(cache));
+  },
+
+  getShowBySlug(slug: string, cache?: CatalogCache): Promise<ShowDetails> {
+    return apiGet<ShowDetails>(`catalog/shows/${encodeURIComponent(slug)}`, cacheOptions(cache));
   },
 
   getHomeHero(cache?: CatalogCache): Promise<HomeItem[]> {

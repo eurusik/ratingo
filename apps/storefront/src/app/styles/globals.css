@@ -2,6 +2,7 @@
 
 @theme {
   --color-imdb: #f5c518;
+  --color-metacritic: #ffcc34;
   --animate-signal-ring: signal-ring 3s ease-out infinite;
 
   @keyframes signal-ring {
@@ -152,6 +153,11 @@
 
 ::view-transition {
   pointer-events: none;
+}
+
+:root:active-view-transition-type(nav-forward, nav-back) [data-shared-art-target] {
+  view-transition-name: media-art;
+  view-transition-class: morph;
 }
 
 ::view-transition-group(site-header),

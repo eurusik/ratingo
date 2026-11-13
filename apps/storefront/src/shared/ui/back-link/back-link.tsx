@@ -8,15 +8,26 @@ import {
   markProgrammaticBack,
   runNavigationTransition,
 } from '@ratingo/ui/motion';
-import { hasPreviousRoute, waitForRouteCommit } from '@/shared/lib';
+import {
+  clearSharedArt,
+  hasPreviousRoute,
+  nameArtLinkingTo,
+  waitForRouteCommit,
+} from '@/shared/lib';
 
 interface BackLinkProps {
   fallbackHref: string;
   className?: string;
+  'aria-label'?: string;
   children: ReactNode;
 }
 
-export function BackLink({ fallbackHref, className, children }: BackLinkProps) {
+export function BackLink({
+  fallbackHref,
+  className,
+  'aria-label': ariaLabel,
+  children,
+}: BackLinkProps) {
   const router = useRouter();
 
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -24,12 +35,20 @@ export function BackLink({ fallbackHref, className, children }: BackLinkProps) {
       return;
     if (!hasPreviousRoute()) return;
     event.preventDefault();
+    const leavingPath = window.location.pathname;
     markProgrammaticBack();
-    runNavigationTransition([NAV_BACK_TRANSITION], () => router.back(), waitForRouteCommit);
+    void runNavigationTransition(
+      [NAV_BACK_TRANSITION],
+      () => router.back(),
+      async () => {
+        await waitForRouteCommit();
+        nameArtLinkingTo(leavingPath);
+      },
+    ).finally(clearSharedArt);
   };
 
   return (
-    <Link href={fallbackHref} className={className} onClick={onClick}>
+    <Link href={fallbackHref} className={className} aria-label={ariaLabel} onClick={onClick}>
       {children}
     </Link>
   );

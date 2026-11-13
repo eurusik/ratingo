@@ -274,7 +274,8 @@
       "failed": "Не вдалося оновити збережене. Спробуй ще раз.",
       "linkCopied": "Посилання скопійовано",
       "shareFailed": "Не вдалося поділитися посиланням."
-    }
+    },
+    "wantToWatch": "Хочу подивитись"
   },
   "rail": {
     "previous": "Попередні",
@@ -466,6 +467,181 @@
       "viyskovyy": "Військовий",
       "muzyka": "Музика",
       "vestern": "Вестерн"
+    }
+  },
+  "details": {
+    "back": "Назад",
+    "share": "Поділитись",
+    "breadcrumb": {
+      "label": "Навігаційний ланцюжок",
+      "browse": "Огляд",
+      "movie": "Фільми",
+      "show": "Серіали"
+    },
+    "watchingNow": "{watching} · Trakt",
+    "watchingNowLong": "{watching} зараз на Trakt",
+    "totalWatchers": "{count} переглянули",
+    "runtime": {
+      "hours": "{hours} год {minutes} хв",
+      "wholeHours": "{hours} год",
+      "minutes": "{minutes} хв"
+    },
+    "seasons": {
+      "one": "{count} сезон",
+      "few": "{count} сезони",
+      "many": "{count} сезонів"
+    },
+    "episodes": {
+      "one": "{count} серія",
+      "few": "{count} серії",
+      "many": "{count} серій"
+    },
+    "showStatus": {
+      "Returning Series": "Продовжується",
+      "Ended": "Завершено",
+      "Canceled": "Скасовано",
+      "In Production": "У виробництві",
+      "Planned": "Заплановано",
+      "Pilot": "Пілот"
+    },
+    "movieStatus": {
+      "Released": "Вийшов",
+      "Post Production": "Постпродакшн",
+      "In Production": "У виробництві",
+      "Planned": "Заплановано",
+      "Rumored": "Чутки",
+      "Canceled": "Скасовано"
+    },
+    "actions": {
+      "rate": "Оцінити",
+      "watched": "Переглянуто · {score}",
+      "watchedLabel": "Переглянуто, твоя оцінка {score}. Змінити оцінку",
+      "myScore": "Моя оцінка {score}",
+      "myScoreLabel": "Твоя оцінка {score}. Змінити оцінку"
+    },
+    "start": {
+      "title": "Ще не дивишся?"
+    },
+    "guest": {
+      "title": "Трекай серії тут",
+      "text": "Позначай переглянуте одним тапом і отримуй нагадування про нові серії.",
+      "action": "Увійти й почати",
+      "hint": "Після входу повернемо сюди — дія, яку ти натиснув, виконається сама"
+    },
+    "ratings": {
+      "label": "Оцінки",
+      "list": "Рейтинги",
+      "score": "Оцінка Ratingo {score} з 10",
+      "howItWorks": "Як рахується оцінка Ratingo",
+      "explainTitle": "Оцінка Ratingo",
+      "explain": "Ми зводимо оцінки IMDb, TMDB, Trakt, Metacritic і Rotten Tomatoes в одну шкалу з 10 і зважуємо їх за кількістю голосів: що більше людей оцінило, то більше важить джерело.",
+      "explainVerdict": "Від 7 — «Варто», від 5.5 — «Сумнівно», нижче — «Слабко».",
+      "noScore": "Оцінка Ratingo ще формується",
+      "critics": "критики",
+      "audience": "глядачі",
+      "imdb": "IMDb {score}",
+      "rtCritics": "Критики Rotten Tomatoes {percent}%",
+      "rtAudience": "Глядачі Rotten Tomatoes {percent}%",
+      "metacritic": "Metacritic {score} з 100",
+      "trakt": "Trakt {percent}%"
+    },
+    "community": {
+      "label": "Спільнота Ratingo",
+      "ratedByMany": "Оцінили {name} і ще {count}",
+      "ratedByOne": "Оцінка від {name}",
+      "audience": "глядачі {score}"
+    },
+    "rate": {
+      "title": {
+        "movie": "Твоя оцінка фільму",
+        "show": "Твоя оцінка серіалу"
+      },
+      "showHint": "загалом, не за сезон",
+      "presetsLabel": "Оцінка",
+      "fineTune": "Уточнити",
+      "outOf": "{score} з 10",
+      "clear": "Прибрати",
+      "done": "Готово",
+      "presets": {
+        "bad": "Фігня",
+        "okay": "Норм",
+        "good": "Сподобалось",
+        "top": "Топ"
+      },
+      "toast": {
+        "failed": "Не вдалося зберегти оцінку. Спробуй ще раз.",
+        "removedFromSaved": "{emoji} {score} · прибрано зі збереженого",
+        "undo": "Скасувати"
+      }
+    },
+    "about": {
+      "movie": "Про фільм",
+      "show": "Про серіал",
+      "more": "Читати далі",
+      "less": "Згорнути"
+    },
+    "trailers": {
+      "title": "Трейлери",
+      "watch": "Дивитись: {title}"
+    },
+    "cast": {
+      "title": "Актори",
+      "directing": "Режисер",
+      "writing": "Сценарій",
+      "creators": "Автори"
+    },
+    "facts": {
+      "title": "Деталі",
+      "status": "Статус",
+      "premiere": "Прем’єра",
+      "lastEpisode": "Остання серія",
+      "budget": "Бюджет",
+      "revenue": "Збори"
+    },
+    "error": {
+      "title": "Не вдалося завантажити сторінку",
+      "text": "Перевір з’єднання й спробуй ще раз."
+    },
+    "verdict": {
+      "movie": {
+        "upcomingHit": "Один з найочікуваніших релізів року",
+        "justReleased": "Зараз можна подивитись у кіно",
+        "nowStreaming": "Вже можна подивитись вдома",
+        "criticsLoved": "Критикам і глядачам зайшло",
+        "trendingNow": "Про нього зараз багато говорять",
+        "strongRatings": "Більше подобається, ніж ні",
+        "decentRatings": "Нормальний варіант на вечір",
+        "risingHype": "Швидко набирає інтерес",
+        "comingToStreaming": "Скоро можна буде подивитись вдома",
+        "mixedReviews": "Думки розділились",
+        "belowAverage": "Багато суперечливих відгуків",
+        "poorRatings": "Більшість глядачів розчаровані",
+        "earlyReviews": "Рейтинги ще формуються",
+        "steadyInterest": "Залишається популярним з часом",
+        "classicChoice": "Перевірений часом вибір",
+        "timelessFavorite": "Класика, яку досі люблять"
+      },
+      "show": {
+        "cancelled": "Серіал скасовано",
+        "poorRatings": "Більшість глядачів розчаровані",
+        "belowAverage": "Багато суперечливих відгуків",
+        "criticsLoved": "Критикам і глядачам зайшло",
+        "strongRatings": "Більше подобається, ніж ні",
+        "decentRatings": "Нормальний варіант на вечір",
+        "longRunning": "Перевірений часом серіал",
+        "trendingNow": "Про нього зараз багато говорять",
+        "risingHype": "Швидко набирає інтерес",
+        "earlyReviews": "Рейтинги ще формуються",
+        "mixedReviews": "Думки розділились",
+        "noConsensusYet": "Оцінки ще нестабільні",
+        "steadyInterest": "Залишається популярним з часом",
+        "classicSeries": "Класика серіального жанру",
+        "timelessFavorite": "Серіал, який досі люблять"
+      }
+    },
+    "money": {
+      "millions": "{amount} млн $",
+      "billions": "{amount} млрд $"
     }
   }
 }

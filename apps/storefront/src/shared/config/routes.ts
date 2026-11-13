@@ -9,6 +9,10 @@ export function mediaRoute(type: MediaKind, slug: string): string {
   return `${MEDIA_ROUTE_PREFIXES[type]}/${encodeURIComponent(slug)}`;
 }
 
+export function isMediaDetailsPath(pathname: string): boolean {
+  return Object.values(MEDIA_ROUTE_PREFIXES).some((prefix) => pathname.startsWith(`${prefix}/`));
+}
+
 export const MY_ROUTE = '/my';
 export const BROWSE_ROUTE = '/browse';
 export const CALENDAR_ROUTE = '/calendar';

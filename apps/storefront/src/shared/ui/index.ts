@@ -3,6 +3,7 @@ export { BrandMark } from './brand-mark/brand-mark';
 export { BackLink } from './back-link/back-link';
 export { Container } from './container/container';
 export { ContentTransition } from './content-transition/content-transition';
+export { ForwardLink } from './forward-link/forward-link';
 export { PageTransition } from './page-transition/page-transition';
 export { Rail, RailItem } from './rail/rail';
 export { RailPager } from './rail/rail-pager';

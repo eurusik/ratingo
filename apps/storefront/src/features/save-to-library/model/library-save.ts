@@ -92,7 +92,7 @@ export function useLibrarySave() {
   );
 
   const changeWithUndo = useCallback(
-    (media: SavableMedia, intent: SaveIntent) => {
+    (media: SavableMedia, intent: SaveIntent, customMessage?: string) => {
       const shown = store.read(media.mediaItemId);
       const optimistic = intent.kind === 'remove' ? NOT_SAVED : ensureSaved(shown);
       const applied = change(media, intent, optimistic);
@@ -102,7 +102,7 @@ export function useLibrarySave() {
 
       showUndoToast({
         mediaItemId: media.mediaItemId,
-        message: interpolate(message, { title: media.title }),
+        message: customMessage ?? interpolate(message, { title: media.title }),
         undoLabel: dict.saveToLibrary.toast.undo,
         onUndo: () => {
           const previous = applied.then((result) => result?.before ?? shown);
@@ -125,5 +125,13 @@ export function useLibrarySave() {
     [changeWithUndo],
   );
 
-  return { toggleSaved, save };
+  const removeIfSaved = useCallback(
+    (media: SavableMedia, message: string) => {
+      if (isSaved(store.read(media.mediaItemId)))
+        changeWithUndo(media, { kind: 'remove' }, message);
+    },
+    [changeWithUndo, store],
+  );
+
+  return { toggleSaved, save, removeIfSaved };
 }
