@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BRAND_NAME } from '@/shared/config';
 import type { Dictionary, Locale } from '@/shared/i18n';
 
 export interface RootMetadataOptions {
@@ -8,7 +9,6 @@ export interface RootMetadataOptions {
   indexingEnabled: boolean;
 }
 
-const SITE_NAME = 'Ratingo';
 const DATA_SOURCE_KEYWORDS = ['TMDB', 'Trakt', 'IMDb'];
 
 const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
@@ -39,7 +39,7 @@ export function buildRootMetadata({
   const { title, description, keywords } = dict.meta;
 
   return {
-    title: { default: title, template: `%s | ${SITE_NAME}` },
+    title: { default: title, template: `%s | ${BRAND_NAME}` },
     description,
     keywords: [
       keywords.shows,
@@ -49,22 +49,18 @@ export function buildRootMetadata({
       ...DATA_SOURCE_KEYWORDS,
       keywords.country,
     ],
-    authors: [{ name: SITE_NAME }],
-    creator: SITE_NAME,
-    publisher: SITE_NAME,
+    authors: [{ name: BRAND_NAME }],
+    creator: BRAND_NAME,
+    publisher: BRAND_NAME,
     metadataBase: new URL(siteUrl),
     openGraph: {
       type: 'website',
       locale: OPEN_GRAPH_LOCALES[locale],
-      url: '/',
-      title,
-      description,
-      siteName: SITE_NAME,
+      siteName: BRAND_NAME,
     },
-    twitter: { card: 'summary_large_image', title, description },
+    twitter: { card: 'summary_large_image' },
     robots: indexingEnabled ? INDEXED_ROBOTS : HIDDEN_ROBOTS,
-    appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: 'black-translucent' },
+    appleWebApp: { capable: true, title: BRAND_NAME, statusBarStyle: 'black-translucent' },
     formatDetection: { telephone: false },
-    other: { 'mobile-web-app-capable': 'yes' },
   };
 }

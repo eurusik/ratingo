@@ -1,3 +1,5 @@
+import { BRAND_NAME } from '@/shared/config';
+
 export function BrandMark() {
   return (
     <>
@@ -8,7 +10,7 @@ export function BrandMark() {
         R
         <span className="absolute right-[5px] bottom-[6px] size-[5px] rounded-full bg-accent" />
       </span>
-      Ratingo
+      {BRAND_NAME}
     </>
   );
 }

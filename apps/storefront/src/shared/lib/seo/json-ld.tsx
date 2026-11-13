@@ -1,10 +1,11 @@
+import { BRAND_NAME, EXTERNAL_LINKS } from '@/shared/config';
+
 type JsonLdData = Record<string, unknown>;
 
-const SITE_NAME = 'Ratingo';
 const SITE_LANGUAGE = 'uk';
 const ORGANIZATION_DESCRIPTION =
   'Український сервіс для відкриття стрімінгового контенту — серіали та фільми';
-const ORGANIZATION_PROFILES = ['https://github.com/ratingo'];
+const ORGANIZATION_LOGO_PATH = '/icons/icon-512x512.png';
 const SCRIPT_TAG_OPENER = /</g;
 
 function serializeJsonLd(data: JsonLdData): string {
@@ -21,11 +22,11 @@ export function buildOrganizationJsonLd(siteUrl: string): JsonLdData {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: SITE_NAME,
+    name: BRAND_NAME,
     url: siteUrl,
-    logo: `${siteUrl}/icon.png`,
+    logo: `${siteUrl}${ORGANIZATION_LOGO_PATH}`,
     description: ORGANIZATION_DESCRIPTION,
-    sameAs: ORGANIZATION_PROFILES,
+    sameAs: [EXTERNAL_LINKS.github],
   };
 }
 
@@ -33,7 +34,7 @@ export function buildWebSiteJsonLd(siteUrl: string): JsonLdData {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: SITE_NAME,
+    name: BRAND_NAME,
     url: siteUrl,
     inLanguage: SITE_LANGUAGE,
   };

@@ -1,4 +1,5 @@
 import { sitemapApi } from '@/shared/api';
+import { SITE_URL } from '@/shared/config';
 import { generateSitemap } from './sitemap';
 
 jest.mock('@/shared/api', () => ({
@@ -27,7 +28,7 @@ describe('generateSitemap', () => {
 
     const urls = (await generateSitemap()).map((entry) => entry.url);
 
-    expect(urls).toContain('https://ratingo.top/shows/outlander-2014');
+    expect(urls).toContain(`${SITE_URL}/shows/outlander-2014`);
     expect(urls.some((url) => url.includes('/movies/'))).toBe(false);
     expect(console.error).toHaveBeenCalledWith('Sitemap: failed to load movies', expect.any(Error));
   });

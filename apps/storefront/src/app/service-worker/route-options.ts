@@ -1,9 +1,10 @@
-import { buildRevision } from '@/shared/config';
+import { OFFLINE_ROUTE, buildRevision } from '@/shared/config';
 
-const OFFLINE_FALLBACK_URL = '/~offline';
+const UNPRECACHED_FILES = ['**/node_modules/**/*', 'public/screenshots/**'];
 
 export const serviceWorkerRouteOptions = {
   swSrc: 'src/app/service-worker/sw.ts',
-  additionalPrecacheEntries: [{ url: OFFLINE_FALLBACK_URL, revision: buildRevision() }],
+  additionalPrecacheEntries: [{ url: OFFLINE_ROUTE, revision: buildRevision() }],
+  globIgnores: UNPRECACHED_FILES,
   useNativeEsbuild: true,
 };

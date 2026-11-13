@@ -10,6 +10,9 @@ export function mediaRoute(type: MediaKind, slug: string): string {
 }
 
 export const MY_ROUTE = '/my';
+export const BROWSE_ROUTE = '/browse';
+export const CALENDAR_ROUTE = '/calendar';
+export const OFFLINE_ROUTE = '/~offline';
 export const SETTINGS_ROUTE = '/settings';
 export const NOTIFICATIONS_ROUTE = '/notifications';
 export const ABOUT_ROUTE = '/about';

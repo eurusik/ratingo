@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import type { components } from '@ratingo/api-contract';
 import { formatRating, formatYear } from '@ratingo/web-core/lib';
-import { mediaRoute } from '@/shared/config';
+import { BRAND_NAME, mediaRoute } from '@/shared/config';
 import { DEFAULT_LOCALE, getDictionary } from '@/shared/i18n';
 
 type CastMember = components['schemas']['CastMemberDto'];
@@ -27,7 +27,7 @@ export interface MediaMetadataOptions {
   slug?: string;
 }
 
-const SITE_TITLE_SUFFIX = ' | Ratingo';
+const SITE_TITLE_SUFFIX = ` | ${BRAND_NAME}`;
 const SERP_TITLE_MAX_LENGTH = 60;
 const SEO_TITLE_MAX_LENGTH = SERP_TITLE_MAX_LENGTH - SITE_TITLE_SUFFIX.length;
 const SEO_DESCRIPTION_MAX_LENGTH = 160;

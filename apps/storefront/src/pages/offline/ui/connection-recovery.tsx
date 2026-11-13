@@ -3,10 +3,10 @@
 import { Button } from '@heroui/react';
 import { ArrowLeft, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
-import { useHasBrowserHistory, useIsOnline } from '@/shared/lib';
+import { useHasBrowserHistory, useReloadWhenOnline } from '../model';
 
-function SignalIcon({ online }: { online: boolean }) {
-  if (online) {
+function SignalIcon({ reconnected }: { reconnected: boolean }) {
+  if (reconnected) {
     return (
       <span className="flex size-16 items-center justify-center rounded-full bg-success-soft">
         <Wifi className="size-7 text-success" />
@@ -24,24 +24,24 @@ function SignalIcon({ online }: { online: boolean }) {
 
 export function ConnectionRecovery() {
   const { dict } = useTranslation();
-  const online = useIsOnline();
+  const reconnected = useReloadWhenOnline();
   const hasHistory = useHasBrowserHistory();
   const text = dict.offline;
 
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <span aria-hidden="true" className="mb-2">
-        <SignalIcon online={online} />
+        <SignalIcon reconnected={reconnected} />
       </span>
-      <div role="status" className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {online ? text.restoredTitle : text.title}
-        </h1>
-        <p className="max-w-xs muted">{online ? text.restoredDescription : text.description}</p>
-      </div>
+      <h1 className="text-2xl font-semibold tracking-tight text-balance">
+        {reconnected ? text.restoredTitle : text.title}
+      </h1>
+      <p role="status" className="max-w-xs text-pretty muted">
+        {reconnected ? text.restoredDescription : text.description}
+      </p>
       <div
         className="mt-3 flex flex-col items-center gap-1 md:flex-row md:gap-2 inert:invisible"
-        inert={online}
+        inert={reconnected}
       >
         <Button variant="secondary" size="lg" onPress={() => window.location.reload()}>
           <RefreshCw aria-hidden="true" className="size-4" />

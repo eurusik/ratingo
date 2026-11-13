@@ -18,6 +18,7 @@ export function ServiceWorkerProvider({ enabled, children }: ServiceWorkerProvid
       swUrl={SERVICE_WORKER_URL}
       disable={!enabled}
       cacheOnNavigation={false}
+      reloadOnOnline={false}
       options={REGISTRATION_OPTIONS}
     >
       {children}

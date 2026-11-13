@@ -1,5 +1,16 @@
 import type { MetadataRoute } from 'next';
-import { JOURNAL_ROUTE, mediaRoute } from '@/shared/config';
+import {
+  ABOUT_ROUTE,
+  BROWSE_ROUTE,
+  CALENDAR_ROUTE,
+  HOME_ROUTE,
+  JOURNAL_ROUTE,
+  MY_ROUTE,
+  NOTIFICATIONS_ROUTE,
+  OFFLINE_ROUTE,
+  SETTINGS_ROUTE,
+  mediaRoute,
+} from '@/shared/config';
 
 type ChangeFrequency = NonNullable<MetadataRoute.Sitemap[number]['changeFrequency']>;
 
@@ -22,32 +33,27 @@ interface StaticPage {
 }
 
 const STATIC_PAGES: readonly StaticPage[] = [
-  { path: '', changeFrequency: 'daily', priority: 1.0 },
-  { path: '/about', changeFrequency: 'monthly', priority: 0.5 },
+  { path: HOME_ROUTE, changeFrequency: 'daily', priority: 1.0 },
+  { path: BROWSE_ROUTE, changeFrequency: 'daily', priority: 0.9 },
   { path: JOURNAL_ROUTE, changeFrequency: 'daily', priority: 0.8 },
-  { path: '/browse/shows', changeFrequency: 'daily', priority: 0.9 },
-  { path: '/browse/movies', changeFrequency: 'daily', priority: 0.9 },
-  { path: '/browse/shows-trending', changeFrequency: 'daily', priority: 0.8 },
-  { path: '/browse/shows-popular', changeFrequency: 'daily', priority: 0.8 },
-  { path: '/browse/movies-trending', changeFrequency: 'daily', priority: 0.8 },
-  { path: '/browse/movies-popular', changeFrequency: 'daily', priority: 0.8 },
+  { path: ABOUT_ROUTE, changeFrequency: 'monthly', priority: 0.5 },
 ];
 
 const DETAIL_PAGE_CHANGE_FREQUENCY: ChangeFrequency = 'weekly';
 const DETAIL_PAGE_PRIORITY = 0.7;
 
+const LEGACY_PRIVATE_PATHS = ['/admin', '/activity', '/saved'];
+
 const DISALLOWED_PATHS = [
-  '/admin',
+  ...LEGACY_PRIVATE_PATHS,
   '/auth',
-  '/settings',
   '/api',
   '/serwist',
-  '/~offline',
-  '/activity',
-  '/calendar',
-  '/saved',
-  '/my',
-  '/notifications',
+  OFFLINE_ROUTE,
+  SETTINGS_ROUTE,
+  CALENDAR_ROUTE,
+  MY_ROUTE,
+  NOTIFICATIONS_ROUTE,
 ];
 
 function detailEntry(url: string, lastModified: string): MetadataRoute.Sitemap[number] {
@@ -61,7 +67,7 @@ function detailEntry(url: string, lastModified: string): MetadataRoute.Sitemap[n
 
 export function buildSitemap(siteUrl: string, sources: SitemapSources): MetadataRoute.Sitemap {
   const staticEntries = STATIC_PAGES.map((page) => ({
-    url: `${siteUrl}${page.path}`,
+    url: page.path === HOME_ROUTE ? siteUrl : `${siteUrl}${page.path}`,
     lastModified: sources.now,
     changeFrequency: page.changeFrequency,
     priority: page.priority,

@@ -20,3 +20,17 @@ describe('buildWebAppManifest', () => {
     expect(manifest.icons).toEqual(expect.arrayContaining([expect.objectContaining({ purpose: 'maskable' })]));
   });
 });
+
+describe('buildWebAppManifest shortcuts', () => {
+  it('only opens routes the storefront serves', () => {
+    expect(buildWebAppManifest().shortcuts?.map((shortcut) => shortcut.url)).toEqual([
+      '/browse',
+      '/calendar',
+      '/my',
+    ]);
+  });
+
+  it('lets the installed app rotate with the device', () => {
+    expect(buildWebAppManifest().orientation).toBeUndefined();
+  });
+});

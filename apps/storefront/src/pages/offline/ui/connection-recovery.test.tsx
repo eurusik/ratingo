@@ -3,13 +3,11 @@ import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { ConnectionRecovery } from './connection-recovery';
 
 const uk = getDictionary('uk');
+const reloadPage = jest.fn();
 
-function setConnection(online: boolean) {
+function setBrowserState({ online, historyLength }: { online: boolean; historyLength: number }) {
   jest.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(online);
-}
-
-function setHistoryLength(length: number) {
-  jest.spyOn(window.history, 'length', 'get').mockReturnValue(length);
+  jest.spyOn(window.history, 'length', 'get').mockReturnValue(historyLength);
 }
 
 function renderRecovery() {
@@ -20,38 +18,55 @@ function renderRecovery() {
   );
 }
 
+const reloadButton = () => screen.getByRole('button', { name: uk.offline.reload, hidden: true });
+
 describe('ConnectionRecovery', () => {
-  afterEach(() => jest.restoreAllMocks());
+  beforeAll(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: reloadPage },
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    reloadPage.mockReset();
+  });
 
   it('explains the outage and offers to reload or go back', () => {
-    setConnection(false);
-    setHistoryLength(3);
+    setBrowserState({ online: false, historyLength: 3 });
     renderRecovery();
 
     expect(screen.getByRole('heading', { name: uk.offline.title })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: uk.offline.reload })).toBeInTheDocument();
+    expect(reloadButton()).toBeInTheDocument();
     expect(screen.getByRole('button', { name: uk.offline.back })).toBeInTheDocument();
   });
 
   it('hides the back button when there is nowhere to go back to', () => {
-    setConnection(false);
-    setHistoryLength(1);
+    setBrowserState({ online: false, historyLength: 1 });
     renderRecovery();
 
     expect(screen.queryByRole('button', { name: uk.offline.back })).not.toBeInTheDocument();
   });
 
-  it('announces the restored connection without moving the layout', () => {
-    setConnection(false);
-    setHistoryLength(1);
+  it('keeps reload available when the request failed although the device reports online', () => {
+    setBrowserState({ online: true, historyLength: 1 });
     renderRecovery();
 
-    setConnection(true);
+    expect(screen.getByRole('heading', { name: uk.offline.title })).toBeInTheDocument();
+    expect(reloadButton().closest('[inert]')).toBeNull();
+  });
+
+  it('announces the restored connection and reloads the page', () => {
+    setBrowserState({ online: false, historyLength: 1 });
+    renderRecovery();
+
     act(() => {
       window.dispatchEvent(new Event('online'));
     });
 
-    expect(screen.getByRole('status')).toHaveTextContent(uk.offline.restoredTitle);
-    expect(screen.getByRole('button', { name: uk.offline.reload, hidden: true }).closest('[inert]')).not.toBeNull();
+    expect(screen.getByRole('status')).toHaveTextContent(uk.offline.restoredDescription);
+    expect(reloadButton().closest('[inert]')).not.toBeNull();
+    expect(reloadPage).toHaveBeenCalledTimes(1);
   });
 });

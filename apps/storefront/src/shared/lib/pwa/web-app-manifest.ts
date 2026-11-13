@@ -1,22 +1,24 @@
 import type { MetadataRoute } from 'next';
+import { BRAND_NAME, BROWSE_ROUTE, CALENDAR_ROUTE, MY_ROUTE } from '@/shared/config';
+import { DEFAULT_LOCALE, getDictionary } from '@/shared/i18n';
 
 export const APP_THEME_COLOR = '#060607';
 
-const APP_NAME = 'Ratingo';
 const LAUNCHER_ICON = { src: '/icons/icon-192x192.png', sizes: '192x192' };
 
 export function buildWebAppManifest(): MetadataRoute.Manifest {
+  const { nav } = getDictionary(DEFAULT_LOCALE);
+
   return {
     id: '/',
-    name: APP_NAME,
-    short_name: APP_NAME,
+    name: BRAND_NAME,
+    short_name: BRAND_NAME,
     description: 'Відстежуйте тренди, рейтинги та нові епізоди серіалів і фільмів',
     lang: 'uk',
     dir: 'ltr',
     start_url: '/?source=pwa',
     scope: '/',
     display: 'standalone',
-    orientation: 'portrait',
     background_color: APP_THEME_COLOR,
     theme_color: APP_THEME_COLOR,
     categories: ['entertainment'],
@@ -47,19 +49,9 @@ export function buildWebAppManifest(): MetadataRoute.Manifest {
       },
     ],
     shortcuts: [
-      {
-        name: 'Серіали у тренді',
-        short_name: 'Серіали',
-        url: '/browse/shows-trending',
-        icons: [LAUNCHER_ICON],
-      },
-      {
-        name: 'Фільми у тренді',
-        short_name: 'Фільми',
-        url: '/browse/movies-trending',
-        icons: [LAUNCHER_ICON],
-      },
-      { name: 'Мій список', short_name: 'Список', url: '/saved', icons: [LAUNCHER_ICON] },
+      { name: nav.browse, url: BROWSE_ROUTE, icons: [LAUNCHER_ICON] },
+      { name: nav.calendar, url: CALENDAR_ROUTE, icons: [LAUNCHER_ICON] },
+      { name: nav.my, url: MY_ROUTE, icons: [LAUNCHER_ICON] },
     ],
   };
 }
