@@ -31,7 +31,7 @@ export function AppShell({
       <main
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
-        className="flex flex-1 flex-col pb-[calc(var(--spacing-tab-bar)+var(--safe-bottom)+1.5rem)] outline-none md:page-container md:pb-0"
+        className="flex flex-1 flex-col pt-(--page-top) pb-[calc(var(--spacing-tab-bar)+var(--safe-bottom)+1.5rem)] outline-none md:page-container md:pb-0"
       >
         {children}
       </main>

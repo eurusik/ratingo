@@ -119,9 +119,9 @@ export function BrowseView({ category, state, currentYear, firstPage }: BrowseVi
   const changeSort = (sort: BrowseSort) => navigation.apply({ ...shownState, sort });
 
   return (
-    <div className="flex flex-col pb-10 md:pt-4">
-      <div className="contents lg:sticky lg:top-16 lg:z-20 lg:mt-4 lg:flex lg:items-center lg:gap-5 lg:border-b lg:border-separator lg:bg-background/90 lg:py-2.5 lg:backdrop-blur-xl">
-        <header className="px-4 pt-2 md:px-0 md:pt-0 lg:shrink-0">
+    <div className="flex flex-col pb-10">
+      <div className="contents lg:sticky lg:top-16 lg:z-20 lg:-mt-2.5 lg:flex lg:items-center lg:gap-5 lg:border-b lg:border-separator lg:bg-background/90 lg:py-2.5 lg:backdrop-blur-xl">
+        <header className="px-4 md:px-0 lg:shrink-0">
           <h1 className="sr-only">{`${dict.browse.title}: ${title}`}</h1>
           <TypeSwitch category={shownCategory} state={shownState} onOpen={navigation.open} />
         </header>

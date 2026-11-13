@@ -18,6 +18,7 @@
 
 :root {
   --page-gutter: 1rem;
+  --page-top: 1rem;
   scroll-padding-top: 5rem;
 
   @media (width >= 48rem) {
@@ -65,7 +66,7 @@
     gap: 1.5rem;
     max-width: 40rem;
     margin: 0 auto;
-    padding: 2rem max(1rem, var(--safe-right)) 2rem max(1rem, var(--safe-left));
+    padding: 0 max(1rem, var(--safe-right)) 2rem max(1rem, var(--safe-left));
   }
 
   @media (width >= 48rem) {

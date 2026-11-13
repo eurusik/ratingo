@@ -3,7 +3,7 @@ import { BrowseGridSkeleton } from './browse-grid';
 
 export function BrowseSkeleton({ label }: { label: string }) {
   return (
-    <div role="status" className="flex flex-col gap-4 px-4 pt-2 pb-10 md:px-0 md:pt-4">
+    <div role="status" className="flex flex-col gap-4 px-4 pb-10 md:px-0">
       <span className="sr-only">{label}</span>
       <div aria-hidden className="flex items-center gap-3">
         <Skeleton className="h-9 flex-1 rounded-full md:max-w-40" />
