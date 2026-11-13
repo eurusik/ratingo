@@ -1,7 +1,7 @@
-import type { MovieDetails } from '@/shared/api';
+import type { MovieDetails, ShowDetails } from '@/shared/api';
 import { tmdbPosterUrl } from '@/shared/config';
 
-type CreditsDto = NonNullable<MovieDetails['credits']>;
+type CreditsDto = NonNullable<MovieDetails['credits'] | ShowDetails['credits']>;
 type CrewMember = CreditsDto['crew'][number];
 
 interface CastMember {
@@ -29,7 +29,7 @@ function namesWithJob(crew: CrewMember[], jobs: Set<string>): string[] {
   return [...new Set(names)].slice(0, CREW_NAMES_LIMIT);
 }
 
-export function toCredits(credits: MovieDetails['credits']): Credits {
+export function toCredits(credits: CreditsDto | null | undefined): Credits {
   const cast = [...(credits?.cast ?? [])]
     .sort((left, right) => left.order - right.order)
     .slice(0, CAST_LIMIT)

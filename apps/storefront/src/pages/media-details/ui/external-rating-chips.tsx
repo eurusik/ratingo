@@ -27,7 +27,7 @@ export function ExternalRatingChips({
   const dict = getDictionary(locale).details.ratings;
 
   return (
-    <ul aria-label={dict.list} className="flex flex-wrap gap-2">
+    <ul role="list" aria-label={dict.list} className="flex flex-wrap gap-2">
       {ratings.map((rating) => {
         const shown = shownValue(rating, locale);
         const caption = CAPTIONS[rating.source];

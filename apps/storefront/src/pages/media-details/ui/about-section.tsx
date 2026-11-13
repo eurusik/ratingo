@@ -7,15 +7,18 @@ import { useTranslation } from '@/shared/i18n';
 import { DetailsSection } from './details-section';
 
 const OVERVIEW_ID = 'details-overview';
+const CLAMP_TOLERANCE_PX = 1;
+const CHARS_THAT_USUALLY_OVERFLOW_CLAMP = 180;
 
-function useIsClamped(isExpanded: boolean) {
+function useIsClamped(isExpanded: boolean, likelyClamped: boolean) {
   const ref = useRef<HTMLParagraphElement>(null);
-  const [isClamped, setIsClamped] = useState(false);
+  const [isClamped, setIsClamped] = useState(likelyClamped);
 
   useLayoutEffect(() => {
     const element = ref.current;
     if (!element || isExpanded) return;
-    const measure = () => setIsClamped(element.scrollHeight > element.clientHeight + 1);
+    const measure = () =>
+      setIsClamped(element.scrollHeight > element.clientHeight + CLAMP_TOLERANCE_PX);
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(element);
@@ -28,7 +31,10 @@ function useIsClamped(isExpanded: boolean) {
 export function AboutSection({ type, overview }: { type: MediaType; overview: string }) {
   const { dict } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
-  const { ref, isClamped } = useIsClamped(isExpanded);
+  const { ref, isClamped } = useIsClamped(
+    isExpanded,
+    overview.length >= CHARS_THAT_USUALLY_OVERFLOW_CLAMP,
+  );
 
   return (
     <DetailsSection id="details-about" title={dict.details.about[type]}>

@@ -54,6 +54,7 @@ export function CastSection({ type, credits, locale }: CastSectionProps) {
           orientation="horizontal"
           hideScrollBar
           tabIndex={0}
+          role="region"
           aria-label={title}
           className="-mx-4 snap-x scroll-px-4 overscroll-x-contain rounded-xl md:mx-0 md:overflow-visible"
         >

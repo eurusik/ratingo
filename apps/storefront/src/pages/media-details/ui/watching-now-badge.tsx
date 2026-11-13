@@ -1,6 +1,6 @@
 export function WatchingNowBadge({ label }: { label: string }) {
   return (
-    <span className="inline-flex h-8 max-w-full items-center gap-2 rounded-full bg-surface/60 px-3 text-[13px] font-semibold text-foreground tabular-nums backdrop-blur-xl">
+    <span className="inline-flex h-8 max-w-full items-center gap-2 poster-glass rounded-full px-3 text-[13px] font-semibold tabular-nums">
       <span
         aria-hidden
         className="size-2 shrink-0 rounded-full bg-success ring-3 ring-success/25"

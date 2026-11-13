@@ -1,18 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { ScrollShadow } from '@heroui/react';
 import { Play } from 'lucide-react';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { preloadWhenIdle } from '@/shared/lib';
 import { trailerThumbnailUrl, type Trailer } from '../model/trailers';
 import { DetailsSection } from './details-section';
 
-const TrailerPlayer = dynamic(
-  () => import('./trailer-player').then((module) => module.TrailerPlayer),
-  { ssr: false },
-);
+const loadTrailerPlayer = () => import('./trailer-player').then((module) => module.TrailerPlayer);
+
+const TrailerPlayer = dynamic(loadTrailerPlayer, { ssr: false });
 
 function TrailerThumb({ trailer, onPlay }: { trailer: Trailer; onPlay: () => void }) {
   const { dict } = useTranslation();
@@ -35,7 +35,7 @@ function TrailerThumb({ trailer, onPlay }: { trailer: Trailer; onPlay: () => voi
         />
         <span
           aria-hidden
-          className="absolute top-1/2 left-1/2 flex size-13 -translate-1/2 items-center justify-center rounded-full bg-background/70 text-white md:size-15"
+          className="absolute top-1/2 left-1/2 flex size-13 -translate-1/2 items-center justify-center rounded-full bg-background/70 text-foreground md:size-15"
         >
           <Play className="size-5.5 fill-current" />
         </span>
@@ -49,6 +49,7 @@ export function TrailersSection({ trailers }: { trailers: Trailer[] }) {
   const { dict } = useTranslation();
   const [selected, setSelected] = useState<Trailer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  useEffect(() => preloadWhenIdle(loadTrailerPlayer), []);
 
   const play = (trailer: Trailer) => {
     setSelected(trailer);

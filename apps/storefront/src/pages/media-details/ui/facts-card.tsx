@@ -2,6 +2,8 @@ import { getDictionary, type Locale } from '@/shared/i18n';
 import { formatDate, formatMoney } from '../model/details-format';
 import type { MediaDetailsView } from '../model/details-view';
 
+const FACTS_HEADING_ID = 'details-facts';
+
 interface Fact {
   label: string;
   value?: string;
@@ -35,13 +37,16 @@ export function FactsCard({ view, locale }: { view: MediaDetailsView; locale: Lo
 
   return (
     <section
-      aria-labelledby="details-facts"
-      className="flex flex-col gap-2.5 md:gap-1 md:rounded-[20px] md:bg-surface md:px-4.5 md:py-2"
+      aria-labelledby={FACTS_HEADING_ID}
+      className="flex flex-col gap-2.5 md:gap-1 md:rounded-3xl md:bg-surface md:px-4.5 md:py-2"
     >
-      <h2 id="details-facts" className="text-xl font-extrabold tracking-tight md:mt-2.5 md:text-lg">
+      <h2
+        id={FACTS_HEADING_ID}
+        className="text-xl font-extrabold tracking-tight md:mt-2.5 md:text-lg"
+      >
         {title}
       </h2>
-      <dl className="rounded-[20px] bg-surface px-3.5 py-1 md:rounded-none md:bg-transparent md:p-0">
+      <dl className="rounded-3xl bg-surface px-3.5 py-1 md:rounded-none md:bg-transparent md:p-0">
         {facts.map((fact) => (
           <div
             key={fact.label}

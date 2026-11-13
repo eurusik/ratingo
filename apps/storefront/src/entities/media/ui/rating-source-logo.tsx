@@ -1,4 +1,4 @@
-export type RatingSource = 'imdb' | 'rtCritics' | 'rtAudience' | 'metacritic' | 'trakt';
+import type { RatingSource } from '../model/rating-source';
 
 export function TomatoIcon({ className }: { className: string }) {
   return (

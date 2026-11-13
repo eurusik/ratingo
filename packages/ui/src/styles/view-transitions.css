@@ -2,6 +2,11 @@
   --vt-push-duration: 380ms;
   --vt-push-ease: cubic-bezier(0.32, 0.72, 0, 1);
   --vt-morph-duration: 380ms;
+  --vt-fade-duration: 200ms;
+  --vt-rise-duration: 320ms;
+  --vt-rise-ease: cubic-bezier(0.2, 0, 0, 1);
+  --vt-desktop-morph-duration: 450ms;
+  --vt-desktop-morph-ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 ::view-transition-group(.push-enter),
@@ -95,35 +100,62 @@ html[data-skip-view-transition]::view-transition-new(*) {
   animation: none !important;
 }
 
-html:active-view-transition-type(nav-back) [data-page-transition] {
-  view-transition-name: page;
-}
-
-html:active-view-transition-type(nav-back)::view-transition-old(page) {
-  z-index: 1;
-  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-to-right;
-}
-
-html:active-view-transition-type(nav-back)::view-transition-new(page) {
-  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-from-left-dim;
-}
-
-html:active-view-transition-type(nav-back)::view-transition-group(page) {
+html[data-nav-transition]::view-transition-group(root) {
   animation: none;
 }
 
-html:active-view-transition-type(nav-forward) [data-page-transition] {
-  view-transition-name: page;
+@media (width < 48rem) {
+  html[data-nav-transition~='nav-back']::view-transition-old(root) {
+    z-index: 1;
+    animation: var(--vt-push-duration) var(--vt-push-ease) both vt-to-right;
+  }
+
+  html[data-nav-transition~='nav-back']::view-transition-new(root) {
+    animation: var(--vt-push-duration) var(--vt-push-ease) both vt-from-left-dim;
+  }
+
+  html[data-nav-transition~='nav-forward']::view-transition-old(root) {
+    animation: var(--vt-push-duration) var(--vt-push-ease) both vt-to-left-dim;
+  }
+
+  html[data-nav-transition~='nav-forward']::view-transition-new(root) {
+    animation: var(--vt-push-duration) var(--vt-push-ease) both vt-from-right;
+  }
 }
 
-html:active-view-transition-type(nav-forward)::view-transition-old(page) {
-  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-to-left-dim;
+@media (width >= 48rem) {
+  html[data-nav-transition]::view-transition-old(root) {
+    animation: var(--vt-fade-duration) ease-out both vt-fade-out;
+  }
+
+  html[data-nav-transition]::view-transition-new(root) {
+    animation: var(--vt-rise-duration) var(--vt-rise-ease) both vt-rise-in;
+  }
 }
 
-html:active-view-transition-type(nav-forward)::view-transition-new(page) {
-  animation: var(--vt-push-duration) var(--vt-push-ease) both vt-from-right;
+@keyframes vt-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
 }
 
-html:active-view-transition-type(nav-forward)::view-transition-group(page) {
-  animation: none;
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+html[data-nav-transition]::view-transition-old(*):only-child {
+  animation: var(--vt-fade-duration) ease-out both vt-fade-out;
+}
+
+html[data-nav-transition]::view-transition-new(*):only-child {
+  animation: var(--vt-fade-duration) ease-out both vt-fade-in;
 }

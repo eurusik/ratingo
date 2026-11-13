@@ -24,3 +24,16 @@ export function whenIdle(task: () => void): () => void {
   const handle = window.setTimeout(task, FALLBACK_DELAY_MS);
   return () => window.clearTimeout(handle);
 }
+
+export function whenIdleOnFastConnection(task: () => void): (() => void) | undefined {
+  if (isOnLightConnection()) return undefined;
+  return whenIdle(task);
+}
+
+const ignoreFailedPreload = () => undefined;
+
+export function preloadWhenIdle(load: () => Promise<unknown>): (() => void) | undefined {
+  return whenIdleOnFastConnection(() => {
+    void load().catch(ignoreFailedPreload);
+  });
+}

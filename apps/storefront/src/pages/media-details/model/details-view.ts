@@ -25,6 +25,7 @@ interface DetailsBase {
   title: string;
   overview?: string;
   posterUrl?: string;
+  posterPlaceholderUrl?: string;
   backdropUrl?: string;
   backdropLargeUrl?: string;
   year?: number;
@@ -59,6 +60,8 @@ export interface ShowDetailsView extends DetailsBase {
 
 export type MediaDetailsView = MovieDetailsView | ShowDetailsView;
 
+const SHOWN_RATERS = 3;
+
 function toExternalRatings(ratings: MovieDetails['externalRatings']): ExternalRating[] {
   const traktScore = positiveNumber(ratings?.trakt?.rating);
   const candidates: Array<[RatingSource, number | undefined]> = [
@@ -73,12 +76,14 @@ function toExternalRatings(ratings: MovieDetails['externalRatings']): ExternalRa
 
 function toBase(media: MovieDetails | ShowDetails): DetailsBase {
   const score = scoreFromPercent(media.stats?.qualityScore);
+  const raters = media.stats?.recentRaters ?? [];
   return {
     mediaItemId: media.id,
     slug: media.slug,
     title: media.title,
     overview: media.overview?.trim() || undefined,
     posterUrl: media.poster?.medium,
+    posterPlaceholderUrl: media.poster?.small,
     backdropUrl: media.backdrop?.medium,
     backdropLargeUrl: media.backdrop?.large,
     year: yearFromDate(media.releaseDate),
@@ -91,8 +96,8 @@ function toBase(media: MovieDetails | ShowDetails): DetailsBase {
     watchingNow: positiveNumber(media.stats?.liveWatchers),
     totalWatchers: positiveNumber(media.stats?.totalWatchers),
     community: {
-      raters: media.stats?.recentRaters ?? [],
-      ratingCount: media.stats?.communityRatingCount ?? 0,
+      raters: raters.slice(0, SHOWN_RATERS),
+      ratingCount: Math.max(media.stats?.communityRatingCount ?? 0, raters.length),
       averageScore: scoreFromPercent(media.stats?.communityAverageRating),
     },
     credits: toCredits(media.credits),

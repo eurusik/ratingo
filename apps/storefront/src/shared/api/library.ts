@@ -1,5 +1,5 @@
 import type { GetData, components } from '@ratingo/api-contract';
-import { apiDelete, apiGet, apiPatch, apiPost, isNotFoundError } from '@ratingo/web-core/api';
+import { apiDelete, apiGet, apiGetOrNull, apiPatch, apiPost } from '@ratingo/web-core/api';
 import type { MediaType } from './catalog';
 
 export type MediaSaveStatus = components['schemas']['MediaSaveStatusDto'];
@@ -45,16 +45,15 @@ export const libraryApi = {
     return batch.ratings;
   },
 
-  async getMediaState(mediaItemId: string): Promise<UserMediaState | null> {
-    try {
-      return await apiGet<UserMediaState>(`user-media/${mediaItemId}`);
-    } catch (error) {
-      if (await isNotFoundError(error)) return null;
-      throw error;
-    }
+  getMediaState(mediaItemId: string): Promise<UserMediaState | null> {
+    return apiGetOrNull<UserMediaState>(`user-media/${mediaItemId}`);
   },
 
-  setRating(mediaItemId: string, rating: number | null, mediaType: MediaType) {
+  setRating(
+    mediaItemId: string,
+    rating: number | null,
+    mediaType: MediaType,
+  ): Promise<UserMediaState> {
     return apiPatch<UserMediaState>(`user-media/${mediaItemId}`, {
       rating,
       mediaType,

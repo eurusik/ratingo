@@ -1,12 +1,11 @@
-export const SHARED_ART_SCOPE = { 'data-shared-art-scope': '' } as const;
-export const SHARED_ART_SOURCE = { 'data-shared-art': '' } as const;
-export const SHARED_ART_TARGET = { 'data-shared-art-target': '' } as const;
+import { SHARED_ART_SCOPE, SHARED_ART_SOURCE } from './shared-art-markers';
 
 const SCOPE_SELECTOR = `[${Object.keys(SHARED_ART_SCOPE)[0]}]`;
 const SOURCE_SELECTOR = `[${Object.keys(SHARED_ART_SOURCE)[0]}]`;
 const ACTIVE_ATTRIBUTE = 'data-shared-art-active';
 
 let currentlyActiveArt: HTMLElement | null = null;
+let pendingArt: { path: string; imageUrl: string } | null = null;
 
 function artInside(link: Element): HTMLElement | null {
   const scope = link.closest(SCOPE_SELECTOR) ?? link;
@@ -38,7 +37,15 @@ export function releaseSharedArt(art: HTMLElement | null): void {
 }
 
 export function nameArtOfLink(link: Element): HTMLElement | null {
-  return activate(artInside(link));
+  const art = activate(artInside(link));
+  const path = link.getAttribute('href');
+  const imageUrl = art?.querySelector('img')?.currentSrc;
+  pendingArt = path && imageUrl ? { path, imageUrl } : null;
+  return art;
+}
+
+export function pendingArtImageFor(path: string): string | null {
+  return pendingArt?.path === path ? pendingArt.imageUrl : null;
 }
 
 export function nameArtLinkingTo(pathname: string): HTMLElement | null {

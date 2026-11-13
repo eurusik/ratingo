@@ -2,12 +2,13 @@ export { SiteAnalytics } from './analytics';
 export { useBrowserOrigin, useBrowserPath } from './browser-origin';
 export { useDebouncedValue } from './debounced-value';
 export { interleave } from './interleave';
-export { DESKTOP_MEDIA_QUERY, useMediaQuery } from './media-query';
+export { useMediaQuery } from './media-query';
 export {
   currentYear,
   formatCompactCount,
   formatScore,
   percentFromScore,
+  scoreFromRating,
   positiveNumber,
   scoreFromPercent,
   yearFromDate,
@@ -22,19 +23,21 @@ export {
 } from './pwa';
 export {
   RouteCommitSignal,
+  CONTENT_TRANSITION_ONLY,
   SHARED_ART_SCOPE,
   SHARED_ART_SOURCE,
   SHARED_ART_TARGET,
   hasPreviousRoute,
   isPlainClick,
+  navigateForward,
   nameArtLinkingTo,
   nameArtOfLink,
+  pendingArtImageFor,
   releaseSharedArt,
   replaceDocumentLocation,
   waitForRouteCommit,
 } from './navigation';
-export { useShareLink } from './share-link';
-export { createBatchLoader, isOnLightConnection, whenIdle } from './scheduling';
+export { createBatchLoader, preloadWhenIdle, whenIdleOnFastConnection } from './scheduling';
 export {
   JsonLd,
   buildOrganizationJsonLd,
@@ -44,3 +47,4 @@ export {
   buildWebSiteJsonLd,
   createMediaMetadata,
 } from './seo';
+export { closeUndoToast, showUndoToast, useShareLink } from './toast';

@@ -6,8 +6,8 @@ import { toast } from '@heroui/react';
 import { LIBRARY_QUERY_KEY, NOT_SAVED, isSaved, useLibraryStore } from '@/entities/library';
 import { libraryApi, type MediaSaveStatus } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { closeUndoToast, showUndoToast } from '@/shared/lib';
 import { ensureSaved, planListChanges } from './save-plan';
-import { closeUndoToast, showUndoToast } from './undo-toast';
 
 export interface SavableMedia {
   mediaItemId: string;
@@ -101,7 +101,7 @@ export function useLibrarySave() {
         : dict.saveToLibrary.toast.removed;
 
       showUndoToast({
-        mediaItemId: media.mediaItemId,
+        key: media.mediaItemId,
         message: toastMessage ?? interpolate(message, { title: media.title }),
         undoLabel: dict.saveToLibrary.toast.undo,
         onUndo: () => {
@@ -126,9 +126,10 @@ export function useLibrarySave() {
   );
 
   const removeIfSaved = useCallback(
-    (media: SavableMedia, message: string) => {
-      if (isSaved(store.read(media.mediaItemId)))
-        changeWithUndo(media, { kind: 'remove' }, message);
+    (media: SavableMedia, toastMessage: string) => {
+      if (isSaved(store.read(media.mediaItemId))) {
+        changeWithUndo(media, { kind: 'remove' }, toastMessage);
+      }
     },
     [changeWithUndo, store],
   );

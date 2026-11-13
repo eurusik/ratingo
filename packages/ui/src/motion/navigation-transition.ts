@@ -1,6 +1,7 @@
 export const NAV_FORWARD_TRANSITION = 'nav-forward';
 export const NAV_BACK_TRANSITION = 'nav-back';
 
+const NAV_TRANSITION_ATTRIBUTE = 'data-nav-transition';
 const PROGRAMMATIC_BACK_TTL_MS = 2000;
 const NAVIGATION_TIMEOUT_MS = 1000;
 
@@ -57,12 +58,14 @@ export function runNavigationTransition(
   navigate: () => void,
   committed: () => Promise<void>,
 ): Promise<void> {
-  if (!canAnimateNavigation()) {
+  if (activeNavigation || !canAnimateNavigation()) {
     navigate();
     return Promise.resolve();
   }
 
   const start = document.startViewTransition.bind(document) as unknown as StartViewTransition;
+  const root = document.documentElement;
+  root.setAttribute(NAV_TRANSITION_ATTRIBUTE, types.join(' '));
   let transition: ViewTransition;
   try {
     transition = start({
@@ -73,6 +76,7 @@ export function runNavigationTransition(
       },
     });
   } catch {
+    root.removeAttribute(NAV_TRANSITION_ATTRIBUTE);
     navigate();
     return Promise.resolve();
   }
@@ -81,6 +85,8 @@ export function runNavigationTransition(
   return transition.finished
     .catch(() => {})
     .finally(() => {
-      if (activeNavigation === transition) activeNavigation = null;
+      if (activeNavigation !== transition) return;
+      activeNavigation = null;
+      root.removeAttribute(NAV_TRANSITION_ATTRIBUTE);
     });
 }

@@ -45,7 +45,7 @@ interface DetailsTopBarProps {
 export function DetailsTopBar({ title, shareHref, backHref, watchingLabel }: DetailsTopBarProps) {
   const { dict } = useTranslation();
   const isScrolled = useIsScrolledPast(TITLE_SHOWN_FROM_PX);
-  const buttonTone = isScrolled ? 'bg-transparent' : 'bg-surface/60 backdrop-blur-xl';
+  const buttonTone = isScrolled ? 'bg-transparent' : 'bg-surface/75 backdrop-blur-xl';
 
   return (
     <div

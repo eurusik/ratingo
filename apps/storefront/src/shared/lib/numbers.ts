@@ -20,6 +20,10 @@ export function scoreFromPercent(percent: number | null | undefined): number | u
   return positive === undefined ? undefined : positive / PERCENT_PER_POINT;
 }
 
+export function scoreFromRating(rating: number): number {
+  return rating / PERCENT_PER_POINT;
+}
+
 export function percentFromScore(score: number): number {
   return score * PERCENT_PER_POINT;
 }

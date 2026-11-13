@@ -7,11 +7,12 @@ import { formatScore, percentFromScore } from '@/shared/lib';
 
 export function ScoreRing({ score, verdict }: { score: number; verdict: RatingVerdict }) {
   const { dict, locale } = useTranslation();
-  const shown = formatScore(locale, score);
+  const label = interpolate(dict.details.ratings.score, { score: formatScore(locale, score) });
 
   return (
     <ProgressCircle
-      aria-label={interpolate(dict.details.ratings.score, { score: shown })}
+      aria-label={label}
+      valueLabel={label}
       value={percentFromScore(score)}
       color={VERDICT_TONES[verdict]}
       className="relative size-18 shrink-0 md:size-19"
@@ -24,7 +25,7 @@ export function ScoreRing({ score, verdict }: { score: number; verdict: RatingVe
         aria-hidden
         className="absolute inset-0 flex items-center justify-center text-2xl font-extrabold tabular-nums"
       >
-        {shown}
+        {formatScore(locale, score)}
       </span>
     </ProgressCircle>
   );

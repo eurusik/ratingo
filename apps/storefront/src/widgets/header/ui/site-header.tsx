@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
+import { cn } from '@ratingo/web-core/lib';
 import { openAuth } from '@/shared/auth';
 import {
   HOME_ROUTE,
@@ -60,7 +61,10 @@ export function SiteHeader() {
 
   return (
     <header
-      className={`${hidesOnPhone ? 'hidden md:block' : ''} pt-safe-top pr-safe-right pl-safe-left md:sticky md:top-0 md:z-30 md:[view-transition-name:site-header] md:border-b md:border-separator md:bg-background/90 md:backdrop-blur-xl`}
+      className={cn(
+        'pt-safe-top pr-safe-right pl-safe-left md:sticky md:top-0 md:z-30 md:[view-transition-name:site-header] md:border-b md:border-separator md:bg-background/90 md:backdrop-blur-xl',
+        hidesOnPhone && 'hidden md:block',
+      )}
     >
       <Container className="flex h-16 items-center gap-4">
         <Link

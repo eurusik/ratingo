@@ -1,18 +1,21 @@
 import type { MovieDetails, ShowDetails } from '@/shared/api';
+import { toCredits } from './credits';
 
-type JsonLdData = Record<string, unknown>;
+export type JsonLdData = Record<string, unknown>;
 
 const ACTOR_LIMIT = 5;
-const RATINGO_SCORE_SCALE = 100;
+const RATING_SCALE = 100;
+const LOWEST_RATING = 0;
 
 function aggregateRating(media: MovieDetails | ShowDetails): JsonLdData | undefined {
-  const score = media.stats?.ratingoScore;
+  const average = media.stats?.communityAverageRating;
   const count = media.stats?.communityRatingCount;
-  if (score == null || count == null || count <= 0) return undefined;
+  if (average == null || count == null || count <= 0) return undefined;
   return {
     '@type': 'AggregateRating',
-    ratingValue: score,
-    bestRating: RATINGO_SCORE_SCALE,
+    ratingValue: average,
+    bestRating: RATING_SCALE,
+    worstRating: LOWEST_RATING,
     ratingCount: count,
   };
 }
@@ -22,10 +25,8 @@ function people(names: string[]): JsonLdData[] | undefined {
 }
 
 export function movieJsonLd(movie: MovieDetails): JsonLdData {
-  const directors = (movie.credits?.crew ?? [])
-    .filter((member) => member.job === 'Director')
-    .map((member) => member.name);
-  const actors = (movie.credits?.cast ?? []).slice(0, ACTOR_LIMIT).map((member) => member.name);
+  const credits = toCredits(movie.credits);
+  const actors = credits.cast.slice(0, ACTOR_LIMIT).map((member) => member.name);
 
   return {
     '@context': 'https://schema.org',
@@ -36,7 +37,7 @@ export function movieJsonLd(movie: MovieDetails): JsonLdData {
     datePublished: movie.releaseDate || undefined,
     genre: (movie.genres ?? []).map((genre) => genre.name),
     aggregateRating: aggregateRating(movie),
-    director: people(directors),
+    director: people(credits.directors),
     actor: people(actors),
   };
 }

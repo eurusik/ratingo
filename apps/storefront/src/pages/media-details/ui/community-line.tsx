@@ -4,17 +4,15 @@ import { Avatar, AvatarGroup } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { formatCompactCount, formatScore } from '@/shared/lib';
 import type { Community } from '../model/details-view';
-import { initialOf } from './person-avatar';
-
-const SHOWN_RATERS = 3;
+import { initialOf } from '../model/initial';
 
 export function CommunityLine({ community }: { community: Community }) {
   const { dict, locale } = useTranslation();
-  const raters = community.raters.slice(0, SHOWN_RATERS);
+  const { raters } = community;
   const [firstRater] = raters;
   if (!firstRater && community.averageScore === undefined) return null;
 
-  const othersCount = Math.max(community.ratingCount, community.raters.length) - 1;
+  const othersCount = community.ratingCount - 1;
   const ratedBy = firstRater
     ? interpolate(
         othersCount > 0 ? dict.details.community.ratedByMany : dict.details.community.ratedByOne,
@@ -34,7 +32,9 @@ export function CommunityLine({ community }: { community: Community }) {
         <AvatarGroup size="sm" aria-hidden className="shrink-0">
           {raters.map((rater) => (
             <Avatar key={rater.userId}>
-              {rater.avatarUrl ? <Avatar.Image src={rater.avatarUrl} alt="" /> : null}
+              {rater.avatarUrl ? (
+                <Avatar.Image src={rater.avatarUrl} alt="" className="object-cover" />
+              ) : null}
               <Avatar.Fallback>{initialOf(rater.username)}</Avatar.Fallback>
             </Avatar>
           ))}

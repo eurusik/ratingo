@@ -13,7 +13,7 @@ type SaveButtonTone = 'surface' | 'overlay';
 
 const TONE_CLASSES: Record<SaveButtonTone, string> = {
   surface: '',
-  overlay: 'bg-black/80 text-white',
+  overlay: 'poster-glass',
 };
 
 const MENU_KEYS = { toggle: 'toggle', open: 'open', share: 'share' } as const;

@@ -5,6 +5,7 @@ import { SHARED_ART_SCOPE, SHARED_ART_SOURCE } from '@/shared/lib';
 import { ForwardLink } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import type { TrendingMedia } from '../model/media';
+import { CardGlow } from './card-glow';
 import { MediaBackdrop } from './media-backdrop';
 import { EventBadge } from './event-badge';
 import { ExternalRatings } from './external-ratings';
@@ -26,8 +27,9 @@ export function TrendingCard({ media, isPriority = false, actions, footer }: Tre
   return (
     <Card
       {...SHARED_ART_SCOPE}
-      className="relative w-77.5 gap-0 overflow-hidden rounded-3xl p-0 md:w-full"
+      className="relative isolate w-77.5 gap-0 overflow-hidden rounded-3xl p-0 md:w-full"
     >
+      <CardGlow imageUrl={media.backdropUrl} />
       <div {...SHARED_ART_SOURCE} className="relative">
         <MediaBackdrop type={media.type} backdropUrl={media.backdropUrl} isPriority={isPriority} />
         <ExternalRatings

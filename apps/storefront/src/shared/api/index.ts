@@ -1,4 +1,5 @@
 export { configureStorefrontApi } from './configure';
+export { orNullWhenNotFound } from './not-found';
 export {
   catalogApi,
   type CatalogCache,

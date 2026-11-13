@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { toast } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
-import { useBrowserOrigin } from './browser-origin';
+import { useBrowserOrigin } from '../browser-origin';
 
 type ShareOutcome = 'shared' | 'copied' | 'cancelled' | 'failed';
 
