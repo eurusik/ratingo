@@ -13,6 +13,7 @@ export interface HeroMedia extends TrendingMedia {
 export interface HomeHero {
   lead?: HeroMedia;
   picks: TrendingMedia[];
+  firstPickRank: number;
 }
 
 export interface EpisodeRelease {
@@ -43,7 +44,24 @@ export function buildHomeHero(items: readonly HomeItem[]): HomeHero {
   return {
     lead: lead ? toHeroMedia(lead) : undefined,
     picks: rest.slice(0, TOP_THREE_COUNT).map(fromHomeItem),
+    firstPickRank: lead ? 2 : 1,
   };
+}
+
+const VERDICT_ORDER = ['good', 'mixed', undefined, 'bad'] as const;
+
+function verdictRank(media: TrendingMedia): number {
+  return VERDICT_ORDER.indexOf(media.verdict);
+}
+
+function unratedRank(media: TrendingMedia): number {
+  return Number(media.imdbRating === undefined && media.criticsPercent === undefined);
+}
+
+export function toReleaseRail(items: readonly TrendingMedia[]): TrendingMedia[] {
+  return [...items]
+    .sort((a, b) => verdictRank(a) - verdictRank(b) || unratedRank(a) - unratedRank(b))
+    .map((media) => ({ ...media, event: undefined }));
 }
 
 export interface ListChoice<K extends string> {

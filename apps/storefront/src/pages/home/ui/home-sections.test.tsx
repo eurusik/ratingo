@@ -123,12 +123,13 @@ describe('NewReleases', () => {
 });
 
 describe('TopThree', () => {
-  it('ranks titles in order and says how many people are watching', () => {
-    renderIn(<TopThree items={[ANDOR, DUNE]} />, 'en');
+  it('continues the ranking after the lead and says how many people are watching', () => {
+    renderIn(<TopThree items={[ANDOR, DUNE]} firstRank={2} />, 'en');
 
     const list = screen.getByRole('list', { name: 'Also on top' });
     expect(list.tagName).toBe('OL');
-    expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('1Андор');
+    expect(list).toHaveAttribute('start', '2');
+    expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('2Андор');
     expect(within(list).getByText('340 people are watching now')).toBeInTheDocument();
   });
 });

@@ -1,6 +1,7 @@
 import fc from 'fast-check';
+import type { TrendingMedia } from '@/entities/media';
 import type { HomeItem, NewEpisode } from '@/shared/api';
-import { buildHomeHero, chooseList, toAiredAt, toEpisodeRelease } from './home-feed';
+import { buildHomeHero, chooseList, toAiredAt, toEpisodeRelease, toReleaseRail } from './home-feed';
 
 const IMAGE = {
   thumb: 'https://img.test/w154/a.jpg',
@@ -40,10 +41,59 @@ describe('buildHomeHero', () => {
       wideBackdropUrl: IMAGE.large,
     });
     expect(hero.picks.map((pick) => pick.mediaItemId)).toEqual(['b', 'c', 'd']);
+    expect(hero.firstPickRank).toBe(2);
   });
 
   it('has nothing to lead with when the feed is empty', () => {
-    expect(buildHomeHero([])).toEqual({ lead: undefined, picks: [] });
+    expect(buildHomeHero([])).toEqual({ lead: undefined, picks: [], firstPickRank: 1 });
+  });
+});
+
+describe('toReleaseRail', () => {
+  const VERDICTS = ['good', 'mixed', undefined, 'bad'] as const;
+  const release = fc.record({
+    verdict: fc.constantFrom(...VERDICTS),
+    imdbRating: fc.option(fc.double({ min: 1, max: 10, noNaN: true }), { nil: undefined }),
+  });
+
+  it('puts better verdicts first and keeps every title once', () => {
+    fc.assert(
+      fc.property(fc.array(release, { maxLength: 12 }), (specs) => {
+        const items: TrendingMedia[] = specs.map((spec, index) => ({
+          mediaItemId: String(index),
+          type: 'movie',
+          slug: String(index),
+          title: String(index),
+          providers: [],
+          ...spec,
+        }));
+        const rail = toReleaseRail(items);
+        const ranks = rail.map((media) => VERDICTS.indexOf(media.verdict));
+
+        expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+        expect(rail.map((media) => media.mediaItemId).sort()).toEqual(
+          items.map((media) => media.mediaItemId).sort(),
+        );
+      }),
+    );
+  });
+
+  it('lifts rated titles above unrated ones with the same verdict and drops the release badge', () => {
+    const unrated: TrendingMedia = {
+      mediaItemId: 'clay',
+      type: 'movie',
+      slug: 'clay',
+      title: 'Clay',
+      verdict: 'good',
+      event: 'IN_THEATERS',
+      providers: [],
+    };
+    const rated: TrendingMedia = { ...unrated, mediaItemId: 'digger', criticsPercent: 52 };
+
+    const rail = toReleaseRail([unrated, rated]);
+
+    expect(rail.map((media) => media.mediaItemId)).toEqual(['digger', 'clay']);
+    expect(rail.every((media) => media.event === undefined)).toBe(true);
   });
 });
 

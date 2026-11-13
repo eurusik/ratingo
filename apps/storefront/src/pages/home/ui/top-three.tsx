@@ -52,7 +52,12 @@ function TopThreeCard({ media, rank }: { media: TrendingMedia; rank: number }) {
   );
 }
 
-export function TopThree({ items }: { items: TrendingMedia[] }) {
+interface TopThreeProps {
+  items: TrendingMedia[];
+  firstRank: number;
+}
+
+export function TopThree({ items, firstRank }: TopThreeProps) {
   const { dict } = useTranslation();
   const title = dict.home.picks;
 
@@ -61,10 +66,14 @@ export function TopThree({ items }: { items: TrendingMedia[] }) {
   return (
     <section aria-labelledby={SECTION_ID} className="flex flex-col gap-2">
       <SectionHeader id={SECTION_ID} title={title} />
-      <ol aria-label={title} className="grid gap-2 px-4 md:grid-cols-3 md:gap-3 md:px-0">
+      <ol
+        aria-label={title}
+        start={firstRank}
+        className="grid gap-2 px-4 md:grid-cols-3 md:gap-3 md:px-0"
+      >
         {items.map((media, index) => (
           <li key={media.mediaItemId}>
-            <TopThreeCard media={media} rank={index + 1} />
+            <TopThreeCard media={media} rank={firstRank + index} />
           </li>
         ))}
       </ol>

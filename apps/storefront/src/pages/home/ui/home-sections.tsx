@@ -5,7 +5,7 @@ import {
   loadNowPlaying,
   loadTrending,
 } from '../api/load-home-feed';
-import { buildHomeHero } from '../model/home-feed';
+import { buildHomeHero, toReleaseRail } from '../model/home-feed';
 import { HeroBanner } from './hero-banner';
 import { NewEpisodes } from './new-episodes';
 import { NewReleases } from './new-releases';
@@ -17,12 +17,12 @@ export async function HeroSection() {
   const hero = await loadHero();
   if (!hero.ok) return null;
 
-  const { lead, picks } = buildHomeHero(hero.data);
+  const { lead, picks, firstPickRank } = buildHomeHero(hero.data);
 
   return (
     <>
       {lead ? <HeroBanner hero={lead} /> : null}
-      <TopThree items={picks} />
+      <TopThree items={picks} firstRank={firstPickRank} />
     </>
   );
 }
@@ -45,8 +45,8 @@ export async function NewReleasesSection() {
   return (
     <NewReleases
       lists={{
-        nowPlaying: nowPlaying.ok ? nowPlaying.data : [],
-        newOnDigital: newOnDigital.ok ? newOnDigital.data : [],
+        nowPlaying: nowPlaying.ok ? toReleaseRail(nowPlaying.data) : [],
+        newOnDigital: newOnDigital.ok ? toReleaseRail(newOnDigital.data) : [],
       }}
     />
   );
