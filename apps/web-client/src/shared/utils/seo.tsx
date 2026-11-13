@@ -181,7 +181,8 @@ export const SEO_BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo
   .trim()
   .replace(/\/$/, '');
 
-export const IS_SEARCH_INDEXING_ENABLED = process.env.VERCEL_ENV === 'production';
+export const IS_SEARCH_INDEXING_ENABLED =
+  process.env.APP_ENV === 'production' || process.env.VERCEL_ENV === 'production';
 
 /**
  * Returns an `alternates.canonical` object for use in Next.js Metadata.
