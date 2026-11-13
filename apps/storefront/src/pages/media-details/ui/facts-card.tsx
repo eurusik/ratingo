@@ -1,5 +1,4 @@
-import { useId } from 'react';
-import { useTranslation } from '@/shared/i18n';
+import { getDictionary, type Locale } from '@/shared/i18n';
 import { formatDate, formatMoney } from '../model/details-format';
 import type { MediaDetailsView } from '../model/details-view';
 
@@ -8,47 +7,39 @@ interface Fact {
   value?: string;
 }
 
-function useFacts(view: MediaDetailsView): Fact[] {
-  const { dict, locale } = useTranslation();
-  const facts = dict.details.facts;
+function factsOf(view: MediaDetailsView, locale: Locale): Fact[] {
+  const dict = getDictionary(locale).details;
   const date = (iso?: string) => (iso ? formatDate(iso, locale) : undefined);
+  const money = (amount?: number) =>
+    amount === undefined ? undefined : formatMoney(amount, locale, dict);
 
   if (view.type === 'movie') {
     return [
-      { label: facts.status, value: view.status && dict.details.movieStatus[view.status] },
-      { label: facts.premiere, value: date(view.releaseDate) },
-      {
-        label: facts.budget,
-        value:
-          view.budget === undefined ? undefined : formatMoney(view.budget, locale, dict.details),
-      },
-      {
-        label: facts.revenue,
-        value:
-          view.revenue === undefined ? undefined : formatMoney(view.revenue, locale, dict.details),
-      },
+      { label: dict.facts.status, value: view.status && dict.movieStatus[view.status] },
+      { label: dict.facts.premiere, value: date(view.releaseDate) },
+      { label: dict.facts.budget, value: money(view.budget) },
+      { label: dict.facts.revenue, value: money(view.revenue) },
     ];
   }
   return [
-    { label: facts.premiere, value: date(view.releaseDate) },
-    { label: facts.lastEpisode, value: date(view.lastAirDate) },
+    { label: dict.facts.premiere, value: date(view.releaseDate) },
+    { label: dict.facts.lastEpisode, value: date(view.lastAirDate) },
   ];
 }
 
-export function FactsCard({ view }: { view: MediaDetailsView }) {
-  const { dict } = useTranslation();
-  const headingId = useId();
-  const facts = useFacts(view).filter((fact): fact is Required<Fact> => Boolean(fact.value));
+export function FactsCard({ view, locale }: { view: MediaDetailsView; locale: Locale }) {
+  const title = getDictionary(locale).details.facts.title;
+  const facts = factsOf(view, locale).filter((fact): fact is Required<Fact> => Boolean(fact.value));
 
   if (facts.length === 0) return null;
 
   return (
     <section
-      aria-labelledby={headingId}
+      aria-labelledby="details-facts"
       className="flex flex-col gap-2.5 md:gap-1 md:rounded-[20px] md:bg-surface md:px-4.5 md:py-2"
     >
-      <h2 id={headingId} className="text-xl font-extrabold tracking-tight md:mt-2.5 md:text-lg">
-        {dict.details.facts.title}
+      <h2 id="details-facts" className="text-xl font-extrabold tracking-tight md:mt-2.5 md:text-lg">
+        {title}
       </h2>
       <dl className="rounded-[20px] bg-surface px-3.5 py-1 md:rounded-none md:bg-transparent md:p-0">
         {facts.map((fact) => (

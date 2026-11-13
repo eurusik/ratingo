@@ -1,12 +1,12 @@
 'use client';
 
 import type { Key } from 'react';
-import { Dropdown, Label, ToggleButton, toast } from '@heroui/react';
+import { Dropdown, Label, ToggleButton } from '@heroui/react';
 import { Check, Plus } from 'lucide-react';
 import type { MediaSummary } from '@/entities/media';
 import { mediaRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { shareLink, useBrowserOrigin } from '@/shared/lib';
+import { useShareLink } from '@/shared/lib';
 import { useSaveToggle } from '../model/save-toggle';
 
 type SaveButtonTone = 'surface' | 'overlay';
@@ -25,21 +25,14 @@ interface SaveButtonProps {
 
 export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
   const { dict } = useTranslation();
-  const origin = useBrowserOrigin();
+  const share = useShareLink();
   const { saved, toggle } = useSaveToggle(media);
   const href = mediaRoute(media.type, media.slug);
   const toggleLabel = saved ? dict.saveToLibrary.menu.unsave : dict.saveToLibrary.menu.save;
 
-  const share = async () => {
-    if (!origin) return;
-    const outcome = await shareLink({ url: new URL(href, origin).href, title: media.title });
-    if (outcome === 'copied') toast(dict.saveToLibrary.toast.linkCopied);
-    if (outcome === 'failed') toast.danger(dict.saveToLibrary.toast.shareFailed);
-  };
-
   const onMenuAction = (key: Key) => {
     if (key === MENU_KEYS.toggle) toggle();
-    if (key === MENU_KEYS.share) void share();
+    if (key === MENU_KEYS.share) void share({ href, title: media.title });
   };
 
   return (

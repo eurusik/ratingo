@@ -7,6 +7,7 @@ export {
   currentYear,
   formatCompactCount,
   formatScore,
+  percentFromScore,
   positiveNumber,
   scoreFromPercent,
   yearFromDate,
@@ -24,14 +25,15 @@ export {
   SHARED_ART_SCOPE,
   SHARED_ART_SOURCE,
   SHARED_ART_TARGET,
-  clearSharedArt,
   hasPreviousRoute,
+  isPlainClick,
   nameArtLinkingTo,
   nameArtOfLink,
+  releaseSharedArt,
   replaceDocumentLocation,
   waitForRouteCommit,
 } from './navigation';
-export { shareLink } from './share-link';
+export { useShareLink } from './share-link';
 export { createBatchLoader, isOnLightConnection, whenIdle } from './scheduling';
 export {
   JsonLd,
@@ -41,5 +43,4 @@ export {
   buildSitemap,
   buildWebSiteJsonLd,
   createMediaMetadata,
-  createNotFoundMetadata,
 } from './seo';

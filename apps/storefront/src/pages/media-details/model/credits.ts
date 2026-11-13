@@ -4,7 +4,7 @@ import { tmdbPosterUrl } from '@/shared/config';
 type CreditsDto = NonNullable<MovieDetails['credits']>;
 type CrewMember = CreditsDto['crew'][number];
 
-export interface CastMember {
+interface CastMember {
   id: string;
   name: string;
   character?: string;

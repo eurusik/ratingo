@@ -17,12 +17,11 @@ export function DetailsError({ onRetry }: { onRetry: () => void }) {
     });
 
   return (
-    <div
-      role="alert"
-      className="mx-auto flex max-w-md flex-col items-center gap-3 px-4 pt-[max(6rem,var(--safe-top))] pb-16 text-center md:pt-24"
-    >
+    <div className="mx-auto flex max-w-md flex-col items-center gap-3 px-4 pt-[max(6rem,var(--safe-top))] pb-16 text-center md:pt-24">
       <h1 className="text-xl font-extrabold">{dict.details.error.title}</h1>
-      <p className="text-sm text-muted">{dict.details.error.text}</p>
+      <p role="alert" className="text-sm text-muted">
+        {dict.details.error.text}
+      </p>
       <Button variant="secondary" isPending={isRetrying} onPress={retry}>
         {dict.common.retry}
       </Button>

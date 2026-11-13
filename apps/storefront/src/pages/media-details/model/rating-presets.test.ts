@@ -10,7 +10,7 @@ import {
 describe('rating presets', () => {
   it('maps every rating on the scale to exactly one preset', () => {
     fc.assert(
-      fc.property(fc.integer({ min: RATING_MIN, max: RATING_MAX }), (rating) => {
+      fc.property(fc.integer({ min: 0, max: RATING_MAX }), (rating) => {
         const matches = RATING_PRESETS.filter(({ min, max }) => rating >= min && rating <= max);
         expect(matches).toHaveLength(1);
         expect(presetForRating(rating)).toBe(matches[0]);
@@ -20,6 +20,10 @@ describe('rating presets', () => {
 
   it('keeps each preset score inside its own range', () => {
     RATING_PRESETS.forEach((preset) => expect(presetForRating(preset.score)).toBe(preset));
+  });
+
+  it('keeps the fine-tune scale above zero so every saved rating shows as a score', () => {
+    expect(RATING_MIN).toBeGreaterThan(0);
   });
 
   it('stores the scores the API expects', () => {

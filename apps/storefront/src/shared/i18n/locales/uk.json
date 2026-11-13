@@ -62,7 +62,9 @@
     "skipToContent": "Перейти до змісту",
     "retry": "Спробувати ще раз",
     "loading": "Завантаження…",
-    "opensInNewTab": "(відкриється в новій вкладці)"
+    "opensInNewTab": "(відкриється в новій вкладці)",
+    "linkCopied": "Посилання скопійовано",
+    "shareFailed": "Не вдалося поділитися посиланням."
   },
   "nav": {
     "label": "Основна навігація",
@@ -271,9 +273,7 @@
       "saved": "«{title}» збережено",
       "removed": "«{title}» прибрано",
       "undo": "Скасувати",
-      "failed": "Не вдалося оновити збережене. Спробуй ще раз.",
-      "linkCopied": "Посилання скопійовано",
-      "shareFailed": "Не вдалося поділитися посиланням."
+      "failed": "Не вдалося оновити збережене. Спробуй ще раз."
     },
     "wantToWatch": "Хочу подивитись"
   },
@@ -515,9 +515,9 @@
     "actions": {
       "rate": "Оцінити",
       "watched": "Переглянуто · {score}",
-      "watchedLabel": "Переглянуто, твоя оцінка {score}. Змінити оцінку",
+      "watchedLabel": "Переглянуто · {score}. Змінити оцінку",
       "myScore": "Моя оцінка {score}",
-      "myScoreLabel": "Твоя оцінка {score}. Змінити оцінку"
+      "myScoreLabel": "Моя оцінка {score}. Змінити оцінку"
     },
     "start": {
       "title": "Ще не дивишся?"
@@ -540,10 +540,10 @@
       "critics": "критики",
       "audience": "глядачі",
       "imdb": "IMDb {score}",
-      "rtCritics": "Критики Rotten Tomatoes {percent}%",
-      "rtAudience": "Глядачі Rotten Tomatoes {percent}%",
+      "rtCritics": "Критики Rotten Tomatoes {percent}",
+      "rtAudience": "Глядачі Rotten Tomatoes {percent}",
       "metacritic": "Metacritic {score} з 100",
-      "trakt": "Trakt {percent}%"
+      "trakt": "Trakt {percent}"
     },
     "community": {
       "label": "Спільнота Ratingo",
@@ -571,8 +571,10 @@
       "toast": {
         "failed": "Не вдалося зберегти оцінку. Спробуй ще раз.",
         "removedFromSaved": "{emoji} {score} · прибрано зі збереженого",
-        "undo": "Скасувати"
-      }
+        "undo": "Скасувати",
+        "cleared": "Оцінку прибрано"
+      },
+      "notRated": "Без оцінки"
     },
     "about": {
       "movie": "Про фільм",

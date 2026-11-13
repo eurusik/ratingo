@@ -39,10 +39,10 @@ interface DetailsTopBarProps {
   title: string;
   shareHref: string;
   backHref: string;
-  watchingNow?: number;
+  watchingLabel?: string;
 }
 
-export function DetailsTopBar({ title, shareHref, backHref, watchingNow }: DetailsTopBarProps) {
+export function DetailsTopBar({ title, shareHref, backHref, watchingLabel }: DetailsTopBarProps) {
   const { dict } = useTranslation();
   const isScrolled = useIsScrolledPast(TITLE_SHOWN_FROM_PX);
   const buttonTone = isScrolled ? 'bg-transparent' : 'bg-surface/60 backdrop-blur-xl';
@@ -65,10 +65,12 @@ export function DetailsTopBar({ title, shareHref, backHref, watchingNow }: Detai
         </BackLink>
         <div className="flex min-w-0 flex-1 justify-center">
           {isScrolled ? (
-            <span className="truncate text-base font-bold">{title}</span>
-          ) : watchingNow === undefined ? null : (
-            <WatchingNowBadge count={watchingNow} />
-          )}
+            <span aria-hidden className="truncate text-base font-bold">
+              {title}
+            </span>
+          ) : watchingLabel ? (
+            <WatchingNowBadge label={watchingLabel} />
+          ) : null}
         </div>
         <ShareButton href={shareHref} title={title} className={`${GLASS_BUTTON} ${buttonTone}`} />
       </div>

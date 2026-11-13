@@ -5,7 +5,7 @@ import { toast } from '@heroui/react';
 import { useLibrarySave } from '@/features/save-to-library';
 import { LIBRARY_QUERY_KEY, useMediaState, useMediaStateStore } from '@/entities/library';
 import { libraryApi, type MediaType, type WatchState } from '@/shared/api';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation, type Dictionary, type Locale } from '@/shared/i18n';
 import { formatScore, scoreFromPercent } from '@/shared/lib';
 import { presetForRating } from './rating-presets';
 
@@ -20,7 +20,19 @@ const STATES_KEPT_ON_RATING = new Set<WatchState>(['watching', 'paused', 'caught
 export interface MediaRating {
   rating: number | null;
   isResolving: boolean;
-  rate: (rating: number | null) => void;
+  rate: (rating: number) => void;
+  clear: () => void;
+}
+
+function dropsFromSaved(stateBefore: WatchState | undefined): boolean {
+  return !(stateBefore && STATES_KEPT_ON_RATING.has(stateBefore));
+}
+
+function removedFromSavedMessage(rating: number, dict: Dictionary, locale: Locale): string {
+  return interpolate(dict.details.rate.toast.removedFromSaved, {
+    emoji: presetForRating(rating)?.emoji ?? '',
+    score: formatScore(locale, scoreFromPercent(rating) ?? 0),
+  });
 }
 
 export function useRateMedia(media: RatableMedia): MediaRating {
@@ -34,24 +46,22 @@ export function useRateMedia(media: RatableMedia): MediaRating {
     scope: { id: `rate:${media.mediaItemId}` },
     mutationFn: (rating: number | null) =>
       libraryApi.setRating(media.mediaItemId, rating, media.type),
-    onMutate: () => ({ stateBefore: store.read(media.mediaItemId)?.state }),
-    onSuccess: (saved, rating, context) => {
+    onMutate: () => ({ before: store.read(media.mediaItemId) }),
+    onSuccess: (saved, rating, { before }) => {
       store.write(media.mediaItemId, saved);
-      if (
-        rating === null ||
-        (context.stateBefore && STATES_KEPT_ON_RATING.has(context.stateBefore))
-      )
-        return;
-      const preset = presetForRating(rating);
-      const score = scoreFromPercent(rating);
-      if (!preset || score === undefined) return;
-      removeIfSaved(
-        media,
-        interpolate(dict.details.rate.toast.removedFromSaved, {
-          emoji: preset.emoji,
-          score: formatScore(locale, score),
-        }),
-      );
+      if (rating !== null && dropsFromSaved(before?.state)) {
+        removeIfSaved(media, removedFromSavedMessage(rating, dict, locale));
+      }
+      const previousRating = before?.rating;
+      if (rating === null && previousRating != null) {
+        toast(dict.details.rate.toast.cleared, {
+          actionProps: {
+            children: dict.details.rate.toast.undo,
+            variant: 'tertiary',
+            onPress: () => mutate(previousRating),
+          },
+        });
+      }
     },
     onError: (error) => {
       console.error('Saving a rating failed', { mediaItemId: media.mediaItemId, error });
@@ -60,9 +70,14 @@ export function useRateMedia(media: RatableMedia): MediaRating {
     },
   });
 
+  const rating = isPending && variables !== undefined ? variables : (mediaState?.rating ?? null);
+
   return {
-    rating: isPending && variables !== undefined ? variables : (mediaState?.rating ?? null),
+    rating,
     isResolving,
-    rate: mutate,
+    rate: (next) => {
+      if (next !== rating) mutate(next);
+    },
+    clear: () => mutate(null),
   };
 }

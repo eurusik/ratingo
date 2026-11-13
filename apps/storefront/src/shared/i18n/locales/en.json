@@ -62,7 +62,9 @@
     "skipToContent": "Skip to content",
     "retry": "Try again",
     "loading": "Loading…",
-    "opensInNewTab": "(opens in a new tab)"
+    "opensInNewTab": "(opens in a new tab)",
+    "linkCopied": "Link copied",
+    "shareFailed": "Could not share the link."
   },
   "nav": {
     "label": "Main navigation",
@@ -271,9 +273,7 @@
       "saved": "“{title}” saved",
       "removed": "“{title}” removed",
       "undo": "Undo",
-      "failed": "Could not update your saved titles. Try again.",
-      "linkCopied": "Link copied",
-      "shareFailed": "Could not share the link."
+      "failed": "Could not update your saved titles. Try again."
     },
     "wantToWatch": "Want to watch"
   },
@@ -515,9 +515,9 @@
     "actions": {
       "rate": "Rate",
       "watched": "Watched · {score}",
-      "watchedLabel": "Watched, your score {score}. Change your score",
+      "watchedLabel": "Watched · {score}. Change your score",
       "myScore": "My score {score}",
-      "myScoreLabel": "Your score {score}. Change your score"
+      "myScoreLabel": "My score {score}. Change your score"
     },
     "start": {
       "title": "Not watching yet?"
@@ -540,10 +540,10 @@
       "critics": "critics",
       "audience": "audience",
       "imdb": "IMDb {score}",
-      "rtCritics": "Rotten Tomatoes critics {percent}%",
-      "rtAudience": "Rotten Tomatoes audience {percent}%",
+      "rtCritics": "Rotten Tomatoes critics {percent}",
+      "rtAudience": "Rotten Tomatoes audience {percent}",
       "metacritic": "Metacritic {score} out of 100",
-      "trakt": "Trakt {percent}%"
+      "trakt": "Trakt {percent}"
     },
     "community": {
       "label": "Ratingo community",
@@ -571,8 +571,10 @@
       "toast": {
         "failed": "Could not save your score. Try again.",
         "removedFromSaved": "{emoji} {score} · removed from saved",
-        "undo": "Undo"
-      }
+        "undo": "Undo",
+        "cleared": "Score removed"
+      },
+      "notRated": "Not rated"
     },
     "about": {
       "movie": "About the movie",

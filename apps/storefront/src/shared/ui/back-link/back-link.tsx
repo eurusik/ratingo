@@ -9,9 +9,10 @@ import {
   runNavigationTransition,
 } from '@ratingo/ui/motion';
 import {
-  clearSharedArt,
   hasPreviousRoute,
+  isPlainClick,
   nameArtLinkingTo,
+  releaseSharedArt,
   waitForRouteCommit,
 } from '@/shared/lib';
 
@@ -31,20 +32,19 @@ export function BackLink({
   const router = useRouter();
 
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
-      return;
-    if (!hasPreviousRoute()) return;
+    if (!isPlainClick(event) || !hasPreviousRoute()) return;
     event.preventDefault();
     const leavingPath = window.location.pathname;
+    let returningArt: HTMLElement | null = null;
     markProgrammaticBack();
     void runNavigationTransition(
       [NAV_BACK_TRANSITION],
       () => router.back(),
       async () => {
         await waitForRouteCommit();
-        nameArtLinkingTo(leavingPath);
+        returningArt = nameArtLinkingTo(leavingPath);
       },
-    ).finally(clearSharedArt);
+    ).finally(() => releaseSharedArt(returningArt));
   };
 
   return (

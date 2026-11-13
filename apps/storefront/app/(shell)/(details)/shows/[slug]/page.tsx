@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getRequestLocale } from '@/app/entrypoint';
 import { ShowDetailsPage, showDetailsMetadata } from '@/pages/media-details';
 
 interface ShowRouteProps {
@@ -11,6 +12,6 @@ export async function generateMetadata({ params }: ShowRouteProps): Promise<Meta
 }
 
 export default async function ShowRoute({ params }: ShowRouteProps) {
-  const { slug } = await params;
-  return <ShowDetailsPage slug={slug} />;
+  const [{ slug }, locale] = await Promise.all([params, getRequestLocale()]);
+  return <ShowDetailsPage slug={slug} locale={locale} />;
 }

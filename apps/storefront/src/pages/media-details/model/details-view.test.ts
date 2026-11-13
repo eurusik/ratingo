@@ -1,6 +1,5 @@
-import fc from 'fast-check';
 import type { MovieDetails, ShowDetails } from '@/shared/api';
-import { formatsAsPercent, fromMovieDetails, fromShowDetails } from './details-view';
+import { fromMovieDetails, fromShowDetails } from './details-view';
 
 const MOVIE = {
   id: 'odyssey-id',
@@ -81,19 +80,5 @@ describe('fromShowDetails', () => {
       episodeCount: 20,
       status: 'Returning Series',
     });
-  });
-});
-
-describe('formatsAsPercent', () => {
-  it('formats only Rotten Tomatoes and Trakt as percents', () => {
-    fc.assert(
-      fc.property(
-        fc.constantFrom('imdb', 'rtCritics', 'rtAudience', 'metacritic', 'trakt' as const),
-        (source) =>
-          expect(formatsAsPercent(source)).toBe(
-            ['rtCritics', 'rtAudience', 'trakt'].includes(source),
-          ),
-      ),
-    );
   });
 });

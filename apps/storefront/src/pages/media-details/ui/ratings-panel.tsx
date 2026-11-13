@@ -1,5 +1,5 @@
 import { VerdictChip } from '@/entities/media';
-import { useTranslation, type Dictionary } from '@/shared/i18n';
+import { getDictionary, type Dictionary, type Locale } from '@/shared/i18n';
 import type { MediaDetailsView } from '../model/details-view';
 import { CommunityLine } from './community-line';
 import { ExternalRatingChips } from './external-rating-chips';
@@ -15,8 +15,7 @@ function verdictMessage(view: MediaDetailsView, messages: VerdictMessages): stri
   return byType[key];
 }
 
-function VerdictBlock({ view }: { view: MediaDetailsView }) {
-  const { dict } = useTranslation();
+function VerdictBlock({ view, dict }: { view: MediaDetailsView; dict: Dictionary }) {
   const message = verdictMessage(view, dict.details.verdict);
 
   if (view.score === undefined || !view.verdict) {
@@ -44,26 +43,30 @@ function VerdictBlock({ view }: { view: MediaDetailsView }) {
   );
 }
 
-export function RatingsPanel({ view }: { view: MediaDetailsView }) {
-  const { dict } = useTranslation();
+export function RatingsPanel({ view, locale }: { view: MediaDetailsView; locale: Locale }) {
+  const dict = getDictionary(locale);
   const hasExternal = view.externalRatings.length > 0;
 
   return (
-    <section aria-label={dict.details.ratings.label} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-4 rounded-3xl bg-surface p-4 pt-4.5 md:flex-row md:items-center md:gap-7 md:px-6 md:py-5.5">
-        <div className="md:shrink-0 md:border-e md:border-separator md:pe-7">
-          <VerdictBlock view={view} />
-        </div>
-        {hasExternal ? (
-          <div className="flex min-w-0 flex-col gap-3.5 border-t border-separator pt-3.5 md:flex-1 md:border-t-0 md:pt-0">
-            <ExternalRatingChips ratings={view.externalRatings} />
-            <CommunityLine community={view.community} className="hidden md:flex" />
-          </div>
-        ) : (
-          <CommunityLine community={view.community} className="hidden md:flex md:flex-1" />
-        )}
+    <section
+      aria-label={dict.details.ratings.label}
+      className="grid md:grid-cols-[auto_minmax(0,1fr)] md:items-center md:gap-x-7 md:gap-y-3.5 md:rounded-3xl md:bg-surface md:px-6 md:py-5.5"
+    >
+      <div
+        className={`bg-surface px-4 pt-4.5 pb-4 md:row-span-2 md:rounded-none md:border-e md:border-separator md:bg-transparent md:p-0 md:pe-7 ${hasExternal ? 'rounded-t-3xl' : 'rounded-3xl'}`}
+      >
+        <VerdictBlock view={view} dict={dict} />
       </div>
-      <CommunityLine community={view.community} className="-mt-1 md:hidden" />
+      {hasExternal ? (
+        <div className="rounded-b-3xl bg-surface px-4 pb-4 md:rounded-none md:bg-transparent md:p-0">
+          <div className="border-t border-separator pt-3.5 md:border-t-0 md:pt-0">
+            <ExternalRatingChips ratings={view.externalRatings} locale={locale} />
+          </div>
+        </div>
+      ) : null}
+      <div className="mt-3 md:col-start-2 md:mt-0">
+        <CommunityLine community={view.community} />
+      </div>
     </section>
   );
 }

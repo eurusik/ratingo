@@ -6,9 +6,8 @@ export const RATING_PRESETS = [
 ] as const;
 
 export type RatingPreset = (typeof RATING_PRESETS)[number];
-export type RatingPresetId = RatingPreset['id'];
 
-export const RATING_MIN = 0;
+export const RATING_MIN = 5;
 export const RATING_MAX = 100;
 export const RATING_STEP = 5;
 

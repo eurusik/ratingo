@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getRequestLocale } from '@/app/entrypoint';
 import { MovieDetailsPage, movieDetailsMetadata } from '@/pages/media-details';
 
 interface MovieRouteProps {
@@ -11,6 +12,6 @@ export async function generateMetadata({ params }: MovieRouteProps): Promise<Met
 }
 
 export default async function MovieRoute({ params }: MovieRouteProps) {
-  const { slug } = await params;
-  return <MovieDetailsPage slug={slug} />;
+  const [{ slug }, locale] = await Promise.all([params, getRequestLocale()]);
+  return <MovieDetailsPage slug={slug} locale={locale} />;
 }

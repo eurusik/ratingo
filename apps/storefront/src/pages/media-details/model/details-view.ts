@@ -1,10 +1,10 @@
 import { ratingVerdict, type RatingSource, type RatingVerdict } from '@/entities/media';
 import type { MediaType, MovieDetails, ShowDetails } from '@/shared/api';
-import { positiveNumber, scoreFromPercent, yearFromDate } from '@/shared/lib';
+import { percentFromScore, positiveNumber, scoreFromPercent, yearFromDate } from '@/shared/lib';
 import { toCredits, type Credits } from './credits';
 import { toTrailers, type Trailer } from './trailers';
 
-export type MovieStatus = NonNullable<MovieDetails['status']>;
+type MovieStatus = NonNullable<MovieDetails['status']>;
 export type ShowStatus = NonNullable<ShowDetails['status']>;
 type RecentRater = NonNullable<NonNullable<MovieDetails['stats']>['recentRaters']>[number];
 
@@ -59,21 +59,14 @@ export interface ShowDetailsView extends DetailsBase {
 
 export type MediaDetailsView = MovieDetailsView | ShowDetailsView;
 
-const PERCENT_SOURCES = new Set<RatingSource>(['rtCritics', 'rtAudience', 'trakt']);
-const TEN_POINT_TO_PERCENT = 10;
-
-export function formatsAsPercent(source: RatingSource): boolean {
-  return PERCENT_SOURCES.has(source);
-}
-
 function toExternalRatings(ratings: MovieDetails['externalRatings']): ExternalRating[] {
-  const traktPercent = positiveNumber(ratings?.trakt?.rating);
+  const traktScore = positiveNumber(ratings?.trakt?.rating);
   const candidates: Array<[RatingSource, number | undefined]> = [
     ['imdb', positiveNumber(ratings?.imdb?.rating)],
     ['rtCritics', positiveNumber(ratings?.rottenTomatoes?.rating)],
     ['rtAudience', positiveNumber(ratings?.rottenTomatoesAudience?.rating)],
     ['metacritic', positiveNumber(ratings?.metacritic?.rating)],
-    ['trakt', traktPercent === undefined ? undefined : traktPercent * TEN_POINT_TO_PERCENT],
+    ['trakt', traktScore === undefined ? undefined : percentFromScore(traktScore)],
   ];
   return candidates.flatMap(([source, value]) => (value === undefined ? [] : [{ source, value }]));
 }

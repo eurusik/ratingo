@@ -5,8 +5,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { libraryApi, type MediaSaveStatus, type UserMediaState } from '@/shared/api';
 import { closeAuth, useAuthRequest } from '@/shared/auth';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
-import type { MovieDetailsView, ShowDetailsView } from '../model/details-view';
-import { HeroActions } from './hero-actions';
+import { HeroActions, type ActionMedia } from './hero-actions';
 
 jest.mock('@ratingo/web-core/auth', () => ({ useAuth: jest.fn() }));
 jest.mock('@/shared/api', () => ({
@@ -20,19 +19,13 @@ jest.mock('@/shared/api', () => ({
   },
 }));
 
-const BASE = {
+const DUNE: ActionMedia = {
   mediaItemId: 'dune-id',
   slug: 'dune-2',
   title: 'Дюна: Частина друга',
-  genres: [],
-  externalRatings: [],
-  community: { raters: [], ratingCount: 0 },
-  credits: { cast: [], directors: [], writers: [], creators: [] },
-  trailers: [],
+  type: 'movie',
 };
-const DUNE: MovieDetailsView = { ...BASE, type: 'movie' };
-const SHOGUN: ShowDetailsView = {
-  ...BASE,
+const SHOGUN: ActionMedia = {
   mediaItemId: 'shogun-id',
   slug: 'shogun',
   title: 'Сьоґун',
@@ -54,14 +47,14 @@ function AuthRequestProbe() {
   return request ? <p>auth requested</p> : null;
 }
 
-function renderActions(view: MovieDetailsView | ShowDetailsView) {
+function renderActions(media: ActionMedia) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 60_000 }, mutations: { retry: false } },
   });
   render(
     <QueryClientProvider client={queryClient}>
       <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
-        <HeroActions view={view} />
+        <HeroActions media={media} />
         <AuthRequestProbe />
         <ToastProvider />
       </I18nProvider>
@@ -101,8 +94,9 @@ describe('HeroActions', () => {
     fireEvent.click(await screen.findByRole('radio', { name: /Топ/ }));
 
     await waitFor(() => expect(libraryApi.setRating).toHaveBeenCalledWith('dune-id', 90, 'movie'));
+    fireEvent.click(screen.getByRole('button', { name: 'Готово' }));
     expect(
-      await screen.findByRole('button', { name: 'Переглянуто, твоя оцінка 9,0. Змінити оцінку' }),
+      await screen.findByRole('button', { name: 'Переглянуто · 9,0. Змінити оцінку' }),
     ).toBeInTheDocument();
   });
 
@@ -119,13 +113,25 @@ describe('HeroActions', () => {
     expect(await screen.findByText('🙂 7,5 · прибрано зі збереженого')).toBeInTheDocument();
   });
 
-  it('removes a rating from the sheet', async () => {
+  it('keeps the sheet open after the first pick so the score can be fine-tuned', async () => {
+    signIn(true);
+    renderActions(DUNE);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Оцінити' }));
+    fireEvent.click(await screen.findByRole('radio', { name: /Норм/ }));
+
+    await waitFor(() => expect(libraryApi.setRating).toHaveBeenCalledWith('dune-id', 50, 'movie'));
+    expect(screen.getByRole('slider')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Норм/ })).toBeChecked();
+  });
+
+  it('removes a rating from the sheet and offers to undo', async () => {
     jest.mocked(libraryApi.getMediaState).mockResolvedValue(stateWith(75));
     signIn(true);
     renderActions(DUNE);
 
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Переглянуто, твоя оцінка 7,5. Змінити оцінку' }),
+      await screen.findByRole('button', { name: 'Переглянуто · 7,5. Змінити оцінку' }),
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Прибрати' }));
 
@@ -133,6 +139,13 @@ describe('HeroActions', () => {
       expect(libraryApi.setRating).toHaveBeenCalledWith('dune-id', null, 'movie'),
     );
     expect(await screen.findByRole('button', { name: 'Оцінити' })).toBeInTheDocument();
+
+    expect(await screen.findByText('Оцінку прибрано')).toBeInTheDocument();
+    const [undo] = await screen.findAllByRole('button', { name: 'Скасувати' });
+    fireEvent.click(undo!);
+    await waitFor(() =>
+      expect(libraryApi.setRating).toHaveBeenLastCalledWith('dune-id', 75, 'movie'),
+    );
   });
 
   it('asks a guest to sign in before rating', async () => {

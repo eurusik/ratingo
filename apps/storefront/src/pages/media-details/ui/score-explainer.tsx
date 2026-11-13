@@ -14,7 +14,7 @@ export function ScoreExplainer() {
         size="sm"
         variant="tertiary"
         aria-label={dict.details.ratings.howItWorks}
-        className="size-7 min-w-7 rounded-full text-muted"
+        className="relative size-7 min-w-7 rounded-full text-muted after:absolute after:-inset-2 after:content-['']"
       >
         <Info aria-hidden className="size-4" />
       </Button>

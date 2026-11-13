@@ -155,7 +155,7 @@
   pointer-events: none;
 }
 
-:root:active-view-transition-type(nav-forward, nav-back) [data-shared-art-target] {
+:root:active-view-transition-type(nav-forward, nav-back) :is([data-shared-art-target], [data-shared-art-active]) {
   view-transition-name: media-art;
   view-transition-class: morph;
 }

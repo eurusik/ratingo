@@ -1,6 +1,4 @@
-import type { Metadata } from 'next';
 import type { MovieDetails, ShowDetails } from '@/shared/api';
-import { createMediaMetadata, createNotFoundMetadata } from '@/shared/lib';
 
 type JsonLdData = Record<string, unknown>;
 
@@ -21,16 +19,6 @@ function aggregateRating(media: MovieDetails | ShowDetails): JsonLdData | undefi
 
 function people(names: string[]): JsonLdData[] | undefined {
   return names.length > 0 ? names.map((name) => ({ '@type': 'Person', name })) : undefined;
-}
-
-export function movieMetadata(movie: MovieDetails | null, slug: string): Metadata {
-  return movie
-    ? createMediaMetadata(movie, { type: 'movie', slug })
-    : createNotFoundMetadata('movie');
-}
-
-export function showMetadata(show: ShowDetails | null, slug: string): Metadata {
-  return show ? createMediaMetadata(show, { type: 'show', slug }) : createNotFoundMetadata('show');
 }
 
 export function movieJsonLd(movie: MovieDetails): JsonLdData {

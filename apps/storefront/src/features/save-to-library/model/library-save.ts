@@ -92,7 +92,7 @@ export function useLibrarySave() {
   );
 
   const changeWithUndo = useCallback(
-    (media: SavableMedia, intent: SaveIntent, customMessage?: string) => {
+    (media: SavableMedia, intent: SaveIntent, toastMessage?: string) => {
       const shown = store.read(media.mediaItemId);
       const optimistic = intent.kind === 'remove' ? NOT_SAVED : ensureSaved(shown);
       const applied = change(media, intent, optimistic);
@@ -102,7 +102,7 @@ export function useLibrarySave() {
 
       showUndoToast({
         mediaItemId: media.mediaItemId,
-        message: customMessage ?? interpolate(message, { title: media.title }),
+        message: toastMessage ?? interpolate(message, { title: media.title }),
         undoLabel: dict.saveToLibrary.toast.undo,
         onUndo: () => {
           const previous = applied.then((result) => result?.before ?? shown);

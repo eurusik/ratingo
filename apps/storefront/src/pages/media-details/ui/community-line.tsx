@@ -1,21 +1,14 @@
+'use client';
+
 import { Avatar, AvatarGroup } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { formatCompactCount, formatScore } from '@/shared/lib';
 import type { Community } from '../model/details-view';
+import { initialOf } from './person-avatar';
 
 const SHOWN_RATERS = 3;
 
-function initialOf(username: string): string {
-  return Array.from(username.trim())[0]?.toUpperCase() ?? '?';
-}
-
-export function CommunityLine({
-  community,
-  className,
-}: {
-  community: Community;
-  className?: string;
-}) {
+export function CommunityLine({ community }: { community: Community }) {
   const { dict, locale } = useTranslation();
   const raters = community.raters.slice(0, SHOWN_RATERS);
   const [firstRater] = raters;
@@ -25,10 +18,7 @@ export function CommunityLine({
   const ratedBy = firstRater
     ? interpolate(
         othersCount > 0 ? dict.details.community.ratedByMany : dict.details.community.ratedByOne,
-        {
-          name: firstRater.username,
-          count: formatCompactCount(locale, othersCount),
-        },
+        { name: firstRater.username, count: formatCompactCount(locale, othersCount) },
       )
     : undefined;
   const audience =
@@ -39,9 +29,7 @@ export function CommunityLine({
         });
 
   return (
-    <div
-      className={`flex items-center gap-2.5 text-sm text-foreground/85 md:text-[15px] ${className ?? ''}`}
-    >
+    <div className="flex items-center gap-2.5 text-sm text-foreground/85 md:text-[15px]">
       {raters.length > 0 ? (
         <AvatarGroup size="sm" aria-hidden className="shrink-0">
           {raters.map((rater) => (

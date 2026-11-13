@@ -1,23 +1,4 @@
-import { interpolate, useTranslation } from '@/shared/i18n';
-import { formatCompactCount } from '@/shared/lib';
-import { formatCompactPeople } from '../model/details-format';
-
-interface WatchingNowBadgeProps {
-  count: number;
-  totalWatchers?: number;
-}
-
-export function WatchingNowBadge({ count, totalWatchers }: WatchingNowBadgeProps) {
-  const { dict, locale } = useTranslation();
-  const watching = formatCompactPeople(count, dict.media.watchingNowShort, locale);
-  const label =
-    totalWatchers === undefined
-      ? interpolate(dict.details.watchingNow, { watching })
-      : `${interpolate(dict.details.watchingNowLong, { watching })} · ${interpolate(
-          dict.details.totalWatchers,
-          { count: formatCompactCount(locale, totalWatchers) },
-        )}`;
-
+export function WatchingNowBadge({ label }: { label: string }) {
   return (
     <span className="inline-flex h-8 max-w-full items-center gap-2 rounded-full bg-surface/60 px-3 text-[13px] font-semibold text-foreground tabular-nums backdrop-blur-xl">
       <span
