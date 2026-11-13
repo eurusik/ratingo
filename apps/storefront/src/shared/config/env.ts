@@ -12,3 +12,10 @@ export const API_BASE_URL = `${API_ORIGIN}/api`;
 const LEGACY_ADMIN_URL = 'https://ratingo.top/admin';
 
 export const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL || LEGACY_ADMIN_URL;
+
+const TMDB_IMAGE_ORIGIN = 'https://image.tmdb.org/t/p';
+const IMAGE_PROXY_ORIGIN = process.env.NEXT_PUBLIC_IMAGE_PROXY_ORIGIN;
+
+export const TMDB_IMAGE_BASE_URL = IMAGE_PROXY_ORIGIN
+  ? `${withoutTrailingSlashes(IMAGE_PROXY_ORIGIN)}/tmdb`
+  : TMDB_IMAGE_ORIGIN;

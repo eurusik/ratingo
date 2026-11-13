@@ -1,4 +1,4 @@
-import type { MediaBadge, MediaType, TrendingMovie, TrendingShow } from '@/shared/api';
+import type { HomeItem, MediaBadge, MediaType, TrendingMovie, TrendingShow } from '@/shared/api';
 import { positiveNumber, scoreFromPercent, yearFromDate } from '@/shared/lib';
 import { ratingVerdict, type RatingVerdict } from './score';
 
@@ -52,7 +52,19 @@ function watchingNowOf(liveWatchers: number | null | undefined): number | undefi
   return watching !== undefined && watching >= MIN_WATCHING_NOW ? watching : undefined;
 }
 
-function toTrendingMedia(item: TrendingMovie | TrendingShow, type: MediaType): TrendingMedia {
+interface CatalogItem {
+  mediaItemId: string;
+  slug: string;
+  title: string;
+  releaseDate?: string | null;
+  poster?: TrendingMovie['poster'];
+  backdrop?: TrendingMovie['backdrop'];
+  stats: TrendingMovie['stats'];
+  externalRatings?: TrendingMovie['externalRatings'];
+  card?: { badgeKey?: MediaBadge | null };
+}
+
+function toTrendingMedia(item: CatalogItem, type: MediaType): TrendingMedia {
   return {
     mediaItemId: item.mediaItemId,
     type,
@@ -61,8 +73,8 @@ function toTrendingMedia(item: TrendingMovie | TrendingShow, type: MediaType): T
     year: yearFromDate(item.releaseDate),
     posterUrl: item.poster?.small,
     backdropUrl: item.backdrop?.medium,
-    imdbRating: positiveNumber(item.externalRatings.imdb?.rating),
-    criticsPercent: positiveNumber(item.externalRatings.rottenTomatoes?.rating),
+    imdbRating: positiveNumber(item.externalRatings?.imdb?.rating),
+    criticsPercent: positiveNumber(item.externalRatings?.rottenTomatoes?.rating),
     watchingNow: watchingNowOf(item.stats.liveWatchers),
     verdict: verdictOf(item.stats.qualityScore),
     event: toMediaEvent(item.card?.badgeKey),
@@ -76,4 +88,8 @@ export function fromTrendingMovie(movie: TrendingMovie): TrendingMedia {
 
 export function fromTrendingShow(show: TrendingShow): TrendingMedia {
   return toTrendingMedia(show, 'show');
+}
+
+export function fromHomeItem(item: HomeItem): TrendingMedia {
+  return toTrendingMedia(item, item.type);
 }

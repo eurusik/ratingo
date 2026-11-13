@@ -43,6 +43,7 @@ function useScrollEdges(scrollerRef: RefObject<HTMLElement | null>): ScrollEdges
     scroller.addEventListener('scroll', update, { passive: true });
     const resizeObserver = new ResizeObserver(update);
     resizeObserver.observe(scroller);
+    if (scroller.firstElementChild) resizeObserver.observe(scroller.firstElementChild);
     return () => {
       scroller.removeEventListener('scroll', update);
       resizeObserver.disconnect();

@@ -5,22 +5,35 @@
   },
   "home": {
     "title": "Ratingo",
-    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works.",
-    "trending": "Trending now",
-    "trendingFailed": "Could not load what is trending. Refresh the page.",
-    "topShows": "Top 10 shows",
-    "topMovies": "Top 10 movies"
-  },
-  "session": {
-    "heading": "Session",
-    "loading": "Checking your session…",
-    "guest": "You are not signed in.",
-    "signedInAs": "Signed in as",
-    "signInWith": {
-      "google": "Sign in with Google",
-      "facebook": "Sign in with Facebook"
+    "heading": "What to watch today",
+    "leadBadge": "No. 1 right now",
+    "details": "Details",
+    "picks": "Also on top",
+    "topTen": "Top 10",
+    "topTenCaption": "Everyone’s watching — for good reason",
+    "topTenFailed": "Could not load the top 10.",
+    "typeFilter": {
+      "label": "What to show",
+      "show": "Shows",
+      "movie": "Movies"
     },
-    "signOut": "Sign out"
+    "newEpisodes": "New episodes",
+    "newEpisodesCaption": "Out in the last week",
+    "episodeCode": "S{season} · E{episode}",
+    "episodeLabel": "Season {season}, episode {episode}",
+    "newReleases": "New releases",
+    "newReleasesCaption": "Just out in cinemas and on streaming",
+    "releaseFilter": {
+      "label": "Where to watch",
+      "nowPlaying": "In cinemas",
+      "newOnDigital": "On streaming"
+    },
+    "track": {
+      "title": "Track your shows",
+      "body": "Add the shows you watch and we will show new episodes as soon as they air, and where you left off.",
+      "signIn": "Sign in",
+      "find": "Find a show"
+    }
   },
   "oauth": {
     "completing": "Completing sign-in…",
@@ -229,6 +242,11 @@
       "one": "{count} person is watching now",
       "few": "{count} people are watching now",
       "many": "{count} people are watching now"
+    },
+    "watchingNowShort": {
+      "one": "{count} watching",
+      "few": "{count} watching",
+      "many": "{count} watching"
     }
   },
   "library": {
