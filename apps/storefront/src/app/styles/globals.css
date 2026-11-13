@@ -155,18 +155,6 @@
   animation: none;
 }
 
-::view-transition-old(site-header),
-::view-transition-old(browse-toolbar),
-::view-transition-old(mobile-dock) {
-  display: none;
-}
-
-::view-transition-new(site-header),
-::view-transition-new(browse-toolbar),
-::view-transition-new(mobile-dock) {
-  animation: none;
-}
-
 @keyframes fade-out {
   to {
     opacity: 0;
