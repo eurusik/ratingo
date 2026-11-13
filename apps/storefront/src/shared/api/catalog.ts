@@ -8,12 +8,30 @@ export type ImportResult = components['schemas']['ImportResultDto'];
 export type ImportJobStatus = GetData<'/api/catalog/import/status/{jobId}'>;
 export type TrendingMovie = components['schemas']['MovieListItemDto'];
 export type TrendingShow = components['schemas']['ShowTrendingItemDto'];
+export type HomeItem = components['schemas']['HeroItemDto'];
+export type NewEpisode = components['schemas']['NewEpisodeDto'];
 export type MediaBadge = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
+
+export interface CatalogCache {
+  revalidateSeconds: number;
+}
 
 const IMPORT_PATHS: Record<MediaType, string> = {
   movie: 'catalog/import/movie',
   show: 'catalog/import/show',
 };
+
+function cacheOptions(cache: CatalogCache | undefined) {
+  return cache ? { next: { revalidate: cache.revalidateSeconds } } : {};
+}
+
+async function getMovieList(path: string, limit: number, cache?: CatalogCache) {
+  const page = await apiGet<GetData<'/api/catalog/movies/now-playing'>>(path, {
+    searchParams: { limit },
+    ...cacheOptions(cache),
+  });
+  return page.data;
+}
 
 export const catalogApi = {
   search(query: string, signal?: AbortSignal): Promise<SearchResponse> {
@@ -28,17 +46,43 @@ export const catalogApi = {
     return apiGet<ImportJobStatus>(`catalog/import/status/${jobId}`, { signal });
   },
 
-  async getTrendingMovies(limit: number): Promise<TrendingMovie[]> {
+  async getTrendingMovies(limit: number, cache?: CatalogCache): Promise<TrendingMovie[]> {
     const page = await apiGet<GetData<'/api/catalog/movies/trending'>>('catalog/movies/trending', {
       searchParams: { limit, context: 'home' },
+      ...cacheOptions(cache),
     });
     return page.data;
   },
 
-  async getTrendingShows(limit: number): Promise<TrendingShow[]> {
+  async getTrendingShows(limit: number, cache?: CatalogCache): Promise<TrendingShow[]> {
     const page = await apiGet<GetData<'/api/catalog/shows/trending'>>('catalog/shows/trending', {
       searchParams: { limit, context: 'home' },
+      ...cacheOptions(cache),
     });
     return page.data;
+  },
+
+  getNowPlayingMovies(limit: number, cache?: CatalogCache): Promise<TrendingMovie[]> {
+    return getMovieList('catalog/movies/now-playing', limit, cache);
+  },
+
+  getNewOnDigitalMovies(limit: number, cache?: CatalogCache): Promise<TrendingMovie[]> {
+    return getMovieList('catalog/movies/new-on-digital', limit, cache);
+  },
+
+  async getNewEpisodes(days: number, limit: number, cache?: CatalogCache): Promise<NewEpisode[]> {
+    const page = await apiGet<GetData<'/api/catalog/shows/new-episodes'>>(
+      'catalog/shows/new-episodes',
+      { searchParams: { days, limit }, ...cacheOptions(cache) },
+    );
+    return page.data;
+  },
+
+  getHomeHero(cache?: CatalogCache): Promise<HomeItem[]> {
+    return apiGet<HomeItem[]>('home/hero', cacheOptions(cache));
+  },
+
+  getWatchingNow(cache?: CatalogCache): Promise<HomeItem[]> {
+    return apiGet<HomeItem[]>('home/watching-now', cacheOptions(cache));
   },
 } as const;

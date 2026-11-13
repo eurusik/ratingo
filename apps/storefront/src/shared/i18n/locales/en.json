@@ -5,22 +5,35 @@
   },
   "home": {
     "title": "Ratingo",
-    "subtitle": "The new Ratingo is under construction. For now this page only checks that everything works.",
+    "heading": "What to watch today",
+    "leadBadge": "No. 1 right now",
+    "details": "Details",
+    "picks": "Also on top",
     "trending": "Trending now",
     "trendingFailed": "Could not load what is trending. Refresh the page.",
-    "topShows": "Top 10 shows",
-    "topMovies": "Top 10 movies"
-  },
-  "session": {
-    "heading": "Session",
-    "loading": "Checking your session…",
-    "guest": "You are not signed in.",
-    "signedInAs": "Signed in as",
-    "signInWith": {
-      "google": "Sign in with Google",
-      "facebook": "Sign in with Facebook"
+    "typeFilter": {
+      "label": "What to show",
+      "all": "All",
+      "show": "Shows",
+      "movie": "Movies"
     },
-    "signOut": "Sign out"
+    "topShows": "Top 10 shows",
+    "topMovies": "Top 10 movies",
+    "rank": "No. {rank}",
+    "watchingNow": "Watching right now",
+    "watchingNowCaption": "Fresh premieres and episodes with the most viewers",
+    "newEpisodes": "New episodes",
+    "newEpisodesCaption": "Out in the last week",
+    "episodeCode": "S{season} · E{episode}",
+    "episodeLabel": "Season {season}, episode {episode}",
+    "nowPlaying": "In cinemas now",
+    "newOnDigital": "New on streaming",
+    "track": {
+      "title": "Track your shows",
+      "body": "Add the shows you watch and we will show new episodes as soon as they air, and where you left off.",
+      "signIn": "Sign in",
+      "find": "Find a show"
+    }
   },
   "oauth": {
     "completing": "Completing sign-in…",
