@@ -16,7 +16,7 @@ type ScoreChipTone = 'surface' | 'overlay';
 
 const TONES: Record<ScoreChipTone, { variant: 'soft' | 'tertiary'; className: string }> = {
   surface: { variant: 'soft', className: '' },
-  overlay: { variant: 'tertiary', className: 'bg-black/80 backdrop-blur-md' },
+  overlay: { variant: 'tertiary', className: 'bg-black/85' },
 };
 
 interface ScoreChipProps {

@@ -15,7 +15,7 @@ import { useBrowseList } from '../model/use-browse-list';
 import { browseGridClass } from './browse-grid';
 import { PosterTile, PosterTileSkeleton } from './poster-tile';
 
-const LOADING_TILES = 3;
+const LOADING_TILES = 15;
 const HIGH_PRIORITY_TILES = 3;
 
 type ListEndStatus = 'loading' | 'failed' | 'complete' | 'idle';
@@ -113,9 +113,7 @@ export function BrowseResults({ category, state, title, initialPage }: BrowseRes
   const total = query.data.pages[0]?.total ?? items.length;
 
   const sentinelRef = useInfiniteSentinel({
-    onReach: () => {
-      if (!query.isFetchingNextPage) void query.fetchNextPage();
-    },
+    onReach: () => void query.fetchNextPage({ cancelRefetch: false }),
     isEnabled: query.hasNextPage && !query.isFetchNextPageError,
     rearmKey: query.data.pages.length,
   });
@@ -145,7 +143,7 @@ export function BrowseResults({ category, state, title, initialPage }: BrowseRes
       <ListEnd
         status={status}
         resultLabel={countLabel(total)}
-        onRetry={() => void query.fetchNextPage()}
+        onRetry={() => void query.fetchNextPage({ cancelRefetch: false })}
       />
     </div>
   );

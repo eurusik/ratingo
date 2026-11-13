@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-const PRELOAD_MARGIN = '800px 0px';
+const PRELOAD_MARGIN = '200% 0px';
 
 interface InfiniteSentinelOptions {
   onReach: () => void;
