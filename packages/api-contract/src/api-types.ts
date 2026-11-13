@@ -6299,6 +6299,8 @@ export interface operations {
                 genres?: string;
                 /** @description Min ratingoScore (0-100) */
                 minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
                 /** @description Vote source for minVotes filter */
                 voteSource?: "tmdb" | "trakt";
                 /** @description Min votes for selected voteSource */
@@ -6362,6 +6364,8 @@ export interface operations {
                 genres?: string;
                 /** @description Min ratingoScore (0-100) */
                 minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
                 /** @description Vote source for minVotes filter */
                 voteSource?: "tmdb" | "trakt";
                 /** @description Min votes for selected voteSource */
@@ -6425,6 +6429,8 @@ export interface operations {
                 genres?: string;
                 /** @description Min ratingoScore (0-100) */
                 minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
                 /** @description Vote source for minVotes filter */
                 voteSource?: "tmdb" | "trakt";
                 /** @description Min votes for selected voteSource */
@@ -6488,6 +6494,8 @@ export interface operations {
                 genres?: string;
                 /** @description Min ratingoScore (0-100) */
                 minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
                 /** @description Vote source for minVotes filter */
                 voteSource?: "tmdb" | "trakt";
                 /** @description Min votes for selected voteSource */
@@ -6553,6 +6561,8 @@ export interface operations {
                 genres?: string;
                 /** @description Min ratingoScore (0-100) */
                 minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
                 /** @description Vote source for minVotes filter */
                 voteSource?: "tmdb" | "trakt";
                 /** @description Min votes for selected voteSource */
@@ -6670,6 +6680,8 @@ export interface operations {
                 genres?: string;
                 /** @description Min ratingoScore (0-100) */
                 minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
                 /** @description Vote source for minVotes filter */
                 voteSource?: "tmdb" | "trakt";
                 /** @description Min votes for selected voteSource */
@@ -6733,6 +6745,8 @@ export interface operations {
                 genres?: string;
                 /** @description Min ratingoScore (0-100) */
                 minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
                 /** @description Vote source for minVotes filter */
                 voteSource?: "tmdb" | "trakt";
                 /** @description Min votes for selected voteSource */

@@ -19,16 +19,16 @@ import type {
   SortOrder,
   VoteSource,
   ListContext,
+  ScoreFilterOptions,
 } from '../types/query.types';
 import { type DatabaseTransaction } from '../types/transaction.type';
 
 /**
  * Options for trending shows query.
  */
-export interface TrendingShowsOptions {
+export interface TrendingShowsOptions extends ScoreFilterOptions {
   limit?: number;
   offset?: number;
-  minRatingo?: number;
   genres?: string[];
   sort?: CatalogSort;
   order?: SortOrder;

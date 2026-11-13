@@ -18,7 +18,11 @@ import {
 } from '@/modules/catalog/domain/constants/catalog-query.constants';
 import { LIST_CONTEXT } from '@/modules/catalog/domain/constants/catalog.constants';
 import type { TrendingMovieItem } from '@/modules/catalog/domain/repositories/movie.repository.interface';
-import type { TrendingQueryResult, ListContext } from '@/modules/catalog/domain/types/query.types';
+import type {
+  TrendingQueryResult,
+  ListContext,
+  ScoreFilterOptions,
+} from '@/modules/catalog/domain/types/query.types';
 import { EvaluationContext } from '@/modules/catalog-policy/public';
 
 import {
@@ -36,10 +40,9 @@ import {
 /**
  * Options for trending movies query.
  */
-export interface TrendingMoviesOptions {
+export interface TrendingMoviesOptions extends ScoreFilterOptions {
   limit?: number;
   offset?: number;
-  minRatingo?: number;
   genres?: string[];
   sort?: CatalogSort;
   order?: SortOrder;
@@ -86,6 +89,7 @@ export class TrendingMoviesQuery {
       limit = 20,
       offset = 0,
       minRatingo,
+      minQuality,
       genres,
       sort = CATALOG_SORT.TRENDING,
       order = SORT_ORDER.DESC,
@@ -116,6 +120,7 @@ export class TrendingMoviesQuery {
       const conditions = buildTrendingMovieConditions(this.db, {
         context,
         minRatingo,
+        minQuality,
         genres,
         voteSource,
         minVotes,

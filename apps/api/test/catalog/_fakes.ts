@@ -39,10 +39,13 @@ const matchesYear = (
 
 const applyMovieFilters = (items: MovieWithMedia[], options: any) => {
   let res = [...items];
-  const { genres, minRatingo, voteSource, minVotes, year, yearFrom, yearTo } = options ?? {};
+  const { genres, minRatingo, minQuality, voteSource, minVotes, year, yearFrom, yearTo } =
+    options ?? {};
   if (genres?.length) res = res.filter((m) => matchesGenres(m, genres));
   if (typeof minRatingo === 'number')
     res = res.filter((m) => (m.stats?.ratingoScore ?? 0) >= minRatingo);
+  if (typeof minQuality === 'number')
+    res = res.filter((m) => (m.stats?.qualityScore ?? 0) >= minQuality);
   if (minVotes !== undefined || voteSource)
     res = res.filter((m) => matchesVotes(m, voteSource, minVotes));
   if (year !== undefined || yearFrom !== undefined || yearTo !== undefined) {
@@ -53,10 +56,13 @@ const applyMovieFilters = (items: MovieWithMedia[], options: any) => {
 
 const applyShowFilters = (items: any[], options: TrendingShowsOptions) => {
   let res = [...items];
-  const { genres, minRatingo, voteSource, minVotes, year, yearFrom, yearTo } = options ?? {};
+  const { genres, minRatingo, minQuality, voteSource, minVotes, year, yearFrom, yearTo } =
+    options ?? {};
   if (genres?.length) res = res.filter((m) => matchesGenres(m, genres));
   if (typeof minRatingo === 'number')
     res = res.filter((m) => (m.stats?.ratingoScore ?? 0) >= minRatingo);
+  if (typeof minQuality === 'number')
+    res = res.filter((m) => (m.stats?.qualityScore ?? 0) >= minQuality);
   if (minVotes !== undefined || voteSource)
     res = res.filter((m) => matchesVotes(m, voteSource, minVotes));
   if (year !== undefined || yearFrom !== undefined || yearTo !== undefined) {

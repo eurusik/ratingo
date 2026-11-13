@@ -64,6 +64,7 @@ export class TrendingShowsQuery {
       limit = DEFAULT_PAGE_SIZE,
       offset = 0,
       minRatingo,
+      minQuality,
       genres,
       sort = CATALOG_SORT.TRENDING,
       order = SORT_ORDER.DESC,
@@ -95,6 +96,7 @@ export class TrendingShowsQuery {
       const whereConditions = buildTrendingShowConditions({
         listContext: context,
         minRatingo,
+        minQuality,
         genres,
         voteSource,
         minVotes,

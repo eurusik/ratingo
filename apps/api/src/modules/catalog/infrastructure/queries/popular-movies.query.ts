@@ -19,23 +19,26 @@ import {
 } from '@/modules/catalog/domain/constants/catalog-query.constants';
 import { POPULAR_THRESHOLDS } from '@/modules/catalog/domain/constants/catalog.constants';
 import type { TrendingMovieItem } from '@/modules/catalog/domain/repositories/movie.repository.interface';
-import type { TrendingQueryResult } from '@/modules/catalog/domain/types/query.types';
+import type {
+  ScoreFilterOptions,
+  TrendingQueryResult,
+} from '@/modules/catalog/domain/types/query.types';
 import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
 import { checkContextEvaluationsExist } from './shared/evaluation-check.util';
 import { GenreQuery } from './shared/genre.query';
 import { MovieResultMapper } from './shared/movie-result.mapper';
 import { movieSelectFields, type MovieSelectRow } from './shared/movie-select.fields';
+import { buildMovieScoreConditions } from './shared/score-conditions.builder';
 import { buildMovieSortOrder } from './shared/sort-order.builder';
 import { buildYearConditions } from './shared/year-range.util';
 
 /**
  * Options for popular movies query.
  */
-export interface PopularMoviesOptions {
+export interface PopularMoviesOptions extends ScoreFilterOptions {
   limit?: number;
   offset?: number;
-  minRatingo?: number;
   genres?: string[];
   sort?: CatalogSort;
   order?: SortOrder;
@@ -82,6 +85,7 @@ export class PopularMoviesQuery {
       limit = 20,
       offset = 0,
       minRatingo,
+      minQuality,
       genres,
       sort = CATALOG_SORT.POPULARITY,
       order = SORT_ORDER.DESC,
@@ -127,9 +131,7 @@ export class PopularMoviesQuery {
         sql`COALESCE(${schema.mediaStats.totalWatchers}, 0) >= ${POPULAR_THRESHOLDS.MIN_TOTAL_WATCHERS_MOVIES}`,
       );
 
-      if (minRatingo !== undefined) {
-        conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
-      }
+      conditions.push(...buildMovieScoreConditions({ minRatingo, minQuality }));
 
       if (genres?.length) {
         conditions.push(

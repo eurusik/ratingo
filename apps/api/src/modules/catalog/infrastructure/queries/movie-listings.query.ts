@@ -39,6 +39,7 @@ import {
   type MovieWithMedia,
   type WithTotal,
 } from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import type { ScoreFilterOptions } from '@/modules/catalog/domain/types/query.types';
 import {
   EligibilityStatus,
   EvaluationContext,
@@ -48,6 +49,7 @@ import {
 import { GenreQuery } from './shared/genre.query';
 import { MovieResultMapper } from './shared/movie-result.mapper';
 import { movieSelectFields, type MovieSelectRow } from './shared/movie-select.fields';
+import { buildMovieScoreConditions } from './shared/score-conditions.builder';
 import { buildMovieSortOrder } from './shared/sort-order.builder';
 
 /**
@@ -74,14 +76,13 @@ export const ELIGIBILITY_MODE = {
 export type EligibilityMode = (typeof ELIGIBILITY_MODE)[keyof typeof ELIGIBILITY_MODE];
 
 /** Options for movie listings query. */
-export interface MovieListingOptions {
+export interface MovieListingOptions extends ScoreFilterOptions {
   limit?: number;
   offset?: number;
   daysBack?: number;
   sort?: CatalogSort;
   order?: SortOrder;
   genres?: string[];
-  minRatingo?: number;
   voteSource?: VoteSource;
   minVotes?: number;
   year?: number;
@@ -230,17 +231,24 @@ export class MovieListingsQuery {
   }
 
   /**
-   * Builds filter conditions: genre, year, minRatingo, minVotes.
+   * Builds filter conditions: genre, year, minRatingo, minQuality, minVotes.
    */
   private buildFilterConditions(options: MovieListingOptions): SQL[] {
-    const { genres, minRatingo, voteSource = 'tmdb', minVotes, year, yearFrom, yearTo } = options;
+    const {
+      genres,
+      minRatingo,
+      minQuality,
+      voteSource = 'tmdb',
+      minVotes,
+      year,
+      yearFrom,
+      yearTo,
+    } = options;
     const conditions: SQL[] = [];
 
     conditions.push(...this.buildYearConditions(year, yearFrom, yearTo));
 
-    if (minRatingo !== undefined) {
-      conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
-    }
+    conditions.push(...buildMovieScoreConditions({ minRatingo, minQuality }));
 
     if (minVotes !== undefined) {
       const voteColumn =

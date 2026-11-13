@@ -77,6 +77,17 @@
             }
           },
           {
+            "name": "minQuality",
+            "required": false,
+            "in": "query",
+            "description": "Min qualityScore (0-100), the score behind the card verdict",
+            "schema": {
+              "minimum": 0,
+              "maximum": 100,
+              "type": "number"
+            }
+          },
+          {
             "name": "voteSource",
             "required": false,
             "in": "query",
@@ -267,6 +278,17 @@
             "in": "query",
             "description": "Min ratingoScore (0-100)",
             "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "minQuality",
+            "required": false,
+            "in": "query",
+            "description": "Min qualityScore (0-100), the score behind the card verdict",
+            "schema": {
+              "minimum": 0,
+              "maximum": 100,
               "type": "number"
             }
           },
@@ -465,6 +487,17 @@
             }
           },
           {
+            "name": "minQuality",
+            "required": false,
+            "in": "query",
+            "description": "Min qualityScore (0-100), the score behind the card verdict",
+            "schema": {
+              "minimum": 0,
+              "maximum": 100,
+              "type": "number"
+            }
+          },
+          {
             "name": "voteSource",
             "required": false,
             "in": "query",
@@ -655,6 +688,17 @@
             "in": "query",
             "description": "Min ratingoScore (0-100)",
             "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "minQuality",
+            "required": false,
+            "in": "query",
+            "description": "Min qualityScore (0-100), the score behind the card verdict",
+            "schema": {
+              "minimum": 0,
+              "maximum": 100,
               "type": "number"
             }
           },
@@ -858,6 +902,17 @@
             "in": "query",
             "description": "Min ratingoScore (0-100)",
             "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "minQuality",
+            "required": false,
+            "in": "query",
+            "description": "Min qualityScore (0-100), the score behind the card verdict",
+            "schema": {
+              "minimum": 0,
+              "maximum": 100,
               "type": "number"
             }
           },
@@ -1142,6 +1197,17 @@
             }
           },
           {
+            "name": "minQuality",
+            "required": false,
+            "in": "query",
+            "description": "Min qualityScore (0-100), the score behind the card verdict",
+            "schema": {
+              "minimum": 0,
+              "maximum": 100,
+              "type": "number"
+            }
+          },
+          {
             "name": "voteSource",
             "required": false,
             "in": "query",
@@ -1332,6 +1398,17 @@
             "in": "query",
             "description": "Min ratingoScore (0-100)",
             "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "minQuality",
+            "required": false,
+            "in": "query",
+            "description": "Min qualityScore (0-100), the score behind the card verdict",
+            "schema": {
+              "minimum": 0,
+              "maximum": 100,
               "type": "number"
             }
           },

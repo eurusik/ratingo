@@ -15,6 +15,11 @@ export type WithTotal<T> = T[] & { total?: number };
  */
 export type ListContext = 'home' | 'catalog';
 
+export interface ScoreFilterOptions {
+  minRatingo?: number;
+  minQuality?: number;
+}
+
 /**
  * Metadata for trending query results.
  * Indicates whether the response is in a degraded state.
