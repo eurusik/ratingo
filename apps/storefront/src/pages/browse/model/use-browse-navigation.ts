@@ -11,7 +11,7 @@ export interface BrowseLocation {
 }
 
 function scrollBackToTop(): void {
-  if (window.scrollY > window.innerHeight) window.scrollTo({ top: 0 });
+  if (window.scrollY > 0) window.scrollTo({ top: 0 });
 }
 
 export function useBrowseNavigation(current: BrowseLocation) {
