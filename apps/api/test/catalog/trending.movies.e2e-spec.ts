@@ -68,6 +68,11 @@ describe('Catalog E2E - Trending Movies', () => {
     expect(res.body.data.data.map((m: any) => m.id)).toEqual([MOVIE_ONE_ID]);
   });
 
+  it('applies minQuality filter', async () => {
+    const res = await ctx.get('/api/catalog/movies/trending?minQuality=65').expect(200);
+    expect(res.body.data.data.map((m: any) => m.id)).toEqual([MOVIE_ONE_ID, MOVIE_THREE_ID]);
+  });
+
   it('supports sorting by releaseDate and tmdbPopularity', async () => {
     const byReleaseDesc = await ctx
       .get('/api/catalog/movies/trending?sort=releaseDate&order=desc')
@@ -119,6 +124,8 @@ describe('Catalog E2E - Trending Movies', () => {
       '?order=invalid',
       '?voteSource=invalid',
       '?minRatingo=101',
+      '?minQuality=101',
+      '?minQuality=-1',
       '?year=2200',
       '?yearFrom=2200',
       '?yearTo=1800',

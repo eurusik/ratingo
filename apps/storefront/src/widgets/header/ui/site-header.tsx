@@ -52,7 +52,7 @@ export function SiteHeader() {
   const showsAccountOnPhone = PHONE_ACCOUNT_ROUTES.has(pathname);
 
   return (
-    <header className="pt-safe-top pr-safe-right pl-safe-left md:sticky md:top-0 md:z-30 md:border-b md:border-separator md:bg-background/90 md:backdrop-blur-xl">
+    <header className="pt-safe-top pr-safe-right pl-safe-left md:sticky md:top-0 md:z-30 md:[view-transition-name:site-header] md:border-b md:border-separator md:bg-background/90 md:backdrop-blur-xl">
       <Container className="flex h-16 items-center gap-4">
         <Link
           href={HOME_ROUTE}

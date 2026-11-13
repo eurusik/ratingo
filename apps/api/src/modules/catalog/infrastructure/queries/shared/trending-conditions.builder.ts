@@ -8,14 +8,14 @@ import {
   CONTEXT_FRESHNESS,
   TRENDING_THRESHOLDS,
 } from '@/modules/catalog/domain/constants/catalog.constants';
-import type { ListContext } from '@/modules/catalog/domain/types/query.types';
+import type { ListContext, ScoreFilterOptions } from '@/modules/catalog/domain/types/query.types';
 import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
+import { buildMovieScoreConditions } from './score-conditions.builder';
 import { buildYearConditions } from './year-range.util';
 
-export interface TrendingMovieConditionsOptions {
+export interface TrendingMovieConditionsOptions extends ScoreFilterOptions {
   context: ListContext;
-  minRatingo?: number;
   genres?: string[];
   voteSource?: VoteSource;
   minVotes?: number;
@@ -45,7 +45,8 @@ export function buildTrendingMovieConditions(
   db: PostgresJsDatabase<typeof schema>,
   options: TrendingMovieConditionsOptions,
 ): SQL[] {
-  const { context, minRatingo, genres, voteSource, minVotes, year, yearFrom, yearTo } = options;
+  const { context, minRatingo, minQuality, genres, voteSource, minVotes, year, yearFrom, yearTo } =
+    options;
 
   const conditions: SQL[] = [
     isNotNull(schema.mediaStats.popularityScore),
@@ -65,9 +66,7 @@ export function buildTrendingMovieConditions(
     sql`COALESCE(${schema.mediaStats.watchersCount}, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES}`,
   );
 
-  if (minRatingo !== undefined) {
-    conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
-  }
+  conditions.push(...buildMovieScoreConditions({ minRatingo, minQuality }));
 
   if (genres?.length) {
     conditions.push(

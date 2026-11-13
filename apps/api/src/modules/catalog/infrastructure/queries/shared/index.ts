@@ -9,6 +9,7 @@ export * from './release-flags.util';
 export * from './watch-offers.query';
 export * from './evaluation-check.util';
 export * from './year-range.util';
+export * from './score-conditions.builder';
 export * from './show-select.fields';
 export * from './show-result.mapper';
 export * from './show-details.mapper';

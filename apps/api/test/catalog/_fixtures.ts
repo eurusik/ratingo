@@ -27,7 +27,7 @@ export const moviesFixture: MovieWithMedia[] = [
     videos: null,
     stats: {
       ratingoScore: 80,
-      qualityScore: 0.7,
+      qualityScore: 70,
       popularityScore: 0.9,
       liveWatchers: null,
       totalWatchers: null,
@@ -62,7 +62,7 @@ export const moviesFixture: MovieWithMedia[] = [
     videos: null,
     stats: {
       ratingoScore: 60,
-      qualityScore: 0.5,
+      qualityScore: 50,
       popularityScore: 0.6,
       liveWatchers: null,
       totalWatchers: null,
@@ -97,7 +97,7 @@ export const moviesFixture: MovieWithMedia[] = [
     videos: null,
     stats: {
       ratingoScore: 50,
-      qualityScore: 0.9,
+      qualityScore: 90,
       popularityScore: 0.4,
       liveWatchers: null,
       totalWatchers: null,
@@ -135,7 +135,7 @@ export const moviesFixture: MovieWithMedia[] = [
     videos: null,
     stats: {
       ratingoScore: 40,
-      qualityScore: 0.2,
+      qualityScore: 20,
       popularityScore: 0.2,
       liveWatchers: null,
       totalWatchers: null,
@@ -180,7 +180,7 @@ export const showsFixture: any[] = [
     nextAirDate: null,
     stats: {
       ratingoScore: 75,
-      qualityScore: 0.6,
+      qualityScore: 60,
       popularityScore: 0.8,
       liveWatchers: null,
       totalWatchers: null,
@@ -223,7 +223,7 @@ export const showsFixture: any[] = [
     nextAirDate: null,
     stats: {
       ratingoScore: 55,
-      qualityScore: 0.4,
+      qualityScore: 40,
       popularityScore: 0.3,
       liveWatchers: null,
       totalWatchers: null,

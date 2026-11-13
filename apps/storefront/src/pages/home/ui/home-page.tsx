@@ -20,7 +20,7 @@ export function HomePage({ locale }: { locale: Locale }) {
   preloadHomeFeed();
 
   return (
-    <div className="flex flex-col gap-8 pb-8 md:gap-10 md:pt-4">
+    <div className="flex flex-col gap-8 pb-8 md:gap-10">
       <h1 className="sr-only">{dict.home.heading}</h1>
       <Suspense
         fallback={

@@ -25,9 +25,11 @@ import type { TrendingQueryResult } from '@/modules/catalog/domain/types/query.t
 import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
 import { checkContextEvaluationsExist } from './shared/evaluation-check.util';
+import { buildShowScoreConditions } from './shared/score-conditions.builder';
 import { ShowResultMapper } from './shared/show-result.mapper';
 import type { ShowSelectRow } from './shared/show-select.fields';
 import { buildShowSortOrder } from './shared/sort-order.builder';
+import { buildRawYearConditions } from './shared/year-range.util';
 
 /**
  * Fetches popular TV shows (Hits pool).
@@ -64,6 +66,7 @@ export class PopularShowsQuery {
       limit = DEFAULT_PAGE_SIZE,
       offset = 0,
       minRatingo,
+      minQuality,
       genres,
       sort = CATALOG_SORT.POPULARITY,
       order = SORT_ORDER.DESC,
@@ -111,9 +114,7 @@ export class PopularShowsQuery {
         sql`COALESCE(ms.total_watchers, 0) >= ${POPULAR_THRESHOLDS.MIN_TOTAL_WATCHERS_SHOWS}`,
       );
 
-      if (minRatingo !== undefined) {
-        whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);
-      }
+      whereConditions.push(...buildShowScoreConditions({ minRatingo, minQuality }));
 
       if (genres?.length) {
         const genreList = sql.join(
@@ -137,26 +138,7 @@ export class PopularShowsQuery {
         }
       }
 
-      if (year !== undefined) {
-        whereConditions.push(
-          sql`mi.release_date IS NOT NULL`,
-          sql`mi.release_date >= ${new Date(Date.UTC(year, 0, 1))}`,
-          sql`mi.release_date < ${new Date(Date.UTC(year + 1, 0, 1))}`,
-        );
-      } else if (yearFrom !== undefined || yearTo !== undefined) {
-        if (yearFrom !== undefined) {
-          whereConditions.push(
-            sql`mi.release_date IS NOT NULL`,
-            sql`mi.release_date >= ${new Date(Date.UTC(yearFrom, 0, 1))}`,
-          );
-        }
-        if (yearTo !== undefined) {
-          whereConditions.push(
-            sql`mi.release_date IS NOT NULL`,
-            sql`mi.release_date < ${new Date(Date.UTC(yearTo + 1, 0, 1))}`,
-          );
-        }
-      }
+      whereConditions.push(...buildRawYearConditions(sql`mi.release_date`, year, yearFrom, yearTo));
 
       const whereSql = sql.join(whereConditions, sql` AND `);
 

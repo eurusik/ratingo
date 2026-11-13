@@ -1,9 +1,10 @@
 import { Chip } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { RATING_CHIP_CLASSES, type RatingChipSize } from './rating-chip-size';
 
-function TomatoIcon() {
+function TomatoIcon({ className }: { className: string }) {
   return (
-    <svg aria-hidden viewBox="0 0 16 16" className="size-4 shrink-0">
+    <svg aria-hidden viewBox="0 0 16 16" className={`shrink-0 ${className}`}>
       <circle cx="8" cy="9.2" r="6" fill="#e5402b" />
       <path
         fill="#3e9c35"
@@ -17,16 +18,21 @@ function TomatoIcon() {
   );
 }
 
-export function CriticsChip({ percent }: { percent: number }) {
+interface CriticsChipProps {
+  percent: number;
+  size?: RatingChipSize;
+}
+
+export function CriticsChip({ percent, size = 'md' }: CriticsChipProps) {
   const { dict } = useTranslation();
   const rounded = Math.round(percent);
 
   return (
     <Chip
-      size="md"
-      className="gap-1.5 bg-black/80 ps-2 text-xs font-extrabold text-white tabular-nums"
+      size={size}
+      className={`font-extrabold tabular-nums ${RATING_CHIP_CLASSES[size].chip} ${RATING_CHIP_CLASSES[size].criticsChip}`}
     >
-      <TomatoIcon />
+      <TomatoIcon className={RATING_CHIP_CLASSES[size].icon} />
       <span aria-hidden>{`${rounded}%`}</span>
       <span className="sr-only">{interpolate(dict.media.criticsLabel, { percent: rounded })}</span>
     </Chip>

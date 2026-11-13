@@ -306,5 +306,166 @@
     "back": "Back",
     "restoredTitle": "You’re back online",
     "restoredDescription": "Opening the page…"
+  },
+  "browse": {
+    "title": "Browse",
+    "typeLabel": "What to show",
+    "type": {
+      "show": "Shows",
+      "movie": "Movies"
+    },
+    "poolsLabel": "Collections",
+    "pools": {
+      "trending": {
+        "label": "This week",
+        "caption": "Most watched this week"
+      },
+      "popular": {
+        "label": "Most popular",
+        "caption": "Most popular of all time"
+      },
+      "nowPlaying": {
+        "label": "In theaters",
+        "caption": "Playing in theaters now"
+      },
+      "newReleases": {
+        "label": "New releases",
+        "caption": "Released in the last few weeks"
+      },
+      "digital": {
+        "label": "New on streaming",
+        "caption": "Just arrived on streaming"
+      }
+    },
+    "categories": {
+      "shows-trending": {
+        "title": "Shows this week",
+        "description": "Shows people are watching the most right now"
+      },
+      "shows-popular": {
+        "title": "Most popular shows",
+        "description": "Most popular shows of all time"
+      },
+      "movies-trending": {
+        "title": "Movies this week",
+        "description": "Movies people are watching the most right now"
+      },
+      "movies-popular": {
+        "title": "Most popular movies",
+        "description": "Most popular movies of all time"
+      },
+      "movies-now-playing": {
+        "title": "Now in theaters",
+        "description": "Movies currently playing in theaters"
+      },
+      "movies-new-releases": {
+        "title": "New movies",
+        "description": "Recently released movies"
+      },
+      "movies-digital": {
+        "title": "New on streaming",
+        "description": "Movies recently released on streaming platforms"
+      }
+    },
+    "count": {
+      "show": {
+        "one": "{count} show",
+        "few": "{count} shows",
+        "many": "{count} shows",
+        "other": "{count} shows"
+      },
+      "movie": {
+        "one": "{count} movie",
+        "few": "{count} movies",
+        "many": "{count} movies",
+        "other": "{count} movies"
+      }
+    },
+    "sort": {
+      "label": "Sort",
+      "recommended": {
+        "label": "Recommended",
+        "hint": "Popularity, ratings and freshness combined"
+      },
+      "releaseDate": {
+        "label": "Release date",
+        "hint": "Newest first"
+      },
+      "lastAirDate": {
+        "label": "Latest episode",
+        "hint": "Recently aired first"
+      }
+    },
+    "filters": {
+      "open": "Filters",
+      "openActive": "Filters, {count} active",
+      "title": "Filters",
+      "reset": "Reset",
+      "show": "Show {result}",
+      "showUncounted": "Show results",
+      "nothingFound": "Nothing found",
+      "counting": "Counting…",
+      "active": "Active filters",
+      "remove": "Remove filter “{label}”",
+      "genres": "Genres",
+      "genresHint": "Pick as many as you like",
+      "year": "Release year",
+      "yearAny": "Any",
+      "decade": "{decade}s",
+      "decadeMillennium": "{decade}s",
+      "older": "Earlier",
+      "range": "{from}–{to}",
+      "score": "Ratingo score from",
+      "scoreAny": "All",
+      "scoreFrom": "From {score}",
+      "scoreHint": {
+        "any": "The same score you see on cards",
+        "6": "No weak ones: 6 and up",
+        "7": "7+ means everything marked “Worth it”",
+        "8": "Only the best: 8 and up"
+      }
+    },
+    "empty": {
+      "title": "Nothing found",
+      "body": "These filters together match nothing. The biggest gain:",
+      "remove": "Remove “{label}”",
+      "result": "{result} will show up",
+      "reset": "Reset all filters",
+      "plain": "Nothing here yet. Try another collection."
+    },
+    "list": {
+      "label": "{title}: list",
+      "loading": "Loading more…",
+      "failed": "Couldn’t load more",
+      "failedHint": "Check your connection and try again",
+      "firstFailed": "Couldn’t load the list",
+      "retry": "Try again",
+      "end": "That’s all: {result}"
+    },
+    "backToTop": "Back to top",
+    "genres": {
+      "drama": "Drama",
+      "komediya": "Comedy",
+      "kryminal": "Crime",
+      "detektyv": "Mystery",
+      "naukovo-fantastychnyy": "Sci-Fi & Fantasy",
+      "ekshn-i-pryhody": "Action & Adventure",
+      "multfilm": "Animation",
+      "simeynyy": "Family",
+      "dytyachyy": "Kids",
+      "realiti-shou": "Reality",
+      "polityka-ta-viyna": "War & Politics",
+      "boyovyk": "Action",
+      "tryler": "Thriller",
+      "zhakhy": "Horror",
+      "fantastyka": "Science Fiction",
+      "fentezi": "Fantasy",
+      "pryhody": "Adventure",
+      "melodrama": "Romance",
+      "istorychnyy": "History",
+      "viyskovyy": "War",
+      "muzyka": "Music",
+      "vestern": "Western"
+    }
   }
 }

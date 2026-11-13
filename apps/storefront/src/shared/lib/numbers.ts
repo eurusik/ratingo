@@ -7,6 +7,10 @@ export function positiveNumber(value: number | null | undefined): number | undef
   return value != null && Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
+export function currentYear(): number {
+  return new Date().getFullYear();
+}
+
 export function yearFromDate(date: string | null | undefined): number | undefined {
   return positiveNumber(date ? Number.parseInt(date.slice(0, 4), 10) : undefined);
 }

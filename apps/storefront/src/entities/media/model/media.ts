@@ -32,6 +32,7 @@ export interface TrendingMedia extends MediaSummary {
   imdbRating?: number;
   criticsPercent?: number;
   watchingNow?: number;
+  score?: number;
   verdict?: RatingVerdict;
   backdropUrl?: string;
   event?: MediaEvent;
@@ -40,11 +41,6 @@ export interface TrendingMedia extends MediaSummary {
 
 export function toMediaEvent(badge: MediaBadge | null | undefined): MediaEvent | undefined {
   return MEDIA_EVENTS.find((event) => event === badge);
-}
-
-function verdictOf(qualityPercent: number | null | undefined): RatingVerdict | undefined {
-  const quality = scoreFromPercent(qualityPercent);
-  return quality === undefined ? undefined : ratingVerdict(quality);
 }
 
 function watchingNowOf(liveWatchers: number | null | undefined): number | undefined {
@@ -65,6 +61,7 @@ interface CatalogItem {
 }
 
 function toTrendingMedia(item: CatalogItem, type: MediaType): TrendingMedia {
+  const score = scoreFromPercent(item.stats.qualityScore);
   return {
     mediaItemId: item.mediaItemId,
     type,
@@ -76,7 +73,8 @@ function toTrendingMedia(item: CatalogItem, type: MediaType): TrendingMedia {
     imdbRating: positiveNumber(item.externalRatings?.imdb?.rating),
     criticsPercent: positiveNumber(item.externalRatings?.rottenTomatoes?.rating),
     watchingNow: watchingNowOf(item.stats.liveWatchers),
-    verdict: verdictOf(item.stats.qualityScore),
+    score,
+    verdict: score === undefined ? undefined : ratingVerdict(score),
     event: toMediaEvent(item.card?.badgeKey),
     providers: [],
   };

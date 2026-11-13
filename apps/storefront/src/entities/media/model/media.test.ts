@@ -65,6 +65,7 @@ describe('trending mappers', () => {
       imdbRating: 8.3,
       criticsPercent: 76,
       watchingNow: 192,
+      score: 6.2,
       verdict: 'mixed',
       event: 'IN_THEATERS',
       providers: [],
