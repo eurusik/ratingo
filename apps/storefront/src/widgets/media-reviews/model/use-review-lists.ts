@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@ratingo/web-core/auth';
-import { reviewsApi, type ReviewPage, type ReviewSort } from '@/shared/api';
+import { reviewsApi, type Review, type ReviewPage, type ReviewSort } from '@/shared/api';
 import { myReviewKey, reviewPagesKey, topReviewsKey } from './review-keys';
 import { TOP_REVIEWS_QUERY, reviewPageQuery } from './review-queries';
 
@@ -49,11 +49,13 @@ export function useReviewPages(mediaItemId: string, sort: ReviewSort, initial: R
   });
 }
 
-export function useMyReview(mediaItemId: string) {
+export function useMyReview(mediaItemId: string, listed: readonly Review[] = []) {
   const { viewer, isKnown, isAuthenticated } = useViewer();
+  const listedMine = viewer ? listed.find((review) => review.author.id === viewer) : undefined;
   const query = useQuery({
     queryKey: myReviewKey(mediaItemId, viewer),
     queryFn: () => reviewsApi.getMine(mediaItemId),
+    initialData: listedMine,
     enabled: isAuthenticated,
     staleTime: REVIEWS_STALE_MS,
   });

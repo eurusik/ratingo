@@ -723,7 +723,8 @@
     "guest": {
       "title": "Seen it? Tell us what you think",
       "text": "Sign in and the form opens right away",
-      "action": "Sign in"
+      "action": "Sign in",
+      "write": "Write"
     },
     "prompt": {
       "rated": "Your rating: {emoji} {score}",

@@ -35,18 +35,20 @@ export function EmptyReviews() {
   );
 }
 
-export function GuestPrompt() {
+export function GuestPrompt({ isViewerKnown = true }: { isViewerKnown?: boolean }) {
   const { dict } = useTranslation();
   const startReview = useComposeSignedIn();
+  const text = isViewerKnown ? dict.reviews.guest.text : dict.reviews.prompt.text;
+  const action = isViewerKnown ? dict.reviews.guest.action : dict.reviews.guest.write;
 
   return (
     <div className="flex items-center gap-3 rounded-3xl bg-surface p-3.5">
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-[15px] font-bold">{dict.reviews.guest.title}</span>
-        <span className="text-[13px] text-muted">{dict.reviews.guest.text}</span>
+        <span className="text-[13px] text-muted">{text}</span>
       </span>
       <Button onPress={startReview} className="min-h-tap shrink-0 rounded-full px-4 font-bold">
-        {dict.reviews.guest.action}
+        {action}
       </Button>
     </div>
   );

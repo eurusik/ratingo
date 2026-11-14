@@ -195,6 +195,24 @@ describe('MediaReviews', () => {
     expect(screen.getAllByRole('article')).toHaveLength(2);
   });
 
+  it('keeps three cards and the link to all reviews once the author’s own review is known', async () => {
+    signIn('mine-id');
+    const mine = reviewBy('mine');
+    listing([reviewBy('olya'), mine, reviewBy('max'), reviewBy('andrii')], 4);
+    renderReviews({
+      reviews: [reviewBy('olya'), mine, reviewBy('max'), reviewBy('andrii')],
+      total: 4,
+    });
+
+    await waitFor(() =>
+      expect(screen.getAllByRole('article').map((card) => card.getAttribute('aria-label'))).toEqual(
+        ['Відгук mine', 'Відгук olya', 'Відгук max'],
+      ),
+    );
+    expect(screen.getByRole('link', { name: 'Усі 4 відгуки' })).toBeInTheDocument();
+    expect(reviewsApi.getMine).not.toHaveBeenCalled();
+  });
+
   it('counts a helpful vote at once', async () => {
     signIn('me');
     listing([reviewBy('olya')]);

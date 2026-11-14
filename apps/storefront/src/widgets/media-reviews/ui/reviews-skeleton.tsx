@@ -27,14 +27,10 @@ function ReviewCardSkeleton() {
   );
 }
 
-export function ViewerPromptSkeleton() {
-  return <Skeleton aria-hidden className="h-23 w-full rounded-3xl md:h-18" />;
-}
-
 export function ReviewsSkeleton() {
   return (
     <div aria-hidden className="flex flex-col gap-4">
-      <ViewerPromptSkeleton />
+      <Skeleton className="h-23 w-full rounded-3xl md:h-18" />
       {PLACEHOLDER_CARDS.map((card) => (
         <ReviewCardSkeleton key={card} />
       ))}

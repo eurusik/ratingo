@@ -13,7 +13,7 @@ import {
   parseReviewSort,
   reviewSortSearch,
 } from '../model/review-sort';
-import { useReviewPages } from '../model/use-review-lists';
+import { useMyReview, useReviewPages } from '../model/use-review-lists';
 import { ReviewsBoard } from './reviews-board';
 import { ReviewsHeading } from './reviews-heading';
 
@@ -38,6 +38,7 @@ export function AllReviews({ media, community, initialSort, initialPage }: AllRe
     [pages.data],
   );
   const total = pages.data?.pages[0]?.total ?? 0;
+  useMyReview(media.mediaItemId, reviews);
   const sortOptions = REVIEW_SORTS.map((id) => ({ id, label: dict.reviews.sort[id] }));
 
   return (

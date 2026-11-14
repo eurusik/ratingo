@@ -22,17 +22,18 @@ interface MediaReviewsProps {
 export function MediaReviews({ media, community, initialPage }: MediaReviewsProps) {
   const { dict, locale } = useTranslation();
   const top = useTopReviews(media.mediaItemId, initialPage);
-  const { mine } = useMyReview(media.mediaItemId);
+  const listed = top.data?.reviews;
+  const { mine } = useMyReview(media.mediaItemId, listed);
   const total = top.data?.total ?? 0;
   const mineId = mine?.id;
   const others = useMemo(
     () =>
-      (top.data?.reviews ?? [])
+      (listed ?? [])
         .filter((review) => review.id !== mineId)
-        .slice(0, TOP_REVIEWS_SHOWN),
-    [top.data, mineId],
+        .slice(0, mineId ? TOP_REVIEWS_SHOWN - 1 : TOP_REVIEWS_SHOWN),
+    [listed, mineId],
   );
-  const hasMore = total > others.length + (mine ? 1 : 0);
+  const hasMore = total > TOP_REVIEWS_SHOWN;
   const allHref = mediaReviewsRoute(media.type, media.slug);
 
   return (
