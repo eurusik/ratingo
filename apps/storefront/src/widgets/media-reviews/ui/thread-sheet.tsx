@@ -3,7 +3,7 @@
 import type { Review } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { Sheet } from '@/shared/ui';
-import { useLastShown } from '../model/use-last-shown';
+import { useLastShown } from '../lib/use-last-shown';
 import { useReplyTarget } from '../model/use-reply-target';
 import { ReplyComposer } from './reply-composer';
 import { ReplyList } from './reply-list';

@@ -1,7 +1,7 @@
 'use client';
 
 import type { Review } from '@/shared/api';
-import { useGuardedClose } from './use-guarded-close';
+import { useGuardedClose } from '../lib/use-guarded-close';
 import { useReviewDraft } from './use-review-draft';
 
 export function useReviewComposer(

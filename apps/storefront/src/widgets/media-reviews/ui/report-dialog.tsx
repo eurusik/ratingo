@@ -5,7 +5,7 @@ import { Button, Form, Input, Label, Radio, RadioGroup, TextField } from '@herou
 import type { ReportReason, Review } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { ResponsiveDialog } from '@/shared/ui';
-import { useLastShown } from '../model/use-last-shown';
+import { useLastShown } from '../lib/use-last-shown';
 import { REPORT_REASONS, useReportReview } from '../model/use-report-review';
 
 const MAX_DETAILS_LENGTH = 500;

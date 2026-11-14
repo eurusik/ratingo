@@ -9,7 +9,7 @@ import type { Review } from '@/shared/api';
 import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { useMediaQuery } from '@/shared/lib';
-import { useIds } from '../model/id-set';
+import { useIds } from '../lib/id-set';
 import {
   reportedReviews,
   resetReportedReviewsOnViewerChange,

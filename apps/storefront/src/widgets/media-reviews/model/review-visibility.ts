@@ -1,4 +1,4 @@
-import { createIdSet } from './id-set';
+import { createIdSet } from '../lib/id-set';
 
 export const reportedReviews = createIdSet();
 
