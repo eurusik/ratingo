@@ -2,9 +2,8 @@
 
 import { Avatar, AvatarGroup } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { formatCompactCount, formatScore } from '@/shared/lib';
+import { formatCompactCount, formatScore, initialOf } from '@/shared/lib';
 import type { Community } from '../model/details-view';
-import { initialOf } from '../model/initial';
 
 export function CommunityLine({ community }: { community: Community }) {
   const { dict, locale } = useTranslation();

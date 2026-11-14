@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { BackLink } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
@@ -12,27 +12,19 @@ const TITLE_SHOWN_FROM_PX = 260;
 const GLASS_BUTTON =
   'flex size-11 shrink-0 items-center justify-center rounded-full text-foreground transition-colors';
 
+function subscribeToScroll(onChange: () => void): () => void {
+  window.addEventListener('scroll', onChange, { passive: true });
+  return () => window.removeEventListener('scroll', onChange);
+}
+
+const readNotScrolledOnServer = () => false;
+
 function useIsScrolledPast(offset: number): boolean {
-  const [isPast, setIsPast] = useState(false);
-
-  useEffect(() => {
-    let frame = 0;
-    const check = () => {
-      frame = 0;
-      setIsPast(window.scrollY > offset);
-    };
-    const onScroll = () => {
-      if (frame === 0) frame = requestAnimationFrame(check);
-    };
-    check();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      cancelAnimationFrame(frame);
-    };
-  }, [offset]);
-
-  return isPast;
+  return useSyncExternalStore(
+    subscribeToScroll,
+    () => window.scrollY > offset,
+    readNotScrolledOnServer,
+  );
 }
 
 interface DetailsTopBarProps {
@@ -49,6 +41,8 @@ export function DetailsTopBar({ title, shareHref, backHref, watchingLabel }: Det
 
   return (
     <div
+      data-top-bar
+      data-glass-bar={isScrolled || undefined}
       className={`fixed inset-x-0 top-0 z-30 border-b pt-safe-top pr-safe-right pl-safe-left transition-colors md:hidden ${
         isScrolled
           ? 'border-separator bg-background/85 backdrop-blur-xl'

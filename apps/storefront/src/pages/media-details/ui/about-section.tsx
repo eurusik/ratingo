@@ -1,37 +1,19 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@heroui/react';
 import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
+import { useIsClamped } from '@/shared/lib';
 import { DetailsSection } from './details-section';
 
 const OVERVIEW_ID = 'details-overview';
-const CLAMP_TOLERANCE_PX = 1;
 const CHARS_THAT_USUALLY_OVERFLOW_CLAMP = 180;
-
-function useIsClamped(isExpanded: boolean, likelyClamped: boolean) {
-  const ref = useRef<HTMLParagraphElement>(null);
-  const [isClamped, setIsClamped] = useState(likelyClamped);
-
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element || isExpanded) return;
-    const measure = () =>
-      setIsClamped(element.scrollHeight > element.clientHeight + CLAMP_TOLERANCE_PX);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [isExpanded]);
-
-  return { ref, isClamped };
-}
 
 export function AboutSection({ type, overview }: { type: MediaType; overview: string }) {
   const { dict } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
-  const { ref, isClamped } = useIsClamped(
+  const { ref, isClamped } = useIsClamped<HTMLParagraphElement>(
     isExpanded,
     overview.length >= CHARS_THAT_USUALLY_OVERFLOW_CLAMP,
   );

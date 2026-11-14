@@ -44,7 +44,7 @@ describe('pending sign-in intent', () => {
     fc.assert(
       fc.property(fc.oneof(fc.string(), fc.json()), (raw) => {
         const parsed = parsePendingIntent(raw, NOW);
-        if (parsed !== null) expect(parsed.kind).toBe('save');
+        if (parsed !== null) expect(['save', 'review']).toContain(parsed.kind);
       }),
     );
     expect(parsePendingIntent('{"intent":{"kind":"delete"},"savedAt":0}', 0)).toBeNull();
@@ -53,13 +53,21 @@ describe('pending sign-in intent', () => {
   it('hands the intent over once after the redirect', () => {
     rememberPendingIntent(ANDOR, NOW);
 
-    expect(takePendingIntent(NOW + 1000)).toEqual(ANDOR);
-    expect(takePendingIntent(NOW + 1000)).toBeNull();
+    expect(takePendingIntent('save', NOW + 1000)).toEqual(ANDOR);
+    expect(takePendingIntent('save', NOW + 1000)).toBeNull();
+  });
+
+  it('keeps an intent of another kind for the screen that owns it', () => {
+    const review: AuthIntent = { ...ANDOR, kind: 'review' };
+    rememberPendingIntent(review, NOW);
+
+    expect(takePendingIntent('save', NOW + 1000)).toBeNull();
+    expect(takePendingIntent('review', NOW + 1000)).toEqual(review);
   });
 
   it('forgets the intent when the sign-in dialog is closed', () => {
     rememberPendingIntent(ANDOR, NOW);
     closeAuth();
-    expect(takePendingIntent(NOW)).toBeNull();
+    expect(takePendingIntent('save', NOW)).toBeNull();
   });
 });

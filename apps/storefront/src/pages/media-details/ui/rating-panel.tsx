@@ -12,7 +12,7 @@ import {
   RATING_STEP,
   findPreset,
   presetForRating,
-} from '../model/rating-presets';
+} from '@/entities/library';
 import { useDelayedSave } from '../model/use-delayed-save';
 import type { MediaRating } from '../model/use-rate-media';
 

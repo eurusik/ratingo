@@ -20,11 +20,14 @@ export function ForwardLink({ href, onClick, replace, scroll, ...props }: Forwar
     if (!isPlainClick(event) || opensElsewhere(event.currentTarget)) return;
     event.preventDefault();
     const art = nameArtOfLink(event.currentTarget);
-    void navigateForward(() => {
-      releaseSharedArt(art);
-      if (replace) router.replace(href, { scroll });
-      else router.push(href, { scroll });
-    });
+    void navigateForward(
+      () => {
+        releaseSharedArt(art);
+        if (replace) router.replace(href, { scroll });
+        else router.push(href, { scroll });
+      },
+      { keepScroll: scroll === false },
+    );
   };
 
   return <Link href={href} replace={replace} scroll={scroll} onClick={navigate} {...props} />;

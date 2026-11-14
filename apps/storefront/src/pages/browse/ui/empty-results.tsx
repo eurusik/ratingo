@@ -20,12 +20,7 @@ interface EmptyResultsProps {
   onChangeFilters: (next: BrowseFilters) => void;
 }
 
-export function EmptyResults({
-  category,
-  state,
-  yearPresets,
-  onChangeFilters,
-}: EmptyResultsProps) {
+export function EmptyResults({ category, state, yearPresets, onChangeFilters }: EmptyResultsProps) {
   const { dict } = useTranslation();
   const labels = dict.browse.empty;
   const countLabel = useCountLabel(category.type);

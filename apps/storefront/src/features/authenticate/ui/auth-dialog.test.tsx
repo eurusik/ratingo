@@ -58,7 +58,7 @@ describe('AuthDialog', () => {
     expect(google.getAttribute('href')).toContain('/auth/google?returnTo=%2Fbrowse%3Ftype%3Dshow');
     google.addEventListener('click', (event) => event.preventDefault());
     fireEvent.click(google);
-    expect(takePendingIntent()).toEqual({ kind: 'save', title: 'Андор', mediaItemId: 'andor-id' });
+    expect(takePendingIntent('save')).toEqual({ kind: 'save', title: 'Андор', mediaItemId: 'andor-id' });
     await waitFor(() =>
       expect(
         within(dialog).queryByRole('link', { name: uk.auth.continueWith.facebook }),

@@ -1,5 +1,4 @@
 export { configureStorefrontApi } from './configure';
-export { orNullWhenNotFound } from './not-found';
 export {
   catalogApi,
   type CatalogCache,
@@ -20,6 +19,7 @@ export {
   type TrendingMovie,
   type TrendingShow,
 } from './catalog';
+export { loadMovieBySlug, loadShowBySlug } from './media-details';
 export { episodeProgressApi, type ShowProgress } from './episode-progress';
 export { notificationsApi, type NotificationItem } from './notifications';
 export {
@@ -29,4 +29,15 @@ export {
   type UserMediaState,
   type WatchState,
 } from './library';
+export {
+  reviewsApi,
+  type ReplyDraft,
+  type ReportReason,
+  type Review,
+  type ReviewDraft,
+  type ReviewPage,
+  type ReviewReply,
+  type ReviewSort,
+  type VoteType,
+} from './reviews';
 export { sitemapApi } from './sitemap';

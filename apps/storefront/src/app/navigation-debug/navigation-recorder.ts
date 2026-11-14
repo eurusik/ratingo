@@ -12,7 +12,7 @@ export interface NavigationLogEntry {
   details?: Record<string, unknown>;
 }
 
-const MAX_ENTRIES = 80;
+const MAX_ENTRIES = 250;
 const LONG_FRAME_MS = 50;
 
 type StartViewTransition = typeof document.startViewTransition;
@@ -131,6 +131,101 @@ function traceInputAfterTraversal(): () => void {
   };
 }
 
+const TOP_STRIP_WATCH_MS = 1500;
+const TOP_STRIP_PROBE_Y = [24, 72];
+const DEBUG_PANEL_SELECTOR = '[data-navigation-debug]';
+
+function describeElement(element: Element): string {
+  const data = Object.keys((element as HTMLElement).dataset ?? {})
+    .slice(0, 2)
+    .map((key) => `[${key}]`)
+    .join('');
+  const classes = [...element.classList]
+    .filter((name) => /^(fixed|sticky|bg-|backdrop|opacity|hidden|md:hidden)/.test(name))
+    .slice(0, 4)
+    .join('.');
+  return `${element.tagName.toLowerCase()}${data}${classes ? `.${classes}` : ''}`;
+}
+
+function firstPaintedBackground(elements: Element[]): string {
+  for (const element of elements) {
+    const style = getComputedStyle(element);
+    if (style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none') {
+      return `${describeElement(element)} bg=${style.backgroundColor} op=${style.opacity} blur=${style.backdropFilter || style.getPropertyValue('-webkit-backdrop-filter') || 'none'}`;
+    }
+  }
+  return 'none';
+}
+
+function topStripSignature(): string {
+  const root = document.documentElement;
+  const probes = TOP_STRIP_PROBE_Y.map((y) => {
+    const elements = document
+      .elementsFromPoint(window.innerWidth / 2, y)
+      .filter((element) => !element.closest(DEBUG_PANEL_SELECTOR));
+    return `y${y}:${elements.slice(0, 3).map(describeElement).join('>')} | ${firstPaintedBackground(elements.slice(0, 4))}`;
+  });
+  return [
+    `scroll=${Math.round(window.scrollY)}`,
+    `vt=${root.getAttribute('data-nav-transition') ?? '-'}`,
+    `skip=${root.hasAttribute('data-skip-view-transition') ? 'yes' : 'no'}`,
+    `vis=${document.visibilityState}`,
+    ...probes,
+  ].join(' ; ');
+}
+
+function traceTopStrip(): () => void {
+  let watchUntil = 0;
+  let startedAt = 0;
+  let frame = 0;
+  let lastSignature = '';
+  let isSampling = false;
+  const sample = () => {
+    const now = performance.now();
+    if (now > watchUntil) {
+      isSampling = false;
+      reportNavigationStep('top-strip-end', { frames: frame });
+      return;
+    }
+    frame += 1;
+    const signature = topStripSignature();
+    if (signature !== lastSignature) {
+      reportNavigationStep('top-strip', {
+        frame,
+        sinceMs: Math.round(now - startedAt),
+        state: signature,
+      });
+      lastSignature = signature;
+    }
+    requestAnimationFrame(sample);
+  };
+  const watch = (reason: string) => {
+    startedAt = performance.now();
+    watchUntil = startedAt + TOP_STRIP_WATCH_MS;
+    frame = 0;
+    lastSignature = '';
+    reportNavigationStep('top-strip-start', { reason });
+    if (!isSampling) {
+      isSampling = true;
+      requestAnimationFrame(sample);
+    }
+  };
+  const onPopState = () => watch('popstate');
+  const onPageShow = (event: PageTransitionEvent) =>
+    watch(event.persisted ? 'pageshow-bfcache' : 'pageshow');
+  const onPointerDown = (event: PointerEvent) => {
+    if ((event.target as Element | null)?.closest?.('a[href]')) watch('link-tap');
+  };
+  window.addEventListener('popstate', onPopState, { capture: true });
+  window.addEventListener('pageshow', onPageShow);
+  document.addEventListener('pointerdown', onPointerDown, { capture: true });
+  return () => {
+    window.removeEventListener('popstate', onPopState, { capture: true });
+    window.removeEventListener('pageshow', onPageShow);
+    document.removeEventListener('pointerdown', onPointerDown, { capture: true });
+  };
+}
+
 function traceTaps(): () => void {
   const onPointerDown = (event: PointerEvent) => {
     const link = (event.target as Element | null)?.closest?.('a[href]');
@@ -167,7 +262,9 @@ export function recordNavigation(onEntries: (entries: NavigationLogEntry[]) => v
   const stopTracingTransitions = traceViewTransitions();
   const stopTracingTaps = traceTaps();
   const stopTracingInput = traceInputAfterTraversal();
+  const stopTracingTopStrip = traceTopStrip();
   return () => {
+    stopTracingTopStrip();
     stopTracingInput();
     stopObservingSteps();
     stopTracingTransitions();

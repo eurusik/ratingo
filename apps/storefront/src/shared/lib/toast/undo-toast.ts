@@ -7,9 +7,10 @@ interface UndoToast {
   message: string;
   undoLabel: string;
   onUndo: () => void;
+  onKept?: () => void;
 }
 
-export function showUndoToast({ key, message, undoLabel, onUndo }: UndoToast): void {
+export function showUndoToast({ key, message, undoLabel, onUndo, onKept }: UndoToast): void {
   const previous = openToastByKey.get(key);
   if (previous) toast.close(previous);
 
@@ -28,6 +29,7 @@ export function showUndoToast({ key, message, undoLabel, onUndo }: UndoToast): v
     },
     onClose: () => {
       if (openToastByKey.get(key) === toastId) openToastByKey.delete(key);
+      if (!isUndone) onKept?.();
     },
   });
   openToastByKey.set(key, toastId);

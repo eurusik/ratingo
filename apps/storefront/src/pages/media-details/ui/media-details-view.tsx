@@ -1,3 +1,9 @@
+import { Suspense } from 'react';
+import {
+  MediaReviewsSection,
+  ReviewsBoardSkeleton,
+  type ReviewedMedia,
+} from '@/widgets/media-reviews';
 import { HOME_ROUTE, mediaRoute } from '@/shared/config';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import { hasCredits } from '../model/credits';
@@ -14,14 +20,14 @@ import { RatingsPanel } from './ratings-panel';
 import { RevealAfterSkeleton } from './reveal-after-skeleton';
 import { TrailersSection } from './trailers-section';
 
+function reviewedMediaOf({ mediaItemId, type, slug, title }: View): ReviewedMedia {
+  return { mediaItemId, type, slug, title };
+}
+
 function actionMediaOf(view: View): ActionMedia {
-  const { mediaItemId, type, slug, title } = view;
-  if (view.type === 'movie') return { mediaItemId, type, slug, title };
+  if (view.type === 'movie') return reviewedMediaOf(view);
   return {
-    mediaItemId,
-    type,
-    slug,
-    title,
+    ...reviewedMediaOf(view),
     showId: view.showId,
     seasons: view.seasons,
     seasonCount: view.seasonCount,
@@ -67,6 +73,11 @@ export function MediaDetailsView({ view, locale }: { view: View; locale: Locale 
         <aside className="md:self-start">
           <FactsCard view={view} locale={locale} />
         </aside>
+        <div className="md:col-span-2">
+          <Suspense fallback={<ReviewsBoardSkeleton label={dict.common.loading} />}>
+            <MediaReviewsSection media={reviewedMediaOf(view)} community={view.community} />
+          </Suspense>
+        </div>
       </div>
     </article>
   );

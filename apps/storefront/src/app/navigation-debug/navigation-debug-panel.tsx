@@ -18,7 +18,10 @@ export function NavigationDebugPanel() {
   const log = formatNavigationLog(visibleEntries);
 
   return (
-    <div className="fixed top-[calc(var(--safe-top)+0.25rem)] right-2 z-50 flex max-w-[calc(100vw-1rem)] flex-col items-end gap-1 font-mono text-[10px] [view-transition-name:navigation-debug]">
+    <div
+      data-navigation-debug
+      className="fixed top-[calc(var(--safe-top)+0.25rem)] right-2 z-50 flex max-w-[calc(100vw-1rem)] flex-col items-end gap-1 font-mono text-[10px] [view-transition-name:navigation-debug]"
+    >
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}

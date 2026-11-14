@@ -5,7 +5,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { nextUpcoming } from '@/entities/episode';
 import { SaveToWatchCta, WantToWatchButton } from '@/features/save-to-library';
 import { useTranslation } from '@/shared/i18n';
-import { useClientNow } from '../model/client-now';
+import { useClientNow } from '@/shared/lib';
 import { useRateMedia } from '../model/use-rate-media';
 import type { ActionMedia } from '../model/action-media';
 import { ActionsSkeleton } from './actions-skeleton';

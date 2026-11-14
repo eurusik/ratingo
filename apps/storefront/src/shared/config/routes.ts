@@ -9,6 +9,10 @@ export function mediaRoute(type: MediaKind, slug: string): string {
   return `${MEDIA_ROUTE_PREFIXES[type]}/${encodeURIComponent(slug)}`;
 }
 
+export function mediaReviewsRoute(type: MediaKind, slug: string): string {
+  return `${mediaRoute(type, slug)}/reviews`;
+}
+
 export function isMediaDetailsPath(pathname: string): boolean {
   return Object.values(MEDIA_ROUTE_PREFIXES).some((prefix) => pathname.startsWith(`${prefix}/`));
 }

@@ -51,7 +51,7 @@ describe('useReplaySaveAfterSignIn', () => {
 
     await waitFor(() => expect(libraryApi.save).toHaveBeenCalledWith('andor-id', 'for_later'));
     expect(libraryApi.save).toHaveBeenCalledTimes(1);
-    expect(takePendingIntent()).toBeNull();
+    expect(takePendingIntent('save')).toBeNull();
   });
 
   it('keeps the intent while the session is not restored yet', () => {
@@ -60,6 +60,6 @@ describe('useReplaySaveAfterSignIn', () => {
     renderHook(() => useReplaySaveAfterSignIn(), { wrapper: Wrapper });
 
     expect(libraryApi.save).not.toHaveBeenCalled();
-    expect(takePendingIntent()).toEqual(ANDOR);
+    expect(takePendingIntent('save')).toEqual(ANDOR);
   });
 });

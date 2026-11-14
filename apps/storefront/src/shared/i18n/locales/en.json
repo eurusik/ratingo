@@ -131,7 +131,8 @@
     "loginTitle": "Sign in to Ratingo",
     "registerTitle": "Create an account",
     "intent": {
-      "save": "Sign in to save “{title}”"
+      "save": "Sign in to save “{title}”",
+      "review": "Sign in to review “{title}”"
     },
     "loginLead": "Your saved titles, new episodes and calendar follow you on every device.",
     "registerLead": "It’s free and takes a minute.",
@@ -694,5 +695,146 @@
       "failed": "Couldn't save your progress. Try again.",
       "allReset": "All progress reset"
     }
+  },
+  "reviews": {
+    "title": "Reviews",
+    "all": "All",
+    "allCount": {
+      "one": "All {count} review",
+      "few": "All {count} reviews",
+      "many": "All {count} reviews"
+    },
+    "pageTitle": "Reviews · {title}",
+    "metaDescription": "What Ratingo viewers say about “{title}”: reviews, ratings and replies.",
+    "backToTitle": "Back to “{title}”",
+    "sortLabel": "Sort",
+    "sort": {
+      "most_liked": "Most helpful",
+      "newest": "Newest",
+      "oldest": "Oldest"
+    },
+    "loadMore": "Show more",
+    "loadError": "Couldn’t load reviews",
+    "empty": {
+      "title": "No reviews yet",
+      "text": "Be the first — help others decide whether to watch",
+      "action": "Write a review"
+    },
+    "guest": {
+      "title": "Seen it? Tell us what you think",
+      "text": "Sign in and the form opens right away",
+      "action": "Sign in"
+    },
+    "prompt": {
+      "rated": "Your rating:",
+      "unrated": "How was it?",
+      "text": "Add a few words — what worked, what didn’t?",
+      "action": "Write"
+    },
+    "card": {
+      "label": "Review by {name}",
+      "you": "you",
+      "score": "Rating {score}",
+      "edit": "Edit",
+      "delete": "Delete review",
+      "report": "Report",
+      "spoiler": "Spoiler · show",
+      "spoilerHidden": "Contains spoilers",
+      "readMore": "Read more",
+      "helpfulCount": "Helpful review, {count}",
+      "notHelpful": "Not helpful",
+      "reply": "Reply",
+      "replies": {
+        "one": "{count} reply",
+        "few": "{count} replies",
+        "many": "{count} replies"
+      },
+      "hideReplies": "Hide replies",
+      "reported": "Report on the review by {name} sent",
+      "show": "Show",
+      "justNow": "just now",
+      "menuFor": "More actions for the review by {name}",
+      "replyTo": "Reply to {name}"
+    },
+    "compose": {
+      "title": "Your review",
+      "editTitle": "Edit review",
+      "cancel": "Cancel",
+      "ratingLabel": "Rating",
+      "ratingTitle": "Your rating",
+      "ratingNote": {
+        "movie": "This is your movie rating — it changes on the page too",
+        "show": "This is your show rating — it changes on the page too"
+      },
+      "textLabel": "Review text",
+      "placeholder": "What worked, what let you down? Mark spoilers below…",
+      "counter": "{count} / {max}",
+      "spoiler": "Contains spoilers",
+      "spoilerHint": "We’ll hide the text until someone taps “show”",
+      "publish": "Publish",
+      "save": "Save",
+      "publishing": "Publishing…",
+      "errors": {
+        "rating": "Pick a rating",
+        "empty": "Write at least a few words",
+        "failed": "Couldn’t publish. Try again.",
+        "exists": "You already reviewed this title — reload the page to edit it"
+      },
+      "discard": {
+        "title": "Discard draft?",
+        "text": "Your review text won’t be saved.",
+        "keep": "Keep editing",
+        "confirm": "Discard"
+      }
+    },
+    "toast": {
+      "published": "Review published",
+      "saved": "Review updated",
+      "deleted": "Review deleted",
+      "undo": "Undo",
+      "deleteFailed": "Couldn’t delete the review. Try again.",
+      "voteFailed": "Couldn’t save your vote. Try again."
+    },
+    "replies": {
+      "title": "Replies · {count}",
+      "empty": "No replies yet — start the conversation",
+      "loadError": "Couldn’t load replies",
+      "label": "Reply",
+      "placeholder": "Reply to {name}…",
+      "send": "Send",
+      "failed": "Couldn’t send the reply. Try again.",
+      "signIn": "Sign in to reply",
+      "replyingTo": "Replying to @{name}",
+      "cancelReplyTo": "Stop replying to {name}"
+    },
+    "report": {
+      "title": "What’s wrong with this review?",
+      "reasons": {
+        "spam": "Spam or advertising",
+        "harassment": "Insults",
+        "hate_speech": "Hate speech",
+        "spoiler_unmarked": "Unmarked spoiler",
+        "misinformation": "Misinformation",
+        "other": "Other"
+      },
+      "detailsLabel": "Report details",
+      "detailsPlaceholder": "Briefly describe the problem (optional)…",
+      "pickReason": "Pick a reason so we know what to check",
+      "submit": "Send report",
+      "sent": "Thanks, we’ll take a look. The review is hidden for you",
+      "already": "This review was already reported. It’s hidden for you",
+      "failed": "Couldn’t send the report. Try again."
+    },
+    "community": {
+      "title": "How Ratingo viewers rated it",
+      "count": {
+        "one": "{count} rating",
+        "few": "{count} ratings",
+        "many": "{count} ratings"
+      },
+      "none": "No ratings yet — be the first"
+    },
+    "allLabel": "All reviews",
+    "loadMoreFailed": "Couldn’t load more reviews"
   }
 }

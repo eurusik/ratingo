@@ -44,13 +44,22 @@ describe('year labels', () => {
 
 describe('filterRemovals', () => {
   it('removes one filter at a time and keeps the rest', () => {
-    const filters = { genres: ['drama' as const], yearFrom: 2020, yearTo: 2029, minScore: 7 as const };
+    const filters = {
+      genres: ['drama' as const],
+      yearFrom: 2020,
+      yearTo: 2029,
+      minScore: 7 as const,
+    };
     const removals = filterRemovals(filters);
 
     expect(removals.map((removal) => removal.id)).toEqual(['genre:drama', 'year', 'score']);
     expect(removals[0]?.next).toEqual({ ...filters, genres: [] });
     expect(removals[1]).toMatchObject({ range: { yearFrom: 2020, yearTo: 2029 } });
-    expect(removals[1]?.next).toMatchObject({ yearFrom: undefined, yearTo: undefined, minScore: 7 });
+    expect(removals[1]?.next).toMatchObject({
+      yearFrom: undefined,
+      yearTo: undefined,
+      minScore: 7,
+    });
     expect(removals[2]?.next).toMatchObject({ minScore: undefined, genres: ['drama'] });
   });
 });
