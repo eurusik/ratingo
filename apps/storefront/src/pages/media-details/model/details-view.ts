@@ -1,3 +1,4 @@
+import { toSeasons, type Season } from '@/entities/episode';
 import { ratingVerdict, type RatingSource, type RatingVerdict } from '@/entities/media';
 import type { MediaType, MovieDetails, ShowDetails } from '@/shared/api';
 import { percentFromScore, positiveNumber, scoreFromPercent, yearFromDate } from '@/shared/lib';
@@ -52,6 +53,8 @@ export interface MovieDetailsView extends DetailsBase {
 
 export interface ShowDetailsView extends DetailsBase {
   type: Extract<MediaType, 'show'>;
+  showId: string;
+  seasons: Season[];
   seasonCount?: number;
   episodeCount?: number;
   status?: ShowStatus;
@@ -120,6 +123,8 @@ export function fromShowDetails(show: ShowDetails): ShowDetailsView {
   return {
     ...toBase(show),
     type: 'show',
+    showId: show.showId,
+    seasons: toSeasons(show.seasons),
     seasonCount: positiveNumber(show.totalSeasons),
     episodeCount: positiveNumber(show.totalEpisodes),
     status: show.status ?? undefined,

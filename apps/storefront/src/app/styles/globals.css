@@ -4,6 +4,22 @@
   --color-imdb: #f5c518;
   --color-metacritic: #ffcc34;
   --animate-signal-ring: signal-ring 3s ease-out infinite;
+  --animate-season-forward: season-forward 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  --animate-season-back: season-back 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+
+  @keyframes season-forward {
+    from {
+      transform: translateX(6rem);
+      opacity: 0;
+    }
+  }
+
+  @keyframes season-back {
+    from {
+      transform: translateX(-6rem);
+      opacity: 0;
+    }
+  }
 
   @keyframes signal-ring {
     from {

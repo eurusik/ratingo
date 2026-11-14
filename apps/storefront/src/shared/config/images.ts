@@ -12,3 +12,9 @@ export function tmdbPosterUrl(
   if (ABSOLUTE_URL.test(path)) return path;
   return `${TMDB_IMAGE_BASE_URL}/${width}${path}`;
 }
+
+export function tmdbStillUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined;
+  if (ABSOLUTE_URL.test(path)) return path;
+  return `${TMDB_IMAGE_BASE_URL}/w300${path}`;
+}

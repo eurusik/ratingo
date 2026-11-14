@@ -26,7 +26,6 @@
     },
     "newEpisodes": "New episodes",
     "newEpisodesCaption": "Out in the last week",
-    "episodeCode": "S{season} · E{episode}",
     "episodeLabel": "Season {season}, episode {episode}",
     "newReleases": "New releases",
     "newReleasesCaption": "Just out in cinemas and on streaming",
@@ -644,6 +643,56 @@
     "money": {
       "millions": "${amount}M",
       "billions": "${amount}B"
+    }
+  },
+  "episodes": {
+    "title": "Episodes",
+    "season": "Season {number}",
+    "seasonTab": "Season",
+    "seasonsLabel": "Seasons",
+    "seasonAria": "Season {number}, {watched} of {aired}",
+    "seasonProgress": "Season {number} · {watched} of {aired}",
+    "seasonWatched": "Season {number} watched",
+    "seasonProgressLabel": "Episodes watched in season {number}",
+    "showProgress": "{title} · {watched} of {episodes}",
+    "showSize": "{title} · {episodes}",
+    "episodeCode": "S{season} · E{episode}",
+    "episodeShort": "E{episode}",
+    "untitled": "Episode {number}",
+    "episodeAria": "{code}: {title}",
+    "next": "Next",
+    "markSeason": "Whole season",
+    "allEpisodes": "All episodes",
+    "markNext": "Mark as watched: {title}",
+    "caughtUp": "You're all caught up",
+    "remindNext": "We'll remind you when {code} airs",
+    "airs": "{code} airs {date}",
+    "perEpisode": "{minutes} min each",
+    "watchedUntil": "I've watched up to…",
+    "menu": {
+      "label": "Season actions",
+      "pickUntil": "I've watched up to…",
+      "catchUp": "Catch up on everything aired",
+      "resetSeason": "Reset this season",
+      "resetAll": "Reset all progress"
+    },
+    "pick": {
+      "banner": "Choose the episode you stopped at",
+      "cancel": "Cancel",
+      "confirm": "Mark {episodes} up to {code}"
+    },
+    "notice": {
+      "watched": "Watched {code}",
+      "unwatched": "Unmarked {code}",
+      "range": "Marked {from}–{to}",
+      "onlyThis": "Only {episode}",
+      "seasonWatched": "Season {number} watched",
+      "seasonReset": "Season {number} reset",
+      "caughtUp": "Marked everything aired: {episodes}",
+      "pickedUntil": "Marked everything up to {code}",
+      "undo": "Undo",
+      "failed": "Couldn't save your progress. Try again.",
+      "allReset": "All progress reset"
     }
   }
 }

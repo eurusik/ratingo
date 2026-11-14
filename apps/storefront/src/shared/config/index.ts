@@ -10,7 +10,7 @@ export {
 } from './env';
 export { BRAND_NAME } from './brand';
 export { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from './breakpoints';
-export { tmdbPosterUrl } from './images';
+export { tmdbPosterUrl, tmdbStillUrl } from './images';
 export { HOME_ROUTE, NAV_ROUTES, isNavRouteActive, type NavSection } from './navigation';
 export {
   ABOUT_ROUTE,

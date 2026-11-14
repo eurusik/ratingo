@@ -3,6 +3,7 @@
 import { useContext, useEffect, useRef } from 'react';
 import { OverlayTriggerStateContext } from 'react-aria-components';
 import { blurFocusedInputWithin } from './blur-focused-input';
+import { cancelPressAfterSlop, type TouchPress } from './cancel-press-on-drag';
 import { startManualScrollHandoff, type ManualScrollHandoff } from './manual-scroll-handoff';
 import { startSheetPullDown, type SheetPullDown } from './sheet-pull-down';
 import { startSheetTopGesture, type SheetTopGesture } from './sheet-top-gesture';
@@ -63,6 +64,12 @@ export function SheetScrollUnlock() {
     let releasing: Array<{ cancel(): void }> = [];
     let lastSheetScrollAt = 0;
     let touchStartY: number | null = null;
+    let touchPress: TouchPress | null = null;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType !== 'touch' || !event.isPrimary || !event.target) return;
+      touchPress = { target: event.target, pointerId: event.pointerId, startY: event.clientY };
+    };
 
     const update = (event?: Event) => {
       const sheet = parts();
@@ -139,6 +146,9 @@ export function SheetScrollUnlock() {
       topGesture?.move(event);
       pullDown?.move(event);
       const touch = event.touches[0];
+      if (touch && (topGesture || pullDown || handoff)) {
+        touchPress = cancelPressAfterSlop(touchPress, touch.clientY);
+      }
       if (handoff && touch) {
         if (event.cancelable) event.preventDefault();
         handoff.move(touch.clientY);
@@ -147,6 +157,7 @@ export function SheetScrollUnlock() {
 
     const onTouchEnd = () => {
       touchStartY = null;
+      touchPress = null;
       topGesture?.end();
       pullDown?.end();
       handoff?.end();
@@ -158,6 +169,7 @@ export function SheetScrollUnlock() {
 
     update();
     document.addEventListener('scroll', update, { capture: true, passive: true });
+    document.addEventListener('pointerdown', onPointerDown, { capture: true, passive: true });
     document.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
     document.addEventListener('touchmove', onTouchMove, { capture: true, passive: false });
     document.addEventListener('touchend', onTouchEnd, { capture: true, passive: true });
@@ -165,6 +177,7 @@ export function SheetScrollUnlock() {
     window.addEventListener('resize', update);
     return () => {
       document.removeEventListener('scroll', update, { capture: true });
+      document.removeEventListener('pointerdown', onPointerDown, { capture: true });
       document.removeEventListener('touchstart', onTouchStart, { capture: true });
       document.removeEventListener('touchmove', onTouchMove, { capture: true });
       document.removeEventListener('touchend', onTouchEnd, { capture: true });

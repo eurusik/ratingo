@@ -22,6 +22,8 @@ function actionMediaOf(view: View): ActionMedia {
     type,
     slug,
     title,
+    showId: view.showId,
+    seasons: view.seasons,
     seasonCount: view.seasonCount,
     episodeCount: view.episodeCount,
   };

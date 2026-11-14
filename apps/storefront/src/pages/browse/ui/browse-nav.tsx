@@ -6,6 +6,7 @@ import { buttonVariants } from '@heroui/react';
 import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { isPlainClick } from '@/shared/lib';
+import { EdgeFade, useHorizontalScroller } from '@/shared/ui';
 import {
   browseCategoriesOfType,
   counterpartCategory,
@@ -13,7 +14,6 @@ import {
 } from '../model/browse-category';
 import { browseHref, carryStateTo, type BrowseState } from '../model/browse-state';
 import type { BrowseLocation } from '../model/use-browse-navigation';
-import { useHorizontalScroller } from '../lib/horizontal-scroller';
 
 const MEDIA_TYPES: readonly MediaType[] = ['show', 'movie'];
 
@@ -33,20 +33,6 @@ function openInPlace(next: BrowseLocation, onOpen: (next: BrowseLocation) => voi
     event.preventDefault();
     onOpen(next);
   };
-}
-
-const EDGE_FADE_SIDE = {
-  start: 'start-0 bg-linear-to-r',
-  end: 'end-0 bg-linear-to-l',
-} as const;
-
-function EdgeFade({ side, isVisible }: { side: keyof typeof EDGE_FADE_SIDE; isVisible: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={`pointer-events-none absolute inset-y-0 w-10 from-background/90 to-transparent transition-opacity motion-reduce:transition-none ${EDGE_FADE_SIDE[side]} ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-    />
-  );
 }
 
 export function TypeSwitch({ category, state, onOpen }: BrowseNavProps) {

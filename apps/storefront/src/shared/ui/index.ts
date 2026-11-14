@@ -5,6 +5,8 @@ export { BackLink } from './back-link/back-link';
 export { Container } from './container/container';
 export { ContentTransition } from './content-transition/content-transition';
 export { DownscaledBlur } from './downscaled-blur/downscaled-blur';
+export { EdgeFade } from './edge-fade/edge-fade';
+export { useHorizontalScroller } from './edge-fade/horizontal-scroller';
 export { ForwardLink } from './forward-link/forward-link';
 export { PageTransition } from './page-transition/page-transition';
 export { Rail, RailItem } from './rail/rail';
