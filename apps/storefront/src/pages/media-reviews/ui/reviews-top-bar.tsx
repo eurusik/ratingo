@@ -13,7 +13,10 @@ export function ReviewsTopBar({ title, backHref }: ReviewsTopBarProps) {
   const { dict } = useTranslation();
 
   return (
-    <div className="sticky top-0 z-30 -mt-(--page-top) border-b border-separator bg-background/85 pt-safe-top pr-safe-right pl-safe-left backdrop-blur-xl md:hidden">
+    <div
+      data-glass-bar
+      className="sticky top-0 z-30 -mt-(--page-top) border-b border-separator bg-background/85 pt-safe-top pr-safe-right pl-safe-left backdrop-blur-xl md:hidden"
+    >
       <div className="flex h-14 items-center gap-2.5 px-4">
         <BackLink
           fallbackHref={backHref}

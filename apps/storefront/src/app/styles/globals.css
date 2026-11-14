@@ -225,6 +225,11 @@
   animation: none;
 }
 
+:root[data-nav-transition] [data-glass-bar] {
+  background-color: var(--background);
+  transition: none;
+}
+
 :root[data-nav-transition] [data-content-transition-only] {
   view-transition-name: none;
 }

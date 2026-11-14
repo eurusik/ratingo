@@ -41,6 +41,7 @@ export function DetailsTopBar({ title, shareHref, backHref, watchingLabel }: Det
 
   return (
     <div
+      data-glass-bar={isScrolled || undefined}
       className={`fixed inset-x-0 top-0 z-30 border-b pt-safe-top pr-safe-right pl-safe-left transition-colors md:hidden ${
         isScrolled
           ? 'border-separator bg-background/85 backdrop-blur-xl'
