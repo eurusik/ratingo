@@ -79,7 +79,7 @@ export function RatingsPanel({ view, locale }: { view: MediaDetailsView; locale:
         aria-hidden
         className={`relative isolate col-start-1 row-start-1 self-stretch overflow-hidden rounded-3xl bg-surface md:col-end-3 md:-mx-6 md:-my-5.5 ${rows.glow}`}
       >
-        <CardGlow imageUrl={view.posterPlaceholderUrl} />
+        <CardGlow imageUrl={view.posterPlaceholderUrl} loading="eager" />
       </div>
       <div
         className={`relative col-start-1 row-start-1 px-4 pt-4.5 pb-4 md:border-e md:border-separator md:p-0 md:pe-7 ${rows.verdict}`}

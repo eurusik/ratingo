@@ -16,7 +16,7 @@ interface TopTenProps {
 
 export function TopTen({ shows, movies }: TopTenProps) {
   const { dict } = useTranslation();
-  const filter = useRailFilter({ show: shows, movie: movies }, TYPES);
+  const filter = useRailFilter(SECTION_ID, { show: shows, movie: movies }, TYPES);
   const title = dict.home.topTen;
 
   if (!filter.active) return null;
@@ -36,7 +36,13 @@ export function TopTen({ shows, movies }: TopTenProps) {
         active={filter.active}
         onSelect={filter.select}
       />
-      <Rail label={title} isOrdered itemSize="tile" scrollerRef={filter.scrollerRef}>
+      <Rail
+        label={title}
+        isOrdered
+        itemSize="tile"
+        scrollerRef={filter.scrollerRef}
+        memoryKey={filter.memoryKey}
+      >
         {filter.items.map((media, index) => (
           <RailItem key={media.mediaItemId}>
             <TopRankTile media={media} rank={index + 1} />

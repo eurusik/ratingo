@@ -4,11 +4,12 @@ import { MediaTypeIcon } from '@/entities/media';
 import { BROWSE_ROUTE } from '@/shared/config';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import { SHARED_ART_TARGET } from '@/shared/lib';
-import { BackdropPicture } from '@/shared/ui';
+import { BackdropPicture, DownscaledBlur } from '@/shared/ui';
 import { watchingNowLabel } from '../model/details-format';
 import { browseHrefFor } from '../model/details-routes';
 import { DETAILS_REVEAL } from '../model/details-reveal';
 import type { MediaDetailsView } from '../model/details-view';
+import { ArrivingArt } from './arriving-art';
 import { DetailsBreadcrumbs } from './details-breadcrumbs';
 import { IdentityLine } from './identity-line';
 import { WatchingNowBadge } from './watching-now-badge';
@@ -33,11 +34,13 @@ function HeroBackdrop({ url, largeUrl }: { url?: string; largeUrl?: string }) {
             />
           </div>
           <div className="absolute inset-x-0 top-0 bottom-2 overflow-hidden [mask-image:linear-gradient(to_top,black_40%,transparent_75%)] md:[mask-image:linear-gradient(to_top,black_15%,transparent_65%),linear-gradient(to_right,black_25%,transparent_60%)]">
-            <BackdropPicture
-              url={url}
-              wideUrl={largeUrl}
-              className={`scale-110 blur-2xl ${DETAILS_BACKDROP_FOCUS}`}
-            />
+            <DownscaledBlur>
+              <BackdropPicture
+                url={url}
+                wideUrl={largeUrl}
+                className={`scale-110 ${DETAILS_BACKDROP_FOCUS}`}
+              />
+            </DownscaledBlur>
           </div>
         </>
       ) : null}
@@ -59,15 +62,18 @@ function Poster({ view }: { view: MediaDetailsView }) {
       className="relative block aspect-2/3 w-full overflow-hidden rounded-[14px] bg-surface-secondary bg-cover bg-center shadow-[0_16px_40px_rgba(0,0,0,0.4)] ring-1 ring-white/12 ring-inset md:rounded-[20px]"
     >
       {view.posterUrl ? (
-        <Image
-          src={view.posterUrl}
-          alt=""
-          fill
-          unoptimized
-          loading="eager"
-          sizes="(min-width: 48rem) 240px, 120px"
-          className="object-cover"
-        />
+        <>
+          <ArrivingArt />
+          <Image
+            src={view.posterUrl}
+            alt=""
+            fill
+            unoptimized
+            loading="eager"
+            sizes="(min-width: 48rem) 240px, 120px"
+            className="object-cover"
+          />
+        </>
       ) : (
         <span className="flex size-full items-center justify-center text-muted">
           <MediaTypeIcon type={view.type} className="size-8" />

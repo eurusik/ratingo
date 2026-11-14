@@ -204,6 +204,11 @@
   view-transition-name: root;
 }
 
+:root[data-nav-transition] .skeleton--shimmer::before,
+:root[data-nav-transition] .skeleton--shimmer::after {
+  animation: none;
+}
+
 :root[data-nav-transition] [data-content-transition-only] {
   view-transition-name: none;
 }

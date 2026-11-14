@@ -1,3 +1,4 @@
+import { reportNavigationStep } from '@ratingo/ui/motion';
 import { SHARED_ART_SCOPE, SHARED_ART_SOURCE } from './shared-art-markers';
 
 const SCOPE_SELECTOR = `[${Object.keys(SHARED_ART_SCOPE)[0]}]`;
@@ -41,6 +42,11 @@ export function nameArtOfLink(link: Element): HTMLElement | null {
   const path = link.getAttribute('href');
   const imageUrl = art?.querySelector('img')?.currentSrc;
   pendingArt = path && imageUrl ? { path, imageUrl } : null;
+  reportNavigationStep('shared-art-forward', {
+    path,
+    hasArt: art !== null,
+    hasImage: Boolean(imageUrl),
+  });
   return art;
 }
 
@@ -51,5 +57,6 @@ export function pendingArtImageFor(path: string): string | null {
 export function nameArtLinkingTo(pathname: string): HTMLElement | null {
   const links = document.querySelectorAll(`a[href="${CSS.escape(pathname)}"]`);
   const art = [...links].map(artInside).find((candidate) => candidate && isOnScreen(candidate));
+  reportNavigationStep('shared-art-back', { pathname, links: links.length, hasArt: Boolean(art) });
   return activate(art ?? null);
 }

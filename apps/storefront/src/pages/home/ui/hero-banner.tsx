@@ -5,7 +5,7 @@ import { OwnScoreChip } from '@/entities/library';
 import { SaveButton } from '@/features/save-to-library';
 import { mediaRoute } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
-import { BackdropPicture, ForwardLink } from '@/shared/ui';
+import { BackdropPicture, DownscaledBlur, ForwardLink } from '@/shared/ui';
 import type { HeroMedia } from '../model/home-feed';
 import { HERO_FRAME_CLASS } from './hero-frame';
 import { RankCorner } from './rank-corner';
@@ -28,11 +28,9 @@ function HeroBackdrop({ hero }: { hero: HeroMedia }) {
         aria-hidden
         className="absolute inset-0 -z-10 overflow-hidden [mask-image:linear-gradient(to_top,black_30%,transparent_65%)] md:[mask-image:linear-gradient(to_right,black_25%,transparent_55%)]"
       >
-        <BackdropPicture
-          url={narrowUrl}
-          wideUrl={wideUrl}
-          className="scale-110 object-top blur-2xl"
-        />
+        <DownscaledBlur>
+          <BackdropPicture url={narrowUrl} wideUrl={wideUrl} className="scale-110 object-top" />
+        </DownscaledBlur>
       </span>
     </>
   );

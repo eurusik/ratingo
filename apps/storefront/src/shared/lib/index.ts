@@ -22,8 +22,10 @@ export {
   useInstallApp,
 } from './pwa';
 export {
+  BrowserBackScrollRestorer,
   RouteCommitSignal,
   CONTENT_TRANSITION_ONLY,
+  currentLocationKey,
   SHARED_ART_SCOPE,
   SHARED_ART_SOURCE,
   SHARED_ART_TARGET,
@@ -33,8 +35,11 @@ export {
   nameArtLinkingTo,
   nameArtOfLink,
   pendingArtImageFor,
+  railMemoryMarker,
   releaseSharedArt,
   replaceDocumentLocation,
+  restoreRememberedRailScroll,
+  restoreRememberedScroll,
   waitForRouteCommit,
 } from './navigation';
 export { createBatchLoader, preloadWhenIdle, whenIdleOnFastConnection } from './scheduling';

@@ -22,6 +22,10 @@ export const NOTIFICATIONS_ROUTE = '/notifications';
 export const ABOUT_ROUTE = '/about';
 export const JOURNAL_ROUTE = '/journal';
 
+export function isBrowsePath(pathname: string): boolean {
+  return pathname === BROWSE_ROUTE || pathname.startsWith(`${BROWSE_ROUTE}/`);
+}
+
 export const EXTERNAL_LINKS = {
   github: 'https://github.com/eurusik/ratingo',
   author: 'https://eurusik.tech/',

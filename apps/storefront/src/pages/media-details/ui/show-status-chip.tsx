@@ -35,7 +35,12 @@ export function ShowStatusChip({ status, label }: ShowStatusChipProps) {
   const { tone, icon } = STATUS_LOOK[status];
 
   return (
-    <Chip size="md" variant="soft" color={tone} className="poster-glass shrink-0 gap-1.5 font-bold">
+    <Chip
+      size="md"
+      variant="soft"
+      color={tone}
+      className="poster-glass shrink-0 gap-1.5 self-start font-bold md:self-auto"
+    >
       <span className={`flex items-center ${TONE_ICON_COLOR[tone]}`}>{icon}</span>
       {label}
     </Chip>
