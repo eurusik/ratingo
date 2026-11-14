@@ -4,25 +4,25 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@ratingo/web-core/auth';
 import { reviewsApi, type Review, type ReviewPage, type ReviewSort } from '@/shared/api';
 import { myReviewKey, reviewPagesKey, topReviewsKey } from './review-keys';
-import { TOP_REVIEWS_QUERY, reviewPageQuery } from './review-queries';
+import { REVIEWS_FRESH_SECONDS, TOP_REVIEWS_QUERY, reviewPageQuery } from './review-queries';
 
-const REVIEWS_STALE_MS = 60_000;
+const REVIEWS_STALE_MS = REVIEWS_FRESH_SECONDS * 1000;
 
 function useViewer() {
   const { user, isLoading, isAuthenticated } = useAuth();
-  return { viewer: user?.id ?? null, isKnown: !isLoading, isAuthenticated };
+  return { viewerId: user?.id ?? null, isKnown: !isLoading, isAuthenticated };
 }
 
-function asSeed(viewer: string | null, initial: ReviewPage | null) {
-  return viewer === null && initial ? initial : undefined;
+function guestSeed(viewerId: string | null, initial: ReviewPage | null) {
+  return viewerId === null && initial ? initial : undefined;
 }
 
 export function useTopReviews(mediaItemId: string, initial: ReviewPage | null) {
-  const { viewer, isKnown } = useViewer();
+  const { viewerId, isKnown } = useViewer();
   return useQuery({
-    queryKey: topReviewsKey(mediaItemId, viewer),
+    queryKey: topReviewsKey(mediaItemId, viewerId),
     queryFn: () => reviewsApi.listForMedia(mediaItemId, TOP_REVIEWS_QUERY),
-    initialData: asSeed(viewer, initial),
+    initialData: guestSeed(viewerId, initial),
     placeholderData: initial ?? undefined,
     enabled: isKnown,
     staleTime: REVIEWS_STALE_MS,
@@ -30,10 +30,10 @@ export function useTopReviews(mediaItemId: string, initial: ReviewPage | null) {
 }
 
 export function useReviewPages(mediaItemId: string, sort: ReviewSort, initial: ReviewPage | null) {
-  const { viewer, isKnown } = useViewer();
-  const seed = asSeed(viewer, initial);
+  const { viewerId, isKnown } = useViewer();
+  const seed = guestSeed(viewerId, initial);
   return useInfiniteQuery({
-    queryKey: reviewPagesKey(mediaItemId, sort, viewer),
+    queryKey: reviewPagesKey(mediaItemId, sort, viewerId),
     queryFn: ({ pageParam }) =>
       reviewsApi.listForMedia(mediaItemId, reviewPageQuery(sort, pageParam)),
     initialPageParam: 0,
@@ -50,13 +50,13 @@ export function useReviewPages(mediaItemId: string, sort: ReviewSort, initial: R
 }
 
 export function useMyReview(mediaItemId: string, listed: readonly Review[] = []) {
-  const { viewer, isKnown, isAuthenticated } = useViewer();
-  const listedMine = viewer ? listed.find((review) => review.author.id === viewer) : undefined;
+  const { viewerId, isKnown, isAuthenticated } = useViewer();
+  const listedMine = viewerId ? listed.find((review) => review.author.id === viewerId) : undefined;
   const query = useQuery({
-    queryKey: myReviewKey(mediaItemId, viewer),
+    queryKey: myReviewKey(mediaItemId, viewerId),
     queryFn: () => reviewsApi.getMine(mediaItemId),
     initialData: listedMine,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !listedMine,
     staleTime: REVIEWS_STALE_MS,
   });
   return {

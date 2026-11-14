@@ -1,5 +1,5 @@
 import type { components } from '@ratingo/api-contract';
-import { apiDelete, apiGet, apiPatch, apiPost } from '@ratingo/web-core/api';
+import { apiDelete, apiGet, apiGetOrNull, apiPatch, apiPost } from '@ratingo/web-core/api';
 import type { MediaType } from './catalog';
 import { cacheOptions, type CatalogCache } from './request-cache';
 
@@ -66,7 +66,7 @@ export const reviewsApi = {
   },
 
   async getMine(mediaItemId: string): Promise<Review | null> {
-    const mine = await apiGet<ReviewMutation | null>(`me/reviews/media/${mediaItemId}`);
+    const mine = await apiGetOrNull<ReviewMutation>(`me/reviews/media/${mediaItemId}`);
     return mine ? reviewsApi.getById(mine.id) : null;
   },
 

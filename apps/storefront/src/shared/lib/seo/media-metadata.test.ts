@@ -126,7 +126,11 @@ describe('createMediaMetadata', () => {
 
   it('prefers the backdrop as the share image and falls back to the poster', () => {
     const withBackdrop = createMediaMetadata(
-      { ...outlander, backdrop: { large: 'https://img/backdrop.jpg' }, poster: { large: 'https://img/poster.jpg' } },
+      {
+        ...outlander,
+        backdrop: { large: 'https://img/backdrop.jpg' },
+        poster: { large: 'https://img/poster.jpg' },
+      },
       { type: 'show' },
     );
     const withPoster = createMediaMetadata(

@@ -1,4 +1,4 @@
-import { formatRelativeTime } from './relative-time';
+import { formatFullDate, formatRelativeTime } from './review-time-format';
 
 const NOW = Date.parse('2026-11-14T12:00:00Z');
 const ago = (seconds: number) => new Date(NOW - seconds * 1000).toISOString();
@@ -22,5 +22,12 @@ describe('formatRelativeTime', () => {
 
   it('shows the full date before the client clock is known', () => {
     expect(formatRelativeTime(ago(60), Number.POSITIVE_INFINITY, 'en', 'just now')).toMatch(/2026/);
+  });
+});
+
+describe('formatFullDate', () => {
+  it('renders nothing for a broken date instead of throwing', () => {
+    expect(formatFullDate('not a date', 'uk')).toBe('');
+    expect(formatRelativeTime('not a date', NOW, 'uk', 'щойно')).toBe('');
   });
 });

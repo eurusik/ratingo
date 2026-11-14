@@ -13,7 +13,7 @@ import {
   parseReviewSort,
   reviewSortSearch,
 } from '../model/review-sort';
-import { useMyReview, useReviewPages } from '../model/use-review-lists';
+import { useReviewPages } from '../model/use-review-lists';
 import { ReviewsBoard } from './reviews-board';
 import { ReviewsHeading } from './reviews-heading';
 
@@ -38,8 +38,11 @@ export function AllReviews({ media, community, initialSort, initialPage }: AllRe
     [pages.data],
   );
   const total = pages.data?.pages[0]?.total ?? 0;
-  useMyReview(media.mediaItemId, reviews);
-  const sortOptions = REVIEW_SORTS.map((id) => ({ id, label: dict.reviews.sort[id] }));
+  const sortOptions = useMemo(
+    () => REVIEW_SORTS.map((id) => ({ id, label: dict.reviews.sort[id] })),
+    [dict],
+  );
+  const status = pages.data ? 'success' : pages.status;
 
   return (
     <ReviewsBoard
@@ -47,7 +50,8 @@ export function AllReviews({ media, community, initialSort, initialPage }: AllRe
       community={community}
       reviews={reviews}
       total={total}
-      status={pages.status}
+      status={status}
+      isPageHeading
       onRetry={() => void pages.refetch()}
       heading={
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
@@ -63,15 +67,22 @@ export function AllReviews({ media, community, initialSort, initialPage }: AllRe
       }
       footer={
         pages.hasNextPage ? (
-          <Button
-            variant="outline"
-            size="lg"
-            isPending={pages.isFetchingNextPage}
-            onPress={() => void pages.fetchNextPage()}
-            className="min-h-12 self-stretch rounded-full font-semibold md:self-start"
-          >
-            {dict.reviews.loadMore}
-          </Button>
+          <div className="flex flex-col gap-2">
+            {pages.isFetchNextPageError ? (
+              <p role="alert" className="text-sm text-danger">
+                {dict.reviews.loadMoreFailed}
+              </p>
+            ) : null}
+            <Button
+              variant="outline"
+              size="lg"
+              isPending={pages.isFetchingNextPage}
+              onPress={() => void pages.fetchNextPage()}
+              className="min-h-12 self-stretch rounded-full font-semibold md:self-start"
+            >
+              {dict.reviews.loadMore}
+            </Button>
+          </div>
         ) : null
       }
     />

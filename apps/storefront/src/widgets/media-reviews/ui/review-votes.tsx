@@ -7,7 +7,7 @@ import { interpolate, useTranslation } from '@/shared/i18n';
 import { formatCompactCount } from '@/shared/lib';
 import { useReviewsActions } from './reviews-context';
 
-const VOTE_BUTTON = 'min-h-tap rounded-full px-3 font-bold';
+const VOTE_TOGGLE = 'min-h-tap rounded-full px-3 font-bold';
 
 export function ReviewVotes({ review, isOwn }: { review: Review; isOwn: boolean }) {
   const { dict, locale } = useTranslation();
@@ -22,12 +22,10 @@ export function ReviewVotes({ review, isOwn }: { review: Review; isOwn: boolean 
         isDisabled={isOwn}
         onChange={() => vote(review, 'like')}
         aria-label={interpolate(dict.reviews.card.helpfulCount, { count: likes })}
-        className={`${VOTE_BUTTON} data-[selected=true]:bg-accent-soft data-[selected=true]:text-accent`}
+        className={`${VOTE_TOGGLE} data-[selected=true]:bg-accent-soft data-[selected=true]:text-accent`}
       >
         <ThumbsUp aria-hidden className="size-4.5" />
-        <span className="tabular-nums" title={dict.reviews.card.helpful}>
-          {likes}
-        </span>
+        <span className="tabular-nums">{likes}</span>
       </ToggleButton>
       {isOwn ? null : (
         <ToggleButton
@@ -36,7 +34,7 @@ export function ReviewVotes({ review, isOwn }: { review: Review; isOwn: boolean 
           isSelected={review.currentUserVote === 'dislike'}
           onChange={() => vote(review, 'dislike')}
           aria-label={dict.reviews.card.notHelpful}
-          className={`${VOTE_BUTTON} min-w-tap px-0 text-muted data-[selected=true]:bg-danger-soft data-[selected=true]:text-danger`}
+          className={`${VOTE_TOGGLE} min-w-tap px-0 text-muted data-[selected=true]:bg-danger-soft data-[selected=true]:text-danger`}
         >
           <ThumbsDown aria-hidden className="size-4.5" />
         </ToggleButton>

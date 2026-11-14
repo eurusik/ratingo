@@ -44,6 +44,7 @@ function ReportForm({ review, onDone }: { review: Review; onDone: () => void }) 
         aria-describedby={isReasonMissing ? reasonErrorId : undefined}
         onChange={(value) => {
           if (!isReportReason(value)) return;
+          report.reset();
           setReason(value);
           setIsReasonMissing(false);
         }}
@@ -72,6 +73,7 @@ function ReportForm({ review, onDone }: { review: Review; onDone: () => void }) 
           <Input
             variant="secondary"
             autoComplete="off"
+            autoFocus
             placeholder={copy.detailsPlaceholder}
             className="min-h-12 text-base"
           />
@@ -80,6 +82,11 @@ function ReportForm({ review, onDone }: { review: Review; onDone: () => void }) 
       {isReasonMissing ? (
         <p id={reasonErrorId} role="alert" className="text-sm text-danger">
           {copy.pickReason}
+        </p>
+      ) : null}
+      {report.isError ? (
+        <p role="alert" className="text-sm text-danger">
+          {copy.failed}
         </p>
       ) : null}
       <Button

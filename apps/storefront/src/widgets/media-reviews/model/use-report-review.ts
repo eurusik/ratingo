@@ -5,7 +5,7 @@ import { toast } from '@heroui/react';
 import { ErrorCode, getApiErrorCode } from '@ratingo/web-core/api';
 import { reviewsApi, type ReportReason } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
-import { reportedReviews } from './hidden-reviews';
+import { reportedReviews } from './review-visibility';
 
 export const REPORT_REASONS = [
   'spam',
@@ -22,26 +22,28 @@ interface Report {
   details?: string;
 }
 
+type ReportOutcome = 'sent' | 'already';
+
+async function sendReport({ reviewId, reason, details }: Report): Promise<ReportOutcome> {
+  try {
+    await reviewsApi.report(reviewId, reason, details);
+    return 'sent';
+  } catch (error) {
+    if ((await getApiErrorCode(error)) === ErrorCode.REPORT_ALREADY_EXISTS) return 'already';
+    console.error('Reporting a review failed', { reviewId, error });
+    throw error;
+  }
+}
+
 export function useReportReview(onReported: () => void) {
   const { dict } = useTranslation();
 
-  const hideReported = (reviewId: string, message: string) => {
-    reportedReviews.add(reviewId);
-    toast.success(message);
-    onReported();
-  };
-
   return useMutation({
-    mutationFn: ({ reviewId, reason, details }: Report) =>
-      reviewsApi.report(reviewId, reason, details),
-    onSuccess: (_report, { reviewId }) => hideReported(reviewId, dict.reviews.report.sent),
-    onError: async (error, { reviewId }) => {
-      if ((await getApiErrorCode(error)) === ErrorCode.REPORT_ALREADY_EXISTS) {
-        hideReported(reviewId, dict.reviews.report.already);
-        return;
-      }
-      console.error('Reporting a review failed', { reviewId, error });
-      toast.danger(dict.reviews.report.failed);
+    mutationFn: sendReport,
+    onSuccess: (outcome, { reviewId }) => {
+      reportedReviews.add(reviewId);
+      toast.success(outcome === 'sent' ? dict.reviews.report.sent : dict.reviews.report.already);
+      onReported();
     },
   });
 }

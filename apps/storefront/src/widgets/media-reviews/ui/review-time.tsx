@@ -2,7 +2,7 @@
 
 import { useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
-import { formatFullDate, formatRelativeTime } from '../model/relative-time';
+import { formatFullDate, formatRelativeTime } from '../model/review-time-format';
 
 export function ReviewTime({ date }: { date: string }) {
   const { dict, locale } = useTranslation();

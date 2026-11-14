@@ -42,16 +42,14 @@ function findCachedReview(data: CachedReviews, reviewId: string): Review | undef
   return data.id === reviewId ? data : undefined;
 }
 
-export interface ReviewsCacheSnapshot {
-  restore(): void;
-}
+export type RestoreReview = () => void;
 
 export async function updateReviewEverywhere(
   queryClient: QueryClient,
   mediaItemId: string,
   reviewId: string,
   update: ReviewUpdate,
-): Promise<ReviewsCacheSnapshot> {
+): Promise<RestoreReview> {
   const filters = { queryKey: mediaReviewsKey(mediaItemId) };
   await queryClient.cancelQueries(filters);
   const previous = queryClient
@@ -61,16 +59,21 @@ export async function updateReviewEverywhere(
   queryClient.setQueriesData<CachedReviews>(filters, (data) =>
     updateCachedReview(data, reviewId, update),
   );
-  return {
-    restore: () => {
-      if (!previous) return;
-      queryClient.setQueriesData<CachedReviews>(filters, (data) =>
-        updateCachedReview(data, reviewId, () => previous),
-      );
-    },
+  return () => {
+    if (!previous) return;
+    queryClient.setQueriesData<CachedReviews>(filters, (data) =>
+      updateCachedReview(data, reviewId, () => previous),
+    );
   };
 }
 
+export function refreshMediaReviewsAndWait(
+  queryClient: QueryClient,
+  mediaItemId: string,
+): Promise<void> {
+  return queryClient.invalidateQueries({ queryKey: mediaReviewsKey(mediaItemId) });
+}
+
 export function refreshMediaReviews(queryClient: QueryClient, mediaItemId: string): void {
-  void queryClient.invalidateQueries({ queryKey: mediaReviewsKey(mediaItemId) });
+  void refreshMediaReviewsAndWait(queryClient, mediaItemId);
 }

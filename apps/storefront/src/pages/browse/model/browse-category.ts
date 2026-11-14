@@ -69,7 +69,6 @@ export type BrowseCategorySlug = BrowseCategory['slug'];
 
 export const DEFAULT_BROWSE_CATEGORY: BrowseCategory = BROWSE_CATEGORIES[0];
 
-
 export const BROWSE_CATEGORY_SLUGS: readonly BrowseCategorySlug[] = BROWSE_CATEGORIES.map(
   (category) => category.slug,
 );

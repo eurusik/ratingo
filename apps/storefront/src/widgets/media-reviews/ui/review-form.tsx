@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent } from 'react';
 import {
   Button,
   Description,
@@ -20,7 +20,7 @@ import { interpolate, useTranslation } from '@/shared/i18n';
 import { formatScore, scoreFromRating } from '@/shared/lib';
 import { MAX_REVIEW_TEXT_LENGTH } from '../model/review-limits';
 import type { ReviewDraftState } from '../model/use-review-draft';
-import { usePublishReview } from '../model/use-review-editor';
+import { usePublishReview } from '../model/use-publish-review';
 import { useReviewsActions } from './reviews-context';
 
 type FormLayout = 'sheet' | 'inline';
@@ -28,7 +28,7 @@ type FormLayout = 'sheet' | 'inline';
 const PRESET_CLASSES: Record<FormLayout, string> = {
   sheet:
     'h-17 w-full min-w-0 flex-col gap-0.5 rounded-2xl border-2 border-transparent bg-default px-1',
-  inline: 'min-h-9 gap-1.5 rounded-full border-2 border-transparent bg-default px-3',
+  inline: 'min-h-tap gap-1.5 rounded-full border-2 border-transparent bg-default px-3',
 };
 
 interface ReviewFormProps {
@@ -87,14 +87,51 @@ function RatingPresets({ rating, layout, errorId, onPick }: RatingPresetsProps) 
   );
 }
 
+interface DraftErrors {
+  isRatingMissing: boolean;
+  isTextMissing: boolean;
+}
+
+const NO_ERRORS: DraftErrors = { isRatingMissing: false, isTextMissing: false };
+
+function errorsOf(draft: ReviewDraftState): DraftErrors {
+  return { isRatingMissing: draft.rating === null, isTextMissing: !draft.content.trim() };
+}
+
+function SpoilerSwitch({
+  draft,
+  onChange,
+}: {
+  draft: ReviewDraftState;
+  onChange: (on: boolean) => void;
+}) {
+  const { dict } = useTranslation();
+  const copy = dict.reviews.compose;
+
+  return (
+    <Switch isSelected={draft.hasSpoiler} onChange={onChange}>
+      <Switch.Content className="flex-1">
+        <Label className="text-[15px] font-semibold">{copy.spoiler}</Label>
+        <Description className="text-[13px]">{copy.spoilerHint}</Description>
+      </Switch.Content>
+      <Switch.Control>
+        <Switch.Thumb />
+      </Switch.Control>
+    </Switch>
+  );
+}
+
 export function ReviewForm({ draft, editing, layout, onPublished, onCancel }: ReviewFormProps) {
   const { dict } = useTranslation();
   const { media } = useReviewsActions();
   const publish = usePublishReview(media);
-  const [isRatingMissing, setIsRatingMissing] = useState(false);
+  const [errors, setErrors] = useState<DraftErrors>(NO_ERRORS);
   const ratingErrorId = useId();
+  const presetsRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
   const copy = dict.reviews.compose;
-  const edited =
+
+  const clearPublishErrorThen =
     <T,>(change: (value: T) => void) =>
     (value: T) => {
       publish.reset();
@@ -104,29 +141,31 @@ export function ReviewForm({ draft, editing, layout, onPublished, onCancel }: Re
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (publish.isPending) return;
+    const found = errorsOf(draft);
+    setErrors(found);
+    if (found.isRatingMissing) presetsRef.current?.querySelector('button')?.focus();
+    else if (found.isTextMissing) textRef.current?.focus();
     const ready = draft.toDraft();
-    setIsRatingMissing(draft.rating === null);
-    if (!ready) return;
-    publish.mutate({ draft: ready, editing }, { onSuccess: onPublished });
+    if (ready) publish.mutate({ draft: ready, editing }, { onSuccess: onPublished });
   };
 
   return (
-    <Form onSubmit={submit} className="flex flex-col gap-3.5">
-      <div className="flex flex-col gap-1.5">
+    <Form onSubmit={submit} validationBehavior="aria" className="flex flex-col gap-3.5">
+      <div ref={presetsRef} className="flex flex-col gap-1.5">
         {layout === 'inline' ? (
           <span className="text-[15px] font-bold">{copy.ratingTitle}</span>
         ) : null}
         <RatingPresets
           rating={draft.rating}
           layout={layout}
-          errorId={isRatingMissing ? ratingErrorId : undefined}
-          onPick={edited((rating: number) => {
-            setIsRatingMissing(false);
+          errorId={errors.isRatingMissing ? ratingErrorId : undefined}
+          onPick={clearPublishErrorThen((rating: number) => {
+            setErrors((current) => ({ ...current, isRatingMissing: false }));
             draft.setRating(rating);
           })}
         />
         <p className="text-[13px] text-muted">{copy.ratingNote[media.type]}</p>
-        {isRatingMissing ? (
+        {errors.isRatingMissing ? (
           <p id={ratingErrorId} role="alert" className="text-sm text-danger">
             {copy.errors.rating}
           </p>
@@ -135,33 +174,29 @@ export function ReviewForm({ draft, editing, layout, onPublished, onCancel }: Re
       <TextField
         name="review"
         value={draft.content}
-        onChange={edited(draft.setContent)}
+        onChange={clearPublishErrorThen((content: string) => {
+          setErrors((current) => ({ ...current, isTextMissing: false }));
+          draft.setContent(content);
+        })}
         maxLength={MAX_REVIEW_TEXT_LENGTH}
-        validate={(value) => (value.trim() ? null : copy.errors.empty)}
-        isRequired
+        isInvalid={errors.isTextMissing}
         fullWidth
       >
         <Label className="sr-only">{copy.textLabel}</Label>
         <TextArea
+          ref={textRef}
           variant="secondary"
           autoComplete="off"
+          autoFocus={editing !== null && layout === 'inline'}
           placeholder={copy.placeholder}
           className={`w-full resize-none text-base leading-normal ${layout === 'sheet' ? 'h-33' : 'h-24 resize-y'}`}
         />
         <Description className="self-end text-xs tabular-nums">
           {interpolate(copy.counter, { count: draft.content.length, max: MAX_REVIEW_TEXT_LENGTH })}
         </Description>
-        <FieldError />
+        <FieldError>{copy.errors.empty}</FieldError>
       </TextField>
-      <Switch isSelected={draft.hasSpoiler} onChange={edited(draft.setHasSpoiler)}>
-        <Switch.Content className="flex-1">
-          <Label className="text-[15px] font-semibold">{copy.spoiler}</Label>
-          <Description className="text-[13px]">{copy.spoilerHint}</Description>
-        </Switch.Content>
-        <Switch.Control>
-          <Switch.Thumb />
-        </Switch.Control>
-      </Switch>
+      <SpoilerSwitch draft={draft} onChange={clearPublishErrorThen(draft.setHasSpoiler)} />
       {publish.error ? (
         <p role="alert" className="text-sm text-danger">
           {copy.errors[publish.error.failure]}

@@ -11,7 +11,7 @@ import {
 } from '@/shared/api';
 import { closeAuth, useAuthRequest } from '@/shared/auth';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
-import { reportedReviews } from '../model/hidden-reviews';
+import { reportedReviews } from '../model/review-visibility';
 import { MediaReviews } from './media-reviews';
 
 jest.mock('@ratingo/web-core/auth', () => ({ useAuth: jest.fn() }));
@@ -166,7 +166,7 @@ describe('MediaReviews', () => {
     jest.mocked(reviewsApi.create).mockResolvedValue({} as never);
     renderReviews();
 
-    fireEvent.click(await screen.findByRole('button', { name: /Твоя оцінка: 🙂 7,5/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Твоя оцінка:\s+7,5/ }));
     const text = await screen.findByRole('textbox', { name: 'Текст відгуку' });
     fireEvent.change(text, { target: { value: 'Звук — окремий персонаж' } });
     fireEvent.click(screen.getByRole('button', { name: 'Опублікувати' }));
@@ -213,16 +213,24 @@ describe('MediaReviews', () => {
     expect(reviewsApi.getMine).not.toHaveBeenCalled();
   });
 
-  it('counts a helpful vote at once', async () => {
+  it('counts a helpful vote at once and keeps what the server confirms', async () => {
     signIn('me');
     listing([reviewBy('olya')]);
-    jest.mocked(reviewsApi.vote).mockResolvedValue({ action: 'added', currentVote: 'like' });
+    jest.mocked(reviewsApi.vote).mockImplementation(async () => {
+      listing([reviewBy('olya', { likesCount: 5, currentUserVote: 'like' })]);
+      return { action: 'added', currentVote: 'like' };
+    });
     renderReviews();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Корисний відгук, 4' }));
 
-    expect(await screen.findByRole('button', { name: 'Корисний відгук, 5' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Корисний відгук, 5' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(reviewsApi.vote).toHaveBeenCalledWith('olya-review', 'like');
+    await waitFor(() => expect(reviewsApi.listForMedia).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('button', { name: 'Корисний відгук, 5' })).toBeInTheDocument();
   });
 
   it('collapses a review for the viewer after reporting it', async () => {
@@ -231,7 +239,7 @@ describe('MediaReviews', () => {
     jest.mocked(reviewsApi.report).mockResolvedValue({} as never);
     renderReviews();
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Ще дії з відгуком' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Ще дії з відгуком troll' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Поскаржитись' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Надіслати скаргу' }));
     expect(await screen.findByText('Вибери причину, щоб ми знали, що перевірити')).toHaveAttribute(
@@ -245,7 +253,7 @@ describe('MediaReviews', () => {
     await waitFor(() =>
       expect(reviewsApi.report).toHaveBeenCalledWith('troll-review', 'spam', undefined),
     );
-    expect(await screen.findByText('Ти поскаржився на відгук troll')).toBeInTheDocument();
+    expect(await screen.findByText('Скаргу на відгук troll надіслано')).toBeInTheDocument();
     act(() => reportedReviews.remove('troll-review'));
   });
 });

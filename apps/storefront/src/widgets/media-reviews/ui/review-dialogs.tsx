@@ -20,7 +20,7 @@ const ReportDialog = dynamic(
   },
 );
 
-function useHasOpened(isOpen: boolean): boolean {
+function useMountedOnceOpened(isOpen: boolean): boolean {
   const [hasOpened, setHasOpened] = useState(isOpen);
   if (isOpen && !hasOpened) setHasOpened(true);
   return hasOpened;
@@ -43,9 +43,9 @@ export function ReviewDialogs({
   reportReview,
   onCloseReport,
 }: ReviewDialogsProps) {
-  const hasComposed = useHasOpened(isPhone && compose.isOpen);
-  const hasOpenedThread = useHasOpened(isPhone && threadReview !== null);
-  const hasReported = useHasOpened(reportReview !== null);
+  const hasComposed = useMountedOnceOpened(isPhone && compose.isOpen);
+  const hasOpenedThread = useMountedOnceOpened(isPhone && threadReview !== null);
+  const hasReported = useMountedOnceOpened(reportReview !== null);
 
   return (
     <>

@@ -24,6 +24,8 @@ function cached<T>(formats: Map<Locale, T>, locale: Locale, create: () => T): T 
 }
 
 export function formatFullDate(date: string, locale: Locale): string {
+  const time = Date.parse(date);
+  if (Number.isNaN(time)) return '';
   return cached(
     dateFormats,
     locale,
@@ -33,7 +35,7 @@ export function formatFullDate(date: string, locale: Locale): string {
         timeStyle: 'short',
         timeZone: SERVICE_TIME_ZONE,
       }),
-  ).format(Date.parse(date));
+  ).format(time);
 }
 
 export function formatRelativeTime(

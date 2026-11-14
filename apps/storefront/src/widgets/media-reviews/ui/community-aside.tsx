@@ -7,7 +7,13 @@ import type { CommunityScore } from '../model/reviewed-media';
 
 const ASIDE_HEADING_ID = 'reviews-community';
 
-export function CommunityAside({ community }: { community: CommunityScore }) {
+interface CommunityAsideProps {
+  community: CommunityScore;
+  headingLevel: 'h2' | 'h3';
+}
+
+export function CommunityAside({ community, headingLevel }: CommunityAsideProps) {
+  const Heading = headingLevel;
   const { dict, locale } = useTranslation();
   const copy = dict.reviews.community;
 
@@ -16,9 +22,9 @@ export function CommunityAside({ community }: { community: CommunityScore }) {
       aria-labelledby={ASIDE_HEADING_ID}
       className="hidden flex-col gap-2 self-start rounded-3xl bg-surface p-4.5 md:flex"
     >
-      <h3 id={ASIDE_HEADING_ID} className="text-base font-extrabold">
+      <Heading id={ASIDE_HEADING_ID} className="text-base font-extrabold">
         {copy.title}
-      </h3>
+      </Heading>
       {community.averageScore === undefined ? (
         <p className="text-sm text-muted">{copy.none}</p>
       ) : (

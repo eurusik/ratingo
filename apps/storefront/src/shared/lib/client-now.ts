@@ -19,6 +19,7 @@ function refreshWhenVisible() {
 }
 
 function startRefreshing(): () => void {
+  current = Date.now();
   const timer = setInterval(refresh, REFRESH_MS);
   document.addEventListener('visibilitychange', refreshWhenVisible);
   return () => {

@@ -1,6 +1,7 @@
 import type { ReviewSort } from '@/shared/api';
 
 export const TOP_REVIEWS_SHOWN = 3;
+export const REVIEWS_FRESH_SECONDS = 60;
 const REVIEWS_PAGE_SIZE = 10;
 
 export const TOP_REVIEWS_QUERY = {

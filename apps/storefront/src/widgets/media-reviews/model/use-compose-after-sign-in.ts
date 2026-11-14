@@ -4,11 +4,9 @@ import { useEffect } from 'react';
 import { useAuth } from '@ratingo/web-core/auth';
 import type { Review } from '@/shared/api';
 import { takePendingIntent } from '@/shared/auth';
+import type { useMyReview } from './use-review-lists';
 
-interface ViewerReview {
-  mine: Review | null;
-  isResolving: boolean;
-}
+type ViewerReview = Pick<ReturnType<typeof useMyReview>, 'mine' | 'isResolving'>;
 
 export function useComposeAfterSignIn(
   mediaItemId: string,

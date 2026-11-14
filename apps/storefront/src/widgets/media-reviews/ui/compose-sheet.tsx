@@ -3,8 +3,7 @@
 import type { Review } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { Sheet } from '@/shared/ui';
-import { useGuardedClose } from '../model/use-guarded-close';
-import { useReviewDraft } from '../model/use-review-draft';
+import { useReviewComposer } from '../model/use-review-composer';
 import { DiscardDraftDialog } from './discard-draft-dialog';
 import { ReviewForm } from './review-form';
 import { useReviewsActions } from './reviews-context';
@@ -18,8 +17,7 @@ interface ComposeSheetProps {
 export function ComposeSheet({ isOpen, editing, onClose }: ComposeSheetProps) {
   const { dict } = useTranslation();
   const { ownRating } = useReviewsActions();
-  const draft = useReviewDraft(editing, ownRating);
-  const closing = useGuardedClose(draft.isDirty, onClose);
+  const { draft, closing } = useReviewComposer(editing, ownRating, onClose);
 
   return (
     <>

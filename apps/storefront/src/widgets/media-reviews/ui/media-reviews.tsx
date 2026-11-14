@@ -9,6 +9,7 @@ import { ForwardLink } from '@/shared/ui';
 import type { ReviewPage } from '@/shared/api';
 import type { CommunityScore, ReviewedMedia } from '../model/reviewed-media';
 import { TOP_REVIEWS_SHOWN } from '../model/review-queries';
+import { topOthers } from '../model/review-order';
 import { useMyReview, useTopReviews } from '../model/use-review-lists';
 import { ReviewsBoard } from './reviews-board';
 import { ReviewsHeading } from './reviews-heading';
@@ -26,13 +27,7 @@ export function MediaReviews({ media, community, initialPage }: MediaReviewsProp
   const { mine } = useMyReview(media.mediaItemId, listed);
   const total = top.data?.total ?? 0;
   const mineId = mine?.id;
-  const others = useMemo(
-    () =>
-      (listed ?? [])
-        .filter((review) => review.id !== mineId)
-        .slice(0, mineId ? TOP_REVIEWS_SHOWN - 1 : TOP_REVIEWS_SHOWN),
-    [listed, mineId],
-  );
+  const others = useMemo(() => topOthers(listed ?? [], mineId), [listed, mineId]);
   const hasMore = total > TOP_REVIEWS_SHOWN;
   const allHref = mediaReviewsRoute(media.type, media.slug);
 
@@ -51,6 +46,7 @@ export function MediaReviews({ media, community, initialPage }: MediaReviewsProp
             hasMore ? (
               <ForwardLink
                 href={allHref}
+                aria-label={dict.reviews.allLabel}
                 className="inline-flex min-h-tap items-center px-1 text-[15px] font-semibold text-accent no-underline md:hidden"
               >
                 {dict.reviews.all}

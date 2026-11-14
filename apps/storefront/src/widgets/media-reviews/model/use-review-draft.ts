@@ -20,7 +20,8 @@ export function useReviewDraft(editing: Review | null, ownRating: number | null)
   const [content, setContent] = useState(initialContent);
   const [pickedRating, setRating] = useState<number | null>(null);
   const [hasSpoiler, setHasSpoiler] = useState(initialSpoiler);
-  const rating = pickedRating ?? ownRating ?? editing?.rating ?? null;
+  const initialRating = editing?.rating ?? ownRating;
+  const rating = pickedRating ?? initialRating;
 
   return {
     content,
@@ -29,7 +30,7 @@ export function useReviewDraft(editing: Review | null, ownRating: number | null)
     isDirty:
       content.trim() !== initialContent.trim() ||
       hasSpoiler !== initialSpoiler ||
-      pickedRating !== null,
+      (pickedRating !== null && pickedRating !== initialRating),
     setContent,
     setRating,
     setHasSpoiler,

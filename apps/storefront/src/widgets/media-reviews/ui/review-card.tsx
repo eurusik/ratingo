@@ -1,22 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Button, Chip } from '@heroui/react';
 import { pluralize } from '@ratingo/web-core/lib';
 import { MessageCircle } from 'lucide-react';
 import { presetForRating } from '@/entities/library';
 import type { Review } from '@/shared/api';
 import { interpolate, useTranslation, type Dictionary, type Locale } from '@/shared/i18n';
-import { formatScore, scoreFromRating } from '@/shared/lib';
+import { formatCompactCount, formatScore, scoreFromRating } from '@/shared/lib';
 import { ReviewAvatar } from './review-avatar';
 import { ReviewBody } from './review-body';
 import { ReviewMenu } from './review-menu';
 import { ReviewTime } from './review-time';
 import { ReviewVotes } from './review-votes';
 import { useReviewsActions } from './reviews-context';
-import { InlineThread } from './inline-thread';
 
-const FOOTER_BUTTON = 'min-h-tap rounded-full px-3 text-sm font-semibold';
+const InlineThread = dynamic(
+  () => import('./inline-thread').then((module) => module.InlineThread),
+  {
+    ssr: false,
+  },
+);
+
+const CARD_ACTION = 'min-h-tap rounded-full px-3 text-sm font-semibold';
 
 function ScoreChip({ rating }: { rating: number }) {
   const { dict, locale } = useTranslation();
@@ -39,11 +46,11 @@ function repliesLabel(review: Review, isThreadOpen: boolean, dict: Dictionary, l
   if (isThreadOpen) return dict.reviews.card.hideReplies;
   if (review.repliesCount === 0) return dict.reviews.card.reply;
   return interpolate(pluralize(review.repliesCount, dict.reviews.card.replies, locale), {
-    count: review.repliesCount,
+    count: formatCompactCount(locale, review.repliesCount),
   });
 }
 
-export function ReviewCard({ review }: { review: Review }) {
+function ReviewCardContent({ review }: { review: Review }) {
   const { dict, locale } = useTranslation();
   const actions = useReviewsActions();
   const [isThreadOpen, setIsThreadOpen] = useState(false);
@@ -79,7 +86,11 @@ export function ReviewCard({ review }: { review: Review }) {
         {rating === null ? null : <ScoreChip rating={rating} />}
         <ReviewMenu review={review} isOwn={isOwn} />
       </header>
-      <ReviewBody text={review.content} hasSpoiler={review.hasSpoiler} />
+      <ReviewBody
+        key={String(review.hasSpoiler)}
+        text={review.content}
+        hasSpoiler={review.hasSpoiler}
+      />
       <footer className="-mx-1.5 -mb-1 flex items-center gap-1">
         <ReviewVotes review={review} isOwn={isOwn} />
         <span className="flex-1" />
@@ -87,7 +98,7 @@ export function ReviewCard({ review }: { review: Review }) {
           <Button
             variant="ghost"
             onPress={() => actions.compose(review)}
-            className={`${FOOTER_BUTTON} text-accent`}
+            className={`${CARD_ACTION} text-accent`}
           >
             {dict.reviews.card.edit}
           </Button>
@@ -95,8 +106,9 @@ export function ReviewCard({ review }: { review: Review }) {
         <Button
           variant="ghost"
           aria-expanded={actions.isDesktop ? isThreadOpen : undefined}
+          aria-haspopup={actions.isDesktop ? undefined : 'dialog'}
           onPress={toggleReplies}
-          className={FOOTER_BUTTON}
+          className={CARD_ACTION}
         >
           <MessageCircle aria-hidden className="size-4.5" />
           {repliesLabel(review, showsInlineThread, dict, locale)}
@@ -106,3 +118,5 @@ export function ReviewCard({ review }: { review: Review }) {
     </article>
   );
 }
+
+export const ReviewCard = memo(ReviewCardContent);

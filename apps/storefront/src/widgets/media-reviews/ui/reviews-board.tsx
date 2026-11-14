@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { useMediaState } from '@/entities/library';
@@ -8,27 +9,32 @@ import type { Review } from '@/shared/api';
 import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { useMediaQuery } from '@/shared/lib';
+import { useIds } from '../model/id-set';
 import {
-  forgetHiddenReviewsUnlessViewer,
   reportedReviews,
+  resetReportedReviewsOnViewerChange,
   reviewsBeingDeleted,
-  useIds,
-} from '../model/hidden-reviews';
-import { withOwnReviewFirst } from '../model/review-order';
+} from '../model/review-visibility';
 import type { CommunityScore, ReviewedMedia } from '../model/reviewed-media';
 import { useComposeAfterSignIn } from '../model/use-compose-after-sign-in';
 import { useComposeState } from '../model/use-compose-state';
+import { useDeleteReview } from '../model/use-delete-review';
+import { useOrderedReviews } from '../model/use-ordered-reviews';
 import { useMyReview } from '../model/use-review-lists';
-import { useDeleteReview } from '../model/use-review-editor';
 import { useReviewVote } from '../model/use-review-vote';
 import { CommunityAside } from './community-aside';
-import { InlineCompose } from './inline-compose';
 import { ReportedReview } from './reported-review';
 import { ReviewCard } from './review-card';
 import { ReviewDialogs } from './review-dialogs';
 import { ReviewsProvider, useReviewsActions, type ReviewsActions } from './reviews-context';
+import { REVIEWS_HEADING_ID, focusReviewsHeading } from './reviews-heading';
 import { ReviewsSkeleton } from './reviews-skeleton';
-import { EmptyReviews, GuestPrompt, WritePrompt } from './viewer-prompt';
+import { EmptyReviews, GuestPrompt, ResolvingViewerPrompt, WritePrompt } from './viewer-prompt';
+
+const InlineCompose = dynamic(
+  () => import('./inline-compose').then((module) => module.InlineCompose),
+  { ssr: false },
+);
 
 type ReviewsStatus = 'pending' | 'error' | 'success';
 
@@ -40,6 +46,7 @@ export interface ReviewsBoardProps {
   status: ReviewsStatus;
   onRetry: () => void;
   heading: ReactNode;
+  isPageHeading?: boolean;
   footer?: ReactNode;
 }
 
@@ -83,34 +90,45 @@ export function ReviewsBoard({
   status,
   onRetry,
   heading,
+  isPageHeading = false,
   footer,
 }: ReviewsBoardProps) {
   const { user, isLoading: isAuthResolving } = useAuth();
   const viewerId = user?.id ?? null;
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
   const ownRating = useMediaState(media.mediaItemId).mediaState?.rating ?? null;
-  const myReview = useMyReview(media.mediaItemId);
+  const myReview = useMyReview(media.mediaItemId, reviews);
   const reported = useIds(reportedReviews);
   const deleting = useIds(reviewsBeingDeleted);
   const vote = useReviewVote(media.mediaItemId);
-  const remove = useDeleteReview(media.mediaItemId);
+  const deleteReview = useDeleteReview(media.mediaItemId);
   const compose = useComposeState();
   const [reportTarget, setReportTarget] = useState<Review | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
 
-  useEffect(() => forgetHiddenReviewsUnlessViewer(viewerId), [viewerId]);
+  useEffect(() => resetReportedReviewsOnViewerChange(viewerId), [viewerId]);
   useComposeAfterSignIn(media.mediaItemId, myReview, compose.open);
 
-  const { mine } = myReview;
-  const isDeletingMine = mine !== null && deleting.has(mine.id);
-  const ownReview = isDeletingMine ? null : mine;
-  const inlineEditing = isDesktop && compose.isOpen ? compose.editing : null;
-  const ordered = useMemo(() => {
-    const hidden = new Set(deleting);
-    if (inlineEditing && ownReview) hidden.add(ownReview.id);
-    return withOwnReviewFirst(ownReview, reviews, hidden);
-  }, [deleting, inlineEditing, ownReview, reviews]);
+  const editingInline = isDesktop && compose.isOpen ? compose.editing : null;
+  const { ordered, ownReview, isDeletingMine } = useOrderedReviews({
+    mine: myReview.mine,
+    others: reviews,
+    deleting,
+    editingInline,
+  });
   const threadReview = ordered.find((review) => review.id === threadId) ?? null;
+
+  const remove = useCallback(
+    (review: Review) => {
+      deleteReview(review);
+      focusReviewsHeading();
+    },
+    [deleteReview],
+  );
+  const closeReport = useCallback(() => {
+    setReportTarget(null);
+    focusReviewsHeading();
+  }, []);
 
   const actions = useMemo<ReviewsActions>(
     () => ({
@@ -129,12 +147,12 @@ export function ReviewsBoard({
 
   const isListReady = status === 'success';
   const isViewerResolving = myReview.isResolving || isAuthResolving;
-  const isViewerReady = isListReady && !isViewerResolving && !isDeletingMine;
+  const showsViewerSlot = isListReady && !isViewerResolving && !isDeletingMine && !myReview.isError;
 
   return (
     <ReviewsProvider value={actions}>
       <section
-        aria-labelledby="reviews-heading"
+        aria-labelledby={REVIEWS_HEADING_ID}
         aria-busy={status === 'pending'}
         className="flex flex-col gap-4 md:grid md:grid-cols-[minmax(0,1fr)_20rem] md:gap-x-12"
       >
@@ -143,14 +161,12 @@ export function ReviewsBoard({
           {status === 'error' ? <LoadError onRetry={onRetry} /> : null}
           {myReview.isError ? <LoadError onRetry={myReview.retry} /> : null}
           {status === 'pending' ? <ReviewsSkeleton /> : null}
-          {isListReady && isViewerResolving && !isDeletingMine ? (
-            <GuestPrompt isViewerKnown={false} />
-          ) : null}
-          {isViewerReady && !myReview.isError ? (
+          {isListReady && isViewerResolving && !isDeletingMine ? <ResolvingViewerPrompt /> : null}
+          {showsViewerSlot ? (
             <ViewerSlot
               hasMine={ownReview !== null}
               isEmpty={total === 0 && ordered.length === 0}
-              editing={inlineEditing}
+              editing={editingInline}
               onDoneEditing={compose.close}
             />
           ) : null}
@@ -163,7 +179,7 @@ export function ReviewsBoard({
           )}
           {footer}
         </div>
-        <CommunityAside community={community} />
+        <CommunityAside community={community} headingLevel={isPageHeading ? 'h2' : 'h3'} />
       </section>
       <ReviewDialogs
         isPhone={!isDesktop}
@@ -171,7 +187,7 @@ export function ReviewsBoard({
         threadReview={threadReview}
         onCloseThread={() => setThreadId(null)}
         reportReview={reportTarget}
-        onCloseReport={() => setReportTarget(null)}
+        onCloseReport={closeReport}
       />
     </ReviewsProvider>
   );

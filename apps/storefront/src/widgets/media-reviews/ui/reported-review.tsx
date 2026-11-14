@@ -3,7 +3,7 @@
 import { Button } from '@heroui/react';
 import type { Review } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { reportedReviews } from '../model/hidden-reviews';
+import { reportedReviews } from '../model/review-visibility';
 
 export function ReportedReview({ review }: { review: Review }) {
   const { dict } = useTranslation();

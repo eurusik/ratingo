@@ -15,6 +15,7 @@ export function InlineThread({ review }: { review: Review }) {
         review={review}
         target={reply.target}
         onSent={reply.reset}
+        onCancelTarget={reply.reset}
         inputRef={reply.inputRef}
       />
     </div>

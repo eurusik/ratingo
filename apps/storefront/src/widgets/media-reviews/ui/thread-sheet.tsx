@@ -39,6 +39,7 @@ export function ThreadSheet({ review, onClose }: ThreadSheetProps) {
               review={shown}
               target={reply.target}
               onSent={reply.reset}
+              onCancelTarget={reply.reset}
               inputRef={reply.inputRef}
             />
           </div>

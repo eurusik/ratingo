@@ -14,7 +14,9 @@ describe('buildRobots', () => {
   it('keeps private and service-worker paths out of the index', () => {
     const [rule] = [buildRobots(SITE_URL, true).rules].flat();
 
-    expect(rule?.disallow).toEqual(expect.arrayContaining(['/auth', '/my', '/~offline', '/serwist']));
+    expect(rule?.disallow).toEqual(
+      expect.arrayContaining(['/auth', '/my', '/~offline', '/serwist']),
+    );
   });
 
   it('blocks all crawling anywhere else', () => {

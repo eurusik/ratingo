@@ -3,7 +3,7 @@
 import { Button, Skeleton } from '@heroui/react';
 import type { Review, ReviewReply } from '@/shared/api';
 import { useSignedInAction } from '@/shared/auth';
-import { useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation } from '@/shared/i18n';
 import type { ReplyTarget } from '../model/reply-thread';
 import { useReplyThread } from '../model/use-replies';
 import { ReviewAvatar } from './review-avatar';
@@ -29,7 +29,8 @@ function ReplyItem({ reply, isAnswer, onReply }: ReplyItemProps) {
         <p className="text-sm">
           <b className="font-bold">{reply.author.username}</b>{' '}
           <span className="text-muted">
-            · <ReviewTime date={reply.createdAt} />
+            <span aria-hidden>· </span>
+            <ReviewTime date={reply.createdAt} />
           </span>
         </p>
         <p className="mt-0.5 text-[15px] leading-normal break-words whitespace-pre-line text-foreground/90">
@@ -42,6 +43,7 @@ function ReplyItem({ reply, isAnswer, onReply }: ReplyItemProps) {
           variant="ghost"
           size="sm"
           onPress={onReply}
+          aria-label={interpolate(dict.reviews.card.replyTo, { name: reply.author.username })}
           className="-ms-2 min-h-tap px-2 text-[13px] font-semibold text-muted"
         >
           {dict.reviews.card.reply}
@@ -64,6 +66,32 @@ function RepliesSkeleton({ label }: { label: string }) {
         </div>
       ))}
     </div>
+  );
+}
+
+interface ReplyBranchItemsProps {
+  reply: ReviewReply;
+  answers: ReviewReply[];
+  onAnswer: (target: ReplyTarget) => void;
+}
+
+function ReplyBranchItems({ reply, answers, onAnswer }: ReplyBranchItemsProps) {
+  return (
+    <>
+      <ReplyItem
+        reply={reply}
+        isAnswer={false}
+        onReply={() => onAnswer({ branchId: reply.id, username: reply.author.username })}
+      />
+      {answers.map((answer) => (
+        <ReplyItem
+          key={answer.id}
+          reply={answer}
+          isAnswer
+          onReply={() => onAnswer({ branchId: reply.id, username: answer.author.username })}
+        />
+      ))}
+    </>
   );
 }
 
@@ -99,22 +127,9 @@ export function ReplyList({ review, onTarget }: ReplyListProps) {
 
   return (
     <ul className="flex flex-col gap-3.5">
-      {thread.flatMap(({ reply, answers }) => [
-        <ReplyItem
-          key={reply.id}
-          reply={reply}
-          isAnswer={false}
-          onReply={() => answer({ branchId: reply.id, username: reply.author.username })}
-        />,
-        ...answers.map((item) => (
-          <ReplyItem
-            key={item.id}
-            reply={item}
-            isAnswer
-            onReply={() => answer({ branchId: reply.id, username: item.author.username })}
-          />
-        )),
-      ])}
+      {thread.map(({ reply, answers }) => (
+        <ReplyBranchItems key={reply.id} reply={reply} answers={answers} onAnswer={answer} />
+      ))}
     </ul>
   );
 }

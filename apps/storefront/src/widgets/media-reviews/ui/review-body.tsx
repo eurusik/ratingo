@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Button } from '@heroui/react';
 import { TriangleAlert } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
@@ -33,7 +33,7 @@ function SpoilerCover({ text, onReveal }: { text: string; onReveal: () => void }
   );
 }
 
-function ClampedText({ text }: { text: string }) {
+function ClampedText({ text, takesFocus }: { text: string; takesFocus: boolean }) {
   const { dict } = useTranslation();
   const textId = useId();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -41,6 +41,10 @@ function ClampedText({ text }: { text: string }) {
     isExpanded,
     text.length >= CHARS_THAT_USUALLY_OVERFLOW_CLAMP,
   );
+
+  useEffect(() => {
+    if (takesFocus) ref.current?.focus({ preventScroll: true });
+  }, [takesFocus, ref]);
 
   return (
     <>
@@ -73,5 +77,5 @@ function ClampedText({ text }: { text: string }) {
 export function ReviewBody({ text, hasSpoiler }: { text: string; hasSpoiler: boolean }) {
   const [isRevealed, setIsRevealed] = useState(!hasSpoiler);
   if (!isRevealed) return <SpoilerCover text={text} onReveal={() => setIsRevealed(true)} />;
-  return <ClampedText text={text} />;
+  return <ClampedText text={text} takesFocus={hasSpoiler} />;
 }

@@ -1,8 +1,12 @@
 import { cache } from 'react';
 import { reviewsApi, type CatalogCache, type ReviewPage, type ReviewSort } from '@/shared/api';
-import { TOP_REVIEWS_QUERY, reviewPageQuery } from '../model/review-queries';
+import { REVIEWS_FRESH_SECONDS, TOP_REVIEWS_QUERY, reviewPageQuery } from '../model/review-queries';
 
-const REVIEWS_CACHE: CatalogCache = { revalidateSeconds: 60 };
+const REVIEWS_CACHE: CatalogCache = {
+  revalidateSeconds: REVIEWS_FRESH_SECONDS,
+  timeoutMs: 2000,
+  retries: 0,
+};
 
 async function orNullOnFailure(
   mediaItemId: string,

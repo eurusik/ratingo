@@ -17,7 +17,9 @@ describe('buildWebAppManifest', () => {
   });
 
   it('ships a maskable icon for adaptive launchers', () => {
-    expect(manifest.icons).toEqual(expect.arrayContaining([expect.objectContaining({ purpose: 'maskable' })]));
+    expect(manifest.icons).toEqual(
+      expect.arrayContaining([expect.objectContaining({ purpose: 'maskable' })]),
+    );
   });
 });
 

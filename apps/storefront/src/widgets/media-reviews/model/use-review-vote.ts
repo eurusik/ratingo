@@ -6,7 +6,7 @@ import { toast } from '@heroui/react';
 import { reviewsApi, type Review, type VoteType } from '@/shared/api';
 import { useSignedInAction } from '@/shared/auth';
 import { useTranslation } from '@/shared/i18n';
-import { updateReviewEverywhere } from './review-cache';
+import { refreshMediaReviews, updateReviewEverywhere } from './review-cache';
 import { nextVote, withVote } from './review-vote';
 
 interface VoteChange {
@@ -26,11 +26,12 @@ export function useReviewVote(mediaItemId: string): (review: Review, pressed: Vo
       updateReviewEverywhere(queryClient, mediaItemId, reviewId, (review) =>
         withVote(review, vote),
       ),
-    onError: (error, { reviewId }, snapshot) => {
+    onError: (error, { reviewId }, restore) => {
       console.error('Voting on a review failed', { reviewId, error });
-      snapshot?.restore();
+      restore?.();
       toast.danger(dict.reviews.toast.voteFailed);
     },
+    onSettled: () => refreshMediaReviews(queryClient, mediaItemId),
   });
 
   return useCallback(

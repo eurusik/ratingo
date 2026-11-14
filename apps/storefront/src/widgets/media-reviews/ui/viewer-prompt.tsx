@@ -4,7 +4,7 @@ import { Button } from '@heroui/react';
 import { MessageSquareText, Pencil } from 'lucide-react';
 import { presetForRating } from '@/entities/library';
 import { useSignedInAction } from '@/shared/auth';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { useTranslation } from '@/shared/i18n';
 import { formatScore, scoreFromRating } from '@/shared/lib';
 import { useReviewsActions } from './reviews-context';
 
@@ -35,11 +35,14 @@ export function EmptyReviews() {
   );
 }
 
-export function GuestPrompt({ isViewerKnown = true }: { isViewerKnown?: boolean }) {
+interface InviteCardProps {
+  text: string;
+  action: string;
+}
+
+function InviteCard({ text, action }: InviteCardProps) {
   const { dict } = useTranslation();
   const startReview = useComposeSignedIn();
-  const text = isViewerKnown ? dict.reviews.guest.text : dict.reviews.prompt.text;
-  const action = isViewerKnown ? dict.reviews.guest.action : dict.reviews.guest.write;
 
   return (
     <div className="flex items-center gap-3 rounded-3xl bg-surface p-3.5">
@@ -54,17 +57,28 @@ export function GuestPrompt({ isViewerKnown = true }: { isViewerKnown?: boolean 
   );
 }
 
+export function GuestPrompt() {
+  const { dict } = useTranslation();
+  return <InviteCard text={dict.reviews.guest.text} action={dict.reviews.guest.action} />;
+}
+
+export function ResolvingViewerPrompt() {
+  const { dict } = useTranslation();
+  return <InviteCard text={dict.reviews.prompt.text} action={dict.reviews.prompt.action} />;
+}
+
 export function WritePrompt() {
   const { dict, locale } = useTranslation();
   const { ownRating, compose } = useReviewsActions();
-  const preset = ownRating === null ? undefined : presetForRating(ownRating);
   const heading =
-    ownRating === null
-      ? dict.reviews.prompt.unrated
-      : interpolate(dict.reviews.prompt.rated, {
-          emoji: preset?.emoji ?? '',
-          score: formatScore(locale, scoreFromRating(ownRating)),
-        });
+    ownRating === null ? (
+      dict.reviews.prompt.unrated
+    ) : (
+      <>
+        {dict.reviews.prompt.rated} <span aria-hidden>{presetForRating(ownRating)?.emoji}</span>{' '}
+        {formatScore(locale, scoreFromRating(ownRating))}
+      </>
+    );
 
   return (
     <Button

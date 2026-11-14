@@ -1,4 +1,4 @@
-import { createIdSet } from './hidden-reviews';
+import { createIdSet } from './id-set';
 
 describe('createIdSet', () => {
   it('notifies only on real changes', () => {

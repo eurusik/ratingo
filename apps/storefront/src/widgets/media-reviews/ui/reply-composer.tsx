@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent, type RefObject } from 'react';
-import { Button, Form, Input, Label, TextField } from '@heroui/react';
+import { Button, Chip, CloseButton, Form, Input, Label, TextField } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { ArrowRight } from 'lucide-react';
 import type { Review } from '@/shared/api';
@@ -16,10 +16,34 @@ interface ReplyComposerProps {
   review: Review;
   target: ReplyTarget | null;
   onSent: () => void;
+  onCancelTarget: () => void;
   inputRef: RefObject<HTMLInputElement | null>;
 }
 
-export function ReplyComposer({ review, target, onSent, inputRef }: ReplyComposerProps) {
+function ReplyTargetChip({ target, onCancel }: { target: ReplyTarget; onCancel: () => void }) {
+  const { dict } = useTranslation();
+
+  return (
+    <div role="status" className="flex items-center gap-1">
+      <Chip size="sm" variant="soft" color="accent">
+        {interpolate(dict.reviews.replies.replyingTo, { name: target.username })}
+      </Chip>
+      <CloseButton
+        aria-label={interpolate(dict.reviews.replies.cancelReplyTo, { name: target.username })}
+        onPress={onCancel}
+        className="size-tap"
+      />
+    </div>
+  );
+}
+
+export function ReplyComposer({
+  review,
+  target,
+  onSent,
+  onCancelTarget,
+  inputRef,
+}: ReplyComposerProps) {
   const { dict } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { media, isDesktop } = useReviewsActions();
@@ -34,9 +58,9 @@ export function ReplyComposer({ review, target, onSent, inputRef }: ReplyCompose
     );
   }
 
+  const text = content.trim();
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const text = content.trim();
     if (!text || send.isPending) return;
     send.mutate(replyDraftFor(text, target), {
       onSuccess: () => {
@@ -50,6 +74,7 @@ export function ReplyComposer({ review, target, onSent, inputRef }: ReplyCompose
 
   return (
     <Form onSubmit={submit} className="flex flex-col gap-1.5">
+      {target ? <ReplyTargetChip target={target} onCancel={onCancelTarget} /> : null}
       <div className="flex items-end gap-2">
         <TextField
           name="reply"
@@ -71,6 +96,7 @@ export function ReplyComposer({ review, target, onSent, inputRef }: ReplyCompose
         <Button
           type="submit"
           isIconOnly={!isDesktop}
+          isDisabled={!text}
           isPending={send.isPending}
           aria-label={isDesktop ? undefined : dict.reviews.replies.send}
           className="min-h-tap min-w-11 shrink-0 rounded-full"

@@ -46,15 +46,3 @@ export function createIdSet(): IdSet {
 export function useIds(set: IdSet): ReadonlySet<string> {
   return useSyncExternalStore(set.subscribe, set.read, readNothing);
 }
-
-export const reportedReviews = createIdSet();
-
-export const reviewsBeingDeleted = createIdSet();
-
-let hiddenFor: string | null = null;
-
-export function forgetHiddenReviewsUnlessViewer(viewerId: string | null): void {
-  if (viewerId === hiddenFor) return;
-  hiddenFor = viewerId;
-  reportedReviews.clear();
-}
