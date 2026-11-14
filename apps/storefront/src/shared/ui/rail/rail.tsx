@@ -1,5 +1,8 @@
-import type { ReactNode, Ref } from 'react';
+'use client';
+
+import { useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { ScrollShadow } from '@heroui/react';
+import { railMemoryMarker, restoreRememberedRailScroll } from '@/shared/lib';
 
 type RailItemSize = 'card' | 'tile';
 
@@ -7,7 +10,8 @@ interface RailProps {
   label: string;
   isOrdered?: boolean;
   itemSize?: RailItemSize;
-  scrollerRef?: Ref<HTMLDivElement>;
+  scrollerRef?: RefObject<HTMLDivElement | null>;
+  memoryKey?: string;
   children: ReactNode;
 }
 
@@ -27,14 +31,23 @@ export function Rail({
   isOrdered = false,
   itemSize = 'card',
   scrollerRef,
+  memoryKey = label,
   children,
 }: RailProps) {
   const List = isOrdered ? 'ol' : 'ul';
+  const ownScrollerRef = useRef<HTMLDivElement>(null);
+  const scroller = scrollerRef ?? ownScrollerRef;
+
+  useLayoutEffect(() => {
+    if (scroller.current) restoreRememberedRailScroll(scroller.current, memoryKey);
+  }, [scroller, memoryKey]);
 
   return (
     <ScrollShadow
-      ref={scrollerRef}
+      ref={scroller}
+      {...railMemoryMarker(memoryKey)}
       orientation="horizontal"
+      visibility="none"
       hideScrollBar
       className={SCROLLER_CLASS}
     >

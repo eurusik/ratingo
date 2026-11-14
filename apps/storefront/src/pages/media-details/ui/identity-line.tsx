@@ -20,7 +20,7 @@ export function IdentityLine({ view, locale }: { view: MediaDetailsView; locale:
   const genres = view.genres.join(', ');
 
   return (
-    <div className="flex flex-col items-start gap-2 md:flex-row md:flex-wrap md:items-center md:gap-x-3">
+    <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-x-3">
       <p className="text-[15px] leading-snug font-medium text-foreground/90 tabular-nums [text-shadow:0_0_12px_color-mix(in_oklab,var(--background)_80%,transparent)] md:text-lg">
         {facts}
         {facts && genres ? (

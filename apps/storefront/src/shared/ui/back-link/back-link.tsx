@@ -13,6 +13,7 @@ import {
   isPlainClick,
   nameArtLinkingTo,
   releaseSharedArt,
+  restoreRememberedScroll,
   waitForRouteCommit,
 } from '@/shared/lib';
 
@@ -42,6 +43,7 @@ export function BackLink({
       () => router.back(),
       async () => {
         await waitForRouteCommit();
+        restoreRememberedScroll();
         returningArt = nameArtLinkingTo(leavingPath);
       },
     ).finally(() => releaseSharedArt(returningArt));

@@ -10,6 +10,7 @@ import {
   HOME_ROUTE,
   MY_ROUTE,
   NAV_ROUTES,
+  isBrowsePath,
   isMediaDetailsPath,
   isNavRouteActive,
 } from '@/shared/config';
@@ -57,7 +58,7 @@ export function SiteHeader() {
   const pathname = usePathname() ?? '';
   const { dict } = useTranslation();
   const showsAccountOnPhone = PHONE_ACCOUNT_ROUTES.has(pathname);
-  const hidesOnPhone = isMediaDetailsPath(pathname);
+  const hidesOnPhone = isMediaDetailsPath(pathname) || isBrowsePath(pathname);
 
   return (
     <header

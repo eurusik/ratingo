@@ -1,27 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Skeleton } from '@heroui/react';
-import { SHARED_ART_TARGET, pendingArtImageFor } from '@/shared/lib';
+import { reportNavigationStep } from '@ratingo/ui/motion';
+import { SHARED_ART_TARGET } from '@/shared/lib';
 import { markSkeletonShownFor } from '../model/skeleton-reveal';
+import { ArrivingArt } from './arriving-art';
 
 export function PendingPoster() {
   const pathname = usePathname() ?? '';
-  const [imageUrl] = useState(() => pendingArtImageFor(pathname));
-  useEffect(() => markSkeletonShownFor(pathname), [pathname]);
+  useEffect(() => {
+    markSkeletonShownFor(pathname);
+    reportNavigationStep('skeleton-shown', { pathname });
+  }, [pathname]);
 
   return (
     <span
       {...SHARED_ART_TARGET}
       className="relative block aspect-2/3 w-full overflow-hidden rounded-[14px] [grid-area:poster] md:rounded-[20px]"
     >
-      {imageUrl ? (
-        <Image src={imageUrl} alt="" fill unoptimized sizes="240px" className="object-cover" />
-      ) : (
-        <Skeleton className="size-full rounded-none" />
-      )}
+      <ArrivingArt fallback={<Skeleton className="size-full rounded-none" />} />
     </span>
   );
 }

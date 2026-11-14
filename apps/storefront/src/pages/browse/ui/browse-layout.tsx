@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { CONTENT_TRANSITION_ONLY } from '@/shared/lib';
 
+const PHONE_TOOLBAR_HEIGHT = 'h-[calc(max(0.75rem,var(--safe-top))+3.25rem+1px)]';
+
 interface BrowseLayoutProps {
   heading?: ReactNode;
   typeSwitch: ReactNode;
@@ -30,6 +32,7 @@ export function BrowseLayout({
 
   return (
     <>
+      <div aria-hidden className={`${PHONE_TOOLBAR_HEIGHT} md:hidden`} />
       <div
         {...CONTENT_TRANSITION_ONLY}
         className="contents lg:sticky lg:[view-transition-name:browse-toolbar] lg:top-16 lg:z-20 lg:-mt-4 lg:flex lg:items-center lg:gap-5 lg:border-b lg:border-separator lg:bg-background/90 lg:py-4 lg:backdrop-blur-xl"
@@ -43,7 +46,7 @@ export function BrowseLayout({
 
         <div
           {...CONTENT_TRANSITION_ONLY}
-          className="sticky top-0 z-20 -mt-px [view-transition-name:browse-toolbar] lg:[view-transition-name:none] flex items-center gap-2 border-b border-separator bg-background/90 px-4 pt-[max(0.75rem,var(--safe-top))] pb-3 backdrop-blur-xl md:top-16 md:px-0 md:pt-3 lg:static lg:mt-0 lg:min-w-0 lg:flex-1 lg:border-b-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
+          className={`fixed inset-x-0 top-0 z-20 ${PHONE_TOOLBAR_HEIGHT} [view-transition-name:browse-toolbar] md:sticky md:h-auto md:-mt-px lg:[view-transition-name:none] flex items-center gap-2 border-b border-separator bg-background/90 pt-[max(0.75rem,var(--safe-top))] pr-[max(1rem,var(--safe-right))] pb-3 pl-[max(1rem,var(--safe-left))] backdrop-blur-xl md:top-16 md:px-0 md:pt-3 lg:static lg:mt-0 lg:min-w-0 lg:flex-1 lg:border-b-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none`}
         >
           {pools}
           {filtersButton == null ? null : <div className="lg:hidden">{filtersButton}</div>}

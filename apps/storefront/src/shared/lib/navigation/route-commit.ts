@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { reportNavigationStep } from '@ratingo/ui/motion';
 
 const listeners = new Set<() => void>();
 const visitedPaths: string[] = [];
@@ -31,6 +32,7 @@ export function RouteCommitSignal(): null {
 
   useEffect(() => {
     if (pathname !== null) recordVisit(pathname);
+    reportNavigationStep('route-commit', { pathname, waiting: listeners.size });
     [...listeners].forEach((listener) => listener());
   }, [pathname]);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 const EDGE_TOLERANCE_PX = 2;
 const ACTIVE_ITEM_SELECTOR = '[aria-current="page"]';
@@ -24,7 +24,7 @@ export function readEdges(element: HTMLElement): ScrollEdges {
 function useScrollEdges(ref: RefObject<HTMLElement | null>, contentKey: string): ScrollEdges {
   const [edges, setEdges] = useState<ScrollEdges>({ hasMoreBefore: false, hasMoreAfter: false });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
 
@@ -37,6 +37,7 @@ function useScrollEdges(ref: RefObject<HTMLElement | null>, contentKey: string):
       );
     };
 
+    update();
     const resizeObserver = new ResizeObserver(update);
     resizeObserver.observe(element);
     for (const item of element.children) resizeObserver.observe(item);
@@ -72,7 +73,7 @@ function scrollBehaviorFor(isChange: boolean): ScrollBehavior {
 function useActiveItemInView(ref: RefObject<HTMLElement | null>, activeKey: string) {
   const previousKey = useRef(activeKey);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const isChange = previousKey.current !== activeKey;
     previousKey.current = activeKey;
 
@@ -95,7 +96,7 @@ export function useHorizontalScroller<T extends HTMLElement>({
   contentKey,
 }: HorizontalScrollerOptions) {
   const ref = useRef<T>(null);
-  const edges = useScrollEdges(ref, contentKey);
   useActiveItemInView(ref, activeKey);
+  const edges = useScrollEdges(ref, contentKey);
   return { ref, edges };
 }

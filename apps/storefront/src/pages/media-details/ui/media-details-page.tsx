@@ -10,6 +10,7 @@ import {
   fromShowDetails,
   type MediaDetailsView as View,
 } from '../model/details-view';
+import { AfterNavigationTransition } from './after-navigation-transition';
 import { MediaDetailsView } from './media-details-view';
 
 function preloadBackdrop(view: View): void {
@@ -41,7 +42,9 @@ function DetailsDocument({
   return (
     <>
       <JsonLd data={jsonLd} />
-      <MediaDetailsView view={view} locale={locale} />
+      <AfterNavigationTransition>
+        <MediaDetailsView view={view} locale={locale} />
+      </AfterNavigationTransition>
     </>
   );
 }

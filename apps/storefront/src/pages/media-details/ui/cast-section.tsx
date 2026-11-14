@@ -52,6 +52,7 @@ export function CastSection({ type, credits, locale }: CastSectionProps) {
       {credits.cast.length > 0 ? (
         <ScrollShadow
           orientation="horizontal"
+          visibility="none"
           hideScrollBar
           tabIndex={0}
           role="region"

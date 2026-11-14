@@ -1,3 +1,4 @@
+export { BrowserBackScrollRestorer } from './browser-back-scroll';
 export { navigateForward } from './forward-navigation';
 export { isPlainClick } from './plain-click';
 export { replaceDocumentLocation } from './document-location';
@@ -10,3 +11,9 @@ export {
   pendingArtImageFor,
   releaseSharedArt,
 } from './shared-art';
+export {
+  currentLocationKey,
+  railMemoryMarker,
+  restoreRememberedRailScroll,
+  restoreRememberedScroll,
+} from './scroll-memory';

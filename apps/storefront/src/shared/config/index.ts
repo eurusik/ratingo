@@ -3,6 +3,7 @@ export {
   API_BASE_URL,
   GA_MEASUREMENT_ID,
   IS_PRODUCTION_SITE,
+  NAVIGATION_DEBUG_ENABLED,
   SERVICE_WORKER_ENABLED,
   SITE_URL,
   buildRevision,
@@ -21,6 +22,7 @@ export {
   NOTIFICATIONS_ROUTE,
   OFFLINE_ROUTE,
   SETTINGS_ROUTE,
+  isBrowsePath,
   isMediaDetailsPath,
   mediaRoute,
 } from './routes';

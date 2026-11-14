@@ -6,9 +6,14 @@ const LEGACY_BROWSE_REDIRECTS = [
   { source: '/browse/movies', destination: '/browse/movies-trending', permanent: true },
 ];
 
+const DYNAMIC_PAGE_REUSE_SECONDS = process.env.NODE_ENV === 'production' ? 300 : 0;
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   expireTime: 3600,
+  experimental: {
+    staleTimes: { dynamic: DYNAMIC_PAGE_REUSE_SECONDS },
+  },
   transpilePackages: ['@ratingo/web-core', '@ratingo/ui'],
   async redirects() {
     return LEGACY_BROWSE_REDIRECTS;

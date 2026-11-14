@@ -60,6 +60,7 @@ export function TrailersSection({ trailers }: { trailers: Trailer[] }) {
     <DetailsSection id="details-trailers" title={dict.details.trailers.title}>
       <ScrollShadow
         orientation="horizontal"
+        visibility="none"
         hideScrollBar
         className="-mx-4 snap-x snap-mandatory scroll-px-4 overscroll-x-contain md:mx-0 md:overflow-visible"
       >

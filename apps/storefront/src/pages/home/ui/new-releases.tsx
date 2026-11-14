@@ -15,7 +15,7 @@ const RELEASE_LISTS: readonly [ReleaseList, ...ReleaseList[]] = ['nowPlaying', '
 
 export function NewReleases({ lists }: { lists: Record<ReleaseList, TrendingMedia[]> }) {
   const { dict } = useTranslation();
-  const filter = useRailFilter(lists, RELEASE_LISTS);
+  const filter = useRailFilter(SECTION_ID, lists, RELEASE_LISTS);
   const title = dict.home.newReleases;
 
   if (!filter.active) return null;
@@ -35,7 +35,7 @@ export function NewReleases({ lists }: { lists: Record<ReleaseList, TrendingMedi
         active={filter.active}
         onSelect={filter.select}
       />
-      <Rail label={title} scrollerRef={filter.scrollerRef}>
+      <Rail label={title} scrollerRef={filter.scrollerRef} memoryKey={filter.memoryKey}>
         {filter.items.map((media) => (
           <RailItem key={media.mediaItemId}>
             <TrendingCard
