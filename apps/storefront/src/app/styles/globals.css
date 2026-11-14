@@ -225,6 +225,10 @@
   animation: none;
 }
 
+[data-glass-bar] {
+  transition: background-color 300ms ease-out;
+}
+
 :root[data-nav-transition] [data-glass-bar] {
   background-color: var(--background);
   transition: none;
