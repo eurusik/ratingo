@@ -47,7 +47,8 @@ function ClampedText({ text }: { text: string }) {
       <p
         ref={ref}
         id={textId}
-        className={`text-[15px] leading-normal break-words whitespace-pre-line text-foreground/90 md:max-w-[72ch] ${isExpanded ? '' : 'line-clamp-4'}`}
+        tabIndex={-1}
+        className={`text-[15px] outline-none leading-normal break-words whitespace-pre-line text-foreground/90 md:max-w-[72ch] ${isExpanded ? '' : 'line-clamp-4'}`}
       >
         {text}
       </p>
@@ -56,7 +57,10 @@ function ClampedText({ text }: { text: string }) {
           variant="ghost"
           aria-expanded={false}
           aria-controls={textId}
-          onPress={() => setIsExpanded(true)}
+          onPress={() => {
+            setIsExpanded(true);
+            ref.current?.focus({ preventScroll: true });
+          }}
           className="-my-2 -ms-3 min-h-tap self-start px-3 text-sm font-semibold text-accent"
         >
           {dict.reviews.card.readMore}
