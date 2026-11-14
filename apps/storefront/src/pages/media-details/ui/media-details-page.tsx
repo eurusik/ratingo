@@ -1,9 +1,9 @@
 import { preload } from 'react-dom';
 import { notFound } from 'next/navigation';
+import { loadMovieBySlug, loadShowBySlug } from '@/shared/api';
 import { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from '@/shared/config';
 import type { Locale } from '@/shared/i18n';
 import { JsonLd } from '@/shared/lib';
-import { loadMovie, loadShow } from '../api/load-media-details';
 import { movieJsonLd, showJsonLd, type JsonLdData } from '../model/details-seo';
 import {
   fromMovieDetails,
@@ -50,7 +50,7 @@ function DetailsDocument({
 }
 
 export async function MovieDetailsPage({ slug, locale }: DetailsPageProps) {
-  const movie = await loadMovie(slug);
+  const movie = await loadMovieBySlug(slug);
   if (!movie) notFound();
   return (
     <DetailsDocument view={fromMovieDetails(movie)} jsonLd={movieJsonLd(movie)} locale={locale} />
@@ -58,7 +58,7 @@ export async function MovieDetailsPage({ slug, locale }: DetailsPageProps) {
 }
 
 export async function ShowDetailsPage({ slug, locale }: DetailsPageProps) {
-  const show = await loadShow(slug);
+  const show = await loadShowBySlug(slug);
   if (!show) notFound();
   return <DetailsDocument view={fromShowDetails(show)} jsonLd={showJsonLd(show)} locale={locale} />;
 }

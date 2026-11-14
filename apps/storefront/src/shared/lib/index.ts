@@ -1,18 +1,20 @@
 export { SiteAnalytics } from './analytics';
 export { useBrowserOrigin, useBrowserPath } from './browser-origin';
+export { useClientNow } from './client-now';
 export { useDebouncedValue } from './debounced-value';
 export { interleave } from './interleave';
-export { useMediaQuery } from './media-query';
+export { useIsClamped, useMediaQuery } from './layout';
 export {
   currentYear,
   formatCompactCount,
   formatScore,
+  initialOf,
   percentFromScore,
-  scoreFromRating,
   positiveNumber,
   scoreFromPercent,
+  scoreFromRating,
   yearFromDate,
-} from './numbers';
+} from './format';
 export { useIsApplePlatform } from './platform';
 export {
   APP_THEME_COLOR,

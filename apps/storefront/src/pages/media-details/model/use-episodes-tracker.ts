@@ -19,7 +19,7 @@ import {
 } from '@/entities/episode';
 import { useMediaStateStore } from '@/entities/library';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { useClientNow } from './client-now';
+import { useClientNow } from '@/shared/lib';
 
 const NOTICE_VISIBLE_MS = 8000;
 

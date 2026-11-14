@@ -43,6 +43,7 @@ export function useMediaStateStore(): MediaStateStore {
       },
       refresh: (mediaItemId) => {
         void queryClient.invalidateQueries({ queryKey: mediaStateKey(mediaItemId) });
+        void queryClient.invalidateQueries({ queryKey: ownScoreKey(mediaItemId) });
       },
     }),
     [queryClient],

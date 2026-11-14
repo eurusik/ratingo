@@ -1,7 +1,7 @@
 'use client';
 
 import { Avatar } from '@heroui/react';
-import { initialOf } from '../model/initial';
+import { initialOf } from '@/shared/lib';
 
 interface PersonAvatarProps {
   name: string;

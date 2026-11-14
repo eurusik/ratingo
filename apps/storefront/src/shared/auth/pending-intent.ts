@@ -1,7 +1,8 @@
-import type { AuthIntent } from './auth-opener';
+import type { AuthIntent, AuthIntentKind } from './auth-opener';
 
 const STORAGE_KEY = 'ratingo:pending-auth-intent:v1';
 const MAX_AGE_MS = 15 * 60 * 1000;
+const INTENT_KINDS: readonly unknown[] = ['save', 'review'] satisfies AuthIntentKind[];
 
 interface StoredIntent {
   intent: AuthIntent;
@@ -12,7 +13,7 @@ function isAuthIntent(value: unknown): value is AuthIntent {
   if (typeof value !== 'object' || value === null) return false;
   const intent = value as Record<string, unknown>;
   return (
-    intent.kind === 'save' &&
+    INTENT_KINDS.includes(intent.kind) &&
     typeof intent.title === 'string' &&
     typeof intent.mediaItemId === 'string' &&
     intent.mediaItemId.length > 0
@@ -73,8 +74,9 @@ export function hasPendingIntent(): boolean {
   }
 }
 
-export function takePendingIntent(now = Date.now()): AuthIntent | null {
+export function takePendingIntent(kind: AuthIntentKind, now = Date.now()): AuthIntent | null {
   const intent = parsePendingIntent(sessionStore()?.getItem(STORAGE_KEY) ?? null, now);
+  if (intent && intent.kind !== kind) return null;
   forgetPendingIntent();
   return intent;
 }

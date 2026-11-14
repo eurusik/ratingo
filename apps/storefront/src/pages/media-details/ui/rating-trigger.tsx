@@ -2,9 +2,9 @@
 
 import { Button } from '@heroui/react';
 import { Check, Star } from 'lucide-react';
+import { presetForRating } from '@/entities/library';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { formatScore, scoreFromRating } from '@/shared/lib';
-import { presetForRating } from '../model/rating-presets';
 import type { MediaRating } from '../model/use-rate-media';
 import { HERO_GLASS_BUTTON } from './hero-glass';
 

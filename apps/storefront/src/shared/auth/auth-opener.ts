@@ -6,8 +6,10 @@ import { forgetPendingIntent } from './pending-intent';
 
 export type AuthMode = 'login' | 'register';
 
+export type AuthIntentKind = 'save' | 'review';
+
 export interface AuthIntent {
-  kind: 'save';
+  kind: AuthIntentKind;
   title: string;
   mediaItemId: string;
 }

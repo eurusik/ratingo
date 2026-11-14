@@ -3,11 +3,15 @@
 import { useMutation } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
 import { useLibrarySave } from '@/features/save-to-library';
-import { LIBRARY_QUERY_KEY, useMediaState, useMediaStateStore } from '@/entities/library';
+import {
+  LIBRARY_QUERY_KEY,
+  presetForRating,
+  useMediaState,
+  useMediaStateStore,
+} from '@/entities/library';
 import { libraryApi, type MediaType, type WatchState } from '@/shared/api';
 import { interpolate, useTranslation, type Dictionary, type Locale } from '@/shared/i18n';
 import { formatScore, scoreFromRating, showUndoToast } from '@/shared/lib';
-import { presetForRating } from './rating-presets';
 
 interface RatableMedia {
   mediaItemId: string;

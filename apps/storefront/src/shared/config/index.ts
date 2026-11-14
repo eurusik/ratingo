@@ -25,4 +25,5 @@ export {
   isBrowsePath,
   isMediaDetailsPath,
   mediaRoute,
+  mediaReviewsRoute,
 } from './routes';
