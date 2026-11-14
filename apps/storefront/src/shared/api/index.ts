@@ -16,9 +16,11 @@ export {
   type NewEpisode,
   type SearchItem,
   type ShowDetails,
+  type ShowSeason,
   type TrendingMovie,
   type TrendingShow,
 } from './catalog';
+export { episodeProgressApi, type ShowProgress } from './episode-progress';
 export { notificationsApi, type NotificationItem } from './notifications';
 export {
   libraryApi,

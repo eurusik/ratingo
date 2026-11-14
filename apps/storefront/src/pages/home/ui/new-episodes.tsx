@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { episodeCode } from '@/entities/episode';
 import { MediaPoster } from '@/entities/media';
 import { mediaRoute } from '@/shared/config';
 import { SHARED_ART_SOURCE } from '@/shared/lib';
@@ -41,7 +42,7 @@ function EpisodeTile({ release }: { release: EpisodeRelease }) {
           aria-hidden
           className="absolute start-1.5 bottom-1.5 rounded-lg poster-glass px-1.5 py-0.5 text-xs font-extrabold tabular-nums"
         >
-          {interpolate(dict.home.episodeCode, numbers)}
+          {episodeCode({ seasonNumber: release.season, number: release.episode }, dict)}
         </span>
       </span>
       <span className="line-clamp-2 min-h-[2lh] text-[13px] leading-tight font-semibold break-words md:text-sm">

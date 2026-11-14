@@ -2,13 +2,22 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@heroui/react/toast';
 import { useAuth } from '@ratingo/web-core/auth';
-import { libraryApi, type MediaSaveStatus, type UserMediaState } from '@/shared/api';
+import {
+  episodeProgressApi,
+  libraryApi,
+  type MediaSaveStatus,
+  type UserMediaState,
+} from '@/shared/api';
 import { closeAuth, useAuthRequest } from '@/shared/auth';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { HeroActions, type ActionMedia } from './hero-actions';
 
-jest.mock('@ratingo/web-core/auth', () => ({ useAuth: jest.fn() }));
+jest.mock('@ratingo/web-core/auth', () => ({
+  useAuth: jest.fn(),
+  tokenStorage: { getRefreshToken: () => 'refresh-token' },
+}));
 jest.mock('@/shared/api', () => ({
+  episodeProgressApi: { getShowProgress: jest.fn() },
   libraryApi: {
     getSaveStatuses: jest.fn(),
     getRatings: jest.fn(),
@@ -174,5 +183,43 @@ describe('HeroActions', () => {
     expect(await screen.findByRole('heading', { name: 'Ще не дивишся?' })).toBeInTheDocument();
     expect(screen.getByText('2 сезони · 20 серій')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Хочу подивитись' })).toBeInTheDocument();
+  });
+
+  it('shows a viewer who already marks episodes the next one to watch', async () => {
+    jest.mocked(useAuth).mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+      user: { id: 'user-1' },
+    } as ReturnType<typeof useAuth>);
+    jest.mocked(episodeProgressApi.getShowProgress).mockResolvedValue({
+      showId: 'shogun-show',
+      seasons: [{ seasonNumber: 1, watchedCount: 1, totalCount: 2, watchedEpisodeIds: ['e1'] }],
+    });
+    renderActions({
+      ...SHOGUN,
+      showId: 'shogun-show',
+      seasons: [
+        {
+          number: 1,
+          episodes: [
+            { id: 'e1', seasonNumber: 1, number: 1, title: 'Анджін', airDate: '2024-02-27' },
+            {
+              id: 'e2',
+              seasonNumber: 1,
+              number: 2,
+              title: 'Слуги двох господарів',
+              airDate: '2024-02-27',
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Сезон 1' })).toBeInTheDocument();
+    expect(screen.getByText('Слуги двох господарів')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Позначити переглянутою: Слуги двох господарів' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Хочу подивитись' })).not.toBeInTheDocument();
   });
 });

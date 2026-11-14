@@ -12,6 +12,7 @@ export type HomeItem = components['schemas']['HeroItemDto'];
 export type NewEpisode = components['schemas']['NewEpisodeDto'];
 export type MovieDetails = components['schemas']['MovieResponseDto'];
 export type ShowDetails = components['schemas']['ShowResponseDto'];
+export type ShowSeason = components['schemas']['SeasonDto'];
 export type MediaBadge = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
 type PageMeta = components['schemas']['OffsetPaginationMetaDto'];
 

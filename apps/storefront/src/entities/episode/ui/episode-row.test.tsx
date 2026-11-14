@@ -1,0 +1,59 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { I18nProvider, getDictionary } from '@/shared/i18n';
+import type { Episode } from '../model/season';
+import { EpisodeRow } from './episode-row';
+
+const EPISODE: Episode = {
+  id: 'e3',
+  seasonNumber: 1,
+  number: 3,
+  title: 'Reckoning',
+  airDate: '2022-09-21',
+  runtimeMinutes: 40,
+};
+
+function renderRow(props: Partial<Parameters<typeof EpisodeRow>[0]>) {
+  return render(
+    <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
+      <ul>
+        <EpisodeRow episode={EPISODE} isAired {...props} />
+      </ul>
+    </I18nProvider>,
+  );
+}
+
+describe('EpisodeRow', () => {
+  it('toggles an aired episode as a checkbox named after the episode', () => {
+    const onWatchedChange = jest.fn();
+    renderRow({ onWatchedChange });
+
+    const checkbox = screen.getByRole('checkbox', { name: 'С1 · Е3: Reckoning' });
+    expect(checkbox).not.toBeChecked();
+
+    fireEvent.click(checkbox);
+    expect(onWatchedChange).toHaveBeenCalledWith(EPISODE, true);
+  });
+
+  it('unmarks a watched episode', () => {
+    const onWatchedChange = jest.fn();
+    renderRow({ isWatched: true, onWatchedChange });
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(onWatchedChange).toHaveBeenCalledWith(EPISODE, false);
+  });
+
+  it('offers no toggle for an episode that has not aired', () => {
+    renderRow({ isAired: false, onWatchedChange: jest.fn() });
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('becomes a pick button while choosing where the viewer stopped', () => {
+    const onPick = jest.fn();
+    renderRow({ onWatchedChange: jest.fn(), onPick });
+
+    fireEvent.click(screen.getByRole('button', { name: 'С1 · Е3: Reckoning' }));
+    expect(onPick).toHaveBeenCalled();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+});

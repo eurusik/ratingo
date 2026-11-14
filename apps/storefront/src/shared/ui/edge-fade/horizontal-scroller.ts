@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 const EDGE_TOLERANCE_PX = 2;
-const ACTIVE_ITEM_SELECTOR = '[aria-current="page"]';
+const CURRENT_PAGE_SELECTOR = '[aria-current="page"]';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 const EDGE_FADE_REM = 2.5;
@@ -70,7 +70,11 @@ function scrollBehaviorFor(isChange: boolean): ScrollBehavior {
   return isChange && !window.matchMedia(REDUCED_MOTION_QUERY).matches ? 'smooth' : 'instant';
 }
 
-function useActiveItemInView(ref: RefObject<HTMLElement | null>, activeKey: string) {
+function useActiveItemInView(
+  ref: RefObject<HTMLElement | null>,
+  activeKey: string,
+  activeSelector: string,
+) {
   const previousKey = useRef(activeKey);
 
   useLayoutEffect(() => {
@@ -78,25 +82,27 @@ function useActiveItemInView(ref: RefObject<HTMLElement | null>, activeKey: stri
     previousKey.current = activeKey;
 
     const container = ref.current;
-    const item = container?.querySelector<HTMLElement>(ACTIVE_ITEM_SELECTOR);
+    const item = container?.querySelector<HTMLElement>(activeSelector);
     if (!container || !item || isClearOfFades(item, container)) return;
 
     const centeredLeft = item.offsetLeft - (container.clientWidth - item.offsetWidth) / 2;
     container.scrollTo({ left: centeredLeft, behavior: scrollBehaviorFor(isChange) });
-  }, [ref, activeKey]);
+  }, [ref, activeKey, activeSelector]);
 }
 
 interface HorizontalScrollerOptions {
   activeKey: string;
   contentKey: string;
+  activeSelector?: string;
 }
 
 export function useHorizontalScroller<T extends HTMLElement>({
   activeKey,
   contentKey,
+  activeSelector = CURRENT_PAGE_SELECTOR,
 }: HorizontalScrollerOptions) {
   const ref = useRef<T>(null);
-  useActiveItemInView(ref, activeKey);
+  useActiveItemInView(ref, activeKey, activeSelector);
   const edges = useScrollEdges(ref, contentKey);
   return { ref, edges };
 }

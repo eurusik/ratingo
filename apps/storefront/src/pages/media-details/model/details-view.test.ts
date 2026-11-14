@@ -68,6 +68,8 @@ describe('fromShowDetails', () => {
   it('carries seasons, episodes and the show status', () => {
     const show = fromShowDetails({
       ...MOVIE,
+      showId: 'show-1',
+      seasons: [{ number: 1, episodes: [{ id: 'e1', number: 1 }] }],
       totalSeasons: 2,
       totalEpisodes: 20,
       status: 'Returning Series',
@@ -76,6 +78,8 @@ describe('fromShowDetails', () => {
 
     expect(show).toMatchObject({
       type: 'show',
+      showId: 'show-1',
+      seasons: [{ number: 1, episodes: [{ id: 'e1', seasonNumber: 1, number: 1 }] }],
       seasonCount: 2,
       episodeCount: 20,
       status: 'Returning Series',

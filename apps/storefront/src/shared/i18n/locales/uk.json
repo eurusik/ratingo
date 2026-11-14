@@ -26,7 +26,6 @@
     },
     "newEpisodes": "Нові серії",
     "newEpisodesCaption": "Що вийшло за останній тиждень",
-    "episodeCode": "С{season} · Е{episode}",
     "episodeLabel": "Сезон {season}, серія {episode}",
     "newReleases": "Новинки",
     "newReleasesCaption": "Щойно в кіно та на стрімінгах",
@@ -644,6 +643,56 @@
     "money": {
       "millions": "{amount} млн $",
       "billions": "{amount} млрд $"
+    }
+  },
+  "episodes": {
+    "title": "Серії",
+    "season": "Сезон {number}",
+    "seasonTab": "Сезон",
+    "seasonsLabel": "Сезони",
+    "seasonAria": "Сезон {number}, {watched} з {aired}",
+    "seasonProgress": "Сезон {number} · {watched} з {aired}",
+    "seasonWatched": "Сезон {number} переглянуто",
+    "seasonProgressLabel": "Переглянуто серій сезону {number}",
+    "showProgress": "{title} · {watched} з {episodes}",
+    "showSize": "{title} · {episodes}",
+    "episodeCode": "С{season} · Е{episode}",
+    "episodeShort": "Е{episode}",
+    "untitled": "Серія {number}",
+    "episodeAria": "{code}: {title}",
+    "next": "Далі",
+    "markSeason": "Весь сезон",
+    "allEpisodes": "Усі серії",
+    "markNext": "Позначити переглянутою: {title}",
+    "caughtUp": "Ти все наздогнав",
+    "remindNext": "Нагадаємо, коли вийде {code}",
+    "airs": "{code} вийде {date}",
+    "perEpisode": "по {minutes} хв",
+    "watchedUntil": "Я вже дивився до…",
+    "menu": {
+      "label": "Дії із сезоном",
+      "pickUntil": "Я дивився до…",
+      "catchUp": "Наздогнати все, що вийшло",
+      "resetSeason": "Скинути цей сезон",
+      "resetAll": "Скинути весь прогрес"
+    },
+    "pick": {
+      "banner": "Обери серію, на якій зупинився",
+      "cancel": "Скасувати",
+      "confirm": "Позначити {episodes} до {code}"
+    },
+    "notice": {
+      "watched": "Переглянуто {code}",
+      "unwatched": "Знято: {code}",
+      "range": "Позначено {from}–{to}",
+      "onlyThis": "Лише {episode}",
+      "seasonWatched": "Сезон {number} переглянуто",
+      "seasonReset": "Сезон {number} скинуто",
+      "caughtUp": "Позначено все, що вийшло: {episodes}",
+      "pickedUntil": "Позначено все до {code}",
+      "undo": "Скасувати",
+      "failed": "Не вдалося зберегти прогрес. Спробуй ще раз.",
+      "allReset": "Увесь прогрес скинуто"
     }
   }
 }
