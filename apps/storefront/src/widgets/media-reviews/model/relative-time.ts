@@ -9,6 +9,8 @@ const UNITS: ReadonlyArray<[Intl.RelativeTimeFormatUnit, number]> = [
   ['minute', 60],
 ];
 
+const SERVICE_TIME_ZONE = 'Europe/Kyiv';
+
 const relativeFormats = new Map<Locale, Intl.RelativeTimeFormat>();
 const dateFormats = new Map<Locale, Intl.DateTimeFormat>();
 
@@ -22,8 +24,15 @@ function cached<T>(formats: Map<Locale, T>, locale: Locale, create: () => T): T 
 }
 
 export function formatFullDate(date: string, locale: Locale): string {
-  return cached(dateFormats, locale, () =>
-    new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short' }),
+  return cached(
+    dateFormats,
+    locale,
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'long',
+        timeStyle: 'short',
+        timeZone: SERVICE_TIME_ZONE,
+      }),
   ).format(Date.parse(date));
 }
 
@@ -38,7 +47,9 @@ export function formatRelativeTime(
   const unit = UNITS.find(([, seconds]) => elapsedSeconds >= seconds);
   if (!unit) return justNow;
   const [name, seconds] = unit;
-  return cached(relativeFormats, locale, () =>
-    new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }),
+  return cached(
+    relativeFormats,
+    locale,
+    () => new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }),
   ).format(-Math.floor(elapsedSeconds / seconds), name);
 }

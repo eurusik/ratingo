@@ -27,7 +27,7 @@ import { ReportedReview } from './reported-review';
 import { ReviewCard } from './review-card';
 import { ReviewDialogs } from './review-dialogs';
 import { ReviewsProvider, useReviewsActions, type ReviewsActions } from './reviews-context';
-import { ReviewsSkeleton } from './reviews-skeleton';
+import { ReviewsSkeleton, ViewerPromptSkeleton } from './reviews-skeleton';
 import { EmptyReviews, GuestPrompt, WritePrompt } from './viewer-prompt';
 
 type ReviewsStatus = 'pending' | 'error' | 'success';
@@ -128,8 +128,8 @@ export function ReviewsBoard({
   );
 
   const isListReady = status === 'success';
-  const isViewerReady =
-    isListReady && !myReview.isResolving && !isAuthResolving && !isDeletingMine;
+  const isViewerResolving = myReview.isResolving || isAuthResolving;
+  const isViewerReady = isListReady && !isViewerResolving && !isDeletingMine;
 
   return (
     <ReviewsProvider value={actions}>
@@ -143,6 +143,7 @@ export function ReviewsBoard({
           {status === 'error' ? <LoadError onRetry={onRetry} /> : null}
           {myReview.isError ? <LoadError onRetry={myReview.retry} /> : null}
           {status === 'pending' ? <ReviewsSkeleton /> : null}
+          {isListReady && isViewerResolving ? <ViewerPromptSkeleton /> : null}
           {isViewerReady && !myReview.isError ? (
             <ViewerSlot
               hasMine={ownReview !== null}

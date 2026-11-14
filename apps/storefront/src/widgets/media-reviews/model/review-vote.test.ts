@@ -41,7 +41,10 @@ describe('withVote', () => {
   it('is undone by restoring the previous vote', () => {
     fc.assert(
       fc.property(reviews, votes, (review, vote) => {
-        const restored = withVote(withVote(review, vote), review.currentUserVote as VoteType | null);
+        const restored = withVote(
+          withVote(review, vote),
+          review.currentUserVote as VoteType | null,
+        );
         expect(restored).toEqual(review);
       }),
     );

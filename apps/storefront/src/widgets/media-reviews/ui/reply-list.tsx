@@ -83,13 +83,19 @@ export function ReplyList({ review, onTarget }: ReplyListProps) {
     return (
       <div role="alert" className="flex items-center gap-3 text-sm text-muted">
         <span className="flex-1">{dict.reviews.replies.loadError}</span>
-        <Button variant="ghost" size="sm" onPress={() => void query.refetch()} className="min-h-tap">
+        <Button
+          variant="ghost"
+          size="sm"
+          onPress={() => void query.refetch()}
+          className="min-h-tap"
+        >
           {dict.common.retry}
         </Button>
       </div>
     );
   }
-  if (thread.length === 0) return <p className="text-sm text-muted">{dict.reviews.replies.empty}</p>;
+  if (thread.length === 0)
+    return <p className="text-sm text-muted">{dict.reviews.replies.empty}</p>;
 
   return (
     <ul className="flex flex-col gap-3.5">

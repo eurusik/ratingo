@@ -1,12 +1,11 @@
 'use client';
 
-import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@ratingo/web-core/auth';
-import { reviewsApi, type ReviewSort } from '@/shared/api';
+import { reviewsApi, type ReviewPage, type ReviewSort } from '@/shared/api';
 import { myReviewKey, reviewPagesKey, topReviewsKey } from './review-keys';
+import { TOP_REVIEWS_QUERY, reviewPageQuery } from './review-queries';
 
-export const TOP_REVIEWS_SHOWN = 3;
-const REVIEWS_PAGE_SIZE = 10;
 const REVIEWS_STALE_MS = 60_000;
 
 function useViewer() {
@@ -14,39 +13,39 @@ function useViewer() {
   return { viewer: user?.id ?? null, isKnown: !isLoading, isAuthenticated };
 }
 
-export function useTopReviews(mediaItemId: string) {
+function asSeed(viewer: string | null, initial: ReviewPage | null) {
+  return viewer === null && initial ? initial : undefined;
+}
+
+export function useTopReviews(mediaItemId: string, initial: ReviewPage | null) {
   const { viewer, isKnown } = useViewer();
   return useQuery({
     queryKey: topReviewsKey(mediaItemId, viewer),
-    queryFn: () =>
-      reviewsApi.listForMedia(mediaItemId, {
-        sort: 'most_liked',
-        limit: TOP_REVIEWS_SHOWN + 1,
-        offset: 0,
-      }),
+    queryFn: () => reviewsApi.listForMedia(mediaItemId, TOP_REVIEWS_QUERY),
+    initialData: asSeed(viewer, initial),
+    placeholderData: initial ?? undefined,
     enabled: isKnown,
     staleTime: REVIEWS_STALE_MS,
   });
 }
 
-export function useReviewPages(mediaItemId: string, sort: ReviewSort) {
+export function useReviewPages(mediaItemId: string, sort: ReviewSort, initial: ReviewPage | null) {
   const { viewer, isKnown } = useViewer();
+  const seed = asSeed(viewer, initial);
   return useInfiniteQuery({
     queryKey: reviewPagesKey(mediaItemId, sort, viewer),
     queryFn: ({ pageParam }) =>
-      reviewsApi.listForMedia(mediaItemId, {
-        sort,
-        limit: REVIEWS_PAGE_SIZE,
-        offset: pageParam,
-      }),
+      reviewsApi.listForMedia(mediaItemId, reviewPageQuery(sort, pageParam)),
     initialPageParam: 0,
+    initialData: seed ? { pages: [seed], pageParams: [0] } : undefined,
     getNextPageParam: (lastPage, pages) => {
       const loaded = pages.reduce((count, page) => count + page.reviews.length, 0);
       return lastPage.reviews.length > 0 && loaded < lastPage.total ? loaded : undefined;
     },
     enabled: isKnown,
     staleTime: REVIEWS_STALE_MS,
-    placeholderData: keepPreviousData,
+    placeholderData: (previous) =>
+      previous ?? (initial ? { pages: [initial], pageParams: [0] } : undefined),
   });
 }
 

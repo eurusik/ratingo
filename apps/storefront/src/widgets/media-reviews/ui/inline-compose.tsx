@@ -29,7 +29,11 @@ export function InlineCompose({ editing, onDone }: InlineComposeProps) {
         onPublished={onDone}
         onCancel={editing ? closing.request : undefined}
       />
-      <DiscardDraftDialog isOpen={closing.isAsking} onKeep={closing.keep} onDiscard={closing.discard} />
+      <DiscardDraftDialog
+        isOpen={closing.isAsking}
+        onKeep={closing.keep}
+        onDiscard={closing.discard}
+      />
     </section>
   );
 }

@@ -94,10 +94,12 @@ export function ReviewForm({ draft, editing, layout, onPublished, onCancel }: Re
   const [isRatingMissing, setIsRatingMissing] = useState(false);
   const ratingErrorId = useId();
   const copy = dict.reviews.compose;
-  const edited = <T,>(change: (value: T) => void) => (value: T) => {
-    publish.reset();
-    change(value);
-  };
+  const edited =
+    <T,>(change: (value: T) => void) =>
+    (value: T) => {
+      publish.reset();
+      change(value);
+    };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -27,10 +27,14 @@ function ReviewCardSkeleton() {
   );
 }
 
+export function ViewerPromptSkeleton() {
+  return <Skeleton aria-hidden className="h-23 w-full rounded-3xl md:h-18" />;
+}
+
 export function ReviewsSkeleton() {
   return (
     <div aria-hidden className="flex flex-col gap-4">
-      <Skeleton className="h-23 w-full rounded-3xl md:h-18" />
+      <ViewerPromptSkeleton />
       {PLACEHOLDER_CARDS.map((card) => (
         <ReviewCardSkeleton key={card} />
       ))}
@@ -38,7 +42,12 @@ export function ReviewsSkeleton() {
   );
 }
 
-export function ReviewsBoardSkeleton({ label }: { label: string }) {
+interface ReviewsBoardSkeletonProps {
+  label: string;
+  withSort?: boolean;
+}
+
+export function ReviewsBoardSkeleton({ label, withSort = false }: ReviewsBoardSkeletonProps) {
   return (
     <div
       role="status"
@@ -50,11 +59,13 @@ export function ReviewsBoardSkeleton({ label }: { label: string }) {
           <div className="flex min-h-tap items-center">
             <Skeleton className="h-7 w-36 rounded-full md:h-8" />
           </div>
-          <div className="flex gap-2">
-            {SORT_TAB_WIDTHS.map((width) => (
-              <Skeleton key={width} className={`h-11 rounded-full ${width}`} />
-            ))}
-          </div>
+          {withSort ? (
+            <div className="flex gap-2">
+              {SORT_TAB_WIDTHS.map((width) => (
+                <Skeleton key={width} className={`h-11 rounded-full ${width}`} />
+              ))}
+            </div>
+          ) : null}
         </div>
         <ReviewsSkeleton />
       </div>

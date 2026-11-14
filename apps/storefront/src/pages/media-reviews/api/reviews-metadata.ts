@@ -15,6 +15,5 @@ export async function reviewsMetadata(
     title: interpolate(dict.pageTitle, { title: media.title }),
     description: interpolate(dict.metaDescription, { title: media.title }),
     alternates: { canonical: mediaReviewsRoute(type, media.slug) },
-    robots: { index: false, follow: true },
   };
 }

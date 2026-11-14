@@ -13,7 +13,7 @@ export function ReviewsPageSkeleton({ label }: { label: string }) {
         <Skeleton className="h-4 w-24 rounded-full" />
       </div>
       <div className="px-4 md:px-0">
-        <ReviewsBoardSkeleton label={label} />
+        <ReviewsBoardSkeleton label={label} withSort />
       </div>
     </div>
   );

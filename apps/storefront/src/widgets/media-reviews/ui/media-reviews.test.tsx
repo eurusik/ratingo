@@ -2,7 +2,13 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@heroui/react/toast';
 import { useAuth } from '@ratingo/web-core/auth';
-import { libraryApi, reviewsApi, type Review, type UserMediaState } from '@/shared/api';
+import {
+  libraryApi,
+  reviewsApi,
+  type Review,
+  type ReviewPage,
+  type UserMediaState,
+} from '@/shared/api';
 import { closeAuth, useAuthRequest } from '@/shared/auth';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { reportedReviews } from '../model/hidden-reviews';
@@ -60,14 +66,18 @@ function AuthRequestProbe() {
   return useAuthRequest() ? <p>auth requested</p> : null;
 }
 
-function renderReviews() {
+function renderReviews(initialPage: ReviewPage | null = null) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   render(
     <QueryClientProvider client={queryClient}>
       <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
-        <MediaReviews media={DUNE} community={{ averageScore: 8.1, ratingCount: 214 }} />
+        <MediaReviews
+          media={DUNE}
+          community={{ averageScore: 8.1, ratingCount: 214 }}
+          initialPage={initialPage}
+        />
         <AuthRequestProbe />
         <ToastProvider />
       </I18nProvider>
@@ -102,6 +112,27 @@ describe('MediaReviews', () => {
       '/movies/dune-2/reviews',
     );
     expect(screen.getByText('Дивився? Розкажи, як тобі')).toBeInTheDocument();
+  });
+
+  it('shows the reviews rendered on the server without asking again', async () => {
+    signIn(null);
+    renderReviews({ reviews: [reviewBy('olya')], total: 1 });
+
+    expect(screen.getByRole('article', { name: 'Відгук olya' })).toBeInTheDocument();
+    await screen.findByText('Дивився? Розкажи, як тобі');
+    expect(reviewsApi.listForMedia).not.toHaveBeenCalled();
+  });
+
+  it('keeps the server reviews on screen while a signed-in viewer’s votes load', async () => {
+    signIn('me');
+    listing([reviewBy('olya', { currentUserVote: 'like', likesCount: 5 })]);
+    renderReviews({ reviews: [reviewBy('olya')], total: 1 });
+
+    expect(screen.getByRole('button', { name: 'Корисний відгук, 4' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Корисний відгук, 5' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
   it('hides a spoiler until the reader asks for it', async () => {
@@ -185,9 +216,10 @@ describe('MediaReviews', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Ще дії з відгуком' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Поскаржитись' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Надіслати скаргу' }));
-    expect(
-      await screen.findByText('Вибери причину, щоб ми знали, що перевірити'),
-    ).toHaveAttribute('role', 'alert');
+    expect(await screen.findByText('Вибери причину, щоб ми знали, що перевірити')).toHaveAttribute(
+      'role',
+      'alert',
+    );
 
     fireEvent.click(screen.getByRole('radio', { name: 'Спам або реклама' }));
     fireEvent.click(screen.getByRole('button', { name: 'Надіслати скаргу' }));

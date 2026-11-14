@@ -6,19 +6,22 @@ import { mediaReviewsRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { formatCompactCount } from '@/shared/lib';
 import { ForwardLink } from '@/shared/ui';
+import type { ReviewPage } from '@/shared/api';
 import type { CommunityScore, ReviewedMedia } from '../model/reviewed-media';
-import { TOP_REVIEWS_SHOWN, useMyReview, useTopReviews } from '../model/use-review-lists';
+import { TOP_REVIEWS_SHOWN } from '../model/review-queries';
+import { useMyReview, useTopReviews } from '../model/use-review-lists';
 import { ReviewsBoard } from './reviews-board';
 import { ReviewsHeading } from './reviews-heading';
 
 interface MediaReviewsProps {
   media: ReviewedMedia;
   community: CommunityScore;
+  initialPage: ReviewPage | null;
 }
 
-export function MediaReviews({ media, community }: MediaReviewsProps) {
+export function MediaReviews({ media, community, initialPage }: MediaReviewsProps) {
   const { dict, locale } = useTranslation();
-  const top = useTopReviews(media.mediaItemId);
+  const top = useTopReviews(media.mediaItemId, initialPage);
   const { mine } = useMyReview(media.mediaItemId);
   const total = top.data?.total ?? 0;
   const mineId = mine?.id;

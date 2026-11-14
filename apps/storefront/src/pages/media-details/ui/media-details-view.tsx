@@ -1,4 +1,5 @@
-import { MediaReviews } from '@/widgets/media-reviews';
+import { Suspense } from 'react';
+import { MediaReviewsSection, ReviewsBoardSkeleton } from '@/widgets/media-reviews';
 import { HOME_ROUTE, mediaRoute } from '@/shared/config';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import { hasCredits } from '../model/credits';
@@ -69,10 +70,17 @@ export function MediaDetailsView({ view, locale }: { view: View; locale: Locale 
           <FactsCard view={view} locale={locale} />
         </aside>
         <div className="md:col-span-2">
-          <MediaReviews
-            media={{ mediaItemId: view.mediaItemId, type: view.type, slug: view.slug, title: view.title }}
-            community={view.community}
-          />
+          <Suspense fallback={<ReviewsBoardSkeleton label={dict.common.loading} />}>
+            <MediaReviewsSection
+              media={{
+                mediaItemId: view.mediaItemId,
+                type: view.type,
+                slug: view.slug,
+                title: view.title,
+              }}
+              community={view.community}
+            />
+          </Suspense>
         </div>
       </div>
     </article>

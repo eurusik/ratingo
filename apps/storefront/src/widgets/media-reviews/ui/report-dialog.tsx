@@ -50,11 +50,7 @@ function ReportForm({ review, onDone }: { review: Review; onDone: () => void }) 
         className="gap-0 overflow-hidden rounded-2xl bg-surface"
       >
         {REPORT_REASONS.map((value) => (
-          <Radio
-            key={value}
-            value={value}
-            className="border-t border-separator first:border-t-0"
-          >
+          <Radio key={value} value={value} className="border-t border-separator first:border-t-0">
             <Radio.Content className="min-h-12.5 w-full flex-row-reverse justify-between px-3.5 text-[15px]">
               <Radio.Control>
                 <Radio.Indicator />

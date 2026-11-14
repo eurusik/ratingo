@@ -4,15 +4,21 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { Review } from '@/shared/api';
 
-const ComposeSheet = dynamic(() => import('./compose-sheet').then((module) => module.ComposeSheet), {
-  ssr: false,
-});
+const ComposeSheet = dynamic(
+  () => import('./compose-sheet').then((module) => module.ComposeSheet),
+  {
+    ssr: false,
+  },
+);
 const ThreadSheet = dynamic(() => import('./thread-sheet').then((module) => module.ThreadSheet), {
   ssr: false,
 });
-const ReportDialog = dynamic(() => import('./report-dialog').then((module) => module.ReportDialog), {
-  ssr: false,
-});
+const ReportDialog = dynamic(
+  () => import('./report-dialog').then((module) => module.ReportDialog),
+  {
+    ssr: false,
+  },
+);
 
 function useHasOpened(isOpen: boolean): boolean {
   const [hasOpened, setHasOpened] = useState(isOpen);

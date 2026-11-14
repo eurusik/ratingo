@@ -3,11 +3,16 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@heroui/react';
-import type { ReviewSort } from '@/shared/api';
+import type { ReviewPage, ReviewSort } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { SegmentedFilter } from '@/shared/ui';
 import type { CommunityScore, ReviewedMedia } from '../model/reviewed-media';
-import { REVIEW_SORTS, REVIEW_SORT_PARAM, parseReviewSort, reviewSortSearch } from '../model/review-sort';
+import {
+  REVIEW_SORTS,
+  REVIEW_SORT_PARAM,
+  parseReviewSort,
+  reviewSortSearch,
+} from '../model/review-sort';
 import { useReviewPages } from '../model/use-review-lists';
 import { ReviewsBoard } from './reviews-board';
 import { ReviewsHeading } from './reviews-heading';
@@ -15,6 +20,8 @@ import { ReviewsHeading } from './reviews-heading';
 interface AllReviewsProps {
   media: ReviewedMedia;
   community: CommunityScore;
+  initialSort: ReviewSort;
+  initialPage: ReviewPage | null;
 }
 
 function replaceSortInUrl(sort: ReviewSort): void {
@@ -22,11 +29,14 @@ function replaceSortInUrl(sort: ReviewSort): void {
   window.history.replaceState(null, '', url);
 }
 
-export function AllReviews({ media, community }: AllReviewsProps) {
+export function AllReviews({ media, community, initialSort, initialPage }: AllReviewsProps) {
   const { dict } = useTranslation();
   const sort = parseReviewSort(useSearchParams()?.get(REVIEW_SORT_PARAM));
-  const pages = useReviewPages(media.mediaItemId, sort);
-  const reviews = useMemo(() => pages.data?.pages.flatMap((page) => page.reviews) ?? [], [pages.data]);
+  const pages = useReviewPages(media.mediaItemId, sort, sort === initialSort ? initialPage : null);
+  const reviews = useMemo(
+    () => pages.data?.pages.flatMap((page) => page.reviews) ?? [],
+    [pages.data],
+  );
   const total = pages.data?.pages[0]?.total ?? 0;
   const sortOptions = REVIEW_SORTS.map((id) => ({ id, label: dict.reviews.sort[id] }));
 

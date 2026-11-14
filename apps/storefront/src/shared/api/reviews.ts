@@ -1,6 +1,7 @@
 import type { components } from '@ratingo/api-contract';
 import { apiDelete, apiGet, apiPatch, apiPost } from '@ratingo/web-core/api';
 import type { MediaType } from './catalog';
+import { cacheOptions, type CatalogCache } from './request-cache';
 
 export type Review = components['schemas']['ReviewResponseDto'];
 export type ReviewReply = components['schemas']['ReplyResponseDto'];
@@ -47,9 +48,14 @@ interface ReviewPageQuery {
 }
 
 export const reviewsApi = {
-  async listForMedia(mediaItemId: string, query: ReviewPageQuery): Promise<ReviewPage> {
+  async listForMedia(
+    mediaItemId: string,
+    query: ReviewPageQuery,
+    cache?: CatalogCache,
+  ): Promise<ReviewPage> {
     const list = await apiGet<ReviewList>(`reviews/media/${mediaItemId}`, {
       searchParams: { ...query },
+      ...cacheOptions(cache),
     });
     const meta = list.meta as ReviewMeta;
     return { reviews: list.data, total: meta.total ?? list.data.length };

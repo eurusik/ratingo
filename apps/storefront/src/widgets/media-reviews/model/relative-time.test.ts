@@ -21,8 +21,6 @@ describe('formatRelativeTime', () => {
   });
 
   it('shows the full date before the client clock is known', () => {
-    expect(formatRelativeTime(ago(60), Number.POSITIVE_INFINITY, 'en', 'just now')).toMatch(
-      /2026/,
-    );
+    expect(formatRelativeTime(ago(60), Number.POSITIVE_INFINITY, 'en', 'just now')).toMatch(/2026/);
   });
 });

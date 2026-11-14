@@ -32,7 +32,11 @@ export function ComposeSheet({ isOpen, editing, onClose }: ComposeSheetProps) {
       >
         <ReviewForm draft={draft} editing={editing} layout="sheet" onPublished={onClose} />
       </Sheet>
-      <DiscardDraftDialog isOpen={closing.isAsking} onKeep={closing.keep} onDiscard={closing.discard} />
+      <DiscardDraftDialog
+        isOpen={closing.isAsking}
+        onKeep={closing.keep}
+        onDiscard={closing.discard}
+      />
     </>
   );
 }

@@ -1,5 +1,8 @@
 import type { GetData, GetQuery, components } from '@ratingo/api-contract';
 import { apiGet, apiPost } from '@ratingo/web-core/api';
+import { cacheOptions, type CatalogCache } from './request-cache';
+
+export type { CatalogCache } from './request-cache';
 
 export type SearchItem = components['schemas']['SearchItemDto'];
 export type SearchResponse = components['schemas']['SearchResponseDto'];
@@ -35,25 +38,10 @@ export interface CatalogPage<T> {
   hasMore: boolean;
 }
 
-export interface CatalogCache {
-  revalidateSeconds: number;
-}
-
 const IMPORT_PATHS: Record<MediaType, string> = {
   movie: 'catalog/import/movie',
   show: 'catalog/import/show',
 };
-
-const CACHED_REQUEST_TIMEOUT_MS = 5000;
-
-function cacheOptions(cache: CatalogCache | undefined) {
-  if (!cache) return {};
-  return {
-    next: { revalidate: cache.revalidateSeconds },
-    timeout: CACHED_REQUEST_TIMEOUT_MS,
-    retry: { limit: 1 },
-  };
-}
 
 function definedParams(query: CatalogListQuery): Record<string, string | number> {
   return Object.fromEntries(

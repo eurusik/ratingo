@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { AllReviews } from '@/widgets/media-reviews';
+import { AllReviewsSection, ReviewsBoardSkeleton, parseReviewSort } from '@/widgets/media-reviews';
 import type { MediaType } from '@/shared/api';
 import { mediaRoute } from '@/shared/config';
 import { getDictionary, interpolate, type Locale } from '@/shared/i18n';
@@ -11,10 +11,11 @@ import { ReviewsTopBar } from './reviews-top-bar';
 interface MediaReviewsPageProps {
   type: MediaType;
   slug: string;
+  sort?: string;
   locale: Locale;
 }
 
-export async function MediaReviewsPage({ type, slug, locale }: MediaReviewsPageProps) {
+export async function MediaReviewsPage({ type, slug, sort, locale }: MediaReviewsPageProps) {
   const { media, community } = await loadReviewsSubject(type, slug);
   const dict = getDictionary(locale).reviews;
   const titleHref = mediaRoute(type, media.slug);
@@ -31,8 +32,10 @@ export async function MediaReviewsPage({ type, slug, locale }: MediaReviewsPageP
         {media.title}
       </BackLink>
       <div className="px-4 md:px-0">
-        <Suspense>
-          <AllReviews media={media} community={community} />
+        <Suspense
+          fallback={<ReviewsBoardSkeleton label={getDictionary(locale).common.loading} withSort />}
+        >
+          <AllReviewsSection media={media} community={community} sort={parseReviewSort(sort)} />
         </Suspense>
       </div>
     </article>
