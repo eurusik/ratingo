@@ -14,6 +14,7 @@ export function ReviewsTopBar({ title, backHref }: ReviewsTopBarProps) {
 
   return (
     <div
+      data-top-bar
       data-glass-bar
       className="sticky top-0 z-30 -mt-(--page-top) border-b border-separator bg-background/85 pt-safe-top pr-safe-right pl-safe-left backdrop-blur-xl md:hidden"
     >

@@ -39,9 +39,25 @@ function takeRemembered(memory: Map<string, number>, key: string): number | unde
   return remembered;
 }
 
+const SCROLL_RESTORING_ATTRIBUTE = 'data-scroll-restoring';
+const SCROLL_RESTORING_FRAMES = 3;
+
+function markScrollRestoring(): void {
+  const root = document.documentElement;
+  root.setAttribute(SCROLL_RESTORING_ATTRIBUTE, '');
+  let framesLeft = SCROLL_RESTORING_FRAMES;
+  const countDown = () => {
+    framesLeft -= 1;
+    if (framesLeft > 0) requestAnimationFrame(countDown);
+    else root.removeAttribute(SCROLL_RESTORING_ATTRIBUTE);
+  };
+  requestAnimationFrame(countDown);
+}
+
 export function restoreRememberedScroll(): void {
   const rememberedY = takeRemembered(scrollByLocation, currentLocationKey());
   if (rememberedY === undefined) return;
+  markScrollRestoring();
   window.scrollTo(0, rememberedY);
   reportNavigationStep('scroll-restored', { y: rememberedY });
 }

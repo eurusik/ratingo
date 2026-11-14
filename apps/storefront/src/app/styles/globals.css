@@ -234,6 +234,10 @@
   transition: none;
 }
 
+:root[data-scroll-restoring] [data-top-bar] {
+  transition: none;
+}
+
 :root[data-nav-transition] [data-content-transition-only] {
   view-transition-name: none;
 }
