@@ -30,16 +30,20 @@ function Shelf({ actions }: { actions: LibraryActions }) {
   return (
     <div className="mt-4">
       <Button
-        variant="ghost"
+        size="sm"
+        variant="outline"
         aria-expanded={isOpen}
         aria-controls={panelId}
         onPress={() => setIsOpen((open) => !open)}
-        className="min-h-tap gap-1.5 px-0 text-sm font-semibold text-muted"
+        className="min-h-tap gap-1.5 rounded-full px-4 text-muted"
       >
-        {interpolate(dict.my.watching.shelf, {
-          paused: pausedItems.length,
-          dropped: droppedItems.length,
-        })}
+        {[
+          { label: dict.my.lists.paused, count: pausedItems.length },
+          { label: dict.my.lists.dropped, count: droppedItems.length },
+        ]
+          .filter(({ count }) => count > 0)
+          .map(({ label, count }) => interpolate(dict.my.watching.shelfPart, { label, count }))
+          .join(' · ')}
         <ChevronDown
           aria-hidden
           className={cn(

@@ -141,7 +141,7 @@
       "nextEpisode": "Next: {code} · {count} left",
       "airsOn": "New episode {date}",
       "caughtUp": "Caught up",
-      "shelf": "Paused · {paused} · Dropped · {dropped}",
+      "shelfPart": "{label} · {count}",
       "restore": "Resume",
       "empty": {
         "title": "Shows you're watching will appear here",

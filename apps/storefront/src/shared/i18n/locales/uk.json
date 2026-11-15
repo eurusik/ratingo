@@ -141,7 +141,7 @@
       "nextEpisode": "Далі: {code} · ще {count}",
       "airsOn": "Нова серія {date}",
       "caughtUp": "Наздогнав",
-      "shelf": "На паузі · {paused} · Покинуто · {dropped}",
+      "shelfPart": "{label} · {count}",
       "restore": "Повернути",
       "empty": {
         "title": "Тут будуть серіали, які ти дивишся",
