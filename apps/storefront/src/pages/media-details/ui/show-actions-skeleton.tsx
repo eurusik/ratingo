@@ -1,8 +1,6 @@
-'use client';
-
 import { Skeleton } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
-import { useTrackingGuess } from '../model/tracking-guess';
+import type { TrackingState } from '@/entities/episode';
 import { ActionsSkeleton } from './actions-skeleton';
 
 const CARD = 'flex flex-col gap-3 rounded-3xl bg-surface/45 p-4';
@@ -62,15 +60,9 @@ function WatchingSkeleton({ hasUpcoming }: { hasUpcoming: boolean }) {
   );
 }
 
-interface ShowActionsSkeletonProps {
-  showId?: string;
-  hasUpcoming: boolean;
-}
-
-export function ShowActionsSkeleton({ showId, hasUpcoming }: ShowActionsSkeletonProps) {
-  const guess = useTrackingGuess(showId);
-
-  if (guess === 'watching') return <WatchingSkeleton hasUpcoming={hasUpcoming} />;
-  if (guess === 'start') return <StartSkeleton />;
+export function ShowActionsSkeleton({ state }: { state: TrackingState }) {
+  if (state === 'watching') return <WatchingSkeleton hasUpcoming={false} />;
+  if (state === 'watching-next') return <WatchingSkeleton hasUpcoming />;
+  if (state === 'start') return <StartSkeleton />;
   return <ActionsSkeleton type="show" />;
 }

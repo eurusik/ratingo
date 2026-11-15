@@ -1,4 +1,4 @@
-import type { Season } from '@/entities/episode';
+import type { Season, TrackingState } from '@/entities/episode';
 import type { MediaType } from '@/shared/api';
 
 export interface ActionMedia {
@@ -10,4 +10,5 @@ export interface ActionMedia {
   seasons?: Season[];
   seasonCount?: number;
   episodeCount?: number;
+  trackingState?: TrackingState;
 }

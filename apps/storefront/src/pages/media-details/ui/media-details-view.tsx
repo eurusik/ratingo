@@ -4,6 +4,7 @@ import {
   ReviewsBoardSkeleton,
   type ReviewedMedia,
 } from '@/widgets/media-reviews';
+import type { TrackingState } from '@/entities/episode';
 import { HOME_ROUTE, mediaRoute } from '@/shared/config';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import { hasCredits } from '../model/credits';
@@ -24,10 +25,11 @@ function reviewedMediaOf({ mediaItemId, type, slug, title }: View): ReviewedMedi
   return { mediaItemId, type, slug, title };
 }
 
-function actionMediaOf(view: View): ActionMedia {
+function actionMediaOf(view: View, trackingState: TrackingState | undefined): ActionMedia {
   if (view.type === 'movie') return reviewedMediaOf(view);
   return {
     ...reviewedMediaOf(view),
+    trackingState,
     showId: view.showId,
     seasons: view.seasons,
     seasonCount: view.seasonCount,
@@ -35,7 +37,13 @@ function actionMediaOf(view: View): ActionMedia {
   };
 }
 
-export function MediaDetailsView({ view, locale }: { view: View; locale: Locale }) {
+interface MediaDetailsViewProps {
+  view: View;
+  locale: Locale;
+  trackingState?: TrackingState;
+}
+
+export function MediaDetailsView({ view, locale, trackingState }: MediaDetailsViewProps) {
   const dict = getDictionary(locale);
 
   return (
@@ -54,7 +62,7 @@ export function MediaDetailsView({ view, locale }: { view: View; locale: Locale 
       <DetailsHero
         view={view}
         locale={locale}
-        actions={<HeroActions media={actionMediaOf(view)} />}
+        actions={<HeroActions media={actionMediaOf(view, trackingState)} />}
       />
       <div
         {...DETAILS_REVEAL}

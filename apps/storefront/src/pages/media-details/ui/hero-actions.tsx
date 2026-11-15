@@ -2,10 +2,8 @@
 
 import { Bell } from 'lucide-react';
 import { useAuth } from '@ratingo/web-core/auth';
-import { nextUpcoming } from '@/entities/episode';
 import { SaveToWatchCta, WantToWatchButton } from '@/features/save-to-library';
 import { useTranslation } from '@/shared/i18n';
-import { useClientNow } from '@/shared/lib';
 import { useRateMedia } from '../model/use-rate-media';
 import type { ActionMedia } from '../model/action-media';
 import { ActionsSkeleton } from './actions-skeleton';
@@ -69,12 +67,8 @@ function GuestTracking({ media }: { media: ActionMedia }) {
 
 function ShowActions({ media }: { media: ActionMedia }) {
   const { isAuthenticated, isLoading } = useAuth();
-  const now = useClientNow();
 
-  if (isLoading) {
-    const hasUpcoming = media.seasons ? nextUpcoming(media.seasons, now) !== undefined : false;
-    return <ShowActionsSkeleton showId={media.showId} hasUpcoming={hasUpcoming} />;
-  }
+  if (isLoading) return <ShowActionsSkeleton state={media.trackingState ?? 'guest'} />;
   if (!isAuthenticated) return <GuestTracking media={media} />;
   return <ShowTracking media={media} />;
 }
