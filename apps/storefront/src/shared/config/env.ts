@@ -9,6 +9,10 @@ const API_ORIGIN = withoutTrailingSlashes(process.env.NEXT_PUBLIC_API_URL || LOC
 
 export const API_BASE_URL = `${API_ORIGIN}/api`;
 
+const SERVER_API_ORIGIN = withoutTrailingSlashes(process.env.API_INTERNAL_URL || API_ORIGIN);
+
+export const SERVER_API_BASE_URL = `${SERVER_API_ORIGIN}/api`;
+
 const LEGACY_ADMIN_URL = 'https://ratingo.top/admin';
 
 export const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL || LEGACY_ADMIN_URL;
