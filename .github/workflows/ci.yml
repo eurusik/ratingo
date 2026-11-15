@@ -36,6 +36,7 @@ jobs:
       migrations: ${{ steps.filter.outputs.migrations }}
       deps: ${{ steps.filter.outputs.deps }}
       smoke: ${{ steps.filter.outputs.smoke }}
+      storefront_image: ${{ steps.filter.outputs.storefront_image }}
     steps:
       - id: filter
         env:
@@ -51,6 +52,7 @@ jobs:
             echo "migrations=true" >> "$GITHUB_OUTPUT"
             echo "deps=$([[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
             echo "smoke=false" >> "$GITHUB_OUTPUT"
+            echo "storefront_image=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -63,7 +65,7 @@ jobs:
           large=$(( count >= 3000 ))
 
           if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
-            api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true
+            api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true; storefront_image=true
           else
             api=$(match '^(apps/api/|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|knip\.json$)')
@@ -72,6 +74,7 @@ jobs:
             backup=$(match '^apps/pg-backup/')
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
             smoke=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|e2e/smoke/|playwright\.smoke\.config\.ts$|\.dockerignore$)')
+            storefront_image=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui)/|\.dockerignore$)')
           fi
 
           if (( large )); then
@@ -80,7 +83,7 @@ jobs:
             deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
           fi
 
-          echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke"
+          echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke storefront_image=$storefront_image"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "storefront=$storefront" >> "$GITHUB_OUTPUT"
@@ -89,6 +92,7 @@ jobs:
           echo "migrations=$migrations" >> "$GITHUB_OUTPUT"
           echo "deps=$deps" >> "$GITHUB_OUTPUT"
           echo "smoke=$smoke" >> "$GITHUB_OUTPUT"
+          echo "storefront_image=$storefront_image" >> "$GITHUB_OUTPUT"
 
   api:
     name: api
@@ -479,9 +483,49 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  storefront-image:
+    name: storefront-image
+    needs: changes
+    if: needs.changes.outputs.storefront_image == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      STOREFRONT_PORT: 3003
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Build the storefront image
+        timeout-minutes: 12
+        run: |
+          docker build -f apps/storefront/Dockerfile -t ratingo-storefront:ci \
+            --build-arg NEXT_PUBLIC_API_URL=https://api-dev.ratingo.top \
+            --build-arg NEXT_PUBLIC_APP_URL=http://localhost:$STOREFRONT_PORT \
+            --build-arg NEXT_PUBLIC_IMAGE_PROXY_ORIGIN=https://img.ratingo.top \
+            --build-arg APP_ENV=ci \
+            --build-arg RAILWAY_GIT_COMMIT_SHA=${{ github.sha }} \
+            .
+
+      - name: Start the storefront container
+        timeout-minutes: 2
+        run: |
+          docker run -d --name storefront -p $STOREFRONT_PORT:3000 ratingo-storefront:ci
+          until curl -fsS -o /dev/null http://localhost:$STOREFRONT_PORT/robots.txt; do sleep 2; done
+
+      - name: Serve the home page, the service worker and a noindex robots.txt
+        run: |
+          base=http://localhost:$STOREFRONT_PORT
+          curl -fsS -o /dev/null "$base/"
+          curl -fsS -o /dev/null "$base/sw.js"
+          curl -fsS "$base/robots.txt" | grep -qx 'Disallow: /'
+
+      - if: failure()
+        run: docker logs storefront || true
+
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, storefront, contracts, pg-backup, web-smoke]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, storefront, storefront-image, contracts, pg-backup, web-smoke]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

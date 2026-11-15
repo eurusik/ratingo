@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 import { withSerwist } from '@serwist/turbopack';
 
@@ -9,6 +10,8 @@ const LEGACY_BROWSE_REDIRECTS = [
 const DYNAMIC_PAGE_REUSE_SECONDS = process.env.NODE_ENV === 'production' ? 300 : 0;
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   reactStrictMode: true,
   expireTime: 3600,
   experimental: {
