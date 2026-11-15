@@ -1,4 +1,4 @@
-import { isBrowsePath, mediaReviewsRoute } from './routes';
+import { isBrowsePath, mediaReviewsRoute, showSeasonRoute } from './routes';
 
 describe('isBrowsePath', () => {
   it.each([
@@ -15,6 +15,15 @@ describe('isBrowsePath', () => {
 describe('mediaReviewsRoute', () => {
   it('nests the reviews list under the title page', () => {
     expect(mediaReviewsRoute('movie', 'dune-part-two')).toBe('/movies/dune-part-two/reviews');
-    expect(mediaReviewsRoute('show', 'андор')).toBe(`/shows/${encodeURIComponent('андор')}/reviews`);
+    expect(mediaReviewsRoute('show', 'андор')).toBe(
+      `/shows/${encodeURIComponent('андор')}/reviews`,
+    );
+  });
+});
+
+describe('showSeasonRoute', () => {
+  it('links to a season of the show when one is given', () => {
+    expect(showSeasonRoute('arcane')).toBe('/shows/arcane');
+    expect(showSeasonRoute('arcane', 2)).toBe('/shows/arcane?season=2');
   });
 });

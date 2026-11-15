@@ -2,7 +2,12 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 import { defaultCache } from '@serwist/turbopack/worker';
-import type { PrecacheEntry, RouteMatchCallback, RuntimeCaching, SerwistGlobalConfig } from 'serwist';
+import type {
+  PrecacheEntry,
+  RouteMatchCallback,
+  RuntimeCaching,
+  SerwistGlobalConfig,
+} from 'serwist';
 import { Serwist, CacheFirst, NetworkOnly, ExpirationPlugin } from 'serwist';
 
 declare global {
@@ -34,7 +39,11 @@ function imageCacheRoute(matcher: RegExp, cacheName: string, maxEntries: number)
       cacheName,
       fetchOptions: CORS_IMAGE_FETCH,
       plugins: [
-        new ExpirationPlugin({ maxEntries, maxAgeSeconds: ONE_WEEK_IN_SECONDS, purgeOnQuotaError: true }),
+        new ExpirationPlugin({
+          maxEntries,
+          maxAgeSeconds: ONE_WEEK_IN_SECONDS,
+          purgeOnQuotaError: true,
+        }),
       ],
     }),
   };

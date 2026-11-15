@@ -1,4 +1,5 @@
 import { animateSpring } from '@ratingo/ui/motion';
+import { prefersReducedMotion } from '@/shared/lib';
 
 const AXIS_LOCK_SLOP_PX = 8;
 const FLICK_VELOCITY_PX_PER_MS = 0.3;
@@ -26,10 +27,6 @@ type DragState =
       lastTime: number;
       velocity: number;
     };
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 function resist(offset: number, revealWidth: number): number {
   if (offset > 0) return offset * OVERSHOOT_RESISTANCE;

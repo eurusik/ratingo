@@ -9,6 +9,13 @@ export function mediaRoute(type: MediaKind, slug: string): string {
   return `${MEDIA_ROUTE_PREFIXES[type]}/${encodeURIComponent(slug)}`;
 }
 
+export const SHOW_SEASON_PARAM = 'season';
+
+export function showSeasonRoute(slug: string, season?: number): string {
+  const showRoute = mediaRoute('show', slug);
+  return season === undefined ? showRoute : `${showRoute}?${SHOW_SEASON_PARAM}=${season}`;
+}
+
 export function mediaReviewsRoute(type: MediaKind, slug: string): string {
   return `${mediaRoute(type, slug)}/reviews`;
 }

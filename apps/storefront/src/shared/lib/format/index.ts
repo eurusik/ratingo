@@ -1,4 +1,5 @@
 export { initialOf } from './initial';
+export { capitalizeFirst } from './text';
 export {
   currentYear,
   formatCompactCount,

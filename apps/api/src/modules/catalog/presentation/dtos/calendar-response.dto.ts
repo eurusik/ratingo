@@ -1,8 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CalendarEpisodeDto {
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({ example: '0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90' })
+  episodeId: string;
+
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Media item ID of the show.',
+  })
   showId: string;
+
+  @ApiProperty({
+    example: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+    description: 'Show record ID used by episode progress endpoints.',
+  })
+  showRecordId: string;
 
   @ApiProperty({ example: 'arcane' })
   showSlug: string;
@@ -33,6 +45,26 @@ export class CalendarEpisodeDto {
 
   @ApiProperty({ type: String, example: 'http://image.com/1.jpg', required: false, nullable: true })
   stillPath: string | null;
+
+  @ApiProperty({
+    type: Number,
+    example: 8,
+    nullable: true,
+    description: 'Number of episodes in the season, when known.',
+  })
+  seasonEpisodeCount: number | null;
+
+  @ApiProperty({ example: 312.4, description: 'TMDB popularity of the show.' })
+  showPopularity: number;
+
+  @ApiProperty({ example: false, description: 'The viewer is watching this show.' })
+  isTracked: boolean;
+
+  @ApiProperty({ example: false, description: 'The viewer saved this show to watch later.' })
+  isSaved: boolean;
+
+  @ApiProperty({ example: false, description: 'The viewer marked this episode as watched.' })
+  isWatched: boolean;
 }
 
 export class CalendarDayDto {
@@ -55,7 +87,7 @@ export class CalendarResponseDto {
 
   @ApiPropertyOptional({
     description:
-      'Number of shows the user is currently watching. Only present when personalized=true.',
+      'Number of shows the user is currently watching (saved shows are not counted). Only present when personalized=true.',
     type: Number,
   })
   watchingShowsCount?: number;

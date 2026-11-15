@@ -234,7 +234,7 @@
   transition: none;
 }
 
-:root[data-scroll-restoring] [data-top-bar] {
+:root[data-scroll-restoring] :is([data-top-bar], [data-top-bar] *) {
   transition: none;
 }
 

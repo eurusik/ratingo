@@ -19,6 +19,12 @@ export {
   type TrendingMovie,
   type TrendingShow,
 } from './catalog';
+export {
+  calendarApi,
+  type CalendarEpisode,
+  type CalendarRange,
+  type CalendarRangeQuery,
+} from './calendar';
 export { loadMovieBySlug, loadShowBySlug } from './media-details';
 export { episodeProgressApi, type ShowProgress } from './episode-progress';
 export { notificationsApi, type NotificationItem } from './notifications';

@@ -3,13 +3,11 @@
 import { useRef } from 'react';
 import { episodeCode } from '@/entities/episode';
 import { MediaPoster } from '@/entities/media';
-import { mediaRoute } from '@/shared/config';
+import { SERVICE_TIME_ZONE, mediaRoute } from '@/shared/config';
 import { SHARED_ART_SOURCE } from '@/shared/lib';
 import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
 import { ForwardLink, Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import type { EpisodeRelease } from '../model/home-feed';
-
-const AIR_DATE_TIME_ZONE = 'Europe/Kyiv';
 
 const airDateFormats = new Map<Locale, Intl.DateTimeFormat>();
 
@@ -19,7 +17,7 @@ function formatAirDate(locale: Locale, airedAt: string): string {
     format = new Intl.DateTimeFormat(locale, {
       day: 'numeric',
       month: 'short',
-      timeZone: AIR_DATE_TIME_ZONE,
+      timeZone: SERVICE_TIME_ZONE,
     });
     airDateFormats.set(locale, format);
   }

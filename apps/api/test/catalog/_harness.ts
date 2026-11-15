@@ -6,6 +6,7 @@ import { UsersModule } from '../../src/modules/users/users.module';
 import { UserMediaModule } from '../../src/modules/user-media/user-media.module';
 import { CatalogModule } from '../../src/modules/catalog/catalog.module';
 import { USERS_REPOSITORY } from '../../src/modules/users/domain/repositories/users.repository.interface';
+import { WATCHING_SHOWS_COUNT_PORT } from '../../src/modules/catalog/domain/ports/watching-shows-count.port';
 import { REFRESH_TOKENS_REPOSITORY } from '../../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import {
   IUserMediaStateRepository,
@@ -287,6 +288,8 @@ export async function createCatalogApp(): Promise<CatalogE2eContext> {
     .useClass(FakeShowRepository)
     .overrideProvider(MEDIA_REPOSITORY)
     .useClass(FakeMediaRepository)
+    .overrideProvider(WATCHING_SHOWS_COUNT_PORT)
+    .useValue({ countWatchingShows: async () => 1 })
     .overrideProvider(TmdbAdapter)
     .useValue({ searchMulti: () => [] })
     .overrideProvider(CatalogSearchService)

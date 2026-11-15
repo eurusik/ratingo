@@ -27,6 +27,7 @@ export interface EpisodesSheetProps {
   tracker: EpisodesTracker;
   isOpen: boolean;
   isPicking: boolean;
+  initialSeason?: number;
   onOpenChange: (isOpen: boolean) => void;
   onPickingChange: (isPicking: boolean) => void;
 }
@@ -56,10 +57,17 @@ const SLIDE_IN: Record<SlideDirection, string> = {
 
 type SheetBodyProps = Pick<
   EpisodesSheetProps,
-  'show' | 'tracker' | 'isPicking' | 'onPickingChange'
+  'show' | 'tracker' | 'isPicking' | 'initialSeason' | 'onPickingChange'
 > & { onClose: () => void };
 
-function SheetBody({ show, tracker, isPicking, onPickingChange, onClose }: SheetBodyProps) {
+function SheetBody({
+  show,
+  tracker,
+  isPicking,
+  initialSeason,
+  onPickingChange,
+  onClose,
+}: SheetBodyProps) {
   const { dict } = useTranslation();
   const [pickTarget, setPickTarget] = useState<Episode>();
   const { watched, now } = tracker;
@@ -69,7 +77,8 @@ function SheetBody({ show, tracker, isPicking, onPickingChange, onClose }: Sheet
   );
   const navigation = useSeasonNavigation({
     seasons: show.seasons,
-    initial: () => currentSeason(show.seasons, tracker.summary, watched, now).number,
+    initial: () =>
+      initialSeason ?? currentSeason(show.seasons, tracker.summary, watched, now).number,
     now,
     isComplete,
   });
@@ -199,6 +208,7 @@ export function EpisodesSheet({
   tracker,
   isOpen,
   isPicking,
+  initialSeason,
   onOpenChange,
   onPickingChange,
 }: EpisodesSheetProps) {
@@ -217,6 +227,7 @@ export function EpisodesSheet({
         show={show}
         tracker={tracker}
         isPicking={isPicking}
+        initialSeason={initialSeason}
         onPickingChange={onPickingChange}
         onClose={() => onOpenChange(false)}
       />

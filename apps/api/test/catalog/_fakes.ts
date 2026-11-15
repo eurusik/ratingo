@@ -8,6 +8,7 @@ import {
   IShowRepository,
   TrendingShowsOptions,
   CalendarEpisode,
+  CalendarEpisodesOptions,
   NewEpisodeItem,
 } from '../../src/modules/catalog/domain/repositories/show.repository.interface';
 import { SHOW_ONE_ID, daysAgo, moviesFixture, showsFixture } from './_fixtures';
@@ -237,10 +238,20 @@ export class FakeShowRepository implements IShowRepository {
     return [];
   }
 
-  async findEpisodesByDateRange(start: Date, end: Date): Promise<CalendarEpisode[]> {
+  lastCalendarOptions?: CalendarEpisodesOptions;
+
+  async findEpisodesByDateRange(
+    start: Date,
+    _end: Date,
+    options: CalendarEpisodesOptions = {},
+  ): Promise<CalendarEpisode[]> {
+    this.lastCalendarOptions = options;
+    const isTracked = options.personalized === true;
     return [
       {
+        episodeId: 'episode-one',
         showId: SHOW_ONE_ID,
+        showRecordId: 'show-record-one',
         showSlug: 'show-one',
         showTitle: 'Show One',
         posterPath: null,
@@ -251,6 +262,11 @@ export class FakeShowRepository implements IShowRepository {
         airDate: start,
         runtime: 45,
         stillPath: null,
+        seasonEpisodeCount: 8,
+        showPopularity: 10,
+        isTracked,
+        isSaved: false,
+        isWatched: false,
       },
     ];
   }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type RefObject } from 'react';
 import { Button } from '@heroui/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
+import { prefersReducedMotion } from '@/shared/lib';
 
 type Direction = -1 | 1;
 
@@ -21,10 +22,6 @@ function readEdges(scroller: HTMLElement): ScrollEdges {
     atStart: scroller.scrollLeft <= EDGE_TOLERANCE_PX,
     atEnd: scroller.scrollLeft >= maxScroll - EDGE_TOLERANCE_PX,
   };
-}
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 function useScrollEdges(scrollerRef: RefObject<HTMLElement | null>): ScrollEdges {
