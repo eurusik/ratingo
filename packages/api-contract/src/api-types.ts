@@ -3162,7 +3162,7 @@ export interface components {
             /** @example 2024-11-08T00:00:00.000Z */
             endDate: string;
             days: components["schemas"]["CalendarDayDto"][];
-            /** @description Number of shows the user is currently watching. Only present when personalized=true. */
+            /** @description Number of shows the user is currently watching (saved shows are not counted). Only present when personalized=true. */
             watchingShowsCount?: number;
         };
         EpisodeDto: {
@@ -3593,6 +3593,7 @@ export interface components {
             poster: components["schemas"]["ImageDto"] | null;
             /** Format: date-time */
             releaseDate?: string | null;
+            qualityScore?: number | null;
             card?: components["schemas"]["CardMetaDto"];
         };
         ProgressSummaryDto: {
@@ -3606,6 +3607,22 @@ export interface components {
              * @example 10
              */
             total: number;
+        };
+        LibraryContinuePointDto: {
+            /**
+             * @description Season number to continue from
+             * @example 2
+             */
+            season: number;
+            /**
+             * @description Episode number to continue from
+             * @example 5
+             */
+            episode: number;
+            /** @description Episode to continue from */
+            episodeId?: string;
+            /** @description Air date of that episode */
+            airDate?: string | null;
         };
         MeUserMediaListItemDto: {
             /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */
@@ -3664,7 +3681,7 @@ export interface components {
             /** @description Episode progress summary (only for shows) */
             progressSummary?: components["schemas"]["ProgressSummaryDto"] | null;
             /** @description Next episode to continue watching (only for shows with progress) */
-            continuePoint?: components["schemas"]["ContinuePointDto"] | null;
+            continuePoint?: components["schemas"]["LibraryContinuePointDto"] | null;
         };
         PaginatedMeUserMediaResponseDto: {
             data: components["schemas"]["MeUserMediaListItemDto"][];
@@ -3902,6 +3919,17 @@ export interface components {
              */
             statuses: Record<string, never>;
         };
+        SavedItemMediaSummaryDto: {
+            id: string;
+            /** @enum {string} */
+            type: "movie" | "show";
+            title: string;
+            slug: string;
+            poster: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+            qualityScore?: number | null;
+        };
         SavedItemWithMediaResponseDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
             id: string;
@@ -3922,23 +3950,7 @@ export interface components {
              * @example 2024-01-15T10:30:00.000Z
              */
             createdAt: string;
-            /**
-             * @example {
-             *       "id": "123e4567-e89b-12d3-a456-426614174000",
-             *       "type": "movie",
-             *       "title": "Inception",
-             *       "slug": "inception-2010",
-             *       "poster": {
-             *         "w92": "...",
-             *         "w185": "...",
-             *         "w342": "...",
-             *         "w500": "...",
-             *         "w780": "...",
-             *         "original": "..."
-             *       }
-             *     }
-             */
-            mediaSummary: Record<string, never>;
+            mediaSummary: components["schemas"]["SavedItemMediaSummaryDto"];
             /**
              * @description Active subscription triggers for this media item. Empty array if no subscriptions.
              * @example [
@@ -3947,6 +3959,10 @@ export interface components {
              *     ]
              */
             activeSubscriptionTriggers: string[];
+        };
+        PaginatedSavedItemsResponseDto: {
+            data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
         };
         SubscribeDto: {
             /**
@@ -9103,7 +9119,7 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
-                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                        data: components["schemas"]["PaginatedSavedItemsResponseDto"];
                     };
                 };
             };
@@ -9158,7 +9174,7 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
-                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                        data: components["schemas"]["PaginatedSavedItemsResponseDto"];
                     };
                 };
             };

@@ -116,7 +116,12 @@ export class MeListsService {
   ) {
     const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
     const states = state ? [state] : USER_MEDIA_HISTORY_STATES;
-    const options = { states, sort: effectiveSort, type };
+    const options = {
+      states,
+      sort: effectiveSort,
+      type,
+      ...(state === USER_MEDIA_STATE.WATCHING && { withContinuePoint: true }),
+    };
 
     const [total, data] = await Promise.all([
       this.userMediaService.countWithMedia(userId, { states, type }),

@@ -14,6 +14,7 @@ import { CurrentUser } from '@/modules/auth/public';
 import { JwtAuthGuard } from '@/modules/auth/public';
 import { MeListsService } from '@/modules/user-media/application/me-lists.service';
 import { type UserMediaState } from '@/modules/user-media/domain/entities/user-media-state.entity';
+import { type ContinuePoint } from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
 
 import { FavoriteUpdatesResponseDto } from '../dto/favorite-updates.dto';
 import {
@@ -34,6 +35,7 @@ type UserMediaWithSummary = UserMediaState & {
     releaseDate?: Date | null;
   };
   progressSummary?: { watched: number; total: number } | null;
+  continuePoint?: ContinuePoint | null;
 };
 
 /**
@@ -65,6 +67,7 @@ export class MeListsController {
       updatedAt: item.updatedAt,
       mediaSummary: item.mediaSummary,
       progressSummary: item.progressSummary ?? null,
+      continuePoint: item.continuePoint ?? null,
     };
   }
 

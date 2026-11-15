@@ -10,6 +10,7 @@ export interface UserMediaSummary {
   slug: string;
   poster: ImageDto | null;
   releaseDate?: Date | null;
+  qualityScore?: number | null;
 }
 
 export interface ProgressSummary {
@@ -20,6 +21,8 @@ export interface ProgressSummary {
 export interface ContinuePoint {
   season: number;
   episode: number;
+  episodeId?: string;
+  airDate?: string | null;
 }
 
 export const USER_MEDIA_STATE_REPOSITORY = Symbol('USER_MEDIA_STATE_REPOSITORY');
@@ -36,6 +39,7 @@ export interface ListWithMediaOptions {
   states?: Array<UserMediaState['state']>;
   sort?: UserMediaListSort;
   type?: MediaType;
+  withContinuePoint?: boolean;
 }
 
 /**
@@ -159,6 +163,7 @@ export interface IUserMediaStateRepository {
       UserMediaState & {
         mediaSummary: UserMediaSummary;
         progressSummary?: ProgressSummary | null;
+        continuePoint?: ContinuePoint | null;
       }
     >
   >;

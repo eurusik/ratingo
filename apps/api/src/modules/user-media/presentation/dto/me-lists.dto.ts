@@ -32,12 +32,18 @@ export class ProgressSummaryDto {
 /**
  * Continue point for shows (next episode to watch).
  */
-export class ContinuePointDto {
+export class LibraryContinuePointDto {
   @ApiProperty({ description: 'Season number to continue from', example: 2 })
   season!: number;
 
   @ApiProperty({ description: 'Episode number to continue from', example: 5 })
   episode!: number;
+
+  @ApiPropertyOptional({ description: 'Episode to continue from' })
+  episodeId?: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, description: 'Air date of that episode' })
+  airDate?: string | null;
 }
 
 const ME_USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
@@ -108,6 +114,9 @@ export class MeUserMediaSummaryDto {
   @ApiPropertyOptional({ type: Date, nullable: true })
   releaseDate?: Date | null;
 
+  @ApiPropertyOptional({ type: Number, nullable: true, minimum: 0, maximum: 100 })
+  qualityScore?: number | null;
+
   @ApiPropertyOptional({ type: CardMetaDto, required: false })
   card?: CardMetaDto;
 }
@@ -127,11 +136,11 @@ export class MeUserMediaListItemDto extends UserMediaStateDto {
   progressSummary?: ProgressSummaryDto | null;
 
   @ApiPropertyOptional({
-    type: ContinuePointDto,
+    type: LibraryContinuePointDto,
     nullable: true,
     description: 'Next episode to continue watching (only for shows with progress)',
   })
-  continuePoint?: ContinuePointDto | null;
+  continuePoint?: LibraryContinuePointDto | null;
 }
 
 /**
