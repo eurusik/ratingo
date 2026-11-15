@@ -3162,7 +3162,7 @@ export interface components {
             /** @example 2024-11-08T00:00:00.000Z */
             endDate: string;
             days: components["schemas"]["CalendarDayDto"][];
-            /** @description Number of shows the user is currently watching. Only present when personalized=true. */
+            /** @description Number of shows the user is currently watching (saved shows are not counted). Only present when personalized=true. */
             watchingShowsCount?: number;
         };
         EpisodeDto: {

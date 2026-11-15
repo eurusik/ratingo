@@ -15071,7 +15071,7 @@
           },
           "watchingShowsCount": {
             "type": "number",
-            "description": "Number of shows the user is currently watching. Only present when personalized=true."
+            "description": "Number of shows the user is currently watching (saved shows are not counted). Only present when personalized=true."
           }
         },
         "required": [
