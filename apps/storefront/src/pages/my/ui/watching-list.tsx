@@ -21,8 +21,12 @@ function Shelf({ actions }: { actions: LibraryActions }) {
   const panelId = useId();
   const moves = useLibraryMoves();
   const { paused, dropped } = useShelfLists();
-  const pausedItems = paused.data ?? [];
-  const droppedItems = dropped.data ?? [];
+  const pausedItems = (paused.data ?? []).filter(
+    (item) => !moves.isMovedOut(item.mediaItemId, 'paused'),
+  );
+  const droppedItems = (dropped.data ?? []).filter(
+    (item) => !moves.isMovedOut(item.mediaItemId, 'dropped'),
+  );
   if (pausedItems.length + droppedItems.length === 0) return null;
 
   return (
@@ -40,7 +44,10 @@ function Shelf({ actions }: { actions: LibraryActions }) {
         })}
         <ChevronDown
           aria-hidden
-          className={cn('size-4 transition-transform', isOpen && 'rotate-180')}
+          className={cn(
+            'size-4 transition-transform motion-reduce:transition-none',
+            isOpen && 'rotate-180',
+          )}
         />
       </Button>
       {isOpen ? (

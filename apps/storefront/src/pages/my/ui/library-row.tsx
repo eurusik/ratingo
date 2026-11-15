@@ -10,7 +10,7 @@ import type { LibraryTitle } from '../model/library-title';
 export const ROW_FRAME = 'h-[63px] w-28 md:h-[81px] md:w-36';
 
 const HOVER_REVEAL =
-  'transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 [@media(hover:hover)]:group-focus-within/row:opacity-100 [@media(hover:hover)]:has-[[aria-expanded=true]]:opacity-100';
+  'transition-opacity motion-reduce:transition-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 [@media(hover:hover)]:group-focus-within/row:opacity-100 [@media(hover:hover)]:has-[[aria-expanded=true]]:opacity-100';
 
 interface RowProgress {
   value: number;
@@ -27,9 +27,15 @@ interface LibraryRowProps {
   progress?: RowProgress;
   action?: ReactNode;
   menu?: ReactNode;
+  isEager?: boolean;
 }
 
-function RowFrame({ title, event, code }: Pick<LibraryRowProps, 'title' | 'event' | 'code'>) {
+function RowFrame({
+  title,
+  event,
+  code,
+  isEager,
+}: Pick<LibraryRowProps, 'title' | 'event' | 'code' | 'isEager'>) {
   return (
     <span
       aria-hidden
@@ -40,9 +46,9 @@ function RowFrame({ title, event, code }: Pick<LibraryRowProps, 'title' | 'event
           unoptimized
           src={title.imageUrl}
           alt=""
-          width={144}
-          height={81}
-          loading="lazy"
+          width={288}
+          height={162}
+          loading={isEager ? 'eager' : 'lazy'}
           className="size-full object-cover object-[center_20%]"
         />
       ) : null}
@@ -69,6 +75,7 @@ export function LibraryRow({
   progress,
   action,
   menu,
+  isEager = false,
 }: LibraryRowProps) {
   return (
     <div className="group/row flex min-h-[79px] items-center gap-3 py-2 md:min-h-[97px] md:gap-4">
@@ -76,8 +83,8 @@ export function LibraryRow({
         href={href}
         className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-foreground no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus md:gap-4"
       >
-        <RowFrame title={title} event={event} code={code} />
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <RowFrame title={title} event={event} code={code} isEager={isEager} />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="truncate text-[15px] font-bold md:text-base">{title.title}</span>
           <span className="flex min-w-0 items-center gap-1.5 truncate text-[13px] text-muted tabular-nums md:text-sm">
             {meta}
@@ -95,7 +102,7 @@ export function LibraryRow({
               </Meter.Track>
             </Meter>
           ) : null}
-        </span>
+        </div>
       </Link>
       {action}
       {menu ? <span className={cn('flex', HOVER_REVEAL)}>{menu}</span> : null}

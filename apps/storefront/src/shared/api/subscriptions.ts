@@ -12,8 +12,8 @@ export interface SubscriptionPage {
 }
 
 export const subscriptionsApi = {
-  list(limit: number, offset: number): Promise<SubscriptionPage> {
-    return apiGet<SubscriptionPage>('me/subscriptions', { searchParams: { limit, offset } });
+  list(query: { limit: number; offset: number }): Promise<SubscriptionPage> {
+    return apiGet<SubscriptionPage>('me/subscriptions', { searchParams: { ...query } });
   },
 
   subscribe(mediaItemId: string, trigger: SubscriptionTrigger): Promise<SubscribeResult> {

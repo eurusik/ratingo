@@ -1073,7 +1073,6 @@
   },
   "reminder": {
     "remind": "Remind me",
-    "reminding": "Reminding",
     "label": "Remind me about new episodes: {show}",
     "on": "We'll remind you about new episodes: {show}",
     "off": "Reminder turned off: {show}",

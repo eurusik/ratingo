@@ -65,8 +65,8 @@ export function EmptyList({ title, text, action, href }: EmptyListProps) {
 
 export function SectionTitle({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="flex items-center gap-2 pt-5 pb-1 text-[17px] font-extrabold md:text-lg">
+    <h3 id={id} className="flex items-center gap-2 pt-5 pb-1 text-[17px] font-extrabold md:text-lg">
       {children}
-    </h2>
+    </h3>
   );
 }

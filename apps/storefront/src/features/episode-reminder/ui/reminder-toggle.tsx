@@ -18,7 +18,6 @@ export function ReminderToggle({ show, look = 'icon', className }: ReminderToggl
   const { dict } = useTranslation();
   const { isOn, toggle } = useEpisodeReminder(show);
   const Icon = isOn ? BellRing : Bell;
-  const text = isOn ? dict.reminder.reminding : dict.reminder.remind;
 
   return (
     <Button
@@ -39,7 +38,7 @@ export function ReminderToggle({ show, look = 'icon', className }: ReminderToggl
       <Icon aria-hidden className="size-4.5" />
       {look === 'text' ? (
         <>
-          {text}
+          {dict.reminder.remind}
           <span className="sr-only">{`: ${show.title}`}</span>
         </>
       ) : null}

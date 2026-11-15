@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
-import { subscriptionsApi } from '@/shared/api';
+import { fetchAllPages, subscriptionsApi } from '@/shared/api';
 import { useSignedInAction } from '@/shared/auth';
 import { interpolate, useTranslation } from '@/shared/i18n';
 
@@ -17,16 +17,12 @@ function remindersKey(userId: string | null) {
 }
 
 async function fetchRemindedShows(): Promise<ReadonlySet<string>> {
-  const shows = new Set<string>();
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const page = await subscriptionsApi.list(PAGE_SIZE, offset);
-    for (const subscription of page.data) {
-      if (subscription.trigger === REMINDER_TRIGGER && subscription.isActive) {
-        shows.add(subscription.mediaItemId);
-      }
-    }
-    if (!page.meta.hasMore) return shows;
-  }
+  const subscriptions = await fetchAllPages(PAGE_SIZE, subscriptionsApi.list);
+  return new Set(
+    subscriptions
+      .filter((subscription) => subscription.trigger === REMINDER_TRIGGER && subscription.isActive)
+      .map((subscription) => subscription.mediaItemId),
+  );
 }
 
 function withShow(shows: ReadonlySet<string>, showId: string, isOn: boolean): ReadonlySet<string> {
@@ -81,6 +77,7 @@ export function useEpisodeReminder(show: ReminderShow): EpisodeReminder {
       );
       toast.danger(dict.reminder.failed);
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
 
   const toggle = useCallback(() => runSignedIn(() => mutate(!isOn)), [isOn, mutate, runSignedIn]);

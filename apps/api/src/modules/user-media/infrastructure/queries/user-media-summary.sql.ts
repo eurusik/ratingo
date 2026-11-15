@@ -4,6 +4,16 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import * as schema from '@/database/schema';
 import { type ContinuePoint } from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
 
+export const mediaSummaryColumns = {
+  id: schema.mediaItems.id,
+  type: schema.mediaItems.type,
+  title: schema.mediaItems.title,
+  slug: schema.mediaItems.slug,
+  posterPath: schema.mediaItems.posterPath,
+  releaseDate: schema.mediaItems.releaseDate,
+  qualityScore: schema.mediaStats.qualityScore,
+};
+
 export function progressTotalSql() {
   return sql<number | null>`
               CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (

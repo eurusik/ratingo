@@ -8,16 +8,16 @@ import { useTranslation } from '@/shared/i18n';
 import { SwipeableRow } from '@/shared/ui/gestures';
 
 const HOVER_REVEAL =
-  'transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/notification:opacity-100 [@media(hover:hover)]:group-focus-within/notification:opacity-100';
+  'transition-opacity motion-reduce:transition-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/notification:opacity-100 [@media(hover:hover)]:group-focus-within/notification:opacity-100';
 
-interface NotificationItemProps {
+interface SwipeableNotificationProps {
   item: NotificationItem;
   now: number;
   onOpen: (item: NotificationItem) => void;
   onRead: (item: NotificationItem) => void;
 }
 
-export function NotificationListItem({ item, now, onOpen, onRead }: NotificationItemProps) {
+export function SwipeableNotification({ item, now, onOpen, onRead }: SwipeableNotificationProps) {
   const { dict } = useTranslation();
   const row = (
     <NotificationRow
@@ -29,9 +29,9 @@ export function NotificationListItem({ item, now, onOpen, onRead }: Notification
           <Button
             isIconOnly
             variant="outline"
-            aria-label={dict.notifications.markRead}
+            aria-label={`${dict.notifications.markRead}: ${item.mediaSummary.title}`}
             onPress={() => onRead(item)}
-            className={`hidden size-9 shrink-0 rounded-full md:inline-flex ${HOVER_REVEAL}`}
+            className={`size-11 shrink-0 rounded-full ${HOVER_REVEAL}`}
           >
             <Check aria-hidden className="size-4" strokeWidth={2.4} />
           </Button>

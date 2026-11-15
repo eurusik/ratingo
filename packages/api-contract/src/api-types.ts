@@ -3620,9 +3620,9 @@ export interface components {
              */
             episode: number;
             /** @description Episode to continue from */
-            episodeId?: string;
+            episodeId: string;
             /** @description Air date of that episode */
-            airDate?: string | null;
+            airDate: string | null;
         };
         MeUserMediaListItemDto: {
             /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */

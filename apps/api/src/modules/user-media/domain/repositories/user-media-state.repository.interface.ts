@@ -21,8 +21,8 @@ export interface ProgressSummary {
 export interface ContinuePoint {
   season: number;
   episode: number;
-  episodeId?: string;
-  airDate?: string | null;
+  episodeId: string;
+  airDate: string | null;
 }
 
 export const USER_MEDIA_STATE_REPOSITORY = Symbol('USER_MEDIA_STATE_REPOSITORY');

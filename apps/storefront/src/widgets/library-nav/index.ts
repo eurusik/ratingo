@@ -1,1 +1,1 @@
-export { LibraryNav } from './ui/library-nav';
+export { LibraryShell } from './ui/library-shell';

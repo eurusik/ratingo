@@ -16201,7 +16201,9 @@
         },
         "required": [
           "season",
-          "episode"
+          "episode",
+          "episodeId",
+          "airDate"
         ]
       },
       "MeUserMediaListItemDto": {

@@ -22,9 +22,17 @@ function codeOf(episode: NextEpisode, dict: Dictionary): string {
   return episodeCode({ seasonNumber: episode.seasonNumber, number: episode.episodeNumber }, dict);
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function startOfDay(at: number): number {
+  const day = new Date(at);
+  day.setHours(0, 0, 0, 0);
+  return day.getTime();
+}
+
 function relativeDay(airDate: string | undefined, now: number, locale: string): string {
   if (!airDate) return '';
-  const days = Math.round((Date.parse(airDate) - now) / (24 * 60 * 60 * 1000));
+  const days = Math.round((startOfDay(Date.parse(airDate)) - startOfDay(now)) / DAY_MS);
   return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(days, 'day');
 }
 
@@ -96,7 +104,6 @@ export function FreshEpisodeRow({ row, actions, now }: RowProps<FreshRow>) {
         })}
         action={
           <CheckButton
-            key={row.episode.episodeId}
             label={interpolate(dict.my.actions.markEpisode, { title: row.title.title, code })}
             onCheck={() =>
               actions.markEpisodeWatched({
@@ -133,7 +140,6 @@ export function NextEpisodeRow({ row, actions }: RowProps<NextRow>) {
         action={
           episodeId && code ? (
             <CheckButton
-              key={episodeId}
               label={interpolate(dict.my.actions.markEpisode, { title: row.title.title, code })}
               onCheck={() => actions.markEpisodeWatched({ title: row.title, episodeId, code })}
             />

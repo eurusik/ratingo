@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@heroui/react';
-import { useAuth, type MeDto } from '@ratingo/web-core/auth';
+import { useAuth } from '@ratingo/web-core/auth';
 import { LIBRARY_LISTS, listCount, useLibraryCounts, type LibraryList } from '@/entities/library';
-import { LibraryNav } from '@/widgets/library-nav';
+import { LibraryShell } from '@/widgets/library-nav';
 import { NotificationBell, ProfileMenu } from '@/widgets/header';
 import type { LibraryCounts } from '@/shared/api';
-import { openAuth } from '@/shared/auth';
 import { useTranslation } from '@/shared/i18n';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { useLibraryActions, type LibraryActions } from '../model/library-actions';
@@ -30,8 +28,9 @@ function useStartsEmpty(counts: LibraryCounts | undefined): boolean | undefined 
   return startsEmpty;
 }
 
-function PhoneHeader({ user }: { user: MeDto | null }) {
+function PhoneHeader() {
   const { dict } = useTranslation();
+  const { user } = useAuth();
 
   return (
     <div className="flex min-h-14 items-center gap-2 md:contents">
@@ -42,20 +41,6 @@ function PhoneHeader({ user }: { user: MeDto | null }) {
           <ProfileMenu user={user} />
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function SignInPrompt() {
-  const { dict } = useTranslation();
-
-  return (
-    <div className="mx-auto flex max-w-sm flex-col items-center gap-2 py-16 text-center">
-      <p className="text-lg font-extrabold">{dict.my.signIn.title}</p>
-      <p className="text-sm text-muted">{dict.my.signIn.text}</p>
-      <Button className="mt-3" onPress={() => openAuth()}>
-        {dict.my.signIn.action}
-      </Button>
     </div>
   );
 }
@@ -81,7 +66,6 @@ function Library({ list }: { list: LibraryList }) {
   const actions = useLibraryActions();
   const startsEmpty = useStartsEmpty(useLibraryCounts());
 
-  if (startsEmpty === undefined) return <RowsSkeleton />;
   if (startsEmpty) return <NewUserStart actions={actions} />;
 
   return (
@@ -90,7 +74,7 @@ function Library({ list }: { list: LibraryList }) {
         <div className="md:hidden">
           <ListChips current={list} />
         </div>
-        <h2 className="hidden text-2xl font-extrabold md:block">{dict.my.lists[list]}</h2>
+        <h2 className="sr-only text-2xl font-extrabold md:not-sr-only">{dict.my.lists[list]}</h2>
         <SelectedList list={list} actions={actions} />
       </div>
     </PullToRefresh>
@@ -98,27 +82,11 @@ function Library({ list }: { list: LibraryList }) {
 }
 
 export function MyView({ list }: { list: LibraryList }) {
-  const { user, isLoading } = useAuth();
-
-  const content = (() => {
-    if (isLoading) return <RowsSkeleton />;
-    if (!user) return <SignInPrompt />;
-    return (
+  return (
+    <LibraryShell current={list} header={<PhoneHeader />} skeleton={<RowsSkeleton />}>
       <LibraryMovesProvider>
         <Library list={list} />
       </LibraryMovesProvider>
-    );
-  })();
-
-  return (
-    <div className="flex flex-col gap-3 px-4 md:flex-row md:items-start md:gap-10 md:px-0 md:pt-7">
-      <PhoneHeader user={user} />
-      {user ? (
-        <div className="hidden md:block">
-          <LibraryNav current={list} />
-        </div>
-      ) : null}
-      <div className="min-w-0 max-w-[860px] flex-1">{content}</div>
-    </div>
+    </LibraryShell>
   );
 }

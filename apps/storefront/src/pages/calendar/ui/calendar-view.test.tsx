@@ -37,7 +37,10 @@ jest.mock('@ratingo/web-core/auth', () => ({
   tokenStorage: { getRefreshToken: () => 'refresh-token' },
 }));
 jest.mock('@/shared/api', () => ({
+  CALENDAR_QUERY_KEY: ['calendar'],
   calendarApi: { getRange: jest.fn() },
+  fetchAllPages: jest.fn().mockResolvedValue([]),
+  subscriptionsApi: { list: jest.fn() },
   episodeProgressApi: { markWatched: jest.fn(), markUnwatched: jest.fn() },
   libraryApi: { startWatching: jest.fn() },
 }));

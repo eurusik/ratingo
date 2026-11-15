@@ -22,11 +22,10 @@ export function mergeSaved(...lists: ReadonlyArray<readonly SavedItem[]>): PlanR
   for (const item of lists.flat()) {
     const addedAt = Date.parse(item.createdAt);
     const known = byMedia.get(item.mediaItemId);
-    const lists = [...(known?.lists ?? []), item.list];
     byMedia.set(item.mediaItemId, {
       title: known?.title ?? titleOf(item.mediaItemId, item.mediaSummary),
       addedAt: Math.max(known?.addedAt ?? addedAt, addedAt),
-      lists,
+      lists: [...(known?.lists ?? []), item.list],
     });
   }
   return [...byMedia.values()].sort(newestFirst);

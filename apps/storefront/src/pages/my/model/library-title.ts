@@ -21,7 +21,7 @@ export function titleOf(mediaItemId: string, summary: Summary): LibraryTitle {
     type: summary.type,
     slug: summary.slug,
     title: summary.title,
-    imageUrl: summary.poster?.small,
+    imageUrl: summary.poster?.medium,
     year: yearFromDate(summary.releaseDate),
     releaseDate: summary.releaseDate ?? undefined,
     score: scoreFromPercent(summary.qualityScore),

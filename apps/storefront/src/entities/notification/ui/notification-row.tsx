@@ -48,35 +48,37 @@ export function NotificationRow({ item, now, onOpen, actions, className }: Notif
         className,
       )}
     >
-      <NotificationPoster item={item} />
       <Link
         href={mediaRoute(media.type, media.slug)}
         onClick={() => onOpen(item)}
-        className="flex min-w-0 flex-1 flex-col gap-1 rounded-lg text-foreground no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-foreground no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus md:gap-4"
       >
-        <span className="flex items-center gap-1.5">
-          <Chip
-            size="sm"
-            variant="soft"
-            color={notificationTone(item.trigger)}
-            className="font-extrabold"
-          >
-            {dict.notifications.kinds[item.trigger]}
-          </Chip>
-          <span className="text-xs text-muted">
-            {notificationTime(item.createdAt, now, locale)}
+        <NotificationPoster item={item} />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex items-center gap-1.5">
+            <Chip
+              size="sm"
+              variant="soft"
+              color={notificationTone(item.trigger)}
+              className="font-extrabold"
+            >
+              {dict.notifications.kinds[item.trigger]}
+            </Chip>
+            <span className="text-xs text-muted">
+              {notificationTime(item.createdAt, now, locale)}
+            </span>
           </span>
-        </span>
-        <span
-          className={cn(
-            'text-[15px] leading-snug md:text-base',
-            item.isRead ? 'font-medium' : 'font-bold',
-          )}
-        >
-          {notificationText(item, dict)}
-        </span>
-        {detail ? <span className="text-[13px] text-muted md:text-sm">{detail}</span> : null}
-        {item.isRead ? null : <span className="sr-only">{dict.notifications.unreadItem}</span>}
+          <span
+            className={cn(
+              'text-[15px] leading-snug md:text-base',
+              item.isRead ? 'font-medium' : 'font-bold',
+            )}
+          >
+            {notificationText(item, dict)}
+          </span>
+          {detail ? <span className="text-[13px] text-muted md:text-sm">{detail}</span> : null}
+          {item.isRead ? null : <span className="sr-only">{dict.notifications.unreadItem}</span>}
+        </div>
       </Link>
       {actions}
       <span

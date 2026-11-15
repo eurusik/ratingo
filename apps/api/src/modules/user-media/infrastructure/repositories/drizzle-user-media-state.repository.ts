@@ -31,9 +31,10 @@ import {
 import { FavoriteUpdatesQuery } from '../queries/favorite-updates.query';
 import {
   continuePointSql,
+  mediaSummaryColumns,
   progressTotalSql,
   progressWatchedSql,
-} from '../queries/show-progress.sql';
+} from '../queries/user-media-summary.sql';
 
 @Injectable()
 export class DrizzleUserMediaStateRepository implements IUserMediaStateRepository {
@@ -220,15 +221,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
         const rows = await this.db
           .select({
             state: schema.userMediaState,
-            media: {
-              id: schema.mediaItems.id,
-              type: schema.mediaItems.type,
-              title: schema.mediaItems.title,
-              slug: schema.mediaItems.slug,
-              posterPath: schema.mediaItems.posterPath,
-              releaseDate: schema.mediaItems.releaseDate,
-              qualityScore: schema.mediaStats.qualityScore,
-            },
+            media: mediaSummaryColumns,
           })
           .from(schema.userMediaState)
           .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
@@ -390,15 +383,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
         const rows = await this.db
           .select({
             state: schema.userMediaState,
-            media: {
-              id: schema.mediaItems.id,
-              type: schema.mediaItems.type,
-              title: schema.mediaItems.title,
-              slug: schema.mediaItems.slug,
-              posterPath: schema.mediaItems.posterPath,
-              releaseDate: schema.mediaItems.releaseDate,
-              qualityScore: schema.mediaStats.qualityScore,
-            },
+            media: mediaSummaryColumns,
             progressTotal: progressTotalSql(),
             progressWatched: progressWatchedSql(userId),
             continuePoint: options?.withContinuePoint
@@ -493,15 +478,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
         const rows = await this.db
           .select({
             state: schema.userMediaState,
-            media: {
-              id: schema.mediaItems.id,
-              type: schema.mediaItems.type,
-              title: schema.mediaItems.title,
-              slug: schema.mediaItems.slug,
-              posterPath: schema.mediaItems.posterPath,
-              releaseDate: schema.mediaItems.releaseDate,
-              qualityScore: schema.mediaStats.qualityScore,
-            },
+            media: mediaSummaryColumns,
           })
           .from(schema.userMediaState)
           .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
@@ -623,15 +600,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           await this.db
             .select({
               state: schema.userMediaState,
-              media: {
-                id: schema.mediaItems.id,
-                type: schema.mediaItems.type,
-                title: schema.mediaItems.title,
-                slug: schema.mediaItems.slug,
-                posterPath: schema.mediaItems.posterPath,
-                releaseDate: schema.mediaItems.releaseDate,
-                qualityScore: schema.mediaStats.qualityScore,
-              },
+              media: mediaSummaryColumns,
               progressTotal: progressTotalSql(),
               progressWatched: progressWatchedSql(userId),
               continuePoint: continuePointSql(userId),

@@ -39,11 +39,11 @@ export class LibraryContinuePointDto {
   @ApiProperty({ description: 'Episode number to continue from', example: 5 })
   episode!: number;
 
-  @ApiPropertyOptional({ description: 'Episode to continue from' })
-  episodeId?: string;
+  @ApiProperty({ description: 'Episode to continue from' })
+  episodeId!: string;
 
-  @ApiPropertyOptional({ type: String, nullable: true, description: 'Air date of that episode' })
-  airDate?: string | null;
+  @ApiProperty({ type: String, nullable: true, description: 'Air date of that episode' })
+  airDate!: string | null;
 }
 
 const ME_USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);

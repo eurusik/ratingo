@@ -1,59 +1,21 @@
 'use client';
 
-import { useCallback, useMemo, type ReactNode } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
-import {
-  useLibraryListsStore,
-  useLibraryStore,
-  useMediaStateStore,
-  type LibraryList,
-} from '@/entities/library';
-import { episodeProgressApi, libraryApi, type SaveList } from '@/shared/api';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { EPISODE_PROGRESS_QUERY_KEY } from '@/entities/episode';
+import { useLibraryListsStore, useLibraryStore, useMediaStateStore } from '@/entities/library';
+import { CALENDAR_QUERY_KEY } from '@/shared/api';
+import { useTranslation } from '@/shared/i18n';
 import { showUndoToast } from '@/shared/lib';
-import type { LibraryTitle } from './library-title';
+import { moveSpecs, type MoveSpec, type MoveSpecs } from './library-move-specs';
 import { useLibraryMoves } from './library-moves';
-import type { PlanRow } from './plan-order';
 
-const CALENDAR_QUERY_KEY = ['calendar'] as const;
-const EPISODE_PROGRESS_QUERY_KEY = ['episode-progress'] as const;
+type Act<K extends keyof MoveSpecs> = (...args: Parameters<MoveSpecs[K]>) => void;
 
-interface MoveSpec {
-  title: LibraryTitle;
-  from?: LibraryList;
-  to?: LibraryList;
-  message: string;
-  description?: ReactNode;
-  commit: () => Promise<unknown>;
-  revert: () => Promise<unknown>;
-}
-
-async function saveTo(mediaItemId: string, lists: readonly SaveList[]): Promise<void> {
-  for (const list of lists) await libraryApi.save(mediaItemId, list);
-}
-
-async function unsaveFrom(mediaItemId: string, lists: readonly SaveList[]): Promise<void> {
-  for (const list of lists) await libraryApi.unsave(mediaItemId, list);
-}
-
-interface EpisodeTarget {
-  title: LibraryTitle;
-  episodeId: string;
-  code: string;
-}
-
-export interface LibraryActions {
-  pause: (title: LibraryTitle) => void;
-  drop: (title: LibraryTitle) => void;
-  restore: (title: LibraryTitle, from: 'paused' | 'dropped') => void;
-  start: (row: PlanRow) => void;
-  markMovieWatched: (row: PlanRow, rateAction: ReactNode) => void;
-  removeFromPlan: (row: PlanRow) => void;
-  markEpisodeWatched: (target: EpisodeTarget) => void;
-  rate: (title: LibraryTitle, rating: number | null, previous: number | null) => void;
+export type LibraryActions = { [K in keyof MoveSpecs]: Act<K> } & {
   refresh: () => Promise<void>;
-}
+};
 
 export function useLibraryActions(): LibraryActions {
   const { dict } = useTranslation();
@@ -72,38 +34,43 @@ export function useLibraryActions(): LibraryActions {
   }, [lists, queryClient]);
 
   const settle = useCallback(
-    async (title: LibraryTitle, change: Promise<unknown>) => {
+    async (spec: MoveSpec, change: Promise<unknown>, token?: number) => {
+      const { mediaItemId } = spec.title;
       try {
         await change;
       } catch (error) {
-        console.error('Updating the library failed', { mediaItemId: title.mediaItemId, error });
+        console.error('Updating the library failed', { mediaItemId, error });
         toast.danger(dict.my.toast.failed);
       } finally {
-        mediaStates.refresh(title.mediaItemId);
-        saveStatuses.refresh(title.mediaItemId);
+        mediaStates.refresh(mediaItemId);
+        saveStatuses.refresh(mediaItemId);
         await refresh();
-        moves.forget(title.mediaItemId);
+        if (token !== undefined) moves.forget(mediaItemId, token);
       }
     },
     [dict, mediaStates, moves, refresh, saveStatuses],
   );
 
   const run = useCallback(
-    ({ title, from, to, message, description, commit, revert }: MoveSpec) => {
-      if (from || to) moves.track(title.mediaItemId, to ?? 'gone');
-      if (from !== to) lists.move({ from, to });
-      const committed = commit();
-      void settle(title, committed);
+    (spec: MoveSpec) => {
+      const { title, from, to } = spec;
+      const isMove = from !== to;
+      const token = isMove ? moves.track(title.mediaItemId, to ?? 'gone') : undefined;
+      if (isMove) lists.move({ from, to });
+      const committed = spec.commit();
+      void settle(spec, committed, token);
       showUndoToast({
         key: title.mediaItemId,
-        message,
-        description,
+        message: spec.message,
+        description: spec.description,
         undoLabel: dict.my.toast.undo,
         onUndo: () => {
-          if (from !== to) lists.move({ from: to, to: from });
+          const undoToken = isMove ? moves.track(title.mediaItemId, from ?? 'gone') : undefined;
+          if (isMove) lists.move({ from: to, to: from });
           void settle(
-            title,
-            committed.then(revert, () => undefined),
+            spec,
+            committed.then(spec.revert, () => undefined),
+            undoToken,
           );
         },
       });
@@ -112,97 +79,17 @@ export function useLibraryActions(): LibraryActions {
   );
 
   return useMemo(() => {
-    const say = (template: string, title: LibraryTitle) =>
-      interpolate(template, { title: title.title });
-
+    const specs = moveSpecs(dict);
     return {
       refresh,
-      pause: (title) =>
-        run({
-          title,
-          from: 'watching',
-          to: 'paused',
-          message: say(dict.my.toast.paused, title),
-          commit: () => libraryApi.pause(title.mediaItemId),
-          revert: () => libraryApi.resume(title.mediaItemId),
-        }),
-      drop: (title) =>
-        run({
-          title,
-          from: 'watching',
-          to: 'dropped',
-          message: say(dict.my.toast.dropped, title),
-          commit: () => libraryApi.setState(title.mediaItemId, 'dropped', title.type),
-          revert: () => libraryApi.setState(title.mediaItemId, 'watching', title.type),
-        }),
-      restore: (title, from) =>
-        run({
-          title,
-          from,
-          to: 'watching',
-          message: say(dict.my.toast.restored, title),
-          commit: () =>
-            from === 'paused'
-              ? libraryApi.resume(title.mediaItemId)
-              : libraryApi.setState(title.mediaItemId, 'watching', title.type),
-          revert: () =>
-            from === 'paused'
-              ? libraryApi.pause(title.mediaItemId)
-              : libraryApi.setState(title.mediaItemId, 'dropped', title.type),
-        }),
-      start: (row) =>
-        run({
-          title: row.title,
-          from: 'plan',
-          to: 'watching',
-          message: say(dict.my.toast.started, row.title),
-          commit: async () => {
-            await libraryApi.startWatching(row.title.mediaItemId);
-            await unsaveFrom(row.title.mediaItemId, row.lists);
-          },
-          revert: async () => {
-            await saveTo(row.title.mediaItemId, row.lists);
-            await libraryApi.setState(row.title.mediaItemId, 'planned', row.title.type);
-          },
-        }),
-      markMovieWatched: (row, rateAction) =>
-        run({
-          title: row.title,
-          from: 'plan',
-          to: 'history',
-          message: say(dict.my.toast.movieWatched, row.title),
-          description: rateAction,
-          commit: async () => {
-            await libraryApi.setState(row.title.mediaItemId, 'completed', row.title.type);
-            await unsaveFrom(row.title.mediaItemId, row.lists);
-          },
-          revert: async () => {
-            await saveTo(row.title.mediaItemId, row.lists);
-            await libraryApi.setState(row.title.mediaItemId, 'planned', row.title.type);
-          },
-        }),
-      removeFromPlan: (row) =>
-        run({
-          title: row.title,
-          from: 'plan',
-          message: say(dict.my.toast.removed, row.title),
-          commit: () => unsaveFrom(row.title.mediaItemId, row.lists),
-          revert: () => saveTo(row.title.mediaItemId, row.lists),
-        }),
-      markEpisodeWatched: ({ title, episodeId, code }) =>
-        run({
-          title,
-          message: interpolate(dict.my.toast.episodeWatched, { title: title.title, code }),
-          commit: () => episodeProgressApi.markWatched(episodeId),
-          revert: () => episodeProgressApi.markUnwatched(episodeId),
-        }),
-      rate: (title, rating, previous) =>
-        run({
-          title,
-          message: say(dict.my.toast.rated, title),
-          commit: () => libraryApi.setRating(title.mediaItemId, rating, title.type),
-          revert: () => libraryApi.setRating(title.mediaItemId, previous, title.type),
-        }),
+      pause: (...args) => run(specs.pause(...args)),
+      drop: (...args) => run(specs.drop(...args)),
+      restore: (...args) => run(specs.restore(...args)),
+      start: (...args) => run(specs.start(...args)),
+      markMovieWatched: (...args) => run(specs.markMovieWatched(...args)),
+      removeFromPlan: (...args) => run(specs.removeFromPlan(...args)),
+      markEpisodeWatched: (...args) => run(specs.markEpisodeWatched(...args)),
+      rate: (...args) => run(specs.rate(...args)),
     } satisfies LibraryActions;
   }, [dict, refresh, run]);
 }

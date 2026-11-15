@@ -14,31 +14,34 @@ import {
   useUnreadNotificationCount,
   type NotificationFilter,
 } from '@/entities/notification';
-import { LibraryNav } from '@/widgets/library-nav';
+import { LibraryShell } from '@/widgets/library-nav';
 import { MY_ROUTE, NOTIFICATION_SETTINGS_ROUTE } from '@/shared/config';
-import { openAuth } from '@/shared/auth';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
 import { BackLink, SegmentedFilter } from '@/shared/ui';
 import { PullToRefresh } from '@/shared/ui/gestures';
-import { NotificationListItem } from './notification-item';
+import { SwipeableNotification } from './swipeable-notification';
 
 const SKELETON_ROWS = 4;
 
 function ListSkeleton() {
   const { dict } = useTranslation();
   return (
-    <ul aria-busy aria-label={dict.common.loading} className="flex flex-col gap-2">
-      {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-        <li key={index} className="flex items-center gap-3 rounded-2xl p-3">
-          <Skeleton className="h-18 w-12 shrink-0 rounded-[9px]" />
-          <span className="flex flex-1 flex-col gap-2">
-            <Skeleton className="h-5 w-24 rounded-full" />
-            <Skeleton className="h-4 w-4/5 rounded-md" />
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div aria-busy aria-label={dict.common.loading} className="flex flex-col gap-1.5">
+      <Skeleton className="h-5 w-24 rounded-md" />
+      <ul className="flex flex-col gap-2">
+        {Array.from({ length: SKELETON_ROWS }, (_, index) => (
+          <li key={index} className="flex min-h-24 items-center gap-3 rounded-2xl p-3">
+            <Skeleton className="h-18 w-12 shrink-0 rounded-[9px]" />
+            <span className="flex flex-1 flex-col gap-2">
+              <Skeleton className="h-5 w-24 rounded-full" />
+              <Skeleton className="h-4 w-4/5 rounded-md" />
+              <Skeleton className="h-3.5 w-2/5 rounded-md" />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -61,10 +64,17 @@ function AllRead() {
   );
 }
 
-function NotificationList({ filter }: { filter: NotificationFilter }) {
+type NotificationPages = ReturnType<typeof useNotificationPages>;
+
+function NotificationList({
+  filter,
+  pages,
+}: {
+  filter: NotificationFilter;
+  pages: NotificationPages;
+}) {
   const { dict } = useTranslation();
   const now = useClientNow();
-  const pages = useNotificationPages(filter);
   const markRead = useMarkNotificationRead();
 
   if (pages.isPending) return <ListSkeleton />;
@@ -102,7 +112,7 @@ function NotificationList({ filter }: { filter: NotificationFilter }) {
           <ul className="flex flex-col gap-2 md:gap-1.5">
             {groupItems.map((item) => (
               <li key={item.id}>
-                <NotificationListItem item={item} now={now} onOpen={markRead} onRead={markRead} />
+                <SwipeableNotification item={item} now={now} onOpen={markRead} onRead={markRead} />
               </li>
             ))}
           </ul>
@@ -122,37 +132,28 @@ function NotificationList({ filter }: { filter: NotificationFilter }) {
   );
 }
 
-function Notifications() {
+function NotificationsHeader() {
   const { dict } = useTranslation();
-  const [filter, setFilter] = useState<NotificationFilter>('unread');
+  const { user } = useAuth();
   const unreadCount = useUnreadNotificationCount();
   const readAll = useReadAllNotifications();
-  const pages = useNotificationPages(filter);
-  const readAllButton =
-    unreadCount > 0 ? (
-      <Button
-        variant="ghost"
-        className="min-h-tap px-1 text-accent md:px-3"
-        onPress={() => readAll(unreadCount)}
-      >
-        {dict.notifications.markAllRead}
-      </Button>
-    ) : null;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex min-h-14 items-center gap-2">
-        <BackLink
-          fallbackHref={MY_ROUTE}
-          aria-label={dict.notifications.back}
-          className="-ms-2 inline-flex size-11 items-center justify-center rounded-full text-foreground md:hidden"
-        >
-          <ChevronLeft aria-hidden className="size-6" />
-        </BackLink>
-        <h1 className="flex-1 text-[22px] font-extrabold md:text-2xl">
-          {dict.notifications.title}
-        </h1>
-        {readAllButton}
+    <div className="flex min-h-14 items-center gap-2">
+      <BackLink
+        fallbackHref={MY_ROUTE}
+        aria-label={dict.notifications.back}
+        className="-ms-2 inline-flex size-11 items-center justify-center rounded-full text-foreground md:hidden"
+      >
+        <ChevronLeft aria-hidden className="size-6" />
+      </BackLink>
+      <h1 className="flex-1 text-[22px] font-extrabold md:text-2xl">{dict.notifications.title}</h1>
+      {user && unreadCount > 0 ? (
+        <Button variant="ghost" className="min-h-tap px-1 text-accent md:px-3" onPress={readAll}>
+          {dict.notifications.markAllRead}
+        </Button>
+      ) : null}
+      {user ? (
         <Link
           href={NOTIFICATION_SETTINGS_ROUTE}
           className={cn(
@@ -162,7 +163,19 @@ function Notifications() {
         >
           {dict.notifications.settingsShort}
         </Link>
-      </div>
+      ) : null}
+    </div>
+  );
+}
+
+function Notifications() {
+  const { dict } = useTranslation();
+  const [filter, setFilter] = useState<NotificationFilter>('unread');
+  const unreadCount = useUnreadNotificationCount();
+  const pages = useNotificationPages(filter);
+
+  return (
+    <>
       <SegmentedFilter
         label={dict.notifications.filterLabel}
         options={[
@@ -180,7 +193,7 @@ function Notifications() {
         className="px-0"
       />
       <PullToRefresh onRefresh={() => pages.refetch()}>
-        <NotificationList filter={filter} />
+        <NotificationList filter={filter} pages={pages} />
       </PullToRefresh>
       <p className="pt-3 text-center text-[13px] text-muted md:text-start">
         {dict.notifications.footnote}
@@ -192,37 +205,18 @@ function Notifications() {
         <Settings aria-hidden className="size-4" />
         {dict.notifications.settings}
       </Link>
-    </div>
+    </>
   );
 }
 
 export function NotificationsView() {
-  const { dict } = useTranslation();
-  const { user, isLoading } = useAuth();
-
-  const content = (() => {
-    if (isLoading) return <ListSkeleton />;
-    if (!user) {
-      return (
-        <div className="mx-auto flex max-w-sm flex-col items-center gap-2 py-16 text-center">
-          <p className="text-lg font-extrabold">{dict.my.signIn.title}</p>
-          <Button className="mt-3" onPress={() => openAuth()}>
-            {dict.my.signIn.action}
-          </Button>
-        </div>
-      );
-    }
-    return <Notifications />;
-  })();
-
   return (
-    <div className="flex flex-col gap-3 px-4 md:flex-row md:items-start md:gap-10 md:px-0 md:pt-7">
-      {user ? (
-        <div className="hidden md:block">
-          <LibraryNav current="notifications" />
-        </div>
-      ) : null}
-      <div className="min-w-0 max-w-[860px] flex-1">{content}</div>
-    </div>
+    <LibraryShell
+      current="notifications"
+      header={<NotificationsHeader />}
+      skeleton={<ListSkeleton />}
+    >
+      <Notifications />
+    </LibraryShell>
   );
 }

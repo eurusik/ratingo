@@ -8,13 +8,14 @@ import {
 } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
-import { type ImageDto } from '@/common/dtos/image.dto';
-import { type MediaType } from '@/common/enums/media-type.enum';
 import { CurrentUser } from '@/modules/auth/public';
 import { JwtAuthGuard } from '@/modules/auth/public';
 import { MeListsService } from '@/modules/user-media/application/me-lists.service';
 import { type UserMediaState } from '@/modules/user-media/domain/entities/user-media-state.entity';
-import { type ContinuePoint } from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
+import {
+  type ContinuePoint,
+  type UserMediaSummary,
+} from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
 
 import { FavoriteUpdatesResponseDto } from '../dto/favorite-updates.dto';
 import {
@@ -26,14 +27,7 @@ import {
 } from '../dto/me-lists.dto';
 
 type UserMediaWithSummary = UserMediaState & {
-  mediaSummary: {
-    id: string;
-    type: MediaType;
-    title: string;
-    slug: string;
-    poster: ImageDto | null;
-    releaseDate?: Date | null;
-  };
+  mediaSummary: UserMediaSummary;
   progressSummary?: { watched: number; total: number } | null;
   continuePoint?: ContinuePoint | null;
 };

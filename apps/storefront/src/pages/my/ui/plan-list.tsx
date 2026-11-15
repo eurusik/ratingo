@@ -25,6 +25,8 @@ import { LibraryRow } from './library-row';
 import { EmptyList, ListFailure, RowsSkeleton } from './list-states';
 import { RowMenu, type RowMenuItem } from './row-menu';
 
+const EAGER_ROWS = 3;
+
 function SortMenu({ sort, onSort }: { sort: PlanSort; onSort: (sort: PlanSort) => void }) {
   const { dict } = useTranslation();
   const label = dict.my.plan.sort[sort];
@@ -61,7 +63,15 @@ function SortMenu({ sort, onSort }: { sort: PlanSort; onSort: (sort: PlanSort) =
   );
 }
 
-function PlanRowItem({ row, actions }: { row: PlanRow; actions: LibraryActions }) {
+function PlanRowItem({
+  row,
+  actions,
+  isEager,
+}: {
+  row: PlanRow;
+  actions: LibraryActions;
+  isEager: boolean;
+}) {
   const { dict } = useTranslation();
   const { title } = row;
   const href = mediaRoute(title.type, title.slug);
@@ -90,6 +100,7 @@ function PlanRowItem({ row, actions }: { row: PlanRow; actions: LibraryActions }
   return (
     <LibraryRow
       title={title}
+      isEager={isEager}
       meta={
         <>
           {title.score !== undefined ? <ScoreChip score={title.score} /> : null}
@@ -154,9 +165,9 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
         <SortMenu sort={sort} onSort={setSort} />
       </div>
       <ul aria-label={dict.my.lists.plan} className="flex flex-col">
-        {rows.map((row) => (
+        {rows.map((row, index) => (
           <li key={row.title.mediaItemId}>
-            <PlanRowItem row={row} actions={actions} />
+            <PlanRowItem row={row} actions={actions} isEager={index < EAGER_ROWS} />
           </li>
         ))}
       </ul>

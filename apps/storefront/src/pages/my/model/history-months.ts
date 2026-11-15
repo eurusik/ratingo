@@ -39,7 +39,8 @@ export function matchesQuery(row: HistoryRow, query: string): boolean {
 }
 
 function monthKey(isoDate: string): string {
-  return isoDate.slice(0, 7);
+  const date = new Date(isoDate);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export function groupByMonth(rows: readonly HistoryRow[]): HistoryMonth[] {

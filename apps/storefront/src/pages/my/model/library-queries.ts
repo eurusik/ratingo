@@ -5,6 +5,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { LIBRARY_LISTS_KEY } from '@/entities/library';
 import {
   calendarApi,
+  fetchAllPages,
   libraryApi,
   type LibraryPageQuery,
   type SavedItem,
@@ -14,21 +15,14 @@ import { mergeSaved } from './plan-order';
 import { toHistoryRows } from './history-months';
 
 const PAGE_SIZE = 100;
-const MAX_PAGES = 20;
 const LIST_STALE_MS = 60 * 1000;
 const RECENT_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Page<T> = { data: T[]; meta: { hasMore?: boolean } };
 
-async function fetchAll<T>(load: (query: LibraryPageQuery) => Promise<Page<T>>): Promise<T[]> {
-  const items: T[] = [];
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const { data, meta } = await load({ limit: PAGE_SIZE, offset: page * PAGE_SIZE });
-    items.push(...data);
-    if (!meta.hasMore) break;
-  }
-  return items;
+function fetchAll<T>(load: (query: LibraryPageQuery) => Promise<Page<T>>): Promise<T[]> {
+  return fetchAllPages(PAGE_SIZE, load);
 }
 
 function libraryListKey(viewerId: string | null, list: string) {

@@ -7,7 +7,7 @@ import { episodeProgressApi, type ShowProgress } from '@/shared/api';
 import { applyWatchChange, watchedEpisodeIds, type WatchChange } from './progress';
 import type { Season } from './season';
 
-const EPISODE_PROGRESS_QUERY_KEY = ['episode-progress'] as const;
+export const EPISODE_PROGRESS_QUERY_KEY = ['episode-progress'] as const;
 
 function showProgressKey(userId: string | null, showId: string) {
   return [...EPISODE_PROGRESS_QUERY_KEY, userId, showId] as const;

@@ -1,28 +1,37 @@
 'use client';
 
-import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react';
+import { createContext, use, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { LibraryList } from '@/entities/library';
 
 type Destination = LibraryList | 'gone';
 
+interface TrackedMove {
+  destination: Destination;
+  token: number;
+}
+
 export interface LibraryMoves {
   isMovedOut: (mediaItemId: string, list: LibraryList) => boolean;
-  track: (mediaItemId: string, destination: Destination) => void;
-  forget: (mediaItemId: string) => void;
+  track: (mediaItemId: string, destination: Destination) => number;
+  forget: (mediaItemId: string, token: number) => void;
 }
 
 const LibraryMovesContext = createContext<LibraryMoves | null>(null);
 
 export function LibraryMovesProvider({ children }: { children: ReactNode }) {
-  const [moved, setMoved] = useState<ReadonlyMap<string, Destination>>(new Map());
+  const [moved, setMoved] = useState<ReadonlyMap<string, TrackedMove>>(new Map());
+  const nextToken = useRef(0);
 
   const track = useCallback((mediaItemId: string, destination: Destination) => {
-    setMoved((current) => new Map(current).set(mediaItemId, destination));
+    nextToken.current += 1;
+    const token = nextToken.current;
+    setMoved((current) => new Map(current).set(mediaItemId, { destination, token }));
+    return token;
   }, []);
 
-  const forget = useCallback((mediaItemId: string) => {
+  const forget = useCallback((mediaItemId: string, token: number) => {
     setMoved((current) => {
-      if (!current.has(mediaItemId)) return current;
+      if (current.get(mediaItemId)?.token !== token) return current;
       const next = new Map(current);
       next.delete(mediaItemId);
       return next;
@@ -32,8 +41,8 @@ export function LibraryMovesProvider({ children }: { children: ReactNode }) {
   const value = useMemo<LibraryMoves>(
     () => ({
       isMovedOut: (mediaItemId, list) => {
-        const destination = moved.get(mediaItemId);
-        return destination !== undefined && destination !== list;
+        const move = moved.get(mediaItemId);
+        return move !== undefined && move.destination !== list;
       },
       track,
       forget,

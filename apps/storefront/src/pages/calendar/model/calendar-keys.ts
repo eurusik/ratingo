@@ -1,6 +1,4 @@
-import type { CalendarRangeQuery } from '@/shared/api';
-
-const CALENDAR_QUERY_KEY = ['calendar'] as const;
+import { CALENDAR_QUERY_KEY, type CalendarRangeQuery } from '@/shared/api';
 
 interface CalendarKeyFields extends CalendarRangeQuery {
   viewerId: string | null;
