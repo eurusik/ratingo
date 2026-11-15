@@ -11,9 +11,15 @@ export function mediaRoute(type: MediaKind, slug: string): string {
 
 export const SHOW_SEASON_PARAM = 'season';
 
+export const SHOW_PICK_VALUE = 'pick';
+
 export function showSeasonRoute(slug: string, season?: number): string {
   const showRoute = mediaRoute('show', slug);
   return season === undefined ? showRoute : `${showRoute}?${SHOW_SEASON_PARAM}=${season}`;
+}
+
+export function showPickRoute(slug: string): string {
+  return `${mediaRoute('show', slug)}?${SHOW_SEASON_PARAM}=${SHOW_PICK_VALUE}`;
 }
 
 export function mediaReviewsRoute(type: MediaKind, slug: string): string {
@@ -25,10 +31,18 @@ export function isMediaDetailsPath(pathname: string): boolean {
 }
 
 export const MY_ROUTE = '/my';
+
+export const MY_LIST_PARAM = 'list';
+
+export function myListRoute(list: string, defaultList: string): string {
+  return list === defaultList ? MY_ROUTE : `${MY_ROUTE}?${MY_LIST_PARAM}=${list}`;
+}
 export const BROWSE_ROUTE = '/browse';
 export const CALENDAR_ROUTE = '/calendar';
 export const OFFLINE_ROUTE = '/~offline';
 export const SETTINGS_ROUTE = '/settings';
+export const IMPORT_ROUTE = '/settings/import';
+export const NOTIFICATION_SETTINGS_ROUTE = '/settings#notifications';
 export const NOTIFICATIONS_ROUTE = '/notifications';
 export const ABOUT_ROUTE = '/about';
 export const JOURNAL_ROUTE = '/journal';

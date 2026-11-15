@@ -1,7 +1,11 @@
-import { SHOW_SEASON_PARAM } from '@/shared/config';
+import { SHOW_PICK_VALUE, SHOW_SEASON_PARAM } from '@/shared/config';
 
 export function seasonParam(search: string): string | null {
   return new URLSearchParams(search).get(SHOW_SEASON_PARAM);
+}
+
+export function isPickLink(search: string): boolean {
+  return seasonParam(search) === SHOW_PICK_VALUE;
 }
 
 export function linkedSeason(search: string, seasonNumbers: readonly number[]): number | undefined {

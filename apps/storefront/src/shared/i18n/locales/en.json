@@ -72,7 +72,8 @@
     "browse": "Browse",
     "calendar": "Calendar",
     "my": "My",
-    "search": "Search"
+    "search": "Search",
+    "myUnread": "My, unread notifications"
   },
   "search": {
     "title": "Search",
@@ -111,9 +112,122 @@
     "refreshing": "Refreshing…"
   },
   "my": {
-    "sampleItem": "Sample #{number}",
-    "remove": "Remove",
-    "sampleHint": "Temporary list: swipe a row left to remove it. In the installed app, pull the page down to bring everything back."
+    "lists": {
+      "watching": "Watching",
+      "plan": "Want to watch",
+      "history": "Watched",
+      "paused": "Paused",
+      "dropped": "Dropped"
+    },
+    "listsLabel": "My lists",
+    "failed": "Couldn't load the list.",
+    "retry": "Try again",
+    "loadMore": "Show more",
+    "signIn": {
+      "title": "Sign in to see your library",
+      "text": "Shows you're watching, titles for later and everything you've watched will live here.",
+      "action": "Sign in"
+    },
+    "watching": {
+      "showCount": {
+        "one": "{count} show",
+        "few": "{count} shows",
+        "many": "{count} shows"
+      },
+      "fresh": "New episodes",
+      "next": "Up next",
+      "waiting": "Waiting for new episodes",
+      "newEpisode": "New: {code} · {when}",
+      "nextEpisode": "Next: {code} · {count} left",
+      "nextOnly": "Next: {code}",
+      "airsOn": "New episode {date}",
+      "caughtUp": "Caught up",
+      "shelf": "Paused · {paused} · Dropped · {dropped}",
+      "restore": "Resume",
+      "empty": {
+        "title": "Shows you're watching will appear here",
+        "text": "Mark the first episode on a show's page and new episodes will show up here.",
+        "action": "Go to Browse"
+      }
+    },
+    "plan": {
+      "filter": {
+        "all": "All",
+        "movie": "Movies",
+        "show": "Shows"
+      },
+      "filterLabel": "Type",
+      "sort": {
+        "recent": "Recently added",
+        "rating": "By rating",
+        "releaseDate": "Coming soon"
+      },
+      "sortLabel": "Sort: {sort}",
+      "start": "Start",
+      "startLabel": "Start watching: {title}",
+      "showMeta": "Show",
+      "empty": {
+        "title": "Titles you want to watch will appear here",
+        "text": "Tap “Want to watch” on a movie or show page — we'll tell you when it's out at home.",
+        "action": "Go to Browse"
+      }
+    },
+    "history": {
+      "search": "Search what you've watched…",
+      "searchLabel": "Search what you've watched",
+      "summary": {
+        "one": "{count} movie or show",
+        "few": "{count} movies and shows",
+        "many": "{count} movies and shows"
+      },
+      "rate": "Rate",
+      "rateLabel": "Rate: {title}",
+      "yourRating": "Your rating {score}",
+      "watchedOn": "watched {date}",
+      "noMatches": "Nothing found for “{query}”.",
+      "empty": {
+        "title": "Everything you've watched will appear here",
+        "text": "Rate a movie or mark an episode and it lands in your history. Or bring your history over from Trakt.",
+        "action": "Import from Trakt"
+      }
+    },
+    "actions": {
+      "more": "More actions: {title}",
+      "markEpisode": "Mark as watched: {title} {code}",
+      "markMovie": "Watched: {title}",
+      "pause": "Pause",
+      "drop": "Drop",
+      "open": "Open",
+      "watchedUntil": "I've watched up to…",
+      "remove": "Remove from list",
+      "changeRating": "Change rating",
+      "rating": "Your rating"
+    },
+    "toast": {
+      "paused": "Paused: {title}",
+      "dropped": "Dropped: {title}",
+      "restored": "Back in Watching: {title}",
+      "started": "Moved to Watching: {title}",
+      "movieWatched": "Watched: {title} · in Watched",
+      "episodeWatched": "Watched: {title} {code}",
+      "removed": "Removed: {title}",
+      "rated": "Rated: {title}",
+      "rate": "Rate",
+      "undo": "Undo",
+      "failed": "Couldn't update the list. Please try again."
+    },
+    "newUser": {
+      "title": "What are you watching or want to watch?",
+      "text": "Shows you're watching bring their new episodes here and to the calendar. Titles for later — we'll remind you when they're out at home.",
+      "search": "Find a movie or show…",
+      "popular": "Popular now",
+      "watching": "Watching",
+      "want": "Want",
+      "import": {
+        "title": "Bring it over from Trakt or Letterboxd",
+        "text": "Import your history and ratings in a minute"
+      }
+    }
   },
   "rating": {
     "label": "Rating {score}: {verdict}",
@@ -182,19 +296,56 @@
   },
   "notifications": {
     "title": "Notifications",
-    "unread": "Notifications, unread: {count}",
+    "unread": "Notifications, {count} unread",
     "markAllRead": "Mark all as read",
     "viewAll": "All notifications",
     "empty": "No new notifications yet.",
-    "failed": "Couldn’t load notifications.",
-    "events": {
-      "release": "In cinemas",
-      "new_season": "Season returns",
-      "new_episode": "New episode out",
-      "on_streaming": "Now streaming",
-      "status_changed": "Status changed"
+    "failed": "Couldn't load notifications.",
+    "unreadItem": "unread",
+    "filter": {
+      "unread": "Unread",
+      "all": "All"
     },
-    "unreadItem": "unread"
+    "filterLabel": "Filter",
+    "unreadFilter": "Unread · {count}",
+    "allRead": "All notifications marked as read",
+    "undo": "Undo",
+    "markRead": "Mark as read",
+    "read": "Read",
+    "allCaughtUp": {
+      "title": "All caught up",
+      "text": "We'll let you know when a new season or a title you're waiting for comes out."
+    },
+    "groups": {
+      "today": "Today",
+      "week": "This week",
+      "earlier": "Earlier"
+    },
+    "kinds": {
+      "release": "Out now",
+      "on_streaming": "Out now",
+      "new_season": "New season",
+      "new_episode": "New episode",
+      "status_changed": "Release date"
+    },
+    "text": {
+      "release": "{title} is now in cinemas",
+      "on_streaming": "{title} is now available at home",
+      "new_season": "{title} is back with season {season}",
+      "new_season_unknown": "{title} has a new season coming",
+      "new_episode": "{title}: episode {code} is out",
+      "status_changed": "{title}: release date announced"
+    },
+    "sub": {
+      "fromPlan": "From your Want to watch",
+      "airDate": "Out {date}",
+      "remind": "We'll remind you on release day"
+    },
+    "footnote": "New episodes of what you watch live in My. You can turn on notifications for them in settings.",
+    "settings": "Choose what to notify in settings",
+    "settingsShort": "What to notify",
+    "back": "Back",
+    "loadMore": "Show more"
   },
   "profile": {
     "stats": {
@@ -919,5 +1070,13 @@
     "retry": "Try again",
     "lessShows": "Show less",
     "weekShown": "Showing the week of {range}"
+  },
+  "reminder": {
+    "remind": "Remind me",
+    "reminding": "Reminding",
+    "label": "Remind me about new episodes: {show}",
+    "on": "We'll remind you about new episodes: {show}",
+    "off": "Reminder turned off: {show}",
+    "failed": "Couldn't change the reminder."
   }
 }

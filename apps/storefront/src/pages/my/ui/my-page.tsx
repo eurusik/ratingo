@@ -1,13 +1,6 @@
-import { getDictionary, type Locale } from '@/shared/i18n';
-import { SampleList } from './sample-list';
+import { DEFAULT_LIBRARY_LIST, isLibraryList } from '@/entities/library';
+import { MyView } from './my-view';
 
-export function MyPage({ locale }: { locale: Locale }) {
-  const dict = getDictionary(locale);
-
-  return (
-    <div className="flex flex-col gap-4">
-      <h1 className="px-4 text-2xl font-bold md:px-0">{dict.nav.my}</h1>
-      <SampleList />
-    </div>
-  );
+export function MyPage({ list }: { list?: string }) {
+  return <MyView list={isLibraryList(list) ? list : DEFAULT_LIBRARY_LIST} />;
 }

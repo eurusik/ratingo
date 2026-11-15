@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Popover } from '@heroui/react';
 import { notificationsApi, type NotificationItem } from '@/shared/api';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { NotificationPanel } from './notification-panel';
@@ -10,13 +11,13 @@ jest.mock('@/shared/api', () => ({
 
 const uk = getDictionary('uk');
 
-const EPISODE: NotificationItem = {
+const SEASON: NotificationItem = {
   id: 'n-1',
-  trigger: 'new_episode',
-  payload: null,
+  trigger: 'new_season',
+  payload: { seasonNumber: 4 },
   isRead: false,
   createdAt: '2026-11-12T08:00:00.000Z',
-  mediaSummary: { id: 'm-1', type: 'show', title: 'Андор', slug: 'andor', poster: null },
+  mediaSummary: { id: 'm-1', type: 'show', title: 'Ведмідь', slug: 'the-bear', poster: null },
 };
 
 function renderPanel(onNavigate = jest.fn()) {
@@ -24,7 +25,14 @@ function renderPanel(onNavigate = jest.fn()) {
   render(
     <QueryClientProvider client={queryClient}>
       <I18nProvider locale="uk" dictionary={uk}>
-        <NotificationPanel onNavigate={onNavigate} />
+        <Popover isOpen>
+          <button type="button">trigger</button>
+          <Popover.Content>
+            <Popover.Dialog>
+              <NotificationPanel unreadCount={1} onNavigate={onNavigate} />
+            </Popover.Dialog>
+          </Popover.Content>
+        </Popover>
       </I18nProvider>
     </QueryClientProvider>,
   );
@@ -34,24 +42,21 @@ function renderPanel(onNavigate = jest.fn()) {
 describe('NotificationPanel', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('lists the latest notifications as links and marks them all read', async () => {
+  it('lists the latest notifications as links and marks one read on open', async () => {
     jest
       .mocked(notificationsApi.list)
-      .mockResolvedValue({ data: [EPISODE], unreadCount: 1, total: 1, hasMore: false });
-    jest.mocked(notificationsApi.markAllAsRead).mockResolvedValue({ success: true, count: 1 });
-    renderPanel();
+      .mockResolvedValue({ data: [SEASON], unreadCount: 1, total: 1, hasMore: false });
+    jest.mocked(notificationsApi.markAsRead).mockResolvedValue({ success: true });
+    const onNavigate = renderPanel();
 
-    const list = await screen.findByRole('listbox', { name: uk.notifications.title });
-    const item = await within(list).findByRole('option', {
-      name: new RegExp(
-        `${uk.notifications.events.new_episode} Андор\\s*, ${uk.notifications.unreadItem}`,
-      ),
-    });
-    expect(item).toHaveAttribute('href', '/shows/andor');
+    const list = await screen.findByRole('list', { name: uk.notifications.title });
+    const link = within(list).getByRole('link', { name: /Ведмідь — повернувся сезон 4/ });
+    expect(link).toHaveAttribute('href', '/shows/the-bear');
     expect(notificationsApi.list).toHaveBeenCalledWith(5);
 
-    fireEvent.click(screen.getByRole('button', { name: uk.notifications.markAllRead }));
-    await waitFor(() => expect(notificationsApi.markAllAsRead).toHaveBeenCalledTimes(1));
+    fireEvent.click(link);
+    await waitFor(() => expect(notificationsApi.markAsRead).toHaveBeenCalledWith('n-1'));
+    expect(onNavigate).toHaveBeenCalled();
     expect(screen.getByRole('link', { name: uk.notifications.viewAll })).toHaveAttribute(
       'href',
       '/notifications',
@@ -65,8 +70,5 @@ describe('NotificationPanel', () => {
     renderPanel();
 
     expect(await screen.findByText(uk.notifications.empty)).toHaveAttribute('role', 'status');
-    expect(
-      screen.queryByRole('button', { name: uk.notifications.markAllRead }),
-    ).not.toBeInTheDocument();
   });
 });

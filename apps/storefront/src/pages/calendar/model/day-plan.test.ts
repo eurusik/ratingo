@@ -65,9 +65,9 @@ describe('episodeMark', () => {
 describe('episodeAction', () => {
   const context = { mode: 'mine' as const, now: NOW, viewer: 'signedIn' as const };
 
-  it('offers ✓ only for aired episodes of tracked shows', () => {
+  it('offers ✓ for aired episodes of tracked shows and a reminder for upcoming ones', () => {
     expect(episodeAction(episode({ isTracked: true, airDate: AIRED }), context)).toBe('watch');
-    expect(episodeAction(episode({ isTracked: true, airDate: FUTURE }), context)).toBe('none');
+    expect(episodeAction(episode({ isTracked: true, airDate: FUTURE }), context)).toBe('remind');
   });
 
   it('offers to start saved premieres in “Mine” and any show in “All”', () => {

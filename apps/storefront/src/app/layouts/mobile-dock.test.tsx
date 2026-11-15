@@ -9,6 +9,11 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('@/features/search', () => ({ openSearch: jest.fn() }));
 
+let unreadCount = 0;
+jest.mock('@/entities/notification', () => ({
+  useUnreadNotificationCount: () => unreadCount,
+}));
+
 const uk = getDictionary('uk');
 
 function renderDock() {
@@ -40,5 +45,13 @@ describe('MobileDock', () => {
     fireEvent.click(screen.getByRole('button', { name: uk.nav.search }));
 
     expect(openSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts an unread dot on My when notifications wait', () => {
+    unreadCount = 3;
+    renderDock();
+
+    expect(screen.getByRole('link', { name: uk.nav.myUnread })).toHaveAttribute('href', '/my');
+    unreadCount = 0;
   });
 });

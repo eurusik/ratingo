@@ -5,6 +5,7 @@ import { Button, Checkbox } from '@heroui/react';
 import { Plus } from 'lucide-react';
 import { cn } from '@ratingo/web-core/lib';
 import { EpisodeStill } from '@/entities/episode';
+import { ReminderToggle } from '@/features/episode-reminder';
 import type { CalendarEpisode } from '@/shared/api';
 import { showSeasonRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
@@ -123,6 +124,9 @@ export const CalendarEpisodeItem = memo(function CalendarEpisodeItem({
         </span>
       </ForwardLink>
       {action === 'watch' ? <WatchCheckbox episode={episode} /> : null}
+      {action === 'remind' ? (
+        <ReminderToggle show={{ mediaItemId: episode.showId, title: episode.showTitle }} />
+      ) : null}
       {action === 'start' ? <StartWatchingButton episode={episode} /> : null}
     </li>
   );

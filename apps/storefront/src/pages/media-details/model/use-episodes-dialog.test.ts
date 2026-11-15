@@ -55,4 +55,13 @@ describe('useEpisodesDialog', () => {
     rerender({ canTrack: true });
     expect(result.current.dialog.isOpen).toBe(false);
   });
+
+  it('opens straight in pick mode from a pick link', () => {
+    window.history.replaceState(null, '', '/shows/arcane?season=pick');
+    const { result } = renderHook(() =>
+      useEpisodesDialog({ seasons: SEASONS, canTrack: true, isResolving: false }),
+    );
+
+    expect(result.current.dialog).toMatchObject({ isOpen: true, isPicking: true });
+  });
 });

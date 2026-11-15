@@ -1,4 +1,15 @@
-export { LIBRARY_QUERY_KEY } from './model/library-keys';
+export { LIBRARY_LISTS_KEY, LIBRARY_QUERY_KEY } from './model/library-keys';
+export { useLibraryCounts, useLibraryListsStore } from './model/library-counts';
+export {
+  DEFAULT_LIBRARY_LIST,
+  LIBRARY_LISTS,
+  MAIN_LIBRARY_LISTS,
+  SHELF_LIBRARY_LISTS,
+  isLibraryList,
+  libraryListRoute,
+  listCount,
+  type LibraryList,
+} from './model/library-lists';
 export { useForgetLibraryOnUserChange } from './model/library-owner';
 export { useMediaState, useMediaStateStore } from './model/media-state';
 export {

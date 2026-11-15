@@ -13,7 +13,7 @@ export interface DayPlan {
 
 export type EpisodeMark = 'premiere' | 'finale';
 
-export type EpisodeAction = 'watch' | 'start' | 'none';
+export type EpisodeAction = 'watch' | 'remind' | 'start' | 'none';
 
 export type ViewerStatus = 'resolving' | 'guest' | 'signedIn';
 
@@ -69,7 +69,7 @@ export function episodeAction(
 ): EpisodeAction {
   if (viewer === 'resolving') return 'none';
   if (viewer === 'signedIn' && episode.isTracked) {
-    return hasAired(episode, now) ? 'watch' : 'none';
+    return hasAired(episode, now) ? 'watch' : 'remind';
   }
   return mode === 'all' || episode.isSaved ? 'start' : 'none';
 }

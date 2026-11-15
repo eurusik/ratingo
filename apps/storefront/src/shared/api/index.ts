@@ -27,10 +27,19 @@ export {
 } from './calendar';
 export { loadMovieBySlug, loadShowBySlug } from './media-details';
 export { episodeProgressApi, type ShowProgress } from './episode-progress';
-export { notificationsApi, type NotificationItem } from './notifications';
+export {
+  notificationsApi,
+  type NotificationItem,
+  type NotificationList,
+  type NotificationTrigger,
+} from './notifications';
+export { subscriptionsApi } from './subscriptions';
 export {
   libraryApi,
+  type LibraryCounts,
+  type LibraryPageQuery,
   type MediaSaveStatus,
+  type SavedItem,
   type SaveList,
   type UserMediaState,
   type WatchState,
