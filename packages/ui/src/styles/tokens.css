@@ -10,6 +10,7 @@
   --viewport-bottom-fill-height: 10rem;
   --viewport-bottom-edge-height: 12px;
   --sheet-backdrop-full-at: 30%;
+  --sheet-top-gap: max(2rem, calc(var(--safe-top) + 0.75rem));
   --edge-panel-shadow: 0 -6px 24px 0 rgba(0, 0, 0, 0.08);
   --tab-bar-height: 4rem;
 }

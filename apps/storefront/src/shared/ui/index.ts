@@ -1,11 +1,17 @@
 export { AppShell, MAIN_CONTENT_ID } from './app-shell/app-shell';
+export { BackdropPicture } from './backdrop-picture/backdrop-picture';
 export { BrandMark } from './brand-mark/brand-mark';
 export { BackLink } from './back-link/back-link';
 export { Container } from './container/container';
 export { ContentTransition } from './content-transition/content-transition';
+export { DownscaledBlur } from './downscaled-blur/downscaled-blur';
+export { EdgeFade } from './edge-fade/edge-fade';
+export { useHorizontalScroller } from './edge-fade/horizontal-scroller';
+export { ForwardLink } from './forward-link/forward-link';
 export { PageTransition } from './page-transition/page-transition';
 export { Rail, RailItem } from './rail/rail';
 export { RailPager } from './rail/rail-pager';
+export { ReturningImage } from './returning-image/returning-image';
 export { ResponsiveDialog } from './responsive-dialog/responsive-dialog';
 export { SectionHeader } from './section-header/section-header';
 export { SegmentedFilter } from './segmented-filter/segmented-filter';

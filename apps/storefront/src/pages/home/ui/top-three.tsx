@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { Card } from '@heroui/react';
 import {
+  CardGlow,
   ExternalRatings,
   MediaPoster,
   VerdictChip,
@@ -11,29 +11,36 @@ import {
 } from '@/entities/media';
 import { SaveButton } from '@/features/save-to-library';
 import { mediaRoute } from '@/shared/config';
+import { SHARED_ART_SCOPE, SHARED_ART_SOURCE } from '@/shared/lib';
 import { useTranslation } from '@/shared/i18n';
-import { SectionHeader } from '@/shared/ui';
+import { ForwardLink, SectionHeader } from '@/shared/ui';
 
 const SECTION_ID = 'top-picks';
 
 function TopThreeCard({ media, rank }: { media: TrendingMedia; rank: number }) {
   return (
-    <Card className="relative flex-row items-center gap-3 rounded-2xl p-3">
+    <Card
+      {...SHARED_ART_SCOPE}
+      className="relative isolate flex-row items-center gap-3 overflow-hidden rounded-2xl p-3"
+    >
+      <CardGlow imageUrl={media.posterUrl} />
       <span
         aria-hidden
         className="w-7 shrink-0 text-center text-3xl font-black text-muted tabular-nums"
       >
         {rank}
       </span>
-      <MediaPoster type={media.type} posterUrl={media.posterUrl} size="list" />
+      <span {...SHARED_ART_SOURCE} className="shrink-0">
+        <MediaPoster type={media.type} posterUrl={media.posterUrl} size="list" />
+      </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <Card.Title className="line-clamp-2 text-base leading-tight font-extrabold">
-          <Link
+          <ForwardLink
             href={mediaRoute(media.type, media.slug)}
             className="text-foreground no-underline outline-none after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
           >
             {media.title}
-          </Link>
+          </ForwardLink>
         </Card.Title>
         <Card.Description className="text-sm tabular-nums">
           <MediaDetails media={media} />

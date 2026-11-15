@@ -20,7 +20,7 @@ export const RATING_CHIP_CLASSES: Record<RatingChipSize, RatingChipClasses> = {
   },
   md: {
     row: 'gap-1.5',
-    chip: 'gap-1.5 bg-black/80 text-xs text-white',
+    chip: 'gap-1.5 poster-glass text-xs',
     imdbChip: 'ps-1',
     criticsChip: 'ps-2',
     badge: 'text-[11px]',

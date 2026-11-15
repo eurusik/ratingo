@@ -57,6 +57,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],
+    isrFlushToDisk: false,
   },
   transpilePackages: ['@ratingo/api-contract', '@ratingo/web-core'],
   // Serwist adds webpack config for SW bundling; empty turbopack config

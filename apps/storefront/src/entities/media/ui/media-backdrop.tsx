@@ -1,5 +1,5 @@
-import Image from 'next/image';
 import type { MediaType } from '@/shared/api';
+import { ReturningImage } from '@/shared/ui';
 import { MediaTypeIcon } from './media-poster';
 
 const BACKDROP_WIDTH = 310;
@@ -21,7 +21,7 @@ export function MediaBackdrop({ type, backdropUrl, isPriority }: MediaBackdropPr
   }
 
   return (
-    <Image
+    <ReturningImage
       src={backdropUrl}
       alt=""
       width={BACKDROP_WIDTH}

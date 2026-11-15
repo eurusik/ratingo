@@ -209,6 +209,12 @@ export async function apiGet<T>(path: string, options?: Options): Promise<T> {
   return handleResponse(getClient().get(path, options).json<ApiResponse<T>>());
 }
 
+export async function apiGetOrNull<T>(path: string, options?: Options): Promise<T | null> {
+  const response = await getClient().get(path, options).json<ApiResponse<T | null>>();
+  if (response.success && response.data === null) return null;
+  return handleResponse(Promise.resolve(response as ApiResponse<T>));
+}
+
 /**
  * Performs POST request to API.
  *

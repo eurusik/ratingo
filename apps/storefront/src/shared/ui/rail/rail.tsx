@@ -1,5 +1,8 @@
-import type { ReactNode, Ref } from 'react';
+'use client';
+
+import { useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { ScrollShadow } from '@heroui/react';
+import { railMemoryMarker, restoreRememberedRailScroll } from '@/shared/lib';
 
 type RailItemSize = 'card' | 'tile';
 
@@ -7,15 +10,16 @@ interface RailProps {
   label: string;
   isOrdered?: boolean;
   itemSize?: RailItemSize;
-  scrollerRef?: Ref<HTMLDivElement>;
+  scrollerRef?: RefObject<HTMLDivElement | null>;
+  memoryKey?: string;
   children: ReactNode;
 }
 
 const SCROLLER_CLASS =
-  '@container -my-1 snap-x snap-mandatory scroll-px-4 overflow-y-hidden overscroll-x-contain md:mx-[calc(var(--page-gutter)*-1)] md:my-0 md:scroll-px-(--page-gutter)';
+  '@container -my-4 snap-x snap-mandatory scroll-px-4 overflow-y-hidden overscroll-x-contain md:mx-[calc(var(--page-gutter)*-1)] md:scroll-px-(--page-gutter)';
 
 const LIST_BASE =
-  'flex w-max gap-3 px-4 py-1 md:px-(--page-gutter) md:py-0 md:*:w-[calc((100cqw-var(--page-gutter)-var(--rail-columns)*0.75rem)/(var(--rail-columns)+0.4))]';
+  'flex w-max gap-3 px-4 py-4 md:px-(--page-gutter) md:*:w-[calc((100cqw-var(--page-gutter)-var(--rail-columns)*0.75rem)/(var(--rail-columns)+0.4))]';
 
 const COLUMNS_BY_SIZE: Record<RailItemSize, string> = {
   card: 'md:[--rail-columns:2] lg:[--rail-columns:3] 2xl:[--rail-columns:4]',
@@ -27,14 +31,23 @@ export function Rail({
   isOrdered = false,
   itemSize = 'card',
   scrollerRef,
+  memoryKey = label,
   children,
 }: RailProps) {
   const List = isOrdered ? 'ol' : 'ul';
+  const ownScrollerRef = useRef<HTMLDivElement>(null);
+  const scroller = scrollerRef ?? ownScrollerRef;
+
+  useLayoutEffect(() => {
+    if (scroller.current) restoreRememberedRailScroll(scroller.current, memoryKey);
+  }, [scroller, memoryKey]);
 
   return (
     <ScrollShadow
-      ref={scrollerRef}
+      ref={scroller}
+      {...railMemoryMarker(memoryKey)}
       orientation="horizontal"
+      visibility="none"
       hideScrollBar
       className={SCROLLER_CLASS}
     >

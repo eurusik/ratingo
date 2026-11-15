@@ -1,11 +1,12 @@
 'use client';
 
 import { useRef } from 'react';
-import Link from 'next/link';
+import { episodeCode } from '@/entities/episode';
 import { MediaPoster } from '@/entities/media';
 import { mediaRoute } from '@/shared/config';
+import { SHARED_ART_SOURCE } from '@/shared/lib';
 import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
-import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
+import { ForwardLink, Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import type { EpisodeRelease } from '../model/home-feed';
 
 const AIR_DATE_TIME_ZONE = 'Europe/Kyiv';
@@ -31,17 +32,17 @@ function EpisodeTile({ release }: { release: EpisodeRelease }) {
   const numbers = { season: release.season, episode: release.episode };
 
   return (
-    <Link
+    <ForwardLink
       href={mediaRoute('show', release.slug)}
       className="flex w-24 flex-col gap-1.5 text-foreground no-underline md:w-full md:gap-2"
     >
-      <span className="relative">
+      <span {...SHARED_ART_SOURCE} className="relative">
         <MediaPoster type="show" posterUrl={release.posterUrl} size="rank" />
         <span
           aria-hidden
-          className="absolute start-1.5 bottom-1.5 rounded-lg bg-black/80 px-1.5 py-0.5 text-xs font-extrabold text-white tabular-nums"
+          className="absolute start-1.5 bottom-1.5 rounded-lg poster-glass px-1.5 py-0.5 text-xs font-extrabold tabular-nums"
         >
-          {interpolate(dict.home.episodeCode, numbers)}
+          {episodeCode({ seasonNumber: release.season, number: release.episode }, dict)}
         </span>
       </span>
       <span className="line-clamp-2 min-h-[2lh] text-[13px] leading-tight font-semibold break-words md:text-sm">
@@ -51,7 +52,7 @@ function EpisodeTile({ release }: { release: EpisodeRelease }) {
       <time dateTime={release.airedAt} className="text-xs text-muted tabular-nums">
         {formatAirDate(locale, release.airedAt)}
       </time>
-    </Link>
+    </ForwardLink>
   );
 }
 

@@ -1,23 +1,19 @@
 'use client';
 
 import type { Key } from 'react';
-import { Dropdown, Label, ToggleButton, toast } from '@heroui/react';
+import { Dropdown, Label, ToggleButton } from '@heroui/react';
 import { Check, Plus } from 'lucide-react';
-import { useAuth } from '@ratingo/web-core/auth';
 import type { MediaSummary } from '@/entities/media';
-import { isSaved, useSaveStatus } from '@/entities/library';
-import { useSignedInAction } from '@/shared/auth';
 import { mediaRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { useBrowserOrigin } from '@/shared/lib';
-import { useLibrarySave } from '../model/library-save';
-import { shareLink } from '../model/share-link';
+import { useShareLink } from '@/shared/lib';
+import { useSaveToggle } from '../model/save-toggle';
 
 type SaveButtonTone = 'surface' | 'overlay';
 
 const TONE_CLASSES: Record<SaveButtonTone, string> = {
   surface: '',
-  overlay: 'bg-black/80 text-white',
+  overlay: 'poster-glass',
 };
 
 const MENU_KEYS = { toggle: 'toggle', open: 'open', share: 'share' } as const;
@@ -29,30 +25,14 @@ interface SaveButtonProps {
 
 export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
   const { dict } = useTranslation();
-  const { isAuthenticated } = useAuth();
-  const origin = useBrowserOrigin();
-  const runSignedIn = useSignedInAction();
-  const { toggleSaved, save } = useLibrarySave();
-  const saved = isSaved(useSaveStatus(media.mediaItemId));
-  const savable = { mediaItemId: media.mediaItemId, title: media.title };
+  const share = useShareLink();
+  const { saved, toggle } = useSaveToggle(media);
   const href = mediaRoute(media.type, media.slug);
   const toggleLabel = saved ? dict.saveToLibrary.menu.unsave : dict.saveToLibrary.menu.save;
 
-  const toggleOrAskToSignIn = () => {
-    if (isAuthenticated) toggleSaved(savable);
-    else runSignedIn(() => save(savable), { kind: 'save', ...savable });
-  };
-
-  const share = async () => {
-    if (!origin) return;
-    const outcome = await shareLink({ url: new URL(href, origin).href, title: media.title });
-    if (outcome === 'copied') toast(dict.saveToLibrary.toast.linkCopied);
-    if (outcome === 'failed') toast.danger(dict.saveToLibrary.toast.shareFailed);
-  };
-
   const onMenuAction = (key: Key) => {
-    if (key === MENU_KEYS.toggle) toggleOrAskToSignIn();
-    if (key === MENU_KEYS.share) void share();
+    if (key === MENU_KEYS.toggle) toggle();
+    if (key === MENU_KEYS.share) void share({ href, title: media.title });
   };
 
   return (
@@ -60,7 +40,7 @@ export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
       <ToggleButton
         isIconOnly
         isSelected={saved}
-        onPress={toggleOrAskToSignIn}
+        onPress={toggle}
         aria-label={interpolate(dict.saveToLibrary.save, { title: media.title })}
         className={`size-11 shrink-0 touch-manipulation rounded-full select-none [-webkit-touch-callout:none] data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground ${TONE_CLASSES[tone]}`}
       >

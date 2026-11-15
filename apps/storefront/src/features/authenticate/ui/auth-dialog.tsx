@@ -32,7 +32,7 @@ export function AuthDialog() {
   const modeTitle = mode === 'login' ? dict.auth.loginTitle : dict.auth.registerTitle;
   const title =
     shown.intent && mode === 'login'
-      ? interpolate(dict.auth.intent.save, { title: shown.intent.title })
+      ? interpolate(dict.auth.intent[shown.intent.kind], { title: shown.intent.title })
       : modeTitle;
 
   const finish = () => {

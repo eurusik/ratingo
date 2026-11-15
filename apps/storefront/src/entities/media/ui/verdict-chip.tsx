@@ -1,3 +1,5 @@
+'use client';
+
 import { Chip } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
 import { VERDICT_TONES, type RatingVerdict } from '../model/score';

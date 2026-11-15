@@ -4,6 +4,8 @@ import { I18nProvider, getDictionary } from '@/shared/i18n';
 import type { GridMedia } from '../model/grid-media';
 import { PosterTile } from './poster-tile';
 
+jest.mock('next/navigation', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+
 function Wrapper({ children }: { children: ReactNode }) {
   return (
     <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
@@ -22,7 +24,6 @@ const ANDOR: GridMedia = {
   imdbRating: 8.3,
   criticsPercent: 76,
 };
-
 
 describe('PosterTile', () => {
   it('links the poster and title, shows the Ratingo verdict and both outside ratings', () => {

@@ -31,6 +31,8 @@ export const GA_MEASUREMENT_ID = IS_PRODUCTION_SITE
 
 export const SERVICE_WORKER_ENABLED = process.env.NODE_ENV === 'production';
 
+export const NAVIGATION_DEBUG_ENABLED = process.env.NEXT_PUBLIC_NAVIGATION_DEBUG === 'true';
+
 export function buildRevision(): string {
   return process.env.VERCEL_GIT_COMMIT_SHA || crypto.randomUUID();
 }

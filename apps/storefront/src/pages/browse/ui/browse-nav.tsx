@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { buttonVariants } from '@heroui/react';
 import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
+import { isPlainClick } from '@/shared/lib';
+import { EdgeFade, useHorizontalScroller } from '@/shared/ui';
 import {
   browseCategoriesOfType,
   counterpartCategory,
@@ -12,7 +14,6 @@ import {
 } from '../model/browse-category';
 import { browseHref, carryStateTo, type BrowseState } from '../model/browse-state';
 import type { BrowseLocation } from '../model/use-browse-navigation';
-import { useHorizontalScroller } from '../lib/horizontal-scroller';
 
 const MEDIA_TYPES: readonly MediaType[] = ['show', 'movie'];
 
@@ -24,10 +25,6 @@ interface BrowseNavProps {
 
 function locationOf(target: BrowseCategory, state: BrowseState): BrowseLocation {
   return { slug: target.slug, state: carryStateTo(target, state) };
-}
-
-function isPlainClick(event: MouseEvent<HTMLAnchorElement>): boolean {
-  return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 }
 
 function openInPlace(next: BrowseLocation, onOpen: (next: BrowseLocation) => void) {
@@ -42,10 +39,7 @@ export function TypeSwitch({ category, state, onOpen }: BrowseNavProps) {
   const { dict } = useTranslation();
 
   return (
-    <nav
-      aria-label={dict.browse.typeLabel}
-      className="flex items-baseline gap-5"
-    >
+    <nav aria-label={dict.browse.typeLabel} className="flex items-baseline gap-5">
       {MEDIA_TYPES.map((type) => {
         const next = locationOf(counterpartCategory(category, type), state);
         return (
@@ -72,32 +66,34 @@ export function PoolNav({ category, state, onOpen }: BrowseNavProps) {
   });
 
   return (
-    <nav
-      ref={poolsRef}
-      aria-label={dict.browse.poolsLabel}
-      data-more-before={edges.hasMoreBefore || undefined}
-      data-more-after={edges.hasMoreAfter || undefined}
-      className="relative flex min-w-0 flex-1 gap-2 overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_var(--fade-before),black_calc(100%-var(--fade-after)),transparent)] scroll-px-10 [scrollbar-width:none] [--fade-after:0px] [--fade-before:0px] data-[more-after]:[--fade-after:2.5rem] data-[more-before]:[--fade-before:2.5rem] [&::-webkit-scrollbar]:hidden"
-    >
-      {browseCategoriesOfType(category.type).map((pool) => {
-        const isCurrent = pool.slug === category.slug;
-        const next = locationOf(pool, state);
-        return (
-          <Link
-            key={pool.slug}
-            href={browseHref(next.slug, next.state)}
-            onClick={openInPlace(next, onOpen)}
-            aria-current={isCurrent ? 'page' : undefined}
-            className={buttonVariants({
-              variant: isCurrent ? 'primary' : 'outline',
-              size: 'sm',
-              className: 'min-h-10 shrink-0 rounded-full px-4 whitespace-nowrap no-underline',
-            })}
-          >
-            {dict.browse.pools[pool.pool].label}
-          </Link>
-        );
-      })}
-    </nav>
+    <div className="relative flex min-w-0 flex-1">
+      <nav
+        ref={poolsRef}
+        aria-label={dict.browse.poolsLabel}
+        className="flex min-w-0 flex-1 gap-2 overflow-x-auto scroll-px-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {browseCategoriesOfType(category.type).map((pool) => {
+          const isCurrent = pool.slug === category.slug;
+          const next = locationOf(pool, state);
+          return (
+            <Link
+              key={pool.slug}
+              href={browseHref(next.slug, next.state)}
+              onClick={openInPlace(next, onOpen)}
+              aria-current={isCurrent ? 'page' : undefined}
+              className={buttonVariants({
+                variant: isCurrent ? 'primary' : 'outline',
+                size: 'sm',
+                className: 'min-h-10 shrink-0 rounded-full px-4 whitespace-nowrap no-underline',
+              })}
+            >
+              {dict.browse.pools[pool.pool].label}
+            </Link>
+          );
+        })}
+      </nav>
+      <EdgeFade side="start" isVisible={edges.hasMoreBefore} />
+      <EdgeFade side="end" isVisible={edges.hasMoreAfter} />
+    </div>
   );
 }

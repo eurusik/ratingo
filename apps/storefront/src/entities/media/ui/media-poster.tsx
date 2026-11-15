@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import { Clapperboard, Tv } from 'lucide-react';
 import type { MediaType } from '@/shared/api';
+import { ReturningImage } from '@/shared/ui';
 
 type PosterSize = 'row' | 'list' | 'rank' | 'grid';
 
@@ -48,7 +48,7 @@ export function MediaPoster({
   }
 
   return (
-    <Image
+    <ReturningImage
       src={posterUrl}
       alt=""
       width={width}

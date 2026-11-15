@@ -1,9 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import { consumeProgrammaticBack, installNavigationTransitionGuard } from './navigation-transition';
+import {
+  SKIP_VIEW_TRANSITION_ATTRIBUTE,
+  consumeProgrammaticBack,
+  installNavigationTransitionGuard,
+} from './navigation-transition';
+import { reportNavigationStep } from './navigation-debug';
 
-const SKIP_ATTRIBUTE = 'data-skip-view-transition';
 const SKIP_WINDOW_MS = 1000;
 
 function browserMayHaveAnimated(event: PopStateEvent): boolean {
@@ -18,17 +22,25 @@ export function ViewTransitionTraversalGuard() {
     installNavigationTransitionGuard();
 
     const onPopState = (event: PopStateEvent) => {
-      if (consumeProgrammaticBack() || !browserMayHaveAnimated(event)) return;
-      root.setAttribute(SKIP_ATTRIBUTE, '');
+      const isProgrammaticBack = consumeProgrammaticBack();
+      reportNavigationStep('popstate', {
+        isProgrammaticBack,
+        browserMayHaveAnimated: browserMayHaveAnimated(event),
+      });
+      if (isProgrammaticBack || !browserMayHaveAnimated(event)) return;
+      root.setAttribute(SKIP_VIEW_TRANSITION_ATTRIBUTE, '');
       clearTimeout(clearTimer);
-      clearTimer = setTimeout(() => root.removeAttribute(SKIP_ATTRIBUTE), SKIP_WINDOW_MS);
+      clearTimer = setTimeout(
+        () => root.removeAttribute(SKIP_VIEW_TRANSITION_ATTRIBUTE),
+        SKIP_WINDOW_MS,
+      );
     };
 
     window.addEventListener('popstate', onPopState, { capture: true });
     return () => {
       window.removeEventListener('popstate', onPopState, { capture: true });
       clearTimeout(clearTimer);
-      root.removeAttribute(SKIP_ATTRIBUTE);
+      root.removeAttribute(SKIP_VIEW_TRANSITION_ATTRIBUTE);
     };
   }, []);
 

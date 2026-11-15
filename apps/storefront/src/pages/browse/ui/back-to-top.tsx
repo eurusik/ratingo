@@ -1,13 +1,35 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { Button } from '@heroui/react';
 import { ArrowUp } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
+import { currentLocationKey } from '@/shared/lib';
 import { MAIN_CONTENT_ID } from '@/shared/ui';
 
 const VISIBLE_AFTER_SCREENS = 2;
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+const visibilityByLocation = new Map<string, boolean>();
+
+function rememberedVisibility(): boolean {
+  if (typeof window === 'undefined') return false;
+  return visibilityByLocation.get(currentLocationKey()) ?? false;
+}
+
+function isScrolledFarEnough(): boolean {
+  return window.scrollY > window.innerHeight * VISIBLE_AFTER_SCREENS;
+}
+
+function scheduleFirstUpdate(update: () => void): () => void {
+  const isReturning = visibilityByLocation.has(currentLocationKey());
+  if (!isReturning) {
+    update();
+    return () => {};
+  }
+  const frame = requestAnimationFrame(update);
+  return () => cancelAnimationFrame(frame);
+}
 
 function scrollToTop(): void {
   const prefersReducedMotion = window.matchMedia(REDUCED_MOTION_QUERY).matches;
@@ -17,13 +39,20 @@ function scrollToTop(): void {
 
 export function BackToTop() {
   const { dict } = useTranslation();
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(rememberedVisibility);
 
-  useEffect(() => {
-    const update = () => setIsVisible(window.scrollY > window.innerHeight * VISIBLE_AFTER_SCREENS);
-    update();
+  useLayoutEffect(() => {
+    const update = () => {
+      const next = isScrolledFarEnough();
+      visibilityByLocation.set(currentLocationKey(), next);
+      setIsVisible(next);
+    };
+    const cancelFirstUpdate = scheduleFirstUpdate(update);
     window.addEventListener('scroll', update, { passive: true });
-    return () => window.removeEventListener('scroll', update);
+    return () => {
+      cancelFirstUpdate();
+      window.removeEventListener('scroll', update);
+    };
   }, []);
 
   if (!isVisible) return null;

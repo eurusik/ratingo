@@ -1,0 +1,1 @@
+export const MAX_REVIEW_TEXT_LENGTH = 280;

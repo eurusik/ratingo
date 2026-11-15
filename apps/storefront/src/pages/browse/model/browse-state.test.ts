@@ -104,9 +104,9 @@ describe('parseBrowseState', () => {
   });
 
   it('accepts legacy sort=ratingo links as the recommended order', () => {
-    expect(parseBrowseState(category('shows-trending'), { sort: 'ratingo' }, CURRENT_YEAR).sort).toBe(
-      'recommended',
-    );
+    expect(
+      parseBrowseState(category('shows-trending'), { sort: 'ratingo' }, CURRENT_YEAR).sort,
+    ).toBe('recommended');
   });
 
   it('ignores filters on collections that only sort', () => {

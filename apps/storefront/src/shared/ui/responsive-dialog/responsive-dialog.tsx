@@ -4,8 +4,10 @@ import { cloneElement, useState } from 'react';
 import { Modal } from '@heroui/react';
 import { DismissOnSystemBack, ViewportBottomFill } from '@ratingo/ui/overlay';
 import { useTranslation } from '@/shared/i18n';
-import { DESKTOP_MEDIA_QUERY, useMediaQuery } from '@/shared/lib';
+import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
+import { useMediaQuery } from '@/shared/lib';
 import { Sheet, type DialogSurfaceProps } from '../sheet';
+import { SidePanel } from '../side-panel/side-panel';
 
 function DesktopModal({
   isOpen,
@@ -38,12 +40,17 @@ function DesktopModal({
   );
 }
 
+interface ResponsiveDialogProps extends DialogSurfaceProps {
+  desktop?: 'modal' | 'side';
+}
+
 export function ResponsiveDialog({
   trigger,
   isOpen,
   onOpenChange,
+  desktop = 'modal',
   ...surface
-}: DialogSurfaceProps) {
+}: ResponsiveDialogProps) {
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
   const [isOpenUncontrolled, setIsOpenUncontrolled] = useState(false);
   const isControlled = isOpen !== undefined;
@@ -54,7 +61,8 @@ export function ResponsiveDialog({
     onOpenChange?.(next);
   };
 
-  const Surface = isDesktop ? DesktopModal : Sheet;
+  const DesktopSurface = desktop === 'side' ? SidePanel : DesktopModal;
+  const Surface = isDesktop ? DesktopSurface : Sheet;
   return (
     <>
       {trigger ? cloneElement(trigger, { onPress: () => changeOpen(true) }) : null}

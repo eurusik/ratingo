@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { mediaRoute } from '@/shared/config';
+import { navigateForward } from '@/shared/lib';
 import { importUntilReady } from './import-title';
 import { rememberTitle } from './recent-titles';
 import type { SearchTitle } from './search-title';
@@ -22,7 +23,7 @@ export function useOpenTitle(onOpened: () => void) {
   const navigate = (title: SearchTitle, slug: string) => {
     rememberTitle({ ...title, slug });
     onOpened();
-    router.push(mediaRoute(title.type, slug));
+    void navigateForward(() => router.push(mediaRoute(title.type, slug)));
   };
 
   const startImport = (title: SearchTitle, tmdbId: number) => {

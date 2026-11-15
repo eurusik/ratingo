@@ -4,20 +4,33 @@ import { useRef, useState } from 'react';
 import { SegmentedFilter } from '@/shared/ui';
 import { chooseList } from '../model/home-feed';
 
+const chosenBySection = new Map<string, string>();
+
 export function useRailFilter<K extends string, T>(
+  sectionId: string,
   lists: Record<K, readonly T[]>,
   order: readonly [K, ...K[]],
 ) {
-  const [chosen, setChosen] = useState<K>(order[0]);
+  const [chosen, setChosen] = useState<K>(
+    () => order.find((key) => key === chosenBySection.get(sectionId)) ?? order[0],
+  );
   const scrollerRef = useRef<HTMLDivElement>(null);
   const { available, active } = chooseList(lists, order, chosen);
 
   const select = (next: K) => {
+    chosenBySection.set(sectionId, next);
     setChosen(next);
     if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
   };
 
-  return { active, available, items: active ? lists[active] : [], select, scrollerRef };
+  return {
+    active,
+    available,
+    items: active ? lists[active] : [],
+    select,
+    scrollerRef,
+    memoryKey: `${sectionId}:${active}`,
+  };
 }
 
 interface RailFilterBarProps<K extends string> {

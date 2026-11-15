@@ -1,17 +1,20 @@
 export { SiteAnalytics } from './analytics';
 export { useBrowserOrigin, useBrowserPath } from './browser-origin';
+export { useClientNow } from './client-now';
 export { useDebouncedValue } from './debounced-value';
-export { replaceDocumentLocation } from './document-location';
 export { interleave } from './interleave';
-export { DESKTOP_MEDIA_QUERY, useMediaQuery } from './media-query';
+export { useIsClamped, useMediaQuery } from './layout';
 export {
   currentYear,
   formatCompactCount,
   formatScore,
+  initialOf,
+  percentFromScore,
   positiveNumber,
   scoreFromPercent,
+  scoreFromRating,
   yearFromDate,
-} from './numbers';
+} from './format';
 export { useIsApplePlatform } from './platform';
 export {
   APP_THEME_COLOR,
@@ -20,8 +23,28 @@ export {
   buildWebAppManifest,
   useInstallApp,
 } from './pwa';
-export { RouteCommitSignal, hasPreviousRoute, waitForRouteCommit } from './route-commit';
-export { createBatchLoader, isOnLightConnection, whenIdle } from './scheduling';
+export {
+  BrowserBackScrollRestorer,
+  RouteCommitSignal,
+  CONTENT_TRANSITION_ONLY,
+  currentLocationKey,
+  SHARED_ART_SCOPE,
+  SHARED_ART_SOURCE,
+  SHARED_ART_TARGET,
+  hasPreviousRoute,
+  isPlainClick,
+  navigateForward,
+  nameArtLinkingTo,
+  nameArtOfLink,
+  pendingArtImageFor,
+  railMemoryMarker,
+  releaseSharedArt,
+  replaceDocumentLocation,
+  restoreRememberedRailScroll,
+  restoreRememberedScroll,
+  waitForRouteCommit,
+} from './navigation';
+export { createBatchLoader, preloadWhenIdle, whenIdleOnFastConnection } from './scheduling';
 export {
   JsonLd,
   buildOrganizationJsonLd,
@@ -29,4 +52,6 @@ export {
   buildRootMetadata,
   buildSitemap,
   buildWebSiteJsonLd,
+  createMediaMetadata,
 } from './seo';
+export { closeUndoToast, showUndoToast, useShareLink } from './toast';

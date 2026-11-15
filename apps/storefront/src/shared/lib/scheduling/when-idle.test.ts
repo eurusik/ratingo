@@ -1,4 +1,9 @@
-import { isOnLightConnection, whenIdle } from './when-idle';
+import {
+  isOnLightConnection,
+  preloadWhenIdle,
+  whenIdle,
+  whenIdleOnFastConnection,
+} from './when-idle';
 
 describe('whenIdle', () => {
   afterEach(() => {
@@ -65,5 +70,51 @@ describe('isOnLightConnection', () => {
 
   it('assumes a normal connection where the browser does not say', () => {
     expect(isOnLightConnection()).toBe(false);
+  });
+});
+
+describe('whenIdleOnFastConnection', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(navigator, 'connection');
+    jest.useRealTimers();
+  });
+
+  it('skips the task on a light connection', () => {
+    jest.useFakeTimers();
+    Object.defineProperty(navigator, 'connection', {
+      value: { saveData: true },
+      configurable: true,
+    });
+    const task = jest.fn();
+
+    expect(whenIdleOnFastConnection(task)).toBeUndefined();
+    jest.runAllTimers();
+
+    expect(task).not.toHaveBeenCalled();
+  });
+
+  it('runs the task when idle on a normal connection', () => {
+    jest.useFakeTimers();
+    const task = jest.fn();
+
+    whenIdleOnFastConnection(task);
+    jest.runAllTimers();
+
+    expect(task).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('preloadWhenIdle', () => {
+  afterEach(() => jest.useRealTimers());
+
+  it('swallows a failed preload', async () => {
+    jest.useFakeTimers();
+    const load = jest.fn(() => Promise.reject(new Error('offline')));
+
+    preloadWhenIdle(load);
+    jest.runAllTimers();
+    await Promise.resolve();
+
+    expect(load).toHaveBeenCalledTimes(1);
   });
 });

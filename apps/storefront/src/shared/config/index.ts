@@ -3,12 +3,14 @@ export {
   API_BASE_URL,
   GA_MEASUREMENT_ID,
   IS_PRODUCTION_SITE,
+  NAVIGATION_DEBUG_ENABLED,
   SERVICE_WORKER_ENABLED,
   SITE_URL,
   buildRevision,
 } from './env';
 export { BRAND_NAME } from './brand';
-export { tmdbPosterUrl } from './images';
+export { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from './breakpoints';
+export { tmdbPosterUrl, tmdbStillUrl } from './images';
 export { HOME_ROUTE, NAV_ROUTES, isNavRouteActive, type NavSection } from './navigation';
 export {
   ABOUT_ROUTE,
@@ -20,5 +22,8 @@ export {
   NOTIFICATIONS_ROUTE,
   OFFLINE_ROUTE,
   SETTINGS_ROUTE,
+  isBrowsePath,
+  isMediaDetailsPath,
   mediaRoute,
+  mediaReviewsRoute,
 } from './routes';

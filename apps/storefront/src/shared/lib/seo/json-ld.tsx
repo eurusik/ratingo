@@ -14,7 +14,10 @@ function serializeJsonLd(data: JsonLdData): string {
 
 export function JsonLd({ data }: { data: JsonLdData }) {
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(data) }} />
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(data) }}
+    />
   );
 }
 

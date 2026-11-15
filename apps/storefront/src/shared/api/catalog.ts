@@ -1,5 +1,8 @@
 import type { GetData, GetQuery, components } from '@ratingo/api-contract';
 import { apiGet, apiPost } from '@ratingo/web-core/api';
+import { cacheOptions, type CatalogCache } from './request-cache';
+
+export type { CatalogCache } from './request-cache';
 
 export type SearchItem = components['schemas']['SearchItemDto'];
 export type SearchResponse = components['schemas']['SearchResponseDto'];
@@ -10,6 +13,9 @@ export type TrendingMovie = components['schemas']['MovieListItemDto'];
 export type TrendingShow = components['schemas']['ShowTrendingItemDto'];
 export type HomeItem = components['schemas']['HeroItemDto'];
 export type NewEpisode = components['schemas']['NewEpisodeDto'];
+export type MovieDetails = components['schemas']['MovieResponseDto'];
+export type ShowDetails = components['schemas']['ShowResponseDto'];
+export type ShowSeason = components['schemas']['SeasonDto'];
 export type MediaBadge = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
 type PageMeta = components['schemas']['OffsetPaginationMetaDto'];
 
@@ -32,25 +38,10 @@ export interface CatalogPage<T> {
   hasMore: boolean;
 }
 
-export interface CatalogCache {
-  revalidateSeconds: number;
-}
-
 const IMPORT_PATHS: Record<MediaType, string> = {
   movie: 'catalog/import/movie',
   show: 'catalog/import/show',
 };
-
-const CACHED_REQUEST_TIMEOUT_MS = 5000;
-
-function cacheOptions(cache: CatalogCache | undefined) {
-  if (!cache) return {};
-  return {
-    next: { revalidate: cache.revalidateSeconds },
-    timeout: CACHED_REQUEST_TIMEOUT_MS,
-    retry: { limit: 1 },
-  };
-}
 
 function definedParams(query: CatalogListQuery): Record<string, string | number> {
   return Object.fromEntries(
@@ -138,6 +129,14 @@ export const catalogApi = {
     cache?: CatalogCache,
   ): Promise<CatalogPage<TrendingShow>> {
     return getCatalogPage<TrendingShow>(path, query, cache);
+  },
+
+  getMovieBySlug(slug: string, cache?: CatalogCache): Promise<MovieDetails> {
+    return apiGet<MovieDetails>(`catalog/movies/${encodeURIComponent(slug)}`, cacheOptions(cache));
+  },
+
+  getShowBySlug(slug: string, cache?: CatalogCache): Promise<ShowDetails> {
+    return apiGet<ShowDetails>(`catalog/shows/${encodeURIComponent(slug)}`, cacheOptions(cache));
   },
 
   getHomeHero(cache?: CatalogCache): Promise<HomeItem[]> {
