@@ -12,6 +12,7 @@ import {
   episodeTitle,
   formatAirDate,
   nextUpcoming,
+  signedInTrackingState,
   seasonName,
   seasonProgress,
   typicalRuntime,
@@ -24,6 +25,7 @@ import { preloadWhenIdle } from '@/shared/lib';
 import { formatCount } from '../model/details-format';
 import { useEpisodesDialog } from '../model/use-episodes-dialog';
 import { useEpisodesTracker, type EpisodesTracker } from '../model/use-episodes-tracker';
+import { useRememberTracking } from '../model/use-remember-tracking';
 import { useRateMedia } from '../model/use-rate-media';
 import type { ActionMedia } from '../model/action-media';
 import { RatingTrigger, type TriggerLook } from './rating-trigger';
@@ -247,6 +249,7 @@ interface TrackedShow {
 function EpisodeTracking({ media, showId, seasons }: TrackedShow) {
   const show = { showId, mediaItemId: media.mediaItemId, seasons, title: media.title };
   const tracker = useEpisodesTracker(show);
+  useRememberTracking(media.slug, seasons, tracker);
   const { dialog, open, setOpen, setPicking } = useEpisodesDialog({
     seasons,
     canTrack: tracker.canTrack,
@@ -256,12 +259,7 @@ function EpisodeTracking({ media, showId, seasons }: TrackedShow) {
   useEffect(() => preloadWhenIdle(loadEpisodesSheet), []);
 
   if (tracker.isResolving) {
-    return (
-      <ShowActionsSkeleton
-        showId={showId}
-        hasUpcoming={nextUpcoming(seasons, tracker.now) !== undefined}
-      />
-    );
+    return <ShowActionsSkeleton state={signedInTrackingState(media.trackingState)} />;
   }
   if (!tracker.canTrack) return <StartCard media={media} />;
 

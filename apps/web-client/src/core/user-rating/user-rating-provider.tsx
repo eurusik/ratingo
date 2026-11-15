@@ -36,7 +36,6 @@ export function UserRatingProvider({ mediaItemIds, children }: UserRatingProvide
     queryFn: () => meListsApi.getBatchRatings(uniqueIds),
     enabled: isAuthenticated && uniqueIds.length > 0,
     staleTime: 30_000,
-    gcTime: 5 * 60_000,
   });
 
   const getRating = useCallback(

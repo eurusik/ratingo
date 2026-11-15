@@ -5,7 +5,6 @@ import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/reac
 import { useAuth } from '@ratingo/web-core/auth';
 import { episodeProgressApi, type ShowProgress } from '@/shared/api';
 import { applyWatchChange, watchedEpisodeIds, type WatchChange } from './progress';
-import { rememberProgress } from './progress-memory';
 import type { Season } from './season';
 
 const EPISODE_PROGRESS_QUERY_KEY = ['episode-progress'] as const;
@@ -30,13 +29,7 @@ export function useShowProgress(showId: string | undefined): ShowProgressView {
   const canTrack = isAuthenticated && userId !== null && showId !== undefined;
   const { data, isPending } = useQuery({
     queryKey: showProgressKey(userId, showId ?? ''),
-    queryFn: canTrack
-      ? async () => {
-          const progress = await episodeProgressApi.getShowProgress(showId);
-          rememberProgress(userId, showId, progress);
-          return progress;
-        }
-      : skipToken,
+    queryFn: canTrack ? () => episodeProgressApi.getShowProgress(showId) : skipToken,
   });
   const watched = useMemo(() => watchedEpisodeIds(data), [data]);
 
