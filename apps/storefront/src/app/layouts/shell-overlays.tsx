@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
+import { useTrackingHintsSession } from '@/entities/episode';
 import { useForgetLibraryOnUserChange } from '@/entities/library';
 import { SearchShortcut, useIsSearchOpen, type SearchTitle } from '@/features/search';
 import { hasPendingIntent, useAuthRequest } from '@/shared/auth';
@@ -42,6 +43,7 @@ export function ShellOverlays() {
     readNoIntentOnServer,
   );
   useForgetLibraryOnUserChange();
+  useTrackingHintsSession();
   const isWarm = useWarmOverlays();
 
   return (

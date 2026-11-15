@@ -1,5 +1,6 @@
 import { preload } from 'react-dom';
 import { notFound } from 'next/navigation';
+import { trackingStateFor, type TrackingHints, type TrackingState } from '@/entities/episode';
 import { loadMovieBySlug, loadShowBySlug } from '@/shared/api';
 import { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from '@/shared/config';
 import type { Locale } from '@/shared/i18n';
@@ -28,14 +29,20 @@ interface DetailsPageProps {
   locale: Locale;
 }
 
+interface ShowDetailsPageProps extends DetailsPageProps {
+  trackingHints: TrackingHints | null;
+}
+
 function DetailsDocument({
   view,
   jsonLd,
   locale,
+  trackingState,
 }: {
   view: View;
   jsonLd: JsonLdData;
   locale: Locale;
+  trackingState?: TrackingState;
 }) {
   preloadBackdrop(view);
 
@@ -43,7 +50,7 @@ function DetailsDocument({
     <>
       <JsonLd data={jsonLd} />
       <AfterNavigationTransition>
-        <MediaDetailsView view={view} locale={locale} />
+        <MediaDetailsView view={view} locale={locale} trackingState={trackingState} />
       </AfterNavigationTransition>
     </>
   );
@@ -57,8 +64,15 @@ export async function MovieDetailsPage({ slug, locale }: DetailsPageProps) {
   );
 }
 
-export async function ShowDetailsPage({ slug, locale }: DetailsPageProps) {
+export async function ShowDetailsPage({ slug, locale, trackingHints }: ShowDetailsPageProps) {
   const show = await loadShowBySlug(slug);
   if (!show) notFound();
-  return <DetailsDocument view={fromShowDetails(show)} jsonLd={showJsonLd(show)} locale={locale} />;
+  return (
+    <DetailsDocument
+      view={fromShowDetails(show)}
+      jsonLd={showJsonLd(show)}
+      locale={locale}
+      trackingState={trackingStateFor(trackingHints, show.slug)}
+    />
+  );
 }
