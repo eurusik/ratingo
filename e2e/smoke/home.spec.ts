@@ -9,6 +9,7 @@ test('home lists both shows and movies', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: /тренд|trending|топ-10|top 10/i }).first()).toBeVisible();
   await expect(page.locator(SHOW_LINK).first()).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(page.locator(MOVIE_LINK).first()).toBeAttached();
 });
 
