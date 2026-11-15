@@ -5,6 +5,7 @@ import { Pause, X } from 'lucide-react';
 import { episodeCode, formatAirDate } from '@/entities/episode';
 import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
 import { SwipeableRow } from '@/shared/ui/gestures';
+import { daysFromToday } from '../model/episode-days';
 import type { LibraryActions } from '../model/library-actions';
 import type { LibraryTitle } from '../model/library-title';
 import {
@@ -22,18 +23,12 @@ function codeOf(episode: NextEpisode, dict: Dictionary): string {
   return episodeCode({ seasonNumber: episode.seasonNumber, number: episode.episodeNumber }, dict);
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function startOfDay(at: number): number {
-  const day = new Date(at);
-  day.setHours(0, 0, 0, 0);
-  return day.getTime();
-}
-
 function relativeDay(airDate: string | undefined, now: number, locale: string): string {
   if (!airDate) return '';
-  const days = Math.round((startOfDay(Date.parse(airDate)) - startOfDay(now)) / DAY_MS);
-  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(days, 'day');
+  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
+    daysFromToday(airDate, now),
+    'day',
+  );
 }
 
 function SwipeActions({ title, actions }: { title: LibraryTitle; actions: LibraryActions }) {
@@ -120,7 +115,7 @@ export function FreshEpisodeRow({ row, actions, now }: RowProps<FreshRow>) {
   );
 }
 
-export function NextEpisodeRow({ row, actions }: RowProps<NextRow>) {
+export function NextEpisodeRow({ row, actions }: Omit<RowProps<NextRow>, 'now'>) {
   const { dict } = useTranslation();
   const episode = row.episode;
   const code = episode ? codeOf(episode, dict) : undefined;
@@ -134,9 +129,16 @@ export function NextEpisodeRow({ row, actions }: RowProps<NextRow>) {
         meta={
           code
             ? interpolate(dict.my.watching.nextEpisode, { code, count: remainingEpisodes(row) })
-            : null
+            : dict.my.watching.caughtUp
         }
-        progress={{ value: row.watched, max: row.total, label: `${row.watched}/${row.total}` }}
+        progress={{
+          value: Math.min(row.watched, row.total),
+          max: row.total,
+          label: interpolate(dict.my.watching.progressLabel, {
+            watched: row.watched,
+            total: row.total,
+          }),
+        }}
         action={
           episodeId && code ? (
             <CheckButton

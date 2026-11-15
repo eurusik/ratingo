@@ -52,7 +52,10 @@ function earliestUnwatchedByShow(
   const episodes = range?.days.flatMap((day) => day.episodes) ?? [];
   for (const episode of episodes) {
     if (!episode.isTracked || episode.isWatched || !isAired(episode.airDate, now)) continue;
-    if (!byShow.has(episode.showId)) byShow.set(episode.showId, episode);
+    const known = byShow.get(episode.showId);
+    if (!known || Date.parse(episode.airDate) < Date.parse(known.airDate)) {
+      byShow.set(episode.showId, episode);
+    }
   }
   return byShow;
 }
@@ -98,9 +101,11 @@ export function splitWatching(
   const next: NextRow[] = [];
   const waiting: WaitingRow[] = [];
 
+  const seen = new Set<string>();
   for (const item of [...watching, ...caughtUp]) {
     const title = libraryTitle(item);
-    if (!title) continue;
+    if (!title || seen.has(item.mediaItemId)) continue;
+    seen.add(item.mediaItemId);
     const freshEpisode = freshByShow.get(item.mediaItemId);
     if (freshEpisode) {
       fresh.push(freshRow(freshEpisode));

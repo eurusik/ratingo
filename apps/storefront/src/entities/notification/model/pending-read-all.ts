@@ -1,11 +1,10 @@
 type Listener = () => void;
 
 const listeners = new Set<Listener>();
-let isPending = false;
+let activeToken = 0;
+let nextToken = 0;
 
-function setPending(next: boolean): void {
-  if (isPending === next) return;
-  isPending = next;
+function notify(): void {
   for (const listener of listeners) listener();
 }
 
@@ -14,7 +13,16 @@ export const pendingReadAll = {
     listeners.add(listener);
     return () => listeners.delete(listener);
   },
-  isPending: (): boolean => isPending,
-  start: (): void => setPending(true),
-  cancel: (): void => setPending(false),
+  isPending: (): boolean => activeToken !== 0,
+  start(): number {
+    nextToken += 1;
+    activeToken = nextToken;
+    notify();
+    return activeToken;
+  },
+  finish(token: number): void {
+    if (activeToken !== token) return;
+    activeToken = 0;
+    notify();
+  },
 };

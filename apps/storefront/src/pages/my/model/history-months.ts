@@ -3,6 +3,7 @@ import { titleOf, type LibraryTitle } from './library-title';
 
 export interface HistoryRow {
   title: LibraryTitle;
+  searchText: string;
   rating: number | null;
   watchedAt: string;
 }
@@ -12,12 +13,20 @@ export interface HistoryMonth {
   rows: HistoryRow[];
 }
 
+function normalized(text: string): string {
+  return text
+    .toLocaleLowerCase()
+    .normalize('NFKD')
+    .replace(/\p{Diacritic}/gu, '');
+}
+
 export function toHistoryRows(items: readonly UserMediaState[]): HistoryRow[] {
   return items.flatMap((item) =>
     item.mediaSummary
       ? [
           {
             title: titleOf(item.mediaItemId, item.mediaSummary),
+            searchText: normalized(item.mediaSummary.title),
             rating: item.rating,
             watchedAt: item.updatedAt,
           },
@@ -26,16 +35,9 @@ export function toHistoryRows(items: readonly UserMediaState[]): HistoryRow[] {
   );
 }
 
-function normalized(text: string): string {
-  return text
-    .toLocaleLowerCase()
-    .normalize('NFKD')
-    .replace(/\p{Diacritic}/gu, '');
-}
-
 export function matchesQuery(row: HistoryRow, query: string): boolean {
   const needle = normalized(query.trim());
-  return needle === '' || normalized(row.title.title).includes(needle);
+  return needle === '' || row.searchText.includes(needle);
 }
 
 function monthKey(isoDate: string): string {

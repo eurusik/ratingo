@@ -2,7 +2,7 @@
 
 import { Button } from '@heroui/react';
 import type { UserMediaState } from '@/shared/api';
-import { useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation } from '@/shared/i18n';
 import type { LibraryActions } from '../model/library-actions';
 import { useShelfLists } from '../model/library-queries';
 import { titleOf } from '../model/library-title';
@@ -33,7 +33,7 @@ export function ShelfRows({ list, items, actions, isMovedOut }: ShelfRowsProps) 
             <Button
               size="sm"
               variant="secondary"
-              aria-label={`${dict.my.watching.restore}: ${title.title}`}
+              aria-label={interpolate(dict.my.watching.restoreLabel, { title: title.title })}
               onPress={() => actions.restore(title, list)}
               className="phone-tap-target shrink-0 rounded-full"
             >

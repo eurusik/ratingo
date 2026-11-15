@@ -20,12 +20,13 @@ function newestFirst(left: PlanRow, right: PlanRow): number {
 export function mergeSaved(...lists: ReadonlyArray<readonly SavedItem[]>): PlanRow[] {
   const byMedia = new Map<string, PlanRow>();
   for (const item of lists.flat()) {
-    const addedAt = Date.parse(item.createdAt);
+    const parsed = Date.parse(item.createdAt);
+    const addedAt = Number.isFinite(parsed) ? parsed : 0;
     const known = byMedia.get(item.mediaItemId);
     byMedia.set(item.mediaItemId, {
       title: known?.title ?? titleOf(item.mediaItemId, item.mediaSummary),
       addedAt: Math.max(known?.addedAt ?? addedAt, addedAt),
-      lists: [...(known?.lists ?? []), item.list],
+      lists: [...new Set([...(known?.lists ?? []), item.list])],
     });
   }
   return [...byMedia.values()].sort(newestFirst);

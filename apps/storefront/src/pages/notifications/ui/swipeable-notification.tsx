@@ -2,9 +2,10 @@
 
 import { Button } from '@heroui/react';
 import { Check } from 'lucide-react';
+import { cn } from '@ratingo/web-core/lib';
 import { NotificationRow } from '@/entities/notification';
 import type { NotificationItem } from '@/shared/api';
-import { useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation } from '@/shared/i18n';
 import { SwipeableRow } from '@/shared/ui/gestures';
 
 const HOVER_REVEAL =
@@ -19,44 +20,43 @@ interface SwipeableNotificationProps {
 
 export function SwipeableNotification({ item, now, onOpen, onRead }: SwipeableNotificationProps) {
   const { dict } = useTranslation();
-  const row = (
-    <NotificationRow
-      item={item}
-      now={now}
-      onOpen={onOpen}
-      actions={
-        item.isRead ? null : (
-          <Button
-            isIconOnly
-            variant="outline"
-            aria-label={`${dict.notifications.markRead}: ${item.mediaSummary.title}`}
-            onPress={() => onRead(item)}
-            className={`size-11 shrink-0 rounded-full ${HOVER_REVEAL}`}
-          >
-            <Check aria-hidden className="size-4" strokeWidth={2.4} />
-          </Button>
-        )
-      }
-    />
-  );
-
-  if (item.isRead) return row;
+  const label = interpolate(dict.notifications.markReadLabel, { title: item.mediaSummary.title });
 
   return (
     <SwipeableRow
       className="rounded-2xl [--swipeable-row-surface:transparent]"
       actions={
-        <Button
-          excludeFromTabOrder
-          variant="primary"
-          onPress={() => onRead(item)}
-          className="h-full min-h-tap rounded-none px-6 text-[13px] font-bold"
-        >
-          {dict.notifications.read}
-        </Button>
+        item.isRead ? null : (
+          <Button
+            excludeFromTabOrder
+            variant="primary"
+            aria-label={label}
+            onPress={() => onRead(item)}
+            className="h-full min-h-tap rounded-none px-6 text-[13px] font-bold"
+          >
+            {dict.notifications.read}
+          </Button>
+        )
       }
     >
-      {row}
+      <NotificationRow
+        item={item}
+        now={now}
+        onOpen={onOpen}
+        actions={
+          item.isRead ? null : (
+            <Button
+              isIconOnly
+              variant="outline"
+              aria-label={label}
+              onPress={() => onRead(item)}
+              className={cn('size-11 shrink-0 rounded-full', HOVER_REVEAL)}
+            >
+              <Check aria-hidden className="size-4" strokeWidth={2.4} />
+            </Button>
+          )
+        }
+      />
     </SwipeableRow>
   );
 }

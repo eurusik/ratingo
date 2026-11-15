@@ -31,11 +31,13 @@ export function useLibraryListsStore(): LibraryListsStore {
 
   return useMemo(
     () => ({
-      move: (move) =>
+      move: (move) => {
+        void queryClient.cancelQueries({ queryKey: LIBRARY_COUNTS_KEY }, { revert: false });
         queryClient.setQueryData<LibraryCounts>(
           LIBRARY_COUNTS_KEY,
           (counts) => counts && applyMove(counts, move),
-        ),
+        );
+      },
       refresh: async () => {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: LIBRARY_LISTS_KEY }),

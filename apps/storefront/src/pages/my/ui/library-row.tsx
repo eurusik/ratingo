@@ -87,7 +87,7 @@ export function LibraryRow({
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="truncate text-[15px] font-bold md:text-base">{title.title}</span>
           <span className="flex min-w-0 items-center gap-1.5 truncate text-[13px] text-muted tabular-nums md:text-sm">
-            {meta}
+            {typeof meta === 'string' ? <span className="truncate">{meta}</span> : meta}
           </span>
           {progress ? (
             <Meter

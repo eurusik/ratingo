@@ -1,8 +1,3 @@
-[data-page-transition]:has(> [data-calendar-root]) {
-  display: flex;
-  flex-direction: column;
-}
-
 :root[data-calendar-page] {
   --calendar-sticky-offset: calc(9rem + var(--safe-top));
   scroll-padding-top: var(--calendar-sticky-offset);

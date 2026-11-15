@@ -11,6 +11,7 @@ import {
   type SavedItem,
   type UserMediaState,
 } from '@/shared/api';
+import { SERVICE_TIME_ZONE } from '@/shared/config';
 import { mergeSaved } from './plan-order';
 import { toHistoryRows } from './history-months';
 
@@ -39,11 +40,15 @@ function useLibraryQuery<T>(list: string, load: () => Promise<T>) {
   });
 }
 
+const serviceDateKey = new Intl.DateTimeFormat('en-CA', {
+  timeZone: SERVICE_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
 function dateKey(at: number): string {
-  const date = new Date(at);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
+  return serviceDateKey.format(at);
 }
 
 function loadRecentEpisodes() {

@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Skeleton } from '@heroui/react';
+import { Button, Skeleton, toast } from '@heroui/react';
+import { cn } from '@ratingo/web-core/lib';
 import { Check, ChevronRight, Download, Plus, Search } from 'lucide-react';
 import { isSaved, useMediaStateStore, useSaveStatus } from '@/entities/library';
 import {
@@ -17,7 +18,7 @@ import { openSearch } from '@/features/search';
 import { useLibrarySave } from '@/features/save-to-library';
 import { catalogApi, libraryApi } from '@/shared/api';
 import { IMPORT_ROUTE } from '@/shared/config';
-import { useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation } from '@/shared/i18n';
 import { interleave } from '@/shared/lib';
 import type { LibraryActions } from '../model/library-actions';
 
@@ -44,11 +45,15 @@ function StartShowButton({ media, actions }: { media: TrendingMedia; actions: Li
     setIsStarted(true);
     try {
       mediaStates.write(media.mediaItemId, await libraryApi.startWatching(media.mediaItemId));
-      await actions.refresh();
     } catch (error) {
       console.error('Starting a popular show failed', { mediaItemId: media.mediaItemId, error });
       setIsStarted(false);
+      toast.danger(dict.my.newUser.startFailed);
+      return;
     }
+    await actions.refresh().catch((error: unknown) => {
+      console.error('Refreshing the library failed', { error });
+    });
   };
 
   return (
@@ -56,13 +61,13 @@ function StartShowButton({ media, actions }: { media: TrendingMedia; actions: Li
       size="sm"
       variant={isStarted ? 'secondary' : 'outline'}
       aria-pressed={isStarted}
+      aria-label={interpolate(dict.my.newUser.watchingLabel, { title: media.title })}
       isDisabled={isStarted}
       onPress={() => void start()}
-      className={`${ACTION_CLASS} ${isStarted ? 'text-accent opacity-100' : ''}`}
+      className={cn(ACTION_CLASS, isStarted && 'text-accent opacity-100')}
     >
       {isStarted ? <Check aria-hidden className="size-4" /> : null}
       {dict.my.newUser.watching}
-      <span className="sr-only">{`: ${media.title}`}</span>
     </Button>
   );
 }
@@ -78,7 +83,8 @@ function WantMovieButton({ media }: { media: TrendingMedia }) {
       variant={isWanted ? 'secondary' : 'outline'}
       aria-pressed={isWanted}
       onPress={() => toggleSaved({ mediaItemId: media.mediaItemId, title: media.title })}
-      className={`${ACTION_CLASS} ${isWanted ? 'text-accent' : ''}`}
+      aria-label={interpolate(dict.my.newUser.wantLabel, { title: media.title })}
+      className={cn(ACTION_CLASS, isWanted && 'text-accent')}
     >
       {isWanted ? (
         <Check aria-hidden className="size-4" />
@@ -86,7 +92,6 @@ function WantMovieButton({ media }: { media: TrendingMedia }) {
         <Plus aria-hidden className="size-4" />
       )}
       {dict.my.newUser.want}
-      <span className="sr-only">{`: ${media.title}`}</span>
     </Button>
   );
 }

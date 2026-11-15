@@ -32,6 +32,7 @@ import { FavoriteUpdatesQuery } from '../queries/favorite-updates.query';
 import {
   continuePointSql,
   mediaSummaryColumns,
+  noContinuePointSql,
   progressTotalSql,
   progressWatchedSql,
 } from '../queries/user-media-summary.sql';
@@ -388,7 +389,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             progressWatched: progressWatchedSql(userId),
             continuePoint: options?.withContinuePoint
               ? continuePointSql(userId)
-              : sql<ContinuePoint | null>`NULL`.as('continue_point'),
+              : noContinuePointSql(),
           })
           .from(schema.userMediaState)
           .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))

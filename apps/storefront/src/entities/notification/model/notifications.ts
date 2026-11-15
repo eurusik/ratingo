@@ -6,7 +6,6 @@ import {
   useQuery,
   useQueryClient,
   type InfiniteData,
-  type QueryClient,
   type QueryKey,
 } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
@@ -17,6 +16,7 @@ import { showUndoToast } from '@/shared/lib';
 import {
   NOTIFICATIONS_KEY,
   UNREAD_COUNT_KEY,
+  PAGES_SEGMENT,
   latestNotificationsKey,
   notificationPagesKey,
   type NotificationFilter,
@@ -49,10 +49,8 @@ function markOneCached(cached: CachedNotifications, id: string): CachedNotificat
   return markRead(cached, isRead);
 }
 
-type Snapshot = Array<[QueryKey, CachedNotifications | undefined]>;
-
-function restore(queryClient: QueryClient, snapshot: Snapshot): void {
-  for (const [queryKey, data] of snapshot) queryClient.setQueryData(queryKey, data);
+function isNotPaged(query: { queryKey: QueryKey }): boolean {
+  return !query.queryKey.includes(PAGES_SEGMENT);
 }
 
 function usePendingReadAll(): boolean {
@@ -72,8 +70,10 @@ export function useUnreadNotificationCount(): number {
 }
 
 export function useLatestNotifications() {
+  const { isAuthenticated } = useAuth();
   const isReadingAll = usePendingReadAll();
   return useQuery({
+    enabled: isAuthenticated,
     queryKey: latestNotificationsKey(LATEST_COUNT),
     queryFn: () => notificationsApi.list(LATEST_COUNT),
     staleTime: STALE_MS,
@@ -111,24 +111,20 @@ export function useMarkNotificationRead(): (item: NotificationItem) => void {
 
   return useCallback(
     (item) => {
-      if (item.isRead) return;
+      if (item.isRead && !pendingReadAll.isPending()) return;
       void (async () => {
-        await queryClient.cancelQueries({ queryKey: NOTIFICATIONS_KEY });
-        const snapshot = queryClient.getQueriesData<CachedNotifications>({
-          queryKey: NOTIFICATIONS_KEY,
-        });
+        await queryClient.cancelQueries({ queryKey: NOTIFICATIONS_KEY, predicate: isNotPaged });
         queryClient.setQueriesData<CachedNotifications>(
           { queryKey: NOTIFICATIONS_KEY },
           (cached) => (cached === undefined ? cached : markOneCached(cached, item.id)),
         );
         try {
           await notificationsApi.markAsRead(item.id);
+          void queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
         } catch (error) {
           console.error('Marking a notification read failed', { id: item.id, error });
-          restore(queryClient, snapshot);
           toast.danger(dict.notifications.failed);
-        } finally {
-          void queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+          void queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
         }
       })();
     },
@@ -141,12 +137,12 @@ export function useReadAllNotifications(): () => void {
   const { dict } = useTranslation();
 
   return useCallback(() => {
-    pendingReadAll.start();
+    const token = pendingReadAll.start();
     showUndoToast({
       key: READ_ALL_TOAST_KEY,
       message: dict.notifications.allRead,
       undoLabel: dict.notifications.undo,
-      onUndo: pendingReadAll.cancel,
+      onUndo: () => pendingReadAll.finish(token),
       onKept: () => {
         void notificationsApi
           .markAllAsRead()
@@ -155,7 +151,7 @@ export function useReadAllNotifications(): () => void {
             toast.danger(dict.notifications.failed);
           })
           .then(() => queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }))
-          .finally(pendingReadAll.cancel);
+          .finally(() => pendingReadAll.finish(token));
       },
     });
   }, [dict, queryClient]);

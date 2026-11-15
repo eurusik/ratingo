@@ -1,5 +1,4 @@
 const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
 const WEEK_DAYS = 7;
 
 export type NotificationGroup = 'today' | 'week' | 'earlier';
@@ -14,7 +13,9 @@ export function notificationGroup(createdAt: string, now: number): NotificationG
   const created = Date.parse(createdAt);
   const today = startOfDay(now);
   if (created >= today) return 'today';
-  if (created >= today - (WEEK_DAYS - 1) * DAY_MS) return 'week';
+  const weekStart = new Date(today);
+  weekStart.setDate(weekStart.getDate() - (WEEK_DAYS - 1));
+  if (created >= weekStart.getTime()) return 'week';
   return 'earlier';
 }
 
@@ -30,7 +31,9 @@ export function groupByAge<T extends { createdAt: string }>(
   const groups = new Map<NotificationGroup, T[]>();
   for (const item of items) {
     const group = notificationGroup(item.createdAt, now);
-    groups.set(group, [...(groups.get(group) ?? []), item]);
+    const members = groups.get(group);
+    if (members) members.push(item);
+    else groups.set(group, [item]);
   }
   return (['today', 'week', 'earlier'] as const)
     .filter((group) => groups.has(group))

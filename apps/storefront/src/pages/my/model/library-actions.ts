@@ -9,7 +9,7 @@ import { CALENDAR_QUERY_KEY } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { showUndoToast } from '@/shared/lib';
 import { moveSpecs, type MoveSpec, type MoveSpecs } from './library-move-specs';
-import { useLibraryMoves } from './library-moves';
+import { useLibraryMoveActions } from './library-moves';
 
 type Act<K extends keyof MoveSpecs> = (...args: Parameters<MoveSpecs[K]>) => void;
 
@@ -23,7 +23,7 @@ export function useLibraryActions(): LibraryActions {
   const lists = useLibraryListsStore();
   const saveStatuses = useLibraryStore();
   const mediaStates = useMediaStateStore();
-  const moves = useLibraryMoves();
+  const moves = useLibraryMoveActions();
 
   const refresh = useCallback(async () => {
     await Promise.all([
@@ -34,19 +34,23 @@ export function useLibraryActions(): LibraryActions {
   }, [lists, queryClient]);
 
   const settle = useCallback(
-    async (spec: MoveSpec, change: Promise<unknown>, token?: number) => {
+    async (spec: MoveSpec, change: () => Promise<unknown>, token?: number) => {
       const { mediaItemId } = spec.title;
+      let isSaved = true;
       try {
-        await change;
+        await change();
       } catch (error) {
+        isSaved = false;
         console.error('Updating the library failed', { mediaItemId, error });
         toast.danger(dict.my.toast.failed);
-      } finally {
-        mediaStates.refresh(mediaItemId);
-        saveStatuses.refresh(mediaItemId);
-        await refresh();
-        if (token !== undefined) moves.forget(mediaItemId, token);
       }
+      mediaStates.refresh(mediaItemId);
+      saveStatuses.refresh(mediaItemId);
+      await refresh().catch((error: unknown) => {
+        console.error('Refreshing the library failed', { mediaItemId, error });
+      });
+      if (token !== undefined) moves.forget(mediaItemId, token);
+      return isSaved;
     },
     [dict, mediaStates, moves, refresh, saveStatuses],
   );
@@ -57,21 +61,19 @@ export function useLibraryActions(): LibraryActions {
       const isMove = from !== to;
       const token = isMove ? moves.track(title.mediaItemId, to ?? 'gone') : undefined;
       if (isMove) lists.move({ from, to });
-      const committed = spec.commit();
-      void settle(spec, committed, token);
+      const committed = settle(spec, spec.commit, token);
       showUndoToast({
         key: title.mediaItemId,
         message: spec.message,
         description: spec.description,
         undoLabel: dict.my.toast.undo,
         onUndo: () => {
-          const undoToken = isMove ? moves.track(title.mediaItemId, from ?? 'gone') : undefined;
-          if (isMove) lists.move({ from: to, to: from });
-          void settle(
-            spec,
-            committed.then(spec.revert, () => undefined),
-            undoToken,
-          );
+          void committed.then((isCommitted) => {
+            if (!isCommitted) return;
+            const undoToken = isMove ? moves.track(title.mediaItemId, from ?? 'gone') : undefined;
+            if (isMove) lists.move({ from: to, to: from });
+            return settle(spec, spec.revert, undoToken);
+          });
         },
       });
     },

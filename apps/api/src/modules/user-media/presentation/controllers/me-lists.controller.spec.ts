@@ -523,6 +523,26 @@ describe('MeListsController', () => {
   });
 
   describe('mapItem', () => {
+    it('passes the next episode and quality score through', () => {
+      const mapItem = (controller as any).mapItem.bind(controller);
+      const continuePoint = {
+        season: 2,
+        episode: 4,
+        episodeId: 'episode-24',
+        airDate: '2026-11-14T20:00:00Z',
+      };
+
+      const result = mapItem({
+        ...mockUserMediaWithSummary,
+        state: 'watching',
+        mediaSummary: { ...mockMediaSummary, qualityScore: 84 },
+        continuePoint,
+      });
+
+      expect(result.continuePoint).toEqual(continuePoint);
+      expect(result.mediaSummary.qualityScore).toBe(84);
+    });
+
     it('should correctly map user media item', () => {
       // Access private method for testing
       const mapItem = (controller as any).mapItem.bind(controller);

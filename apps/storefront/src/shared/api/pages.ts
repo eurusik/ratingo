@@ -13,7 +13,8 @@ export async function fetchAllPages<T>(
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const { data, meta } = await load({ limit: pageSize, offset: page * pageSize });
     items.push(...data);
-    if (!meta.hasMore) break;
+    if (!meta.hasMore) return items;
   }
+  console.warn('Stopped loading pages at the page limit', { pageSize, loaded: items.length });
   return items;
 }

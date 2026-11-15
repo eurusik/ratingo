@@ -59,8 +59,14 @@ export function NotificationPanel({ unreadCount, onNavigate }: NotificationPanel
         <Popover.Heading className="flex-1 text-base font-bold">
           {dict.notifications.title}
         </Popover.Heading>
-        {unreadCount > 0 ? (
-          <Button size="sm" variant="ghost" className="text-accent" onPress={readAll}>
+        {data && data.data.length > 0 ? (
+          <Button
+            isDisabled={unreadCount === 0}
+            size="sm"
+            variant="ghost"
+            className="text-accent"
+            onPress={readAll}
+          >
             {dict.notifications.markAllRead}
           </Button>
         ) : null}

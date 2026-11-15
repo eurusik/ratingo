@@ -16191,12 +16191,14 @@
           },
           "episodeId": {
             "type": "string",
-            "description": "Episode to continue from"
+            "format": "uuid",
+            "description": "Next episode to watch"
           },
           "airDate": {
             "type": "string",
+            "format": "date-time",
             "nullable": true,
-            "description": "Air date of that episode"
+            "description": "UTC air date of that episode"
           }
         },
         "required": [
@@ -16298,7 +16300,7 @@
           },
           "continuePoint": {
             "nullable": true,
-            "description": "Next episode to continue watching (only for shows with progress)",
+            "description": "Next episode to watch (shows in the watching and caught-up lists)",
             "type": "object",
             "allOf": [
               {

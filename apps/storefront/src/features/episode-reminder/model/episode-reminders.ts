@@ -56,31 +56,32 @@ export function useEpisodeReminder(show: ReminderShow): EpisodeReminder {
   });
   const isOn = isAuthenticated && (data?.has(show.mediaItemId) ?? false);
 
-  const { mutate } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: async (turnOn: boolean) => {
       if (turnOn) await subscriptionsApi.subscribe(show.mediaItemId, REMINDER_TRIGGER);
       else await subscriptionsApi.unsubscribe(show.mediaItemId, REMINDER_TRIGGER);
     },
     onMutate: async (turnOn) => {
       await queryClient.cancelQueries({ queryKey });
-      queryClient.setQueryData<ReadonlySet<string>>(queryKey, (shows) =>
-        withShow(shows ?? new Set(), show.mediaItemId, turnOn),
-      );
+      const previous = queryClient.getQueryData<ReadonlySet<string>>(queryKey);
+      if (previous)
+        queryClient.setQueryData(queryKey, withShow(previous, show.mediaItemId, turnOn));
+      return { previous };
     },
     onSuccess: (_result, turnOn) => {
       toast(interpolate(turnOn ? dict.reminder.on : dict.reminder.off, { show: show.title }));
     },
-    onError: (error, turnOn) => {
+    onError: (error, _turnOn, context) => {
       console.error('Changing an episode reminder failed', { show: show.mediaItemId, error });
-      queryClient.setQueryData<ReadonlySet<string>>(queryKey, (shows) =>
-        withShow(shows ?? new Set(), show.mediaItemId, !turnOn),
-      );
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
       toast.danger(dict.reminder.failed);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
 
-  const toggle = useCallback(() => runSignedIn(() => mutate(!isOn)), [isOn, mutate, runSignedIn]);
+  const toggle = useCallback(() => {
+    if (!isPending) runSignedIn(() => mutate(!isOn));
+  }, [isOn, isPending, mutate, runSignedIn]);
 
   return { isOn, toggle };
 }

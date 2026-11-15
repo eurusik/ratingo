@@ -139,7 +139,6 @@
       "waiting": "Waiting for new episodes",
       "newEpisode": "New: {code} · {when}",
       "nextEpisode": "Next: {code} · {count} left",
-      "nextOnly": "Next: {code}",
       "airsOn": "New episode {date}",
       "caughtUp": "Caught up",
       "shelf": "Paused · {paused} · Dropped · {dropped}",
@@ -148,7 +147,9 @@
         "title": "Shows you're watching will appear here",
         "text": "Mark the first episode on a show's page and new episodes will show up here.",
         "action": "Go to Browse"
-      }
+      },
+      "restoreLabel": "Resume: {title}",
+      "progressLabel": "Watched {watched} of {total}"
     },
     "plan": {
       "filter": {
@@ -171,12 +172,12 @@
       "sortPrefix": "Sort: ",
       "start": "Start",
       "startLabel": "Start watching: {title}",
-      "showMeta": "Show",
       "empty": {
         "title": "Titles you want to watch will appear here",
         "text": "Tap “Want to watch” on a movie or show page — we'll tell you when it's out at home.",
         "action": "Go to Browse"
-      }
+      },
+      "noMatches": "No titles of this type here."
     },
     "history": {
       "search": "Search what you've watched…",
@@ -195,7 +196,8 @@
         "title": "Everything you've watched will appear here",
         "text": "Rate a movie or mark an episode and it lands in your history. Or bring your history over from Trakt.",
         "action": "Import from Trakt"
-      }
+      },
+      "yourRatingFor": "Your rating {score}: {title}"
     },
     "actions": {
       "more": "More actions: {title}",
@@ -232,7 +234,10 @@
       "import": {
         "title": "Bring it over from Trakt or Letterboxd",
         "text": "Import your history and ratings in a minute"
-      }
+      },
+      "watchingLabel": "Watching: {title}",
+      "wantLabel": "Want: {title}",
+      "startFailed": "Couldn't add the show. Please try again."
     }
   },
   "rating": {
@@ -351,7 +356,10 @@
     "settings": "Choose what to notify in settings",
     "settingsShort": "What to notify",
     "back": "Back",
-    "loadMore": "Show more"
+    "loadMore": "Show more",
+    "markReadLabel": "Mark as read: {title}",
+    "retry": "Try again",
+    "unreadBadge": "{count} unread"
   },
   "profile": {
     "stats": {

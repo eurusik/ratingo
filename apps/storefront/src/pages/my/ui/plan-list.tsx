@@ -10,7 +10,7 @@ import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
 import { SegmentedFilter } from '@/shared/ui';
 import type { LibraryActions } from '../model/library-actions';
-import { useLibraryMoves } from '../model/library-moves';
+import { useIsMovedOut } from '../model/library-moves';
 import { usePlanList } from '../model/library-queries';
 import {
   PLAN_SORTS,
@@ -137,7 +137,7 @@ function PlanRowItem({
 export function PlanList({ actions }: { actions: LibraryActions }) {
   const { dict } = useTranslation();
   const now = useClientNow();
-  const moves = useLibraryMoves();
+  const isMovedOut = useIsMovedOut();
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [sort, setSort] = useState<PlanSort>('recent');
   const plan = usePlanList();
@@ -146,7 +146,7 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
   if (plan.isError) return <ListFailure onRetry={() => void plan.refetch()} />;
 
   const rows = orderPlan(
-    plan.data.filter((row) => !moves.isMovedOut(row.title.mediaItemId, 'plan')),
+    plan.data.filter((row) => !isMovedOut(row.title.mediaItemId, 'plan')),
     { sort, filter, now },
   );
   if (plan.data.length === 0) return <EmptyList {...dict.my.plan.empty} href={BROWSE_ROUTE} />;
@@ -164,6 +164,11 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
         <span className="flex-1" />
         <SortMenu sort={sort} onSort={setSort} />
       </div>
+      {rows.length === 0 ? (
+        <p role="status" className="py-8 text-center text-muted">
+          {dict.my.plan.noMatches}
+        </p>
+      ) : null}
       <ul aria-label={dict.my.lists.plan} className="flex flex-col">
         {rows.map((row, index) => (
           <li key={row.title.mediaItemId}>

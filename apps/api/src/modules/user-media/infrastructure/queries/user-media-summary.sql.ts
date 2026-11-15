@@ -40,6 +40,10 @@ export function progressWatchedSql(userId: string) {
             `.as('progress_watched');
 }
 
+export function noContinuePointSql() {
+  return sql<ContinuePoint | null>`NULL`.as('continue_point');
+}
+
 export function continuePointSql(userId: string) {
   return sql<ContinuePoint | null>`
               CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
@@ -55,7 +59,7 @@ export function continuePointSql(userId: string) {
                   LIMIT 1
                 ),
                 next_episode AS (
-                  SELECT s.number AS season, e.number AS episode, e.id AS episode_id, e.air_date AS air_date
+                  SELECT s.number AS season, e.number AS episode, e.id AS episode_id, to_char(e.air_date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS air_date
                   FROM ${schema.episodes} e
                   JOIN ${schema.seasons} s ON s.id = e.season_id
                   JOIN ${schema.shows} sh ON sh.id = s.show_id

@@ -14,7 +14,7 @@ import {
 } from '@/entities/library';
 import { useUnreadNotificationCount } from '@/entities/notification';
 import { NOTIFICATIONS_ROUTE } from '@/shared/config';
-import { useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation } from '@/shared/i18n';
 
 type NavTarget = LibraryList | 'notifications';
 
@@ -43,7 +43,9 @@ function NavItem({ href, label, isCurrent, isMinor = false, children }: NavItemP
 }
 
 function Count({ value }: { value: number | undefined }) {
-  return <span className="text-[13px] text-muted tabular-nums">{value ?? ''}</span>;
+  return (
+    <span className="min-w-6 text-end text-[13px] text-muted tabular-nums">{value ?? ''}</span>
+  );
 }
 
 export function LibraryNav({ current }: { current: NavTarget }) {
@@ -86,7 +88,10 @@ export function LibraryNav({ current }: { current: NavTarget }) {
       >
         {unreadCount > 0 ? (
           <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-extrabold text-accent-foreground tabular-nums">
-            {unreadCount}
+            <span aria-hidden>{unreadCount}</span>
+            <span className="sr-only">
+              {interpolate(dict.notifications.unreadBadge, { count: unreadCount })}
+            </span>
           </span>
         ) : null}
       </NavItem>

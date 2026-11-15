@@ -9,7 +9,7 @@ import type { LibraryCounts } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { useLibraryActions, type LibraryActions } from '../model/library-actions';
-import { LibraryMovesProvider, useLibraryMoves } from '../model/library-moves';
+import { LibraryMovesProvider, useIsMovedOut } from '../model/library-moves';
 import { HistoryList } from './history-list';
 import { ListChips } from './list-chips';
 import { RowsSkeleton } from './list-states';
@@ -46,7 +46,7 @@ function PhoneHeader() {
 }
 
 function SelectedList({ list, actions }: { list: LibraryList; actions: LibraryActions }) {
-  const moves = useLibraryMoves();
+  const isMovedOut = useIsMovedOut();
   if (list === 'plan') return <PlanList actions={actions} />;
   if (list === 'history') return <HistoryList actions={actions} />;
   if (list === 'paused' || list === 'dropped') {
@@ -54,7 +54,7 @@ function SelectedList({ list, actions }: { list: LibraryList; actions: LibraryAc
       <ShelfPage
         list={list}
         actions={actions}
-        isMovedOut={(mediaItemId) => moves.isMovedOut(mediaItemId, list)}
+        isMovedOut={(mediaItemId) => isMovedOut(mediaItemId, list)}
       />
     );
   }

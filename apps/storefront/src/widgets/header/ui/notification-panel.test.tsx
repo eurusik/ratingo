@@ -5,6 +5,10 @@ import { notificationsApi, type NotificationItem } from '@/shared/api';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { NotificationPanel } from './notification-panel';
 
+jest.mock('@ratingo/web-core/auth', () => ({
+  useAuth: () => ({ isAuthenticated: true, isLoading: false, user: { id: 'user-1' } }),
+}));
+
 jest.mock('@/shared/api', () => ({
   notificationsApi: { list: jest.fn(), markAsRead: jest.fn(), markAllAsRead: jest.fn() },
 }));

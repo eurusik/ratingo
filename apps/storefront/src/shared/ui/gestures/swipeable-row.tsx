@@ -26,7 +26,6 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
     <div ref={rowRef} className={`group relative overflow-hidden ${className ?? ''}`}>
       <div
         ref={actionsRef}
-        aria-hidden
         className="invisible absolute inset-y-0 right-0 flex [transition:visibility_0s_linear_0.4s] group-data-[dragging]:visible group-data-[dragging]:[transition:none] group-data-[open]:visible group-data-[open]:[transition:none]"
       >
         {actions}

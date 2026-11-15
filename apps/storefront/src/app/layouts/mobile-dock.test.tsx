@@ -25,6 +25,10 @@ function renderDock() {
 }
 
 describe('MobileDock', () => {
+  beforeEach(() => {
+    unreadCount = 0;
+  });
+
   it('lists the four sections and marks the active one', () => {
     renderDock();
 
@@ -52,6 +56,5 @@ describe('MobileDock', () => {
     renderDock();
 
     expect(screen.getByRole('link', { name: uk.nav.myUnread })).toHaveAttribute('href', '/my');
-    unreadCount = 0;
   });
 });

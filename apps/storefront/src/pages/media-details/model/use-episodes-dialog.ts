@@ -44,12 +44,13 @@ export function useEpisodesDialog({ seasons, canTrack, isResolving }: EpisodesDi
   const [stored, setStored] = useState<EpisodesDialog>(CLOSED_DIALOG);
   const [consumedParam, setConsumedParam] = useState<string | null>(null);
   const param = seasonParam(search);
-  const requested: SeasonLink | undefined = isPickLink(search)
-    ? 'pick'
-    : linkedSeason(
-        search,
-        seasons.map((season) => season.number),
-      );
+  const requested: SeasonLink | undefined =
+    isPickLink(search) && seasons.length > 0
+      ? 'pick'
+      : linkedSeason(
+          search,
+          seasons.map((season) => season.number),
+        );
   const isConsumed = param !== null && param === consumedParam;
   const linked = canTrack && !isConsumed ? requested : undefined;
   const dialog = deriveDialog(stored, linked);

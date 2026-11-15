@@ -37,7 +37,7 @@ export function ListFailure({ onRetry }: { onRetry: () => void }) {
   return (
     <div role="alert" className="flex flex-col items-center gap-3 py-12 text-center">
       <p className="text-muted">{dict.my.failed}</p>
-      <Button variant="secondary" onPress={onRetry}>
+      <Button variant="secondary" className="min-h-tap" onPress={onRetry}>
         {dict.my.retry}
       </Button>
     </div>
@@ -56,7 +56,10 @@ export function EmptyList({ title, text, action, href }: EmptyListProps) {
     <div className="mx-auto flex max-w-sm flex-col items-center gap-2 py-12 text-center">
       <p className="text-lg font-extrabold">{title}</p>
       <p className="text-sm text-muted">{text}</p>
-      <Link href={href} className={cn(buttonVariants({ variant: 'primary' }), 'mt-3 no-underline')}>
+      <Link
+        href={href}
+        className={cn(buttonVariants({ variant: 'primary' }), 'mt-3 min-h-tap no-underline')}
+      >
         {action}
       </Link>
     </div>

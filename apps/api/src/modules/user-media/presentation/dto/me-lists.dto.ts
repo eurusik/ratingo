@@ -39,10 +39,15 @@ export class LibraryContinuePointDto {
   @ApiProperty({ description: 'Episode number to continue from', example: 5 })
   episode!: number;
 
-  @ApiProperty({ description: 'Episode to continue from' })
+  @ApiProperty({ type: String, format: 'uuid', description: 'Next episode to watch' })
   episodeId!: string;
 
-  @ApiProperty({ type: String, nullable: true, description: 'Air date of that episode' })
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'UTC air date of that episode',
+  })
   airDate!: string | null;
 }
 
@@ -138,7 +143,7 @@ export class MeUserMediaListItemDto extends UserMediaStateDto {
   @ApiPropertyOptional({
     type: LibraryContinuePointDto,
     nullable: true,
-    description: 'Next episode to continue watching (only for shows with progress)',
+    description: 'Next episode to watch (shows in the watching and caught-up lists)',
   })
   continuePoint?: LibraryContinuePointDto | null;
 }

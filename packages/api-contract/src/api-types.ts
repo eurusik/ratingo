@@ -3619,9 +3619,15 @@ export interface components {
              * @example 5
              */
             episode: number;
-            /** @description Episode to continue from */
+            /**
+             * Format: uuid
+             * @description Next episode to watch
+             */
             episodeId: string;
-            /** @description Air date of that episode */
+            /**
+             * Format: date-time
+             * @description UTC air date of that episode
+             */
             airDate: string | null;
         };
         MeUserMediaListItemDto: {
@@ -3680,7 +3686,7 @@ export interface components {
             mediaSummary: components["schemas"]["MeUserMediaSummaryDto"] | null;
             /** @description Episode progress summary (only for shows) */
             progressSummary?: components["schemas"]["ProgressSummaryDto"] | null;
-            /** @description Next episode to continue watching (only for shows with progress) */
+            /** @description Next episode to watch (shows in the watching and caught-up lists) */
             continuePoint?: components["schemas"]["LibraryContinuePointDto"] | null;
         };
         PaginatedMeUserMediaResponseDto: {

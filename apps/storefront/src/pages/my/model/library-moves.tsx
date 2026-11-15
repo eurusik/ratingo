@@ -10,13 +10,15 @@ interface TrackedMove {
   token: number;
 }
 
-export interface LibraryMoves {
-  isMovedOut: (mediaItemId: string, list: LibraryList) => boolean;
+interface LibraryMoveActions {
   track: (mediaItemId: string, destination: Destination) => number;
   forget: (mediaItemId: string, token: number) => void;
 }
 
-const LibraryMovesContext = createContext<LibraryMoves | null>(null);
+type IsMovedOut = (mediaItemId: string, list: LibraryList) => boolean;
+
+const MoveActionsContext = createContext<LibraryMoveActions | null>(null);
+const MovedOutContext = createContext<IsMovedOut | null>(null);
 
 export function LibraryMovesProvider({ children }: { children: ReactNode }) {
   const [moved, setMoved] = useState<ReadonlyMap<string, TrackedMove>>(new Map());
@@ -38,23 +40,30 @@ export function LibraryMovesProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const value = useMemo<LibraryMoves>(
-    () => ({
-      isMovedOut: (mediaItemId, list) => {
-        const move = moved.get(mediaItemId);
-        return move !== undefined && move.destination !== list;
-      },
-      track,
-      forget,
-    }),
-    [moved, track, forget],
+  const actions = useMemo(() => ({ track, forget }), [track, forget]);
+  const isMovedOut = useCallback<IsMovedOut>(
+    (mediaItemId, list) => {
+      const move = moved.get(mediaItemId);
+      return move !== undefined && move.destination !== list;
+    },
+    [moved],
   );
 
-  return <LibraryMovesContext value={value}>{children}</LibraryMovesContext>;
+  return (
+    <MoveActionsContext value={actions}>
+      <MovedOutContext value={isMovedOut}>{children}</MovedOutContext>
+    </MoveActionsContext>
+  );
 }
 
-export function useLibraryMoves(): LibraryMoves {
-  const moves = use(LibraryMovesContext);
-  if (!moves) throw new Error('useLibraryMoves must be used inside LibraryMovesProvider');
-  return moves;
+export function useLibraryMoveActions(): LibraryMoveActions {
+  const actions = use(MoveActionsContext);
+  if (!actions) throw new Error('useLibraryMoveActions must be used inside LibraryMovesProvider');
+  return actions;
+}
+
+export function useIsMovedOut(): IsMovedOut {
+  const isMovedOut = use(MovedOutContext);
+  if (!isMovedOut) throw new Error('useIsMovedOut must be used inside LibraryMovesProvider');
+  return isMovedOut;
 }

@@ -1,23 +1,36 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Button } from '@heroui/react';
+import { Button, Card } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
 import type { LibraryList } from '@/entities/library';
 import { openAuth } from '@/shared/auth';
 import { useTranslation } from '@/shared/i18n';
 import { LibraryNav } from './library-nav';
 
+const SHELL = 'flex flex-1 flex-col px-4 md:px-0 md:pt-7';
+
 function SignInPrompt() {
   const { dict } = useTranslation();
 
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center gap-2 py-16 text-center">
-      <p className="text-lg font-extrabold">{dict.my.signIn.title}</p>
-      <p className="text-sm text-muted">{dict.my.signIn.text}</p>
-      <Button className="mt-3" onPress={() => openAuth()}>
-        {dict.my.signIn.action}
-      </Button>
+    <div className="flex flex-1 flex-col justify-center py-8 md:items-center">
+      <Card className="gap-3 rounded-3xl p-4.5 md:w-full md:max-w-xl">
+        <Card.Header className="gap-1.5 p-0">
+          <Card.Title className="text-[17px] font-extrabold">{dict.my.signIn.title}</Card.Title>
+          <Card.Description className="text-sm leading-relaxed">
+            {dict.my.signIn.text}
+          </Card.Description>
+        </Card.Header>
+        <Card.Footer className="p-0">
+          <Button
+            className="h-12 flex-1 rounded-full text-[15px] font-bold"
+            onPress={() => openAuth({ mode: 'login' })}
+          >
+            {dict.my.signIn.action}
+          </Button>
+        </Card.Footer>
+      </Card>
     </div>
   );
 }
@@ -29,26 +42,26 @@ interface LibraryShellProps {
   children: ReactNode;
 }
 
-function ShellContent({ skeleton, children }: Pick<LibraryShellProps, 'skeleton' | 'children'>) {
-  const { user, isLoading } = useAuth();
-  if (isLoading) return skeleton;
-  if (!user) return <SignInPrompt />;
-  return children;
-}
-
 export function LibraryShell({ current, header, skeleton, children }: LibraryShellProps) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  if (!isLoading && !user) {
+    return (
+      <div className={SHELL}>
+        {header}
+        <SignInPrompt />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-3 px-4 md:flex-row md:items-start md:gap-10 md:px-0 md:pt-7">
-      {user ? (
-        <div className="hidden md:block">
-          <LibraryNav current={current} />
-        </div>
-      ) : null}
+    <div className={`${SHELL} gap-3 md:flex-row md:items-start md:gap-10`}>
+      <div className="hidden md:block">
+        <LibraryNav current={current} />
+      </div>
       <div className="flex min-w-0 max-w-[860px] flex-1 flex-col gap-3">
         {header}
-        <ShellContent skeleton={skeleton}>{children}</ShellContent>
+        {isLoading ? skeleton : children}
       </div>
     </div>
   );

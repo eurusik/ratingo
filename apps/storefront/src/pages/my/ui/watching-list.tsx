@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Button, Chip } from '@heroui/react';
 import { ChevronDown } from 'lucide-react';
 import { cn, pluralize } from '@ratingo/web-core/lib';
@@ -8,7 +8,7 @@ import { BROWSE_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
 import type { LibraryActions } from '../model/library-actions';
-import { useLibraryMoves } from '../model/library-moves';
+import { useIsMovedOut } from '../model/library-moves';
 import { useShelfLists, useWatchingLists } from '../model/library-queries';
 import { splitWatching } from '../model/watching-sections';
 import { EmptyList, ListFailure, RowsSkeleton, SectionTitle } from './list-states';
@@ -19,13 +19,11 @@ function Shelf({ actions }: { actions: LibraryActions }) {
   const { dict } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const panelId = useId();
-  const moves = useLibraryMoves();
+  const isMovedOut = useIsMovedOut();
   const { paused, dropped } = useShelfLists();
-  const pausedItems = (paused.data ?? []).filter(
-    (item) => !moves.isMovedOut(item.mediaItemId, 'paused'),
-  );
+  const pausedItems = (paused.data ?? []).filter((item) => !isMovedOut(item.mediaItemId, 'paused'));
   const droppedItems = (dropped.data ?? []).filter(
-    (item) => !moves.isMovedOut(item.mediaItemId, 'dropped'),
+    (item) => !isMovedOut(item.mediaItemId, 'dropped'),
   );
   if (pausedItems.length + droppedItems.length === 0) return null;
 
@@ -50,33 +48,63 @@ function Shelf({ actions }: { actions: LibraryActions }) {
           )}
         />
       </Button>
-      {isOpen ? (
-        <ul id={panelId} className="flex flex-col">
-          <ShelfRows
-            list="paused"
-            items={pausedItems}
-            actions={actions}
-            isMovedOut={(id) => moves.isMovedOut(id, 'paused')}
-          />
-          <ShelfRows
-            list="dropped"
-            items={droppedItems}
-            actions={actions}
-            isMovedOut={(id) => moves.isMovedOut(id, 'dropped')}
-          />
-        </ul>
-      ) : null}
+      <ul id={panelId} hidden={!isOpen} className="flex flex-col">
+        <ShelfRows
+          list="paused"
+          items={pausedItems}
+          actions={actions}
+          isMovedOut={(id) => isMovedOut(id, 'paused')}
+        />
+        <ShelfRows
+          list="dropped"
+          items={droppedItems}
+          actions={actions}
+          isMovedOut={(id) => isMovedOut(id, 'dropped')}
+        />
+      </ul>
     </div>
+  );
+}
+
+interface WatchingSectionProps<T extends { title: { mediaItemId: string } }> {
+  title: string;
+  badge?: number;
+  rows: readonly T[];
+  renderRow: (row: T) => ReactNode;
+}
+
+function WatchingSection<T extends { title: { mediaItemId: string } }>({
+  title,
+  badge,
+  rows,
+  renderRow,
+}: WatchingSectionProps<T>) {
+  const headingId = useId();
+  if (rows.length === 0) return null;
+
+  return (
+    <section aria-labelledby={headingId}>
+      <SectionTitle id={headingId}>
+        {title}
+        {badge === undefined ? null : (
+          <Chip size="sm" variant="soft" color="accent" className="tabular-nums">
+            {badge}
+          </Chip>
+        )}
+      </SectionTitle>
+      <ul className="flex flex-col">
+        {rows.map((row) => (
+          <li key={row.title.mediaItemId}>{renderRow(row)}</li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
 export function WatchingList({ actions }: { actions: LibraryActions }) {
   const { dict, locale } = useTranslation();
   const now = useClientNow();
-  const moves = useLibraryMoves();
-  const freshId = useId();
-  const nextId = useId();
-  const waitingId = useId();
+  const isMovedOut = useIsMovedOut();
   const { watching, caughtUp, recent } = useWatchingLists();
 
   if (watching.isPending || caughtUp.isPending) return <RowsSkeleton />;
@@ -91,7 +119,7 @@ export function WatchingList({ actions }: { actions: LibraryActions }) {
     );
   }
 
-  const isShown = (mediaItemId: string) => !moves.isMovedOut(mediaItemId, 'watching');
+  const isShown = (mediaItemId: string) => !isMovedOut(mediaItemId, 'watching');
   const sections = splitWatching(
     watching.data.filter((item) => isShown(item.mediaItemId)),
     caughtUp.data.filter((item) => isShown(item.mediaItemId)),
@@ -116,47 +144,22 @@ export function WatchingList({ actions }: { actions: LibraryActions }) {
           count: showCount,
         })}
       </p>
-      {sections.fresh.length > 0 ? (
-        <section aria-labelledby={freshId}>
-          <SectionTitle id={freshId}>
-            {dict.my.watching.fresh}
-            <Chip size="sm" variant="soft" color="accent" className="tabular-nums">
-              {sections.fresh.length}
-            </Chip>
-          </SectionTitle>
-          <ul className="flex flex-col">
-            {sections.fresh.map((row) => (
-              <li key={row.title.mediaItemId}>
-                <FreshEpisodeRow row={row} actions={actions} now={now} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-      {sections.next.length > 0 ? (
-        <section aria-labelledby={nextId}>
-          <SectionTitle id={nextId}>{dict.my.watching.next}</SectionTitle>
-          <ul className="flex flex-col">
-            {sections.next.map((row) => (
-              <li key={row.title.mediaItemId}>
-                <NextEpisodeRow row={row} actions={actions} now={now} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-      {sections.waiting.length > 0 ? (
-        <section aria-labelledby={waitingId}>
-          <SectionTitle id={waitingId}>{dict.my.watching.waiting}</SectionTitle>
-          <ul className="flex flex-col">
-            {sections.waiting.map((row) => (
-              <li key={row.title.mediaItemId}>
-                <WaitingRowItem row={row} actions={actions} now={now} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <WatchingSection
+        title={dict.my.watching.fresh}
+        badge={sections.fresh.length}
+        rows={sections.fresh}
+        renderRow={(row) => <FreshEpisodeRow row={row} actions={actions} now={now} />}
+      />
+      <WatchingSection
+        title={dict.my.watching.next}
+        rows={sections.next}
+        renderRow={(row) => <NextEpisodeRow row={row} actions={actions} />}
+      />
+      <WatchingSection
+        title={dict.my.watching.waiting}
+        rows={sections.waiting}
+        renderRow={(row) => <WaitingRowItem row={row} actions={actions} now={now} />}
+      />
       <Shelf actions={actions} />
     </div>
   );

@@ -27,7 +27,8 @@ const SKELETON_ROWS = 4;
 function ListSkeleton() {
   const { dict } = useTranslation();
   return (
-    <div aria-busy aria-label={dict.common.loading} className="flex flex-col gap-1.5">
+    <div role="status" aria-busy className="flex flex-col gap-1.5">
+      <span className="sr-only">{dict.common.loading}</span>
       <Skeleton className="h-5 w-24 rounded-md" />
       <ul className="flex flex-col gap-2">
         {Array.from({ length: SKELETON_ROWS }, (_, index) => (
@@ -83,7 +84,7 @@ function NotificationList({
       <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
         <p className="text-muted">{dict.notifications.failed}</p>
         <Button variant="secondary" onPress={() => void pages.refetch()}>
-          {dict.my.retry}
+          {dict.notifications.retry}
         </Button>
       </div>
     );
@@ -92,7 +93,7 @@ function NotificationList({
   const items = pages.data.pages
     .flatMap((page) => page.data)
     .filter((item) => filter === 'all' || !item.isRead);
-  if (items.length === 0) {
+  if (items.length === 0 && !pages.hasNextPage) {
     return filter === 'unread' ? (
       <AllRead />
     ) : (

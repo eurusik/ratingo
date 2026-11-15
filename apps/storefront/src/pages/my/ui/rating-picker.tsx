@@ -15,7 +15,7 @@ interface RatingPickerProps {
 }
 
 const TRIGGER_CLASS =
-  'inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-sm font-extrabold tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-focus';
+  'inline-flex min-h-tap shrink-0 items-center gap-1 rounded-full px-3 text-sm font-extrabold tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-focus';
 
 export function RatingPicker({ title, rating, isOpen, onOpenChange, onRate }: RatingPickerProps) {
   const { dict, locale } = useTranslation();
@@ -28,7 +28,7 @@ export function RatingPicker({ title, rating, isOpen, onOpenChange, onRate }: Ra
         aria-label={
           score === undefined
             ? interpolate(dict.my.history.rateLabel, { title: title.title })
-            : `${interpolate(dict.my.history.yourRating, { score })}: ${title.title}`
+            : interpolate(dict.my.history.yourRatingFor, { score, title: title.title })
         }
         className={
           score === undefined

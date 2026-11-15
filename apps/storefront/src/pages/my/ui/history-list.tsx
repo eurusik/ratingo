@@ -8,7 +8,7 @@ import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
 import { SegmentedFilter } from '@/shared/ui';
 import { useLibraryCounts } from '@/entities/library';
 import type { LibraryActions } from '../model/library-actions';
-import { useLibraryMoves } from '../model/library-moves';
+import { useIsMovedOut } from '../model/library-moves';
 import { useHistoryList } from '../model/library-queries';
 import { groupByMonth, matchesQuery, type HistoryRow } from '../model/history-months';
 import { TYPE_FILTERS, matchesType, type TypeFilter } from '../model/plan-order';
@@ -73,7 +73,7 @@ function HistoryRowItem({ row, actions }: { row: HistoryRow; actions: LibraryAct
 
 export function HistoryList({ actions }: { actions: LibraryActions }) {
   const { dict, locale } = useTranslation();
-  const moves = useLibraryMoves();
+  const isMovedOut = useIsMovedOut();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [shownCount, setShownCount] = useState(ROWS_PER_STEP);
@@ -88,7 +88,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
 
   const visible = history.data.filter(
     (row) =>
-      !moves.isMovedOut(row.title.mediaItemId, 'history') &&
+      !isMovedOut(row.title.mediaItemId, 'history') &&
       matchesType(row.title.type, filter) &&
       matchesQuery(row, query),
   );
@@ -101,7 +101,10 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
       <SearchField
         aria-label={dict.my.history.searchLabel}
         value={query}
-        onChange={setQuery}
+        onChange={(next) => {
+          setQuery(next);
+          setShownCount(ROWS_PER_STEP);
+        }}
         variant="secondary"
         fullWidth
       >
@@ -119,7 +122,10 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
           label={dict.my.plan.filterLabel}
           options={TYPE_FILTERS.map((id) => ({ id, label: dict.my.plan.filter[id] }))}
           value={filter}
-          onChange={setFilter}
+          onChange={(next) => {
+            setFilter(next);
+            setShownCount(ROWS_PER_STEP);
+          }}
           className="px-0"
         />
       </div>
@@ -149,7 +155,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
       {visible.length > shown.length ? (
         <Button
           variant="secondary"
-          className="self-center"
+          className="min-h-tap self-center"
           onPress={() => setShownCount((count) => count + ROWS_PER_STEP)}
         >
           {dict.my.loadMore}
