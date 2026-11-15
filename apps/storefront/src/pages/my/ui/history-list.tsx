@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { SearchField } from '@heroui/react';
+import { Button, SearchField } from '@heroui/react';
 import { pluralize } from '@ratingo/web-core/lib';
 import { IMPORT_ROUTE, mediaRoute } from '@/shared/config';
 import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
 import { SegmentedFilter } from '@/shared/ui';
+import { useLibraryCounts } from '@/entities/library';
 import type { LibraryActions } from '../model/library-actions';
 import { useLibraryMoves } from '../model/library-moves';
 import { useHistoryList } from '../model/library-queries';
@@ -15,6 +16,8 @@ import { LibraryRow } from './library-row';
 import { EmptyList, ListFailure, RowsSkeleton, SectionTitle } from './list-states';
 import { RatingPicker } from './rating-picker';
 import { RowMenu } from './row-menu';
+
+const ROWS_PER_STEP = 40;
 
 function monthTitle(key: string, locale: Locale): string {
   const [year, month] = key.split('-').map(Number);
@@ -73,7 +76,9 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
   const moves = useLibraryMoves();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TypeFilter>('all');
+  const [shownCount, setShownCount] = useState(ROWS_PER_STEP);
   const history = useHistoryList();
+  const counts = useLibraryCounts();
 
   if (history.isPending) return <RowsSkeleton />;
   if (history.isError) return <ListFailure onRetry={() => void history.refetch()} />;
@@ -87,7 +92,9 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
       matchesType(row.title.type, filter) &&
       matchesQuery(row, query),
   );
-  const total = history.data.length;
+  const total = counts?.completed ?? history.data.length;
+  const shown = visible.slice(0, shownCount);
+  const monthTotals = new Map(groupByMonth(visible).map((month) => [month.key, month.rows.length]));
 
   return (
     <div className="flex flex-col gap-3">
@@ -121,12 +128,12 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
           {interpolate(dict.my.history.noMatches, { query })}
         </p>
       ) : (
-        groupByMonth(visible).map((month) => (
+        groupByMonth(shown).map((month) => (
           <section key={month.key} aria-labelledby={`month-${month.key}`}>
             <SectionTitle id={`month-${month.key}`}>
               {monthTitle(month.key, locale)}
               <span className="text-sm font-semibold text-muted tabular-nums">
-                {month.rows.length}
+                {monthTotals.get(month.key)}
               </span>
             </SectionTitle>
             <ul className="flex flex-col">
@@ -139,6 +146,15 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
           </section>
         ))
       )}
+      {visible.length > shown.length ? (
+        <Button
+          variant="secondary"
+          className="self-center"
+          onPress={() => setShownCount((count) => count + ROWS_PER_STEP)}
+        >
+          {dict.my.loadMore}
+        </Button>
+      ) : null}
     </div>
   );
 }

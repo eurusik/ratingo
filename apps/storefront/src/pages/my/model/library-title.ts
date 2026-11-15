@@ -1,5 +1,5 @@
 import type { CalendarEpisode, MediaType, SavedItem, UserMediaState } from '@/shared/api';
-import { tmdbStillUrl } from '@/shared/config';
+import { tmdbPosterUrl, tmdbStillUrl } from '@/shared/config';
 import { scoreFromPercent, yearFromDate } from '@/shared/lib';
 
 export interface LibraryTitle {
@@ -34,6 +34,6 @@ export function titleOfEpisode(episode: CalendarEpisode): LibraryTitle {
     type: 'show',
     slug: episode.showSlug,
     title: episode.showTitle,
-    imageUrl: tmdbStillUrl(episode.stillPath) ?? undefined,
+    imageUrl: tmdbStillUrl(episode.stillPath) ?? tmdbPosterUrl(episode.posterPath, 'w342'),
   };
 }

@@ -20,6 +20,17 @@ function seasonOf(item: NotificationItem): number | undefined {
   return item.payload?.seasonNumber ?? undefined;
 }
 
+const EPISODE_KEY = /^S(\d+)E(\d+)$/i;
+
+function episodeLabel(episodeKey: string | undefined, dict: Dictionary): string {
+  const match = episodeKey ? EPISODE_KEY.exec(episodeKey) : null;
+  if (!match) return episodeKey ?? '';
+  return interpolate(dict.episodes.episodeCode, {
+    season: Number(match[1]),
+    episode: Number(match[2]),
+  });
+}
+
 export function notificationText(item: NotificationItem, dict: Dictionary): string {
   const { text } = dict.notifications;
   const title = item.mediaSummary.title;
@@ -30,7 +41,10 @@ export function notificationText(item: NotificationItem, dict: Dictionary): stri
       : interpolate(text.new_season, { title, season });
   }
   if (item.trigger === 'new_episode') {
-    return interpolate(text.new_episode, { title, code: item.payload?.episodeKey ?? '' });
+    return interpolate(text.new_episode, {
+      title,
+      code: episodeLabel(item.payload?.episodeKey, dict),
+    });
   }
   return interpolate(text[item.trigger], { title });
 }

@@ -162,7 +162,13 @@
         "rating": "By rating",
         "releaseDate": "Coming soon"
       },
+      "sortShort": {
+        "recent": "Added",
+        "rating": "Rating",
+        "releaseDate": "Soon"
+      },
       "sortLabel": "Sort: {sort}",
+      "sortPrefix": "Sort: ",
       "start": "Start",
       "startLabel": "Start watching: {title}",
       "showMeta": "Show",

@@ -162,7 +162,13 @@
         "rating": "За оцінкою",
         "releaseDate": "Скоро виходить"
       },
+      "sortShort": {
+        "recent": "Додані",
+        "rating": "Оцінка",
+        "releaseDate": "Скоро"
+      },
       "sortLabel": "Сортування: {sort}",
+      "sortPrefix": "Сортування: ",
       "start": "Почати",
       "startLabel": "Почати дивитись: {title}",
       "showMeta": "Серіал",
