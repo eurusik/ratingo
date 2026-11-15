@@ -293,14 +293,15 @@ describe('DrizzleShowRepository', () => {
       expect(calendarQuery.execute).toHaveBeenCalledWith(start, end, undefined);
     });
 
-    it('findEpisodesByDateRange passes userId to calendarEpisodesQuery', async () => {
+    it('findEpisodesByDateRange passes options to calendarEpisodesQuery', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleShowRepository);
 
       const start = new Date();
       const end = new Date();
-      await repository.findEpisodesByDateRange(start, end, { userId: 'user-123' });
-      expect(calendarQuery.execute).toHaveBeenCalledWith(start, end, 'user-123');
+      const options = { viewerId: 'user-123', personalized: true };
+      await repository.findEpisodesByDateRange(start, end, options);
+      expect(calendarQuery.execute).toHaveBeenCalledWith(start, end, options);
     });
   });
 });

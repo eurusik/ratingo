@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Button, Meter, Skeleton } from '@heroui/react';
 import { CalendarClock, Check, ChevronRight, Flag } from 'lucide-react';
@@ -23,10 +23,10 @@ import { WantToWatchButton } from '@/features/save-to-library';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { preloadWhenIdle } from '@/shared/lib';
 import { formatCount } from '../model/details-format';
+import { useEpisodesDialog } from '../model/use-episodes-dialog';
 import { useEpisodesTracker, type EpisodesTracker } from '../model/use-episodes-tracker';
 import { useRememberTracking } from '../model/use-remember-tracking';
 import { useRateMedia } from '../model/use-rate-media';
-import type { EpisodesSheetProps } from './episodes-sheet';
 import type { ActionMedia } from '../model/action-media';
 import { RatingTrigger, type TriggerLook } from './rating-trigger';
 import { DesktopShare } from './share-button';
@@ -35,15 +35,11 @@ import { NoticeBar } from './notice-bar';
 import { RatingDialog } from './rating-dialog';
 import { ShowActionsSkeleton } from './show-actions-skeleton';
 
-type EpisodesDialog = Pick<EpisodesSheetProps, 'isOpen' | 'isPicking'> & { hasOpened: boolean };
-
 const EPISODE_SLOT = 'flex min-h-[4.125rem] items-center gap-3';
 
 const loadEpisodesSheet = () => import('./episodes-sheet').then((module) => module.EpisodesSheet);
 
 const EpisodesSheet = dynamic(loadEpisodesSheet, { ssr: false });
-
-const CLOSED_DIALOG: EpisodesDialog = { isOpen: false, isPicking: false, hasOpened: false };
 
 const PAGE_NOTICE =
   'fixed inset-x-3 bottom-[calc(var(--tab-bar-height)+var(--safe-bottom)+0.75rem)] z-30 md:inset-x-auto md:end-6 md:bottom-6 md:w-[26rem]';
@@ -254,7 +250,11 @@ function EpisodeTracking({ media, showId, seasons }: TrackedShow) {
   const show = { showId, mediaItemId: media.mediaItemId, seasons, title: media.title };
   const tracker = useEpisodesTracker(show);
   useRememberTracking(media.slug, seasons, tracker);
-  const [dialog, setDialog] = useState<EpisodesDialog>(CLOSED_DIALOG);
+  const { dialog, open, setOpen, setPicking } = useEpisodesDialog({
+    seasons,
+    canTrack: tracker.canTrack,
+    isResolving: tracker.isResolving,
+  });
 
   useEffect(() => preloadWhenIdle(loadEpisodesSheet), []);
 
@@ -262,8 +262,6 @@ function EpisodeTracking({ media, showId, seasons }: TrackedShow) {
     return <ShowActionsSkeleton state={signedInTrackingState(media.trackingState)} />;
   }
   if (!tracker.canTrack) return <StartCard media={media} />;
-
-  const open = (isPicking: boolean) => setDialog({ isOpen: true, isPicking, hasOpened: true });
 
   return (
     <>
@@ -284,8 +282,9 @@ function EpisodeTracking({ media, showId, seasons }: TrackedShow) {
           tracker={tracker}
           isOpen={dialog.isOpen}
           isPicking={dialog.isPicking}
-          onOpenChange={(isOpen) => setDialog((current) => ({ ...current, isOpen }))}
-          onPickingChange={(isPicking) => setDialog((current) => ({ ...current, isPicking }))}
+          initialSeason={dialog.initialSeason}
+          onOpenChange={setOpen}
+          onPickingChange={setPicking}
         />
       ) : null}
       <NoticeBar tracker={tracker} className={dialog.isOpen ? 'hidden' : PAGE_NOTICE} />
@@ -295,5 +294,12 @@ function EpisodeTracking({ media, showId, seasons }: TrackedShow) {
 
 export function ShowTracking({ media }: { media: ActionMedia }) {
   if (!media.showId || !media.seasons?.length) return <StartCard media={media} />;
-  return <EpisodeTracking media={media} showId={media.showId} seasons={media.seasons} />;
+  return (
+    <EpisodeTracking
+      key={media.showId}
+      media={media}
+      showId={media.showId}
+      seasons={media.seasons}
+    />
+  );
 }

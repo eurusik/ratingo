@@ -107,9 +107,6 @@
     "backToSearch": "Back to search",
     "resultsCount": "Found: {count}"
   },
-  "placeholder": {
-    "comingSoon": "This section is coming soon."
-  },
   "pullToRefresh": {
     "refreshing": "Refreshing…"
   },
@@ -836,5 +833,91 @@
     },
     "allLabel": "All reviews",
     "loadMoreFailed": "Couldn’t load more reviews"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "metaTitle": "Episode calendar",
+    "metaDescription": "New episode releases by day of the week, in Kyiv time.",
+    "modesLabel": "Which shows",
+    "modes": {
+      "mine": "Mine",
+      "all": "All"
+    },
+    "modesInfoLabel": "What “Mine” includes",
+    "modesInfo": "“Mine” is the shows you watch plus premieres from “Want to watch”.",
+    "weekNames": {
+      "current": "This week",
+      "next": "Next week",
+      "previous": "Last week"
+    },
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "daysLabel": "Days of the week",
+    "dayTile": {
+      "one": "{day}, {count} episode",
+      "few": "{day}, {count} episodes",
+      "many": "{day}, {count} episodes"
+    },
+    "dayTileEmpty": "{day}, no episodes",
+    "episodesCount": {
+      "one": "{count} episode",
+      "few": "{count} episodes",
+      "many": "{count} episodes"
+    },
+    "morning": "morning",
+    "minutes": "{minutes} min",
+    "quotedTitle": "“{title}”",
+    "savedNote": "in “Want to watch”",
+    "premiere": "Premiere",
+    "finale": "Season finale",
+    "moreShows": {
+      "one": "{count} more show by popularity",
+      "few": "{count} more shows by popularity",
+      "many": "{count} more shows by popularity"
+    },
+    "past": {
+      "unwatched": {
+        "one": "Earlier this week · {count} unwatched",
+        "few": "Earlier this week · {count} unwatched",
+        "many": "Earlier this week · {count} unwatched"
+      },
+      "episodes": {
+        "one": "Earlier this week · {count} episode",
+        "few": "Earlier this week · {count} episodes",
+        "many": "Earlier this week · {count} episodes"
+      },
+      "allWatched": "Earlier this week · all watched"
+    },
+    "markWatched": "Mark watched: {show} {code}",
+    "startWatchingLabel": "Start watching: {show}",
+    "startedWatching": "“{show}” is now in “Watching”",
+    "startFailed": "Couldn’t add the show. Try again.",
+    "notice": {
+      "watched": "Watched: {show} {code}",
+      "unwatched": "Unmarked: {show} {code}"
+    },
+    "guest": {
+      "title": "Your shows will be here",
+      "body": "Sign in and mark what you watch — we’ll show only the episodes you’re waiting for.",
+      "signIn": "Sign in",
+      "showAll": "Show all"
+    },
+    "noShows": {
+      "title": "Nothing here yet",
+      "body": "Start watching a show or save it to “Want to watch”, and its new episodes will appear here.",
+      "showAll": "Show all"
+    },
+    "restWeek": {
+      "title": "Your shows are taking a break this week",
+      "next": "Next new episode — {episode}, {date}",
+      "nextWeek": "Next week"
+    },
+    "emptyWeek": "No new episodes this week",
+    "loadError": "Couldn’t load the calendar",
+    "retry": "Try again",
+    "lessShows": "Show less",
+    "weekShown": "Showing the week of {range}"
   }
 }

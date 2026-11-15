@@ -1641,7 +1641,7 @@
             "name": "personalized",
             "required": false,
             "in": "query",
-            "description": "When true, returns only episodes from shows the authenticated user is currently watching.",
+            "description": "When true, returns only episodes from shows the authenticated user is currently watching and premieres of shows they saved to watch later.",
             "schema": {
               "enum": [
                 "true",
@@ -14930,9 +14930,19 @@
       "CalendarEpisodeDto": {
         "type": "object",
         "properties": {
+          "episodeId": {
+            "type": "string",
+            "example": "0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90"
+          },
           "showId": {
             "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "Media item ID of the show."
+          },
+          "showRecordId": {
+            "type": "string",
+            "example": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+            "description": "Show record ID used by episode progress endpoints."
           },
           "showSlug": {
             "type": "string",
@@ -14978,16 +14988,49 @@
             "type": "string",
             "example": "http://image.com/1.jpg",
             "nullable": true
+          },
+          "seasonEpisodeCount": {
+            "type": "number",
+            "example": 8,
+            "nullable": true,
+            "description": "Number of episodes in the season, when known."
+          },
+          "showPopularity": {
+            "type": "number",
+            "example": 312.4,
+            "description": "TMDB popularity of the show."
+          },
+          "isTracked": {
+            "type": "boolean",
+            "example": false,
+            "description": "The viewer is watching this show."
+          },
+          "isSaved": {
+            "type": "boolean",
+            "example": false,
+            "description": "The viewer saved this show to watch later."
+          },
+          "isWatched": {
+            "type": "boolean",
+            "example": false,
+            "description": "The viewer marked this episode as watched."
           }
         },
         "required": [
+          "episodeId",
           "showId",
+          "showRecordId",
           "showSlug",
           "showTitle",
           "seasonNumber",
           "episodeNumber",
           "title",
-          "airDate"
+          "airDate",
+          "seasonEpisodeCount",
+          "showPopularity",
+          "isTracked",
+          "isSaved",
+          "isWatched"
         ]
       },
       "CalendarDayDto": {

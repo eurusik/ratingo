@@ -3093,8 +3093,18 @@ export interface components {
             data: components["schemas"]["NewEpisodeDto"][];
         };
         CalendarEpisodeDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            /** @example 0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90 */
+            episodeId: string;
+            /**
+             * @description Media item ID of the show.
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
             showId: string;
+            /**
+             * @description Show record ID used by episode progress endpoints.
+             * @example 7c9e6679-7425-40de-944b-e07fc1f90ae7
+             */
+            showRecordId: string;
             /** @example arcane */
             showSlug: string;
             /** @example Arcane */
@@ -3115,6 +3125,31 @@ export interface components {
             runtime?: number | null;
             /** @example http://image.com/1.jpg */
             stillPath?: string | null;
+            /**
+             * @description Number of episodes in the season, when known.
+             * @example 8
+             */
+            seasonEpisodeCount: number | null;
+            /**
+             * @description TMDB popularity of the show.
+             * @example 312.4
+             */
+            showPopularity: number;
+            /**
+             * @description The viewer is watching this show.
+             * @example false
+             */
+            isTracked: boolean;
+            /**
+             * @description The viewer saved this show to watch later.
+             * @example false
+             */
+            isSaved: boolean;
+            /**
+             * @description The viewer marked this episode as watched.
+             * @example false
+             */
+            isWatched: boolean;
         };
         CalendarDayDto: {
             /** @example 2024-11-09 */
@@ -6851,7 +6886,7 @@ export interface operations {
                 startDate?: string;
                 /** @description Number of days to include (default: 7). */
                 days?: number;
-                /** @description When true, returns only episodes from shows the authenticated user is currently watching. */
+                /** @description When true, returns only episodes from shows the authenticated user is currently watching and premieres of shows they saved to watch later. */
                 personalized?: "true" | "false";
             };
             header?: never;

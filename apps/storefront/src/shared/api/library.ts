@@ -49,6 +49,12 @@ export const libraryApi = {
     return apiGetOrNull<UserMediaState>(`user-media/${mediaItemId}`);
   },
 
+  startWatching(mediaItemId: string): Promise<UserMediaState> {
+    return apiPatch<UserMediaState>(`user-media/${mediaItemId}`, {
+      state: 'watching',
+    } satisfies SetUserMediaState);
+  },
+
   setRating(
     mediaItemId: string,
     rating: number | null,

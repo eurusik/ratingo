@@ -1,3 +1,4 @@
+import { SERVICE_TIME_ZONE } from '@/shared/config';
 import type { Locale } from '@/shared/i18n';
 
 const UNITS: ReadonlyArray<[Intl.RelativeTimeFormatUnit, number]> = [
@@ -8,8 +9,6 @@ const UNITS: ReadonlyArray<[Intl.RelativeTimeFormatUnit, number]> = [
   ['hour', 3600],
   ['minute', 60],
 ];
-
-const SERVICE_TIME_ZONE = 'Europe/Kyiv';
 
 const relativeFormats = new Map<Locale, Intl.RelativeTimeFormat>();
 const dateFormats = new Map<Locale, Intl.DateTimeFormat>();

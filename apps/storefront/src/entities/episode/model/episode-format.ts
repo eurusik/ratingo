@@ -1,8 +1,7 @@
 import { pluralize } from '@ratingo/web-core/lib';
+import { SERVICE_TIME_ZONE } from '@/shared/config';
 import { interpolate, type Dictionary, type Locale } from '@/shared/i18n';
 import type { Episode, Season } from './season';
-
-const AIR_DATE_TIME_ZONE = 'Europe/Kyiv';
 
 const airDateFormats = new Map<Locale, Intl.DateTimeFormat>();
 
@@ -13,7 +12,7 @@ function airDateFormat(locale: Locale): Intl.DateTimeFormat {
       weekday: 'short',
       day: 'numeric',
       month: 'long',
-      timeZone: AIR_DATE_TIME_ZONE,
+      timeZone: SERVICE_TIME_ZONE,
     });
     airDateFormats.set(locale, format);
   }

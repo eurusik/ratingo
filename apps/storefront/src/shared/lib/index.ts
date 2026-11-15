@@ -3,8 +3,9 @@ export { useBrowserOrigin, useBrowserPath } from './browser-origin';
 export { useClientNow } from './client-now';
 export { useDebouncedValue } from './debounced-value';
 export { interleave } from './interleave';
-export { useIsClamped, useMediaQuery } from './layout';
+export { motionScrollBehavior, prefersReducedMotion, useIsClamped, useMediaQuery } from './layout';
 export {
+  capitalizeFirst,
   currentYear,
   formatCompactCount,
   formatScore,

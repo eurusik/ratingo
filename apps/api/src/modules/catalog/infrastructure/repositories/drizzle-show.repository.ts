@@ -9,6 +9,7 @@ import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 import {
   type CalendarEpisode,
+  type CalendarEpisodesOptions,
   type IShowRepository,
   type NewEpisodeItem,
   type ShowDetails,
@@ -211,9 +212,9 @@ export class DrizzleShowRepository implements IShowRepository {
   async findEpisodesByDateRange(
     startDate: Date,
     endDate: Date,
-    options?: { userId?: string | null },
+    options?: CalendarEpisodesOptions,
   ): Promise<CalendarEpisode[]> {
-    return this.calendarEpisodesQuery.execute(startDate, endDate, options?.userId);
+    return this.calendarEpisodesQuery.execute(startDate, endDate, options);
   }
 
   /**

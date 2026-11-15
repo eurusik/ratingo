@@ -29,6 +29,29 @@ describe('Catalog E2E - Calendar', () => {
     expect(res.body.data.days[0].date).toBe('2024-01-01');
   });
 
+  it('returns viewer flags off for anonymous requests', async () => {
+    const res = await ctx.get('/api/catalog/shows/calendar').expect(200);
+    const [episode] = res.body.data.days[0].episodes;
+    expect(episode).toMatchObject({ isTracked: false, isSaved: false, isWatched: false });
+    expect(ctx.showsRepo.lastCalendarOptions).toEqual({});
+  });
+
+  it('requires a viewer for the personalized calendar', async () => {
+    await ctx.get('/api/catalog/shows/calendar?personalized=true').expect(401);
+  });
+
+  it('personalizes the calendar for the signed-in viewer', async () => {
+    const token = await ctx.registerAndLogin();
+    const res = await ctx.get('/api/catalog/shows/calendar?personalized=true', token).expect(200);
+
+    expect(ctx.showsRepo.lastCalendarOptions).toEqual({
+      viewerId: expect.any(String),
+      personalized: true,
+    });
+    expect(res.body.data.days[0].episodes[0].isTracked).toBe(true);
+    expect(typeof res.body.data.watchingShowsCount).toBe('number');
+  });
+
   it('rejects invalid days param', async () => {
     await ctx.get('/api/catalog/shows/calendar?days=-1').expect(400);
   });

@@ -54,16 +54,18 @@ function sendWatchChange({ episodeIds, watched }: WatchChange): Promise<void> {
 
 interface WatchedShow {
   showId: string;
-  seasons: readonly Season[];
+  seasons?: readonly Season[];
   onSynced?: () => void;
   onFailed?: () => void;
 }
 
 type SetWatched = (change: WatchChange) => void;
 
+const NO_SEASONS: readonly Season[] = [];
+
 export function useSetEpisodesWatched({
   showId,
-  seasons,
+  seasons = NO_SEASONS,
   onSynced,
   onFailed,
 }: WatchedShow): SetWatched {

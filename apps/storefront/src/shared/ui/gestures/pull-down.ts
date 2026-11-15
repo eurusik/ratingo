@@ -1,4 +1,5 @@
 import { animateSpring } from '@ratingo/ui/motion';
+import { prefersReducedMotion } from '@/shared/lib';
 
 const START_SLOP_PX = 6;
 const PULL_RESISTANCE = 0.5;
@@ -22,10 +23,6 @@ type PullState =
 
 function resist(travel: number): number {
   return Math.min(Math.max(travel, 0) * PULL_RESISTANCE, MAX_PULL_PX);
-}
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 export function attachPullDown({

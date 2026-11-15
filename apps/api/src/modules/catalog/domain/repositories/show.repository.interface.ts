@@ -104,7 +104,9 @@ export interface NewEpisodeItem {
  * Calendar episode item for the global show calendar.
  */
 export interface CalendarEpisode {
+  episodeId: string;
   showId: string;
+  showRecordId: string;
   showSlug: string;
   showTitle: string;
   posterPath: string | null;
@@ -115,7 +117,15 @@ export interface CalendarEpisode {
   airDate: Date;
   runtime: number | null;
   stillPath: string | null;
+  seasonEpisodeCount: number | null;
+  showPopularity: number;
+  isTracked: boolean;
+  isSaved: boolean;
+  isWatched: boolean;
 }
+
+export type CalendarEpisodesOptions =
+  { viewerId?: undefined; personalized?: false } | { viewerId: string; personalized: boolean };
 
 /**
  * Episode info for show details.
@@ -235,12 +245,12 @@ export interface IShowRepository {
    *
    * @param startDate - Start of date range (inclusive)
    * @param endDate - End of date range (inclusive)
-   * @param options.userId - When provided, filters to shows the user is currently watching
+   * @param options - Viewer state and personalized filtering
    */
   findEpisodesByDateRange(
     startDate: Date,
     endDate: Date,
-    options?: { userId?: string | null },
+    options?: CalendarEpisodesOptions,
   ): Promise<CalendarEpisode[]>;
 
   /**

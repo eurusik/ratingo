@@ -18,5 +18,12 @@ export default async function ReviewsRoute({ params, searchParams }: ReviewsRout
     searchParams,
     getRequestLocale(),
   ]);
-  return <MediaReviewsPage type="show" slug={slug} sort={typeof sort === 'string' ? sort : undefined} locale={locale} />;
+  return (
+    <MediaReviewsPage
+      type="show"
+      slug={slug}
+      sort={typeof sort === 'string' ? sort : undefined}
+      locale={locale}
+    />
+  );
 }

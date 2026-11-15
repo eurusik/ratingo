@@ -1,10 +1,14 @@
 import type { CalendarEpisode } from '@/modules/catalog/domain/repositories/show.repository.interface';
 
+import fc from 'fast-check';
+
 import { groupEpisodesByDate } from './calendar.utils';
 
 describe('groupEpisodesByDate', () => {
   const createEpisode = (date: string, showId: string = 'show-1'): CalendarEpisode => ({
+    episodeId: `episode-${showId}-${date}`,
     showId,
+    showRecordId: `record-${showId}`,
     showSlug: `show-${showId}`,
     showTitle: `Show ${showId}`,
     posterPath: null,
@@ -15,6 +19,11 @@ describe('groupEpisodesByDate', () => {
     airDate: new Date(date),
     runtime: 45,
     stillPath: null,
+    seasonEpisodeCount: null,
+    showPopularity: 0,
+    isTracked: false,
+    isSaved: false,
+    isWatched: false,
   });
 
   it('groups episodes by their air date', () => {
@@ -63,7 +72,9 @@ describe('groupEpisodesByDate', () => {
 
   it('preserves episode data in grouped results', () => {
     const episode: CalendarEpisode = {
+      episodeId: 'episode-516',
       showId: 'show-123',
+      showRecordId: 'record-123',
       showSlug: 'breaking-bad',
       showTitle: 'Breaking Bad',
       posterPath: '/poster.jpg',
@@ -74,6 +85,11 @@ describe('groupEpisodesByDate', () => {
       airDate: new Date('2025-01-15T21:00:00Z'),
       runtime: 55,
       stillPath: '/still.jpg',
+      seasonEpisodeCount: 16,
+      showPopularity: 120,
+      isTracked: true,
+      isSaved: false,
+      isWatched: false,
     };
 
     const result = groupEpisodesByDate([episode]);
@@ -91,5 +107,22 @@ describe('groupEpisodesByDate', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].episodes).toHaveLength(2);
+  });
+
+  it('keeps every episode and sorts days', () => {
+    const instant = fc.date({
+      min: new Date('2020-01-01T00:00:00Z'),
+      max: new Date('2030-12-31T23:59:59Z'),
+      noInvalidDate: true,
+    });
+    fc.assert(
+      fc.property(fc.array(instant, { maxLength: 40 }), (dates) => {
+        const days = groupEpisodesByDate(dates.map((date) => createEpisode(date.toISOString())));
+        const keys = days.map((day) => day.date);
+        expect(days.flatMap((day) => day.episodes)).toHaveLength(dates.length);
+        expect(keys).toEqual([...keys].sort());
+        expect(new Set(keys).size).toBe(keys.length);
+      }),
+    );
   });
 });

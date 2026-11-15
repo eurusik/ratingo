@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import { cn } from '@ratingo/web-core/lib';
-import { tmdbStillUrl } from '@/shared/config';
+import { tmdbPosterUrl, tmdbStillUrl } from '@/shared/config';
+import { ReturningImage } from '@/shared/ui';
 import type { Episode } from '../model/season';
 
 const SIZES = {
@@ -13,11 +13,24 @@ interface EpisodeStillProps {
   badge: string;
   size: keyof typeof SIZES;
   isDimmed?: boolean;
+  fallbackPosterPath?: string;
 }
 
-export function EpisodeStill({ episode, badge, size, isDimmed = false }: EpisodeStillProps) {
+function stillOrPoster(episode: Episode, fallbackPosterPath: string | undefined) {
+  const still = tmdbStillUrl(episode.stillPath);
+  if (still) return { src: still, isPoster: false };
+  return { src: tmdbPosterUrl(fallbackPosterPath, 'w154'), isPoster: true };
+}
+
+export function EpisodeStill({
+  episode,
+  badge,
+  size,
+  isDimmed = false,
+  fallbackPosterPath,
+}: EpisodeStillProps) {
   const { width, height, className } = SIZES[size];
-  const src = tmdbStillUrl(episode.stillPath);
+  const { src, isPoster } = stillOrPoster(episode, fallbackPosterPath);
 
   return (
     <span
@@ -25,14 +38,14 @@ export function EpisodeStill({ episode, badge, size, isDimmed = false }: Episode
       className={cn('relative shrink-0 overflow-hidden rounded-[10px] bg-default', className)}
     >
       {src ? (
-        <Image
+        <ReturningImage
           unoptimized
           src={src}
           alt=""
           width={width}
           height={height}
           loading="lazy"
-          className="size-full object-cover"
+          className={cn('size-full object-cover', isPoster && 'object-[center_20%]')}
         />
       ) : null}
       {isDimmed ? <span className="absolute inset-0 bg-background/45" /> : null}

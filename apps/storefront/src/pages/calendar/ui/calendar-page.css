@@ -1,0 +1,27 @@
+[data-page-transition]:has(> [data-calendar-root]) {
+  display: flex;
+  flex-direction: column;
+}
+
+:root[data-calendar-page] {
+  --calendar-sticky-offset: calc(9rem + var(--safe-top));
+  scroll-padding-top: var(--calendar-sticky-offset);
+}
+
+@media (width >= 48rem) {
+  :root[data-calendar-page] {
+    --calendar-sticky-offset: 13rem;
+  }
+}
+
+@keyframes calendar-list-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-calendar-list-swap] {
+    animation: calendar-list-in 220ms ease-out both;
+  }
+}

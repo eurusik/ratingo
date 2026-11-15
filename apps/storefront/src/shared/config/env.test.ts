@@ -28,7 +28,10 @@ describe('site environment gating', () => {
   });
 
   it.each<[string, DeploymentEnv]>([
-    ['the storefront dev domain', { VERCEL_ENV: 'production', VERCEL_PROJECT_PRODUCTION_URL: 'ratingo-storefront.vercel.app' }],
+    [
+      'the storefront dev domain',
+      { VERCEL_ENV: 'production', VERCEL_PROJECT_PRODUCTION_URL: 'ratingo-storefront.vercel.app' },
+    ],
     ['a preview', { VERCEL_ENV: 'preview', VERCEL_PROJECT_PRODUCTION_URL: 'ratingo.top' }],
     ['a local build', {}],
   ])('keeps %s out of search and Google Analytics', (_name, deployment) => {
