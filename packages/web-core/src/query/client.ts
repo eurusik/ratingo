@@ -11,7 +11,7 @@ import { QueryClient, isServer } from '@tanstack/react-query';
  *
  * Default settings:
  * - 1 minute stale time
- * - 5 minutes garbage collection
+ * - 5 minutes garbage collection in the browser, none on the server
  * - No refetch on window focus
  * - Single retry on failure
  */
@@ -20,7 +20,7 @@ function makeQueryClient(): QueryClient {
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000,
-        gcTime: 5 * 60 * 1000,
+        gcTime: isServer ? Infinity : 5 * 60 * 1000,
         refetchOnWindowFocus: false,
         retry: 1,
         refetchOnMount: true,

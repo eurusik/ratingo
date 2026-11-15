@@ -40,7 +40,6 @@ export function SavedStatusProvider({ mediaItemIds, children }: SavedStatusProvi
     queryFn: () => userActionsApi.getBatchSaveStatus(uniqueIds),
     enabled: isAuthenticated && uniqueIds.length > 0,
     staleTime: 30_000,
-    gcTime: 5 * 60_000,
   });
 
   const getStatus = useCallback(
