@@ -1,5 +1,6 @@
 import fc from 'fast-check';
 import {
+  hintsChangeForSession,
   isRememberableSlug,
   parseTrackingHints,
   signedInTrackingState,
@@ -65,6 +66,50 @@ describe('tracking hints', () => {
     expect(signedInTrackingState(undefined)).toBe('start');
     expect(signedInTrackingState('guest')).toBe('start');
     expect(signedInTrackingState('watching')).toBe('watching');
+  });
+
+  it('forgets the hints only after a real sign-out', () => {
+    const signedOut = { previousUserId: 'me', userId: null, hasHints: true };
+    expect(hintsChangeForSession({ ...signedOut, hasRefreshToken: false })).toBe('forget');
+    expect(hintsChangeForSession({ ...signedOut, hasRefreshToken: true })).toBe('keep');
+    expect(
+      hintsChangeForSession({ ...signedOut, hasRefreshToken: false, hasHints: false }),
+    ).toBe('keep');
+  });
+
+  it('starts empty hints on sign-in and on a switch to another user', () => {
+    const signedIn = { userId: 'me', hasRefreshToken: true };
+    expect(hintsChangeForSession({ ...signedIn, previousUserId: null, hasHints: false })).toBe(
+      'reset',
+    );
+    expect(hintsChangeForSession({ ...signedIn, previousUserId: 'other', hasHints: true })).toBe(
+      'reset',
+    );
+    expect(hintsChangeForSession({ ...signedIn, previousUserId: 'me', hasHints: true })).toBe(
+      'keep',
+    );
+    expect(hintsChangeForSession({ ...signedIn, previousUserId: null, hasHints: true })).toBe(
+      'keep',
+    );
+  });
+
+  it('never resets the hints of a signed-out viewer', () => {
+    fc.assert(
+      fc.property(
+        fc.option(fc.string(), { nil: null }),
+        fc.boolean(),
+        fc.boolean(),
+        (previousUserId, hasRefreshToken, hasHints) => {
+          const change = hintsChangeForSession({
+            previousUserId,
+            userId: null,
+            hasRefreshToken,
+            hasHints,
+          });
+          expect(change).not.toBe('reset');
+        },
+      ),
+    );
   });
 
   it('derives the state from the watched count and the next episode', () => {

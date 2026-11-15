@@ -1,7 +1,7 @@
 import { Skeleton } from '@heroui/react';
 import type { TrackingHints } from '@/entities/episode';
 import type { MediaType } from '@/shared/api';
-import { ACTIONS_SKELETON_SIZE } from '../model/actions-skeleton-size';
+import { ActionsSkeleton } from './actions-skeleton';
 import { PendingPoster } from './pending-poster';
 import { RouteShowActionsSkeleton } from './route-show-actions-skeleton';
 
@@ -31,15 +31,13 @@ export function DetailsSkeleton({ label, type, trackingHints = null }: DetailsSk
               <Skeleton className="h-4 w-2/3 rounded-full md:hidden" />
               {type === 'show' ? <Skeleton className="h-6 w-32 rounded-full md:hidden" /> : null}
             </div>
-            {type === 'show' ? (
-              <div className="min-w-0 [grid-area:actions] md:mb-2 md:max-w-180">
+            <div className="min-w-0 [grid-area:actions] md:max-w-180 md:pb-2">
+              {type === 'show' ? (
                 <RouteShowActionsSkeleton hints={trackingHints} />
-              </div>
-            ) : (
-              <Skeleton
-                className={`[grid-area:actions] md:mb-2 md:max-w-180 ${ACTIONS_SKELETON_SIZE[type]}`}
-              />
-            )}
+              ) : (
+                <ActionsSkeleton type={type} />
+              )}
+            </div>
           </div>
         </div>
       </div>

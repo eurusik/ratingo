@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { tokenStorage, useAuth } from '@ratingo/web-core/auth';
 import {
   TRACKING_HINT_COOKIE,
+  hintsChangeForSession,
   isRememberableSlug,
   parseTrackingHints,
   serializeTrackingHints,
@@ -53,13 +54,14 @@ export function useTrackingHintsSession(): void {
 
   useEffect(() => {
     if (isLoading) return;
-    const previous = previousUserId.current;
+    const change = hintsChangeForSession({
+      previousUserId: previousUserId.current,
+      userId,
+      hasRefreshToken: tokenStorage.getRefreshToken() !== null,
+      hasHints: readHints() !== null,
+    });
     previousUserId.current = userId;
-    if (userId === null) {
-      if (tokenStorage.getRefreshToken() === null && readHints()) forgetTrackingHints();
-      return;
-    }
-    if (previous !== null && previous !== userId) forgetTrackingHints();
-    if (!readHints()) writeHints({ shows: [] });
+    if (change === 'forget') forgetTrackingHints();
+    if (change === 'reset') writeHints({ shows: [] });
   }, [isLoading, userId]);
 }

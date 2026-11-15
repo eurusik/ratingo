@@ -61,8 +61,9 @@ function WatchingSkeleton({ hasUpcoming }: { hasUpcoming: boolean }) {
 }
 
 export function ShowActionsSkeleton({ state }: { state: TrackingState }) {
-  if (state === 'watching') return <WatchingSkeleton hasUpcoming={false} />;
-  if (state === 'watching-next') return <WatchingSkeleton hasUpcoming />;
+  if (state === 'watching' || state === 'watching-next') {
+    return <WatchingSkeleton hasUpcoming={state === 'watching-next'} />;
+  }
   if (state === 'start') return <StartSkeleton />;
   return <ActionsSkeleton type="show" />;
 }

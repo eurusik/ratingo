@@ -78,6 +78,26 @@ export function signedInTrackingState(state: TrackingState | undefined): Remembe
   return state === undefined || state === 'guest' ? 'start' : state;
 }
 
+interface HintsSession {
+  previousUserId: string | null;
+  userId: string | null;
+  hasRefreshToken: boolean;
+  hasHints: boolean;
+}
+
+export type HintsChange = 'keep' | 'forget' | 'reset';
+
+export function hintsChangeForSession({
+  previousUserId,
+  userId,
+  hasRefreshToken,
+  hasHints,
+}: HintsSession): HintsChange {
+  if (userId === null) return hasHints && !hasRefreshToken ? 'forget' : 'keep';
+  const isOtherUser = previousUserId !== null && previousUserId !== userId;
+  return isOtherUser || !hasHints ? 'reset' : 'keep';
+}
+
 export function trackingStateOf(watchedCount: number, hasUpcoming: boolean): RememberedState {
   if (watchedCount === 0) return 'start';
   return hasUpcoming ? 'watching-next' : 'watching';
