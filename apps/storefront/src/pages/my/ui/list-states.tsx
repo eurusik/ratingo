@@ -15,7 +15,7 @@ type RowAction = 'check' | 'pill' | 'score' | 'none';
 
 const ACTION_SKELETON: Record<Exclude<RowAction, 'none'>, string> = {
   check: 'size-11 rounded-full',
-  pill: 'h-11 w-20 rounded-full',
+  pill: 'size-11 rounded-full md:w-24',
   score: 'h-11 w-18 rounded-full',
 };
 
@@ -89,9 +89,9 @@ function ListSkeletonBody({ list }: { list: MainLibraryList }) {
     return (
       <div className="flex flex-col gap-3">
         <SearchSkeleton />
-        <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-2">
+        <div className="-mx-4 flex items-center gap-2 overflow-hidden px-4 md:mx-0 md:justify-between md:px-0">
           <PillsSkeleton widths={TYPE_FILTER_WIDTHS} />
-          <Skeleton className="h-11 w-44 self-end rounded-full md:self-auto" />
+          <Skeleton className="h-11 w-44 shrink-0 rounded-full" />
         </div>
         <RowsSkeleton action="pill" />
       </div>

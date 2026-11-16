@@ -7,7 +7,7 @@ import { EventBadge, type MediaEvent } from '@/entities/media';
 import { mediaRoute } from '@/shared/config';
 import type { LibraryTitle } from '../model/library-title';
 
-export const ROW_FRAME = 'h-[63px] w-28 md:h-[81px] md:w-36';
+export const ROW_FRAME = 'h-[54px] w-24 min-[360px]:h-[63px] min-[360px]:w-28 md:h-[81px] md:w-36';
 
 const HOVER_REVEAL =
   'transition-opacity motion-reduce:transition-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 [@media(hover:hover)]:group-focus-within/row:opacity-100 [@media(hover:hover)]:has-[[aria-expanded=true]]:opacity-100';
@@ -85,7 +85,9 @@ export function LibraryRow({
       >
         <RowFrame title={title} event={event} code={code} isEager={isEager} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="truncate text-[15px] font-bold md:text-base">{title.title}</span>
+          <span className="line-clamp-2 text-[15px] leading-tight font-bold md:text-base">
+            {title.title}
+          </span>
           <span className="flex min-w-0 items-center gap-1.5 truncate text-[13px] text-muted tabular-nums md:text-sm">
             {typeof meta === 'string' ? <span className="truncate">{meta}</span> : meta}
           </span>

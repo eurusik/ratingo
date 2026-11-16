@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button, Dropdown, Label, type Key } from '@heroui/react';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Play } from 'lucide-react';
 import { ScoreChip } from '@/entities/media';
 import { BROWSE_ROUTE, mediaRoute, showPickRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
-import { EmptyState, SegmentedFilter, ShowMore } from '@/shared/ui';
+import { EmptyState, FadingScrollRow, SegmentedFilter, ShowMore } from '@/shared/ui';
 import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
 import { usePlanList } from '../model/library-queries';
@@ -29,6 +29,8 @@ import { ListSearch } from './list-search';
 import { RowMenu, type RowMenuItem } from './row-menu';
 
 const EAGER_ROWS = 3;
+
+const SELECTED_FILTER = '[aria-checked="true"]';
 
 function SortMenu({ sort, onSort }: { sort: PlanSort; onSort: (sort: PlanSort) => void }) {
   const { dict } = useTranslation();
@@ -116,13 +118,13 @@ function PlanRowItem({
           />
         ) : (
           <Button
-            size="sm"
             variant="secondary"
             aria-label={interpolate(dict.my.plan.startLabel, { title: title.title })}
             onPress={() => actions.start(row)}
-            className="phone-tap-target shrink-0 rounded-full font-bold"
+            className="size-11 shrink-0 gap-2 rounded-full p-0 font-bold md:w-auto md:px-4"
           >
-            {dict.my.plan.start}
+            <Play aria-hidden className="size-4.5" />
+            <span className="max-md:sr-only">{dict.my.plan.start}</span>
           </Button>
         )
       }
@@ -173,18 +175,18 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
         value={query}
         onChange={setQuery}
       />
-      <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-2">
-        <SegmentedFilter
-          label={dict.my.plan.filterLabel}
-          options={TYPE_FILTERS.map((id) => ({ id, label: dict.my.plan.filter[id] }))}
-          value={filter}
-          onChange={setFilter}
-          className="shrink-0 px-0"
-        />
-        <div className="self-end md:self-auto">
+      <FadingScrollRow activeKey={filter} contentKey={sort} activeSelector={SELECTED_FILTER}>
+        <div className="flex w-max items-center gap-2 md:w-full md:justify-between">
+          <SegmentedFilter
+            label={dict.my.plan.filterLabel}
+            options={TYPE_FILTERS.map((id) => ({ id, label: dict.my.plan.filter[id] }))}
+            value={filter}
+            onChange={setFilter}
+            className="shrink-0 px-0"
+          />
           <SortMenu sort={sort} onSort={setSort} />
         </div>
-      </div>
+      </FadingScrollRow>
       {rows.length === 0 ? <EmptyState {...noMatches} /> : null}
       <ul aria-label={dict.my.lists.plan} className="flex flex-col">
         {reveal.shown.map((row, index) => (
