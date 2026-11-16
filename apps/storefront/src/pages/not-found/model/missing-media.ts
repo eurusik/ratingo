@@ -1,5 +1,5 @@
 import type { MediaType } from '@/shared/api';
-import { toCyrillic } from './transliterate';
+import { toCyrillic } from './latin-to-cyrillic';
 
 export interface MissingMedia {
   type: MediaType;

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { TriangleAlert } from 'lucide-react';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { errorDigest, useIsOffline, useRetryTransition } from '@/shared/lib';
+import { errorDigest, useRetryTransition } from '@/shared/lib';
 import { ERROR_STATE_ACTION, ErrorState, ErrorStateLink } from '@/shared/ui';
+import { useHasBeenOffline } from '../model/use-has-been-offline';
 import { ConnectionRecovery } from './connection-recovery';
 
 interface PageLink {
@@ -19,13 +19,6 @@ interface PageErrorProps {
   error: unknown;
   onRetry: () => void;
   escape: PageLink;
-}
-
-function useHasBeenOffline(): boolean {
-  const isOffline = useIsOffline();
-  const [hasBeenOffline, setHasBeenOffline] = useState(isOffline);
-  if (isOffline && !hasBeenOffline) setHasBeenOffline(true);
-  return isOffline || hasBeenOffline;
 }
 
 export function PageError({ title, text, error, onRetry, escape }: PageErrorProps) {

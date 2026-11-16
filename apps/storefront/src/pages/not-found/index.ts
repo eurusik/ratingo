@@ -1,2 +1,2 @@
-export { notFoundMetadata } from './api/not-found-metadata';
+export { notFoundMetadata } from './model/not-found-metadata';
 export { NotFoundPage } from './ui/not-found-page';
