@@ -4,25 +4,27 @@ import { tmdbPosterUrl } from '@/shared/config';
 
 export const TOP_TEN_COUNT = 10;
 
+const TOP_THREE_COUNT = 3;
+
 export type Loaded<T> = { ok: true; data: T } | { ok: false };
 
 export function anySectionLoads(
   sections: ReadonlyArray<Promise<Loaded<unknown>>>,
 ): Promise<boolean> {
+  if (sections.length === 0) return Promise.resolve(false);
+
   return new Promise((resolve) => {
-    let pending = sections.length;
-    if (pending === 0) resolve(false);
+    let unsettled = sections.length;
     sections.forEach(
       (section) =>
         void section.then((loaded) => {
-          pending -= 1;
+          unsettled -= 1;
           if (loaded.ok) resolve(true);
-          else if (pending === 0) resolve(false);
+          else if (unsettled === 0) resolve(false);
         }),
     );
   });
 }
-const TOP_THREE_COUNT = 3;
 
 export interface HeroMedia extends TrendingMedia {
   overview?: string;

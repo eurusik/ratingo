@@ -13,19 +13,22 @@ export function HomeOutage() {
   const copy = dict.home.outage;
 
   return (
-    <ErrorState
-      icon={<TriangleAlert />}
-      title={copy.title}
-      text={copy.text}
-      titleAs="h2"
-      actions={
-        <>
-          <Button size="lg" className={ERROR_STATE_ACTION} isPending={isRetrying} onPress={retry}>
-            {dict.common.retry}
-          </Button>
-          <ErrorStateLink href={MY_ROUTE}>{copy.openMy}</ErrorStateLink>
-        </>
-      }
-    />
+    <>
+      <meta name="robots" content="noindex" />
+      <ErrorState
+        icon={<TriangleAlert />}
+        title={copy.title}
+        text={copy.text}
+        titleAs="h2"
+        actions={
+          <>
+            <Button size="lg" className={ERROR_STATE_ACTION} isPending={isRetrying} onPress={retry}>
+              {dict.common.retry}
+            </Button>
+            <ErrorStateLink href={MY_ROUTE}>{copy.openMy}</ErrorStateLink>
+          </>
+        }
+      />
+    </>
   );
 }

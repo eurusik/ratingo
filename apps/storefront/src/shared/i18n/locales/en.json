@@ -48,7 +48,7 @@
     "outage": {
       "title": "The home page didn’t load",
       "text": "We can’t reach the server right now. Try again in a minute.",
-      "openMy": "Open “My”"
+      "openMy": "Open My library"
     }
   },
   "oauth": {

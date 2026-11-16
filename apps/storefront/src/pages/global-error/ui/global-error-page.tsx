@@ -1,112 +1,20 @@
 'use client';
 
-import { useSyncExternalStore, type CSSProperties } from 'react';
+import { useSyncExternalStore } from 'react';
 import { BRAND_NAME } from '@/shared/config';
 import { GLOBAL_ERROR_COPY, globalErrorLocale } from '../model/global-error-copy';
-
-const COLORS = {
-  background: '#060607',
-  foreground: '#fcfcfc',
-  muted: '#9f9fa9',
-  faint: '#71717a',
-  tile: '#18181b',
-  tileBorder: '#2c2c31',
-  accent: '#0485f7',
-};
-
-const STYLES = {
-  body: {
-    margin: 0,
-    minHeight: '100dvh',
-    display: 'flex',
-    flexDirection: 'column',
-    background: COLORS.background,
-    color: COLORS.foreground,
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-    lineHeight: 1.5,
-  },
-  header: {
-    height: 64,
-    marginTop: 'max(16px, env(safe-area-inset-top))',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 9,
-    fontSize: 20,
-    fontWeight: 800,
-    letterSpacing: '-0.03em',
-  },
-  logoTile: {
-    position: 'relative',
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    background: COLORS.tile,
-    border: `1px solid ${COLORS.tileBorder}`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 19,
-    fontWeight: 900,
-    lineHeight: 1,
-  },
-  logoDot: {
-    position: 'absolute',
-    right: 5,
-    bottom: 6,
-    width: 5,
-    height: 5,
-    borderRadius: '50%',
-    background: COLORS.accent,
-  },
-  main: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 480,
-    margin: '0 auto',
-    boxSizing: 'border-box',
-    padding: '0 16px 80px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 18,
-    textAlign: 'center',
-  },
-  title: { margin: 0, fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em' },
-  text: { margin: '6px 0 0', fontSize: 15, lineHeight: 1.45, color: COLORS.muted },
-  button: {
-    height: 48,
-    width: '100%',
-    maxWidth: 320,
-    padding: '0 20px',
-    border: 'none',
-    borderRadius: 24,
-    background: COLORS.accent,
-    color: '#ffffff',
-    fontFamily: 'inherit',
-    fontSize: 15,
-    fontWeight: 700,
-    cursor: 'pointer',
-  },
-  code: { margin: 0, fontSize: 12, color: COLORS.faint },
-} satisfies Record<string, CSSProperties>;
+import { GLOBAL_ERROR_STYLES as STYLES } from './global-error-styles';
 
 const subscribeToNothing = () => () => undefined;
-const readBrowserLanguage = () => navigator.language;
-const readServerLanguage = () => undefined;
+const readBrowserLocale = () => globalErrorLocale(document.cookie, navigator.language);
+const readServerLocale = () => globalErrorLocale('');
 
 interface GlobalErrorPageProps {
   digest?: string;
 }
 
 export function GlobalErrorPage({ digest }: GlobalErrorPageProps) {
-  const language = useSyncExternalStore(
-    subscribeToNothing,
-    readBrowserLanguage,
-    readServerLanguage,
-  );
-  const locale = globalErrorLocale(language);
+  const locale = useSyncExternalStore(subscribeToNothing, readBrowserLocale, readServerLocale);
   const copy = GLOBAL_ERROR_COPY[locale];
 
   return (

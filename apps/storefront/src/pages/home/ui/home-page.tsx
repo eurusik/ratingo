@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from 'react';
 import { getDictionary, type Locale } from '@/shared/i18n';
-import { startHomeFeed, type HomeFeed } from '../api/load-home-feed';
+import { feedSections, startHomeFeed, type HomeFeed } from '../api/load-home-feed';
 import { anySectionLoads } from '../model/home-feed';
 import { HomeOutage } from './home-outage';
 import {
@@ -38,7 +38,7 @@ function HomeFeedSkeleton() {
 }
 
 async function UnlessFeedIsDown({ feed, children }: { feed: HomeFeed; children: ReactNode }) {
-  const isUp = await anySectionLoads(Object.values(feed));
+  const isUp = await anySectionLoads(feedSections(feed));
   return isUp ? children : <HomeOutage />;
 }
 
@@ -63,9 +63,9 @@ export function HomePage({ locale }: { locale: Locale }) {
           <Suspense fallback={<CardRailSkeleton />}>
             <NewReleasesSection nowPlaying={feed.nowPlaying} newOnDigital={feed.newOnDigital} />
           </Suspense>
-          <TrackShowsCard />
         </UnlessFeedIsDown>
       </Suspense>
+      <TrackShowsCard />
     </div>
   );
 }

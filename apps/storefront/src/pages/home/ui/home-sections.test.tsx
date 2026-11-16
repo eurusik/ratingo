@@ -211,7 +211,7 @@ describe('HomeSectionError', () => {
     renderIn(<HomeSectionError section="topTen" />);
 
     expect(screen.getByRole('heading', { name: uk.home.topTen })).toBeInTheDocument();
-    const alert = screen.getByRole('alert');
+    const alert = screen.getByRole('status');
     expect(alert).toHaveTextContent(uk.home.failed.topTen);
     expect(alert).toHaveTextContent(uk.common.sectionErrorHint);
     fireEvent.click(within(alert).getByRole('button', { name: uk.common.retry }));

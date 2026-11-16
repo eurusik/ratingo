@@ -36,7 +36,12 @@ async function post(
 }
 
 describe('POST /api/revalidate', () => {
-  beforeEach(() => mockedRevalidatePath.mockClear());
+  beforeEach(() => {
+    mockedRevalidatePath.mockClear();
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => jest.restoreAllMocks());
 
   it('revalidates the show page for a valid request', async () => {
     const response = await post(`Bearer ${SECRET}`, { type: 'show', slug: 'ted-lasso' });
@@ -88,5 +93,9 @@ describe('POST /api/revalidate', () => {
 
     expect(response.status).toBe(400);
     expect(mockedRevalidatePath).not.toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledWith(
+      'Revalidation rejected an invalid payload',
+      body ?? null,
+    );
   });
 });

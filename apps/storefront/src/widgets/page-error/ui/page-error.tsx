@@ -21,24 +21,21 @@ interface PageErrorProps {
   escape: PageLink;
 }
 
-function useWasOffline(): boolean {
+function useHasBeenOffline(): boolean {
   const isOffline = useIsOffline();
-  const [wasOffline, setWasOffline] = useState(isOffline);
-  if (isOffline && !wasOffline) setWasOffline(true);
-  return isOffline || wasOffline;
-}
-
-function EscapeLink({ escape }: { escape: PageLink }) {
-  return <ErrorStateLink href={escape.href}>{escape.label}</ErrorStateLink>;
+  const [hasBeenOffline, setHasBeenOffline] = useState(isOffline);
+  if (isOffline && !hasBeenOffline) setHasBeenOffline(true);
+  return isOffline || hasBeenOffline;
 }
 
 export function PageError({ title, text, error, onRetry, escape }: PageErrorProps) {
   const { dict } = useTranslation();
   const { retry, isRetrying } = useRetryTransition(onRetry);
   const digest = errorDigest(error);
-  const wasOffline = useWasOffline();
+  const hasBeenOffline = useHasBeenOffline();
+  const escapeLink = <ErrorStateLink href={escape.href}>{escape.label}</ErrorStateLink>;
 
-  if (wasOffline) return <ConnectionRecovery secondaryAction={<EscapeLink escape={escape} />} />;
+  if (hasBeenOffline) return <ConnectionRecovery secondaryAction={escapeLink} />;
 
   return (
     <ErrorState
@@ -50,7 +47,7 @@ export function PageError({ title, text, error, onRetry, escape }: PageErrorProp
           <Button size="lg" className={ERROR_STATE_ACTION} isPending={isRetrying} onPress={retry}>
             {dict.common.retry}
           </Button>
-          <EscapeLink escape={escape} />
+          {escapeLink}
         </>
       }
       footnote={digest ? interpolate(dict.common.errorCode, { code: digest }) : undefined}

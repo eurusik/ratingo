@@ -40,8 +40,10 @@ export function createRevalidateHandler(secret: string | undefined) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const payload = parseRequest(await request.json().catch(() => null));
+    const body: unknown = await request.json().catch(() => null);
+    const payload = parseRequest(body);
     if (!payload) {
+      console.warn('Revalidation rejected an invalid payload', body);
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 

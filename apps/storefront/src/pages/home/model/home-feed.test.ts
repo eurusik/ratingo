@@ -179,6 +179,10 @@ describe('anySectionLoads', () => {
     ).resolves.toBe(true);
   });
 
+  it('treats an empty feed as down', async () => {
+    await expect(anySectionLoads([])).resolves.toBe(false);
+  });
+
   it('reports the feed down only once every section failed', async () => {
     await expect(anySectionLoads([Promise.resolve(failed), Promise.resolve(failed)])).resolves.toBe(
       false,

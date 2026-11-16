@@ -13,6 +13,10 @@ describe('slugToSearchQuery', () => {
     expect(slugToSearchQuery(slug)).toBe(query);
   });
 
+  it('leaves the search empty for slugs made from a TMDB id', () => {
+    expect(slugToSearchQuery('tmdb-12345')).toBe('');
+  });
+
   it('keeps Cyrillic slugs readable', () => {
     expect(slugToSearchQuery(encodeURIComponent('дюна-2'))).toBe('дюна');
   });

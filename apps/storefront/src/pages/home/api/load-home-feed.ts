@@ -47,16 +47,26 @@ async function loadEpisodeReleases(): Promise<EpisodeRelease[]> {
   return episodes.map(toEpisodeRelease);
 }
 
+async function loadNowPlaying(): Promise<TrendingMedia[]> {
+  const movies = await catalogApi.getNowPlayingMovies(MOVIE_RAIL_COUNT, HOME_CACHE);
+  return movies.map(fromTrendingMovie);
+}
+
+async function loadNewOnDigital(): Promise<TrendingMedia[]> {
+  const movies = await catalogApi.getNewOnDigitalMovies(MOVIE_RAIL_COUNT, HOME_CACHE);
+  return movies.map(fromTrendingMovie);
+}
+
 export function startHomeFeed(): HomeFeed {
   return {
     hero: settle('hero', () => catalogApi.getHomeHero(HOME_CACHE)),
     trending: settle('trending', loadTrendingLists),
     newEpisodes: settle('new episodes', loadEpisodeReleases),
-    nowPlaying: settle('now playing', async () =>
-      (await catalogApi.getNowPlayingMovies(MOVIE_RAIL_COUNT, HOME_CACHE)).map(fromTrendingMovie),
-    ),
-    newOnDigital: settle('new on digital', async () =>
-      (await catalogApi.getNewOnDigitalMovies(MOVIE_RAIL_COUNT, HOME_CACHE)).map(fromTrendingMovie),
-    ),
+    nowPlaying: settle('now playing', loadNowPlaying),
+    newOnDigital: settle('new on digital', loadNewOnDigital),
   };
+}
+
+export function feedSections(feed: HomeFeed): Array<Promise<Loaded<unknown>>> {
+  return [feed.hero, feed.trending, feed.newEpisodes, feed.nowPlaying, feed.newOnDigital];
 }

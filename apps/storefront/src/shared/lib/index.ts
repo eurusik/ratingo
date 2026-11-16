@@ -26,7 +26,7 @@ export {
   searchableText,
   yearFromDate,
 } from './format';
-export { errorDigest, useRefreshRetry, useRetryTransition } from './recovery';
+export { errorDigest, useLoggedError, useRefreshRetry, useRetryTransition } from './recovery';
 export {
   APP_THEME_COLOR,
   InstallPromptCapture,

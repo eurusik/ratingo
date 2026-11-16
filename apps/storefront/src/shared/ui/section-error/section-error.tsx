@@ -16,7 +16,7 @@ export function SectionError({ title, onRetry, isRetrying, className = '' }: Sec
 
   return (
     <Card
-      role="alert"
+      role="status"
       className={`items-center justify-center gap-3 rounded-[20px] px-6 py-7 text-center ${className}`}
     >
       <span
