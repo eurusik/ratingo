@@ -8,6 +8,7 @@ import { useTranslation } from '@/shared/i18n';
 import { useMediaQuery } from '@/shared/lib';
 import { BrandIcon } from '@/shared/ui';
 import { useIsInstalledIosApp } from '../model/installed-ios-app';
+import { useConfettiBurst } from './confetti-burst';
 import { DESKTOP_HIGHLIGHTS, PHONE_HIGHLIGHTS, WhatsNewHighlights } from './whats-new-highlights';
 
 const HEADING =
@@ -112,6 +113,7 @@ export function WhatsNewDialog({ isOpen, onDismiss }: WhatsNewDialogProps) {
   const hasIosIconHint = useIsInstalledIosApp();
   const subtitleId = useId();
   const Surface = isDesktop ? DesktopModal : PhoneSheet;
+  useConfettiBurst(isOpen);
 
   return (
     <Surface

@@ -9,11 +9,18 @@ jest.mock('next/navigation', () => ({
   usePathname: () => pathname,
 }));
 
+const mockConfetti = Object.assign(jest.fn(), { reset: jest.fn() });
+jest.mock('canvas-confetti', () => ({ __esModule: true, default: mockConfetti }));
+
 let calmDelayMs = 0;
+let confettiDelayMs = 0;
 jest.mock('../config/whats-new', () => ({
   ...jest.requireActual('../config/whats-new'),
   get WHATS_NEW_CALM_DELAY_MS() {
     return calmDelayMs;
+  },
+  get WHATS_NEW_CONFETTI_DELAY_MS() {
+    return confettiDelayMs;
   },
 }));
 
@@ -55,6 +62,9 @@ describe('WhatsNew', () => {
     localStorage.clear();
     pathname = '/';
     calmDelayMs = 0;
+    confettiDelayMs = 0;
+    mockConfetti.mockClear();
+    mockConfetti.reset.mockClear();
   });
 
   afterEach(() => {
@@ -73,6 +83,41 @@ describe('WhatsNew', () => {
     );
   });
 
+  it('throws one confetti burst from both top corners when it opens', async () => {
+    rememberOldWebClient();
+    renderWhatsNew();
+    await findWindow();
+
+    await waitFor(() => expect(mockConfetti).toHaveBeenCalledTimes(2));
+    expect(mockConfetti).toHaveBeenCalledWith(
+      expect.objectContaining({ disableForReducedMotion: true }),
+    );
+  });
+
+  it('skips the confetti when the window is dismissed before the burst', async () => {
+    rememberOldWebClient();
+    confettiDelayMs = 300;
+    renderWhatsNew();
+    await findWindow();
+
+    fireEvent.click(screen.getByRole('button', { name: uk.whatsNew.gotIt }));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 400)));
+
+    expect(mockConfetti).not.toHaveBeenCalled();
+  });
+
+  it('clears the confetti once the window closes', async () => {
+    rememberOldWebClient();
+    renderWhatsNew();
+    await findWindow();
+    await waitFor(() => expect(mockConfetti).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(screen.getByRole('button', { name: uk.whatsNew.gotIt }));
+
+    await waitFor(() => expect(mockConfetti.reset).toHaveBeenCalled());
+    expect(mockConfetti).toHaveBeenCalledTimes(2);
+  });
+
   it('greets a returning user on «Моє»', async () => {
     rememberOldWebClient();
     pathname = '/my';
@@ -86,6 +131,7 @@ describe('WhatsNew', () => {
 
     await expectNoWindow();
     expect(localStorage.getItem(WHATS_NEW_STORAGE_KEY)).toBe('seen');
+    expect(mockConfetti).not.toHaveBeenCalled();
   });
 
   it('does not interrupt a title page opened from a link', async () => {

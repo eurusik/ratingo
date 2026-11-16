@@ -14,3 +14,7 @@ export const WEB_CLIENT_STORAGE_KEY_PREFIXES = ['ratingo:sync-queued:'] as const
 export const WHATS_NEW_ROUTES: readonly string[] = [HOME_ROUTE, MY_ROUTE];
 
 export const WHATS_NEW_CALM_DELAY_MS = 1200;
+
+export const WHATS_NEW_CONFETTI_DELAY_MS = 700;
+
+export const WHATS_NEW_CONFETTI_COLORS = ['#0485f7', '#16a34a', '#7c3aed', '#f59e0b', '#fcfcfc'];
