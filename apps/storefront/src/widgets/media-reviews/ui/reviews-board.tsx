@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { Button } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { useMediaState } from '@/entities/library';
 import type { Review } from '@/shared/api';

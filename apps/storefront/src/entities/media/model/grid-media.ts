@@ -1,4 +1,4 @@
-import type { TrendingMedia } from '@/entities/media';
+import type { TrendingMedia } from './media';
 
 export type GridMedia = Pick<
   TrendingMedia,

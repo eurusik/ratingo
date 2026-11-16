@@ -1311,5 +1311,23 @@
   "errorPage": {
     "title": "Something went wrong",
     "text": "The page didn’t open on our side. Try again — it usually passes within a minute."
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "page": {
+      "title": "There’s no such page",
+      "text": "The link may be outdated or the address has a typo. Try finding what you were looking for."
+    },
+    "media": {
+      "movie": {
+        "title": "We don’t have this movie",
+        "text": "The link is outdated or the movie was removed from the catalog. We searched for the title from the address:"
+      },
+      "show": {
+        "title": "We don’t have this show",
+        "text": "The link is outdated or the show was removed from the catalog. We searched for the title from the address:"
+      }
+    },
+    "watchedNow": "Or see what people are watching now"
   }
 }

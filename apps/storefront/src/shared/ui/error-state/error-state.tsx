@@ -8,6 +8,10 @@ const BADGE_TONES: Record<ErrorStateTone, string> = {
   success: 'bg-success-soft text-success',
 };
 
+export const ERROR_STATE_TITLE =
+  'text-2xl font-extrabold tracking-tight text-balance md:text-[32px]';
+export const ERROR_STATE_TEXT = 'text-[15px] leading-normal text-pretty text-muted md:text-base';
+
 export const ERROR_STATE_ACTION =
   'h-12 w-full rounded-full px-5 text-[15px] font-bold no-underline md:w-auto';
 
@@ -41,10 +45,8 @@ export function ErrorState({
         {icon}
       </span>
       <div role={announce} className="flex flex-col gap-1.5">
-        <Title className="text-2xl font-extrabold tracking-tight text-balance md:text-[32px]">
-          {title}
-        </Title>
-        <p className="text-[15px] leading-normal text-pretty text-muted md:text-base">{text}</p>
+        <Title className={ERROR_STATE_TITLE}>{title}</Title>
+        <p className={ERROR_STATE_TEXT}>{text}</p>
       </div>
       {actions ? (
         <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:gap-2.5">{actions}</div>

@@ -1,10 +1,12 @@
 import { useId, type ReactNode } from 'react';
 import { Skeleton } from '@heroui/react';
-import { ExternalRatings, MediaPoster, ScoreChip, type PosterLoadPriority } from '@/entities/media';
 import { mediaRoute } from '@/shared/config';
 import { SHARED_ART_SOURCE } from '@/shared/lib';
 import { ForwardLink } from '@/shared/ui';
 import type { GridMedia } from '../model/grid-media';
+import { ExternalRatings } from './external-ratings';
+import { MediaPoster, type PosterLoadPriority } from './media-poster';
+import { ScoreChip } from './score-chip';
 
 const TITLE_CLASS =
   'line-clamp-2 min-h-[2lh] text-[13px] leading-tight font-semibold break-words md:text-sm';

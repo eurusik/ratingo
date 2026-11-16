@@ -1,4 +1,4 @@
-import { PosterTileSkeleton } from './poster-tile';
+import { PosterTileSkeleton } from '@/entities/media';
 
 const GRID_BASE =
   'grid grid-cols-3 gap-x-2.5 gap-y-5 sm:grid-cols-4 md:grid-cols-5 md:gap-x-4 md:gap-y-6';

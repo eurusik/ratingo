@@ -7,7 +7,12 @@ export { Container } from './container/container';
 export { ContentTransition } from './content-transition/content-transition';
 export { DownscaledBlur } from './downscaled-blur/downscaled-blur';
 export { EMPTY_STATE_ACTION, EmptyState } from './empty-state/empty-state';
-export { ERROR_STATE_ACTION, ErrorState } from './error-state/error-state';
+export {
+  ERROR_STATE_ACTION,
+  ERROR_STATE_TEXT,
+  ERROR_STATE_TITLE,
+  ErrorState,
+} from './error-state/error-state';
 export { EdgeFade } from './edge-fade/edge-fade';
 export { FadingScrollRow } from './edge-fade/fading-scroll-row';
 export { useHorizontalScroller } from './edge-fade/horizontal-scroller';
