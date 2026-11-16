@@ -18,7 +18,7 @@ describe('buildOrganizationJsonLd', () => {
     expect(buildOrganizationJsonLd('https://ratingo.top')).toMatchObject({
       '@type': 'Organization',
       url: 'https://ratingo.top',
-      logo: 'https://ratingo.top/icons/icon-512x512.png',
+      logo: 'https://ratingo.top/icons/icon-512.png',
       sameAs: ['https://github.com/eurusik/ratingo'],
     });
   });

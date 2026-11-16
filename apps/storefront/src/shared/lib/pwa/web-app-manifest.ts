@@ -4,7 +4,7 @@ import { DEFAULT_LOCALE, getDictionary } from '@/shared/i18n';
 
 export const APP_THEME_COLOR = '#060607';
 
-const LAUNCHER_ICON = { src: '/icons/icon-192x192.png', sizes: '192x192' };
+const LAUNCHER_ICON = { src: '/icons/icon-192.png', sizes: '192x192' };
 
 export function buildWebAppManifest(): MetadataRoute.Manifest {
   const { nav } = getDictionary(DEFAULT_LOCALE);
@@ -13,7 +13,7 @@ export function buildWebAppManifest(): MetadataRoute.Manifest {
     id: '/',
     name: BRAND_NAME,
     short_name: BRAND_NAME,
-    description: 'Відстежуйте тренди, рейтинги та нові епізоди серіалів і фільмів',
+    description: 'Що дивитись зараз: тренди, оцінки й нові серії твоїх серіалів',
     lang: 'uk',
     dir: 'ltr',
     start_url: '/?source=pwa',
@@ -24,9 +24,9 @@ export function buildWebAppManifest(): MetadataRoute.Manifest {
     categories: ['entertainment'],
     icons: [
       { ...LAUNCHER_ICON, type: 'image/png', purpose: 'any' },
-      { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
       {
-        src: '/icons/icon-512x512-maskable.png',
+        src: '/icons/icon-512-maskable.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',

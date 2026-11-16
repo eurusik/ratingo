@@ -58,6 +58,7 @@ export {
 } from './navigation';
 export { createBatchLoader, preloadWhenIdle, whenIdleOnFastConnection } from './scheduling';
 export {
+  DEFAULT_SHARE_IMAGE,
   JsonLd,
   buildOrganizationJsonLd,
   buildRobots,

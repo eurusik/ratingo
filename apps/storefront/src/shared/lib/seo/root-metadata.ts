@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { BRAND_NAME } from '@/shared/config';
 import type { Dictionary, Locale } from '@/shared/i18n';
+import { DEFAULT_SHARE_IMAGE } from './share-image';
 
 export interface RootMetadataOptions {
   locale: Locale;
@@ -30,6 +31,14 @@ const INDEXED_ROBOTS: Metadata['robots'] = {
 
 const HIDDEN_ROBOTS: Metadata['robots'] = { index: false, follow: false };
 
+const SITE_ICONS = {
+  icon: [
+    { url: '/favicon.ico', sizes: '32x32' },
+    { url: '/icons/favicon.svg', type: 'image/svg+xml' },
+  ],
+  apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+} satisfies Metadata['icons'];
+
 export function buildRootMetadata({
   locale,
   dict,
@@ -57,8 +66,10 @@ export function buildRootMetadata({
       type: 'website',
       locale: OPEN_GRAPH_LOCALES[locale],
       siteName: BRAND_NAME,
+      images: [DEFAULT_SHARE_IMAGE],
     },
-    twitter: { card: 'summary_large_image' },
+    twitter: { card: 'summary_large_image', images: [DEFAULT_SHARE_IMAGE] },
+    icons: SITE_ICONS,
     robots: indexingEnabled ? INDEXED_ROBOTS : HIDDEN_ROBOTS,
     appleWebApp: { capable: true, title: BRAND_NAME, statusBarStyle: 'black-translucent' },
     formatDetection: { telephone: false },
