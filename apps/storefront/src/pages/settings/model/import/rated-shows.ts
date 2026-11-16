@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { isServer, useQuery } from '@tanstack/react-query';
 import { libraryApi, type MediaImportResult, type UserMediaState } from '@/shared/api';
 import { scoreFromPercent } from '@/shared/lib';
 
@@ -65,7 +65,7 @@ export function useRatedImportedShows(result: MediaImportResult | undefined) {
     queryKey: ['media-import', 'rated-shows', ids] as const,
     enabled: ids.length > 0,
     staleTime: Infinity,
-    gcTime: RATED_SHOWS_GC_MS,
+    gcTime: isServer ? Infinity : RATED_SHOWS_GC_MS,
     queryFn: () => findRatedShows(ids),
   });
 }
