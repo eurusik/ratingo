@@ -28,6 +28,14 @@ type DragState =
       velocity: number;
     };
 
+function canStartSwipe(event: PointerEvent): boolean {
+  return event.pointerType !== 'mouse' && event.isPrimary && event.button === 0;
+}
+
+function isPressReleased(event: PointerEvent): boolean {
+  return event.buttons === 0;
+}
+
 function resist(offset: number, revealWidth: number): number {
   if (offset > 0) return offset * OVERSHOOT_RESISTANCE;
   if (offset < -revealWidth) return -revealWidth + (offset + revealWidth) * OVERSHOOT_RESISTANCE;
@@ -82,7 +90,7 @@ export function attachSwipeReveal({ row, content, actions }: SwipeRevealParts): 
 
   const onPointerDown = (event: PointerEvent) => {
     suppressNextClick = false;
-    if (event.pointerType === 'mouse' || !event.isPrimary || event.button !== 0) return;
+    if (!canStartSwipe(event)) return;
     cancelSpring?.();
     cancelSpring = null;
     drag = {
@@ -109,7 +117,7 @@ export function attachSwipeReveal({ row, content, actions }: SwipeRevealParts): 
 
   const onPointerMove = (event: PointerEvent) => {
     if (drag.kind === 'idle' || event.pointerId !== drag.pointerId) return;
-    if (event.buttons === 0) {
+    if (isPressReleased(event)) {
       finishDrag(event);
       return;
     }
