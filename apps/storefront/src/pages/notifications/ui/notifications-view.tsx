@@ -18,7 +18,7 @@ import { LibraryShell } from '@/widgets/library-nav';
 import { MY_ROUTE, NOTIFICATION_SETTINGS_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
-import { BackLink, PageHeader, STICKY_TOOLBAR, SegmentedFilter } from '@/shared/ui';
+import { BackLink, PageHeader, STICKY_TOOLBAR, SegmentedFilter, ShowMore } from '@/shared/ui';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { SwipeableNotification } from './swipeable-notification';
 
@@ -119,16 +119,14 @@ function NotificationList({
           </ul>
         </section>
       ))}
-      {pages.hasNextPage ? (
-        <Button
-          variant="secondary"
-          isPending={pages.isFetchingNextPage}
-          onPress={() => void pages.fetchNextPage()}
-          className="self-center"
-        >
-          {dict.notifications.loadMore}
-        </Button>
-      ) : null}
+      <ShowMore
+        hasMore={pages.hasNextPage}
+        isLoading={pages.isFetchingNextPage}
+        label={dict.notifications.loadMore}
+        loadingLabel={dict.common.loading}
+        rearmKey={pages.data.pages.length}
+        onMore={() => void pages.fetchNextPage({ cancelRefetch: false })}
+      />
     </div>
   );
 }

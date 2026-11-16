@@ -21,4 +21,5 @@ export { ReturningImage } from './returning-image/returning-image';
 export { ResponsiveDialog } from './responsive-dialog/responsive-dialog';
 export { SectionHeader } from './section-header/section-header';
 export { SegmentedFilter } from './segmented-filter/segmented-filter';
+export { ShowMore } from './show-more/show-more';
 export { Sheet } from './sheet';

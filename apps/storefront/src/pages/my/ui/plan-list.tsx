@@ -8,10 +8,11 @@ import { ScoreChip } from '@/entities/media';
 import { BROWSE_ROUTE, mediaRoute, showPickRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
-import { SegmentedFilter } from '@/shared/ui';
+import { SegmentedFilter, ShowMore } from '@/shared/ui';
 import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
 import { usePlanList } from '../model/library-queries';
+import { useRevealedRows } from '../model/revealed-rows';
 import {
   PLAN_SORTS,
   TYPE_FILTERS,
@@ -141,14 +142,15 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [sort, setSort] = useState<PlanSort>('recent');
   const plan = usePlanList();
+  const rows = orderPlan(
+    (plan.data ?? []).filter((row) => !isMovedOut(row.title.mediaItemId, 'plan')),
+    { sort, filter, now },
+  );
+  const reveal = useRevealedRows(rows, `${filter}:${sort}`);
 
   if (plan.isPending) return <RowsSkeleton />;
   if (plan.isError) return <ListFailure onRetry={() => void plan.refetch()} />;
 
-  const rows = orderPlan(
-    plan.data.filter((row) => !isMovedOut(row.title.mediaItemId, 'plan')),
-    { sort, filter, now },
-  );
   if (plan.data.length === 0) return <EmptyList {...dict.my.plan.empty} href={BROWSE_ROUTE} />;
 
   return (
@@ -170,12 +172,20 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
         </p>
       ) : null}
       <ul aria-label={dict.my.lists.plan} className="flex flex-col">
-        {rows.map((row, index) => (
+        {reveal.shown.map((row, index) => (
           <li key={row.title.mediaItemId}>
             <PlanRowItem row={row} actions={actions} isEager={index < EAGER_ROWS} />
           </li>
         ))}
       </ul>
+      <ShowMore
+        key={`${filter}:${sort}`}
+        hasMore={reveal.hasMore}
+        label={dict.my.loadMore}
+        loadingLabel={dict.common.loading}
+        rearmKey={reveal.shownCount}
+        onMore={reveal.showMore}
+      />
     </div>
   );
 }

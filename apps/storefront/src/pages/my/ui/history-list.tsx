@@ -1,23 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, SearchField } from '@heroui/react';
+import { SearchField } from '@heroui/react';
 import { pluralize } from '@ratingo/web-core/lib';
 import { IMPORT_ROUTE, mediaRoute } from '@/shared/config';
 import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
-import { SegmentedFilter } from '@/shared/ui';
+import { SegmentedFilter, ShowMore } from '@/shared/ui';
 import { useLibraryCounts } from '@/entities/library';
 import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
 import { useHistoryList } from '../model/library-queries';
+import { useRevealedRows } from '../model/revealed-rows';
 import { groupByMonth, matchesQuery, type HistoryRow } from '../model/history-months';
 import { TYPE_FILTERS, matchesType, type TypeFilter } from '../model/plan-order';
 import { LibraryRow } from './library-row';
 import { EmptyList, ListFailure, RowsSkeleton, SectionTitle } from './list-states';
 import { RatingPicker } from './rating-picker';
 import { RowMenu } from './row-menu';
-
-const ROWS_PER_STEP = 40;
 
 function monthTitle(key: string, locale: Locale): string {
   const [year, month] = key.split('-').map(Number);
@@ -76,9 +75,15 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
   const isMovedOut = useIsMovedOut();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TypeFilter>('all');
-  const [shownCount, setShownCount] = useState(ROWS_PER_STEP);
   const history = useHistoryList();
   const counts = useLibraryCounts();
+  const visible = (history.data ?? []).filter(
+    (row) =>
+      !isMovedOut(row.title.mediaItemId, 'history') &&
+      matchesType(row.title.type, filter) &&
+      matchesQuery(row, query),
+  );
+  const reveal = useRevealedRows(visible, `${filter}:${query}`);
 
   if (history.isPending) return <RowsSkeleton />;
   if (history.isError) return <ListFailure onRetry={() => void history.refetch()} />;
@@ -86,14 +91,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
     return <EmptyList {...dict.my.history.empty} href={IMPORT_ROUTE} />;
   }
 
-  const visible = history.data.filter(
-    (row) =>
-      !isMovedOut(row.title.mediaItemId, 'history') &&
-      matchesType(row.title.type, filter) &&
-      matchesQuery(row, query),
-  );
   const total = counts?.completed ?? history.data.length;
-  const shown = visible.slice(0, shownCount);
   const monthTotals = new Map(groupByMonth(visible).map((month) => [month.key, month.rows.length]));
 
   return (
@@ -101,10 +99,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
       <SearchField
         aria-label={dict.my.history.searchLabel}
         value={query}
-        onChange={(next) => {
-          setQuery(next);
-          setShownCount(ROWS_PER_STEP);
-        }}
+        onChange={setQuery}
         variant="secondary"
         fullWidth
       >
@@ -122,10 +117,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
           label={dict.my.plan.filterLabel}
           options={TYPE_FILTERS.map((id) => ({ id, label: dict.my.plan.filter[id] }))}
           value={filter}
-          onChange={(next) => {
-            setFilter(next);
-            setShownCount(ROWS_PER_STEP);
-          }}
+          onChange={setFilter}
           className="px-0"
         />
       </div>
@@ -134,7 +126,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
           {interpolate(dict.my.history.noMatches, { query })}
         </p>
       ) : (
-        groupByMonth(shown).map((month) => (
+        groupByMonth(reveal.shown).map((month) => (
           <section key={month.key} aria-labelledby={`month-${month.key}`}>
             <SectionTitle id={`month-${month.key}`}>
               {monthTitle(month.key, locale)}
@@ -152,15 +144,14 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
           </section>
         ))
       )}
-      {visible.length > shown.length ? (
-        <Button
-          variant="secondary"
-          className="min-h-tap self-center"
-          onPress={() => setShownCount((count) => count + ROWS_PER_STEP)}
-        >
-          {dict.my.loadMore}
-        </Button>
-      ) : null}
+      <ShowMore
+        key={`${filter}:${query}`}
+        hasMore={reveal.hasMore}
+        label={dict.my.loadMore}
+        loadingLabel={dict.common.loading}
+        rearmKey={reveal.shownCount}
+        onMore={reveal.showMore}
+      />
     </div>
   );
 }

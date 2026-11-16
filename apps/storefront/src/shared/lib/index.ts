@@ -2,6 +2,7 @@ export { SiteAnalytics } from './analytics';
 export { useBrowserOrigin, useBrowserPath } from './browser-origin';
 export { useClientNow } from './client-now';
 export { useDebouncedValue } from './debounced-value';
+export { useInfiniteSentinel } from './infinite-sentinel';
 export { interleave } from './interleave';
 export { motionScrollBehavior, prefersReducedMotion, useIsClamped, useMediaQuery } from './layout';
 export {
