@@ -32,6 +32,8 @@ interface SettingsShellProps {
   desktopTitle: string;
   backTo?: 'settings' | 'my';
   stepBack?: StepBack;
+  skeleton?: ReactNode;
+  loadingSubtitle?: string;
   children: ReactNode;
 }
 
@@ -41,6 +43,8 @@ export function SettingsShell({
   desktopTitle,
   backTo,
   stepBack,
+  skeleton = <SettingsSkeleton />,
+  loadingSubtitle,
   children,
 }: SettingsShellProps) {
   const { dict } = useTranslation();
@@ -65,8 +69,8 @@ export function SettingsShell({
           children
         ) : (
           <>
-            <SectionHeader title={desktopTitle} />
-            <SettingsSkeleton />
+            <SectionHeader title={desktopTitle} subtitle={loadingSubtitle} />
+            {skeleton}
           </>
         )}
       </SplitShell>

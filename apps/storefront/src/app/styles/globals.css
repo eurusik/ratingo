@@ -225,6 +225,13 @@
   animation: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .skeleton--shimmer::before,
+  .skeleton--shimmer::after {
+    animation: none;
+  }
+}
+
 [data-glass-bar] {
   transition: background-color 300ms ease-out;
 }
