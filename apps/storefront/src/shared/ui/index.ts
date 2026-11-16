@@ -8,6 +8,7 @@ export { ContentTransition } from './content-transition/content-transition';
 export { DownscaledBlur } from './downscaled-blur/downscaled-blur';
 export { EMPTY_STATE_ACTION, EmptyState } from './empty-state/empty-state';
 export { EdgeFade } from './edge-fade/edge-fade';
+export { FadingScrollRow } from './edge-fade/fading-scroll-row';
 export { useHorizontalScroller } from './edge-fade/horizontal-scroller';
 export { ForwardLink } from './forward-link/forward-link';
 export {

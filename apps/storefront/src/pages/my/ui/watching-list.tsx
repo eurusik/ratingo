@@ -186,7 +186,7 @@ export function WatchingList({ actions, initialFilter }: WatchingListProps) {
         value={filter}
         onChange={setChosenFilter}
         isDisabled={isSearching}
-        className="px-0"
+        isScrollable
       />
       {groups.length === 0 ? (
         <NoRows filter={filter} query={query} />

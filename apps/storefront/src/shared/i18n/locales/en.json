@@ -137,7 +137,7 @@
       },
       "fresh": "New episodes",
       "next": "Up next",
-      "waiting": "Waiting for new episodes",
+      "waiting": "Caught up",
       "newEpisode": "New: {code} · {when}",
       "nextEpisode": "Next: {code} · {count} left",
       "airsOn": "New episode {date}",
@@ -155,7 +155,7 @@
       "filterLabel": "Show",
       "filter": {
         "episodes": "New episodes",
-        "waiting": "Waiting",
+        "waiting": "Caught up",
         "postponed": "Set aside"
       },
       "resume": "Resume",
@@ -166,8 +166,8 @@
           "text": "New episodes show up here as soon as they air."
         },
         "waiting": {
-          "title": "Nothing to wait for",
-          "text": "Shows you’ve caught up on wait here for new episodes."
+          "title": "Nothing caught up yet",
+          "text": "Once you’ve watched every aired episode, the show moves here to wait for new ones."
         },
         "postponed": {
           "title": "Nothing set aside",

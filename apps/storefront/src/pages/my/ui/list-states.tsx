@@ -78,7 +78,7 @@ function SectionTitleSkeleton() {
 
 const TYPE_FILTER_WIDTHS = ['w-14', 'w-20', 'w-22'] as const;
 
-const WATCHING_FILTER_WIDTHS = ['w-24', 'w-22', 'w-28'] as const;
+const WATCHING_FILTER_WIDTHS = ['w-28', 'w-32', 'w-30'] as const;
 
 function SearchSkeleton() {
   return <Skeleton className="h-12 w-full rounded-full" />;
@@ -118,7 +118,9 @@ function ListSkeletonBody({ list }: { list: MainLibraryList }) {
   return (
     <div className="flex flex-col gap-3">
       <SearchSkeleton />
-      <PillsSkeleton widths={WATCHING_FILTER_WIDTHS} />
+      <div className="-mx-4 overflow-hidden px-4 md:mx-0 md:px-0">
+        <PillsSkeleton widths={WATCHING_FILTER_WIDTHS} />
+      </div>
       <div className="flex flex-col">
         <SectionTitleSkeleton />
         <RowsSkeleton action="check" />

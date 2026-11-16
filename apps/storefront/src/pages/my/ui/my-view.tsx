@@ -61,9 +61,7 @@ function PhoneHeaderActions() {
 function PhoneHeader() {
   const { dict } = useTranslation();
 
-  return (
-    <PageHeader title={dict.nav.my} className="md:sr-only" actions={<PhoneHeaderActions />} />
-  );
+  return <PageHeader title={dict.nav.my} className="md:sr-only" actions={<PhoneHeaderActions />} />;
 }
 
 function SelectedList({ list, watchingFilter, actions }: MyRoute & { actions: LibraryActions }) {
