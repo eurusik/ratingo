@@ -5,11 +5,11 @@ export const LIBRARY_LISTS = ['watching', 'plan', 'history', 'paused', 'dropped'
 
 export type LibraryList = (typeof LIBRARY_LISTS)[number];
 
-export const DEFAULT_LIBRARY_LIST: LibraryList = 'watching';
-
 export const MAIN_LIBRARY_LISTS = ['watching', 'plan', 'history'] as const;
 
-export const SHELF_LIBRARY_LISTS = ['paused', 'dropped'] as const;
+export type MainLibraryList = (typeof MAIN_LIBRARY_LISTS)[number];
+
+export const DEFAULT_LIBRARY_LIST: MainLibraryList = 'watching';
 
 type CountField = keyof LibraryCounts;
 
@@ -21,12 +21,12 @@ const COUNT_FIELDS: Record<LibraryList, readonly [CountField, ...CountField[]]> 
   dropped: ['dropped'],
 };
 
-export function libraryListRoute(list: LibraryList): string {
+export function libraryListRoute(list: MainLibraryList): string {
   return myListRoute(list, DEFAULT_LIBRARY_LIST);
 }
 
-export function isLibraryList(value: string | null | undefined): value is LibraryList {
-  return LIBRARY_LISTS.some((list) => list === value);
+export function isMainLibraryList(value: string | null | undefined): value is MainLibraryList {
+  return MAIN_LIBRARY_LISTS.some((list) => list === value);
 }
 
 export function listCount(counts: LibraryCounts, list: LibraryList): number {

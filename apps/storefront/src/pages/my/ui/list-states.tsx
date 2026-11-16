@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button, Skeleton, buttonVariants } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import { useTranslation } from '@/shared/i18n';
-import type { LibraryList } from '@/entities/library';
+import type { MainLibraryList } from '@/entities/library';
 import { EMPTY_STATE_ACTION, EmptyState, STICKY_TOOLBAR } from '@/shared/ui';
 import { ROW_FRAME } from './library-row';
 
@@ -76,10 +76,17 @@ function SectionTitleSkeleton() {
 
 const TYPE_FILTER_WIDTHS = ['w-14', 'w-20', 'w-22'] as const;
 
-function ListSkeletonBody({ list }: { list: LibraryList }) {
+const WATCHING_FILTER_WIDTHS = ['w-24', 'w-22', 'w-28'] as const;
+
+function SearchSkeleton() {
+  return <Skeleton className="h-12 w-full rounded-full" />;
+}
+
+function ListSkeletonBody({ list }: { list: MainLibraryList }) {
   if (list === 'plan') {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
+        <SearchSkeleton />
         <div className="flex items-center gap-2">
           <PillsSkeleton widths={TYPE_FILTER_WIDTHS} />
           <span className="flex-1" />
@@ -92,7 +99,7 @@ function ListSkeletonBody({ list }: { list: LibraryList }) {
   if (list === 'history') {
     return (
       <div className="flex flex-col gap-3">
-        <Skeleton className="h-12 w-full rounded-full" />
+        <SearchSkeleton />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Skeleton className="h-4 w-36 rounded-md md:hidden" />
           <PillsSkeleton widths={TYPE_FILTER_WIDTHS} />
@@ -104,19 +111,19 @@ function ListSkeletonBody({ list }: { list: LibraryList }) {
       </div>
     );
   }
-  if (list === 'paused' || list === 'dropped') {
-    return <RowsSkeleton action="pill" hasMenu={false} />;
-  }
   return (
-    <div className="flex flex-col">
-      <Skeleton className="h-4 w-24 rounded-md md:hidden" />
-      <SectionTitleSkeleton />
-      <RowsSkeleton action="check" />
+    <div className="flex flex-col gap-3">
+      <SearchSkeleton />
+      <PillsSkeleton widths={WATCHING_FILTER_WIDTHS} />
+      <div className="flex flex-col">
+        <SectionTitleSkeleton />
+        <RowsSkeleton action="check" />
+      </div>
     </div>
   );
 }
 
-export function LibraryListSkeleton({ list }: { list: LibraryList }) {
+export function LibraryListSkeleton({ list }: { list: MainLibraryList }) {
   const { dict } = useTranslation();
 
   return (

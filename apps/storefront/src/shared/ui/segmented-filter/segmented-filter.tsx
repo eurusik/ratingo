@@ -6,6 +6,7 @@ import { cn } from '@ratingo/web-core/lib';
 interface SegmentedFilterOption<T extends string> {
   id: T;
   label: string;
+  count?: number;
 }
 
 interface SegmentedFilterProps<T extends string> {
@@ -14,6 +15,7 @@ interface SegmentedFilterProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
   descriptionId?: string;
+  isDisabled?: boolean;
   className?: string;
 }
 
@@ -23,6 +25,7 @@ export function SegmentedFilter<T extends string>({
   value,
   onChange,
   descriptionId,
+  isDisabled,
   className,
 }: SegmentedFilterProps<T>) {
   const onSelectionChange = (keys: Set<Key>) => {
@@ -38,14 +41,22 @@ export function SegmentedFilter<T extends string>({
       selectionMode="single"
       disallowEmptySelection
       isDetached
+      isDisabled={isDisabled}
       size="sm"
       selectedKeys={[value]}
       onSelectionChange={onSelectionChange}
       className={cn('px-4', className)}
     >
       {options.map((option) => (
-        <ToggleButton key={option.id} id={option.id} className="min-h-tap rounded-full px-4">
+        <ToggleButton
+          key={option.id}
+          id={option.id}
+          className="min-h-tap gap-1.5 rounded-full px-4"
+        >
           {option.label}
+          {option.count === undefined ? null : (
+            <span className="tabular-nums opacity-70">{option.count}</span>
+          )}
         </ToggleButton>
       ))}
     </ToggleButtonGroup>

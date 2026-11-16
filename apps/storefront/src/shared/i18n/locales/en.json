@@ -142,15 +142,38 @@
       "nextEpisode": "Next: {code} · {count} left",
       "airsOn": "New episode {date}",
       "caughtUp": "Caught up",
-      "shelfPart": "{label} · {count}",
-      "restore": "Resume",
+      "restore": "Bring back",
       "empty": {
         "title": "Shows you're watching will appear here",
         "text": "Mark the first episode on a show's page and new episodes will show up here.",
         "action": "Go to Browse"
       },
-      "restoreLabel": "Resume: {title}",
-      "progressLabel": "Watched {watched} of {total}"
+      "restoreLabel": "Bring back: {title}",
+      "progressLabel": "Watched {watched} of {total}",
+      "search": "Search Watching…",
+      "searchLabel": "Search Watching",
+      "filterLabel": "Show",
+      "filter": {
+        "episodes": "New episodes",
+        "waiting": "Waiting",
+        "postponed": "Set aside"
+      },
+      "resume": "Resume",
+      "resumeLabel": "Resume: {title}",
+      "filterEmpty": {
+        "episodes": {
+          "title": "All caught up",
+          "text": "New episodes show up here as soon as they air."
+        },
+        "waiting": {
+          "title": "Nothing to wait for",
+          "text": "Shows you’ve caught up on wait here for new episodes."
+        },
+        "postponed": {
+          "title": "Nothing set aside",
+          "text": "Shows you pause or drop appear here. You can bring them back any time."
+        }
+      }
     },
     "plan": {
       "filter": {
@@ -179,7 +202,9 @@
         "action": "Go to Browse"
       },
       "noMatches": "No titles of this type here.",
-      "noMatchesText": "Change the filter to see other titles."
+      "noMatchesText": "Change the filter to see other titles.",
+      "search": "Search Want to watch…",
+      "searchLabel": "Search Want to watch"
     },
     "history": {
       "search": "Search what you've watched…",
@@ -193,14 +218,12 @@
       "rateLabel": "Rate: {title}",
       "yourRating": "Your rating {score}",
       "watchedOn": "watched {date}",
-      "noMatches": "Nothing found for “{query}”.",
       "empty": {
         "title": "Everything you've watched will appear here",
         "text": "Rate a movie or mark an episode and it lands in your history. Or bring your ratings over from Kinobaza, IMDb or TMDB.",
         "action": "Import ratings"
       },
-      "yourRatingFor": "Your rating {score}: {title}",
-      "noMatchesText": "Try another title or change the filter."
+      "yourRatingFor": "Your rating {score}: {title}"
     },
     "actions": {
       "more": "More actions: {title}",
@@ -247,12 +270,11 @@
       "few": "{count} titles",
       "many": "{count} titles"
     },
-    "shelfEmpty": {
-      "paused": "Nothing paused",
-      "dropped": "Nothing dropped",
-      "text": "Shows you pause or drop will appear here. You can bring them back any time."
-    },
-    "failedText": "Check your connection and try again."
+    "failedText": "Check your connection and try again.",
+    "search": {
+      "noMatches": "Nothing found for “{query}”.",
+      "noMatchesText": "Try another title or change the filter."
+    }
   },
   "rating": {
     "label": "Rating {score}: {verdict}",

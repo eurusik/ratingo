@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { Button } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
-import type { LibraryList } from '@/entities/library';
+import type { MainLibraryList } from '@/entities/library';
 import { openAuth } from '@/shared/auth';
 import { useTranslation } from '@/shared/i18n';
 import { BackToTop, EMPTY_STATE_ACTION, EmptyState, StatusBarBackdrop } from '@/shared/ui';
@@ -32,7 +32,7 @@ function SignInPrompt() {
 }
 
 interface LibraryShellProps {
-  current: LibraryList | 'notifications';
+  current: MainLibraryList | 'notifications';
   header: ReactNode;
   skeleton: ReactNode;
   children: ReactNode;

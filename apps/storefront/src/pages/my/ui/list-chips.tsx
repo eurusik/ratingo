@@ -8,11 +8,11 @@ import {
   libraryListRoute,
   listCount,
   useLibraryCounts,
-  type LibraryList,
+  type MainLibraryList,
 } from '@/entities/library';
 import { useTranslation } from '@/shared/i18n';
 
-export function ListChips({ current }: { current: LibraryList }) {
+export function ListChips({ current }: { current: MainLibraryList }) {
   const { dict } = useTranslation();
   const counts = useLibraryCounts();
 

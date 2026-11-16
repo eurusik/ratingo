@@ -86,6 +86,10 @@ function nextEpisodeOf(item: UserMediaState): NextEpisode | undefined {
   };
 }
 
+function newestAiredFirst(left: FreshRow, right: FreshRow): number {
+  return Date.parse(right.episode.airDate ?? '') - Date.parse(left.episode.airDate ?? '') || 0;
+}
+
 function libraryTitle(item: UserMediaState): LibraryTitle | undefined {
   return item.mediaSummary ? titleOf(item.mediaItemId, item.mediaSummary) : undefined;
 }
@@ -128,7 +132,7 @@ export function splitWatching(
       waiting.push({ kind: 'waiting', title, episode });
     }
   }
-  return { fresh, next, waiting };
+  return { fresh: fresh.sort(newestAiredFirst), next, waiting };
 }
 
 export function remainingEpisodes(row: NextRow): number {

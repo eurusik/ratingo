@@ -86,6 +86,7 @@ export function useLibraryActions(): LibraryActions {
       refresh,
       pause: (...args) => run(specs.pause(...args)),
       drop: (...args) => run(specs.drop(...args)),
+      dropPaused: (...args) => run(specs.dropPaused(...args)),
       restore: (...args) => run(specs.restore(...args)),
       start: (...args) => run(specs.start(...args)),
       markMovieWatched: (...args) => run(specs.markMovieWatched(...args)),

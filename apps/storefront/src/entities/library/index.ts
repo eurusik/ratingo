@@ -4,11 +4,11 @@ export {
   DEFAULT_LIBRARY_LIST,
   LIBRARY_LISTS,
   MAIN_LIBRARY_LISTS,
-  SHELF_LIBRARY_LISTS,
-  isLibraryList,
+  isMainLibraryList,
   libraryListRoute,
   listCount,
   type LibraryList,
+  type MainLibraryList,
 } from './model/library-lists';
 export { useForgetLibraryOnUserChange } from './model/library-owner';
 export { useMediaState, useMediaStateStore } from './model/media-state';

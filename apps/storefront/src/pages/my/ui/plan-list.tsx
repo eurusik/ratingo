@@ -21,9 +21,11 @@ import {
   type PlanSort,
   type TypeFilter,
 } from '../model/plan-order';
+import { isSearchQuery, matchesSearch } from '../model/title-search';
 import { CheckButton } from './check-button';
 import { LibraryRow } from './library-row';
 import { EmptyList, LibraryListSkeleton, ListFailure } from './list-states';
+import { ListSearch } from './list-search';
 import { RowMenu, type RowMenuItem } from './row-menu';
 
 const EAGER_ROWS = 3;
@@ -141,20 +143,37 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
   const isMovedOut = useIsMovedOut();
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [sort, setSort] = useState<PlanSort>('recent');
+  const [query, setQuery] = useState('');
   const plan = usePlanList();
   const rows = orderPlan(
-    (plan.data ?? []).filter((row) => !isMovedOut(row.title.mediaItemId, 'plan')),
+    (plan.data ?? []).filter(
+      (row) => !isMovedOut(row.title.mediaItemId, 'plan') && matchesSearch(row.title.title, query),
+    ),
     { sort, filter, now },
   );
-  const reveal = useRevealedRows(rows, `${filter}:${sort}`);
+  const resetKey = `${filter}:${sort}:${query}`;
+  const reveal = useRevealedRows(rows, resetKey);
 
   if (plan.isPending) return <LibraryListSkeleton list="plan" />;
   if (plan.isError) return <ListFailure onRetry={() => void plan.refetch()} />;
 
   if (plan.data.length === 0) return <EmptyList {...dict.my.plan.empty} href={BROWSE_ROUTE} />;
 
+  const noMatches = isSearchQuery(query)
+    ? {
+        title: interpolate(dict.my.search.noMatches, { query }),
+        text: dict.my.search.noMatchesText,
+      }
+    : { title: dict.my.plan.noMatches, text: dict.my.plan.noMatchesText };
+
   return (
-    <div className="flex flex-1 flex-col gap-2">
+    <div className="flex flex-1 flex-col gap-3">
+      <ListSearch
+        label={dict.my.plan.searchLabel}
+        placeholder={dict.my.plan.search}
+        value={query}
+        onChange={setQuery}
+      />
       <div className="flex items-center gap-2">
         <SegmentedFilter
           label={dict.my.plan.filterLabel}
@@ -166,9 +185,7 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
         <span className="flex-1" />
         <SortMenu sort={sort} onSort={setSort} />
       </div>
-      {rows.length === 0 ? (
-        <EmptyState title={dict.my.plan.noMatches} text={dict.my.plan.noMatchesText} />
-      ) : null}
+      {rows.length === 0 ? <EmptyState {...noMatches} /> : null}
       <ul aria-label={dict.my.lists.plan} className="flex flex-col">
         {reveal.shown.map((row, index) => (
           <li key={row.title.mediaItemId}>
@@ -177,7 +194,7 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
         ))}
       </ul>
       <ShowMore
-        key={`${filter}:${sort}`}
+        key={resetKey}
         hasMore={reveal.hasMore}
         label={dict.my.loadMore}
         loadingLabel={dict.common.loading}

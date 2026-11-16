@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { SearchField } from '@heroui/react';
 import { pluralize } from '@ratingo/web-core/lib';
 import { IMPORT_ROUTE, mediaRoute } from '@/shared/config';
 import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
@@ -12,8 +11,10 @@ import { useIsMovedOut } from '../model/library-moves';
 import { useHistoryPages, useHistorySearch } from '../model/library-queries';
 import { useRevealedRows } from '../model/revealed-rows';
 import { groupByMonth, matchesQuery, type HistoryRow } from '../model/history-months';
+import { isSearchQuery } from '../model/title-search';
 import { TYPE_FILTERS, matchesType, type TypeFilter } from '../model/plan-order';
 import { LibraryRow } from './library-row';
+import { ListSearch } from './list-search';
 import {
   EmptyList,
   LibraryListSkeleton,
@@ -78,7 +79,7 @@ function HistoryRowItem({ row, actions }: { row: HistoryRow; actions: LibraryAct
 
 function useHistoryRows(filter: TypeFilter, query: string) {
   const isMovedOut = useIsMovedOut();
-  const isSearching = query.trim() !== '';
+  const isSearching = isSearchQuery(query);
   const pages = useHistoryPages(filter === 'all' ? undefined : filter);
   const search = useHistorySearch(isSearching);
   const source = isSearching
@@ -135,8 +136,8 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
     if (history.rows.length === 0) {
       return (
         <EmptyState
-          title={interpolate(dict.my.history.noMatches, { query })}
-          text={dict.my.history.noMatchesText}
+          title={interpolate(dict.my.search.noMatches, { query })}
+          text={dict.my.search.noMatchesText}
         />
       );
     }
@@ -163,19 +164,12 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <SearchField
-        aria-label={dict.my.history.searchLabel}
+      <ListSearch
+        label={dict.my.history.searchLabel}
+        placeholder={dict.my.history.search}
         value={query}
         onChange={setQuery}
-        variant="secondary"
-        fullWidth
-      >
-        <SearchField.Group className="h-12">
-          <SearchField.SearchIcon />
-          <SearchField.Input placeholder={dict.my.history.search} />
-          <SearchField.ClearButton className="phone-tap-target" />
-        </SearchField.Group>
-      </SearchField>
+      />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted tabular-nums md:hidden">
           {interpolate(pluralize(total, dict.my.history.summary, locale), { count: total })}

@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import { useAuth } from '@ratingo/web-core/auth';
-import { LIBRARY_LISTS, listCount, useLibraryCounts, type LibraryList } from '@/entities/library';
+import {
+  LIBRARY_LISTS,
+  listCount,
+  useLibraryCounts,
+  type MainLibraryList,
+} from '@/entities/library';
 import { LibraryShell } from '@/widgets/library-nav';
 import { NotificationBell, ProfileMenu } from '@/widgets/header';
 import type { LibraryCounts } from '@/shared/api';
@@ -11,13 +16,13 @@ import { cn, pluralize } from '@ratingo/web-core/lib';
 import { PageHeader, SECTION_TITLE_DESKTOP, STICKY_TOOLBAR } from '@/shared/ui';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { useLibraryActions, type LibraryActions } from '../model/library-actions';
-import { LibraryMovesProvider, useIsMovedOut } from '../model/library-moves';
+import { LibraryMovesProvider } from '../model/library-moves';
+import type { MyRoute } from '../model/my-route';
 import { HistoryList } from './history-list';
 import { ListChips } from './list-chips';
 import { ChipsSkeleton, LibraryListSkeleton } from './list-states';
 import { NewUserStart } from './new-user-start';
 import { PlanList } from './plan-list';
-import { ShelfPage } from './shelf-list';
 import { WatchingList } from './watching-list';
 
 function isEmptyLibrary(counts: LibraryCounts): boolean {
@@ -50,33 +55,21 @@ function PhoneHeader() {
   );
 }
 
-function SelectedList({ list, actions }: { list: LibraryList; actions: LibraryActions }) {
-  const isMovedOut = useIsMovedOut();
+function SelectedList({ list, watchingFilter, actions }: MyRoute & { actions: LibraryActions }) {
   if (list === 'plan') return <PlanList actions={actions} />;
   if (list === 'history') return <HistoryList actions={actions} />;
-  if (list === 'paused' || list === 'dropped') {
-    return (
-      <ShelfPage
-        list={list}
-        actions={actions}
-        isMovedOut={(mediaItemId) => isMovedOut(mediaItemId, list)}
-      />
-    );
-  }
-  return <WatchingList actions={actions} />;
+  return <WatchingList key={watchingFilter} actions={actions} initialFilter={watchingFilter} />;
 }
 
 type PluralForms = Dictionary['my']['titleCount'];
 
-const COUNT_FORMS: Record<LibraryList, (dict: Dictionary) => PluralForms> = {
+const COUNT_FORMS: Record<MainLibraryList, (dict: Dictionary) => PluralForms> = {
   watching: (dict) => dict.my.watching.showCount,
   plan: (dict) => dict.my.titleCount,
   history: (dict) => dict.my.history.summary,
-  paused: (dict) => dict.my.titleCount,
-  dropped: (dict) => dict.my.titleCount,
 };
 
-function ListHeader({ list }: { list: LibraryList }) {
+function ListHeader({ list }: { list: MainLibraryList }) {
   const { dict, locale } = useTranslation();
   const counts = useLibraryCounts();
   const count = counts ? listCount(counts, list) : undefined;
@@ -96,7 +89,7 @@ function ListHeader({ list }: { list: LibraryList }) {
   );
 }
 
-function Library({ list }: { list: LibraryList }) {
+function Library({ list, watchingFilter }: MyRoute) {
   const actions = useLibraryActions();
   const startsEmpty = useStartsEmpty(useLibraryCounts());
 
@@ -109,13 +102,13 @@ function Library({ list }: { list: LibraryList }) {
           <ListChips current={list} />
         </div>
         <ListHeader list={list} />
-        <SelectedList list={list} actions={actions} />
+        <SelectedList list={list} watchingFilter={watchingFilter} actions={actions} />
       </div>
     </PullToRefresh>
   );
 }
 
-export function MyView({ list }: { list: LibraryList }) {
+export function MyView({ list, watchingFilter }: MyRoute) {
   return (
     <LibraryShell
       current={list}
@@ -129,7 +122,7 @@ export function MyView({ list }: { list: LibraryList }) {
       }
     >
       <LibraryMovesProvider>
-        <Library list={list} />
+        <Library list={list} watchingFilter={watchingFilter} />
       </LibraryMovesProvider>
     </LibraryShell>
   );

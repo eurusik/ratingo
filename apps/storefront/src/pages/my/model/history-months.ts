@@ -1,5 +1,6 @@
 import type { UserMediaState } from '@/shared/api';
 import { titleOf, type LibraryTitle } from './library-title';
+import { searchableText } from './title-search';
 
 export interface HistoryRow {
   title: LibraryTitle;
@@ -13,20 +14,13 @@ export interface HistoryMonth {
   rows: HistoryRow[];
 }
 
-function normalized(text: string): string {
-  return text
-    .toLocaleLowerCase()
-    .normalize('NFKD')
-    .replace(/\p{Diacritic}/gu, '');
-}
-
 export function toHistoryRows(items: readonly UserMediaState[]): HistoryRow[] {
   return items.flatMap((item) =>
     item.mediaSummary
       ? [
           {
             title: titleOf(item.mediaItemId, item.mediaSummary),
-            searchText: normalized(item.mediaSummary.title),
+            searchText: searchableText(item.mediaSummary.title),
             rating: item.rating,
             watchedAt: item.updatedAt,
           },
@@ -36,7 +30,7 @@ export function toHistoryRows(items: readonly UserMediaState[]): HistoryRow[] {
 }
 
 export function matchesQuery(row: HistoryRow, query: string): boolean {
-  const needle = normalized(query.trim());
+  const needle = searchableText(query.trim());
   return needle === '' || row.searchText.includes(needle);
 }
 

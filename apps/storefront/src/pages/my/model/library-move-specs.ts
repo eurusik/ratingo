@@ -65,6 +65,17 @@ export function moveSpecs(dict: Dictionary) {
   return {
     pause: (title: LibraryTitle) => toShelf(title, 'paused'),
     drop: (title: LibraryTitle) => toShelf(title, 'dropped'),
+    dropPaused: (title: LibraryTitle): MoveSpec => ({
+      title,
+      from: 'paused',
+      to: 'dropped',
+      message: say(toast.dropped, title),
+      commit: () => shelve.dropped(title),
+      revert: async () => {
+        await unshelve.dropped(title);
+        await shelve.paused(title);
+      },
+    }),
     restore: (title: LibraryTitle, shelf: ShelfList): MoveSpec => ({
       title,
       from: shelf,

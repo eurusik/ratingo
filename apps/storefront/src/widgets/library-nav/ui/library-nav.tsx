@@ -6,18 +6,17 @@ import { Separator } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import {
   MAIN_LIBRARY_LISTS,
-  SHELF_LIBRARY_LISTS,
   libraryListRoute,
   listCount,
   useLibraryCounts,
-  type LibraryList,
+  type MainLibraryList,
 } from '@/entities/library';
 import { useUnreadNotificationCount } from '@/entities/notification';
 import { NOTIFICATIONS_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { PAGE_TITLE } from '@/shared/ui';
 
-type NavTarget = LibraryList | 'notifications';
+type NavTarget = MainLibraryList | 'notifications';
 
 const ITEM_CLASS =
   'flex items-center gap-2 rounded-xl px-3.5 text-foreground/85 no-underline outline-none transition-colors hover:bg-default focus-visible:outline-2 focus-visible:outline-focus aria-[current=page]:bg-surface aria-[current=page]:font-bold aria-[current=page]:text-foreground';
@@ -53,7 +52,7 @@ export function LibraryNav({ current }: { current: NavTarget }) {
   const { dict } = useTranslation();
   const counts = useLibraryCounts();
   const unreadCount = useUnreadNotificationCount();
-  const countOf = (list: LibraryList) => (counts ? listCount(counts, list) : undefined);
+  const countOf = (list: MainLibraryList) => (counts ? listCount(counts, list) : undefined);
 
   return (
     <nav aria-label={dict.my.listsLabel} className="flex w-55 shrink-0 flex-col gap-1">
@@ -64,18 +63,6 @@ export function LibraryNav({ current }: { current: NavTarget }) {
           href={libraryListRoute(list)}
           label={dict.my.lists[list]}
           isCurrent={current === list}
-        >
-          <Count value={countOf(list)} />
-        </NavItem>
-      ))}
-      <Separator className="my-2" />
-      {SHELF_LIBRARY_LISTS.map((list) => (
-        <NavItem
-          key={list}
-          href={libraryListRoute(list)}
-          label={dict.my.lists[list]}
-          isCurrent={current === list}
-          isMinor
         >
           <Count value={countOf(list)} />
         </NavItem>

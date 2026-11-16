@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import type { LibraryCounts } from '@/shared/api';
-import { LIBRARY_LISTS, applyMove, isLibraryList, listCount } from './library-lists';
+import { LIBRARY_LISTS, applyMove, isMainLibraryList, listCount } from './library-lists';
 
 const countsArbitrary: fc.Arbitrary<LibraryCounts> = fc.record({
   watching: fc.nat(500),
@@ -49,9 +49,10 @@ describe('library lists', () => {
     expect(listCount(counts, 'plan')).toBe(11);
   });
 
-  it('accepts only known list names', () => {
-    expect(isLibraryList('plan')).toBe(true);
-    expect(isLibraryList('saved')).toBe(false);
-    expect(isLibraryList(null)).toBe(false);
+  it('accepts only the main list names', () => {
+    expect(isMainLibraryList('plan')).toBe(true);
+    expect(isMainLibraryList('paused')).toBe(false);
+    expect(isMainLibraryList('saved')).toBe(false);
+    expect(isMainLibraryList(null)).toBe(false);
   });
 });

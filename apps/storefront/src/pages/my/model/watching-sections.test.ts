@@ -56,6 +56,16 @@ describe('splitWatching', () => {
     expect(next.map((row) => row.title.mediaItemId)).toEqual(['b']);
   });
 
+  it('orders new episodes from the most recently aired', () => {
+    const recent = range([
+      episode('a', { airDate: '2026-11-12T10:00:00Z' }),
+      episode('b', { airDate: PAST }),
+    ]);
+    const { fresh } = splitWatching([show('a'), show('b')], [], recent, NOW);
+
+    expect(fresh.map((row) => row.title.mediaItemId)).toEqual(['b', 'a']);
+  });
+
   it('ignores watched, untracked and future calendar episodes', () => {
     const recent = range([
       episode('a', { isWatched: true }),
