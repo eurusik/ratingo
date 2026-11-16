@@ -6,7 +6,7 @@ import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow, useMediaQuery } from '@/shared/lib';
 import { runningProgress } from '@/pages/settings/model/import/import-batches';
-import { clockTime, isJustNow } from '@/pages/settings/model/import/import-moment';
+import { clockTime, isJustNow } from '@/pages/settings/lib/import/import-moment';
 import { useImportBatches } from '@/pages/settings/model/import/import-queries';
 import type { ImportStep } from '@/pages/settings/model/import/import-wizard';
 import { useLastImport } from '@/pages/settings/model/import/last-import';

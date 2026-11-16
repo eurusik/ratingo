@@ -1,4 +1,4 @@
-import type { CsvRecord, CsvTable } from './csv-table';
+import type { CsvRecord, CsvTable } from '@/pages/settings/lib/import/csv-table';
 import {
   FILE_KIND_STATE,
   hasIdentifier,

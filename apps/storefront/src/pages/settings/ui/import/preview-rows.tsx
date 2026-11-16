@@ -3,8 +3,8 @@
 import { Chip } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import type { ImportItem } from '@/pages/settings/model/import/import-item';
-import { withOccurrenceKeys } from '@/pages/settings/model/import/occurrence-keys';
-import { formatOwnRating } from '@/pages/settings/model/import/rating-label';
+import { withOccurrenceKeys } from '@/pages/settings/lib/import/occurrence-keys';
+import { formatOwnRating } from '@/pages/settings/lib/import/rating-label';
 
 const itemKey = (item: ImportItem) => `${item.state}:${item.imdbId ?? item.tmdbId ?? item.title}`;
 

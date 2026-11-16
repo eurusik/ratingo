@@ -1,4 +1,4 @@
-import { readCsvTable } from './csv-table';
+import { readCsvTable } from '@/pages/settings/lib/import/csv-table';
 import { parseWithFormat } from './import-format';
 import type { ImportFileKind, ImportItem } from './import-item';
 import { SOURCE_FORMATS, type ImportSource } from './import-sources';

@@ -1,4 +1,4 @@
-import { readCsvTable } from './csv-table';
+import { readCsvTable } from '@/pages/settings/lib/import/csv-table';
 import { inspectCsv } from './import-file';
 import { SOURCE_FORMATS } from './import-sources';
 

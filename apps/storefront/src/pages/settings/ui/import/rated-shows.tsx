@@ -15,7 +15,7 @@ import {
   type WatchMark,
 } from '@/pages/settings/model/import/imported-show-watching';
 import { useRatedImportedShows, type RatedShow } from '@/pages/settings/model/import/rated-shows';
-import { formatOwnRating } from '@/pages/settings/model/import/rating-label';
+import { formatOwnRating } from '@/pages/settings/lib/import/rating-label';
 import { CARD_LIST } from '../settings-card';
 import { WatchSheet, preloadEpisodesSheet } from './watch-sheet';
 

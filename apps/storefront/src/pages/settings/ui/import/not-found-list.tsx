@@ -2,7 +2,7 @@
 
 import { formatNumber, interpolate, useTranslation } from '@/shared/i18n';
 import type { MediaImportResult } from '@/shared/api';
-import { withOccurrenceKeys } from '@/pages/settings/model/import/occurrence-keys';
+import { withOccurrenceKeys } from '@/pages/settings/lib/import/occurrence-keys';
 import { CardDisclosure } from './card-disclosure';
 
 type NotFoundItem = MediaImportResult['details']['notFound'][number];
