@@ -23,9 +23,7 @@ export const SITE_URL = withoutTrailingSlashes(
   process.env.NEXT_PUBLIC_APP_URL?.trim() || `https://${PRODUCTION_HOST}`,
 );
 
-export const IS_PRODUCTION_SITE =
-  process.env.VERCEL_ENV === 'production' &&
-  process.env.VERCEL_PROJECT_PRODUCTION_URL === PRODUCTION_HOST;
+export const IS_PRODUCTION_SITE = process.env.APP_ENV === 'production';
 
 const DEFAULT_GA_MEASUREMENT_ID = 'G-MPY73Y7DBB';
 
