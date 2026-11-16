@@ -3,7 +3,7 @@
 import { useId, useState } from 'react';
 import Image from 'next/image';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@heroui/react';
+import { Button, Skeleton } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import { Check } from 'lucide-react';
 import { interpolate, useTranslation } from '@/shared/i18n';
@@ -108,6 +108,47 @@ function ShowCard({ show, mark, isDesktop, isBusy, onToggle }: ShowCardProps) {
   );
 }
 
+function RatedShowsSkeleton({ isDesktop }: { isDesktop: boolean }) {
+  const { dict } = useTranslation();
+  const rows = Array.from({ length: COLLAPSED_SHOWS }, (_, index) => index);
+
+  return (
+    <div role="status" aria-busy className="flex flex-col gap-2 md:gap-2.5">
+      <span className="sr-only">{dict.common.loading}</span>
+      <Skeleton className="mx-1 h-4 w-64 rounded-md md:mx-0 md:h-5" />
+      {isDesktop ? (
+        <div className="grid grid-cols-3 gap-3">
+          {rows.map((row) => (
+            <div key={row} className="flex flex-col gap-2.5 rounded-2xl bg-surface p-3">
+              <Skeleton className="h-[81px] w-full rounded-xl" />
+              <span className="flex items-center gap-2.5">
+                <span className="flex flex-1 flex-col gap-2">
+                  <Skeleton className="h-4 w-24 rounded-md" />
+                  <Skeleton className="h-3 w-20 rounded-md" />
+                </span>
+                <Skeleton className="h-9 w-24 shrink-0 rounded-full" />
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ul className={CARD_LIST}>
+          {rows.map((row) => (
+            <li key={row} className="flex items-center gap-3 py-2.5">
+              <Skeleton className={cn('shrink-0 rounded-[10px]', LIST_ROW_FRAME)} />
+              <span className="flex flex-1 flex-col gap-2">
+                <Skeleton className="h-4 w-28 rounded-md" />
+                <Skeleton className="h-3 w-20 rounded-md" />
+              </span>
+              <Skeleton className="h-11 w-24 shrink-0 rounded-full" />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function RatedShows({
   result,
   isDesktop,
@@ -119,9 +160,11 @@ export function RatedShows({
   const copy = dict.settings.import.shows;
   const titleId = useId();
   const [isExpanded, setIsExpanded] = useState(false);
-  const shows = useRatedImportedShows(result).data ?? [];
+  const ratedShows = useRatedImportedShows(result);
+  const shows = ratedShows.data ?? [];
   const watching = useImportedShowWatching();
 
+  if (ratedShows.isLoading) return <RatedShowsSkeleton isDesktop={isDesktop} />;
   if (shows.length === 0) return null;
   const visible = isExpanded ? shows : shows.slice(0, COLLAPSED_SHOWS);
   const canExpand = !isExpanded && shows.length > COLLAPSED_SHOWS;
