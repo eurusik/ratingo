@@ -19,7 +19,7 @@ function SaveBar({ form }: { form: ProfileForm }) {
           fullWidth
           isDisabled={!form.isDirty}
           isPending={form.isSaving}
-          className="h-13 rounded-full text-base font-bold shadow-overlay"
+          className="h-13 rounded-full text-base font-bold shadow-overlay disabled:bg-default disabled:text-muted disabled:opacity-100"
         >
           {form.isDirty ? copy.save : copy.noChanges}
         </Button>

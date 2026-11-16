@@ -36,7 +36,7 @@ export function useFollowedTitles() {
 export function useFollowedSummary(): string | undefined {
   const { dict, locale } = useTranslation();
   const { data } = useFollowedTitles();
-  if (!data) return undefined;
+  if (!data?.length) return undefined;
   return interpolate(pluralize(data.length, dict.my.titleCount, locale), { count: data.length });
 }
 

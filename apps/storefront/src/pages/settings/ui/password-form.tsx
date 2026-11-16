@@ -41,9 +41,9 @@ export function PasswordForm({ id, onClose }: { id: string; onClose: () => void 
       id={id}
       onSubmit={submit}
       aria-labelledby={`${id}-title`}
-      className="flex flex-col gap-3 rounded-[20px] bg-surface p-4 md:grid md:grid-cols-2 md:items-start md:gap-x-5 md:gap-y-4 md:rounded-3xl md:p-6"
+      className="flex flex-col gap-3 rounded-[20px] bg-surface p-4 lg:grid lg:grid-cols-2 lg:items-start md:gap-x-5 md:gap-y-4 md:rounded-3xl md:p-6"
     >
-      <h3 id={`${id}-title`} className="text-[17px] font-extrabold md:col-span-2">
+      <h3 id={`${id}-title`} className="text-[17px] font-extrabold lg:col-span-2">
         {copy.newPasswordTitle}
       </h3>
       <PasswordField
@@ -69,7 +69,7 @@ export function PasswordForm({ id, onClose }: { id: string; onClose: () => void 
       >
         <PasswordChecklist id={checklistId} password={newPassword} />
       </PasswordField>
-      <div className="flex gap-2.5 md:col-span-2 md:justify-end">
+      <div className="flex gap-2.5 lg:col-span-2 md:justify-end">
         <Button variant="outline" className="rounded-full max-md:hidden" onPress={onClose}>
           {copy.cancel}
         </Button>

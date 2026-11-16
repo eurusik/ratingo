@@ -82,7 +82,7 @@ export function ProfileFields({ form }: { form: ProfileForm }) {
   });
 
   return (
-    <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4.5">
+    <div className="flex flex-col gap-4 md:gap-4.5 lg:grid lg:grid-cols-2">
       <TextField
         name="username"
         autoComplete="off"
@@ -108,7 +108,7 @@ export function ProfileFields({ form }: { form: ProfileForm }) {
         autoComplete="off"
         {...field('bio')}
         fullWidth
-        className="md:col-span-2"
+        className="lg:col-span-2"
       >
         <Label>{copy.bio}</Label>
         <TextArea

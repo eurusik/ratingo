@@ -1286,7 +1286,7 @@
       "cancel": "Cancel",
       "unlink": {
         "title": "Disconnect {provider}?",
-        "text": "You won't be able to sign in with {provider} anymore. Still available: {rest}.",
+        "text": "You won't be able to sign in with {provider} anymore. You can still sign in with {rest}.",
         "cancel": "Cancel",
         "confirm": "Disconnect"
       },
