@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { cn } from '@ratingo/web-core/lib';
 import { MY_ROUTE, SETTINGS_ROUTE } from '@/shared/config';
@@ -23,6 +24,7 @@ export function PhoneBar({ title, backTo = 'settings' }: PhoneBarProps) {
     <div className="sticky top-0 z-20 flex min-h-14 items-center gap-1 border-b border-separator bg-background/90 px-1.5 pt-(--safe-top) backdrop-blur-xl md:hidden">
       <BackLink
         fallbackHref={backHref}
+        returnsOnlyToFallback
         aria-label={isBackToMy ? copy.backToMyLabel : copy.backLabel}
         onNavigate={guardedLink(backHref)}
         className="flex h-11 max-w-[45%] shrink-0 items-center gap-0.5 rounded-full pe-1.5 text-base font-semibold text-accent no-underline outline-none focus-visible:outline-2 focus-visible:outline-focus"
@@ -37,7 +39,7 @@ export function PhoneBar({ title, backTo = 'settings' }: PhoneBarProps) {
 
 interface SectionHeaderProps {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
 }
 
 export function SectionHeader({ title, subtitle }: SectionHeaderProps) {

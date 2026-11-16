@@ -22,6 +22,7 @@ import {
   type ProfileDraft,
 } from '../model/profile-draft';
 import type { ProfileForm } from '../model/profile-form';
+import type { UsernameRejection } from '../model/username-rejection';
 import { regionOptions } from '../model/regions';
 
 function OptionalLabel({ children }: { children: ReactNode }) {
@@ -76,6 +77,10 @@ export function ProfileFields({ form }: { form: ProfileForm }) {
     length: dict.auth.validation.usernameLength,
     format: dict.auth.validation.usernameFormat,
   };
+  const usernameRejections: Record<UsernameRejection, string> = {
+    taken: copy.usernameTaken,
+    unavailable: copy.usernameUnavailable,
+  };
   const field = <Field extends keyof ProfileDraft>(name: Field) => ({
     value: draft[name],
     onChange: (value: ProfileDraft[Field]) => change(name, value),
@@ -91,16 +96,20 @@ export function ProfileFields({ form }: { form: ProfileForm }) {
           const problem = findUsernameProblem(value.trim());
           return problem ? usernameProblems[problem] : null;
         }}
-        isInvalid={form.isUsernameTaken || undefined}
+        isInvalid={form.usernameRejection ? true : undefined}
         fullWidth
       >
         <Label>{copy.username}</Label>
         <InputGroup variant="secondary" fullWidth>
-          <InputGroup.Prefix className="text-muted">{PROFILE_ADDRESS_PREFIX}</InputGroup.Prefix>
+          <InputGroup.Prefix translate="no" className="text-muted">
+            {PROFILE_ADDRESS_PREFIX}
+          </InputGroup.Prefix>
           <InputGroup.Input className="text-base" spellCheck={false} autoCapitalize="none" />
         </InputGroup>
         <Description>{copy.usernameHint}</Description>
-        <FieldError>{form.isUsernameTaken ? copy.usernameTaken : undefined}</FieldError>
+        <FieldError>
+          {form.usernameRejection ? usernameRejections[form.usernameRejection] : undefined}
+        </FieldError>
       </TextField>
       <RegionField {...field('region')} />
       <TextField

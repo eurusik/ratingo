@@ -29,11 +29,10 @@ export function useLinkedAccounts() {
 
 export function useLinkProvider() {
   const { dict } = useTranslation();
-  const { refreshUser } = useAuth();
 
   return useMutation({
     mutationFn: async (provider: OAuthProvider) => {
-      await refreshUser();
+      await authApi.me();
       const accessToken = tokenStorage.getAccessToken();
       if (!accessToken) throw new Error('No access token to start linking a provider');
       window.location.assign(

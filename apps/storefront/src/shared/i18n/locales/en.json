@@ -1175,6 +1175,7 @@
       "username": "Username",
       "usernameHint": "Latin letters, digits and _, 3–30 characters · your profile address changes too",
       "usernameTaken": "This username is taken",
+      "usernameUnavailable": "This username isn't available, pick another one",
       "region": "Region",
       "regionHint": "For release dates",
       "bio": "About you",

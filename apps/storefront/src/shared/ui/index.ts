@@ -18,6 +18,7 @@ export {
   STICKY_TOOLBAR,
   StatusBarBackdrop,
 } from './page-header/page-header';
+export { LIST_ROW_FRAME } from './list-row/list-row-frame';
 export { ListSearch } from './list-search/list-search';
 export { PageTransition } from './page-transition/page-transition';
 export { Rail, RailItem } from './rail/rail';

@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/shared/i18n';
-import { isPlainClick } from '@/shared/lib';
+import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
+import { isPlainClick, previousRoutePath, useMediaQuery } from '@/shared/lib';
 import { EmptyState } from '@/shared/ui';
 import { profileAddress, useAccount, visibilityOf } from '../model/account';
 import { useLeaveGuard } from '../model/leave-guard';
@@ -50,12 +51,17 @@ function ProfileContent() {
   const discard = () => {
     form.reset();
     setLeaveTarget(null);
-    if (leaveTarget) router.push(leaveTarget);
+    if (!leaveTarget) return;
+    if (previousRoutePath() === leaveTarget) router.back();
+    else router.push(leaveTarget);
   };
 
   return (
     <>
-      <SectionHeader title={dict.settings.sections.profile} subtitle={profileAddress(username)} />
+      <SectionHeader
+        title={dict.settings.sections.profile}
+        subtitle={<span translate="no">{profileAddress(username)}</span>}
+      />
       <ProfileSection form={form} />
       <DiscardDialog
         isOpen={leaveTarget !== null}
@@ -68,6 +74,7 @@ function ProfileContent() {
 
 export function SettingsHomePage() {
   const { dict } = useTranslation();
+  const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
 
   return (
     <SettingsShell
@@ -76,12 +83,7 @@ export function SettingsHomePage() {
       desktopTitle={dict.settings.sections.profile}
       backTo="my"
     >
-      <div className="md:hidden">
-        <SettingsList />
-      </div>
-      <div className="flex flex-col gap-3 max-md:hidden">
-        <ProfileContent />
-      </div>
+      {isDesktop ? <ProfileContent /> : <SettingsList />}
     </SettingsShell>
   );
 }

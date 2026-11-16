@@ -6,8 +6,7 @@ import { Button, Skeleton, buttonVariants } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import { useTranslation } from '@/shared/i18n';
 import type { MainLibraryList } from '@/entities/library';
-import { EMPTY_STATE_ACTION, EmptyState, STICKY_TOOLBAR } from '@/shared/ui';
-import { ROW_FRAME } from './library-row';
+import { EMPTY_STATE_ACTION, EmptyState, LIST_ROW_FRAME, STICKY_TOOLBAR } from '@/shared/ui';
 
 const SKELETON_ROWS = 10;
 
@@ -37,7 +36,7 @@ export function RowsSkeleton({
           key={index}
           className="flex min-h-[79px] items-center gap-3 py-2 md:min-h-[97px] md:gap-4"
         >
-          <Skeleton className={cn('shrink-0 rounded-[10px]', ROW_FRAME)} />
+          <Skeleton className={cn('shrink-0 rounded-[10px]', LIST_ROW_FRAME)} />
           <span className="flex flex-1 flex-col gap-2">
             <Skeleton className="h-4 w-2/5 rounded-md" />
             <Skeleton className="h-3.5 w-3/5 rounded-md" />

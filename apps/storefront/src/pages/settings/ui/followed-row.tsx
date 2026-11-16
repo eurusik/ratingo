@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@heroui/react';
+import { cn } from '@ratingo/web-core/lib';
 import { mediaRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { LIST_ROW_FRAME } from '@/shared/ui';
 import type { FollowedTitle } from '../model/followed-titles';
-
-const ROW_FRAME = 'h-[54px] w-24 min-[360px]:h-[63px] min-[360px]:w-28 md:h-[81px] md:w-36';
 
 interface FollowedRowProps {
   title: FollowedTitle;
@@ -25,7 +25,10 @@ export function FollowedRow({ title, onUnfollow }: FollowedRowProps) {
       >
         <span
           aria-hidden
-          className={`relative shrink-0 overflow-hidden rounded-[10px] bg-default ${ROW_FRAME}`}
+          className={cn(
+            'relative shrink-0 overflow-hidden rounded-[10px] bg-default',
+            LIST_ROW_FRAME,
+          )}
         >
           {title.imageUrl ? (
             <Image

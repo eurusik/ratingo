@@ -12,6 +12,7 @@ import {
   hasPreviousRoute,
   isPlainClick,
   nameArtLinkingTo,
+  previousRoutePath,
   releaseSharedArt,
   restoreRememberedScroll,
   waitForRouteCommit,
@@ -21,6 +22,7 @@ interface BackLinkProps {
   fallbackHref: string;
   className?: string;
   'aria-label'?: string;
+  returnsOnlyToFallback?: boolean;
   onNavigate?: (event: MouseEvent<HTMLAnchorElement>) => void;
   children: ReactNode;
 }
@@ -29,6 +31,7 @@ export function BackLink({
   fallbackHref,
   className,
   'aria-label': ariaLabel,
+  returnsOnlyToFallback = false,
   onNavigate,
   children,
 }: BackLinkProps) {
@@ -36,7 +39,10 @@ export function BackLink({
 
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
     onNavigate?.(event);
-    if (event.defaultPrevented || !isPlainClick(event) || !hasPreviousRoute()) return;
+    const canReturn = returnsOnlyToFallback
+      ? previousRoutePath() === fallbackHref
+      : hasPreviousRoute();
+    if (event.defaultPrevented || !isPlainClick(event) || !canReturn) return;
     event.preventDefault();
     const leavingPath = window.location.pathname;
     let returningArt: HTMLElement | null = null;

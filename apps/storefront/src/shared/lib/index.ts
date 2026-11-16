@@ -47,6 +47,7 @@ export {
   nameArtLinkingTo,
   nameArtOfLink,
   pendingArtImageFor,
+  previousRoutePath,
   railMemoryMarker,
   releaseSharedArt,
   replaceDocumentLocation,

@@ -13,7 +13,7 @@ import { SECTION_ROUTES, type SettingsSection } from '../model/settings-sections
 import { CARD_LIST, SettingsGroup } from './settings-card';
 
 const ROW_LINK =
-  'flex min-h-13 w-full items-center gap-3.5 text-base text-foreground no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
+  'flex min-h-13 w-full items-center gap-3.5 text-base text-foreground no-underline outline-none transition-opacity [@media(hover:hover)]:hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
 
 interface ListRow {
   section: SettingsSection;
@@ -47,16 +47,18 @@ function AccountCard() {
   return (
     <Link
       href={SECTION_ROUTES.profile}
-      className="flex items-center gap-3.5 rounded-[20px] bg-surface p-4 text-foreground no-underline outline-none focus-visible:outline-2 focus-visible:outline-focus"
+      className="flex items-center gap-3.5 rounded-[20px] bg-surface p-4 text-foreground no-underline outline-none transition-colors [@media(hover:hover)]:hover:bg-default focus-visible:outline-2 focus-visible:outline-focus"
     >
       <Avatar className="size-14 shrink-0 rounded-full text-[22px] font-extrabold">
         {user.avatarUrl ? <Avatar.Image src={user.avatarUrl} alt="" /> : null}
         <Avatar.Fallback>{initialOf(user.username)}</Avatar.Fallback>
       </Avatar>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate font-bold">{user.username}</span>
+        <span translate="no" className="truncate font-bold">
+          {user.username}
+        </span>
         <span className="truncate text-sm text-muted">
-          {user.email} · {dict.settings.profileVisibility[visibility]}
+          <span translate="no">{user.email}</span> · {dict.settings.profileVisibility[visibility]}
         </span>
       </span>
       <ChevronRight aria-hidden className="size-[18px] shrink-0 text-muted" />

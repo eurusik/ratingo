@@ -72,12 +72,18 @@ function useFollowedCache() {
   };
 }
 
-async function setFollowing({ mediaItemId, triggers }: FollowedTitle, isFollowing: boolean) {
+async function followAgain({ mediaItemId, triggers }: FollowedTitle): Promise<void> {
   await Promise.all(
     triggers.map((trigger) =>
-      isFollowing
-        ? subscriptionsApi.subscribe(mediaItemId, trigger, SUBSCRIPTION_CONTEXT)
-        : subscriptionsApi.unsubscribe(mediaItemId, trigger, SUBSCRIPTION_CONTEXT),
+      subscriptionsApi.subscribe(mediaItemId, trigger, SUBSCRIPTION_CONTEXT),
+    ),
+  );
+}
+
+async function stopFollowing({ mediaItemId, triggers }: FollowedTitle): Promise<void> {
+  await Promise.all(
+    triggers.map((trigger) =>
+      subscriptionsApi.unsubscribe(mediaItemId, trigger, SUBSCRIPTION_CONTEXT),
     ),
   );
 }
@@ -94,7 +100,7 @@ export function useUnfollowTitle(): (placed: PlacedTitle) => void {
 
   const follow = useMutation({
     mutationKey: FOLLOWING_MUTATION_KEY,
-    mutationFn: (placed: PlacedTitle) => setFollowing(placed.title, true),
+    mutationFn: (placed: PlacedTitle) => followAgain(placed.title),
     onMutate: async (placed) => {
       await cache.cancel();
       cache.update((titles) => withTitle(titles, placed));
@@ -108,7 +114,7 @@ export function useUnfollowTitle(): (placed: PlacedTitle) => void {
 
   const unfollow = useMutation({
     mutationKey: FOLLOWING_MUTATION_KEY,
-    mutationFn: (placed: PlacedTitle) => setFollowing(placed.title, false),
+    mutationFn: (placed: PlacedTitle) => stopFollowing(placed.title),
     onMutate: async (placed) => {
       await cache.cancel();
       cache.update((titles) => withoutTitle(titles, placed.title.mediaItemId));

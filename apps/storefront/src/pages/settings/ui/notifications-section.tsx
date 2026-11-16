@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button, Skeleton } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { EMPTY_STATE_ACTION, EmptyState, ListSearch } from '@/shared/ui';
+import { EMPTY_STATE_ACTION, EmptyState, LIST_ROW_FRAME, ListSearch } from '@/shared/ui';
 import { useAccountToggles } from '../model/account-toggles';
 import { useFollowedSummary, useFollowedTitles, useUnfollowTitle } from '../model/followed-queries';
 import { FIRST_FOLLOWED_ROWS, visibleFollowedTitles } from '../model/followed-titles';
@@ -25,7 +25,7 @@ function FollowedSkeleton() {
           key={index}
           className="flex min-h-[79px] items-center gap-3 py-2 md:min-h-[97px] md:gap-4"
         >
-          <Skeleton className="h-[63px] w-28 shrink-0 rounded-[10px] md:h-[81px] md:w-36" />
+          <Skeleton className={cn('shrink-0 rounded-[10px]', LIST_ROW_FRAME)} />
           <span className="flex flex-1 flex-col gap-2">
             <Skeleton className="h-4 w-3/5 rounded-md" />
             <Skeleton className="h-3.5 w-2/5 rounded-md" />
