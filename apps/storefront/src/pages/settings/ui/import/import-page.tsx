@@ -14,6 +14,7 @@ import {
   useImportWizard,
   type ImportWizard,
 } from '@/pages/settings/model/import/use-import-wizard';
+import { useStepHistory } from '@/pages/settings/model/import/use-step-history';
 import { useLeaveConfirmation, useLeaveWarning } from '@/pages/settings/model/leave-guard';
 import { DiscardDialog } from '../discard-dialog';
 import { SectionHeader, type StepBack } from '../settings-headers';
@@ -130,7 +131,14 @@ export function ImportSettingsPage() {
   const copy = dict.settings.import;
   const title = dict.settings.sections.import;
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
-  const wizard = useImportWizard();
+  const wizardState = useImportWizard();
+  const historyBack = useStepHistory({
+    step: wizardState.state.step,
+    isDesktop,
+    isImporting: wizardState.state.isImporting,
+    stepBack: wizardState.back,
+  });
+  const wizard: ImportWizard = { ...wizardState, back: historyBack };
   const { step, source, files, finishedAt } = wizard.state;
   const position = useStepPosition(wizard, isDesktop);
   const moment = useImportMoment(finishedAt);
