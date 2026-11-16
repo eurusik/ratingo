@@ -3,11 +3,13 @@
 import { useSyncExternalStore } from 'react';
 
 let isOpen = false;
+let pendingQuery = '';
 const listeners = new Set<() => void>();
 
 function publish(next: boolean): void {
   if (next === isOpen) return;
   isOpen = next;
+  if (!isOpen) pendingQuery = '';
   listeners.forEach((listener) => listener());
 }
 
@@ -21,6 +23,15 @@ const readServerIsOpen = () => false;
 
 export function openSearch(): void {
   publish(true);
+}
+
+export function openSearchFor(query: string): void {
+  pendingQuery = query;
+  publish(true);
+}
+
+export function readPendingQuery(): string {
+  return pendingQuery;
 }
 
 export function setSearchOpen(next: boolean): void {

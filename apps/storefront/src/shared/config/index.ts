@@ -27,6 +27,7 @@ export {
   PRIVACY_SETTINGS_ROUTE,
   PROFILE_SETTINGS_ROUTE,
   PUBLIC_PROFILE_ROUTE,
+  SEARCH_PARAM,
   SECURITY_SETTINGS_ROUTE,
   SETTINGS_ROUTE,
   SHOW_PICK_VALUE,
@@ -38,6 +39,7 @@ export {
   mediaReviewsRoute,
   myListRoute,
   publicProfileRoute,
+  searchRoute,
   showPickRoute,
   showSeasonRoute,
 } from './routes';

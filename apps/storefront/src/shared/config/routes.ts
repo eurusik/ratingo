@@ -37,6 +37,13 @@ export const MY_LIST_PARAM = 'list';
 export function myListRoute(list: string, defaultList: string): string {
   return list === defaultList ? MY_ROUTE : `${MY_ROUTE}?${MY_LIST_PARAM}=${list}`;
 }
+
+export const SEARCH_PARAM = 'q';
+
+export function searchRoute(query: string): string {
+  return `/?${new URLSearchParams({ [SEARCH_PARAM]: query })}`;
+}
+
 export const BROWSE_ROUTE = '/browse';
 export const CALENDAR_ROUTE = '/calendar';
 export const OFFLINE_ROUTE = '/~offline';

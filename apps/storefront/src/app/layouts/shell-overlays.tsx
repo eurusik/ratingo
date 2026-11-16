@@ -4,7 +4,12 @@ import { useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { useTrackingHintsSession } from '@/entities/episode';
 import { useForgetLibraryOnUserChange } from '@/entities/library';
-import { SearchShortcut, useIsSearchOpen, type SearchTitle } from '@/features/search';
+import {
+  SearchShortcut,
+  useIsSearchOpen,
+  useSearchFromUrl,
+  type SearchTitle,
+} from '@/features/search';
 import { WhatsNew } from '@/features/whats-new';
 import { hasPendingIntent, useAuthRequest } from '@/shared/auth';
 import { InstallPromptCapture } from '@/shared/lib';
@@ -45,6 +50,7 @@ export function ShellOverlays() {
   );
   useForgetLibraryOnUserChange();
   useTrackingHintsSession();
+  useSearchFromUrl();
   const isWarm = useWarmOverlays();
 
   return (
