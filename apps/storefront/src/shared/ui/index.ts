@@ -2,6 +2,7 @@ export { AppShell, MAIN_CONTENT_ID } from './app-shell/app-shell';
 export { BackdropPicture } from './backdrop-picture/backdrop-picture';
 export { BrandMark } from './brand-mark/brand-mark';
 export { BackLink } from './back-link/back-link';
+export { BackToTop } from './back-to-top/back-to-top';
 export { Container } from './container/container';
 export { ContentTransition } from './content-transition/content-transition';
 export { DownscaledBlur } from './downscaled-blur/downscaled-blur';

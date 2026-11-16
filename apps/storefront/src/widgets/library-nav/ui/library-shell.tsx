@@ -6,7 +6,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import type { LibraryList } from '@/entities/library';
 import { openAuth } from '@/shared/auth';
 import { useTranslation } from '@/shared/i18n';
-import { EMPTY_STATE_ACTION, EmptyState, StatusBarBackdrop } from '@/shared/ui';
+import { BackToTop, EMPTY_STATE_ACTION, EmptyState, StatusBarBackdrop } from '@/shared/ui';
 import { LibraryNav } from './library-nav';
 
 const SHELL = 'flex flex-1 flex-col';
@@ -64,6 +64,7 @@ export function LibraryShell({ current, header, skeleton, children }: LibraryShe
           {isLoading ? skeleton : children}
         </div>
       </div>
+      <BackToTop />
     </div>
   );
 }

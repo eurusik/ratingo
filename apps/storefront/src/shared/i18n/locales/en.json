@@ -63,7 +63,8 @@
     "loading": "Loading…",
     "opensInNewTab": "(opens in a new tab)",
     "linkCopied": "Link copied",
-    "shareFailed": "Could not share the link."
+    "shareFailed": "Could not share the link.",
+    "backToTop": "Back to top"
   },
   "nav": {
     "label": "Main navigation",
@@ -620,7 +621,6 @@
       "retry": "Try again",
       "end": "That’s all: {result}"
     },
-    "backToTop": "Back to top",
     "genres": {
       "drama": "Drama",
       "komediya": "Comedy",
