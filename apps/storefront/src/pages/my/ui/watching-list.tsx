@@ -134,10 +134,10 @@ export function WatchingList({ actions }: { actions: LibraryActions }) {
 
   if (showCount === 0) {
     return (
-      <>
+      <div className="flex flex-1 flex-col">
         <EmptyList {...dict.my.watching.empty} href={BROWSE_ROUTE} />
         <Shelf actions={actions} />
-      </>
+      </div>
     );
   }
 

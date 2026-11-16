@@ -8,7 +8,7 @@ import { ScoreChip } from '@/entities/media';
 import { BROWSE_ROUTE, mediaRoute, showPickRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
-import { SegmentedFilter, ShowMore } from '@/shared/ui';
+import { EmptyState, SegmentedFilter, ShowMore } from '@/shared/ui';
 import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
 import { usePlanList } from '../model/library-queries';
@@ -154,7 +154,7 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
   if (plan.data.length === 0) return <EmptyList {...dict.my.plan.empty} href={BROWSE_ROUTE} />;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-1 flex-col gap-2">
       <div className="flex items-center gap-2">
         <SegmentedFilter
           label={dict.my.plan.filterLabel}
@@ -167,9 +167,7 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
         <SortMenu sort={sort} onSort={setSort} />
       </div>
       {rows.length === 0 ? (
-        <p role="status" className="py-8 text-center text-muted">
-          {dict.my.plan.noMatches}
-        </p>
+        <EmptyState title={dict.my.plan.noMatches} text={dict.my.plan.noMatchesText} />
       ) : null}
       <ul aria-label={dict.my.lists.plan} className="flex flex-col">
         {reveal.shown.map((row, index) => (

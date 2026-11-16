@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button, Skeleton, buttonVariants } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import { useTranslation } from '@/shared/i18n';
+import { EMPTY_STATE_ACTION, EmptyState } from '@/shared/ui';
 import { ROW_FRAME } from './library-row';
 
 const SKELETON_ROWS = 5;
@@ -35,12 +36,15 @@ export function ListFailure({ onRetry }: { onRetry: () => void }) {
   const { dict } = useTranslation();
 
   return (
-    <div role="alert" className="flex flex-col items-center gap-3 py-12 text-center">
-      <p className="text-muted">{dict.my.failed}</p>
-      <Button variant="secondary" className="min-h-tap" onPress={onRetry}>
-        {dict.my.retry}
-      </Button>
-    </div>
+    <EmptyState
+      title={dict.my.failed}
+      text={dict.my.failedText}
+      action={
+        <Button variant="secondary" className={EMPTY_STATE_ACTION} onPress={onRetry}>
+          {dict.my.retry}
+        </Button>
+      }
+    />
   );
 }
 
@@ -53,16 +57,18 @@ interface EmptyListProps {
 
 export function EmptyList({ title, text, action, href }: EmptyListProps) {
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center gap-2 py-12 text-center">
-      <p className="text-lg font-extrabold">{title}</p>
-      <p className="text-sm text-muted">{text}</p>
-      <Link
-        href={href}
-        className={cn(buttonVariants({ variant: 'primary' }), 'mt-3 min-h-tap no-underline')}
-      >
-        {action}
-      </Link>
-    </div>
+    <EmptyState
+      title={title}
+      text={text}
+      action={
+        <Link
+          href={href}
+          className={cn(buttonVariants({ variant: 'primary' }), EMPTY_STATE_ACTION)}
+        >
+          {action}
+        </Link>
+      }
+    />
   );
 }
 

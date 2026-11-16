@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button, Skeleton, buttonVariants } from '@heroui/react';
-import { Check, ChevronLeft, Settings } from 'lucide-react';
+import { ChevronLeft, Settings } from 'lucide-react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { cn } from '@ratingo/web-core/lib';
 import {
@@ -18,7 +18,16 @@ import { LibraryShell } from '@/widgets/library-nav';
 import { MY_ROUTE, NOTIFICATION_SETTINGS_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
-import { BackLink, PageHeader, STICKY_TOOLBAR, SegmentedFilter, ShowMore } from '@/shared/ui';
+import {
+  BackLink,
+  EMPTY_STATE_ACTION,
+  EmptyState,
+  PageHeader,
+  SECTION_TITLE_DESKTOP,
+  STICKY_TOOLBAR,
+  SegmentedFilter,
+  ShowMore,
+} from '@/shared/ui';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { SwipeableNotification } from './swipeable-notification';
 
@@ -49,19 +58,10 @@ function ListSkeleton() {
 function AllRead() {
   const { dict } = useTranslation();
   return (
-    <div
-      role="status"
-      className="mx-auto flex max-w-sm flex-col items-center gap-2 py-10 text-center"
-    >
-      <span
-        aria-hidden
-        className="flex size-16 items-center justify-center rounded-full bg-success-soft text-success"
-      >
-        <Check className="size-8" strokeWidth={2.4} />
-      </span>
-      <p className="mt-2 text-lg font-extrabold">{dict.notifications.allCaughtUp.title}</p>
-      <p className="text-sm text-muted">{dict.notifications.allCaughtUp.text}</p>
-    </div>
+    <EmptyState
+      title={dict.notifications.allCaughtUp.title}
+      text={dict.notifications.allCaughtUp.text}
+    />
   );
 }
 
@@ -81,12 +81,19 @@ function NotificationList({
   if (pages.isPending) return <ListSkeleton />;
   if (pages.isError) {
     return (
-      <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
-        <p className="text-muted">{dict.notifications.failed}</p>
-        <Button variant="secondary" onPress={() => void pages.refetch()}>
-          {dict.notifications.retry}
-        </Button>
-      </div>
+      <EmptyState
+        title={dict.notifications.failedTitle}
+        text={dict.notifications.failedText}
+        action={
+          <Button
+            variant="secondary"
+            className={EMPTY_STATE_ACTION}
+            onPress={() => void pages.refetch()}
+          >
+            {dict.notifications.retry}
+          </Button>
+        }
+      />
     );
   }
 
@@ -97,9 +104,7 @@ function NotificationList({
     return filter === 'unread' ? (
       <AllRead />
     ) : (
-      <p role="status" className="py-10 text-center text-muted">
-        {dict.notifications.empty}
-      </p>
+      <EmptyState title={dict.notifications.empty} text={dict.notifications.allCaughtUp.text} />
     );
   }
 
@@ -154,6 +159,7 @@ function NotificationsHeader() {
   return (
     <PageHeader
       title={dict.notifications.title}
+      titleClassName={SECTION_TITLE_DESKTOP}
       className="md:sticky md:top-16 md:z-20 md:box-content md:pb-4 md:border-b md:border-separator md:bg-background"
       leading={
         <BackLink
@@ -215,7 +221,7 @@ function Notifications() {
         <span className="flex-1" />
         {unreadCount > 0 ? <ReadAllButton className="md:hidden" onReadAll={readAll} /> : null}
       </div>
-      <PullToRefresh onRefresh={() => pages.refetch()}>
+      <PullToRefresh fillsHeight onRefresh={() => pages.refetch()}>
         <NotificationList filter={filter} pages={pages} />
       </PullToRefresh>
       <p className="pt-3 text-center text-[13px] text-muted md:text-start">

@@ -3,6 +3,8 @@ import { cn } from '@ratingo/web-core/lib';
 
 export const PAGE_TITLE = 'text-[32px] leading-tight font-extrabold tracking-tight md:text-4xl';
 
+export const SECTION_TITLE_DESKTOP = 'md:text-2xl md:tracking-normal';
+
 interface PageHeaderProps {
   title: string;
   titleClassName?: string;

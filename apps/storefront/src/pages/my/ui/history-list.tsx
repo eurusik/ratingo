@@ -5,7 +5,7 @@ import { SearchField } from '@heroui/react';
 import { pluralize } from '@ratingo/web-core/lib';
 import { IMPORT_ROUTE, mediaRoute } from '@/shared/config';
 import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
-import { SegmentedFilter, ShowMore } from '@/shared/ui';
+import { EmptyState, SegmentedFilter, ShowMore } from '@/shared/ui';
 import { useLibraryCounts } from '@/entities/library';
 import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
@@ -95,7 +95,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
   const monthTotals = new Map(groupByMonth(visible).map((month) => [month.key, month.rows.length]));
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-1 flex-col gap-3">
       <SearchField
         aria-label={dict.my.history.searchLabel}
         value={query}
@@ -122,9 +122,10 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
         />
       </div>
       {visible.length === 0 ? (
-        <p role="status" className="py-8 text-center text-muted">
-          {interpolate(dict.my.history.noMatches, { query })}
-        </p>
+        <EmptyState
+          title={interpolate(dict.my.history.noMatches, { query })}
+          text={dict.my.history.noMatchesText}
+        />
       ) : (
         groupByMonth(reveal.shown).map((month) => (
           <section key={month.key} aria-labelledby={`month-${month.key}`}>

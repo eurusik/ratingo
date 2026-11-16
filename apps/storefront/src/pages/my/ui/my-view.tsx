@@ -8,7 +8,7 @@ import { NotificationBell, ProfileMenu } from '@/widgets/header';
 import type { LibraryCounts } from '@/shared/api';
 import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
 import { cn, pluralize } from '@ratingo/web-core/lib';
-import { PageHeader, STICKY_TOOLBAR } from '@/shared/ui';
+import { PageHeader, SECTION_TITLE_DESKTOP, STICKY_TOOLBAR } from '@/shared/ui';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { useLibraryActions, type LibraryActions } from '../model/library-actions';
 import { LibraryMovesProvider, useIsMovedOut } from '../model/library-moves';
@@ -83,7 +83,7 @@ function ListHeader({ list }: { list: LibraryList }) {
 
   return (
     <div className="max-md:sr-only md:sticky md:top-16 md:z-20 md:flex md:min-h-11 md:items-center md:pb-4 md:box-content md:gap-3 md:border-b md:border-separator md:bg-background">
-      <h2 className="text-2xl font-extrabold">{dict.my.lists[list]}</h2>
+      <h2 className={cn('font-extrabold', SECTION_TITLE_DESKTOP)}>{dict.my.lists[list]}</h2>
       {count === undefined ? null : (
         <>
           <span aria-hidden className="h-6 w-px bg-separator" />
@@ -103,8 +103,8 @@ function Library({ list }: { list: LibraryList }) {
   if (startsEmpty) return <NewUserStart actions={actions} />;
 
   return (
-    <PullToRefresh onRefresh={actions.refresh}>
-      <div className="flex flex-col gap-3">
+    <PullToRefresh fillsHeight onRefresh={actions.refresh}>
+      <div className="flex flex-1 flex-col gap-3">
         <div className={cn(STICKY_TOOLBAR, 'md:hidden')}>
           <ListChips current={list} />
         </div>

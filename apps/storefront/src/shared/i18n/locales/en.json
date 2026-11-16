@@ -120,7 +120,7 @@
       "dropped": "Dropped"
     },
     "listsLabel": "My lists",
-    "failed": "Couldn't load the list.",
+    "failed": "Couldn't load the list",
     "retry": "Try again",
     "loadMore": "Show more",
     "signIn": {
@@ -177,7 +177,8 @@
         "text": "Tap “Want to watch” on a movie or show page — we'll tell you when it's out at home.",
         "action": "Go to Browse"
       },
-      "noMatches": "No titles of this type here."
+      "noMatches": "No titles of this type here.",
+      "noMatchesText": "Change the filter to see other titles."
     },
     "history": {
       "search": "Search what you've watched…",
@@ -194,10 +195,11 @@
       "noMatches": "Nothing found for “{query}”.",
       "empty": {
         "title": "Everything you've watched will appear here",
-        "text": "Rate a movie or mark an episode and it lands in your history. Or bring your history over from Trakt.",
-        "action": "Import from Trakt"
+        "text": "Rate a movie or mark an episode and it lands in your history. Or bring your ratings over from Kinobaza, IMDb or TMDB.",
+        "action": "Import ratings"
       },
-      "yourRatingFor": "Your rating {score}: {title}"
+      "yourRatingFor": "Your rating {score}: {title}",
+      "noMatchesText": "Try another title or change the filter."
     },
     "actions": {
       "more": "More actions: {title}",
@@ -232,8 +234,8 @@
       "watching": "Watching",
       "want": "Want",
       "import": {
-        "title": "Bring it over from Trakt or Letterboxd",
-        "text": "Import your history and ratings in a minute"
+        "title": "Bring it over from Kinobaza, IMDb or TMDB",
+        "text": "Import ratings and lists from a CSV in a minute"
       },
       "watchingLabel": "Watching: {title}",
       "wantLabel": "Want: {title}",
@@ -243,7 +245,13 @@
       "one": "{count} title",
       "few": "{count} titles",
       "many": "{count} titles"
-    }
+    },
+    "shelfEmpty": {
+      "paused": "Nothing paused",
+      "dropped": "Nothing dropped",
+      "text": "Shows you pause or drop will appear here. You can bring them back any time."
+    },
+    "failedText": "Check your connection and try again."
   },
   "rating": {
     "label": "Rating {score}: {verdict}",
@@ -364,7 +372,9 @@
     "loadMore": "Show more",
     "markReadLabel": "Mark as read: {title}",
     "retry": "Try again",
-    "unreadBadge": "{count} unread"
+    "unreadBadge": "{count} unread",
+    "failedTitle": "Couldn't load notifications",
+    "failedText": "Check your connection and try again."
   },
   "profile": {
     "stats": {

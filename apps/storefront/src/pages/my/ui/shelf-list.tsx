@@ -6,7 +6,7 @@ import { interpolate, useTranslation } from '@/shared/i18n';
 import type { LibraryActions } from '../model/library-actions';
 import { useShelfLists } from '../model/library-queries';
 import { useRevealedRows } from '../model/revealed-rows';
-import { ShowMore } from '@/shared/ui';
+import { EmptyState, ShowMore } from '@/shared/ui';
 import { titleOf } from '../model/library-title';
 import { LibraryRow } from './library-row';
 import { ListFailure, RowsSkeleton } from './list-states';
@@ -62,6 +62,9 @@ export function ShelfPage({ list, actions, isMovedOut }: ShelfPageProps) {
 
   if (query.isPending) return <RowsSkeleton />;
   if (query.isError) return <ListFailure onRetry={() => void query.refetch()} />;
+  if (reveal.shown.length === 0) {
+    return <EmptyState title={dict.my.shelfEmpty[list]} text={dict.my.shelfEmpty.text} />;
+  }
   return (
     <div className="flex flex-col gap-2">
       <ul className="flex flex-col">
