@@ -11,9 +11,10 @@ const STANDALONE_QUERY = '(display-mode: standalone)';
 interface PullToRefreshProps {
   onRefresh: () => Promise<unknown>;
   children: ReactNode;
+  fillsHeight?: boolean;
 }
 
-export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
+export function PullToRefresh({ onRefresh, children, fillsHeight = false }: PullToRefreshProps) {
   const { dict } = useTranslation();
   const isStandalone = useMediaQuery(STANDALONE_QUERY);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -47,7 +48,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   }, [isStandalone]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={fillsHeight ? 'relative flex flex-1 flex-col' : 'relative'}>
       <div
         ref={indicatorRef}
         aria-hidden
@@ -55,7 +56,9 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       >
         <Spinner size="sm" />
       </div>
-      <div ref={contentRef}>{children}</div>
+      <div ref={contentRef} className={fillsHeight ? 'flex flex-1 flex-col' : undefined}>
+        {children}
+      </div>
       <span role="status" className="sr-only">
         {isRefreshing ? dict.pullToRefresh.refreshing : ''}
       </span>

@@ -6,7 +6,7 @@ import type { PosterLoadPriority } from '@/entities/media';
 import { SaveButton } from '@/features/save-to-library';
 import type { CatalogPage } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { useInfiniteSentinel } from '../lib/use-infinite-sentinel';
+import { useInfiniteSentinel } from '@/shared/lib';
 import type { BrowseCategory } from '../model/browse-category';
 import { useCountLabel } from '../model/browse-labels';
 import type { BrowseState } from '../model/browse-state';

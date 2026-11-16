@@ -1,6 +1,5 @@
+import { CALENDAR_QUERY_KEY } from '@/entities/episode';
 import type { CalendarRangeQuery } from '@/shared/api';
-
-const CALENDAR_QUERY_KEY = ['calendar'] as const;
 
 interface CalendarKeyFields extends CalendarRangeQuery {
   viewerId: string | null;

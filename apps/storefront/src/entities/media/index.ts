@@ -2,6 +2,7 @@ export {
   fromHomeItem,
   fromTrendingMovie,
   fromTrendingShow,
+  type MediaEvent,
   type MediaSummary,
   type TrendingMedia,
 } from './model/media';

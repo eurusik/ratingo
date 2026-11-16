@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { Season } from '@/entities/episode';
-import { linkedSeason, seasonParam, withoutSeasonParam } from './season-link';
+import { isPickLink, linkedSeason, seasonParam, withoutSeasonParam } from './season-link';
 
 export interface EpisodesDialog {
   isOpen: boolean;
@@ -25,8 +25,11 @@ function forgetSeasonLink(): void {
   window.history.replaceState(window.history.state, '', withoutSeasonParam(window.location));
 }
 
-function deriveDialog(stored: EpisodesDialog, linked: number | undefined): EpisodesDialog {
+type SeasonLink = number | 'pick';
+
+function deriveDialog(stored: EpisodesDialog, linked: SeasonLink | undefined): EpisodesDialog {
   if (linked === undefined) return stored;
+  if (linked === 'pick') return { isOpen: true, isPicking: true, hasOpened: true };
   return { isOpen: true, isPicking: false, hasOpened: true, initialSeason: linked };
 }
 
@@ -41,10 +44,13 @@ export function useEpisodesDialog({ seasons, canTrack, isResolving }: EpisodesDi
   const [stored, setStored] = useState<EpisodesDialog>(CLOSED_DIALOG);
   const [consumedParam, setConsumedParam] = useState<string | null>(null);
   const param = seasonParam(search);
-  const requested = linkedSeason(
-    search,
-    seasons.map((season) => season.number),
-  );
+  const requested: SeasonLink | undefined =
+    isPickLink(search) && seasons.length > 0
+      ? 'pick'
+      : linkedSeason(
+          search,
+          seasons.map((season) => season.number),
+        );
   const isConsumed = param !== null && param === consumedParam;
   const linked = canTrack && !isConsumed ? requested : undefined;
   const dialog = deriveDialog(stored, linked);

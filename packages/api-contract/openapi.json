@@ -5099,10 +5099,7 @@
                       ]
                     },
                     "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
-                      }
+                      "$ref": "#/components/schemas/PaginatedSavedItemsResponseDto"
                     }
                   }
                 }
@@ -5206,10 +5203,7 @@
                       ]
                     },
                     "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
-                      }
+                      "$ref": "#/components/schemas/PaginatedSavedItemsResponseDto"
                     }
                   }
                 }
@@ -16145,6 +16139,12 @@
             "type": "string",
             "nullable": true
           },
+          "qualityScore": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100
+          },
           "card": {
             "$ref": "#/components/schemas/CardMetaDto"
           }
@@ -16174,6 +16174,38 @@
         "required": [
           "watched",
           "total"
+        ]
+      },
+      "LibraryContinuePointDto": {
+        "type": "object",
+        "properties": {
+          "season": {
+            "type": "number",
+            "description": "Season number to continue from",
+            "example": 2
+          },
+          "episode": {
+            "type": "number",
+            "description": "Episode number to continue from",
+            "example": 5
+          },
+          "episodeId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Next episode to watch"
+          },
+          "airDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "UTC air date of that episode"
+          }
+        },
+        "required": [
+          "season",
+          "episode",
+          "episodeId",
+          "airDate"
         ]
       },
       "MeUserMediaListItemDto": {
@@ -16268,11 +16300,11 @@
           },
           "continuePoint": {
             "nullable": true,
-            "description": "Next episode to continue watching (only for shows with progress)",
+            "description": "Next episode to watch (shows in the watching and caught-up lists)",
             "type": "object",
             "allOf": [
               {
-                "$ref": "#/components/schemas/ContinuePointDto"
+                "$ref": "#/components/schemas/LibraryContinuePointDto"
               }
             ]
           }
@@ -16823,6 +16855,54 @@
           "statuses"
         ]
       },
+      "SavedItemMediaSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "poster": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "qualityScore": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "slug",
+          "poster"
+        ]
+      },
       "SavedItemWithMediaResponseDto": {
         "type": "object",
         "properties": {
@@ -16854,21 +16934,7 @@
             "example": "2024-01-15T10:30:00.000Z"
           },
           "mediaSummary": {
-            "type": "object",
-            "example": {
-              "id": "123e4567-e89b-12d3-a456-426614174000",
-              "type": "movie",
-              "title": "Inception",
-              "slug": "inception-2010",
-              "poster": {
-                "w92": "...",
-                "w185": "...",
-                "w342": "...",
-                "w500": "...",
-                "w780": "...",
-                "original": "..."
-              }
-            }
+            "$ref": "#/components/schemas/SavedItemMediaSummaryDto"
           },
           "activeSubscriptionTriggers": {
             "example": [
@@ -16889,6 +16955,24 @@
           "createdAt",
           "mediaSummary",
           "activeSubscriptionTriggers"
+        ]
+      },
+      "PaginatedSavedItemsResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
         ]
       },
       "SubscribeDto": {

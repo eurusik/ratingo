@@ -72,9 +72,9 @@ describe('tracking hints', () => {
     const signedOut = { previousUserId: 'me', userId: null, hasHints: true };
     expect(hintsChangeForSession({ ...signedOut, hasRefreshToken: false })).toBe('forget');
     expect(hintsChangeForSession({ ...signedOut, hasRefreshToken: true })).toBe('keep');
-    expect(
-      hintsChangeForSession({ ...signedOut, hasRefreshToken: false, hasHints: false }),
-    ).toBe('keep');
+    expect(hintsChangeForSession({ ...signedOut, hasRefreshToken: false, hasHints: false })).toBe(
+      'keep',
+    );
   });
 
   it('starts empty hints on sign-in and on a switch to another user', () => {

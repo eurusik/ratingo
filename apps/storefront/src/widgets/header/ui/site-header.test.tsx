@@ -19,7 +19,12 @@ jest.mock('@/features/search', () => ({
   SearchShortcutKbd: () => <kbd>⌘K</kbd>,
 }));
 jest.mock('@/shared/api', () => ({
-  notificationsApi: { list: jest.fn(), markAsRead: jest.fn(), markAllAsRead: jest.fn() },
+  notificationsApi: {
+    list: jest.fn(),
+    unreadCount: jest.fn(),
+    markAsRead: jest.fn(),
+    markAllAsRead: jest.fn(),
+  },
 }));
 
 const uk = getDictionary('uk');
@@ -35,6 +40,7 @@ function mockSession(user: MeDto | null, isLoading = false) {
   jest.mocked(useAuth).mockReturnValue({
     user,
     isLoading,
+    isAuthenticated: user !== null,
     isAdmin: false,
     logout: jest.fn(),
   } as unknown as ReturnType<typeof useAuth>);
@@ -60,9 +66,7 @@ function renderHeader() {
 describe('SiteHeader', () => {
   beforeEach(() => {
     pathname = '/';
-    jest
-      .mocked(notificationsApi.list)
-      .mockResolvedValue({ data: [], unreadCount: 2, total: 2, hasMore: false });
+    jest.mocked(notificationsApi.unreadCount).mockResolvedValue(2);
   });
 
   afterEach(() => {
@@ -94,18 +98,18 @@ describe('SiteHeader', () => {
     expect(screen.getByRole('status')).toHaveTextContent('login');
   });
 
-  it('shows the bell with an unread dot and the profile for a signed-in user', async () => {
+  it('links the phone bell to notifications with the unread count', async () => {
     mockSession(USER);
     renderHeader();
 
     expect(
-      await screen.findByRole('button', { name: 'Сповіщення, непрочитаних: 2' }),
-    ).toBeInTheDocument();
+      await screen.findByRole('link', { name: 'Сповіщення, непрочитаних: 2' }),
+    ).toHaveAttribute('href', '/notifications');
     expect(screen.getByRole('button', { name: uk.header.profile })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: uk.header.signIn })).not.toBeInTheDocument();
   });
 
-  it('keeps the phone header clean outside Today and My', () => {
+  it('keeps the phone header clean outside Today', () => {
     mockSession(USER);
     pathname = '/browse';
     renderHeader();

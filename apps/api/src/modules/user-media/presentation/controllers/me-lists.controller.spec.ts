@@ -34,6 +34,7 @@ describe('MeListsController', () => {
     rating: 8.5,
     progress: { seasons: { 1: 10 } },
     progressSummary: null,
+    continuePoint: null,
     notes: 'Great movie!',
     createdAt: new Date('2023-01-01'),
     updatedAt: new Date('2023-01-02'),
@@ -87,6 +88,7 @@ describe('MeListsController', () => {
             rating: 8.5,
             progress: { seasons: { 1: 10 } },
             progressSummary: null,
+            continuePoint: null,
             notes: 'Great movie!',
             createdAt: mockUserMediaWithSummary.createdAt,
             updatedAt: mockUserMediaWithSummary.updatedAt,
@@ -521,6 +523,26 @@ describe('MeListsController', () => {
   });
 
   describe('mapItem', () => {
+    it('passes the next episode and quality score through', () => {
+      const mapItem = (controller as any).mapItem.bind(controller);
+      const continuePoint = {
+        season: 2,
+        episode: 4,
+        episodeId: 'episode-24',
+        airDate: '2026-11-14T20:00:00Z',
+      };
+
+      const result = mapItem({
+        ...mockUserMediaWithSummary,
+        state: 'watching',
+        mediaSummary: { ...mockMediaSummary, qualityScore: 84 },
+        continuePoint,
+      });
+
+      expect(result.continuePoint).toEqual(continuePoint);
+      expect(result.mediaSummary.qualityScore).toBe(84);
+    });
+
     it('should correctly map user media item', () => {
       // Access private method for testing
       const mapItem = (controller as any).mapItem.bind(controller);
@@ -535,6 +557,7 @@ describe('MeListsController', () => {
         rating: 8.5,
         progress: { seasons: { 1: 10 } },
         progressSummary: null,
+        continuePoint: null,
         notes: 'Great movie!',
         createdAt: mockUserMediaWithSummary.createdAt,
         updatedAt: mockUserMediaWithSummary.updatedAt,

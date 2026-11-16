@@ -4,6 +4,7 @@ import { Suspense, use, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
+import { BackToTop } from '@/shared/ui';
 import { findBrowseCategory, type BrowseCategory } from '../model/browse-category';
 import { useCountLabel } from '../model/browse-labels';
 import {
@@ -17,7 +18,6 @@ import type { FirstPageResult } from '../model/first-page';
 import { useBrowseNavigation } from '../model/use-browse-navigation';
 import { yearPresets, type YearPreset } from '../model/year-presets';
 import { ActiveFilters } from './active-filters';
-import { BackToTop } from './back-to-top';
 import { BrowseGridSkeleton } from './browse-grid';
 import { BrowseLayout } from './browse-layout';
 import { PoolNav, TypeSwitch } from './browse-nav';

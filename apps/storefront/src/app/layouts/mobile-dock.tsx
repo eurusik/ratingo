@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@heroui/react';
 import { CalendarDays, Compass, Library, Search, Star, type LucideIcon } from 'lucide-react';
+import { useUnreadNotificationCount } from '@/entities/notification';
 import { openSearch } from '@/features/search';
 import { NAV_ROUTES, isNavRouteActive, type NavSection } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
@@ -21,6 +22,7 @@ const FLOATING_SURFACE =
 export function MobileDock() {
   const pathname = usePathname() ?? '';
   const { dict } = useTranslation();
+  const hasUnread = useUnreadNotificationCount() > 0;
 
   return (
     <div className="flex items-center gap-2.5 px-4 [view-transition-name:mobile-dock] pr-[max(1rem,var(--safe-right))] pb-[calc(var(--safe-bottom)+0.75rem)] pl-[max(1rem,var(--safe-left))] select-none [-webkit-touch-callout:none]">
@@ -30,14 +32,24 @@ export function MobileDock() {
       >
         {NAV_ROUTES.map((route) => {
           const Icon = SECTION_ICONS[route.section];
+          const showsUnread = hasUnread && route.section === 'my';
           return (
             <Link
               key={route.section}
               href={route.href}
               aria-current={isNavRouteActive(route, pathname) ? 'page' : undefined}
+              aria-label={showsUnread ? dict.nav.myUnread : undefined}
               className="flex h-[calc(var(--spacing-tab-bar)-0.75rem)] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[11px] leading-tight font-medium text-muted no-underline transition-colors active:bg-default aria-[current=page]:bg-accent-soft aria-[current=page]:font-semibold aria-[current=page]:text-accent-soft-foreground focus-visible:outline-2 focus-visible:outline-focus"
             >
-              <Icon aria-hidden className="size-[22px]" />
+              <span className="relative flex">
+                <Icon aria-hidden className="size-[22px]" />
+                {showsUnread ? (
+                  <span
+                    aria-hidden
+                    className="absolute -end-1 -top-0.5 size-2.5 rounded-full border-2 border-surface bg-accent"
+                  />
+                ) : null}
+              </span>
               <span className="max-w-full truncate">{dict.nav[route.section]}</span>
             </Link>
           );

@@ -38,6 +38,8 @@ jest.mock('@ratingo/web-core/auth', () => ({
 }));
 jest.mock('@/shared/api', () => ({
   calendarApi: { getRange: jest.fn() },
+  fetchAllPages: jest.fn().mockResolvedValue([]),
+  subscriptionsApi: { list: jest.fn() },
   episodeProgressApi: { markWatched: jest.fn(), markUnwatched: jest.fn() },
   libraryApi: { startWatching: jest.fn() },
 }));

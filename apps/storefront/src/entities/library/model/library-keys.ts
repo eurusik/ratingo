@@ -13,3 +13,7 @@ export function ownScoreKey(mediaItemId: string) {
 export function mediaStateKey(mediaItemId: string) {
   return [...LIBRARY_QUERY_KEY, 'media-state', mediaItemId] as const;
 }
+
+export const LIBRARY_LISTS_KEY = [...LIBRARY_QUERY_KEY, 'lists'] as const;
+
+export const LIBRARY_COUNTS_KEY = [...LIBRARY_QUERY_KEY, 'counts'] as const;

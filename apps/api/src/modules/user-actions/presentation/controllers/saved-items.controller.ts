@@ -29,7 +29,7 @@ import { SAVED_ITEM_LIST } from '@/modules/user-actions/domain/entities/user-sav
 import {
   SaveItemDto,
   UnsaveItemDto,
-  SavedItemWithMediaResponseDto,
+  PaginatedSavedItemsResponseDto,
   MediaSaveStatusDto,
   SaveActionResultDto,
   UnsaveActionResultDto,
@@ -148,7 +148,7 @@ export class SavedItemsController {
    */
   @Get('for-later')
   @ApiOperation({ summary: 'List "for later" saved items (auth: Bearer)' })
-  @ApiOkResponse({ type: [SavedItemWithMediaResponseDto] })
+  @ApiOkResponse({ type: PaginatedSavedItemsResponseDto })
   async listForLater(@CurrentUser() user: { id: string }, @Query() query: SavedItemsListQueryDto) {
     const { total, data } = await this.savedItemsService.listWithMedia(
       user.id,
@@ -174,7 +174,7 @@ export class SavedItemsController {
    */
   @Get('considering')
   @ApiOperation({ summary: 'List "considering" saved items (auth: Bearer)' })
-  @ApiOkResponse({ type: [SavedItemWithMediaResponseDto] })
+  @ApiOkResponse({ type: PaginatedSavedItemsResponseDto })
   async listConsidering(
     @CurrentUser() user: { id: string },
     @Query() query: SavedItemsListQueryDto,

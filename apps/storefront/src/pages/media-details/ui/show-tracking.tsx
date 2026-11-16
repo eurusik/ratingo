@@ -19,6 +19,7 @@ import {
   type Episode,
   type Season,
 } from '@/entities/episode';
+import { ReminderToggle } from '@/features/episode-reminder';
 import { WantToWatchButton } from '@/features/save-to-library';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { preloadWhenIdle } from '@/shared/lib';
@@ -175,10 +176,12 @@ function CaughtUp({ upcoming }: { upcoming?: Episode }) {
 }
 
 function WatchingCard({
+  media,
   seasons,
   tracker,
   onOpen,
 }: {
+  media: ActionMedia;
   seasons: Season[];
   tracker: EpisodesTracker;
   onOpen: () => void;
@@ -226,13 +229,20 @@ function WatchingCard({
             <CaughtUp upcoming={upcoming} />
           )}
           {upcoming && upcomingDate ? (
-            <p className="flex items-center gap-2 border-t border-separator pt-2.5 text-[13px] text-muted">
+            <div className="flex items-center gap-2 border-t border-separator pt-1.5 text-[13px] text-muted">
               <CalendarClock aria-hidden className="size-4 shrink-0" />
-              {interpolate(dict.episodes.airs, {
-                code: episodeCode(upcoming, dict),
-                date: upcomingDate,
-              })}
-            </p>
+              <p className="min-w-0 flex-1">
+                {interpolate(dict.episodes.airs, {
+                  code: episodeCode(upcoming, dict),
+                  date: upcomingDate,
+                })}
+              </p>
+              <ReminderToggle
+                show={{ mediaItemId: media.mediaItemId, title: media.title }}
+                look="text"
+                className="-me-2"
+              />
+            </div>
           ) : null}
         </>
       )}
@@ -267,7 +277,12 @@ function EpisodeTracking({ media, showId, seasons }: TrackedShow) {
     <>
       {tracker.summary.watched > 0 ? (
         <div className="flex flex-col gap-2.5">
-          <WatchingCard seasons={seasons} tracker={tracker} onOpen={() => open(false)} />
+          <WatchingCard
+            media={media}
+            seasons={seasons}
+            tracker={tracker}
+            onOpen={() => open(false)}
+          />
           <div className="flex items-center gap-2.5 *:flex-1 md:*:flex-none">
             <RateAction media={media} look="myScore" />
             <DesktopShare media={media} />

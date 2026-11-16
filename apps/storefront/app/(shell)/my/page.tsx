@@ -1,11 +1,17 @@
 import type { Metadata } from 'next';
-import { MyPage } from '@/pages/my';
-import { DEFAULT_LOCALE, getDictionary } from '@/shared/i18n';
+import { getRequestLocale } from '@/app/entrypoint';
+import { MyPage, myMetadata } from '@/pages/my';
+import { MY_LIST_PARAM } from '@/shared/config';
 
-const dict = getDictionary(DEFAULT_LOCALE);
+export async function generateMetadata(): Promise<Metadata> {
+  return myMetadata(await getRequestLocale());
+}
 
-export const metadata: Metadata = { title: dict.nav.my };
-
-export default function MyRoute() {
-  return <MyPage locale={DEFAULT_LOCALE} />;
+export default async function MyRoute({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const list = (await searchParams)[MY_LIST_PARAM];
+  return <MyPage list={typeof list === 'string' ? list : undefined} />;
 }

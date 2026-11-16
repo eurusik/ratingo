@@ -67,6 +67,7 @@ describe('DrizzleUserMediaStateRepository', () => {
     const chain: any = {
       from: jest.fn().mockReturnThis(),
       innerJoin: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       limit: jest.fn().mockImplementation((n?: number) => {
@@ -284,6 +285,7 @@ describe('DrizzleUserMediaStateRepository', () => {
       const chain: any = {
         from: jest.fn().mockReturnThis(),
         innerJoin: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue([{ count: 3, moviesRated: 0 }]),
       };
       return { select: jest.fn().mockReturnValue(chain), chain };
