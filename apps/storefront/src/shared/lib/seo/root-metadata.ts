@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { BRAND_NAME } from '@/shared/config';
 import type { Dictionary, Locale } from '@/shared/i18n';
+import { buildOpenGraph } from './open-graph';
 import { DEFAULT_SHARE_IMAGE } from './share-image';
 
 export interface RootMetadataOptions {
@@ -11,11 +12,6 @@ export interface RootMetadataOptions {
 }
 
 const DATA_SOURCE_KEYWORDS = ['TMDB', 'Trakt', 'IMDb'];
-
-const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
-  uk: 'uk_UA',
-  en: 'en_US',
-};
 
 const INDEXED_ROBOTS: Metadata['robots'] = {
   index: true,
@@ -62,12 +58,7 @@ export function buildRootMetadata({
     creator: BRAND_NAME,
     publisher: BRAND_NAME,
     metadataBase: new URL(siteUrl),
-    openGraph: {
-      type: 'website',
-      locale: OPEN_GRAPH_LOCALES[locale],
-      siteName: BRAND_NAME,
-      images: [DEFAULT_SHARE_IMAGE],
-    },
+    openGraph: buildOpenGraph({ locale }),
     twitter: { card: 'summary_large_image', images: [DEFAULT_SHARE_IMAGE] },
     icons: SITE_ICONS,
     robots: indexingEnabled ? INDEXED_ROBOTS : HIDDEN_ROBOTS,
