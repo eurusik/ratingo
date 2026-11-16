@@ -1222,7 +1222,7 @@
       "unfollowed": "No longer following “{title}”",
       "unfollowFailed": "Couldn't change that. Try again.",
       "undo": "Undo",
-      "failed": "Couldn't load what you follow.",
+      "failed": "Couldn't load what you follow",
       "types": {
         "movie": "Movie",
         "show": "Show"

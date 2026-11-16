@@ -141,6 +141,11 @@ export function ReviewsBoard({
   const isListReady = status === 'success';
   const isViewerResolving = myReview.isResolving || isAuthResolving;
   const showsViewerSlot = isListReady && !isViewerResolving && !isDeletingMine && !myReview.isError;
+  const hasLoadError = status === 'error' || myReview.isError;
+  const retryFailedLoads = () => {
+    if (status === 'error') onRetry();
+    if (myReview.isError) myReview.retry();
+  };
 
   return (
     <ReviewsProvider value={actions}>
@@ -151,8 +156,7 @@ export function ReviewsBoard({
       >
         <div className="flex min-w-0 flex-col gap-4">
           {heading}
-          {status === 'error' ? <LoadError onRetry={onRetry} /> : null}
-          {myReview.isError ? <LoadError onRetry={myReview.retry} /> : null}
+          {hasLoadError ? <LoadError onRetry={retryFailedLoads} /> : null}
           {status === 'pending' ? <ReviewsSkeleton /> : null}
           {isListReady && isViewerResolving && !isDeletingMine ? <ResolvingViewerPrompt /> : null}
           {showsViewerSlot ? (

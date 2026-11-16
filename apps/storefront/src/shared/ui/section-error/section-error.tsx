@@ -33,7 +33,7 @@ export function SectionError({ title, onRetry, isRetrying, className = '' }: Sec
       </Card.Header>
       <Button
         variant="secondary"
-        className="phone-tap-target"
+        className="phone-tap-target text-foreground"
         isPending={isRetrying}
         onPress={onRetry}
       >

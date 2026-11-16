@@ -17,7 +17,7 @@ function BackButton() {
     <Button
       variant="secondary"
       size="lg"
-      className={ERROR_STATE_ACTION}
+      className={`${ERROR_STATE_ACTION} text-foreground`}
       onPress={() => window.history.back()}
     >
       <ArrowLeft aria-hidden="true" className="size-4" />
