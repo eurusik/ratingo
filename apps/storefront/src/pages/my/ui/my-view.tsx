@@ -14,7 +14,7 @@ import { useLibraryActions, type LibraryActions } from '../model/library-actions
 import { LibraryMovesProvider, useIsMovedOut } from '../model/library-moves';
 import { HistoryList } from './history-list';
 import { ListChips } from './list-chips';
-import { RowsSkeleton } from './list-states';
+import { ChipsSkeleton, LibraryListSkeleton } from './list-states';
 import { NewUserStart } from './new-user-start';
 import { PlanList } from './plan-list';
 import { ShelfPage } from './shelf-list';
@@ -117,7 +117,17 @@ function Library({ list }: { list: LibraryList }) {
 
 export function MyView({ list }: { list: LibraryList }) {
   return (
-    <LibraryShell current={list} header={<PhoneHeader />} skeleton={<RowsSkeleton />}>
+    <LibraryShell
+      current={list}
+      header={<PhoneHeader />}
+      skeleton={
+        <div className="flex flex-col gap-3">
+          <ChipsSkeleton />
+          <ListHeader list={list} />
+          <LibraryListSkeleton list={list} />
+        </div>
+      }
+    >
       <LibraryMovesProvider>
         <Library list={list} />
       </LibraryMovesProvider>

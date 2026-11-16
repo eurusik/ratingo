@@ -23,7 +23,7 @@ import {
 } from '../model/plan-order';
 import { CheckButton } from './check-button';
 import { LibraryRow } from './library-row';
-import { EmptyList, ListFailure, RowsSkeleton } from './list-states';
+import { EmptyList, LibraryListSkeleton, ListFailure } from './list-states';
 import { RowMenu, type RowMenuItem } from './row-menu';
 
 const EAGER_ROWS = 3;
@@ -148,7 +148,7 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
   );
   const reveal = useRevealedRows(rows, `${filter}:${sort}`);
 
-  if (plan.isPending) return <RowsSkeleton />;
+  if (plan.isPending) return <LibraryListSkeleton list="plan" />;
   if (plan.isError) return <ListFailure onRetry={() => void plan.refetch()} />;
 
   if (plan.data.length === 0) return <EmptyList {...dict.my.plan.empty} href={BROWSE_ROUTE} />;

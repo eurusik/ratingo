@@ -11,7 +11,7 @@ import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
 import { useShelfLists, useWatchingLists } from '../model/library-queries';
 import { splitWatching } from '../model/watching-sections';
-import { EmptyList, ListFailure, RowsSkeleton, SectionTitle } from './list-states';
+import { EmptyList, LibraryListSkeleton, ListFailure, SectionTitle } from './list-states';
 import { ShelfRows } from './shelf-list';
 import { FreshEpisodeRow, NextEpisodeRow, WaitingRowItem } from './watching-rows';
 
@@ -111,7 +111,7 @@ export function WatchingList({ actions }: { actions: LibraryActions }) {
   const isMovedOut = useIsMovedOut();
   const { watching, caughtUp, recent } = useWatchingLists();
 
-  if (watching.isPending || caughtUp.isPending) return <RowsSkeleton />;
+  if (watching.isPending || caughtUp.isPending) return <LibraryListSkeleton list="watching" />;
   if (watching.isError || caughtUp.isError) {
     return (
       <ListFailure

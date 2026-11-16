@@ -5,16 +5,33 @@ import Link from 'next/link';
 import { Button, Skeleton, buttonVariants } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import { useTranslation } from '@/shared/i18n';
-import { EMPTY_STATE_ACTION, EmptyState } from '@/shared/ui';
+import type { LibraryList } from '@/entities/library';
+import { EMPTY_STATE_ACTION, EmptyState, STICKY_TOOLBAR } from '@/shared/ui';
 import { ROW_FRAME } from './library-row';
 
-const SKELETON_ROWS = 5;
+const SKELETON_ROWS = 10;
 
-export function RowsSkeleton({ rows = SKELETON_ROWS }: { rows?: number }) {
-  const { dict } = useTranslation();
+type RowAction = 'check' | 'pill' | 'score' | 'none';
 
+const ACTION_SKELETON: Record<Exclude<RowAction, 'none'>, string> = {
+  check: 'size-11 rounded-full',
+  pill: 'h-11 w-20 rounded-full',
+  score: 'h-11 w-18 rounded-full',
+};
+
+interface RowsSkeletonProps {
+  rows?: number;
+  action?: RowAction;
+  hasMenu?: boolean;
+}
+
+export function RowsSkeleton({
+  rows = SKELETON_ROWS,
+  action = 'none',
+  hasMenu = true,
+}: RowsSkeletonProps) {
   return (
-    <ul aria-busy aria-label={dict.common.loading} className="flex flex-col">
+    <ul aria-hidden className="flex flex-col">
       {Array.from({ length: rows }, (_, index) => (
         <li
           key={index}
@@ -25,10 +42,96 @@ export function RowsSkeleton({ rows = SKELETON_ROWS }: { rows?: number }) {
             <Skeleton className="h-4 w-2/5 rounded-md" />
             <Skeleton className="h-3.5 w-3/5 rounded-md" />
           </span>
-          <Skeleton className="size-11 shrink-0 rounded-full" />
+          {action === 'none' ? null : (
+            <Skeleton className={cn('shrink-0', ACTION_SKELETON[action])} />
+          )}
+          {hasMenu ? (
+            <span className="flex size-11 shrink-0 items-center justify-center">
+              <Skeleton className="h-1.5 w-5 rounded-full" />
+            </span>
+          ) : null}
         </li>
       ))}
     </ul>
+  );
+}
+
+function PillsSkeleton({ widths }: { widths: readonly string[] }) {
+  return (
+    <span className="flex gap-2">
+      {widths.map((width) => (
+        <Skeleton key={width} className={cn('h-11 shrink-0 rounded-full', width)} />
+      ))}
+    </span>
+  );
+}
+
+function SectionTitleSkeleton() {
+  return (
+    <span className="flex pt-5 pb-1">
+      <Skeleton className="h-6 w-36 rounded-md" />
+    </span>
+  );
+}
+
+const TYPE_FILTER_WIDTHS = ['w-14', 'w-20', 'w-22'] as const;
+
+function ListSkeletonBody({ list }: { list: LibraryList }) {
+  if (list === 'plan') {
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <PillsSkeleton widths={TYPE_FILTER_WIDTHS} />
+          <span className="flex-1" />
+          <Skeleton className="h-11 w-20 rounded-full" />
+        </div>
+        <RowsSkeleton action="pill" />
+      </div>
+    );
+  }
+  if (list === 'history') {
+    return (
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-12 w-full rounded-full" />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Skeleton className="h-4 w-36 rounded-md md:hidden" />
+          <PillsSkeleton widths={TYPE_FILTER_WIDTHS} />
+        </div>
+        <div className="flex flex-col">
+          <SectionTitleSkeleton />
+          <RowsSkeleton action="score" />
+        </div>
+      </div>
+    );
+  }
+  if (list === 'paused' || list === 'dropped') {
+    return <RowsSkeleton action="pill" hasMenu={false} />;
+  }
+  return (
+    <div className="flex flex-col">
+      <Skeleton className="h-4 w-24 rounded-md md:hidden" />
+      <SectionTitleSkeleton />
+      <RowsSkeleton action="check" />
+    </div>
+  );
+}
+
+export function LibraryListSkeleton({ list }: { list: LibraryList }) {
+  const { dict } = useTranslation();
+
+  return (
+    <div role="status" aria-busy className="flex flex-col">
+      <span className="sr-only">{dict.common.loading}</span>
+      <ListSkeletonBody list={list} />
+    </div>
+  );
+}
+
+export function ChipsSkeleton() {
+  return (
+    <div className={cn(STICKY_TOOLBAR, 'md:hidden')}>
+      <PillsSkeleton widths={['w-28', 'w-44', 'w-32']} />
+    </div>
   );
 }
 

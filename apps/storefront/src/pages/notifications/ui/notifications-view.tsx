@@ -31,7 +31,16 @@ import {
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { SwipeableNotification } from './swipeable-notification';
 
-const SKELETON_ROWS = 4;
+const SKELETON_ROWS = 8;
+
+function FiltersSkeleton() {
+  return (
+    <div className={cn(STICKY_TOOLBAR, 'flex items-center gap-2')}>
+      <Skeleton className="h-11 w-36 shrink-0 rounded-full" />
+      <Skeleton className="h-11 w-14 shrink-0 rounded-full" />
+    </div>
+  );
+}
 
 function ListSkeleton() {
   const { dict } = useTranslation();
@@ -41,13 +50,18 @@ function ListSkeleton() {
       <Skeleton className="h-5 w-24 rounded-md" />
       <ul className="flex flex-col gap-2">
         {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-          <li key={index} className="flex min-h-24 items-center gap-3 rounded-2xl p-3">
+          <li
+            key={index}
+            className="flex min-h-24 items-center gap-3 rounded-2xl bg-surface p-3 md:gap-4 md:px-4"
+          >
             <Skeleton className="h-18 w-12 shrink-0 rounded-[9px]" />
             <span className="flex flex-1 flex-col gap-2">
               <Skeleton className="h-5 w-24 rounded-full" />
               <Skeleton className="h-4 w-4/5 rounded-md" />
               <Skeleton className="h-3.5 w-2/5 rounded-md" />
             </span>
+            <Skeleton className="size-11 shrink-0 rounded-full [@media(hover:hover)]:hidden" />
+            <Skeleton className="size-2.5 shrink-0 rounded-full" />
           </li>
         ))}
       </ul>
@@ -243,7 +257,12 @@ export function NotificationsView() {
     <LibraryShell
       current="notifications"
       header={<NotificationsHeader />}
-      skeleton={<ListSkeleton />}
+      skeleton={
+        <>
+          <FiltersSkeleton />
+          <ListSkeleton />
+        </>
+      }
     >
       <Notifications />
     </LibraryShell>

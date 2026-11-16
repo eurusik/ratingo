@@ -14,7 +14,13 @@ import { useRevealedRows } from '../model/revealed-rows';
 import { groupByMonth, matchesQuery, type HistoryRow } from '../model/history-months';
 import { TYPE_FILTERS, matchesType, type TypeFilter } from '../model/plan-order';
 import { LibraryRow } from './library-row';
-import { EmptyList, ListFailure, RowsSkeleton, SectionTitle } from './list-states';
+import {
+  EmptyList,
+  LibraryListSkeleton,
+  ListFailure,
+  RowsSkeleton,
+  SectionTitle,
+} from './list-states';
 import { RatingPicker } from './rating-picker';
 import { RowMenu } from './row-menu';
 
@@ -112,7 +118,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
   const history = useHistoryRows(filter, query);
   const { pages, search } = history;
 
-  if (pages.isPending) return <RowsSkeleton />;
+  if (pages.isPending) return <LibraryListSkeleton list="history" />;
   if (pages.isError) return <ListFailure onRetry={() => void pages.refetch()} />;
   if (filter === 'all' && !history.isSearching && history.rows.length === 0) {
     return <EmptyList {...dict.my.history.empty} href={IMPORT_ROUTE} />;
@@ -122,7 +128,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
   const months = groupByMonth(history.rows);
   const lastMonth = months.at(-1)?.key;
   const renderResults = () => {
-    if (history.isSearching && search.isPending) return <RowsSkeleton />;
+    if (history.isSearching && search.isPending) return <RowsSkeleton action="score" />;
     if (history.isSearching && search.isError) {
       return <ListFailure onRetry={() => void search.refetch()} />;
     }

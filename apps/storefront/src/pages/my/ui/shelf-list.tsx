@@ -9,7 +9,7 @@ import { useRevealedRows } from '../model/revealed-rows';
 import { EmptyState, ShowMore } from '@/shared/ui';
 import { titleOf } from '../model/library-title';
 import { LibraryRow } from './library-row';
-import { ListFailure, RowsSkeleton } from './list-states';
+import { LibraryListSkeleton, ListFailure } from './list-states';
 
 type ShelfList = 'paused' | 'dropped';
 
@@ -60,7 +60,7 @@ export function ShelfPage({ list, actions, isMovedOut }: ShelfPageProps) {
   const query = lists[list];
   const reveal = useRevealedRows(query.data ?? [], list);
 
-  if (query.isPending) return <RowsSkeleton />;
+  if (query.isPending) return <LibraryListSkeleton list={list} />;
   if (query.isError) return <ListFailure onRetry={() => void query.refetch()} />;
   if (reveal.shown.length === 0) {
     return <EmptyState title={dict.my.shelfEmpty[list]} text={dict.my.shelfEmpty.text} />;
