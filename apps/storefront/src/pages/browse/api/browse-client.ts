@@ -1,7 +1,7 @@
 import type { CatalogPage } from '@/shared/api';
 import type { BrowseCategorySlug } from '../model/browse-category';
 import { browseSearchParams, type BrowseState } from '../model/browse-state';
-import type { GridMedia } from '../model/grid-media';
+import type { GridMedia } from '@/entities/media';
 import { BROWSE_LIMIT_PARAM, BROWSE_OFFSET_PARAM } from './browse-paging';
 
 const BROWSE_API_ROUTE = '/api/browse';

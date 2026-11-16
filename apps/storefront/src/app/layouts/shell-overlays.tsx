@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { useTrackingHintsSession } from '@/entities/episode';
 import { useForgetLibraryOnUserChange } from '@/entities/library';
 import { SearchShortcut, useIsSearchOpen, type SearchTitle } from '@/features/search';
+import { WhatsNew } from '@/features/whats-new';
 import { hasPendingIntent, useAuthRequest } from '@/shared/auth';
 import { InstallPromptCapture } from '@/shared/lib';
 import {
@@ -53,6 +54,7 @@ export function ShellOverlays() {
       {hasIntentFromRedirect ? <PendingSaveReplay /> : null}
       {isWarm || hasOpenedSearch ? <SearchDialog renderActions={renderSearchActions} /> : null}
       {isWarm || hasOpenedAuth ? <AuthDialog /> : null}
+      <WhatsNew />
     </>
   );
 }

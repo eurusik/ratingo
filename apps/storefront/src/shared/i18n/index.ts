@@ -4,3 +4,5 @@ export { I18nProvider, useTranslation } from './i18n-context';
 export { LOCALE_COOKIE, toLocale } from './locale-cookie';
 export { useChangeLocale } from './use-change-locale';
 export { interpolate } from './interpolate';
+export { interpolateNodes } from './interpolate-nodes';
+export { formatCount, formatNumber } from './format-count';

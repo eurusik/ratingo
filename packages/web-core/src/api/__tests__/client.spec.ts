@@ -159,4 +159,42 @@ describe('API Client 204 Handling', () => {
 
     expect(result).toEqual(mockData);
   });
+
+  it('apiPatch returns undefined for 204 No Content', async () => {
+    jest.doMock('ky', () => {
+      const mockInstance = {
+        post: jest.fn(),
+        get: jest.fn(),
+        patch: jest.fn().mockResolvedValue({
+          status: 204,
+          json: jest.fn().mockRejectedValue(new Error('Should not be called')),
+        }),
+        put: jest.fn(),
+        delete: jest.fn(),
+      };
+
+      return Object.assign(
+        jest.fn(() => mockInstance),
+        { create: jest.fn(() => mockInstance) },
+      );
+    });
+
+    jest.doMock('../../auth/refresh', () => ({
+      refreshTokens: jest.fn(),
+      isRefreshEndpoint: jest.fn(() => false),
+    }));
+
+    jest.doMock('../../auth/token-storage', () => ({
+      tokenStorage: { clearTokens: jest.fn() },
+    }));
+
+    const { apiPatch, configureApiClient } = await import('../client');
+    configureApiClient({ baseUrl: 'http://localhost:3001' });
+    const result = await apiPatch<void>('auth/password', {
+      currentPassword: 'a',
+      newPassword: 'b',
+    });
+
+    expect(result).toBeUndefined();
+  });
 });

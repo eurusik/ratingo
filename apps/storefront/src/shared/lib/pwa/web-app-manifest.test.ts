@@ -1,4 +1,8 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { APP_THEME_COLOR, buildWebAppManifest } from './web-app-manifest';
+
+const PUBLIC_DIR = join(__dirname, '../../../../public');
 
 describe('buildWebAppManifest', () => {
   const manifest = buildWebAppManifest();
@@ -20,6 +24,15 @@ describe('buildWebAppManifest', () => {
     expect(manifest.icons).toEqual(
       expect.arrayContaining([expect.objectContaining({ purpose: 'maskable' })]),
     );
+  });
+
+  it('only lists icons that exist in public', () => {
+    const iconPaths = [
+      ...(manifest.icons ?? []),
+      ...(manifest.shortcuts ?? []).flatMap((shortcut) => shortcut.icons ?? []),
+    ].map((icon) => icon.src);
+
+    expect(iconPaths.filter((path) => !existsSync(join(PUBLIC_DIR, path)))).toEqual([]);
   });
 });
 

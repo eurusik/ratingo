@@ -1,66 +1,62 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Badge, Button, Popover } from '@heroui/react';
 import { Bell } from 'lucide-react';
+import { useUnreadNotificationCount } from '@/entities/notification';
+import { NOTIFICATIONS_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
-import { useMediaQuery } from '@/shared/lib';
-import { Sheet } from '@/shared/ui';
-import { useLatestNotifications } from '../model/notifications';
 import { NotificationPanel } from './notification-panel';
+
+const MAX_SHOWN_COUNT = 99;
+
+function BellIcon({ unreadCount }: { unreadCount: number }) {
+  return (
+    <Badge.Anchor>
+      <Bell aria-hidden className="size-5" />
+      {unreadCount > 0 ? (
+        <Badge color="accent" size="sm" className="tabular-nums">
+          {unreadCount > MAX_SHOWN_COUNT ? `${MAX_SHOWN_COUNT}+` : unreadCount}
+        </Badge>
+      ) : null}
+    </Badge.Anchor>
+  );
+}
 
 export function NotificationBell() {
   const { dict } = useTranslation();
-  const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
   const [isOpen, setIsOpen] = useState(false);
-  const { data } = useLatestNotifications();
-  const unreadCount = data?.unreadCount ?? 0;
-  const hasUnread = unreadCount > 0;
-  const close = () => setIsOpen(false);
-
-  const trigger = (
-    <Button
-      isIconOnly
-      variant="ghost"
-      className="size-11 rounded-full"
-      aria-label={
-        hasUnread
-          ? interpolate(dict.notifications.unread, { count: unreadCount })
-          : dict.notifications.title
-      }
-    >
-      <Badge.Anchor>
-        <Bell aria-hidden className="size-5" />
-        {hasUnread ? <Badge color="accent" size="sm" /> : null}
-      </Badge.Anchor>
-    </Button>
-  );
-
-  if (!isDesktop) {
-    return (
-      <Sheet
-        trigger={trigger}
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        title={dict.notifications.title}
-      >
-        <NotificationPanel onNavigate={close} />
-      </Sheet>
-    );
-  }
+  const unreadCount = useUnreadNotificationCount();
+  const label =
+    unreadCount > 0
+      ? interpolate(dict.notifications.unread, { count: unreadCount })
+      : dict.notifications.title;
 
   return (
-    <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-      {trigger}
-      <Popover.Content placement="bottom end" className="w-80">
-        <Popover.Dialog>
-          <Popover.Heading className="text-base font-bold">
-            {dict.notifications.title}
-          </Popover.Heading>
-          <NotificationPanel onNavigate={close} />
-        </Popover.Dialog>
-      </Popover.Content>
-    </Popover>
+    <>
+      <Link
+        href={NOTIFICATIONS_ROUTE}
+        aria-label={label}
+        className="inline-flex size-11 items-center justify-center rounded-full text-foreground outline-none hover:bg-default focus-visible:outline-2 focus-visible:outline-focus md:hidden"
+      >
+        <BellIcon unreadCount={unreadCount} />
+      </Link>
+      <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
+        <Button
+          isIconOnly
+          variant="ghost"
+          className="hidden size-11 rounded-full md:inline-flex"
+          aria-label={label}
+        >
+          <BellIcon unreadCount={unreadCount} />
+        </Button>
+        <Popover.Content placement="bottom end" className="w-96">
+          <Popover.Dialog>
+            <NotificationPanel unreadCount={unreadCount} onNavigate={() => setIsOpen(false)} />
+          </Popover.Dialog>
+        </Popover.Content>
+      </Popover>
+    </>
   );
 }

@@ -1,6 +1,4 @@
 import Script from 'next/script';
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const GOOGLE_TAG_URL = 'https://www.googletagmanager.com/gtag/js';
 
@@ -32,11 +30,5 @@ function GoogleAnalytics({ measurementId }: { measurementId: string }) {
 }
 
 export function SiteAnalytics({ googleMeasurementId }: SiteAnalyticsProps) {
-  return (
-    <>
-      <Analytics />
-      <SpeedInsights />
-      {googleMeasurementId ? <GoogleAnalytics measurementId={googleMeasurementId} /> : null}
-    </>
-  );
+  return googleMeasurementId ? <GoogleAnalytics measurementId={googleMeasurementId} /> : null;
 }

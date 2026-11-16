@@ -29,6 +29,7 @@ export interface SavedItemWithMedia extends UserSavedItem {
     slug: string;
     poster: ImageData | null;
     releaseDate?: Date | null;
+    qualityScore: number | null;
   };
   /**
    * Active subscription triggers for this media item.

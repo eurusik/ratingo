@@ -6,8 +6,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { episodeProgressApi, type ShowProgress } from '@/shared/api';
 import { applyWatchChange, watchedEpisodeIds, type WatchChange } from './progress';
 import type { Season } from './season';
-
-const EPISODE_PROGRESS_QUERY_KEY = ['episode-progress'] as const;
+import { EPISODE_PROGRESS_QUERY_KEY } from './watch-cache';
 
 function showProgressKey(userId: string | null, showId: string) {
   return [...EPISODE_PROGRESS_QUERY_KEY, userId, showId] as const;
@@ -52,18 +51,24 @@ function sendWatchChange({ episodeIds, watched }: WatchChange): Promise<void> {
     : episodeProgressApi.markManyUnwatched(episodeIds);
 }
 
+export function setEpisodeWatched(episodeId: string, watched: boolean): Promise<void> {
+  return sendWatchChange({ episodeIds: [episodeId], watched });
+}
+
 interface WatchedShow {
   showId: string;
-  seasons: readonly Season[];
+  seasons?: readonly Season[];
   onSynced?: () => void;
   onFailed?: () => void;
 }
 
 type SetWatched = (change: WatchChange) => void;
 
+const NO_SEASONS: readonly Season[] = [];
+
 export function useSetEpisodesWatched({
   showId,
-  seasons,
+  seasons = NO_SEASONS,
   onSynced,
   onFailed,
 }: WatchedShow): SetWatched {

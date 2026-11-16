@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { BRAND_NAME } from '@/shared/config';
 import type { Dictionary, Locale } from '@/shared/i18n';
+import { buildOpenGraph } from './open-graph';
+import { DEFAULT_SHARE_IMAGE } from './share-image';
 
 export interface RootMetadataOptions {
   locale: Locale;
@@ -10,11 +12,6 @@ export interface RootMetadataOptions {
 }
 
 const DATA_SOURCE_KEYWORDS = ['TMDB', 'Trakt', 'IMDb'];
-
-const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
-  uk: 'uk_UA',
-  en: 'en_US',
-};
 
 const INDEXED_ROBOTS: Metadata['robots'] = {
   index: true,
@@ -29,6 +26,14 @@ const INDEXED_ROBOTS: Metadata['robots'] = {
 };
 
 const HIDDEN_ROBOTS: Metadata['robots'] = { index: false, follow: false };
+
+const SITE_ICONS = {
+  icon: [
+    { url: '/favicon.ico', sizes: '32x32' },
+    { url: '/icons/favicon.svg', type: 'image/svg+xml' },
+  ],
+  apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+} satisfies Metadata['icons'];
 
 export function buildRootMetadata({
   locale,
@@ -53,12 +58,9 @@ export function buildRootMetadata({
     creator: BRAND_NAME,
     publisher: BRAND_NAME,
     metadataBase: new URL(siteUrl),
-    openGraph: {
-      type: 'website',
-      locale: OPEN_GRAPH_LOCALES[locale],
-      siteName: BRAND_NAME,
-    },
-    twitter: { card: 'summary_large_image' },
+    openGraph: buildOpenGraph({ locale }),
+    twitter: { card: 'summary_large_image', images: [DEFAULT_SHARE_IMAGE] },
+    icons: SITE_ICONS,
     robots: indexingEnabled ? INDEXED_ROBOTS : HIDDEN_ROBOTS,
     appleWebApp: { capable: true, title: BRAND_NAME, statusBarStyle: 'black-translucent' },
     formatDetection: { telephone: false },

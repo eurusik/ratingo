@@ -120,22 +120,33 @@ describe('CatalogShowsController', () => {
       );
     });
 
-    it('passes userId to repository for personalized=true with authenticated user', async () => {
+    it('passes the viewer and personalized filter for personalized=true', async () => {
       await controller.getCalendar('2024-01-01', 7, 'true', { id: 'user-abc' });
 
       expect(showRepository.findEpisodesByDateRange).toHaveBeenCalledWith(
         expect.any(Date),
         expect.any(Date),
-        { userId: 'user-abc' },
+        { viewerId: 'user-abc', personalized: true },
       );
     });
 
-    it('does not filter by user when personalized is not set', async () => {
+    it('passes the viewer without filtering when personalized is not set', async () => {
       await controller.getCalendar('2024-01-01', 7, undefined, { id: 'user-abc' });
 
       expect(showRepository.findEpisodesByDateRange).toHaveBeenCalledWith(
         expect.any(Date),
         expect.any(Date),
+        { viewerId: 'user-abc', personalized: false },
+      );
+    });
+
+    it('passes no viewer for anonymous requests', async () => {
+      await controller.getCalendar('2024-01-01', 7, undefined, null);
+
+      expect(showRepository.findEpisodesByDateRange).toHaveBeenCalledWith(
+        expect.any(Date),
+        expect.any(Date),
+        {},
       );
     });
 

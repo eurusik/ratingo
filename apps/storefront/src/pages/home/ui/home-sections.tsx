@@ -1,23 +1,19 @@
-import {
-  loadHero,
-  loadNewEpisodes,
-  loadNewOnDigital,
-  loadNowPlaying,
-  loadTrending,
-} from '../api/load-home-feed';
-import { buildHomeHero, toReleaseRail } from '../model/home-feed';
+import type { TrendingMedia } from '@/entities/media';
+import type { HomeItem } from '@/shared/api';
+import type { TrendingLists } from '../api/load-home-feed';
+import { buildHomeHero, toReleaseRail, type EpisodeRelease, type Loaded } from '../model/home-feed';
 import { HeroBanner } from './hero-banner';
+import { HomeSectionError } from './home-section-error';
 import { NewEpisodes } from './new-episodes';
 import { NewReleases } from './new-releases';
 import { TopTen } from './top-ten';
-import { TopTenError } from './top-ten-error';
 import { TopThree } from './top-three';
 
-export async function HeroSection() {
-  const hero = await loadHero();
-  if (!hero.ok) return null;
+export async function HeroSection({ hero }: { hero: Promise<Loaded<HomeItem[]>> }) {
+  const loaded = await hero;
+  if (!loaded.ok) return <HomeSectionError section="picks" />;
 
-  const { lead, picks, firstPickRank } = buildHomeHero(hero.data);
+  const { lead, picks, firstPickRank } = buildHomeHero(loaded.data);
 
   return (
     <>
@@ -27,26 +23,38 @@ export async function HeroSection() {
   );
 }
 
-export async function TopTenSection() {
-  const trending = await loadTrending();
-  if (!trending.ok) return <TopTenError />;
+export async function TopTenSection({ trending }: { trending: Promise<Loaded<TrendingLists>> }) {
+  const loaded = await trending;
+  if (!loaded.ok) return <HomeSectionError section="topTen" />;
 
-  return <TopTen shows={trending.data.shows} movies={trending.data.movies} />;
+  return <TopTen shows={loaded.data.shows} movies={loaded.data.movies} />;
 }
 
-export async function NewEpisodesSection() {
-  const releases = await loadNewEpisodes();
-  return releases.ok ? <NewEpisodes releases={releases.data} /> : null;
+export async function NewEpisodesSection({
+  releases,
+}: {
+  releases: Promise<Loaded<EpisodeRelease[]>>;
+}) {
+  const loaded = await releases;
+  if (!loaded.ok) return <HomeSectionError section="newEpisodes" />;
+
+  return <NewEpisodes releases={loaded.data} />;
 }
 
-export async function NewReleasesSection() {
-  const [nowPlaying, newOnDigital] = await Promise.all([loadNowPlaying(), loadNewOnDigital()]);
+interface NewReleasesSectionProps {
+  nowPlaying: Promise<Loaded<TrendingMedia[]>>;
+  newOnDigital: Promise<Loaded<TrendingMedia[]>>;
+}
+
+export async function NewReleasesSection({ nowPlaying, newOnDigital }: NewReleasesSectionProps) {
+  const [cinemas, streaming] = await Promise.all([nowPlaying, newOnDigital]);
+  if (!cinemas.ok && !streaming.ok) return <HomeSectionError section="newReleases" />;
 
   return (
     <NewReleases
       lists={{
-        nowPlaying: nowPlaying.ok ? toReleaseRail(nowPlaying.data) : [],
-        newOnDigital: newOnDigital.ok ? toReleaseRail(newOnDigital.data) : [],
+        nowPlaying: cinemas.ok ? toReleaseRail(cinemas.data) : [],
+        newOnDigital: streaming.ok ? toReleaseRail(streaming.data) : [],
       }}
     />
   );

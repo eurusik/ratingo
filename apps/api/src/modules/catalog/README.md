@@ -92,12 +92,12 @@ Every list and detail endpoint follows the same pipeline:
 DB Query → User State Enrichment → Card Metadata → Verdict → Response
 ```
 
-| Step | Service | What it does |
-|------|---------|-------------|
-| 1. Query | Repository | Fetch raw data with joins, filters, pagination |
-| 2. User State | CatalogUserStateEnricher | Batch-fetch user ratings/watchlist (no N+1) |
-| 3. Cards | CardEnrichmentService | Add badges (trending, new, hit), continue points |
-| 4. Verdict | VerdictEngine | Quality/rating/popularity recommendations (details only) |
+| Step          | Service                  | What it does                                             |
+| ------------- | ------------------------ | -------------------------------------------------------- |
+| 1. Query      | Repository               | Fetch raw data with joins, filters, pagination           |
+| 2. User State | CatalogUserStateEnricher | Batch-fetch user ratings/watchlist (no N+1)              |
+| 3. Cards      | CardEnrichmentService    | Add badges (trending, new, hit), continue points         |
+| 4. Verdict    | VerdictEngine            | Quality/rating/popularity recommendations (details only) |
 
 ### Query Object Pattern
 
@@ -131,19 +131,19 @@ The UI can display a fallback or loading state instead of empty results.
 
 Media slugs must be unique per type. The module handles collisions at multiple levels:
 
-| Level | Strategy |
-|-------|----------|
-| Generation | `generateSlug(title, tmdbId)` via slugify (Ukrainian locale) |
-| DB Constraint | `UNIQUE(type, slug)` — catches race conditions |
-| Retry | On conflict, appends tmdbId suffix: `fight-club` → `fight-club-550` |
-| Fallback | Empty/null title → `tmdb-{tmdbId}` |
+| Level         | Strategy                                                            |
+| ------------- | ------------------------------------------------------------------- |
+| Generation    | `generateSlug(title, tmdbId)` via slugify (Ukrainian locale)        |
+| DB Constraint | `UNIQUE(type, slug)` — catches race conditions                      |
+| Retry         | On conflict, appends tmdbId suffix: `fight-club` → `fight-club-550` |
+| Fallback      | Empty/null title → `tmdb-{tmdbId}`                                  |
 
 ### Stats Preservation
 
 External APIs sometimes return 0 for watchers during outages. The module detects this and preserves the existing DB value:
 
 ```typescript
-preserveTotalWatchers(value) // 0 → keeps existing, >0 → updates
+preserveTotalWatchers(value); // 0 → keeps existing, >0 → updates
 ```
 
 ## Module Structure
@@ -290,67 +290,67 @@ import {
 
 ### Consumer Modules
 
-| Module | Uses |
-|--------|------|
-| `ingestion` | `IMediaRepository` — upsert media, scoring, snapshots |
-| `home` | `HERO_REPOSITORY` — hero block, watching-now |
-| `stats` | `IMediaRepository` — trending sync, watchers fix |
-| `catalog-policy` | Indirectly via evaluations table |
+| Module           | Uses                                                  |
+| ---------------- | ----------------------------------------------------- |
+| `ingestion`      | `IMediaRepository` — upsert media, scoring, snapshots |
+| `home`           | `HERO_REPOSITORY` — hero block, watching-now          |
+| `stats`          | `IMediaRepository` — trending sync, watchers fix      |
+| `catalog-policy` | Indirectly via evaluations table                      |
 
 ## Endpoints
 
 ### Movies
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/catalog/movies/trending` | Trending movies (freshness + quality gate) |
-| `GET` | `/catalog/movies/popular` | Popular movies (classics, no freshness gate) |
-| `GET` | `/catalog/movies/now-playing` | Currently in theaters |
-| `GET` | `/catalog/movies/new-releases` | Recent theatrical releases (`daysBack` param) |
-| `GET` | `/catalog/movies/new-on-digital` | Recent digital releases (`daysBack` param) |
-| `GET` | `/catalog/movies/:slug` | Full movie details with verdict |
+| Method | Path                             | Description                                   |
+| ------ | -------------------------------- | --------------------------------------------- |
+| `GET`  | `/catalog/movies/trending`       | Trending movies (freshness + quality gate)    |
+| `GET`  | `/catalog/movies/popular`        | Popular movies (classics, no freshness gate)  |
+| `GET`  | `/catalog/movies/now-playing`    | Currently in theaters                         |
+| `GET`  | `/catalog/movies/new-releases`   | Recent theatrical releases (`daysBack` param) |
+| `GET`  | `/catalog/movies/new-on-digital` | Recent digital releases (`daysBack` param)    |
+| `GET`  | `/catalog/movies/:slug`          | Full movie details with verdict               |
 
 ### Shows
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/catalog/shows/trending` | Trending shows |
-| `GET` | `/catalog/shows/popular` | Popular shows (classics) |
-| `GET` | `/catalog/shows/new-episodes` | Shows with recent episodes (`days`, `limit`) |
-| `GET` | `/catalog/shows/calendar` | Episode calendar (`startDate`, `days`) |
-| `GET` | `/catalog/shows/:slug` | Full show details with seasons |
+| Method | Path                          | Description                                  |
+| ------ | ----------------------------- | -------------------------------------------- |
+| `GET`  | `/catalog/shows/trending`     | Trending shows                               |
+| `GET`  | `/catalog/shows/popular`      | Popular shows (classics)                     |
+| `GET`  | `/catalog/shows/new-episodes` | Shows with recent episodes (`days`, `limit`) |
+| `GET`  | `/catalog/shows/calendar`     | Episode calendar (`startDate`, `days`)       |
+| `GET`  | `/catalog/shows/:slug`        | Full show details with seasons               |
 
 ### Search & Import
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/catalog/search` | Hybrid search (`query` param) |
+| Method | Path                            | Description                           |
+| ------ | ------------------------------- | ------------------------------------- |
+| `GET`  | `/catalog/search`               | Hybrid search (`query` param)         |
 | `POST` | `/catalog/import/movie/:tmdbId` | Import movie from TMDB (202 Accepted) |
-| `POST` | `/catalog/import/show/:tmdbId` | Import show from TMDB (202 Accepted) |
-| `GET` | `/catalog/import/status/:jobId` | Poll import job status |
+| `POST` | `/catalog/import/show/:tmdbId`  | Import show from TMDB (202 Accepted)  |
+| `GET`  | `/catalog/import/status/:jobId` | Poll import job status                |
 
 ### Providers
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/catalog/providers` | Available streaming providers |
+| Method | Path                 | Description                   |
+| ------ | -------------------- | ----------------------------- |
+| `GET`  | `/catalog/providers` | Available streaming providers |
 
 ### Common Query Parameters
 
-| Param | Type | Description |
-|-------|------|-------------|
-| `limit` | number | Results per page (default: 20, max: 50) |
-| `offset` | number | Pagination offset |
-| `genres` | string | Comma-separated genre IDs |
-| `sort` | enum | `trending` \| `popularity` \| `ratingo` \| `releaseDate` \| `tmdbPopularity` |
-| `order` | enum | `asc` \| `desc` |
-| `minRatingo` | number | Minimum Ratingo Score filter |
-| `minQuality` | number | Minimum Quality Score filter (the score behind the card verdict) |
-| `year` | number | Exact release year |
-| `yearFrom` | number | Release year range start |
-| `yearTo` | number | Release year range end |
-| `voteSource` | enum | `tmdb` \| `trakt` (for `minVotes`) |
-| `daysBack` | number | Time window (new releases/digital only) |
+| Param        | Type   | Description                                                                  |
+| ------------ | ------ | ---------------------------------------------------------------------------- |
+| `limit`      | number | Results per page (default: 20, max: 50)                                      |
+| `offset`     | number | Pagination offset                                                            |
+| `genres`     | string | Comma-separated genre IDs                                                    |
+| `sort`       | enum   | `trending` \| `popularity` \| `ratingo` \| `releaseDate` \| `tmdbPopularity` |
+| `order`      | enum   | `asc` \| `desc`                                                              |
+| `minRatingo` | number | Minimum Ratingo Score filter                                                 |
+| `minQuality` | number | Minimum Quality Score filter (the score behind the card verdict)             |
+| `year`       | number | Exact release year                                                           |
+| `yearFrom`   | number | Release year range start                                                     |
+| `yearTo`     | number | Release year range end                                                       |
+| `voteSource` | enum   | `tmdb` \| `trakt` (for `minVotes`)                                           |
+| `daysBack`   | number | Time window (new releases/digital only)                                      |
 
 All list endpoints support `OptionalJwtAuthGuard` — authenticated users get enriched responses with personal state (ratings, watchlist).
 
@@ -369,12 +369,12 @@ npm test -- src/modules/catalog/presentation
 
 ### Test Coverage
 
-| Layer | Test Files | Focus |
-|-------|-----------|-------|
-| Domain | `slug.utils.spec.ts`, `catalog-query.constants.spec.ts` | Pure functions, property-based tests |
-| Application | `*-service.spec.ts` (5 files) | Service orchestration, edge cases |
+| Layer          | Test Files                                                    | Focus                                    |
+| -------------- | ------------------------------------------------------------- | ---------------------------------------- |
+| Domain         | `slug.utils.spec.ts`, `catalog-query.constants.spec.ts`       | Pure functions, property-based tests     |
+| Application    | `*-service.spec.ts` (5 files)                                 | Service orchestration, edge cases        |
 | Infrastructure | `*-repository.spec.ts`, `*-query.spec.ts`, `*-mapper.spec.ts` | SQL correctness, mapping, error handling |
-| Presentation | `*-controller.spec.ts`, `*-filter.spec.ts`, `*-utils.spec.ts` | HTTP integration, validation, pagination |
+| Presentation   | `*-controller.spec.ts`, `*-filter.spec.ts`, `*-utils.spec.ts` | HTTP integration, validation, pagination |
 
 ### Key Test Patterns
 
@@ -387,16 +387,16 @@ npm test -- src/modules/catalog/presentation
 
 ### With Other Modules
 
-| Module | Direction | Integration |
-|--------|-----------|-------------|
-| `tmdb` | catalog → tmdb | `TmdbMetadataAdapter` wraps `TmdbAdapter` for search/import |
-| `ingestion` | ingestion → catalog | Uses `IMediaRepository` for upsert, scoring, sync |
-| `home` | home → catalog | Uses `HeroRepositoryAdapter` for homepage blocks |
-| `stats` | stats → catalog | Uses `IMediaRepository` for trending sync |
-| `catalog-policy` | catalog ← policy | Evaluations filter trending/popular queries |
-| `user-media` | catalog → user-media | `UserStateAdapter` fetches personal state |
-| `shared/cards` | catalog → cards | Card metadata (badges, continue points) |
-| `shared/verdict` | catalog → verdict | Quality/popularity recommendations |
+| Module           | Direction            | Integration                                                 |
+| ---------------- | -------------------- | ----------------------------------------------------------- |
+| `tmdb`           | catalog → tmdb       | `TmdbMetadataAdapter` wraps `TmdbAdapter` for search/import |
+| `ingestion`      | ingestion → catalog  | Uses `IMediaRepository` for upsert, scoring, sync           |
+| `home`           | home → catalog       | Uses `HeroRepositoryAdapter` for homepage blocks            |
+| `stats`          | stats → catalog      | Uses `IMediaRepository` for trending sync                   |
+| `catalog-policy` | catalog ← policy     | Evaluations filter trending/popular queries                 |
+| `user-media`     | catalog → user-media | `UserStateAdapter` fetches personal state                   |
+| `shared/cards`   | catalog → cards      | Card metadata (badges, continue points)                     |
+| `shared/verdict` | catalog → verdict    | Quality/popularity recommendations                          |
 
 ## Constraints
 

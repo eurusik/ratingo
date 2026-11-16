@@ -7,12 +7,15 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { cn } from '@ratingo/web-core/lib';
 import { openAuth } from '@/shared/auth';
 import {
+  CALENDAR_ROUTE,
   HOME_ROUTE,
   MY_ROUTE,
   NAV_ROUTES,
+  NOTIFICATIONS_ROUTE,
   isBrowsePath,
   isMediaDetailsPath,
   isNavRouteActive,
+  isSettingsPath,
 } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { BrandMark, Container } from '@/shared/ui';
@@ -23,7 +26,18 @@ import { SearchTrigger } from './search-trigger';
 const LINK_CLASS =
   'inline-flex min-h-tap items-center rounded-full px-3.5 text-muted no-underline transition-colors hover:text-foreground aria-[current=page]:bg-accent-soft aria-[current=page]:font-semibold aria-[current=page]:text-accent-soft-foreground focus-visible:outline-2 focus-visible:outline-focus';
 
-const PHONE_ACCOUNT_ROUTES = new Set([HOME_ROUTE, MY_ROUTE]);
+const PHONE_ACCOUNT_ROUTES = new Set([HOME_ROUTE]);
+
+const OWN_PHONE_HEADER_ROUTES = new Set([CALENDAR_ROUTE, MY_ROUTE, NOTIFICATIONS_ROUTE]);
+
+function hasOwnPhoneHeader(pathname: string): boolean {
+  return (
+    isMediaDetailsPath(pathname) ||
+    isBrowsePath(pathname) ||
+    isSettingsPath(pathname) ||
+    OWN_PHONE_HEADER_ROUTES.has(pathname)
+  );
+}
 
 function AccountControls() {
   const { dict } = useTranslation();
@@ -58,7 +72,7 @@ export function SiteHeader() {
   const pathname = usePathname() ?? '';
   const { dict } = useTranslation();
   const showsAccountOnPhone = PHONE_ACCOUNT_ROUTES.has(pathname);
-  const hidesOnPhone = isMediaDetailsPath(pathname) || isBrowsePath(pathname);
+  const hidesOnPhone = hasOwnPhoneHeader(pathname);
 
   return (
     <header

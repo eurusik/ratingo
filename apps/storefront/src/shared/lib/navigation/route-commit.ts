@@ -17,6 +17,10 @@ export function hasPreviousRoute(): boolean {
   return visitedPaths.length > 1;
 }
 
+export function previousRoutePath(): string | undefined {
+  return visitedPaths.at(-2);
+}
+
 export function waitForRouteCommit(): Promise<void> {
   return new Promise((resolve) => {
     const listener = () => {

@@ -3093,8 +3093,18 @@ export interface components {
             data: components["schemas"]["NewEpisodeDto"][];
         };
         CalendarEpisodeDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            /** @example 0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90 */
+            episodeId: string;
+            /**
+             * @description Media item ID of the show.
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
             showId: string;
+            /**
+             * @description Show record ID used by episode progress endpoints.
+             * @example 7c9e6679-7425-40de-944b-e07fc1f90ae7
+             */
+            showRecordId: string;
             /** @example arcane */
             showSlug: string;
             /** @example Arcane */
@@ -3115,6 +3125,31 @@ export interface components {
             runtime?: number | null;
             /** @example http://image.com/1.jpg */
             stillPath?: string | null;
+            /**
+             * @description Number of episodes in the season, when known.
+             * @example 8
+             */
+            seasonEpisodeCount: number | null;
+            /**
+             * @description TMDB popularity of the show.
+             * @example 312.4
+             */
+            showPopularity: number;
+            /**
+             * @description The viewer is watching this show.
+             * @example false
+             */
+            isTracked: boolean;
+            /**
+             * @description The viewer saved this show to watch later.
+             * @example false
+             */
+            isSaved: boolean;
+            /**
+             * @description The viewer marked this episode as watched.
+             * @example false
+             */
+            isWatched: boolean;
         };
         CalendarDayDto: {
             /** @example 2024-11-09 */
@@ -3127,7 +3162,7 @@ export interface components {
             /** @example 2024-11-08T00:00:00.000Z */
             endDate: string;
             days: components["schemas"]["CalendarDayDto"][];
-            /** @description Number of shows the user is currently watching. Only present when personalized=true. */
+            /** @description Number of shows the user is currently watching (saved shows are not counted). Only present when personalized=true. */
             watchingShowsCount?: number;
         };
         EpisodeDto: {
@@ -3558,6 +3593,7 @@ export interface components {
             poster: components["schemas"]["ImageDto"] | null;
             /** Format: date-time */
             releaseDate?: string | null;
+            qualityScore?: number | null;
             card?: components["schemas"]["CardMetaDto"];
         };
         ProgressSummaryDto: {
@@ -3571,6 +3607,28 @@ export interface components {
              * @example 10
              */
             total: number;
+        };
+        LibraryContinuePointDto: {
+            /**
+             * @description Season number to continue from
+             * @example 2
+             */
+            season: number;
+            /**
+             * @description Episode number to continue from
+             * @example 5
+             */
+            episode: number;
+            /**
+             * Format: uuid
+             * @description Next episode to watch
+             */
+            episodeId: string;
+            /**
+             * Format: date-time
+             * @description UTC air date of that episode
+             */
+            airDate: string | null;
         };
         MeUserMediaListItemDto: {
             /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */
@@ -3628,8 +3686,8 @@ export interface components {
             mediaSummary: components["schemas"]["MeUserMediaSummaryDto"] | null;
             /** @description Episode progress summary (only for shows) */
             progressSummary?: components["schemas"]["ProgressSummaryDto"] | null;
-            /** @description Next episode to continue watching (only for shows with progress) */
-            continuePoint?: components["schemas"]["ContinuePointDto"] | null;
+            /** @description Next episode to watch (shows in the watching and caught-up lists) */
+            continuePoint?: components["schemas"]["LibraryContinuePointDto"] | null;
         };
         PaginatedMeUserMediaResponseDto: {
             data: components["schemas"]["MeUserMediaListItemDto"][];
@@ -3867,6 +3925,17 @@ export interface components {
              */
             statuses: Record<string, never>;
         };
+        SavedItemMediaSummaryDto: {
+            id: string;
+            /** @enum {string} */
+            type: "movie" | "show";
+            title: string;
+            slug: string;
+            poster: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+            qualityScore?: number | null;
+        };
         SavedItemWithMediaResponseDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
             id: string;
@@ -3887,23 +3956,7 @@ export interface components {
              * @example 2024-01-15T10:30:00.000Z
              */
             createdAt: string;
-            /**
-             * @example {
-             *       "id": "123e4567-e89b-12d3-a456-426614174000",
-             *       "type": "movie",
-             *       "title": "Inception",
-             *       "slug": "inception-2010",
-             *       "poster": {
-             *         "w92": "...",
-             *         "w185": "...",
-             *         "w342": "...",
-             *         "w500": "...",
-             *         "w780": "...",
-             *         "original": "..."
-             *       }
-             *     }
-             */
-            mediaSummary: Record<string, never>;
+            mediaSummary: components["schemas"]["SavedItemMediaSummaryDto"];
             /**
              * @description Active subscription triggers for this media item. Empty array if no subscriptions.
              * @example [
@@ -3912,6 +3965,10 @@ export interface components {
              *     ]
              */
             activeSubscriptionTriggers: string[];
+        };
+        PaginatedSavedItemsResponseDto: {
+            data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
         };
         SubscribeDto: {
             /**
@@ -3991,6 +4048,22 @@ export interface components {
             /** @description Current subscription status after action */
             status: components["schemas"]["MediaSubscriptionStatusDto"];
         };
+        SubscriptionMediaSummaryDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /**
+             * @example movie
+             * @enum {string}
+             */
+            type: "movie" | "show";
+            /** @example Inception */
+            title: string;
+            /** @example inception-2010 */
+            slug: string;
+            poster: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+        };
         SubscriptionWithMediaResponseDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
             id: string;
@@ -4008,23 +4081,7 @@ export interface components {
              * @example 2024-01-15T10:30:00.000Z
              */
             createdAt: string;
-            /**
-             * @example {
-             *       "id": "123e4567-e89b-12d3-a456-426614174000",
-             *       "type": "movie",
-             *       "title": "Inception",
-             *       "slug": "inception-2010",
-             *       "poster": {
-             *         "w92": "...",
-             *         "w185": "...",
-             *         "w342": "...",
-             *         "w500": "...",
-             *         "w780": "...",
-             *         "original": "..."
-             *       }
-             *     }
-             */
-            mediaSummary: Record<string, never>;
+            mediaSummary: components["schemas"]["SubscriptionMediaSummaryDto"];
         };
         SyncDto: {
             /**
@@ -6851,7 +6908,7 @@ export interface operations {
                 startDate?: string;
                 /** @description Number of days to include (default: 7). */
                 days?: number;
-                /** @description When true, returns only episodes from shows the authenticated user is currently watching. */
+                /** @description When true, returns only episodes from shows the authenticated user is currently watching and premieres of shows they saved to watch later. */
                 personalized?: "true" | "false";
             };
             header?: never;
@@ -9068,7 +9125,7 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
-                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                        data: components["schemas"]["PaginatedSavedItemsResponseDto"];
                     };
                 };
             };
@@ -9123,7 +9180,7 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
-                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                        data: components["schemas"]["PaginatedSavedItemsResponseDto"];
                     };
                 };
             };

@@ -32,7 +32,6 @@ describe('buildSitemap', () => {
     now: NOW,
     movies: [{ slug: 'tenet-2020', updatedAt: '2026-01-02T00:00:00.000Z' }],
     shows: [{ slug: 'outlander-2014', updatedAt: '2026-03-04T00:00:00.000Z' }],
-    journalPosts: [{ slug: 'shcho-novoho', publishedAt: '2026-05-06T00:00:00.000Z' }],
   });
 
   it('lists the home page first with top priority', () => {
@@ -44,14 +43,8 @@ describe('buildSitemap', () => {
     });
   });
 
-  it('adds journal, movie and show pages with their own dates', () => {
-    expect(sitemap.slice(-3)).toEqual([
-      {
-        url: 'https://ratingo.top/journal/shcho-novoho',
-        lastModified: new Date('2026-05-06T00:00:00.000Z'),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      },
+  it('adds movie and show pages with their own dates', () => {
+    expect(sitemap.slice(-2)).toEqual([
       {
         url: 'https://ratingo.top/movies/tenet-2020',
         lastModified: new Date('2026-01-02T00:00:00.000Z'),
@@ -65,6 +58,10 @@ describe('buildSitemap', () => {
         priority: 0.7,
       },
     ]);
+  });
+
+  it('leaves the journal out until it is ported', () => {
+    expect(sitemap.some((entry) => entry.url.includes('/journal'))).toBe(false);
   });
 
   it('never lists the same URL twice', () => {

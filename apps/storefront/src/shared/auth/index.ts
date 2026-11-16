@@ -1,4 +1,10 @@
-export { OAUTH_PROVIDERS, buildOAuthStartUrl, toSafeReturnPath, type OAuthProvider } from './oauth';
+export {
+  OAUTH_PROVIDERS,
+  buildOAuthLinkUrl,
+  buildOAuthStartUrl,
+  toSafeReturnPath,
+  type OAuthProvider,
+} from './oauth';
 export {
   closeAuth,
   openAuth,

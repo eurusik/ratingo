@@ -15,7 +15,7 @@ const EXIT_BY_DIRECTION = {
 export function PageTransition({ children }: { children: ReactNode }) {
   return (
     <ViewTransition enter={ENTER_BY_DIRECTION} exit={EXIT_BY_DIRECTION} default="none">
-      <div data-page-transition className="flex-1 bg-background">
+      <div data-page-transition className="flex flex-1 flex-col bg-background">
         {children}
       </div>
     </ViewTransition>

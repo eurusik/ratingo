@@ -9,6 +9,10 @@ const API_ORIGIN = withoutTrailingSlashes(process.env.NEXT_PUBLIC_API_URL || LOC
 
 export const API_BASE_URL = `${API_ORIGIN}/api`;
 
+const SERVER_API_ORIGIN = withoutTrailingSlashes(process.env.API_INTERNAL_URL || API_ORIGIN);
+
+export const SERVER_API_BASE_URL = `${SERVER_API_ORIGIN}/api`;
+
 const LEGACY_ADMIN_URL = 'https://ratingo.top/admin';
 
 export const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL || LEGACY_ADMIN_URL;
@@ -19,9 +23,7 @@ export const SITE_URL = withoutTrailingSlashes(
   process.env.NEXT_PUBLIC_APP_URL?.trim() || `https://${PRODUCTION_HOST}`,
 );
 
-export const IS_PRODUCTION_SITE =
-  process.env.VERCEL_ENV === 'production' &&
-  process.env.VERCEL_PROJECT_PRODUCTION_URL === PRODUCTION_HOST;
+export const IS_PRODUCTION_SITE = process.env.APP_ENV === 'production';
 
 const DEFAULT_GA_MEASUREMENT_ID = 'G-MPY73Y7DBB';
 
@@ -34,7 +36,9 @@ export const SERVICE_WORKER_ENABLED = process.env.NODE_ENV === 'production';
 export const NAVIGATION_DEBUG_ENABLED = process.env.NEXT_PUBLIC_NAVIGATION_DEBUG === 'true';
 
 export function buildRevision(): string {
-  return process.env.VERCEL_GIT_COMMIT_SHA || crypto.randomUUID();
+  return (
+    process.env.VERCEL_GIT_COMMIT_SHA || process.env.RAILWAY_GIT_COMMIT_SHA || crypto.randomUUID()
+  );
 }
 
 const TMDB_IMAGE_ORIGIN = 'https://image.tmdb.org/t/p';

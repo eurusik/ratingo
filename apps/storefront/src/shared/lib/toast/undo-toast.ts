@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { toast } from '@heroui/react';
 
 const openToastByKey = new Map<string, string>();
@@ -5,17 +6,26 @@ const openToastByKey = new Map<string, string>();
 interface UndoToast {
   key: string;
   message: string;
+  description?: ReactNode;
   undoLabel: string;
   onUndo: () => void;
   onKept?: () => void;
 }
 
-export function showUndoToast({ key, message, undoLabel, onUndo, onKept }: UndoToast): void {
+export function showUndoToast({
+  key,
+  message,
+  description,
+  undoLabel,
+  onUndo,
+  onKept,
+}: UndoToast): void {
   const previous = openToastByKey.get(key);
   if (previous) toast.close(previous);
 
   let isUndone = false;
   const toastId = toast(message, {
+    description,
     actionProps: {
       children: undoLabel,
       variant: 'tertiary',

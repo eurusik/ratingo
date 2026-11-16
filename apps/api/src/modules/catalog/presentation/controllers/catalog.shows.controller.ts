@@ -150,7 +150,7 @@ export class CatalogShowsController {
     required: false,
     enum: ['true', 'false'],
     description:
-      'When true, returns only episodes from shows the authenticated user is currently watching.',
+      'When true, returns only episodes from shows the authenticated user is currently watching and premieres of shows they saved to watch later.',
   })
   @ApiOkResponse({ type: CalendarResponseDto })
   @ApiBadRequestResponse({
@@ -197,15 +197,11 @@ export class CatalogShowsController {
       throw new UnauthorizedException('Authentication required for personalized calendar');
     }
 
-    const personalizedUserId = isPersonalized ? user!.id : undefined;
+    const viewerOptions = user ? { viewerId: user.id, personalized: isPersonalized } : {};
 
     const [episodes, watchingShowsCount] = await Promise.all([
-      personalizedUserId
-        ? this.showRepository.findEpisodesByDateRange(start, end, { userId: personalizedUserId })
-        : this.showRepository.findEpisodesByDateRange(start, end),
-      personalizedUserId
-        ? this.showsCalendarService.getWatchingShowsCount(personalizedUserId)
-        : Promise.resolve(undefined),
+      this.showRepository.findEpisodesByDateRange(start, end, viewerOptions),
+      user && isPersonalized ? this.showsCalendarService.getWatchingShowsCount(user.id) : undefined,
     ]);
 
     const grouped = groupEpisodesByDate(episodes);

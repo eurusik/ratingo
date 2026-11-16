@@ -14,7 +14,8 @@ import {
 } from 'class-validator';
 
 import { MAX_PAGE_SIZE } from '@/common/constants';
-import { OffsetPaginationQueryDto } from '@/common/dtos';
+import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '@/common/dtos';
+import { ImageDto } from '@/common/dtos/image.dto';
 import { MediaType } from '@/common/enums/media-type.enum';
 import {
   SAVED_ITEM_LIST,
@@ -95,27 +96,35 @@ class SavedItemResponseDto {
   createdAt: Date;
 }
 
+export class SavedItemMediaSummaryDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty({ enum: [MediaType.MOVIE, MediaType.SHOW] })
+  type: MediaType;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiProperty()
+  slug: string;
+
+  @ApiProperty({ type: ImageDto, nullable: true })
+  poster: ImageDto | null;
+
+  @ApiPropertyOptional({ type: Date, nullable: true })
+  releaseDate?: Date | null;
+
+  @ApiPropertyOptional({ type: Number, nullable: true, minimum: 0, maximum: 100 })
+  qualityScore?: number | null;
+}
+
 /**
  * Response DTO for saved item with media.
  */
 export class SavedItemWithMediaResponseDto extends SavedItemResponseDto {
-  @ApiProperty({
-    example: {
-      id: '123e4567-e89b-12d3-a456-426614174000',
-      type: 'movie',
-      title: 'Inception',
-      slug: 'inception-2010',
-      poster: { w92: '...', w185: '...', w342: '...', w500: '...', w780: '...', original: '...' },
-    },
-  })
-  mediaSummary: {
-    id: string;
-    type: string;
-    title: string;
-    slug: string;
-    poster: Record<string, string> | null;
-    releaseDate?: Date | null;
-  };
+  @ApiProperty({ type: SavedItemMediaSummaryDto })
+  mediaSummary: SavedItemMediaSummaryDto;
 
   @ApiProperty({
     example: ['release', 'new_season'],
@@ -124,6 +133,14 @@ export class SavedItemWithMediaResponseDto extends SavedItemResponseDto {
     type: [String],
   })
   activeSubscriptionTriggers: string[];
+}
+
+export class PaginatedSavedItemsResponseDto {
+  @ApiProperty({ type: SavedItemWithMediaResponseDto, isArray: true })
+  data: SavedItemWithMediaResponseDto[];
+
+  @ApiProperty({ type: OffsetPaginationMetaDto })
+  meta: OffsetPaginationMetaDto;
 }
 
 /**

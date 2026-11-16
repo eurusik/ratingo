@@ -8,7 +8,7 @@ import type { BrowseCategorySlug } from './browse-category';
 import { BROWSE_FRESHNESS_MS } from './browse-freshness';
 import { browseListKey } from './browse-queries';
 import { BROWSE_PAGE_SIZE, type BrowseState } from './browse-state';
-import type { GridMedia } from './grid-media';
+import type { GridMedia } from '@/entities/media';
 
 const LIST_STALE_MS = 5 * BROWSE_FRESHNESS_MS;
 

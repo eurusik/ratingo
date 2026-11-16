@@ -1,4 +1,5 @@
 export { initialOf } from './initial';
+export { capitalizeFirst } from './text';
 export {
   currentYear,
   formatCompactCount,
@@ -9,3 +10,4 @@ export {
   scoreFromRating,
   yearFromDate,
 } from './numbers';
+export { isSearchQuery, matchesSearch, searchableText } from './search';

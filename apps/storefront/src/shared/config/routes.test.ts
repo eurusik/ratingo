@@ -1,4 +1,10 @@
-import { isBrowsePath, mediaReviewsRoute } from './routes';
+import {
+  isBrowsePath,
+  isSettingsPath,
+  mediaReviewsRoute,
+  publicProfileRoute,
+  showSeasonRoute,
+} from './routes';
 
 describe('isBrowsePath', () => {
   it.each([
@@ -12,9 +18,35 @@ describe('isBrowsePath', () => {
   });
 });
 
+describe('isSettingsPath', () => {
+  it.each([
+    ['/settings', true],
+    ['/settings/privacy', true],
+    ['/settings-old', false],
+    ['/my', false],
+  ])('treats %s as settings: %s', (pathname, expected) => {
+    expect(isSettingsPath(pathname)).toBe(expected);
+  });
+});
+
+describe('publicProfileRoute', () => {
+  it('puts the username under /u', () => {
+    expect(publicProfileRoute('ivan_42')).toBe('/u/ivan_42');
+  });
+});
+
 describe('mediaReviewsRoute', () => {
   it('nests the reviews list under the title page', () => {
     expect(mediaReviewsRoute('movie', 'dune-part-two')).toBe('/movies/dune-part-two/reviews');
-    expect(mediaReviewsRoute('show', 'андор')).toBe(`/shows/${encodeURIComponent('андор')}/reviews`);
+    expect(mediaReviewsRoute('show', 'андор')).toBe(
+      `/shows/${encodeURIComponent('андор')}/reviews`,
+    );
+  });
+});
+
+describe('showSeasonRoute', () => {
+  it('links to a season of the show when one is given', () => {
+    expect(showSeasonRoute('arcane')).toBe('/shows/arcane');
+    expect(showSeasonRoute('arcane', 2)).toBe('/shows/arcane?season=2');
   });
 });

@@ -1,3 +1,9 @@
+export {
+  accountApi,
+  type AvatarContentType,
+  type LinkedAccount,
+  type ProfileChanges,
+} from './account';
 export { configureStorefrontApi } from './configure';
 export {
   catalogApi,
@@ -19,12 +25,28 @@ export {
   type TrendingMovie,
   type TrendingShow,
 } from './catalog';
+export {
+  calendarApi,
+  type CalendarEpisode,
+  type CalendarRange,
+  type CalendarRangeQuery,
+} from './calendar';
+export { mediaImportApi, type ImportBatch, type MediaImportResult } from './media-import';
 export { loadMovieBySlug, loadShowBySlug } from './media-details';
 export { episodeProgressApi, type ShowProgress } from './episode-progress';
-export { notificationsApi, type NotificationItem } from './notifications';
+export {
+  notificationsApi,
+  type NotificationItem,
+  type NotificationList,
+  type NotificationTrigger,
+} from './notifications';
+export { subscriptionsApi, type Subscription, type SubscriptionTrigger } from './subscriptions';
 export {
   libraryApi,
+  type LibraryCounts,
+  type LibraryPageQuery,
   type MediaSaveStatus,
+  type SavedItem,
   type SaveList,
   type UserMediaState,
   type WatchState,
@@ -40,4 +62,5 @@ export {
   type ReviewSort,
   type VoteType,
 } from './reviews';
+export { fetchAllPages } from './pages';
 export { sitemapApi } from './sitemap';

@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { buildOAuthStartUrl, toSafeReturnPath } from './oauth';
+import { buildOAuthLinkUrl, buildOAuthStartUrl, toSafeReturnPath } from './oauth';
 
 describe('toSafeReturnPath', () => {
   it.each(['/', '/browse/movies', '/settings?tab=security', '/saved#top'])(
@@ -60,5 +60,24 @@ describe('buildOAuthStartUrl', () => {
     );
 
     expect(url.searchParams.get('returnTo')).toBe('/');
+  });
+});
+
+describe('buildOAuthLinkUrl', () => {
+  it('starts the link flow for the signed-in account and comes back to a safe path', () => {
+    const url = new URL(
+      buildOAuthLinkUrl({
+        apiBaseUrl: 'https://api-dev.ratingo.top/api',
+        provider: 'facebook',
+        returnTo: '//evil.example',
+        returnOrigin: 'https://dev.ratingo.top',
+        accessToken: 'access.token',
+      }),
+    );
+
+    expect(url.origin + url.pathname).toBe('https://api-dev.ratingo.top/api/auth/link/facebook');
+    expect(url.searchParams.get('token')).toBe('access.token');
+    expect(url.searchParams.get('returnTo')).toBe('/');
+    expect(url.searchParams.get('returnOrigin')).toBe('https://dev.ratingo.top');
   });
 });

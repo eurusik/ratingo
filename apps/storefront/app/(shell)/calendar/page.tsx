@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
-import { SectionPlaceholderPage } from '@/pages/section-placeholder';
-import { DEFAULT_LOCALE, getDictionary } from '@/shared/i18n';
+import { connection } from 'next/server';
+import { getRequestLocale } from '@/app/entrypoint';
+import { CalendarPage, calendarMetadata } from '@/pages/calendar';
 
-const dict = getDictionary(DEFAULT_LOCALE);
+export async function generateMetadata(): Promise<Metadata> {
+  return calendarMetadata(await getRequestLocale());
+}
 
-export const metadata: Metadata = { title: dict.nav.calendar };
-
-export default function CalendarRoute() {
-  return <SectionPlaceholderPage locale={DEFAULT_LOCALE} section="calendar" />;
+export default async function CalendarRoute() {
+  await connection();
+  return <CalendarPage />;
 }

@@ -5,10 +5,19 @@ const REVEAL_WIDTH = 80;
 const STEP_MS = 100;
 let clock = 0;
 
-function pointer(target: Element, type: string, clientX: number, clientY = 0) {
-  const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY });
+const RELEASE_EVENTS = new Set(['pointerup', 'pointercancel', 'lostpointercapture']);
+
+interface PointerOptions {
+  clientY?: number;
+  pointerType?: string;
+  buttons?: number;
+}
+
+function pointer(target: Element, type: string, clientX: number, options: PointerOptions = {}) {
+  const { clientY = 0, pointerType = 'touch', buttons = RELEASE_EVENTS.has(type) ? 0 : 1 } = options;
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY, buttons });
   clock += STEP_MS;
-  Object.assign(event, { pointerId: 1, isPrimary: true });
+  Object.assign(event, { pointerId: 1, isPrimary: true, pointerType });
   Object.defineProperty(event, 'timeStamp', { value: clock });
   target.dispatchEvent(event);
 }
@@ -19,11 +28,16 @@ function tap(target: Element) {
   target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 }
 
-function swipe(target: Element, fromX: number, toX: number, toY = 0) {
-  pointer(target, 'pointerdown', fromX);
-  pointer(target, 'pointermove', (fromX + toX) / 2, toY / 2);
-  pointer(target, 'pointermove', toX, toY);
-  pointer(target, 'pointerup', toX, toY);
+interface SwipeOptions {
+  toY?: number;
+  pointerType?: string;
+}
+
+function swipe(target: Element, fromX: number, toX: number, { toY = 0, pointerType }: SwipeOptions = {}) {
+  pointer(target, 'pointerdown', fromX, { pointerType });
+  pointer(target, 'pointermove', (fromX + toX) / 2, { clientY: toY / 2, pointerType });
+  pointer(target, 'pointermove', toX, { clientY: toY, pointerType });
+  pointer(target, 'pointerup', toX, { clientY: toY, pointerType });
 }
 
 function mountRow() {
@@ -72,7 +86,7 @@ describe('attachSwipeReveal', () => {
   it('leaves vertical drags to the page scroll', () => {
     const { content, detach } = mountRow();
 
-    swipe(content, 200, 190, 80);
+    swipe(content, 200, 190, { toY: 80 });
 
     expect(content.style.transform).toBe('');
     detach();
@@ -113,6 +127,45 @@ describe('attachSwipeReveal', () => {
     action.focus();
 
     expect(row).toHaveAttribute('data-open');
+    detach();
+  });
+
+  it('leaves mouse drags alone', () => {
+    const { row, content, detach } = mountRow();
+
+    swipe(content, 200, 100, { pointerType: 'mouse' });
+
+    expect(content.style.transform).toBe('');
+    expect(row).not.toHaveAttribute('data-open');
+    detach();
+  });
+
+  it.each([
+    ['the mouse once a menu opened from the row has closed', 'mouse'],
+    ['a pen press whose release landed outside the row', 'pen'],
+  ])('does not drag after %s', (_case, pointerType) => {
+    const { row, content, detach } = mountRow();
+
+    pointer(content, 'pointerdown', 200, { pointerType });
+    pointer(content, 'pointermove', 150, { pointerType, buttons: 0 });
+    pointer(content, 'pointermove', 100, { pointerType, buttons: 0 });
+
+    expect(content.style.transform).toBe('');
+    expect(row).not.toHaveAttribute('data-dragging');
+    detach();
+  });
+
+  it('settles the row when it loses pointer capture mid-drag', () => {
+    const { row, content, detach } = mountRow();
+
+    pointer(content, 'pointerdown', 200);
+    pointer(content, 'pointermove', 170);
+    pointer(content, 'pointermove', 160);
+    pointer(content, 'lostpointercapture', 160);
+    pointer(content, 'pointermove', 100);
+
+    expect(row).not.toHaveAttribute('data-dragging');
+    expect(content.style.transform).toBe('');
     detach();
   });
 

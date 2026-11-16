@@ -209,11 +209,13 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
               slug: schema.mediaItems.slug,
               posterPath: schema.mediaItems.posterPath,
               releaseDate: schema.mediaItems.releaseDate,
+              qualityScore: schema.mediaStats.qualityScore,
             },
             triggers: subscriptionTriggersSubquery.triggers,
           })
           .from(schema.userSavedItems)
           .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userSavedItems.mediaItemId))
+          .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
           .leftJoin(
             subscriptionTriggersSubquery,
             eq(subscriptionTriggersSubquery.mediaItemId, schema.userSavedItems.mediaItemId),
@@ -239,6 +241,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
             slug: r.media.slug,
             poster: ImageMapper.toPoster(r.media.posterPath),
             releaseDate: r.media.releaseDate,
+            qualityScore: r.media.qualityScore,
           },
           activeSubscriptionTriggers: r.triggers ?? [],
         }));

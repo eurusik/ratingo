@@ -2,18 +2,21 @@
 
 import { memo } from 'react';
 import { Button, Spinner } from '@heroui/react';
-import type { PosterLoadPriority } from '@/entities/media';
+import {
+  PosterTile,
+  PosterTileSkeleton,
+  type GridMedia,
+  type PosterLoadPriority,
+} from '@/entities/media';
 import { SaveButton } from '@/features/save-to-library';
 import type { CatalogPage } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { useInfiniteSentinel } from '../lib/use-infinite-sentinel';
+import { useInfiniteSentinel } from '@/shared/lib';
 import type { BrowseCategory } from '../model/browse-category';
 import { useCountLabel } from '../model/browse-labels';
 import type { BrowseState } from '../model/browse-state';
-import type { GridMedia } from '../model/grid-media';
 import { useBrowseList } from '../model/use-browse-list';
 import { browseGridClass } from './browse-grid';
-import { PosterTile, PosterTileSkeleton } from './poster-tile';
 
 const LOADING_TILES = 15;
 const HIGH_PRIORITY_TILES = 3;
@@ -86,7 +89,7 @@ function ListEnd({ status, resultLabel, onRetry }: ListEndProps) {
             <span className="text-muted">{labels.failedHint}</span>
           </span>
           <Button variant="secondary" size="sm" onPress={onRetry}>
-            {labels.retry}
+            {dict.common.retry}
           </Button>
         </div>
       ) : null}

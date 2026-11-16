@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Ratingo — what to watch now",
-    "description": "Movies and shows the world is watching right now: ratings, new episodes and what is worth your time.",
+    "title": "Ratingo — what everyone is watching today",
+    "description": "This week's trends, ratings and reviews, a new-episode calendar and a tracker for your shows. Pick what to watch in a minute, not half an evening.",
     "keywords": {
       "shows": "shows",
       "movies": "movies",
@@ -18,7 +18,6 @@
     "picks": "Also on top",
     "topTen": "Top 10",
     "topTenCaption": "Everyone’s watching — for good reason",
-    "topTenFailed": "Could not load the top 10.",
     "typeFilter": {
       "label": "What to show",
       "show": "Shows",
@@ -39,6 +38,17 @@
       "body": "Add the shows you watch and we will show new episodes as soon as they air, and where you left off.",
       "signIn": "Sign in",
       "find": "Find a show"
+    },
+    "failed": {
+      "picks": "Couldn’t load the picks",
+      "topTen": "Couldn’t load the top 10",
+      "newEpisodes": "Couldn’t load new episodes",
+      "newReleases": "Couldn’t load new releases"
+    },
+    "outage": {
+      "title": "The home page didn’t load",
+      "text": "We can’t reach the server right now. Try again in a minute.",
+      "openMy": "Open My library"
     }
   },
   "oauth": {
@@ -63,7 +73,11 @@
     "loading": "Loading…",
     "opensInNewTab": "(opens in a new tab)",
     "linkCopied": "Link copied",
-    "shareFailed": "Could not share the link."
+    "shareFailed": "Could not share the link.",
+    "backToTop": "Back to top",
+    "sectionErrorHint": "The rest of the page works. Try again in a minute.",
+    "errorCode": "Error code: {code}",
+    "toHome": "Go home"
   },
   "nav": {
     "label": "Main navigation",
@@ -72,7 +86,8 @@
     "browse": "Browse",
     "calendar": "Calendar",
     "my": "My",
-    "search": "Search"
+    "search": "Search",
+    "myUnread": "My, unread notifications"
   },
   "search": {
     "title": "Search",
@@ -107,16 +122,166 @@
     "backToSearch": "Back to search",
     "resultsCount": "Found: {count}"
   },
-  "placeholder": {
-    "comingSoon": "This section is coming soon."
-  },
   "pullToRefresh": {
     "refreshing": "Refreshing…"
   },
   "my": {
-    "sampleItem": "Sample #{number}",
-    "remove": "Remove",
-    "sampleHint": "Temporary list: swipe a row left to remove it. In the installed app, pull the page down to bring everything back."
+    "lists": {
+      "watching": "Watching",
+      "plan": "Want to watch",
+      "history": "Watched",
+      "paused": "Paused",
+      "dropped": "Dropped"
+    },
+    "listsLabel": "My lists",
+    "failed": "Couldn't load the list",
+    "loadMore": "Show more",
+    "signIn": {
+      "title": "Sign in to see your library",
+      "text": "Shows you're watching, titles for later and everything you've watched will live here.",
+      "action": "Sign in"
+    },
+    "watching": {
+      "showCount": {
+        "one": "{count} show",
+        "few": "{count} shows",
+        "many": "{count} shows"
+      },
+      "fresh": "New episodes",
+      "next": "Up next",
+      "waiting": "Caught up",
+      "newEpisode": "New: {code} · {when}",
+      "nextEpisode": "Next: {code} · {count} left",
+      "airsOn": "New episode {date}",
+      "caughtUp": "Caught up",
+      "restore": "Bring back",
+      "empty": {
+        "title": "Shows you're watching will appear here",
+        "text": "Mark the first episode on a show's page and new episodes will show up here.",
+        "action": "Go to Browse"
+      },
+      "restoreLabel": "Bring back: {title}",
+      "progressLabel": "Watched {watched} of {total}",
+      "search": "Search Watching…",
+      "searchLabel": "Search Watching",
+      "filterLabel": "Show",
+      "filter": {
+        "episodes": "New episodes",
+        "waiting": "Caught up",
+        "postponed": "Set aside"
+      },
+      "resume": "Resume",
+      "resumeLabel": "Resume: {title}",
+      "filterEmpty": {
+        "episodes": {
+          "title": "All caught up",
+          "text": "New episodes show up here as soon as they air."
+        },
+        "waiting": {
+          "title": "Nothing caught up yet",
+          "text": "Once you’ve watched every aired episode, the show moves here to wait for new ones."
+        },
+        "postponed": {
+          "title": "Nothing set aside",
+          "text": "Shows you pause or drop appear here. You can bring them back any time."
+        }
+      }
+    },
+    "plan": {
+      "filter": {
+        "all": "All",
+        "movie": "Movies",
+        "show": "Shows"
+      },
+      "filterLabel": "Type",
+      "sort": {
+        "recent": "Recently added",
+        "rating": "Top rated",
+        "releaseDate": "Coming soon"
+      },
+      "sortLabel": "Sort: {sort}",
+      "sortPrefix": "Sort: ",
+      "start": "Start",
+      "startLabel": "Start watching: {title}",
+      "empty": {
+        "title": "Titles you want to watch will appear here",
+        "text": "Tap “Want to watch” on a movie or show page — we'll tell you when it's out at home.",
+        "action": "Go to Browse"
+      },
+      "noMatches": "No titles of this type here.",
+      "noMatchesText": "Change the filter to see other titles.",
+      "search": "Search Want to watch…",
+      "searchLabel": "Search Want to watch"
+    },
+    "history": {
+      "search": "Search what you've watched…",
+      "searchLabel": "Search what you've watched",
+      "summary": {
+        "one": "{count} movie or show",
+        "few": "{count} movies and shows",
+        "many": "{count} movies and shows"
+      },
+      "rate": "Rate",
+      "rateLabel": "Rate: {title}",
+      "yourRating": "Your rating {score}",
+      "watchedOn": "watched {date}",
+      "empty": {
+        "title": "Everything you've watched will appear here",
+        "text": "Rate a movie or mark an episode and it lands in your history. Or bring your ratings over from Kinobaza, IMDb or TMDB.",
+        "action": "Import ratings"
+      },
+      "yourRatingFor": "Your rating {score}: {title}"
+    },
+    "actions": {
+      "more": "More actions: {title}",
+      "markEpisode": "Mark as watched: {title} {code}",
+      "markMovie": "Watched: {title}",
+      "pause": "Pause",
+      "drop": "Drop",
+      "open": "Open",
+      "watchedUntil": "I've watched up to…",
+      "remove": "Remove from list",
+      "changeRating": "Change rating",
+      "rating": "Your rating"
+    },
+    "toast": {
+      "paused": "Paused: {title}",
+      "dropped": "Dropped: {title}",
+      "restored": "Back in Watching: {title}",
+      "started": "Moved to Watching: {title}",
+      "movieWatched": "Watched: {title} · in Watched",
+      "episodeWatched": "Watched: {title} {code}",
+      "removed": "Removed: {title}",
+      "rated": "Rated: {title}",
+      "rate": "Rate",
+      "undo": "Undo",
+      "failed": "Couldn't update the list. Please try again."
+    },
+    "newUser": {
+      "title": "What are you watching or want to watch?",
+      "text": "Shows you're watching bring their new episodes here and to the calendar. Titles for later — we'll remind you when they're out at home.",
+      "search": "Find a movie or show…",
+      "popular": "Popular now",
+      "watching": "Watching",
+      "want": "Want",
+      "import": {
+        "title": "Move from IMDb, TMDB or Kinobaza",
+        "text": "Import ratings and lists from a CSV in a minute"
+      },
+      "watchingLabel": "Watching: {title}",
+      "wantLabel": "Want: {title}",
+      "startFailed": "Couldn't add the show. Please try again."
+    },
+    "titleCount": {
+      "one": "{count} title",
+      "few": "{count} titles",
+      "many": "{count} titles"
+    },
+    "search": {
+      "noMatches": "Nothing found for “{query}”.",
+      "noMatchesText": "Try another title or change the filter.",
+      "noMatchesAnywhereText": "Try another title."
+    }
   },
   "rating": {
     "label": "Rating {score}: {verdict}",
@@ -185,19 +350,59 @@
   },
   "notifications": {
     "title": "Notifications",
-    "unread": "Notifications, unread: {count}",
+    "unread": "Notifications, {count} unread",
     "markAllRead": "Mark all as read",
     "viewAll": "All notifications",
     "empty": "No new notifications yet.",
-    "failed": "Couldn’t load notifications.",
-    "events": {
-      "release": "In cinemas",
-      "new_season": "Season returns",
-      "new_episode": "New episode out",
-      "on_streaming": "Now streaming",
-      "status_changed": "Status changed"
+    "failed": "Couldn't load notifications.",
+    "unreadItem": "unread",
+    "filter": {
+      "unread": "Unread",
+      "all": "All"
     },
-    "unreadItem": "unread"
+    "filterLabel": "Filter",
+    "unreadFilter": "Unread · {count}",
+    "allRead": "All notifications marked as read",
+    "undo": "Undo",
+    "markRead": "Mark as read",
+    "read": "Read",
+    "allCaughtUp": {
+      "title": "All caught up",
+      "text": "We'll let you know when a new season or a title you're waiting for comes out."
+    },
+    "groups": {
+      "today": "Today",
+      "week": "This week",
+      "earlier": "Earlier"
+    },
+    "kinds": {
+      "release": "Out now",
+      "on_streaming": "Out now",
+      "new_season": "New season",
+      "new_episode": "New episode",
+      "status_changed": "Release date"
+    },
+    "text": {
+      "release": "{title} is now in cinemas",
+      "on_streaming": "{title} is now available at home",
+      "new_season": "{title} is back with season {season}",
+      "new_season_unknown": "{title} has a new season coming",
+      "new_episode": "{title}: episode {code} is out",
+      "status_changed": "{title}: release date announced"
+    },
+    "sub": {
+      "fromPlan": "From your Want to watch",
+      "airDate": "Out {date}",
+      "remind": "We'll remind you on release day"
+    },
+    "footnote": "New episodes of what you watch live in My. You can turn on notifications for them in settings.",
+    "settings": "Choose what to notify in settings",
+    "settingsShort": "What to notify",
+    "back": "Back",
+    "loadMore": "Show more",
+    "markReadLabel": "Mark as read: {title}",
+    "unreadBadge": "{count} unread",
+    "failedTitle": "Couldn't load notifications"
   },
   "profile": {
     "stats": {
@@ -224,10 +429,8 @@
   },
   "footer": {
     "label": "About the site",
-    "description": "What to watch now: trends, ratings and new episodes of your shows.",
+    "description": "What everyone is watching today: trends, ratings, reviews and a tracker for your shows.",
     "sources": "Data from TMDB, Trakt, IMDb and other sources.",
-    "about": "About Ratingo",
-    "journal": "Journal",
     "github": "GitHub",
     "madeIn": "Made in Ukraine 🇺🇦",
     "authorName": "Yevhen Rusakov"
@@ -440,10 +643,8 @@
       "failed": "Couldn’t load more",
       "failedHint": "Check your connection and try again",
       "firstFailed": "Couldn’t load the list",
-      "retry": "Try again",
       "end": "That’s all: {result}"
     },
-    "backToTop": "Back to top",
     "genres": {
       "drama": "Drama",
       "komediya": "Comedy",
@@ -680,7 +881,8 @@
     "pick": {
       "banner": "Choose the episode you stopped at",
       "cancel": "Cancel",
-      "confirm": "Mark {episodes} up to {code}"
+      "confirm": "Mark {episodes} up to {code}",
+      "notStarted": "Not started yet"
     },
     "notice": {
       "watched": "Watched {code}",
@@ -836,5 +1038,509 @@
     },
     "allLabel": "All reviews",
     "loadMoreFailed": "Couldn’t load more reviews"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "metaTitle": "Episode calendar",
+    "metaDescription": "New episode releases by day of the week, in Kyiv time.",
+    "modesLabel": "Which shows",
+    "modes": {
+      "mine": "Mine",
+      "all": "All"
+    },
+    "modesInfoLabel": "What “Mine” includes",
+    "modesInfo": "“Mine” is the shows you watch plus premieres from “Want to watch”.",
+    "weekNames": {
+      "current": "This week",
+      "next": "Next week",
+      "previous": "Last week"
+    },
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "daysLabel": "Days of the week",
+    "dayTile": {
+      "one": "{day}, {count} episode",
+      "few": "{day}, {count} episodes",
+      "many": "{day}, {count} episodes"
+    },
+    "dayTileEmpty": "{day}, no episodes",
+    "episodesCount": {
+      "one": "{count} episode",
+      "few": "{count} episodes",
+      "many": "{count} episodes"
+    },
+    "morning": "morning",
+    "minutes": "{minutes} min",
+    "quotedTitle": "“{title}”",
+    "savedNote": "in “Want to watch”",
+    "premiere": "Premiere",
+    "finale": "Season finale",
+    "moreShows": {
+      "one": "{count} more show by popularity",
+      "few": "{count} more shows by popularity",
+      "many": "{count} more shows by popularity"
+    },
+    "past": {
+      "unwatched": {
+        "one": "Earlier this week · {count} unwatched",
+        "few": "Earlier this week · {count} unwatched",
+        "many": "Earlier this week · {count} unwatched"
+      },
+      "episodes": {
+        "one": "Earlier this week · {count} episode",
+        "few": "Earlier this week · {count} episodes",
+        "many": "Earlier this week · {count} episodes"
+      },
+      "allWatched": "Earlier this week · all watched"
+    },
+    "markWatched": "Mark watched: {show} {code}",
+    "startWatchingLabel": "Start watching: {show}",
+    "startedWatching": "“{show}” is now in “Watching”",
+    "startFailed": "Couldn’t add the show. Try again.",
+    "notice": {
+      "watched": "Watched: {show} {code}",
+      "unwatched": "Unmarked: {show} {code}"
+    },
+    "guest": {
+      "title": "Your shows will be here",
+      "body": "Sign in and mark what you watch — we’ll show only the episodes you’re waiting for.",
+      "signIn": "Sign in",
+      "showAll": "Show all"
+    },
+    "noShows": {
+      "title": "Nothing here yet",
+      "body": "Start watching a show or save it to “Want to watch”, and its new episodes will appear here.",
+      "showAll": "Show all"
+    },
+    "restWeek": {
+      "title": "Your shows are taking a break this week",
+      "next": "Next new episode — {episode}, {date}",
+      "nextWeek": "Next week"
+    },
+    "emptyWeek": "No new episodes this week",
+    "loadError": "Couldn’t load the calendar",
+    "lessShows": "Show less",
+    "weekShown": "Showing the week of {range}"
+  },
+  "reminder": {
+    "remind": "Remind me",
+    "label": "Remind me about new episodes: {show}",
+    "on": "We'll remind you about new episodes: {show}",
+    "off": "Reminder turned off: {show}",
+    "failed": "Couldn't change the reminder."
+  },
+  "settings": {
+    "title": "Settings",
+    "back": "Settings",
+    "backLabel": "Back to settings",
+    "backToMy": "My",
+    "backToMyLabel": "Back to My",
+    "sectionsLabel": "Settings sections",
+    "groups": {
+      "account": "Account",
+      "app": "App",
+      "data": "Data"
+    },
+    "sections": {
+      "profile": "Profile",
+      "security": "Sign-in & security",
+      "notifications": "Notifications",
+      "privacy": "Privacy",
+      "import": "Import"
+    },
+    "importRow": "Import",
+    "visibility": {
+      "public": "Public",
+      "private": "Private"
+    },
+    "profileVisibility": {
+      "public": "public profile",
+      "private": "private profile"
+    },
+    "signOut": "Sign out",
+    "footnote": "Language and theme live in the profile menu",
+    "signIn": {
+      "title": "Sign in to change settings",
+      "text": "Your profile, notifications, privacy and sign-in methods will show up here.",
+      "action": "Sign in"
+    },
+    "profile": {
+      "photoChange": "Change photo",
+      "photoRemove": "Remove",
+      "photoHint": "JPG, PNG or WebP, up to 5 MB, square works best.",
+      "photoDropHint": "You can drop it here.",
+      "photoUploading": "Uploading photo…",
+      "photoUpdated": "Photo updated",
+      "photoRemoved": "Photo removed",
+      "photoFailed": "Couldn't update the photo. Try again.",
+      "photoTooLarge": "The file is larger than 5 MB. Pick a smaller one.",
+      "photoWrongType": "Only JPG, PNG or WebP will do.",
+      "undo": "Undo",
+      "username": "Username",
+      "usernameHint": "Latin letters, digits and _, 3–30 characters · your profile address changes too",
+      "usernameTaken": "This username is taken",
+      "usernameUnavailable": "This username isn't available, pick another one",
+      "region": "Region",
+      "regionHint": "For release dates",
+      "bio": "About you",
+      "bioPlaceholder": "What you love to watch…",
+      "bioCount": "{count} / {max}",
+      "city": "City",
+      "cityPlaceholder": "Kyiv…",
+      "optional": "optional",
+      "website": "Website",
+      "websitePlaceholder": "mysite.com",
+      "websiteHint": "We'll add https:// for you",
+      "websiteInvalid": "That doesn't look like a website address",
+      "unsaved": "You have unsaved changes",
+      "cancel": "Cancel",
+      "save": "Save",
+      "noChanges": "No changes",
+      "saved": "Saved",
+      "saveFailed": "Couldn't save. Try again.",
+      "discard": {
+        "title": "Discard changes?",
+        "text": "Your username, bio and other profile fields will go back to what you saved.",
+        "keep": "Keep editing",
+        "confirm": "Discard"
+      }
+    },
+    "notifications": {
+      "lead": "Notifications come for titles you follow. New episodes of what you watch show up in My.",
+      "following": "Following",
+      "searchLabel": "Search titles you follow",
+      "searchPlaceholder": "Search by title…",
+      "noMatch": "Nothing you follow matches “{query}”.",
+      "empty": {
+        "title": "You don't follow anything yet",
+        "text": "Follow movies and shows on their pages and we'll tell you when they come out."
+      },
+      "showMore": "Show more",
+      "unfollow": "Unfollow",
+      "unfollowLabel": "Unfollow “{title}”",
+      "unfollowed": "No longer following “{title}”",
+      "unfollowFailed": "Couldn't change that. Try again.",
+      "undo": "Undo",
+      "failed": "Couldn't load what you follow",
+      "types": {
+        "movie": "Movie",
+        "show": "Show"
+      },
+      "triggers": {
+        "release": "release",
+        "new_season": "new season",
+        "new_episode": "new episodes",
+        "on_streaming": "streaming",
+        "status_changed": "release date"
+      },
+      "automatic": "Automatic",
+      "autoSubscribe": "Follow a show when I start it",
+      "autoSubscribeHint": "Once you mark the first episode you follow the show and get notified about a new season"
+    },
+    "privacy": {
+      "isProfilePublic": {
+        "label": "Public profile",
+        "hint": "Others can see your profile at {url}"
+      },
+      "showWatchHistory": {
+        "label": "Show watch history",
+        "hint": "What you watched and when"
+      },
+      "showRatings": {
+        "label": "Show ratings",
+        "hint": "Your scores on title pages and in your profile"
+      },
+      "allowFollowers": {
+        "label": "Allow followers",
+        "hint": "Others can follow your ratings"
+      },
+      "note": "Turn off “Public profile” and the rest becomes inactive, but keeps its values.",
+      "privateNote": "Your profile is private: only you can see {url}. The other settings come back when you open your profile again.",
+      "subtitle": {
+        "public": "Public profile",
+        "private": "Private profile"
+      },
+      "failed": "Couldn't save. Try again."
+    },
+    "security": {
+      "methods": "Sign-in methods",
+      "methodNames": {
+        "google": "Google",
+        "facebook": "Facebook",
+        "email": "email"
+      },
+      "emailMethod": "Email and password",
+      "connectedAs": "Connected · {email}",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "noPassword": "{email} · no password",
+      "connect": "Connect",
+      "connectLabel": "Connect {provider}",
+      "disconnect": "Disconnect",
+      "disconnectLabel": "Disconnect {provider}",
+      "lastMethod": "You can't disconnect your last sign-in method — add another one first.",
+      "changePassword": "Change password",
+      "newPasswordTitle": "New password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "currentRequired": "Enter your current password",
+      "wrongPassword": "That password doesn't match",
+      "passwordChanged": "Password changed",
+      "passwordFailed": "Couldn't change the password. Try again.",
+      "cancel": "Cancel",
+      "unlink": {
+        "title": "Disconnect {provider}?",
+        "text": "You won't be able to sign in with {provider} anymore. You can still sign in with {rest}.",
+        "cancel": "Cancel",
+        "confirm": "Disconnect"
+      },
+      "unlinked": "{provider} disconnected",
+      "unlinkFailed": "Couldn't disconnect {provider}. Try again.",
+      "linked": "{provider} connected",
+      "alreadyLinked": "This {provider} account is already linked to another profile.",
+      "linkFailed": "Couldn't connect {provider}. Try again."
+    },
+    "importValue": "IMDb, TMDB…",
+    "importRunning": "Adding… {done} of {total}",
+    "import": {
+      "steps": {
+        "source": "Source",
+        "files": "Files",
+        "preview": "Review"
+      },
+      "stepOf": "Step {step} of {total} · {name}",
+      "back": "Back",
+      "backToStep": "Back to “{step}”",
+      "titles": {
+        "one": "{count} title",
+        "few": "{count} titles",
+        "many": "{count} titles"
+      },
+      "ratings": {
+        "one": "{count} rating",
+        "few": "{count} ratings",
+        "many": "{count} ratings"
+      },
+      "rows": {
+        "one": "{count} row",
+        "few": "{count} rows",
+        "many": "{count} rows"
+      },
+      "source": {
+        "title": "Where are you moving from?",
+        "resumeTitle": "New import",
+        "text": "Ratings go to Watched, the list goes to Want to watch. Anything already in My won’t be duplicated.",
+        "label": "Source",
+        "soon": "Soon"
+      },
+      "sources": {
+        "kinobaza": {
+          "name": "Kinobaza",
+          "desc": "Ratings and list · kinobaza.com.ua",
+          "url": "https://kinobaza.com.ua",
+          "urlLabel": "kinobaza.com.ua",
+          "steps": [
+            "Open {link} and go to your profile → Settings",
+            "Tap “Export ratings” — a CSV downloads",
+            "For the list — “Export list”"
+          ]
+        },
+        "imdb": {
+          "name": "IMDb",
+          "desc": "Ratings and Watchlist · imdb.com",
+          "url": "https://www.imdb.com/list/ratings",
+          "urlLabel": "imdb.com/list/ratings",
+          "steps": [
+            "Open {link}",
+            "Click ⋯ above the list → Export, the file lands in Exports",
+            "Do the same for your Watchlist"
+          ]
+        },
+        "tmdb": {
+          "name": "TMDB",
+          "desc": "Ratings and Watchlist · themoviedb.org",
+          "url": "https://www.themoviedb.org",
+          "urlLabel": "themoviedb.org",
+          "steps": [
+            "Open {link} and sign in",
+            "My Ratings or Watchlist → ⋮ → Export CSV",
+            "The file arrives by email — save it and pick it here"
+          ]
+        },
+        "letterboxd": {
+          "name": "Letterboxd",
+          "desc": "Diary and list · letterboxd.com"
+        }
+      },
+      "files": {
+        "title": "Files from {source}",
+        "text": "Pick one or both files — we’ll work out which is which.",
+        "deskText": "one or both — we’ll work out which is which",
+        "howTo": "How to get your files from {source}",
+        "computerOnly": "Export only works on the website from a computer. Import there, or send the file to yourself and pick it here.",
+        "websiteOnly": "Export is only on the website, not in the app.",
+        "pick": "Choose files",
+        "pickHint": "Several at once · CSV up to 5 MB",
+        "drop": "Drop CSV files here",
+        "dropPick": "choose files",
+        "dropHint": "or {pick} · several at once, up to 5 MB",
+        "dropRelease": "Release to add",
+        "listLabel": "Chosen files",
+        "remove": "Remove {name}",
+        "localOnly": "Files don’t leave your device until you tap Import.",
+        "toHistory": "{count} → Watched",
+        "toPlan": "{count} → Want to watch",
+        "skipped": "{rows} without an id or for single episodes will be skipped",
+        "problems": {
+          "wrongSource": "Doesn’t look like a {source} file — check where it came from",
+          "tooLarge": "The file is larger than 5 MB — export ratings and the list as separate files",
+          "notCsv": "This isn’t a CSV file — pick the .csv export",
+          "empty": "The file has no titles with an IMDb or TMDB id — check it’s a ratings or list export"
+        },
+        "readFailed": "Couldn’t read the file. Try again.",
+        "footer": "Ratings go to Watched, the list goes to Want to watch",
+        "next": "Next",
+        "newTab": "(opens in a new tab)"
+      },
+      "preview": {
+        "fromSource": "{titles} from {source}",
+        "ratedShows": "Rated shows ({count}) go to Watched. If you’re still watching one, move it to Watching right after the import.",
+        "ratedShowsUntyped": "Rated shows go to Watched. If you’re still watching one, move it to Watching right after the import.",
+        "skipped": "{rows} will be skipped: no IMDb or TMDB id, or they rate single episodes and seasons.",
+        "filterLabel": "What to show",
+        "filters": {
+          "all": "All",
+          "ratings": "Ratings",
+          "watchlist": "Want to watch"
+        },
+        "movie": "Movie",
+        "show": "Show",
+        "yourRating": "yours {score}",
+        "want": "Want",
+        "more": "and {count} more — the list is just for checking, we’ll move all of them",
+        "overwrite": "Replace my ratings",
+        "overwriteHint": "If a title already has your rating in Ratingo, we’ll take the one from the file. Off — we keep yours.",
+        "safe": "Nothing disappears: anything already in My won’t be duplicated",
+        "submit": "Import {count}",
+        "failed": "Couldn’t import. Try again.",
+        "confirm": {
+          "title": "Replace your ratings?",
+          "text": "For titles you’ve already rated in Ratingo, we’ll take the rating from the {source} file. The old ones can’t be restored.",
+          "cancel": "Cancel",
+          "submit": "Replace and import"
+        },
+        "tooMany": "Too many titles: up to {max} at a time. Remove one of the files."
+      },
+      "result": {
+        "title": "Moved {titles}",
+        "nothingNew": "Nothing new was added",
+        "from": "from {source}, {when}",
+        "justNow": "just now",
+        "at": "at {time}",
+        "added": "Added",
+        "existing": "Already there",
+        "existingDesk": "Already in My",
+        "notFound": "Not found",
+        "notFoundList": "{count} not found",
+        "untitled": "Untitled",
+        "openHistory": "Open Watched",
+        "again": "Import more",
+        "footer": "Ratings are in Watched, the list is in Want to watch"
+      },
+      "pending": {
+        "title": "Adding {count} more to the catalog",
+        "progress": "{done} of {total}",
+        "text": "These titles weren’t in Ratingo yet. You can close this screen — we’ll keep adding them. Stop, and we won’t add the rest; what’s already added stays in My.",
+        "stop": "Stop",
+        "stopFailed": "Couldn’t stop. Try again.",
+        "completed": "All titles were added to the catalog — they’re already in My.",
+        "cancelled": "Stopped. We won’t add the rest; what’s already added stays in My.",
+        "stopConfirm": {
+          "title": "Stop adding titles?",
+          "text": "Titles not yet added to the catalog won’t reach My. What’s already added stays.",
+          "keep": "Keep going",
+          "confirm": "Stop"
+        }
+      },
+      "resume": {
+        "title": "Import from {source} is still running",
+        "text": "Adding titles Ratingo didn’t have yet to the catalog. What’s already moved is in My.",
+        "textWithCount": "Adding titles Ratingo didn’t have yet to the catalog. {count} already moved — they’re in My.",
+        "summary": "Summary"
+      },
+      "shows": {
+        "title": "Rated shows are in Watched. Still watching?",
+        "deskTitle": "Rated shows are in Watched",
+        "deskHint": "still watching? Watching opens the episodes panel — mark where you stopped",
+        "rated": "Show · yours {score}",
+        "unrated": "Show",
+        "stoppedAt": "Watching · stopped at {code}",
+        "notStarted": "Watching · not started yet",
+        "watching": "Watching",
+        "watchingLabel": "Watching: {title}",
+        "showAll": "Show all {count}",
+        "failed": "Couldn’t move it to Watching. Try again.",
+        "caughtUp": "Watched every aired episode"
+      },
+      "leave": {
+        "title": "Leave the import?",
+        "text": "The chosen files aren’t kept — you’ll need to pick them again.",
+        "keep": "Stay",
+        "confirm": "Leave"
+      }
+    }
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "text": "The page didn’t open on our side. Try again — it usually passes within a minute."
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "page": {
+      "title": "There’s no such page",
+      "text": "The link may be outdated or the address has a typo. Try finding what you were looking for."
+    },
+    "media": {
+      "movie": {
+        "title": "We don’t have this movie",
+        "text": "The link is outdated or the movie was removed from the catalog. Try finding it by title."
+      },
+      "show": {
+        "title": "We don’t have this show",
+        "text": "The link is outdated or the show was removed from the catalog. Try finding it by title."
+      }
+    },
+    "watchedNow": "Or see what people are watching now",
+    "searchPlaceholder": "Find a movie or show…"
+  },
+  "whatsNew": {
+    "title": "Ratingo got an update",
+    "subtitle": "A new look and a new icon. Your ratings, lists and marked episodes are all still here.",
+    "highlights": {
+      "my": {
+        "title": "Saved and history now live in “My”",
+        "text": "Want to watch, Watching and Watched in one place."
+      },
+      "next": {
+        "title": "See what to watch next",
+        "text": "Shows are sorted into “New episodes”, “Caught up” and “Set aside”."
+      },
+      "app": {
+        "title": "Feels like an app on your phone",
+        "text": "A bottom bar, swipes on rows, pull down to refresh. And it’s faster."
+      },
+      "faster": {
+        "title": "Faster and cleaner",
+        "text": "A new look on every screen, and pages open faster."
+      },
+      "following": {
+        "title": "What you follow, under control",
+        "text": "Settings › Notifications: your followed titles and “Unfollow”."
+      }
+    },
+    "iosIconHint": "To see the new icon on your Home Screen, remove Ratingo and add it again: Share → “Add to Home Screen”. Your ratings and lists are saved in your account — just sign in again.",
+    "gotIt": "Got it"
   }
 }

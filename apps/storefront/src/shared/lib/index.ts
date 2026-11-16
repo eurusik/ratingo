@@ -1,21 +1,32 @@
 export { SiteAnalytics } from './analytics';
-export { useBrowserOrigin, useBrowserPath } from './browser-origin';
+export { useBrowserOrigin, useBrowserPath, useIsApplePlatform, useIsOffline } from './browser';
 export { useClientNow } from './client-now';
 export { useDebouncedValue } from './debounced-value';
 export { interleave } from './interleave';
-export { useIsClamped, useMediaQuery } from './layout';
 export {
+  motionScrollBehavior,
+  prefersReducedMotion,
+  useInfiniteSentinel,
+  useIsClamped,
+  useMediaQuery,
+  useRevealedRows,
+} from './layout';
+export {
+  capitalizeFirst,
   currentYear,
   formatCompactCount,
   formatScore,
   initialOf,
+  isSearchQuery,
+  matchesSearch,
   percentFromScore,
   positiveNumber,
   scoreFromPercent,
   scoreFromRating,
+  searchableText,
   yearFromDate,
 } from './format';
-export { useIsApplePlatform } from './platform';
+export { errorDigest, useLoggedError, useRefreshRetry, useRetryTransition } from './recovery';
 export {
   APP_THEME_COLOR,
   InstallPromptCapture,
@@ -37,6 +48,7 @@ export {
   nameArtLinkingTo,
   nameArtOfLink,
   pendingArtImageFor,
+  previousRoutePath,
   railMemoryMarker,
   releaseSharedArt,
   replaceDocumentLocation,
@@ -47,6 +59,7 @@ export {
 export { createBatchLoader, preloadWhenIdle, whenIdleOnFastConnection } from './scheduling';
 export {
   JsonLd,
+  buildOpenGraph,
   buildOrganizationJsonLd,
   buildRobots,
   buildRootMetadata,
