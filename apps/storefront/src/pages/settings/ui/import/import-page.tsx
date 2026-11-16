@@ -28,7 +28,6 @@ import { PhoneSourceStep } from './source-step';
 import { StepProgress } from './step-progress';
 import { STEP_HEADING_ID } from './step-heading';
 
-const RECENT_IMPORT_MS = 30 * 60 * 1000;
 const PHONE_STEPS: readonly ImportStep[] = ['source', 'files', 'preview'];
 const DESKTOP_STEPS: readonly ImportStep[] = ['files', 'preview'];
 
@@ -109,7 +108,6 @@ function WizardBody({ wizard, isDesktop, origin, resume }: WizardBodyProps) {
 interface Resume {
   card: ReactNode;
   isChecking: boolean;
-  isLikely: boolean;
 }
 
 function useResume(wizard: ImportWizard): Resume {
@@ -118,16 +116,12 @@ function useResume(wizard: ImportWizard): Resume {
   const lastImport = useLastImport(user?.id);
   const progress = runningProgress(batches.data);
   const isChecking = batches.isLoading && batches.failureCount === 0;
-  const now = useClientNow();
-  const isLikely =
-    lastImport?.result.pendingBatch !== undefined && now - lastImport.finishedAt < RECENT_IMPORT_MS;
-  if (!progress) return { card: null, isChecking, isLikely };
+  if (!progress) return { card: null, isChecking };
   const pendingId = lastImport?.result.pendingBatch?.batchId;
   const summary = pendingId && progress.batchIds.includes(pendingId) ? lastImport : undefined;
   return {
     card: <ResumeCard progress={progress} lastImport={summary} onSummary={wizard.showSummary} />,
     isChecking,
-    isLikely,
   };
 }
 
@@ -157,6 +151,7 @@ export function ImportSettingsPage() {
   const wizard: ImportWizard = { ...wizardState, back: historyBack };
   const { step, source, files, finishedAt } = wizard.state;
   const position = useStepPosition(wizard, isDesktop);
+  const desktopPosition = useStepPosition(wizard, true);
   const moment = useImportMoment(finishedAt);
   const resume = useResume(wizard);
   useFocusOnStepChange(step);
@@ -172,8 +167,8 @@ export function ImportSettingsPage() {
       phoneTitle={title}
       desktopTitle={title}
       stepBack={isDesktop ? undefined : position.back}
-      skeleton={<ImportSkeleton isDesktop={isDesktop} />}
-      loadingSubtitle={isDesktop ? position.label : undefined}
+      skeleton={<ImportSkeleton />}
+      loadingSubtitle={desktopPosition.label}
     >
       <ImportLeaveGuard
         isActive={files.length > 0 && step !== 'result' && !wizard.state.isImporting}
@@ -191,7 +186,7 @@ export function ImportSettingsPage() {
           />
         ) : null}
         {isLoadingFirstScreen ? (
-          <ImportSkeleton isDesktop={isDesktop} expectsResume={resume.isLikely} />
+          <ImportSkeleton />
         ) : (
           <WizardBody
             wizard={wizard}
