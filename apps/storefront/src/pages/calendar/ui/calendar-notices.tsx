@@ -5,6 +5,7 @@ import { Button, Card } from '@heroui/react';
 import { openAuth } from '@/shared/auth';
 import type { CalendarEpisode } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { SectionError } from '@/shared/ui';
 import { kyivDateKey } from '../model/calendar-dates';
 import { formatDay } from '../model/calendar-format';
 import { calendarEpisodeCode } from '../model/episode-line';
@@ -104,15 +105,20 @@ export function EmptyWeekNote() {
   );
 }
 
-export function CalendarError({ onRetry }: { onRetry: () => void }) {
+interface CalendarErrorProps {
+  onRetry: () => void;
+  isRetrying: boolean;
+}
+
+export function CalendarError({ onRetry, isRetrying }: CalendarErrorProps) {
   const { dict } = useTranslation();
 
   return (
-    <div role="alert" className="flex flex-col items-center gap-3 text-center text-sm">
-      <p className="text-muted">{dict.calendar.loadError}</p>
-      <Button variant="secondary" onPress={onRetry} className="min-h-tap">
-        {dict.calendar.retry}
-      </Button>
-    </div>
+    <SectionError
+      title={dict.calendar.loadError}
+      onRetry={onRetry}
+      isRetrying={isRetrying}
+      className="min-h-80 w-full"
+    />
   );
 }

@@ -1,5 +1,5 @@
+import { ConnectionRecovery } from '@/widgets/page-error';
 import { BrandMark } from '@/shared/ui';
-import { ConnectionRecovery } from './connection-recovery';
 
 export function OfflinePage() {
   return (
@@ -10,7 +10,7 @@ export function OfflinePage() {
       >
         <BrandMark />
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center px-4 pb-16">
+      <main className="flex flex-1 flex-col">
         <ConnectionRecovery />
       </main>
     </div>

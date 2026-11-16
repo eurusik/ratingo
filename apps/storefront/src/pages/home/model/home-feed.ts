@@ -3,6 +3,12 @@ import type { HomeItem, NewEpisode } from '@/shared/api';
 import { tmdbPosterUrl } from '@/shared/config';
 
 export const TOP_TEN_COUNT = 10;
+
+export type Loaded<T> = { ok: true; data: T } | { ok: false };
+
+export function isFeedDown(sections: ReadonlyArray<Loaded<unknown>>): boolean {
+  return sections.every((section) => !section.ok);
+}
 const TOP_THREE_COUNT = 3;
 
 export interface HeroMedia extends TrendingMedia {

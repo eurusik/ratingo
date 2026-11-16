@@ -4,14 +4,14 @@ import { useEffect } from 'react';
 import { DetailsError } from '@/pages/media-details/index.client';
 
 interface DetailsErrorBoundaryProps {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error: unknown;
+  retry: () => void;
 }
 
-export default function DetailsErrorBoundary({ error, reset }: DetailsErrorBoundaryProps) {
+export default function DetailsErrorBoundary({ error, retry }: DetailsErrorBoundaryProps) {
   useEffect(() => {
-    console.error('Details page failed to render', { digest: error.digest, error });
+    console.error('Details page failed to render', error);
   }, [error]);
 
-  return <DetailsError onRetry={reset} />;
+  return <DetailsError error={error} onRetry={retry} />;
 }

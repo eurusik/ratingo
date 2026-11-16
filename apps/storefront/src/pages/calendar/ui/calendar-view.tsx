@@ -38,7 +38,12 @@ interface NoticeActions {
 function weekNotice(week: CalendarWeek, { onShowAll, onNextWeek }: NoticeActions): ReactNode {
   if (week.isGuestInMine) return <GuestPrompt onShowAll={onShowAll} />;
   if (!week.layout && week.active.isError) {
-    return <CalendarError onRetry={() => void week.active.refetch()} />;
+    return (
+      <CalendarError
+        onRetry={() => void week.active.refetch()}
+        isRetrying={week.active.isFetching}
+      />
+    );
   }
   if (!week.layout) return null;
   if (week.isResting) return <RestWeekNote upcoming={week.nextEpisode} onNextWeek={onNextWeek} />;

@@ -86,7 +86,7 @@ function ListEnd({ status, resultLabel, onRetry }: ListEndProps) {
             <span className="text-muted">{labels.failedHint}</span>
           </span>
           <Button variant="secondary" size="sm" onPress={onRetry}>
-            {labels.retry}
+            {dict.common.retry}
           </Button>
         </div>
       ) : null}

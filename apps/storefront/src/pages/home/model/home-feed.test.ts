@@ -1,7 +1,14 @@
 import fc from 'fast-check';
 import type { TrendingMedia } from '@/entities/media';
 import type { HomeItem, NewEpisode } from '@/shared/api';
-import { buildHomeHero, chooseList, toAiredAt, toEpisodeRelease, toReleaseRail } from './home-feed';
+import {
+  buildHomeHero,
+  chooseList,
+  isFeedDown,
+  toAiredAt,
+  toEpisodeRelease,
+  toReleaseRail,
+} from './home-feed';
 
 const IMAGE = {
   thumb: 'https://img.test/w154/a.jpg',
@@ -158,5 +165,24 @@ describe('new episodes', () => {
       'https://cdn.test/p.jpg',
     );
     expect(toEpisodeRelease({ ...episode, posterPath: null }).posterUrl).toBeUndefined();
+  });
+});
+
+describe('isFeedDown', () => {
+  const failed = { ok: false } as const;
+  const loaded = { ok: true, data: [] } as const;
+
+  it('reports the feed down only when every section failed', () => {
+    expect(isFeedDown([failed, failed, failed])).toBe(true);
+    expect(isFeedDown([failed, loaded, failed])).toBe(false);
+  });
+
+  it('keeps the page whenever any section loaded', () => {
+    fc.assert(
+      fc.property(fc.array(fc.boolean(), { minLength: 1 }), (outcomes) => {
+        const sections = outcomes.map((ok) => (ok ? loaded : failed));
+        expect(isFeedDown(sections)).toBe(!outcomes.includes(true));
+      }),
+    );
   });
 });

@@ -9,6 +9,7 @@ import type { Review } from '@/shared/api';
 import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { useMediaQuery } from '@/shared/lib';
+import { SectionError } from '@/shared/ui';
 import { useIds } from '../lib/id-set';
 import {
   reportedReviews,
@@ -52,14 +53,7 @@ export interface ReviewsBoardProps {
 
 function LoadError({ onRetry }: { onRetry: () => void }) {
   const { dict } = useTranslation();
-  return (
-    <div role="alert" className="flex items-center gap-3 rounded-3xl bg-surface p-3.5 text-sm">
-      <span className="flex-1 text-muted">{dict.reviews.loadError}</span>
-      <Button variant="secondary" size="sm" onPress={onRetry} className="min-h-tap">
-        {dict.common.retry}
-      </Button>
-    </div>
-  );
+  return <SectionError title={dict.reviews.loadError} onRetry={onRetry} className="min-h-60" />;
 }
 
 interface ViewerSlotProps {

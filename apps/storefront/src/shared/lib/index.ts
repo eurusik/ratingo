@@ -2,6 +2,7 @@ export { SiteAnalytics } from './analytics';
 export { useBrowserOrigin, useBrowserPath } from './browser-origin';
 export { useClientNow } from './client-now';
 export { useDebouncedValue } from './debounced-value';
+export { errorDigest } from './error-digest';
 export { interleave } from './interleave';
 export {
   motionScrollBehavior,
@@ -26,7 +27,9 @@ export {
   searchableText,
   yearFromDate,
 } from './format';
+export { useIsOffline } from './network';
 export { useIsApplePlatform } from './platform';
+export { useRefreshRetry, useRetryTransition } from './retry';
 export {
   APP_THEME_COLOR,
   InstallPromptCapture,

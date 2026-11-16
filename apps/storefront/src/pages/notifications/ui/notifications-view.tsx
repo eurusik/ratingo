@@ -20,8 +20,8 @@ import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
 import {
   BackLink,
-  EMPTY_STATE_ACTION,
   EmptyState,
+  SectionError,
   PageHeader,
   SECTION_TITLE_DESKTOP,
   STICKY_TOOLBAR,
@@ -95,19 +95,14 @@ function NotificationList({
   if (pages.isPending) return <ListSkeleton />;
   if (pages.isError) {
     return (
-      <EmptyState
-        title={dict.notifications.failedTitle}
-        text={dict.notifications.failedText}
-        action={
-          <Button
-            variant="secondary"
-            className={EMPTY_STATE_ACTION}
-            onPress={() => void pages.refetch()}
-          >
-            {dict.notifications.retry}
-          </Button>
-        }
-      />
+      <div className="py-4">
+        <SectionError
+          title={dict.notifications.failedTitle}
+          onRetry={() => void pages.refetch()}
+          isRetrying={pages.isFetching}
+          className="min-h-80"
+        />
+      </div>
     );
   }
 

@@ -1,10 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Skeleton } from '@heroui/react';
+import { Skeleton } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useRevealedRows } from '@/shared/lib';
-import { EMPTY_STATE_ACTION, EmptyState, LIST_ROW_FRAME, ListSearch, ShowMore } from '@/shared/ui';
+import {
+  EmptyState,
+  LIST_ROW_FRAME,
+  ListSearch,
+  SectionError,
+  ShowMore,
+} from '@/shared/ui';
 import { useAccountToggles } from '../model/account-toggles';
 import { useFollowedSummary, useFollowedTitles, useUnfollowTitle } from '../model/followed-queries';
 import { matchingFollowedTitles } from '../model/followed-titles';
@@ -51,18 +57,11 @@ function FollowedTitles() {
   if (followed.isPending) return <FollowedSkeleton />;
   if (!followed.data) {
     return (
-      <EmptyState
+      <SectionError
         title={copy.failed}
-        text={dict.notifications.failedText}
-        action={
-          <Button
-            variant="secondary"
-            className={EMPTY_STATE_ACTION}
-            onPress={() => void followed.refetch()}
-          >
-            {copy.retry}
-          </Button>
-        }
+        onRetry={() => void followed.refetch()}
+        isRetrying={followed.isFetching}
+        className="min-h-60"
       />
     );
   }
