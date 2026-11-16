@@ -42,6 +42,7 @@ const nextConfig: NextConfig = {
   expireTime: 3600,
   experimental: {
     staleTimes: { dynamic: DYNAMIC_PAGE_REUSE_SECONDS },
+    isrFlushToDisk: false,
   },
   transpilePackages: ['@ratingo/web-core', '@ratingo/ui'],
   async redirects() {
