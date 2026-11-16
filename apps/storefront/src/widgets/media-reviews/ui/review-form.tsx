@@ -32,8 +32,13 @@ const PRESET_CLASSES: Record<FormLayout, string> = {
 };
 
 const TEXT_AREA_CLASSES: Record<FormLayout, string> = {
-  sheet: 'min-h-24 flex-1',
-  inline: 'min-h-45 max-h-100 [field-sizing:content]',
+  sheet: 'min-h-24 flex-1 resize-none',
+  inline: 'min-h-45 max-h-100 resize-y [field-sizing:content]',
+};
+
+const RATING_BLOCK_CLASSES: Record<FormLayout, string> = {
+  sheet: 'group-has-[textarea:focus]/compose:hidden',
+  inline: '',
 };
 
 const SPOILER_SWITCH_CLASSES: Record<FormLayout, string> = {
@@ -251,14 +256,14 @@ export function ReviewForm(props: ReviewFormProps) {
       validationBehavior="aria"
       className={
         isSheet
-          ? 'flex h-full flex-col gap-4.5 pb-[max(0.5rem,var(--safe-bottom))]'
+          ? 'group/compose flex h-full flex-col gap-4.5 pb-[max(0.5rem,var(--safe-bottom))]'
           : 'flex flex-col gap-5.5'
       }
     >
       {props.layout === 'sheet' ? (
         <SheetHeader title={props.title} onCancel={props.onCancel} />
       ) : null}
-      <div ref={presetsRef} className="flex flex-col gap-2">
+      <div ref={presetsRef} className={`flex flex-col gap-2 ${RATING_BLOCK_CLASSES[layout]}`}>
         <span className="text-base font-bold">{copy.ratingTitle}</span>
         <RatingPresets
           rating={draft.rating}
@@ -286,7 +291,7 @@ export function ReviewForm(props: ReviewFormProps) {
         maxLength={MAX_REVIEW_TEXT_LENGTH}
         isInvalid={errors.isTextMissing}
         fullWidth
-        className={`gap-2 ${isSheet ? 'min-h-0 flex-1' : ''}`}
+        className={`gap-2 ${isSheet ? 'flex-1' : ''}`}
       >
         <Label className="sr-only">{copy.textLabel}</Label>
         <TextArea
@@ -295,7 +300,7 @@ export function ReviewForm(props: ReviewFormProps) {
           autoComplete="off"
           autoFocus={editing !== null && !isSheet}
           placeholder={copy.placeholder}
-          className={`w-full resize-none rounded-[20px] px-4.5 py-4 text-base leading-normal sm:text-base ${TEXT_AREA_CLASSES[layout]}`}
+          className={`w-full rounded-[20px] px-4.5 py-4 text-base leading-normal sm:text-base ${TEXT_AREA_CLASSES[layout]}`}
         />
         <LengthCounter length={draft.content.length} />
         <FieldError>{copy.errors.empty}</FieldError>
