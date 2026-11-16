@@ -48,7 +48,7 @@ export async function WatchedNow({ locale }: { locale: Locale }) {
     <WatchedNowFrame heading={getDictionary(locale).notFound.watchedNow}>
       {titles.map((media, index) => (
         <li key={media.mediaItemId} className={tileVisibility(index)}>
-          <PosterTile media={media} />
+          <PosterTile media={media} isCompact />
         </li>
       ))}
     </WatchedNowFrame>

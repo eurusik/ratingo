@@ -130,12 +130,13 @@ function LookupResults({ state, found, term, limit, fallback }: LookupResultsPro
 }
 
 interface TitleLookupProps {
+  placeholder: string;
   initialQuery?: string;
   limit: number;
   fallback: ReactNode;
 }
 
-export function TitleLookup({ initialQuery = '', limit, fallback }: TitleLookupProps) {
+export function TitleLookup({ placeholder, initialQuery = '', limit, fallback }: TitleLookupProps) {
   const { dict } = useTranslation();
   const [query, setQuery] = useState(initialQuery);
   const search = useCatalogSearch(query, ANY_TYPE);
@@ -148,7 +149,7 @@ export function TitleLookup({ initialQuery = '', limit, fallback }: TitleLookupP
       <div className="w-full md:w-120">
         <ListSearch
           label={dict.search.trigger}
-          placeholder={dict.search.placeholder}
+          placeholder={placeholder}
           value={query}
           onChange={setQuery}
         />

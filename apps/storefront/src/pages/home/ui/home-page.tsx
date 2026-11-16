@@ -63,9 +63,9 @@ export function HomePage({ locale }: { locale: Locale }) {
           <Suspense fallback={<CardRailSkeleton />}>
             <NewReleasesSection nowPlaying={feed.nowPlaying} newOnDigital={feed.newOnDigital} />
           </Suspense>
+          <TrackShowsCard />
         </UnlessFeedIsDown>
       </Suspense>
-      <TrackShowsCard />
     </div>
   );
 }

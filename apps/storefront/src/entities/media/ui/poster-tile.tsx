@@ -17,9 +17,15 @@ interface PosterTileProps {
   media: GridMedia;
   loadPriority?: PosterLoadPriority;
   actions?: ReactNode;
+  isCompact?: boolean;
 }
 
-export function PosterTile({ media, loadPriority = 'lazy', actions }: PosterTileProps) {
+export function PosterTile({
+  media,
+  loadPriority = 'lazy',
+  actions,
+  isCompact = false,
+}: PosterTileProps) {
   const titleId = useId();
   const scoreId = useId();
 
@@ -49,12 +55,12 @@ export function PosterTile({ media, loadPriority = 'lazy', actions }: PosterTile
         </span>
       </ForwardLink>
       <div className="flex min-h-6 items-center gap-1.5">
-        {media.year === undefined ? null : (
+        {media.year === undefined || isCompact ? null : (
           <span className="hidden text-sm text-muted tabular-nums md:inline">{media.year}</span>
         )}
         <ExternalRatings
           imdbRating={media.imdbRating}
-          criticsPercent={media.criticsPercent}
+          criticsPercent={isCompact ? undefined : media.criticsPercent}
           size="sm"
         />
       </div>

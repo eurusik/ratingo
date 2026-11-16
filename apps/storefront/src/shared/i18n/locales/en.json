@@ -1326,6 +1326,7 @@
         "text": "The link is outdated or the show was removed from the catalog. Try finding it by title."
       }
     },
-    "watchedNow": "Or see what people are watching now"
+    "watchedNow": "Or see what people are watching now",
+    "searchPlaceholder": "Find a movie or show…"
   }
 }

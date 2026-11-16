@@ -29,6 +29,7 @@ export function NotFoundContent({ watchedNow }: { watchedNow: ReactNode }) {
       </div>
       <TitleLookup
         key={pathname}
+        placeholder={dict.notFound.searchPlaceholder}
         initialQuery={missing?.query}
         limit={SEARCH_RESULT_LIMIT}
         fallback={watchedNow}
