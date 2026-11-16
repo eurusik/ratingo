@@ -18,7 +18,7 @@ import { RATING_PRESETS, findPreset, presetForRating } from '@/entities/library'
 import type { Review } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { formatScore, scoreFromRating } from '@/shared/lib';
-import { MAX_REVIEW_TEXT_LENGTH } from '../model/review-limits';
+import { MAX_REVIEW_TEXT_LENGTH, isNearReviewTextLimit } from '../model/review-limits';
 import type { ReviewDraftState } from '../model/use-review-draft';
 import { usePublishReview } from '../model/use-publish-review';
 import { useReviewsActions } from './reviews-context';
@@ -31,13 +31,34 @@ const PRESET_CLASSES: Record<FormLayout, string> = {
   inline: 'min-h-tap gap-1.5 rounded-full border-2 border-transparent bg-default px-3',
 };
 
-interface ReviewFormProps {
+const TEXT_AREA_CLASSES: Record<FormLayout, string> = {
+  sheet: 'min-h-24 flex-1',
+  inline: 'min-h-45 max-h-100 [field-sizing:content]',
+};
+
+const SPOILER_SWITCH_CLASSES: Record<FormLayout, string> = {
+  sheet: 'w-full flex-row-reverse',
+  inline: 'flex-row',
+};
+
+interface ReviewFormBaseProps {
   draft: ReviewDraftState;
   editing: Review | null;
-  layout: FormLayout;
   onPublished: () => void;
+}
+
+interface InlineReviewFormProps extends ReviewFormBaseProps {
+  layout: 'inline';
   onCancel?: () => void;
 }
+
+interface SheetReviewFormProps extends ReviewFormBaseProps {
+  layout: 'sheet';
+  title: string;
+  onCancel: () => void;
+}
+
+type ReviewFormProps = InlineReviewFormProps | SheetReviewFormProps;
 
 interface RatingPresetsProps {
   rating: number | null;
@@ -98,30 +119,93 @@ function errorsOf(draft: ReviewDraftState): DraftErrors {
   return { isRatingMissing: draft.rating === null, isTextMissing: !draft.content.trim() };
 }
 
-function SpoilerSwitch({
-  draft,
-  onChange,
-}: {
-  draft: ReviewDraftState;
-  onChange: (on: boolean) => void;
-}) {
+interface SpoilerSwitchProps {
+  isSelected: boolean;
+  layout: FormLayout;
+  onChange: (isSelected: boolean) => void;
+}
+
+function SpoilerSwitch({ isSelected, layout, onChange }: SpoilerSwitchProps) {
   const { dict } = useTranslation();
   const copy = dict.reviews.compose;
 
   return (
-    <Switch isSelected={draft.hasSpoiler} onChange={onChange}>
-      <Switch.Content className="flex-1">
-        <Label className="text-[15px] font-semibold">{copy.spoiler}</Label>
-        <Description className="text-[13px]">{copy.spoilerHint}</Description>
-      </Switch.Content>
+    <Switch
+      aria-label={copy.spoiler}
+      isSelected={isSelected}
+      onChange={onChange}
+      className={`min-h-tap items-center gap-3 ${SPOILER_SWITCH_CLASSES[layout]}`}
+    >
       <Switch.Control>
         <Switch.Thumb />
       </Switch.Control>
+      <Switch.Content className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-start">
+        <Label className="text-base font-semibold">{copy.spoiler}</Label>
+        <Description className="text-[13px] leading-snug">{copy.spoilerHint}</Description>
+      </Switch.Content>
     </Switch>
   );
 }
 
-export function ReviewForm({ draft, editing, layout, onPublished, onCancel }: ReviewFormProps) {
+function LengthCounter({ length }: { length: number }) {
+  const { dict } = useTranslation();
+  if (!isNearReviewTextLimit(length)) return null;
+
+  return (
+    <Description className="self-end text-xs text-muted tabular-nums">
+      {interpolate(dict.reviews.compose.counter, { count: length, max: MAX_REVIEW_TEXT_LENGTH })}
+    </Description>
+  );
+}
+
+interface SubmitButtonProps {
+  isPending: boolean;
+  isEditing: boolean;
+  fullWidth: boolean;
+}
+
+function SubmitButton({ isPending, isEditing, fullWidth }: SubmitButtonProps) {
+  const { dict } = useTranslation();
+  const copy = dict.reviews.compose;
+
+  return (
+    <Button
+      type="submit"
+      size="lg"
+      isPending={isPending}
+      fullWidth={fullWidth}
+      className="min-h-tap rounded-full font-bold"
+    >
+      {isPending ? copy.publishing : isEditing ? copy.save : copy.publish}
+    </Button>
+  );
+}
+
+function CancelButton({ onCancel }: { onCancel: () => void }) {
+  const { dict } = useTranslation();
+
+  return (
+    <Button variant="ghost" onPress={onCancel} className="min-h-tap">
+      {dict.reviews.compose.cancel}
+    </Button>
+  );
+}
+
+function SheetHeader({ title, onCancel }: { title: string; onCancel: () => void }) {
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <div className="justify-self-start">
+        <CancelButton onCancel={onCancel} />
+      </div>
+      <span aria-hidden className="truncate text-[17px] font-bold">
+        {title}
+      </span>
+    </div>
+  );
+}
+
+export function ReviewForm(props: ReviewFormProps) {
+  const { draft, editing, layout, onPublished, onCancel } = props;
   const { dict } = useTranslation();
   const { media } = useReviewsActions();
   const publish = usePublishReview(media);
@@ -130,6 +214,7 @@ export function ReviewForm({ draft, editing, layout, onPublished, onCancel }: Re
   const presetsRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const copy = dict.reviews.compose;
+  const isSheet = layout === 'sheet';
 
   const clearPublishErrorThen =
     <T,>(change: (value: T) => void) =>
@@ -149,12 +234,32 @@ export function ReviewForm({ draft, editing, layout, onPublished, onCancel }: Re
     if (ready) publish.mutate({ draft: ready, editing }, { onSuccess: onPublished });
   };
 
+  const spoilerSwitch = (
+    <SpoilerSwitch
+      isSelected={draft.hasSpoiler}
+      layout={layout}
+      onChange={clearPublishErrorThen(draft.setHasSpoiler)}
+    />
+  );
+  const submitButton = (
+    <SubmitButton isPending={publish.isPending} isEditing={editing !== null} fullWidth={isSheet} />
+  );
+
   return (
-    <Form onSubmit={submit} validationBehavior="aria" className="flex flex-col gap-3.5">
-      <div ref={presetsRef} className="flex flex-col gap-1.5">
-        {layout === 'inline' ? (
-          <span className="text-[15px] font-bold">{copy.ratingTitle}</span>
-        ) : null}
+    <Form
+      onSubmit={submit}
+      validationBehavior="aria"
+      className={
+        isSheet
+          ? 'flex h-full flex-col gap-4.5 pb-[max(0.5rem,var(--safe-bottom))]'
+          : 'flex flex-col gap-5.5'
+      }
+    >
+      {props.layout === 'sheet' ? (
+        <SheetHeader title={props.title} onCancel={props.onCancel} />
+      ) : null}
+      <div ref={presetsRef} className="flex flex-col gap-2">
+        <span className="text-base font-bold">{copy.ratingTitle}</span>
         <RatingPresets
           rating={draft.rating}
           layout={layout}
@@ -181,43 +286,39 @@ export function ReviewForm({ draft, editing, layout, onPublished, onCancel }: Re
         maxLength={MAX_REVIEW_TEXT_LENGTH}
         isInvalid={errors.isTextMissing}
         fullWidth
+        className={`gap-2 ${isSheet ? 'min-h-0 flex-1' : ''}`}
       >
         <Label className="sr-only">{copy.textLabel}</Label>
         <TextArea
           ref={textRef}
           variant="secondary"
           autoComplete="off"
-          autoFocus={editing !== null && layout === 'inline'}
+          autoFocus={editing !== null && !isSheet}
           placeholder={copy.placeholder}
-          className={`w-full resize-none text-base leading-normal ${layout === 'sheet' ? 'h-33' : 'h-24 resize-y'}`}
+          className={`w-full resize-none rounded-[20px] px-4.5 py-4 text-base leading-normal sm:text-base ${TEXT_AREA_CLASSES[layout]}`}
         />
-        <Description className="self-end text-xs tabular-nums">
-          {interpolate(copy.counter, { count: draft.content.length, max: MAX_REVIEW_TEXT_LENGTH })}
-        </Description>
+        <LengthCounter length={draft.content.length} />
         <FieldError>{copy.errors.empty}</FieldError>
       </TextField>
-      <SpoilerSwitch draft={draft} onChange={clearPublishErrorThen(draft.setHasSpoiler)} />
       {publish.error ? (
         <p role="alert" className="text-sm text-danger">
           {copy.errors[publish.error.failure]}
         </p>
       ) : null}
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {onCancel ? (
-          <Button variant="ghost" onPress={onCancel} className="min-h-tap">
-            {copy.cancel}
-          </Button>
-        ) : null}
-        <Button
-          type="submit"
-          size="lg"
-          isPending={publish.isPending}
-          fullWidth={layout === 'sheet'}
-          className="min-h-tap rounded-full font-bold"
-        >
-          {publish.isPending ? copy.publishing : editing ? copy.save : copy.publish}
-        </Button>
-      </div>
+      {isSheet ? (
+        <>
+          {spoilerSwitch}
+          {submitButton}
+        </>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          {spoilerSwitch}
+          <div className="ms-auto flex items-center gap-2">
+            {onCancel ? <CancelButton onCancel={onCancel} /> : null}
+            {submitButton}
+          </div>
+        </div>
+      )}
     </Form>
   );
 }

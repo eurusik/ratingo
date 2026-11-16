@@ -18,6 +18,7 @@ export function ComposeSheet({ isOpen, editing, onClose }: ComposeSheetProps) {
   const { dict } = useTranslation();
   const { ownRating } = useReviewsActions();
   const { draft, closing } = useReviewComposer(editing, ownRating, onClose);
+  const title = editing ? dict.reviews.compose.editTitle : dict.reviews.compose.title;
 
   return (
     <>
@@ -26,9 +27,18 @@ export function ComposeSheet({ isOpen, editing, onClose }: ComposeSheetProps) {
         onOpenChange={(open) => {
           if (!open) closing.request();
         }}
-        title={editing ? dict.reviews.compose.editTitle : dict.reviews.compose.title}
+        title={title}
+        size="full"
+        isHeaderless
       >
-        <ReviewForm draft={draft} editing={editing} layout="sheet" onPublished={onClose} />
+        <ReviewForm
+          draft={draft}
+          editing={editing}
+          layout="sheet"
+          title={title}
+          onPublished={onClose}
+          onCancel={closing.request}
+        />
       </Sheet>
       <DiscardDraftDialog
         isOpen={closing.isAsking}

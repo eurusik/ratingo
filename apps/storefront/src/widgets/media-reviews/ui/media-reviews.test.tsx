@@ -180,6 +180,78 @@ describe('MediaReviews', () => {
     );
   });
 
+  async function openComposerWithRating() {
+    signIn('me');
+    listing([reviewBy('olya')]);
+    jest
+      .mocked(libraryApi.getMediaState)
+      .mockResolvedValue({ mediaItemId: DUNE.mediaItemId, rating: 75 } as UserMediaState);
+    jest.mocked(reviewsApi.create).mockResolvedValue({} as never);
+    renderReviews();
+    fireEvent.click(await screen.findByRole('button', { name: /Твоя оцінка:\s+7,5/ }));
+    return screen.findByRole('textbox', { name: 'Текст відгуку' });
+  }
+
+  it('marks a review as a spoiler with the switch under the field', async () => {
+    const text = await openComposerWithRating();
+    fireEvent.change(text, { target: { value: 'Пол стає імператором' } });
+    const spoiler = screen.getByRole('switch', { name: 'Є спойлери' });
+
+    expect(spoiler).not.toBeChecked();
+    expect(spoiler).toHaveAccessibleDescription('Текст сховаємо, доки не натиснуть «Показати»');
+
+    fireEvent.click(spoiler);
+
+    expect(spoiler).toBeChecked();
+    fireEvent.click(screen.getByRole('button', { name: 'Опублікувати' }));
+    await waitFor(() =>
+      expect(reviewsApi.create).toHaveBeenCalledWith('dune-id', 'movie', {
+        content: 'Пол стає імператором',
+        rating: 75,
+        hasSpoiler: true,
+      }),
+    );
+  });
+
+  it('shows the length counter only once the text nears the limit', async () => {
+    const text = await openComposerWithRating();
+
+    fireEvent.change(text, { target: { value: 'а'.repeat(251) } });
+    expect(screen.queryByText('251 / 280')).toBeNull();
+
+    fireEvent.change(text, { target: { value: 'а'.repeat(252) } });
+    expect(screen.getByText('252 / 280')).toBeInTheDocument();
+  });
+
+  it('asks before discarding typed text and keeps writing on request', async () => {
+    const text = await openComposerWithRating();
+    fireEvent.change(text, { target: { value: 'Звук — окремий персонаж' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
+    const confirm = await screen.findByRole('alertdialog', { name: 'Скинути відгук?' });
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Писати далі' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('alertdialog', { name: 'Скинути відгук?' })).toBeNull(),
+    );
+    expect(screen.getByRole('textbox', { name: 'Текст відгуку' })).toHaveValue(
+      'Звук — окремий персонаж',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
+    fireEvent.click(
+      within(await screen.findByRole('alertdialog', { name: 'Скинути відгук?' })).getByRole(
+        'button',
+        { name: 'Скинути' },
+      ),
+    );
+
+    await waitFor(() =>
+      expect(screen.queryByRole('textbox', { name: 'Текст відгуку' })).toBeNull(),
+    );
+    expect(reviewsApi.create).not.toHaveBeenCalled();
+  });
+
   it('puts the viewer’s own review first without a vote of its own', async () => {
     signIn('mine-id');
     const mine = reviewBy('mine');
