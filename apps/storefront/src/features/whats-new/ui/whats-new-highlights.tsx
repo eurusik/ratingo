@@ -46,7 +46,7 @@ export function WhatsNewHighlights({ hasIosIconHint }: WhatsNewHighlightsProps) 
         ))}
       </ul>
       {hasIosIconHint ? (
-        <p className="flex items-start gap-3 rounded-2xl bg-default px-3.5 py-3 text-sm leading-snug text-foreground/85">
+        <p role="note" className="flex items-start gap-3 rounded-2xl bg-default px-3.5 py-3 text-sm leading-snug text-foreground/85">
           <Info aria-hidden className="mt-px size-[18px] shrink-0 text-accent" />
           <span>{dict.whatsNew.iosIconHint}</span>
         </p>

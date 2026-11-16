@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { useDebouncedValue } from '@/shared/lib';
 import { WHATS_NEW_SETTLE_DELAY_MS } from '../config/whats-new';
 import { isWhatsNewEntryRoute } from '../model/entry-route';
 import { useHasOpenOverlay } from '../model/overlay-presence';
@@ -21,13 +20,17 @@ export function WhatsNew() {
   const isWaiting = isDue && isOnEntryRoute && !hasOpened;
   const hasOpenOverlay = useHasOpenOverlay(isWaiting);
   const isClear = isWaiting && !hasOpenOverlay;
-  const hasStayedClear = useDebouncedValue(isClear, WHATS_NEW_SETTLE_DELAY_MS);
 
   useEffect(() => {
     if (isWaiting) void loadWhatsNewDialog();
   }, [isWaiting]);
 
-  if (isClear && hasStayedClear) setHasOpened(true);
+  useEffect(() => {
+    if (!isClear) return;
+    const timer = setTimeout(() => setHasOpened(true), WHATS_NEW_SETTLE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [isClear]);
+
   if (!hasOpened) return null;
 
   return <WhatsNewDialog isOpen={isDue} onDismiss={dismissWhatsNew} />;

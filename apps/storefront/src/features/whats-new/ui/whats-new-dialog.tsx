@@ -20,17 +20,17 @@ interface SurfaceProps {
   hasIosIconHint: boolean;
 }
 
-function closeTo(onDismiss: () => void) {
+function dismissWhenClosed(onDismiss: () => void) {
   return (isOpen: boolean) => {
     if (!isOpen) onDismiss();
   };
 }
 
-function GotItButton({ fullWidth }: { fullWidth: boolean }) {
+function GotItButton({ className }: { className?: string }) {
   const { dict } = useTranslation();
 
   return (
-    <Button slot="close" size="lg" fullWidth={fullWidth} autoFocus>
+    <Button slot="close" size="lg" className={className} autoFocus>
       {dict.whatsNew.gotIt}
     </Button>
   );
@@ -40,7 +40,7 @@ function PhoneSheet({ isOpen, onDismiss, subtitleId, hasIosIconHint }: SurfacePr
   const { dict } = useTranslation();
 
   return (
-    <Sheet isOpen={isOpen} onOpenChange={closeTo(onDismiss)}>
+    <Sheet isOpen={isOpen} onOpenChange={dismissWhenClosed(onDismiss)}>
       <Sheet.Backdrop>
         <Sheet.Content>
           <Sheet.Dialog aria-describedby={subtitleId}>
@@ -59,7 +59,7 @@ function PhoneSheet({ isOpen, onDismiss, subtitleId, hasIosIconHint }: SurfacePr
               <WhatsNewHighlights hasIosIconHint={hasIosIconHint} />
             </Sheet.Body>
             <Sheet.Footer>
-              <GotItButton fullWidth />
+              <GotItButton className="w-full" />
             </Sheet.Footer>
           </Sheet.Dialog>
         </Sheet.Content>
@@ -73,7 +73,7 @@ function DesktopModal({ isOpen, onDismiss, subtitleId, hasIosIconHint }: Surface
 
   return (
     <Modal>
-      <Modal.Backdrop isOpen={isOpen} onOpenChange={closeTo(onDismiss)}>
+      <Modal.Backdrop isOpen={isOpen} onOpenChange={dismissWhenClosed(onDismiss)}>
         <Modal.Container scroll="inside">
           <Modal.Dialog aria-describedby={subtitleId} className="max-w-[520px] p-8">
             <ViewportBottomFill tone="backdrop" />
@@ -81,7 +81,7 @@ function DesktopModal({ isOpen, onDismiss, subtitleId, hasIosIconHint }: Surface
             <Modal.CloseTrigger aria-label={dict.common.close} />
             <Modal.Header className="flex-row items-center gap-4 pe-10">
               <BrandIcon size={64} />
-              <span className="flex flex-col gap-1">
+              <span className="flex min-w-0 flex-col gap-1">
                 <Modal.Heading className={HEADING}>{dict.whatsNew.title}</Modal.Heading>
                 <p id={subtitleId} className={SUBTITLE}>
                   {dict.whatsNew.subtitle}
@@ -92,7 +92,7 @@ function DesktopModal({ isOpen, onDismiss, subtitleId, hasIosIconHint }: Surface
               <WhatsNewHighlights hasIosIconHint={hasIosIconHint} />
             </Modal.Body>
             <Modal.Footer className="mt-6">
-              <GotItButton fullWidth={false} />
+              <GotItButton />
             </Modal.Footer>
           </Modal.Dialog>
         </Modal.Container>

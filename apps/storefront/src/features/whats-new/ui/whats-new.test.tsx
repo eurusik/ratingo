@@ -9,9 +9,12 @@ jest.mock('next/navigation', () => ({
   usePathname: () => pathname,
 }));
 
+let settleDelayMs = 0;
 jest.mock('../config/whats-new', () => ({
   ...jest.requireActual('../config/whats-new'),
-  WHATS_NEW_SETTLE_DELAY_MS: 0,
+  get WHATS_NEW_SETTLE_DELAY_MS() {
+    return settleDelayMs;
+  },
 }));
 
 const uk = getDictionary('uk');
@@ -37,10 +40,24 @@ async function expectNoWindow() {
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 }
 
+const originalMatchMedia = window.matchMedia;
+
+function matchOnly(matchingQuery: string) {
+  window.matchMedia = ((query: string) => ({
+    ...originalMatchMedia(query),
+    matches: query === matchingQuery,
+  })) as typeof window.matchMedia;
+}
+
 describe('WhatsNew', () => {
   beforeEach(() => {
     localStorage.clear();
     pathname = '/';
+    settleDelayMs = 0;
+  });
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
   });
 
   it('greets a returning user on the home page with focus on the button', async () => {
@@ -76,6 +93,14 @@ describe('WhatsNew', () => {
 
     await expectNoWindow();
     expect(localStorage.getItem(WHATS_NEW_STORAGE_KEY)).toBe('due');
+  });
+
+  it('lets the page settle before opening, even on a fresh mount', async () => {
+    rememberOldWebClient();
+    settleDelayMs = 60_000;
+    renderWhatsNew();
+
+    await expectNoWindow();
   });
 
   it('waits until another overlay closes', async () => {
@@ -116,11 +141,7 @@ describe('WhatsNew', () => {
   });
 
   it('closes the desktop window with its close button', async () => {
-    const originalMatchMedia = window.matchMedia;
-    window.matchMedia = ((query: string) => ({
-      ...originalMatchMedia(query),
-      matches: query === DESKTOP_MEDIA_QUERY,
-    })) as typeof window.matchMedia;
+    matchOnly(DESKTOP_MEDIA_QUERY);
     rememberOldWebClient();
     renderWhatsNew();
     await findWindow();
@@ -128,24 +149,18 @@ describe('WhatsNew', () => {
     fireEvent.click(screen.getByRole('button', { name: uk.common.close }));
 
     await waitFor(() => expect(localStorage.getItem(WHATS_NEW_STORAGE_KEY)).toBe('seen'));
-    window.matchMedia = originalMatchMedia;
   });
 
   describe('home screen icon hint', () => {
     const originalUserAgent = navigator.userAgent;
-    const originalMatchMedia = window.matchMedia;
 
     afterEach(() => {
       Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent, configurable: true });
-      window.matchMedia = originalMatchMedia;
     });
 
     it('explains how to refresh the icon inside the installed iPhone app', async () => {
       Object.defineProperty(navigator, 'userAgent', { value: IPHONE_USER_AGENT, configurable: true });
-      window.matchMedia = ((query: string) => ({
-        ...originalMatchMedia(query),
-        matches: query === '(display-mode: standalone)',
-      })) as typeof window.matchMedia;
+      matchOnly('(display-mode: standalone)');
       rememberOldWebClient();
       renderWhatsNew();
 

@@ -50,7 +50,7 @@ function subscribe(listener: () => void): () => void {
 
 let isDismissedWithoutStorage = false;
 
-function readStatus(): WhatsNewStatus {
+function readOrSettleStatus(): WhatsNewStatus {
   if (isDismissedWithoutStorage) return 'seen';
   try {
     return settleWhatsNewStatus(window.localStorage);
@@ -62,7 +62,7 @@ function readStatus(): WhatsNewStatus {
 const readServerStatus = (): WhatsNewStatus => 'seen';
 
 export function useWhatsNewStatus(): WhatsNewStatus {
-  return useSyncExternalStore(subscribe, readStatus, readServerStatus);
+  return useSyncExternalStore(subscribe, readOrSettleStatus, readServerStatus);
 }
 
 export function dismissWhatsNew(): void {
