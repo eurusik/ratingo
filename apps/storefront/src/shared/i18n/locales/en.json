@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Ratingo — what to watch now",
-    "description": "Movies and shows the world is watching right now: ratings, new episodes and what is worth your time.",
+    "title": "Ratingo — what everyone is watching today",
+    "description": "This week's trends, ratings and reviews, a new-episode calendar and a tracker for your shows. Pick what to watch in a minute, not half an evening.",
     "keywords": {
       "shows": "shows",
       "movies": "movies",
@@ -420,7 +420,7 @@
   },
   "footer": {
     "label": "About the site",
-    "description": "What to watch now: trends, ratings and new episodes of your shows.",
+    "description": "What everyone is watching today: trends, ratings, reviews and a tracker for your shows.",
     "sources": "Data from TMDB, Trakt, IMDb and other sources.",
     "about": "About Ratingo",
     "journal": "Journal",
