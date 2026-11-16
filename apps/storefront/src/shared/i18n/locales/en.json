@@ -431,8 +431,6 @@
     "label": "About the site",
     "description": "What to watch now: trends, ratings and new episodes of your shows.",
     "sources": "Data from TMDB, Trakt, IMDb and other sources.",
-    "about": "About Ratingo",
-    "journal": "Journal",
     "github": "GitHub",
     "madeIn": "Made in Ukraine 🇺🇦",
     "authorName": "Yevhen Rusakov"

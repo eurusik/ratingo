@@ -431,8 +431,6 @@
     "label": "Про сайт",
     "description": "Що дивитися зараз: тренди, оцінки й нові серії твоїх серіалів.",
     "sources": "Дані з TMDB, Trakt, IMDb та інших джерел.",
-    "about": "Про Ratingo",
-    "journal": "Журнал",
     "github": "GitHub",
     "madeIn": "Зроблено в Україні 🇺🇦",
     "authorName": "Євген Русаков"

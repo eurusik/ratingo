@@ -3,7 +3,6 @@ import {
   BROWSE_ROUTE,
   CALENDAR_ROUTE,
   HOME_ROUTE,
-  JOURNAL_ROUTE,
   MY_ROUTE,
   NOTIFICATIONS_ROUTE,
   OFFLINE_ROUTE,
@@ -22,7 +21,6 @@ export interface SitemapSources {
   now: Date;
   movies: readonly DatedSlug[];
   shows: readonly DatedSlug[];
-  journalPosts: ReadonlyArray<{ slug: string; publishedAt: string }>;
 }
 
 interface StaticPage {
@@ -69,9 +67,6 @@ export function buildSitemap(siteUrl: string, sources: SitemapSources): Metadata
     changeFrequency: page.changeFrequency,
     priority: page.priority,
   }));
-  const journalEntries = sources.journalPosts.map((post) =>
-    detailEntry(`${siteUrl}${JOURNAL_ROUTE}/${post.slug}`, post.publishedAt),
-  );
   const movieEntries = sources.movies.map((movie) =>
     detailEntry(`${siteUrl}${mediaRoute('movie', movie.slug)}`, movie.updatedAt),
   );
@@ -79,7 +74,7 @@ export function buildSitemap(siteUrl: string, sources: SitemapSources): Metadata
     detailEntry(`${siteUrl}${mediaRoute('show', show.slug)}`, show.updatedAt),
   );
 
-  return [...staticEntries, ...journalEntries, ...movieEntries, ...showEntries];
+  return [...staticEntries, ...movieEntries, ...showEntries];
 }
 
 export function buildRobots(siteUrl: string, indexingEnabled: boolean): MetadataRoute.Robots {
