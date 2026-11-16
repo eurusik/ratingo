@@ -7,6 +7,9 @@ import { useTranslation } from '@/shared/i18n';
 
 interface PasswordFieldProps {
   autoComplete: 'current-password' | 'new-password';
+  name?: string;
+  label?: string;
+  errorMessage?: string | null;
   value: string;
   onChange: (value: string) => void;
   validate: (value: string) => string | null;
@@ -16,6 +19,9 @@ interface PasswordFieldProps {
 
 export function PasswordField({
   autoComplete,
+  name = 'password',
+  label,
+  errorMessage,
   value,
   onChange,
   validate,
@@ -28,17 +34,18 @@ export function PasswordField({
 
   return (
     <TextField
-      name="password"
+      name={name}
       type={isVisible ? 'text' : 'password'}
       autoComplete={autoComplete}
       value={value}
       onChange={onChange}
       validate={validate}
+      isInvalid={errorMessage ? true : undefined}
       isRequired
       fullWidth
       aria-describedby={describedBy}
     >
-      <Label>{dict.auth.password}</Label>
+      <Label>{label ?? dict.auth.password}</Label>
       <InputGroup variant="secondary" fullWidth>
         <InputGroup.Input className="text-base" />
         <InputGroup.Suffix>
@@ -56,7 +63,7 @@ export function PasswordField({
         </InputGroup.Suffix>
       </InputGroup>
       {children}
-      <FieldError />
+      <FieldError>{errorMessage || undefined}</FieldError>
     </TextField>
   );
 }

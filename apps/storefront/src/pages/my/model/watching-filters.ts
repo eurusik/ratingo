@@ -1,5 +1,5 @@
 import type { LibraryTitle } from './library-title';
-import { isSearchQuery, matchesSearch } from './title-search';
+import { isSearchQuery, matchesSearch } from '@/shared/lib';
 import type { FreshRow, NextRow, WaitingRow, WatchingSections } from './watching-sections';
 
 export const WATCHING_FILTERS = ['episodes', 'waiting', 'postponed'] as const;

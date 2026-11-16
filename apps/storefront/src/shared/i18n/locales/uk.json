@@ -1124,5 +1124,181 @@
     "on": "Нагадаємо, коли вийде нова серія: {show}",
     "off": "Нагадування вимкнено: {show}",
     "failed": "Не вдалося змінити нагадування."
+  },
+  "settings": {
+    "title": "Налаштування",
+    "back": "Налаштування",
+    "backLabel": "Назад до налаштувань",
+    "backToMy": "Моє",
+    "backToMyLabel": "Назад до «Моє»",
+    "sectionsLabel": "Розділи налаштувань",
+    "groups": {
+      "account": "Акаунт",
+      "app": "Застосунок",
+      "data": "Дані"
+    },
+    "sections": {
+      "profile": "Профіль",
+      "security": "Вхід і безпека",
+      "notifications": "Сповіщення",
+      "privacy": "Приватність",
+      "import": "Імпорт"
+    },
+    "importRow": "Імпорт з Trakt або Letterboxd",
+    "visibility": {
+      "public": "Публічний",
+      "private": "Приватний"
+    },
+    "profileVisibility": {
+      "public": "публічний профіль",
+      "private": "приватний профіль"
+    },
+    "signOut": "Вийти",
+    "footnote": "Мова й тема — у меню профілю",
+    "signIn": {
+      "title": "Увійди, щоб змінити налаштування",
+      "text": "Профіль, сповіщення, приватність і способи входу зʼявляться тут.",
+      "action": "Увійти"
+    },
+    "profile": {
+      "photoChange": "Змінити фото",
+      "photoRemove": "Прибрати",
+      "photoHint": "JPG, PNG або WebP, до 5 МБ, краще квадратне.",
+      "photoDropHint": "Можна перетягнути сюди.",
+      "photoUploading": "Завантажуємо фото…",
+      "photoUpdated": "Фото оновлено",
+      "photoRemoved": "Фото прибрано",
+      "photoFailed": "Не вдалося оновити фото. Спробуй ще раз.",
+      "photoTooLarge": "Файл більший за 5 МБ. Вибери менший.",
+      "photoWrongType": "Підходять лише JPG, PNG або WebP.",
+      "undo": "Повернути",
+      "username": "Імʼя користувача",
+      "usernameHint": "Латиниця, цифри й _, 3–30 символів · зміниться адреса профілю",
+      "usernameTaken": "Це імʼя вже зайняте",
+      "region": "Регіон",
+      "regionHint": "Для дат виходу",
+      "bio": "Про себе",
+      "bioPlaceholder": "Що любиш дивитись…",
+      "bioCount": "{count} / {max}",
+      "city": "Місто",
+      "cityPlaceholder": "Київ…",
+      "optional": "необовʼязково",
+      "website": "Сайт",
+      "websitePlaceholder": "mysite.com",
+      "websiteHint": "https:// додамо самі",
+      "websiteInvalid": "Схоже, це не адреса сайту",
+      "unsaved": "Є незбережені зміни",
+      "cancel": "Скасувати",
+      "save": "Зберегти",
+      "noChanges": "Немає змін",
+      "saved": "Збережено",
+      "saveFailed": "Не вдалося зберегти. Спробуй ще раз.",
+      "discard": {
+        "title": "Скинути зміни?",
+        "text": "Імʼя, опис та інші поля профілю повернуться до збережених.",
+        "keep": "Редагувати",
+        "confirm": "Скинути"
+      }
+    },
+    "notifications": {
+      "lead": "Сповіщення приходять про тайтли, за якими стежиш. Нові серії того, що дивишся, видно в «Моє».",
+      "following": "Стежиш",
+      "searchLabel": "Пошук серед тайтлів, за якими стежиш",
+      "searchPlaceholder": "Пошук за назвою…",
+      "noMatch": "Серед тих, за якими стежиш, «{query}» немає.",
+      "empty": {
+        "title": "Поки ні за чим не стежиш",
+        "text": "Стеж за фільмами й серіалами на їхніх сторінках — і ми повідомимо про вихід."
+      },
+      "showAll": "Показати всі {count}",
+      "unfollow": "Не стежити",
+      "unfollowLabel": "Не стежити за «{title}»",
+      "unfollowed": "Більше не стежиш за «{title}»",
+      "unfollowFailed": "Не вдалося змінити стеження. Спробуй ще раз.",
+      "undo": "Повернути",
+      "failed": "Не вдалося завантажити, за чим ти стежиш.",
+      "retry": "Спробувати ще раз",
+      "types": {
+        "movie": "Фільм",
+        "show": "Серіал"
+      },
+      "triggers": {
+        "release": "вихід",
+        "new_season": "новий сезон",
+        "new_episode": "нові серії",
+        "on_streaming": "поява онлайн",
+        "status_changed": "дата виходу"
+      },
+      "automatic": "Автоматично",
+      "autoSubscribe": "Стежити за серіалом, коли починаю",
+      "autoSubscribeHint": "Після першої позначеної серії автоматично стежиш за серіалом і отримуєш сповіщення про новий сезон"
+    },
+    "privacy": {
+      "isProfilePublic": {
+        "label": "Публічний профіль",
+        "hint": "Інші бачать твій профіль за посиланням {url}"
+      },
+      "showWatchHistory": {
+        "label": "Показувати історію переглядів",
+        "hint": "Що й коли ти подивився"
+      },
+      "showRatings": {
+        "label": "Показувати оцінки",
+        "hint": "Твої бали на сторінках тайтлів і в профілі"
+      },
+      "allowFollowers": {
+        "label": "Дозволити підписників",
+        "hint": "Інші можуть стежити за твоїми оцінками"
+      },
+      "note": "Вимкнеш «Публічний профіль» — решта стане неактивною, але збережеться.",
+      "privateNote": "Профіль приватний: сторінку {url} бачиш лише ти. Решта налаштувань збережеться, коли знову відкриєш профіль.",
+      "subtitle": {
+        "public": "Публічний профіль",
+        "private": "Приватний профіль"
+      },
+      "failed": "Не вдалося зберегти. Спробуй ще раз."
+    },
+    "security": {
+      "methods": "Способи входу",
+      "methodNames": {
+        "google": "Google",
+        "facebook": "Facebook",
+        "email": "email"
+      },
+      "emailMethod": "Email і пароль",
+      "connectedAs": "Підключено · {email}",
+      "connected": "Підключено",
+      "notConnected": "Не підключено",
+      "noPassword": "{email} · без пароля",
+      "connect": "Підключити",
+      "connectLabel": "Підключити {provider}",
+      "disconnect": "Відключити",
+      "disconnectLabel": "Відключити {provider}",
+      "lastMethod": "Останній спосіб входу відключити не можна — спершу додай інший.",
+      "changePassword": "Змінити пароль",
+      "newPasswordTitle": "Новий пароль",
+      "currentPassword": "Поточний пароль",
+      "newPassword": "Новий пароль",
+      "currentRequired": "Введи поточний пароль",
+      "wrongPassword": "Пароль не підходить",
+      "passwordChanged": "Пароль змінено",
+      "passwordFailed": "Не вдалося змінити пароль. Спробуй ще раз.",
+      "cancel": "Скасувати",
+      "unlink": {
+        "title": "Відключити {provider}?",
+        "text": "Входити через {provider} більше не вийде. Лишиться: {rest}.",
+        "cancel": "Скасувати",
+        "confirm": "Відключити"
+      },
+      "unlinked": "{provider} відключено",
+      "unlinkFailed": "Не вдалося відключити {provider}. Спробуй ще раз.",
+      "linked": "{provider} підключено",
+      "alreadyLinked": "Цей акаунт {provider} уже привʼязаний до іншого профілю.",
+      "linkFailed": "Не вдалося підключити {provider}. Спробуй ще раз."
+    },
+    "importSoon": {
+      "title": "Імпорт зовсім скоро",
+      "text": "Перенести оцінки й перегляди з Trakt або Letterboxd можна буде просто тут."
+    }
   }
 }

@@ -1,3 +1,9 @@
+export {
+  accountApi,
+  type AvatarContentType,
+  type LinkedAccount,
+  type ProfileChanges,
+} from './account';
 export { configureStorefrontApi } from './configure';
 export {
   catalogApi,
@@ -33,7 +39,7 @@ export {
   type NotificationList,
   type NotificationTrigger,
 } from './notifications';
-export { subscriptionsApi } from './subscriptions';
+export { subscriptionsApi, type Subscription, type SubscriptionTrigger } from './subscriptions';
 export {
   libraryApi,
   type LibraryCounts,

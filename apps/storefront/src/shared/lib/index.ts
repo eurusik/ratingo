@@ -16,10 +16,13 @@ export {
   formatCompactCount,
   formatScore,
   initialOf,
+  isSearchQuery,
+  matchesSearch,
   percentFromScore,
   positiveNumber,
   scoreFromPercent,
   scoreFromRating,
+  searchableText,
   yearFromDate,
 } from './format';
 export { useIsApplePlatform } from './platform';

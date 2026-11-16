@@ -21,6 +21,7 @@ interface BackLinkProps {
   fallbackHref: string;
   className?: string;
   'aria-label'?: string;
+  onNavigate?: (event: MouseEvent<HTMLAnchorElement>) => void;
   children: ReactNode;
 }
 
@@ -28,12 +29,14 @@ export function BackLink({
   fallbackHref,
   className,
   'aria-label': ariaLabel,
+  onNavigate,
   children,
 }: BackLinkProps) {
   const router = useRouter();
 
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (!isPlainClick(event) || !hasPreviousRoute()) return;
+    onNavigate?.(event);
+    if (event.defaultPrevented || !isPlainClick(event) || !hasPreviousRoute()) return;
     event.preventDefault();
     const leavingPath = window.location.pathname;
     let returningArt: HTMLElement | null = null;

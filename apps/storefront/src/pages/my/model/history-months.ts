@@ -1,6 +1,6 @@
 import type { UserMediaState } from '@/shared/api';
 import { titleOf, type LibraryTitle } from './library-title';
-import { searchableText } from './title-search';
+import { searchableText } from '@/shared/lib';
 
 export interface HistoryRow {
   title: LibraryTitle;

@@ -1,4 +1,4 @@
-import { isBrowsePath, mediaReviewsRoute, showSeasonRoute } from './routes';
+import { isBrowsePath, isSettingsPath, mediaReviewsRoute, showSeasonRoute } from './routes';
 
 describe('isBrowsePath', () => {
   it.each([
@@ -9,6 +9,17 @@ describe('isBrowsePath', () => {
     ['/', false],
   ])('treats %s as browse: %s', (pathname, expected) => {
     expect(isBrowsePath(pathname)).toBe(expected);
+  });
+});
+
+describe('isSettingsPath', () => {
+  it.each([
+    ['/settings', true],
+    ['/settings/privacy', true],
+    ['/settings-old', false],
+    ['/my', false],
+  ])('treats %s as settings: %s', (pathname, expected) => {
+    expect(isSettingsPath(pathname)).toBe(expected);
   });
 });
 

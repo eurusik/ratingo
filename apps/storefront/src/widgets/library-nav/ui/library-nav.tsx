@@ -1,7 +1,5 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import Link from 'next/link';
 import { Separator } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import {
@@ -14,33 +12,9 @@ import {
 import { useUnreadNotificationCount } from '@/entities/notification';
 import { NOTIFICATIONS_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { PAGE_TITLE } from '@/shared/ui';
+import { PAGE_TITLE, SideNavItem } from '@/shared/ui';
 
 type NavTarget = MainLibraryList | 'notifications';
-
-const ITEM_CLASS =
-  'flex items-center gap-2 rounded-xl px-3.5 text-foreground/85 no-underline outline-none transition-colors hover:bg-default focus-visible:outline-2 focus-visible:outline-focus aria-[current=page]:bg-surface aria-[current=page]:font-bold aria-[current=page]:text-foreground';
-
-interface NavItemProps {
-  href: string;
-  label: string;
-  isCurrent: boolean;
-  isMinor?: boolean;
-  children?: ReactNode;
-}
-
-function NavItem({ href, label, isCurrent, isMinor = false, children }: NavItemProps) {
-  return (
-    <Link
-      href={href}
-      aria-current={isCurrent ? 'page' : undefined}
-      className={cn(ITEM_CLASS, isMinor ? 'h-10 text-sm text-muted' : 'h-11 text-[15px]')}
-    >
-      <span className="flex-1 truncate">{label}</span>
-      {children}
-    </Link>
-  );
-}
 
 function Count({ value }: { value: number | undefined }) {
   return (
@@ -58,17 +32,17 @@ export function LibraryNav({ current }: { current: NavTarget }) {
     <nav aria-label={dict.my.listsLabel} className="flex w-55 shrink-0 flex-col gap-1">
       <p className={cn('mb-3 flex min-h-11 items-center', PAGE_TITLE)}>{dict.nav.my}</p>
       {MAIN_LIBRARY_LISTS.map((list) => (
-        <NavItem
+        <SideNavItem
           key={list}
           href={libraryListRoute(list)}
           label={dict.my.lists[list]}
           isCurrent={current === list}
         >
           <Count value={countOf(list)} />
-        </NavItem>
+        </SideNavItem>
       ))}
       <Separator className="my-2" />
-      <NavItem
+      <SideNavItem
         href={NOTIFICATIONS_ROUTE}
         label={dict.notifications.title}
         isCurrent={current === 'notifications'}
@@ -82,7 +56,7 @@ export function LibraryNav({ current }: { current: NavTarget }) {
             </span>
           </span>
         ) : null}
-      </NavItem>
+      </SideNavItem>
     </nav>
   );
 }

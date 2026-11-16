@@ -10,3 +10,4 @@ export {
   scoreFromRating,
   yearFromDate,
 } from './numbers';
+export { isSearchQuery, matchesSearch, searchableText } from './search';

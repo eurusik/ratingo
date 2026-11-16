@@ -18,6 +18,7 @@ export {
   STICKY_TOOLBAR,
   StatusBarBackdrop,
 } from './page-header/page-header';
+export { ListSearch } from './list-search/list-search';
 export { PageTransition } from './page-transition/page-transition';
 export { Rail, RailItem } from './rail/rail';
 export { RailPager } from './rail/rail-pager';
@@ -26,4 +27,7 @@ export { ResponsiveDialog } from './responsive-dialog/responsive-dialog';
 export { SectionHeader } from './section-header/section-header';
 export { SegmentedFilter } from './segmented-filter/segmented-filter';
 export { ShowMore } from './show-more/show-more';
+export { SideNavItem } from './split-shell/side-nav-item';
+export { SignInPrompt } from './split-shell/sign-in-prompt';
+export { SplitShell } from './split-shell/split-shell';
 export { Sheet } from './sheet';

@@ -41,11 +41,18 @@ export const BROWSE_ROUTE = '/browse';
 export const CALENDAR_ROUTE = '/calendar';
 export const OFFLINE_ROUTE = '/~offline';
 export const SETTINGS_ROUTE = '/settings';
+export const PROFILE_SETTINGS_ROUTE = '/settings/profile';
+export const SECURITY_SETTINGS_ROUTE = '/settings/security';
+export const NOTIFICATION_SETTINGS_ROUTE = '/settings/notifications';
+export const PRIVACY_SETTINGS_ROUTE = '/settings/privacy';
 export const IMPORT_ROUTE = '/settings/import';
-export const NOTIFICATION_SETTINGS_ROUTE = '/settings#notifications';
 export const NOTIFICATIONS_ROUTE = '/notifications';
 export const ABOUT_ROUTE = '/about';
 export const JOURNAL_ROUTE = '/journal';
+
+export function isSettingsPath(pathname: string): boolean {
+  return pathname === SETTINGS_ROUTE || pathname.startsWith(`${SETTINGS_ROUTE}/`);
+}
 
 export function isBrowsePath(pathname: string): boolean {
   return pathname === BROWSE_ROUTE || pathname.startsWith(`${BROWSE_ROUTE}/`);
