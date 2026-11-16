@@ -47,6 +47,12 @@ export const NOTIFICATION_SETTINGS_ROUTE = '/settings/notifications';
 export const PRIVACY_SETTINGS_ROUTE = '/settings/privacy';
 export const IMPORT_ROUTE = '/settings/import';
 export const NOTIFICATIONS_ROUTE = '/notifications';
+export const PUBLIC_PROFILE_ROUTE = '/u';
+
+export function publicProfileRoute(username: string): string {
+  return `${PUBLIC_PROFILE_ROUTE}/${encodeURIComponent(username)}`;
+}
+
 export const ABOUT_ROUTE = '/about';
 export const JOURNAL_ROUTE = '/journal';
 

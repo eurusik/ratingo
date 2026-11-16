@@ -3,10 +3,10 @@
 import type { ReactNode } from 'react';
 import { Button } from '@heroui/react';
 import { Mail } from 'lucide-react';
-import { ProviderMark } from '@/features/authenticate';
 import type { LinkedAccount } from '@/shared/api';
 import type { OAuthProvider } from '@/shared/auth';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { ProviderMark } from '@/shared/ui';
 
 const ROW_ACTION = 'phone-tap-target shrink-0 rounded-full md:h-10 md:px-4';
 

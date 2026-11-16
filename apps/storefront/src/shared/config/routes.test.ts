@@ -1,4 +1,10 @@
-import { isBrowsePath, isSettingsPath, mediaReviewsRoute, showSeasonRoute } from './routes';
+import {
+  isBrowsePath,
+  isSettingsPath,
+  mediaReviewsRoute,
+  publicProfileRoute,
+  showSeasonRoute,
+} from './routes';
 
 describe('isBrowsePath', () => {
   it.each([
@@ -20,6 +26,12 @@ describe('isSettingsPath', () => {
     ['/my', false],
   ])('treats %s as settings: %s', (pathname, expected) => {
     expect(isSettingsPath(pathname)).toBe(expected);
+  });
+});
+
+describe('publicProfileRoute', () => {
+  it('puts the username under /u', () => {
+    expect(publicProfileRoute('ivan_42')).toBe('/u/ivan_42');
   });
 });
 

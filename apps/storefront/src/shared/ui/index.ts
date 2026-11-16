@@ -20,6 +20,7 @@ export {
 } from './page-header/page-header';
 export { LIST_ROW_FRAME } from './list-row/list-row-frame';
 export { ListSearch } from './list-search/list-search';
+export { ProviderMark } from './provider-mark/provider-mark';
 export { PageTransition } from './page-transition/page-transition';
 export { Rail, RailItem } from './rail/rail';
 export { RailPager } from './rail/rail-pager';

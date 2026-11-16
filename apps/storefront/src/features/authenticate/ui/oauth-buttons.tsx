@@ -5,8 +5,8 @@ import { buildOAuthStartUrl, rememberPendingIntent, useAuthRequest } from '@/sha
 import { API_BASE_URL } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { useBrowserOrigin, useBrowserPath } from '@/shared/lib';
+import { ProviderMark } from '@/shared/ui';
 import { useEnabledOAuthProviders } from '../model/auth-config';
-import { ProviderMark } from './provider-mark';
 
 export function OAuthButtons() {
   const { dict } = useTranslation();
