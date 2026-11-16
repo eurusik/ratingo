@@ -8,7 +8,12 @@ export { DownscaledBlur } from './downscaled-blur/downscaled-blur';
 export { EdgeFade } from './edge-fade/edge-fade';
 export { useHorizontalScroller } from './edge-fade/horizontal-scroller';
 export { ForwardLink } from './forward-link/forward-link';
-export { PAGE_TITLE, PageHeader } from './page-header/page-header';
+export {
+  PAGE_TITLE,
+  PageHeader,
+  STICKY_TOOLBAR,
+  StatusBarBackdrop,
+} from './page-header/page-header';
 export { PageTransition } from './page-transition/page-transition';
 export { Rail, RailItem } from './rail/rail';
 export { RailPager } from './rail/rail-pager';

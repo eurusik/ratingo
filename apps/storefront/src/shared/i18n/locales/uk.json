@@ -238,6 +238,11 @@
       "watchingLabel": "Дивлюсь: {title}",
       "wantLabel": "Хочу: {title}",
       "startFailed": "Не вдалося додати серіал. Спробуй ще раз."
+    },
+    "titleCount": {
+      "one": "{count} тайтл",
+      "few": "{count} тайтли",
+      "many": "{count} тайтлів"
     }
   },
   "rating": {

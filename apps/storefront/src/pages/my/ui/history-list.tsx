@@ -115,7 +115,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
         </SearchField.Group>
       </SearchField>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted tabular-nums">
+        <p className="text-sm text-muted tabular-nums md:hidden">
           {interpolate(pluralize(total, dict.my.history.summary, locale), { count: total })}
         </p>
         <SegmentedFilter

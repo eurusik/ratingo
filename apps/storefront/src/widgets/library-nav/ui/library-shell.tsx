@@ -6,6 +6,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import type { LibraryList } from '@/entities/library';
 import { openAuth } from '@/shared/auth';
 import { useTranslation } from '@/shared/i18n';
+import { StatusBarBackdrop } from '@/shared/ui';
 import { LibraryNav } from './library-nav';
 
 const SHELL = 'flex flex-1 flex-col';
@@ -57,11 +58,14 @@ export function LibraryShell({ current, header, skeleton, children }: LibraryShe
   }
 
   return (
-    <div className={`${SHELL} gap-3 md:flex-row md:items-start md:gap-10`}>
-      <div className="hidden md:block">
-        <LibraryNav current={current} />
+    <div className={`${SHELL} gap-3 md:flex-row md:gap-0`}>
+      <StatusBarBackdrop />
+      <div className="hidden md:block md:pe-10">
+        <div className="md:sticky md:top-16">
+          <LibraryNav current={current} />
+        </div>
       </div>
-      <div className="flex min-w-0 max-w-[860px] flex-1 flex-col gap-3">
+      <div className="flex min-w-0 max-w-[900px] flex-1 flex-col gap-3 md:border-s md:border-separator md:ps-10">
         {header}
         <div className={`flex flex-col gap-3 ${SIDE_PADDING}`}>
           {isLoading ? skeleton : children}

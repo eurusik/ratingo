@@ -18,7 +18,7 @@ import { LibraryShell } from '@/widgets/library-nav';
 import { MY_ROUTE, NOTIFICATION_SETTINGS_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
-import { BackLink, PageHeader, SegmentedFilter } from '@/shared/ui';
+import { BackLink, PageHeader, STICKY_TOOLBAR, SegmentedFilter } from '@/shared/ui';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { SwipeableNotification } from './swipeable-notification';
 
@@ -156,6 +156,7 @@ function NotificationsHeader() {
   return (
     <PageHeader
       title={dict.notifications.title}
+      className="md:sticky md:top-16 md:z-20 md:box-content md:pb-4 md:border-b md:border-separator md:bg-background"
       leading={
         <BackLink
           fallbackHref={MY_ROUTE}
@@ -196,7 +197,7 @@ function Notifications() {
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className={cn(STICKY_TOOLBAR, 'flex items-center gap-2')}>
         <SegmentedFilter
           label={dict.notifications.filterLabel}
           options={[

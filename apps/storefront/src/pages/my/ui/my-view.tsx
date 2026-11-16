@@ -6,8 +6,9 @@ import { LIBRARY_LISTS, listCount, useLibraryCounts, type LibraryList } from '@/
 import { LibraryShell } from '@/widgets/library-nav';
 import { NotificationBell, ProfileMenu } from '@/widgets/header';
 import type { LibraryCounts } from '@/shared/api';
-import { useTranslation } from '@/shared/i18n';
-import { PageHeader } from '@/shared/ui';
+import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
+import { cn, pluralize } from '@ratingo/web-core/lib';
+import { PageHeader, STICKY_TOOLBAR } from '@/shared/ui';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { useLibraryActions, type LibraryActions } from '../model/library-actions';
 import { LibraryMovesProvider, useIsMovedOut } from '../model/library-moves';
@@ -36,8 +37,7 @@ function PhoneHeader() {
   return (
     <PageHeader
       title={dict.nav.my}
-      titleClassName="md:sr-only"
-      className="md:contents"
+      className="md:sr-only"
       actions={
         user ? (
           <div className="flex items-center gap-1 md:hidden">
@@ -66,8 +66,37 @@ function SelectedList({ list, actions }: { list: LibraryList; actions: LibraryAc
   return <WatchingList actions={actions} />;
 }
 
+type PluralForms = Dictionary['my']['titleCount'];
+
+const COUNT_FORMS: Record<LibraryList, (dict: Dictionary) => PluralForms> = {
+  watching: (dict) => dict.my.watching.showCount,
+  plan: (dict) => dict.my.titleCount,
+  history: (dict) => dict.my.history.summary,
+  paused: (dict) => dict.my.titleCount,
+  dropped: (dict) => dict.my.titleCount,
+};
+
+function ListHeader({ list }: { list: LibraryList }) {
+  const { dict, locale } = useTranslation();
+  const counts = useLibraryCounts();
+  const count = counts ? listCount(counts, list) : undefined;
+
+  return (
+    <div className="max-md:sr-only md:sticky md:top-16 md:z-20 md:flex md:min-h-11 md:items-center md:pb-4 md:box-content md:gap-3 md:border-b md:border-separator md:bg-background">
+      <h2 className="text-2xl font-extrabold">{dict.my.lists[list]}</h2>
+      {count === undefined ? null : (
+        <>
+          <span aria-hidden className="h-6 w-px bg-separator" />
+          <span className="text-sm text-muted tabular-nums">
+            {interpolate(pluralize(count, COUNT_FORMS[list](dict), locale), { count })}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Library({ list }: { list: LibraryList }) {
-  const { dict } = useTranslation();
   const actions = useLibraryActions();
   const startsEmpty = useStartsEmpty(useLibraryCounts());
 
@@ -76,12 +105,10 @@ function Library({ list }: { list: LibraryList }) {
   return (
     <PullToRefresh onRefresh={actions.refresh}>
       <div className="flex flex-col gap-3">
-        <div className="md:hidden">
+        <div className={cn(STICKY_TOOLBAR, 'md:hidden')}>
           <ListChips current={list} />
         </div>
-        <h2 className="sr-only text-2xl font-extrabold md:not-sr-only md:flex md:min-h-11 md:items-center">
-          {dict.my.lists[list]}
-        </h2>
+        <ListHeader list={list} />
         <SelectedList list={list} actions={actions} />
       </div>
     </PullToRefresh>

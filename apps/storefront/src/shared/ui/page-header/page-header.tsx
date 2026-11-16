@@ -31,3 +31,15 @@ export function PageHeader({
     </div>
   );
 }
+
+export const STICKY_TOOLBAR =
+  'sticky top-(--safe-top) z-20 -mx-4 border-b border-separator bg-background px-4 py-2 md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0';
+
+export function StatusBarBackdrop() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none fixed inset-x-0 top-0 z-30 h-(--safe-top) bg-background md:hidden"
+    />
+  );
+}

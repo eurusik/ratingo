@@ -143,7 +143,7 @@ export function WatchingList({ actions }: { actions: LibraryActions }) {
 
   return (
     <div className="flex flex-col">
-      <p className="text-sm text-muted tabular-nums">
+      <p className="text-sm text-muted tabular-nums md:hidden">
         {interpolate(pluralize(showCount, dict.my.watching.showCount, locale), {
           count: showCount,
         })}

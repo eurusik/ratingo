@@ -238,6 +238,11 @@
       "watchingLabel": "Watching: {title}",
       "wantLabel": "Want: {title}",
       "startFailed": "Couldn't add the show. Please try again."
+    },
+    "titleCount": {
+      "one": "{count} title",
+      "few": "{count} titles",
+      "many": "{count} titles"
     }
   },
   "rating": {
