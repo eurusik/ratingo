@@ -21,10 +21,9 @@ import {
 } from '@/entities/episode';
 import { ReminderToggle } from '@/features/episode-reminder';
 import { WantToWatchButton } from '@/features/save-to-library';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { formatCount, interpolate, useTranslation } from '@/shared/i18n';
 import { preloadWhenIdle } from '@/shared/lib';
 import { NoticeBar, useEpisodesTracker, type EpisodesTracker } from '@/widgets/episodes-sheet';
-import { formatCount } from '../model/details-format';
 import { useEpisodesDialog } from '../model/use-episodes-dialog';
 import { useRememberTracking } from '../model/use-remember-tracking';
 import { useRateMedia } from '../model/use-rate-media';

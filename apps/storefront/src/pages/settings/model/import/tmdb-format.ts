@@ -1,4 +1,4 @@
-import { hasHeaders, kindByFirstRating, type ImportFormat } from './import-format';
+import { hasHeaders, kindByRatedRows, type ImportFormat } from './import-format';
 import { imdbIdFrom, positiveInt, ratingFrom, type ImportMediaKind } from './import-item';
 
 const RATING_HEADER = 'your rating';
@@ -9,7 +9,7 @@ const MEDIA_KINDS: Record<string, ImportMediaKind> = { movie: 'movie', tv: 'show
 
 export const TMDB_FORMAT: ImportFormat = {
   detect: (table) =>
-    hasHeaders(table, REQUIRED_HEADERS) ? kindByFirstRating(table, RATING_HEADER) : undefined,
+    hasHeaders(table, REQUIRED_HEADERS) ? kindByRatedRows(table, RATING_HEADER) : undefined,
   toItem: (record, kind) => ({
     imdbId: imdbIdFrom(record['imdb id']),
     tmdbId: positiveInt(record['tmdb id']),

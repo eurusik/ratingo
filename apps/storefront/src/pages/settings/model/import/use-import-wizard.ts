@@ -1,9 +1,8 @@
 'use client';
 
-import { useReducer, useState } from 'react';
+import { useReducer } from 'react';
 import { toast } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
-import { readImportFile } from './import-file';
 import { useImportMedia } from './import-queries';
 import { MAX_IMPORT_ITEMS, summarizeImport } from './import-summary';
 import type { ImportSource } from './import-sources';
@@ -15,6 +14,7 @@ import {
   type PreviewFilter,
 } from './import-wizard';
 import type { LastImport } from './last-import';
+import { useFileReading } from './use-file-reading';
 
 export interface ImportWizard {
   state: ImportWizardState;
@@ -35,20 +35,13 @@ export interface ImportWizard {
 export function useImportWizard(): ImportWizard {
   const { dict } = useTranslation();
   const [state, dispatch] = useReducer(importWizardReducer, INITIAL_IMPORT_STATE);
-  const [pendingReads, setPendingReads] = useState(0);
+  const reading = useFileReading();
   const importMedia = useImportMedia();
 
   const addFiles = (files: readonly File[]) => {
     const { source } = state;
-    if (!source || files.length === 0) return;
-    setPendingReads((count) => count + 1);
-    Promise.all(files.map((file) => readImportFile(file, source)))
-      .then((read) => dispatch({ type: 'addFiles', source, files: read }))
-      .catch((error: unknown) => {
-        console.error('Reading import files failed', { source, error });
-        toast.danger(dict.settings.import.files.readFailed);
-      })
-      .finally(() => setPendingReads((count) => count - 1));
+    if (!source) return;
+    reading.read(files, source, (read) => dispatch({ type: 'addFiles', source, files: read }));
   };
 
   const submit = () => {
@@ -73,8 +66,8 @@ export function useImportWizard(): ImportWizard {
 
   return {
     state,
-    canReview: hasImportableItems(state.files) && pendingReads === 0,
-    isReading: pendingReads > 0,
+    canReview: hasImportableItems(state.files) && !reading.isReading,
+    isReading: reading.isReading,
     pickSource: (source) => dispatch({ type: 'pickSource', source }),
     addFiles,
     removeFile: (id) => dispatch({ type: 'removeFile', id }),

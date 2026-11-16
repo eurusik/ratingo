@@ -14,14 +14,17 @@ import {
   useImportWizard,
   type ImportWizard,
 } from '@/pages/settings/model/import/use-import-wizard';
+import { useLeaveConfirmation, useLeaveWarning } from '@/pages/settings/model/leave-guard';
+import { DiscardDialog } from '../discard-dialog';
 import { SectionHeader, type StepBack } from '../settings-headers';
 import { SettingsShell } from '../settings-shell';
-import { DesktopFilesStep, PhoneFilesStep, PhoneSourceStep } from './files-step';
+import { DesktopFilesStep, PhoneFilesStep } from './files-step';
 import { PreviewStep } from './preview-step';
 import { ResultStep } from './result-step';
 import { ResumeCard } from './resume-card';
+import { PhoneSourceStep } from './source-step';
 import { StepProgress } from './step-progress';
-import { STEP_HEADING_ID } from './step-title';
+import { STEP_HEADING_ID } from './step-heading';
 
 const PHONE_STEPS: readonly ImportStep[] = ['source', 'files', 'preview'];
 const DESKTOP_STEPS: readonly ImportStep[] = ['files', 'preview'];
@@ -30,47 +33,57 @@ function desktopStep(step: ImportStep): ImportStep {
   return step === 'source' ? 'files' : step;
 }
 
-function useStepCopy(wizard: ImportWizard, isDesktop: boolean) {
+function useImportMoment(finishedAt: number | undefined): string {
   const { dict, locale } = useTranslation();
-  const copy = dict.settings.import;
+  const copy = dict.settings.import.result;
   const now = useClientNow();
-  const { step, source, finishedAt } = wizard.state;
+  if (finishedAt === undefined || isJustNow(now, finishedAt)) return copy.justNow;
+  return interpolate(copy.at, { time: clockTime(locale, finishedAt) });
+}
+
+function useStepPosition(wizard: ImportWizard, isDesktop: boolean) {
+  const { dict } = useTranslation();
+  const copy = dict.settings.import;
+  const { step, isImporting } = wizard.state;
   const steps = isDesktop ? DESKTOP_STEPS : PHONE_STEPS;
   const shownStep = isDesktop ? desktopStep(step) : step;
   const index = steps.indexOf(shownStep);
-  const sourceName = source ? copy.sources[source].name : '';
-  const when =
-    finishedAt === undefined || isJustNow(now, finishedAt)
-      ? copy.result.justNow
-      : interpolate(copy.result.at, { time: clockTime(locale, finishedAt) });
+  const previous = index > 0 ? steps[index - 1] : undefined;
+  const stepName = (name: ImportStep) => copy.steps[name as keyof typeof copy.steps];
 
-  const stepLabel =
+  const label =
     index < 0
       ? undefined
       : interpolate(copy.stepOf, {
           step: index + 1,
           total: steps.length,
-          name: copy.steps[shownStep as keyof typeof copy.steps],
+          name: stepName(shownStep),
         });
-  const previous = index > 0 ? steps[index - 1] : undefined;
-  const stepBack: StepBack | undefined =
-    previous && !wizard.state.isImporting
+  const back: StepBack | undefined =
+    previous && !isImporting
       ? {
           label: copy.back,
-          ariaLabel: interpolate(copy.backToStep, {
-            step: copy.steps[previous as keyof typeof copy.steps],
-          }),
+          ariaLabel: interpolate(copy.backToStep, { step: stepName(previous) }),
           onPress: wizard.back,
         }
       : undefined;
 
-  return {
-    stepLabel,
-    stepIndex: index,
-    stepBack,
-    origin: interpolate(copy.result.from, { source: sourceName, when }),
-    resultSubtitle: `${sourceName} · ${when}`,
-  };
+  return { index, label, back };
+}
+
+function ImportLeaveGuard({ isActive }: { isActive: boolean }) {
+  const { dict } = useTranslation();
+  const confirmation = useLeaveConfirmation(isActive);
+  useLeaveWarning(isActive);
+
+  return (
+    <DiscardDialog
+      copy={dict.settings.import.leave}
+      isOpen={confirmation.isAsking}
+      onKeep={confirmation.stay}
+      onDiscard={confirmation.leave}
+    />
+  );
 }
 
 interface WizardBodyProps {
@@ -114,38 +127,44 @@ function useFocusOnStepChange(step: ImportStep) {
 
 export function ImportSettingsPage() {
   const { dict } = useTranslation();
+  const copy = dict.settings.import;
   const title = dict.settings.sections.import;
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
   const wizard = useImportWizard();
-  const stepCopy = useStepCopy(wizard, isDesktop);
+  const { step, source, files, finishedAt } = wizard.state;
+  const position = useStepPosition(wizard, isDesktop);
+  const moment = useImportMoment(finishedAt);
   const resume = useResume(wizard);
-  const { step } = wizard.state;
   useFocusOnStepChange(step);
-  const showsPhoneProgress = !isDesktop && stepCopy.stepLabel && !(step === 'source' && resume);
+  const sourceName = source ? copy.sources[source].name : '';
+  const showsPhoneProgress = !isDesktop && position.label && !(step === 'source' && resume);
 
   return (
     <SettingsShell
       current="import"
       phoneTitle={title}
       desktopTitle={title}
-      stepBack={isDesktop ? undefined : stepCopy.stepBack}
+      stepBack={isDesktop ? undefined : position.back}
     >
+      <ImportLeaveGuard
+        isActive={files.length > 0 && step !== 'result' && !wizard.state.isImporting}
+      />
       <SectionHeader
         title={title}
-        subtitle={step === 'result' ? stepCopy.resultSubtitle : stepCopy.stepLabel}
+        subtitle={step === 'result' ? `${sourceName} · ${moment}` : position.label}
       />
       <div className="flex flex-col gap-5 md:gap-4">
         {showsPhoneProgress ? (
           <StepProgress
-            current={stepCopy.stepIndex + 1}
+            current={position.index + 1}
             total={PHONE_STEPS.length}
-            label={stepCopy.stepLabel}
+            label={position.label}
           />
         ) : null}
         <WizardBody
           wizard={wizard}
           isDesktop={isDesktop}
-          origin={stepCopy.origin}
+          origin={interpolate(copy.result.from, { source: sourceName, when: moment })}
           resume={resume}
         />
       </div>

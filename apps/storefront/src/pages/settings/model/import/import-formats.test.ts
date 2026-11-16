@@ -137,6 +137,13 @@ describe('IMDb files', () => {
     });
   });
 
+  it('keeps a watchlist a watchlist when some of its titles are rated', () => {
+    const csv = `${IMDB_HEADER}
+1,tt0468569,,,,The Dark Knight,url,Movie,9.0,152,2008,Action,1,2008-07-18,,9,2023-06-01
+2,tt1375666,,,,Inception,url,Movie,8.8,148,2010,Action,1,2010-07-16,,,`;
+    expect(detect('imdb', csv)).toBe('watchlist');
+  });
+
   it('leaves a non-numeric rating out', () => {
     const csv = `${IMDB_HEADER}\n1,tt0111161,,,,Shawshank,url,Movie,9.3,142,1994,Drama,1,1994-10-14,,abc,`;
     expect(detect('imdb', csv)).toBe('ratings');

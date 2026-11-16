@@ -15,8 +15,10 @@ export function runningProgress(
   batches: readonly ImportBatch[] | undefined,
 ): BatchProgress | undefined {
   const running = batches?.filter((batch) => batch.status === PROCESSING) ?? [];
-  const [latest] = [...running].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  if (!latest) return undefined;
+  if (running.length === 0) return undefined;
+  const latest = running.reduce((newest, batch) =>
+    batch.createdAt > newest.createdAt ? batch : newest,
+  );
   return {
     source: latest.source,
     done: running.reduce((sum, batch) => sum + batch.completedCount + batch.failedCount, 0),

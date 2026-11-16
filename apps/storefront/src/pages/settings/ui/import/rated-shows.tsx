@@ -2,6 +2,7 @@
 
 import { useId, useState } from 'react';
 import Image from 'next/image';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import { Check } from 'lucide-react';
@@ -9,13 +10,14 @@ import { interpolate, useTranslation } from '@/shared/i18n';
 import { LIST_ROW_FRAME } from '@/shared/ui';
 import type { MediaImportResult } from '@/shared/api';
 import {
+  showEpisodesQuery,
   useImportedShowWatching,
   type WatchMark,
 } from '@/pages/settings/model/import/imported-show-watching';
 import { useRatedImportedShows, type RatedShow } from '@/pages/settings/model/import/rated-shows';
 import { formatOwnRating } from '@/pages/settings/model/import/rating-label';
 import { CARD_LIST } from '../settings-card';
-import { WatchSheet } from './watch-sheet';
+import { WatchSheet, preloadEpisodesSheet } from './watch-sheet';
 
 const COLLAPSED_SHOWS = 3;
 
@@ -24,6 +26,7 @@ function useShowMeta() {
   const copy = dict.settings.import.shows;
   return (show: RatedShow, mark: WatchMark | undefined) => {
     if (mark?.kind === 'stoppedAt') return interpolate(copy.stoppedAt, { code: mark.code });
+    if (mark?.kind === 'caughtUp') return copy.caughtUp;
     if (mark) return copy.notStarted;
     if (show.score === undefined) return copy.unrated;
     return interpolate(copy.rated, { score: formatOwnRating(locale, show.score) });
@@ -38,8 +41,17 @@ interface ShowCardProps {
   onToggle: () => void;
 }
 
+function useSheetPreload(slug: string) {
+  const queryClient = useQueryClient();
+  return () => {
+    preloadEpisodesSheet();
+    void queryClient.prefetchQuery(showEpisodesQuery(slug));
+  };
+}
+
 function ShowCard({ show, mark, isDesktop, isBusy, onToggle }: ShowCardProps) {
   const { dict } = useTranslation();
+  const preload = useSheetPreload(show.slug);
   const copy = dict.settings.import.shows;
   const meta = useShowMeta()(show, mark);
   const isWatching = mark !== undefined;
@@ -81,6 +93,8 @@ function ShowCard({ show, mark, isDesktop, isBusy, onToggle }: ShowCardProps) {
           aria-label={interpolate(copy.watchingLabel, { title: show.title })}
           isPending={isBusy}
           onPress={onToggle}
+          onHoverStart={mark ? undefined : preload}
+          onFocus={mark ? undefined : preload}
           className={cn(
             'h-11 shrink-0 gap-1 rounded-full px-3 font-bold md:h-9',
             isWatching && 'text-accent',

@@ -23,7 +23,7 @@ function SourceTile({ source }: { source: ListedSource }) {
     <Radio value={source} isDisabled={isUpcoming} className="min-w-0 flex-1">
       <Radio.Content className={TILE}>
         <SourceMark source={source} className="size-10" />
-        <span className="min-w-0 flex-1 truncate text-[15px] font-bold">
+        <span translate="no" className="min-w-0 flex-1 truncate text-[15px] font-bold">
           {copy.sources[source].name}
         </span>
         {isUpcoming ? (

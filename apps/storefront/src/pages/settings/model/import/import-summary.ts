@@ -16,9 +16,11 @@ export interface ImportSummary {
 const isReady = (file: ImportFile): file is ReadyFile => file.status === 'ready';
 const isRated = (item: ImportItem) => item.state === 'completed';
 
-function preference(item: ImportItem): number {
-  if (item.rating !== undefined) return 2;
-  return isRated(item) ? 1 : 0;
+const PRIORITY = { rated: 2, watched: 1, planned: 0 } as const;
+
+function priority(item: ImportItem): number {
+  if (item.rating !== undefined) return PRIORITY.rated;
+  return isRated(item) ? PRIORITY.watched : PRIORITY.planned;
 }
 
 function identity(item: ImportItem): string {
@@ -30,7 +32,7 @@ export function uniqueItems(items: readonly ImportItem[]): ImportItem[] {
   for (const item of items) {
     const key = identity(item);
     const current = byId.get(key);
-    if (!current || preference(item) > preference(current)) byId.set(key, item);
+    if (!current || priority(item) > priority(current)) byId.set(key, item);
   }
   return [...byId.values()];
 }

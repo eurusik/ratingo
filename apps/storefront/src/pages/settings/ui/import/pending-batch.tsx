@@ -20,19 +20,25 @@ const FINISHED_COPY = {
   cancelled: 'cancelled',
 } as const;
 
-export function PendingBatch({ pending }: { pending: PendingSummary }) {
+interface PendingBatchProps {
+  pending: PendingSummary;
+  importedAt: number;
+}
+
+export function PendingBatch({ pending, importedAt }: PendingBatchProps) {
   const { dict } = useTranslation();
   const copy = dict.settings.import.pending;
   const batches = useImportBatches();
   const batch = batches.data?.find((candidate) => candidate.batchId === pending.batchId);
-  const outcome = batchOutcome(batches.data, pending.batchId);
+  const isListedSinceImport = batches.dataUpdatedAt >= importedAt;
+  const outcome = batchOutcome(isListedSinceImport ? batches.data : undefined, pending.batchId);
+  const finished = FINISHED_COPY[outcome];
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (outcome !== 'running') void queryClient.invalidateQueries({ queryKey: LIBRARY_QUERY_KEY });
-  }, [outcome, queryClient]);
+    if (finished) void queryClient.invalidateQueries({ queryKey: LIBRARY_QUERY_KEY });
+  }, [finished, queryClient]);
 
-  const finished = FINISHED_COPY[outcome];
   const total = batch?.totalItems ?? pending.totalItems;
 
   return (

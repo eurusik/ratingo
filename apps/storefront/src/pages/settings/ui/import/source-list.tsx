@@ -12,10 +12,13 @@ import {
 import { CARD_LIST } from '../settings-card';
 import { SourceMark } from './source-mark';
 
-function SourceRow({ source, onPick }: { source: ListedSource; onPick?: () => void }) {
+type SourceRowProps =
+  | { source: ImportSource; isUpcoming: false; onPick: () => void }
+  | { source: ListedSource; isUpcoming: true; onPick?: never };
+
+function SourceRow({ source, isUpcoming, onPick }: SourceRowProps) {
   const { dict } = useTranslation();
   const copy = dict.settings.import;
-  const isUpcoming = !onPick;
 
   return (
     <Button
@@ -27,7 +30,9 @@ function SourceRow({ source, onPick }: { source: ListedSource; onPick?: () => vo
     >
       <SourceMark source={source} className="size-11" />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-base font-semibold">{copy.sources[source].name}</span>
+        <span translate="no" className="text-base font-semibold">
+          {copy.sources[source].name}
+        </span>
         <span className="truncate text-[13px] font-normal text-muted">
           {copy.sources[source].desc}
         </span>
@@ -48,12 +53,12 @@ export function SourceList({ onPick }: { onPick: (source: ImportSource) => void 
     <ul className={CARD_LIST}>
       {IMPORT_SOURCES.map((source) => (
         <li key={source}>
-          <SourceRow source={source} onPick={() => onPick(source)} />
+          <SourceRow source={source} isUpcoming={false} onPick={() => onPick(source)} />
         </li>
       ))}
       {UPCOMING_SOURCES.map((source) => (
         <li key={source}>
-          <SourceRow source={source} />
+          <SourceRow source={source} isUpcoming />
         </li>
       ))}
     </ul>

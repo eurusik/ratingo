@@ -1378,23 +1378,22 @@
         "computerOnly": "Export only works on the website from a computer. Import there, or send the file to yourself and pick it here.",
         "websiteOnly": "Export is only on the website, not in the app.",
         "pick": "Choose files",
-        "pickHint": "Several at once · CSV up to 5 MB",
+        "pickHint": "Several at once · CSV up to 5 MB",
         "drop": "Drop CSV files here",
         "dropPick": "choose files",
-        "dropHint": "or {pick} · several at once, up to 5 MB",
+        "dropHint": "or {pick} · several at once, up to 5 MB",
         "dropRelease": "Release to add",
         "listLabel": "Chosen files",
         "remove": "Remove {name}",
-        "reading": "Reading files…",
         "localOnly": "Files don’t leave your device until you tap Import.",
         "toHistory": "{count} → Watched",
         "toPlan": "{count} → Want to watch",
         "skipped": "{rows} without an id will be skipped",
         "problems": {
           "wrongSource": "Doesn’t look like a {source} file — check where it came from",
-          "tooLarge": "The file is larger than 5 MB",
-          "notCsv": "This isn’t a CSV file",
-          "empty": "The file has no titles with an IMDb or TMDB id"
+          "tooLarge": "The file is larger than 5 MB — export ratings and the list as separate files",
+          "notCsv": "This isn’t a CSV file — pick the .csv export",
+          "empty": "The file has no titles with an IMDb or TMDB id — check it’s a ratings or list export"
         },
         "readFailed": "Couldn’t read the file. Try again.",
         "footer": "Ratings go to Watched, the list goes to Want to watch",
@@ -1453,7 +1452,13 @@
         "stop": "Stop",
         "stopFailed": "Couldn’t stop. Try again.",
         "completed": "All titles were added to the catalog — they’re already in My.",
-        "cancelled": "Stopped. We won’t add the rest; what’s already added stays in My."
+        "cancelled": "Stopped. We won’t add the rest; what’s already added stays in My.",
+        "stopConfirm": {
+          "title": "Stop adding titles?",
+          "text": "Titles not yet added to the catalog won’t reach My. What’s already added stays.",
+          "keep": "Keep going",
+          "confirm": "Stop"
+        }
       },
       "resume": {
         "title": "Import from {source} is still running",
@@ -1472,7 +1477,14 @@
         "watching": "Watching",
         "watchingLabel": "Watching: {title}",
         "showAll": "Show all {count}",
-        "failed": "Couldn’t move it to Watching. Try again."
+        "failed": "Couldn’t move it to Watching. Try again.",
+        "caughtUp": "Watched every aired episode"
+      },
+      "leave": {
+        "title": "Leave the import?",
+        "text": "The chosen files aren’t kept — you’ll need to pick them again.",
+        "keep": "Stay",
+        "confirm": "Leave"
       }
     }
   }

@@ -1,17 +1,14 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
-import { cn } from '@ratingo/web-core/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import type { ImportSource } from '@/pages/settings/model/import/import-sources';
 import type { ImportWizard } from '@/pages/settings/model/import/use-import-wizard';
 import { FileList } from './file-list';
 import { FilePicker } from './file-picker';
 import { HowTo } from './how-to';
-import { SourceList } from './source-list';
 import { SourceTiles } from './source-tiles';
 import { StepProgress } from './step-progress';
-import { STEP_HEADING_ID, STEP_TITLE } from './step-title';
+import { STEP_HEADING_ID, STEP_TITLE, StepHeading } from './step-heading';
 import { WizardActions } from './wizard-actions';
 
 function useNextAction(wizard: ImportWizard) {
@@ -35,16 +32,16 @@ export function PhoneFilesStep({ wizard }: { wizard: ImportWizard }) {
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <h2 id={STEP_HEADING_ID} tabIndex={-1} className={cn(STEP_TITLE, 'outline-none')}>
+        <StepHeading className={STEP_TITLE}>
           {interpolate(copy.files.title, { source: sourceName })}
-        </h2>
+        </StepHeading>
         <p className="text-[15px] leading-snug text-muted">{copy.files.text}</p>
       </div>
       <HowTo source={source} isDesktop={false} />
       <FilePicker isDesktop={false} onFiles={wizard.addFiles} />
       <FileList files={files} sourceName={sourceName} onRemove={wizard.removeFile} />
       <p className="mx-1 text-[13px] text-muted">{copy.files.localOnly}</p>
-      <WizardActions primary={next} />
+      <WizardActions primary={next} isPinned />
     </>
   );
 }
@@ -62,9 +59,7 @@ export function DesktopFilesStep({ wizard, resume }: { wizard: ImportWizard; res
       {resume}
       <StepProgress current={1} total={2} className="max-w-90" />
       <section aria-labelledby={STEP_HEADING_ID} className="flex flex-col gap-2.5">
-        <h2 id={STEP_HEADING_ID} tabIndex={-1} className="text-[17px] font-extrabold outline-none">
-          {copy.source.label}
-        </h2>
+        <StepHeading className="text-[17px] font-extrabold">{copy.source.label}</StepHeading>
         <SourceTiles labelId={STEP_HEADING_ID} value={source} onChange={wizard.pickSource} />
       </section>
       {source ? (
@@ -84,31 +79,7 @@ export function DesktopFilesStep({ wizard, resume }: { wizard: ImportWizard; res
           <HowTo source={source} isDesktop />
         </>
       ) : null}
-      <WizardActions hint={copy.files.footer} primary={next} />
-    </>
-  );
-}
-
-export function PhoneSourceStep({
-  resume,
-  onPick,
-}: {
-  resume?: ReactNode;
-  onPick: (source: ImportSource) => void;
-}) {
-  const { dict } = useTranslation();
-  const copy = dict.settings.import.source;
-
-  return (
-    <>
-      {resume}
-      <div className="flex flex-col gap-1.5">
-        <h2 id={STEP_HEADING_ID} tabIndex={-1} className={cn(STEP_TITLE, 'outline-none')}>
-          {resume ? copy.resumeTitle : copy.title}
-        </h2>
-        <p className="text-[15px] leading-snug text-muted">{copy.text}</p>
-      </div>
-      <SourceList onPick={onPick} />
+      <WizardActions hint={copy.files.footer} primary={next} isPinned />
     </>
   );
 }

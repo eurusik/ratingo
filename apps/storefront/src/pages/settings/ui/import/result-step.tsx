@@ -1,15 +1,14 @@
 'use client';
 
-import { cn, pluralize } from '@ratingo/web-core/lib';
 import { Check } from 'lucide-react';
 import { libraryListRoute } from '@/entities/library';
 import type { MediaImportResult } from '@/shared/api';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { formatCount, formatNumber, interpolate, useTranslation } from '@/shared/i18n';
 import type { ImportWizard } from '@/pages/settings/model/import/use-import-wizard';
 import { NotFoundList } from './not-found-list';
 import { PendingBatch } from './pending-batch';
 import { RatedShows } from './rated-shows';
-import { STEP_HEADING_ID, STEP_TITLE } from './step-title';
+import { STEP_TITLE, StepHeading } from './step-heading';
 import { WizardActions } from './wizard-actions';
 
 function ResultStats({ result, isDesktop }: { result: MediaImportResult; isDesktop: boolean }) {
@@ -30,7 +29,7 @@ function ResultStats({ result, isDesktop }: { result: MediaImportResult; isDeskt
         >
           <dt className="text-xs text-muted md:text-[13px]">{stat.label}</dt>
           <dd className="mt-1 text-[22px] font-extrabold tabular-nums md:mt-1.5 md:text-[28px]">
-            {stat.value.toLocaleString(locale)}
+            {formatNumber(locale, stat.value)}
           </dd>
         </div>
       ))}
@@ -53,9 +52,7 @@ export function ResultStep({ wizard, isDesktop, origin }: ResultStepProps) {
   const title =
     result.imported > 0
       ? interpolate(copy.result.title, {
-          titles: interpolate(pluralize(result.imported, copy.titles, locale), {
-            count: result.imported,
-          }),
+          titles: formatCount(result.imported, copy.titles, locale),
         })
       : copy.result.nothingNew;
 
@@ -68,24 +65,22 @@ export function ResultStep({ wizard, isDesktop, origin }: ResultStepProps) {
         >
           <Check className="size-7.5 md:size-6.5" strokeWidth={2.6} />
         </span>
-        <h2
-          id={STEP_HEADING_ID}
-          tabIndex={-1}
-          className={cn(isDesktop ? 'text-2xl font-extrabold' : STEP_TITLE, 'outline-none')}
-        >
+        <StepHeading className={isDesktop ? 'text-2xl font-extrabold' : STEP_TITLE}>
           {title}
-        </h2>
+        </StepHeading>
         {isDesktop ? null : <p className="text-[15px] text-muted">{origin}</p>}
       </div>
       <ResultStats result={result} isDesktop={isDesktop} />
-      {result.pendingBatch ? <PendingBatch pending={result.pendingBatch} /> : null}
+      {result.pendingBatch ? (
+        <PendingBatch pending={result.pendingBatch} importedAt={wizard.state.finishedAt ?? 0} />
+      ) : null}
       <RatedShows result={result} isDesktop={isDesktop} />
       <NotFoundList items={result.details.notFound} isDesktop={isDesktop} />
       <WizardActions
         hint={copy.result.footer}
         primary={{ label: copy.result.openHistory, href: libraryListRoute('history') }}
         secondary={{ label: copy.result.again, onPress: wizard.restart }}
-        showsSecondaryOnPhone
+        isPinned={false}
       />
     </>
   );

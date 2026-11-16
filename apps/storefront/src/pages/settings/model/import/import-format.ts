@@ -16,13 +16,9 @@ export function hasHeaders(table: CsvTable, required: readonly string[]): boolea
   return required.every((header) => table.headers.includes(header));
 }
 
-export function kindByFirstRating(
-  table: CsvTable,
-  ratingHeader: string,
-): ImportFileKind | undefined {
-  const [first] = table.records;
-  if (!first) return undefined;
-  return first[ratingHeader] ? 'ratings' : 'watchlist';
+export function kindByRatedRows(table: CsvTable, ratingHeader: string): ImportFileKind | undefined {
+  if (table.records.length === 0) return undefined;
+  return table.records.every((record) => record[ratingHeader]) ? 'ratings' : 'watchlist';
 }
 
 export function parseWithFormat(

@@ -1,17 +1,16 @@
 'use client';
 
 import { Button } from '@heroui/react';
-import { cn, pluralize } from '@ratingo/web-core/lib';
+import { cn } from '@ratingo/web-core/lib';
 import { FileText, X } from 'lucide-react';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { formatCount, interpolate, useTranslation } from '@/shared/i18n';
 import type { ImportFile, ReadyFile } from '@/pages/settings/model/import/import-file';
 import { CARD_LIST } from '../settings-card';
 
 function useFileSummary() {
   const { dict, locale } = useTranslation();
   const copy = dict.settings.import;
-  const count = (forms: typeof copy.titles, value: number) =>
-    interpolate(pluralize(value, forms, locale), { count: value });
+  const count = (forms: typeof copy.titles, value: number) => formatCount(value, forms, locale);
 
   return (file: ReadyFile) => {
     const flow =
@@ -53,7 +52,9 @@ export function FileList({ files, sourceName, onRemove }: FileListProps) {
               <FileText className="size-5" />
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="truncate text-[15px] font-semibold">{file.name}</span>
+              <span translate="no" className="truncate text-[15px] font-semibold">
+                {file.name}
+              </span>
               {isRejected ? (
                 <span role="alert" className="text-[13px] text-danger md:text-sm">
                   {interpolate(copy.problems[file.problem], { source: sourceName })}
@@ -67,7 +68,7 @@ export function FileList({ files, sourceName, onRemove }: FileListProps) {
               variant="ghost"
               aria-label={interpolate(copy.remove, { name: file.name })}
               onPress={() => onRemove(file.id)}
-              className="size-10 shrink-0 rounded-full text-muted"
+              className="size-11 shrink-0 rounded-full text-muted"
             >
               <X aria-hidden className="size-4.5" />
             </Button>

@@ -1,5 +1,5 @@
-import { getDictionary, type Locale } from '@/shared/i18n';
-import { formatCount, formatRuntime } from '../model/details-format';
+import { formatCount, getDictionary, type Locale } from '@/shared/i18n';
+import { formatRuntime } from '../model/details-format';
 import type { MediaDetailsView } from '../model/details-view';
 import { ShowStatusChip } from './show-status-chip';
 

@@ -1,9 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert } from '@heroui/react';
-import { cn, pluralize } from '@ratingo/web-core/lib';
-import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
+import {
+  formatCount,
+  formatNumber,
+  interpolate,
+  useTranslation,
+  type Dictionary,
+} from '@/shared/i18n';
 import { SegmentedFilter } from '@/shared/ui';
 import {
   MAX_IMPORT_ITEMS,
@@ -16,34 +21,34 @@ import type { ImportWizard } from '@/pages/settings/model/import/use-import-wiza
 import { SettingSwitch } from '../setting-switch';
 import { OverwriteDialog } from './overwrite-dialog';
 import { PreviewRows } from './preview-rows';
+import { STEP_TITLE, StepHeading } from './step-heading';
 import { StepProgress } from './step-progress';
-import { STEP_HEADING_ID, STEP_TITLE } from './step-title';
 import { WizardActions } from './wizard-actions';
 
 const PREVIEW_ROWS = 20;
 
-type ImportCopy = Dictionary['settings']['import'];
+type PreviewCopy = Dictionary['settings']['import']['preview'];
 
-function useCounts() {
-  const { locale } = useTranslation();
-  return (forms: ImportCopy['titles'], count: number) =>
-    interpolate(pluralize(count, forms, locale), { count });
-}
-
-function ratedShowsNote(summary: ImportSummary, copy: ImportCopy['preview']): string | undefined {
+function ratedShowsNote(summary: ImportSummary, copy: PreviewCopy): string | undefined {
   if (summary.ratedShows > 0) return interpolate(copy.ratedShows, { count: summary.ratedShows });
   return summary.hasUntypedRatings ? copy.ratedShowsUntyped : undefined;
 }
 
+function useSkippedNote(summary: ImportSummary): string | undefined {
+  const { dict, locale } = useTranslation();
+  const copy = dict.settings.import;
+  if (summary.skippedRows === 0) return undefined;
+  return interpolate(copy.preview.skipped, {
+    rows: formatCount(summary.skippedRows, copy.rows, locale),
+  });
+}
+
 function PreviewNotes({ summary, isDesktop }: { summary: ImportSummary; isDesktop: boolean }) {
   const { dict } = useTranslation();
-  const copy = dict.settings.import;
-  const count = useCounts();
+  const skipped = useSkippedNote(summary);
   const notes = [
-    ratedShowsNote(summary, copy.preview),
-    !isDesktop && summary.skippedRows > 0
-      ? interpolate(copy.preview.skipped, { rows: count(copy.rows, summary.skippedRows) })
-      : undefined,
+    ratedShowsNote(summary, dict.settings.import.preview),
+    isDesktop ? undefined : skipped,
   ].filter((note): note is string => note !== undefined);
 
   if (notes.length === 0) return null;
@@ -63,32 +68,83 @@ function PreviewNotes({ summary, isDesktop }: { summary: ImportSummary; isDeskto
   );
 }
 
+function PreviewHeader({
+  summary,
+  sourceName,
+  isDesktop,
+}: {
+  summary: ImportSummary;
+  sourceName: string;
+  isDesktop: boolean;
+}) {
+  const { dict, locale } = useTranslation();
+  const copy = dict.settings.import;
+  const skipped = useSkippedNote(summary);
+  const titles = formatCount(summary.items.length, copy.titles, locale);
+  const flow = [
+    summary.ratings > 0
+      ? interpolate(copy.files.toHistory, {
+          count: formatCount(summary.ratings, copy.ratings, locale),
+        })
+      : undefined,
+    summary.watchlist > 0
+      ? interpolate(copy.files.toPlan, { count: formatNumber(locale, summary.watchlist) })
+      : undefined,
+    isDesktop ? skipped : undefined,
+  ];
+
+  return (
+    <div className="flex flex-col gap-1.5 md:gap-1">
+      <StepHeading className={isDesktop ? 'text-[22px] font-extrabold' : STEP_TITLE}>
+        {isDesktop ? interpolate(copy.preview.fromSource, { titles, source: sourceName }) : titles}
+      </StepHeading>
+      <p className="text-[15px] leading-snug text-muted tabular-nums">
+        {flow.filter(Boolean).join(' · ')}
+      </p>
+    </div>
+  );
+}
+
+function TooManyAlert() {
+  const { dict, locale } = useTranslation();
+  return (
+    <Alert status="danger" className="rounded-2xl">
+      <Alert.Indicator />
+      <Alert.Content>
+        <Alert.Description>
+          {interpolate(dict.settings.import.preview.tooMany, {
+            max: formatNumber(locale, MAX_IMPORT_ITEMS),
+          })}
+        </Alert.Description>
+      </Alert.Content>
+    </Alert>
+  );
+}
+
+function useFilterOptions(summary: ImportSummary) {
+  const { dict } = useTranslation();
+  const labels = dict.settings.import.preview.filters;
+  const options: { id: PreviewFilter; label: string; count: number }[] = [
+    { id: 'all', label: labels.all, count: summary.items.length },
+    { id: 'ratings', label: labels.ratings, count: summary.ratings },
+    { id: 'watchlist', label: labels.watchlist, count: summary.watchlist },
+  ];
+  return options.filter((option) => option.id === 'all' || option.count > 0);
+}
+
 export function PreviewStep({ wizard, isDesktop }: { wizard: ImportWizard; isDesktop: boolean }) {
   const { dict, locale } = useTranslation();
   const copy = dict.settings.import;
-  const count = useCounts();
   const [isConfirming, setIsConfirming] = useState(false);
   const { state } = wizard;
-  const summary = summarizeImport(state.files);
+  const summary = useMemo(() => summarizeImport(state.files), [state.files]);
+  const shown = useMemo(() => filterItems(summary.items, state.filter), [summary, state.filter]);
+  const filters = useFilterOptions(summary);
   if (!state.source) return null;
 
   const sourceName = copy.sources[state.source].name;
   const total = summary.items.length;
   const isTooMany = total > MAX_IMPORT_ITEMS;
-  const titles = count(copy.titles, total);
-  const flow = [
-    summary.ratings > 0
-      ? interpolate(copy.files.toHistory, { count: count(copy.ratings, summary.ratings) })
-      : undefined,
-    summary.watchlist > 0
-      ? interpolate(copy.files.toPlan, { count: summary.watchlist })
-      : undefined,
-  ];
-  const skipped =
-    isDesktop && summary.skippedRows > 0
-      ? interpolate(copy.preview.skipped, { rows: count(copy.rows, summary.skippedRows) })
-      : undefined;
-  const shown = filterItems(summary.items, state.filter);
   const hidden = shown.length - PREVIEW_ROWS;
 
   const submit = () => {
@@ -96,43 +152,11 @@ export function PreviewStep({ wizard, isDesktop }: { wizard: ImportWizard; isDes
     else wizard.submit();
   };
 
-  const filters = (
-    [
-      { id: 'all', label: copy.preview.filters.all, count: total },
-      { id: 'ratings', label: copy.preview.filters.ratings, count: summary.ratings },
-      { id: 'watchlist', label: copy.preview.filters.watchlist, count: summary.watchlist },
-    ] satisfies { id: PreviewFilter; label: string; count: number }[]
-  ).filter((option) => option.id === 'all' || option.count > 0);
-
   return (
     <>
       {isDesktop ? <StepProgress current={2} total={2} className="max-w-90" /> : null}
-      <div className="flex flex-col gap-1.5 md:gap-1">
-        <h2
-          id={STEP_HEADING_ID}
-          tabIndex={-1}
-          className={cn(isDesktop ? 'text-[22px] font-extrabold' : STEP_TITLE, 'outline-none')}
-        >
-          {isDesktop
-            ? interpolate(copy.preview.fromSource, { titles, source: sourceName })
-            : titles}
-        </h2>
-        <p className="text-[15px] leading-snug text-muted tabular-nums">
-          {[...flow, skipped].filter(Boolean).join(' · ')}
-        </p>
-      </div>
-      {isTooMany ? (
-        <Alert status="danger" className="rounded-2xl">
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Description>
-              {interpolate(copy.preview.tooMany, {
-                max: MAX_IMPORT_ITEMS.toLocaleString(locale),
-              })}
-            </Alert.Description>
-          </Alert.Content>
-        </Alert>
-      ) : null}
+      <PreviewHeader summary={summary} sourceName={sourceName} isDesktop={isDesktop} />
+      {isTooMany ? <TooManyAlert /> : null}
       <PreviewNotes summary={summary} isDesktop={isDesktop} />
       {filters.length > 2 ? (
         <SegmentedFilter
@@ -147,7 +171,7 @@ export function PreviewStep({ wizard, isDesktop }: { wizard: ImportWizard; isDes
       <PreviewRows items={shown.slice(0, PREVIEW_ROWS)} />
       {hidden > 0 ? (
         <p className="-mt-2 text-center text-[13px] text-muted md:text-start">
-          {interpolate(copy.preview.more, { count: hidden })}
+          {interpolate(copy.preview.more, { count: formatNumber(locale, hidden) })}
         </p>
       ) : null}
       <div className="rounded-[20px] bg-surface px-3.5 md:rounded-3xl md:px-5">
@@ -161,12 +185,13 @@ export function PreviewStep({ wizard, isDesktop }: { wizard: ImportWizard; isDes
       <WizardActions
         hint={copy.preview.safe}
         primary={{
-          label: interpolate(copy.preview.submit, { count: total }),
+          label: interpolate(copy.preview.submit, { count: formatNumber(locale, total) }),
           onPress: submit,
           isPending: state.isImporting,
           isDisabled: isTooMany,
         }}
         secondary={{ label: copy.back, onPress: wizard.back, isDisabled: state.isImporting }}
+        isPinned
       />
       <OverwriteDialog
         isOpen={isConfirming}

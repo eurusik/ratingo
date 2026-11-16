@@ -5,6 +5,7 @@ import type { MediaImportResult } from '@/shared/api';
 import type { ImportSource } from './import-sources';
 
 const STORAGE_KEY = 'ratingo:last-import';
+const STORAGE_VERSION = 1;
 
 export interface LastImport {
   userId: string;
@@ -13,25 +14,34 @@ export interface LastImport {
   result: MediaImportResult;
 }
 
-const listeners = new Set<() => void>();
-let cachedRaw: string | null = null;
-let cachedValue: LastImport | undefined;
+interface StoredImport {
+  version: number;
+  entry: LastImport;
+}
 
-function readStored(): LastImport | undefined {
-  let raw: string | null = null;
+const listeners = new Set<() => void>();
+let hasRead = false;
+let current: LastImport | undefined;
+
+function parseStored(raw: string | null): LastImport | undefined {
+  if (!raw) return undefined;
   try {
-    raw = window.sessionStorage.getItem(STORAGE_KEY);
+    const stored = JSON.parse(raw) as Partial<StoredImport>;
+    return stored.version === STORAGE_VERSION ? stored.entry : undefined;
   } catch {
     return undefined;
   }
-  if (raw === cachedRaw) return cachedValue;
-  cachedRaw = raw;
+}
+
+function readStored(): LastImport | undefined {
+  if (hasRead) return current;
+  hasRead = true;
   try {
-    cachedValue = raw ? (JSON.parse(raw) as LastImport) : undefined;
+    current = parseStored(window.sessionStorage.getItem(STORAGE_KEY));
   } catch {
-    cachedValue = undefined;
+    current = undefined;
   }
-  return cachedValue;
+  return current;
 }
 
 function subscribe(onChange: () => void): () => void {
@@ -39,7 +49,7 @@ function subscribe(onChange: () => void): () => void {
   return () => listeners.delete(onChange);
 }
 
-function forgetImport(): void {
+function forgetStored(): void {
   try {
     window.sessionStorage.removeItem(STORAGE_KEY);
   } catch {
@@ -48,13 +58,16 @@ function forgetImport(): void {
 }
 
 export function rememberImport(entry: LastImport): void {
+  hasRead = true;
+  current = entry;
+  listeners.forEach((listener) => listener());
+  const stored: StoredImport = { version: STORAGE_VERSION, entry };
   try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
   } catch (error) {
     console.warn('Saving the import summary failed', { error });
-    forgetImport();
+    forgetStored();
   }
-  listeners.forEach((listener) => listener());
 }
 
 export function useLastImport(userId: string | undefined): LastImport | undefined {

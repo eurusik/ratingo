@@ -16,7 +16,7 @@ interface WizardActionsProps {
   hint?: string;
   primary: WizardAction;
   secondary?: WizardAction;
-  showsSecondaryOnPhone?: boolean;
+  isPinned: boolean;
 }
 
 function ActionButton({
@@ -51,19 +51,13 @@ function ActionButton({
   );
 }
 
-export function WizardActions({
-  hint,
-  primary,
-  secondary,
-  showsSecondaryOnPhone = false,
-}: WizardActionsProps) {
+export function WizardActions({ hint, primary, secondary, isPinned }: WizardActionsProps) {
   return (
     <>
       <div
         className={cn(
           'z-10 flex flex-col gap-1 md:hidden',
-          !showsSecondaryOnPhone &&
-            'sticky bottom-[calc(var(--spacing-tab-bar)+var(--safe-bottom)+1.25rem)]',
+          isPinned && 'sticky bottom-[calc(var(--spacing-tab-bar)+var(--safe-bottom)+1.25rem)]',
         )}
       >
         <ActionButton
@@ -71,7 +65,7 @@ export function WizardActions({
           variant="primary"
           className="h-13 w-full rounded-full text-base font-bold shadow-overlay disabled:bg-default disabled:text-muted disabled:opacity-100"
         />
-        {secondary && showsSecondaryOnPhone ? (
+        {secondary && !isPinned ? (
           <ActionButton
             action={secondary}
             variant="ghost"
