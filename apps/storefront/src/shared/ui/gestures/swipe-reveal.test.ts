@@ -5,10 +5,23 @@ const REVEAL_WIDTH = 80;
 const STEP_MS = 100;
 let clock = 0;
 
-function pointer(target: Element, type: string, clientX: number, clientY = 0) {
-  const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY });
+const RELEASE_EVENTS = new Set(['pointerup', 'pointercancel', 'lostpointercapture']);
+
+interface PointerOptions {
+  pointerType?: string;
+  buttons?: number;
+}
+
+function pointer(
+  target: Element,
+  type: string,
+  clientX: number,
+  clientY = 0,
+  { pointerType = 'touch', buttons = RELEASE_EVENTS.has(type) ? 0 : 1 }: PointerOptions = {},
+) {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY, buttons });
   clock += STEP_MS;
-  Object.assign(event, { pointerId: 1, isPrimary: true });
+  Object.assign(event, { pointerId: 1, isPrimary: true, pointerType });
   Object.defineProperty(event, 'timeStamp', { value: clock });
   target.dispatchEvent(event);
 }
@@ -19,11 +32,11 @@ function tap(target: Element) {
   target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 }
 
-function swipe(target: Element, fromX: number, toX: number, toY = 0) {
-  pointer(target, 'pointerdown', fromX);
-  pointer(target, 'pointermove', (fromX + toX) / 2, toY / 2);
-  pointer(target, 'pointermove', toX, toY);
-  pointer(target, 'pointerup', toX, toY);
+function swipe(target: Element, fromX: number, toX: number, toY = 0, pointerType = 'touch') {
+  pointer(target, 'pointerdown', fromX, 0, { pointerType });
+  pointer(target, 'pointermove', (fromX + toX) / 2, toY / 2, { pointerType });
+  pointer(target, 'pointermove', toX, toY, { pointerType });
+  pointer(target, 'pointerup', toX, toY, { pointerType });
 }
 
 function mountRow() {
@@ -113,6 +126,54 @@ describe('attachSwipeReveal', () => {
     action.focus();
 
     expect(row).toHaveAttribute('data-open');
+    detach();
+  });
+
+  it('leaves mouse drags alone', () => {
+    const { row, content, detach } = mountRow();
+
+    swipe(content, 200, 100, 0, 'mouse');
+
+    expect(content.style.transform).toBe('');
+    expect(row).not.toHaveAttribute('data-open');
+    detach();
+  });
+
+  it('does not follow the mouse once a menu opened from the row has closed', () => {
+    const { row, content, detach } = mountRow();
+
+    pointer(content, 'pointerdown', 200, 0, { pointerType: 'mouse' });
+    pointer(content, 'pointermove', 150, 0, { pointerType: 'mouse', buttons: 0 });
+    pointer(content, 'pointermove', 100, 0, { pointerType: 'mouse', buttons: 0 });
+
+    expect(content.style.transform).toBe('');
+    expect(row).not.toHaveAttribute('data-dragging');
+    detach();
+  });
+
+  it('drops a press whose release landed outside the row', () => {
+    const { row, content, detach } = mountRow();
+
+    pointer(content, 'pointerdown', 200, 0, { pointerType: 'pen' });
+    pointer(content, 'pointermove', 150, 0, { pointerType: 'pen', buttons: 0 });
+    pointer(content, 'pointermove', 100, 0, { pointerType: 'pen', buttons: 0 });
+
+    expect(content.style.transform).toBe('');
+    expect(row).not.toHaveAttribute('data-dragging');
+    detach();
+  });
+
+  it('settles the row when it loses pointer capture mid-drag', () => {
+    const { row, content, detach } = mountRow();
+
+    pointer(content, 'pointerdown', 200);
+    pointer(content, 'pointermove', 170);
+    pointer(content, 'pointermove', 160);
+    pointer(content, 'lostpointercapture', 160);
+    pointer(content, 'pointermove', 100);
+
+    expect(row).not.toHaveAttribute('data-dragging');
+    expect(content.style.transform).toBe('');
     detach();
   });
 

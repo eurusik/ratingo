@@ -82,7 +82,7 @@ export function attachSwipeReveal({ row, content, actions }: SwipeRevealParts): 
 
   const onPointerDown = (event: PointerEvent) => {
     suppressNextClick = false;
-    if (!event.isPrimary || event.button !== 0) return;
+    if (event.pointerType === 'mouse' || !event.isPrimary || event.button !== 0) return;
     cancelSpring?.();
     cancelSpring = null;
     drag = {
@@ -109,6 +109,10 @@ export function attachSwipeReveal({ row, content, actions }: SwipeRevealParts): 
 
   const onPointerMove = (event: PointerEvent) => {
     if (drag.kind === 'idle' || event.pointerId !== drag.pointerId) return;
+    if (event.buttons === 0) {
+      finishDrag(event);
+      return;
+    }
     if (drag.kind === 'pending') {
       const dx = event.clientX - drag.startX;
       const dy = event.clientY - drag.startY;
@@ -176,6 +180,7 @@ export function attachSwipeReveal({ row, content, actions }: SwipeRevealParts): 
   content.addEventListener('pointermove', onPointerMove);
   content.addEventListener('pointerup', finishDrag);
   content.addEventListener('pointercancel', finishDrag);
+  content.addEventListener('lostpointercapture', finishDrag);
   content.addEventListener('click', onContentClick, true);
   actions.addEventListener('focusin', onActionsFocus);
   row.addEventListener('focusout', onRowFocusOut);
@@ -188,6 +193,7 @@ export function attachSwipeReveal({ row, content, actions }: SwipeRevealParts): 
     content.removeEventListener('pointermove', onPointerMove);
     content.removeEventListener('pointerup', finishDrag);
     content.removeEventListener('pointercancel', finishDrag);
+    content.removeEventListener('lostpointercapture', finishDrag);
     content.removeEventListener('click', onContentClick, true);
     actions.removeEventListener('focusin', onActionsFocus);
     row.removeEventListener('focusout', onRowFocusOut);
