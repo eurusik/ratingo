@@ -4048,6 +4048,22 @@ export interface components {
             /** @description Current subscription status after action */
             status: components["schemas"]["MediaSubscriptionStatusDto"];
         };
+        SubscriptionMediaSummaryDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /**
+             * @example movie
+             * @enum {string}
+             */
+            type: "movie" | "show";
+            /** @example Inception */
+            title: string;
+            /** @example inception-2010 */
+            slug: string;
+            poster: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+        };
         SubscriptionWithMediaResponseDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
             id: string;
@@ -4065,23 +4081,7 @@ export interface components {
              * @example 2024-01-15T10:30:00.000Z
              */
             createdAt: string;
-            /**
-             * @example {
-             *       "id": "123e4567-e89b-12d3-a456-426614174000",
-             *       "type": "movie",
-             *       "title": "Inception",
-             *       "slug": "inception-2010",
-             *       "poster": {
-             *         "w92": "...",
-             *         "w185": "...",
-             *         "w342": "...",
-             *         "w500": "...",
-             *         "w780": "...",
-             *         "original": "..."
-             *       }
-             *     }
-             */
-            mediaSummary: Record<string, never>;
+            mediaSummary: components["schemas"]["SubscriptionMediaSummaryDto"];
         };
         SyncDto: {
             /**
