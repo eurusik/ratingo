@@ -9,7 +9,7 @@ export {
   SITE_URL,
   buildRevision,
 } from './env';
-export { BRAND_NAME } from './brand';
+export { BRAND_NAME, BRAND_TAGLINE } from './brand';
 export { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from './breakpoints';
 export { tmdbPosterUrl, tmdbStillUrl } from './images';
 export { SERVICE_TIME_ZONE } from './time-zone';

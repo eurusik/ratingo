@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { BRAND_NAME, BROWSE_ROUTE, CALENDAR_ROUTE, MY_ROUTE } from '@/shared/config';
+import { BRAND_NAME, BRAND_TAGLINE, BROWSE_ROUTE, CALENDAR_ROUTE, MY_ROUTE } from '@/shared/config';
 import { DEFAULT_LOCALE, getDictionary } from '@/shared/i18n';
 
 export const APP_THEME_COLOR = '#060607';
@@ -13,7 +13,7 @@ export function buildWebAppManifest(): MetadataRoute.Manifest {
     id: '/',
     name: BRAND_NAME,
     short_name: BRAND_NAME,
-    description: 'Що дивитись зараз: тренди, оцінки й нові серії твоїх серіалів',
+    description: BRAND_TAGLINE,
     lang: 'uk',
     dir: 'ltr',
     start_url: '/?source=pwa',

@@ -18,6 +18,14 @@ function MarkShape({ shape, color }: { shape: BrandMarkShape; color: string }) {
   );
 }
 
+const MARK_SHAPES = (
+  <>
+    <MarkShape shape="leg" color={BRAND_MARK_COLORS.leg} />
+    <MarkShape shape="body" color={BRAND_MARK_COLORS.body} />
+    <MarkShape shape="cutout" color="currentColor" />
+  </>
+);
+
 export function BrandMark({ size = 32 }: BrandMarkProps) {
   return (
     <>
@@ -27,9 +35,7 @@ export function BrandMark({ size = 32 }: BrandMarkProps) {
         style={{ width: size, height: size }}
       >
         <svg width={size} height={size} viewBox={BRAND_MARK_VIEW_BOX} focusable="false">
-          <MarkShape shape="leg" color={BRAND_MARK_COLORS.leg} />
-          <MarkShape shape="body" color={BRAND_MARK_COLORS.body} />
-          <MarkShape shape="cutout" color="currentColor" />
+          {MARK_SHAPES}
         </svg>
       </span>
       {BRAND_NAME}
