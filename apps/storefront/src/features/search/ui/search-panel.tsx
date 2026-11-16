@@ -17,6 +17,7 @@ import { SegmentedFilter } from '@/shared/ui';
 import { useCatalogSearch, type SearchFilter, type SearchResults } from '../model/catalog-search';
 import { useOpenTitle } from '../model/open-title';
 import { useResultsKeyboard } from '../model/results-keyboard';
+import { readPendingQuery } from '../model/search-dialog-state';
 import { usePopularTitles } from '../model/popular-titles';
 import { clearRecentTitles, forgetTitle, useRecentTitles } from '../model/recent-titles';
 import type { SearchTitle } from '../model/search-title';
@@ -145,7 +146,7 @@ function searchAnnouncement(search: ReturnType<typeof useCatalogSearch>, dict: D
 
 export function SearchPanel({ renderActions, onClose }: SearchPanelProps) {
   const { dict } = useTranslation();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(readPendingQuery);
   const [filter, setFilter] = useState<SearchFilter>('all');
   const search = useCatalogSearch(query, filter);
   const recentTitles = useRecentTitles();

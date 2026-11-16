@@ -9,6 +9,12 @@ export interface NavRoute {
 
 export const HOME_ROUTE = '/';
 
+export const SEARCH_PARAM = 'q';
+
+export function searchRoute(query: string): string {
+  return `${HOME_ROUTE}?${new URLSearchParams({ [SEARCH_PARAM]: query })}`;
+}
+
 export const NAV_ROUTES: readonly NavRoute[] = [
   { section: 'today', href: HOME_ROUTE },
   { section: 'browse', href: BROWSE_ROUTE },

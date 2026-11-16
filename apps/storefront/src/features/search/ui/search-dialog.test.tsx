@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Button } from '@heroui/react';
 import { catalogApi, type SearchItem, type TrendingShow } from '@/shared/api';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
-import { openSearch, setSearchOpen } from '../model/search-dialog-state';
+import { openSearch, openSearchFor, setSearchOpen } from '../model/search-dialog-state';
 import { clearRecentTitles, rememberTitle } from '../model/recent-titles';
 import { SearchDialog } from './search-dialog';
 
@@ -65,7 +65,10 @@ const TRENDING_SHOW = {
   stats: { ratingoScore: 86 },
 } as unknown as TrendingShow;
 
-function renderSearch(renderActions?: Parameters<typeof SearchDialog>[0]['renderActions']) {
+function renderSearch(
+  renderActions?: Parameters<typeof SearchDialog>[0]['renderActions'],
+  open: () => void = openSearch,
+) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
@@ -74,7 +77,7 @@ function renderSearch(renderActions?: Parameters<typeof SearchDialog>[0]['render
       </I18nProvider>
     </QueryClientProvider>,
   );
-  act(() => openSearch());
+  act(() => open());
 }
 
 async function typeQuery(query: string) {
@@ -135,6 +138,24 @@ describe('SearchDialog', () => {
       expect(within(results).queryByRole('row', { name: /2021/ })).not.toBeInTheDocument(),
     );
     expect(within(results).getByRole('row', { name: /Пророцтво/ })).toBeInTheDocument();
+  });
+
+  it('opens prefilled with a query and starts searching for it', async () => {
+    renderSearch(undefined, () => openSearchFor('дюна'));
+
+    expect(await screen.findByRole('searchbox', { name: uk.search.title })).toHaveValue('дюна');
+    const results = await screen.findByRole('grid', { name: uk.search.results });
+    expect(await within(results).findByRole('row', { name: /^Дюна, Фільм · 2021/ })).toBeVisible();
+  });
+
+  it('forgets the prefilled query once the search closes', async () => {
+    renderSearch(undefined, () => openSearchFor('дюна'));
+    await screen.findByRole('searchbox', { name: uk.search.title });
+    act(() => setSearchOpen(false));
+    await waitFor(() => expect(screen.queryByRole('searchbox')).not.toBeInTheDocument());
+
+    act(() => openSearch());
+    expect(await screen.findByRole('searchbox', { name: uk.search.title })).toHaveValue('');
   });
 
   it('opens a catalog title and remembers it', async () => {

@@ -1,4 +1,4 @@
-type MediaKind = 'movie' | 'show';
+export type MediaKind = 'movie' | 'show';
 
 const MEDIA_ROUTE_PREFIXES: Record<MediaKind, string> = {
   movie: '/movies',
@@ -37,6 +37,7 @@ export const MY_LIST_PARAM = 'list';
 export function myListRoute(list: string, defaultList: string): string {
   return list === defaultList ? MY_ROUTE : `${MY_ROUTE}?${MY_LIST_PARAM}=${list}`;
 }
+
 export const BROWSE_ROUTE = '/browse';
 export const CALENDAR_ROUTE = '/calendar';
 export const OFFLINE_ROUTE = '/~offline';
