@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
+import { setEpisodeWatched } from '@/entities/episode';
 import type { LibraryList } from '@/entities/library';
-import { episodeProgressApi, libraryApi, type SaveList } from '@/shared/api';
+import { libraryApi, type SaveList } from '@/shared/api';
 import { interpolate, type Dictionary } from '@/shared/i18n';
 import type { LibraryTitle } from './library-title';
 import type { PlanRow } from './plan-order';
@@ -117,8 +118,8 @@ export function moveSpecs(dict: Dictionary) {
     markEpisodeWatched: ({ title, episodeId, code }: EpisodeTarget): MoveSpec => ({
       title,
       message: interpolate(toast.episodeWatched, { title: title.title, code }),
-      commit: () => episodeProgressApi.markWatched(episodeId),
-      revert: () => episodeProgressApi.markUnwatched(episodeId),
+      commit: () => setEpisodeWatched(episodeId, true),
+      revert: () => setEpisodeWatched(episodeId, false),
     }),
     rate: (title: LibraryTitle, rating: number | null, previous: number | null): MoveSpec => ({
       title,

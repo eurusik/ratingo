@@ -1,11 +1,9 @@
 'use client';
 
 import { useCallback, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
-import { EPISODE_PROGRESS_QUERY_KEY } from '@/entities/episode';
+import { useRefreshWatchProgress } from '@/entities/episode';
 import { useLibraryListsStore, useLibraryStore, useMediaStateStore } from '@/entities/library';
-import { CALENDAR_QUERY_KEY } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { showUndoToast } from '@/shared/lib';
 import { moveSpecs, type MoveSpec, type MoveSpecs } from './library-move-specs';
@@ -19,19 +17,15 @@ export type LibraryActions = { [K in keyof MoveSpecs]: Act<K> } & {
 
 export function useLibraryActions(): LibraryActions {
   const { dict } = useTranslation();
-  const queryClient = useQueryClient();
   const lists = useLibraryListsStore();
   const saveStatuses = useLibraryStore();
   const mediaStates = useMediaStateStore();
   const moves = useLibraryMoveActions();
+  const refreshWatchProgress = useRefreshWatchProgress();
 
   const refresh = useCallback(async () => {
-    await Promise.all([
-      lists.refresh(),
-      queryClient.invalidateQueries({ queryKey: CALENDAR_QUERY_KEY }),
-      queryClient.invalidateQueries({ queryKey: EPISODE_PROGRESS_QUERY_KEY }),
-    ]);
-  }, [lists, queryClient]);
+    await Promise.all([lists.refresh(), refreshWatchProgress()]);
+  }, [lists, refreshWatchProgress]);
 
   const settle = useCallback(
     async (spec: MoveSpec, change: () => Promise<unknown>, token?: number) => {

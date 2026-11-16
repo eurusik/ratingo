@@ -1,4 +1,5 @@
-import { CALENDAR_QUERY_KEY, type CalendarRangeQuery } from '@/shared/api';
+import { CALENDAR_QUERY_KEY } from '@/entities/episode';
+import type { CalendarRangeQuery } from '@/shared/api';
 
 interface CalendarKeyFields extends CalendarRangeQuery {
   viewerId: string | null;

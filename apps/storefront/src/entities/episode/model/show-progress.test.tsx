@@ -5,7 +5,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { episodeProgressApi, type ShowProgress } from '@/shared/api';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import type { Season } from './season';
-import { useSetEpisodesWatched, useShowProgress } from './show-progress';
+import { setEpisodeWatched, useSetEpisodesWatched, useShowProgress } from './show-progress';
 
 jest.mock('@ratingo/web-core/auth', () => ({ useAuth: jest.fn() }));
 jest.mock('@/shared/api', () => ({
@@ -168,5 +168,17 @@ describe('episode progress', () => {
 
     expect(api.markManyWatched).not.toHaveBeenCalled();
     expect(api.markWatched).not.toHaveBeenCalled();
+  });
+
+  it('marks a single episode watched and unwatched for the undo flow', async () => {
+    api.markWatched.mockResolvedValue();
+    api.markUnwatched.mockResolvedValue();
+
+    await setEpisodeWatched('e2', true);
+    await setEpisodeWatched('e2', false);
+
+    expect(api.markWatched).toHaveBeenCalledWith('e2');
+    expect(api.markUnwatched).toHaveBeenCalledWith('e2');
+    expect(api.markManyWatched).not.toHaveBeenCalled();
   });
 });

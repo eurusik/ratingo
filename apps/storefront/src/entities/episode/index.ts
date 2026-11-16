@@ -20,11 +20,8 @@ export {
   type WatchChange,
 } from './model/progress';
 export { hasAired, nextUpcoming, toSeasons, type Episode, type Season } from './model/season';
-export {
-  EPISODE_PROGRESS_QUERY_KEY,
-  useSetEpisodesWatched,
-  useShowProgress,
-} from './model/show-progress';
+export { setEpisodeWatched, useSetEpisodesWatched, useShowProgress } from './model/show-progress';
+export { CALENDAR_QUERY_KEY, useRefreshWatchProgress } from './model/watch-cache';
 export {
   TRACKING_HINT_COOKIE,
   parseTrackingHints,

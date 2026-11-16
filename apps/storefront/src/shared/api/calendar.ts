@@ -2,8 +2,6 @@ import type { GetData, components } from '@ratingo/api-contract';
 import { apiGet } from '@ratingo/web-core/api';
 import { cacheOptions, type CatalogCache } from './request-cache';
 
-export const CALENDAR_QUERY_KEY = ['calendar'] as const;
-
 export type CalendarRange = GetData<'/api/catalog/shows/calendar'>;
 export type CalendarEpisode = components['schemas']['CalendarEpisodeDto'];
 

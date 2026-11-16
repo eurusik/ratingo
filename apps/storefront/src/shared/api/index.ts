@@ -20,7 +20,6 @@ export {
   type TrendingShow,
 } from './catalog';
 export {
-  CALENDAR_QUERY_KEY,
   calendarApi,
   type CalendarEpisode,
   type CalendarRange,
