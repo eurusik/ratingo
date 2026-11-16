@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
+import { buttonVariants } from '@heroui/react';
 
 type ErrorStateTone = 'warning' | 'neutral' | 'success';
 
@@ -14,6 +16,21 @@ export const ERROR_STATE_TEXT = 'text-[15px] leading-normal text-pretty text-mut
 
 export const ERROR_STATE_ACTION =
   'h-12 w-full rounded-full px-5 text-[15px] font-bold no-underline md:w-auto';
+
+export function ErrorStateLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className={buttonVariants({
+        variant: 'secondary',
+        size: 'lg',
+        className: `${ERROR_STATE_ACTION} text-foreground`,
+      })}
+    >
+      {children}
+    </Link>
+  );
+}
 
 interface ErrorStateProps {
   icon: ReactNode;
@@ -51,7 +68,9 @@ export function ErrorState({
       {actions ? (
         <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:gap-2.5">{actions}</div>
       ) : null}
-      {footnote ? <p className="text-xs text-muted tabular-nums md:text-[13px]">{footnote}</p> : null}
+      {footnote ? (
+        <p className="text-xs text-muted tabular-nums md:text-[13px]">{footnote}</p>
+      ) : null}
     </div>
   );
 }

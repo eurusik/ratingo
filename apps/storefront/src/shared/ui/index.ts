@@ -12,6 +12,7 @@ export {
   ERROR_STATE_TEXT,
   ERROR_STATE_TITLE,
   ErrorState,
+  ErrorStateLink,
 } from './error-state/error-state';
 export { EdgeFade } from './edge-fade/edge-fade';
 export { FadingScrollRow } from './edge-fade/fading-scroll-row';

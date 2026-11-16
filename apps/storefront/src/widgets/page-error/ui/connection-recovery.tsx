@@ -55,11 +55,7 @@ export function ConnectionRecovery({ secondaryAction = <BackButton /> }: Connect
       announce="status"
       actions={
         <div className="contents inert:invisible" inert={reconnected}>
-          <Button
-            size="lg"
-            className={ERROR_STATE_ACTION}
-            onPress={() => window.location.reload()}
-          >
+          <Button size="lg" className={ERROR_STATE_ACTION} onPress={() => window.location.reload()}>
             <RefreshCw aria-hidden="true" className="size-4" />
             {text.reload}
           </Button>

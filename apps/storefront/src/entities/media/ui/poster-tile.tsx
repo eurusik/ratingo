@@ -1,3 +1,5 @@
+'use client';
+
 import { useId, type ReactNode } from 'react';
 import { Skeleton } from '@heroui/react';
 import { mediaRoute } from '@/shared/config';

@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { Button, buttonVariants } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { TriangleAlert } from 'lucide-react';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { errorDigest, useIsOffline, useRetryTransition } from '@/shared/lib';
-import { ERROR_STATE_ACTION, ErrorState } from '@/shared/ui';
+import { ERROR_STATE_ACTION, ErrorState, ErrorStateLink } from '@/shared/ui';
 import { ConnectionRecovery } from './connection-recovery';
 
 interface PageLink {
@@ -30,14 +29,7 @@ function useWasOffline(): boolean {
 }
 
 function EscapeLink({ escape }: { escape: PageLink }) {
-  return (
-    <Link
-      href={escape.href}
-      className={buttonVariants({ variant: 'secondary', size: 'lg', className: ERROR_STATE_ACTION })}
-    >
-      {escape.label}
-    </Link>
-  );
+  return <ErrorStateLink href={escape.href}>{escape.label}</ErrorStateLink>;
 }
 
 export function PageError({ title, text, error, onRetry, escape }: PageErrorProps) {

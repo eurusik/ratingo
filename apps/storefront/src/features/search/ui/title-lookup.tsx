@@ -12,7 +12,7 @@ import { useCatalogSearch } from '../model/catalog-search';
 import type { SearchTitle } from '../model/search-title';
 
 const RESULTS_CLASS =
-  'flex w-full flex-col divide-y divide-separator rounded-[20px] bg-surface px-3.5';
+  'flex w-full flex-col text-start divide-y divide-separator rounded-[20px] bg-surface px-3.5';
 const ROW_CLASS = 'flex min-h-19 items-center gap-3 py-2.5';
 
 function FoundTitle({ title }: { title: SearchTitle & { slug: string } }) {

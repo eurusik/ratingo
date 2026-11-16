@@ -4,13 +4,7 @@ import { useState } from 'react';
 import { Skeleton } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useRevealedRows } from '@/shared/lib';
-import {
-  EmptyState,
-  LIST_ROW_FRAME,
-  ListSearch,
-  SectionError,
-  ShowMore,
-} from '@/shared/ui';
+import { EmptyState, LIST_ROW_FRAME, ListSearch, SectionError, ShowMore } from '@/shared/ui';
 import { useAccountToggles } from '../model/account-toggles';
 import { useFollowedSummary, useFollowedTitles, useUnfollowTitle } from '../model/followed-queries';
 import { matchingFollowedTitles } from '../model/followed-titles';

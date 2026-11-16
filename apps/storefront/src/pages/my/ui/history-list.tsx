@@ -118,7 +118,8 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
   const { pages, search } = history;
 
   if (pages.isPending) return <LibraryListSkeleton list="history" />;
-  if (pages.isError) return <ListFailure onRetry={() => void pages.refetch()} isRetrying={pages.isFetching} />;
+  if (pages.isError)
+    return <ListFailure onRetry={() => void pages.refetch()} isRetrying={pages.isFetching} />;
   if (filter === 'all' && !history.isSearching && history.rows.length === 0) {
     return <EmptyList {...dict.my.history.empty} href={IMPORT_ROUTE} />;
   }

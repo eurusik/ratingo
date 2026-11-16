@@ -1,13 +1,10 @@
 import type { Metadata } from 'next';
 import { getRequestLocale } from '@/app/entrypoint';
 import { ShellLayout } from '@/app/layouts';
-import { NotFoundPage } from '@/pages/not-found';
-import { getDictionary } from '@/shared/i18n';
+import { NotFoundPage, notFoundMetadata } from '@/pages/not-found';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const dict = getDictionary(await getRequestLocale());
-
-  return { title: dict.notFound.metaTitle, robots: { index: false, follow: true } };
+  return notFoundMetadata(await getRequestLocale());
 }
 
 export default async function NotFound() {
