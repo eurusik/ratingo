@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import Link from 'next/link';
 import { cn } from '@ratingo/web-core/lib';
 
@@ -10,6 +10,7 @@ interface SideNavItemProps {
   label: string;
   isCurrent: boolean;
   isMinor?: boolean;
+  onNavigate?: (event: MouseEvent<HTMLAnchorElement>) => void;
   children?: ReactNode;
 }
 
@@ -18,12 +19,14 @@ export function SideNavItem({
   label,
   isCurrent,
   isMinor = false,
+  onNavigate,
   children,
 }: SideNavItemProps) {
   return (
     <Link
       href={href}
       aria-current={isCurrent ? 'page' : undefined}
+      onClick={onNavigate}
       className={cn(SIDE_NAV_ITEM, isMinor ? 'h-10 text-sm text-muted' : 'h-11 text-[15px]')}
     >
       <span className="flex-1 truncate">{label}</span>

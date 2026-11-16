@@ -6,7 +6,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { openAuth } from '@/shared/auth';
 import { useTranslation } from '@/shared/i18n';
 import { SignInPrompt, SplitShell } from '@/shared/ui';
-import { BackGuardContext, type BackGuard } from '../model/back-guard';
+import { LeaveGuardContext, type LeaveGuard } from '../model/leave-guard';
 import type { SettingsSection } from '../model/settings-sections';
 import { PhoneBar, SectionHeader } from './settings-headers';
 import { SettingsNav } from './settings-nav';
@@ -43,10 +43,8 @@ export function SettingsShell({
 }: SettingsShellProps) {
   const { dict } = useTranslation();
   const { user, isLoading } = useAuth();
-  const backGuard = useRef<BackGuard | null>(null);
-  const phoneBar = (
-    <PhoneBar title={phoneTitle} backTo={backTo} onBack={(event) => backGuard.current?.(event)} />
-  );
+  const leaveGuard = useRef<LeaveGuard | null>(null);
+  const phoneBar = <PhoneBar title={phoneTitle} backTo={backTo} />;
 
   if (!isLoading && !user) {
     return (
@@ -59,7 +57,7 @@ export function SettingsShell({
   }
 
   return (
-    <BackGuardContext value={backGuard}>
+    <LeaveGuardContext value={leaveGuard}>
       <SplitShell nav={<SettingsNav current={current} />} header={phoneBar}>
         {user ? (
           children
@@ -70,6 +68,6 @@ export function SettingsShell({
           </>
         )}
       </SplitShell>
-    </BackGuardContext>
+    </LeaveGuardContext>
   );
 }

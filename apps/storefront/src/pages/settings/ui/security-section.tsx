@@ -59,6 +59,7 @@ export function SecuritySection() {
   const copy = dict.settings.security;
   const user = useAccount();
   const formId = useId();
+  const lastMethodId = useId();
   const enabled = useEnabledOAuthProviders();
   const linkedAccounts = useLinkedAccounts();
   const linkProvider = useLinkProvider();
@@ -110,6 +111,7 @@ export function SecuritySection() {
                         size="sm"
                         className={ROW_ACTION}
                         isDisabled={!isUnlinkAllowed}
+                        aria-describedby={isUnlinkAllowed ? undefined : lastMethodId}
                         aria-label={interpolate(copy.disconnectLabel, { provider: name })}
                         onPress={() => askUnlink(provider)}
                       >
@@ -121,7 +123,9 @@ export function SecuritySection() {
                         size="sm"
                         className={ROW_ACTION}
                         aria-label={interpolate(copy.connectLabel, { provider: name })}
-                        onPress={() => void linkProvider(provider)}
+                        isPending={linkProvider.isPending && linkProvider.variables === provider}
+                        isDisabled={linkProvider.isPending}
+                        onPress={() => linkProvider.mutate(provider)}
                       >
                         {copy.connect}
                       </Button>
@@ -155,7 +159,9 @@ export function SecuritySection() {
             />
           </li>
         </ul>
-        <p className="mx-1 text-[13px] text-muted md:mx-0 md:text-sm">{copy.lastMethod}</p>
+        <p id={lastMethodId} className="mx-1 text-[13px] text-muted md:mx-0 md:text-sm">
+          {copy.lastMethod}
+        </p>
       </SettingsGroup>
       {isPasswordOpen ? (
         <PasswordForm id={formId} onClose={() => setIsPasswordOpen(false)} />

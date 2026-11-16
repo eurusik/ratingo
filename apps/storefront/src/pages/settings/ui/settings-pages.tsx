@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, type MouseEvent, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { SETTINGS_ROUTE } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
-import { hasPreviousRoute } from '@/shared/lib';
+import { isPlainClick } from '@/shared/lib';
 import { EmptyState } from '@/shared/ui';
-import { profileAddress, useAccount } from '../model/account';
-import { useBackGuard } from '../model/back-guard';
+import { profileAddress, useAccount, visibilityOf } from '../model/account';
+import { useLeaveGuard } from '../model/leave-guard';
 import { useFollowedSummary } from '../model/followed-queries';
 import { useSignInSummary } from '../model/method-names';
 import { useProfileForm } from '../model/profile-form';
@@ -31,27 +30,27 @@ function SectionPage({ section, children }: { section: SettingsSection; children
   );
 }
 
-function ProfileContent({ guardsBack }: { guardsBack: boolean }) {
+function ProfileContent() {
   const { dict } = useTranslation();
   const router = useRouter();
   const { username } = useAccount();
   const form = useProfileForm();
-  const [isDiscardOpen, setIsDiscardOpen] = useState(false);
+  const [leaveTarget, setLeaveTarget] = useState<string | null>(null);
 
-  useBackGuard(
-    guardsBack && form.isDirty
-      ? (event: MouseEvent<HTMLAnchorElement>) => {
+  useLeaveGuard(
+    form.isDirty
+      ? (event, href) => {
+          if (!isPlainClick(event)) return;
           event.preventDefault();
-          setIsDiscardOpen(true);
+          setLeaveTarget(href);
         }
       : null,
   );
 
   const discard = () => {
     form.reset();
-    setIsDiscardOpen(false);
-    if (hasPreviousRoute()) router.back();
-    else router.push(SETTINGS_ROUTE);
+    setLeaveTarget(null);
+    if (leaveTarget) router.push(leaveTarget);
   };
 
   return (
@@ -59,8 +58,8 @@ function ProfileContent({ guardsBack }: { guardsBack: boolean }) {
       <SectionHeader title={dict.settings.sections.profile} subtitle={profileAddress(username)} />
       <ProfileSection form={form} />
       <DiscardDialog
-        isOpen={isDiscardOpen}
-        onKeep={() => setIsDiscardOpen(false)}
+        isOpen={leaveTarget !== null}
+        onKeep={() => setLeaveTarget(null)}
         onDiscard={discard}
       />
     </>
@@ -81,7 +80,7 @@ export function SettingsHomePage() {
         <SettingsList />
       </div>
       <div className="flex flex-col gap-3 max-md:hidden">
-        <ProfileContent guardsBack={false} />
+        <ProfileContent />
       </div>
     </SettingsShell>
   );
@@ -90,16 +89,17 @@ export function SettingsHomePage() {
 export function ProfileSettingsPage() {
   return (
     <SectionPage section="profile">
-      <ProfileContent guardsBack />
+      <ProfileContent />
     </SectionPage>
   );
 }
 
 function SecurityContent() {
   const { dict } = useTranslation();
+  const signInSummary = useSignInSummary();
   return (
     <>
-      <SectionHeader title={dict.settings.sections.security} subtitle={useSignInSummary()} />
+      <SectionHeader title={dict.settings.sections.security} subtitle={signInSummary} />
       <SecuritySection />
     </>
   );
@@ -115,9 +115,10 @@ export function SecuritySettingsPage() {
 
 function NotificationsContent() {
   const { dict } = useTranslation();
+  const followedSummary = useFollowedSummary();
   return (
     <>
-      <SectionHeader title={dict.settings.sections.notifications} subtitle={useFollowedSummary()} />
+      <SectionHeader title={dict.settings.sections.notifications} subtitle={followedSummary} />
       <NotificationsSection />
     </>
   );
@@ -133,8 +134,7 @@ export function NotificationSettingsPage() {
 
 function PrivacyContent() {
   const { dict } = useTranslation();
-  const { profile } = useAccount();
-  const visibility = profile.privacy.isProfilePublic ? 'public' : 'private';
+  const visibility = visibilityOf(useAccount());
   return (
     <>
       <SectionHeader

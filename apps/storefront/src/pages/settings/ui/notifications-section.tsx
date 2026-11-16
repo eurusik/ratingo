@@ -5,7 +5,7 @@ import { Button, Skeleton } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { EMPTY_STATE_ACTION, EmptyState, ListSearch } from '@/shared/ui';
 import { useAccountToggles } from '../model/account-toggles';
-import { useFollowedSummary, useFollowedTitles, useUnfollow } from '../model/followed-queries';
+import { useFollowedSummary, useFollowedTitles, useUnfollowTitle } from '../model/followed-queries';
 import { FIRST_FOLLOWED_ROWS, visibleFollowedTitles } from '../model/followed-titles';
 import { cn } from '@ratingo/web-core/lib';
 import { CARD_LIST, SettingsGroup } from './settings-card';
@@ -40,12 +40,12 @@ function FollowedTitles() {
   const { dict } = useTranslation();
   const copy = dict.settings.notifications;
   const followed = useFollowedTitles();
-  const unfollow = useUnfollow();
+  const unfollow = useUnfollowTitle();
   const [query, setQuery] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (followed.isPending) return <FollowedSkeleton />;
-  if (followed.isError) {
+  if (!followed.data) {
     return (
       <EmptyState
         title={copy.failed}
@@ -128,7 +128,7 @@ export function NotificationsSection() {
             <SettingSwitch
               label={copy.autoSubscribe}
               hint={copy.autoSubscribeHint}
-              isSelected={toggles.valueOf('autoSubscribeOnWatch')}
+              isSelected={toggles.isOn('autoSubscribeOnWatch')}
               onChange={(value) => toggles.set('autoSubscribeOnWatch', value)}
             />
           </li>

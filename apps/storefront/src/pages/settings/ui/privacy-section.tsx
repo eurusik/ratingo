@@ -17,7 +17,7 @@ export function PrivacySection() {
   const copy = dict.settings.privacy;
   const user = useAccount();
   const toggles = useAccountToggles();
-  const isPublic = toggles.valueOf(PUBLIC_PROFILE);
+  const isPublic = toggles.isOn(PUBLIC_PROFILE);
   const url = profileAddress(user.username);
 
   const switchFor = (toggle: PrivacyToggle, isDisabled = false) => (
@@ -25,7 +25,7 @@ export function PrivacySection() {
       <SettingSwitch
         label={copy[toggle].label}
         hint={interpolate(copy[toggle].hint, { url })}
-        isSelected={toggles.valueOf(toggle)}
+        isSelected={toggles.isOn(toggle)}
         isDisabled={isDisabled}
         onChange={(value) => toggles.set(toggle, value)}
       />

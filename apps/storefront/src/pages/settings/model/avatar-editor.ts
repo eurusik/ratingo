@@ -21,7 +21,7 @@ async function uploadAvatar(file: File, contentType: AvatarContentType): Promise
   return publicUrl;
 }
 
-async function chooseAvatar(file: File): Promise<string> {
+async function uploadChecked(file: File): Promise<string> {
   if (!isAvatarType(file.type)) throw new Error(`Unsupported avatar type ${file.type}`);
   return uploadAvatar(file, file.type);
 }
@@ -42,7 +42,7 @@ export function useAvatarEditor(): AvatarEditor {
 
   const saveAvatar = useMutation({
     mutationFn: async (source: File | string | null) => {
-      const avatarUrl = source instanceof File ? await chooseAvatar(source) : source;
+      const avatarUrl = source instanceof File ? await uploadChecked(source) : source;
       await accountApi.updateProfile({ avatarUrl });
     },
     onSuccess: () => refreshUser(),
@@ -58,6 +58,7 @@ export function useAvatarEditor(): AvatarEditor {
   };
 
   const change = (file: File) => {
+    if (saveAvatar.isPending) return;
     const problem = avatarProblem(file);
     if (problem) {
       toast.danger(problemMessages[problem]);
@@ -76,7 +77,7 @@ export function useAvatarEditor(): AvatarEditor {
 
   const remove = () => {
     const previous = user.avatarUrl;
-    if (!previous) return;
+    if (!previous || saveAvatar.isPending) return;
     saveAvatar.mutate(null, {
       onSuccess: () =>
         showUndoToast({

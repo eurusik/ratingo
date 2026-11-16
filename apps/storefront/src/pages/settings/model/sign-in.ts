@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
-import { ApiError } from '@ratingo/web-core/api';
 import { authApi, tokenStorage, useAuth } from '@ratingo/web-core/auth';
 import { accountApi } from '@/shared/api';
 import { buildOAuthLinkUrl, type OAuthProvider } from '@/shared/auth';
@@ -12,10 +11,10 @@ import { API_BASE_URL, SECURITY_SETTINGS_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { linkResultOf, type LinkOutcome } from './link-result';
 
-const FORBIDDEN_STATUS = 403;
+const LINKED_ACCOUNTS_KEY = ['auth', 'providers'] as const;
 
 function linkedAccountsKey(userId: string | null) {
-  return ['auth', 'providers', userId] as const;
+  return [...LINKED_ACCOUNTS_KEY, userId] as const;
 }
 
 export function useLinkedAccounts() {
@@ -28,32 +27,40 @@ export function useLinkedAccounts() {
   });
 }
 
-export function useLinkProvider(): (provider: OAuthProvider) => Promise<void> {
+export function useLinkProvider() {
+  const { dict } = useTranslation();
   const { refreshUser } = useAuth();
 
-  return async (provider) => {
-    await refreshUser();
-    const accessToken = tokenStorage.getAccessToken();
-    if (!accessToken) return;
-    window.location.assign(
-      buildOAuthLinkUrl({
-        apiBaseUrl: API_BASE_URL,
-        provider,
-        returnTo: SECURITY_SETTINGS_ROUTE,
-        returnOrigin: window.location.origin,
-        accessToken,
-      }),
-    );
-  };
+  return useMutation({
+    mutationFn: async (provider: OAuthProvider) => {
+      await refreshUser();
+      const accessToken = tokenStorage.getAccessToken();
+      if (!accessToken) throw new Error('No access token to start linking a provider');
+      window.location.assign(
+        buildOAuthLinkUrl({
+          apiBaseUrl: API_BASE_URL,
+          provider,
+          returnTo: SECURITY_SETTINGS_ROUTE,
+          returnOrigin: window.location.origin,
+          accessToken,
+        }),
+      );
+    },
+    onError: (error, provider) => {
+      console.error('Starting a provider link failed', { provider, error });
+      const copy = dict.settings.security;
+      toast.danger(interpolate(copy.linkFailed, { provider: copy.methodNames[provider] }));
+    },
+  });
 }
 
 function useRefreshSignInMethods() {
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
   const queryClient = useQueryClient();
 
   return async () => {
     await refreshUser();
-    await queryClient.invalidateQueries({ queryKey: linkedAccountsKey(user?.id ?? null) });
+    await queryClient.invalidateQueries({ queryKey: LINKED_ACCOUNTS_KEY });
   };
 }
 
@@ -94,15 +101,4 @@ export function useLinkResultNotice(): void {
     }
     router.replace(SECURITY_SETTINGS_ROUTE, { scroll: false });
   }, [dict, refreshMethods, router]);
-}
-
-export function isWrongPassword(error: unknown): boolean {
-  return error instanceof ApiError && error.statusCode === FORBIDDEN_STATUS;
-}
-
-export function useChangePassword() {
-  return useMutation({
-    mutationFn: (change: Parameters<typeof accountApi.changePassword>[0]) =>
-      accountApi.changePassword(change),
-  });
 }

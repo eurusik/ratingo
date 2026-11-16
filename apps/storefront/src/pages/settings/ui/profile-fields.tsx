@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import {
   Description,
   FieldError,
@@ -36,6 +36,7 @@ function OptionalLabel({ children }: { children: ReactNode }) {
 function RegionField({ value, onChange }: { value: string; onChange: (region: string) => void }) {
   const { dict, locale } = useTranslation();
   const copy = dict.settings.profile;
+  const regions = useMemo(() => regionOptions(locale, value), [locale, value]);
 
   return (
     <Select
@@ -55,7 +56,7 @@ function RegionField({ value, onChange }: { value: string; onChange: (region: st
       <Description>{copy.regionHint}</Description>
       <Select.Popover>
         <ListBox>
-          {regionOptions(locale, value).map((region) => (
+          {regions.map((region) => (
             <ListBox.Item key={region.code} id={region.code} textValue={region.name}>
               {region.name}
               <ListBox.ItemIndicator />
@@ -84,7 +85,7 @@ export function ProfileFields({ form }: { form: ProfileForm }) {
     <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4.5">
       <TextField
         name="username"
-        autoComplete="username"
+        autoComplete="off"
         {...field('username')}
         validate={(value) => {
           const problem = findUsernameProblem(value.trim());

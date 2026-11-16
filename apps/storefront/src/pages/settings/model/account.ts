@@ -7,10 +7,18 @@ import { SITE_URL } from '@/shared/config';
 
 const PROFILE_HOST = new URL(SITE_URL).host;
 
+const PROFILE_UPDATE_SCOPE = { id: 'settings-profile-update' };
+
 export const PROFILE_ADDRESS_PREFIX = `${PROFILE_HOST}/u/`;
+
+export type ProfileVisibility = 'public' | 'private';
 
 export function profileAddress(username: string): string {
   return `${PROFILE_ADDRESS_PREFIX}${username}`;
+}
+
+export function visibilityOf(user: MeDto): ProfileVisibility {
+  return user.profile.privacy.isProfilePublic ? 'public' : 'private';
 }
 
 export function useAccount(): MeDto {
@@ -24,6 +32,7 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: (changes: ProfileChanges) => accountApi.updateProfile(changes),
+    scope: PROFILE_UPDATE_SCOPE,
     onSuccess: () => refreshUser(),
   });
 }

@@ -6,7 +6,7 @@ import { ChevronRight, Download, Eye, Lock, User, Bell, type LucideIcon } from '
 import { useAuth } from '@ratingo/web-core/auth';
 import { initialOf } from '@/shared/lib';
 import { useTranslation } from '@/shared/i18n';
-import { useAccount } from '../model/account';
+import { useAccount, visibilityOf } from '../model/account';
 import { useFollowedSummary } from '../model/followed-queries';
 import { useSignInSummary } from '../model/method-names';
 import { SECTION_ROUTES, type SettingsSection } from '../model/settings-sections';
@@ -42,7 +42,7 @@ function RowLink({ section, icon: Icon, tone, label, value }: ListRow) {
 function AccountCard() {
   const { dict } = useTranslation();
   const user = useAccount();
-  const visibility = user.profile.privacy.isProfilePublic ? 'public' : 'private';
+  const visibility = visibilityOf(user);
 
   return (
     <Link
@@ -85,7 +85,7 @@ export function SettingsList() {
   const user = useAccount();
   const followedSummary = useFollowedSummary();
   const signInSummary = useSignInSummary();
-  const visibility = user.profile.privacy.isProfilePublic ? 'public' : 'private';
+  const visibility = visibilityOf(user);
 
   return (
     <div className="flex flex-col gap-5.5">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { fetchAllPages, subscriptionsApi } from '@/shared/api';
@@ -54,11 +54,19 @@ function withoutTitle(titles: FollowedTitle[], mediaItemId: string): FollowedTit
   return titles.filter((title) => title.mediaItemId !== mediaItemId);
 }
 
-function useFollowedCache(queryClient: QueryClient) {
+const FOLLOWING_MUTATION_KEY = [...SUBSCRIPTIONS_KEY, 'following'] as const;
+
+function useFollowedCache() {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const queryKey = followedKey(user?.id ?? null);
   return {
     queryKey,
+    cancel: () => queryClient.cancelQueries({ queryKey }),
+    settle: () => {
+      const isLastChange = queryClient.isMutating({ mutationKey: FOLLOWING_MUTATION_KEY }) <= 1;
+      if (isLastChange) void queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEY });
+    },
     update: (change: (titles: FollowedTitle[]) => FollowedTitle[]) =>
       queryClient.setQueryData<FollowedTitle[]>(queryKey, (titles) => titles && change(titles)),
   };
@@ -74,35 +82,35 @@ async function setFollowing({ mediaItemId, triggers }: FollowedTitle, isFollowin
   );
 }
 
-export function useUnfollow(): (placed: PlacedTitle) => void {
+export function useUnfollowTitle(): (placed: PlacedTitle) => void {
   const { dict } = useTranslation();
   const copy = dict.settings.notifications;
-  const queryClient = useQueryClient();
-  const cache = useFollowedCache(queryClient);
+  const cache = useFollowedCache();
 
-  const settle = () => queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEY });
   const fail = (error: Error, placed: PlacedTitle) => {
     console.error('Changing a followed title failed', { title: placed.title.mediaItemId, error });
     toast.danger(copy.unfollowFailed);
   };
 
   const follow = useMutation({
+    mutationKey: FOLLOWING_MUTATION_KEY,
     mutationFn: (placed: PlacedTitle) => setFollowing(placed.title, true),
     onMutate: async (placed) => {
-      await queryClient.cancelQueries({ queryKey: cache.queryKey });
+      await cache.cancel();
       cache.update((titles) => withTitle(titles, placed));
     },
     onError: (error, placed) => {
       cache.update((titles) => withoutTitle(titles, placed.title.mediaItemId));
       fail(error, placed);
     },
-    onSettled: settle,
+    onSettled: cache.settle,
   });
 
   const unfollow = useMutation({
+    mutationKey: FOLLOWING_MUTATION_KEY,
     mutationFn: (placed: PlacedTitle) => setFollowing(placed.title, false),
     onMutate: async (placed) => {
-      await queryClient.cancelQueries({ queryKey: cache.queryKey });
+      await cache.cancel();
       cache.update((titles) => withoutTitle(titles, placed.title.mediaItemId));
     },
     onSuccess: (_result, placed) =>
@@ -116,7 +124,7 @@ export function useUnfollow(): (placed: PlacedTitle) => void {
       cache.update((titles) => withTitle(titles, placed));
       fail(error, placed);
     },
-    onSettled: settle,
+    onSettled: cache.settle,
   });
 
   return unfollow.mutate;

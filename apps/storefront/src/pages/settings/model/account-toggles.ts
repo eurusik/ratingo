@@ -9,7 +9,7 @@ import { useAccount, useUpdateProfile } from './account';
 type AccountToggle = keyof MeDto['profile']['privacy'];
 
 export interface AccountToggles {
-  valueOf: (toggle: AccountToggle) => boolean;
+  isOn: (toggle: AccountToggle) => boolean;
   set: (toggle: AccountToggle, value: boolean) => void;
 }
 
@@ -24,31 +24,30 @@ function withoutToggle(values: PendingValues, toggle: AccountToggle): PendingVal
 export function useAccountToggles(): AccountToggles {
   const { dict } = useTranslation();
   const user = useAccount();
-  const update = useUpdateProfile();
+  const { mutateAsync } = useUpdateProfile();
   const [pending, setPending] = useState<PendingValues>({});
   const latestRequest = useRef<Partial<Record<AccountToggle, number>>>({});
 
-  const set = (toggle: AccountToggle, value: boolean) => {
-    const request = (latestRequest.current[toggle] ?? 0) + 1;
-    latestRequest.current[toggle] = request;
-    setPending((values) => ({ ...values, [toggle]: value }));
-    update.mutate(
-      { [toggle]: value },
-      {
-        onError: (error) => {
-          console.error('Saving an account setting failed', { toggle, value, error });
-          toast.danger(dict.settings.privacy.failed);
-        },
-        onSettled: () => {
-          if (latestRequest.current[toggle] !== request) return;
-          setPending((values) => withoutToggle(values, toggle));
-        },
-      },
-    );
+  const save = async (toggle: AccountToggle, value: boolean, request: number) => {
+    try {
+      await mutateAsync({ [toggle]: value });
+    } catch (error) {
+      console.error('Saving an account setting failed', { toggle, value, error });
+      toast.danger(dict.settings.privacy.failed);
+    } finally {
+      if (latestRequest.current[toggle] === request) {
+        setPending((values) => withoutToggle(values, toggle));
+      }
+    }
   };
 
   return {
-    valueOf: (toggle) => pending[toggle] ?? user.profile.privacy[toggle],
-    set,
+    isOn: (toggle) => pending[toggle] ?? user.profile.privacy[toggle],
+    set: (toggle, value) => {
+      const request = (latestRequest.current[toggle] ?? 0) + 1;
+      latestRequest.current[toggle] = request;
+      setPending((values) => ({ ...values, [toggle]: value }));
+      void save(toggle, value, request);
+    },
   };
 }

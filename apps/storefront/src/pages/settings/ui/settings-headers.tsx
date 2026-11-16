@@ -1,29 +1,30 @@
 'use client';
 
-import type { MouseEvent } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { cn } from '@ratingo/web-core/lib';
 import { MY_ROUTE, SETTINGS_ROUTE } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { BackLink, SECTION_TITLE_DESKTOP } from '@/shared/ui';
+import { useGuardedLink } from '../model/leave-guard';
 
 interface PhoneBarProps {
   title: string;
   backTo?: 'settings' | 'my';
-  onBack?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export function PhoneBar({ title, backTo = 'settings', onBack }: PhoneBarProps) {
+export function PhoneBar({ title, backTo = 'settings' }: PhoneBarProps) {
   const { dict } = useTranslation();
   const copy = dict.settings;
   const isBackToMy = backTo === 'my';
+  const backHref = isBackToMy ? MY_ROUTE : SETTINGS_ROUTE;
+  const guardedLink = useGuardedLink();
 
   return (
     <div className="sticky top-0 z-20 flex min-h-14 items-center gap-1 border-b border-separator bg-background/90 px-1.5 pt-(--safe-top) backdrop-blur-xl md:hidden">
       <BackLink
-        fallbackHref={isBackToMy ? MY_ROUTE : SETTINGS_ROUTE}
+        fallbackHref={backHref}
         aria-label={isBackToMy ? copy.backToMyLabel : copy.backLabel}
-        onNavigate={onBack}
+        onNavigate={guardedLink(backHref)}
         className="flex h-11 max-w-[45%] shrink-0 items-center gap-0.5 rounded-full pe-1.5 text-base font-semibold text-accent no-underline outline-none focus-visible:outline-2 focus-visible:outline-focus"
       >
         <ChevronLeft aria-hidden className="size-5.5 shrink-0" />

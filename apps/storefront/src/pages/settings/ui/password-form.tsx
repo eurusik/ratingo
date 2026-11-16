@@ -4,7 +4,7 @@ import { useId, useState, type FormEvent } from 'react';
 import { Button, Form, toast } from '@heroui/react';
 import { PasswordChecklist, PasswordField, isStrongPassword } from '@/features/authenticate';
 import { useTranslation } from '@/shared/i18n';
-import { isWrongPassword, useChangePassword } from '../model/sign-in';
+import { isWrongPassword, useChangePassword } from '../model/password-change';
 
 export function PasswordForm({ id, onClose }: { id: string; onClose: () => void }) {
   const { dict } = useTranslation();
