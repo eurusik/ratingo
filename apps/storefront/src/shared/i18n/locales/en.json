@@ -1388,7 +1388,7 @@
         "localOnly": "Files don’t leave your device until you tap Import.",
         "toHistory": "{count} → Watched",
         "toPlan": "{count} → Want to watch",
-        "skipped": "{rows} without an id will be skipped",
+        "skipped": "{rows} without an id or for single episodes will be skipped",
         "problems": {
           "wrongSource": "Doesn’t look like a {source} file — check where it came from",
           "tooLarge": "The file is larger than 5 MB — export ratings and the list as separate files",
@@ -1404,7 +1404,7 @@
         "fromSource": "{titles} from {source}",
         "ratedShows": "Rated shows ({count}) go to Watched. If you’re still watching one, move it to Watching right after the import.",
         "ratedShowsUntyped": "Rated shows go to Watched. If you’re still watching one, move it to Watching right after the import.",
-        "skipped": "{rows} will be skipped: no IMDb or TMDB id.",
+        "skipped": "{rows} will be skipped: no IMDb or TMDB id, or they rate single episodes and seasons.",
         "filterLabel": "What to show",
         "filters": {
           "all": "All",
