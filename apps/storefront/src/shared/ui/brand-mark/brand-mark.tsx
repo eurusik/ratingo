@@ -26,18 +26,24 @@ const MARK_SHAPES = (
   </>
 );
 
-export function BrandMark({ size = 32 }: BrandMarkProps) {
+export function BrandIcon({ size = 32 }: BrandMarkProps) {
+  return (
+    <span
+      aria-hidden
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-[31%] bg-surface text-surface ring-1 ring-foreground/10 ring-inset"
+      style={{ width: size, height: size }}
+    >
+      <svg width={size} height={size} viewBox={BRAND_MARK_VIEW_BOX} focusable="false">
+        {MARK_SHAPES}
+      </svg>
+    </span>
+  );
+}
+
+export function BrandMark({ size }: BrandMarkProps) {
   return (
     <>
-      <span
-        aria-hidden
-        className="flex shrink-0 items-center justify-center overflow-hidden rounded-[31%] bg-surface text-surface ring-1 ring-foreground/10 ring-inset"
-        style={{ width: size, height: size }}
-      >
-        <svg width={size} height={size} viewBox={BRAND_MARK_VIEW_BOX} focusable="false">
-          {MARK_SHAPES}
-        </svg>
-      </span>
+      <BrandIcon size={size} />
       {BRAND_NAME}
     </>
   );
