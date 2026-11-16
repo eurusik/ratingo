@@ -1,1 +1,1 @@
-export { EpisodesSheet, type EpisodesSheetProps } from './ui/episodes-sheet';
+export { EpisodesSheet } from './ui/episodes-sheet';

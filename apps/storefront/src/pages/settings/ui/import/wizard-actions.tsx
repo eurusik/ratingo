@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Button, buttonVariants } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 
-export interface WizardAction {
+interface WizardAction {
   label: string;
   onPress?: () => void;
   href?: string;

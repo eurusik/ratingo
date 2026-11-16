@@ -3,11 +3,11 @@ import { parseWithFormat } from './import-format';
 import type { ImportFileKind, ImportItem } from './import-item';
 import { SOURCE_FORMATS, type ImportSource } from './import-sources';
 
-export const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const CSV_EXTENSION = /\.csv$/i;
 const CSV_MIME_TYPES = new Set(['text/csv', 'application/vnd.ms-excel']);
 
-export type FileProblem = 'tooLarge' | 'notCsv' | 'wrongSource' | 'empty';
+type FileProblem = 'tooLarge' | 'notCsv' | 'wrongSource' | 'empty';
 
 interface FileIdentity {
   id: string;
@@ -21,7 +21,7 @@ export interface ReadyFile extends FileIdentity {
   skippedRows: number;
 }
 
-export interface RejectedFile extends FileIdentity {
+interface RejectedFile extends FileIdentity {
   status: 'rejected';
   problem: FileProblem;
 }
@@ -44,7 +44,7 @@ function isCsv(file: File): boolean {
   return CSV_EXTENSION.test(file.name) || CSV_MIME_TYPES.has(file.type);
 }
 
-export function fileId(file: File): string {
+function fileId(file: File): string {
   return `${file.name}:${file.size}:${file.lastModified}`;
 }
 

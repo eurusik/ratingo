@@ -1,6 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Alert } from '@heroui/react';
+import { LIBRARY_QUERY_KEY } from '@/entities/library';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import type { MediaImportResult } from '@/shared/api';
 import { batchOutcome } from '@/pages/settings/model/import/import-batches';
@@ -16,6 +19,11 @@ export function PendingBatch({ pending }: { pending: PendingSummary }) {
   const batches = useImportBatches();
   const batch = batches.data?.find((candidate) => candidate.batchId === pending.batchId);
   const outcome = batchOutcome(batch);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (outcome !== 'running') void queryClient.invalidateQueries({ queryKey: LIBRARY_QUERY_KEY });
+  }, [outcome, queryClient]);
 
   if (outcome !== 'running') {
     return (
