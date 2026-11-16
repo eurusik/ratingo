@@ -9,21 +9,13 @@ const SOURCE_ROWS = 4;
 const PHONE_STEPS = 3;
 const DESKTOP_STEPS = 2;
 
-function ResumeCardSkeleton() {
-  return <Skeleton className="h-[175px] w-full rounded-[20px] md:h-[155px]" />;
-}
-
-function PhoneSourceSkeleton({ expectsResume }: { expectsResume: boolean }) {
+function PhoneSourceSkeleton() {
   return (
-    <>
-      {expectsResume ? (
-        <ResumeCardSkeleton />
-      ) : (
-        <div className="flex flex-col gap-2">
-          <StepProgress current={0} total={PHONE_STEPS} />
-          <Skeleton className="h-4 w-36 rounded-md" />
-        </div>
-      )}
+    <div className="flex flex-col gap-5 md:hidden">
+      <div className="flex flex-col gap-2">
+        <StepProgress current={0} total={PHONE_STEPS} />
+        <Skeleton className="h-4 w-36 rounded-md" />
+      </div>
       <div className="flex flex-col gap-2">
         <Skeleton className="h-8 w-3/4 rounded-lg" />
         <Skeleton className="h-4 w-full rounded-md" />
@@ -41,14 +33,13 @@ function PhoneSourceSkeleton({ expectsResume }: { expectsResume: boolean }) {
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }
 
-function DesktopFilesSkeleton({ expectsResume }: { expectsResume: boolean }) {
+function DesktopFilesSkeleton() {
   return (
-    <>
-      {expectsResume ? <ResumeCardSkeleton /> : null}
+    <div className="flex flex-col gap-4 max-md:hidden">
       <StepProgress current={0} total={DESKTOP_STEPS} className="max-w-90" />
       <div className="flex flex-col gap-2.5">
         <Skeleton className="h-6 w-20 rounded-md" />
@@ -63,26 +54,18 @@ function DesktopFilesSkeleton({ expectsResume }: { expectsResume: boolean }) {
         <span className="flex-1" />
         <Skeleton className="h-11 w-20 rounded-full" />
       </div>
-    </>
+    </div>
   );
 }
 
-interface ImportSkeletonProps {
-  isDesktop: boolean;
-  expectsResume?: boolean;
-}
-
-export function ImportSkeleton({ isDesktop, expectsResume = false }: ImportSkeletonProps) {
+export function ImportSkeleton() {
   const { dict } = useTranslation();
 
   return (
-    <div role="status" aria-busy className="flex flex-col gap-5 md:gap-4">
+    <div role="status" aria-busy>
       <span className="sr-only">{dict.common.loading}</span>
-      {isDesktop ? (
-        <DesktopFilesSkeleton expectsResume={expectsResume} />
-      ) : (
-        <PhoneSourceSkeleton expectsResume={expectsResume} />
-      )}
+      <PhoneSourceSkeleton />
+      <DesktopFilesSkeleton />
     </div>
   );
 }
