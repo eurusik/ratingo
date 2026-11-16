@@ -1,6 +1,6 @@
-import { HOME_ROUTE, mediaRoute, searchRoute } from '@/shared/config';
+import { HOME_ROUTE, mediaRoute, searchRoute, type MediaKind } from '@/shared/config';
 
-function mediaKind(type: string | null): 'movie' | 'show' {
+function mediaKind(type: string | null): MediaKind {
   return type === 'show' ? 'show' : 'movie';
 }
 

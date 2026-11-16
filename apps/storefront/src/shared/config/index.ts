@@ -13,7 +13,14 @@ export { BRAND_NAME, BRAND_TAGLINE } from './brand';
 export { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from './breakpoints';
 export { tmdbPosterUrl, tmdbStillUrl } from './images';
 export { SERVICE_TIME_ZONE } from './time-zone';
-export { HOME_ROUTE, NAV_ROUTES, isNavRouteActive, type NavSection } from './navigation';
+export {
+  HOME_ROUTE,
+  NAV_ROUTES,
+  SEARCH_PARAM,
+  isNavRouteActive,
+  searchRoute,
+  type NavSection,
+} from './navigation';
 export {
   BROWSE_ROUTE,
   CALENDAR_ROUTE,
@@ -27,7 +34,6 @@ export {
   PRIVACY_SETTINGS_ROUTE,
   PROFILE_SETTINGS_ROUTE,
   PUBLIC_PROFILE_ROUTE,
-  SEARCH_PARAM,
   SECURITY_SETTINGS_ROUTE,
   SETTINGS_ROUTE,
   SHOW_PICK_VALUE,
@@ -39,7 +45,7 @@ export {
   mediaReviewsRoute,
   myListRoute,
   publicProfileRoute,
-  searchRoute,
   showPickRoute,
   showSeasonRoute,
+  type MediaKind,
 } from './routes';

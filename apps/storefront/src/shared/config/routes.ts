@@ -1,4 +1,4 @@
-type MediaKind = 'movie' | 'show';
+export type MediaKind = 'movie' | 'show';
 
 const MEDIA_ROUTE_PREFIXES: Record<MediaKind, string> = {
   movie: '/movies',
@@ -36,12 +36,6 @@ export const MY_LIST_PARAM = 'list';
 
 export function myListRoute(list: string, defaultList: string): string {
   return list === defaultList ? MY_ROUTE : `${MY_ROUTE}?${MY_LIST_PARAM}=${list}`;
-}
-
-export const SEARCH_PARAM = 'q';
-
-export function searchRoute(query: string): string {
-  return `/?${new URLSearchParams({ [SEARCH_PARAM]: query })}`;
 }
 
 export const BROWSE_ROUTE = '/browse';
