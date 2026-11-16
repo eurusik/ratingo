@@ -253,7 +253,7 @@
       "watching": "Watching",
       "want": "Want",
       "import": {
-        "title": "Bring it over from Kinobaza, IMDb or TMDB",
+        "title": "Move from IMDb, TMDB or Kinobaza",
         "text": "Import ratings and lists from a CSV in a minute"
       },
       "watchingLabel": "Watching: {title}",
@@ -875,7 +875,8 @@
     "pick": {
       "banner": "Choose the episode you stopped at",
       "cancel": "Cancel",
-      "confirm": "Mark {episodes} up to {code}"
+      "confirm": "Mark {episodes} up to {code}",
+      "notStarted": "Not started yet"
     },
     "notice": {
       "watched": "Watched {code}",
@@ -1144,7 +1145,7 @@
       "privacy": "Privacy",
       "import": "Import"
     },
-    "importRow": "Import from Trakt or Letterboxd",
+    "importRow": "Import",
     "visibility": {
       "public": "Public",
       "private": "Private"
@@ -1297,9 +1298,180 @@
       "alreadyLinked": "This {provider} account is already linked to another profile.",
       "linkFailed": "Couldn't connect {provider}. Try again."
     },
-    "importSoon": {
-      "title": "Import is coming soon",
-      "text": "You'll be able to bring your ratings and history from Trakt or Letterboxd right here."
+    "importValue": "IMDb, TMDB…",
+    "importRunning": "Adding… {done} of {total}",
+    "import": {
+      "steps": {
+        "source": "Source",
+        "files": "Files",
+        "preview": "Review"
+      },
+      "stepOf": "Step {step} of {total} · {name}",
+      "back": "Back",
+      "backToStep": "Back to “{step}”",
+      "titles": {
+        "one": "{count} title",
+        "few": "{count} titles",
+        "many": "{count} titles"
+      },
+      "ratings": {
+        "one": "{count} rating",
+        "few": "{count} ratings",
+        "many": "{count} ratings"
+      },
+      "rows": {
+        "one": "{count} row",
+        "few": "{count} rows",
+        "many": "{count} rows"
+      },
+      "source": {
+        "title": "Where are you moving from?",
+        "resumeTitle": "New import",
+        "text": "Ratings go to Watched, the list goes to Want to watch. Anything already in My won’t be duplicated.",
+        "label": "Source",
+        "soon": "Soon"
+      },
+      "sources": {
+        "kinobaza": {
+          "name": "Kinobaza",
+          "desc": "Ratings and list · kinobaza.com.ua",
+          "url": "https://kinobaza.com.ua",
+          "urlLabel": "kinobaza.com.ua",
+          "steps": [
+            "Open {link} and go to your profile → Settings",
+            "Tap “Export ratings” — a CSV downloads",
+            "For the list — “Export list”"
+          ]
+        },
+        "imdb": {
+          "name": "IMDb",
+          "desc": "Ratings and Watchlist · imdb.com",
+          "url": "https://www.imdb.com/list/ratings",
+          "urlLabel": "imdb.com/list/ratings",
+          "steps": [
+            "Open {link}",
+            "Click ⋯ above the list → Export, the file lands in Exports",
+            "Do the same for your Watchlist"
+          ]
+        },
+        "tmdb": {
+          "name": "TMDB",
+          "desc": "Ratings and Watchlist · themoviedb.org",
+          "url": "https://www.themoviedb.org",
+          "urlLabel": "themoviedb.org",
+          "steps": [
+            "Open {link} and sign in",
+            "My Ratings or Watchlist → ⋮ → Export CSV",
+            "The file arrives by email — save it and pick it here"
+          ]
+        },
+        "letterboxd": {
+          "name": "Letterboxd",
+          "desc": "Diary and list · letterboxd.com"
+        }
+      },
+      "files": {
+        "title": "Files from {source}",
+        "text": "Pick one or both files — we’ll work out which is which.",
+        "deskText": "one or both — we’ll work out which is which",
+        "howTo": "How to get your files from {source}",
+        "computerOnly": "Export only works on the website from a computer. Import there, or send the file to yourself and pick it here.",
+        "websiteOnly": "Export is only on the website, not in the app.",
+        "pick": "Choose files",
+        "pickHint": "Several at once · CSV up to 5 MB",
+        "drop": "Drop CSV files here",
+        "dropPick": "choose files",
+        "dropHint": "or {pick} · several at once, up to 5 MB",
+        "dropRelease": "Release to add",
+        "listLabel": "Chosen files",
+        "remove": "Remove {name}",
+        "reading": "Reading files…",
+        "localOnly": "Files don’t leave your device until you tap Import.",
+        "toHistory": "{count} → Watched",
+        "toPlan": "{count} → Want to watch",
+        "skipped": "{rows} without an id will be skipped",
+        "problems": {
+          "wrongSource": "Doesn’t look like a {source} file — check where it came from",
+          "tooLarge": "The file is larger than 5 MB",
+          "notCsv": "This isn’t a CSV file",
+          "empty": "The file has no titles with an IMDb or TMDB id"
+        },
+        "readFailed": "Couldn’t read the file. Try again.",
+        "footer": "Ratings go to Watched, the list goes to Want to watch",
+        "next": "Next"
+      },
+      "preview": {
+        "fromSource": "{titles} from {source}",
+        "ratedShows": "Rated shows ({count}) go to Watched. If you’re still watching one, move it to Watching right after the import.",
+        "ratedShowsUntyped": "Rated shows go to Watched. If you’re still watching one, move it to Watching right after the import.",
+        "skipped": "{rows} will be skipped: no IMDb or TMDB id.",
+        "filterLabel": "What to show",
+        "filters": {
+          "all": "All",
+          "ratings": "Ratings",
+          "watchlist": "Want to watch"
+        },
+        "movie": "Movie",
+        "show": "Show",
+        "yourRating": "yours {score}",
+        "want": "Want",
+        "more": "and {count} more — the list is just for checking, we’ll move all of them",
+        "overwrite": "Replace my ratings",
+        "overwriteHint": "If a title already has your rating in Ratingo, we’ll take the one from the file. Off — we keep yours.",
+        "safe": "Nothing disappears: anything already in My won’t be duplicated",
+        "submit": "Import {count}",
+        "failed": "Couldn’t import. Try again.",
+        "confirm": {
+          "title": "Replace your ratings?",
+          "text": "For titles you’ve already rated in Ratingo, we’ll take the rating from the {source} file. The old ones can’t be restored.",
+          "cancel": "Cancel",
+          "submit": "Replace and import"
+        }
+      },
+      "result": {
+        "title": "Moved {titles}",
+        "nothingNew": "Nothing new was added",
+        "from": "from {source}, {when}",
+        "justNow": "just now",
+        "at": "at {time}",
+        "added": "Added",
+        "existing": "Already there",
+        "existingDesk": "Already in My",
+        "notFound": "Not found",
+        "notFoundList": "{count} not found",
+        "untitled": "Untitled",
+        "openHistory": "Open Watched",
+        "again": "Import more",
+        "footer": "Ratings are in Watched, the list is in Want to watch"
+      },
+      "pending": {
+        "title": "Adding {count} more to the catalog",
+        "progress": "{done} of {total}",
+        "text": "These titles weren’t in Ratingo yet. You can close this screen — we’ll keep adding them. Stop, and we won’t add the rest; what’s already added stays in My.",
+        "stop": "Stop",
+        "stopFailed": "Couldn’t stop. Try again.",
+        "completed": "All titles were added to the catalog — they’re already in My.",
+        "cancelled": "Stopped. We won’t add the rest; what’s already added stays in My."
+      },
+      "resume": {
+        "title": "Import from {source} is still running",
+        "text": "Adding titles Ratingo didn’t have yet to the catalog. What’s already moved is in My.",
+        "textWithCount": "Adding titles Ratingo didn’t have yet to the catalog. {count} already moved — they’re in My.",
+        "summary": "Summary"
+      },
+      "shows": {
+        "title": "Rated shows are in Watched. Still watching?",
+        "deskTitle": "Rated shows are in Watched",
+        "deskHint": "still watching? Watching opens the episodes panel — mark where you stopped",
+        "rated": "Show · yours {score}",
+        "unrated": "Show",
+        "stoppedAt": "Watching · stopped at {code}",
+        "notStarted": "Watching · not started yet",
+        "watching": "Watching",
+        "watchingLabel": "Watching: {title}",
+        "showAll": "Show all {count}",
+        "failed": "Couldn’t move it to Watching. Try again."
+      }
     }
   }
 }

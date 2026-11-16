@@ -5,8 +5,10 @@ import { Avatar, Button } from '@heroui/react';
 import { ChevronRight, Download, Eye, Lock, User, Bell, type LucideIcon } from 'lucide-react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { initialOf } from '@/shared/lib';
-import { useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation } from '@/shared/i18n';
 import { useAccount, visibilityOf } from '../model/account';
+import { runningProgress } from '../model/import/import-batches';
+import { useImportBatches } from '../model/import/import-queries';
 import { useFollowedSummary } from '../model/followed-queries';
 import { useSignInSummary } from '../model/method-names';
 import { SECTION_ROUTES, type SettingsSection } from '../model/settings-sections';
@@ -88,6 +90,7 @@ export function SettingsList() {
   const followedSummary = useFollowedSummary();
   const signInSummary = useSignInSummary();
   const visibility = visibilityOf(user);
+  const importProgress = runningProgress(useImportBatches().data);
 
   return (
     <div className="flex flex-col gap-5.5">
@@ -135,7 +138,20 @@ export function SettingsList() {
       <RowGroup
         id="settings-group-data"
         title={copy.groups.data}
-        rows={[{ section: 'import', icon: Download, tone: 'bg-violet-600', label: copy.importRow }]}
+        rows={[
+          {
+            section: 'import',
+            icon: Download,
+            tone: 'bg-violet-600',
+            label: copy.importRow,
+            value: importProgress
+              ? interpolate(copy.importRunning, {
+                done: importProgress.done,
+                total: importProgress.total,
+              })
+              : copy.importValue,
+          },
+        ]}
       />
       <Button
         variant="danger-soft"

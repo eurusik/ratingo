@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/shared/i18n';
 import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
 import { isPlainClick, previousRoutePath, useMediaQuery } from '@/shared/lib';
-import { EmptyState } from '@/shared/ui';
 import { profileAddress, useAccount, visibilityOf } from '../model/account';
 import { useLeaveGuard } from '../model/leave-guard';
 import { useFollowedSummary } from '../model/followed-queries';
@@ -152,24 +151,6 @@ export function PrivacySettingsPage() {
   return (
     <SectionPage section="privacy">
       <PrivacyContent />
-    </SectionPage>
-  );
-}
-
-function ImportContent() {
-  const { dict } = useTranslation();
-  return (
-    <>
-      <SectionHeader title={dict.settings.sections.import} />
-      <EmptyState title={dict.settings.importSoon.title} text={dict.settings.importSoon.text} />
-    </>
-  );
-}
-
-export function ImportSettingsPage() {
-  return (
-    <SectionPage section="import">
-      <ImportContent />
     </SectionPage>
   );
 }

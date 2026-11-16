@@ -22,6 +22,7 @@ interface SheetFooterProps {
   pickTarget?: Episode;
   onStartPicking: () => void;
   onConfirmPick: () => void;
+  onNotStarted?: () => void;
 }
 
 function PickConfirm({ show, tracker, pickTarget, onConfirmPick }: SheetFooterProps) {
@@ -45,13 +46,22 @@ function PickConfirm({ show, tracker, pickTarget, onConfirmPick }: SheetFooterPr
 
 export function SheetFooter(props: SheetFooterProps) {
   const { dict } = useTranslation();
-  const { show, season, tracker, isPicking, onStartPicking } = props;
+  const { show, season, tracker, isPicking, onStartPicking, onNotStarted } = props;
   const offersPick =
     !isPicking && !tracker.notice && isBehind(show.seasons, season, tracker.watched, tracker.now);
 
   return (
     <>
       {isPicking ? <PickConfirm {...props} /> : null}
+      {isPicking && onNotStarted ? (
+        <Button
+          variant="secondary"
+          onPress={onNotStarted}
+          className="h-13 w-full rounded-full text-[15px] font-bold"
+        >
+          {dict.episodes.pick.notStarted}
+        </Button>
+      ) : null}
       <NoticeBar tracker={tracker} className={isPicking ? 'hidden' : 'w-full'} />
       {offersPick ? (
         <Button

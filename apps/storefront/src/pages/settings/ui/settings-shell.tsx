@@ -8,7 +8,7 @@ import { useTranslation } from '@/shared/i18n';
 import { SignInPrompt, SplitShell } from '@/shared/ui';
 import { LeaveGuardContext, type LeaveGuard } from '../model/leave-guard';
 import type { SettingsSection } from '../model/settings-sections';
-import { PhoneBar, SectionHeader } from './settings-headers';
+import { PhoneBar, SectionHeader, type StepBack } from './settings-headers';
 import { SettingsNav } from './settings-nav';
 
 const SKELETON_ROWS = 4;
@@ -31,6 +31,7 @@ interface SettingsShellProps {
   phoneTitle: string;
   desktopTitle: string;
   backTo?: 'settings' | 'my';
+  stepBack?: StepBack;
   children: ReactNode;
 }
 
@@ -39,12 +40,13 @@ export function SettingsShell({
   phoneTitle,
   desktopTitle,
   backTo,
+  stepBack,
   children,
 }: SettingsShellProps) {
   const { dict } = useTranslation();
   const { user, isLoading } = useAuth();
   const leaveGuard = useRef<LeaveGuard | null>(null);
-  const phoneBar = <PhoneBar title={phoneTitle} backTo={backTo} />;
+  const phoneBar = <PhoneBar title={phoneTitle} backTo={backTo} stepBack={stepBack} />;
 
   if (!isLoading && !user) {
     return (

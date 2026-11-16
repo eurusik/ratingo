@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { rememberTrackingState, toSeasons } from '@/entities/episode';
-import type { EpisodesTracker } from './use-episodes-tracker';
+import type { EpisodesTracker } from '@/widgets/episodes-sheet';
 import { useRememberTracking } from './use-remember-tracking';
 
 jest.mock('@/entities/episode', () => ({
