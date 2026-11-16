@@ -21,24 +21,23 @@ import {
 } from '@/entities/episode';
 import { ReminderToggle } from '@/features/episode-reminder';
 import { WantToWatchButton } from '@/features/save-to-library';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { formatCount, interpolate, useTranslation } from '@/shared/i18n';
 import { preloadWhenIdle } from '@/shared/lib';
-import { formatCount } from '../model/details-format';
+import { NoticeBar, useEpisodesTracker, type EpisodesTracker } from '@/widgets/episodes-sheet';
 import { useEpisodesDialog } from '../model/use-episodes-dialog';
-import { useEpisodesTracker, type EpisodesTracker } from '../model/use-episodes-tracker';
 import { useRememberTracking } from '../model/use-remember-tracking';
 import { useRateMedia } from '../model/use-rate-media';
 import type { ActionMedia } from '../model/action-media';
 import { RatingTrigger, type TriggerLook } from './rating-trigger';
 import { DesktopShare } from './share-button';
 import { TrackingCard } from './tracking-card';
-import { NoticeBar } from './notice-bar';
 import { RatingDialog } from './rating-dialog';
 import { ShowActionsSkeleton } from './show-actions-skeleton';
 
 const EPISODE_SLOT = 'flex min-h-[4.125rem] items-center gap-3';
 
-const loadEpisodesSheet = () => import('./episodes-sheet').then((module) => module.EpisodesSheet);
+const loadEpisodesSheet = () =>
+  import('@/widgets/episodes-sheet/index.client').then((module) => module.EpisodesSheet);
 
 const EpisodesSheet = dynamic(loadEpisodesSheet, { ssr: false });
 

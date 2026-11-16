@@ -30,6 +30,7 @@ export interface EpisodesSheetProps {
   initialSeason?: number;
   onOpenChange: (isOpen: boolean) => void;
   onPickingChange: (isPicking: boolean) => void;
+  onNotStarted?: () => void;
 }
 
 const REVEAL_GAP_PX = 16;
@@ -57,7 +58,7 @@ const SLIDE_IN: Record<SlideDirection, string> = {
 
 type SheetBodyProps = Pick<
   EpisodesSheetProps,
-  'show' | 'tracker' | 'isPicking' | 'initialSeason' | 'onPickingChange'
+  'show' | 'tracker' | 'isPicking' | 'initialSeason' | 'onPickingChange' | 'onNotStarted'
 > & { onClose: () => void };
 
 function SheetBody({
@@ -66,6 +67,7 @@ function SheetBody({
   isPicking,
   initialSeason,
   onPickingChange,
+  onNotStarted,
   onClose,
 }: SheetBodyProps) {
   const { dict } = useTranslation();
@@ -135,7 +137,9 @@ function SheetBody({
 
   return (
     <>
-      {isPicking ? <PickBanner onCancel={() => setPicking(false)} /> : null}
+      {isPicking ? (
+        <PickBanner onCancel={onNotStarted ? onClose : () => setPicking(false)} />
+      ) : null}
       <div className="flex flex-col gap-3">
         <SheetHeading
           title={show.title}
@@ -196,6 +200,7 @@ function SheetBody({
             pickTarget={pickTarget}
             onStartPicking={() => setPicking(true)}
             onConfirmPick={confirmPick}
+            onNotStarted={onNotStarted}
           />
         </div>
       </div>
@@ -211,6 +216,7 @@ export function EpisodesSheet({
   initialSeason,
   onOpenChange,
   onPickingChange,
+  onNotStarted,
 }: EpisodesSheetProps) {
   const { dict } = useTranslation();
 
@@ -229,6 +235,7 @@ export function EpisodesSheet({
         isPicking={isPicking}
         initialSeason={initialSeason}
         onPickingChange={onPickingChange}
+        onNotStarted={onNotStarted}
         onClose={() => onOpenChange(false)}
       />
     </ResponsiveDialog>

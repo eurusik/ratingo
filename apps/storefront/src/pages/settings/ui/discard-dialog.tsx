@@ -3,15 +3,23 @@
 import { AlertDialog, Button } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
 
+interface DiscardCopy {
+  title: string;
+  text: string;
+  keep: string;
+  confirm: string;
+}
+
 interface DiscardDialogProps {
+  copy?: DiscardCopy;
   isOpen: boolean;
   onKeep: () => void;
   onDiscard: () => void;
 }
 
-export function DiscardDialog({ isOpen, onKeep, onDiscard }: DiscardDialogProps) {
+export function DiscardDialog({ copy: givenCopy, isOpen, onKeep, onDiscard }: DiscardDialogProps) {
   const { dict } = useTranslation();
-  const copy = dict.settings.profile.discard;
+  const copy = givenCopy ?? dict.settings.profile.discard;
 
   return (
     <AlertDialog.Backdrop

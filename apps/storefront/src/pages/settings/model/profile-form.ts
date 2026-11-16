@@ -1,24 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
 import { useAccount, useUpdateProfile } from './account';
 import { changesOf, draftOf, hasChanges, type ProfileDraft } from './profile-draft';
+import { useLeaveWarning } from './leave-guard';
 import { usernameRejectionOf, type UsernameRejection } from './username-rejection';
 
 interface RejectedUsername {
   username: string;
   reason: UsernameRejection;
-}
-
-function useLeaveWarning(isActive: boolean): void {
-  useEffect(() => {
-    if (!isActive) return;
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [isActive]);
 }
 
 export interface ProfileForm {

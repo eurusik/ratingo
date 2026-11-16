@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import type { ReactNode } from 'react';
 import { useTranslation } from '@/shared/i18n';
 import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
-import { isPlainClick, previousRoutePath, useMediaQuery } from '@/shared/lib';
-import { EmptyState } from '@/shared/ui';
+import { useMediaQuery } from '@/shared/lib';
 import { profileAddress, useAccount, visibilityOf } from '../model/account';
-import { useLeaveGuard } from '../model/leave-guard';
+import { useLeaveConfirmation } from '../model/leave-guard';
 import { useFollowedSummary } from '../model/followed-queries';
 import { useSignInSummary } from '../model/method-names';
 import { useProfileForm } from '../model/profile-form';
@@ -33,28 +31,9 @@ function SectionPage({ section, children }: { section: SettingsSection; children
 
 function ProfileContent() {
   const { dict } = useTranslation();
-  const router = useRouter();
   const { username } = useAccount();
   const form = useProfileForm();
-  const [leaveTarget, setLeaveTarget] = useState<string | null>(null);
-
-  useLeaveGuard(
-    form.isDirty
-      ? (event, href) => {
-          if (!isPlainClick(event)) return;
-          event.preventDefault();
-          setLeaveTarget(href);
-        }
-      : null,
-  );
-
-  const discard = () => {
-    form.reset();
-    setLeaveTarget(null);
-    if (!leaveTarget) return;
-    if (previousRoutePath() === leaveTarget) router.back();
-    else router.push(leaveTarget);
-  };
+  const confirmation = useLeaveConfirmation(form.isDirty, form.reset);
 
   return (
     <>
@@ -64,9 +43,9 @@ function ProfileContent() {
       />
       <ProfileSection form={form} />
       <DiscardDialog
-        isOpen={leaveTarget !== null}
-        onKeep={() => setLeaveTarget(null)}
-        onDiscard={discard}
+        isOpen={confirmation.isAsking}
+        onKeep={confirmation.stay}
+        onDiscard={confirmation.leave}
       />
     </>
   );
@@ -152,24 +131,6 @@ export function PrivacySettingsPage() {
   return (
     <SectionPage section="privacy">
       <PrivacyContent />
-    </SectionPage>
-  );
-}
-
-function ImportContent() {
-  const { dict } = useTranslation();
-  return (
-    <>
-      <SectionHeader title={dict.settings.sections.import} />
-      <EmptyState title={dict.settings.importSoon.title} text={dict.settings.importSoon.text} />
-    </>
-  );
-}
-
-export function ImportSettingsPage() {
-  return (
-    <SectionPage section="import">
-      <ImportContent />
     </SectionPage>
   );
 }

@@ -7,7 +7,7 @@ import {
   trackingStateOf,
   type Season,
 } from '@/entities/episode';
-import type { EpisodesTracker } from './use-episodes-tracker';
+import type { EpisodesTracker } from '@/widgets/episodes-sheet';
 
 export function useRememberTracking(slug: string, seasons: Season[], tracker: EpisodesTracker) {
   const { canTrack, isResolving, now } = tracker;

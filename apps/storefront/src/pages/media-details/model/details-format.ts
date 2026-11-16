@@ -4,12 +4,6 @@ import { formatCompactCount } from '@/shared/lib';
 
 type DetailsDictionary = Dictionary['details'];
 
-interface PluralForms {
-  one: string;
-  few: string;
-  many: string;
-}
-
 const MINUTES_PER_HOUR = 60;
 const MILLION = 1_000_000;
 const BILLION = 1_000_000_000;
@@ -21,10 +15,6 @@ export function formatRuntime(minutes: number, dict: DetailsDictionary): string 
   if (hours === 0) return interpolate(dict.runtime.minutes, { minutes: rest });
   if (rest === 0) return interpolate(dict.runtime.wholeHours, { hours });
   return interpolate(dict.runtime.hours, { hours, minutes: rest });
-}
-
-export function formatCount(count: number, forms: PluralForms, locale: Locale): string {
-  return interpolate(pluralize(count, forms, locale), { count });
 }
 
 export function formatPercent(percent: number, locale: Locale): string {
