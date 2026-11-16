@@ -18,11 +18,11 @@ export interface TrendingLists {
 }
 
 export interface HomeFeed {
-  hero: Loaded<HomeItem[]>;
-  trending: Loaded<TrendingLists>;
-  newEpisodes: Loaded<EpisodeRelease[]>;
-  nowPlaying: Loaded<TrendingMedia[]>;
-  newOnDigital: Loaded<TrendingMedia[]>;
+  hero: Promise<Loaded<HomeItem[]>>;
+  trending: Promise<Loaded<TrendingLists>>;
+  newEpisodes: Promise<Loaded<EpisodeRelease[]>>;
+  nowPlaying: Promise<Loaded<TrendingMedia[]>>;
+  newOnDigital: Promise<Loaded<TrendingMedia[]>>;
 }
 
 async function settle<T>(section: string, load: () => Promise<T>): Promise<Loaded<T>> {
@@ -43,27 +43,20 @@ async function loadTrendingLists(): Promise<TrendingLists> {
 }
 
 async function loadEpisodeReleases(): Promise<EpisodeRelease[]> {
-  const episodes = await catalogApi.getNewEpisodes(
-    NEW_EPISODE_DAYS,
-    NEW_EPISODE_COUNT,
-    HOME_CACHE,
-  );
+  const episodes = await catalogApi.getNewEpisodes(NEW_EPISODE_DAYS, NEW_EPISODE_COUNT, HOME_CACHE);
   return episodes.map(toEpisodeRelease);
 }
 
-export async function loadHomeFeed(): Promise<HomeFeed> {
-  const [hero, trending, newEpisodes, nowPlaying, newOnDigital] = await Promise.all([
-    settle('hero', () => catalogApi.getHomeHero(HOME_CACHE)),
-    settle('trending', loadTrendingLists),
-    settle('new episodes', loadEpisodeReleases),
-    settle('now playing', async () =>
+export function startHomeFeed(): HomeFeed {
+  return {
+    hero: settle('hero', () => catalogApi.getHomeHero(HOME_CACHE)),
+    trending: settle('trending', loadTrendingLists),
+    newEpisodes: settle('new episodes', loadEpisodeReleases),
+    nowPlaying: settle('now playing', async () =>
       (await catalogApi.getNowPlayingMovies(MOVIE_RAIL_COUNT, HOME_CACHE)).map(fromTrendingMovie),
     ),
-    settle('new on digital', async () =>
-      (await catalogApi.getNewOnDigitalMovies(MOVIE_RAIL_COUNT, HOME_CACHE)).map(
-        fromTrendingMovie,
-      ),
+    newOnDigital: settle('new on digital', async () =>
+      (await catalogApi.getNewOnDigitalMovies(MOVIE_RAIL_COUNT, HOME_CACHE)).map(fromTrendingMovie),
     ),
-  ]);
-  return { hero, trending, newEpisodes, nowPlaying, newOnDigital };
+  };
 }

@@ -6,8 +6,21 @@ export const TOP_TEN_COUNT = 10;
 
 export type Loaded<T> = { ok: true; data: T } | { ok: false };
 
-export function isFeedDown(sections: ReadonlyArray<Loaded<unknown>>): boolean {
-  return sections.every((section) => !section.ok);
+export function anySectionLoads(
+  sections: ReadonlyArray<Promise<Loaded<unknown>>>,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    let pending = sections.length;
+    if (pending === 0) resolve(false);
+    sections.forEach(
+      (section) =>
+        void section.then((loaded) => {
+          pending -= 1;
+          if (loaded.ok) resolve(true);
+          else if (pending === 0) resolve(false);
+        }),
+    );
+  });
 }
 const TOP_THREE_COUNT = 3;
 

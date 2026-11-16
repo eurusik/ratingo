@@ -31,7 +31,12 @@ export function SectionError({ title, onRetry, isRetrying, className = '' }: Sec
           {dict.common.sectionErrorHint}
         </Card.Description>
       </Card.Header>
-      <Button variant="secondary" isPending={isRetrying} onPress={onRetry}>
+      <Button
+        variant="secondary"
+        className="phone-tap-target"
+        isPending={isRetrying}
+        onPress={onRetry}
+      >
         {dict.common.retry}
       </Button>
     </Card>

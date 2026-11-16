@@ -5,7 +5,7 @@ import { Skeleton } from '@heroui/react';
 import { ChevronRight } from 'lucide-react';
 import { MediaPoster, useScoreLabel } from '@/entities/media';
 import { mediaRoute } from '@/shared/config';
-import { useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation } from '@/shared/i18n';
 import { formatScore } from '@/shared/lib';
 import { ForwardLink, ListSearch } from '@/shared/ui';
 import { useCatalogSearch } from '../model/catalog-search';
@@ -82,7 +82,17 @@ export function TitleLookup({ initialQuery = '', limit, fallback }: TitleLookupP
 
   const renderResults = () => {
     if (isWaiting) return <FoundTitlesSkeleton count={limit} />;
-    if (!search.isActive || search.isError || found.length === 0) return fallback;
+    if (!search.isActive || search.isError) return fallback;
+    if (found.length === 0) {
+      return (
+        <>
+          <p role="status" className="pb-3 text-sm text-muted">
+            {interpolate(dict.search.noResults, { query: search.term })}
+          </p>
+          {fallback}
+        </>
+      );
+    }
 
     return (
       <ul aria-label={dict.search.results} className={RESULTS_CLASS}>

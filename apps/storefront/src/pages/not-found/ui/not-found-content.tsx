@@ -11,7 +11,8 @@ const SEARCH_RESULT_LIMIT = 3;
 
 export function NotFoundContent({ watchedNow }: { watchedNow: ReactNode }) {
   const { dict } = useTranslation();
-  const missing = missingMediaAt(usePathname());
+  const pathname = usePathname() ?? '';
+  const missing = missingMediaAt(pathname);
   const copy = missing ? dict.notFound.media[missing.type] : dict.notFound.page;
 
   return (
@@ -27,6 +28,7 @@ export function NotFoundContent({ watchedNow }: { watchedNow: ReactNode }) {
         <p className={ERROR_STATE_TEXT}>{copy.text}</p>
       </div>
       <TitleLookup
+        key={pathname}
         initialQuery={missing?.query}
         limit={SEARCH_RESULT_LIMIT}
         fallback={watchedNow}

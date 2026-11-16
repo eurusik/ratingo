@@ -89,6 +89,7 @@ describe('NotFoundContent', () => {
     renderAt('/shows/pinhvin');
 
     expect(await screen.findByText(WATCHED_NOW)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('пінгвін');
     expect(
       screen.getByRole('heading', { level: 1, name: uk.notFound.media.show.title }),
     ).toBeVisible();

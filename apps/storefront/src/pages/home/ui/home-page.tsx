@@ -1,7 +1,7 @@
-import { Suspense } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { getDictionary, type Locale } from '@/shared/i18n';
-import { loadHomeFeed } from '../api/load-home-feed';
-import { isFeedDown } from '../model/home-feed';
+import { startHomeFeed, type HomeFeed } from '../api/load-home-feed';
+import { anySectionLoads } from '../model/home-feed';
 import { HomeOutage } from './home-outage';
 import {
   HeroSection,
@@ -17,11 +17,19 @@ import {
 } from './home-skeletons';
 import { TrackShowsCard } from './track-shows-card';
 
-function HomeFeedSkeleton() {
+function HeroSkeletons() {
   return (
     <>
       <HeroSkeleton />
       <TopThreeSkeleton />
+    </>
+  );
+}
+
+function HomeFeedSkeleton() {
+  return (
+    <>
+      <HeroSkeletons />
       <TileRailSkeleton />
       <TileRailSkeleton />
       <CardRailSkeleton />
@@ -29,29 +37,34 @@ function HomeFeedSkeleton() {
   );
 }
 
-async function HomeFeed() {
-  const feed = await loadHomeFeed();
-  if (isFeedDown(Object.values(feed))) return <HomeOutage />;
-
-  return (
-    <>
-      <HeroSection hero={feed.hero} />
-      <TopTenSection trending={feed.trending} />
-      <NewEpisodesSection releases={feed.newEpisodes} />
-      <NewReleasesSection nowPlaying={feed.nowPlaying} newOnDigital={feed.newOnDigital} />
-      <TrackShowsCard />
-    </>
-  );
+async function UnlessFeedIsDown({ feed, children }: { feed: HomeFeed; children: ReactNode }) {
+  const isUp = await anySectionLoads(Object.values(feed));
+  return isUp ? children : <HomeOutage />;
 }
 
 export function HomePage({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
+  const feed = startHomeFeed();
 
   return (
     <div className="flex flex-col gap-8 pb-8 md:gap-10">
       <h1 className="sr-only">{dict.home.heading}</h1>
       <Suspense fallback={<HomeFeedSkeleton />}>
-        <HomeFeed />
+        <UnlessFeedIsDown feed={feed}>
+          <Suspense fallback={<HeroSkeletons />}>
+            <HeroSection hero={feed.hero} />
+          </Suspense>
+          <Suspense fallback={<TileRailSkeleton />}>
+            <TopTenSection trending={feed.trending} />
+          </Suspense>
+          <Suspense fallback={<TileRailSkeleton />}>
+            <NewEpisodesSection releases={feed.newEpisodes} />
+          </Suspense>
+          <Suspense fallback={<CardRailSkeleton />}>
+            <NewReleasesSection nowPlaying={feed.nowPlaying} newOnDigital={feed.newOnDigital} />
+          </Suspense>
+          <TrackShowsCard />
+        </UnlessFeedIsDown>
       </Suspense>
     </div>
   );

@@ -4,7 +4,7 @@ import type { HomeItem, NewEpisode } from '@/shared/api';
 import {
   buildHomeHero,
   chooseList,
-  isFeedDown,
+  anySectionLoads,
   toAiredAt,
   toEpisodeRelease,
   toReleaseRail,
@@ -168,20 +168,28 @@ describe('new episodes', () => {
   });
 });
 
-describe('isFeedDown', () => {
+describe('anySectionLoads', () => {
   const failed = { ok: false } as const;
   const loaded = { ok: true, data: [] } as const;
+  const never = new Promise<typeof loaded>(() => undefined);
 
-  it('reports the feed down only when every section failed', () => {
-    expect(isFeedDown([failed, failed, failed])).toBe(true);
-    expect(isFeedDown([failed, loaded, failed])).toBe(false);
+  it('answers as soon as one section loads, without waiting for the rest', async () => {
+    await expect(
+      anySectionLoads([Promise.resolve(failed), Promise.resolve(loaded), never]),
+    ).resolves.toBe(true);
   });
 
-  it('keeps the page whenever any section loaded', () => {
-    fc.assert(
-      fc.property(fc.array(fc.boolean(), { minLength: 1 }), (outcomes) => {
-        const sections = outcomes.map((ok) => (ok ? loaded : failed));
-        expect(isFeedDown(sections)).toBe(!outcomes.includes(true));
+  it('reports the feed down only once every section failed', async () => {
+    await expect(anySectionLoads([Promise.resolve(failed), Promise.resolve(failed)])).resolves.toBe(
+      false,
+    );
+  });
+
+  it('agrees with whether any section loaded, whatever the mix', async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.array(fc.boolean(), { minLength: 1 }), async (outcomes) => {
+        const sections = outcomes.map((ok) => Promise.resolve(ok ? loaded : failed));
+        expect(await anySectionLoads(sections)).toBe(outcomes.includes(true));
       }),
     );
   });

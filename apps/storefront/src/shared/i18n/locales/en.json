@@ -1319,11 +1319,11 @@
     "media": {
       "movie": {
         "title": "We don’t have this movie",
-        "text": "The link is outdated or the movie was removed from the catalog. We searched for the title from the address:"
+        "text": "The link is outdated or the movie was removed from the catalog. Try finding it by title."
       },
       "show": {
         "title": "We don’t have this show",
-        "text": "The link is outdated or the show was removed from the catalog. We searched for the title from the address:"
+        "text": "The link is outdated or the show was removed from the catalog. Try finding it by title."
       }
     },
     "watchedNow": "Or see what people are watching now"

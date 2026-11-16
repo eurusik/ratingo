@@ -49,5 +49,3 @@ const IMAGE_PROXY_ORIGIN = process.env.NEXT_PUBLIC_IMAGE_PROXY_ORIGIN;
 export const TMDB_IMAGE_BASE_URL = IMAGE_PROXY_ORIGIN
   ? `${withoutTrailingSlashes(IMAGE_PROXY_ORIGIN)}/tmdb`
   : TMDB_IMAGE_ORIGIN;
-
-export const REVALIDATE_SECRET = process.env.REVALIDATE_SECRET || undefined;

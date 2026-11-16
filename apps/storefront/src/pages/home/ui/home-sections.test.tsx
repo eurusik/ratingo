@@ -224,7 +224,10 @@ describe('HomeOutage', () => {
     renderIn(<HomeOutage />);
 
     expect(screen.getByRole('heading', { name: uk.home.outage.title })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: uk.home.outage.openMy })).toHaveAttribute('href', '/my');
+    expect(screen.getByRole('link', { name: uk.home.outage.openMy })).toHaveAttribute(
+      'href',
+      '/my',
+    );
     fireEvent.click(screen.getByRole('button', { name: uk.common.retry }));
     expect(refresh).toHaveBeenCalled();
   });

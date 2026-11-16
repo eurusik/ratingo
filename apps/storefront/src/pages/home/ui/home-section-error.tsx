@@ -21,7 +21,7 @@ function sectionCopy(section: HomeSection, home: Dictionary['home']): FailedSect
   return copies[section];
 }
 
-const SKELETON_HEIGHTS: Record<HomeSection, string> = {
+const CARD_MIN_HEIGHTS: Record<HomeSection, string> = {
   picks: 'min-h-94 md:min-h-30',
   topTen: 'min-h-55 md:min-h-65',
   newEpisodes: 'min-h-55 md:min-h-65',
@@ -42,7 +42,7 @@ export function HomeSectionError({ section }: { section: HomeSection }) {
           title={dict.home.failed[section]}
           onRetry={retry}
           isRetrying={isRetrying}
-          className={SKELETON_HEIGHTS[section]}
+          className={CARD_MIN_HEIGHTS[section]}
         />
       </div>
     </section>
