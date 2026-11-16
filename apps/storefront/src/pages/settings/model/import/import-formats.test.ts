@@ -155,6 +155,38 @@ describe('IMDb files', () => {
   });
 });
 
+describe('IMDb ratings export with title-type rows', () => {
+  const RATINGS = `Const,Your Rating,Date Rated,Title,Original Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
+tt0903747,9,2024-01-02,Breaking Bad,Breaking Bad,url,TV Series,9.5,49,2008,"Crime, Drama",2100000,2008-01-20,
+tt0959621,10,2024-01-03,Pilot,Pilot,url,TV Episode,9.0,58,2008,"Crime, Drama",50000,2008-01-20,Vince Gilligan
+tt2140553,8,2024-01-04,The Last of Us,The Last of Us,url,Video Game,9.2,,2013,Action,90000,2013-06-14,
+tt0111161,10,2024-01-05,The Shawshank Redemption,The Shawshank Redemption,url,Movie,9.3,142,1994,Drama,2800000,1994-10-14,Frank Darabont`;
+
+  it('reads the current column layout and skips episodes and games', () => {
+    expect(inspectCsv(RATINGS, 'imdb')).toMatchObject({
+      kind: 'ratings',
+      skippedRows: 2,
+      items: [
+        { imdbId: 'tt0903747', rating: 9, kind: 'show' },
+        { imdbId: 'tt0111161', rating: 10, kind: 'movie' },
+      ],
+    });
+  });
+});
+
+describe('TMDB ratings with season and episode rows', () => {
+  it('imports whole titles only', () => {
+    const csv = `${TMDB_HEADER}
+1399,tt0944947,tv,Game of Thrones,2011-04-17,,,8.4,9.0,2024-01-20
+1399,,tv,Game of Thrones,2011-04-17,3,,8.4,10.0,2024-01-21
+1399,,tv,Game of Thrones,2011-04-17,3,9,8.4,10.0,2024-01-22`;
+    expect(inspectCsv(csv, 'tmdb')).toMatchObject({
+      skippedRows: 2,
+      items: [{ tmdbId: 1399, rating: 9, kind: 'show' }],
+    });
+  });
+});
+
 describe('TMDB files', () => {
   it('tells ratings from a watchlist and rejects other sources', () => {
     expect(detect('tmdb', TMDB_RATINGS)).toBe('ratings');

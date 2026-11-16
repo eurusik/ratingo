@@ -18,4 +18,5 @@ export const TMDB_FORMAT: ImportFormat = {
     year: positiveInt(record['release date']?.slice(0, YEAR_LENGTH)),
     kind: MEDIA_KINDS[record.type?.toLowerCase() ?? ''],
   }),
+  isTitleRow: (record) => !record['season number'] && !record['episode number'],
 };

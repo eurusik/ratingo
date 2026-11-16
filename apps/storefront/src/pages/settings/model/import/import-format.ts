@@ -10,6 +10,7 @@ import {
 export interface ImportFormat {
   detect: (table: CsvTable) => ImportFileKind | undefined;
   toItem: (record: CsvRecord, kind: ImportFileKind) => Omit<ImportItem, 'state'>;
+  isTitleRow?: (record: CsvRecord) => boolean;
 }
 
 export function hasHeaders(table: CsvTable, required: readonly string[]): boolean {
@@ -30,7 +31,8 @@ export function parseWithFormat(
   let skippedRows = 0;
   for (const record of table.records) {
     const item = format.toItem(record, kind);
-    if (!hasIdentifier(item)) {
+    const isTitle = format.isTitleRow?.(record) ?? true;
+    if (!isTitle || !hasIdentifier(item)) {
       skippedRows++;
       continue;
     }

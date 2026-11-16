@@ -4,6 +4,7 @@ import { imdbIdFrom, positiveInt, ratingFrom, type ImportMediaKind } from './imp
 const RATING_HEADER = 'your rating';
 const REQUIRED_HEADERS = ['const', RATING_HEADER, 'title', 'year'] as const;
 const SERIES_TYPE = /series/i;
+const NON_TITLE_TYPES = new Set(['tv episode', 'video game', 'podcast episode', 'podcast series']);
 
 function mediaKind(titleType: string | undefined): ImportMediaKind | undefined {
   if (!titleType) return undefined;
@@ -20,4 +21,5 @@ export const IMDB_FORMAT: ImportFormat = {
     year: positiveInt(record.year),
     kind: mediaKind(record['title type']),
   }),
+  isTitleRow: (record) => !NON_TITLE_TYPES.has(record['title type']?.toLowerCase() ?? ''),
 };
