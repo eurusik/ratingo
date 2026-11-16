@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@ratingo/web-core/auth';
 import { LIBRARY_LISTS_KEY } from '@/entities/library';
 import {
@@ -8,12 +8,13 @@ import {
   fetchAllPages,
   libraryApi,
   type LibraryPageQuery,
+  type MediaType,
   type SavedItem,
   type UserMediaState,
 } from '@/shared/api';
 import { SERVICE_TIME_ZONE } from '@/shared/config';
 import { mergeSaved } from './plan-order';
-import { toHistoryRows } from './history-months';
+import { toHistoryRows, type HistoryRow } from './history-months';
 
 const PAGE_SIZE = 100;
 const LIST_STALE_MS = 60 * 1000;
@@ -103,6 +104,41 @@ export function usePlanList() {
   return useLibraryQuery('plan', loadPlan);
 }
 
-export function useHistoryList() {
-  return useLibraryQuery('history', loadHistory);
+const HISTORY_PAGE_SIZE = 20;
+
+interface HistoryPage {
+  rows: HistoryRow[];
+  hasMore: boolean;
+}
+
+export function useHistoryPages(type: MediaType | undefined) {
+  const { user, isAuthenticated } = useAuth();
+  return useInfiniteQuery({
+    queryKey: [...libraryListKey(user?.id ?? null, 'history'), 'pages', type ?? 'all'],
+    queryFn: async ({ pageParam }): Promise<HistoryPage> => {
+      const page = await libraryApi.getHistory({
+        limit: HISTORY_PAGE_SIZE,
+        offset: pageParam,
+        state: 'completed',
+        type,
+      });
+      return { rows: toHistoryRows(page.data), hasMore: page.meta.hasMore ?? false };
+    },
+    initialPageParam: 0,
+    getNextPageParam: (last, pages) =>
+      last.hasMore ? pages.length * HISTORY_PAGE_SIZE : undefined,
+    placeholderData: keepPreviousData,
+    enabled: isAuthenticated,
+    staleTime: LIST_STALE_MS,
+  });
+}
+
+export function useHistorySearch(isSearching: boolean) {
+  const { user, isAuthenticated } = useAuth();
+  return useQuery({
+    queryKey: [...libraryListKey(user?.id ?? null, 'history'), 'all'],
+    queryFn: loadHistory,
+    enabled: isAuthenticated && isSearching,
+    staleTime: LIST_STALE_MS,
+  });
 }

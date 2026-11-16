@@ -9,7 +9,7 @@ import { EmptyState, SegmentedFilter, ShowMore } from '@/shared/ui';
 import { useLibraryCounts } from '@/entities/library';
 import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
-import { useHistoryList } from '../model/library-queries';
+import { useHistoryPages, useHistorySearch } from '../model/library-queries';
 import { useRevealedRows } from '../model/revealed-rows';
 import { groupByMonth, matchesQuery, type HistoryRow } from '../model/history-months';
 import { TYPE_FILTERS, matchesType, type TypeFilter } from '../model/plan-order';
@@ -70,29 +70,90 @@ function HistoryRowItem({ row, actions }: { row: HistoryRow; actions: LibraryAct
   );
 }
 
+function useHistoryRows(filter: TypeFilter, query: string) {
+  const isMovedOut = useIsMovedOut();
+  const isSearching = query.trim() !== '';
+  const pages = useHistoryPages(filter === 'all' ? undefined : filter);
+  const search = useHistorySearch(isSearching);
+  const source = isSearching
+    ? (search.data ?? []).filter(
+        (row) => matchesType(row.title.type, filter) && matchesQuery(row, query),
+      )
+    : (pages.data?.pages.flatMap((page) => page.rows) ?? []);
+  const rows = source.filter((row) => !isMovedOut(row.title.mediaItemId, 'history'));
+  const reveal = useRevealedRows(rows, `${filter}:${query}`);
+
+  return {
+    isSearching,
+    pages,
+    search,
+    rows: isSearching ? reveal.shown : rows,
+    more: isSearching
+      ? {
+          hasMore: reveal.hasMore,
+          isLoading: false,
+          rearmKey: reveal.shownCount,
+          onMore: reveal.showMore,
+        }
+      : {
+          hasMore: pages.hasNextPage,
+          isLoading: pages.isFetchingNextPage,
+          rearmKey: pages.data?.pages.length ?? 0,
+          onMore: () => void pages.fetchNextPage({ cancelRefetch: false }),
+        },
+  };
+}
+
 export function HistoryList({ actions }: { actions: LibraryActions }) {
   const { dict, locale } = useTranslation();
-  const isMovedOut = useIsMovedOut();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TypeFilter>('all');
-  const history = useHistoryList();
   const counts = useLibraryCounts();
-  const visible = (history.data ?? []).filter(
-    (row) =>
-      !isMovedOut(row.title.mediaItemId, 'history') &&
-      matchesType(row.title.type, filter) &&
-      matchesQuery(row, query),
-  );
-  const reveal = useRevealedRows(visible, `${filter}:${query}`);
+  const history = useHistoryRows(filter, query);
+  const { pages, search } = history;
 
-  if (history.isPending) return <RowsSkeleton />;
-  if (history.isError) return <ListFailure onRetry={() => void history.refetch()} />;
-  if (history.data.length === 0) {
+  if (pages.isPending) return <RowsSkeleton />;
+  if (pages.isError) return <ListFailure onRetry={() => void pages.refetch()} />;
+  if (filter === 'all' && !history.isSearching && history.rows.length === 0) {
     return <EmptyList {...dict.my.history.empty} href={IMPORT_ROUTE} />;
   }
 
-  const total = counts?.completed ?? history.data.length;
-  const monthTotals = new Map(groupByMonth(visible).map((month) => [month.key, month.rows.length]));
+  const total = counts?.completed ?? history.rows.length;
+  const months = groupByMonth(history.rows);
+  const lastMonth = months.at(-1)?.key;
+  const renderResults = () => {
+    if (history.isSearching && search.isPending) return <RowsSkeleton />;
+    if (history.isSearching && search.isError) {
+      return <ListFailure onRetry={() => void search.refetch()} />;
+    }
+    if (history.rows.length === 0) {
+      return (
+        <EmptyState
+          title={interpolate(dict.my.history.noMatches, { query })}
+          text={dict.my.history.noMatchesText}
+        />
+      );
+    }
+    return months.map((month) => (
+      <section key={month.key} aria-labelledby={`month-${month.key}`}>
+        <SectionTitle id={`month-${month.key}`}>
+          {monthTitle(month.key, locale)}
+          {month.key === lastMonth && history.more.hasMore ? null : (
+            <span className="text-sm font-semibold text-muted tabular-nums">
+              {month.rows.length}
+            </span>
+          )}
+        </SectionTitle>
+        <ul className="flex flex-col">
+          {month.rows.map((row) => (
+            <li key={row.title.mediaItemId}>
+              <HistoryRowItem row={row} actions={actions} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    ));
+  };
 
   return (
     <div className="flex flex-1 flex-col gap-3">
@@ -121,37 +182,15 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
           className="px-0"
         />
       </div>
-      {visible.length === 0 ? (
-        <EmptyState
-          title={interpolate(dict.my.history.noMatches, { query })}
-          text={dict.my.history.noMatchesText}
-        />
-      ) : (
-        groupByMonth(reveal.shown).map((month) => (
-          <section key={month.key} aria-labelledby={`month-${month.key}`}>
-            <SectionTitle id={`month-${month.key}`}>
-              {monthTitle(month.key, locale)}
-              <span className="text-sm font-semibold text-muted tabular-nums">
-                {monthTotals.get(month.key)}
-              </span>
-            </SectionTitle>
-            <ul className="flex flex-col">
-              {month.rows.map((row) => (
-                <li key={row.title.mediaItemId}>
-                  <HistoryRowItem row={row} actions={actions} />
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))
-      )}
+      {renderResults()}
       <ShowMore
         key={`${filter}:${query}`}
-        hasMore={reveal.hasMore}
+        hasMore={history.more.hasMore}
+        isLoading={history.more.isLoading}
         label={dict.my.loadMore}
         loadingLabel={dict.common.loading}
-        rearmKey={reveal.shownCount}
-        onMore={reveal.showMore}
+        rearmKey={history.more.rearmKey}
+        onMore={history.more.onMore}
       />
     </div>
   );
