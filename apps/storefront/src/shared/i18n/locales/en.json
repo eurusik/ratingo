@@ -1531,6 +1531,10 @@
         "title": "Feels like an app on your phone",
         "text": "A bottom bar, swipes on rows, pull down to refresh. And it’s faster."
       },
+      "faster": {
+        "title": "Faster and cleaner",
+        "text": "A new look on every screen, and pages open faster."
+      },
       "following": {
         "title": "What you follow, under control",
         "text": "Settings › Notifications: your followed titles and “Unfollow”."

@@ -13,4 +13,4 @@ export const WEB_CLIENT_STORAGE_KEY_PREFIXES = ['ratingo:sync-queued:'] as const
 
 export const WHATS_NEW_ROUTES: readonly string[] = [HOME_ROUTE, MY_ROUTE];
 
-export const WHATS_NEW_SETTLE_DELAY_MS = 800;
+export const WHATS_NEW_CALM_DELAY_MS = 1200;

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { WHATS_NEW_SETTLE_DELAY_MS } from '../config/whats-new';
+import { WHATS_NEW_CALM_DELAY_MS } from '../config/whats-new';
+import { useOnCalmMoment } from '../model/calm-moment';
 import { isWhatsNewEntryRoute } from '../model/entry-route';
 import { useHasOpenOverlay } from '../model/overlay-presence';
 import { dismissWhatsNew, useWhatsNewStatus } from '../model/whats-new-status';
@@ -25,11 +26,8 @@ export function WhatsNew() {
     if (isWaiting) void loadWhatsNewDialog();
   }, [isWaiting]);
 
-  useEffect(() => {
-    if (!isClear) return;
-    const timer = setTimeout(() => setHasOpened(true), WHATS_NEW_SETTLE_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [isClear]);
+  const open = useCallback(() => setHasOpened(true), []);
+  useOnCalmMoment(isClear, WHATS_NEW_CALM_DELAY_MS, open);
 
   if (!hasOpened) return null;
 

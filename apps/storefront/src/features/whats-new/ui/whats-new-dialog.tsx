@@ -8,9 +8,10 @@ import { useTranslation } from '@/shared/i18n';
 import { useMediaQuery } from '@/shared/lib';
 import { BrandIcon } from '@/shared/ui';
 import { useIsInstalledIosApp } from '../model/installed-ios-app';
-import { WhatsNewHighlights } from './whats-new-highlights';
+import { DESKTOP_HIGHLIGHTS, PHONE_HIGHLIGHTS, WhatsNewHighlights } from './whats-new-highlights';
 
-const HEADING = 'text-[26px] font-extrabold leading-tight tracking-tight text-balance text-foreground';
+const HEADING =
+  'text-[26px] font-extrabold leading-tight tracking-tight text-balance text-foreground';
 const SUBTITLE = 'text-[15px] leading-snug text-pretty text-muted';
 
 interface SurfaceProps {
@@ -56,7 +57,7 @@ function PhoneSheet({ isOpen, onDismiss, subtitleId, hasIosIconHint }: SurfacePr
               </p>
             </Sheet.Header>
             <Sheet.Body>
-              <WhatsNewHighlights hasIosIconHint={hasIosIconHint} />
+              <WhatsNewHighlights highlights={PHONE_HIGHLIGHTS} hasIosIconHint={hasIosIconHint} />
             </Sheet.Body>
             <Sheet.Footer>
               <GotItButton className="w-full" />
@@ -89,7 +90,7 @@ function DesktopModal({ isOpen, onDismiss, subtitleId, hasIosIconHint }: Surface
               </span>
             </Modal.Header>
             <Modal.Body className="mt-6">
-              <WhatsNewHighlights hasIosIconHint={hasIosIconHint} />
+              <WhatsNewHighlights highlights={DESKTOP_HIGHLIGHTS} hasIosIconHint={hasIosIconHint} />
             </Modal.Body>
             <Modal.Footer className="mt-6">
               <GotItButton />

@@ -9,11 +9,11 @@ jest.mock('next/navigation', () => ({
   usePathname: () => pathname,
 }));
 
-let settleDelayMs = 0;
+let calmDelayMs = 0;
 jest.mock('../config/whats-new', () => ({
   ...jest.requireActual('../config/whats-new'),
-  get WHATS_NEW_SETTLE_DELAY_MS() {
-    return settleDelayMs;
+  get WHATS_NEW_CALM_DELAY_MS() {
+    return calmDelayMs;
   },
 }));
 
@@ -33,7 +33,8 @@ function rememberOldWebClient() {
   localStorage.setItem('ratingo_refresh_token', 'old-session');
 }
 
-const findWindow = () => screen.findByRole('dialog', { name: uk.whatsNew.title }, { timeout: 3000 });
+const findWindow = () =>
+  screen.findByRole('dialog', { name: uk.whatsNew.title }, { timeout: 3000 });
 
 async function expectNoWindow() {
   await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
@@ -53,7 +54,7 @@ describe('WhatsNew', () => {
   beforeEach(() => {
     localStorage.clear();
     pathname = '/';
-    settleDelayMs = 0;
+    calmDelayMs = 0;
   });
 
   afterEach(() => {
@@ -65,7 +66,8 @@ describe('WhatsNew', () => {
     renderWhatsNew();
 
     const dialog = await findWindow();
-    expect(dialog.textContent).toContain(uk.whatsNew.highlights.following.title);
+    expect(dialog.textContent).toContain(uk.whatsNew.highlights.app.title);
+    expect(dialog.textContent).not.toContain(uk.whatsNew.highlights.faster.title);
     await waitFor(() =>
       expect(screen.getByRole('button', { name: uk.whatsNew.gotIt })).toHaveFocus(),
     );
@@ -97,10 +99,24 @@ describe('WhatsNew', () => {
 
   it('lets the page settle before opening, even on a fresh mount', async () => {
     rememberOldWebClient();
-    settleDelayMs = 60_000;
+    calmDelayMs = 60_000;
     renderWhatsNew();
 
     await expectNoWindow();
+  });
+
+  it('holds off while the user keeps scrolling', async () => {
+    rememberOldWebClient();
+    calmDelayMs = 150;
+    renderWhatsNew();
+
+    for (let step = 0; step < 4; step += 1) {
+      await act(() => new Promise((resolve) => setTimeout(resolve, 80)));
+      fireEvent.scroll(window);
+    }
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    expect(await findWindow()).toBeInTheDocument();
   });
 
   it('waits until another overlay closes', async () => {
@@ -144,7 +160,9 @@ describe('WhatsNew', () => {
     matchOnly(DESKTOP_MEDIA_QUERY);
     rememberOldWebClient();
     renderWhatsNew();
-    await findWindow();
+    const dialog = await findWindow();
+    expect(dialog.textContent).toContain(uk.whatsNew.highlights.faster.title);
+    expect(dialog.textContent).not.toContain(uk.whatsNew.highlights.app.title);
 
     fireEvent.click(screen.getByRole('button', { name: uk.common.close }));
 
@@ -155,20 +173,33 @@ describe('WhatsNew', () => {
     const originalUserAgent = navigator.userAgent;
 
     afterEach(() => {
-      Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent, configurable: true });
+      Object.defineProperty(navigator, 'userAgent', {
+        value: originalUserAgent,
+        configurable: true,
+      });
     });
 
     it('explains how to refresh the icon inside the installed iPhone app', async () => {
-      Object.defineProperty(navigator, 'userAgent', { value: IPHONE_USER_AGENT, configurable: true });
+      Object.defineProperty(navigator, 'userAgent', {
+        value: IPHONE_USER_AGENT,
+        configurable: true,
+      });
       matchOnly('(display-mode: standalone)');
       rememberOldWebClient();
       renderWhatsNew();
 
-      expect((await findWindow()).textContent).toContain(uk.whatsNew.iosIconHint);
+      const text = (await findWindow()).textContent ?? '';
+      expect(text.indexOf(uk.whatsNew.iosIconHint)).toBeGreaterThan(-1);
+      expect(text.indexOf(uk.whatsNew.iosIconHint)).toBeLessThan(
+        text.indexOf(uk.whatsNew.highlights.my.title),
+      );
     });
 
     it('stays quiet in a browser tab', async () => {
-      Object.defineProperty(navigator, 'userAgent', { value: IPHONE_USER_AGENT, configurable: true });
+      Object.defineProperty(navigator, 'userAgent', {
+        value: IPHONE_USER_AGENT,
+        configurable: true,
+      });
       rememberOldWebClient();
       renderWhatsNew();
 
