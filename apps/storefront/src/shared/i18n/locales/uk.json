@@ -184,13 +184,8 @@
       "filterLabel": "Тип",
       "sort": {
         "recent": "Нещодавно додані",
-        "rating": "За оцінкою",
-        "releaseDate": "Скоро виходить"
-      },
-      "sortShort": {
-        "recent": "Додані",
-        "rating": "Оцінка",
-        "releaseDate": "Скоро"
+        "rating": "Найвища оцінка",
+        "releaseDate": "Скоро вийдуть"
       },
       "sortLabel": "Сортування: {sort}",
       "sortPrefix": "Сортування: ",

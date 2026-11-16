@@ -89,10 +89,9 @@ function ListSkeletonBody({ list }: { list: MainLibraryList }) {
     return (
       <div className="flex flex-col gap-3">
         <SearchSkeleton />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-2">
           <PillsSkeleton widths={TYPE_FILTER_WIDTHS} />
-          <span className="flex-1" />
-          <Skeleton className="h-11 w-20 rounded-full" />
+          <Skeleton className="h-11 w-44 self-end rounded-full md:self-auto" />
         </div>
         <RowsSkeleton action="pill" />
       </div>

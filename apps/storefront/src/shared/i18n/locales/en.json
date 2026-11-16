@@ -184,13 +184,8 @@
       "filterLabel": "Type",
       "sort": {
         "recent": "Recently added",
-        "rating": "By rating",
+        "rating": "Top rated",
         "releaseDate": "Coming soon"
-      },
-      "sortShort": {
-        "recent": "Added",
-        "rating": "Rating",
-        "releaseDate": "Soon"
       },
       "sortLabel": "Sort: {sort}",
       "sortPrefix": "Sort: ",

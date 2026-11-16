@@ -39,8 +39,7 @@ function SortMenu({ sort, onSort }: { sort: PlanSort; onSort: (sort: PlanSort) =
       <Dropdown.Trigger className="flex min-h-tap shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-foreground outline-none hover:bg-default focus-visible:outline-2 focus-visible:outline-focus">
         <ArrowUpDown aria-hidden className="size-4 text-muted" />
         <span className="sr-only">{dict.my.plan.sortPrefix}</span>
-        <span className="md:hidden">{dict.my.plan.sortShort[sort]}</span>
-        <span className="hidden md:inline">{label}</span>
+        <span>{label}</span>
       </Dropdown.Trigger>
       <Dropdown.Popover placement="bottom end">
         <Dropdown.Menu
@@ -174,7 +173,7 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
         value={query}
         onChange={setQuery}
       />
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-2">
         <SegmentedFilter
           label={dict.my.plan.filterLabel}
           options={TYPE_FILTERS.map((id) => ({ id, label: dict.my.plan.filter[id] }))}
@@ -182,8 +181,9 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
           onChange={setFilter}
           className="shrink-0 px-0"
         />
-        <span className="flex-1" />
-        <SortMenu sort={sort} onSort={setSort} />
+        <div className="self-end md:self-auto">
+          <SortMenu sort={sort} onSort={setSort} />
+        </div>
       </div>
       {rows.length === 0 ? <EmptyState {...noMatches} /> : null}
       <ul aria-label={dict.my.lists.plan} className="flex flex-col">
