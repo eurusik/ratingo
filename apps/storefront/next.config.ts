@@ -34,6 +34,14 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [...LEGACY_REDIRECTS, ...HIDDEN_UNTIL_PORTED];
   },
+  async headers() {
+    return [
+      {
+        source: '/sw.js',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }],
+      },
+    ];
+  },
   async rewrites() {
     return [
       { source: '/sw.js', destination: '/serwist/sw.js' },
