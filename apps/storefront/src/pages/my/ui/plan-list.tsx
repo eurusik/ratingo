@@ -153,7 +153,8 @@ export function PlanList({ actions }: { actions: LibraryActions }) {
   const reveal = useRevealedRows(rows, resetKey);
 
   if (plan.isPending) return <LibraryListSkeleton list="plan" />;
-  if (plan.isError) return <ListFailure onRetry={() => void plan.refetch()} />;
+  if (plan.isError)
+    return <ListFailure onRetry={() => void plan.refetch()} isRetrying={plan.isFetching} />;
 
   if (plan.data.length === 0) return <EmptyList {...dict.my.plan.empty} href={BROWSE_ROUTE} />;
 

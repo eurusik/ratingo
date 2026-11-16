@@ -15,12 +15,10 @@ export { tmdbPosterUrl, tmdbStillUrl } from './images';
 export { SERVICE_TIME_ZONE } from './time-zone';
 export { HOME_ROUTE, NAV_ROUTES, isNavRouteActive, type NavSection } from './navigation';
 export {
-  ABOUT_ROUTE,
   BROWSE_ROUTE,
   CALENDAR_ROUTE,
   EXTERNAL_LINKS,
   IMPORT_ROUTE,
-  JOURNAL_ROUTE,
   MY_LIST_PARAM,
   MY_ROUTE,
   NOTIFICATION_SETTINGS_ROUTE,

@@ -4,7 +4,7 @@ import type { BrowseCategory } from '../model/browse-category';
 import { BROWSE_FRESHNESS_SECONDS } from '../model/browse-freshness';
 import { BROWSE_PAGE_SIZE, toCatalogQuery, type BrowseState } from '../model/browse-state';
 import type { FirstPageResult } from '../model/first-page';
-import { toGridMedia, type GridMedia } from '../model/grid-media';
+import { toGridMedia, type GridMedia } from '@/entities/media';
 
 const BROWSE_CACHE: CatalogCache = { revalidateSeconds: BROWSE_FRESHNESS_SECONDS };
 

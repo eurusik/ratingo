@@ -18,7 +18,6 @@
     "picks": "Also on top",
     "topTen": "Top 10",
     "topTenCaption": "Everyone’s watching — for good reason",
-    "topTenFailed": "Could not load the top 10.",
     "typeFilter": {
       "label": "What to show",
       "show": "Shows",
@@ -39,6 +38,17 @@
       "body": "Add the shows you watch and we will show new episodes as soon as they air, and where you left off.",
       "signIn": "Sign in",
       "find": "Find a show"
+    },
+    "failed": {
+      "picks": "Couldn’t load the picks",
+      "topTen": "Couldn’t load the top 10",
+      "newEpisodes": "Couldn’t load new episodes",
+      "newReleases": "Couldn’t load new releases"
+    },
+    "outage": {
+      "title": "The home page didn’t load",
+      "text": "We can’t reach the server right now. Try again in a minute.",
+      "openMy": "Open My library"
     }
   },
   "oauth": {
@@ -64,7 +74,10 @@
     "opensInNewTab": "(opens in a new tab)",
     "linkCopied": "Link copied",
     "shareFailed": "Could not share the link.",
-    "backToTop": "Back to top"
+    "backToTop": "Back to top",
+    "sectionErrorHint": "The rest of the page works. Try again in a minute.",
+    "errorCode": "Error code: {code}",
+    "toHome": "Go home"
   },
   "nav": {
     "label": "Main navigation",
@@ -122,7 +135,6 @@
     },
     "listsLabel": "My lists",
     "failed": "Couldn't load the list",
-    "retry": "Try again",
     "loadMore": "Show more",
     "signIn": {
       "title": "Sign in to see your library",
@@ -265,7 +277,6 @@
       "few": "{count} titles",
       "many": "{count} titles"
     },
-    "failedText": "Check your connection and try again.",
     "search": {
       "noMatches": "Nothing found for “{query}”.",
       "noMatchesText": "Try another title or change the filter.",
@@ -390,10 +401,8 @@
     "back": "Back",
     "loadMore": "Show more",
     "markReadLabel": "Mark as read: {title}",
-    "retry": "Try again",
     "unreadBadge": "{count} unread",
-    "failedTitle": "Couldn't load notifications",
-    "failedText": "Check your connection and try again."
+    "failedTitle": "Couldn't load notifications"
   },
   "profile": {
     "stats": {
@@ -422,8 +431,6 @@
     "label": "About the site",
     "description": "What everyone is watching today: trends, ratings, reviews and a tracker for your shows.",
     "sources": "Data from TMDB, Trakt, IMDb and other sources.",
-    "about": "About Ratingo",
-    "journal": "Journal",
     "github": "GitHub",
     "madeIn": "Made in Ukraine 🇺🇦",
     "authorName": "Yevhen Rusakov"
@@ -636,7 +643,6 @@
       "failed": "Couldn’t load more",
       "failedHint": "Check your connection and try again",
       "firstFailed": "Couldn’t load the list",
-      "retry": "Try again",
       "end": "That’s all: {result}"
     },
     "genres": {
@@ -1115,7 +1121,6 @@
     },
     "emptyWeek": "No new episodes this week",
     "loadError": "Couldn’t load the calendar",
-    "retry": "Try again",
     "lessShows": "Show less",
     "weekShown": "Showing the week of {range}"
   },
@@ -1218,8 +1223,7 @@
       "unfollowed": "No longer following “{title}”",
       "unfollowFailed": "Couldn't change that. Try again.",
       "undo": "Undo",
-      "failed": "Couldn't load what you follow.",
-      "retry": "Try again",
+      "failed": "Couldn't load what you follow",
       "types": {
         "movie": "Movie",
         "show": "Show"
@@ -1487,5 +1491,28 @@
         "confirm": "Leave"
       }
     }
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "text": "The page didn’t open on our side. Try again — it usually passes within a minute."
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "page": {
+      "title": "There’s no such page",
+      "text": "The link may be outdated or the address has a typo. Try finding what you were looking for."
+    },
+    "media": {
+      "movie": {
+        "title": "We don’t have this movie",
+        "text": "The link is outdated or the movie was removed from the catalog. Try finding it by title."
+      },
+      "show": {
+        "title": "We don’t have this show",
+        "text": "The link is outdated or the show was removed from the catalog. Try finding it by title."
+      }
+    },
+    "watchedNow": "Or see what people are watching now",
+    "searchPlaceholder": "Find a movie or show…"
   }
 }

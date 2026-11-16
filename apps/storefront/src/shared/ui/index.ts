@@ -7,6 +7,13 @@ export { Container } from './container/container';
 export { ContentTransition } from './content-transition/content-transition';
 export { DownscaledBlur } from './downscaled-blur/downscaled-blur';
 export { EMPTY_STATE_ACTION, EmptyState } from './empty-state/empty-state';
+export {
+  ERROR_STATE_ACTION,
+  ERROR_STATE_TEXT,
+  ERROR_STATE_TITLE,
+  ErrorState,
+  ErrorStateLink,
+} from './error-state/error-state';
 export { EdgeFade } from './edge-fade/edge-fade';
 export { FadingScrollRow } from './edge-fade/fading-scroll-row';
 export { useHorizontalScroller } from './edge-fade/horizontal-scroller';
@@ -27,6 +34,7 @@ export { RailPager } from './rail/rail-pager';
 export { ReturningImage } from './returning-image/returning-image';
 export { ResponsiveDialog } from './responsive-dialog/responsive-dialog';
 export { SectionHeader } from './section-header/section-header';
+export { SectionError } from './section-error/section-error';
 export { SegmentedFilter } from './segmented-filter/segmented-filter';
 export { ShowMore } from './show-more/show-more';
 export { SideNavItem } from './split-shell/side-nav-item';

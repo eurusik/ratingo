@@ -2,11 +2,17 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { Button, Skeleton, buttonVariants } from '@heroui/react';
+import { Skeleton, buttonVariants } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import { useTranslation } from '@/shared/i18n';
 import type { MainLibraryList } from '@/entities/library';
-import { EMPTY_STATE_ACTION, EmptyState, LIST_ROW_FRAME, STICKY_TOOLBAR } from '@/shared/ui';
+import {
+  EMPTY_STATE_ACTION,
+  EmptyState,
+  LIST_ROW_FRAME,
+  STICKY_TOOLBAR,
+  SectionError,
+} from '@/shared/ui';
 
 const SKELETON_ROWS = 10;
 
@@ -146,19 +152,23 @@ export function ChipsSkeleton() {
   );
 }
 
-export function ListFailure({ onRetry }: { onRetry: () => void }) {
+interface ListFailureProps {
+  onRetry: () => void;
+  isRetrying?: boolean;
+}
+
+export function ListFailure({ onRetry, isRetrying }: ListFailureProps) {
   const { dict } = useTranslation();
 
   return (
-    <EmptyState
-      title={dict.my.failed}
-      text={dict.my.failedText}
-      action={
-        <Button variant="secondary" className={EMPTY_STATE_ACTION} onPress={onRetry}>
-          {dict.my.retry}
-        </Button>
-      }
-    />
+    <div className="py-4">
+      <SectionError
+        title={dict.my.failed}
+        onRetry={onRetry}
+        isRetrying={isRetrying}
+        className="min-h-80"
+      />
+    </div>
   );
 }
 

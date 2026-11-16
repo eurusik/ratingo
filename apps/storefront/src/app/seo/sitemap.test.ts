@@ -4,11 +4,10 @@ import { generateSitemap } from './sitemap';
 
 jest.mock('@/shared/api', () => ({
   configureStorefrontApi: jest.fn(),
-  sitemapApi: { getMedia: jest.fn(), getJournalPosts: jest.fn() },
+  sitemapApi: { getMedia: jest.fn() },
 }));
 
 const getMedia = jest.mocked(sitemapApi.getMedia);
-const getJournalPosts = jest.mocked(sitemapApi.getJournalPosts);
 
 describe('generateSitemap', () => {
   beforeEach(() => {
@@ -24,7 +23,6 @@ describe('generateSitemap', () => {
       if (kind === 'movies') throw new Error('API down');
       return [{ slug: 'outlander-2014', updatedAt: '2026-03-04T00:00:00.000Z' }];
     });
-    getJournalPosts.mockResolvedValue([]);
 
     const urls = (await generateSitemap()).map((entry) => entry.url);
 

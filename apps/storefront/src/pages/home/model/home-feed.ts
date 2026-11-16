@@ -3,7 +3,28 @@ import type { HomeItem, NewEpisode } from '@/shared/api';
 import { tmdbPosterUrl } from '@/shared/config';
 
 export const TOP_TEN_COUNT = 10;
+
 const TOP_THREE_COUNT = 3;
+
+export type Loaded<T> = { ok: true; data: T } | { ok: false };
+
+export function anySectionLoads(
+  sections: ReadonlyArray<Promise<Loaded<unknown>>>,
+): Promise<boolean> {
+  if (sections.length === 0) return Promise.resolve(false);
+
+  return new Promise((resolve) => {
+    let unsettled = sections.length;
+    sections.forEach(
+      (section) =>
+        void section.then((loaded) => {
+          unsettled -= 1;
+          if (loaded.ok) resolve(true);
+          else if (unsettled === 0) resolve(false);
+        }),
+    );
+  });
+}
 
 export interface HeroMedia extends TrendingMedia {
   overview?: string;

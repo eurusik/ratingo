@@ -53,9 +53,6 @@ export function publicProfileRoute(username: string): string {
   return `${PUBLIC_PROFILE_ROUTE}/${encodeURIComponent(username)}`;
 }
 
-export const ABOUT_ROUTE = '/about';
-export const JOURNAL_ROUTE = '/journal';
-
 export function isSettingsPath(pathname: string): boolean {
   return pathname === SETTINGS_ROUTE || pathname.startsWith(`${SETTINGS_ROUTE}/`);
 }

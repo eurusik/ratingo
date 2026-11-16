@@ -1,10 +1,14 @@
+'use client';
+
 import { useId, type ReactNode } from 'react';
 import { Skeleton } from '@heroui/react';
-import { ExternalRatings, MediaPoster, ScoreChip, type PosterLoadPriority } from '@/entities/media';
 import { mediaRoute } from '@/shared/config';
 import { SHARED_ART_SOURCE } from '@/shared/lib';
 import { ForwardLink } from '@/shared/ui';
 import type { GridMedia } from '../model/grid-media';
+import { ExternalRatings } from './external-ratings';
+import { MediaPoster, type PosterLoadPriority } from './media-poster';
+import { ScoreChip } from './score-chip';
 
 const TITLE_CLASS =
   'line-clamp-2 min-h-[2lh] text-[13px] leading-tight font-semibold break-words md:text-sm';
@@ -13,9 +17,15 @@ interface PosterTileProps {
   media: GridMedia;
   loadPriority?: PosterLoadPriority;
   actions?: ReactNode;
+  isCompact?: boolean;
 }
 
-export function PosterTile({ media, loadPriority = 'lazy', actions }: PosterTileProps) {
+export function PosterTile({
+  media,
+  loadPriority = 'lazy',
+  actions,
+  isCompact = false,
+}: PosterTileProps) {
   const titleId = useId();
   const scoreId = useId();
 
@@ -45,12 +55,12 @@ export function PosterTile({ media, loadPriority = 'lazy', actions }: PosterTile
         </span>
       </ForwardLink>
       <div className="flex min-h-6 items-center gap-1.5">
-        {media.year === undefined ? null : (
+        {media.year === undefined || isCompact ? null : (
           <span className="hidden text-sm text-muted tabular-nums md:inline">{media.year}</span>
         )}
         <ExternalRatings
           imdbRating={media.imdbRating}
-          criticsPercent={media.criticsPercent}
+          criticsPercent={isCompact ? undefined : media.criticsPercent}
           size="sm"
         />
       </div>

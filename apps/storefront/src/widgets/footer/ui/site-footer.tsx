@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import Link from 'next/link';
-import { ABOUT_ROUTE, EXTERNAL_LINKS, JOURNAL_ROUTE } from '@/shared/config';
+import { EXTERNAL_LINKS } from '@/shared/config';
 import type { Dictionary } from '@/shared/i18n';
 import { Container } from '@/shared/ui';
 
@@ -38,16 +37,6 @@ export function SiteFooter({ dict }: { dict: Dictionary }) {
           </div>
           <nav aria-label={dict.footer.label}>
             <ul className="flex flex-col gap-2">
-              <li>
-                <Link href={ABOUT_ROUTE} className={LINK_CLASS}>
-                  {dict.footer.about}
-                </Link>
-              </li>
-              <li>
-                <Link href={JOURNAL_ROUTE} className={LINK_CLASS}>
-                  {dict.footer.journal}
-                </Link>
-              </li>
               <li>
                 <ExternalLink href={EXTERNAL_LINKS.github} newTabCue={dict.common.opensInNewTab}>
                   {dict.footer.github}

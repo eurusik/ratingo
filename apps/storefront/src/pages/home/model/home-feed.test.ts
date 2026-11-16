@@ -1,7 +1,14 @@
 import fc from 'fast-check';
 import type { TrendingMedia } from '@/entities/media';
 import type { HomeItem, NewEpisode } from '@/shared/api';
-import { buildHomeHero, chooseList, toAiredAt, toEpisodeRelease, toReleaseRail } from './home-feed';
+import {
+  buildHomeHero,
+  chooseList,
+  anySectionLoads,
+  toAiredAt,
+  toEpisodeRelease,
+  toReleaseRail,
+} from './home-feed';
 
 const IMAGE = {
   thumb: 'https://img.test/w154/a.jpg',
@@ -158,5 +165,36 @@ describe('new episodes', () => {
       'https://cdn.test/p.jpg',
     );
     expect(toEpisodeRelease({ ...episode, posterPath: null }).posterUrl).toBeUndefined();
+  });
+});
+
+describe('anySectionLoads', () => {
+  const failed = { ok: false } as const;
+  const loaded = { ok: true, data: [] } as const;
+  const never = new Promise<typeof loaded>(() => undefined);
+
+  it('answers as soon as one section loads, without waiting for the rest', async () => {
+    await expect(
+      anySectionLoads([Promise.resolve(failed), Promise.resolve(loaded), never]),
+    ).resolves.toBe(true);
+  });
+
+  it('treats an empty feed as down', async () => {
+    await expect(anySectionLoads([])).resolves.toBe(false);
+  });
+
+  it('reports the feed down only once every section failed', async () => {
+    await expect(anySectionLoads([Promise.resolve(failed), Promise.resolve(failed)])).resolves.toBe(
+      false,
+    );
+  });
+
+  it('agrees with whether any section loaded, whatever the mix', async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.array(fc.boolean(), { minLength: 1 }), async (outcomes) => {
+        const sections = outcomes.map((ok) => Promise.resolve(ok ? loaded : failed));
+        expect(await anySectionLoads(sections)).toBe(outcomes.includes(true));
+      }),
+    );
   });
 });

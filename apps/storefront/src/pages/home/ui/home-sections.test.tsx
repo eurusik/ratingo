@@ -8,10 +8,11 @@ import { openAuth } from '@/shared/auth';
 import { I18nProvider, getDictionary, type Locale } from '@/shared/i18n';
 import type { EpisodeRelease } from '../model/home-feed';
 import { HeroBanner } from './hero-banner';
+import { HomeOutage } from './home-outage';
+import { HomeSectionError } from './home-section-error';
 import { NewEpisodes } from './new-episodes';
 import { NewReleases } from './new-releases';
 import { TopTen } from './top-ten';
-import { TopTenError } from './top-ten-error';
 import { TopThree } from './top-three';
 import { TrackShowsCard } from './track-shows-card';
 
@@ -205,13 +206,29 @@ describe('TrackShowsCard', () => {
   });
 });
 
-describe('TopTenError', () => {
-  it('reloads the server data on retry', () => {
-    renderIn(<TopTenError />);
+describe('HomeSectionError', () => {
+  it('keeps the section heading and reloads the server data on retry', () => {
+    renderIn(<HomeSectionError section="topTen" />);
 
-    const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent(uk.home.topTenFailed);
+    expect(screen.getByRole('heading', { name: uk.home.topTen })).toBeInTheDocument();
+    const alert = screen.getByRole('status');
+    expect(alert).toHaveTextContent(uk.home.failed.topTen);
+    expect(alert).toHaveTextContent(uk.common.sectionErrorHint);
     fireEvent.click(within(alert).getByRole('button', { name: uk.common.retry }));
+    expect(refresh).toHaveBeenCalled();
+  });
+});
+
+describe('HomeOutage', () => {
+  it('offers to retry or open My when the whole feed is down', () => {
+    renderIn(<HomeOutage />);
+
+    expect(screen.getByRole('heading', { name: uk.home.outage.title })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: uk.home.outage.openMy })).toHaveAttribute(
+      'href',
+      '/my',
+    );
+    fireEvent.click(screen.getByRole('button', { name: uk.common.retry }));
     expect(refresh).toHaveBeenCalled();
   });
 });
