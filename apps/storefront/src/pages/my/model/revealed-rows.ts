@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export const ROWS_PER_STEP = 20;
+const ROWS_PER_STEP = 20;
 
 export interface RevealedRows<T> {
   shown: T[];
