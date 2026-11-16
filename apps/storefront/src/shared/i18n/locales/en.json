@@ -1514,5 +1514,33 @@
     },
     "watchedNow": "Or see what people are watching now",
     "searchPlaceholder": "Find a movie or show…"
+  },
+  "whatsNew": {
+    "title": "Ratingo got an update",
+    "subtitle": "A new look and a new icon. Your ratings, lists and marked episodes are all still here.",
+    "highlights": {
+      "my": {
+        "title": "Saved and history now live in “My”",
+        "text": "Want to watch, Watching and Watched in one place."
+      },
+      "next": {
+        "title": "See what to watch next",
+        "text": "Shows are sorted into “New episodes”, “Caught up” and “Set aside”."
+      },
+      "app": {
+        "title": "Feels like an app on your phone",
+        "text": "A bottom bar, swipes on rows, pull down to refresh. And it’s faster."
+      },
+      "faster": {
+        "title": "Faster and cleaner",
+        "text": "A new look on every screen, and pages open faster."
+      },
+      "following": {
+        "title": "What you follow, under control",
+        "text": "Settings › Notifications: your followed titles and “Unfollow”."
+      }
+    },
+    "iosIconHint": "To see the new icon on your Home Screen, remove Ratingo and add it again: Share → “Add to Home Screen”. Your ratings and lists are saved in your account — just sign in again.",
+    "gotIt": "Got it"
   }
 }
