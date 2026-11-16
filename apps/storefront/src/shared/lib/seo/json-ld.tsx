@@ -5,7 +5,7 @@ type JsonLdData = Record<string, unknown>;
 const SITE_LANGUAGE = 'uk';
 const ORGANIZATION_DESCRIPTION =
   'Український сервіс для відкриття стрімінгового контенту — серіали та фільми';
-const ORGANIZATION_LOGO_PATH = '/icons/icon-512x512.png';
+const ORGANIZATION_LOGO_PATH = '/icons/icon-512.png';
 const SCRIPT_TAG_OPENER = /</g;
 
 function serializeJsonLd(data: JsonLdData): string {

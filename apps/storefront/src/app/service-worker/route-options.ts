@@ -1,6 +1,6 @@
 import { OFFLINE_ROUTE, buildRevision } from '@/shared/config';
 
-const UNPRECACHED_FILES = ['**/node_modules/**/*', 'public/screenshots/**'];
+const UNPRECACHED_FILES = ['**/node_modules/**/*', 'public/screenshots/**', 'public/og-image.png'];
 
 export const serviceWorkerRouteOptions = {
   swSrc: 'src/app/service-worker/sw.ts',
