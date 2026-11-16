@@ -22,7 +22,7 @@ export function StopButton({ batchIds }: { batchIds: readonly string[] }) {
           },
         })
       }
-      className="h-9 rounded-full px-3.5 font-semibold"
+      className="h-11 rounded-full px-3.5 font-semibold md:h-9"
     >
       {copy.stop}
     </Button>

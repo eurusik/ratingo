@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
@@ -10,7 +10,10 @@ import { clockTime, isJustNow } from '@/pages/settings/model/import/import-momen
 import { useImportBatches } from '@/pages/settings/model/import/import-queries';
 import type { ImportStep } from '@/pages/settings/model/import/import-wizard';
 import { useLastImport } from '@/pages/settings/model/import/last-import';
-import { useImportWizard, type ImportWizard } from '@/pages/settings/model/import/use-import-wizard';
+import {
+  useImportWizard,
+  type ImportWizard,
+} from '@/pages/settings/model/import/use-import-wizard';
 import { SectionHeader, type StepBack } from '../settings-headers';
 import { SettingsShell } from '../settings-shell';
 import { DesktopFilesStep, PhoneFilesStep, PhoneSourceStep } from './files-step';
@@ -18,6 +21,7 @@ import { PreviewStep } from './preview-step';
 import { ResultStep } from './result-step';
 import { ResumeCard } from './resume-card';
 import { StepProgress } from './step-progress';
+import { STEP_HEADING_ID } from './step-title';
 
 const PHONE_STEPS: readonly ImportStep[] = ['source', 'files', 'preview'];
 const DESKTOP_STEPS: readonly ImportStep[] = ['files', 'preview'];
@@ -78,7 +82,8 @@ interface WizardBodyProps {
 
 function WizardBody({ wizard, isDesktop, origin, resume }: WizardBodyProps) {
   const { step } = wizard.state;
-  if (step === 'result') return <ResultStep wizard={wizard} isDesktop={isDesktop} origin={origin} />;
+  if (step === 'result')
+    return <ResultStep wizard={wizard} isDesktop={isDesktop} origin={origin} />;
   if (step === 'preview') return <PreviewStep wizard={wizard} isDesktop={isDesktop} />;
   if (isDesktop) return <DesktopFilesStep wizard={wizard} resume={resume} />;
   if (step === 'files') return <PhoneFilesStep wizard={wizard} />;
@@ -96,6 +101,17 @@ function useResume(wizard: ImportWizard): ReactNode {
   return <ResumeCard progress={progress} lastImport={summary} onSummary={wizard.showSummary} />;
 }
 
+function useFocusOnStepChange(step: ImportStep) {
+  const shownStep = useRef(step);
+
+  useEffect(() => {
+    if (shownStep.current === step) return;
+    shownStep.current = step;
+    window.scrollTo({ top: 0 });
+    document.getElementById(STEP_HEADING_ID)?.focus({ preventScroll: true });
+  }, [step]);
+}
+
 export function ImportSettingsPage() {
   const { dict } = useTranslation();
   const title = dict.settings.sections.import;
@@ -104,6 +120,7 @@ export function ImportSettingsPage() {
   const stepCopy = useStepCopy(wizard, isDesktop);
   const resume = useResume(wizard);
   const { step } = wizard.state;
+  useFocusOnStepChange(step);
   const showsPhoneProgress = !isDesktop && stepCopy.stepLabel && !(step === 'source' && resume);
 
   return (
@@ -125,7 +142,12 @@ export function ImportSettingsPage() {
             label={stepCopy.stepLabel}
           />
         ) : null}
-        <WizardBody wizard={wizard} isDesktop={isDesktop} origin={stepCopy.origin} resume={resume} />
+        <WizardBody
+          wizard={wizard}
+          isDesktop={isDesktop}
+          origin={stepCopy.origin}
+          resume={resume}
+        />
       </div>
     </SettingsShell>
   );

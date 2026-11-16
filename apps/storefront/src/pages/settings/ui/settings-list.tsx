@@ -146,9 +146,9 @@ export function SettingsList() {
             label: copy.importRow,
             value: importProgress
               ? interpolate(copy.importRunning, {
-                done: importProgress.done,
-                total: importProgress.total,
-              })
+                  done: importProgress.done,
+                  total: importProgress.total,
+                })
               : copy.importValue,
           },
         ]}

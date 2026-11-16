@@ -2,17 +2,22 @@
 
 import { useState } from 'react';
 import { Alert } from '@heroui/react';
-import { pluralize } from '@ratingo/web-core/lib';
+import { cn, pluralize } from '@ratingo/web-core/lib';
 import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
 import { SegmentedFilter } from '@/shared/ui';
-import { filterItems, summarizeImport, type ImportSummary } from '@/pages/settings/model/import/import-summary';
+import {
+  MAX_IMPORT_ITEMS,
+  filterItems,
+  summarizeImport,
+  type ImportSummary,
+} from '@/pages/settings/model/import/import-summary';
 import type { PreviewFilter } from '@/pages/settings/model/import/import-wizard';
 import type { ImportWizard } from '@/pages/settings/model/import/use-import-wizard';
 import { SettingSwitch } from '../setting-switch';
-import { STEP_TITLE } from './files-step';
 import { OverwriteDialog } from './overwrite-dialog';
 import { PreviewRows } from './preview-rows';
 import { StepProgress } from './step-progress';
+import { STEP_HEADING_ID, STEP_TITLE } from './step-title';
 import { WizardActions } from './wizard-actions';
 
 const PREVIEW_ROWS = 20;
@@ -46,7 +51,10 @@ function PreviewNotes({ summary, isDesktop }: { summary: ImportSummary; isDeskto
     <Alert status="warning" className="rounded-2xl bg-warning/10">
       <Alert.Content className="gap-1.5">
         {notes.map((note) => (
-          <Alert.Description key={note} className="text-sm leading-snug text-warning md:text-[15px]">
+          <Alert.Description
+            key={note}
+            className="text-sm leading-snug text-warning md:text-[15px]"
+          >
             {note}
           </Alert.Description>
         ))}
@@ -56,7 +64,7 @@ function PreviewNotes({ summary, isDesktop }: { summary: ImportSummary; isDeskto
 }
 
 export function PreviewStep({ wizard, isDesktop }: { wizard: ImportWizard; isDesktop: boolean }) {
-  const { dict } = useTranslation();
+  const { dict, locale } = useTranslation();
   const copy = dict.settings.import;
   const count = useCounts();
   const [isConfirming, setIsConfirming] = useState(false);
@@ -66,6 +74,7 @@ export function PreviewStep({ wizard, isDesktop }: { wizard: ImportWizard; isDes
 
   const sourceName = copy.sources[state.source].name;
   const total = summary.items.length;
+  const isTooMany = total > MAX_IMPORT_ITEMS;
   const titles = count(copy.titles, total);
   const flow = [
     summary.ratings > 0
@@ -99,13 +108,31 @@ export function PreviewStep({ wizard, isDesktop }: { wizard: ImportWizard; isDes
     <>
       {isDesktop ? <StepProgress current={2} total={2} className="max-w-90" /> : null}
       <div className="flex flex-col gap-1.5 md:gap-1">
-        <h2 className={isDesktop ? 'text-[22px] font-extrabold' : STEP_TITLE}>
-          {isDesktop ? interpolate(copy.preview.fromSource, { titles, source: sourceName }) : titles}
+        <h2
+          id={STEP_HEADING_ID}
+          tabIndex={-1}
+          className={cn(isDesktop ? 'text-[22px] font-extrabold' : STEP_TITLE, 'outline-none')}
+        >
+          {isDesktop
+            ? interpolate(copy.preview.fromSource, { titles, source: sourceName })
+            : titles}
         </h2>
         <p className="text-[15px] leading-snug text-muted tabular-nums">
           {[...flow, skipped].filter(Boolean).join(' · ')}
         </p>
       </div>
+      {isTooMany ? (
+        <Alert status="danger" className="rounded-2xl">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Description>
+              {interpolate(copy.preview.tooMany, {
+                max: MAX_IMPORT_ITEMS.toLocaleString(locale),
+              })}
+            </Alert.Description>
+          </Alert.Content>
+        </Alert>
+      ) : null}
       <PreviewNotes summary={summary} isDesktop={isDesktop} />
       {filters.length > 2 ? (
         <SegmentedFilter
@@ -137,6 +164,7 @@ export function PreviewStep({ wizard, isDesktop }: { wizard: ImportWizard; isDes
           label: interpolate(copy.preview.submit, { count: total }),
           onPress: submit,
           isPending: state.isImporting,
+          isDisabled: isTooMany,
         }}
         secondary={{ label: copy.back, onPress: wizard.back, isDisabled: state.isImporting }}
       />

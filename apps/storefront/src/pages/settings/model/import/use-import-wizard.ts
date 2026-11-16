@@ -2,11 +2,10 @@
 
 import { useReducer, useState } from 'react';
 import { toast } from '@heroui/react';
-import { useAuth } from '@ratingo/web-core/auth';
 import { useTranslation } from '@/shared/i18n';
 import { readImportFile } from './import-file';
 import { useImportMedia } from './import-queries';
-import { summarizeImport } from './import-summary';
+import { MAX_IMPORT_ITEMS, summarizeImport } from './import-summary';
 import type { ImportSource } from './import-sources';
 import {
   INITIAL_IMPORT_STATE,
@@ -15,7 +14,7 @@ import {
   type ImportWizardState,
   type PreviewFilter,
 } from './import-wizard';
-import { rememberImport, type LastImport } from './last-import';
+import type { LastImport } from './last-import';
 
 export interface ImportWizard {
   state: ImportWizardState;
@@ -35,7 +34,6 @@ export interface ImportWizard {
 
 export function useImportWizard(): ImportWizard {
   const { dict } = useTranslation();
-  const { user } = useAuth();
   const [state, dispatch] = useReducer(importWizardReducer, INITIAL_IMPORT_STATE);
   const [pendingReads, setPendingReads] = useState(0);
   const importMedia = useImportMedia();
@@ -55,17 +53,15 @@ export function useImportWizard(): ImportWizard {
 
   const submit = () => {
     const { source } = state;
-    if (!source || state.step !== 'preview' || state.isImporting) return;
-    dispatch({ type: 'importStarted' });
     const { items } = summarizeImport(state.files);
+    if (!source || state.step !== 'preview' || state.isImporting) return;
+    if (items.length > MAX_IMPORT_ITEMS) return;
+    dispatch({ type: 'importStarted' });
     importMedia.mutate(
       { source, items, overwrite: state.overwrite },
       {
-        onSuccess: (result) => {
-          const finishedAt = Date.now();
-          if (user) rememberImport({ userId: user.id, source, result, finishedAt });
-          dispatch({ type: 'importSucceeded', result, finishedAt });
-        },
+        onSuccess: (result) =>
+          dispatch({ type: 'importSucceeded', result, finishedAt: Date.now() }),
         onError: (error) => {
           console.error('Import failed', { source, count: items.length, error });
           dispatch({ type: 'importFailed' });

@@ -53,10 +53,10 @@ describe('importWizardReducer', () => {
   });
 
   it('replaces a file added twice instead of listing it again', () => {
-    expect(run(pickImdb, addRatings, { type: 'addFiles', source: 'imdb', files: [WRONG, RATINGS] }).files).toEqual([
-      WRONG,
-      RATINGS,
-    ]);
+    expect(
+      run(pickImdb, addRatings, { type: 'addFiles', source: 'imdb', files: [WRONG, RATINGS] })
+        .files,
+    ).toEqual([WRONG, RATINGS]);
   });
 
   it('ignores files read for a source that is no longer picked', () => {
@@ -99,13 +99,17 @@ describe('importWizardReducer', () => {
 
   it('shows the result after a successful import and ignores stray results', () => {
     const importing = run(pickImdb, addRatings, { type: 'review' }, { type: 'importStarted' });
-    expect(importWizardReducer(importing, { type: 'importSucceeded', result: RESULT, finishedAt: 1 })).toMatchObject({
+    expect(
+      importWizardReducer(importing, { type: 'importSucceeded', result: RESULT, finishedAt: 1 }),
+    ).toMatchObject({
       step: 'result',
       isImporting: false,
       result: RESULT,
     });
     const idle = run(pickImdb);
-    expect(importWizardReducer(idle, { type: 'importSucceeded', result: RESULT, finishedAt: 1 })).toBe(idle);
+    expect(
+      importWizardReducer(idle, { type: 'importSucceeded', result: RESULT, finishedAt: 1 }),
+    ).toBe(idle);
   });
 
   it('stays on preview with files kept when the import fails', () => {
@@ -120,7 +124,9 @@ describe('importWizardReducer', () => {
   });
 
   it('opens a remembered summary and restarts from scratch', () => {
-    expect(run(pickImdb, { type: 'showSummary', source: 'tmdb', result: RESULT, finishedAt: 5 })).toMatchObject({
+    expect(
+      run(pickImdb, { type: 'showSummary', source: 'tmdb', result: RESULT, finishedAt: 5 }),
+    ).toMatchObject({
       step: 'result',
       source: 'tmdb',
       result: RESULT,
@@ -128,5 +134,20 @@ describe('importWizardReducer', () => {
       files: [],
     });
     expect(run(pickImdb, addRatings, { type: 'restart' })).toEqual(INITIAL_IMPORT_STATE);
+  });
+});
+
+describe('importWizardReducer while importing', () => {
+  it('ignores summary and restart until the request settles', () => {
+    const importing = run(pickImdb, addRatings, { type: 'review' }, { type: 'importStarted' });
+    expect(importWizardReducer(importing, { type: 'restart' })).toBe(importing);
+    expect(
+      importWizardReducer(importing, {
+        type: 'showSummary',
+        source: 'tmdb',
+        result: RESULT,
+        finishedAt: 1,
+      }),
+    ).toBe(importing);
   });
 });

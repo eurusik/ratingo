@@ -35,8 +35,19 @@ export function useImportedShowWatching() {
   const mediaStates = useMediaStateStore();
   const [marks, setMarks] = useState<Readonly<Record<string, WatchMark>>>({});
   const [openShow, setOpenShow] = useState<RatedShow>();
+  const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set());
+
+  const setBusy = (mediaItemId: string, isBusy: boolean) =>
+    setBusyIds((current) => {
+      const next = new Set(current);
+      if (isBusy) next.add(mediaItemId);
+      else next.delete(mediaItemId);
+      return next;
+    });
 
   const moveTo = async (mediaItemId: string, state: WatchState) => {
+    if (busyIds.has(mediaItemId)) return false;
+    setBusy(mediaItemId, true);
     try {
       mediaStates.write(mediaItemId, await libraryApi.setState(mediaItemId, state, 'show'));
       return true;
@@ -44,16 +55,15 @@ export function useImportedShowWatching() {
       console.error('Moving an imported show failed', { mediaItemId, state, error });
       toast.danger(dict.settings.import.shows.failed);
       return false;
+    } finally {
+      setBusy(mediaItemId, false);
     }
   };
 
   const markWatching = async (show: RatedShow, mark: WatchMark) => {
     setOpenShow(undefined);
-    if (await moveTo(show.mediaItemId, 'watching')) {
-      setMarks((current) => ({ ...current, [show.mediaItemId]: mark }));
-      return true;
-    }
-    return false;
+    if (!(await moveTo(show.mediaItemId, 'watching'))) return;
+    setMarks((current) => ({ ...current, [show.mediaItemId]: mark }));
   };
 
   const unmark = async (show: RatedShow) => {
@@ -67,6 +77,8 @@ export function useImportedShowWatching() {
   return {
     marks,
     openShow,
+    isBusy: (mediaItemId: string) =>
+      busyIds.has(mediaItemId) || openShow?.mediaItemId === mediaItemId,
     open: setOpenShow,
     close: () => setOpenShow(undefined),
     markWatching,

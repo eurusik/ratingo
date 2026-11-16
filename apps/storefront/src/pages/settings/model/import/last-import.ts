@@ -39,11 +39,20 @@ function subscribe(onChange: () => void): () => void {
   return () => listeners.delete(onChange);
 }
 
+function forgetImport(): void {
+  try {
+    window.sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    return;
+  }
+}
+
 export function rememberImport(entry: LastImport): void {
   try {
     window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
   } catch (error) {
     console.warn('Saving the import summary failed', { error });
+    forgetImport();
   }
   listeners.forEach((listener) => listener());
 }

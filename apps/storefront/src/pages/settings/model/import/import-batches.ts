@@ -7,11 +7,13 @@ export interface BatchProgress {
   batchIds: string[];
 }
 
-export type BatchOutcome = 'running' | 'completed' | 'cancelled';
+type BatchOutcome = 'running' | 'completed' | 'cancelled' | 'unknown';
 
 const PROCESSING: ImportBatch['status'] = 'processing';
 
-export function runningProgress(batches: readonly ImportBatch[] | undefined): BatchProgress | undefined {
+export function runningProgress(
+  batches: readonly ImportBatch[] | undefined,
+): BatchProgress | undefined {
   const running = batches?.filter((batch) => batch.status === PROCESSING) ?? [];
   const [latest] = [...running].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   if (!latest) return undefined;
@@ -23,8 +25,14 @@ export function runningProgress(batches: readonly ImportBatch[] | undefined): Ba
   };
 }
 
-export function batchOutcome(batch: ImportBatch | undefined): BatchOutcome {
-  if (!batch || batch.status === PROCESSING) return 'running';
+export function batchOutcome(
+  batches: readonly ImportBatch[] | undefined,
+  batchId: string,
+): BatchOutcome {
+  if (!batches) return 'running';
+  const batch = batches.find((candidate) => candidate.batchId === batchId);
+  if (!batch) return 'unknown';
+  if (batch.status === PROCESSING) return 'running';
   return batch.status === 'cancelled' ? 'cancelled' : 'completed';
 }
 

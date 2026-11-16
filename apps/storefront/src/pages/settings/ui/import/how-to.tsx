@@ -30,8 +30,15 @@ export function HowTo({ source, isDesktop }: { source: ImportSource; isDesktop: 
               <li key={step}>
                 {interpolateNodes(step, {
                   link: (
-                    <a href={guide.url} target="_blank" rel="noreferrer" translate="no">
+                    <a
+                      href={guide.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      translate="no"
+                      className="text-accent underline underline-offset-2"
+                    >
                       {guide.urlLabel}
+                      <span className="sr-only"> {copy.files.newTab}</span>
                     </a>
                   ),
                 })}

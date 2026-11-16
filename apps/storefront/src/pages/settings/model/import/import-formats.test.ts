@@ -55,9 +55,30 @@ describe('Kinobaza files', () => {
       kind: 'ratings',
       skippedRows: 1,
       items: [
-        { imdbId: 'tt1234567', tmdbId: 550, rating: 8, title: 'Fight Club', year: 1999, state: 'completed' },
-        { imdbId: 'tt7654321', tmdbId: 101, rating: 6, title: 'Inception', year: 2010, state: 'completed' },
-        { imdbId: undefined, tmdbId: 27205, rating: 7, title: 'Inception 2', year: 2025, state: 'completed' },
+        {
+          imdbId: 'tt1234567',
+          tmdbId: 550,
+          rating: 8,
+          title: 'Fight Club',
+          year: 1999,
+          state: 'completed',
+        },
+        {
+          imdbId: 'tt7654321',
+          tmdbId: 101,
+          rating: 6,
+          title: 'Inception',
+          year: 2010,
+          state: 'completed',
+        },
+        {
+          imdbId: undefined,
+          tmdbId: 27205,
+          rating: 7,
+          title: 'Inception 2',
+          year: 2025,
+          state: 'completed',
+        },
       ],
     });
   });
@@ -65,7 +86,10 @@ describe('Kinobaza files', () => {
   it('reads the watchlist as planned titles without ratings', () => {
     const verdict = inspectCsv(KINOBAZA_WATCHLIST, 'kinobaza');
     expect(verdict).toMatchObject({ kind: 'watchlist', skippedRows: 1 });
-    expect('items' in verdict && verdict.items.every((item) => item.state === 'planned' && item.rating === undefined)).toBe(true);
+    expect(
+      'items' in verdict &&
+        verdict.items.every((item) => item.state === 'planned' && item.rating === undefined),
+    ).toBe(true);
   });
 
   it('treats a zero id as missing and falls back to the Ukrainian title', () => {
@@ -93,8 +117,22 @@ describe('IMDb files', () => {
       kind: 'ratings',
       skippedRows: 1,
       items: [
-        { imdbId: 'tt0111161', rating: 10, title: 'The Shawshank Redemption', year: 1994, kind: 'movie', state: 'completed' },
-        { imdbId: 'tt0903747', rating: 9, title: 'Breaking Bad', year: 2008, kind: 'show', state: 'completed' },
+        {
+          imdbId: 'tt0111161',
+          rating: 10,
+          title: 'The Shawshank Redemption',
+          year: 1994,
+          kind: 'movie',
+          state: 'completed',
+        },
+        {
+          imdbId: 'tt0903747',
+          rating: 9,
+          title: 'Breaking Bad',
+          year: 2008,
+          kind: 'show',
+          state: 'completed',
+        },
       ],
     });
   });
@@ -124,9 +162,33 @@ describe('TMDB files', () => {
       kind: 'ratings',
       skippedRows: 1,
       items: [
-        { imdbId: 'tt0137523', tmdbId: 550, rating: 8.5, title: 'Fight Club', year: 1999, kind: 'movie', state: 'completed' },
-        { imdbId: 'tt0944947', tmdbId: 1399, rating: 9, title: 'Game of Thrones', year: 2011, kind: 'show', state: 'completed' },
-        { imdbId: undefined, tmdbId: 680, rating: 7.5, title: 'Pulp Fiction', year: 1994, kind: 'movie', state: 'completed' },
+        {
+          imdbId: 'tt0137523',
+          tmdbId: 550,
+          rating: 8.5,
+          title: 'Fight Club',
+          year: 1999,
+          kind: 'movie',
+          state: 'completed',
+        },
+        {
+          imdbId: 'tt0944947',
+          tmdbId: 1399,
+          rating: 9,
+          title: 'Game of Thrones',
+          year: 2011,
+          kind: 'show',
+          state: 'completed',
+        },
+        {
+          imdbId: undefined,
+          tmdbId: 680,
+          rating: 7.5,
+          title: 'Pulp Fiction',
+          year: 1994,
+          kind: 'movie',
+          state: 'completed',
+        },
       ],
     });
   });

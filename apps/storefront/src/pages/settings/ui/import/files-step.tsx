@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
+import { cn } from '@ratingo/web-core/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import type { ImportSource } from '@/pages/settings/model/import/import-sources';
 import type { ImportWizard } from '@/pages/settings/model/import/use-import-wizard';
@@ -10,9 +11,8 @@ import { HowTo } from './how-to';
 import { SourceList } from './source-list';
 import { SourceTiles } from './source-tiles';
 import { StepProgress } from './step-progress';
+import { STEP_HEADING_ID, STEP_TITLE } from './step-title';
 import { WizardActions } from './wizard-actions';
-
-export const STEP_TITLE = 'text-[26px] leading-tight font-extrabold tracking-tight';
 
 function useNextAction(wizard: ImportWizard) {
   const { dict } = useTranslation();
@@ -35,7 +35,9 @@ export function PhoneFilesStep({ wizard }: { wizard: ImportWizard }) {
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <h2 className={STEP_TITLE}>{interpolate(copy.files.title, { source: sourceName })}</h2>
+        <h2 id={STEP_HEADING_ID} tabIndex={-1} className={cn(STEP_TITLE, 'outline-none')}>
+          {interpolate(copy.files.title, { source: sourceName })}
+        </h2>
         <p className="text-[15px] leading-snug text-muted">{copy.files.text}</p>
       </div>
       <HowTo source={source} isDesktop={false} />
@@ -51,7 +53,6 @@ export function DesktopFilesStep({ wizard, resume }: { wizard: ImportWizard; res
   const { dict } = useTranslation();
   const copy = dict.settings.import;
   const next = useNextAction(wizard);
-  const sourceLabelId = useId();
   const filesLabelId = useId();
   const { source, files } = wizard.state;
   const sourceName = source ? copy.sources[source].name : '';
@@ -60,11 +61,11 @@ export function DesktopFilesStep({ wizard, resume }: { wizard: ImportWizard; res
     <>
       {resume}
       <StepProgress current={1} total={2} className="max-w-90" />
-      <section aria-labelledby={sourceLabelId} className="flex flex-col gap-2.5">
-        <h2 id={sourceLabelId} className="text-[17px] font-extrabold">
+      <section aria-labelledby={STEP_HEADING_ID} className="flex flex-col gap-2.5">
+        <h2 id={STEP_HEADING_ID} tabIndex={-1} className="text-[17px] font-extrabold outline-none">
           {copy.source.label}
         </h2>
-        <SourceTiles labelId={sourceLabelId} value={source} onChange={wizard.pickSource} />
+        <SourceTiles labelId={STEP_HEADING_ID} value={source} onChange={wizard.pickSource} />
       </section>
       {source ? (
         <>
@@ -102,7 +103,9 @@ export function PhoneSourceStep({
     <>
       {resume}
       <div className="flex flex-col gap-1.5">
-        <h2 className={STEP_TITLE}>{resume ? copy.resumeTitle : copy.title}</h2>
+        <h2 id={STEP_HEADING_ID} tabIndex={-1} className={cn(STEP_TITLE, 'outline-none')}>
+          {resume ? copy.resumeTitle : copy.title}
+        </h2>
         <p className="text-[15px] leading-snug text-muted">{copy.text}</p>
       </div>
       <SourceList onPick={onPick} />

@@ -18,7 +18,9 @@ function useRowCopy() {
       [item.kind ? copy.preview[item.kind] : undefined, item.year].filter(Boolean).join(' · '),
     tag: (item: ImportItem) => {
       if (item.rating !== undefined)
-        return interpolate(copy.preview.yourRating, { score: formatOwnRating(locale, item.rating) });
+        return interpolate(copy.preview.yourRating, {
+          score: formatOwnRating(locale, item.rating),
+        });
       return item.state === 'planned' ? copy.preview.want : undefined;
     },
   };
@@ -33,10 +35,7 @@ export function PreviewRows({ items }: { items: readonly ImportItem[] }) {
         const tag = copy.tag(item);
         const meta = copy.meta(item);
         return (
-          <li
-            key={key}
-            className="flex min-h-14 items-center gap-3 py-2 md:min-h-15"
-          >
+          <li key={key} className="flex min-h-14 items-center gap-3 py-2 md:min-h-15">
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="truncate text-[15px] font-semibold">{copy.title(item)}</span>
               {meta ? <span className="text-[13px] text-muted tabular-nums">{meta}</span> : null}

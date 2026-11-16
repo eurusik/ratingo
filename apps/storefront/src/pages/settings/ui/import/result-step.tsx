@@ -1,15 +1,15 @@
 'use client';
 
-import { pluralize } from '@ratingo/web-core/lib';
+import { cn, pluralize } from '@ratingo/web-core/lib';
 import { Check } from 'lucide-react';
 import { libraryListRoute } from '@/entities/library';
 import type { MediaImportResult } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import type { ImportWizard } from '@/pages/settings/model/import/use-import-wizard';
-import { STEP_TITLE } from './files-step';
 import { NotFoundList } from './not-found-list';
 import { PendingBatch } from './pending-batch';
 import { RatedShows } from './rated-shows';
+import { STEP_HEADING_ID, STEP_TITLE } from './step-title';
 import { WizardActions } from './wizard-actions';
 
 function ResultStats({ result, isDesktop }: { result: MediaImportResult; isDesktop: boolean }) {
@@ -24,7 +24,10 @@ function ResultStats({ result, isDesktop }: { result: MediaImportResult; isDeskt
   return (
     <dl className="grid grid-cols-3 gap-2 md:gap-3">
       {stats.map((stat) => (
-        <div key={stat.label} className="rounded-[18px] bg-surface px-3 py-3.5 md:rounded-[20px] md:p-4.5">
+        <div
+          key={stat.label}
+          className="rounded-[18px] bg-surface px-3 py-3.5 md:rounded-[20px] md:p-4.5"
+        >
           <dt className="text-xs text-muted md:text-[13px]">{stat.label}</dt>
           <dd className="mt-1 text-[22px] font-extrabold tabular-nums md:mt-1.5 md:text-[28px]">
             {stat.value.toLocaleString(locale)}
@@ -65,7 +68,13 @@ export function ResultStep({ wizard, isDesktop, origin }: ResultStepProps) {
         >
           <Check className="size-7.5 md:size-6.5" strokeWidth={2.6} />
         </span>
-        <h2 className={isDesktop ? 'text-2xl font-extrabold' : STEP_TITLE}>{title}</h2>
+        <h2
+          id={STEP_HEADING_ID}
+          tabIndex={-1}
+          className={cn(isDesktop ? 'text-2xl font-extrabold' : STEP_TITLE, 'outline-none')}
+        >
+          {title}
+        </h2>
         {isDesktop ? null : <p className="text-[15px] text-muted">{origin}</p>}
       </div>
       <ResultStats result={result} isDesktop={isDesktop} />

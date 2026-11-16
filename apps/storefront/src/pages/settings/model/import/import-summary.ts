@@ -2,6 +2,8 @@ import type { ImportFile, ReadyFile } from './import-file';
 import type { ImportItem } from './import-item';
 import type { PreviewFilter } from './import-wizard';
 
+export const MAX_IMPORT_ITEMS = 10_000;
+
 export interface ImportSummary {
   items: ImportItem[];
   ratings: number;
@@ -14,9 +16,28 @@ export interface ImportSummary {
 const isReady = (file: ImportFile): file is ReadyFile => file.status === 'ready';
 const isRated = (item: ImportItem) => item.state === 'completed';
 
+function preference(item: ImportItem): number {
+  if (item.rating !== undefined) return 2;
+  return isRated(item) ? 1 : 0;
+}
+
+function identity(item: ImportItem): string {
+  return item.imdbId ?? `tmdb:${item.tmdbId ?? ''}`;
+}
+
+export function uniqueItems(items: readonly ImportItem[]): ImportItem[] {
+  const byId = new Map<string, ImportItem>();
+  for (const item of items) {
+    const key = identity(item);
+    const current = byId.get(key);
+    if (!current || preference(item) > preference(current)) byId.set(key, item);
+  }
+  return [...byId.values()];
+}
+
 export function summarizeImport(files: readonly ImportFile[]): ImportSummary {
   const ready = files.filter(isReady);
-  const items = ready.flatMap((file) => file.items);
+  const items = uniqueItems(ready.flatMap((file) => file.items));
   const rated = items.filter(isRated);
   return {
     items,

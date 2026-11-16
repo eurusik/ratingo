@@ -30,7 +30,10 @@ function ActionButton({
 }) {
   if (action.href) {
     return (
-      <Link href={action.href} className={cn(buttonVariants({ variant }), 'no-underline', className)}>
+      <Link
+        href={action.href}
+        className={cn(buttonVariants({ variant }), 'no-underline', className)}
+      >
         {action.label}
       </Link>
     );
@@ -85,7 +88,11 @@ export function WizardActions({
             className="h-11 rounded-full px-4.5 font-semibold"
           />
         ) : null}
-        <ActionButton action={primary} variant="primary" className="h-11 rounded-full px-5.5 font-bold" />
+        <ActionButton
+          action={primary}
+          variant="primary"
+          className="h-11 rounded-full px-5.5 font-bold"
+        />
       </div>
     </>
   );

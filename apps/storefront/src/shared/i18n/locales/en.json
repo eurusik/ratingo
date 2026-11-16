@@ -1398,7 +1398,8 @@
         },
         "readFailed": "Couldn’t read the file. Try again.",
         "footer": "Ratings go to Watched, the list goes to Want to watch",
-        "next": "Next"
+        "next": "Next",
+        "newTab": "(opens in a new tab)"
       },
       "preview": {
         "fromSource": "{titles} from {source}",
@@ -1426,7 +1427,8 @@
           "text": "For titles you’ve already rated in Ratingo, we’ll take the rating from the {source} file. The old ones can’t be restored.",
           "cancel": "Cancel",
           "submit": "Replace and import"
-        }
+        },
+        "tooMany": "Too many titles: up to {max} at a time. Remove one of the files."
       },
       "result": {
         "title": "Moved {titles}",

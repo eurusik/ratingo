@@ -7,6 +7,7 @@ import { mediaImportApi, type ImportBatch, type MediaImportResult } from '@/shar
 import { isAnyRunning } from './import-batches';
 import { toImportItemDto, type ImportItem } from './import-item';
 import type { ImportSource } from './import-sources';
+import { rememberImport } from './last-import';
 
 const POLL_MS = 5000;
 const ERROR_BACKOFF_MS = 30_000;
@@ -40,7 +41,7 @@ export function useCancelImport() {
   });
 }
 
-export interface ImportRequest {
+interface ImportRequest {
   source: ImportSource;
   items: readonly ImportItem[];
   overwrite: boolean;
@@ -56,11 +57,10 @@ export function useImportMedia() {
         items: items.map(toImportItemDto),
         overwriteExisting: overwrite,
       }),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: LIBRARY_QUERY_KEY }),
-        queryClient.invalidateQueries({ queryKey: importBatchesKey(user?.id ?? null) }),
-      ]);
+    onSuccess: (result, { source }) => {
+      if (user) rememberImport({ userId: user.id, source, result, finishedAt: Date.now() });
+      void queryClient.invalidateQueries({ queryKey: LIBRARY_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: importBatchesKey(user?.id ?? null) });
     },
   });
 }

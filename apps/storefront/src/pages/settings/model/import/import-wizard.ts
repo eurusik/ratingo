@@ -98,6 +98,7 @@ export function importWizardReducer(
     case 'importFailed':
       return { ...state, isImporting: false };
     case 'showSummary':
+      if (state.isImporting) return state;
       return {
         ...INITIAL_IMPORT_STATE,
         step: 'result',
@@ -106,6 +107,6 @@ export function importWizardReducer(
         finishedAt: action.finishedAt,
       };
     case 'restart':
-      return INITIAL_IMPORT_STATE;
+      return state.isImporting ? state : INITIAL_IMPORT_STATE;
   }
 }

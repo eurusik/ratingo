@@ -34,10 +34,11 @@ interface ShowCardProps {
   show: RatedShow;
   mark?: WatchMark;
   isDesktop: boolean;
+  isBusy: boolean;
   onToggle: () => void;
 }
 
-function ShowCard({ show, mark, isDesktop, onToggle }: ShowCardProps) {
+function ShowCard({ show, mark, isDesktop, isBusy, onToggle }: ShowCardProps) {
   const { dict } = useTranslation();
   const copy = dict.settings.import.shows;
   const meta = useShowMeta()(show, mark);
@@ -78,8 +79,12 @@ function ShowCard({ show, mark, isDesktop, onToggle }: ShowCardProps) {
           variant={isWatching ? 'secondary' : 'outline'}
           aria-pressed={isWatching}
           aria-label={interpolate(copy.watchingLabel, { title: show.title })}
+          isPending={isBusy}
           onPress={onToggle}
-          className={cn('h-9 shrink-0 gap-1 rounded-full px-3 font-bold', isWatching && 'text-accent')}
+          className={cn(
+            'h-11 shrink-0 gap-1 rounded-full px-3 font-bold md:h-9',
+            isWatching && 'text-accent',
+          )}
         >
           {isWatching ? <Check aria-hidden className="size-4" /> : null}
           {copy.watching}
@@ -89,7 +94,13 @@ function ShowCard({ show, mark, isDesktop, onToggle }: ShowCardProps) {
   );
 }
 
-export function RatedShows({ result, isDesktop }: { result: MediaImportResult; isDesktop: boolean }) {
+export function RatedShows({
+  result,
+  isDesktop,
+}: {
+  result: MediaImportResult;
+  isDesktop: boolean;
+}) {
   const { dict } = useTranslation();
   const copy = dict.settings.import.shows;
   const titleId = useId();
@@ -137,6 +148,7 @@ export function RatedShows({ result, isDesktop }: { result: MediaImportResult; i
               show={show}
               mark={mark}
               isDesktop={isDesktop}
+              isBusy={watching.isBusy(show.mediaItemId)}
               onToggle={() => (mark ? void watching.unmark(show) : watching.open(show))}
             />
           );

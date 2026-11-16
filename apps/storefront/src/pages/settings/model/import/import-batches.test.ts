@@ -38,10 +38,15 @@ describe('runningProgress', () => {
 });
 
 describe('batchOutcome', () => {
-  it('treats a missing or processing batch as running', () => {
-    expect(batchOutcome(undefined)).toBe('running');
-    expect(batchOutcome(batch({}))).toBe('running');
-    expect(batchOutcome(batch({ status: 'cancelled' }))).toBe('cancelled');
+  it('is running until the list loads or while the batch processes', () => {
+    expect(batchOutcome(undefined, 'b1')).toBe('running');
+    expect(batchOutcome([batch({})], 'b1')).toBe('running');
+  });
+
+  it('reports the finished state and an unknown batch', () => {
+    expect(batchOutcome([batch({ status: 'cancelled' })], 'b1')).toBe('cancelled');
+    expect(batchOutcome([batch({ status: 'completed' })], 'b1')).toBe('completed');
+    expect(batchOutcome([batch({})], 'other')).toBe('unknown');
   });
 });
 

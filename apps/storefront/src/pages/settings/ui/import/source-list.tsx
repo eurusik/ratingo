@@ -12,13 +12,7 @@ import {
 import { CARD_LIST } from '../settings-card';
 import { SourceMark } from './source-mark';
 
-function SourceRow({
-  source,
-  onPick,
-}: {
-  source: ListedSource;
-  onPick?: () => void;
-}) {
+function SourceRow({ source, onPick }: { source: ListedSource; onPick?: () => void }) {
   const { dict } = useTranslation();
   const copy = dict.settings.import;
   const isUpcoming = !onPick;

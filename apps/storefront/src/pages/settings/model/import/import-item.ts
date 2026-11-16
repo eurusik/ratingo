@@ -25,6 +25,7 @@ export const FILE_KIND_STATE: Record<ImportFileKind, ImportItem['state']> = {
   watchlist: 'planned',
 };
 
+const MAX_TITLE_LENGTH = 200;
 const MIN_RATING = 0.5;
 const MAX_RATING = 10;
 
@@ -47,6 +48,6 @@ export function hasIdentifier(item: Pick<ImportItem, 'imdbId' | 'tmdbId'>): bool
   return item.imdbId !== undefined || item.tmdbId !== undefined;
 }
 
-export function toImportItemDto({ kind: _kind, ...item }: ImportItem): ImportItemDto {
-  return item;
+export function toImportItemDto({ kind: _kind, title, ...item }: ImportItem): ImportItemDto {
+  return { ...item, title: title?.slice(0, MAX_TITLE_LENGTH) };
 }

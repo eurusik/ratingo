@@ -39,11 +39,21 @@ describe('rated imported shows', () => {
 
   it('picks shows from history that were imported with a rating', () => {
     const shows = pickRatedShows(
-      [entry('rated-show', 'show'), entry('other-show', 'show'), entry('rated-show-movie', 'movie')],
+      [
+        entry('rated-show', 'show'),
+        entry('other-show', 'show'),
+        entry('rated-show-movie', 'movie'),
+      ],
       new Set(['rated-show', 'rated-show-movie']),
     );
     expect(shows).toEqual([
-      { mediaItemId: 'rated-show', title: 'rated-show', slug: 'rated-show', imageUrl: undefined, score: 9 },
+      {
+        mediaItemId: 'rated-show',
+        title: 'rated-show',
+        slug: 'rated-show',
+        imageUrl: undefined,
+        score: 9,
+      },
     ]);
   });
 });

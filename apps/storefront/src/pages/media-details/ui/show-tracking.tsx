@@ -37,7 +37,8 @@ import { ShowActionsSkeleton } from './show-actions-skeleton';
 
 const EPISODE_SLOT = 'flex min-h-[4.125rem] items-center gap-3';
 
-const loadEpisodesSheet = () => import('@/widgets/episodes-sheet/index.client').then((module) => module.EpisodesSheet);
+const loadEpisodesSheet = () =>
+  import('@/widgets/episodes-sheet/index.client').then((module) => module.EpisodesSheet);
 
 const EpisodesSheet = dynamic(loadEpisodesSheet, { ssr: false });
 

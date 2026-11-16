@@ -2,7 +2,8 @@
 
 import { useEffect, useEffectEvent } from 'react';
 import dynamic from 'next/dynamic';
-import { episodeCode } from '@/entities/episode';
+import { toast } from '@heroui/react';
+import { episodeCode, type Episode } from '@/entities/episode';
 import { useTranslation } from '@/shared/i18n';
 import { useEpisodesTracker, type EpisodesTracker } from '@/widgets/episodes-sheet';
 import {
@@ -25,43 +26,76 @@ interface WatchSheetProps {
   onClose: () => void;
 }
 
-function OpenSheet({ show, episodes, onMark, onClose }: WatchSheetProps & { episodes: ShowEpisodes }) {
+function lastEpisode(episodes: readonly Episode[]): Episode | undefined {
+  return episodes.at(-1);
+}
+
+function OpenSheet({
+  show,
+  episodes,
+  onMark,
+  onClose,
+}: WatchSheetProps & { episodes: ShowEpisodes }) {
   const { dict } = useTranslation();
   const sheetShow = { ...episodes, mediaItemId: show.mediaItemId, title: show.title };
   const tracker = useEpisodesTracker(sheetShow);
-  const importTracker: EpisodesTracker = {
+  const stopAt = (episode: Episode | undefined) => {
+    if (episode) onMark(show, { kind: 'stoppedAt', code: episodeCode(episode, dict) });
+  };
+  const startTracker: EpisodesTracker = {
     ...tracker,
     markThrough: (episode) => {
       tracker.markThrough(episode);
-      onMark(show, { kind: 'stoppedAt', code: episodeCode(episode, dict) });
+      stopAt(episode);
+    },
+    toggle: (episode, isWatched) => {
+      tracker.toggle(episode, isWatched);
+      if (isWatched) stopAt(episode);
+    },
+    markSeason: (season) => {
+      tracker.markSeason(season);
+      stopAt(lastEpisode(season.episodes));
+    },
+    catchUp: () => {
+      tracker.catchUp();
+      onClose();
     },
   };
 
   return (
     <EpisodesSheet
       show={sheetShow}
-      tracker={importTracker}
+      tracker={startTracker}
       isOpen
       isPicking
       onOpenChange={(isOpen) => {
         if (!isOpen) onClose();
       }}
-      onPickingChange={() => undefined}
+      onPickingChange={(isPicking) => {
+        if (!isPicking) onClose();
+      }}
       onNotStarted={() => onMark(show, NOT_STARTED)}
     />
   );
 }
 
 export function WatchSheet(props: WatchSheetProps) {
-  const { show, onMark } = props;
+  const { dict } = useTranslation();
+  const { show, onMark, onClose } = props;
   const episodes = useShowEpisodes(show.slug);
-  const hasNoEpisodes = episodes.isError || episodes.data?.seasons.length === 0;
-
-  const startWithoutEpisodes = useEffectEvent(() => onMark(show, NOT_STARTED));
+  const hasNoEpisodes = episodes.data?.seasons.length === 0;
+  const settle = useEffectEvent(() => {
+    if (hasNoEpisodes) {
+      onMark(show, NOT_STARTED);
+      return;
+    }
+    toast.danger(dict.settings.import.shows.failed);
+    onClose();
+  });
 
   useEffect(() => {
-    if (hasNoEpisodes) startWithoutEpisodes();
-  }, [hasNoEpisodes]);
+    if (hasNoEpisodes || episodes.isError) settle();
+  }, [hasNoEpisodes, episodes.isError]);
 
   if (!episodes.data || hasNoEpisodes) return null;
   return <OpenSheet {...props} episodes={episodes.data} />;

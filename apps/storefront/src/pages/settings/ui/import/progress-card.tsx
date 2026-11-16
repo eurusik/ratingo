@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
-import { Meter } from '@heroui/react';
+import { ProgressBar } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
 
@@ -24,6 +24,7 @@ export function ProgressCard({
 }: ProgressCardProps) {
   const { dict } = useTranslation();
   const titleId = useId();
+  const progressText = interpolate(dict.settings.import.pending.progress, { done, total });
 
   return (
     <section
@@ -37,15 +38,21 @@ export function ProgressCard({
         <h2 id={titleId} className="min-w-0 flex-1 text-base font-bold">
           {title}
         </h2>
-        <span className="text-[13px] text-muted tabular-nums md:text-sm">
-          {interpolate(dict.settings.import.pending.progress, { done, total })}
+        <span aria-hidden className="text-[13px] text-muted tabular-nums md:text-sm">
+          {progressText}
         </span>
       </div>
-      <Meter aria-labelledby={titleId} value={done} maxValue={Math.max(total, 1)} size="sm">
-        <Meter.Track>
-          <Meter.Fill />
-        </Meter.Track>
-      </Meter>
+      <ProgressBar
+        aria-labelledby={titleId}
+        value={done}
+        maxValue={Math.max(total, 1)}
+        valueLabel={progressText}
+        size="sm"
+      >
+        <ProgressBar.Track>
+          <ProgressBar.Fill />
+        </ProgressBar.Track>
+      </ProgressBar>
       <p className="text-[13px] leading-snug text-muted md:text-sm">{text}</p>
       <div className="flex gap-2">{actions}</div>
     </section>

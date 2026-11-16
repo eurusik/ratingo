@@ -9,7 +9,13 @@ type NotFoundItem = MediaImportResult['details']['notFound'][number];
 
 const itemKey = (item: NotFoundItem) => `${item.imdbId ?? item.tmdbId ?? item.title}`;
 
-export function NotFoundList({ items, isDesktop }: { items: readonly NotFoundItem[]; isDesktop: boolean }) {
+export function NotFoundList({
+  items,
+  isDesktop,
+}: {
+  items: readonly NotFoundItem[];
+  isDesktop: boolean;
+}) {
   const { dict } = useTranslation();
   const copy = dict.settings.import.result;
   if (items.length === 0) return null;
@@ -29,9 +35,7 @@ export function NotFoundList({ items, isDesktop }: { items: readonly NotFoundIte
         <Disclosure.Body>
           <ul className="mb-3 list-disc ps-4.5 text-sm leading-relaxed text-muted md:mb-4 md:columns-2 md:text-[15px]">
             {withOccurrenceKeys(items, itemKey).map(({ item, key }) => (
-              <li key={key}>
-                {item.title ?? item.imdbId ?? copy.untitled}
-              </li>
+              <li key={key}>{item.title ?? item.imdbId ?? copy.untitled}</li>
             ))}
           </ul>
         </Disclosure.Body>

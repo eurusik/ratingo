@@ -16,7 +16,10 @@ export function hasHeaders(table: CsvTable, required: readonly string[]): boolea
   return required.every((header) => table.headers.includes(header));
 }
 
-export function kindByFirstRating(table: CsvTable, ratingHeader: string): ImportFileKind | undefined {
+export function kindByFirstRating(
+  table: CsvTable,
+  ratingHeader: string,
+): ImportFileKind | undefined {
   const [first] = table.records;
   if (!first) return undefined;
   return first[ratingHeader] ? 'ratings' : 'watchlist';

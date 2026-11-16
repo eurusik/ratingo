@@ -1,5 +1,5 @@
 import type { ImportFile } from './import-file';
-import { filterItems, summarizeImport } from './import-summary';
+import { filterItems, summarizeImport, uniqueItems } from './import-summary';
 
 const FILES: ImportFile[] = [
   {
@@ -45,6 +45,23 @@ describe('summarizeImport', () => {
       items: [{ tmdbId: 1, rating: 7, state: 'completed' }],
     };
     expect(summarizeImport([untyped]).hasUntypedRatings).toBe(true);
+  });
+});
+
+describe('uniqueItems', () => {
+  it('keeps one entry per title, preferring a rating, then a watched entry', () => {
+    expect(
+      uniqueItems([
+        { imdbId: 'tt1', state: 'planned' },
+        { imdbId: 'tt1', state: 'completed', rating: 7 },
+        { imdbId: 'tt1', state: 'completed' },
+        { tmdbId: 5, state: 'planned' },
+        { tmdbId: 5, state: 'completed' },
+      ]),
+    ).toEqual([
+      { imdbId: 'tt1', state: 'completed', rating: 7 },
+      { tmdbId: 5, state: 'completed' },
+    ]);
   });
 });
 
