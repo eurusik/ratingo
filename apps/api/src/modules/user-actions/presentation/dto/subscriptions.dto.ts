@@ -1,7 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { IsIn, IsOptional, IsString } from 'class-validator';
 
+import { ImageDto } from '@/common/dtos/image.dto';
+import { MediaType } from '@/common/enums/media-type.enum';
 import {
   SUBSCRIPTION_TRIGGER,
   type SubscriptionTrigger,
@@ -74,27 +76,32 @@ class SubscriptionResponseDto {
   createdAt: Date;
 }
 
+export class SubscriptionMediaSummaryDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  id: string;
+
+  @ApiProperty({ enum: [MediaType.MOVIE, MediaType.SHOW], example: MediaType.MOVIE })
+  type: MediaType;
+
+  @ApiProperty({ example: 'Inception' })
+  title: string;
+
+  @ApiProperty({ example: 'inception-2010' })
+  slug: string;
+
+  @ApiProperty({ type: ImageDto, nullable: true })
+  poster: ImageDto | null;
+
+  @ApiPropertyOptional({ type: Date, nullable: true })
+  releaseDate?: Date | null;
+}
+
 /**
  * Response DTO for subscription with media.
  */
 export class SubscriptionWithMediaResponseDto extends SubscriptionResponseDto {
-  @ApiProperty({
-    example: {
-      id: '123e4567-e89b-12d3-a456-426614174000',
-      type: 'movie',
-      title: 'Inception',
-      slug: 'inception-2010',
-      poster: { w92: '...', w185: '...', w342: '...', w500: '...', w780: '...', original: '...' },
-    },
-  })
-  mediaSummary: {
-    id: string;
-    type: string;
-    title: string;
-    slug: string;
-    poster: Record<string, string> | null;
-    releaseDate?: Date | null;
-  };
+  @ApiProperty({ type: SubscriptionMediaSummaryDto })
+  mediaSummary: SubscriptionMediaSummaryDto;
 }
 
 /**

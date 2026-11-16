@@ -36,3 +36,22 @@ export function buildOAuthStartUrl({
   const query = new URLSearchParams({ returnTo: toSafeReturnPath(returnTo), returnOrigin });
   return `${apiBaseUrl}/auth/${provider}?${query.toString()}`;
 }
+
+interface OAuthLinkUrlInput extends OAuthStartUrlInput {
+  accessToken: string;
+}
+
+export function buildOAuthLinkUrl({
+  apiBaseUrl,
+  provider,
+  returnTo,
+  returnOrigin,
+  accessToken,
+}: OAuthLinkUrlInput): string {
+  const query = new URLSearchParams({
+    token: accessToken,
+    returnTo: toSafeReturnPath(returnTo),
+    returnOrigin,
+  });
+  return `${apiBaseUrl}/auth/link/${provider}?${query.toString()}`;
+}

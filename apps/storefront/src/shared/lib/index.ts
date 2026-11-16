@@ -9,6 +9,7 @@ export {
   useInfiniteSentinel,
   useIsClamped,
   useMediaQuery,
+  useRevealedRows,
 } from './layout';
 export {
   capitalizeFirst,
@@ -16,10 +17,13 @@ export {
   formatCompactCount,
   formatScore,
   initialOf,
+  isSearchQuery,
+  matchesSearch,
   percentFromScore,
   positiveNumber,
   scoreFromPercent,
   scoreFromRating,
+  searchableText,
   yearFromDate,
 } from './format';
 export { useIsApplePlatform } from './platform';
@@ -44,6 +48,7 @@ export {
   nameArtLinkingTo,
   nameArtOfLink,
   pendingArtImageFor,
+  previousRoutePath,
   railMemoryMarker,
   releaseSharedArt,
   replaceDocumentLocation,

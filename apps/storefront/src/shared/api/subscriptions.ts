@@ -2,7 +2,7 @@ import type { components } from '@ratingo/api-contract';
 import { apiDelete, apiGet, apiPost } from '@ratingo/web-core/api';
 
 export type SubscriptionTrigger = components['schemas']['SubscribeDto']['trigger'];
-type Subscription = components['schemas']['SubscriptionWithMediaResponseDto'];
+export type Subscription = components['schemas']['SubscriptionWithMediaResponseDto'];
 type SubscribeResult = components['schemas']['SubscribeActionResultDto'];
 type UnsubscribeResult = components['schemas']['UnsubscribeActionResultDto'];
 
@@ -16,16 +16,24 @@ export const subscriptionsApi = {
     return apiGet<SubscriptionPage>('me/subscriptions', { searchParams: { ...query } });
   },
 
-  subscribe(mediaItemId: string, trigger: SubscriptionTrigger): Promise<SubscribeResult> {
+  subscribe(
+    mediaItemId: string,
+    trigger: SubscriptionTrigger,
+    context = 'reminder',
+  ): Promise<SubscribeResult> {
     return apiPost<SubscribeResult>(`me/subscriptions/${mediaItemId}`, {
       trigger,
-      context: 'reminder',
+      context,
     } satisfies components['schemas']['SubscribeDto']);
   },
 
-  unsubscribe(mediaItemId: string, trigger: SubscriptionTrigger): Promise<UnsubscribeResult> {
+  unsubscribe(
+    mediaItemId: string,
+    trigger: SubscriptionTrigger,
+    context = 'reminder',
+  ): Promise<UnsubscribeResult> {
     return apiDelete<UnsubscribeResult>(`me/subscriptions/${mediaItemId}`, {
-      json: { trigger, context: 'reminder' } satisfies components['schemas']['UnsubscribeDto'],
+      json: { trigger, context } satisfies components['schemas']['UnsubscribeDto'],
     });
   },
 } as const;

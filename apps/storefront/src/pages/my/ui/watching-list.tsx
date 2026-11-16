@@ -5,14 +5,12 @@ import { Chip } from '@heroui/react';
 import type { UserMediaState } from '@/shared/api';
 import { BROWSE_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
-import { useClientNow } from '@/shared/lib';
-import { EmptyState, SegmentedFilter, ShowMore } from '@/shared/ui';
+import { isSearchQuery, useClientNow, useRevealedRows } from '@/shared/lib';
+import { EmptyState, ListSearch, SegmentedFilter, ShowMore } from '@/shared/ui';
 import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
 import { useShelfLists, useWatchingLists } from '../model/library-queries';
 import { titleOf } from '../model/library-title';
-import { useRevealedRows } from '../model/revealed-rows';
-import { isSearchQuery } from '../model/title-search';
 import {
   WATCHING_FILTERS,
   filterCounts,
@@ -27,7 +25,6 @@ import {
   type WatchingKind,
 } from '../model/watching-filters';
 import { splitWatching } from '../model/watching-sections';
-import { ListSearch } from './list-search';
 import { EmptyList, LibraryListSkeleton, ListFailure, SectionTitle } from './list-states';
 import { ShelfRowItem } from './shelf-list';
 import { FreshEpisodeRow, NextEpisodeRow, WaitingRowItem } from './watching-rows';

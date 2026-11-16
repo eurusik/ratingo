@@ -1124,5 +1124,182 @@
     "on": "We'll remind you about new episodes: {show}",
     "off": "Reminder turned off: {show}",
     "failed": "Couldn't change the reminder."
+  },
+  "settings": {
+    "title": "Settings",
+    "back": "Settings",
+    "backLabel": "Back to settings",
+    "backToMy": "My",
+    "backToMyLabel": "Back to My",
+    "sectionsLabel": "Settings sections",
+    "groups": {
+      "account": "Account",
+      "app": "App",
+      "data": "Data"
+    },
+    "sections": {
+      "profile": "Profile",
+      "security": "Sign-in & security",
+      "notifications": "Notifications",
+      "privacy": "Privacy",
+      "import": "Import"
+    },
+    "importRow": "Import from Trakt or Letterboxd",
+    "visibility": {
+      "public": "Public",
+      "private": "Private"
+    },
+    "profileVisibility": {
+      "public": "public profile",
+      "private": "private profile"
+    },
+    "signOut": "Sign out",
+    "footnote": "Language and theme live in the profile menu",
+    "signIn": {
+      "title": "Sign in to change settings",
+      "text": "Your profile, notifications, privacy and sign-in methods will show up here.",
+      "action": "Sign in"
+    },
+    "profile": {
+      "photoChange": "Change photo",
+      "photoRemove": "Remove",
+      "photoHint": "JPG, PNG or WebP, up to 5 MB, square works best.",
+      "photoDropHint": "You can drop it here.",
+      "photoUploading": "Uploading photo…",
+      "photoUpdated": "Photo updated",
+      "photoRemoved": "Photo removed",
+      "photoFailed": "Couldn't update the photo. Try again.",
+      "photoTooLarge": "The file is larger than 5 MB. Pick a smaller one.",
+      "photoWrongType": "Only JPG, PNG or WebP will do.",
+      "undo": "Undo",
+      "username": "Username",
+      "usernameHint": "Latin letters, digits and _, 3–30 characters · your profile address changes too",
+      "usernameTaken": "This username is taken",
+      "usernameUnavailable": "This username isn't available, pick another one",
+      "region": "Region",
+      "regionHint": "For release dates",
+      "bio": "About you",
+      "bioPlaceholder": "What you love to watch…",
+      "bioCount": "{count} / {max}",
+      "city": "City",
+      "cityPlaceholder": "Kyiv…",
+      "optional": "optional",
+      "website": "Website",
+      "websitePlaceholder": "mysite.com",
+      "websiteHint": "We'll add https:// for you",
+      "websiteInvalid": "That doesn't look like a website address",
+      "unsaved": "You have unsaved changes",
+      "cancel": "Cancel",
+      "save": "Save",
+      "noChanges": "No changes",
+      "saved": "Saved",
+      "saveFailed": "Couldn't save. Try again.",
+      "discard": {
+        "title": "Discard changes?",
+        "text": "Your username, bio and other profile fields will go back to what you saved.",
+        "keep": "Keep editing",
+        "confirm": "Discard"
+      }
+    },
+    "notifications": {
+      "lead": "Notifications come for titles you follow. New episodes of what you watch show up in My.",
+      "following": "Following",
+      "searchLabel": "Search titles you follow",
+      "searchPlaceholder": "Search by title…",
+      "noMatch": "Nothing you follow matches “{query}”.",
+      "empty": {
+        "title": "You don't follow anything yet",
+        "text": "Follow movies and shows on their pages and we'll tell you when they come out."
+      },
+      "showMore": "Show more",
+      "unfollow": "Unfollow",
+      "unfollowLabel": "Unfollow “{title}”",
+      "unfollowed": "No longer following “{title}”",
+      "unfollowFailed": "Couldn't change that. Try again.",
+      "undo": "Undo",
+      "failed": "Couldn't load what you follow.",
+      "retry": "Try again",
+      "types": {
+        "movie": "Movie",
+        "show": "Show"
+      },
+      "triggers": {
+        "release": "release",
+        "new_season": "new season",
+        "new_episode": "new episodes",
+        "on_streaming": "streaming",
+        "status_changed": "release date"
+      },
+      "automatic": "Automatic",
+      "autoSubscribe": "Follow a show when I start it",
+      "autoSubscribeHint": "Once you mark the first episode you follow the show and get notified about a new season"
+    },
+    "privacy": {
+      "isProfilePublic": {
+        "label": "Public profile",
+        "hint": "Others can see your profile at {url}"
+      },
+      "showWatchHistory": {
+        "label": "Show watch history",
+        "hint": "What you watched and when"
+      },
+      "showRatings": {
+        "label": "Show ratings",
+        "hint": "Your scores on title pages and in your profile"
+      },
+      "allowFollowers": {
+        "label": "Allow followers",
+        "hint": "Others can follow your ratings"
+      },
+      "note": "Turn off “Public profile” and the rest becomes inactive, but keeps its values.",
+      "privateNote": "Your profile is private: only you can see {url}. The other settings come back when you open your profile again.",
+      "subtitle": {
+        "public": "Public profile",
+        "private": "Private profile"
+      },
+      "failed": "Couldn't save. Try again."
+    },
+    "security": {
+      "methods": "Sign-in methods",
+      "methodNames": {
+        "google": "Google",
+        "facebook": "Facebook",
+        "email": "email"
+      },
+      "emailMethod": "Email and password",
+      "connectedAs": "Connected · {email}",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "noPassword": "{email} · no password",
+      "connect": "Connect",
+      "connectLabel": "Connect {provider}",
+      "disconnect": "Disconnect",
+      "disconnectLabel": "Disconnect {provider}",
+      "lastMethod": "You can't disconnect your last sign-in method — add another one first.",
+      "changePassword": "Change password",
+      "newPasswordTitle": "New password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "currentRequired": "Enter your current password",
+      "wrongPassword": "That password doesn't match",
+      "passwordChanged": "Password changed",
+      "passwordFailed": "Couldn't change the password. Try again.",
+      "cancel": "Cancel",
+      "unlink": {
+        "title": "Disconnect {provider}?",
+        "text": "You won't be able to sign in with {provider} anymore. You can still sign in with {rest}.",
+        "cancel": "Cancel",
+        "confirm": "Disconnect"
+      },
+      "unlinked": "{provider} disconnected",
+      "unlinkFailed": "Couldn't disconnect {provider}. Try again.",
+      "linked": "{provider} connected",
+      "alreadyLinked": "This {provider} account is already linked to another profile.",
+      "linkFailed": "Couldn't connect {provider}. Try again."
+    },
+    "importSoon": {
+      "title": "Import is coming soon",
+      "text": "You'll be able to bring your ratings and history from Trakt or Letterboxd right here."
+    }
   }
 }

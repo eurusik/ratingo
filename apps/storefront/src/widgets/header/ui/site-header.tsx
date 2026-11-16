@@ -15,6 +15,7 @@ import {
   isBrowsePath,
   isMediaDetailsPath,
   isNavRouteActive,
+  isSettingsPath,
 } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { BrandMark, Container } from '@/shared/ui';
@@ -31,7 +32,10 @@ const OWN_PHONE_HEADER_ROUTES = new Set([CALENDAR_ROUTE, MY_ROUTE, NOTIFICATIONS
 
 function hasOwnPhoneHeader(pathname: string): boolean {
   return (
-    isMediaDetailsPath(pathname) || isBrowsePath(pathname) || OWN_PHONE_HEADER_ROUTES.has(pathname)
+    isMediaDetailsPath(pathname) ||
+    isBrowsePath(pathname) ||
+    isSettingsPath(pathname) ||
+    OWN_PHONE_HEADER_ROUTES.has(pathname)
   );
 }
 

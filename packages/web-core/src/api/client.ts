@@ -245,11 +245,13 @@ export async function apiPost<T>(path: string, json?: unknown, options?: Options
  * @throws {ApiError} When API returns error response
  */
 export async function apiPatch<T>(path: string, json?: unknown, options?: Options): Promise<T> {
-  return handleResponse(
-    getClient()
-      .patch(path, { json, ...options })
-      .json<ApiResponse<T>>(),
-  );
+  const response = await getClient().patch(path, { json, ...options });
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return handleResponse(response.json<ApiResponse<T>>());
 }
 
 /**

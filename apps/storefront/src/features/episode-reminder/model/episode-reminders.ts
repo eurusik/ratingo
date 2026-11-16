@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
+import { SUBSCRIPTIONS_KEY, remindedShowsKey } from '@/entities/subscription';
 import { fetchAllPages, subscriptionsApi } from '@/shared/api';
 import { useSignedInAction } from '@/shared/auth';
 import { interpolate, useTranslation } from '@/shared/i18n';
@@ -11,10 +12,6 @@ import { interpolate, useTranslation } from '@/shared/i18n';
 const REMINDER_TRIGGER = 'new_episode';
 const PAGE_SIZE = 100;
 const REMINDERS_STALE_MS = 5 * 60 * 1000;
-
-function remindersKey(userId: string | null) {
-  return ['subscriptions', 'reminders', userId] as const;
-}
 
 async function fetchRemindedShows(): Promise<ReadonlySet<string>> {
   const subscriptions = await fetchAllPages(PAGE_SIZE, subscriptionsApi.list);
@@ -47,7 +44,7 @@ export function useEpisodeReminder(show: ReminderShow): EpisodeReminder {
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const runSignedIn = useSignedInAction();
-  const queryKey = remindersKey(user?.id ?? null);
+  const queryKey = remindedShowsKey(user?.id ?? null);
   const { data } = useQuery({
     queryKey,
     queryFn: fetchRemindedShows,
@@ -76,7 +73,7 @@ export function useEpisodeReminder(show: ReminderShow): EpisodeReminder {
       if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
       toast.danger(dict.reminder.failed);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEY }),
   });
 
   const toggle = useCallback(() => {

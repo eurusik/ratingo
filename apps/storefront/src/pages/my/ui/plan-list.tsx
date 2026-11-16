@@ -7,12 +7,11 @@ import { ArrowUpDown, Play } from 'lucide-react';
 import { ScoreChip } from '@/entities/media';
 import { BROWSE_ROUTE, mediaRoute, showPickRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { useClientNow } from '@/shared/lib';
-import { EmptyState, FadingScrollRow, SegmentedFilter, ShowMore } from '@/shared/ui';
+import { isSearchQuery, matchesSearch, useClientNow, useRevealedRows } from '@/shared/lib';
+import { EmptyState, FadingScrollRow, ListSearch, SegmentedFilter, ShowMore } from '@/shared/ui';
 import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
 import { usePlanList } from '../model/library-queries';
-import { useRevealedRows } from '../model/revealed-rows';
 import {
   PLAN_SORTS,
   TYPE_FILTERS,
@@ -21,11 +20,9 @@ import {
   type PlanSort,
   type TypeFilter,
 } from '../model/plan-order';
-import { isSearchQuery, matchesSearch } from '../model/title-search';
 import { CheckButton } from './check-button';
 import { LibraryRow } from './library-row';
 import { EmptyList, LibraryListSkeleton, ListFailure } from './list-states';
-import { ListSearch } from './list-search';
 import { RowMenu, type RowMenuItem } from './row-menu';
 
 const EAGER_ROWS = 3;

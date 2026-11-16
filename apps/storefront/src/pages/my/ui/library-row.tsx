@@ -5,9 +5,8 @@ import { Meter } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import { EventBadge, type MediaEvent } from '@/entities/media';
 import { mediaRoute } from '@/shared/config';
+import { LIST_ROW_FRAME } from '@/shared/ui';
 import type { LibraryTitle } from '../model/library-title';
-
-export const ROW_FRAME = 'h-[54px] w-24 min-[360px]:h-[63px] min-[360px]:w-28 md:h-[81px] md:w-36';
 
 const HOVER_REVEAL =
   'transition-opacity motion-reduce:transition-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 [@media(hover:hover)]:group-focus-within/row:opacity-100 [@media(hover:hover)]:has-[[aria-expanded=true]]:opacity-100';
@@ -39,7 +38,7 @@ function RowFrame({
   return (
     <span
       aria-hidden
-      className={cn('relative shrink-0 overflow-hidden rounded-[10px] bg-default', ROW_FRAME)}
+      className={cn('relative shrink-0 overflow-hidden rounded-[10px] bg-default', LIST_ROW_FRAME)}
     >
       {title.imageUrl ? (
         <Image
