@@ -1211,7 +1211,7 @@
         "title": "You don't follow anything yet",
         "text": "Follow movies and shows on their pages and we'll tell you when they come out."
       },
-      "showAll": "Show all {count}",
+      "showMore": "Show more",
       "unfollow": "Unfollow",
       "unfollowLabel": "Unfollow “{title}”",
       "unfollowed": "No longer following “{title}”",

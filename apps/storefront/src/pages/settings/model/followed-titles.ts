@@ -1,7 +1,5 @@
 import type { MediaType, Subscription, SubscriptionTrigger } from '@/shared/api';
-import { isSearchQuery, matchesSearch } from '@/shared/lib';
-
-export const FIRST_FOLLOWED_ROWS = 5;
+import { matchesSearch } from '@/shared/lib';
 
 export interface FollowedTitle {
   mediaItemId: string;
@@ -32,22 +30,9 @@ export function groupFollowedTitles(subscriptions: readonly Subscription[]): Fol
   return [...titles.values()];
 }
 
-export interface VisibleFollowedTitles {
-  rows: FollowedTitle[];
-  hasMore: boolean;
-}
-
-export function visibleFollowedTitles(
+export function matchingFollowedTitles(
   titles: readonly FollowedTitle[],
   query: string,
-  isExpanded: boolean,
-): VisibleFollowedTitles {
-  if (isSearchQuery(query)) {
-    return { rows: titles.filter((title) => matchesSearch(title.title, query)), hasMore: false };
-  }
-  if (isExpanded) return { rows: [...titles], hasMore: false };
-  return {
-    rows: titles.slice(0, FIRST_FOLLOWED_ROWS),
-    hasMore: titles.length > FIRST_FOLLOWED_ROWS,
-  };
+): FollowedTitle[] {
+  return titles.filter((title) => matchesSearch(title.title, query));
 }

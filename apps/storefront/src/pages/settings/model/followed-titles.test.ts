@@ -1,11 +1,6 @@
 import fc from 'fast-check';
 import type { Subscription, SubscriptionTrigger } from '@/shared/api';
-import {
-  FIRST_FOLLOWED_ROWS,
-  groupFollowedTitles,
-  visibleFollowedTitles,
-  type FollowedTitle,
-} from './followed-titles';
+import { groupFollowedTitles, matchingFollowedTitles, type FollowedTitle } from './followed-titles';
 
 function subscription(mediaItemId: string, trigger: SubscriptionTrigger, title = mediaItemId) {
   return {
@@ -71,23 +66,14 @@ describe('groupFollowedTitles', () => {
   });
 });
 
-describe('visibleFollowedTitles', () => {
-  it('shows the first page with a "show all" while collapsed', () => {
-    const { rows, hasMore } = visibleFollowedTitles(followed(8), '', false);
-    expect(rows).toHaveLength(FIRST_FOLLOWED_ROWS);
-    expect(hasMore).toBe(true);
+describe('matchingFollowedTitles', () => {
+  it('keeps every title while the search is empty', () => {
+    expect(matchingFollowedTitles(followed(30), '  ')).toHaveLength(30);
   });
 
-  it('shows everything once expanded', () => {
-    expect(visibleFollowedTitles(followed(8), '', true)).toEqual({
-      rows: followed(8),
-      hasMore: false,
-    });
-  });
-
-  it('searches across all titles, not only the first page', () => {
-    const { rows, hasMore } = visibleFollowedTitles(followed(8), 'title 7', false);
-    expect(rows.map((row) => row.title)).toEqual(['Title 7']);
-    expect(hasMore).toBe(false);
+  it('searches across the whole list', () => {
+    expect(matchingFollowedTitles(followed(30), 'title 27').map((row) => row.title)).toEqual([
+      'Title 27',
+    ]);
   });
 });

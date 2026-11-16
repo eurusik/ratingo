@@ -3,14 +3,17 @@
 import { useState } from 'react';
 import { Button, Skeleton } from '@heroui/react';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { EMPTY_STATE_ACTION, EmptyState, LIST_ROW_FRAME, ListSearch } from '@/shared/ui';
+import { useRevealedRows } from '@/shared/lib';
+import { EMPTY_STATE_ACTION, EmptyState, LIST_ROW_FRAME, ListSearch, ShowMore } from '@/shared/ui';
 import { useAccountToggles } from '../model/account-toggles';
 import { useFollowedSummary, useFollowedTitles, useUnfollowTitle } from '../model/followed-queries';
-import { FIRST_FOLLOWED_ROWS, visibleFollowedTitles } from '../model/followed-titles';
+import { matchingFollowedTitles } from '../model/followed-titles';
 import { cn } from '@ratingo/web-core/lib';
 import { CARD_LIST, SettingsGroup } from './settings-card';
 import { FollowedRow } from './followed-row';
 import { SettingSwitch } from './setting-switch';
+
+const SKELETON_ROWS = 5;
 
 const FOLLOWED_LIST = cn(CARD_LIST, 'md:rounded-none md:bg-transparent md:px-0');
 
@@ -20,7 +23,7 @@ function FollowedSkeleton() {
   return (
     <div role="status" aria-busy className={FOLLOWED_LIST}>
       <span className="sr-only">{dict.common.loading}</span>
-      {Array.from({ length: FIRST_FOLLOWED_ROWS }, (_, index) => (
+      {Array.from({ length: SKELETON_ROWS }, (_, index) => (
         <div
           key={index}
           className="flex min-h-[79px] items-center gap-3 py-2 md:min-h-[97px] md:gap-4"
@@ -42,7 +45,8 @@ function FollowedTitles() {
   const followed = useFollowedTitles();
   const unfollow = useUnfollowTitle();
   const [query, setQuery] = useState('');
-  const [isExpanded, setIsExpanded] = useState(false);
+  const matching = matchingFollowedTitles(followed.data ?? [], query);
+  const reveal = useRevealedRows(matching, query);
 
   if (followed.isPending) return <FollowedSkeleton />;
   if (!followed.data) {
@@ -66,8 +70,6 @@ function FollowedTitles() {
   const titles = followed.data;
   if (titles.length === 0) return <EmptyState title={copy.empty.title} text={copy.empty.text} />;
 
-  const { rows, hasMore } = visibleFollowedTitles(titles, query, isExpanded);
-
   return (
     <>
       <ListSearch
@@ -76,13 +78,13 @@ function FollowedTitles() {
         value={query}
         onChange={setQuery}
       />
-      {rows.length === 0 ? (
+      {matching.length === 0 ? (
         <p className="mx-1 my-2 text-[15px] text-muted">
           {interpolate(copy.noMatch, { query: query.trim() })}
         </p>
       ) : (
         <ul className={FOLLOWED_LIST}>
-          {rows.map((title) => (
+          {reveal.shown.map((title) => (
             <li key={title.mediaItemId}>
               <FollowedRow
                 title={title}
@@ -94,15 +96,14 @@ function FollowedTitles() {
           ))}
         </ul>
       )}
-      {hasMore ? (
-        <Button
-          variant="secondary"
-          className="self-center rounded-full md:self-start"
-          onPress={() => setIsExpanded(true)}
-        >
-          {interpolate(copy.showAll, { count: titles.length })}
-        </Button>
-      ) : null}
+      <ShowMore
+        key={query}
+        hasMore={reveal.hasMore}
+        label={copy.showMore}
+        loadingLabel={dict.common.loading}
+        rearmKey={reveal.shownCount}
+        onMore={reveal.showMore}
+      />
     </>
   );
 }

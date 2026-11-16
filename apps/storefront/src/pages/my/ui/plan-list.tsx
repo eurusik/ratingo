@@ -7,12 +7,11 @@ import { ArrowUpDown, Play } from 'lucide-react';
 import { ScoreChip } from '@/entities/media';
 import { BROWSE_ROUTE, mediaRoute, showPickRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { isSearchQuery, matchesSearch, useClientNow } from '@/shared/lib';
+import { isSearchQuery, matchesSearch, useClientNow, useRevealedRows } from '@/shared/lib';
 import { EmptyState, FadingScrollRow, ListSearch, SegmentedFilter, ShowMore } from '@/shared/ui';
 import type { LibraryActions } from '../model/library-actions';
 import { useIsMovedOut } from '../model/library-moves';
 import { usePlanList } from '../model/library-queries';
-import { useRevealedRows } from '../model/revealed-rows';
 import {
   PLAN_SORTS,
   TYPE_FILTERS,

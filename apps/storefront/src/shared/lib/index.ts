@@ -9,6 +9,7 @@ export {
   useInfiniteSentinel,
   useIsClamped,
   useMediaQuery,
+  useRevealedRows,
 } from './layout';
 export {
   capitalizeFirst,
