@@ -38,17 +38,17 @@ function useStartsEmpty(counts: LibraryCounts | undefined): boolean | undefined 
 
 const PHONE_ACTIONS = 'flex items-center gap-1 md:hidden';
 
+const PHONE_ACTIONS_PLACEHOLDER = (
+  <div aria-hidden className={PHONE_ACTIONS}>
+    <Skeleton className="size-11 rounded-full" />
+    <Skeleton className="size-11 rounded-full" />
+  </div>
+);
+
 function PhoneHeaderActions() {
   const { user, isLoading } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div aria-hidden className={PHONE_ACTIONS}>
-        <Skeleton className="size-11 rounded-full" />
-        <Skeleton className="size-11 rounded-full" />
-      </div>
-    );
-  }
+  if (isLoading) return PHONE_ACTIONS_PLACEHOLDER;
   if (!user) return null;
   return (
     <div className={PHONE_ACTIONS}>

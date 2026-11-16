@@ -66,10 +66,12 @@ function PillsSkeleton({ widths }: { widths: readonly string[] }) {
   );
 }
 
+const SECTION_TITLE_TEXT = 'text-[17px] font-extrabold md:text-lg';
+
 function SectionTitleSkeleton() {
   return (
-    <span className="flex pt-5 pb-1">
-      <Skeleton className="h-6.5 w-36 rounded-md md:h-7" />
+    <span className={cn('flex pt-5 pb-1', SECTION_TITLE_TEXT)}>
+      <Skeleton className="h-lh w-36 rounded-md" />
     </span>
   );
 }
@@ -101,7 +103,7 @@ function ListSkeletonBody({ list }: { list: MainLibraryList }) {
       <div className="flex flex-col gap-3">
         <SearchSkeleton />
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="flex h-5 items-center md:hidden">
+          <span className="flex h-lh items-center text-sm md:hidden">
             <Skeleton className="h-4 w-36 rounded-md" />
           </span>
           <PillsSkeleton widths={TYPE_FILTER_WIDTHS} />
@@ -186,7 +188,7 @@ export function EmptyList({ title, text, action, href }: EmptyListProps) {
 
 export function SectionTitle({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h3 id={id} className="flex items-center gap-2 pt-5 pb-1 text-[17px] font-extrabold md:text-lg">
+    <h3 id={id} className={cn('flex items-center gap-2 pt-5 pb-1', SECTION_TITLE_TEXT)}>
       {children}
     </h3>
   );
