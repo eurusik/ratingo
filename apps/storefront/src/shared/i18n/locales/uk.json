@@ -273,7 +273,8 @@
     "failedText": "Перевір з’єднання і спробуй ще раз.",
     "search": {
       "noMatches": "Нічого не знайдено за «{query}».",
-      "noMatchesText": "Спробуй іншу назву або зміни фільтр."
+      "noMatchesText": "Спробуй іншу назву або зміни фільтр.",
+      "noMatchesAnywhereText": "Спробуй іншу назву."
     }
   },
   "rating": {

@@ -69,7 +69,7 @@ function PillsSkeleton({ widths }: { widths: readonly string[] }) {
 function SectionTitleSkeleton() {
   return (
     <span className="flex pt-5 pb-1">
-      <Skeleton className="h-6 w-36 rounded-md" />
+      <Skeleton className="h-6.5 w-36 rounded-md md:h-7" />
     </span>
   );
 }
@@ -101,7 +101,9 @@ function ListSkeletonBody({ list }: { list: MainLibraryList }) {
       <div className="flex flex-col gap-3">
         <SearchSkeleton />
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Skeleton className="h-4 w-36 rounded-md md:hidden" />
+          <span className="flex h-5 items-center md:hidden">
+            <Skeleton className="h-4 w-36 rounded-md" />
+          </span>
           <PillsSkeleton widths={TYPE_FILTER_WIDTHS} />
         </div>
         <div className="flex flex-col">

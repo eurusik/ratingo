@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Skeleton } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
 import {
   LIBRARY_LISTS,
@@ -35,23 +36,33 @@ function useStartsEmpty(counts: LibraryCounts | undefined): boolean | undefined 
   return startsEmpty;
 }
 
+const PHONE_ACTIONS = 'flex items-center gap-1 md:hidden';
+
+function PhoneHeaderActions() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div aria-hidden className={PHONE_ACTIONS}>
+        <Skeleton className="size-11 rounded-full" />
+        <Skeleton className="size-11 rounded-full" />
+      </div>
+    );
+  }
+  if (!user) return null;
+  return (
+    <div className={PHONE_ACTIONS}>
+      <NotificationBell />
+      <ProfileMenu user={user} />
+    </div>
+  );
+}
+
 function PhoneHeader() {
   const { dict } = useTranslation();
-  const { user } = useAuth();
 
   return (
-    <PageHeader
-      title={dict.nav.my}
-      className="md:sr-only"
-      actions={
-        user ? (
-          <div className="flex items-center gap-1 md:hidden">
-            <NotificationBell />
-            <ProfileMenu user={user} />
-          </div>
-        ) : null
-      }
-    />
+    <PageHeader title={dict.nav.my} className="md:sr-only" actions={<PhoneHeaderActions />} />
   );
 }
 

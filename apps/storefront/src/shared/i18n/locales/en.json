@@ -273,7 +273,8 @@
     "failedText": "Check your connection and try again.",
     "search": {
       "noMatches": "Nothing found for “{query}”.",
-      "noMatchesText": "Try another title or change the filter."
+      "noMatchesText": "Try another title or change the filter.",
+      "noMatchesAnywhereText": "Try another title."
     }
   },
   "rating": {

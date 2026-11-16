@@ -136,7 +136,7 @@ function NoRows({ filter, query }: { filter: WatchingFilter; query: string }) {
     return (
       <EmptyState
         title={interpolate(dict.my.search.noMatches, { query })}
-        text={dict.my.search.noMatchesText}
+        text={dict.my.search.noMatchesAnywhereText}
       />
     );
   }
