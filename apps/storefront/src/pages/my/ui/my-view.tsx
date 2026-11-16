@@ -7,6 +7,7 @@ import { LibraryShell } from '@/widgets/library-nav';
 import { NotificationBell, ProfileMenu } from '@/widgets/header';
 import type { LibraryCounts } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
+import { PageHeader } from '@/shared/ui';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { useLibraryActions, type LibraryActions } from '../model/library-actions';
 import { LibraryMovesProvider, useIsMovedOut } from '../model/library-moves';
@@ -33,15 +34,19 @@ function PhoneHeader() {
   const { user } = useAuth();
 
   return (
-    <div className="flex min-h-14 items-center gap-2 md:contents">
-      <h1 className="flex-1 text-[32px] font-extrabold tracking-tight md:sr-only">{dict.nav.my}</h1>
-      {user ? (
-        <div className="flex items-center gap-1 md:hidden">
-          <NotificationBell />
-          <ProfileMenu user={user} />
-        </div>
-      ) : null}
-    </div>
+    <PageHeader
+      title={dict.nav.my}
+      titleClassName="md:sr-only"
+      className="md:contents"
+      actions={
+        user ? (
+          <div className="flex items-center gap-1 md:hidden">
+            <NotificationBell />
+            <ProfileMenu user={user} />
+          </div>
+        ) : null
+      }
+    />
   );
 }
 
@@ -74,7 +79,9 @@ function Library({ list }: { list: LibraryList }) {
         <div className="md:hidden">
           <ListChips current={list} />
         </div>
-        <h2 className="sr-only text-2xl font-extrabold md:not-sr-only">{dict.my.lists[list]}</h2>
+        <h2 className="sr-only text-2xl font-extrabold md:not-sr-only md:flex md:min-h-11 md:items-center">
+          {dict.my.lists[list]}
+        </h2>
         <SelectedList list={list} actions={actions} />
       </div>
     </PullToRefresh>

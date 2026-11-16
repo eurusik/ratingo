@@ -18,7 +18,7 @@ import { LibraryShell } from '@/widgets/library-nav';
 import { MY_ROUTE, NOTIFICATION_SETTINGS_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { useClientNow } from '@/shared/lib';
-import { BackLink, SegmentedFilter } from '@/shared/ui';
+import { BackLink, PageHeader, SegmentedFilter } from '@/shared/ui';
 import { PullToRefresh } from '@/shared/ui/gestures';
 import { SwipeableNotification } from './swipeable-notification';
 
@@ -133,6 +133,20 @@ function NotificationList({
   );
 }
 
+function ReadAllButton({ className, onReadAll }: { className: string; onReadAll: () => void }) {
+  const { dict } = useTranslation();
+
+  return (
+    <Button
+      variant="ghost"
+      className={cn('min-h-tap px-1 text-accent md:px-3', className)}
+      onPress={onReadAll}
+    >
+      {dict.notifications.markAllRead}
+    </Button>
+  );
+}
+
 function NotificationsHeader() {
   const { dict } = useTranslation();
   const { user } = useAuth();
@@ -140,32 +154,36 @@ function NotificationsHeader() {
   const readAll = useReadAllNotifications();
 
   return (
-    <div className="flex min-h-14 items-center gap-2">
-      <BackLink
-        fallbackHref={MY_ROUTE}
-        aria-label={dict.notifications.back}
-        className="-ms-2 inline-flex size-11 items-center justify-center rounded-full text-foreground md:hidden"
-      >
-        <ChevronLeft aria-hidden className="size-6" />
-      </BackLink>
-      <h1 className="flex-1 text-[22px] font-extrabold md:text-2xl">{dict.notifications.title}</h1>
-      {user && unreadCount > 0 ? (
-        <Button variant="ghost" className="min-h-tap px-1 text-accent md:px-3" onPress={readAll}>
-          {dict.notifications.markAllRead}
-        </Button>
-      ) : null}
-      {user ? (
-        <Link
-          href={NOTIFICATION_SETTINGS_ROUTE}
-          className={cn(
-            buttonVariants({ variant: 'outline', size: 'sm' }),
-            'hidden rounded-full no-underline md:inline-flex',
-          )}
+    <PageHeader
+      title={dict.notifications.title}
+      leading={
+        <BackLink
+          fallbackHref={MY_ROUTE}
+          aria-label={dict.notifications.back}
+          className="-ms-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-foreground md:hidden"
         >
-          {dict.notifications.settingsShort}
-        </Link>
-      ) : null}
-    </div>
+          <ChevronLeft aria-hidden className="size-6" />
+        </BackLink>
+      }
+      actions={
+        <>
+          {user && unreadCount > 0 ? (
+            <ReadAllButton className="hidden md:inline-flex" onReadAll={readAll} />
+          ) : null}
+          {user ? (
+            <Link
+              href={NOTIFICATION_SETTINGS_ROUTE}
+              className={cn(
+                buttonVariants({ variant: 'outline', size: 'sm' }),
+                'hidden rounded-full no-underline md:inline-flex',
+              )}
+            >
+              {dict.notifications.settingsShort}
+            </Link>
+          ) : null}
+        </>
+      }
+    />
   );
 }
 
@@ -173,26 +191,31 @@ function Notifications() {
   const { dict } = useTranslation();
   const [filter, setFilter] = useState<NotificationFilter>('unread');
   const unreadCount = useUnreadNotificationCount();
+  const readAll = useReadAllNotifications();
   const pages = useNotificationPages(filter);
 
   return (
     <>
-      <SegmentedFilter
-        label={dict.notifications.filterLabel}
-        options={[
-          {
-            id: 'unread',
-            label:
-              unreadCount > 0
-                ? interpolate(dict.notifications.unreadFilter, { count: unreadCount })
-                : dict.notifications.filter.unread,
-          },
-          { id: 'all', label: dict.notifications.filter.all },
-        ]}
-        value={filter}
-        onChange={setFilter}
-        className="px-0"
-      />
+      <div className="flex items-center gap-2">
+        <SegmentedFilter
+          label={dict.notifications.filterLabel}
+          options={[
+            {
+              id: 'unread',
+              label:
+                unreadCount > 0
+                  ? interpolate(dict.notifications.unreadFilter, { count: unreadCount })
+                  : dict.notifications.filter.unread,
+            },
+            { id: 'all', label: dict.notifications.filter.all },
+          ]}
+          value={filter}
+          onChange={setFilter}
+          className="px-0"
+        />
+        <span className="flex-1" />
+        {unreadCount > 0 ? <ReadAllButton className="md:hidden" onReadAll={readAll} /> : null}
+      </div>
       <PullToRefresh onRefresh={() => pages.refetch()}>
         <NotificationList filter={filter} pages={pages} />
       </PullToRefresh>

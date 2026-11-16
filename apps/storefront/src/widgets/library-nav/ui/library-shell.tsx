@@ -8,13 +8,15 @@ import { openAuth } from '@/shared/auth';
 import { useTranslation } from '@/shared/i18n';
 import { LibraryNav } from './library-nav';
 
-const SHELL = 'flex flex-1 flex-col px-4 md:px-0 md:pt-7';
+const SHELL = 'flex flex-1 flex-col';
+
+const SIDE_PADDING = 'px-4 md:px-0';
 
 function SignInPrompt() {
   const { dict } = useTranslation();
 
   return (
-    <div className="flex flex-1 flex-col justify-center py-8 md:items-center">
+    <div className={`flex flex-1 flex-col justify-center py-8 md:items-center ${SIDE_PADDING}`}>
       <Card className="gap-3 rounded-3xl p-4.5 md:w-full md:max-w-xl">
         <Card.Header className="gap-1.5 p-0">
           <Card.Title className="text-[17px] font-extrabold">{dict.my.signIn.title}</Card.Title>
@@ -61,7 +63,9 @@ export function LibraryShell({ current, header, skeleton, children }: LibraryShe
       </div>
       <div className="flex min-w-0 max-w-[860px] flex-1 flex-col gap-3">
         {header}
-        {isLoading ? skeleton : children}
+        <div className={`flex flex-col gap-3 ${SIDE_PADDING}`}>
+          {isLoading ? skeleton : children}
+        </div>
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import {
 import { useUnreadNotificationCount } from '@/entities/notification';
 import { NOTIFICATIONS_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { PAGE_TITLE } from '@/shared/ui';
 
 type NavTarget = LibraryList | 'notifications';
 
@@ -56,7 +57,7 @@ export function LibraryNav({ current }: { current: NavTarget }) {
 
   return (
     <nav aria-label={dict.my.listsLabel} className="flex w-55 shrink-0 flex-col gap-1">
-      <p className="mb-3 text-[32px] font-extrabold tracking-tight">{dict.nav.my}</p>
+      <p className={cn('mb-3 flex min-h-11 items-center', PAGE_TITLE)}>{dict.nav.my}</p>
       {MAIN_LIBRARY_LISTS.map((list) => (
         <NavItem
           key={list}
