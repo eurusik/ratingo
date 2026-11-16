@@ -15,11 +15,10 @@ async function orEmpty<T>(source: string, load: () => Promise<T[]>): Promise<T[]
 export async function generateSitemap(): Promise<MetadataRoute.Sitemap> {
   configureStorefrontApi();
 
-  const [movies, shows, journalPosts] = await Promise.all([
+  const [movies, shows] = await Promise.all([
     orEmpty('movies', () => sitemapApi.getMedia('movies')),
     orEmpty('shows', () => sitemapApi.getMedia('shows')),
-    orEmpty('journal posts', () => sitemapApi.getJournalPosts()),
   ]);
 
-  return buildSitemap(SITE_URL, { now: new Date(), movies, shows, journalPosts });
+  return buildSitemap(SITE_URL, { now: new Date(), movies, shows });
 }

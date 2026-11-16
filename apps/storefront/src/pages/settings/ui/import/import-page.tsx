@@ -22,6 +22,7 @@ import { SettingsShell } from '../settings-shell';
 import { DesktopFilesStep, PhoneFilesStep } from './files-step';
 import { PreviewStep } from './preview-step';
 import { ResultStep } from './result-step';
+import { ImportSkeleton } from './import-skeleton';
 import { ResumeCard } from './resume-card';
 import { PhoneSourceStep } from './source-step';
 import { StepProgress } from './step-progress';
@@ -104,15 +105,24 @@ function WizardBody({ wizard, isDesktop, origin, resume }: WizardBodyProps) {
   return <PhoneSourceStep resume={resume} onPick={wizard.pickSource} />;
 }
 
-function useResume(wizard: ImportWizard): ReactNode {
+interface Resume {
+  card: ReactNode;
+  isChecking: boolean;
+}
+
+function useResume(wizard: ImportWizard): Resume {
   const { user } = useAuth();
   const batches = useImportBatches();
   const lastImport = useLastImport(user?.id);
   const progress = runningProgress(batches.data);
-  if (!progress) return null;
+  const isChecking = batches.isLoading && batches.failureCount === 0;
+  if (!progress) return { card: null, isChecking };
   const pendingId = lastImport?.result.pendingBatch?.batchId;
   const summary = pendingId && progress.batchIds.includes(pendingId) ? lastImport : undefined;
-  return <ResumeCard progress={progress} lastImport={summary} onSummary={wizard.showSummary} />;
+  return {
+    card: <ResumeCard progress={progress} lastImport={summary} onSummary={wizard.showSummary} />,
+    isChecking,
+  };
 }
 
 function useFocusOnStepChange(step: ImportStep) {
@@ -141,11 +151,15 @@ export function ImportSettingsPage() {
   const wizard: ImportWizard = { ...wizardState, back: historyBack };
   const { step, source, files, finishedAt } = wizard.state;
   const position = useStepPosition(wizard, isDesktop);
+  const desktopPosition = useStepPosition(wizard, true);
   const moment = useImportMoment(finishedAt);
   const resume = useResume(wizard);
   useFocusOnStepChange(step);
   const sourceName = source ? copy.sources[source].name : '';
-  const showsPhoneProgress = !isDesktop && position.label && !(step === 'source' && resume);
+  const isFirstScreen = step === 'source' || (isDesktop && step === 'files' && files.length === 0);
+  const isLoadingFirstScreen = isFirstScreen && resume.isChecking;
+  const showsPhoneProgress =
+    !isDesktop && position.label && !(step === 'source' && resume.card) && !isLoadingFirstScreen;
 
   return (
     <SettingsShell
@@ -153,6 +167,8 @@ export function ImportSettingsPage() {
       phoneTitle={title}
       desktopTitle={title}
       stepBack={isDesktop ? undefined : position.back}
+      skeleton={<ImportSkeleton />}
+      loadingSubtitle={desktopPosition.label}
     >
       <ImportLeaveGuard
         isActive={files.length > 0 && step !== 'result' && !wizard.state.isImporting}
@@ -169,12 +185,16 @@ export function ImportSettingsPage() {
             label={position.label}
           />
         ) : null}
-        <WizardBody
-          wizard={wizard}
-          isDesktop={isDesktop}
-          origin={interpolate(copy.result.from, { source: sourceName, when: moment })}
-          resume={resume}
-        />
+        {isLoadingFirstScreen ? (
+          <ImportSkeleton />
+        ) : (
+          <WizardBody
+            wizard={wizard}
+            isDesktop={isDesktop}
+            origin={interpolate(copy.result.from, { source: sourceName, when: moment })}
+            resume={resume.card}
+          />
+        )}
       </div>
     </SettingsShell>
   );

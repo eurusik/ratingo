@@ -5,20 +5,13 @@ import { SiteFooter } from './site-footer';
 const uk = getDictionary('uk');
 
 describe('SiteFooter', () => {
-  it('links to the about page, the journal, the code and the author', () => {
+  it('links to the code and the author', () => {
     render(<SiteFooter dict={uk} />);
 
     const footer = screen.getByRole('contentinfo');
     expect(footer).toHaveClass('hidden', 'md:block');
     const links = within(footer).getByRole('navigation', { name: uk.footer.label });
-    expect(within(links).getByRole('link', { name: uk.footer.about })).toHaveAttribute(
-      'href',
-      '/about',
-    );
-    expect(within(links).getByRole('link', { name: uk.footer.journal })).toHaveAttribute(
-      'href',
-      '/journal',
-    );
+    expect(within(links).getAllByRole('link')).toHaveLength(1);
     expect(
       within(links).getByRole('link', { name: `${uk.footer.github} ${uk.common.opensInNewTab}` }),
     ).toHaveAttribute('target', '_blank');

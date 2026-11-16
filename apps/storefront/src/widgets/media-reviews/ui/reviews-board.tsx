@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { Button } from '@heroui/react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { useMediaState } from '@/entities/library';
 import type { Review } from '@/shared/api';
 import { DESKTOP_MEDIA_QUERY } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { useMediaQuery } from '@/shared/lib';
+import { SectionError } from '@/shared/ui';
 import { useIds } from '../lib/id-set';
 import {
   reportedReviews,
@@ -52,14 +52,7 @@ export interface ReviewsBoardProps {
 
 function LoadError({ onRetry }: { onRetry: () => void }) {
   const { dict } = useTranslation();
-  return (
-    <div role="alert" className="flex items-center gap-3 rounded-3xl bg-surface p-3.5 text-sm">
-      <span className="flex-1 text-muted">{dict.reviews.loadError}</span>
-      <Button variant="secondary" size="sm" onPress={onRetry} className="min-h-tap">
-        {dict.common.retry}
-      </Button>
-    </div>
-  );
+  return <SectionError title={dict.reviews.loadError} onRetry={onRetry} className="min-h-60" />;
 }
 
 interface ViewerSlotProps {
@@ -148,6 +141,11 @@ export function ReviewsBoard({
   const isListReady = status === 'success';
   const isViewerResolving = myReview.isResolving || isAuthResolving;
   const showsViewerSlot = isListReady && !isViewerResolving && !isDeletingMine && !myReview.isError;
+  const hasLoadError = status === 'error' || myReview.isError;
+  const retryFailedLoads = () => {
+    if (status === 'error') onRetry();
+    if (myReview.isError) myReview.retry();
+  };
 
   return (
     <ReviewsProvider value={actions}>
@@ -158,8 +156,7 @@ export function ReviewsBoard({
       >
         <div className="flex min-w-0 flex-col gap-4">
           {heading}
-          {status === 'error' ? <LoadError onRetry={onRetry} /> : null}
-          {myReview.isError ? <LoadError onRetry={myReview.retry} /> : null}
+          {hasLoadError ? <LoadError onRetry={retryFailedLoads} /> : null}
           {status === 'pending' ? <ReviewsSkeleton /> : null}
           {isListReady && isViewerResolving && !isDeletingMine ? <ResolvingViewerPrompt /> : null}
           {showsViewerSlot ? (

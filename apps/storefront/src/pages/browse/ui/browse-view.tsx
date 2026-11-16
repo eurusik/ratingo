@@ -1,10 +1,9 @@
 'use client';
 
-import { Suspense, use, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@heroui/react';
+import { Suspense, use } from 'react';
 import { useTranslation } from '@/shared/i18n';
-import { BackToTop } from '@/shared/ui';
+import { useRefreshRetry } from '@/shared/lib';
+import { BackToTop, SectionError } from '@/shared/ui';
 import { findBrowseCategory, type BrowseCategory } from '../model/browse-category';
 import { useCountLabel } from '../model/browse-labels';
 import {
@@ -29,22 +28,18 @@ import { SortMenu } from './sort-menu';
 
 function FirstPageError() {
   const { dict } = useTranslation();
-  const router = useRouter();
-  const [isRetrying, startRetry] = useTransition();
+  const { retry, isRetrying } = useRefreshRetry();
 
   return (
-    <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center text-sm">
+    <>
       <meta name="robots" content="noindex" />
-      <p className="text-muted">{dict.browse.list.firstFailed}</p>
-      <Button
-        variant="secondary"
-        size="sm"
-        isPending={isRetrying}
-        onPress={() => startRetry(() => router.refresh())}
-      >
-        {dict.browse.list.retry}
-      </Button>
-    </div>
+      <SectionError
+        title={dict.browse.list.firstFailed}
+        onRetry={retry}
+        isRetrying={isRetrying}
+        className="min-h-130"
+      />
+    </>
   );
 }
 

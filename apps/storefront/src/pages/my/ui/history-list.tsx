@@ -118,7 +118,8 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
   const { pages, search } = history;
 
   if (pages.isPending) return <LibraryListSkeleton list="history" />;
-  if (pages.isError) return <ListFailure onRetry={() => void pages.refetch()} />;
+  if (pages.isError)
+    return <ListFailure onRetry={() => void pages.refetch()} isRetrying={pages.isFetching} />;
   if (filter === 'all' && !history.isSearching && history.rows.length === 0) {
     return <EmptyList {...dict.my.history.empty} href={IMPORT_ROUTE} />;
   }
@@ -129,7 +130,7 @@ export function HistoryList({ actions }: { actions: LibraryActions }) {
   const renderResults = () => {
     if (history.isSearching && search.isPending) return <RowsSkeleton action="score" />;
     if (history.isSearching && search.isError) {
-      return <ListFailure onRetry={() => void search.refetch()} />;
+      return <ListFailure onRetry={() => void search.refetch()} isRetrying={search.isFetching} />;
     }
     if (history.rows.length === 0) {
       return (

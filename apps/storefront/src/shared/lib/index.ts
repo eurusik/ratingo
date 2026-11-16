@@ -1,5 +1,5 @@
 export { SiteAnalytics } from './analytics';
-export { useBrowserOrigin, useBrowserPath } from './browser-origin';
+export { useBrowserOrigin, useBrowserPath, useIsApplePlatform, useIsOffline } from './browser';
 export { useClientNow } from './client-now';
 export { useDebouncedValue } from './debounced-value';
 export { interleave } from './interleave';
@@ -26,7 +26,7 @@ export {
   searchableText,
   yearFromDate,
 } from './format';
-export { useIsApplePlatform } from './platform';
+export { errorDigest, useLoggedError, useRefreshRetry, useRetryTransition } from './recovery';
 export {
   APP_THEME_COLOR,
   InstallPromptCapture,
