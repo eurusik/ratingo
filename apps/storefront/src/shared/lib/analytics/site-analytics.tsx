@@ -19,7 +19,7 @@ function clarityBootstrap(projectId: string): string {
   ].join('\n');
 }
 
-function googleTagBootstrap(measurementId: string): string {
+export function googleTagBootstrap(measurementId: string): string {
   return [
     'window.dataLayer = window.dataLayer || [];',
     'function gtag(){dataLayer.push(arguments);}',
@@ -32,15 +32,10 @@ function googleTagBootstrap(measurementId: string): string {
 
 function GoogleAnalytics({ measurementId }: { measurementId: string }) {
   return (
-    <>
-      <Script
-        src={`${GOOGLE_TAG_URL}?id=${encodeURIComponent(measurementId)}`}
-        strategy="afterInteractive"
-      />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {googleTagBootstrap(measurementId)}
-      </Script>
-    </>
+    <Script
+      src={`${GOOGLE_TAG_URL}?id=${encodeURIComponent(measurementId)}`}
+      strategy="afterInteractive"
+    />
   );
 }
 
