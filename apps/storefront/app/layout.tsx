@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import Script from 'next/script';
 import { AppProviders, getRequestLocale } from '@/app/entrypoint';
 import { configureStorefrontApi } from '@/shared/api';
 import {
@@ -16,6 +17,7 @@ import {
   buildOrganizationJsonLd,
   buildRootMetadata,
   buildWebSiteJsonLd,
+  googleTagBootstrap,
 } from '@/shared/lib';
 import '@/app/styles/globals.css';
 
@@ -46,6 +48,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={locale} suppressHydrationWarning>
       <body>
+        {GA_MEASUREMENT_ID ? (
+          <Script id="google-analytics" strategy="beforeInteractive">
+            {googleTagBootstrap(GA_MEASUREMENT_ID)}
+          </Script>
+        ) : null}
         <JsonLd data={buildOrganizationJsonLd(SITE_URL)} />
         <JsonLd data={buildWebSiteJsonLd(SITE_URL)} />
         <AppProviders locale={locale} dictionary={getDictionary(locale)}>

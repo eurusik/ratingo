@@ -1,5 +1,7 @@
 import { render } from '@testing-library/react';
-import { SiteAnalytics } from './site-analytics';
+import { SiteAnalytics, googleTagBootstrap } from './site-analytics';
+
+const GOOGLE_TAG = 'https://www.googletagmanager.com/gtag/js?id=G-TEST';
 
 jest.mock('next/script', () => ({
   __esModule: true,
@@ -25,7 +27,7 @@ describe('SiteAnalytics', () => {
     expect(getByTestId('microsoft-clarity').textContent).toContain(
       'https://www.clarity.ms/tag/abc123',
     );
-    expect(queryByTestId('google-analytics')).toBeNull();
+    expect(queryByTestId(GOOGLE_TAG)).toBeNull();
   });
 
   it('loads Google Analytics alongside Clarity', () => {
@@ -33,7 +35,16 @@ describe('SiteAnalytics', () => {
       <SiteAnalytics googleMeasurementId="G-TEST" clarityProjectId="abc123" />,
     );
 
-    expect(getByTestId('google-analytics')).toBeInTheDocument();
+    expect(getByTestId(GOOGLE_TAG)).toBeInTheDocument();
     expect(getByTestId('microsoft-clarity')).toBeInTheDocument();
+  });
+});
+
+describe('googleTagBootstrap', () => {
+  it('configures the measurement id without OAuth secrets in the page location', () => {
+    const script = googleTagBootstrap('G-TEST');
+
+    expect(script).toContain('gtag(\'config\', "G-TEST"');
+    expect(script).toContain("['code', 'state', 'token']");
   });
 });
