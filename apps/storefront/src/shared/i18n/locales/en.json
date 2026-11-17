@@ -53,11 +53,16 @@
   },
   "oauth": {
     "completing": "Completing sign-in…",
+    "completingHint": "Checking your account and opening your library. Just a few seconds.",
     "failed": "Sign-in failed",
     "backHome": "Back to home",
+    "back": "Go back",
+    "retry": "Try again",
+    "signInWithPassword": "Sign in with password",
+    "cancelledTitle": "Sign-in cancelled",
     "errors": {
       "accountExistsPassword": "An account with this email already exists. Sign in with your password and link Google or Facebook in settings.",
-      "cancelled": "Sign-in was cancelled.",
+      "cancelled": "You can try again or go back.",
       "emailNotVerified": "Verify your email with the provider first.",
       "exchangeExpired": "The sign-in link has expired. Please try again.",
       "exchangeUsed": "This sign-in link was already used. Please try again.",
