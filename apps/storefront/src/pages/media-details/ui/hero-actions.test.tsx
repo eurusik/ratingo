@@ -23,6 +23,7 @@ jest.mock('@/shared/api', () => ({
     getRatings: jest.fn(),
     getMediaState: jest.fn(),
     setRating: jest.fn(),
+    removeFromLibrary: jest.fn(),
     save: jest.fn(),
     unsave: jest.fn(),
   },
@@ -155,6 +156,36 @@ describe('HeroActions', () => {
     await waitFor(() =>
       expect(libraryApi.setRating).toHaveBeenLastCalledWith('dune-id', 75, 'movie'),
     );
+  });
+
+  it('lets a viewer take a title out of the library and undo it', async () => {
+    jest.mocked(libraryApi.getMediaState).mockResolvedValue(stateWith(80));
+    signIn(true);
+    renderActions(DUNE);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Прибрати з бібліотеки' }));
+
+    expect(
+      await screen.findByText('Прибрано з бібліотеки: Дюна: Частина друга'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Прибрати з бібліотеки' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Оцінити' })).toBeInTheDocument();
+
+    const [undo] = await screen.findAllByRole('button', { name: 'Скасувати' });
+    fireEvent.click(undo!);
+
+    expect(
+      await screen.findByRole('button', { name: 'Прибрати з бібліотеки' }),
+    ).toBeInTheDocument();
+    expect(libraryApi.removeFromLibrary).not.toHaveBeenCalled();
+  });
+
+  it('offers no removal for a title that is not in the library', async () => {
+    signIn(true);
+    renderActions(DUNE);
+
+    expect(await screen.findByRole('button', { name: 'Оцінити' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Прибрати з бібліотеки' })).not.toBeInTheDocument();
   });
 
   it('asks a guest to sign in before rating', async () => {

@@ -2,6 +2,7 @@
 
 import { Bell } from 'lucide-react';
 import { useAuth } from '@ratingo/web-core/auth';
+import { RemoveFromLibraryButton } from '@/features/remove-from-library';
 import { SaveToWatchCta, WantToWatchButton } from '@/features/save-to-library';
 import { useTranslation } from '@/shared/i18n';
 import { useRateMedia } from '../model/use-rate-media';
@@ -74,5 +75,10 @@ function ShowActions({ media }: { media: ActionMedia }) {
 }
 
 export function HeroActions({ media }: { media: ActionMedia }) {
-  return media.type === 'movie' ? <MovieActions media={media} /> : <ShowActions media={media} />;
+  return (
+    <div className="flex flex-col gap-2">
+      {media.type === 'movie' ? <MovieActions media={media} /> : <ShowActions media={media} />}
+      <RemoveFromLibraryButton media={media} />
+    </div>
+  );
 }

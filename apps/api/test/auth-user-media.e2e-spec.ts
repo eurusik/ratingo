@@ -12,6 +12,8 @@ import {
   UpsertUserMediaStateData,
 } from '../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
 import { UserMediaState } from '../src/modules/user-media/domain/entities/user-media-state.entity';
+import { MEDIA_LOOKUP_PORT } from '../src/modules/user-media/domain/constants/import.constants';
+import { EPISODE_PROGRESS_REPOSITORY } from '../src/modules/user-media/domain/repositories/episode-progress.repository.interface';
 import { MediaType } from '../src/common/enums/media-type.enum';
 import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
 import { testUuid } from './support/test-uuid';
@@ -49,6 +51,7 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
       existing.rating = data.rating ?? null;
       existing.progress = data.progress ?? null;
       existing.notes = data.notes ?? null;
+      if (data.stateImplied !== undefined) existing.stateImplied = data.stateImplied;
       existing.updatedAt = new Date();
       return existing;
     }
@@ -60,6 +63,7 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
       rating: data.rating ?? null,
       progress: data.progress ?? null,
       notes: data.notes ?? null,
+      stateImplied: data.stateImplied ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
       mediaSummary: this.makeSummary(data.mediaItemId),
@@ -78,6 +82,7 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     if (!row || !fromStates.includes(row.state)) return null;
     const previous = row.state;
     row.state = toState;
+    row.stateImplied = false;
     row.updatedAt = new Date();
     return { previous, current: row };
   }
@@ -209,6 +214,22 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   }
 }
 
+class InMemoryEpisodeProgressRepository {
+  private readonly watched = new Map<string, number>();
+
+  async countWatchedForMedia(userId: string, mediaItemId: string): Promise<number> {
+    return this.watched.get(`${userId}:${mediaItemId}`) ?? 0;
+  }
+
+  async deleteAllForMedia(userId: string, mediaItemId: string): Promise<void> {
+    this.watched.delete(`${userId}:${mediaItemId}`);
+  }
+}
+
+const movieLookup = {
+  findTypeById: async () => MediaType.MOVIE,
+};
+
 describe('User Media e2e', () => {
   let app: INestApplication;
   const baseUrl = '/api/auth';
@@ -236,6 +257,10 @@ describe('User Media e2e', () => {
       .useClass(InMemoryRefreshTokensRepository)
       .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
       .useClass(InMemoryUserMediaRepository)
+      .overrideProvider(EPISODE_PROGRESS_REPOSITORY)
+      .useClass(InMemoryEpisodeProgressRepository)
+      .overrideProvider(MEDIA_LOOKUP_PORT)
+      .useValue(movieLookup)
       .compile();
 
     app = await createE2eApp(moduleFixture);
@@ -253,6 +278,87 @@ describe('User Media e2e', () => {
       .expect(401);
     await request(app.getHttpServer()).get(`${mediaUrl}/${mediaItemId}`).expect(401);
     await request(app.getHttpServer()).get(`${mediaUrl}`).expect(401);
+    await request(app.getHttpServer()).delete(`${mediaUrl}/${mediaItemId}`).expect(401);
+  });
+
+  it('removes a title from the library and is idempotent', async () => {
+    const token = await registerAndLogin('remove');
+    const mediaItemId = testUuid('mid-remove');
+
+    await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'completed', rating: 80 })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .delete(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+
+    const after = await request(app.getHttpServer())
+      .get(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(after.body.data ?? null).toBeNull();
+
+    await request(app.getHttpServer())
+      .delete(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+  });
+
+  it('rejects removing with a non-uuid id', async () => {
+    const token = await registerAndLogin('rmbad');
+    await request(app.getHttpServer())
+      .delete(`${mediaUrl}/not-a-uuid`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(400);
+  });
+
+  it('clearing the rating of a rating-only entry removes it from the library', async () => {
+    const token = await registerAndLogin('rateonly');
+    const mediaItemId = testUuid('mid-rate-only');
+
+    const rated = await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rating: 80 })
+      .expect(200);
+    expect(rated.body.data.state).toBe('completed');
+    expect(rated.body.data.stateImplied).toBe(true);
+
+    const cleared = await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rating: null })
+      .expect(200);
+    expect(cleared.body.data ?? null).toBeNull();
+  });
+
+  it('clearing the rating keeps a state the user chose', async () => {
+    const token = await registerAndLogin('ratekeep');
+    const mediaItemId = testUuid('mid-rate-keep');
+
+    await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'completed' })
+      .expect(200);
+    await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rating: 80 })
+      .expect(200);
+
+    const cleared = await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rating: null })
+      .expect(200);
+    expect(cleared.body.data.state).toBe('completed');
+    expect(cleared.body.data.rating).toBeNull();
+    expect(cleared.body.data.stateImplied).toBe(false);
   });
 
   it('set/get/list with bearer', async () => {

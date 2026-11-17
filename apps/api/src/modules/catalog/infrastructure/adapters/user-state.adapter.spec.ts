@@ -31,6 +31,7 @@ describe('UserStateAdapter', () => {
         rating: null,
         progress: null,
         notes: null,
+        stateImplied: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -62,6 +63,7 @@ describe('UserStateAdapter', () => {
           rating: 8,
           progress: null,
           notes: null,
+          stateImplied: false,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -73,6 +75,7 @@ describe('UserStateAdapter', () => {
           rating: 9,
           progress: null,
           notes: 'Great movie!',
+          stateImplied: false,
           createdAt: new Date(),
           updatedAt: new Date(),
         },

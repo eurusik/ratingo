@@ -88,6 +88,7 @@ describe('MeListsService', () => {
           rating: 8.5,
           progress: null,
           notes: null,
+          stateImplied: false,
           createdAt: new Date(),
           updatedAt: new Date(),
           mediaSummary: {
@@ -185,6 +186,7 @@ describe('MeListsService', () => {
           rating: null,
           progress: null,
           notes: null,
+          stateImplied: false,
           createdAt: new Date(),
           updatedAt: new Date(),
           mediaSummary: {
@@ -282,6 +284,7 @@ describe('MeListsService', () => {
           rating: 9.0,
           progress: null,
           notes: null,
+          stateImplied: false,
           createdAt: new Date(),
           updatedAt: new Date(),
           mediaSummary: {
@@ -449,6 +452,7 @@ describe('MeListsService', () => {
           rating: null,
           progress: { seasons: { 1: 5 } },
           notes: null,
+          stateImplied: false,
           createdAt: new Date(),
           updatedAt: new Date(),
           mediaSummary: {
@@ -506,6 +510,7 @@ describe('MeListsService', () => {
           rating: 7.5,
           progress: { seasons: { 1: 3, 2: 1 } },
           notes: 'Good show',
+          stateImplied: false,
           createdAt: new Date(),
           updatedAt: new Date(),
           mediaSummary: {
@@ -572,6 +577,7 @@ describe('MeListsService', () => {
           rating: null,
           progress: { seasons: { 1: 5 } },
           notes: null,
+          stateImplied: false,
           createdAt: new Date(),
           updatedAt: new Date(),
           mediaSummary: {
@@ -651,6 +657,7 @@ describe('MeListsService', () => {
           rating: null,
           progress: { seasons: { 1: 5 } },
           notes: null,
+          stateImplied: false,
           createdAt: new Date(),
           updatedAt: new Date(),
           mediaSummary: {

@@ -62,6 +62,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
         if (data.rating !== undefined) updateSet.rating = data.rating;
         if (data.progress !== undefined) updateSet.progress = data.progress;
         if (data.notes !== undefined) updateSet.notes = data.notes;
+        if (data.stateImplied !== undefined) updateSet.stateImplied = data.stateImplied;
 
         const [row] = await this.db
           .insert(schema.userMediaState)
@@ -72,6 +73,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             ...(data.rating !== undefined && { rating: data.rating }),
             ...(data.progress !== undefined && { progress: data.progress }),
             ...(data.notes !== undefined && { notes: data.notes }),
+            ...(data.stateImplied !== undefined && { stateImplied: data.stateImplied }),
           })
           .onConflictDoUpdate({
             target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
@@ -121,6 +123,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           if (data.rating !== undefined) updateSet.rating = data.rating;
           if (data.progress !== undefined) updateSet.progress = data.progress;
           if (data.notes !== undefined) updateSet.notes = data.notes;
+          if (data.stateImplied !== undefined) updateSet.stateImplied = data.stateImplied;
 
           const [row] = await tx
             .insert(schema.userMediaState)
@@ -131,6 +134,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
               ...(data.rating !== undefined && { rating: data.rating }),
               ...(data.progress !== undefined && { progress: data.progress }),
               ...(data.notes !== undefined && { notes: data.notes }),
+              ...(data.stateImplied !== undefined && { stateImplied: data.stateImplied }),
             })
             .onConflictDoUpdate({
               target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
@@ -176,7 +180,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           const previous = current.state as UserMediaState['state'];
           const [updated] = await tx
             .update(schema.userMediaState)
-            .set({ state: toState, updatedAt: new Date() })
+            .set({ state: toState, stateImplied: false, updatedAt: new Date() })
             .where(
               and(
                 eq(schema.userMediaState.userId, userId),
@@ -767,6 +771,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
                     THEN EXCLUDED.state
                     ELSE ${schema.userMediaState.state}
                   END`,
+                  stateImplied: false,
                   updatedAt: sql`NOW()`,
                 },
               })
@@ -806,6 +811,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       rating: row.rating,
       progress: row.progress,
       notes: row.notes,
+      stateImplied: row.stateImplied,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

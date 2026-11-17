@@ -469,7 +469,13 @@
     }
   },
   "library": {
-    "yourScore": "Your score {score}"
+    "yourScore": "Your score {score}",
+    "remove": "Remove from library",
+    "toast": {
+      "removed": "Removed from library: {title}",
+      "undo": "Undo",
+      "failed": "Couldn't remove from library. Please try again."
+    }
   },
   "saveToLibrary": {
     "save": "Save “{title}”",

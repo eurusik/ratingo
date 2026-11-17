@@ -33,6 +33,13 @@ export class UserMediaStateDto implements UserMediaState {
   @ApiProperty({ type: String, example: 'Must watch this weekend', nullable: true })
   notes!: string | null;
 
+  @ApiProperty({
+    example: false,
+    description:
+      'True when the state was set automatically (rating-only entry, first episode mark) rather than chosen by the user',
+  })
+  stateImplied!: boolean;
+
   @ApiProperty({ example: '2025-12-11T12:00:00.000Z' })
   createdAt!: Date;
 

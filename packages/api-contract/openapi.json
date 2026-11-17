@@ -2973,6 +2973,67 @@
         "tags": [
           "Me: Library"
         ]
+      },
+      "delete": {
+        "operationId": "UserMediaController_removeFromLibrary",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed from library (idempotent)"
+          },
+          "400": {
+            "description": "Validation failed or malformed input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a title from the library: state, rating and episode marks (auth: Bearer)",
+        "tags": [
+          "Me: Library"
+        ]
       }
     },
     "/api/user-media": {
@@ -14448,6 +14509,11 @@
             "example": "Must watch this weekend",
             "nullable": true
           },
+          "stateImplied": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when the state was set automatically (rating-only entry, first episode mark) rather than chosen by the user"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -14484,6 +14550,7 @@
           "rating",
           "progress",
           "notes",
+          "stateImplied",
           "createdAt",
           "updatedAt",
           "mediaSummary"
@@ -16328,7 +16395,8 @@
             "example": null,
             "nullable": true,
             "minimum": 0,
-            "maximum": 100
+            "maximum": 100,
+            "description": "Rating 0-100. Clearing it (null, alone) on an entry that exists only because of that rating removes the entry; the response is then null."
           },
           "progress": {
             "type": "object",
@@ -16731,6 +16799,11 @@
             "example": "Must watch this weekend",
             "nullable": true
           },
+          "stateImplied": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when the state was set automatically (rating-only entry, first episode mark) rather than chosen by the user"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -16792,6 +16865,7 @@
           "rating",
           "progress",
           "notes",
+          "stateImplied",
           "createdAt",
           "updatedAt",
           "mediaSummary"

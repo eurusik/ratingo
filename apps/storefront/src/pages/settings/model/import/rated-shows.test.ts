@@ -26,6 +26,7 @@ function entry(mediaItemId: string, type: 'movie' | 'show'): UserMediaState {
     rating: 90,
     progress: null,
     notes: null,
+    stateImplied: false,
     createdAt: '',
     updatedAt: '',
     mediaSummary: { id: mediaItemId, type, title: mediaItemId, slug: mediaItemId, poster: null },
