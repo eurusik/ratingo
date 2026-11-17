@@ -7,6 +7,7 @@ describe('recordRequestError', () => {
     const add = jest.fn();
     recordRequestError(
       {
+        routerKind: 'App Router',
         routePath: '/app/(shell)/(details)/movie/[slug]',
         routeType: 'render',
         renderSource: 'react-server-components',
@@ -23,15 +24,18 @@ describe('recordRequestError', () => {
     });
   });
 
-  it('falls back to placeholders when Next.js gives no context', () => {
+  it('falls back to placeholders when Next.js gives no route or render source', () => {
     const add = jest.fn();
-    recordRequestError({}, { add } as unknown as Counter);
+    recordRequestError(
+      { routerKind: 'App Router', routePath: '', routeType: 'route', revalidateReason: 'stale' },
+      { add } as unknown as Counter,
+    );
 
     expect(add).toHaveBeenCalledWith(1, {
       'http.route': 'unmatched',
-      'next.route_type': 'unknown',
+      'next.route_type': 'route',
       'next.render_source': 'none',
-      'next.revalidate_reason': 'none',
+      'next.revalidate_reason': 'stale',
     });
   });
 });

@@ -1,32 +1,31 @@
 import { type Counter, metrics } from '@opentelemetry/api';
+import type { Instrumentation } from 'next';
 
-import { METER_NAME, REQUEST_ERRORS_METRIC, UNMATCHED_ROUTE } from './constants';
+import { METER_NAME, MISSING_LABEL, REQUEST_ERRORS_METRIC, UNMATCHED_ROUTE } from './constants';
 
-export interface RequestErrorContext {
-  routePath?: string;
-  routeType?: string;
-  renderSource?: string;
-  revalidateReason?: string;
-}
+type RequestErrorContext = Parameters<Instrumentation.onRequestError>[2];
 
-let counter: Counter | undefined;
+let errorCounter: Counter | undefined;
 
-const errorCounter = (): Counter => {
-  counter ??= metrics.getMeter(METER_NAME).createCounter(REQUEST_ERRORS_METRIC, {
+const getErrorCounter = (): Counter => {
+  errorCounter ??= metrics.getMeter(METER_NAME).createCounter(REQUEST_ERRORS_METRIC, {
     description: 'Errors captured by the Next.js onRequestError hook',
   });
-  return counter;
+  return errorCounter;
 };
 
 function requestErrorAttributes(context: RequestErrorContext) {
   return {
     'http.route': context.routePath || UNMATCHED_ROUTE,
-    'next.route_type': context.routeType ?? 'unknown',
-    'next.render_source': context.renderSource ?? 'none',
-    'next.revalidate_reason': context.revalidateReason ?? 'none',
+    'next.route_type': context.routeType,
+    'next.render_source': context.renderSource ?? MISSING_LABEL,
+    'next.revalidate_reason': context.revalidateReason ?? MISSING_LABEL,
   };
 }
 
-export function recordRequestError(context: RequestErrorContext, target: Counter = errorCounter()): void {
-  target.add(1, requestErrorAttributes(context));
+export function recordRequestError(
+  context: RequestErrorContext,
+  counter: Counter = getErrorCounter(),
+): void {
+  counter.add(1, requestErrorAttributes(context));
 }

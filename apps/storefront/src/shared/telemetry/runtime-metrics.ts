@@ -1,74 +1,109 @@
-import { performance, monitorEventLoopDelay, type EventLoopUtilization } from 'node:perf_hooks';
+import { type IntervalHistogram, monitorEventLoopDelay, performance } from 'node:perf_hooks';
 
-import type { BatchObservableCallback, Meter } from '@opentelemetry/api';
+import type {
+  BatchObservableResult,
+  Meter,
+  ObservableCounter,
+  ObservableGauge,
+} from '@opentelemetry/api';
 
 import {
   EVENT_LOOP_DELAY_METRIC,
   EVENT_LOOP_PERCENTILES,
   EVENT_LOOP_RESOLUTION_MS,
   EVENT_LOOP_UTILIZATION_METRIC,
+  NS_PER_SECOND,
   PROCESS_CPU_TIME_METRIC,
   PROCESS_MEMORY_METRIC,
+  US_PER_SECOND,
 } from './constants';
 
-const NS_PER_SECOND = 1e9;
-const US_PER_SECOND = 1e6;
+interface RuntimeInstruments {
+  eventLoopDelay: ObservableGauge;
+  eventLoopUtilization: ObservableGauge;
+  memory: ObservableGauge;
+  cpuTime: ObservableCounter;
+}
 
-export function registerRuntimeMetrics(meter: Meter): () => void {
-  const eventLoopDelay = monitorEventLoopDelay({ resolution: EVENT_LOOP_RESOLUTION_MS });
-  eventLoopDelay.enable();
-  let previousUtilization: EventLoopUtilization = performance.eventLoopUtilization();
-
-  const delayGauge = meter.createObservableGauge(EVENT_LOOP_DELAY_METRIC, {
+const createInstruments = (meter: Meter): RuntimeInstruments => ({
+  eventLoopDelay: meter.createObservableGauge(EVENT_LOOP_DELAY_METRIC, {
     description: 'Event loop delay percentiles since the previous export',
     unit: 's',
-  });
-  const utilizationGauge = meter.createObservableGauge(EVENT_LOOP_UTILIZATION_METRIC, {
+  }),
+  eventLoopUtilization: meter.createObservableGauge(EVENT_LOOP_UTILIZATION_METRIC, {
     description: 'Share of time the event loop was busy since the previous export',
     unit: '1',
-  });
-  const memoryGauge = meter.createObservableGauge(PROCESS_MEMORY_METRIC, {
+  }),
+  memory: meter.createObservableGauge(PROCESS_MEMORY_METRIC, {
     description: 'Process memory by type',
     unit: 'By',
-  });
-  const cpuCounter = meter.createObservableCounter(PROCESS_CPU_TIME_METRIC, {
+  }),
+  cpuTime: meter.createObservableCounter(PROCESS_CPU_TIME_METRIC, {
     description: 'CPU time consumed by the process',
     unit: 's',
-  });
+  }),
+});
 
-  const observe: BatchObservableCallback = (result) => {
-    if (eventLoopDelay.count > 0) {
-      EVENT_LOOP_PERCENTILES.forEach((percentile) =>
-        result.observe(delayGauge, eventLoopDelay.percentile(percentile) / NS_PER_SECOND, {
-          percentile: `p${percentile}`,
-        }),
-      );
-      result.observe(delayGauge, eventLoopDelay.max / NS_PER_SECOND, { percentile: 'max' });
-      eventLoopDelay.reset();
-    }
+function observeEventLoopDelay(
+  result: BatchObservableResult,
+  gauge: ObservableGauge,
+  delay: IntervalHistogram,
+): void {
+  if (delay.count === 0) {
+    return;
+  }
+  EVENT_LOOP_PERCENTILES.forEach((percentile) =>
+    result.observe(gauge, delay.percentile(percentile) / NS_PER_SECOND, {
+      percentile: `p${percentile}`,
+    }),
+  );
+  result.observe(gauge, delay.max / NS_PER_SECOND, { percentile: 'max' });
+  delay.reset();
+}
 
-    const currentUtilization = performance.eventLoopUtilization();
-    const utilization = performance.eventLoopUtilization(currentUtilization, previousUtilization);
-    previousUtilization = currentUtilization;
-    result.observe(utilizationGauge, utilization.utilization);
-
-    const memory = process.memoryUsage();
-    result.observe(memoryGauge, memory.rss, { type: 'rss' });
-    result.observe(memoryGauge, memory.heapUsed, { type: 'heap_used' });
-    result.observe(memoryGauge, memory.heapTotal, { type: 'heap_total' });
-    result.observe(memoryGauge, memory.external, { type: 'external' });
-    result.observe(memoryGauge, memory.arrayBuffers, { type: 'array_buffers' });
-
-    const cpu = process.cpuUsage();
-    result.observe(cpuCounter, cpu.user / US_PER_SECOND, { 'cpu.mode': 'user' });
-    result.observe(cpuCounter, cpu.system / US_PER_SECOND, { 'cpu.mode': 'system' });
-  };
-
-  const observables = [delayGauge, utilizationGauge, memoryGauge, cpuCounter];
-  meter.addBatchObservableCallback(observe, observables);
-
+function trackEventLoopUtilization(): () => number {
+  let previous = performance.eventLoopUtilization();
   return () => {
-    eventLoopDelay.disable();
-    meter.removeBatchObservableCallback(observe, observables);
+    const current = performance.eventLoopUtilization();
+    const sincePrevious = performance.eventLoopUtilization(current, previous);
+    previous = current;
+    return sincePrevious.utilization;
   };
+}
+
+function observeMemory(result: BatchObservableResult, gauge: ObservableGauge): void {
+  const memory = process.memoryUsage();
+  result.observe(gauge, memory.rss, { type: 'rss' });
+  result.observe(gauge, memory.heapUsed, { type: 'heap_used' });
+  result.observe(gauge, memory.heapTotal, { type: 'heap_total' });
+  result.observe(gauge, memory.external, { type: 'external' });
+  result.observe(gauge, memory.arrayBuffers, { type: 'array_buffers' });
+}
+
+function observeCpuTime(result: BatchObservableResult, counter: ObservableCounter): void {
+  const cpu = process.cpuUsage();
+  result.observe(counter, cpu.user / US_PER_SECOND, { 'cpu.mode': 'user' });
+  result.observe(counter, cpu.system / US_PER_SECOND, { 'cpu.mode': 'system' });
+}
+
+export function registerRuntimeMetrics(meter: Meter): void {
+  const instruments = createInstruments(meter);
+  const eventLoopDelay = monitorEventLoopDelay({ resolution: EVENT_LOOP_RESOLUTION_MS });
+  eventLoopDelay.enable();
+  const eventLoopUtilizationSincePrevious = trackEventLoopUtilization();
+
+  meter.addBatchObservableCallback(
+    (result) => {
+      observeEventLoopDelay(result, instruments.eventLoopDelay, eventLoopDelay);
+      result.observe(instruments.eventLoopUtilization, eventLoopUtilizationSincePrevious());
+      observeMemory(result, instruments.memory);
+      observeCpuTime(result, instruments.cpuTime);
+    },
+    [
+      instruments.eventLoopDelay,
+      instruments.eventLoopUtilization,
+      instruments.memory,
+      instruments.cpuTime,
+    ],
+  );
 }

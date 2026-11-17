@@ -1,19 +1,27 @@
-import type { Attributes, AttributeValue, Histogram, HrTime, Meter } from '@opentelemetry/api';
+import {
+  type Attributes,
+  type AttributeValue,
+  type Histogram,
+  type HrTime,
+  type Meter,
+  SpanStatusCode,
+} from '@opentelemetry/api';
 import type { ReadableSpan, Span, SpanProcessor } from '@opentelemetry/sdk-trace-node';
 
 import {
   DURATION_BUCKETS_SECONDS,
+  FAILED_FETCH_STATUS,
   FETCH_DURATION_METRIC,
-  HTTP_REQUEST_DURATION_METRIC,
   KNOWN_HTTP_METHODS,
+  MISSING_LABEL,
   NEXT_SPAN_TYPE,
+  NS_PER_SECOND,
   OTHER_METHOD,
   RENDER_DURATION_METRIC,
+  REQUEST_DURATION_METRIC,
   UNKNOWN_HOST,
   UNMATCHED_ROUTE,
 } from './constants';
-
-const NS_PER_SECOND = 1e9;
 
 export const toSeconds = ([seconds, nanos]: HrTime): number => seconds + nanos / NS_PER_SECOND;
 
@@ -28,34 +36,46 @@ export const normalizeMethod = (value: AttributeValue | undefined): string => {
   return method && KNOWN_HTTP_METHODS.has(method) ? method : OTHER_METHOD;
 };
 
-const routeOf = (attributes: Attributes): string =>
+const routeOf = ({ attributes }: ReadableSpan): string =>
   asString(attributes['next.route']) ?? UNMATCHED_ROUTE;
 
-function requestAttributes(attributes: Attributes): Attributes {
+const statusAttribute = (status: number | undefined): Attributes =>
+  status === undefined ? {} : { 'http.response.status_code': status };
+
+function requestAttributes(span: ReadableSpan): Attributes {
   return {
-    'http.request.method': normalizeMethod(attributes['http.method']),
-    'http.route': routeOf(attributes),
-    'http.response.status_code': asNumber(attributes['http.status_code']) ?? 0,
-    'next.rsc': attributes['next.rsc'] === true,
+    'http.request.method': normalizeMethod(span.attributes['http.method']),
+    'http.route': routeOf(span),
+    'next.rsc': span.attributes['next.rsc'] === true,
+    ...statusAttribute(asNumber(span.attributes['http.status_code'])),
   };
 }
 
-function renderAttributes(attributes: Attributes): Attributes {
-  return { 'http.route': routeOf(attributes) };
+function renderAttributes(span: ReadableSpan): Attributes {
+  return { 'http.route': routeOf(span) };
 }
 
-function fetchAttributes(attributes: Attributes): Attributes {
+function fetchStatus(span: ReadableSpan): number | undefined {
+  const status = asNumber(span.attributes['http.status_code']);
+  if (status !== undefined) {
+    return status;
+  }
+  return span.status.code === SpanStatusCode.ERROR ? FAILED_FETCH_STATUS : undefined;
+}
+
+function fetchAttributes(span: ReadableSpan): Attributes {
   return {
-    'server.address': asString(attributes['net.peer.name']) ?? UNKNOWN_HOST,
-    'http.request.method': normalizeMethod(attributes['http.method']),
-    'http.response.status_code': asNumber(attributes['http.status_code']) ?? 0,
-    'next.fetch.cache_status': asString(attributes['next.fetch.cache_status']) ?? 'none',
+    'server.address': asString(span.attributes['net.peer.name']) ?? UNKNOWN_HOST,
+    'http.request.method': normalizeMethod(span.attributes['http.method']),
+    'next.fetch.cache_status':
+      asString(span.attributes['next.fetch.cache_status']) ?? MISSING_LABEL,
+    ...statusAttribute(fetchStatus(span)),
   };
 }
 
 interface SpanMetric {
   histogram: Histogram;
-  toAttributes: (attributes: Attributes) => Attributes;
+  toAttributes: (span: ReadableSpan) => Attributes;
 }
 
 export class NextSpanMetricsProcessor implements SpanProcessor {
@@ -73,7 +93,7 @@ export class NextSpanMetricsProcessor implements SpanProcessor {
       [
         NEXT_SPAN_TYPE.REQUEST,
         {
-          histogram: histogram(HTTP_REQUEST_DURATION_METRIC, 'Duration of requests handled by Next.js'),
+          histogram: histogram(REQUEST_DURATION_METRIC, 'Duration of requests handled by Next.js'),
           toAttributes: requestAttributes,
         },
       ],
@@ -87,7 +107,10 @@ export class NextSpanMetricsProcessor implements SpanProcessor {
       [
         NEXT_SPAN_TYPE.FETCH,
         {
-          histogram: histogram(FETCH_DURATION_METRIC, 'Duration of fetch calls made during rendering'),
+          histogram: histogram(
+            FETCH_DURATION_METRIC,
+            'Duration of fetch calls made during rendering',
+          ),
           toAttributes: fetchAttributes,
         },
       ],
@@ -102,7 +125,7 @@ export class NextSpanMetricsProcessor implements SpanProcessor {
     if (!metric) {
       return;
     }
-    metric.histogram.record(toSeconds(span.duration), metric.toAttributes(span.attributes));
+    metric.histogram.record(toSeconds(span.duration), metric.toAttributes(span));
   }
 
   forceFlush(): Promise<void> {

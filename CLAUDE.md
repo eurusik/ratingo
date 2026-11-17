@@ -19,7 +19,7 @@ After finishing each step, review the changed code before moving on, and fix wha
 ## Layout
 - `apps/api/` — NestJS + Fastify + Drizzle ORM + PostgreSQL
 - `apps/web-client/` — Next.js 16 + React 19 + TanStack Query v5
-- `apps/storefront/` — the public site being rewritten (Next.js 16, FSD v2.1): routes in the root `app/`, FSD layers in `src/` (`app`, `pages`, `widgets`, `features`, `entities`, `shared`), boundaries checked by Steiger (`npm run lint:fsd --workspace=storefront`, Node >= 22.18); the empty root `pages/` keeps Next from routing `src/pages`. Env is read only in `src/shared/config`
+- `apps/storefront/` — the public site being rewritten (Next.js 16, FSD v2.1): routes in the root `app/`, FSD layers in `src/` (`app`, `pages`, `widgets`, `features`, `entities`, `shared`), boundaries checked by Steiger (`npm run lint:fsd --workspace=storefront`, Node >= 22.18); the empty root `pages/` keeps Next from routing `src/pages`. Env is read only in `src/shared/config`, except the inline `process.env.NEXT_RUNTIME === 'nodejs'` checks in the root `instrumentation.ts`: Next needs them inline to keep the Node-only OpenTelemetry SDK (`src/shared/telemetry`) out of edge bundles
 - `apps/pg-backup/` — daily `pg_dump` of prod to the Railway bucket (Railway cron service `Backup CRON`, own Dockerfile)
 - `packages/api-contract/` — Shared OpenAPI types (auto-generated)
 - `packages/web-core/` — Framework-agnostic web code shared by the web apps (`@ratingo/web-core/{api,auth,query,i18n,lib}`): no `next/*` imports, no `process.env`, config passed in by the app

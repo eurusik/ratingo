@@ -1,7 +1,7 @@
-import { metrics } from '@opentelemetry/api';
+import { type Meter, metrics } from '@opentelemetry/api';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { resourceFromAttributes } from '@opentelemetry/resources';
+import { type Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import {
   BatchSpanProcessor,
@@ -14,19 +14,16 @@ import { type TelemetryEnv, readTelemetryEnv } from '@/shared/config/index.serve
 import { METER_NAME, METRICS_EXPORT_INTERVAL_MS } from './constants';
 import { NextSpanMetricsProcessor } from './next-span-metrics';
 import { registerRuntimeMetrics } from './runtime-metrics';
+import { SampledExportProcessor } from './sampled-export-processor';
 
-const buildServiceAttributes = (config: TelemetryEnv): Record<string, string> => ({
-  'service.name': config.serviceName,
-  'service.version': config.serviceVersion,
-  'deployment.environment.name': config.environmentName,
-});
+const buildResource = (config: TelemetryEnv): Resource =>
+  resourceFromAttributes({
+    'service.name': config.serviceName,
+    'service.version': config.serviceVersion,
+    'deployment.environment.name': config.environmentName,
+  });
 
-export function startTelemetry(config: TelemetryEnv = readTelemetryEnv()): MeterProvider | undefined {
-  if (!config.enabled) {
-    return undefined;
-  }
-
-  const resource = resourceFromAttributes(buildServiceAttributes(config));
+function startMetrics(resource: Resource): Meter {
   const meterProvider = new MeterProvider({
     resource,
     readers: [
@@ -37,14 +34,28 @@ export function startTelemetry(config: TelemetryEnv = readTelemetryEnv()): Meter
     ],
   });
   metrics.setGlobalMeterProvider(meterProvider);
-  const meter = meterProvider.getMeter(METER_NAME);
+  return meterProvider.getMeter(METER_NAME);
+}
 
+function startTracing(resource: Resource, meter: Meter, tracesExportRatio: number): void {
   const spanProcessors: SpanProcessor[] = [new NextSpanMetricsProcessor(meter)];
-  if (config.exportTraces) {
-    spanProcessors.push(new BatchSpanProcessor(new OTLPTraceExporter()));
+  if (tracesExportRatio > 0) {
+    spanProcessors.push(
+      new SampledExportProcessor(
+        new BatchSpanProcessor(new OTLPTraceExporter()),
+        tracesExportRatio,
+      ),
+    );
   }
   new NodeTracerProvider({ resource, spanProcessors }).register();
+}
 
+export function startTelemetry(config: TelemetryEnv = readTelemetryEnv()): void {
+  if (!config.enabled) {
+    return;
+  }
+  const resource = buildResource(config);
+  const meter = startMetrics(resource);
+  startTracing(resource, meter, config.tracesExportRatio);
   registerRuntimeMetrics(meter);
-  return meterProvider;
 }

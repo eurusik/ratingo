@@ -1,10 +1,16 @@
-import type { Attributes, Histogram, HrTime, Meter } from '@opentelemetry/api';
+import {
+  type Attributes,
+  type Histogram,
+  type HrTime,
+  type Meter,
+  SpanStatusCode,
+} from '@opentelemetry/api';
 import type { ReadableSpan } from '@opentelemetry/sdk-trace-node';
 
 import {
   FETCH_DURATION_METRIC,
-  HTTP_REQUEST_DURATION_METRIC,
   RENDER_DURATION_METRIC,
+  REQUEST_DURATION_METRIC,
 } from './constants';
 import { NextSpanMetricsProcessor, normalizeMethod, toSeconds } from './next-span-metrics';
 
@@ -17,16 +23,32 @@ function fakeMeter() {
       return { record } as unknown as Histogram;
     },
   } as unknown as Meter;
-  return { meter, histograms };
+  return { processor: new NextSpanMetricsProcessor(meter), histograms };
 }
 
-const span = (attributes: Attributes, duration: HrTime = [0, 250_000_000]) =>
-  ({ attributes, duration }) as unknown as ReadableSpan;
+const span = (
+  attributes: Attributes,
+  {
+    duration = [0, 250_000_000],
+    status = SpanStatusCode.UNSET,
+  }: { duration?: HrTime; status?: SpanStatusCode } = {},
+) => ({ attributes, duration, status: { code: status } }) as unknown as ReadableSpan;
+
+const fetchSpan = (attributes: Attributes, status?: SpanStatusCode) =>
+  span(
+    {
+      'next.span_type': 'AppRender.fetch',
+      'http.method': 'GET',
+      'net.peer.name': 'api.railway.internal',
+      ...attributes,
+    },
+    { status },
+  );
 
 describe('NextSpanMetricsProcessor', () => {
   it('records request duration by route, status and RSC flag', () => {
-    const { meter, histograms } = fakeMeter();
-    new NextSpanMetricsProcessor(meter).onEnd(
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(
       span({
         'next.span_type': 'BaseServer.handleRequest',
         'http.method': 'GET',
@@ -36,7 +58,7 @@ describe('NextSpanMetricsProcessor', () => {
       }),
     );
 
-    expect(histograms.get(HTTP_REQUEST_DURATION_METRIC)).toHaveBeenCalledWith(0.25, {
+    expect(histograms.get(REQUEST_DURATION_METRIC)).toHaveBeenCalledWith(0.25, {
       'http.request.method': 'GET',
       'http.route': '/movie/[slug]',
       'http.response.status_code': 200,
@@ -44,37 +66,36 @@ describe('NextSpanMetricsProcessor', () => {
     });
   });
 
-  it('labels requests without a matched route as unmatched', () => {
-    const { meter, histograms } = fakeMeter();
-    new NextSpanMetricsProcessor(meter).onEnd(
+  it('labels requests without a matched route as unmatched and leaves out a missing status', () => {
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(
       span({ 'next.span_type': 'BaseServer.handleRequest', 'http.method': 'PROPFIND' }),
     );
 
-    expect(histograms.get(HTTP_REQUEST_DURATION_METRIC)).toHaveBeenCalledWith(0.25, {
+    expect(histograms.get(REQUEST_DURATION_METRIC)).toHaveBeenCalledWith(0.25, {
       'http.request.method': '_OTHER',
       'http.route': 'unmatched',
-      'http.response.status_code': 0,
       'next.rsc': false,
     });
   });
 
   it('records render duration by route', () => {
-    const { meter, histograms } = fakeMeter();
-    new NextSpanMetricsProcessor(meter).onEnd(
-      span({ 'next.span_type': 'AppRender.getBodyResult', 'next.route': '/' }, [1, 500_000_000]),
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(
+      span(
+        { 'next.span_type': 'AppRender.getBodyResult', 'next.route': '/' },
+        { duration: [1, 500_000_000] },
+      ),
     );
 
     expect(histograms.get(RENDER_DURATION_METRIC)).toHaveBeenCalledWith(1.5, { 'http.route': '/' });
   });
 
   it('records fetch duration by host, status and cache status without the URL', () => {
-    const { meter, histograms } = fakeMeter();
-    new NextSpanMetricsProcessor(meter).onEnd(
-      span({
-        'next.span_type': 'AppRender.fetch',
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(
+      fetchSpan({
         'http.url': 'http://api.railway.internal:3000/api/catalog/movies/123',
-        'http.method': 'GET',
-        'net.peer.name': 'api.railway.internal',
         'http.status_code': 200,
         'next.fetch.cache_status': 'hit',
       }),
@@ -88,13 +109,33 @@ describe('NextSpanMetricsProcessor', () => {
     });
   });
 
-  it('ignores spans that are not tracked', () => {
-    const { meter, histograms } = fakeMeter();
-    new NextSpanMetricsProcessor(meter).onEnd(
-      span({ 'next.span_type': 'NextNodeServer.findPageComponents' }),
-    );
-    new NextSpanMetricsProcessor(meter).onEnd(span({}));
+  it('labels a fetch that threw with status 0', () => {
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(fetchSpan({}, SpanStatusCode.ERROR));
 
+    expect(histograms.get(FETCH_DURATION_METRIC)).toHaveBeenCalledWith(
+      0.25,
+      expect.objectContaining({ 'http.response.status_code': 0 }),
+    );
+  });
+
+  it('leaves out the status of a fetch Next.js did not track instead of reporting a failure', () => {
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(fetchSpan({}));
+
+    expect(histograms.get(FETCH_DURATION_METRIC)).toHaveBeenCalledWith(0.25, {
+      'server.address': 'api.railway.internal',
+      'http.request.method': 'GET',
+      'next.fetch.cache_status': 'none',
+    });
+  });
+
+  it('ignores spans that are not tracked', () => {
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(span({ 'next.span_type': 'NextNodeServer.findPageComponents' }));
+    processor.onEnd(span({}));
+
+    expect(histograms.size).toBe(3);
     histograms.forEach((record) => expect(record).not.toHaveBeenCalled());
   });
 });
