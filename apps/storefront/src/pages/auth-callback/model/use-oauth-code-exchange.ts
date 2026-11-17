@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '@ratingo/web-core/api';
 import { authApi, tokenStorage } from '@ratingo/web-core/auth';
-import { toSafeReturnPath } from '@/shared/auth';
-import { replaceDocumentLocation } from '@/shared/lib';
+import { toSafeReturnPath, type OAuthProvider } from '@/shared/auth';
+import { replaceDocumentLocation, track } from '@/shared/lib';
 import { MISSING_CODE_ERROR } from './oauth-error';
 
 const UNKNOWN_EXCHANGE_ERROR = 'UNKNOWN';
@@ -18,7 +18,10 @@ interface OAuthCallbackParams {
   get(name: string): string | null;
 }
 
-export function useOAuthCodeExchange(params: OAuthCallbackParams): string | null {
+export function useOAuthCodeExchange(
+  params: OAuthCallbackParams,
+  provider: OAuthProvider,
+): string | null {
   const code = params.get('code');
   const providerError = params.get('error');
   const returnTo = toSafeReturnPath(params.get('returnTo'));
@@ -33,6 +36,7 @@ export function useOAuthCodeExchange(params: OAuthCallbackParams): string | null
       .exchangeOAuthCode(code)
       .then((tokens) => {
         tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
+        track('login', { method: provider });
         replaceDocumentLocation(returnTo);
       })
       .catch((error: unknown) => {
@@ -41,7 +45,7 @@ export function useOAuthCodeExchange(params: OAuthCallbackParams): string | null
           errorCode: error instanceof ApiError ? error.code : UNKNOWN_EXCHANGE_ERROR,
         });
       });
-  }, [code, providerError, returnTo]);
+  }, [code, provider, providerError, returnTo]);
 
   if (providerError) return providerError;
   if (!code) return MISSING_CODE_ERROR;

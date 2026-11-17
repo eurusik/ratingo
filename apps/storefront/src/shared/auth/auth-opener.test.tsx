@@ -9,7 +9,20 @@ function mockSession(isAuthenticated: boolean) {
 }
 
 describe('auth opener', () => {
-  afterEach(() => act(() => closeAuth()));
+  afterEach(() => {
+    act(() => closeAuth());
+    delete window.gtag;
+  });
+
+  it('reports the intent kind when the dialog opens, and none without one', () => {
+    window.gtag = jest.fn();
+
+    act(() => openAuth({ intent: { kind: 'review', title: 'Андор', mediaItemId: 'andor-id' } }));
+    act(() => openAuth());
+
+    expect(window.gtag).toHaveBeenNthCalledWith(1, 'event', 'auth_prompt', { intent: 'review' });
+    expect(window.gtag).toHaveBeenNthCalledWith(2, 'event', 'auth_prompt', { intent: 'none' });
+  });
 
   it('opens sign-in by default and closes it', () => {
     const { result } = renderHook(() => useAuthRequest());

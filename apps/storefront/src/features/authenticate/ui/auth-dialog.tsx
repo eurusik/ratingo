@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { closeAuth, useAuthRequest, type AuthMode, type AuthRequest } from '@/shared/auth';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import { ResponsiveDialog } from '@/shared/ui';
 import { LoginForm } from './login-form';
 import { OAuthButtons } from './oauth-buttons';
@@ -35,7 +36,8 @@ export function AuthDialog() {
       ? interpolate(dict.auth.intent[shown.intent.kind], { title: shown.intent.title })
       : modeTitle;
 
-  const finish = () => {
+  const finish = (event: 'login' | 'sign_up') => {
+    track(event, { method: 'email' });
     closeAuth();
     shown.onSignedIn?.();
   };
@@ -55,9 +57,9 @@ export function AuthDialog() {
         </p>
         <OAuthButtons />
         {mode === 'login' ? (
-          <LoginForm onSignedIn={finish} onRegister={() => chooseMode('register')} />
+          <LoginForm onSignedIn={() => finish('login')} onRegister={() => chooseMode('register')} />
         ) : (
-          <RegisterForm onSignedIn={finish} onLogin={() => chooseMode('login')} />
+          <RegisterForm onSignedIn={() => finish('sign_up')} onLogin={() => chooseMode('login')} />
         )}
       </div>
     </ResponsiveDialog>

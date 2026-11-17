@@ -196,7 +196,7 @@ const NO_SEARCH_PARAMS = new URLSearchParams();
 
 function OAuthCallbackContent({ provider }: { provider: OAuthProvider }) {
   const searchParams = useSearchParams() ?? NO_SEARCH_PARAMS;
-  const errorCode = useOAuthCodeExchange(searchParams);
+  const errorCode = useOAuthCodeExchange(searchParams, provider);
 
   return errorCode ? (
     <CallbackError

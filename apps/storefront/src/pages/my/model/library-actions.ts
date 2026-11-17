@@ -5,7 +5,7 @@ import { toast } from '@heroui/react';
 import { useRefreshWatchProgress } from '@/entities/episode';
 import { useLibraryListsStore, useLibraryStore, useMediaStateStore } from '@/entities/library';
 import { useTranslation } from '@/shared/i18n';
-import { showUndoToast } from '@/shared/lib';
+import { showUndoToast, track } from '@/shared/lib';
 import { moveSpecs, type MoveSpec, type MoveSpecs } from './library-move-specs';
 import { useLibraryMoveActions } from './library-moves';
 
@@ -50,12 +50,15 @@ export function useLibraryActions(): LibraryActions {
   );
 
   const run = useCallback(
-    (spec: MoveSpec) => {
+    (action: keyof MoveSpecs, spec: MoveSpec) => {
       const { title, from, to } = spec;
       const isMove = from !== to;
       const token = isMove ? moves.track(title.mediaItemId, to ?? 'gone') : undefined;
       if (isMove) lists.move({ from, to });
       const committed = settle(spec, spec.commit, token);
+      void committed.then((isCommitted) => {
+        if (isCommitted) track('library_action', { action });
+      });
       showUndoToast({
         key: title.mediaItemId,
         message: spec.message,
@@ -78,15 +81,15 @@ export function useLibraryActions(): LibraryActions {
     const specs = moveSpecs(dict);
     return {
       refresh,
-      pause: (...args) => run(specs.pause(...args)),
-      drop: (...args) => run(specs.drop(...args)),
-      dropPaused: (...args) => run(specs.dropPaused(...args)),
-      restore: (...args) => run(specs.restore(...args)),
-      start: (...args) => run(specs.start(...args)),
-      markMovieWatched: (...args) => run(specs.markMovieWatched(...args)),
-      removeFromPlan: (...args) => run(specs.removeFromPlan(...args)),
-      markEpisodeWatched: (...args) => run(specs.markEpisodeWatched(...args)),
-      rate: (...args) => run(specs.rate(...args)),
+      pause: (...args) => run('pause', specs.pause(...args)),
+      drop: (...args) => run('drop', specs.drop(...args)),
+      dropPaused: (...args) => run('dropPaused', specs.dropPaused(...args)),
+      restore: (...args) => run('restore', specs.restore(...args)),
+      start: (...args) => run('start', specs.start(...args)),
+      markMovieWatched: (...args) => run('markMovieWatched', specs.markMovieWatched(...args)),
+      removeFromPlan: (...args) => run('removeFromPlan', specs.removeFromPlan(...args)),
+      markEpisodeWatched: (...args) => run('markEpisodeWatched', specs.markEpisodeWatched(...args)),
+      rate: (...args) => run('rate', specs.rate(...args)),
     } satisfies LibraryActions;
   }, [dict, refresh, run]);
 }

@@ -8,6 +8,7 @@ import { SUBSCRIPTIONS_KEY, remindedShowsKey } from '@/entities/subscription';
 import { fetchAllPages, subscriptionsApi } from '@/shared/api';
 import { useSignedInAction } from '@/shared/auth';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 
 const REMINDER_TRIGGER = 'new_episode';
 const PAGE_SIZE = 100;
@@ -66,6 +67,7 @@ export function useEpisodeReminder(show: ReminderShow): EpisodeReminder {
       return { previous };
     },
     onSuccess: (_result, turnOn) => {
+      track('episode_reminder', { enabled: turnOn });
       toast(interpolate(turnOn ? dict.reminder.on : dict.reminder.off, { show: show.title }));
     },
     onError: (error, _turnOn, context) => {

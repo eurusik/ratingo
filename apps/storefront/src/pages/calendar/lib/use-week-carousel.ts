@@ -81,7 +81,10 @@ interface PanePreview {
   pane: number;
 }
 
-export function useWeekCarousel(weekKey: string, tryStep: (step: WeekStep) => boolean) {
+export function useWeekCarousel(
+  weekKey: string,
+  tryStep: (step: WeekStep, action?: 'swipe') => boolean,
+) {
   const scroller = useRef<HTMLDivElement>(null);
   const [preview, setPreview] = useState<PanePreview>({ weekKey, pane: CURRENT_PANE });
   const latest = useRef({
@@ -143,7 +146,8 @@ export function useWeekCarousel(weekKey: string, tryStep: (step: WeekStep) => bo
         return;
       }
       state.lastCommittedWeek = state.weekKey;
-      if (state.tryStep(step)) return;
+      const isSwipe = state.slide === undefined;
+      if (isSwipe ? state.tryStep(step, 'swipe') : state.tryStep(step)) return;
       state.lastCommittedWeek = undefined;
       stopSliding();
       scrollToPane(element, CURRENT_PANE);

@@ -1,4 +1,5 @@
 import { catalogApi, type ImportJobStatus, type ImportResult, type MediaType } from '@/shared/api';
+import { track } from '@/shared/lib';
 
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLLS = 40;
@@ -78,11 +79,11 @@ async function pollUntilReady(
   throw new TitleImportError('timeout');
 }
 
-export async function importUntilReady(
+async function importTitle(
   type: MediaType,
   tmdbId: number,
   signal: AbortSignal,
-  gateway: ImportGateway = apiGateway,
+  gateway: ImportGateway,
 ): Promise<string> {
   const result = await gateway.importMedia(type, tmdbId);
   const slug = readySlug(result);
@@ -90,4 +91,25 @@ export async function importUntilReady(
   if (!result.jobId)
     throw new TitleImportError(result.status === 'not_found' ? 'not-found' : 'failed');
   return pollUntilReady(result.jobId, signal, gateway);
+}
+
+export async function importUntilReady(
+  type: MediaType,
+  tmdbId: number,
+  signal: AbortSignal,
+  gateway: ImportGateway = apiGateway,
+): Promise<string> {
+  try {
+    const slug = await importTitle(type, tmdbId, signal, gateway);
+    track('title_import', { media_type: type, result: 'ready' });
+    return slug;
+  } catch (error) {
+    if (error instanceof TitleImportError) {
+      track('title_import', {
+        media_type: type,
+        result: error.reason === 'not-found' ? 'not_found' : error.reason,
+      });
+    }
+    throw error;
+  }
 }

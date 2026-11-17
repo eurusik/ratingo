@@ -94,8 +94,11 @@ describe('ProfileMenu', () => {
     expect(document.cookie).toContain('ratingo-locale=en');
     expect(refresh).toHaveBeenCalledTimes(1);
 
+    window.gtag = jest.fn();
     fireEvent.click(within(sheet).getByRole('button', { name: uk.profile.signOut }));
     expect(logout).toHaveBeenCalledTimes(1);
+    expect(window.gtag).toHaveBeenCalledWith('event', 'logout', {});
+    delete window.gtag;
   });
 
   it('opens a dropdown on desktop with the admin link for admins', async () => {

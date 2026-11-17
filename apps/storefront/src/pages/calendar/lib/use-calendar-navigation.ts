@@ -1,6 +1,7 @@
 'use client';
 
 import type { RefObject } from 'react';
+import { track } from '@/shared/lib';
 import type { WeekStep } from './use-week-carousel';
 import {
   addDays,
@@ -40,9 +41,10 @@ export function useCalendarNavigation({
     scrollToListStart(list.current);
   };
 
-  const tryStep = (direction: WeekStep): boolean => {
+  const tryStep = (direction: WeekStep, action: 'step' | 'swipe' = 'step'): boolean => {
     const nextWeekStart = addDays(location.weekStart, direction * WEEK_LENGTH);
     if (!isSupportedWeek(nextWeekStart)) return false;
+    track('calendar_change', { action });
     goTo({ ...location, weekStart: nextWeekStart });
     return true;
   };
@@ -52,8 +54,14 @@ export function useCalendarNavigation({
     goToNextWeek: () => {
       tryStep(1);
     },
-    goToThisWeek: () => goTo({ ...location, weekStart: weekStartOf(today) }),
-    changeMode: (mode: CalendarMode) => goTo({ ...location, mode }),
+    goToThisWeek: () => {
+      track('calendar_change', { action: 'this_week' });
+      goTo({ ...location, weekStart: weekStartOf(today) });
+    },
+    changeMode: (mode: CalendarMode) => {
+      track('calendar_change', { action: 'mode', mode });
+      goTo({ ...location, mode });
+    },
     keepResolvedMode: () => setLocation(withResolvedMode(location)),
   };
 }

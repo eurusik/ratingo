@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { mediaRoute } from '@/shared/config';
-import { navigateForward } from '@/shared/lib';
+import { navigateForward, track } from '@/shared/lib';
 import { importUntilReady } from './import-title';
 import { rememberTitle } from './recent-titles';
 import type { SearchTitle } from './search-title';
@@ -46,8 +46,13 @@ export function useOpenTitle(onOpened: () => void) {
   };
 
   const open = (title: SearchTitle) => {
-    if (title.isInCatalog && title.slug) navigate(title, title.slug);
-    else if (title.tmdbId !== undefined) startImport(title, title.tmdbId);
+    if (title.isInCatalog && title.slug) {
+      track('open_title', { source: 'search', media_type: title.type, in_catalog: true });
+      navigate(title, title.slug);
+    } else if (title.tmdbId !== undefined) {
+      track('open_title', { source: 'search', media_type: title.type, in_catalog: false });
+      startImport(title, title.tmdbId);
+    }
   };
 
   const cancelImport = () => {

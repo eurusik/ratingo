@@ -1,8 +1,9 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { catalogApi } from '@/shared/api';
-import { useDebouncedValue } from '@/shared/lib';
+import { track, useDebouncedValue } from '@/shared/lib';
 import { fromSearchItem, type SearchTitle } from './search-title';
 
 const MIN_QUERY_LENGTH = 2;
@@ -37,6 +38,19 @@ export function useCatalogSearch(query: string, filter: SearchFilter) {
     catalog: (data?.local ?? []).map(fromSearchItem).filter(keep),
     more: (data?.tmdb ?? []).map(fromSearchItem).filter(keep),
   };
+
+  const lastTracked = useRef('');
+  const isSettled = isActive && !isFetching && !isError && data !== undefined;
+  const resultsCount = results.catalog.length + results.more.length;
+
+  useEffect(() => {
+    if (!isSettled) return;
+    const key = `${term}|${filter}`;
+    if (lastTracked.current === key) return;
+    lastTracked.current = key;
+    if (resultsCount === 0) track('search_no_results', { search_term: term, filter });
+    else track('search', { results_count: resultsCount, filter });
+  }, [isSettled, term, filter, resultsCount]);
 
   const showsResultsFor = (typed: string) =>
     isActive && !isFetching && !isError && typed.trim() === term;
