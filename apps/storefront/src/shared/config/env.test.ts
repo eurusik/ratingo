@@ -25,7 +25,7 @@ describe('site environment gating', () => {
     const env = loadEnv({ APP_ENV: 'production' });
 
     expect(env.IS_PRODUCTION_SITE).toBe(true);
-    expect(env.GA_MEASUREMENT_ID).toBe('G-MPY73Y7DBB');
+    expect(env.GA_MEASUREMENT_ID).toBe('G-Y3TXZS9VBK');
   });
 
   it.each<[string, DeploymentEnv]>([
