@@ -10,6 +10,6 @@ export function useReviewComposer(
   discard: (draft: ReviewDraftState) => void,
 ) {
   const draft = useReviewDraft(editing, ownRating);
-  const closing = useGuardedClose(draft.isDirty, () => discard(draft));
+  const closing = useGuardedClose(draft.hasContentChanges, () => discard(draft));
   return { draft, closing };
 }

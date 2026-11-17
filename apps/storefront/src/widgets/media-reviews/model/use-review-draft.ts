@@ -7,12 +7,12 @@ export interface ReviewDraftState {
   content: string;
   rating: number | null;
   hasSpoiler: boolean;
-  hasTextChanges: boolean;
+  hasContentChanges: boolean;
   isDirty: boolean;
   setContent: (content: string) => void;
   setRating: (rating: number) => void;
   setHasSpoiler: (hasSpoiler: boolean) => void;
-  resetText: () => void;
+  resetContent: () => void;
   toDraft: () => ReviewDraft | null;
 }
 
@@ -24,18 +24,19 @@ export function useReviewDraft(editing: Review | null, ownRating: number | null)
   const [hasSpoiler, setHasSpoiler] = useState(initialSpoiler);
   const initialRating = editing?.rating ?? ownRating;
   const rating = pickedRating ?? initialRating;
-  const hasTextChanges = content.trim() !== initialContent.trim() || hasSpoiler !== initialSpoiler;
+  const hasContentChanges =
+    content.trim() !== initialContent.trim() || hasSpoiler !== initialSpoiler;
 
   return {
     content,
     rating,
     hasSpoiler,
-    hasTextChanges,
-    isDirty: hasTextChanges || (pickedRating !== null && pickedRating !== initialRating),
+    hasContentChanges,
+    isDirty: hasContentChanges || (pickedRating !== null && pickedRating !== initialRating),
     setContent,
     setRating,
     setHasSpoiler,
-    resetText: () => {
+    resetContent: () => {
       setContent(initialContent);
       setHasSpoiler(initialSpoiler);
     },

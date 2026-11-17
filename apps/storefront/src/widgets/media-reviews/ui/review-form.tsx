@@ -268,7 +268,7 @@ export function ReviewForm(props: ReviewFormProps) {
       ) : null}
       <div
         ref={presetsRef}
-        className={`flex flex-col gap-2 ${hidesRatingWhileTyping ? 'group-has-[textarea:focus]/compose:hidden' : ''}`}
+        className={`flex flex-col gap-2 ${hidesRatingWhileTyping ? 'pointer-coarse:group-has-[textarea:focus]/compose:hidden' : ''}`}
       >
         <span className="text-base font-bold">{copy.ratingTitle}</span>
         <RatingPresets
