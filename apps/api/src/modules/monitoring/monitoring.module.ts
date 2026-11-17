@@ -11,6 +11,7 @@ import omdbConfig from '@/config/omdb.config';
 import schedulerConfig from '@/config/scheduler.config';
 import tmdbConfig from '@/config/tmdb.config';
 import traktConfig from '@/config/trakt.config';
+import { TraktModule } from '@/modules/trakt/trakt.module';
 
 import { ExternalApiFailureListener } from './application/listeners/external-api-failure.listener';
 import { KeyHealthService } from './application/services/key-health.service';
@@ -48,6 +49,7 @@ import { MonitoringController } from './presentation/controllers/monitoring.cont
     ConfigModule.forFeature(mdblistConfig),
     ConfigModule.forFeature(omdbConfig),
     ConfigModule.forFeature(schedulerConfig),
+    TraktModule,
     BullModule.registerQueue({
       name: MONITORING_QUEUE,
       defaultJobOptions: {

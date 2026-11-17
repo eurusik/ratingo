@@ -218,6 +218,10 @@ export function destroyTraktRateLimiter(): void {
   sharedLimiter.destroy();
 }
 
+export function acquireTraktRateLimitToken(): Promise<void> {
+  return sharedLimiter.acquire();
+}
+
 /**
  * Options for fetch method.
  */

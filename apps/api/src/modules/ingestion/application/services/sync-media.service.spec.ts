@@ -415,6 +415,92 @@ describe('SyncMediaService', () => {
     });
   });
 
+  describe('Trakt for unreleased movies', () => {
+    const now = new Date('2026-11-17T15:00:00Z');
+
+    beforeEach(() => {
+      const clock = (service as unknown as { clock: { now: jest.Mock } }).clock;
+      clock.now.mockReturnValue(now);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue({
+        imdbRating: 7.5,
+        imdbVotes: 120,
+        metacritic: null,
+        metascore: null,
+        rottenTomatoes: null,
+      });
+    });
+
+    it('should skip Trakt but still fetch OMDb for a movie released after now', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({
+        ...mockMedia,
+        releaseDate: new Date('2026-12-25'),
+        details: { theatricalReleaseDate: new Date('2026-12-25') },
+      });
+
+      await service.syncMovie(550);
+
+      expect(traktAdapter.getMovieRatingsByTmdbId).not.toHaveBeenCalled();
+      expect(aggregatedRatings.getAggregatedRatings).toHaveBeenCalledWith(
+        'tt0137523',
+        MediaType.MOVIE,
+      );
+      expect(mediaRepository.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ ratingImdb: 7.5, voteCountImdb: 120 }),
+      );
+    });
+
+    it('should skip Trakt when only the digital release is in the future', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({
+        ...mockMedia,
+        releaseDate: new Date('2001-01-01'),
+        details: { theatricalReleaseDate: null, digitalReleaseDate: new Date('2027-02-01') },
+      });
+
+      await service.syncMovie(550);
+
+      expect(traktAdapter.getMovieRatingsByTmdbId).not.toHaveBeenCalled();
+    });
+
+    it('should call Trakt once the release moment has passed', async () => {
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      tmdbAdapter.getMovie.mockResolvedValue({
+        ...mockMedia,
+        releaseDate: new Date('2026-11-17T00:00:00Z'),
+        details: { theatricalReleaseDate: new Date('2026-11-17T00:00:00Z') },
+      });
+
+      await service.syncMovie(550);
+
+      expect(traktAdapter.getMovieRatingsByTmdbId).toHaveBeenCalledWith(550);
+    });
+
+    it('should call Trakt for a movie without any release date', async () => {
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      tmdbAdapter.getMovie.mockResolvedValue({
+        ...mockMedia,
+        releaseDate: null,
+        details: { theatricalReleaseDate: null, digitalReleaseDate: null },
+      });
+
+      await service.syncMovie(550);
+
+      expect(traktAdapter.getMovieRatingsByTmdbId).toHaveBeenCalledWith(550);
+    });
+
+    it('should still call Trakt for a show with a future date', async () => {
+      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
+      tmdbAdapter.getShow.mockResolvedValue({
+        ...mockMedia,
+        type: MediaType.SHOW,
+        releaseDate: new Date('2027-01-01'),
+      });
+
+      await service.syncShow(550);
+
+      expect(traktAdapter.getShowRatingsByTmdbId).toHaveBeenCalledWith(550);
+    });
+  });
+
   describe('syncShow', () => {
     const mockShow = {
       ...mockMedia,

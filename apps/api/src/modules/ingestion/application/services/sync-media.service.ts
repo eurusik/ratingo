@@ -3,9 +3,11 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { ReleaseStatus } from '@/common/enums/release-status.enum';
 import { startOfUtcDay } from '@/common/utils/date.util';
 import { errorMessage, toError } from '@/common/utils/error.utils';
 import {
+  computeReleaseStatus,
   generateSlug,
   type IMediaRepository,
   isMovieReleasingFrom,
@@ -340,9 +342,7 @@ export class SyncMediaService {
     const { imdbId } = media.externalIds;
 
     const [traktRating, omdbRatings] = await Promise.all([
-      type === MediaType.MOVIE
-        ? this.traktRatingsAdapter.getMovieRatingsByTmdbId(tmdbId)
-        : this.traktRatingsAdapter.getShowRatingsByTmdbId(tmdbId),
+      this.fetchTraktRatings(media, tmdbId, type),
       imdbId ? this.aggregatedRatings.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
     ]);
 
@@ -364,6 +364,24 @@ export class SyncMediaService {
         ratingRottenTomatoes: omdbRatings.rottenTomatoes,
       }),
     };
+  }
+
+  private fetchTraktRatings(media: NormalizedMedia, tmdbId: number, type: MediaType) {
+    if (type === MediaType.SHOW) return this.traktRatingsAdapter.getShowRatingsByTmdbId(tmdbId);
+    if (this.isUnreleasedMovie(media)) return Promise.resolve(null);
+    return this.traktRatingsAdapter.getMovieRatingsByTmdbId(tmdbId);
+  }
+
+  private isUnreleasedMovie(media: NormalizedMedia): boolean {
+    const releaseStatus = computeReleaseStatus(
+      {
+        releaseDate: media.releaseDate,
+        theatricalReleaseDate: media.details?.theatricalReleaseDate,
+        digitalReleaseDate: media.details?.digitalReleaseDate,
+      },
+      this.clock.now(),
+    );
+    return releaseStatus === ReleaseStatus.UPCOMING;
   }
 
   /**
