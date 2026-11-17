@@ -5,12 +5,8 @@
     "rootDir": "src",
     "outDir": "dist",
     "declarationMap": false,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "declaration": false
   },
-  "exclude": [
-    "src/**/*.test.ts"
-  ]
+  "exclude": ["src/**/*.test.ts"]
 }
