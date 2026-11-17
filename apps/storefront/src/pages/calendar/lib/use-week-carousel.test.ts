@@ -23,6 +23,31 @@ function scrollerWithPanes(): HTMLDivElement {
   return scroller;
 }
 
+function settleOn(scroller: HTMLElement, scrollLeft: number): void {
+  scroller.scrollLeft = scrollLeft;
+  scroller.dispatchEvent(new Event('scroll'));
+  scroller.dispatchEvent(new Event('scrollend'));
+}
+
+function captureResizes() {
+  const original = globalThis.ResizeObserver;
+  const callbacks: ResizeObserverCallback[] = [];
+  globalThis.ResizeObserver = class {
+    constructor(callback: ResizeObserverCallback) {
+      callbacks.push(callback);
+    }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+  return {
+    notify: () => callbacks.forEach((callback) => callback([], {} as ResizeObserver)),
+    restore: () => {
+      globalThis.ResizeObserver = original;
+    },
+  };
+}
+
 function renderCarousel(onStep: jest.Mock<boolean, [number]>) {
   const scroller = scrollerWithPanes();
   const hook = renderHook(
@@ -104,6 +129,69 @@ describe('useWeekCarousel', () => {
     swipeNext();
 
     expect(onStep).toHaveBeenCalledTimes(2);
+  });
+
+  it('finishes a slide that was cut short on the current week', () => {
+    const onStep = jest.fn((_step: number) => true);
+    const { result, scroller } = renderCarousel(onStep);
+    const slideAll = scroller.scrollTo;
+
+    scroller.scrollTo = () => {};
+    act(() => result.current.slideTo(1));
+    scroller.scrollTo = slideAll;
+    act(() => settleOn(scroller, PANE_WIDTH));
+
+    expect(onStep).toHaveBeenCalledWith(1);
+  });
+
+  it('accepts arrow presses again after a slide cannot be resumed', () => {
+    const onStep = jest.fn((_step: number) => true);
+    const { result, scroller } = renderCarousel(onStep);
+    const slideAll = scroller.scrollTo;
+
+    scroller.scrollTo = () => {};
+    act(() => result.current.slideTo(1));
+    act(() => settleOn(scroller, PANE_WIDTH));
+    act(() => settleOn(scroller, PANE_WIDTH));
+    expect(onStep).not.toHaveBeenCalled();
+
+    scroller.scrollTo = slideAll;
+    act(() => result.current.slideTo(1));
+
+    expect(onStep).toHaveBeenCalledWith(1);
+  });
+
+  it('keeps a queued arrow press when the recentred strip settles before it slides', () => {
+    const onStep = jest.fn((_step: number) => true);
+    const { result, rerender, scroller } = renderCarousel(onStep);
+
+    act(() => {
+      result.current.slideTo(1);
+      result.current.slideTo(1);
+    });
+    rerender({ week: '2026-11-16' });
+    act(() => settleOn(scroller, PANE_WIDTH));
+
+    expect(onStep).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps sliding when only the strip height changes', () => {
+    const resizes = captureResizes();
+    const onStep = jest.fn((_step: number) => true);
+    const { result, scroller } = renderCarousel(onStep);
+    act(() => resizes.notify());
+    const slides: number[] = [];
+
+    scroller.scrollTo = (options?: ScrollToOptions | number) => {
+      if (typeof options === 'object' && options.left !== undefined) slides.push(options.left);
+    };
+    act(() => result.current.slideTo(1));
+    scroller.scrollLeft = PANE_WIDTH * 1.5;
+    act(() => resizes.notify());
+    resizes.restore();
+
+    expect(slides).toEqual([PANE_WIDTH * 2]);
+    expect(scroller.scrollLeft).toBe(PANE_WIDTH * 1.5);
   });
 
   it('queues arrow presses made while the strip is still sliding', () => {
