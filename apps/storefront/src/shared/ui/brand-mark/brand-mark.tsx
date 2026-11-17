@@ -10,23 +10,55 @@ interface BrandMarkProps {
   size?: number;
 }
 
-function MarkShape({ shape, color }: { shape: BrandMarkShape; color: string }) {
+interface BrandIconProps extends BrandMarkProps {
+  playing?: boolean;
+}
+
+function MarkShape({
+  shape,
+  color,
+  className,
+}: {
+  shape: BrandMarkShape;
+  color: string;
+  className?: string;
+}) {
   const { d, strokeWidth } = BRAND_MARK_SHAPES[shape];
 
   return (
-    <path d={d} fill={color} stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
+    <path
+      d={d}
+      fill={color}
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinejoin="round"
+      className={className}
+    />
   );
 }
 
-const MARK_SHAPES = (
-  <>
-    <MarkShape shape="leg" color={BRAND_MARK_COLORS.leg} />
-    <MarkShape shape="body" color={BRAND_MARK_COLORS.body} />
-    <MarkShape shape="cutout" color="currentColor" />
-  </>
-);
+function markShapes(playing: boolean) {
+  return (
+    <>
+      <MarkShape shape="leg" color={BRAND_MARK_COLORS.leg} />
+      <MarkShape shape="body" color={BRAND_MARK_COLORS.body} />
+      <MarkShape
+        shape="cutout"
+        color="currentColor"
+        className={
+          playing
+            ? 'origin-center [transform-box:fill-box] motion-safe:animate-brand-play'
+            : undefined
+        }
+      />
+    </>
+  );
+}
 
-export function BrandIcon({ size = 32 }: BrandMarkProps) {
+const MARK_SHAPES = markShapes(false);
+const PLAYING_MARK_SHAPES = markShapes(true);
+
+export function BrandIcon({ size = 32, playing = false }: BrandIconProps) {
   return (
     <span
       aria-hidden
@@ -34,7 +66,7 @@ export function BrandIcon({ size = 32 }: BrandMarkProps) {
       style={{ width: size, height: size }}
     >
       <svg width={size} height={size} viewBox={BRAND_MARK_VIEW_BOX} focusable="false">
-        {MARK_SHAPES}
+        {playing ? PLAYING_MARK_SHAPES : MARK_SHAPES}
       </svg>
     </span>
   );
