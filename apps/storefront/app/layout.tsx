@@ -17,6 +17,7 @@ import {
   buildOrganizationJsonLd,
   buildRootMetadata,
   buildWebSiteJsonLd,
+  clarityBootstrap,
   googleTagBootstrap,
 } from '@/shared/lib';
 import '@/app/styles/globals.css';
@@ -53,15 +54,17 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             {googleTagBootstrap(GA_MEASUREMENT_ID)}
           </Script>
         ) : null}
+        {CLARITY_PROJECT_ID ? (
+          <Script id="microsoft-clarity" strategy="beforeInteractive">
+            {clarityBootstrap(CLARITY_PROJECT_ID)}
+          </Script>
+        ) : null}
         <JsonLd data={buildOrganizationJsonLd(SITE_URL)} />
         <JsonLd data={buildWebSiteJsonLd(SITE_URL)} />
         <AppProviders locale={locale} dictionary={getDictionary(locale)}>
           {children}
         </AppProviders>
-        <SiteAnalytics
-          googleMeasurementId={GA_MEASUREMENT_ID}
-          clarityProjectId={CLARITY_PROJECT_ID}
-        />
+        <SiteAnalytics googleMeasurementId={GA_MEASUREMENT_ID} />
       </body>
     </html>
   );
