@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, notExists, notInArray, type SQL, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -84,6 +84,13 @@ export class DrizzleShowRepository implements IShowRepository {
 
     if (details.seasons?.length) {
       await this.upsertSeasons(drizzleTx, showId, details.seasons);
+      if (this.coversAllSeasons(details.seasons, details.totalSeasons)) {
+        await this.pruneStaleSeasons(
+          drizzleTx,
+          showId,
+          details.seasons.map((s) => s.number),
+        );
+      }
     }
   }
 
@@ -93,10 +100,8 @@ export class DrizzleShowRepository implements IShowRepository {
   private async upsertSeasons(
     drizzleTx: DrizzleTransaction,
     showId: string,
-    seasons: ShowDetailsPayload['seasons'],
+    seasons: NormalizedSeason[],
   ): Promise<void> {
-    if (!seasons) return;
-
     for (const season of seasons) {
       const [seasonRecord] = await drizzleTx
         .insert(schema.seasons)
@@ -108,7 +113,109 @@ export class DrizzleShowRepository implements IShowRepository {
         .returning({ id: schema.seasons.id });
 
       await this.upsertEpisodes(drizzleTx, seasonRecord.id, showId, season.episodes);
+
+      const seasonCameWithEpisodes = season.episodes.length > 0;
+      if (seasonCameWithEpisodes) {
+        const pruned = await this.deleteUnwatchedEpisodesMissingFrom(
+          drizzleTx,
+          seasonRecord.id,
+          season.episodes.map((ep) => ep.number),
+        );
+        if (pruned > 0) {
+          this.logger.log(
+            `Pruned ${pruned} stale episode(s) from season ${season.number} of show ${showId}`,
+          );
+        }
+      }
     }
+  }
+
+  private coversAllSeasons(seasons: NormalizedSeason[], totalSeasons?: number | null): boolean {
+    const regularSeasonCount = seasons.filter((s) => s.number > 0).length;
+    return regularSeasonCount >= (totalSeasons ?? 0);
+  }
+
+  private async deleteUnwatchedEpisodesMissingFrom(
+    drizzleTx: DrizzleTransaction,
+    seasonId: string,
+    keptEpisodeNumbers: number[],
+  ): Promise<number> {
+    const removed = await drizzleTx
+      .delete(schema.episodes)
+      .where(
+        and(
+          eq(schema.episodes.seasonId, seasonId),
+          notInArray(schema.episodes.number, keptEpisodeNumbers),
+          this.notWatchedByAnyUser(drizzleTx),
+        ),
+      )
+      .returning({ id: schema.episodes.id });
+    return removed.length;
+  }
+
+  private async pruneStaleSeasons(
+    drizzleTx: DrizzleTransaction,
+    showId: string,
+    keptSeasonNumbers: number[],
+  ): Promise<void> {
+    const isStaleSeason = and(
+      eq(schema.seasons.showId, showId),
+      notInArray(schema.seasons.number, keptSeasonNumbers),
+    );
+
+    await this.deleteUnwatchedEpisodesOfSeasons(drizzleTx, isStaleSeason);
+    const removedNumbers = await this.deleteEmptySeasons(drizzleTx, isStaleSeason);
+
+    if (removedNumbers.length > 0) {
+      this.logger.log(`Pruned stale season(s) ${removedNumbers.join(', ')} of show ${showId}`);
+    }
+  }
+
+  private async deleteUnwatchedEpisodesOfSeasons(
+    drizzleTx: DrizzleTransaction,
+    seasonFilter: SQL | undefined,
+  ): Promise<void> {
+    await drizzleTx
+      .delete(schema.episodes)
+      .where(
+        and(
+          inArray(
+            schema.episodes.seasonId,
+            drizzleTx.select({ id: schema.seasons.id }).from(schema.seasons).where(seasonFilter),
+          ),
+          this.notWatchedByAnyUser(drizzleTx),
+        ),
+      );
+  }
+
+  private async deleteEmptySeasons(
+    drizzleTx: DrizzleTransaction,
+    seasonFilter: SQL | undefined,
+  ): Promise<number[]> {
+    const removed = await drizzleTx
+      .delete(schema.seasons)
+      .where(
+        and(
+          seasonFilter,
+          notExists(
+            drizzleTx
+              .select({ id: schema.episodes.id })
+              .from(schema.episodes)
+              .where(eq(schema.episodes.seasonId, schema.seasons.id)),
+          ),
+        ),
+      )
+      .returning({ number: schema.seasons.number });
+    return removed.map((s) => s.number);
+  }
+
+  private notWatchedByAnyUser(drizzleTx: DrizzleTransaction): SQL {
+    return notExists(
+      drizzleTx
+        .select({ episodeId: schema.userEpisodeProgress.episodeId })
+        .from(schema.userEpisodeProgress)
+        .where(eq(schema.userEpisodeProgress.episodeId, schema.episodes.id)),
+    );
   }
 
   /**

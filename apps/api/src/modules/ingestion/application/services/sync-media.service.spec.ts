@@ -751,6 +751,39 @@ describe('SyncMediaService', () => {
         }),
       );
     });
+
+    it('should lower an overcounted totalEpisodes to the TMDB episode count', async () => {
+      const showWithOvercount: any = {
+        ...mockShowWithEmptyEpisodes,
+        details: {
+          totalEpisodes: 10,
+          seasons: [{ number: 1, name: 'Сезон 1', tmdbId: 101, episodeCount: 4, episodes: [] }],
+        },
+      };
+
+      tmdbAdapter.getShow.mockResolvedValue({ ...showWithOvercount });
+      tvMazeEnrichment.enrich.mockResolvedValue({ ...showWithOvercount });
+      tmdbAdapter.getSeasonEpisodes.mockResolvedValue(
+        Array.from({ length: 4 }, (_, i) => ({
+          tmdbId: 2000 + i,
+          number: i + 1,
+          title: `Episode ${i + 1}`,
+          airDate: new Date('2026-09-25'),
+          runtime: 45,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        })),
+      );
+
+      await service.syncShow(290720);
+
+      expect(mediaRepository.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          details: expect.objectContaining({ totalEpisodes: 4 }),
+        }),
+      );
+    });
   });
 
   describe('provider normalization', () => {
