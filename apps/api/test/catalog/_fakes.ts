@@ -1,7 +1,12 @@
 import {
+  CalendarMovieReleases,
+  CalendarMoviesOptions,
   MovieWithMedia,
   MovieListQueryOptions,
   IMovieRepository,
+  ReleaseDateRange,
+  UpcomingMovie,
+  UpcomingMoviesQueryOptions,
   WithTotal,
 } from '../../src/modules/catalog/domain/repositories/movie.repository.interface';
 import {
@@ -194,6 +199,49 @@ export class FakeMovieRepository implements IMovieRepository {
       releaseDate: (m) => (m.releaseDate ? m.releaseDate.getTime() : -Infinity),
     });
     return paginate(sorted, options?.limit, options?.offset);
+  }
+
+  public lastUpcomingOptions: UpcomingMoviesQueryOptions | undefined;
+  public lastCalendarMoviesRange: ReleaseDateRange | undefined;
+  public lastCalendarMoviesOptions: CalendarMoviesOptions | undefined;
+
+  async findUpcoming(options: UpcomingMoviesQueryOptions): Promise<WithTotal<UpcomingMovie>> {
+    this.lastUpcomingOptions = options;
+    const upcoming = this.items.map((movie) => ({
+      ...movie,
+      effectiveReleaseDate: options.from,
+      releaseDateKind: 'theatrical' as const,
+      releaseCountry: 'US',
+    }));
+    return paginate(upcoming, options.limit, options.offset);
+  }
+
+  async findReleasesByDateRange(
+    range: ReleaseDateRange,
+    options: CalendarMoviesOptions = {},
+  ): Promise<CalendarMovieReleases> {
+    this.lastCalendarMoviesRange = range;
+    this.lastCalendarMoviesOptions = options;
+    const [movie] = this.items;
+    const day = range.from.toISOString().slice(0, 10);
+    return {
+      movies: [
+        {
+          mediaItemId: movie.mediaItemId,
+          tmdbId: movie.tmdbId,
+          slug: movie.slug,
+          title: movie.title,
+          poster: null,
+          releaseDate: range.from,
+          releaseDateKind: 'digital',
+          releaseCountry: null,
+          popularity: movie.popularity,
+          isSavedForLater: options.personalized === true,
+          isReminderSet: false,
+        },
+      ],
+      movieCountByDay: new Map([[day, options.perDayLimit ? 8 : 1]]),
+    };
   }
 
   async setNowPlaying(): Promise<void> {

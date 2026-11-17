@@ -82,6 +82,7 @@ const ContextRequirementsMapSchema = z
     now_playing: ContextRequirementsSchema.optional(),
     new_digital: ContextRequirementsSchema.optional(),
     search: ContextRequirementsSchema.optional(),
+    upcoming: ContextRequirementsSchema.optional(),
   })
   .strict();
 

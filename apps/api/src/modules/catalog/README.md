@@ -308,6 +308,7 @@ import {
 | `GET`  | `/catalog/movies/now-playing`    | Currently in theaters                         |
 | `GET`  | `/catalog/movies/new-releases`   | Recent theatrical releases (`daysBack` param) |
 | `GET`  | `/catalog/movies/new-on-digital` | Recent digital releases (`daysBack` param)    |
+| `GET`  | `/catalog/movies/upcoming`       | Upcoming movies, today..today+`days` (120)    |
 | `GET`  | `/catalog/movies/:slug`          | Full movie details with verdict               |
 
 ### Shows
@@ -319,6 +320,12 @@ import {
 | `GET`  | `/catalog/shows/new-episodes` | Shows with recent episodes (`days`, `limit`) |
 | `GET`  | `/catalog/shows/calendar`     | Episode calendar (`startDate`, `days`)       |
 | `GET`  | `/catalog/shows/:slug`        | Full show details with seasons               |
+
+### Release calendar
+
+| Method | Path                | Description                                                              |
+| ------ | ------------------- | ------------------------------------------------------------------------ |
+| `GET`  | `/catalog/calendar` | Episodes and movies by day (`startDate`, `days`, `personalized`, `type`) |
 
 ### Search & Import
 

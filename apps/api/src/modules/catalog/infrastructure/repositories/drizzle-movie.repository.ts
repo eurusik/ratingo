@@ -15,10 +15,16 @@ import {
   type TrendingQueryResult,
   type WithTotal,
   type ReleaseInfo,
+  type UpcomingMovie,
+  type UpcomingMoviesQueryOptions,
+  type ReleaseDateRange,
+  type CalendarMoviesOptions,
+  type CalendarMovieReleases,
 } from '@/modules/catalog/domain/repositories/movie.repository.interface';
 import { type DatabaseTransaction } from '@/modules/catalog/domain/types/transaction.type';
 
 import { MoviePersistenceMapper } from '../mappers/movie-persistence.mapper';
+import { CalendarMoviesQuery } from '../queries/calendar-movies.query';
 import { MovieDetailsQuery } from '../queries/movie-details.query';
 import {
   MovieListingsQuery,
@@ -27,6 +33,7 @@ import {
 } from '../queries/movie-listings.query';
 import { PopularMoviesQuery } from '../queries/popular-movies.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
+import { UpcomingMoviesQuery } from '../queries/upcoming-movies.query';
 import { toDrizzleTx } from '../utils/drizzle-transaction';
 
 /**
@@ -57,6 +64,8 @@ export class DrizzleMovieRepository implements IMovieRepository {
     private readonly trendingMoviesQuery: TrendingMoviesQuery,
     private readonly popularMoviesQuery: PopularMoviesQuery,
     private readonly movieListingsQuery: MovieListingsQuery,
+    private readonly upcomingMoviesQuery: UpcomingMoviesQuery,
+    private readonly calendarMoviesQuery: CalendarMoviesQuery,
   ) {}
 
   /**
@@ -185,6 +194,17 @@ export class DrizzleMovieRepository implements IMovieRepository {
   /** Finds movies recently released on digital platforms. Uses catalog eligibility mode. */
   async findNewOnDigital(options: MovieListQueryOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_ON_DIGITAL, options);
+  }
+
+  findUpcoming(options: UpcomingMoviesQueryOptions): Promise<WithTotal<UpcomingMovie>> {
+    return this.upcomingMoviesQuery.execute(options);
+  }
+
+  findReleasesByDateRange(
+    range: ReleaseDateRange,
+    options?: CalendarMoviesOptions,
+  ): Promise<CalendarMovieReleases> {
+    return this.calendarMoviesQuery.execute(range, options);
   }
 
   private normalizeGenres(genres?: string | string[]): string[] | undefined {

@@ -203,3 +203,12 @@ export const WATCHING_NOW_THRESHOLDS = {
   /** Minimum quality score (sanity check) */
   MIN_QUALITY_SCORE: 50,
 } as const;
+
+export const CALENDAR_MOVIES_PER_DAY = 5;
+
+export const CalendarMediaType = {
+  SHOW: 'show',
+  MOVIE: 'movie',
+} as const;
+
+export type CalendarMediaTypeValue = (typeof CalendarMediaType)[keyof typeof CalendarMediaType];

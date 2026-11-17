@@ -14,7 +14,12 @@ export {
   DEFAULT_INGESTION_JOB_OPTIONS,
 } from './queues';
 
-export { IngestionJob, type SyncMediaJobData } from './ingestion-jobs';
+export {
+  IngestionJob,
+  type SyncMediaJobData,
+  UpcomingMoviesRefreshScope,
+  type UpcomingMoviesRefreshScopeType,
+} from './ingestion-jobs';
 
 export { ContentClassValues, type ContentClass } from './content-class';
 

@@ -86,7 +86,9 @@ export class BackfillMdblistRatingsPipeline {
 
     this.logger.log('Starting MDBList ratings backfill dispatcher...');
 
-    const staleBefore = new Date(Date.now() - MDBLIST_RATINGS_REFRESH_DAYS * MS_PER_DAY);
+    const now = Date.now();
+    const staleBefore = new Date(now - MDBLIST_RATINGS_REFRESH_DAYS * MS_PER_DAY);
+    const releasedBy = new Date(now);
     const day = formatUtcDayId();
     const pending = await this.getPendingJobs();
     let remainingBudget = MDBLIST_DAILY_BUDGET - pending.jobCount;
@@ -96,6 +98,7 @@ export class BackfillMdblistRatingsPipeline {
     while (remainingBudget > 0) {
       const candidates = await this.backfillRepository.findCandidates({
         fetchedBefore: staleBefore,
+        releasedBy,
         cursor,
         limit: BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
       });

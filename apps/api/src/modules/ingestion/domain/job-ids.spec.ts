@@ -3,6 +3,8 @@ import {
   buildMdblistRatingsJobId,
   buildNewReleaseJobId,
   buildSyncMediaJobId,
+  buildUpcomingMovieJobId,
+  buildUpcomingRefreshJobId,
 } from './job-ids';
 
 // 2025-12-21T19:45:10Z
@@ -48,6 +50,20 @@ describe('job-ids', () => {
       expect(id).toBe('nr_movie_5_20251221');
       expect(id).not.toBe(buildSyncMediaJobId('movie', 5, 'daily'));
       expect(id).not.toBe(buildSyncMediaJobId('movie', 5, 'window'));
+    });
+  });
+
+  describe('upcoming movie job ids', () => {
+    it('use distinct day-scoped prefixes for import and refresh', () => {
+      jest.useFakeTimers().setSystemTime(FIXED_NOW);
+      const importId = buildUpcomingMovieJobId(5);
+      const refreshId = buildUpcomingRefreshJobId(5);
+
+      expect(importId).toBe('up_movie_5_20251221');
+      expect(refreshId).toBe('upr_movie_5_20251221');
+      expect(new Set([importId, refreshId, buildNewReleaseJobId(5)]).size).toBe(3);
+      expect(importId).not.toBe(buildSyncMediaJobId('movie', 5, 'daily'));
+      expect(refreshId).not.toBe(buildSyncMediaJobId('movie', 5, 'window'));
     });
   });
 

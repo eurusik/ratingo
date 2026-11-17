@@ -17,7 +17,10 @@ import {
   CATALOG_POLICY_QUEUE,
   CATALOG_POLICY_JOBS,
 } from '@/modules/catalog-policy/catalog-policy.constants';
-import { ACTIVE_EVALUATION_CONTEXTS } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import {
+  ACTIVE_EVALUATION_CONTEXTS,
+  FAN_OUT_EVALUATION_CONTEXTS,
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   PolicyNotFoundError,
   RunNotFoundError,
@@ -141,8 +144,7 @@ describe('PolicyActivationService', () => {
         targetPolicyId: 'policy-1',
         targetPolicyVersion: 2,
       });
-      // Fan-out: should queue jobs for all active contexts (catalog, trending)
-      expect(mockQueue.add).toHaveBeenCalledTimes(2);
+      expect(mockQueue.add).toHaveBeenCalledTimes(3);
       expect(mockQueue.add).toHaveBeenCalledWith(
         're-evaluate-all',
         expect.objectContaining({
@@ -158,6 +160,15 @@ describe('PolicyActivationService', () => {
           runId: 'run-123',
           policyVersion: 2,
           context: 'trending',
+        }),
+        expect.any(Object),
+      );
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        're-evaluate-all',
+        expect.objectContaining({
+          runId: 'run-123',
+          policyVersion: 2,
+          context: 'upcoming',
         }),
         expect.any(Object),
       );
@@ -506,8 +517,8 @@ describe('PolicyActivationService', () => {
       const result = await service.promoteRun('run-1');
 
       expect(result.success).toBe(true);
-      expect(mockQueue.add).toHaveBeenCalledTimes(ACTIVE_EVALUATION_CONTEXTS.length);
-      for (const context of ACTIVE_EVALUATION_CONTEXTS) {
+      expect(mockQueue.add).toHaveBeenCalledTimes(FAN_OUT_EVALUATION_CONTEXTS.length);
+      for (const context of FAN_OUT_EVALUATION_CONTEXTS) {
         expect(mockQueue.add).toHaveBeenCalledWith(
           CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
           expect.objectContaining({

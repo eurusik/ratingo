@@ -178,6 +178,7 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
     now_playing: 'Now Playing',
     new_digital: 'New Digital',
     search: 'Search',
+    upcoming: 'Upcoming',
   };
   const activeContexts = req.appliesTo ?? ['catalog', 'homepage', 'trending', 'search'];
 

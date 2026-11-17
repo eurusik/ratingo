@@ -20,6 +20,7 @@ import {
   BlockingReasonCode,
   type BlockingReasonType,
   ACTIVE_EVALUATION_CONTEXTS,
+  FAN_OUT_EVALUATION_CONTEXTS,
   type EvaluationContextType,
 } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
@@ -157,8 +158,7 @@ export class PolicyActivationService {
 
     const run = { id: snapshotResult.runId };
 
-    // Fan-out: Queue RE_EVALUATE_ALL job for each active context
-    for (const context of ACTIVE_EVALUATION_CONTEXTS) {
+    for (const context of FAN_OUT_EVALUATION_CONTEXTS) {
       await this.queueReEvaluateJob({
         runId: run.id,
         policyVersion: policy.version,
@@ -169,7 +169,7 @@ export class PolicyActivationService {
     }
 
     this.logger.log(
-      `Created run ${run.id} for policy v${policy.version} and queued ${ACTIVE_EVALUATION_CONTEXTS.length} RE_EVALUATE_ALL jobs (fan-out)`,
+      `Created run ${run.id} for policy v${policy.version} and queued ${FAN_OUT_EVALUATION_CONTEXTS.length} RE_EVALUATE_ALL jobs (fan-out)`,
     );
 
     return {
@@ -450,7 +450,7 @@ export class PolicyActivationService {
     }
 
     try {
-      for (const context of ACTIVE_EVALUATION_CONTEXTS) {
+      for (const context of FAN_OUT_EVALUATION_CONTEXTS) {
         await this.queueReEvaluateJob({
           runId: run.id,
           policyVersion: run.targetPolicyVersion,

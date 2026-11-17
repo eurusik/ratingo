@@ -308,6 +308,7 @@ describe('BackfillMdblistRatingsPipeline', () => {
 
       expect(repository.findCandidates).toHaveBeenCalledWith({
         fetchedBefore: expect.any(Date),
+        releasedBy: expect.any(Date),
         cursor: undefined,
         limit: BACKFILL_MDBLIST_RATINGS_BATCH_SIZE,
       });

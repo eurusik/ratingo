@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import * as fc from 'fast-check';
 
 import { ReleaseStatus } from '@/common/enums/release-status.enum';
 import { CLOCK_PORT } from '@/modules/shared/clock';
@@ -156,6 +157,70 @@ describe('MovieDetailsService', () => {
       const result = await service.getBySlug('test-movie');
 
       expect(result.releaseStatus).toBe(ReleaseStatus.IN_THEATERS);
+    });
+
+    it('treats a digital-only premiere with a past festival date as upcoming', async () => {
+      const festivalPremiere = new Date(testNow);
+      festivalPremiere.setDate(testNow.getDate() - 30);
+      const digitalPremiere = new Date(testNow);
+      digitalPremiere.setDate(testNow.getDate() + 10);
+
+      movieRepository.findBySlug.mockResolvedValue({
+        ...mockMovie,
+        releaseDate: festivalPremiere,
+        theatricalReleaseDate: null,
+        digitalReleaseDate: digitalPremiere,
+      });
+
+      const result = await service.getBySlug('test-movie');
+
+      expect(result.releaseStatus).toBe(ReleaseStatus.UPCOMING);
+    });
+
+    it('treats a movie already on streaming as released even if its primary date is ahead', async () => {
+      const primaryDate = new Date(testNow);
+      primaryDate.setDate(testNow.getDate() + 30);
+      const digitalPremiere = new Date(testNow);
+      digitalPremiere.setDate(testNow.getDate() - 3);
+
+      movieRepository.findBySlug.mockResolvedValue({
+        ...mockMovie,
+        releaseDate: primaryDate,
+        theatricalReleaseDate: null,
+        digitalReleaseDate: digitalPremiere,
+      });
+
+      const result = await service.getBySlug('test-movie');
+
+      expect(result.releaseStatus).toBe(ReleaseStatus.NEW_ON_STREAMING);
+    });
+
+    it('is upcoming exactly when the effective release date is still ahead', async () => {
+      const day = (offset: number): Date => new Date(testNow.getTime() + offset * 86_400_000);
+      const maybeOffset = fc.option(fc.integer({ min: -60, max: 60 }), { nil: null });
+
+      await fc.assert(
+        fc.asyncProperty(
+          maybeOffset,
+          maybeOffset,
+          maybeOffset,
+          async (theatrical, digital, primary) => {
+            movieRepository.findBySlug.mockResolvedValue({
+              ...mockMovie,
+              theatricalReleaseDate: theatrical === null ? null : day(theatrical),
+              digitalReleaseDate: digital === null ? null : day(digital),
+              releaseDate: primary === null ? null : day(primary),
+            });
+
+            const { releaseStatus } = await service.getBySlug('test-movie');
+
+            const effective = theatrical ?? digital ?? primary;
+            expect(releaseStatus === ReleaseStatus.UPCOMING).toBe(
+              effective !== null && effective > 0,
+            );
+          },
+        ),
+      );
     });
 
     it('should include verdict in response', async () => {

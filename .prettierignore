@@ -15,3 +15,5 @@ coverage
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+packages/api-contract/src/api-types.ts
+packages/api-contract/openapi.json

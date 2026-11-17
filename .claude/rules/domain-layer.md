@@ -22,7 +22,7 @@ paths:
   export type EligibilityStatusType = (typeof EligibilityStatus)[keyof typeof EligibilityStatus];
   ```
 - Evaluation reasons: use only values from `EvaluationReason` in `catalog-policy/domain/constants/`
-- Evaluation contexts: `catalog`, `trending`, `homepage`, `now_playing`, `new_digital`, `search`
+- Evaluation contexts: `catalog`, `trending`, `homepage`, `now_playing`, `new_digital`, `search`, `upcoming`
 
 ## Policy Engine
 - Input: `PolicyEngineInput` with mediaItem + stats

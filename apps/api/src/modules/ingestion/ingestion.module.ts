@@ -28,6 +28,7 @@ import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline
 import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
 import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipeline';
 import { TrendingPipeline } from './application/pipelines/trending.pipeline';
+import { UpcomingMoviesPipeline } from './application/pipelines/upcoming-movies.pipeline';
 import { BulkJobService } from './application/services/bulk-job.service';
 import { IngestionJobStatusService } from './application/services/ingestion-job-status.service';
 import { IngestionSchedulerService } from './application/services/ingestion-scheduler.service';
@@ -49,6 +50,7 @@ import { IMDB_BACKFILL_REPOSITORY } from './domain/repositories/imdb-backfill.re
 import { ROTTEN_TOMATOES_BACKFILL_REPOSITORY } from './domain/repositories/rotten-tomatoes-backfill.repository.interface';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
 import { TRACKED_SHOW_REPOSITORY } from './domain/repositories/tracked-show.repository.interface';
+import { UPCOMING_MOVIES_REPOSITORY } from './domain/repositories/upcoming-movies.repository.interface';
 import { BullMqIngestionJobStatusAdapter } from './infrastructure/adapters/job-status/bullmq-ingestion-job-status.adapter';
 import { MdblistAdapter } from './infrastructure/adapters/mdblist/mdblist.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
@@ -59,6 +61,7 @@ import { ImdbBackfillRepository } from './infrastructure/repositories/imdb-backf
 import { RottenTomatoesBackfillRepository } from './infrastructure/repositories/rotten-tomatoes-backfill.repository';
 import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
 import { TrackedShowRepository } from './infrastructure/repositories/tracked-show.repository';
+import { UpcomingMoviesRepository } from './infrastructure/repositories/upcoming-movies.repository';
 import {
   BACKFILL_QUEUE,
   DEFAULT_INGESTION_JOB_OPTIONS,
@@ -118,6 +121,10 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       useClass: RottenTomatoesBackfillRepository,
     },
     {
+      provide: UPCOMING_MOVIES_REPOSITORY,
+      useClass: UpcomingMoviesRepository,
+    },
+    {
       provide: ALT_TITLES_BACKFILL_REPOSITORY,
       useClass: AltTitlesBackfillRepository,
     },
@@ -163,6 +170,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     TrackedShowsPipeline,
     NowPlayingPipeline,
     NewReleasesPipeline,
+    UpcomingMoviesPipeline,
     BackfillImdbPipeline,
     BackfillAltTitlesPipeline,
     BackfillMdblistRatingsPipeline,

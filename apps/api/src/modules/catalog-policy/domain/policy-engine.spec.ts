@@ -12,7 +12,11 @@ import {
   checkContentClassExcluded,
 } from './policy-engine';
 import { PolicyConfig, PolicyEngineInput, GlobalRequirements } from './types/policy.types';
-import { EligibilityStatus, EvaluationContext } from './constants/evaluation.constants';
+import {
+  EligibilityStatus,
+  EvaluationContext,
+  EvaluationReason,
+} from './constants/evaluation.constants';
 import { ContentClass } from './classification.service';
 
 describe('Policy Engine', () => {
@@ -1387,6 +1391,7 @@ describe('Policy Engine', () => {
         EvaluationContext.NOW_PLAYING,
         EvaluationContext.NEW_DIGITAL,
         EvaluationContext.SEARCH,
+        EvaluationContext.UPCOMING,
       ];
 
       for (const context of contexts) {
@@ -1394,6 +1399,64 @@ describe('Policy Engine', () => {
         // Should not throw, context is valid
         expect(result.status).toBeDefined();
       }
+    });
+  });
+
+  describe('evaluateEligibility - unreleased movie (upcoming context)', () => {
+    const globalRequirements: GlobalRequirements = {
+      minVotesAnyOf: { sources: ['imdb', 'trakt'], min: 3000 },
+      requireAnyOfRatingsPresent: ['imdb', 'trakt'],
+    };
+    const policy = createPolicy({ globalRequirements });
+    const unreleased = createInput();
+
+    it('is INELIGIBLE in catalog context because the Global Gate needs votes', () => {
+      const result = evaluateEligibility(unreleased, policy, {
+        context: EvaluationContext.CATALOG,
+      });
+
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain(EvaluationReason.MISSING_GLOBAL_SIGNALS);
+    });
+
+    it('skips the Global Gate in upcoming context', () => {
+      const result = evaluateEligibility(unreleased, policy, {
+        context: EvaluationContext.UPCOMING,
+      });
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+    });
+
+    it('still blocks a blocked country in upcoming context', () => {
+      const result = evaluateEligibility(
+        createInput({ mediaItem: { ...unreleased.mediaItem, originCountries: ['RU'] } }),
+        policy,
+        { context: EvaluationContext.UPCOMING },
+      );
+
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain(EvaluationReason.BLOCKED_COUNTRY);
+    });
+
+    it('still requires a readable title in upcoming context', () => {
+      const result = evaluateEligibility(
+        createInput({ mediaItem: { ...unreleased.mediaItem, title: '功夫' } }),
+        policy,
+        { context: EvaluationContext.UPCOMING },
+      );
+
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain(EvaluationReason.MISSING_TRANSLATED_TITLE);
+    });
+
+    it('does not require an overview in upcoming context', () => {
+      const result = evaluateEligibility(
+        createInput({ mediaItem: { ...unreleased.mediaItem, overview: null } }),
+        policy,
+        { context: EvaluationContext.UPCOMING },
+      );
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
     });
   });
 

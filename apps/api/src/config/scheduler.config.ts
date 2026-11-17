@@ -89,6 +89,27 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     data: { region: NEW_RELEASES_REGION, daysBack: CATALOG_DEFAULT_NEW_RELEASE_DAYS },
   },
   {
+    name: 'upcomingMovies',
+    jobType: 'sync-upcoming-movies',
+    pattern: '0 5 * * *',
+    jobId: 'scheduled-upcoming-movies',
+    data: {},
+  },
+  {
+    name: 'upcomingMoviesRefreshSoon',
+    jobType: 'refresh-upcoming-movies',
+    pattern: '0 7 * * 0,2-6',
+    jobId: 'scheduled-upcoming-movies-refresh-soon',
+    data: { scope: 'soon' },
+  },
+  {
+    name: 'upcomingMoviesRefreshAll',
+    jobType: 'refresh-upcoming-movies',
+    pattern: '0 7 * * 1',
+    jobId: 'scheduled-upcoming-movies-refresh-all',
+    data: { scope: 'all' },
+  },
+  {
     name: 'mdblistRatings',
     jobType: 'backfill-mdblist-ratings-dispatcher',
     // 02:00 UTC daily — safely after MDBList's 00:00 UTC quota reset.
