@@ -5,7 +5,9 @@ import { Button, FieldError, Form, Input, Label, TextField } from '@heroui/react
 import { mapAuthError } from '@ratingo/web-core/api';
 import { useAuth } from '@ratingo/web-core/auth';
 import { useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import { isEmail } from '../model/email';
+import { failureReason } from '../model/failure-reason';
 import { FormErrorBanner } from './form-error-banner';
 import { ModeSwitch } from './mode-switch';
 import { PasswordField } from './password-field';
@@ -31,6 +33,11 @@ export function LoginForm({ onSignedIn, onRegister }: LoginFormProps) {
         await login({ email: email.trim(), password });
         onSignedIn();
       } catch (loginError) {
+        track('login_failed', {
+          method: 'email',
+          mode: 'login',
+          reason: failureReason(loginError),
+        });
         setError(mapAuthError(loginError, dict.auth.errors));
       }
     });

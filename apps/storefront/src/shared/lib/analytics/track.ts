@@ -36,6 +36,16 @@ export function track<E extends AnalyticsEventName>(name: E, params: AnalyticsEv
   }
 }
 
+export function setUserProperties(properties: Record<string, string>): void {
+  const send = gtag();
+  if (!send) return;
+  try {
+    send('set', 'user_properties', properties);
+  } catch {
+    return;
+  }
+}
+
 export function identifyUser(userId: string | null): void {
   const send = gtag();
   if (!send) return;

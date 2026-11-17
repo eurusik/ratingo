@@ -15,7 +15,9 @@ import {
 import { ApiError, ErrorCode, mapAuthError } from '@ratingo/web-core/api';
 import { useAuth } from '@ratingo/web-core/auth';
 import { useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import { isEmail } from '../model/email';
+import { failureReason } from '../model/failure-reason';
 import { isStrongPassword } from '../model/password-rules';
 import { findUsernameProblem, suggestUsername, type UsernameProblem } from '../model/username';
 import { FormErrorBanner } from './form-error-banner';
@@ -75,6 +77,11 @@ export function RegisterForm({ onSignedIn, onLogin }: RegisterFormProps) {
         await register({ email: email.trim(), username, password });
         onSignedIn();
       } catch (registerError) {
+        track('login_failed', {
+          method: 'email',
+          mode: 'sign_up',
+          reason: failureReason(registerError),
+        });
         const fieldConflict = conflictOf(registerError);
         setConflict(fieldConflict);
         if (!fieldConflict) setError(mapAuthError(registerError, dict.auth.errors));

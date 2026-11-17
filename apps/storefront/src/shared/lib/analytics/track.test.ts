@@ -1,4 +1,4 @@
-import { identifyUser, track } from './track';
+import { identifyUser, setUserProperties, track } from './track';
 
 describe('track', () => {
   afterEach(() => {
@@ -58,5 +58,20 @@ describe('identifyUser', () => {
     expect(gtag).toHaveBeenCalledWith('set', 'user_properties', { logged_in: 'true' });
     expect(gtag).toHaveBeenCalledWith('set', { user_id: null });
     expect(gtag).toHaveBeenCalledWith('set', 'user_properties', { logged_in: 'false' });
+  });
+});
+
+describe('setUserProperties', () => {
+  afterEach(() => {
+    delete window.gtag;
+  });
+
+  it('sets the given user properties', () => {
+    const gtag = jest.fn();
+    window.gtag = gtag;
+
+    setUserProperties({ library_size: '3-9' });
+
+    expect(gtag).toHaveBeenCalledWith('set', 'user_properties', { library_size: '3-9' });
   });
 });

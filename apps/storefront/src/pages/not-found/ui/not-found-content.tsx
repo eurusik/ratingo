@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { TitleLookup } from '@/features/search';
 import { useTranslation } from '@/shared/i18n';
+import { NotFoundReporter } from '@/shared/lib';
 import { ERROR_STATE_TEXT, ERROR_STATE_TITLE } from '@/shared/ui';
 import { missingMediaAt } from '../model/missing-media';
 
@@ -17,6 +18,7 @@ export function NotFoundContent({ watchedNow }: { watchedNow: ReactNode }) {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4.5 px-4 pt-24 pb-16 text-center md:max-w-190 md:gap-5 md:pt-18">
+      <NotFoundReporter />
       <span
         aria-hidden
         className="text-[88px] leading-none font-black tracking-[-0.05em] text-muted/40 tabular-nums"

@@ -3,11 +3,24 @@
 import { useEffect } from 'react';
 import { useReportWebVitals } from 'next/web-vitals';
 import { useAuth } from '@ratingo/web-core/auth';
-import { identifyUser, track } from './track';
+import { identifyUser, setUserProperties, track } from './track';
+
+const STANDALONE_QUERY = '(display-mode: standalone)';
+
+function displayMode(): string {
+  const isStandalone =
+    window.matchMedia(STANDALONE_QUERY).matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return isStandalone ? 'app' : 'browser';
+}
 
 export function AnalyticsIdentity() {
   const { user, isLoading } = useAuth();
   const userId = user?.id ?? null;
+
+  useEffect(() => {
+    setUserProperties({ display_mode: displayMode() });
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;

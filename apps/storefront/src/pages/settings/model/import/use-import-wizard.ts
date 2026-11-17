@@ -3,6 +3,7 @@
 import { useReducer } from 'react';
 import { toast } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import { useImportMedia } from './import-queries';
 import { MAX_IMPORT_ITEMS, summarizeImport } from './import-summary';
 import type { ImportSource } from './import-sources';
@@ -50,13 +51,17 @@ export function useImportWizard(): ImportWizard {
     if (!source || state.step !== 'preview' || state.isImporting) return;
     if (items.length > MAX_IMPORT_ITEMS) return;
     dispatch({ type: 'importStarted' });
+    track('library_import', { stage: 'start', source, items: items.length });
     importMedia.mutate(
       { source, items, overwrite: state.overwrite },
       {
-        onSuccess: (result) =>
-          dispatch({ type: 'importSucceeded', result, finishedAt: Date.now() }),
+        onSuccess: (result) => {
+          track('library_import', { stage: 'success', source, items: items.length });
+          dispatch({ type: 'importSucceeded', result, finishedAt: Date.now() });
+        },
         onError: (error) => {
           console.error('Import failed', { source, count: items.length, error });
+          track('library_import', { stage: 'failed', source, items: items.length });
           dispatch({ type: 'importFailed' });
           toast.danger(dict.settings.import.preview.failed);
         },
