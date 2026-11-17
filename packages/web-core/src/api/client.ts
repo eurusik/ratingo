@@ -254,6 +254,18 @@ export async function apiPatch<T>(path: string, json?: unknown, options?: Option
   return handleResponse(response.json<ApiResponse<T>>());
 }
 
+export async function apiPatchOrNull<T>(
+  path: string,
+  json?: unknown,
+  options?: Options,
+): Promise<T | null> {
+  const response = await getClient()
+    .patch(path, { json, ...options })
+    .json<ApiResponse<T | null>>();
+  if (response.success && response.data === null) return null;
+  return handleResponse(Promise.resolve(response as ApiResponse<T>));
+}
+
 /**
  * Performs PUT request to API.
  *

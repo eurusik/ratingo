@@ -17,6 +17,7 @@ describe('UserMediaController', () => {
     findMany: jest.fn(),
     pauseMedia: jest.fn(),
     resumeMedia: jest.fn(),
+    removeFromLibrary: jest.fn(),
   };
 
   const importMediaService = {
@@ -134,6 +135,17 @@ describe('UserMediaController', () => {
 
     expect(userMediaService.listContinueWithMedia).toHaveBeenCalledWith('u1', 10, 5);
     expect(result).toEqual([{ id: 's1' }]);
+  });
+
+  describe('removeFromLibrary', () => {
+    it('removes the title for the current user and returns nothing', async () => {
+      userMediaService.removeFromLibrary.mockResolvedValue(undefined);
+
+      const result = await controller.removeFromLibrary({ id: 'u1' }, 'm1');
+
+      expect(userMediaService.removeFromLibrary).toHaveBeenCalledWith('u1', 'm1');
+      expect(result).toBeUndefined();
+    });
   });
 
   describe('batchRatings', () => {

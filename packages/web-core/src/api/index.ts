@@ -4,6 +4,7 @@ export {
   apiGetOrNull,
   apiPost,
   apiPatch,
+  apiPatchOrNull,
   apiPut,
   apiDelete,
   type ApiClientConfig,

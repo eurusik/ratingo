@@ -227,4 +227,56 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
       { episodeId },
     );
   }
+
+  async countWatchedForMedia(userId: string, mediaItemId: string): Promise<number> {
+    return withDbError(
+      'count watched episodes for media',
+      this.logger,
+      async () => {
+        const row = firstOrUndefined(
+          await this.db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(schema.userEpisodeProgress)
+            .innerJoin(
+              schema.episodes,
+              eq(schema.userEpisodeProgress.episodeId, schema.episodes.id),
+            )
+            .innerJoin(schema.shows, eq(schema.episodes.showId, schema.shows.id))
+            .where(
+              and(
+                eq(schema.userEpisodeProgress.userId, userId),
+                eq(schema.shows.mediaItemId, mediaItemId),
+              ),
+            ),
+        );
+        return row?.count ?? 0;
+      },
+      { userId, mediaItemId },
+    );
+  }
+
+  async deleteAllForMedia(userId: string, mediaItemId: string): Promise<void> {
+    return withDbError(
+      'delete episode progress for media',
+      this.logger,
+      async () => {
+        await this.db
+          .delete(schema.userEpisodeProgress)
+          .where(
+            and(
+              eq(schema.userEpisodeProgress.userId, userId),
+              inArray(
+                schema.userEpisodeProgress.episodeId,
+                this.db
+                  .select({ id: schema.episodes.id })
+                  .from(schema.episodes)
+                  .innerJoin(schema.shows, eq(schema.episodes.showId, schema.shows.id))
+                  .where(eq(schema.shows.mediaItemId, mediaItemId)),
+              ),
+            ),
+          );
+      },
+      { userId, mediaItemId },
+    );
+  }
 }

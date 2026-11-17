@@ -68,6 +68,12 @@ function HistoryRowItem({ row, actions }: { row: HistoryRow; actions: LibraryAct
               label: dict.my.actions.open,
               href: mediaRoute(row.title.type, row.title.slug),
             },
+            {
+              id: 'remove',
+              label: dict.library.remove,
+              isDanger: true,
+              onAction: () => actions.removeFromLibrary(row.title, 'history'),
+            },
           ]}
         />
       }

@@ -54,6 +54,7 @@ export interface SetUserMediaStateInput {
     seasons?: Record<number, number>;
   } | null;
   notes?: string | null;
+  stateImplied?: boolean;
 }
 
 /**
@@ -68,6 +69,7 @@ export interface UpsertUserMediaStateData {
     seasons?: Record<number, number>;
   } | null;
   notes?: string | null;
+  stateImplied?: boolean;
 }
 
 export interface BulkImportResult {

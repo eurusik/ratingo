@@ -11,6 +11,7 @@ export interface UserMediaState {
     seasons?: Record<number, number>;
   } | null;
   notes: string | null;
+  stateImplied: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

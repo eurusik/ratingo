@@ -491,7 +491,8 @@ export interface paths {
         get: operations["UserMediaController_getState"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Remove a title from the library: state, rating and episode marks (auth: Bearer) */
+        delete: operations["UserMediaController_removeFromLibrary"];
         options?: never;
         head?: never;
         /** Upsert user media state with media summary (auth: Bearer) */
@@ -2835,6 +2836,11 @@ export interface components {
             /** @example Must watch this weekend */
             notes: string | null;
             /**
+             * @description True when the state was set automatically (rating-only entry, first episode mark) rather than chosen by the user
+             * @example false
+             */
+            stateImplied: boolean;
+            /**
              * Format: date-time
              * @example 2025-12-11T12:00:00.000Z
              */
@@ -3614,7 +3620,10 @@ export interface components {
              * @enum {string}
              */
             mediaType?: "movie" | "show";
-            /** @example null */
+            /**
+             * @description Rating 0-100. Clearing it (null, alone) on an entry that exists only because of that rating removes the entry; the response is then null.
+             * @example null
+             */
             rating?: number | null;
             /**
              * @description Season -> episode progress map
@@ -3801,6 +3810,11 @@ export interface components {
             progress: Record<string, never> | null;
             /** @example Must watch this weekend */
             notes: string | null;
+            /**
+             * @description True when the state was set automatically (rating-only entry, first episode mark) rather than chosen by the user
+             * @example false
+             */
+            stateImplied: boolean;
             /**
              * Format: date-time
              * @example 2025-12-11T12:00:00.000Z
@@ -7830,6 +7844,61 @@ export interface operations {
                         data: components["schemas"]["UserMediaStateDto"];
                     };
                 };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_removeFromLibrary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed from library (idempotent) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation failed or malformed input */
             400: {

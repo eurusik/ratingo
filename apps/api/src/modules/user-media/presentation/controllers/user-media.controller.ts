@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -16,6 +17,7 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -194,6 +196,22 @@ export class UserMediaController {
     );
 
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
+  }
+
+  @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })
+  @ApiNoContentResponse({ description: 'Removed from library (idempotent)' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiOperation({
+    summary: 'Remove a title from the library: state, rating and episode marks (auth: Bearer)',
+  })
+  @Throttle({ strict: { limit: 10, ttl: 60000 } })
+  @Delete(':mediaItemId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeFromLibrary(
+    @CurrentUser() user: { id: string },
+    @Param('mediaItemId', ParseUUIDPipe) mediaItemId: string,
+  ): Promise<void> {
+    await this.userMediaService.removeFromLibrary(user.id, mediaItemId);
   }
 
   @ApiOkResponse({ description: 'User media states', type: UserMediaStateDto, isArray: true })

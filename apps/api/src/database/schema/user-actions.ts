@@ -40,6 +40,7 @@ export const userMediaState = pgTable(
     rating: integer('rating'), // 0-100 scale
     progress: jsonb('progress').$type<Record<string, unknown> | null>(),
     notes: text('notes'),
+    stateImplied: boolean('state_implied').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

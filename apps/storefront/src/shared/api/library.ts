@@ -1,5 +1,12 @@
 import type { GetData, components, operations } from '@ratingo/api-contract';
-import { apiDelete, apiGet, apiGetOrNull, apiPatch, apiPost } from '@ratingo/web-core/api';
+import {
+  apiDelete,
+  apiGet,
+  apiGetOrNull,
+  apiPatch,
+  apiPatchOrNull,
+  apiPost,
+} from '@ratingo/web-core/api';
 import type { MediaType } from './catalog';
 
 export type MediaSaveStatus = components['schemas']['MediaSaveStatusDto'];
@@ -117,10 +124,14 @@ export const libraryApi = {
     mediaItemId: string,
     rating: number | null,
     mediaType: MediaType,
-  ): Promise<UserMediaState> {
-    return apiPatch<UserMediaState>(`user-media/${mediaItemId}`, {
+  ): Promise<UserMediaState | null> {
+    return apiPatchOrNull<UserMediaState>(`user-media/${mediaItemId}`, {
       rating,
       mediaType,
     } satisfies SetUserMediaState);
+  },
+
+  removeFromLibrary(mediaItemId: string): Promise<void> {
+    return apiDelete(`user-media/${mediaItemId}`, { keepalive: true });
   },
 } as const;

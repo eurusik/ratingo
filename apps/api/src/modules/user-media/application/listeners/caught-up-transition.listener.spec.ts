@@ -13,6 +13,7 @@ const makeState = (userId: string, mediaItemId = 'media-1') => ({
   rating: null,
   progress: null,
   notes: null,
+  stateImplied: false,
   createdAt: new Date(),
   updatedAt: new Date(),
 });
