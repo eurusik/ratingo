@@ -130,6 +130,38 @@ describe('NextSpanMetricsProcessor', () => {
     });
   });
 
+  it('labels a skip with no cache entry yet as a miss', () => {
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(
+      fetchSpan({
+        'http.status_code': 200,
+        'next.fetch.cache_status': 'skip',
+        'next.fetch.cache_reason': 'cache-control: no-cache (hard refresh)',
+      }),
+    );
+
+    expect(histograms.get(FETCH_DURATION_METRIC)).toHaveBeenCalledWith(
+      0.25,
+      expect.objectContaining({ 'next.fetch.cache_status': 'miss' }),
+    );
+  });
+
+  it('keeps a skip that bypasses the cache on purpose', () => {
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(
+      fetchSpan({
+        'http.status_code': 200,
+        'next.fetch.cache_status': 'skip',
+        'next.fetch.cache_reason': 'revalidate: 0',
+      }),
+    );
+
+    expect(histograms.get(FETCH_DURATION_METRIC)).toHaveBeenCalledWith(
+      0.25,
+      expect.objectContaining({ 'next.fetch.cache_status': 'skip' }),
+    );
+  });
+
   it('ignores spans that are not tracked', () => {
     const { processor, histograms } = fakeMeter();
     processor.onEnd(span({ 'next.span_type': 'NextNodeServer.findPageComponents' }));
