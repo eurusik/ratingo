@@ -28,12 +28,12 @@ import { ReviewCard } from './review-card';
 import { ReviewDialogs } from './review-dialogs';
 import { ReviewsProvider, useReviewsActions, type ReviewsActions } from './reviews-context';
 import { REVIEWS_HEADING_ID, focusReviewsHeading } from './reviews-heading';
-import { ReviewsSkeleton } from './reviews-skeleton';
+import { InlineComposeSkeleton, ReviewsSkeleton } from './reviews-skeleton';
 import { EmptyReviews, GuestPrompt, ResolvingViewerPrompt, WritePrompt } from './viewer-prompt';
 
 const InlineCompose = dynamic(
   () => import('./inline-compose').then((module) => module.InlineCompose),
-  { ssr: false },
+  { ssr: false, loading: InlineComposeSkeleton },
 );
 
 type ReviewsStatus = 'pending' | 'error' | 'success';
@@ -180,6 +180,7 @@ export function ReviewsBoard({
       </section>
       <ReviewDialogs
         isPhone={!isDesktop}
+        canCompose={viewerId !== null}
         compose={compose}
         threadReview={threadReview}
         onCloseThread={() => setThreadId(null)}

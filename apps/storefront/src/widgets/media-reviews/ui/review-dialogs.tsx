@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import type { Review } from '@/shared/api';
 
@@ -20,6 +20,16 @@ const ReportDialog = dynamic(
   },
 );
 
+const subscribeToNothing = () => () => {};
+
+function useIsHydrated(): boolean {
+  return useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
+}
+
 function useMountedOnceOpened(isOpen: boolean): boolean {
   const [hasOpened, setHasOpened] = useState(isOpen);
   if (isOpen && !hasOpened) setHasOpened(true);
@@ -28,6 +38,7 @@ function useMountedOnceOpened(isOpen: boolean): boolean {
 
 interface ReviewDialogsProps {
   isPhone: boolean;
+  canCompose: boolean;
   compose: { session: number; isOpen: boolean; editing: Review | null; close: () => void };
   threadReview: Review | null;
   onCloseThread: () => void;
@@ -37,19 +48,22 @@ interface ReviewDialogsProps {
 
 export function ReviewDialogs({
   isPhone,
+  canCompose,
   compose,
   threadReview,
   onCloseThread,
   reportReview,
   onCloseReport,
 }: ReviewDialogsProps) {
+  const isHydrated = useIsHydrated();
   const hasComposed = useMountedOnceOpened(isPhone && compose.isOpen);
+  const keepsComposeReady = isHydrated && isPhone && (canCompose || hasComposed);
   const hasOpenedThread = useMountedOnceOpened(isPhone && threadReview !== null);
   const hasReported = useMountedOnceOpened(reportReview !== null);
 
   return (
     <>
-      {isPhone && hasComposed ? (
+      {keepsComposeReady ? (
         <ComposeSheet
           key={compose.session}
           isOpen={compose.isOpen}
