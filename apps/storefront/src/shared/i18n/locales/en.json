@@ -969,10 +969,12 @@
         "show": "This is your show rating — it changes on the page too"
       },
       "textLabel": "Review text",
-      "placeholder": "What worked, what let you down? Mark spoilers below…",
+      "placeholder": "What worked, what let you down?",
       "counter": "{count} / {max}",
+      "limitNear": "Getting close to the {max}-character limit",
+      "limitReached": "That’s the {max}-character maximum",
       "spoiler": "Contains spoilers",
-      "spoilerHint": "We’ll hide the text until someone taps “show”",
+      "spoilerHint": "We’ll hide the text until someone taps “Show”",
       "publish": "Publish",
       "save": "Save",
       "publishing": "Publishing…",
@@ -983,9 +985,9 @@
         "exists": "You already reviewed this title — reload the page to edit it"
       },
       "discard": {
-        "title": "Discard draft?",
-        "text": "Your review text won’t be saved.",
-        "keep": "Keep editing",
+        "title": "Discard review?",
+        "text": "Your text and the spoiler mark will be gone. Your rating stays.",
+        "keep": "Keep writing",
         "confirm": "Discard"
       }
     },

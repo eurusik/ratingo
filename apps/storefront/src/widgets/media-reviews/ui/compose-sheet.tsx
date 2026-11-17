@@ -3,9 +3,10 @@
 import type { Review } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { Sheet } from '@/shared/ui';
-import { useReviewComposer } from '../model/use-review-composer';
+import { useGuardedClose } from '../lib/use-guarded-close';
+import { useReviewDraft } from '../model/use-review-draft';
 import { DiscardDraftDialog } from './discard-draft-dialog';
-import { ReviewForm } from './review-form';
+import { SheetReviewForm } from './sheet-review-form';
 import { useReviewsActions } from './reviews-context';
 
 interface ComposeSheetProps {
@@ -17,7 +18,9 @@ interface ComposeSheetProps {
 export function ComposeSheet({ isOpen, editing, onClose }: ComposeSheetProps) {
   const { dict } = useTranslation();
   const { ownRating } = useReviewsActions();
-  const { draft, closing } = useReviewComposer(editing, ownRating, onClose);
+  const draft = useReviewDraft(editing, ownRating);
+  const closing = useGuardedClose(draft.hasContentChanges, onClose);
+  const title = editing ? dict.reviews.compose.editTitle : dict.reviews.compose.title;
 
   return (
     <>
@@ -26,9 +29,17 @@ export function ComposeSheet({ isOpen, editing, onClose }: ComposeSheetProps) {
         onOpenChange={(open) => {
           if (!open) closing.request();
         }}
-        title={editing ? dict.reviews.compose.editTitle : dict.reviews.compose.title}
+        title={title}
+        size="full"
+        isHeaderless
       >
-        <ReviewForm draft={draft} editing={editing} layout="sheet" onPublished={onClose} />
+        <SheetReviewForm
+          draft={draft}
+          editing={editing}
+          title={title}
+          onPublished={onClose}
+          onCancel={closing.request}
+        />
       </Sheet>
       <DiscardDraftDialog
         isOpen={closing.isAsking}

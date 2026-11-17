@@ -2,6 +2,7 @@ import { Skeleton } from '@heroui/react';
 
 const PLACEHOLDER_CARDS = [0, 1];
 const SORT_TAB_WIDTHS = ['w-32', 'w-16', 'w-18'];
+const RATING_PRESET_KEYS = [0, 1, 2, 3];
 
 function ReviewCardSkeleton() {
   return (
@@ -22,6 +23,31 @@ function ReviewCardSkeleton() {
       <div className="flex h-11 items-center justify-between">
         <Skeleton className="h-6 w-20 rounded-full" />
         <Skeleton className="h-6 w-24 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+export function InlineComposeSkeleton() {
+  return (
+    <div
+      aria-hidden
+      className="flex flex-col gap-5.5 rounded-[28px] border border-separator bg-surface p-7"
+    >
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-6 w-28 rounded-full" />
+        <div className="flex flex-wrap gap-1.5">
+          {RATING_PRESET_KEYS.map((key) => (
+            <Skeleton key={key} className="h-11 w-20 rounded-full" />
+          ))}
+        </div>
+        <Skeleton className="h-5 w-64 rounded-full" />
+      </div>
+      <Skeleton className="h-45 w-full rounded-[20px]" />
+      <div className="flex min-h-tap items-center gap-3">
+        <Skeleton className="h-6 w-10 rounded-full" />
+        <Skeleton className="h-4 w-48 rounded-full" />
+        <Skeleton className="ms-auto h-11 w-36 rounded-full" />
       </div>
     </div>
   );

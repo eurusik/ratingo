@@ -23,12 +23,16 @@ function readNoKeyboardOnServer(): number {
   return 0;
 }
 
-export function KeyboardInset() {
-  const keyboardHeight = useSyncExternalStore(
+export function useKeyboardHeight(): number {
+  return useSyncExternalStore(
     subscribeToVisualViewport,
     readKeyboardHeight,
     readNoKeyboardOnServer,
   );
+}
+
+export function KeyboardInset() {
+  const keyboardHeight = useKeyboardHeight();
 
   return (
     <span
