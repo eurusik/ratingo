@@ -18,6 +18,16 @@ interface OAuthCallbackParams {
   get(name: string): string | null;
 }
 
+function resolveErrorCode(
+  code: string | null,
+  providerError: string | null,
+  exchangeFailure: ExchangeFailure | null,
+): string | null {
+  if (providerError) return providerError;
+  if (!code) return MISSING_CODE_ERROR;
+  return exchangeFailure?.code === code ? exchangeFailure.errorCode : null;
+}
+
 export function useOAuthCodeExchange(
   params: OAuthCallbackParams,
   provider: OAuthProvider,
@@ -27,6 +37,7 @@ export function useOAuthCodeExchange(
   const returnTo = toSafeReturnPath(params.get('returnTo'));
   const [exchangeFailure, setExchangeFailure] = useState<ExchangeFailure | null>(null);
   const exchangedCode = useRef<string | null>(null);
+  const reportedFailure = useRef<string | null>(null);
 
   useEffect(() => {
     if (!code || providerError || exchangedCode.current === code) return;
@@ -47,7 +58,13 @@ export function useOAuthCodeExchange(
       });
   }, [code, provider, providerError, returnTo]);
 
-  if (providerError) return providerError;
-  if (!code) return MISSING_CODE_ERROR;
-  return exchangeFailure?.code === code ? exchangeFailure.errorCode : null;
+  const errorCode = resolveErrorCode(code, providerError, exchangeFailure);
+
+  useEffect(() => {
+    if (!errorCode || reportedFailure.current === errorCode) return;
+    reportedFailure.current = errorCode;
+    track('login_failed', { method: provider, reason: errorCode });
+  }, [errorCode, provider]);
+
+  return errorCode;
 }

@@ -76,6 +76,58 @@ describe('OAuthCallbackPage', () => {
     expect(window.gtag).toHaveBeenCalledWith('event', 'login', { method: 'facebook' });
   });
 
+  it('reports a provider error once, with the provider and the error code', () => {
+    window.gtag = jest.fn();
+
+    const { rerender } = renderCallback('error=OAUTH_CANCELLED', 'facebook');
+    rerender(callbackTree());
+
+    expect(window.gtag).toHaveBeenCalledTimes(1);
+    expect(window.gtag).toHaveBeenCalledWith('event', 'login_failed', {
+      method: 'facebook',
+      reason: 'OAUTH_CANCELLED',
+    });
+  });
+
+  it('reports a failed code exchange with the API error code, once', async () => {
+    window.gtag = jest.fn();
+    jest
+      .spyOn(authApi, 'exchangeOAuthCode')
+      .mockRejectedValue(new ApiError('OAUTH_EXCHANGE_USED', 400, 'used'));
+
+    renderCallback('code=reused');
+
+    await screen.findByRole('alert');
+    expect(window.gtag).toHaveBeenCalledTimes(1);
+    expect(window.gtag).toHaveBeenCalledWith('event', 'login_failed', {
+      method: 'google',
+      reason: 'OAUTH_EXCHANGE_USED',
+    });
+  });
+
+  it('reports an unknown reason when the exchange fails without an API error', async () => {
+    window.gtag = jest.fn();
+    jest.spyOn(authApi, 'exchangeOAuthCode').mockRejectedValue(new Error('offline'));
+
+    renderCallback('code=lost');
+
+    await screen.findByRole('alert');
+    expect(window.gtag).toHaveBeenCalledWith('event', 'login_failed', {
+      method: 'google',
+      reason: 'UNKNOWN',
+    });
+  });
+
+  it('does not report a successful exchange as a failure', async () => {
+    window.gtag = jest.fn();
+    jest.spyOn(authApi, 'exchangeOAuthCode').mockResolvedValue(STORED_TOKENS);
+
+    renderCallback('code=one-time');
+
+    await waitFor(() => expect(replaceDocumentLocation).toHaveBeenCalled());
+    expect(window.gtag).not.toHaveBeenCalledWith('event', 'login_failed', expect.anything());
+  });
+
   it('never sends the user to another origin', async () => {
     jest.spyOn(authApi, 'exchangeOAuthCode').mockResolvedValue(STORED_TOKENS);
 

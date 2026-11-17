@@ -140,6 +140,68 @@ describe('AuthDialog', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(uk.auth.errors.invalidCredentials);
     expect(login).toHaveBeenCalledWith({ email: 'ivan@example.com', password: 'wrong' });
     expect(window.gtag).not.toHaveBeenCalledWith('event', 'login', expect.anything());
+    expect(
+      jest.mocked(window.gtag!).mock.calls.filter(([, name]) => name === 'login_failed'),
+    ).toHaveLength(1);
+    expect(window.gtag).toHaveBeenCalledWith('event', 'login_failed', {
+      method: 'email',
+      mode: 'login',
+      reason: ErrorCode.UNAUTHORIZED,
+    });
+  });
+
+  it('reports an unknown reason when the sign-in fails without an API error', async () => {
+    window.gtag = jest.fn();
+    login.mockRejectedValue(new Error('network'));
+    renderDialog();
+    act(() => openAuth());
+    await screen.findByRole('dialog', { name: uk.auth.loginTitle });
+
+    type(uk.auth.email, 'ivan@example.com');
+    type(uk.auth.password, 'S3curePassw0rd');
+    fireEvent.click(screen.getByRole('button', { name: uk.auth.submitLogin }));
+
+    await waitFor(() =>
+      expect(window.gtag).toHaveBeenCalledWith('event', 'login_failed', {
+        method: 'email',
+        mode: 'login',
+        reason: 'unknown',
+      }),
+    );
+  });
+
+  it('reports a failed registration with the API error code', async () => {
+    window.gtag = jest.fn();
+    register.mockRejectedValue(new ApiError(ErrorCode.EMAIL_ALREADY_EXISTS, 409, 'Exists'));
+    renderDialog();
+    act(() => openAuth({ mode: 'register' }));
+    await screen.findByRole('dialog', { name: uk.auth.registerTitle });
+    type(uk.auth.email, 'ivan_42@example.com');
+    type(uk.auth.password, 'Abcdefg1');
+
+    fireEvent.click(screen.getByRole('button', { name: uk.auth.submitRegister }));
+
+    await waitFor(() =>
+      expect(window.gtag).toHaveBeenCalledWith('event', 'login_failed', {
+        method: 'email',
+        mode: 'sign_up',
+        reason: ErrorCode.EMAIL_ALREADY_EXISTS,
+      }),
+    );
+    expect(window.gtag).not.toHaveBeenCalledWith('event', 'sign_up', expect.anything());
+  });
+
+  it('does not report a sign-in that fails validation before reaching the API', async () => {
+    window.gtag = jest.fn();
+    renderDialog();
+    act(() => openAuth());
+    await screen.findByRole('dialog', { name: uk.auth.loginTitle });
+
+    type(uk.auth.email, 'not-an-email');
+    fireEvent.click(screen.getByRole('button', { name: uk.auth.submitLogin }));
+
+    expect(login).not.toHaveBeenCalled();
+    expect(window.gtag).not.toHaveBeenCalledWith('event', 'login_failed', expect.anything());
   });
 
   it('closes and replays the guest action after signing in', async () => {
