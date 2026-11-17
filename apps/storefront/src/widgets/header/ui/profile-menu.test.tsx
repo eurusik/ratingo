@@ -60,13 +60,12 @@ describe('ProfileMenu', () => {
     const sheet = await screen.findByRole('dialog', { name: uk.header.profile });
     expect(within(sheet).getByText('ivan@example.com')).toBeInTheDocument();
     const stats = within(sheet).getByRole('list', { name: uk.profile.stats.label });
-    const moviesLink = within(stats).getByRole('link', { name: /Фільми/ });
-    expect(moviesLink).toHaveTextContent('42');
-    expect(moviesLink).toHaveAttribute('href', '/my?list=history');
-    expect(within(stats).getByRole('link', { name: /Список/ })).toHaveAttribute(
-      'href',
-      '/my?list=plan',
-    );
+    expect(
+      within(stats).getByRole('link', { name: `${uk.profile.stats.movies}: 42` }),
+    ).toHaveAttribute('href', '/my?list=history');
+    expect(
+      within(stats).getByRole('link', { name: `${uk.profile.stats.watchlist}: 77` }),
+    ).toHaveAttribute('href', '/my?list=plan');
     expect(within(sheet).queryByRole('link', { name: uk.profile.admin })).not.toBeInTheDocument();
 
     fireEvent.click(within(sheet).getByRole('radio', { name: uk.profile.themes.light }));
@@ -105,10 +104,12 @@ describe('ProfileMenu', () => {
     });
 
     const stats = await screen.findByRole('list', { name: uk.profile.stats.label });
-    expect(within(stats).getByRole('link', { name: /Фільми/ }).textContent).toContain('2\u202f311');
-    const watchlistLink = within(stats).getByRole('link', { name: /Список/ });
-    expect(watchlistLink).toHaveTextContent(uk.profile.stats.emptyWatchlist);
-    expect(watchlistLink).toHaveTextContent(uk.profile.stats.findToWatch);
-    expect(watchlistLink).toHaveAttribute('href', '/browse');
+    const { movies, watchlist, emptyWatchlist, findToWatch } = uk.profile.stats;
+    expect(within(stats).getByRole('link', { name: `${movies}: 2\u202f311` })).toBeInTheDocument();
+    expect(
+      within(stats).getByRole('link', {
+        name: `${watchlist}: ${emptyWatchlist}. ${findToWatch}`,
+      }),
+    ).toHaveAttribute('href', '/browse');
   });
 });

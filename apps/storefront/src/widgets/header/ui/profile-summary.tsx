@@ -3,119 +3,108 @@ import { ChevronRight } from 'lucide-react';
 import type { MeDto } from '@ratingo/web-core/auth';
 import { libraryListRoute } from '@/entities/library';
 import { BROWSE_ROUTE } from '@/shared/config';
-import { formatNumber, useTranslation, type Dictionary } from '@/shared/i18n';
+import { useTranslation, type Dictionary } from '@/shared/i18n';
 import { UserAvatar } from './user-avatar';
 
 type ProfileStatsLayout = 'tiles' | 'rows';
 
-type StatKey = 'movies' | 'shows' | 'watchlist';
+type StatLabels = Dictionary['profile']['stats'];
 
 interface ProfileStat {
-  key: StatKey;
-  count: number;
+  label: string;
   href: string;
-  isEmptyWatchlist: boolean;
+  count?: string;
 }
 
 const NARROW_NO_BREAK_SPACE = ' ';
 
-function profileStats(stats: MeDto['stats']): ProfileStat[] {
-  const isEmptyWatchlist = stats.watchlistCount === 0;
+const countFormats = new Map<string, Intl.NumberFormat>();
+
+function formatStatCount(locale: string, count: number): string {
+  let format = countFormats.get(locale);
+  if (!format) {
+    format = new Intl.NumberFormat(locale);
+    countFormats.set(locale, format);
+  }
+  return format
+    .formatToParts(count)
+    .map((part) => (part.type === 'group' ? NARROW_NO_BREAK_SPACE : part.value))
+    .join('');
+}
+
+function profileStats(stats: MeDto['stats'], labels: StatLabels, locale: string): ProfileStat[] {
+  const isWatchlistEmpty = stats.watchlistCount === 0;
   return [
     {
-      key: 'movies',
-      count: stats.moviesRated,
+      label: labels.movies,
       href: libraryListRoute('history'),
-      isEmptyWatchlist: false,
+      count: formatStatCount(locale, stats.moviesRated),
     },
     {
-      key: 'shows',
-      count: stats.showsRated,
+      label: labels.shows,
       href: libraryListRoute('history'),
-      isEmptyWatchlist: false,
+      count: formatStatCount(locale, stats.showsRated),
     },
     {
-      key: 'watchlist',
-      count: stats.watchlistCount,
-      href: isEmptyWatchlist ? BROWSE_ROUTE : libraryListRoute('plan'),
-      isEmptyWatchlist,
+      label: labels.watchlist,
+      href: isWatchlistEmpty ? BROWSE_ROUTE : libraryListRoute('plan'),
+      count: isWatchlistEmpty ? undefined : formatStatCount(locale, stats.watchlistCount),
     },
   ];
 }
 
-function formatStatCount(locale: string, count: number): string {
-  return formatNumber(locale, count).replace(/\s/g, NARROW_NO_BREAK_SPACE);
+function accessibleName(stat: ProfileStat, labels: StatLabels): string {
+  const value = stat.count ?? `${labels.emptyWatchlist}. ${labels.findToWatch}`;
+  return `${stat.label}: ${value}`;
 }
 
 const LINK_CLASS =
   'text-foreground no-underline transition-colors hover:bg-surface-tertiary focus-visible:outline-2 focus-visible:outline-focus';
 
+const LAYOUT_LINK_CLASS: Record<ProfileStatsLayout, string> = {
+  tiles: `@container flex min-h-28 flex-col gap-4 rounded-2xl bg-surface-secondary px-3.5 pt-3.5 pb-4 ${LINK_CLASS}`,
+  rows: `flex min-h-16 items-center gap-3 rounded-xl ps-4 pe-3.5 ${LINK_CLASS}`,
+};
+
+const LAYOUT_LIST_CLASS: Record<ProfileStatsLayout, string> = {
+  tiles: 'grid grid-cols-3 gap-2',
+  rows: 'flex flex-col gap-0.5 rounded-2xl bg-surface-secondary p-1.5',
+};
+
 const CHEVRON_CLASS = 'size-4 shrink-0 text-muted';
 
 const COUNT_CLASS = 'font-extrabold leading-none tracking-tight tabular-nums whitespace-nowrap';
 
-function StatTile({
-  stat,
-  dict,
-  locale,
-  onNavigate,
-}: {
-  stat: ProfileStat;
-  dict: Dictionary;
-  locale: string;
-  onNavigate: () => void;
-}) {
-  const labels = dict.profile.stats;
+function TileContent({ stat, labels }: { stat: ProfileStat; labels: StatLabels }) {
   return (
-    <Link
-      href={stat.href}
-      onClick={onNavigate}
-      className={`@container flex min-h-28 flex-col gap-4 rounded-2xl bg-surface-secondary px-3.5 pt-3.5 pb-4 ${LINK_CLASS}`}
-    >
+    <>
       <span className="flex items-center justify-between gap-1 text-sm font-medium text-muted">
-        {labels[stat.key]}
+        {stat.label}
         <ChevronRight aria-hidden className={CHEVRON_CLASS} />
       </span>
-      {stat.isEmptyWatchlist ? (
+      {stat.count === undefined ? (
         <span className="flex flex-col gap-1 text-xs leading-tight font-semibold">
           <span className="text-sm">{labels.emptyWatchlist}</span>
           <span className="text-accent">{labels.findToWatch}</span>
         </span>
       ) : (
-        <span className={`text-[min(2.125rem,30cqi)] ${COUNT_CLASS}`}>
-          {formatStatCount(locale, stat.count)}
-        </span>
+        <span className={`text-[min(2.125rem,30cqi)] ${COUNT_CLASS}`}>{stat.count}</span>
       )}
-    </Link>
+    </>
   );
 }
 
-function StatRow({
-  stat,
-  dict,
-  locale,
-  onNavigate,
-}: {
-  stat: ProfileStat;
-  dict: Dictionary;
-  locale: string;
-  onNavigate: () => void;
-}) {
-  const labels = dict.profile.stats;
+function RowContent({ stat, labels }: { stat: ProfileStat; labels: StatLabels }) {
   return (
-    <Link
-      href={stat.href}
-      onClick={onNavigate}
-      className={`flex min-h-16 items-center gap-3 rounded-xl ps-4 pe-3.5 ${LINK_CLASS}`}
-    >
-      <span className="flex-1 text-base font-medium text-muted">{labels[stat.key]}</span>
-      {stat.isEmptyWatchlist ? (
+    <>
+      <span className="min-w-0 flex-1 text-base font-medium text-muted">{stat.label}</span>
+      {stat.count === undefined ? (
         <span className="text-[15px] font-semibold text-accent">{labels.findToWatch}</span>
       ) : (
-        <span className={`text-[26px] ${COUNT_CLASS}`}>{formatStatCount(locale, stat.count)}</span>
+        <span className={`text-[26px] ${COUNT_CLASS}`}>{stat.count}</span>
       )}
       <ChevronRight aria-hidden className={CHEVRON_CLASS} />
-    </Link>
+    </>
   );
 }
 
@@ -129,8 +118,9 @@ export function ProfileSummary({
   onNavigate: () => void;
 }) {
   const { dict, locale } = useTranslation();
-  const stats = profileStats(user.stats);
-  const Stat = layout === 'tiles' ? StatTile : StatRow;
+  const labels = dict.profile.stats;
+  const stats = profileStats(user.stats, labels, locale);
+  const Content = layout === 'tiles' ? TileContent : RowContent;
 
   return (
     <div className="flex flex-col gap-4">
@@ -145,17 +135,17 @@ export function ProfileSummary({
           </span>
         </div>
       </div>
-      <ul
-        aria-label={dict.profile.stats.label}
-        className={
-          layout === 'tiles'
-            ? 'grid grid-cols-3 gap-2'
-            : 'flex flex-col gap-0.5 rounded-2xl bg-surface-secondary p-1.5'
-        }
-      >
+      <ul aria-label={labels.label} className={LAYOUT_LIST_CLASS[layout]}>
         {stats.map((stat) => (
-          <li key={stat.key} className="grid">
-            <Stat stat={stat} dict={dict} locale={locale} onNavigate={onNavigate} />
+          <li key={stat.label} className="grid">
+            <Link
+              href={stat.href}
+              onClick={onNavigate}
+              aria-label={accessibleName(stat, labels)}
+              className={LAYOUT_LINK_CLASS[layout]}
+            >
+              <Content stat={stat} labels={labels} />
+            </Link>
           </li>
         ))}
       </ul>
