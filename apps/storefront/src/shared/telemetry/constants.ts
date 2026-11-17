@@ -13,6 +13,8 @@ export const REQUEST_ERRORS_METRIC = 'app.next.request.errors';
 
 export const UNKNOWN_HOST = 'unknown';
 export const MISSING_LABEL = 'none';
+export const FETCH_CACHE_STATUS = { SKIP: 'skip', MISS: 'miss' } as const;
+export const COLD_CACHE_ENTRY_REASON = 'hard refresh';
 export const FAILED_FETCH_STATUS = 0;
 export const OTHER_METHOD = '_OTHER';
 export const KNOWN_HTTP_METHODS: ReadonlySet<string> = new Set([
