@@ -20,6 +20,7 @@ module.exports = {
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^@ratingo/node-telemetry$': '<rootDir>/../../../packages/node-telemetry/src',
     '^isomorphic-dompurify$': '<rootDir>/../__mocks__/isomorphic-dompurify.js',
   },
 };

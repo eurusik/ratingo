@@ -1,7 +1,8 @@
+import { HTTP_DURATION_BUCKETS_SECONDS } from '@ratingo/node-telemetry';
 import fastify, { type FastifyInstance } from 'fastify';
 
 import { registerHttpMetrics } from './http-metrics';
-import { HTTP_DURATION_BUCKETS_SECONDS, HTTP_REQUEST_DURATION_METRIC } from './telemetry.constants';
+import { HTTP_REQUEST_DURATION_METRIC } from './telemetry.constants';
 import { createTestMeterProvider } from './telemetry.testing';
 
 describe('registerHttpMetrics', () => {

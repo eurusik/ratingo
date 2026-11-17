@@ -42,6 +42,7 @@ const storefrontRouteFiles = [`${storefrontDir}/app/**/*.{ts,tsx}`];
 const storefrontEnvReaders = [`${storefrontDir}/src/shared/config/**`];
 const webCoreSourceFiles = ['packages/web-core/src/**/*.{ts,tsx}'];
 const uiSourceFiles = ['packages/ui/src/**/*.{ts,tsx}'];
+const nodeTelemetrySourceFiles = ['packages/node-telemetry/src/**/*.ts'];
 const heroUiAutoFocusRule = { 'jsx-a11y/no-autofocus': ['error', { ignoreNonDOM: true }] };
 const webCoreTestFiles = ['packages/web-core/src/**/__tests__/**'];
 const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];
@@ -1052,6 +1053,39 @@ export default [
         },
       ],
       'max-lines': ['error', { max: 500, ...maxLinesOptions }],
+      ...typeSafetyRules,
+    },
+  },
+  {
+    files: nodeTelemetrySourceFiles,
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      'no-console': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@nestjs/*', 'next', 'next/*', '@/*'],
+              message:
+                'node-telemetry is shared by the API and the storefront: no framework imports and no app aliases.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'node-telemetry takes its config from the caller instead of reading process.env.',
+        },
+      ],
       ...typeSafetyRules,
     },
   },

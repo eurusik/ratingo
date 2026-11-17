@@ -1,6 +1,7 @@
 import { type IntervalHistogram, monitorEventLoopDelay, performance } from 'node:perf_hooks';
 
 import type {
+  BatchObservableCallback,
   BatchObservableResult,
   Meter,
   ObservableCounter,
@@ -9,14 +10,14 @@ import type {
 
 import {
   EVENT_LOOP_DELAY_METRIC,
-  EVENT_LOOP_PERCENTILES,
-  EVENT_LOOP_RESOLUTION_MS,
   EVENT_LOOP_UTILIZATION_METRIC,
-  NS_PER_SECOND,
   PROCESS_CPU_TIME_METRIC,
   PROCESS_MEMORY_METRIC,
-  US_PER_SECOND,
-} from './constants';
+} from './metric-names';
+import { EVENT_LOOP_RESOLUTION_MS, toStallSeconds } from './event-loop-stall';
+import { US_PER_SECOND } from './units';
+
+const EVENT_LOOP_PERCENTILES = [50, 99] as const;
 
 interface RuntimeInstruments {
   eventLoopDelay: ObservableGauge;
@@ -53,11 +54,11 @@ function observeEventLoopDelay(
     return;
   }
   EVENT_LOOP_PERCENTILES.forEach((percentile) =>
-    result.observe(gauge, delay.percentile(percentile) / NS_PER_SECOND, {
+    result.observe(gauge, toStallSeconds(delay.percentile(percentile)), {
       percentile: `p${percentile}`,
     }),
   );
-  result.observe(gauge, delay.max / NS_PER_SECOND, { percentile: 'max' });
+  result.observe(gauge, toStallSeconds(delay.max), { percentile: 'max' });
   delay.reset();
 }
 
@@ -86,24 +87,28 @@ function observeCpuTime(result: BatchObservableResult, counter: ObservableCounte
   result.observe(counter, cpu.system / US_PER_SECOND, { 'cpu.mode': 'system' });
 }
 
-export function registerRuntimeMetrics(meter: Meter): void {
+export function registerRuntimeMetrics(meter: Meter): () => void {
   const instruments = createInstruments(meter);
+  const observables = [
+    instruments.eventLoopDelay,
+    instruments.eventLoopUtilization,
+    instruments.memory,
+    instruments.cpuTime,
+  ];
   const eventLoopDelay = monitorEventLoopDelay({ resolution: EVENT_LOOP_RESOLUTION_MS });
   eventLoopDelay.enable();
   const eventLoopUtilizationSincePrevious = trackEventLoopUtilization();
 
-  meter.addBatchObservableCallback(
-    (result) => {
-      observeEventLoopDelay(result, instruments.eventLoopDelay, eventLoopDelay);
-      result.observe(instruments.eventLoopUtilization, eventLoopUtilizationSincePrevious());
-      observeMemory(result, instruments.memory);
-      observeCpuTime(result, instruments.cpuTime);
-    },
-    [
-      instruments.eventLoopDelay,
-      instruments.eventLoopUtilization,
-      instruments.memory,
-      instruments.cpuTime,
-    ],
-  );
+  const observe: BatchObservableCallback = (result) => {
+    observeEventLoopDelay(result, instruments.eventLoopDelay, eventLoopDelay);
+    result.observe(instruments.eventLoopUtilization, eventLoopUtilizationSincePrevious());
+    observeMemory(result, instruments.memory);
+    observeCpuTime(result, instruments.cpuTime);
+  };
+  meter.addBatchObservableCallback(observe, observables);
+
+  return () => {
+    meter.removeBatchObservableCallback(observe, observables);
+    eventLoopDelay.disable();
+  };
 }
