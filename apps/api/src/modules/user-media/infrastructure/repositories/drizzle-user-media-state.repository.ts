@@ -771,6 +771,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
                     THEN EXCLUDED.state
                     ELSE ${schema.userMediaState.state}
                   END`,
+                  stateImplied: false,
                   updatedAt: sql`NOW()`,
                 },
               })

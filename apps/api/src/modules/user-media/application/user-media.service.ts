@@ -13,6 +13,7 @@ import { USER_MEDIA_STATE_ERRORS } from '../domain/constants/user-media-state-er
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
 import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';
 import { UserMediaStateChangedEvent } from '../domain/events/user-media-state-changed.event';
+import { isDisposableImpliedEntry, stateImpliedFor } from '../domain/policies/implied-entry.policy';
 import type { IMediaLookupPort } from '../domain/ports/media-lookup.port';
 import type { IRatingSyncPort } from '../domain/ports/rating-sync.port';
 import {
@@ -88,7 +89,7 @@ export class UserMediaService implements IRatingSyncPort {
       const result = await this.repo.upsert({
         ...data,
         state: USER_MEDIA_STATE.WATCHING,
-        stateImplied: this.resolveStateImplied(data, existing),
+        stateImplied: stateImpliedFor(data, existing),
       });
       if (data.rating !== undefined) {
         await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating ?? null);
@@ -117,7 +118,9 @@ export class UserMediaService implements IRatingSyncPort {
       return null;
     }
 
-    if (existing && (await this.isImpliedRatingOnlyEntryCleared(data, existing))) {
+    const clearsImpliedEntry =
+      existing !== null && (await this.isImpliedEntryClearedByRating(data, existing));
+    if (clearsImpliedEntry) {
       await this.deleteState(data.userId, data.mediaItemId);
       return null;
     }
@@ -161,7 +164,7 @@ export class UserMediaService implements IRatingSyncPort {
     const upsertData: UpsertUserMediaStateData = {
       ...data,
       state: resolvedState,
-      stateImplied: this.resolveStateImplied(data, existing),
+      stateImplied: stateImpliedFor(data, existing),
     };
     // Moving to completed / dropped / planned ends active watching: explicitly clear
     // stale progress, otherwise the item lingers in /continue (progress IS NOT NULL).
@@ -232,7 +235,7 @@ export class UserMediaService implements IRatingSyncPort {
       mediaItemId,
       rating,
       state: resolvedState,
-      ...(!existing && { stateImplied: true }),
+      stateImplied: stateImpliedFor({}, existing),
     });
 
     if ((existing?.rating ?? null) !== rating) {
@@ -539,31 +542,25 @@ export class UserMediaService implements IRatingSyncPort {
     return hint;
   }
 
-  private resolveStateImplied(
-    data: SetUserMediaStateInput,
-    existing: UserMediaState | null,
-  ): boolean | undefined {
-    if (data.state !== undefined && !data.stateImplied) return false;
-    return existing ? undefined : true;
-  }
-
-  private async isImpliedRatingOnlyEntryCleared(
+  private async isImpliedEntryClearedByRating(
     data: SetUserMediaStateInput,
     existing: UserMediaState,
   ): Promise<boolean> {
-    const clearsRatingOnly =
-      data.rating === null &&
-      data.state === undefined &&
-      data.progress === undefined &&
-      data.notes === undefined;
-    if (!clearsRatingOnly || !existing.stateImplied) return false;
-    if (existing.progress != null) return false;
-    if (existing.notes != null && existing.notes.trim() !== '') return false;
+    if (!this.isRatingOnlyClear(data) || !existing.stateImplied) return false;
     const watchedEpisodes = await this.episodeProgressRepo.countWatchedForMedia(
       data.userId,
       data.mediaItemId,
     );
-    return watchedEpisodes === 0;
+    return isDisposableImpliedEntry({ ...existing, rating: null }, watchedEpisodes);
+  }
+
+  private isRatingOnlyClear(data: SetUserMediaStateInput): boolean {
+    return (
+      data.rating === null &&
+      data.state === undefined &&
+      data.progress === undefined &&
+      data.notes === undefined
+    );
   }
 
   private resolveDefaultState(

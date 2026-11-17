@@ -125,6 +125,6 @@ export const libraryApi = {
   },
 
   removeFromLibrary(mediaItemId: string): Promise<void> {
-    return apiDelete(`user-media/${mediaItemId}`);
+    return apiDelete(`user-media/${mediaItemId}`, { keepalive: true });
   },
 } as const;

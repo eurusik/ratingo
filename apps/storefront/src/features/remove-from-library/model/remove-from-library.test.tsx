@@ -49,11 +49,12 @@ function lastUndoToast(): UndoToastOptions {
 
 describe('useRemoveFromLibrary', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     jest.mocked(libraryApi.removeFromLibrary).mockResolvedValue(undefined);
     jest.mocked(libraryApi.getMediaState).mockResolvedValue(null);
   });
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => jest.restoreAllMocks());
 
   it('hides the title at once and offers to undo before removing anything', () => {
     const { queryClient, remove } = setup();
@@ -104,5 +105,35 @@ describe('useRemoveFromLibrary', () => {
     expect(onUndo).toHaveBeenCalled();
     expect(toast.danger).toHaveBeenCalledWith('Не вдалося прибрати з бібліотеки. Спробуй ще раз.');
     expect(track).not.toHaveBeenCalled();
+  });
+
+  it('keeps the title when it is rated again before the undo window passes', async () => {
+    const { queryClient, remove } = setup();
+    const onUndo = jest.fn();
+    const onSettled = jest.fn();
+
+    act(() => remove(DUNE, { onUndo, onSettled }));
+    act(() => {
+      queryClient.setQueryData(MEDIA_STATE_KEY, { ...RATED, rating: 60 });
+    });
+    act(() => lastUndoToast().onKept?.());
+
+    await waitFor(() => expect(onSettled).toHaveBeenCalled());
+    expect(onUndo).toHaveBeenCalled();
+    expect(libraryApi.removeFromLibrary).not.toHaveBeenCalled();
+  });
+
+  it('sends the removal when the page is closed during the undo window', async () => {
+    const { remove } = setup();
+
+    act(() => remove(DUNE));
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'));
+    });
+
+    await waitFor(() => expect(libraryApi.removeFromLibrary).toHaveBeenCalledWith('dune-id'));
+    const sent = jest.mocked(libraryApi.removeFromLibrary).mock.calls.length;
+    act(() => lastUndoToast().onKept?.());
+    expect(libraryApi.removeFromLibrary).toHaveBeenCalledTimes(sent);
   });
 });

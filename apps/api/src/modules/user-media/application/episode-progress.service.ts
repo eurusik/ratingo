@@ -9,6 +9,7 @@ import {
   UNSAVE_CONTEXT,
 } from '../domain/constants/episode-progress.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
+import { isDisposableImpliedEntry } from '../domain/policies/implied-entry.policy';
 import { SHOW_STATUS_PORT, type IShowStatusPort } from '../domain/ports/show-status.port';
 import {
   EPISODE_PROGRESS_REPOSITORY,
@@ -210,8 +211,8 @@ export class EpisodeProgressService {
   }
 
   /**
-   * 0 watched episodes: a row that only exists because of episode marks (implied state,
-   * no rating, no notes) is removed; anything the user chose themselves is kept.
+   * 0 watched episodes: a row that only exists because of episode marks is removed;
+   * anything the user chose themselves is kept.
    *
    * Completed/caught_up with episodes missing reverts to watching.
    */
@@ -226,7 +227,7 @@ export class EpisodeProgressService {
     const currentState = await this.userMediaService.getState(userId, mediaItemId);
     if (!currentState) return;
 
-    if (watchedEpisodes === 0 && currentState.stateImplied && !this.hasUserData(currentState)) {
+    if (isDisposableImpliedEntry(currentState, watchedEpisodes)) {
       await this.userMediaService.deleteState(userId, mediaItemId);
       this.logger.log(
         `Removed implied user_media_state for user=${userId}, media=${mediaItemId} (0 episodes watched)`,
@@ -248,9 +249,5 @@ export class EpisodeProgressService {
         `Reverted user_media_state from '${currentState.state}' to 'watching' for user=${userId}, media=${mediaItemId}`,
       );
     }
-  }
-
-  private hasUserData(state: UserMediaState): boolean {
-    return state.rating != null || (state.notes != null && state.notes.trim() !== '');
   }
 }
