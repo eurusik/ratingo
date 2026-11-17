@@ -2,9 +2,10 @@
 
 import type { Review } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
-import { useReviewComposer } from '../model/use-review-composer';
+import { useGuardedClose } from '../lib/use-guarded-close';
+import { useReviewDraft } from '../model/use-review-draft';
 import { DiscardDraftDialog } from './discard-draft-dialog';
-import { ReviewForm } from './review-form';
+import { InlineReviewForm } from './review-form';
 import { useReviewsActions } from './reviews-context';
 
 interface InlineComposeProps {
@@ -15,19 +16,15 @@ interface InlineComposeProps {
 export function InlineCompose({ editing, onDone }: InlineComposeProps) {
   const { dict } = useTranslation();
   const { ownRating } = useReviewsActions();
-  const { draft, closing } = useReviewComposer(
-    editing,
-    ownRating,
-    editing ? onDone : (draft) => draft.resetContent(),
-  );
+  const draft = useReviewDraft(editing, ownRating);
+  const closing = useGuardedClose(draft.hasContentChanges, editing ? onDone : draft.resetContent);
   const title = editing ? dict.reviews.compose.editTitle : dict.reviews.compose.title;
 
   return (
     <section aria-label={title} className="rounded-[28px] border border-separator bg-surface p-7">
-      <ReviewForm
+      <InlineReviewForm
         draft={draft}
         editing={editing}
-        layout="inline"
         onPublished={onDone}
         onCancel={closing.request}
       />

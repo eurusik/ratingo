@@ -242,14 +242,21 @@ describe('MediaReviews', () => {
 
     fireEvent.change(text, { target: { value: 'а'.repeat(252) } });
     expect(screen.getByText('252 / 280')).toBeInTheDocument();
+    expect(screen.getByText('Лишилося небагато: максимум 280 символів')).toBeInTheDocument();
+
+    fireEvent.change(text, { target: { value: 'а'.repeat(280) } });
+    expect(screen.getByText('Це максимум — 280 символів')).toBeInTheDocument();
   });
 
-  it('asks before discarding typed text and keeps writing on request', async () => {
+  it('keeps the typed text when the viewer chooses to keep writing', async () => {
     const text = await openComposerWithRating();
     fireEvent.change(text, { target: { value: 'Звук — окремий персонаж' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
     const confirm = await screen.findByRole('alertdialog', { name: 'Скинути відгук?' });
+    await waitFor(() =>
+      expect(within(confirm).getByRole('button', { name: 'Писати далі' })).toHaveFocus(),
+    );
     fireEvent.click(within(confirm).getByRole('button', { name: 'Писати далі' }));
 
     await waitFor(() =>
@@ -258,19 +265,65 @@ describe('MediaReviews', () => {
     expect(screen.getByRole('textbox', { name: 'Текст відгуку' })).toHaveValue(
       'Звук — окремий персонаж',
     );
+  });
+
+  it('closes the sheet without publishing once the viewer discards the text', async () => {
+    const text = await openComposerWithRating();
+    fireEvent.change(text, { target: { value: 'Звук — окремий персонаж' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
-    fireEvent.click(
-      within(await screen.findByRole('alertdialog', { name: 'Скинути відгук?' })).getByRole(
-        'button',
-        { name: 'Скинути' },
-      ),
-    );
+    const confirm = await screen.findByRole('alertdialog', { name: 'Скинути відгук?' });
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Скинути' }));
 
     await waitFor(() =>
       expect(screen.queryByRole('textbox', { name: 'Текст відгуку' })).toBeNull(),
     );
     expect(reviewsApi.create).not.toHaveBeenCalled();
+  });
+
+  it('closes the sheet at once when nothing was written', async () => {
+    await openComposerWithRating();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('textbox', { name: 'Текст відгуку' })).toBeNull(),
+    );
+    expect(screen.queryByRole('alertdialog', { name: 'Скинути відгук?' })).toBeNull();
+  });
+
+  describe('on desktop', () => {
+    const phoneMatchMedia = window.matchMedia;
+
+    beforeEach(() => {
+      window.matchMedia = (query: string) =>
+        ({ ...phoneMatchMedia(query), matches: true }) as MediaQueryList;
+    });
+
+    afterEach(() => {
+      window.matchMedia = phoneMatchMedia;
+    });
+
+    it('clears the text and spoiler mark on discard but keeps the rating', async () => {
+      signIn('me');
+      listing([reviewBy('olya')]);
+      jest
+        .mocked(libraryApi.getMediaState)
+        .mockResolvedValue({ mediaItemId: DUNE.mediaItemId, rating: 75 } as UserMediaState);
+      renderReviews();
+
+      const text = await screen.findByRole('textbox', { name: 'Текст відгуку' });
+      fireEvent.change(text, { target: { value: 'Звук — окремий персонаж' } });
+      fireEvent.click(screen.getByRole('switch', { name: 'Є спойлери' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
+      const confirm = await screen.findByRole('alertdialog', { name: 'Скинути відгук?' });
+      fireEvent.click(within(confirm).getByRole('button', { name: 'Скинути' }));
+
+      await waitFor(() => expect(text).toHaveValue(''));
+      expect(screen.getByRole('switch', { name: 'Є спойлери' })).not.toBeChecked();
+      expect(screen.getByRole('radio', { name: 'Сподобалось 7,5' })).toBeChecked();
+      expect(reviewsApi.create).not.toHaveBeenCalled();
+    });
   });
 
   it('puts the viewer’s own review first without a vote of its own', async () => {

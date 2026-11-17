@@ -971,6 +971,8 @@
       "textLabel": "Review text",
       "placeholder": "What worked, what let you down?",
       "counter": "{count} / {max}",
+      "limitNear": "Getting close to the {max}-character limit",
+      "limitReached": "That’s the {max}-character maximum",
       "spoiler": "Contains spoilers",
       "spoilerHint": "We’ll hide the text until someone taps “Show”",
       "publish": "Publish",

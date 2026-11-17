@@ -29,7 +29,7 @@ export function DiscardDraftDialog({ isOpen, onKeep, onDiscard }: DiscardDraftDi
             <p className="text-sm text-muted">{copy.text}</p>
           </AlertDialog.Body>
           <AlertDialog.Footer>
-            <Button variant="tertiary" onPress={onKeep} className="min-h-tap flex-1">
+            <Button autoFocus variant="tertiary" onPress={onKeep} className="min-h-tap flex-1">
               {copy.keep}
             </Button>
             <Button variant="danger" onPress={onDiscard} className="min-h-tap flex-1">
