@@ -14,7 +14,7 @@ import { PROBE_RETRY_CONFIG, mapHttpFailure } from './probe-http.util';
 @Injectable()
 export class TraktKeyProbe extends BaseKeyProbe {
   readonly provider = MONITORED_PROVIDER.TRAKT;
-  private readonly http = new ResilientHttpClient(PROBE_RETRY_CONFIG);
+  private readonly http = new ResilientHttpClient({ ...PROBE_RETRY_CONFIG, maxRetries: 0 });
 
   constructor(
     @Inject(traktConfig.KEY)
