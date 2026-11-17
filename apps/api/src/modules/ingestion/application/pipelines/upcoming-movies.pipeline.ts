@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { MS_PER_DAY, MS_PER_HOUR, UPCOMING_MOVIES_SOON_DAYS } from '@/common/constants';
-import { MediaType } from '@/common/enums/media-type.enum';
 import { type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import {
   buildUpcomingMovieJobId,
@@ -10,6 +9,7 @@ import {
 import {
   type IUpcomingMoviesRepository,
   UPCOMING_MOVIES_REPOSITORY,
+  type UpcomingMoviesRefreshQuery,
 } from '@/modules/ingestion/domain/repositories/upcoming-movies.repository.interface';
 import {
   IngestionJob,
@@ -21,6 +21,7 @@ import {
 import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 
+import { findMissingMovieTmdbIds } from '../helpers/missing-movies.helper';
 import { BulkJobService } from '../services/bulk-job.service';
 
 @Injectable()
@@ -44,7 +45,7 @@ export class UpcomingMoviesPipeline {
 
     if (tmdbIds.length === 0) return;
 
-    const missingTmdbIds = await this.filterMissing(tmdbIds);
+    const missingTmdbIds = await findMissingMovieTmdbIds(this.mediaRepository, tmdbIds);
     if (missingTmdbIds.length === 0) {
       this.logger.log('All upcoming movies already exist in database');
       return;
@@ -66,16 +67,9 @@ export class UpcomingMoviesPipeline {
   async refresh(
     scope: UpcomingMoviesRefreshScopeType = UpcomingMoviesRefreshScope.SOON,
   ): Promise<void> {
-    const now = this.clock.now().getTime();
-    const soonWindowMs = UPCOMING_MOVIES_SOON_DAYS * MS_PER_DAY;
-
-    const tmdbIds = await this.upcomingMoviesRepository.findTmdbIdsToRefresh({
-      releasedAfter: new Date(now - soonWindowMs),
-      releasedBefore:
-        scope === UpcomingMoviesRefreshScope.SOON ? new Date(now + soonWindowMs) : null,
-      syncedBefore: new Date(now - UPCOMING_REFRESH_MIN_SYNC_AGE_HOURS * MS_PER_HOUR),
-      limit: UPCOMING_REFRESH_RUN_CAP,
-    });
+    const tmdbIds = await this.upcomingMoviesRepository.findTmdbIdsToRefresh(
+      this.buildRefreshQuery(scope),
+    );
 
     if (tmdbIds.length === 0) {
       this.logger.log(`No upcoming movies to refresh (scope=${scope})`);
@@ -105,9 +99,16 @@ export class UpcomingMoviesPipeline {
     );
   }
 
-  private async filterMissing(tmdbIds: number[]): Promise<number[]> {
-    const existingMedia = await this.mediaRepository.findManyByTmdbIds(tmdbIds, MediaType.MOVIE);
-    const existingTmdbIds = new Set(existingMedia.map((m) => m.tmdbId));
-    return tmdbIds.filter((id) => !existingTmdbIds.has(id));
+  private buildRefreshQuery(scope: UpcomingMoviesRefreshScopeType): UpcomingMoviesRefreshQuery {
+    const now = this.clock.now().getTime();
+    const soonWindowMs = UPCOMING_MOVIES_SOON_DAYS * MS_PER_DAY;
+
+    return {
+      releasedAfter: new Date(now - soonWindowMs),
+      releasedBefore:
+        scope === UpcomingMoviesRefreshScope.ALL ? null : new Date(now + soonWindowMs),
+      syncedBefore: new Date(now - UPCOMING_REFRESH_MIN_SYNC_AGE_HOURS * MS_PER_HOUR),
+      limit: UPCOMING_REFRESH_RUN_CAP,
+    };
   }
 }

@@ -4,14867 +4,14801 @@
  */
 
 export interface paths {
-  '/api/catalog/movies/trending': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Trending movies
-     * @description Returns trending movies sorted by popularity and rating.
-     */
-    get: operations['CatalogMoviesController_getTrendingMovies'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/movies/popular': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Popular movies (Hits)
-     * @description Returns historically popular movies. Includes classics.
-     */
-    get: operations['CatalogMoviesController_getPopularMovies'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/movies/now-playing': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Movies currently in theaters
-     * @description Returns movies currently playing in theaters. Data is synced from TMDB now_playing endpoint.
-     */
-    get: operations['CatalogMoviesController_getNowPlaying'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/movies/new-releases': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Movies recently released in theaters
-     * @description Returns movies with theatrical release in the specified period, sorted by popularity.
-     */
-    get: operations['CatalogMoviesController_getNewReleases'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/movies/new-on-digital': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Movies recently released on digital platforms
-     * @description Returns movies with digital release in the last 14 days, sorted by popularity.
-     */
-    get: operations['CatalogMoviesController_getNewOnDigital'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/movies/{slug}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get movie details by slug
-     * @description Returns full movie details including genres and stats.
-     */
-    get: operations['CatalogMoviesController_getMovieBySlug'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/shows/trending': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Trending TV shows
-     * @description Returns trending shows sorted by popularity and rating.
-     */
-    get: operations['CatalogShowsController_getTrendingShows'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/shows/popular': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Popular TV shows (Hits)
-     * @description Returns historically popular shows. Includes classics.
-     */
-    get: operations['CatalogShowsController_getPopularShows'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/shows/new-episodes': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Shows with new episodes
-     * @description Returns shows that have aired new episodes recently. One entry per show with the latest episode.
-     */
-    get: operations['CatalogShowsController_getNewEpisodes'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/shows/calendar': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Global release calendar for TV shows
-     * @description Returns episodes airing within the specified date range. Groups episodes by day.
-     */
-    get: operations['CatalogShowsController_getCalendar'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/shows/{slug}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get show details by slug
-     * @description Returns full show details including seasons list.
-     */
-    get: operations['CatalogShowsController_getShowBySlug'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/shows/{slug}/sync': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Request metadata refresh for a show
-     * @description Queues a full metadata re-sync from TMDB/TVMaze. Rate-limited to once per 7 days per show globally; 5 requests per minute per user.
-     */
-    post: operations['CatalogShowsController_requestShowSync'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/search': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Search movies and shows */
-    get: operations['CatalogSearchController_search'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/import/movie/{tmdbId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Import a movie from TMDB on-demand */
-    post: operations['CatalogSearchController_importMovie'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/import/show/{tmdbId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Import a show from TMDB on-demand */
-    post: operations['CatalogSearchController_importShow'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/import/status/{jobId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get import job status */
-    get: operations['CatalogSearchController_getImportStatus'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/providers': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get streaming providers
-     * @description Returns streaming providers (Netflix, Max, etc.) sorted by available titles count.
-     */
-    get: operations['CatalogProvidersController_getProviders'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/sitemap/movies': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Movie sitemap data
-     * @description Returns slug and updatedAt for all active movies. Intended for sitemap generation.
-     */
-    get: operations['CatalogSitemapController_getMovieSitemap'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/catalog/sitemap/shows': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Show sitemap data
-     * @description Returns slug and updatedAt for all active shows. Intended for sitemap generation.
-     */
-    get: operations['CatalogSitemapController_getShowSitemap'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/batch-ratings': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Batch fetch user ratings (auth: Bearer) */
-    get: operations['UserMediaController_batchRatings'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/continue': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List continue items with media summary (auth: Bearer) */
-    get: operations['UserMediaController_listContinue'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/import/status': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get auto-ingest import batch statuses (auth: Bearer) */
-    get: operations['UserMediaController_getImportStatus'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/import/cancel': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Cancel one or more import batches (auth: Bearer) */
-    post: operations['UserMediaController_cancelImportBatches'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/{mediaItemId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get user media state with media summary (auth: Bearer) */
-    get: operations['UserMediaController_getState'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Upsert user media state with media summary (auth: Bearer) */
-    patch: operations['UserMediaController_setState'];
-    trace?: never;
-  };
-  '/api/user-media': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List user media states with media summary (auth: Bearer) */
-    get: operations['UserMediaController_list'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/{mediaItemId}/pause': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Pause a media item (auth: Bearer) */
-    post: operations['UserMediaController_pauseMedia'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/{mediaItemId}/resume': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Resume a paused media item (auth: Bearer) */
-    post: operations['UserMediaController_resumeMedia'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/import': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Import ratings and watchlist from external source (auth: Bearer) */
-    post: operations['UserMediaController_importMedia'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/ratings': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** My ratings (auth: Bearer) */
-    get: operations['MeListsController_ratings'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/watchlist': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** My watchlist (auth: Bearer) */
-    get: operations['MeListsController_watchlist'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/history': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** My history (auth: Bearer) */
-    get: operations['MeListsController_history'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/activity': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** My activity (auth: Bearer) */
-    get: operations['MeListsController_activity'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/paused': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** My paused items (auth: Bearer) */
-    get: operations['MeListsController_paused'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/caught-up': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** My caught-up items (auth: Bearer) */
-    get: operations['MeListsController_caughtUp'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/dropped': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** My dropped items (auth: Bearer) */
-    get: operations['MeListsController_dropped'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/lists/counts': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Counts of my lists (auth: Bearer) */
-    get: operations['MeListsController_listCounts'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/favorites/updates': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Updates for my favorite shows (auth: Bearer) */
-    get: operations['MeListsController_favoriteUpdates'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/episodes/batch/watch': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Batch mark episodes as watched (auth: Bearer) */
-    post: operations['EpisodeProgressController_markBatchWatched'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/episodes/batch/unwatch': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Batch mark episodes as unwatched (auth: Bearer) */
-    post: operations['EpisodeProgressController_markBatchUnwatched'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/episodes/{episodeId}/watch': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Mark episode as watched (auth: Bearer) */
-    post: operations['EpisodeProgressController_markWatched'];
-    /** Mark episode as unwatched (auth: Bearer) */
-    delete: operations['EpisodeProgressController_markUnwatched'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/user-media/shows/{showId}/progress': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get watch progress for a show (auth: Bearer) */
-    get: operations['EpisodeProgressController_getShowProgress'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/notifications': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List notifications (auth: Bearer) */
-    get: operations['NotificationsController_list'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/notifications/unread-count': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get unread notification count (auth: Bearer) */
-    get: operations['NotificationsController_getUnreadCount'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/notifications/{notificationId}/read': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Mark notification as read (auth: Bearer) */
-    post: operations['NotificationsController_markAsRead'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/notifications/read-all': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Mark all notifications as read (auth: Bearer) */
-    post: operations['NotificationsController_markAllAsRead'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/saved-items/{mediaItemId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Save media item to a list (auth: Bearer) */
-    post: operations['SavedItemsController_saveItem'];
-    /** Remove media item from a list (auth: Bearer) */
-    delete: operations['SavedItemsController_unsaveItem'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/saved-items/status/batch': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get save status for multiple media items (auth: Bearer) */
-    get: operations['SavedItemsController_getBatchStatus'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/saved-items/{mediaItemId}/status': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get save status for media item (auth: Bearer) */
-    get: operations['SavedItemsController_getStatus'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/saved-items/for-later': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List "for later" saved items (auth: Bearer) */
-    get: operations['SavedItemsController_listForLater'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/saved-items/considering': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List "considering" saved items (auth: Bearer) */
-    get: operations['SavedItemsController_listConsidering'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/subscriptions/{mediaItemId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Subscribe to notifications for media item (auth: Bearer) */
-    post: operations['SubscriptionsController_subscribe'];
-    /** Unsubscribe from notifications for media item (auth: Bearer) */
-    delete: operations['SubscriptionsController_unsubscribe'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/subscriptions/{mediaItemId}/status': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get subscription status for media item (auth: Bearer) */
-    get: operations['SubscriptionsController_getStatus'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/subscriptions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List active subscriptions (auth: Bearer) */
-    get: operations['SubscriptionsController_listActive'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/jobs/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get ingestion job status */
-    get: operations['IngestionController_getJobStatus'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/sync': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Manually trigger sync for a specific media item */
-    post: operations['IngestionController_sync'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/trending': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Trigger sync for trending movies and shows
-     * @description Syncs trending content from TMDB using dispatcher pattern. Queues page jobs for movies and shows. With syncStats=true (default), also updates Trakt stats after ingestion.
-     */
-    post: operations['IngestionController_syncTrending'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/movies/now-playing': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Sync movies currently in theaters (ingestion only)
-     * @description Fetches now playing movies from TMDB and queues them for sync. Does NOT update isNowPlaying flags - use /ingestion/movies/now-playing-flags for that.
-     */
-    post: operations['IngestionController_syncNowPlaying'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/movies/now-playing-flags': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Update isNowPlaying flags for movies
-     * @description Updates isNowPlaying flags based on current TMDB now_playing list. Run this AFTER now-playing sync has completed.
-     */
-    post: operations['IngestionController_updateNowPlayingFlags'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/movies/new-releases': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Sync new theatrical movie releases
-     * @description Fetches movies released in theaters within the specified period and syncs them.
-     */
-    post: operations['IngestionController_syncNewReleases'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/snapshots': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Trigger daily watchers snapshots sync
-     * @description Updates daily watcher counts for all media items from Trakt.
-     */
-    post: operations['IngestionController_syncSnapshots'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/shows/tracked': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Trigger tracked shows sync
-     * @description Syncs shows that have active subscriptions. Detects new episodes/seasons and triggers notifications.
-     */
-    post: operations['IngestionController_syncTrackedShows'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/backfill/imdb': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Re-sync shows missing IMDb ID
-     * @description Finds all shows with missing IMDb ID and performs full re-sync. This fetches external_ids from TMDB (including imdb_id), then enriches each show with Trakt stats (watchers, ratings) and OMDb ratings (IMDb, Rotten Tomatoes, Metacritic). Use when shows were imported before external_ids fetching was implemented.
-     */
-    post: operations['IngestionController_backfillImdb'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/backfill/alt-titles': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Backfill alternative titles from TMDB
-     * @description Finds all media items with missing alternative titles and fetches them from TMDB. Uses dedicated lightweight TMDB endpoints — no Trakt, OMDb, or TVMaze calls. One-time operation; future syncs populate alt titles automatically.
-     */
-    post: operations['IngestionController_backfillAltTitles'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/ingestion/backfill/mdblist-ratings': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Backfill Rotten Tomatoes ratings from MDBList (admin-only)
-     * @description Admin-only. Finds media items where either Rotten Tomatoes critics score or audience score is missing, or whose last MDBList check is older than the refresh window (rtFetchedAt > 90 days), and fetches critics + audience ratings from MDBList. Complements OMDb, which frequently omits RT values. Item jobs run on a dedicated rate-limited queue; dispatcher enforces an app-side daily cap of 900 items per run to fit the MDBList free-tier budget (1000 req/day; worker limiter ~40/hour).
-     */
-    post: operations['IngestionController_backfillMdblistRatings'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get list of policies
-     * @description Returns list of all catalog policies with their status and metadata.
-     */
-    get: operations['PolicyController_getPolicies'];
-    put?: never;
-    /**
-     * Create new policy
-     * @description Creates a new policy draft with auto-incremented version. The policy is NOT activated automatically. Use POST /:id/prepare to start evaluation.
-     */
-    post: operations['PolicyController_createPolicy'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get policy details
-     * @description Returns a single policy with full configuration settings.
-     */
-    get: operations['PolicyController_getPolicyById'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/{id}/prepare': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Prepare policy for activation
-     * @description Creates an evaluation run and starts background job to pre-compute evaluations for all media items. Returns immediately with run ID for tracking progress.
-     */
-    post: operations['PolicyController_preparePolicy'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/runs': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get list of evaluation runs
-     * @description Returns list of all evaluation runs with their status and progress.
-     */
-    get: operations['RunController_getRuns'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/runs/{runId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get run status and progress
-     * @description Returns detailed status of an evaluation run including progress, counters, and readyToPromote flag.
-     */
-    get: operations['RunController_getRunStatus'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/runs/{runId}/promote': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Promote run to activate policy
-     * @description Verifies run is successful and meets thresholds, then atomically activates the policy. This makes the new policy version active for the public catalog.
-     */
-    post: operations['RunController_promoteRun'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/runs/{runId}/cancel': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cancel running evaluation
-     * @description Cancels a running evaluation. Item jobs already in queue will be skipped. Preserves cursor and counters for potential resume.
-     */
-    post: operations['RunController_cancelRun'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/runs/{runId}/diff': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get diff report
-     * @description Computes differences between current active policy and the prepared run. Shows regressions (items leaving catalog) and improvements (items entering catalog).
-     */
-    get: operations['RunController_getDiff'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/runs/backfill': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Backfill evaluations for a specific context
-     * @description Triggers re-evaluation for the specified context only, using the currently active policy. Use this to populate missing evaluation data for a specific context without affecting other contexts.
-     */
-    post: operations['RunController_backfillContext'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/dry-run': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Execute dry-run evaluation
-     * @description Evaluates media items against a proposed policy WITHOUT persisting results. Supports multiple selection modes: sample (random), top (by popularity), byType, byCountry. Limits: max 10000 items, 60s timeout.
-     */
-    post: operations['DryRunController_executeDryRun'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/catalog-policies/dry-run/diff': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Execute dry-run with diff
-     * @description Same as dry-run but includes comparison against current active policy version.
-     */
-    post: operations['DryRunController_executeDryRunDiff'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/providers': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List providers
-     * @description Returns all providers from the registry with their status.
-     */
-    get: operations['ProvidersController_listProviders'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/providers/unmapped': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List unmapped providers
-     * @description Returns providers seen in TMDB data that have no mapping. Sorted by seen count descending.
-     */
-    get: operations['ProvidersController_listUnmapped'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/providers/mappings': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List mappings
-     * @description Returns all provider mappings. Can filter by provider or region.
-     */
-    get: operations['ProvidersController_listMappings'];
-    put?: never;
-    /**
-     * Create mapping
-     * @description Creates a new TMDB to canonical provider mapping. After creation, affected media will be re-normalized on next sync.
-     */
-    post: operations['ProvidersController_createMapping'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/providers/mappings/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    /**
-     * Update mapping
-     * @description Updates an existing mapping. Only provided fields are updated.
-     */
-    put: operations['ProvidersController_updateMapping'];
-    post?: never;
-    /**
-     * Delete mapping
-     * @description Deletes a mapping. The TMDB provider will become unmapped again.
-     */
-    delete: operations['ProvidersController_deleteMapping'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/providers/resolve': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Debug resolution
-     * @description Tests how a TMDB provider ID would be resolved to canonical provider. Useful for debugging mapping issues.
-     */
-    get: operations['ProvidersController_resolveProvider'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/sync': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Sync trending stats from Trakt
-     * @description Adds a job to the queue to fetch current watchers count and trending rank from Trakt API.
-     */
-    post: operations['StatsController_syncTrendingStats'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/sync-eligible-trending': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Sync watchers for ELIGIBLE trending items
-     * @description Adds a job to the queue to sync watchers data for ELIGIBLE items in trending context. Use this to backfill watchers for items that are never in Trakt trending top-100.
-     */
-    post: operations['StatsController_syncEligibleTrending'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/tmdb/{tmdbId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get stats by TMDB ID
-     * @description Returns current watchers count and trending rank for a media item.
-     */
-    get: operations['StatsController_getStatsByTmdbId'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/drop-off/analyze': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Analyze drop-off for shows
-     * @description Adds a job to analyze viewer drop-off for shows. Can analyze a single show or all shows.
-     */
-    post: operations['StatsController_analyzeDropOff'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/drop-off/analyze/{tmdbId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Analyze drop-off for a specific show
-     * @description Analyzes viewer drop-off for a single show by TMDB ID. Runs in background.
-     */
-    post: operations['StatsController_analyzeDropOffById'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/drop-off/tmdb/{tmdbId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get drop-off analysis for a show
-     * @description Returns pre-calculated drop-off analysis including drop-off point, engagement metrics, and insights.
-     */
-    get: operations['StatsController_getDropOffAnalysis'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/backfill/total-watchers': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Backfill total_watchers for corrupted items
-     * @description Finds items where total_watchers = 0 but have Trakt votes, then re-fetches from Trakt API.
-     */
-    post: operations['StatsController_backfillTotalWatchers'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/backfill/watchers-count': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Queue backfill jobs for watchers_count
-     * @description Finds items where watchers_count = 0 but total_watchers > threshold, then queues chunk jobs to re-fetch live watchers from Trakt API with proper rate limiting and exponential backoff.
-     */
-    post: operations['StatsController_backfillWatchersCount'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/recalculate': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Recalculate scores for all media items
-     * @description Recalculates ratingo_score, quality_score, popularity_score, and freshness_score for all items. Use type=show to recalculate only shows.
-     */
-    post: operations['StatsController_recalculateScores'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/stats/reconcile-community-ratings': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Reconcile community ratings
-     * @description Aggregates all user ratings and updates community_average_rating / community_rating_count in media_stats.
-     */
-    post: operations['StatsController_reconcileCommunityRatings'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/home/hero': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get Hero block items (Top 4 hottest media) */
-    get: operations['HomeController_getHero'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/home/watching-now': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get "Watching Now" items (Top 3 fresh content by live watchers)
-     * @description Returns fresh content with most live Trakt watchers. Movies: released within 45 days. Shows: last episode within 21 days or has upcoming episode.
-     */
-    get: operations['HomeController_getWatchingNow'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/insights/movements': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get biggest risers and fallers
-     * @description Returns media items with the biggest change in watchers count over the specified window.
-     */
-    get: operations['InsightsController_getMovements'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/register': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Register new user */
-    post: operations['AuthController_register'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/login': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Login with email/password */
-    post: operations['AuthController_login'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/refresh': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Refresh tokens */
-    post: operations['AuthController_refresh'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/logout': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Logout (revoke refresh tokens) */
-    post: operations['AuthController_logout'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/password': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Change current user password */
-    patch: operations['AuthController_changePassword'];
-    trace?: never;
-  };
-  '/api/auth/me': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get current user profile */
-    get: operations['AuthController_me'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/google': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Initiate Google OAuth flow */
-    get: operations['AuthController_googleAuth'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/facebook': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Initiate Facebook OAuth flow */
-    get: operations['AuthController_facebookAuth'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/oauth/exchange': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Exchange one-time code for tokens */
-    post: operations['AuthController_exchangeCode'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/providers': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get linked OAuth providers */
-    get: operations['AuthController_getLinkedAccounts'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/providers/{provider}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    /** Unlink OAuth provider */
-    delete: operations['AuthController_unlinkProvider'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/auth/config': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get auth configuration */
-    get: operations['AuthController_getConfig'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/users/me': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get current user profile (auth: Bearer) */
-    get: operations['UsersController_me'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Update current user profile (auth: Bearer) */
-    patch: operations['UsersController_updateProfile'];
-    trace?: never;
-  };
-  '/api/users/me/avatar/upload-url': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Create presigned upload URL for avatar (auth: Bearer) */
-    post: operations['UsersController_createAvatarUploadUrl'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/users/{username}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get public user profile by username (auth optional, privacy aware) */
-    get: operations['PublicUsersController_getPublicProfile'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/users/{username}/ratings': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get public user ratings (auth optional, privacy aware) */
-    get: operations['PublicUsersController_getRatings'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/users/{username}/watchlist': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get public user watchlist (auth optional, privacy aware) */
-    get: operations['PublicUsersController_getWatchlist'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/users/{username}/history': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get public user watch history (auth optional, privacy aware) */
-    get: operations['PublicUsersController_getHistory'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/journal/posts': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List journal posts
-     * @description Returns paginated list of published journal posts. Supports filtering by type (comma-separated for union) and context.
-     */
-    get: operations['JournalPostsController_getPosts'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/journal/posts/{slug}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get post by slug
-     * @description Returns full post details including rendered HTML and navigation links.
-     */
-    get: operations['JournalPostsController_getPostBySlug'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/journal/posts': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List all posts (admin)
-     * @description Returns paginated list of all posts including drafts.
-     */
-    get: operations['AdminJournalController_getPosts'];
-    put?: never;
-    /**
-     * Create new post
-     * @description Creates a new journal post. Auto-generates slug from title if not provided.
-     */
-    post: operations['AdminJournalController_createPost'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/journal/posts/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get post by ID (admin)
-     * @description Returns full post details including draft content.
-     */
-    get: operations['AdminJournalController_getPostById'];
-    put?: never;
-    post?: never;
-    /**
-     * Delete post
-     * @description Permanently deletes a journal post.
-     */
-    delete: operations['AdminJournalController_deletePost'];
-    options?: never;
-    head?: never;
-    /**
-     * Update post
-     * @description Updates an existing journal post. Only provided fields are updated.
-     */
-    patch: operations['AdminJournalController_updatePost'];
-    trace?: never;
-  };
-  '/api/admin/journal/posts/{id}/publish': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Publish post
-     * @description Publishes a draft post immediately. For scheduled posts, publishes them now.
-     */
-    post: operations['AdminJournalController_publishPost'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/journal/posts/{id}/unpublish': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Unpublish post
-     * @description Converts a published post back to draft status.
-     */
-    post: operations['AdminJournalController_unpublishPost'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/journal/posts/upload-image': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Upload image
-     * @description Uploads an image for use in journal posts. Returns CDN URL.
-     */
-    post: operations['AdminJournalController_uploadImage'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/journal/images/{filename}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get journal image
-     * @description Serves a journal image from storage. Images are cached for 1 year.
-     */
-    get: operations['JournalImagesController_getImage'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/reviews/media/{mediaItemId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List reviews for a media item
-     * @description Returns reviews for a movie/show with author info and optional current user vote.
-     */
-    get: operations['ReviewsController_listForMedia'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/reviews/{reviewId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get a single review
-     * @description Returns a single review with author info and optional current user vote.
-     */
-    get: operations['ReviewsController_getById'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/reviews/{reviewId}/replies': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List replies for a review
-     * @description Returns all replies for a review with author info.
-     */
-    get: operations['ReviewsController_listReplies'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/reviews': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Create a review (auth: Bearer) */
-    post: operations['UserReviewsController_create'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/reviews/media/{mediaItemId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get my review for a media item (auth: Bearer) */
-    get: operations['UserReviewsController_getMyReviewForMedia'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/reviews/{reviewId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    /** Delete my review (auth: Bearer) */
-    delete: operations['UserReviewsController_delete'];
-    options?: never;
-    head?: never;
-    /** Update my review (auth: Bearer) */
-    patch: operations['UserReviewsController_update'];
-    trace?: never;
-  };
-  '/api/me/reviews/{reviewId}/vote': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Vote on a review (auth: Bearer) */
-    post: operations['UserReviewsController_vote'];
-    /** Remove vote from a review (auth: Bearer) */
-    delete: operations['UserReviewsController_unvote'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/reviews/{reviewId}/replies': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Create a reply to a review (auth: Bearer) */
-    post: operations['UserReviewsController_createReply'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/reviews/replies/{replyId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    /** Delete my reply (auth: Bearer) */
-    delete: operations['UserReviewsController_deleteReply'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/me/reviews/{reviewId}/report': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Report a review (auth: Bearer) */
-    post: operations['UserReviewsController_report'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/reviews/reports': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List reports
-     * @description Returns paginated list of reports for moderation queue.
-     */
-    get: operations['AdminReviewsController_listReports'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/reviews/reports/{reportId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /**
-     * Resolve report
-     * @description Resolves a report with given status. Can optionally hide the review.
-     */
-    patch: operations['AdminReviewsController_resolveReport'];
-    trace?: never;
-  };
-  '/api/admin/reviews/{reviewId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    /**
-     * Force delete review
-     * @description Soft deletes a review regardless of ownership.
-     */
-    delete: operations['AdminReviewsController_forceDeleteReview'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/monitoring/keys': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Current health of every monitored API key */
-    get: operations['MonitoringController_getKeys'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/monitoring/keys/check': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Probe all keys now and return the fresh dashboard */
-    post: operations['MonitoringController_checkNow'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/monitoring/keys/{provider}/history': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Recent probe history for one provider */
-    get: operations['MonitoringController_getHistory'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
+    "/api/catalog/movies/trending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Trending movies
+         * @description Returns trending movies sorted by popularity and rating.
+         */
+        get: operations["CatalogMoviesController_getTrendingMovies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/movies/popular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Popular movies (Hits)
+         * @description Returns historically popular movies. Includes classics.
+         */
+        get: operations["CatalogMoviesController_getPopularMovies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/movies/now-playing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Movies currently in theaters
+         * @description Returns movies currently playing in theaters. Data is synced from TMDB now_playing endpoint.
+         */
+        get: operations["CatalogMoviesController_getNowPlaying"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/movies/new-releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Movies recently released in theaters
+         * @description Returns movies with theatrical release in the specified period, sorted by popularity.
+         */
+        get: operations["CatalogMoviesController_getNewReleases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/movies/new-on-digital": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Movies recently released on digital platforms
+         * @description Returns movies with digital release in the last 14 days, sorted by popularity.
+         */
+        get: operations["CatalogMoviesController_getNewOnDigital"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/movies/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get movie details by slug
+         * @description Returns full movie details including genres and stats.
+         */
+        get: operations["CatalogMoviesController_getMovieBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/shows/trending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Trending TV shows
+         * @description Returns trending shows sorted by popularity and rating.
+         */
+        get: operations["CatalogShowsController_getTrendingShows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/shows/popular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Popular TV shows (Hits)
+         * @description Returns historically popular shows. Includes classics.
+         */
+        get: operations["CatalogShowsController_getPopularShows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/shows/new-episodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Shows with new episodes
+         * @description Returns shows that have aired new episodes recently. One entry per show with the latest episode.
+         */
+        get: operations["CatalogShowsController_getNewEpisodes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/shows/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Global release calendar for TV shows
+         * @description Returns episodes airing within the specified date range. Groups episodes by day.
+         */
+        get: operations["CatalogShowsController_getCalendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/shows/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get show details by slug
+         * @description Returns full show details including seasons list.
+         */
+        get: operations["CatalogShowsController_getShowBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/shows/{slug}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request metadata refresh for a show
+         * @description Queues a full metadata re-sync from TMDB/TVMaze. Rate-limited to once per 7 days per show globally; 5 requests per minute per user.
+         */
+        post: operations["CatalogShowsController_requestShowSync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search movies and shows */
+        get: operations["CatalogSearchController_search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/import/movie/{tmdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import a movie from TMDB on-demand */
+        post: operations["CatalogSearchController_importMovie"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/import/show/{tmdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import a show from TMDB on-demand */
+        post: operations["CatalogSearchController_importShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/import/status/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get import job status */
+        get: operations["CatalogSearchController_getImportStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get streaming providers
+         * @description Returns streaming providers (Netflix, Max, etc.) sorted by available titles count.
+         */
+        get: operations["CatalogProvidersController_getProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/sitemap/movies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Movie sitemap data
+         * @description Returns slug and updatedAt for all active movies. Intended for sitemap generation.
+         */
+        get: operations["CatalogSitemapController_getMovieSitemap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/sitemap/shows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show sitemap data
+         * @description Returns slug and updatedAt for all active shows. Intended for sitemap generation.
+         */
+        get: operations["CatalogSitemapController_getShowSitemap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/batch-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Batch fetch user ratings (auth: Bearer) */
+        get: operations["UserMediaController_batchRatings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/continue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List continue items with media summary (auth: Bearer) */
+        get: operations["UserMediaController_listContinue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/import/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get auto-ingest import batch statuses (auth: Bearer) */
+        get: operations["UserMediaController_getImportStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/import/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel one or more import batches (auth: Bearer) */
+        post: operations["UserMediaController_cancelImportBatches"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get user media state with media summary (auth: Bearer) */
+        get: operations["UserMediaController_getState"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Upsert user media state with media summary (auth: Bearer) */
+        patch: operations["UserMediaController_setState"];
+        trace?: never;
+    };
+    "/api/user-media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List user media states with media summary (auth: Bearer) */
+        get: operations["UserMediaController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/{mediaItemId}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pause a media item (auth: Bearer) */
+        post: operations["UserMediaController_pauseMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/{mediaItemId}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume a paused media item (auth: Bearer) */
+        post: operations["UserMediaController_resumeMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import ratings and watchlist from external source (auth: Bearer) */
+        post: operations["UserMediaController_importMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My ratings (auth: Bearer) */
+        get: operations["MeListsController_ratings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/watchlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My watchlist (auth: Bearer) */
+        get: operations["MeListsController_watchlist"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My history (auth: Bearer) */
+        get: operations["MeListsController_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My activity (auth: Bearer) */
+        get: operations["MeListsController_activity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/paused": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My paused items (auth: Bearer) */
+        get: operations["MeListsController_paused"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/caught-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My caught-up items (auth: Bearer) */
+        get: operations["MeListsController_caughtUp"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/dropped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My dropped items (auth: Bearer) */
+        get: operations["MeListsController_dropped"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/lists/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Counts of my lists (auth: Bearer) */
+        get: operations["MeListsController_listCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/favorites/updates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Updates for my favorite shows (auth: Bearer) */
+        get: operations["MeListsController_favoriteUpdates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/episodes/batch/watch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch mark episodes as watched (auth: Bearer) */
+        post: operations["EpisodeProgressController_markBatchWatched"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/episodes/batch/unwatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch mark episodes as unwatched (auth: Bearer) */
+        post: operations["EpisodeProgressController_markBatchUnwatched"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/episodes/{episodeId}/watch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark episode as watched (auth: Bearer) */
+        post: operations["EpisodeProgressController_markWatched"];
+        /** Mark episode as unwatched (auth: Bearer) */
+        delete: operations["EpisodeProgressController_markUnwatched"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/shows/{showId}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get watch progress for a show (auth: Bearer) */
+        get: operations["EpisodeProgressController_getShowProgress"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List notifications (auth: Bearer) */
+        get: operations["NotificationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get unread notification count (auth: Bearer) */
+        get: operations["NotificationsController_getUnreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/{notificationId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark notification as read (auth: Bearer) */
+        post: operations["NotificationsController_markAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark all notifications as read (auth: Bearer) */
+        post: operations["NotificationsController_markAllAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save media item to a list (auth: Bearer) */
+        post: operations["SavedItemsController_saveItem"];
+        /** Remove media item from a list (auth: Bearer) */
+        delete: operations["SavedItemsController_unsaveItem"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/status/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get save status for multiple media items (auth: Bearer) */
+        get: operations["SavedItemsController_getBatchStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/{mediaItemId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get save status for media item (auth: Bearer) */
+        get: operations["SavedItemsController_getStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/for-later": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List "for later" saved items (auth: Bearer) */
+        get: operations["SavedItemsController_listForLater"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/considering": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List "considering" saved items (auth: Bearer) */
+        get: operations["SavedItemsController_listConsidering"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/subscriptions/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Subscribe to notifications for media item (auth: Bearer) */
+        post: operations["SubscriptionsController_subscribe"];
+        /** Unsubscribe from notifications for media item (auth: Bearer) */
+        delete: operations["SubscriptionsController_unsubscribe"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/subscriptions/{mediaItemId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get subscription status for media item (auth: Bearer) */
+        get: operations["SubscriptionsController_getStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active subscriptions (auth: Bearer) */
+        get: operations["SubscriptionsController_listActive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/jobs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get ingestion job status */
+        get: operations["IngestionController_getJobStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Manually trigger sync for a specific media item */
+        post: operations["IngestionController_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/trending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger sync for trending movies and shows
+         * @description Syncs trending content from TMDB using dispatcher pattern. Queues page jobs for movies and shows. With syncStats=true (default), also updates Trakt stats after ingestion.
+         */
+        post: operations["IngestionController_syncTrending"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/movies/now-playing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync movies currently in theaters (ingestion only)
+         * @description Fetches now playing movies from TMDB and queues them for sync. Does NOT update isNowPlaying flags - use /ingestion/movies/now-playing-flags for that.
+         */
+        post: operations["IngestionController_syncNowPlaying"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/movies/now-playing-flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Update isNowPlaying flags for movies
+         * @description Updates isNowPlaying flags based on current TMDB now_playing list. Run this AFTER now-playing sync has completed.
+         */
+        post: operations["IngestionController_updateNowPlayingFlags"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/movies/new-releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync new theatrical movie releases
+         * @description Fetches movies released in theaters within the specified period and syncs them.
+         */
+        post: operations["IngestionController_syncNewReleases"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger daily watchers snapshots sync
+         * @description Updates daily watcher counts for all media items from Trakt.
+         */
+        post: operations["IngestionController_syncSnapshots"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/shows/tracked": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger tracked shows sync
+         * @description Syncs shows that have active subscriptions. Detects new episodes/seasons and triggers notifications.
+         */
+        post: operations["IngestionController_syncTrackedShows"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/backfill/imdb": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-sync shows missing IMDb ID
+         * @description Finds all shows with missing IMDb ID and performs full re-sync. This fetches external_ids from TMDB (including imdb_id), then enriches each show with Trakt stats (watchers, ratings) and OMDb ratings (IMDb, Rotten Tomatoes, Metacritic). Use when shows were imported before external_ids fetching was implemented.
+         */
+        post: operations["IngestionController_backfillImdb"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/backfill/alt-titles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill alternative titles from TMDB
+         * @description Finds all media items with missing alternative titles and fetches them from TMDB. Uses dedicated lightweight TMDB endpoints — no Trakt, OMDb, or TVMaze calls. One-time operation; future syncs populate alt titles automatically.
+         */
+        post: operations["IngestionController_backfillAltTitles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/backfill/mdblist-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill Rotten Tomatoes ratings from MDBList (admin-only)
+         * @description Admin-only. Finds media items where either Rotten Tomatoes critics score or audience score is missing, or whose last MDBList check is older than the refresh window (rtFetchedAt > 90 days), and fetches critics + audience ratings from MDBList. Complements OMDb, which frequently omits RT values. Item jobs run on a dedicated rate-limited queue; dispatcher enforces an app-side daily cap of 900 items per run to fit the MDBList free-tier budget (1000 req/day; worker limiter ~40/hour).
+         */
+        post: operations["IngestionController_backfillMdblistRatings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get list of policies
+         * @description Returns list of all catalog policies with their status and metadata.
+         */
+        get: operations["PolicyController_getPolicies"];
+        put?: never;
+        /**
+         * Create new policy
+         * @description Creates a new policy draft with auto-incremented version. The policy is NOT activated automatically. Use POST /:id/prepare to start evaluation.
+         */
+        post: operations["PolicyController_createPolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get policy details
+         * @description Returns a single policy with full configuration settings.
+         */
+        get: operations["PolicyController_getPolicyById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/{id}/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Prepare policy for activation
+         * @description Creates an evaluation run and starts background job to pre-compute evaluations for all media items. Returns immediately with run ID for tracking progress.
+         */
+        post: operations["PolicyController_preparePolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get list of evaluation runs
+         * @description Returns list of all evaluation runs with their status and progress.
+         */
+        get: operations["RunController_getRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get run status and progress
+         * @description Returns detailed status of an evaluation run including progress, counters, and readyToPromote flag.
+         */
+        get: operations["RunController_getRunStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/{runId}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promote run to activate policy
+         * @description Verifies run is successful and meets thresholds, then atomically activates the policy. This makes the new policy version active for the public catalog.
+         */
+        post: operations["RunController_promoteRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/{runId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel running evaluation
+         * @description Cancels a running evaluation. Item jobs already in queue will be skipped. Preserves cursor and counters for potential resume.
+         */
+        post: operations["RunController_cancelRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/{runId}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get diff report
+         * @description Computes differences between current active policy and the prepared run. Shows regressions (items leaving catalog) and improvements (items entering catalog).
+         */
+        get: operations["RunController_getDiff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/backfill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill evaluations for a specific context
+         * @description Triggers re-evaluation for the specified context only, using the currently active policy. Use this to populate missing evaluation data for a specific context without affecting other contexts.
+         */
+        post: operations["RunController_backfillContext"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/dry-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute dry-run evaluation
+         * @description Evaluates media items against a proposed policy WITHOUT persisting results. Supports multiple selection modes: sample (random), top (by popularity), byType, byCountry. Limits: max 10000 items, 60s timeout.
+         */
+        post: operations["DryRunController_executeDryRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/dry-run/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute dry-run with diff
+         * @description Same as dry-run but includes comparison against current active policy version.
+         */
+        post: operations["DryRunController_executeDryRunDiff"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List providers
+         * @description Returns all providers from the registry with their status.
+         */
+        get: operations["ProvidersController_listProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/unmapped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List unmapped providers
+         * @description Returns providers seen in TMDB data that have no mapping. Sorted by seen count descending.
+         */
+        get: operations["ProvidersController_listUnmapped"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List mappings
+         * @description Returns all provider mappings. Can filter by provider or region.
+         */
+        get: operations["ProvidersController_listMappings"];
+        put?: never;
+        /**
+         * Create mapping
+         * @description Creates a new TMDB to canonical provider mapping. After creation, affected media will be re-normalized on next sync.
+         */
+        post: operations["ProvidersController_createMapping"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/mappings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update mapping
+         * @description Updates an existing mapping. Only provided fields are updated.
+         */
+        put: operations["ProvidersController_updateMapping"];
+        post?: never;
+        /**
+         * Delete mapping
+         * @description Deletes a mapping. The TMDB provider will become unmapped again.
+         */
+        delete: operations["ProvidersController_deleteMapping"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Debug resolution
+         * @description Tests how a TMDB provider ID would be resolved to canonical provider. Useful for debugging mapping issues.
+         */
+        get: operations["ProvidersController_resolveProvider"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync trending stats from Trakt
+         * @description Adds a job to the queue to fetch current watchers count and trending rank from Trakt API.
+         */
+        post: operations["StatsController_syncTrendingStats"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/sync-eligible-trending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync watchers for ELIGIBLE trending items
+         * @description Adds a job to the queue to sync watchers data for ELIGIBLE items in trending context. Use this to backfill watchers for items that are never in Trakt trending top-100.
+         */
+        post: operations["StatsController_syncEligibleTrending"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/tmdb/{tmdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get stats by TMDB ID
+         * @description Returns current watchers count and trending rank for a media item.
+         */
+        get: operations["StatsController_getStatsByTmdbId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/drop-off/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze drop-off for shows
+         * @description Adds a job to analyze viewer drop-off for shows. Can analyze a single show or all shows.
+         */
+        post: operations["StatsController_analyzeDropOff"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/drop-off/analyze/{tmdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze drop-off for a specific show
+         * @description Analyzes viewer drop-off for a single show by TMDB ID. Runs in background.
+         */
+        post: operations["StatsController_analyzeDropOffById"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/drop-off/tmdb/{tmdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get drop-off analysis for a show
+         * @description Returns pre-calculated drop-off analysis including drop-off point, engagement metrics, and insights.
+         */
+        get: operations["StatsController_getDropOffAnalysis"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/backfill/total-watchers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill total_watchers for corrupted items
+         * @description Finds items where total_watchers = 0 but have Trakt votes, then re-fetches from Trakt API.
+         */
+        post: operations["StatsController_backfillTotalWatchers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/backfill/watchers-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Queue backfill jobs for watchers_count
+         * @description Finds items where watchers_count = 0 but total_watchers > threshold, then queues chunk jobs to re-fetch live watchers from Trakt API with proper rate limiting and exponential backoff.
+         */
+        post: operations["StatsController_backfillWatchersCount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/recalculate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recalculate scores for all media items
+         * @description Recalculates ratingo_score, quality_score, popularity_score, and freshness_score for all items. Use type=show to recalculate only shows.
+         */
+        post: operations["StatsController_recalculateScores"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/reconcile-community-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reconcile community ratings
+         * @description Aggregates all user ratings and updates community_average_rating / community_rating_count in media_stats.
+         */
+        post: operations["StatsController_reconcileCommunityRatings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/home/hero": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Hero block items (Top 4 hottest media) */
+        get: operations["HomeController_getHero"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/home/watching-now": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get "Watching Now" items (Top 3 fresh content by live watchers)
+         * @description Returns fresh content with most live Trakt watchers. Movies: released within 45 days. Shows: last episode within 21 days or has upcoming episode.
+         */
+        get: operations["HomeController_getWatchingNow"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/insights/movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get biggest risers and fallers
+         * @description Returns media items with the biggest change in watchers count over the specified window.
+         */
+        get: operations["InsightsController_getMovements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register new user */
+        post: operations["AuthController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login with email/password */
+        post: operations["AuthController_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh tokens */
+        post: operations["AuthController_refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Logout (revoke refresh tokens) */
+        post: operations["AuthController_logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change current user password */
+        patch: operations["AuthController_changePassword"];
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get current user profile */
+        get: operations["AuthController_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Initiate Google OAuth flow */
+        get: operations["AuthController_googleAuth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/facebook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Initiate Facebook OAuth flow */
+        get: operations["AuthController_facebookAuth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/oauth/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Exchange one-time code for tokens */
+        post: operations["AuthController_exchangeCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get linked OAuth providers */
+        get: operations["AuthController_getLinkedAccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/providers/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unlink OAuth provider */
+        delete: operations["AuthController_unlinkProvider"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get auth configuration */
+        get: operations["AuthController_getConfig"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get current user profile (auth: Bearer) */
+        get: operations["UsersController_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update current user profile (auth: Bearer) */
+        patch: operations["UsersController_updateProfile"];
+        trace?: never;
+    };
+    "/api/users/me/avatar/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create presigned upload URL for avatar (auth: Bearer) */
+        post: operations["UsersController_createAvatarUploadUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public user profile by username (auth optional, privacy aware) */
+        get: operations["PublicUsersController_getPublicProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{username}/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public user ratings (auth optional, privacy aware) */
+        get: operations["PublicUsersController_getRatings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{username}/watchlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public user watchlist (auth optional, privacy aware) */
+        get: operations["PublicUsersController_getWatchlist"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{username}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public user watch history (auth optional, privacy aware) */
+        get: operations["PublicUsersController_getHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journal/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List journal posts
+         * @description Returns paginated list of published journal posts. Supports filtering by type (comma-separated for union) and context.
+         */
+        get: operations["JournalPostsController_getPosts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journal/posts/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get post by slug
+         * @description Returns full post details including rendered HTML and navigation links.
+         */
+        get: operations["JournalPostsController_getPostBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/journal/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all posts (admin)
+         * @description Returns paginated list of all posts including drafts.
+         */
+        get: operations["AdminJournalController_getPosts"];
+        put?: never;
+        /**
+         * Create new post
+         * @description Creates a new journal post. Auto-generates slug from title if not provided.
+         */
+        post: operations["AdminJournalController_createPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/journal/posts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get post by ID (admin)
+         * @description Returns full post details including draft content.
+         */
+        get: operations["AdminJournalController_getPostById"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete post
+         * @description Permanently deletes a journal post.
+         */
+        delete: operations["AdminJournalController_deletePost"];
+        options?: never;
+        head?: never;
+        /**
+         * Update post
+         * @description Updates an existing journal post. Only provided fields are updated.
+         */
+        patch: operations["AdminJournalController_updatePost"];
+        trace?: never;
+    };
+    "/api/admin/journal/posts/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish post
+         * @description Publishes a draft post immediately. For scheduled posts, publishes them now.
+         */
+        post: operations["AdminJournalController_publishPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/journal/posts/{id}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unpublish post
+         * @description Converts a published post back to draft status.
+         */
+        post: operations["AdminJournalController_unpublishPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/journal/posts/upload-image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload image
+         * @description Uploads an image for use in journal posts. Returns CDN URL.
+         */
+        post: operations["AdminJournalController_uploadImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journal/images/{filename}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get journal image
+         * @description Serves a journal image from storage. Images are cached for 1 year.
+         */
+        get: operations["JournalImagesController_getImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/media/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List reviews for a media item
+         * @description Returns reviews for a movie/show with author info and optional current user vote.
+         */
+        get: operations["ReviewsController_listForMedia"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/{reviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a single review
+         * @description Returns a single review with author info and optional current user vote.
+         */
+        get: operations["ReviewsController_getById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/{reviewId}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List replies for a review
+         * @description Returns all replies for a review with author info.
+         */
+        get: operations["ReviewsController_listReplies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a review (auth: Bearer) */
+        post: operations["UserReviewsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews/media/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get my review for a media item (auth: Bearer) */
+        get: operations["UserReviewsController_getMyReviewForMedia"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews/{reviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete my review (auth: Bearer) */
+        delete: operations["UserReviewsController_delete"];
+        options?: never;
+        head?: never;
+        /** Update my review (auth: Bearer) */
+        patch: operations["UserReviewsController_update"];
+        trace?: never;
+    };
+    "/api/me/reviews/{reviewId}/vote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Vote on a review (auth: Bearer) */
+        post: operations["UserReviewsController_vote"];
+        /** Remove vote from a review (auth: Bearer) */
+        delete: operations["UserReviewsController_unvote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews/{reviewId}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a reply to a review (auth: Bearer) */
+        post: operations["UserReviewsController_createReply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews/replies/{replyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete my reply (auth: Bearer) */
+        delete: operations["UserReviewsController_deleteReply"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews/{reviewId}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report a review (auth: Bearer) */
+        post: operations["UserReviewsController_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/reviews/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List reports
+         * @description Returns paginated list of reports for moderation queue.
+         */
+        get: operations["AdminReviewsController_listReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/reviews/reports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Resolve report
+         * @description Resolves a report with given status. Can optionally hide the review.
+         */
+        patch: operations["AdminReviewsController_resolveReport"];
+        trace?: never;
+    };
+    "/api/admin/reviews/{reviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Force delete review
+         * @description Soft deletes a review regardless of ownership.
+         */
+        delete: operations["AdminReviewsController_forceDeleteReview"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/monitoring/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current health of every monitored API key */
+        get: operations["MonitoringController_getKeys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/monitoring/keys/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Probe all keys now and return the fresh dashboard */
+        post: operations["MonitoringController_checkNow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/monitoring/keys/{provider}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recent probe history for one provider */
+        get: operations["MonitoringController_getHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    ErrorResponse: {
-      /** @enum {boolean} */
-      success: false;
-      error: {
-        /**
-         * @description Machine-readable error code (see ErrorCode enum)
-         * @example VALIDATION_ERROR
-         */
-        code: string;
-        /** @example Validation failed */
-        message: string;
-        /** @example 400 */
-        statusCode: number;
-        /** @description Optional structured context for the error */
-        details?: {
-          [key: string]: unknown;
+    schemas: {
+        ErrorResponse: {
+            /** @enum {boolean} */
+            success: false;
+            error: {
+                /**
+                 * @description Machine-readable error code (see ErrorCode enum)
+                 * @example VALIDATION_ERROR
+                 */
+                code: string;
+                /** @example Validation failed */
+                message: string;
+                /** @example 400 */
+                statusCode: number;
+                /** @description Optional structured context for the error */
+                details?: {
+                    [key: string]: unknown;
+                };
+            };
         };
-      };
-    };
-    ImageDto: {
-      /**
-       * @description Smallest size TMDB serves: w154 for posters (list thumbnails up to ~75px wide), w300 for backdrops (same as small)
-       * @example https://image.tmdb.org/t/p/w154/abc.jpg
-       */
-      thumb: string;
-      /**
-       * @description Small image for cards (w342)
-       * @example https://image.tmdb.org/t/p/w342/abc.jpg
-       */
-      small: string;
-      /**
-       * @description Medium image for details (w500)
-       * @example https://image.tmdb.org/t/p/w500/abc.jpg
-       */
-      medium: string;
-      /**
-       * @description Large image for banners (w780)
-       * @example https://image.tmdb.org/t/p/w780/abc.jpg
-       */
-      large: string;
-      /**
-       * @description Original quality image
-       * @example https://image.tmdb.org/t/p/original/abc.jpg
-       */
-      original: string;
-    };
-    RecentRaterDto: {
-      /**
-       * @description Unique user identifier
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      userId: string;
-      /**
-       * @description Public username of the rater
-       * @example john_doe
-       */
-      username: string;
-      /**
-       * @description URL of the user avatar image
-       * @example https://example.com/avatar.jpg
-       */
-      avatarUrl: string | null;
-    };
-    RatingoStatsDto: {
-      /**
-       * @description Composite Ratingo Score (0-100)
-       * @example 85.5
-       */
-      ratingoScore?: number | null;
-      /**
-       * @description Quality Score (0-100)
-       * @example 88.5
-       */
-      qualityScore?: number | null;
-      /**
-       * @description Popularity Score (0-100)
-       * @example 45.2
-       */
-      popularityScore?: number | null;
-      /**
-       * @description Number of people watching right now (Live)
-       * @example 6
-       */
-      liveWatchers?: number | null;
-      /**
-       * @description Total unique watchers all time
-       * @example 6423
-       */
-      totalWatchers?: number | null;
-      /**
-       * @description Community average rating (0-100 scale)
-       * @example 78.5
-       */
-      communityAverageRating?: number | null;
-      /**
-       * @description Number of community ratings
-       * @example 1240
-       */
-      communityRatingCount?: number | null;
-      /** @description Up to 3 most recent public raters */
-      recentRaters?: components['schemas']['RecentRaterDto'][];
-    };
-    ExternalRatingItemDto: {
-      /** @example 8.8 */
-      rating: number;
-      /** @example 2000000 */
-      voteCount?: number | null;
-    };
-    ExternalRatingsDto: {
-      tmdb?: components['schemas']['ExternalRatingItemDto'] | null;
-      imdb?: components['schemas']['ExternalRatingItemDto'] | null;
-      trakt?: components['schemas']['ExternalRatingItemDto'] | null;
-      metacritic?: components['schemas']['ExternalRatingItemDto'] | null;
-      /** @description Rotten Tomatoes critics score (Tomatometer, 0-100) */
-      rottenTomatoes?: components['schemas']['ExternalRatingItemDto'] | null;
-      /** @description Rotten Tomatoes audience score (Popcornmeter, 0-100) */
-      rottenTomatoesAudience?: components['schemas']['ExternalRatingItemDto'] | null;
-    };
-    GenreDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example Action */
-      name: string;
-      /** @example action */
-      slug: string;
-    };
-    ContinuePointDto: {
-      /** @example 2 */
-      season: number;
-      /** @example 5 */
-      episode: number;
-    };
-    CardMetaDto: {
-      /** @enum {string|null} */
-      badgeKey?:
-        | 'NEW_EPISODE'
-        | 'CONTINUE'
-        | 'IN_WATCHLIST'
-        | 'HIT'
-        | 'NEW_RELEASE'
-        | 'RISING'
-        | 'TRENDING'
-        | 'IN_THEATERS'
-        | 'NEW_ON_STREAMING'
-        | null;
-      /** @enum {string} */
-      listContext?:
-        | 'TRENDING_LIST'
-        | 'POPULAR_LIST'
-        | 'NEW_RELEASES_LIST'
-        | 'IN_THEATERS_LIST'
-        | 'NEW_ON_STREAMING_LIST'
-        | 'USER_LIBRARY'
-        | 'CONTINUE_LIST'
-        | 'DEFAULT';
-      /** @enum {string} */
-      primaryCta: 'SAVE' | 'CONTINUE' | 'OPEN';
-      continue?: components['schemas']['ContinuePointDto'] | null;
-    };
-    MovieListItemDto: {
-      id: string;
-      mediaItemId: string;
-      tmdbId: number;
-      title: string;
-      slug: string;
-      /**
-       * @default ready
-       * @example ready
-       * @enum {string}
-       */
-      ingestionStatus: 'importing' | 'ready' | 'failed';
-      overview: string | null;
-      poster?: components['schemas']['ImageDto'] | null;
-      backdrop?: components['schemas']['ImageDto'] | null;
-      /** @example 120.5 */
-      popularity: number;
-      /** Format: date-time */
-      releaseDate: string | null;
-      /** Format: date-time */
-      theatricalReleaseDate: string | null;
-      /** Format: date-time */
-      digitalReleaseDate: string | null;
-      runtime: number | null;
-      stats: components['schemas']['RatingoStatsDto'];
-      externalRatings: components['schemas']['ExternalRatingsDto'];
-      genres: components['schemas']['GenreDto'][];
-      card?: components['schemas']['CardMetaDto'];
-    };
-    OffsetPaginationMetaDto: {
-      /** @example 100 */
-      count?: number;
-      /** @example 250 */
-      total?: number;
-      /** @example 20 */
-      limit?: number;
-      /** @example 0 */
-      offset?: number;
-      /** @example true */
-      hasMore?: boolean;
-    };
-    PaginatedMovieResponseDto: {
-      data: components['schemas']['MovieListItemDto'][];
-      meta: components['schemas']['OffsetPaginationMetaDto'];
-    };
-    UserMediaStateDto: {
-      /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */
-      id: string;
-      /** @example 6bd54e62-bac3-49dd-a0d4-05efd7761700 */
-      userId: string;
-      /** @example c1f2c3d4-e5f6-7890-abcd-1234567890ab */
-      mediaItemId: string;
-      /**
-       * @example watching
-       * @enum {string}
-       */
-      state: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused' | 'caught_up';
-      /**
-       * @description 0-100 rating
-       * @example 85
-       */
-      rating: number | null;
-      /**
-       * @description Arbitrary progress payload (JSON)
-       * @example {
-       *       "seasons": {
-       *         "1": 3
-       *       }
-       *     }
-       */
-      progress: Record<string, never> | null;
-      /** @example Must watch this weekend */
-      notes: string | null;
-      /**
-       * Format: date-time
-       * @example 2025-12-11T12:00:00.000Z
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @example 2025-12-11T12:00:00.000Z
-       */
-      updatedAt: string;
-      /**
-       * @description Lightweight media summary to avoid extra catalog calls
-       * @example {
-       *       "id": "0a8085e4-a128-42b4-a64f-e6692c112ee6",
-       *       "type": "show",
-       *       "title": "Stranger Things",
-       *       "slug": "dyvni-dyva",
-       *       "poster": {
-       *         "small": "https://image.tmdb.org/t/p/w342/poster.jpg",
-       *         "medium": "https://image.tmdb.org/t/p/w500/poster.jpg",
-       *         "large": "https://image.tmdb.org/t/p/w780/poster.jpg",
-       *         "original": "https://image.tmdb.org/t/p/original/poster.jpg"
-       *       }
-       *     }
-       */
-      mediaSummary: Record<string, never> | null;
-    };
-    VideoDto: {
-      /**
-       * @description YouTube video key
-       * @example dQw4w9WgXcQ
-       */
-      key: string;
-      /**
-       * @description Video title
-       * @example Dune: Part Two | Official Trailer 3
-       */
-      name: string;
-      /**
-       * @example YouTube
-       * @enum {string}
-       */
-      site: 'YouTube' | 'Vimeo';
-      /**
-       * @example Trailer
-       * @enum {string}
-       */
-      type: 'Trailer' | 'Teaser' | 'Clip' | 'Featurette' | 'Behind the Scenes' | 'Bloopers';
-      /**
-       * @description Is this an official video
-       * @example true
-       */
-      official: boolean;
-      /**
-       * @description ISO 639-1 language code
-       * @example en
-       * @enum {string}
-       */
-      language: 'en' | 'uk';
-      /**
-       * @description ISO 3166-1 alpha-2 country code
-       * @example US
-       */
-      country: string;
-    };
-    CastMemberDto: {
-      /**
-       * @description Universal person identifier
-       * @example tmdb:123
-       */
-      personId: string;
-      /**
-       * @description URL-friendly slug
-       * @example brad-pitt
-       */
-      slug: string | null;
-      /**
-       * @deprecated
-       * @example 123
-       */
-      tmdbId: number;
-      /** @example Brad Pitt */
-      name: string;
-      /** @example Tyler Durden */
-      character: string;
-      /** @example /pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg */
-      profilePath: string | null;
-      /** @example 0 */
-      order: number;
-    };
-    CrewMemberDto: {
-      /**
-       * @description Universal person identifier
-       * @example tmdb:456
-       */
-      personId: string;
-      /**
-       * @description URL-friendly slug
-       * @example david-fincher
-       */
-      slug: string | null;
-      /**
-       * @deprecated
-       * @example 456
-       */
-      tmdbId: number;
-      /** @example David Fincher */
-      name: string;
-      /** @example Director */
-      job: string;
-      /** @example Directing */
-      department: string;
-      /** @example /y.jpg */
-      profilePath: string | null;
-    };
-    CreditsDto: {
-      /**
-       * @example [
-       *       {
-       *         "personId": "tmdb:123",
-       *         "slug": "brad-pitt",
-       *         "tmdbId": 123,
-       *         "name": "Brad Pitt",
-       *         "character": "Tyler Durden",
-       *         "profilePath": "/brad.jpg",
-       *         "order": 0
-       *       }
-       *     ]
-       */
-      cast: components['schemas']['CastMemberDto'][];
-      /**
-       * @example [
-       *       {
-       *         "personId": "tmdb:456",
-       *         "slug": "david-fincher",
-       *         "tmdbId": 456,
-       *         "name": "David Fincher",
-       *         "job": "Director",
-       *         "department": "Directing",
-       *         "profilePath": "/david.jpg"
-       *       }
-       *     ]
-       */
-      crew: components['schemas']['CrewMemberDto'][];
-    };
-    WatchProviderDto: {
-      /**
-       * @description Canonical provider ID
-       * @example netflix
-       */
-      id: string;
-      /**
-       * @deprecated
-       * @description Numeric provider ID (deprecated, use id instead)
-       * @example 8
-       */
-      providerId: number;
-      /** @example Netflix */
-      name: string;
-      logo?: components['schemas']['ImageDto'] | null;
-      /** @example 10 */
-      displayPriority?: number;
-    };
-    AvailabilityDto: {
-      /**
-       * @description Selected region for watch providers (UA primary, US fallback)
-       * @example UA
-       * @enum {string|null}
-       */
-      region: 'UA' | 'US' | null;
-      /**
-       * @description True if using US as fallback because UA is not available
-       * @example false
-       */
-      isFallback: boolean;
-      /** @example https://www.themoviedb.org/movie/123/watch?locale=UA */
-      link: string | null;
-      /** @description Streaming/subscription services (flatrate) */
-      stream?: components['schemas']['WatchProviderDto'][];
-      rent?: components['schemas']['WatchProviderDto'][];
-      buy?: components['schemas']['WatchProviderDto'][];
-      ads?: components['schemas']['WatchProviderDto'][];
-      free?: components['schemas']['WatchProviderDto'][];
-      /**
-       * @description Hint for UI: svod = show providers, tvod_only = show "not on subscription" message, none = no data
-       * @example svod
-       * @enum {string}
-       */
-      hint: 'svod' | 'tvod_only' | 'none';
-      /**
-       * @description TMDB watch page URL for fallback "View on TMDB" link
-       * @example https://www.themoviedb.org/movie/123/watch
-       */
-      tmdbWatchUrl?: string | null;
-    };
-    MovieVerdictDto: {
-      /**
-       * @description Verdict type for UI styling
-       * @example quality
-       * @enum {string}
-       */
-      type: 'warning' | 'release' | 'quality' | 'popularity' | 'general';
-      /**
-       * @description Additional context to display with verdict
-       * @example IMDb: 6.3
-       */
-      context?: string | null;
-      /**
-       * @description Hint key for CTA suggestions
-       * @example forLater
-       * @enum {string}
-       */
-      hintKey:
-        | 'newEpisodes'
-        | 'afterAllEpisodes'
-        | 'whenOnStreaming'
-        | 'notifyNewEpisode'
-        | 'general'
-        | 'forLater'
-        | 'notifyRelease'
-        | 'decideToWatch';
-      /**
-       * @description Message key for i18n lookup on client (details.verdict.movie.*)
-       * @example strongRatings
-       */
-      messageKey: string | null;
-    };
-    MovieResponseDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example 12345 */
-      tmdbId: number;
-      /** @example The Matrix */
-      title: string;
-      /** @example The Matrix */
-      originalTitle?: string | null;
-      /** @example the-matrix */
-      slug: string;
-      /** @example Overview text... */
-      overview?: string | null;
-      /**
-       * @deprecated
-       * @example /path/to/poster.jpg
-       */
-      posterPath?: string | null;
-      poster?: components['schemas']['ImageDto'] | null;
-      /**
-       * @deprecated
-       * @example /path/to/backdrop.jpg
-       */
-      backdropPath?: string | null;
-      backdrop?: components['schemas']['ImageDto'] | null;
-      stats?: components['schemas']['RatingoStatsDto'] | null;
-      externalRatings?: components['schemas']['ExternalRatingsDto'] | null;
-      genres?: components['schemas']['GenreDto'][];
-      /**
-       * @example ready
-       * @enum {string}
-       */
-      ingestionStatus: 'importing' | 'ready' | 'failed';
-      /** @description User-specific state, present only when authenticated */
-      userState?: components['schemas']['UserMediaStateDto'] | null;
-      videos?: components['schemas']['VideoDto'][] | null;
-      /** @description Primary trailer (first UK or EN trailer) */
-      primaryTrailer?: components['schemas']['VideoDto'] | null;
-      credits?: components['schemas']['CreditsDto'] | null;
-      /** @description Where to watch - UA primary with US fallback */
-      availability?: components['schemas']['AvailabilityDto'] | null;
-      /** @example 120 */
-      runtime?: number | null;
-      /** @example 100000000 */
-      budget?: number | null;
-      /** @example 500000000 */
-      revenue?: number | null;
-      /**
-       * @description Movie status: Rumored, Planned, In Production, Post Production, Released, Canceled
-       * @example Released
-       * @enum {string|null}
-       */
-      status?:
-        | 'Rumored'
-        | 'Planned'
-        | 'In Production'
-        | 'Post Production'
-        | 'Released'
-        | 'Canceled'
-        | null;
-      /** Format: date-time */
-      releaseDate?: string | null;
-      /** @description Card metadata with badge and CTA info */
-      card?: components['schemas']['CardMetaDto'] | null;
-      /**
-       * @description Computed release status: upcoming, in_theaters, streaming, new_on_streaming
-       * @example in_theaters
-       * @enum {string|null}
-       */
-      releaseStatus?: 'upcoming' | 'in_theaters' | 'streaming' | 'new_on_streaming' | null;
-      /** @description Computed verdict for movie details page. Clients use messageKey for i18n lookup. */
-      verdict?: components['schemas']['MovieVerdictDto'] | null;
-    };
-    ShowProgressDto: {
-      /**
-       * @description Show ID
-       * @example uuid-show-id
-       */
-      showId: string;
-      /** @description Progress per season */
-      seasons: components['schemas']['SeasonProgressDto'][];
-    };
-    ShowTrendingItemDto: {
-      id: string;
-      mediaItemId: string;
-      slug: string;
-      title: string;
-      originalTitle?: string | null;
-      overview?: string | null;
-      primaryTrailerKey?: string | null;
-      poster?: components['schemas']['ImageDto'] | null;
-      backdrop?: components['schemas']['ImageDto'] | null;
-      /** Format: date-time */
-      releaseDate?: string | null;
-      isNew: boolean;
-      isClassic: boolean;
-      stats: components['schemas']['RatingoStatsDto'];
-      externalRatings: components['schemas']['ExternalRatingsDto'];
-      /**
-       * @example show
-       * @enum {string}
-       */
-      type: 'show';
-      showProgress?: components['schemas']['ShowProgressDto'] | null;
-      card?: components['schemas']['CardMetaDto'];
-    };
-    TrendingShowsResponseDto: {
-      data: components['schemas']['ShowTrendingItemDto'][];
-      meta: components['schemas']['OffsetPaginationMetaDto'];
-    };
-    NewEpisodeDto: {
-      /**
-       * @description Media item ID (for linking to show details)
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      mediaItemId: string;
-      /** @example arcane */
-      slug: string;
-      /** @example Arcane */
-      title: string;
-      /** @example /path/to/poster.jpg */
-      posterPath?: string | null;
-      /** @example 2 */
-      seasonNumber: number;
-      /** @example 5 */
-      episodeNumber: number;
-      /** @example Heavy Is the Crown */
-      episodeTitle: string;
-      /** Format: date-time */
-      airDate: string;
-    };
-    NewEpisodesResponseDto: {
-      data: components['schemas']['NewEpisodeDto'][];
-    };
-    CalendarEpisodeDto: {
-      /** @example 0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90 */
-      episodeId: string;
-      /**
-       * @description Media item ID of the show.
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      showId: string;
-      /**
-       * @description Show record ID used by episode progress endpoints.
-       * @example 7c9e6679-7425-40de-944b-e07fc1f90ae7
-       */
-      showRecordId: string;
-      /** @example arcane */
-      showSlug: string;
-      /** @example Arcane */
-      showTitle: string;
-      /** @example /path/to/poster.jpg */
-      posterPath?: string | null;
-      /** @example 2 */
-      seasonNumber: number;
-      /** @example 1 */
-      episodeNumber: number;
-      /** @example Heavy Is the Crown */
-      title: string | null;
-      /** @example Overview... */
-      overview?: string | null;
-      /** Format: date-time */
-      airDate: string;
-      /** @example 45 */
-      runtime?: number | null;
-      /** @example http://image.com/1.jpg */
-      stillPath?: string | null;
-      /**
-       * @description Number of episodes in the season, when known.
-       * @example 8
-       */
-      seasonEpisodeCount: number | null;
-      /**
-       * @description TMDB popularity of the show.
-       * @example 312.4
-       */
-      showPopularity: number;
-      /**
-       * @description The viewer is watching this show.
-       * @example false
-       */
-      isTracked: boolean;
-      /**
-       * @description The viewer saved this show to watch later.
-       * @example false
-       */
-      isSaved: boolean;
-      /**
-       * @description The viewer marked this episode as watched.
-       * @example false
-       */
-      isWatched: boolean;
-    };
-    CalendarDayDto: {
-      /** @example 2024-11-09 */
-      date: string;
-      episodes: components['schemas']['CalendarEpisodeDto'][];
-    };
-    CalendarResponseDto: {
-      /** @example 2024-11-01T00:00:00.000Z */
-      startDate: string;
-      /** @example 2024-11-08T00:00:00.000Z */
-      endDate: string;
-      days: components['schemas']['CalendarDayDto'][];
-      /** @description Number of shows the user is currently watching (saved shows are not counted). Only present when personalized=true. */
-      watchingShowsCount?: number;
-    };
-    EpisodeDto: {
-      /**
-       * @description Internal episode ID (null if not yet imported)
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      id?: string | null;
-      /** @example 1 */
-      number: number;
-      /** @example The Beginning */
-      title?: string | null;
-      /** Format: date-time */
-      airDate?: string | null;
-      /** @example 52 */
-      runtime?: number | null;
-      /** @example /path/to/still.jpg */
-      stillPath?: string | null;
-      /** @example 8.5 */
-      voteAverage?: number | null;
-    };
-    SeasonDto: {
-      /** @example 1 */
-      number: number;
-      /** @example Season 1 */
-      name?: string | null;
-      /** @example 10 */
-      episodeCount?: number | null;
-      /** @example /path/to/poster.jpg */
-      posterPath?: string | null;
-      /** Format: date-time */
-      airDate?: string | null;
-      episodes?: components['schemas']['EpisodeDto'][];
-    };
-    ShowVerdictDto: {
-      /**
-       * @description Verdict type for UI styling
-       * @example quality
-       * @enum {string}
-       */
-      type: 'warning' | 'release' | 'quality' | 'popularity' | 'general';
-      /**
-       * @description Additional context to display with verdict
-       * @example IMDb: 8.2
-       */
-      context?: string | null;
-      /**
-       * @description Hint key for CTA suggestions
-       * @example forLater
-       * @enum {string}
-       */
-      hintKey:
-        | 'newEpisodes'
-        | 'afterAllEpisodes'
-        | 'whenOnStreaming'
-        | 'notifyNewEpisode'
-        | 'general'
-        | 'forLater'
-        | 'notifyRelease'
-        | 'decideToWatch';
-      /**
-       * @description Message key for i18n lookup on client (details.verdict.show.*)
-       * @example strongRatings
-       * @enum {string|null}
-       */
-      messageKey:
-        | 'cancelled'
-        | 'poorRatings'
-        | 'belowAverage'
-        | 'criticsLoved'
-        | 'strongRatings'
-        | 'decentRatings'
-        | 'longRunning'
-        | 'trendingNow'
-        | 'risingHype'
-        | 'earlyReviews'
-        | 'mixedReviews'
-        | null;
-    };
-    ShowStatusHintDto: {
-      /**
-       * @description Message key for i18n lookup on client (details.verdict.showStatusHint.*)
-       * @example newSeason
-       * @enum {string|null}
-       */
-      messageKey: 'newSeason' | 'seriesFinale' | null;
-    };
-    ShowResponseDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example 12345 */
-      tmdbId: number;
-      /** @example The Matrix */
-      title: string;
-      /** @example The Matrix */
-      originalTitle?: string | null;
-      /** @example the-matrix */
-      slug: string;
-      /** @example Overview text... */
-      overview?: string | null;
-      /**
-       * @deprecated
-       * @example /path/to/poster.jpg
-       */
-      posterPath?: string | null;
-      poster?: components['schemas']['ImageDto'] | null;
-      /**
-       * @deprecated
-       * @example /path/to/backdrop.jpg
-       */
-      backdropPath?: string | null;
-      backdrop?: components['schemas']['ImageDto'] | null;
-      stats?: components['schemas']['RatingoStatsDto'] | null;
-      externalRatings?: components['schemas']['ExternalRatingsDto'] | null;
-      genres?: components['schemas']['GenreDto'][];
-      /**
-       * @example ready
-       * @enum {string}
-       */
-      ingestionStatus: 'importing' | 'ready' | 'failed';
-      /** @description User-specific state, present only when authenticated */
-      userState?: components['schemas']['UserMediaStateDto'] | null;
-      videos?: components['schemas']['VideoDto'][] | null;
-      /** @description Primary trailer (first UK or EN trailer) */
-      primaryTrailer?: components['schemas']['VideoDto'] | null;
-      credits?: components['schemas']['CreditsDto'] | null;
-      /** @description Where to watch - UA primary with US fallback */
-      availability?: components['schemas']['AvailabilityDto'] | null;
-      /**
-       * @description Internal shows table ID (for episode progress tracking)
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      showId: string;
-      /**
-       * Format: date-time
-       * @description First air date of the show
-       */
-      releaseDate?: string | null;
-      /**
-       * Format: date-time
-       * @description When the show metadata was last synced
-       */
-      lastSyncedAt?: string | null;
-      /** @example 5 */
-      totalSeasons?: number | null;
-      /** @example 62 */
-      totalEpisodes?: number | null;
-      /**
-       * @description Show status: Returning Series, Ended, Canceled, In Production, Planned
-       * @example Returning Series
-       * @enum {string|null}
-       */
-      status?:
-        'Returning Series' | 'Planned' | 'In Production' | 'Ended' | 'Canceled' | 'Pilot' | null;
-      /** Format: date-time */
-      lastAirDate?: string | null;
-      /** Format: date-time */
-      nextAirDate?: string | null;
-      seasons: components['schemas']['SeasonDto'][];
-      /** @description Card metadata with badge and CTA info */
-      card?: components['schemas']['CardMetaDto'] | null;
-      /** @description Show verdict - answers "is it worth it?" */
-      verdict?: components['schemas']['ShowVerdictDto'] | null;
-      /** @description Status hint - explains "why now?" (secondary, optional) */
-      statusHint?: components['schemas']['ShowStatusHintDto'] | null;
-    };
-    SyncRequestResponseDto: {
-      /** @description Whether a sync job was queued */
-      queued: boolean;
-      /**
-       * Format: date-time
-       * @description When the show metadata was last successfully synced
-       */
-      lastSyncedAt: string | null;
-      /**
-       * Format: date-time
-       * @description When the next sync can be requested (null if not on cooldown)
-       */
-      cooldownExpiresAt: string | null;
-    };
-    SearchItemDto: {
-      /** @enum {string} */
-      source: 'local' | 'tmdb';
-      /** @enum {string} */
-      type: 'movie' | 'show';
-      id?: string;
-      mediaItemId?: string;
-      slug?: string;
-      tmdbId: number;
-      title: string;
-      originalTitle?: string | null;
-      year?: number | null;
-      poster?: components['schemas']['ImageDto'] | null;
-      /** @example 8.5 */
-      rating: number;
-      /**
-       * @description If true, this item exists in local DB
-       * @example false
-       */
-      isImported: boolean;
-      /** @description Alternative title that matched the search query */
-      matchedAlternativeTitle?: string | null;
-    };
-    SearchResponseDto: {
-      query: string;
-      local: components['schemas']['SearchItemDto'][];
-      tmdb: components['schemas']['SearchItemDto'][];
-    };
-    ImportResultDto: {
-      /** @enum {string} */
-      status: 'exists' | 'importing' | 'ready' | 'failed' | 'not_found';
-      id?: string;
-      slug?: string;
-      /** @enum {string} */
-      type: 'movie' | 'show';
-      tmdbId: number;
-      /** @enum {string} */
-      ingestionStatus?: 'importing' | 'ready' | 'failed';
-      /** @description Job ID for polling ingestion status */
-      jobId?: string;
-    };
-    ProviderDto: {
-      /**
-       * @description Provider ID (lowercase slug)
-       * @example netflix
-       */
-      id: string;
-      /**
-       * @description Provider display name
-       * @example Netflix
-       */
-      name: string;
-      /**
-       * @description Number of media items available
-       * @example 1250
-       */
-      count: number;
-    };
-    ProvidersListDto: {
-      data: components['schemas']['ProviderDto'][];
-      meta: components['schemas']['OffsetPaginationMetaDto'];
-    };
-    SitemapItemDto: {
-      /** @description URL-friendly identifier for the media item */
-      slug: string;
-      /** @description ISO 8601 timestamp of when the item was last updated */
-      updatedAt: string;
-    };
-    SitemapResponseDto: {
-      items: components['schemas']['SitemapItemDto'][];
-    };
-    BatchRatingsResponseDto: {
-      /**
-       * @description Map of mediaItemId to user rating (0-100). Only includes items with ratings.
-       * @example {
-       *       "uuid-1": 85,
-       *       "uuid-2": 60
-       *     }
-       */
-      ratings: {
-        [key: string]: number;
-      };
-    };
-    ImportBatchStatusDto: {
-      /**
-       * @description Unique batch identifier
-       * @example uuid-here
-       */
-      batchId: string;
-      /**
-       * @description Import source identifier
-       * @example kinobaza
-       */
-      source: string;
-      /**
-       * @description Total number of not-found items submitted for auto-ingestion
-       * @example 42
-       */
-      totalItems: number;
-      /**
-       * @description Number of items successfully ingested and linked
-       * @example 35
-       */
-      completedCount: number;
-      /**
-       * @description Number of items that failed to resolve or ingest
-       * @example 3
-       */
-      failedCount: number;
-      /**
-       * @description Batch status: processing while items remain, completed when all done/failed, cancelled when user aborted
-       * @example processing
-       * @enum {string}
-       */
-      status: 'processing' | 'completed' | 'cancelled';
-      /**
-       * @description ISO 8601 timestamp when the batch was created
-       * @example 2024-01-15T12:00:00.000Z
-       */
-      createdAt: string;
-    };
-    CancelImportBatchesDto: {
-      /**
-       * @description UUIDs of the import batches to cancel
-       * @example [
-       *       "550e8400-e29b-41d4-a716-446655440000"
-       *     ]
-       */
-      batchIds: string[];
-    };
-    CancelImportBatchesResponseDto: {
-      /**
-       * @description Batch IDs that failed to cancel (not found or already terminal)
-       * @example []
-       */
-      failedBatchIds: string[];
-    };
-    SetUserMediaStateDto: {
-      /**
-       * @description Watch state. When omitted, preserves existing state or defaults to "completed" for movies / "watching" for shows.
-       * @example watching
-       * @enum {string}
-       */
-      state?: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused' | 'caught_up';
-      /**
-       * @description Media type hint for auto-state resolution. Only accepted when state is omitted; ignored otherwise.
-       * @enum {string}
-       */
-      mediaType?: 'movie' | 'show';
-      /** @example null */
-      rating?: number | null;
-      /**
-       * @description Season -> episode progress map
-       * @example {
-       *       "seasons": {
-       *         "1": 3
-       *       }
-       *     }
-       */
-      progress?: Record<string, never>;
-      /** @example Rewatching with friends */
-      notes?: string | null;
-    };
-    ImportItemDto: {
-      /** @example tt1234567 */
-      imdbId?: string | null;
-      /** @example 550 */
-      tmdbId?: number | null;
-      /** @example 8 */
-      rating?: number | null;
-      /**
-       * @example completed
-       * @enum {string}
-       */
-      state: 'completed' | 'planned';
-      /** @example Fight Club */
-      title?: string | null;
-      /** @example 1999 */
-      year?: number | null;
-    };
-    ImportMediaDto: {
-      /**
-       * @example kinobaza
-       * @enum {string}
-       */
-      source: 'kinobaza' | 'imdb' | 'tmdb';
-      /** @description Items to import (1–10000) */
-      items: components['schemas']['ImportItemDto'][];
-      /**
-       * @description Overwrite existing ratings and states. State can never be downgraded.
-       * @default false
-       * @example false
-       */
-      overwriteExisting: boolean;
-    };
-    ImportedItemDetailDto: {
-      /** @example Fight Club */
-      title?: string | null;
-      /** @example uuid-here */
-      mediaItemId: string;
-      /** @example completed */
-      state: string;
-      /** @example 80 */
-      rating: number | null;
-    };
-    SkippedItemDetailDto: {
-      /** @example The Matrix */
-      title?: string | null;
-      /** @example already_exists */
-      reason: string;
-    };
-    NotFoundItemDetailDto: {
-      /** @example Obscure Film */
-      title?: string | null;
-      /** @example tt9999999 */
-      imdbId?: string | null;
-      /** @example 99999 */
-      tmdbId?: number | null;
-    };
-    ImportDetailsDto: {
-      imported: components['schemas']['ImportedItemDetailDto'][];
-      skipped: components['schemas']['SkippedItemDetailDto'][];
-      notFound: components['schemas']['NotFoundItemDetailDto'][];
-    };
-    PendingBatchSummaryDto: {
-      /**
-       * @description Batch identifier for polling status
-       * @example uuid-here
-       */
-      batchId: string;
-      /**
-       * @description Total number of items submitted for background auto-ingestion
-       * @example 42
-       */
-      totalItems: number;
-    };
-    CsvImportResultDto: {
-      /**
-       * @description Items successfully written to the database
-       * @example 2743
-       */
-      imported: number;
-      /**
-       * @description Items skipped (already exist and overwrite is false)
-       * @example 52
-       */
-      skipped: number;
-      /**
-       * @description Items whose media could not be found in the catalog
-       * @example 135
-       */
-      notFound: number;
-      /**
-       * @description Wall-clock import duration in milliseconds
-       * @example 812
-       */
-      durationMs: number;
-      /** @description Item-level breakdown for the result summary */
-      details: components['schemas']['ImportDetailsDto'];
-      /** @description Present when not-found items have been queued for background auto-ingestion. Poll GET /user-media/import/status for progress updates. */
-      pendingBatch?: components['schemas']['PendingBatchSummaryDto'];
-    };
-    MeUserMediaSummaryDto: {
-      id: string;
-      /** @enum {string} */
-      type: 'movie' | 'show';
-      title: string;
-      slug: string;
-      poster: components['schemas']['ImageDto'] | null;
-      /** Format: date-time */
-      releaseDate?: string | null;
-      qualityScore?: number | null;
-      card?: components['schemas']['CardMetaDto'];
-    };
-    ProgressSummaryDto: {
-      /**
-       * @description Number of watched episodes
-       * @example 5
-       */
-      watched: number;
-      /**
-       * @description Total number of episodes
-       * @example 10
-       */
-      total: number;
-    };
-    LibraryContinuePointDto: {
-      /**
-       * @description Season number to continue from
-       * @example 2
-       */
-      season: number;
-      /**
-       * @description Episode number to continue from
-       * @example 5
-       */
-      episode: number;
-      /**
-       * Format: uuid
-       * @description Next episode to watch
-       */
-      episodeId: string;
-      /**
-       * Format: date-time
-       * @description UTC air date of that episode
-       */
-      airDate: string | null;
-    };
-    MeUserMediaListItemDto: {
-      /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */
-      id: string;
-      /** @example 6bd54e62-bac3-49dd-a0d4-05efd7761700 */
-      userId: string;
-      /** @example c1f2c3d4-e5f6-7890-abcd-1234567890ab */
-      mediaItemId: string;
-      /**
-       * @example watching
-       * @enum {string}
-       */
-      state: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused' | 'caught_up';
-      /**
-       * @description 0-100 rating
-       * @example 85
-       */
-      rating: number | null;
-      /**
-       * @description Arbitrary progress payload (JSON)
-       * @example {
-       *       "seasons": {
-       *         "1": 3
-       *       }
-       *     }
-       */
-      progress: Record<string, never> | null;
-      /** @example Must watch this weekend */
-      notes: string | null;
-      /**
-       * Format: date-time
-       * @example 2025-12-11T12:00:00.000Z
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @example 2025-12-11T12:00:00.000Z
-       */
-      updatedAt: string;
-      /**
-       * @description Lightweight media summary to avoid extra catalog calls
-       * @example {
-       *       "id": "0a8085e4-a128-42b4-a64f-e6692c112ee6",
-       *       "type": "show",
-       *       "title": "Stranger Things",
-       *       "slug": "dyvni-dyva",
-       *       "poster": {
-       *         "small": "https://image.tmdb.org/t/p/w342/poster.jpg",
-       *         "medium": "https://image.tmdb.org/t/p/w500/poster.jpg",
-       *         "large": "https://image.tmdb.org/t/p/w780/poster.jpg",
-       *         "original": "https://image.tmdb.org/t/p/original/poster.jpg"
-       *       }
-       *     }
-       */
-      mediaSummary: components['schemas']['MeUserMediaSummaryDto'] | null;
-      /** @description Episode progress summary (only for shows) */
-      progressSummary?: components['schemas']['ProgressSummaryDto'] | null;
-      /** @description Next episode to watch (shows in the watching and caught-up lists) */
-      continuePoint?: components['schemas']['LibraryContinuePointDto'] | null;
-    };
-    PaginatedMeUserMediaResponseDto: {
-      data: components['schemas']['MeUserMediaListItemDto'][];
-      meta: components['schemas']['OffsetPaginationMetaDto'];
-    };
-    MeListCountsResponseDto: {
-      /** @description Items with state=watching (strict, no overlap with paused/dropped) */
-      watching: number;
-      /** @description Items paused by the user */
-      paused: number;
-      /** @description Items dropped by the user */
-      dropped: number;
-      /** @description Items the user completed watching */
-      completed: number;
-      /** @description Items caught up on (ongoing shows with all aired episodes watched) */
-      caughtUp: number;
-      /** @description Saved items in the "for later" list */
-      forLater: number;
-      /** @description Saved items in the "considering" list */
-      considering: number;
-    };
-    EpisodeInfoDto: {
-      /**
-       * @description Season number
-       * @example 2
-       */
-      seasonNumber: number;
-      /**
-       * @description Episode number
-       * @example 5
-       */
-      episodeNumber: number;
-      /**
-       * @description Episode title
-       * @example The Winds of Winter
-       */
-      title?: string | null;
-      /**
-       * Format: date-time
-       * @description Air date
-       */
-      airDate?: string | null;
-      /**
-       * @description True when multiple episodes aired on the same date (e.g. Netflix full-season drop)
-       * @example false
-       */
-      isBatchRelease: boolean;
-    };
-    FavoriteUpdateItemDto: {
-      /** @description Media item ID */
-      mediaItemId: string;
-      /**
-       * @description User rating (0-100)
-       * @example 85
-       */
-      rating: number;
-      mediaSummary: components['schemas']['MeUserMediaSummaryDto'];
-      /** @description Most recent aired episode */
-      latestEpisode?: components['schemas']['EpisodeInfoDto'] | null;
-      /** @description Next upcoming episode */
-      nextEpisode?: components['schemas']['EpisodeInfoDto'] | null;
-    };
-    FavoriteUpdatesResponseDto: {
-      data: components['schemas']['FavoriteUpdateItemDto'][];
-    };
-    BatchEpisodeIdsDto: {
-      /**
-       * @description Array of episode UUIDs to mark as watched/unwatched
-       * @example [
-       *       "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-       *       "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
-       *       "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f"
-       *     ]
-       */
-      episodeIds: string[];
-    };
-    SeasonProgressDto: {
-      /**
-       * @description Season number
-       * @example 1
-       */
-      seasonNumber: number;
-      /**
-       * @description Number of watched episodes
-       * @example 5
-       */
-      watchedCount: number;
-      /**
-       * @description Total episodes in season
-       * @example 8
-       */
-      totalCount: number;
-      /**
-       * @description IDs of watched episodes
-       * @example [
-       *       "uuid-1",
-       *       "uuid-2"
-       *     ]
-       */
-      watchedEpisodeIds: string[];
-    };
-    NotificationPayloadDto: {
-      /** @example 3 */
-      seasonNumber?: number;
-      /** @example S3E1 */
-      episodeKey?: string;
-      /** @example 2025-01-15 */
-      airDate?: string;
-    };
-    NotificationMediaSummaryDto: {
-      /** @example uuid-123 */
-      id: string;
-      /**
-       * @example show
-       * @enum {string}
-       */
-      type: 'movie' | 'show';
-      /** @example Breaking Bad */
-      title: string;
-      /** @example breaking-bad */
-      slug: string;
-      poster: components['schemas']['ImageDto'] | null;
-    };
-    NotificationItemDto: {
-      /** @example uuid-123 */
-      id: string;
-      /**
-       * @example new_season
-       * @enum {string}
-       */
-      trigger: 'release' | 'new_season' | 'new_episode' | 'on_streaming' | 'status_changed';
-      payload: components['schemas']['NotificationPayloadDto'] | null;
-      /** @example false */
-      isRead: boolean;
-      /** @example 2025-01-15T10:30:00.000Z */
-      createdAt: string;
-      mediaSummary: components['schemas']['NotificationMediaSummaryDto'];
-    };
-    NotificationListResponseDto: {
-      data: components['schemas']['NotificationItemDto'][];
-      /** @example 5 */
-      unreadCount: number;
-      /** @example 42 */
-      total: number;
-      /** @example true */
-      hasMore: boolean;
-    };
-    UnreadCountResponseDto: {
-      /** @example 5 */
-      unreadCount: number;
-    };
-    MarkReadResponseDto: {
-      /** @example true */
-      success: boolean;
-      /** @example 3 */
-      count?: number;
-    };
-    SaveItemDto: {
-      /**
-       * @description List to save to: for_later or considering
-       * @example for_later
-       * @enum {string}
-       */
-      list: 'for_later' | 'considering';
-      /**
-       * @description Where the action originated
-       * @example verdict
-       */
-      context?: string;
-      /**
-       * @description Verdict/reason that triggered the action
-       * @example trendingNow
-       */
-      reasonKey?: string;
-    };
-    MediaSaveStatusDto: {
-      /**
-       * @description Is saved in "for later" list
-       * @example true
-       */
-      isForLater: boolean;
-      /**
-       * @description Is saved in "considering" list
-       * @example false
-       */
-      isConsidering: boolean;
-    };
-    SaveActionResultDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      mediaItemId: string;
-      /**
-       * @example for_later
-       * @enum {string}
-       */
-      list: 'for_later' | 'considering';
-      /** @description Current save status after action */
-      status: components['schemas']['MediaSaveStatusDto'];
-      /**
-       * Format: date-time
-       * @example 2024-01-15T10:30:00.000Z
-       */
-      createdAt: string;
-    };
-    UnsaveItemDto: {
-      /**
-       * @description List to remove from
-       * @example for_later
-       * @enum {string}
-       */
-      list: 'for_later' | 'considering';
-      /** @example card */
-      context?: string;
-    };
-    UnsaveActionResultDto: {
-      /** @example true */
-      removed: boolean;
-      /** @description Current save status after action */
-      status: components['schemas']['MediaSaveStatusDto'];
-    };
-    BatchStatusResponseDto: {
-      /**
-       * @description Map of mediaItemId to save status
-       * @example {
-       *       "id1": {
-       *         "isForLater": true,
-       *         "isConsidering": false
-       *       },
-       *       "id2": {
-       *         "isForLater": false,
-       *         "isConsidering": true
-       *       }
-       *     }
-       */
-      statuses: Record<string, never>;
-    };
-    SavedItemMediaSummaryDto: {
-      id: string;
-      /** @enum {string} */
-      type: 'movie' | 'show';
-      title: string;
-      slug: string;
-      poster: components['schemas']['ImageDto'] | null;
-      /** Format: date-time */
-      releaseDate?: string | null;
-      qualityScore?: number | null;
-    };
-    SavedItemWithMediaResponseDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      mediaItemId: string;
-      /**
-       * @example for_later
-       * @enum {string}
-       */
-      list: 'for_later' | 'considering';
-      /**
-       * @description Verdict/reason that triggered the save action
-       * @example trendingNow
-       */
-      reasonKey?: string | null;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T10:30:00.000Z
-       */
-      createdAt: string;
-      mediaSummary: components['schemas']['SavedItemMediaSummaryDto'];
-      /**
-       * @description Active subscription triggers for this media item. Empty array if no subscriptions.
-       * @example [
-       *       "release",
-       *       "new_season"
-       *     ]
-       */
-      activeSubscriptionTriggers: string[];
-    };
-    PaginatedSavedItemsResponseDto: {
-      data: components['schemas']['SavedItemWithMediaResponseDto'][];
-      meta: components['schemas']['OffsetPaginationMetaDto'];
-    };
-    SubscribeDto: {
-      /**
-       * @description Trigger type: release, new_season, or on_streaming
-       * @example release
-       * @enum {string}
-       */
-      trigger: 'release' | 'new_season' | 'new_episode' | 'on_streaming' | 'status_changed';
-      /**
-       * @description Where the action originated
-       * @example verdict
-       */
-      context?: string;
-      /**
-       * @description Verdict/reason that triggered the action
-       * @example upcomingHit
-       */
-      reasonKey?: string;
-    };
-    MediaSubscriptionStatusDto: {
-      /**
-       * @description Active subscription triggers
-       * @example [
-       *       "release"
-       *     ]
-       */
-      triggers: string[];
-      /**
-       * @description Has active release subscription
-       * @example true
-       */
-      hasRelease: boolean;
-      /**
-       * @description Has active new season subscription
-       * @example false
-       */
-      hasNewSeason: boolean;
-      /**
-       * @description Has active on streaming subscription
-       * @example false
-       */
-      hasOnStreaming: boolean;
-    };
-    SubscribeActionResultDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      mediaItemId: string;
-      /**
-       * @example release
-       * @enum {string}
-       */
-      trigger: 'release' | 'new_season' | 'new_episode' | 'on_streaming' | 'status_changed';
-      /** @example true */
-      isActive: boolean;
-      /** @description Current subscription status after action */
-      status: components['schemas']['MediaSubscriptionStatusDto'];
-      /**
-       * Format: date-time
-       * @example 2024-01-15T10:30:00.000Z
-       */
-      createdAt: string;
-    };
-    UnsubscribeDto: {
-      /**
-       * @description Trigger type to unsubscribe from
-       * @example release
-       * @enum {string}
-       */
-      trigger: 'release' | 'new_season' | 'new_episode' | 'on_streaming' | 'status_changed';
-      /** @example card */
-      context?: string;
-    };
-    UnsubscribeActionResultDto: {
-      /** @example true */
-      unsubscribed: boolean;
-      /** @description Current subscription status after action */
-      status: components['schemas']['MediaSubscriptionStatusDto'];
-    };
-    SubscriptionMediaSummaryDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /**
-       * @example movie
-       * @enum {string}
-       */
-      type: 'movie' | 'show';
-      /** @example Inception */
-      title: string;
-      /** @example inception-2010 */
-      slug: string;
-      poster: components['schemas']['ImageDto'] | null;
-      /** Format: date-time */
-      releaseDate?: string | null;
-    };
-    SubscriptionWithMediaResponseDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      mediaItemId: string;
-      /**
-       * @example release
-       * @enum {string}
-       */
-      trigger: 'release' | 'new_season' | 'new_episode' | 'on_streaming' | 'status_changed';
-      /** @example true */
-      isActive: boolean;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T10:30:00.000Z
-       */
-      createdAt: string;
-      mediaSummary: components['schemas']['SubscriptionMediaSummaryDto'];
-    };
-    SyncDto: {
-      /**
-       * @description TMDB ID of the media
-       * @example 550
-       */
-      tmdbId: number;
-      /**
-       * @example movie
-       * @enum {string}
-       */
-      type: 'movie' | 'show';
-      /**
-       * @description Force re-sync even if media already exists
-       * @default false
-       * @example false
-       */
-      force: boolean;
-    };
-    SyncTrendingDto: {
-      /**
-       * @description Number of pages to sync (20 items per page). Use this for dispatcher mode.
-       * @default 5
-       * @example 5
-       */
-      pages: number;
-      /**
-       * @description Single page number (deprecated, use pages instead)
-       * @example 1
-       */
-      page?: number;
-      /**
-       * @description Also sync Trakt stats after ingestion
-       * @default true
-       * @example true
-       */
-      syncStats: boolean;
-      /**
-       * @description Sync only specific media type (movie or show). Only for legacy single-page mode.
-       * @enum {string}
-       */
-      type?: 'movie' | 'show';
-    };
-    SyncNowPlayingDto: {
-      /**
-       * @description Region code (ISO 3166-1)
-       * @default UA
-       * @example UA
-       */
-      region: string;
-    };
-    SyncNewReleasesDto: {
-      /**
-       * @description Region code (ISO 3166-1)
-       * @default US
-       * @example US
-       */
-      region: string;
-      /**
-       * @description Days to look back
-       * @default 30
-       * @example 30
-       */
-      daysBack: number;
-      /**
-       * @description Force re-sync even if job already exists for today
-       * @default false
-       * @example false
-       */
-      force: boolean;
-    };
-    IngestionJobResponseDto: {
-      /** @example queued */
-      status: string;
-      /** @example backfill_alt_titles_20260223 */
-      jobId: string;
-      /** @example BACKFILL_ALT_TITLES_DISPATCHER */
-      jobType: string;
-      /** @example false */
-      force: boolean;
-    };
-    PolicyDto: {
-      /**
-       * @description Policy ID
-       * @example policy-123e4567-e89b-12d3-a456-426614174000
-       */
-      id: string;
-      /**
-       * @description Policy name
-       * @example Content Filtering Policy
-       */
-      name: string;
-      /**
-       * @description Policy version
-       * @example 1.0
-       */
-      version: string;
-      /**
-       * @description Policy status
-       * @example active
-       * @enum {string}
-       */
-      status: 'active' | 'inactive';
-      /**
-       * @description Policy description
-       * @example Filters content based on quality and popularity thresholds
-       */
-      description?: string;
-      /**
-       * Format: date-time
-       * @description When the policy was last updated
-       * @example 2024-12-20T10:00:00Z
-       */
-      updatedAt: string;
-    };
-    PoliciesListDto: {
-      /** @description List of policies */
-      data: components['schemas']['PolicyDto'][];
-    };
-    BreakoutRuleRequirementsDto: {
-      /**
-       * @description Minimum IMDb vote count required
-       * @example 10000
-       */
-      minImdbVotes?: number;
-      /**
-       * @description Minimum Trakt vote count required
-       * @example 5000
-       */
-      minTraktVotes?: number;
-      /**
-       * @description Minimum normalized quality score (0.0 to 1.0)
-       * @example 0.7
-       */
-      minQualityScoreNormalized?: number;
-      /**
-       * @description List of streaming providers - at least one must be present
-       * @example [
-       *       "netflix",
-       *       "prime",
-       *       "disney"
-       *     ]
-       */
-      requireAnyOfProviders?: string[];
-      /**
-       * @description Rating sources - at least one must have a rating present. Valid values: imdb, metacritic, rt, trakt
-       * @example [
-       *       "imdb",
-       *       "rt"
-       *     ]
-       */
-      requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[];
-      /**
-       * @description Availability mode for provider filtering. subscription_only = flatrate only, transactional_only = rent/buy only, any = all types
-       * @example subscription_only
-       * @enum {string}
-       */
-      availabilityMode?: 'subscription_only' | 'transactional_only' | 'any';
-      /**
-       * @description Exclude ads-tier variants from provider matching
-       * @example false
-       */
-      excludeAdsTiers?: boolean;
-      /**
-       * @description Exclude non-direct distribution channels (amazon_channel, apple_tv_channel)
-       * @example false
-       */
-      excludeChannelDistribution?: boolean;
-      /**
-       * @description Origin countries filter (ISO 3166-1 alpha-2 codes). Rule matches if media has ANY of these countries.
-       * @example [
-       *       "UA",
-       *       "PL"
-       *     ]
-       */
-      originCountries?: string[];
-      /**
-       * @description Exclude origin countries filter (ISO 3166-1 alpha-2 codes). Rule does NOT match if media has ANY of these countries.
-       * @example [
-       *       "JP",
-       *       "KR",
-       *       "CN"
-       *     ]
-       */
-      excludeOriginCountries?: string[];
-    };
-    BreakoutRuleDto: {
-      /**
-       * @description Unique identifier for the breakout rule
-       * @example high-quality-exception
-       */
-      id: string;
-      /**
-       * @description Human-readable name for the breakout rule
-       * @example High Quality Content Exception
-       */
-      name: string;
-      /**
-       * @description Priority of the rule (lower number = higher priority)
-       * @example 1
-       */
-      priority: number;
-      /** @description Requirements that must be met for this rule to apply */
-      requirements: components['schemas']['BreakoutRuleRequirementsDto'];
-    };
-    HomepageConfigDto: {
-      /**
-       * @description Minimum relevance score for homepage items (0-100)
-       * @example 50
-       */
-      minRelevanceScore: number;
-    };
-    MinVotesAnyOfDto: {
-      /**
-       * @description Vote sources to check (OR logic)
-       * @example [
-       *       "imdb",
-       *       "trakt"
-       *     ]
-       */
-      sources?: ('imdb' | 'trakt')[];
-      /**
-       * @description Minimum votes threshold
-       * @example 3000
-       */
-      min?: number;
-    };
-    LocalMaturityOverrideDto: {
-      /**
-       * @description Minimum freshness score normalized (0-1). Higher values = stricter freshness requirement. Example: 0.90 = must be in top 10% freshest content.
-       * @example 0.9
-       */
-      minFreshnessScoreNormalized?: number;
-      /**
-       * @description Minimum Ratingo platform watchers count. Validates local engagement signal. Example: 30 = at least 30 users actively watching on platform.
-       * @example 30
-       */
-      minLocalWatchers?: number;
-    };
-    GlobalRequirementsDto: {
-      /**
-       * @description Minimum quality score normalized (0-1)
-       * @example 0.6
-       */
-      minQualityScoreNormalized?: number;
-      /**
-       * @description At least one of these rating sources must be present (OR logic)
-       * @example [
-       *       "imdb",
-       *       "trakt"
-       *     ]
-       */
-      requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[];
-      /** @description Minimum votes from ANY of the specified sources (OR logic). Passes if any source meets the threshold. Robust to missing data. */
-      minVotesAnyOf?: components['schemas']['MinVotesAnyOfDto'];
-      /**
-       * @description Contexts where global gate applies. Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. Freshness surfaces (now_playing, new_digital, upcoming) are excluded by default.
-       * @example [
-       *       "catalog",
-       *       "homepage",
-       *       "trending",
-       *       "search"
-       *     ]
-       */
-      appliesTo?: (
-        'catalog' | 'homepage' | 'trending' | 'now_playing' | 'new_digital' | 'search' | 'upcoming'
-      )[];
-      /** @description Alternative path for fresh content with local engagement. Applied only when minVotesAnyOf check fails. Allows new releases with strong platform signals to bypass vote requirements. */
-      localMaturityOverride?: components['schemas']['LocalMaturityOverrideDto'];
-    };
-    PolicyConfigDto: {
-      /**
-       * @description Allowed countries (ISO 3166-1 alpha-2 codes)
-       * @example [
-       *       "US",
-       *       "GB",
-       *       "CA",
-       *       "AU",
-       *       "UA"
-       *     ]
-       */
-      allowedCountries: string[];
-      /**
-       * @description Blocked countries (ISO 3166-1 alpha-2 codes)
-       * @example [
-       *       "RU",
-       *       "BY"
-       *     ]
-       */
-      blockedCountries: string[];
-      /**
-       * @description Blocked country mode
-       * @example ANY
-       * @enum {string}
-       */
-      blockedCountryMode: 'ANY' | 'MAJORITY';
-      /**
-       * @description Allowed languages (ISO 639-1 codes)
-       * @example [
-       *       "en",
-       *       "uk",
-       *       "de",
-       *       "fr"
-       *     ]
-       */
-      allowedLanguages: string[];
-      /**
-       * @description Blocked languages (ISO 639-1 codes)
-       * @example [
-       *       "ru"
-       *     ]
-       */
-      blockedLanguages: string[];
-      /**
-       * @description Global streaming providers
-       * @example [
-       *       "netflix",
-       *       "max",
-       *       "appletv",
-       *       "prime",
-       *       "disney"
-       *     ]
-       */
-      globalProviders: string[];
-      /** @description Breakout rules for exceptions */
-      breakoutRules: components['schemas']['BreakoutRuleDto'][];
-      /**
-       * @description Eligibility mode (STRICT = country AND language, RELAXED = country OR language)
-       * @example STRICT
-       * @enum {string}
-       */
-      eligibilityMode: 'STRICT' | 'RELAXED';
-      /** @description Homepage configuration */
-      homepage: components['schemas']['HomepageConfigDto'];
-      /** @description Global quality gate requirements (all conditions combined with AND) */
-      globalRequirements?: components['schemas']['GlobalRequirementsDto'];
-      /**
-       * @description Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.
-       * @example [
-       *       "anime",
-       *       "reality"
-       *     ]
-       */
-      excludedContentClasses?: ('mainstream' | 'anime' | 'documentary' | 'reality' | 'kids')[];
-      /**
-       * @description Context-specific requirements for display surfaces (readability, overview)
-       * @example {
-       *       "trending": {
-       *         "requireReadableTitle": true,
-       *         "requireOverview": true,
-       *         "minOverviewChars": 60
-       *       },
-       *       "homepage": {
-       *         "requireReadableTitle": true,
-       *         "requireOverview": true,
-       *         "minOverviewChars": 60
-       *       },
-       *       "catalog": {
-       *         "requireReadableTitle": true
-       *       }
-       *     }
-       */
-      contextRequirements?: Record<string, never>;
-    };
-    PolicyDetailDto: {
-      /**
-       * @description Policy ID
-       * @example policy-123e4567-e89b-12d3-a456-426614174000
-       */
-      id: string;
-      /**
-       * @description Policy name
-       * @example Policy v2
-       */
-      name: string;
-      /**
-       * @description Policy version
-       * @example 2
-       */
-      version: string;
-      /**
-       * @description Policy status
-       * @example active
-       * @enum {string}
-       */
-      status: 'active' | 'inactive';
-      /** @description Policy configuration */
-      config: components['schemas']['PolicyConfigDto'];
-      /**
-       * Format: date-time
-       * @description When the policy was created
-       * @example 2024-12-20T10:00:00Z
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description When the policy was activated
-       * @example 2024-12-20T12:00:00Z
-       */
-      activatedAt?: string;
-    };
-    CreatePolicyDto: {
-      /**
-       * @description Allowed countries (ISO 3166-1 alpha-2 codes)
-       * @example [
-       *       "US",
-       *       "GB",
-       *       "CA",
-       *       "AU",
-       *       "UA"
-       *     ]
-       */
-      allowedCountries: string[];
-      /**
-       * @description Blocked countries (ISO 3166-1 alpha-2 codes)
-       * @example [
-       *       "RU",
-       *       "BY"
-       *     ]
-       */
-      blockedCountries: string[];
-      /**
-       * @description Blocked country mode
-       * @example ANY
-       * @enum {string}
-       */
-      blockedCountryMode?: 'ANY' | 'MAJORITY';
-      /**
-       * @description Allowed languages (ISO 639-1 codes)
-       * @example [
-       *       "en",
-       *       "uk",
-       *       "de",
-       *       "fr"
-       *     ]
-       */
-      allowedLanguages: string[];
-      /**
-       * @description Blocked languages (ISO 639-1 codes)
-       * @example [
-       *       "ru"
-       *     ]
-       */
-      blockedLanguages: string[];
-      /**
-       * @description Global streaming providers
-       * @example [
-       *       "netflix",
-       *       "max",
-       *       "appletv",
-       *       "prime",
-       *       "disney"
-       *     ]
-       */
-      globalProviders?: string[];
-      /** @description Breakout rules for exceptions */
-      breakoutRules?: components['schemas']['BreakoutRuleDto'][];
-      /**
-       * @description Eligibility mode
-       * @example STRICT
-       * @enum {string}
-       */
-      eligibilityMode?: 'STRICT' | 'RELAXED';
-      /**
-       * @description Homepage configuration
-       * @example {
-       *       "minRelevanceScore": 50
-       *     }
-       */
-      homepage?: components['schemas']['HomepageConfigDto'];
-      /** @description Global quality gate requirements (all conditions combined with AND) */
-      globalRequirements?: components['schemas']['GlobalRequirementsDto'];
-      /**
-       * @description Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.
-       * @example [
-       *       "anime",
-       *       "reality"
-       *     ]
-       */
-      excludedContentClasses?: ('mainstream' | 'anime' | 'documentary' | 'reality' | 'kids')[];
-      /**
-       * @description Context-specific requirements for display surfaces (readability, overview)
-       * @example {
-       *       "trending": {
-       *         "requireReadableTitle": true,
-       *         "requireOverview": true,
-       *         "minOverviewChars": 60
-       *       },
-       *       "homepage": {
-       *         "requireReadableTitle": true,
-       *         "requireOverview": true,
-       *         "minOverviewChars": 60
-       *       },
-       *       "catalog": {
-       *         "requireReadableTitle": true
-       *       }
-       *     }
-       */
-      contextRequirements?: Record<string, never>;
-    };
-    CreatePolicyResponseDto: {
-      /**
-       * @description Created policy ID
-       * @example policy-123e4567-e89b-12d3-a456-426614174000
-       */
-      id: string;
-      /**
-       * @description Policy version
-       * @example 2
-       */
-      version: number;
-      /**
-       * @description Human-readable message
-       * @example Policy v2 created successfully. Use POST /admin/catalog-policies/:id/prepare to start evaluation.
-       */
-      message: string;
-    };
-    PrepareOptionsDto: {
-      /**
-       * @description Batch size for processing items
-       * @example 500
-       */
-      batchSize?: number;
-      /**
-       * @description Number of concurrent workers
-       * @example 10
-       */
-      concurrency?: number;
-    };
-    PrepareResponseDto: {
-      /**
-       * @description ID of the created evaluation run
-       * @example run-123e4567-e89b-12d3-a456-426614174000
-       */
-      runId: string;
-      /**
-       * @description Current status of the run
-       * @example running
-       * @enum {string}
-       */
-      status: 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted';
-      /**
-       * @description Human-readable message
-       * @example Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress.
-       */
-      message: string;
-    };
-    ProgressStatsDto: {
-      /**
-       * @description Number of items processed
-       * @example 750
-       */
-      processed: number;
-      /**
-       * @description Total number of items to process
-       * @example 1200
-       */
-      total: number;
-      /**
-       * @description Number of eligible items
-       * @example 600
-       */
-      eligible: number;
-      /**
-       * @description Number of ineligible items
-       * @example 100
-       */
-      ineligible: number;
-      /**
-       * @description Number of errors encountered
-       * @example 50
-       */
-      errors: number;
-    };
-    EvaluationRunDto: {
-      /**
-       * @description Run ID
-       * @example run-123e4567-e89b-12d3-a456-426614174000
-       */
-      id: string;
-      /**
-       * @description Policy ID
-       * @example policy-456e7890-f12a-34b5-c678-901234567890
-       */
-      policyId: string;
-      /**
-       * @description Policy name
-       * @example Content Filtering Policy
-       */
-      policyName: string;
-      /**
-       * @description Policy version number
-       * @example 1
-       */
-      policyVersion: number;
-      /**
-       * @description Run status
-       * @example running
-       * @enum {string}
-       */
-      status: 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted';
-      /** @description Progress statistics */
-      progress: components['schemas']['ProgressStatsDto'];
-      /**
-       * Format: date-time
-       * @description When the run started
-       * @example 2024-12-20T14:00:00Z
-       */
-      startedAt: string;
-      /**
-       * Format: date-time
-       * @description When the run finished
-       * @example 2024-12-20T14:30:00Z
-       */
-      finishedAt?: string;
-      /**
-       * @description Whether the run is ready to be promoted
-       * @example true
-       */
-      readyToPromote?: boolean;
-    };
-    RunsListDto: {
-      /** @description List of evaluation runs */
-      data: components['schemas']['EvaluationRunDto'][];
-    };
-    ErrorSampleDto: {
-      /**
-       * @description Media item ID that caused the error
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      mediaItemId: string;
-      /**
-       * @description Error message
-       * @example Missing origin country data
-       */
-      error: string;
-      /** @description Error stack trace */
-      stack?: string;
-      /**
-       * @description When the error occurred
-       * @example 2024-12-20T14:30:00Z
-       */
-      timestamp: string;
-    };
-    RunStatusDto: {
-      /**
-       * @description Run ID
-       * @example run-123e4567-e89b-12d3-a456-426614174000
-       */
-      id: string;
-      /**
-       * @description Target policy ID
-       * @example policy-456e7890-f12a-34b5-c678-901234567890
-       */
-      targetPolicyId: string;
-      /**
-       * @description Target policy version
-       * @example 2
-       */
-      targetPolicyVersion: number;
-      /**
-       * @description Current run status
-       * @example running
-       * @enum {string}
-       */
-      status: 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted';
-      /** @description Progress statistics */
-      progress: components['schemas']['ProgressStatsDto'];
-      /**
-       * Format: date-time
-       * @description When the run started
-       * @example 2024-12-20T14:00:00Z
-       */
-      startedAt: string;
-      /**
-       * Format: date-time
-       * @description When the run finished
-       * @example 2024-12-20T14:30:00Z
-       */
-      finishedAt?: string;
-      /**
-       * Format: date-time
-       * @description When the run was promoted
-       * @example 2024-12-20T15:00:00Z
-       */
-      promotedAt?: string;
-      /**
-       * @description Who promoted the run
-       * @example admin@example.com
-       */
-      promotedBy?: string;
-      /**
-       * @description Whether the run is ready to be promoted
-       * @example true
-       */
-      readyToPromote: boolean;
-      /**
-       * @description Reasons why the run cannot be promoted (if any)
-       * @example [
-       *       "COVERAGE_NOT_MET"
-       *     ]
-       */
-      blockingReasons: string[];
-      /**
-       * @description Coverage percentage (0.0 to 1.0)
-       * @example 0.95
-       */
-      coverage: number;
-      /** @description Sample of errors encountered */
-      errorSample: components['schemas']['ErrorSampleDto'][];
-    };
-    PromoteOptionsDto: {
-      /**
-       * @description Coverage threshold (0.0 to 1.0)
-       * @example 1
-       */
-      coverageThreshold?: number;
-      /**
-       * @description Maximum allowed errors
-       * @example 0
-       */
-      maxErrors?: number;
-    };
-    ActionResponseDto: {
-      /**
-       * @description Whether the action was successful
-       * @example true
-       */
-      success: boolean;
-      /**
-       * @description Error message if action failed
-       * @example Run is not ready to promote: coverage threshold not met
-       */
-      error?: string;
-      /**
-       * @description Success message
-       * @example Policy activated successfully
-       */
-      message?: string;
-    };
-    DiffCountsDto: {
-      /**
-       * @description Number of items that will be removed from catalog
-       * @example 25
-       */
-      regressions: number;
-      /**
-       * @description Number of items that will be added to catalog
-       * @example 150
-       */
-      improvements: number;
-      /**
-       * @description Net change in catalog size
-       * @example 125
-       */
-      netChange: number;
-    };
-    DiffSampleDto: {
-      /**
-       * @description Media item ID
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      mediaItemId: string;
-      /**
-       * @description Media item title
-       * @example The Matrix
-       */
-      title: string;
-      /**
-       * @description Reason for the change
-       * @example Quality threshold updated
-       */
-      reason: string;
-    };
-    ReasonBreakdownDto: {
-      /**
-       * @description Breakdown of regression reasons
-       * @example {
-       *       "MISSING_GLOBAL_SIGNALS": 150,
-       *       "BLOCKED_COUNTRY": 25,
-       *       "NEUTRAL_LANGUAGE": 10
-       *     }
-       */
-      regressionReasons: {
-        [key: string]: number;
-      };
-      /**
-       * @description Breakdown of improvement reasons
-       * @example {
-       *       "ALLOWED_COUNTRY": 100,
-       *       "BREAKOUT_ALLOWED": 50
-       *     }
-       */
-      improvementReasons: {
-        [key: string]: number;
-      };
-    };
-    DiffReportDto: {
-      /**
-       * @description Run ID
-       * @example run-123e4567-e89b-12d3-a456-426614174000
-       */
-      runId: string;
-      /**
-       * @description Target policy version
-       * @example 2
-       */
-      targetPolicyVersion: number;
-      /**
-       * @description Current active policy version
-       * @example 1
-       */
-      currentPolicyVersion?: number;
-      /** @description Summary of changes */
-      counts: components['schemas']['DiffCountsDto'];
-      /** @description Sample items being removed from catalog */
-      topRegressions: components['schemas']['DiffSampleDto'][];
-      /** @description Sample items being added to catalog */
-      topImprovements: components['schemas']['DiffSampleDto'][];
-      /** @description Breakdown of reasons for regressions and improvements */
-      reasonBreakdown?: components['schemas']['ReasonBreakdownDto'];
-    };
-    BackfillRequestDto: {
-      /**
-       * @description Evaluation context to backfill
-       * @example trending
-       * @enum {string}
-       */
-      context: 'catalog' | 'trending' | 'homepage' | 'search';
-      /**
-       * @description Batch size for processing items
-       * @example 500
-       */
-      batchSize?: number;
-    };
-    BackfillResponseDto: {
-      /**
-       * @description ID of the created backfill run
-       * @example run-123e4567-e89b-12d3-a456-426614174000
-       */
-      runId: string;
-      /**
-       * @description Current status of the run
-       * @example running
-       * @enum {string}
-       */
-      status: 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted';
-      /**
-       * @description Context being backfilled
-       * @example trending
-       * @enum {string}
-       */
-      context: 'catalog' | 'trending' | 'homepage' | 'search';
-      /**
-       * @description Human-readable message
-       * @example Backfill started for context=trending. Use GET /admin/catalog-policies/runs/run-123 to track progress.
-       */
-      message: string;
-    };
-    DryRunOptionsDto: {
-      /**
-       * @description Selection mode for items to evaluate
-       * @example sample
-       * @enum {string}
-       */
-      mode: 'sample' | 'top' | 'byType' | 'byCountry';
-      /**
-       * @description Maximum number of items to evaluate (default: 1000, max: 10000)
-       * @example 1000
-       */
-      limit?: number;
-      /**
-       * @description Media type filter (required for byType mode)
-       * @example movie
-       * @enum {string}
-       */
-      mediaType?: 'movie' | 'show';
-      /**
-       * @description Country filter (ISO 3166-1 alpha-2, required for byCountry mode)
-       * @example US
-       */
-      country?: string;
-      /**
-       * @description Sample percentage for sample mode (1-100)
-       * @example 10
-       */
-      samplePercent?: number;
-    };
-    DryRunRequestDto: {
-      /** @description Proposed policy configuration to test */
-      policy: components['schemas']['CreatePolicyDto'];
-      /** @description Dry-run options */
-      options: components['schemas']['DryRunOptionsDto'];
-    };
-    ReasonCountDto: {
-      /**
-       * @description Evaluation reason
-       * @example ALLOWED_COUNTRY
-       */
-      reason: string;
-      /**
-       * @description Count of items with this reason
-       * @example 500
-       */
-      count: number;
-    };
-    DryRunSummaryDto: {
-      /**
-       * @description Total items evaluated
-       * @example 1000
-       */
-      totalEvaluated: number;
-      /**
-       * @description Items that would be eligible
-       * @example 750
-       */
-      eligible: number;
-      /**
-       * @description Items that would be ineligible
-       * @example 200
-       */
-      ineligible: number;
-      /**
-       * @description Items that would need review
-       * @example 10
-       */
-      review: number;
-      /**
-       * @description Items that would become newly eligible
-       * @example 50
-       */
-      newlyEligible: number;
-      /**
-       * @description Items that would become newly ineligible
-       * @example 25
-       */
-      newlyIneligible: number;
-      /**
-       * @description Items with unchanged status
-       * @example 925
-       */
-      unchanged: number;
-      /**
-       * @description Items without previous evaluation (first-time evaluation)
-       * @example 40
-       */
-      newItems: number;
-      /** @description Breakdown of evaluation reasons */
-      reasonBreakdown: components['schemas']['ReasonCountDto'][];
-      /**
-       * @description Execution time in milliseconds
-       * @example 1500
-       */
-      executionTimeMs: number;
-      /**
-       * @description Selection mode used
-       * @example sample
-       * @enum {string}
-       */
-      mode: 'sample' | 'top' | 'byType' | 'byCountry';
-      /**
-       * @description Item limit used
-       * @example 1000
-       */
-      limit: number;
-      /**
-       * @description Whether evaluation was stopped due to timeout
-       * @example false
-       */
-      timedOut: boolean;
-    };
-    DryRunItemResultDto: {
-      /**
-       * @description Media item ID
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      mediaItemId: string;
-      /**
-       * @description Media item title
-       * @example The Matrix
-       */
-      title: string;
-      /**
-       * @description Current eligibility status (null if not evaluated)
-       * @example ELIGIBLE
-       * @enum {string}
-       */
-      currentStatus?: 'ELIGIBLE' | 'INELIGIBLE' | 'REVIEW';
-      /**
-       * @description Proposed eligibility status under new policy
-       * @example ELIGIBLE
-       * @enum {string}
-       */
-      proposedStatus: 'ELIGIBLE' | 'INELIGIBLE' | 'REVIEW';
-      /**
-       * @description Evaluation reasons
-       * @example [
-       *       "ALLOWED_COUNTRY",
-       *       "ALLOWED_LANGUAGE"
-       *     ]
-       */
-      reasons: string[];
-      /**
-       * @description Relevance score (0-100)
-       * @example 75
-       */
-      relevanceScore: number;
-      /**
-       * @description Breakout rule ID if applicable
-       * @example GLOBAL_HIT
-       */
-      breakoutRuleId?: string;
-      /**
-       * @description Whether status changed from current
-       * @example false
-       */
-      statusChanged: boolean;
-    };
-    DryRunResponseDto: {
-      /** @description Dry-run summary */
-      summary: components['schemas']['DryRunSummaryDto'];
-      /** @description Individual item results */
-      items: components['schemas']['DryRunItemResultDto'][];
-      /**
-       * @description Current active policy version (for diff mode)
-       * @example 1
-       */
-      currentPolicyVersion?: number;
-    };
-    UnmappedProviderDto: {
-      /**
-       * @description TMDB provider ID
-       * @example 999
-       */
-      tmdbProviderId: number;
-      /**
-       * @description Last seen provider name
-       * @example Unknown Streaming
-       */
-      lastSeenName: string;
-      /**
-       * @description Number of times seen
-       * @example 150
-       */
-      seenCount: number;
-      /**
-       * Format: date-time
-       * @description Last seen timestamp
-       */
-      lastSeenAt: string;
-      /**
-       * @description Sample regions where seen
-       * @example [
-       *       "US",
-       *       "GB"
-       *     ]
-       */
-      sampleRegions: string[];
-      /**
-       * @description Sample names seen
-       * @example [
-       *       "Unknown Streaming",
-       *       "Unknown Stream"
-       *     ]
-       */
-      sampleNames: string[];
-    };
-    UnmappedProvidersListDto: {
-      data: components['schemas']['UnmappedProviderDto'][];
-      meta: components['schemas']['OffsetPaginationMetaDto'];
-    };
-    MappingDto: {
-      /**
-       * @description Mapping ID
-       * @example uuid-123
-       */
-      id: string;
-      /**
-       * @description TMDB provider ID
-       * @example 8
-       */
-      tmdbProviderId: number;
-      /**
-       * @description Canonical provider ID
-       * @example netflix
-       */
-      providerId: string;
-      /**
-       * @description Variant ID if applicable
-       * @example netflix_ads
-       */
-      variantId?: string;
-      /**
-       * @description Distribution channel
-       * @example direct
-       */
-      distributionChannel: string;
-      /**
-       * @description Region code or global
-       * @example global
-       */
-      region: string;
-      /**
-       * @description Mapping source
-       * @example seed
-       */
-      source: string;
-      /**
-       * Format: date-time
-       * @description Creation timestamp
-       */
-      createdAt: string;
-    };
-    MappingsListDto: {
-      data: components['schemas']['MappingDto'][];
-      meta: components['schemas']['OffsetPaginationMetaDto'];
-    };
-    CreateMappingRequestDto: {
-      /**
-       * @description TMDB provider ID
-       * @example 8
-       */
-      tmdbProviderId: number;
-      /**
-       * @description Canonical provider ID
-       * @example netflix
-       */
-      providerId: string;
-      /**
-       * @description Variant ID
-       * @example netflix_ads
-       */
-      variantId?: string;
-      /**
-       * @description Distribution channel
-       * @default direct
-       * @example direct
-       * @enum {string}
-       */
-      distributionChannel: 'direct' | 'amazon_channel' | 'apple_tv_channel';
-      /**
-       * @description Region code (ISO 3166-1 alpha-2) or "global"
-       * @default global
-       * @example US
-       */
-      region: string;
-    };
-    UpdateMappingRequestDto: {
-      /**
-       * @description Canonical provider ID
-       * @example netflix
-       */
-      providerId?: string;
-      /**
-       * @description Variant ID
-       * @example netflix_ads
-       */
-      variantId?: string;
-      /**
-       * @description Distribution channel
-       * @example direct
-       * @enum {string}
-       */
-      distributionChannel?: 'direct' | 'amazon_channel' | 'apple_tv_channel';
-    };
-    ResolveResultDto: {
-      /**
-       * @description Input TMDB provider ID
-       * @example 8
-       */
-      tmdbProviderId: number;
-      /**
-       * @description Region used for resolution
-       * @example US
-       */
-      region: string;
-      /** @description Resolved mapping if found */
-      mapping?: components['schemas']['MappingDto'];
-      /**
-       * @description Whether mapping was found
-       * @example true
-       */
-      found: boolean;
-      /**
-       * @description Resolution source: region-specific or global fallback
-       * @example region
-       */
-      source?: string;
-    };
-    HeroShowProgressDto: {
-      /** @example 5 */
-      season: number;
-      /** @example 5 */
-      episode: number;
-      /** @example S5E5 */
-      label: string;
-      /**
-       * Format: date-time
-       * @example 2025-12-14T00:00:00.000Z
-       */
-      lastAirDate?: string;
-      /**
-       * Format: date-time
-       * @example 2025-12-21T00:00:00.000Z
-       */
-      nextAirDate?: string;
-    };
-    HeroItemDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      mediaItemId: string;
-      /**
-       * @example movie
-       * @enum {string}
-       */
-      type: 'movie' | 'show';
-      /** @example fight-club */
-      slug: string;
-      /** @example Fight Club */
-      title: string;
-      /** @example Fight Club */
-      originalTitle: string;
-      /** @example An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more. */
-      overview: string | null;
-      /**
-       * @description YouTube video key for primary trailer
-       * @example ogFrkWefoLQ
-       */
-      primaryTrailerKey?: string | null;
-      poster: components['schemas']['ImageDto'];
-      backdrop: components['schemas']['ImageDto'];
-      stats: components['schemas']['RatingoStatsDto'];
-      externalRatings?: components['schemas']['ExternalRatingsDto'];
-      /**
-       * Format: date-time
-       * @example 1999-10-15T00:00:00.000Z
-       */
-      releaseDate: string | null;
-      /**
-       * @description True if released within last 90 days
-       * @example false
-       */
-      isNew: boolean;
-      /**
-       * @description True if released more than 5 years ago
-       * @example true
-       */
-      isClassic: boolean;
-      /** @description Progress info for TV Shows (latest aired episode) */
-      showProgress?: components['schemas']['HeroShowProgressDto'];
-    };
-    RiseFallStatsDto: {
-      /** @description Absolute change in watchers count */
-      deltaWatchers: number;
-      /** @description Percentage change in watchers count */
-      deltaPercent: number | null;
-      /** @description Current total watchers count */
-      currentWatchers: number;
-      /** @description Indicates if the item is new to trends (no previous history) */
-      isNewInTrends?: boolean;
-      /** @description Watchers added in the current window */
-      growthCurrent: number;
-      /** @description Watchers added in the previous window */
-      growthPrev: number;
-    };
-    RiseFallItemDto: {
-      id: string;
-      mediaItemId: string;
-      /** @enum {string} */
-      type: 'movie' | 'show';
-      slug: string;
-      title: string;
-      originalTitle: string | null;
-      poster: components['schemas']['ImageDto'] | null;
-      backdrop: components['schemas']['ImageDto'] | null;
-      stats: components['schemas']['RiseFallStatsDto'];
-      externalRatings?: components['schemas']['ExternalRatingsDto'];
-    };
-    RiseFallResponseDto: {
-      /** @enum {string} */
-      window: '30d' | '90d' | '365d';
-      /** @example global */
-      region: string;
-      /** @example delta */
-      metric: string;
-      risers: components['schemas']['RiseFallItemDto'][];
-      fallers: components['schemas']['RiseFallItemDto'][];
-    };
-    RegisterDto: {
-      /** @example user@example.com */
-      email: string;
-      /** @example ratingo_fan */
-      username: string;
-      /** @example S3curePassw0rd */
-      password: string;
-      /** @example https://cdn.example.com/avatar.png */
-      avatarUrl?: string;
-    };
-    AuthTokensDto: {
-      /**
-       * @description JWT access token
-       * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY1NDU5MDc0fQ.JYlxU9C9P_DJOJTeN_tosd5Dds5H5u3U9_y_AQdLtDU
-       */
-      accessToken: string;
-      /**
-       * @description Refresh token
-       * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJqdGkiOiJmYmUwYTQxOC05ZWVkLTRjNmEtOTU2MS00MDRmZDFiMTFhOTciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY4MDUwMTc0fQ.Jra2xAp4OeKcm5ZSalwwMrqwoQngn8Js9ql_rK0VjFQ
-       */
-      refreshToken: string;
-    };
-    LoginDto: {
-      /** @example user@example.com */
-      email: string;
-      /** @example S3curePassw0rd */
-      password: string;
-    };
-    RefreshDto: {
-      /** @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... */
-      refreshToken: string;
-    };
-    ChangePasswordDto: {
-      /** @example OldPass123 */
-      currentPassword: string;
-      /** @example NewPass456 */
-      newPassword: string;
-    };
-    PrivacyDto: {
-      /** @example true */
-      isProfilePublic: boolean;
-      /** @example false */
-      showWatchHistory: boolean;
-      /** @example true */
-      showRatings: boolean;
-      /** @example true */
-      allowFollowers: boolean;
-      /** @example true */
-      autoSubscribeOnWatch: boolean;
-    };
-    ProfileDto: {
-      /** @example Люблю жахи та sci-fi */
-      bio: string | null;
-      /** @example Kyiv */
-      location: string | null;
-      /** @example https://instagram.com/me */
-      website: string | null;
-      /** @example uk */
-      preferredLanguage: string | null;
-      /** @example UA */
-      preferredRegion: string | null;
-      privacy: components['schemas']['PrivacyDto'];
-    };
-    StatsDto: {
-      /** @example 24 */
-      moviesRated: number;
-      /** @example 10 */
-      showsRated: number;
-      /** @example 42 */
-      watchlistCount: number;
-    };
-    MeDto: {
-      /** @example 6bd54e62-bac3-49dd-a0d4-05efd7761700 */
-      id: string;
-      /** @example user@example.com */
-      email: string;
-      /** @example ratingo_fan */
-      username: string;
-      /** @example https://cdn.ratingo/avatar.png */
-      avatarUrl: string | null;
-      /**
-       * @example user
-       * @enum {string}
-       */
-      role: 'user' | 'admin';
-      profile: components['schemas']['ProfileDto'];
-      /** @description Whether the user has a password set (false for OAuth-only accounts) */
-      hasPassword: boolean;
-      /**
-       * @description List of linked OAuth provider names
-       * @example [
-       *       "google"
-       *     ]
-       */
-      linkedProviders: string[];
-      stats: components['schemas']['StatsDto'];
-    };
-    ExchangeCodeDto: {
-      /**
-       * @description One-time exchange code from OAuth callback
-       * @example abc123xyz...
-       */
-      code: string;
-    };
-    LinkedAccountDto: {
-      /**
-       * @description OAuth provider name
-       * @example google
-       */
-      provider: string;
-      /**
-       * @description Email from OAuth provider
-       * @example user@gmail.com
-       */
-      email?: string | null;
-      /**
-       * @description Display name from OAuth provider
-       * @example John Doe
-       */
-      displayName?: string | null;
-      /**
-       * Format: date-time
-       * @description When the account was linked
-       * @example 2025-01-15T10:30:00.000Z
-       */
-      linkedAt: string;
-    };
-    ProviderConfigDto: {
-      /** @description Whether this OAuth provider is enabled */
-      enabled: boolean;
-    };
-    AuthConfigDto: {
-      /** @description Google OAuth configuration */
-      google: components['schemas']['ProviderConfigDto'];
-      /** @description Facebook OAuth configuration */
-      facebook: components['schemas']['ProviderConfigDto'];
-    };
-    UpdateProfileDto: {
-      /** @example ratingo_fan */
-      username?: string;
-      /** @example https://cdn.example.com/avatar.png */
-      avatarUrl?: string;
-      /** @example Люблю фільми жахів та наукову фантастику */
-      bio?: string;
-      /** @example Kyiv, Ukraine */
-      location?: string;
-      /** @example https://instagram.com/myprofile */
-      website?: string;
-      /** @example uk */
-      preferredLanguage?: string;
-      /** @example UA */
-      preferredRegion?: string;
-      /** @example true */
-      isProfilePublic?: boolean;
-      /** @example false */
-      showWatchHistory?: boolean;
-      /** @example true */
-      showRatings?: boolean;
-      /** @example true */
-      allowFollowers?: boolean;
-      /** @example true */
-      autoSubscribeOnWatch?: boolean;
-    };
-    CreateAvatarUploadUrlDto: {
-      /** @enum {string} */
-      contentType: 'image/jpeg' | 'image/png' | 'image/webp';
-    };
-    AvatarUploadUrlDto: {
-      uploadUrl: string;
-      publicUrl: string;
-      key: string;
-    };
-    PublicUserMediaSummaryDto: {
-      id: string;
-      /** @enum {string} */
-      type: 'movie' | 'show';
-      title: string;
-      slug: string;
-      poster: components['schemas']['ImageDto'] | null;
-      /** Format: date-time */
-      releaseDate?: string | null;
-    };
-    PublicUserMediaListItemDto: {
-      id: string;
-      /** @enum {string} */
-      state: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused' | 'caught_up';
-      /** @description 0-100 rating */
-      rating: number | null;
-      /** @description Arbitrary progress payload (JSON) */
-      progress?: Record<string, never> | null;
-      notes?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      mediaSummary: components['schemas']['PublicUserMediaSummaryDto'];
-    };
-    PaginatedPublicUserMediaResponseDto: {
-      data: components['schemas']['PublicUserMediaListItemDto'][];
-      meta: components['schemas']['OffsetPaginationMetaDto'];
-    };
-    PostListItemDto: {
-      /**
-       * @description Post ID
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      id: string;
-      /**
-       * @description URL slug
-       * @example shcho-novoho-v-ratingo
-       */
-      slug: string;
-      /**
-       * @description Post title
-       * @example Що нового в Ratingo
-       */
-      title: string;
-      /**
-       * @description Post excerpt (first 200 chars of body)
-       * @example Ми додали нові функції для покращення вашого досвіду...
-       */
-      excerpt: string;
-      /**
-       * @description Post type
-       * @example update
-       * @enum {string}
-       */
-      type: 'update' | 'explanation' | 'fix' | 'roadmap';
-      /**
-       * @description Featured image URL
-       * @example https://cdn.ratingo.com/journal/featured.jpg
-       */
-      featuredImageUrl?: string | null;
-      /**
-       * Format: date-time
-       * @description Publication date
-       * @example 2026-01-15T10:00:00.000Z
-       */
-      publishedAt: string;
-      /**
-       * Format: date-time
-       * @description Creation date
-       * @example 2026-01-14T15:30:00.000Z
-       */
-      createdAt: string;
-    };
-    PostPaginationMetaDto: {
-      /**
-       * @description Total number of posts
-       * @example 42
-       */
-      total: number;
-      /**
-       * @description Current page number
-       * @example 1
-       */
-      page: number;
-      /**
-       * @description Total number of pages
-       * @example 5
-       */
-      totalPages: number;
-      /**
-       * @description Posts per page
-       * @example 10
-       */
-      limit: number;
-    };
-    PostListResponseDto: {
-      /** @description List of posts */
-      posts: components['schemas']['PostListItemDto'][];
-      /** @description Pagination metadata */
-      meta: components['schemas']['PostPaginationMetaDto'];
-    };
-    PostNavigationLinkDto: {
-      /**
-       * @description Post slug
-       * @example shcho-novoho-v-ratingo
-       */
-      slug: string;
-      /**
-       * @description Post title
-       * @example Що нового в Ratingo
-       */
-      title: string;
-    };
-    PostNavigationDto: {
-      /** @description Previous post (older) */
-      prev?: components['schemas']['PostNavigationLinkDto'] | null;
-      /** @description Next post (newer) */
-      next?: components['schemas']['PostNavigationLinkDto'] | null;
-    };
-    PostDetailDto: {
-      /**
-       * @description Post ID
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      id: string;
-      /**
-       * @description URL slug
-       * @example shcho-novoho-v-ratingo
-       */
-      slug: string;
-      /**
-       * @description Post title
-       * @example Що нового в Ratingo
-       */
-      title: string;
-      /**
-       * @description Post excerpt (first 200 chars of body)
-       * @example Ми додали нові функції для покращення вашого досвіду...
-       */
-      excerpt: string;
-      /**
-       * @description Post type
-       * @example update
-       * @enum {string}
-       */
-      type: 'update' | 'explanation' | 'fix' | 'roadmap';
-      /**
-       * @description Featured image URL
-       * @example https://cdn.ratingo.com/journal/featured.jpg
-       */
-      featuredImageUrl?: string | null;
-      /**
-       * Format: date-time
-       * @description Publication date
-       * @example 2026-01-15T10:00:00.000Z
-       */
-      publishedAt: string;
-      /**
-       * Format: date-time
-       * @description Creation date
-       * @example 2026-01-14T15:30:00.000Z
-       */
-      createdAt: string;
-      /**
-       * @description Post body in Markdown format
-       * @example ## Нові функції
-       *
-       *     Ми додали...
-       */
-      body: string;
-      /**
-       * @description Rendered HTML content
-       * @example <h2>Нові функції</h2><p>Ми додали...</p>
-       */
-      bodyHtml: string;
-      /**
-       * @description Context identifier
-       * @example trending
-       */
-      contextId?: string | null;
-      /**
-       * @description Meta title for SEO
-       * @example Що нового в Ratingo | Журнал
-       */
-      metaTitle?: string | null;
-      /**
-       * @description Meta description for SEO
-       * @example Дізнайтеся про останні оновлення Ratingo...
-       */
-      metaDescription?: string | null;
-      /**
-       * Format: date-time
-       * @description Last update date
-       * @example 2026-01-15T12:00:00.000Z
-       */
-      updatedAt: string;
-      /** @description Navigation links to adjacent posts */
-      navigation: components['schemas']['PostNavigationDto'];
-    };
-    AdminPostDto: {
-      /**
-       * @description Post ID
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      id: string;
-      /**
-       * @description URL slug
-       * @example shcho-novoho-v-ratingo
-       */
-      slug: string;
-      /**
-       * @description Post title
-       * @example Що нового в Ratingo
-       */
-      title: string;
-      /**
-       * @description Post excerpt (first 200 chars of body)
-       * @example Ми додали нові функції для покращення вашого досвіду...
-       */
-      excerpt: string;
-      /**
-       * @description Post type
-       * @example update
-       * @enum {string}
-       */
-      type: 'update' | 'explanation' | 'fix' | 'roadmap';
-      /**
-       * @description Featured image URL
-       * @example https://cdn.ratingo.com/journal/featured.jpg
-       */
-      featuredImageUrl?: string | null;
-      /**
-       * Format: date-time
-       * @description Publication date
-       * @example 2026-01-15T10:00:00.000Z
-       */
-      publishedAt: string;
-      /**
-       * Format: date-time
-       * @description Creation date
-       * @example 2026-01-14T15:30:00.000Z
-       */
-      createdAt: string;
-      /**
-       * @description Post body in Markdown format
-       * @example ## Нові функції
-       *
-       *     Ми додали...
-       */
-      body: string;
-      /**
-       * @description Rendered HTML content
-       * @example <h2>Нові функції</h2><p>Ми додали...</p>
-       */
-      bodyHtml: string;
-      /**
-       * @description Context identifier
-       * @example trending
-       */
-      contextId?: string | null;
-      /**
-       * @description Meta title for SEO
-       * @example Що нового в Ratingo | Журнал
-       */
-      metaTitle?: string | null;
-      /**
-       * @description Meta description for SEO
-       * @example Дізнайтеся про останні оновлення Ratingo...
-       */
-      metaDescription?: string | null;
-      /**
-       * Format: date-time
-       * @description Last update date
-       * @example 2026-01-15T12:00:00.000Z
-       */
-      updatedAt: string;
-      /** @description Navigation links to adjacent posts */
-      navigation: components['schemas']['PostNavigationDto'];
-      /**
-       * @description Whether post is a draft
-       * @example false
-       */
-      isDraft: boolean;
-      /**
-       * @description Author user ID
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      authorId: string;
-    };
-    AdminPostListResponseDto: {
-      /** @description List of posts with admin details */
-      posts: components['schemas']['AdminPostDto'][];
-      /** @description Pagination metadata */
-      meta: components['schemas']['PostPaginationMetaDto'];
-    };
-    CreatePostDto: {
-      /**
-       * @description Post title
-       * @example Що нового в Ratingo
-       */
-      title: string;
-      /**
-       * @description Post body in Markdown format
-       * @example ## Нові функції
-       *
-       *     Ми додали...
-       */
-      body: string;
-      /**
-       * @description Post type
-       * @example update
-       * @enum {string}
-       */
-      type: 'update' | 'explanation' | 'fix' | 'roadmap';
-      /**
-       * @description Custom URL slug (auto-generated from title if not provided)
-       * @example shcho-novoho-v-ratingo
-       */
-      slug?: string;
-      /**
-       * @description Featured image URL or path for Open Graph previews
-       * @example /api/journal/images/uuid.jpg
-       */
-      featuredImageUrl?: string;
-      /**
-       * @description Context identifier for linking post to product features
-       * @example trending
-       */
-      contextId?: string;
-      /**
-       * @description Custom meta title for SEO (defaults to post title)
-       * @example Що нового в Ratingo | Журнал
-       */
-      metaTitle?: string;
-      /**
-       * @description Custom meta description for SEO (defaults to excerpt)
-       * @example Дізнайтеся про останні оновлення Ratingo...
-       */
-      metaDescription?: string;
-      /**
-       * @description Save as draft without publishing
-       * @default true
-       * @example true
-       */
-      isDraft: boolean;
-      /**
-       * @description Publication date (for scheduling). ISO 8601 format.
-       * @example 2026-01-15T10:00:00.000Z
-       */
-      publishedAt?: string;
-    };
-    UpdatePostDto: {
-      /**
-       * @description Post title
-       * @example Що нового в Ratingo
-       */
-      title?: string;
-      /**
-       * @description Post body in Markdown format
-       * @example ## Нові функції
-       *
-       *     Ми додали...
-       */
-      body?: string;
-      /**
-       * @description Post type
-       * @example update
-       * @enum {string}
-       */
-      type?: 'update' | 'explanation' | 'fix' | 'roadmap';
-      /**
-       * @description Custom URL slug
-       * @example shcho-novoho-v-ratingo
-       */
-      slug?: string;
-      /**
-       * @description Featured image URL or path for Open Graph previews
-       * @example /api/journal/images/uuid.jpg
-       */
-      featuredImageUrl?: string;
-      /**
-       * @description Context identifier for linking post to product features
-       * @example trending
-       */
-      contextId?: string;
-      /**
-       * @description Custom meta title for SEO
-       * @example Що нового в Ratingo | Журнал
-       */
-      metaTitle?: string;
-      /**
-       * @description Custom meta description for SEO
-       * @example Дізнайтеся про останні оновлення Ratingo...
-       */
-      metaDescription?: string;
-      /**
-       * @description Save as draft without publishing
-       * @example true
-       */
-      isDraft?: boolean;
-      /**
-       * @description Publication date (for scheduling). ISO 8601 format.
-       * @example 2026-01-15T10:00:00.000Z
-       */
-      publishedAt?: string;
-    };
-    ImageUploadResponseDto: {
-      /**
-       * @description CDN URL of uploaded image
-       * @example https://cdn.ratingo.com/journal/abc123.jpg
-       */
-      url: string;
-    };
-    ReviewAuthorDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example user123 */
-      username: string;
-      /** @example https://example.com/avatar.jpg */
-      avatarUrl: string | null;
-      /**
-       * @description Whether the author shows their ratings publicly
-       * @example true
-       */
-      showRatings: boolean;
-      /**
-       * @description Whether the author profile is public
-       * @example true
-       */
-      isProfilePublic: boolean;
-    };
-    ReviewResponseDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      mediaItemId: string;
-      /** @example Чудовий фільм! Візуальні ефекти на висоті. */
-      content: string;
-      /**
-       * @description Rating 0-100, null if author has showRatings=false
-       * @example 85
-       */
-      rating: number | null;
-      /** @example false */
-      hasSpoiler: boolean;
-      /** @example 42 */
-      likesCount: number;
-      /** @example 3 */
-      dislikesCount: number;
-      /** @example 5 */
-      repliesCount: number;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T10:30:00.000Z
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T10:30:00.000Z
-       */
-      updatedAt: string;
-      author: components['schemas']['ReviewAuthorDto'];
-      /**
-       * @description Current user vote (null if not voted or not authenticated)
-       * @example like
-       */
-      currentUserVote: string | null;
-    };
-    ReviewListResponseDto: {
-      data: components['schemas']['ReviewResponseDto'][];
-      /**
-       * @example {
-       *       "total": 100,
-       *       "limit": 20,
-       *       "offset": 0
-       *     }
-       */
-      meta: Record<string, never>;
-    };
-    ReplyAuthorDto: {
-      /** @description Author UUID */
-      id: string;
-      /** @description Author username */
-      username: string;
-      /** @description Author avatar URL */
-      avatarUrl?: string;
-      /** @description Whether author profile is public */
-      isProfilePublic: boolean;
-    };
-    ReplyResponseDto: {
-      /** @description Reply UUID */
-      id: string;
-      /** @description Review UUID this reply belongs to */
-      reviewId: string;
-      /** @description Parent reply UUID for nested replies */
-      parentReplyId?: string;
-      /** @description Username of the person being replied to */
-      replyToUsername?: string;
-      /** @description Reply content */
-      content: string;
-      /** @description Reply author info */
-      author: components['schemas']['ReplyAuthorDto'];
-      /**
-       * Format: date-time
-       * @description When reply was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description When reply was last updated
-       */
-      updatedAt: string;
-    };
-    CreateReviewDto: {
-      /**
-       * @description Media item UUID
-       * @example 123e4567-e89b-12d3-a456-426614174000
-       */
-      mediaItemId: string;
-      /**
-       * @description Review content (max 280 characters)
-       * @example Чудовий фільм! Візуальні ефекти на висоті.
-       */
-      content: string;
-      /**
-       * @description Rating from 0 to 100
-       * @example 85
-       */
-      rating: number;
-      /**
-       * @description Whether the review contains spoilers
-       * @default false
-       * @example false
-       */
-      hasSpoiler: boolean;
-      /**
-       * @description Media type hint. When provided, allows the correct default user-media state to be chosen for first-time entries (watching for shows, completed for movies).
-       * @example movie
-       * @enum {string}
-       */
-      mediaType?: 'movie' | 'show';
-    };
-    ReviewMutationResponseDto: {
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      id: string;
-      /** @example 123e4567-e89b-12d3-a456-426614174000 */
-      mediaItemId: string;
-      /** @example Чудовий фільм! */
-      content: string;
-      /** @example 85 */
-      rating: number;
-      /** @example false */
-      hasSpoiler: boolean;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T10:30:00.000Z
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T10:30:00.000Z
-       */
-      updatedAt: string;
-    };
-    UpdateReviewDto: {
-      /**
-       * @description Updated review content (max 280 characters)
-       * @example Переглянув ще раз - стало ще краще!
-       */
-      content?: string;
-      /**
-       * @description Updated rating from 0 to 100
-       * @example 90
-       */
-      rating?: number;
-      /**
-       * @description Whether the review contains spoilers
-       * @example true
-       */
-      hasSpoiler?: boolean;
-    };
-    ReviewVoteDto: {
-      /**
-       * @description Vote type: like or dislike
-       * @example like
-       * @enum {string}
-       */
-      voteType: 'like' | 'dislike';
-    };
-    VoteResultDto: {
-      /**
-       * @description Action taken
-       * @example added
-       * @enum {string}
-       */
-      action: 'added' | 'changed' | 'removed';
-      /**
-       * @description Current vote type (null if removed)
-       * @example like
-       */
-      currentVote: string | null;
-    };
-    CreateReplyDto: {
-      /** @description Reply content */
-      content: string;
-      /**
-       * Format: uuid
-       * @description Parent reply ID for nested replies
-       */
-      parentReplyId?: string;
-      /** @description Username of the person being replied to */
-      replyToUsername?: string;
-    };
-    ReplyMutationResponseDto: {
-      /** @description Reply UUID */
-      id: string;
-      /** @description Review UUID */
-      reviewId: string;
-      /** @description Parent reply UUID */
-      parentReplyId?: string;
-      /** @description Username of the person being replied to */
-      replyToUsername?: string;
-      /** @description Reply content */
-      content: string;
-      /**
-       * Format: date-time
-       * @description When reply was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description When reply was last updated
-       */
-      updatedAt: string;
-    };
-    CreateReportDto: {
-      /**
-       * @description Report reason
-       * @example spam
-       * @enum {string}
-       */
-      reason:
-        'spam' | 'harassment' | 'hate_speech' | 'misinformation' | 'spoiler_unmarked' | 'other';
-      /** @description Additional details about the report */
-      details?: string;
-    };
-    ReportResponseDto: {
-      /** @description Report UUID */
-      id: string;
-      /** @description Review UUID */
-      reviewId: string;
-      /**
-       * @description Report reason
-       * @enum {string}
-       */
-      reason:
-        'spam' | 'harassment' | 'hate_speech' | 'misinformation' | 'spoiler_unmarked' | 'other';
-      /** @description Additional details */
-      details?: string;
-      /**
-       * @description Report status
-       * @enum {string}
-       */
-      status: 'pending' | 'reviewed' | 'dismissed' | 'actioned';
-      /**
-       * Format: date-time
-       * @description When report was created
-       */
-      createdAt: string;
-    };
-    ReportReviewAuthorDto: {
-      /** @description Author UUID */
-      id: string;
-      /** @description Author username */
-      username: string;
-    };
-    ReportReviewDto: {
-      /** @description Review UUID */
-      id: string;
-      /** @description Review content */
-      content: string;
-      /** @description Whether review contains spoilers */
-      hasSpoiler: boolean;
-      /** @description Whether review is deleted */
-      isDeleted: boolean;
-      /** @description Review author */
-      author: components['schemas']['ReportReviewAuthorDto'];
-    };
-    ReporterDto: {
-      /** @description Reporter UUID */
-      id: string;
-      /** @description Reporter username */
-      username: string;
-    };
-    ReportWithReviewDto: {
-      /** @description Report UUID */
-      id: string;
-      /** @description Review UUID */
-      reviewId: string;
-      /**
-       * @description Report reason
-       * @enum {string}
-       */
-      reason:
-        'spam' | 'harassment' | 'hate_speech' | 'misinformation' | 'spoiler_unmarked' | 'other';
-      /** @description Additional details */
-      details?: string;
-      /**
-       * @description Report status
-       * @enum {string}
-       */
-      status: 'pending' | 'reviewed' | 'dismissed' | 'actioned';
-      /**
-       * Format: date-time
-       * @description When report was created
-       */
-      createdAt: string;
-      /** @description Reported review */
-      review: components['schemas']['ReportReviewDto'];
-      /** @description Reporter info */
-      reporter: components['schemas']['ReporterDto'];
-      /** @description Moderator UUID who resolved */
-      moderatorId?: string;
-      /** @description Moderator notes */
-      moderatorNotes?: string;
-      /**
-       * Format: date-time
-       * @description When report was resolved
-       */
-      resolvedAt?: string;
-    };
-    AdminReportListResponseDto: {
-      /** @description Reports */
-      data: components['schemas']['ReportWithReviewDto'][];
-      /** @description Total count */
-      total: number;
-    };
-    ResolveReportDto: {
-      /**
-       * @description New status
-       * @enum {string}
-       */
-      status: 'reviewed' | 'dismissed' | 'actioned';
-      /** @description Moderator notes */
-      moderatorNotes?: string;
-      /** @description Whether to hide the review (soft delete) */
-      hideReview?: boolean;
-    };
-    KeyHealthSnapshotDto: {
-      /**
-       * @example tmdb
-       * @enum {string}
-       */
-      provider: 'tmdb' | 'trakt' | 'mdblist' | 'omdb' | 's3';
-      /**
-       * @example valid
-       * @enum {string}
-       */
-      status: 'valid' | 'degraded' | 'invalid' | 'unknown';
-      /** @description HTTP status observed by the probe */
-      statusCode: number | null;
-      /** @description Probe latency in milliseconds */
-      latencyMs: number | null;
-      /** @description Error message or quota note */
-      detail: string | null;
-      quotaRemaining: number | null;
-      quotaLimit: number | null;
-      /** Format: date-time */
-      checkedAt: string;
-    };
-    ProviderFailureCountsDto: {
-      /** @description 401/403 responses seen on live requests */
-      unauthorized: number;
-      /** @description 429 responses seen on live requests */
-      rateLimited: number;
-    };
-    ProviderKeyHealthDto: {
-      /**
-       * @example tmdb
-       * @enum {string}
-       */
-      provider: 'tmdb' | 'trakt' | 'mdblist' | 'omdb' | 's3';
-      latest: components['schemas']['KeyHealthSnapshotDto'] | null;
-      failures: components['schemas']['ProviderFailureCountsDto'];
-    };
-    KeyHealthDashboardDto: {
-      providers: components['schemas']['ProviderKeyHealthDto'][];
-    };
-    KeyHealthHistoryDto: {
-      /**
-       * @example tmdb
-       * @enum {string}
-       */
-      provider: 'tmdb' | 'trakt' | 'mdblist' | 'omdb' | 's3';
-      items: components['schemas']['KeyHealthSnapshotDto'][];
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+        ImageDto: {
+            /**
+             * @description Smallest size TMDB serves: w154 for posters (list thumbnails up to ~75px wide), w300 for backdrops (same as small)
+             * @example https://image.tmdb.org/t/p/w154/abc.jpg
+             */
+            thumb: string;
+            /**
+             * @description Small image for cards (w342)
+             * @example https://image.tmdb.org/t/p/w342/abc.jpg
+             */
+            small: string;
+            /**
+             * @description Medium image for details (w500)
+             * @example https://image.tmdb.org/t/p/w500/abc.jpg
+             */
+            medium: string;
+            /**
+             * @description Large image for banners (w780)
+             * @example https://image.tmdb.org/t/p/w780/abc.jpg
+             */
+            large: string;
+            /**
+             * @description Original quality image
+             * @example https://image.tmdb.org/t/p/original/abc.jpg
+             */
+            original: string;
+        };
+        RecentRaterDto: {
+            /**
+             * @description Unique user identifier
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            userId: string;
+            /**
+             * @description Public username of the rater
+             * @example john_doe
+             */
+            username: string;
+            /**
+             * @description URL of the user avatar image
+             * @example https://example.com/avatar.jpg
+             */
+            avatarUrl: string | null;
+        };
+        RatingoStatsDto: {
+            /**
+             * @description Composite Ratingo Score (0-100)
+             * @example 85.5
+             */
+            ratingoScore?: number | null;
+            /**
+             * @description Quality Score (0-100)
+             * @example 88.5
+             */
+            qualityScore?: number | null;
+            /**
+             * @description Popularity Score (0-100)
+             * @example 45.2
+             */
+            popularityScore?: number | null;
+            /**
+             * @description Number of people watching right now (Live)
+             * @example 6
+             */
+            liveWatchers?: number | null;
+            /**
+             * @description Total unique watchers all time
+             * @example 6423
+             */
+            totalWatchers?: number | null;
+            /**
+             * @description Community average rating (0-100 scale)
+             * @example 78.5
+             */
+            communityAverageRating?: number | null;
+            /**
+             * @description Number of community ratings
+             * @example 1240
+             */
+            communityRatingCount?: number | null;
+            /** @description Up to 3 most recent public raters */
+            recentRaters?: components["schemas"]["RecentRaterDto"][];
+        };
+        ExternalRatingItemDto: {
+            /** @example 8.8 */
+            rating: number;
+            /** @example 2000000 */
+            voteCount?: number | null;
+        };
+        ExternalRatingsDto: {
+            tmdb?: components["schemas"]["ExternalRatingItemDto"] | null;
+            imdb?: components["schemas"]["ExternalRatingItemDto"] | null;
+            trakt?: components["schemas"]["ExternalRatingItemDto"] | null;
+            metacritic?: components["schemas"]["ExternalRatingItemDto"] | null;
+            /** @description Rotten Tomatoes critics score (Tomatometer, 0-100) */
+            rottenTomatoes?: components["schemas"]["ExternalRatingItemDto"] | null;
+            /** @description Rotten Tomatoes audience score (Popcornmeter, 0-100) */
+            rottenTomatoesAudience?: components["schemas"]["ExternalRatingItemDto"] | null;
+        };
+        GenreDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example Action */
+            name: string;
+            /** @example action */
+            slug: string;
+        };
+        ContinuePointDto: {
+            /** @example 2 */
+            season: number;
+            /** @example 5 */
+            episode: number;
+        };
+        CardMetaDto: {
+            /** @enum {string|null} */
+            badgeKey?: "NEW_EPISODE" | "CONTINUE" | "IN_WATCHLIST" | "HIT" | "NEW_RELEASE" | "RISING" | "TRENDING" | "IN_THEATERS" | "NEW_ON_STREAMING" | null;
+            /** @enum {string} */
+            listContext?: "TRENDING_LIST" | "POPULAR_LIST" | "NEW_RELEASES_LIST" | "IN_THEATERS_LIST" | "NEW_ON_STREAMING_LIST" | "USER_LIBRARY" | "CONTINUE_LIST" | "DEFAULT";
+            /** @enum {string} */
+            primaryCta: "SAVE" | "CONTINUE" | "OPEN";
+            continue?: components["schemas"]["ContinuePointDto"] | null;
+        };
+        MovieListItemDto: {
+            id: string;
+            mediaItemId: string;
+            tmdbId: number;
+            title: string;
+            slug: string;
+            /**
+             * @default ready
+             * @example ready
+             * @enum {string}
+             */
+            ingestionStatus: "importing" | "ready" | "failed";
+            overview: string | null;
+            poster?: components["schemas"]["ImageDto"] | null;
+            backdrop?: components["schemas"]["ImageDto"] | null;
+            /** @example 120.5 */
+            popularity: number;
+            /** Format: date-time */
+            releaseDate: string | null;
+            /** Format: date-time */
+            theatricalReleaseDate: string | null;
+            /** Format: date-time */
+            digitalReleaseDate: string | null;
+            runtime: number | null;
+            stats: components["schemas"]["RatingoStatsDto"];
+            externalRatings: components["schemas"]["ExternalRatingsDto"];
+            genres: components["schemas"]["GenreDto"][];
+            card?: components["schemas"]["CardMetaDto"];
+        };
+        OffsetPaginationMetaDto: {
+            /** @example 100 */
+            count?: number;
+            /** @example 250 */
+            total?: number;
+            /** @example 20 */
+            limit?: number;
+            /** @example 0 */
+            offset?: number;
+            /** @example true */
+            hasMore?: boolean;
+        };
+        PaginatedMovieResponseDto: {
+            data: components["schemas"]["MovieListItemDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        UserMediaStateDto: {
+            /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */
+            id: string;
+            /** @example 6bd54e62-bac3-49dd-a0d4-05efd7761700 */
+            userId: string;
+            /** @example c1f2c3d4-e5f6-7890-abcd-1234567890ab */
+            mediaItemId: string;
+            /**
+             * @example watching
+             * @enum {string}
+             */
+            state: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
+            /**
+             * @description 0-100 rating
+             * @example 85
+             */
+            rating: number | null;
+            /**
+             * @description Arbitrary progress payload (JSON)
+             * @example {
+             *       "seasons": {
+             *         "1": 3
+             *       }
+             *     }
+             */
+            progress: Record<string, never> | null;
+            /** @example Must watch this weekend */
+            notes: string | null;
+            /**
+             * Format: date-time
+             * @example 2025-12-11T12:00:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2025-12-11T12:00:00.000Z
+             */
+            updatedAt: string;
+            /**
+             * @description Lightweight media summary to avoid extra catalog calls
+             * @example {
+             *       "id": "0a8085e4-a128-42b4-a64f-e6692c112ee6",
+             *       "type": "show",
+             *       "title": "Stranger Things",
+             *       "slug": "dyvni-dyva",
+             *       "poster": {
+             *         "small": "https://image.tmdb.org/t/p/w342/poster.jpg",
+             *         "medium": "https://image.tmdb.org/t/p/w500/poster.jpg",
+             *         "large": "https://image.tmdb.org/t/p/w780/poster.jpg",
+             *         "original": "https://image.tmdb.org/t/p/original/poster.jpg"
+             *       }
+             *     }
+             */
+            mediaSummary: Record<string, never> | null;
+        };
+        VideoDto: {
+            /**
+             * @description YouTube video key
+             * @example dQw4w9WgXcQ
+             */
+            key: string;
+            /**
+             * @description Video title
+             * @example Dune: Part Two | Official Trailer 3
+             */
+            name: string;
+            /**
+             * @example YouTube
+             * @enum {string}
+             */
+            site: "YouTube" | "Vimeo";
+            /**
+             * @example Trailer
+             * @enum {string}
+             */
+            type: "Trailer" | "Teaser" | "Clip" | "Featurette" | "Behind the Scenes" | "Bloopers";
+            /**
+             * @description Is this an official video
+             * @example true
+             */
+            official: boolean;
+            /**
+             * @description ISO 639-1 language code
+             * @example en
+             * @enum {string}
+             */
+            language: "en" | "uk";
+            /**
+             * @description ISO 3166-1 alpha-2 country code
+             * @example US
+             */
+            country: string;
+        };
+        CastMemberDto: {
+            /**
+             * @description Universal person identifier
+             * @example tmdb:123
+             */
+            personId: string;
+            /**
+             * @description URL-friendly slug
+             * @example brad-pitt
+             */
+            slug: string | null;
+            /**
+             * @deprecated
+             * @example 123
+             */
+            tmdbId: number;
+            /** @example Brad Pitt */
+            name: string;
+            /** @example Tyler Durden */
+            character: string;
+            /** @example /pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg */
+            profilePath: string | null;
+            /** @example 0 */
+            order: number;
+        };
+        CrewMemberDto: {
+            /**
+             * @description Universal person identifier
+             * @example tmdb:456
+             */
+            personId: string;
+            /**
+             * @description URL-friendly slug
+             * @example david-fincher
+             */
+            slug: string | null;
+            /**
+             * @deprecated
+             * @example 456
+             */
+            tmdbId: number;
+            /** @example David Fincher */
+            name: string;
+            /** @example Director */
+            job: string;
+            /** @example Directing */
+            department: string;
+            /** @example /y.jpg */
+            profilePath: string | null;
+        };
+        CreditsDto: {
+            /**
+             * @example [
+             *       {
+             *         "personId": "tmdb:123",
+             *         "slug": "brad-pitt",
+             *         "tmdbId": 123,
+             *         "name": "Brad Pitt",
+             *         "character": "Tyler Durden",
+             *         "profilePath": "/brad.jpg",
+             *         "order": 0
+             *       }
+             *     ]
+             */
+            cast: components["schemas"]["CastMemberDto"][];
+            /**
+             * @example [
+             *       {
+             *         "personId": "tmdb:456",
+             *         "slug": "david-fincher",
+             *         "tmdbId": 456,
+             *         "name": "David Fincher",
+             *         "job": "Director",
+             *         "department": "Directing",
+             *         "profilePath": "/david.jpg"
+             *       }
+             *     ]
+             */
+            crew: components["schemas"]["CrewMemberDto"][];
+        };
+        WatchProviderDto: {
+            /**
+             * @description Canonical provider ID
+             * @example netflix
+             */
+            id: string;
+            /**
+             * @deprecated
+             * @description Numeric provider ID (deprecated, use id instead)
+             * @example 8
+             */
+            providerId: number;
+            /** @example Netflix */
+            name: string;
+            logo?: components["schemas"]["ImageDto"] | null;
+            /** @example 10 */
+            displayPriority?: number;
+        };
+        AvailabilityDto: {
+            /**
+             * @description Selected region for watch providers (UA primary, US fallback)
+             * @example UA
+             * @enum {string|null}
+             */
+            region: "UA" | "US" | null;
+            /**
+             * @description True if using US as fallback because UA is not available
+             * @example false
+             */
+            isFallback: boolean;
+            /** @example https://www.themoviedb.org/movie/123/watch?locale=UA */
+            link: string | null;
+            /** @description Streaming/subscription services (flatrate) */
+            stream?: components["schemas"]["WatchProviderDto"][];
+            rent?: components["schemas"]["WatchProviderDto"][];
+            buy?: components["schemas"]["WatchProviderDto"][];
+            ads?: components["schemas"]["WatchProviderDto"][];
+            free?: components["schemas"]["WatchProviderDto"][];
+            /**
+             * @description Hint for UI: svod = show providers, tvod_only = show "not on subscription" message, none = no data
+             * @example svod
+             * @enum {string}
+             */
+            hint: "svod" | "tvod_only" | "none";
+            /**
+             * @description TMDB watch page URL for fallback "View on TMDB" link
+             * @example https://www.themoviedb.org/movie/123/watch
+             */
+            tmdbWatchUrl?: string | null;
+        };
+        MovieVerdictDto: {
+            /**
+             * @description Verdict type for UI styling
+             * @example quality
+             * @enum {string}
+             */
+            type: "warning" | "release" | "quality" | "popularity" | "general";
+            /**
+             * @description Additional context to display with verdict
+             * @example IMDb: 6.3
+             */
+            context?: string | null;
+            /**
+             * @description Hint key for CTA suggestions
+             * @example forLater
+             * @enum {string}
+             */
+            hintKey: "newEpisodes" | "afterAllEpisodes" | "whenOnStreaming" | "notifyNewEpisode" | "general" | "forLater" | "notifyRelease" | "decideToWatch";
+            /**
+             * @description Message key for i18n lookup on client (details.verdict.movie.*)
+             * @example strongRatings
+             */
+            messageKey: string | null;
+        };
+        MovieResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 12345 */
+            tmdbId: number;
+            /** @example The Matrix */
+            title: string;
+            /** @example The Matrix */
+            originalTitle?: string | null;
+            /** @example the-matrix */
+            slug: string;
+            /** @example Overview text... */
+            overview?: string | null;
+            /**
+             * @deprecated
+             * @example /path/to/poster.jpg
+             */
+            posterPath?: string | null;
+            poster?: components["schemas"]["ImageDto"] | null;
+            /**
+             * @deprecated
+             * @example /path/to/backdrop.jpg
+             */
+            backdropPath?: string | null;
+            backdrop?: components["schemas"]["ImageDto"] | null;
+            stats?: components["schemas"]["RatingoStatsDto"] | null;
+            externalRatings?: components["schemas"]["ExternalRatingsDto"] | null;
+            genres?: components["schemas"]["GenreDto"][];
+            /**
+             * @example ready
+             * @enum {string}
+             */
+            ingestionStatus: "importing" | "ready" | "failed";
+            /** @description User-specific state, present only when authenticated */
+            userState?: components["schemas"]["UserMediaStateDto"] | null;
+            videos?: components["schemas"]["VideoDto"][] | null;
+            /** @description Primary trailer (first UK or EN trailer) */
+            primaryTrailer?: components["schemas"]["VideoDto"] | null;
+            credits?: components["schemas"]["CreditsDto"] | null;
+            /** @description Where to watch - UA primary with US fallback */
+            availability?: components["schemas"]["AvailabilityDto"] | null;
+            /** @example 120 */
+            runtime?: number | null;
+            /** @example 100000000 */
+            budget?: number | null;
+            /** @example 500000000 */
+            revenue?: number | null;
+            /**
+             * @description Movie status: Rumored, Planned, In Production, Post Production, Released, Canceled
+             * @example Released
+             * @enum {string|null}
+             */
+            status?: "Rumored" | "Planned" | "In Production" | "Post Production" | "Released" | "Canceled" | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+            /** @description Card metadata with badge and CTA info */
+            card?: components["schemas"]["CardMetaDto"] | null;
+            /**
+             * @description Computed release status: upcoming, in_theaters, streaming, new_on_streaming
+             * @example in_theaters
+             * @enum {string|null}
+             */
+            releaseStatus?: "upcoming" | "in_theaters" | "streaming" | "new_on_streaming" | null;
+            /** @description Computed verdict for movie details page. Clients use messageKey for i18n lookup. */
+            verdict?: components["schemas"]["MovieVerdictDto"] | null;
+        };
+        ShowProgressDto: {
+            /**
+             * @description Show ID
+             * @example uuid-show-id
+             */
+            showId: string;
+            /** @description Progress per season */
+            seasons: components["schemas"]["SeasonProgressDto"][];
+        };
+        ShowTrendingItemDto: {
+            id: string;
+            mediaItemId: string;
+            slug: string;
+            title: string;
+            originalTitle?: string | null;
+            overview?: string | null;
+            primaryTrailerKey?: string | null;
+            poster?: components["schemas"]["ImageDto"] | null;
+            backdrop?: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+            isNew: boolean;
+            isClassic: boolean;
+            stats: components["schemas"]["RatingoStatsDto"];
+            externalRatings: components["schemas"]["ExternalRatingsDto"];
+            /**
+             * @example show
+             * @enum {string}
+             */
+            type: "show";
+            showProgress?: components["schemas"]["ShowProgressDto"] | null;
+            card?: components["schemas"]["CardMetaDto"];
+        };
+        TrendingShowsResponseDto: {
+            data: components["schemas"]["ShowTrendingItemDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        NewEpisodeDto: {
+            /**
+             * @description Media item ID (for linking to show details)
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            mediaItemId: string;
+            /** @example arcane */
+            slug: string;
+            /** @example Arcane */
+            title: string;
+            /** @example /path/to/poster.jpg */
+            posterPath?: string | null;
+            /** @example 2 */
+            seasonNumber: number;
+            /** @example 5 */
+            episodeNumber: number;
+            /** @example Heavy Is the Crown */
+            episodeTitle: string;
+            /** Format: date-time */
+            airDate: string;
+        };
+        NewEpisodesResponseDto: {
+            data: components["schemas"]["NewEpisodeDto"][];
+        };
+        CalendarEpisodeDto: {
+            /** @example 0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90 */
+            episodeId: string;
+            /**
+             * @description Media item ID of the show.
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            showId: string;
+            /**
+             * @description Show record ID used by episode progress endpoints.
+             * @example 7c9e6679-7425-40de-944b-e07fc1f90ae7
+             */
+            showRecordId: string;
+            /** @example arcane */
+            showSlug: string;
+            /** @example Arcane */
+            showTitle: string;
+            /** @example /path/to/poster.jpg */
+            posterPath?: string | null;
+            /** @example 2 */
+            seasonNumber: number;
+            /** @example 1 */
+            episodeNumber: number;
+            /** @example Heavy Is the Crown */
+            title: string | null;
+            /** @example Overview... */
+            overview?: string | null;
+            /** Format: date-time */
+            airDate: string;
+            /** @example 45 */
+            runtime?: number | null;
+            /** @example http://image.com/1.jpg */
+            stillPath?: string | null;
+            /**
+             * @description Number of episodes in the season, when known.
+             * @example 8
+             */
+            seasonEpisodeCount: number | null;
+            /**
+             * @description TMDB popularity of the show.
+             * @example 312.4
+             */
+            showPopularity: number;
+            /**
+             * @description The viewer is watching this show.
+             * @example false
+             */
+            isTracked: boolean;
+            /**
+             * @description The viewer saved this show to watch later.
+             * @example false
+             */
+            isSaved: boolean;
+            /**
+             * @description The viewer marked this episode as watched.
+             * @example false
+             */
+            isWatched: boolean;
+        };
+        CalendarDayDto: {
+            /** @example 2024-11-09 */
+            date: string;
+            episodes: components["schemas"]["CalendarEpisodeDto"][];
+        };
+        CalendarResponseDto: {
+            /** @example 2024-11-01T00:00:00.000Z */
+            startDate: string;
+            /** @example 2024-11-08T00:00:00.000Z */
+            endDate: string;
+            days: components["schemas"]["CalendarDayDto"][];
+            /** @description Number of shows the user is currently watching (saved shows are not counted). Only present when personalized=true. */
+            watchingShowsCount?: number;
+        };
+        EpisodeDto: {
+            /**
+             * @description Internal episode ID (null if not yet imported)
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            id?: string | null;
+            /** @example 1 */
+            number: number;
+            /** @example The Beginning */
+            title?: string | null;
+            /** Format: date-time */
+            airDate?: string | null;
+            /** @example 52 */
+            runtime?: number | null;
+            /** @example /path/to/still.jpg */
+            stillPath?: string | null;
+            /** @example 8.5 */
+            voteAverage?: number | null;
+        };
+        SeasonDto: {
+            /** @example 1 */
+            number: number;
+            /** @example Season 1 */
+            name?: string | null;
+            /** @example 10 */
+            episodeCount?: number | null;
+            /** @example /path/to/poster.jpg */
+            posterPath?: string | null;
+            /** Format: date-time */
+            airDate?: string | null;
+            episodes?: components["schemas"]["EpisodeDto"][];
+        };
+        ShowVerdictDto: {
+            /**
+             * @description Verdict type for UI styling
+             * @example quality
+             * @enum {string}
+             */
+            type: "warning" | "release" | "quality" | "popularity" | "general";
+            /**
+             * @description Additional context to display with verdict
+             * @example IMDb: 8.2
+             */
+            context?: string | null;
+            /**
+             * @description Hint key for CTA suggestions
+             * @example forLater
+             * @enum {string}
+             */
+            hintKey: "newEpisodes" | "afterAllEpisodes" | "whenOnStreaming" | "notifyNewEpisode" | "general" | "forLater" | "notifyRelease" | "decideToWatch";
+            /**
+             * @description Message key for i18n lookup on client (details.verdict.show.*)
+             * @example strongRatings
+             * @enum {string|null}
+             */
+            messageKey: "cancelled" | "poorRatings" | "belowAverage" | "criticsLoved" | "strongRatings" | "decentRatings" | "longRunning" | "trendingNow" | "risingHype" | "earlyReviews" | "mixedReviews" | null;
+        };
+        ShowStatusHintDto: {
+            /**
+             * @description Message key for i18n lookup on client (details.verdict.showStatusHint.*)
+             * @example newSeason
+             * @enum {string|null}
+             */
+            messageKey: "newSeason" | "seriesFinale" | null;
+        };
+        ShowResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 12345 */
+            tmdbId: number;
+            /** @example The Matrix */
+            title: string;
+            /** @example The Matrix */
+            originalTitle?: string | null;
+            /** @example the-matrix */
+            slug: string;
+            /** @example Overview text... */
+            overview?: string | null;
+            /**
+             * @deprecated
+             * @example /path/to/poster.jpg
+             */
+            posterPath?: string | null;
+            poster?: components["schemas"]["ImageDto"] | null;
+            /**
+             * @deprecated
+             * @example /path/to/backdrop.jpg
+             */
+            backdropPath?: string | null;
+            backdrop?: components["schemas"]["ImageDto"] | null;
+            stats?: components["schemas"]["RatingoStatsDto"] | null;
+            externalRatings?: components["schemas"]["ExternalRatingsDto"] | null;
+            genres?: components["schemas"]["GenreDto"][];
+            /**
+             * @example ready
+             * @enum {string}
+             */
+            ingestionStatus: "importing" | "ready" | "failed";
+            /** @description User-specific state, present only when authenticated */
+            userState?: components["schemas"]["UserMediaStateDto"] | null;
+            videos?: components["schemas"]["VideoDto"][] | null;
+            /** @description Primary trailer (first UK or EN trailer) */
+            primaryTrailer?: components["schemas"]["VideoDto"] | null;
+            credits?: components["schemas"]["CreditsDto"] | null;
+            /** @description Where to watch - UA primary with US fallback */
+            availability?: components["schemas"]["AvailabilityDto"] | null;
+            /**
+             * @description Internal shows table ID (for episode progress tracking)
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            showId: string;
+            /**
+             * Format: date-time
+             * @description First air date of the show
+             */
+            releaseDate?: string | null;
+            /**
+             * Format: date-time
+             * @description When the show metadata was last synced
+             */
+            lastSyncedAt?: string | null;
+            /** @example 5 */
+            totalSeasons?: number | null;
+            /** @example 62 */
+            totalEpisodes?: number | null;
+            /**
+             * @description Show status: Returning Series, Ended, Canceled, In Production, Planned
+             * @example Returning Series
+             * @enum {string|null}
+             */
+            status?: "Returning Series" | "Planned" | "In Production" | "Ended" | "Canceled" | "Pilot" | null;
+            /** Format: date-time */
+            lastAirDate?: string | null;
+            /** Format: date-time */
+            nextAirDate?: string | null;
+            seasons: components["schemas"]["SeasonDto"][];
+            /** @description Card metadata with badge and CTA info */
+            card?: components["schemas"]["CardMetaDto"] | null;
+            /** @description Show verdict - answers "is it worth it?" */
+            verdict?: components["schemas"]["ShowVerdictDto"] | null;
+            /** @description Status hint - explains "why now?" (secondary, optional) */
+            statusHint?: components["schemas"]["ShowStatusHintDto"] | null;
+        };
+        SyncRequestResponseDto: {
+            /** @description Whether a sync job was queued */
+            queued: boolean;
+            /**
+             * Format: date-time
+             * @description When the show metadata was last successfully synced
+             */
+            lastSyncedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the next sync can be requested (null if not on cooldown)
+             */
+            cooldownExpiresAt: string | null;
+        };
+        SearchItemDto: {
+            /** @enum {string} */
+            source: "local" | "tmdb";
+            /** @enum {string} */
+            type: "movie" | "show";
+            id?: string;
+            mediaItemId?: string;
+            slug?: string;
+            tmdbId: number;
+            title: string;
+            originalTitle?: string | null;
+            year?: number | null;
+            poster?: components["schemas"]["ImageDto"] | null;
+            /** @example 8.5 */
+            rating: number;
+            /**
+             * @description If true, this item exists in local DB
+             * @example false
+             */
+            isImported: boolean;
+            /** @description Alternative title that matched the search query */
+            matchedAlternativeTitle?: string | null;
+        };
+        SearchResponseDto: {
+            query: string;
+            local: components["schemas"]["SearchItemDto"][];
+            tmdb: components["schemas"]["SearchItemDto"][];
+        };
+        ImportResultDto: {
+            /** @enum {string} */
+            status: "exists" | "importing" | "ready" | "failed" | "not_found";
+            id?: string;
+            slug?: string;
+            /** @enum {string} */
+            type: "movie" | "show";
+            tmdbId: number;
+            /** @enum {string} */
+            ingestionStatus?: "importing" | "ready" | "failed";
+            /** @description Job ID for polling ingestion status */
+            jobId?: string;
+        };
+        ProviderDto: {
+            /**
+             * @description Provider ID (lowercase slug)
+             * @example netflix
+             */
+            id: string;
+            /**
+             * @description Provider display name
+             * @example Netflix
+             */
+            name: string;
+            /**
+             * @description Number of media items available
+             * @example 1250
+             */
+            count: number;
+        };
+        ProvidersListDto: {
+            data: components["schemas"]["ProviderDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        SitemapItemDto: {
+            /** @description URL-friendly identifier for the media item */
+            slug: string;
+            /** @description ISO 8601 timestamp of when the item was last updated */
+            updatedAt: string;
+        };
+        SitemapResponseDto: {
+            items: components["schemas"]["SitemapItemDto"][];
+        };
+        BatchRatingsResponseDto: {
+            /**
+             * @description Map of mediaItemId to user rating (0-100). Only includes items with ratings.
+             * @example {
+             *       "uuid-1": 85,
+             *       "uuid-2": 60
+             *     }
+             */
+            ratings: {
+                [key: string]: number;
+            };
+        };
+        ImportBatchStatusDto: {
+            /**
+             * @description Unique batch identifier
+             * @example uuid-here
+             */
+            batchId: string;
+            /**
+             * @description Import source identifier
+             * @example kinobaza
+             */
+            source: string;
+            /**
+             * @description Total number of not-found items submitted for auto-ingestion
+             * @example 42
+             */
+            totalItems: number;
+            /**
+             * @description Number of items successfully ingested and linked
+             * @example 35
+             */
+            completedCount: number;
+            /**
+             * @description Number of items that failed to resolve or ingest
+             * @example 3
+             */
+            failedCount: number;
+            /**
+             * @description Batch status: processing while items remain, completed when all done/failed, cancelled when user aborted
+             * @example processing
+             * @enum {string}
+             */
+            status: "processing" | "completed" | "cancelled";
+            /**
+             * @description ISO 8601 timestamp when the batch was created
+             * @example 2024-01-15T12:00:00.000Z
+             */
+            createdAt: string;
+        };
+        CancelImportBatchesDto: {
+            /**
+             * @description UUIDs of the import batches to cancel
+             * @example [
+             *       "550e8400-e29b-41d4-a716-446655440000"
+             *     ]
+             */
+            batchIds: string[];
+        };
+        CancelImportBatchesResponseDto: {
+            /**
+             * @description Batch IDs that failed to cancel (not found or already terminal)
+             * @example []
+             */
+            failedBatchIds: string[];
+        };
+        SetUserMediaStateDto: {
+            /**
+             * @description Watch state. When omitted, preserves existing state or defaults to "completed" for movies / "watching" for shows.
+             * @example watching
+             * @enum {string}
+             */
+            state?: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
+            /**
+             * @description Media type hint for auto-state resolution. Only accepted when state is omitted; ignored otherwise.
+             * @enum {string}
+             */
+            mediaType?: "movie" | "show";
+            /** @example null */
+            rating?: number | null;
+            /**
+             * @description Season -> episode progress map
+             * @example {
+             *       "seasons": {
+             *         "1": 3
+             *       }
+             *     }
+             */
+            progress?: Record<string, never>;
+            /** @example Rewatching with friends */
+            notes?: string | null;
+        };
+        ImportItemDto: {
+            /** @example tt1234567 */
+            imdbId?: string | null;
+            /** @example 550 */
+            tmdbId?: number | null;
+            /** @example 8 */
+            rating?: number | null;
+            /**
+             * @example completed
+             * @enum {string}
+             */
+            state: "completed" | "planned";
+            /** @example Fight Club */
+            title?: string | null;
+            /** @example 1999 */
+            year?: number | null;
+        };
+        ImportMediaDto: {
+            /**
+             * @example kinobaza
+             * @enum {string}
+             */
+            source: "kinobaza" | "imdb" | "tmdb";
+            /** @description Items to import (1–10000) */
+            items: components["schemas"]["ImportItemDto"][];
+            /**
+             * @description Overwrite existing ratings and states. State can never be downgraded.
+             * @default false
+             * @example false
+             */
+            overwriteExisting: boolean;
+        };
+        ImportedItemDetailDto: {
+            /** @example Fight Club */
+            title?: string | null;
+            /** @example uuid-here */
+            mediaItemId: string;
+            /** @example completed */
+            state: string;
+            /** @example 80 */
+            rating: number | null;
+        };
+        SkippedItemDetailDto: {
+            /** @example The Matrix */
+            title?: string | null;
+            /** @example already_exists */
+            reason: string;
+        };
+        NotFoundItemDetailDto: {
+            /** @example Obscure Film */
+            title?: string | null;
+            /** @example tt9999999 */
+            imdbId?: string | null;
+            /** @example 99999 */
+            tmdbId?: number | null;
+        };
+        ImportDetailsDto: {
+            imported: components["schemas"]["ImportedItemDetailDto"][];
+            skipped: components["schemas"]["SkippedItemDetailDto"][];
+            notFound: components["schemas"]["NotFoundItemDetailDto"][];
+        };
+        PendingBatchSummaryDto: {
+            /**
+             * @description Batch identifier for polling status
+             * @example uuid-here
+             */
+            batchId: string;
+            /**
+             * @description Total number of items submitted for background auto-ingestion
+             * @example 42
+             */
+            totalItems: number;
+        };
+        CsvImportResultDto: {
+            /**
+             * @description Items successfully written to the database
+             * @example 2743
+             */
+            imported: number;
+            /**
+             * @description Items skipped (already exist and overwrite is false)
+             * @example 52
+             */
+            skipped: number;
+            /**
+             * @description Items whose media could not be found in the catalog
+             * @example 135
+             */
+            notFound: number;
+            /**
+             * @description Wall-clock import duration in milliseconds
+             * @example 812
+             */
+            durationMs: number;
+            /** @description Item-level breakdown for the result summary */
+            details: components["schemas"]["ImportDetailsDto"];
+            /** @description Present when not-found items have been queued for background auto-ingestion. Poll GET /user-media/import/status for progress updates. */
+            pendingBatch?: components["schemas"]["PendingBatchSummaryDto"];
+        };
+        MeUserMediaSummaryDto: {
+            id: string;
+            /** @enum {string} */
+            type: "movie" | "show";
+            title: string;
+            slug: string;
+            poster: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+            qualityScore?: number | null;
+            card?: components["schemas"]["CardMetaDto"];
+        };
+        ProgressSummaryDto: {
+            /**
+             * @description Number of watched episodes
+             * @example 5
+             */
+            watched: number;
+            /**
+             * @description Total number of episodes
+             * @example 10
+             */
+            total: number;
+        };
+        LibraryContinuePointDto: {
+            /**
+             * @description Season number to continue from
+             * @example 2
+             */
+            season: number;
+            /**
+             * @description Episode number to continue from
+             * @example 5
+             */
+            episode: number;
+            /**
+             * Format: uuid
+             * @description Next episode to watch
+             */
+            episodeId: string;
+            /**
+             * Format: date-time
+             * @description UTC air date of that episode
+             */
+            airDate: string | null;
+        };
+        MeUserMediaListItemDto: {
+            /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */
+            id: string;
+            /** @example 6bd54e62-bac3-49dd-a0d4-05efd7761700 */
+            userId: string;
+            /** @example c1f2c3d4-e5f6-7890-abcd-1234567890ab */
+            mediaItemId: string;
+            /**
+             * @example watching
+             * @enum {string}
+             */
+            state: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
+            /**
+             * @description 0-100 rating
+             * @example 85
+             */
+            rating: number | null;
+            /**
+             * @description Arbitrary progress payload (JSON)
+             * @example {
+             *       "seasons": {
+             *         "1": 3
+             *       }
+             *     }
+             */
+            progress: Record<string, never> | null;
+            /** @example Must watch this weekend */
+            notes: string | null;
+            /**
+             * Format: date-time
+             * @example 2025-12-11T12:00:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2025-12-11T12:00:00.000Z
+             */
+            updatedAt: string;
+            /**
+             * @description Lightweight media summary to avoid extra catalog calls
+             * @example {
+             *       "id": "0a8085e4-a128-42b4-a64f-e6692c112ee6",
+             *       "type": "show",
+             *       "title": "Stranger Things",
+             *       "slug": "dyvni-dyva",
+             *       "poster": {
+             *         "small": "https://image.tmdb.org/t/p/w342/poster.jpg",
+             *         "medium": "https://image.tmdb.org/t/p/w500/poster.jpg",
+             *         "large": "https://image.tmdb.org/t/p/w780/poster.jpg",
+             *         "original": "https://image.tmdb.org/t/p/original/poster.jpg"
+             *       }
+             *     }
+             */
+            mediaSummary: components["schemas"]["MeUserMediaSummaryDto"] | null;
+            /** @description Episode progress summary (only for shows) */
+            progressSummary?: components["schemas"]["ProgressSummaryDto"] | null;
+            /** @description Next episode to watch (shows in the watching and caught-up lists) */
+            continuePoint?: components["schemas"]["LibraryContinuePointDto"] | null;
+        };
+        PaginatedMeUserMediaResponseDto: {
+            data: components["schemas"]["MeUserMediaListItemDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        MeListCountsResponseDto: {
+            /** @description Items with state=watching (strict, no overlap with paused/dropped) */
+            watching: number;
+            /** @description Items paused by the user */
+            paused: number;
+            /** @description Items dropped by the user */
+            dropped: number;
+            /** @description Items the user completed watching */
+            completed: number;
+            /** @description Items caught up on (ongoing shows with all aired episodes watched) */
+            caughtUp: number;
+            /** @description Saved items in the "for later" list */
+            forLater: number;
+            /** @description Saved items in the "considering" list */
+            considering: number;
+        };
+        EpisodeInfoDto: {
+            /**
+             * @description Season number
+             * @example 2
+             */
+            seasonNumber: number;
+            /**
+             * @description Episode number
+             * @example 5
+             */
+            episodeNumber: number;
+            /**
+             * @description Episode title
+             * @example The Winds of Winter
+             */
+            title?: string | null;
+            /**
+             * Format: date-time
+             * @description Air date
+             */
+            airDate?: string | null;
+            /**
+             * @description True when multiple episodes aired on the same date (e.g. Netflix full-season drop)
+             * @example false
+             */
+            isBatchRelease: boolean;
+        };
+        FavoriteUpdateItemDto: {
+            /** @description Media item ID */
+            mediaItemId: string;
+            /**
+             * @description User rating (0-100)
+             * @example 85
+             */
+            rating: number;
+            mediaSummary: components["schemas"]["MeUserMediaSummaryDto"];
+            /** @description Most recent aired episode */
+            latestEpisode?: components["schemas"]["EpisodeInfoDto"] | null;
+            /** @description Next upcoming episode */
+            nextEpisode?: components["schemas"]["EpisodeInfoDto"] | null;
+        };
+        FavoriteUpdatesResponseDto: {
+            data: components["schemas"]["FavoriteUpdateItemDto"][];
+        };
+        BatchEpisodeIdsDto: {
+            /**
+             * @description Array of episode UUIDs to mark as watched/unwatched
+             * @example [
+             *       "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+             *       "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+             *       "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f"
+             *     ]
+             */
+            episodeIds: string[];
+        };
+        SeasonProgressDto: {
+            /**
+             * @description Season number
+             * @example 1
+             */
+            seasonNumber: number;
+            /**
+             * @description Number of watched episodes
+             * @example 5
+             */
+            watchedCount: number;
+            /**
+             * @description Total episodes in season
+             * @example 8
+             */
+            totalCount: number;
+            /**
+             * @description IDs of watched episodes
+             * @example [
+             *       "uuid-1",
+             *       "uuid-2"
+             *     ]
+             */
+            watchedEpisodeIds: string[];
+        };
+        NotificationPayloadDto: {
+            /** @example 3 */
+            seasonNumber?: number;
+            /** @example S3E1 */
+            episodeKey?: string;
+            /** @example 2025-01-15 */
+            airDate?: string;
+        };
+        NotificationMediaSummaryDto: {
+            /** @example uuid-123 */
+            id: string;
+            /**
+             * @example show
+             * @enum {string}
+             */
+            type: "movie" | "show";
+            /** @example Breaking Bad */
+            title: string;
+            /** @example breaking-bad */
+            slug: string;
+            poster: components["schemas"]["ImageDto"] | null;
+        };
+        NotificationItemDto: {
+            /** @example uuid-123 */
+            id: string;
+            /**
+             * @example new_season
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            payload: components["schemas"]["NotificationPayloadDto"] | null;
+            /** @example false */
+            isRead: boolean;
+            /** @example 2025-01-15T10:30:00.000Z */
+            createdAt: string;
+            mediaSummary: components["schemas"]["NotificationMediaSummaryDto"];
+        };
+        NotificationListResponseDto: {
+            data: components["schemas"]["NotificationItemDto"][];
+            /** @example 5 */
+            unreadCount: number;
+            /** @example 42 */
+            total: number;
+            /** @example true */
+            hasMore: boolean;
+        };
+        UnreadCountResponseDto: {
+            /** @example 5 */
+            unreadCount: number;
+        };
+        MarkReadResponseDto: {
+            /** @example true */
+            success: boolean;
+            /** @example 3 */
+            count?: number;
+        };
+        SaveItemDto: {
+            /**
+             * @description List to save to: for_later or considering
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /**
+             * @description Where the action originated
+             * @example verdict
+             */
+            context?: string;
+            /**
+             * @description Verdict/reason that triggered the action
+             * @example trendingNow
+             */
+            reasonKey?: string;
+        };
+        MediaSaveStatusDto: {
+            /**
+             * @description Is saved in "for later" list
+             * @example true
+             */
+            isForLater: boolean;
+            /**
+             * @description Is saved in "considering" list
+             * @example false
+             */
+            isConsidering: boolean;
+        };
+        SaveActionResultDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /** @description Current save status after action */
+            status: components["schemas"]["MediaSaveStatusDto"];
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        UnsaveItemDto: {
+            /**
+             * @description List to remove from
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /** @example card */
+            context?: string;
+        };
+        UnsaveActionResultDto: {
+            /** @example true */
+            removed: boolean;
+            /** @description Current save status after action */
+            status: components["schemas"]["MediaSaveStatusDto"];
+        };
+        BatchStatusResponseDto: {
+            /**
+             * @description Map of mediaItemId to save status
+             * @example {
+             *       "id1": {
+             *         "isForLater": true,
+             *         "isConsidering": false
+             *       },
+             *       "id2": {
+             *         "isForLater": false,
+             *         "isConsidering": true
+             *       }
+             *     }
+             */
+            statuses: Record<string, never>;
+        };
+        SavedItemMediaSummaryDto: {
+            id: string;
+            /** @enum {string} */
+            type: "movie" | "show";
+            title: string;
+            slug: string;
+            poster: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+            qualityScore?: number | null;
+        };
+        SavedItemWithMediaResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /**
+             * @description Verdict/reason that triggered the save action
+             * @example trendingNow
+             */
+            reasonKey?: string | null;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            mediaSummary: components["schemas"]["SavedItemMediaSummaryDto"];
+            /**
+             * @description Active subscription triggers for this media item. Empty array if no subscriptions.
+             * @example [
+             *       "release",
+             *       "new_season"
+             *     ]
+             */
+            activeSubscriptionTriggers: string[];
+        };
+        PaginatedSavedItemsResponseDto: {
+            data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        SubscribeDto: {
+            /**
+             * @description Trigger type: release, new_season, or on_streaming
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /**
+             * @description Where the action originated
+             * @example verdict
+             */
+            context?: string;
+            /**
+             * @description Verdict/reason that triggered the action
+             * @example upcomingHit
+             */
+            reasonKey?: string;
+        };
+        MediaSubscriptionStatusDto: {
+            /**
+             * @description Active subscription triggers
+             * @example [
+             *       "release"
+             *     ]
+             */
+            triggers: string[];
+            /**
+             * @description Has active release subscription
+             * @example true
+             */
+            hasRelease: boolean;
+            /**
+             * @description Has active new season subscription
+             * @example false
+             */
+            hasNewSeason: boolean;
+            /**
+             * @description Has active on streaming subscription
+             * @example false
+             */
+            hasOnStreaming: boolean;
+        };
+        SubscribeActionResultDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /** @example true */
+            isActive: boolean;
+            /** @description Current subscription status after action */
+            status: components["schemas"]["MediaSubscriptionStatusDto"];
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        UnsubscribeDto: {
+            /**
+             * @description Trigger type to unsubscribe from
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /** @example card */
+            context?: string;
+        };
+        UnsubscribeActionResultDto: {
+            /** @example true */
+            unsubscribed: boolean;
+            /** @description Current subscription status after action */
+            status: components["schemas"]["MediaSubscriptionStatusDto"];
+        };
+        SubscriptionMediaSummaryDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /**
+             * @example movie
+             * @enum {string}
+             */
+            type: "movie" | "show";
+            /** @example Inception */
+            title: string;
+            /** @example inception-2010 */
+            slug: string;
+            poster: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+        };
+        SubscriptionWithMediaResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /** @example true */
+            isActive: boolean;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            mediaSummary: components["schemas"]["SubscriptionMediaSummaryDto"];
+        };
+        SyncDto: {
+            /**
+             * @description TMDB ID of the media
+             * @example 550
+             */
+            tmdbId: number;
+            /**
+             * @example movie
+             * @enum {string}
+             */
+            type: "movie" | "show";
+            /**
+             * @description Force re-sync even if media already exists
+             * @default false
+             * @example false
+             */
+            force: boolean;
+        };
+        SyncTrendingDto: {
+            /**
+             * @description Number of pages to sync (20 items per page). Use this for dispatcher mode.
+             * @default 5
+             * @example 5
+             */
+            pages: number;
+            /**
+             * @description Single page number (deprecated, use pages instead)
+             * @example 1
+             */
+            page?: number;
+            /**
+             * @description Also sync Trakt stats after ingestion
+             * @default true
+             * @example true
+             */
+            syncStats: boolean;
+            /**
+             * @description Sync only specific media type (movie or show). Only for legacy single-page mode.
+             * @enum {string}
+             */
+            type?: "movie" | "show";
+        };
+        SyncNowPlayingDto: {
+            /**
+             * @description Region code (ISO 3166-1)
+             * @default UA
+             * @example UA
+             */
+            region: string;
+        };
+        SyncNewReleasesDto: {
+            /**
+             * @description Region code (ISO 3166-1)
+             * @default US
+             * @example US
+             */
+            region: string;
+            /**
+             * @description Days to look back
+             * @default 30
+             * @example 30
+             */
+            daysBack: number;
+            /**
+             * @description Force re-sync even if job already exists for today
+             * @default false
+             * @example false
+             */
+            force: boolean;
+        };
+        IngestionJobResponseDto: {
+            /** @example queued */
+            status: string;
+            /** @example backfill_alt_titles_20260223 */
+            jobId: string;
+            /** @example BACKFILL_ALT_TITLES_DISPATCHER */
+            jobType: string;
+            /** @example false */
+            force: boolean;
+        };
+        PolicyDto: {
+            /**
+             * @description Policy ID
+             * @example policy-123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description Policy name
+             * @example Content Filtering Policy
+             */
+            name: string;
+            /**
+             * @description Policy version
+             * @example 1.0
+             */
+            version: string;
+            /**
+             * @description Policy status
+             * @example active
+             * @enum {string}
+             */
+            status: "active" | "inactive";
+            /**
+             * @description Policy description
+             * @example Filters content based on quality and popularity thresholds
+             */
+            description?: string;
+            /**
+             * Format: date-time
+             * @description When the policy was last updated
+             * @example 2024-12-20T10:00:00Z
+             */
+            updatedAt: string;
+        };
+        PoliciesListDto: {
+            /** @description List of policies */
+            data: components["schemas"]["PolicyDto"][];
+        };
+        BreakoutRuleRequirementsDto: {
+            /**
+             * @description Minimum IMDb vote count required
+             * @example 10000
+             */
+            minImdbVotes?: number;
+            /**
+             * @description Minimum Trakt vote count required
+             * @example 5000
+             */
+            minTraktVotes?: number;
+            /**
+             * @description Minimum normalized quality score (0.0 to 1.0)
+             * @example 0.7
+             */
+            minQualityScoreNormalized?: number;
+            /**
+             * @description List of streaming providers - at least one must be present
+             * @example [
+             *       "netflix",
+             *       "prime",
+             *       "disney"
+             *     ]
+             */
+            requireAnyOfProviders?: string[];
+            /**
+             * @description Rating sources - at least one must have a rating present. Valid values: imdb, metacritic, rt, trakt
+             * @example [
+             *       "imdb",
+             *       "rt"
+             *     ]
+             */
+            requireAnyOfRatingsPresent?: ("imdb" | "metacritic" | "rt" | "trakt")[];
+            /**
+             * @description Availability mode for provider filtering. subscription_only = flatrate only, transactional_only = rent/buy only, any = all types
+             * @example subscription_only
+             * @enum {string}
+             */
+            availabilityMode?: "subscription_only" | "transactional_only" | "any";
+            /**
+             * @description Exclude ads-tier variants from provider matching
+             * @example false
+             */
+            excludeAdsTiers?: boolean;
+            /**
+             * @description Exclude non-direct distribution channels (amazon_channel, apple_tv_channel)
+             * @example false
+             */
+            excludeChannelDistribution?: boolean;
+            /**
+             * @description Origin countries filter (ISO 3166-1 alpha-2 codes). Rule matches if media has ANY of these countries.
+             * @example [
+             *       "UA",
+             *       "PL"
+             *     ]
+             */
+            originCountries?: string[];
+            /**
+             * @description Exclude origin countries filter (ISO 3166-1 alpha-2 codes). Rule does NOT match if media has ANY of these countries.
+             * @example [
+             *       "JP",
+             *       "KR",
+             *       "CN"
+             *     ]
+             */
+            excludeOriginCountries?: string[];
+        };
+        BreakoutRuleDto: {
+            /**
+             * @description Unique identifier for the breakout rule
+             * @example high-quality-exception
+             */
+            id: string;
+            /**
+             * @description Human-readable name for the breakout rule
+             * @example High Quality Content Exception
+             */
+            name: string;
+            /**
+             * @description Priority of the rule (lower number = higher priority)
+             * @example 1
+             */
+            priority: number;
+            /** @description Requirements that must be met for this rule to apply */
+            requirements: components["schemas"]["BreakoutRuleRequirementsDto"];
+        };
+        HomepageConfigDto: {
+            /**
+             * @description Minimum relevance score for homepage items (0-100)
+             * @example 50
+             */
+            minRelevanceScore: number;
+        };
+        MinVotesAnyOfDto: {
+            /**
+             * @description Vote sources to check (OR logic)
+             * @example [
+             *       "imdb",
+             *       "trakt"
+             *     ]
+             */
+            sources?: ("imdb" | "trakt")[];
+            /**
+             * @description Minimum votes threshold
+             * @example 3000
+             */
+            min?: number;
+        };
+        LocalMaturityOverrideDto: {
+            /**
+             * @description Minimum freshness score normalized (0-1). Higher values = stricter freshness requirement. Example: 0.90 = must be in top 10% freshest content.
+             * @example 0.9
+             */
+            minFreshnessScoreNormalized?: number;
+            /**
+             * @description Minimum Ratingo platform watchers count. Validates local engagement signal. Example: 30 = at least 30 users actively watching on platform.
+             * @example 30
+             */
+            minLocalWatchers?: number;
+        };
+        GlobalRequirementsDto: {
+            /**
+             * @description Minimum quality score normalized (0-1)
+             * @example 0.6
+             */
+            minQualityScoreNormalized?: number;
+            /**
+             * @description At least one of these rating sources must be present (OR logic)
+             * @example [
+             *       "imdb",
+             *       "trakt"
+             *     ]
+             */
+            requireAnyOfRatingsPresent?: ("imdb" | "metacritic" | "rt" | "trakt")[];
+            /** @description Minimum votes from ANY of the specified sources (OR logic). Passes if any source meets the threshold. Robust to missing data. */
+            minVotesAnyOf?: components["schemas"]["MinVotesAnyOfDto"];
+            /**
+             * @description Contexts where global gate applies. Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. Freshness surfaces (now_playing, new_digital, upcoming) are excluded by default.
+             * @example [
+             *       "catalog",
+             *       "homepage",
+             *       "trending",
+             *       "search"
+             *     ]
+             */
+            appliesTo?: ("catalog" | "homepage" | "trending" | "now_playing" | "new_digital" | "search" | "upcoming")[];
+            /** @description Alternative path for fresh content with local engagement. Applied only when minVotesAnyOf check fails. Allows new releases with strong platform signals to bypass vote requirements. */
+            localMaturityOverride?: components["schemas"]["LocalMaturityOverrideDto"];
+        };
+        PolicyConfigDto: {
+            /**
+             * @description Allowed countries (ISO 3166-1 alpha-2 codes)
+             * @example [
+             *       "US",
+             *       "GB",
+             *       "CA",
+             *       "AU",
+             *       "UA"
+             *     ]
+             */
+            allowedCountries: string[];
+            /**
+             * @description Blocked countries (ISO 3166-1 alpha-2 codes)
+             * @example [
+             *       "RU",
+             *       "BY"
+             *     ]
+             */
+            blockedCountries: string[];
+            /**
+             * @description Blocked country mode
+             * @example ANY
+             * @enum {string}
+             */
+            blockedCountryMode: "ANY" | "MAJORITY";
+            /**
+             * @description Allowed languages (ISO 639-1 codes)
+             * @example [
+             *       "en",
+             *       "uk",
+             *       "de",
+             *       "fr"
+             *     ]
+             */
+            allowedLanguages: string[];
+            /**
+             * @description Blocked languages (ISO 639-1 codes)
+             * @example [
+             *       "ru"
+             *     ]
+             */
+            blockedLanguages: string[];
+            /**
+             * @description Global streaming providers
+             * @example [
+             *       "netflix",
+             *       "max",
+             *       "appletv",
+             *       "prime",
+             *       "disney"
+             *     ]
+             */
+            globalProviders: string[];
+            /** @description Breakout rules for exceptions */
+            breakoutRules: components["schemas"]["BreakoutRuleDto"][];
+            /**
+             * @description Eligibility mode (STRICT = country AND language, RELAXED = country OR language)
+             * @example STRICT
+             * @enum {string}
+             */
+            eligibilityMode: "STRICT" | "RELAXED";
+            /** @description Homepage configuration */
+            homepage: components["schemas"]["HomepageConfigDto"];
+            /** @description Global quality gate requirements (all conditions combined with AND) */
+            globalRequirements?: components["schemas"]["GlobalRequirementsDto"];
+            /**
+             * @description Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.
+             * @example [
+             *       "anime",
+             *       "reality"
+             *     ]
+             */
+            excludedContentClasses?: ("mainstream" | "anime" | "documentary" | "reality" | "kids")[];
+            /**
+             * @description Context-specific requirements for display surfaces (readability, overview)
+             * @example {
+             *       "trending": {
+             *         "requireReadableTitle": true,
+             *         "requireOverview": true,
+             *         "minOverviewChars": 60
+             *       },
+             *       "homepage": {
+             *         "requireReadableTitle": true,
+             *         "requireOverview": true,
+             *         "minOverviewChars": 60
+             *       },
+             *       "catalog": {
+             *         "requireReadableTitle": true
+             *       }
+             *     }
+             */
+            contextRequirements?: Record<string, never>;
+        };
+        PolicyDetailDto: {
+            /**
+             * @description Policy ID
+             * @example policy-123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description Policy name
+             * @example Policy v2
+             */
+            name: string;
+            /**
+             * @description Policy version
+             * @example 2
+             */
+            version: string;
+            /**
+             * @description Policy status
+             * @example active
+             * @enum {string}
+             */
+            status: "active" | "inactive";
+            /** @description Policy configuration */
+            config: components["schemas"]["PolicyConfigDto"];
+            /**
+             * Format: date-time
+             * @description When the policy was created
+             * @example 2024-12-20T10:00:00Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the policy was activated
+             * @example 2024-12-20T12:00:00Z
+             */
+            activatedAt?: string;
+        };
+        CreatePolicyDto: {
+            /**
+             * @description Allowed countries (ISO 3166-1 alpha-2 codes)
+             * @example [
+             *       "US",
+             *       "GB",
+             *       "CA",
+             *       "AU",
+             *       "UA"
+             *     ]
+             */
+            allowedCountries: string[];
+            /**
+             * @description Blocked countries (ISO 3166-1 alpha-2 codes)
+             * @example [
+             *       "RU",
+             *       "BY"
+             *     ]
+             */
+            blockedCountries: string[];
+            /**
+             * @description Blocked country mode
+             * @example ANY
+             * @enum {string}
+             */
+            blockedCountryMode?: "ANY" | "MAJORITY";
+            /**
+             * @description Allowed languages (ISO 639-1 codes)
+             * @example [
+             *       "en",
+             *       "uk",
+             *       "de",
+             *       "fr"
+             *     ]
+             */
+            allowedLanguages: string[];
+            /**
+             * @description Blocked languages (ISO 639-1 codes)
+             * @example [
+             *       "ru"
+             *     ]
+             */
+            blockedLanguages: string[];
+            /**
+             * @description Global streaming providers
+             * @example [
+             *       "netflix",
+             *       "max",
+             *       "appletv",
+             *       "prime",
+             *       "disney"
+             *     ]
+             */
+            globalProviders?: string[];
+            /** @description Breakout rules for exceptions */
+            breakoutRules?: components["schemas"]["BreakoutRuleDto"][];
+            /**
+             * @description Eligibility mode
+             * @example STRICT
+             * @enum {string}
+             */
+            eligibilityMode?: "STRICT" | "RELAXED";
+            /**
+             * @description Homepage configuration
+             * @example {
+             *       "minRelevanceScore": 50
+             *     }
+             */
+            homepage?: components["schemas"]["HomepageConfigDto"];
+            /** @description Global quality gate requirements (all conditions combined with AND) */
+            globalRequirements?: components["schemas"]["GlobalRequirementsDto"];
+            /**
+             * @description Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.
+             * @example [
+             *       "anime",
+             *       "reality"
+             *     ]
+             */
+            excludedContentClasses?: ("mainstream" | "anime" | "documentary" | "reality" | "kids")[];
+            /**
+             * @description Context-specific requirements for display surfaces (readability, overview)
+             * @example {
+             *       "trending": {
+             *         "requireReadableTitle": true,
+             *         "requireOverview": true,
+             *         "minOverviewChars": 60
+             *       },
+             *       "homepage": {
+             *         "requireReadableTitle": true,
+             *         "requireOverview": true,
+             *         "minOverviewChars": 60
+             *       },
+             *       "catalog": {
+             *         "requireReadableTitle": true
+             *       }
+             *     }
+             */
+            contextRequirements?: Record<string, never>;
+        };
+        CreatePolicyResponseDto: {
+            /**
+             * @description Created policy ID
+             * @example policy-123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description Policy version
+             * @example 2
+             */
+            version: number;
+            /**
+             * @description Human-readable message
+             * @example Policy v2 created successfully. Use POST /admin/catalog-policies/:id/prepare to start evaluation.
+             */
+            message: string;
+        };
+        PrepareOptionsDto: {
+            /**
+             * @description Batch size for processing items
+             * @example 500
+             */
+            batchSize?: number;
+            /**
+             * @description Number of concurrent workers
+             * @example 10
+             */
+            concurrency?: number;
+        };
+        PrepareResponseDto: {
+            /**
+             * @description ID of the created evaluation run
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            runId: string;
+            /**
+             * @description Current status of the run
+             * @example running
+             * @enum {string}
+             */
+            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
+            /**
+             * @description Human-readable message
+             * @example Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress.
+             */
+            message: string;
+        };
+        ProgressStatsDto: {
+            /**
+             * @description Number of items processed
+             * @example 750
+             */
+            processed: number;
+            /**
+             * @description Total number of items to process
+             * @example 1200
+             */
+            total: number;
+            /**
+             * @description Number of eligible items
+             * @example 600
+             */
+            eligible: number;
+            /**
+             * @description Number of ineligible items
+             * @example 100
+             */
+            ineligible: number;
+            /**
+             * @description Number of errors encountered
+             * @example 50
+             */
+            errors: number;
+        };
+        EvaluationRunDto: {
+            /**
+             * @description Run ID
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description Policy ID
+             * @example policy-456e7890-f12a-34b5-c678-901234567890
+             */
+            policyId: string;
+            /**
+             * @description Policy name
+             * @example Content Filtering Policy
+             */
+            policyName: string;
+            /**
+             * @description Policy version number
+             * @example 1
+             */
+            policyVersion: number;
+            /**
+             * @description Run status
+             * @example running
+             * @enum {string}
+             */
+            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
+            /** @description Progress statistics */
+            progress: components["schemas"]["ProgressStatsDto"];
+            /**
+             * Format: date-time
+             * @description When the run started
+             * @example 2024-12-20T14:00:00Z
+             */
+            startedAt: string;
+            /**
+             * Format: date-time
+             * @description When the run finished
+             * @example 2024-12-20T14:30:00Z
+             */
+            finishedAt?: string;
+            /**
+             * @description Whether the run is ready to be promoted
+             * @example true
+             */
+            readyToPromote?: boolean;
+        };
+        RunsListDto: {
+            /** @description List of evaluation runs */
+            data: components["schemas"]["EvaluationRunDto"][];
+        };
+        ErrorSampleDto: {
+            /**
+             * @description Media item ID that caused the error
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            mediaItemId: string;
+            /**
+             * @description Error message
+             * @example Missing origin country data
+             */
+            error: string;
+            /** @description Error stack trace */
+            stack?: string;
+            /**
+             * @description When the error occurred
+             * @example 2024-12-20T14:30:00Z
+             */
+            timestamp: string;
+        };
+        RunStatusDto: {
+            /**
+             * @description Run ID
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description Target policy ID
+             * @example policy-456e7890-f12a-34b5-c678-901234567890
+             */
+            targetPolicyId: string;
+            /**
+             * @description Target policy version
+             * @example 2
+             */
+            targetPolicyVersion: number;
+            /**
+             * @description Current run status
+             * @example running
+             * @enum {string}
+             */
+            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
+            /** @description Progress statistics */
+            progress: components["schemas"]["ProgressStatsDto"];
+            /**
+             * Format: date-time
+             * @description When the run started
+             * @example 2024-12-20T14:00:00Z
+             */
+            startedAt: string;
+            /**
+             * Format: date-time
+             * @description When the run finished
+             * @example 2024-12-20T14:30:00Z
+             */
+            finishedAt?: string;
+            /**
+             * Format: date-time
+             * @description When the run was promoted
+             * @example 2024-12-20T15:00:00Z
+             */
+            promotedAt?: string;
+            /**
+             * @description Who promoted the run
+             * @example admin@example.com
+             */
+            promotedBy?: string;
+            /**
+             * @description Whether the run is ready to be promoted
+             * @example true
+             */
+            readyToPromote: boolean;
+            /**
+             * @description Reasons why the run cannot be promoted (if any)
+             * @example [
+             *       "COVERAGE_NOT_MET"
+             *     ]
+             */
+            blockingReasons: string[];
+            /**
+             * @description Coverage percentage (0.0 to 1.0)
+             * @example 0.95
+             */
+            coverage: number;
+            /** @description Sample of errors encountered */
+            errorSample: components["schemas"]["ErrorSampleDto"][];
+        };
+        PromoteOptionsDto: {
+            /**
+             * @description Coverage threshold (0.0 to 1.0)
+             * @example 1
+             */
+            coverageThreshold?: number;
+            /**
+             * @description Maximum allowed errors
+             * @example 0
+             */
+            maxErrors?: number;
+        };
+        ActionResponseDto: {
+            /**
+             * @description Whether the action was successful
+             * @example true
+             */
+            success: boolean;
+            /**
+             * @description Error message if action failed
+             * @example Run is not ready to promote: coverage threshold not met
+             */
+            error?: string;
+            /**
+             * @description Success message
+             * @example Policy activated successfully
+             */
+            message?: string;
+        };
+        DiffCountsDto: {
+            /**
+             * @description Number of items that will be removed from catalog
+             * @example 25
+             */
+            regressions: number;
+            /**
+             * @description Number of items that will be added to catalog
+             * @example 150
+             */
+            improvements: number;
+            /**
+             * @description Net change in catalog size
+             * @example 125
+             */
+            netChange: number;
+        };
+        DiffSampleDto: {
+            /**
+             * @description Media item ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            mediaItemId: string;
+            /**
+             * @description Media item title
+             * @example The Matrix
+             */
+            title: string;
+            /**
+             * @description Reason for the change
+             * @example Quality threshold updated
+             */
+            reason: string;
+        };
+        ReasonBreakdownDto: {
+            /**
+             * @description Breakdown of regression reasons
+             * @example {
+             *       "MISSING_GLOBAL_SIGNALS": 150,
+             *       "BLOCKED_COUNTRY": 25,
+             *       "NEUTRAL_LANGUAGE": 10
+             *     }
+             */
+            regressionReasons: {
+                [key: string]: number;
+            };
+            /**
+             * @description Breakdown of improvement reasons
+             * @example {
+             *       "ALLOWED_COUNTRY": 100,
+             *       "BREAKOUT_ALLOWED": 50
+             *     }
+             */
+            improvementReasons: {
+                [key: string]: number;
+            };
+        };
+        DiffReportDto: {
+            /**
+             * @description Run ID
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            runId: string;
+            /**
+             * @description Target policy version
+             * @example 2
+             */
+            targetPolicyVersion: number;
+            /**
+             * @description Current active policy version
+             * @example 1
+             */
+            currentPolicyVersion?: number;
+            /** @description Summary of changes */
+            counts: components["schemas"]["DiffCountsDto"];
+            /** @description Sample items being removed from catalog */
+            topRegressions: components["schemas"]["DiffSampleDto"][];
+            /** @description Sample items being added to catalog */
+            topImprovements: components["schemas"]["DiffSampleDto"][];
+            /** @description Breakdown of reasons for regressions and improvements */
+            reasonBreakdown?: components["schemas"]["ReasonBreakdownDto"];
+        };
+        BackfillRequestDto: {
+            /**
+             * @description Evaluation context to backfill
+             * @example trending
+             * @enum {string}
+             */
+            context: "catalog" | "trending" | "homepage" | "search";
+            /**
+             * @description Batch size for processing items
+             * @example 500
+             */
+            batchSize?: number;
+        };
+        BackfillResponseDto: {
+            /**
+             * @description ID of the created backfill run
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            runId: string;
+            /**
+             * @description Current status of the run
+             * @example running
+             * @enum {string}
+             */
+            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
+            /**
+             * @description Context being backfilled
+             * @example trending
+             * @enum {string}
+             */
+            context: "catalog" | "trending" | "homepage" | "search";
+            /**
+             * @description Human-readable message
+             * @example Backfill started for context=trending. Use GET /admin/catalog-policies/runs/run-123 to track progress.
+             */
+            message: string;
+        };
+        DryRunOptionsDto: {
+            /**
+             * @description Selection mode for items to evaluate
+             * @example sample
+             * @enum {string}
+             */
+            mode: "sample" | "top" | "byType" | "byCountry";
+            /**
+             * @description Maximum number of items to evaluate (default: 1000, max: 10000)
+             * @example 1000
+             */
+            limit?: number;
+            /**
+             * @description Media type filter (required for byType mode)
+             * @example movie
+             * @enum {string}
+             */
+            mediaType?: "movie" | "show";
+            /**
+             * @description Country filter (ISO 3166-1 alpha-2, required for byCountry mode)
+             * @example US
+             */
+            country?: string;
+            /**
+             * @description Sample percentage for sample mode (1-100)
+             * @example 10
+             */
+            samplePercent?: number;
+        };
+        DryRunRequestDto: {
+            /** @description Proposed policy configuration to test */
+            policy: components["schemas"]["CreatePolicyDto"];
+            /** @description Dry-run options */
+            options: components["schemas"]["DryRunOptionsDto"];
+        };
+        ReasonCountDto: {
+            /**
+             * @description Evaluation reason
+             * @example ALLOWED_COUNTRY
+             */
+            reason: string;
+            /**
+             * @description Count of items with this reason
+             * @example 500
+             */
+            count: number;
+        };
+        DryRunSummaryDto: {
+            /**
+             * @description Total items evaluated
+             * @example 1000
+             */
+            totalEvaluated: number;
+            /**
+             * @description Items that would be eligible
+             * @example 750
+             */
+            eligible: number;
+            /**
+             * @description Items that would be ineligible
+             * @example 200
+             */
+            ineligible: number;
+            /**
+             * @description Items that would need review
+             * @example 10
+             */
+            review: number;
+            /**
+             * @description Items that would become newly eligible
+             * @example 50
+             */
+            newlyEligible: number;
+            /**
+             * @description Items that would become newly ineligible
+             * @example 25
+             */
+            newlyIneligible: number;
+            /**
+             * @description Items with unchanged status
+             * @example 925
+             */
+            unchanged: number;
+            /**
+             * @description Items without previous evaluation (first-time evaluation)
+             * @example 40
+             */
+            newItems: number;
+            /** @description Breakdown of evaluation reasons */
+            reasonBreakdown: components["schemas"]["ReasonCountDto"][];
+            /**
+             * @description Execution time in milliseconds
+             * @example 1500
+             */
+            executionTimeMs: number;
+            /**
+             * @description Selection mode used
+             * @example sample
+             * @enum {string}
+             */
+            mode: "sample" | "top" | "byType" | "byCountry";
+            /**
+             * @description Item limit used
+             * @example 1000
+             */
+            limit: number;
+            /**
+             * @description Whether evaluation was stopped due to timeout
+             * @example false
+             */
+            timedOut: boolean;
+        };
+        DryRunItemResultDto: {
+            /**
+             * @description Media item ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            mediaItemId: string;
+            /**
+             * @description Media item title
+             * @example The Matrix
+             */
+            title: string;
+            /**
+             * @description Current eligibility status (null if not evaluated)
+             * @example ELIGIBLE
+             * @enum {string}
+             */
+            currentStatus?: "ELIGIBLE" | "INELIGIBLE" | "REVIEW";
+            /**
+             * @description Proposed eligibility status under new policy
+             * @example ELIGIBLE
+             * @enum {string}
+             */
+            proposedStatus: "ELIGIBLE" | "INELIGIBLE" | "REVIEW";
+            /**
+             * @description Evaluation reasons
+             * @example [
+             *       "ALLOWED_COUNTRY",
+             *       "ALLOWED_LANGUAGE"
+             *     ]
+             */
+            reasons: string[];
+            /**
+             * @description Relevance score (0-100)
+             * @example 75
+             */
+            relevanceScore: number;
+            /**
+             * @description Breakout rule ID if applicable
+             * @example GLOBAL_HIT
+             */
+            breakoutRuleId?: string;
+            /**
+             * @description Whether status changed from current
+             * @example false
+             */
+            statusChanged: boolean;
+        };
+        DryRunResponseDto: {
+            /** @description Dry-run summary */
+            summary: components["schemas"]["DryRunSummaryDto"];
+            /** @description Individual item results */
+            items: components["schemas"]["DryRunItemResultDto"][];
+            /**
+             * @description Current active policy version (for diff mode)
+             * @example 1
+             */
+            currentPolicyVersion?: number;
+        };
+        UnmappedProviderDto: {
+            /**
+             * @description TMDB provider ID
+             * @example 999
+             */
+            tmdbProviderId: number;
+            /**
+             * @description Last seen provider name
+             * @example Unknown Streaming
+             */
+            lastSeenName: string;
+            /**
+             * @description Number of times seen
+             * @example 150
+             */
+            seenCount: number;
+            /**
+             * Format: date-time
+             * @description Last seen timestamp
+             */
+            lastSeenAt: string;
+            /**
+             * @description Sample regions where seen
+             * @example [
+             *       "US",
+             *       "GB"
+             *     ]
+             */
+            sampleRegions: string[];
+            /**
+             * @description Sample names seen
+             * @example [
+             *       "Unknown Streaming",
+             *       "Unknown Stream"
+             *     ]
+             */
+            sampleNames: string[];
+        };
+        UnmappedProvidersListDto: {
+            data: components["schemas"]["UnmappedProviderDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        MappingDto: {
+            /**
+             * @description Mapping ID
+             * @example uuid-123
+             */
+            id: string;
+            /**
+             * @description TMDB provider ID
+             * @example 8
+             */
+            tmdbProviderId: number;
+            /**
+             * @description Canonical provider ID
+             * @example netflix
+             */
+            providerId: string;
+            /**
+             * @description Variant ID if applicable
+             * @example netflix_ads
+             */
+            variantId?: string;
+            /**
+             * @description Distribution channel
+             * @example direct
+             */
+            distributionChannel: string;
+            /**
+             * @description Region code or global
+             * @example global
+             */
+            region: string;
+            /**
+             * @description Mapping source
+             * @example seed
+             */
+            source: string;
+            /**
+             * Format: date-time
+             * @description Creation timestamp
+             */
+            createdAt: string;
+        };
+        MappingsListDto: {
+            data: components["schemas"]["MappingDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        CreateMappingRequestDto: {
+            /**
+             * @description TMDB provider ID
+             * @example 8
+             */
+            tmdbProviderId: number;
+            /**
+             * @description Canonical provider ID
+             * @example netflix
+             */
+            providerId: string;
+            /**
+             * @description Variant ID
+             * @example netflix_ads
+             */
+            variantId?: string;
+            /**
+             * @description Distribution channel
+             * @default direct
+             * @example direct
+             * @enum {string}
+             */
+            distributionChannel: "direct" | "amazon_channel" | "apple_tv_channel";
+            /**
+             * @description Region code (ISO 3166-1 alpha-2) or "global"
+             * @default global
+             * @example US
+             */
+            region: string;
+        };
+        UpdateMappingRequestDto: {
+            /**
+             * @description Canonical provider ID
+             * @example netflix
+             */
+            providerId?: string;
+            /**
+             * @description Variant ID
+             * @example netflix_ads
+             */
+            variantId?: string;
+            /**
+             * @description Distribution channel
+             * @example direct
+             * @enum {string}
+             */
+            distributionChannel?: "direct" | "amazon_channel" | "apple_tv_channel";
+        };
+        ResolveResultDto: {
+            /**
+             * @description Input TMDB provider ID
+             * @example 8
+             */
+            tmdbProviderId: number;
+            /**
+             * @description Region used for resolution
+             * @example US
+             */
+            region: string;
+            /** @description Resolved mapping if found */
+            mapping?: components["schemas"]["MappingDto"];
+            /**
+             * @description Whether mapping was found
+             * @example true
+             */
+            found: boolean;
+            /**
+             * @description Resolution source: region-specific or global fallback
+             * @example region
+             */
+            source?: string;
+        };
+        HeroShowProgressDto: {
+            /** @example 5 */
+            season: number;
+            /** @example 5 */
+            episode: number;
+            /** @example S5E5 */
+            label: string;
+            /**
+             * Format: date-time
+             * @example 2025-12-14T00:00:00.000Z
+             */
+            lastAirDate?: string;
+            /**
+             * Format: date-time
+             * @example 2025-12-21T00:00:00.000Z
+             */
+            nextAirDate?: string;
+        };
+        HeroItemDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example movie
+             * @enum {string}
+             */
+            type: "movie" | "show";
+            /** @example fight-club */
+            slug: string;
+            /** @example Fight Club */
+            title: string;
+            /** @example Fight Club */
+            originalTitle: string;
+            /** @example An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more. */
+            overview: string | null;
+            /**
+             * @description YouTube video key for primary trailer
+             * @example ogFrkWefoLQ
+             */
+            primaryTrailerKey?: string | null;
+            poster: components["schemas"]["ImageDto"];
+            backdrop: components["schemas"]["ImageDto"];
+            stats: components["schemas"]["RatingoStatsDto"];
+            externalRatings?: components["schemas"]["ExternalRatingsDto"];
+            /**
+             * Format: date-time
+             * @example 1999-10-15T00:00:00.000Z
+             */
+            releaseDate: string | null;
+            /**
+             * @description True if released within last 90 days
+             * @example false
+             */
+            isNew: boolean;
+            /**
+             * @description True if released more than 5 years ago
+             * @example true
+             */
+            isClassic: boolean;
+            /** @description Progress info for TV Shows (latest aired episode) */
+            showProgress?: components["schemas"]["HeroShowProgressDto"];
+        };
+        RiseFallStatsDto: {
+            /** @description Absolute change in watchers count */
+            deltaWatchers: number;
+            /** @description Percentage change in watchers count */
+            deltaPercent: number | null;
+            /** @description Current total watchers count */
+            currentWatchers: number;
+            /** @description Indicates if the item is new to trends (no previous history) */
+            isNewInTrends?: boolean;
+            /** @description Watchers added in the current window */
+            growthCurrent: number;
+            /** @description Watchers added in the previous window */
+            growthPrev: number;
+        };
+        RiseFallItemDto: {
+            id: string;
+            mediaItemId: string;
+            /** @enum {string} */
+            type: "movie" | "show";
+            slug: string;
+            title: string;
+            originalTitle: string | null;
+            poster: components["schemas"]["ImageDto"] | null;
+            backdrop: components["schemas"]["ImageDto"] | null;
+            stats: components["schemas"]["RiseFallStatsDto"];
+            externalRatings?: components["schemas"]["ExternalRatingsDto"];
+        };
+        RiseFallResponseDto: {
+            /** @enum {string} */
+            window: "30d" | "90d" | "365d";
+            /** @example global */
+            region: string;
+            /** @example delta */
+            metric: string;
+            risers: components["schemas"]["RiseFallItemDto"][];
+            fallers: components["schemas"]["RiseFallItemDto"][];
+        };
+        RegisterDto: {
+            /** @example user@example.com */
+            email: string;
+            /** @example ratingo_fan */
+            username: string;
+            /** @example S3curePassw0rd */
+            password: string;
+            /** @example https://cdn.example.com/avatar.png */
+            avatarUrl?: string;
+        };
+        AuthTokensDto: {
+            /**
+             * @description JWT access token
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY1NDU5MDc0fQ.JYlxU9C9P_DJOJTeN_tosd5Dds5H5u3U9_y_AQdLtDU
+             */
+            accessToken: string;
+            /**
+             * @description Refresh token
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJqdGkiOiJmYmUwYTQxOC05ZWVkLTRjNmEtOTU2MS00MDRmZDFiMTFhOTciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY4MDUwMTc0fQ.Jra2xAp4OeKcm5ZSalwwMrqwoQngn8Js9ql_rK0VjFQ
+             */
+            refreshToken: string;
+        };
+        LoginDto: {
+            /** @example user@example.com */
+            email: string;
+            /** @example S3curePassw0rd */
+            password: string;
+        };
+        RefreshDto: {
+            /** @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... */
+            refreshToken: string;
+        };
+        ChangePasswordDto: {
+            /** @example OldPass123 */
+            currentPassword: string;
+            /** @example NewPass456 */
+            newPassword: string;
+        };
+        PrivacyDto: {
+            /** @example true */
+            isProfilePublic: boolean;
+            /** @example false */
+            showWatchHistory: boolean;
+            /** @example true */
+            showRatings: boolean;
+            /** @example true */
+            allowFollowers: boolean;
+            /** @example true */
+            autoSubscribeOnWatch: boolean;
+        };
+        ProfileDto: {
+            /** @example Люблю жахи та sci-fi */
+            bio: string | null;
+            /** @example Kyiv */
+            location: string | null;
+            /** @example https://instagram.com/me */
+            website: string | null;
+            /** @example uk */
+            preferredLanguage: string | null;
+            /** @example UA */
+            preferredRegion: string | null;
+            privacy: components["schemas"]["PrivacyDto"];
+        };
+        StatsDto: {
+            /** @example 24 */
+            moviesRated: number;
+            /** @example 10 */
+            showsRated: number;
+            /** @example 42 */
+            watchlistCount: number;
+        };
+        MeDto: {
+            /** @example 6bd54e62-bac3-49dd-a0d4-05efd7761700 */
+            id: string;
+            /** @example user@example.com */
+            email: string;
+            /** @example ratingo_fan */
+            username: string;
+            /** @example https://cdn.ratingo/avatar.png */
+            avatarUrl: string | null;
+            /**
+             * @example user
+             * @enum {string}
+             */
+            role: "user" | "admin";
+            profile: components["schemas"]["ProfileDto"];
+            /** @description Whether the user has a password set (false for OAuth-only accounts) */
+            hasPassword: boolean;
+            /**
+             * @description List of linked OAuth provider names
+             * @example [
+             *       "google"
+             *     ]
+             */
+            linkedProviders: string[];
+            stats: components["schemas"]["StatsDto"];
+        };
+        ExchangeCodeDto: {
+            /**
+             * @description One-time exchange code from OAuth callback
+             * @example abc123xyz...
+             */
+            code: string;
+        };
+        LinkedAccountDto: {
+            /**
+             * @description OAuth provider name
+             * @example google
+             */
+            provider: string;
+            /**
+             * @description Email from OAuth provider
+             * @example user@gmail.com
+             */
+            email?: string | null;
+            /**
+             * @description Display name from OAuth provider
+             * @example John Doe
+             */
+            displayName?: string | null;
+            /**
+             * Format: date-time
+             * @description When the account was linked
+             * @example 2025-01-15T10:30:00.000Z
+             */
+            linkedAt: string;
+        };
+        ProviderConfigDto: {
+            /** @description Whether this OAuth provider is enabled */
+            enabled: boolean;
+        };
+        AuthConfigDto: {
+            /** @description Google OAuth configuration */
+            google: components["schemas"]["ProviderConfigDto"];
+            /** @description Facebook OAuth configuration */
+            facebook: components["schemas"]["ProviderConfigDto"];
+        };
+        UpdateProfileDto: {
+            /** @example ratingo_fan */
+            username?: string;
+            /** @example https://cdn.example.com/avatar.png */
+            avatarUrl?: string;
+            /** @example Люблю фільми жахів та наукову фантастику */
+            bio?: string;
+            /** @example Kyiv, Ukraine */
+            location?: string;
+            /** @example https://instagram.com/myprofile */
+            website?: string;
+            /** @example uk */
+            preferredLanguage?: string;
+            /** @example UA */
+            preferredRegion?: string;
+            /** @example true */
+            isProfilePublic?: boolean;
+            /** @example false */
+            showWatchHistory?: boolean;
+            /** @example true */
+            showRatings?: boolean;
+            /** @example true */
+            allowFollowers?: boolean;
+            /** @example true */
+            autoSubscribeOnWatch?: boolean;
+        };
+        CreateAvatarUploadUrlDto: {
+            /** @enum {string} */
+            contentType: "image/jpeg" | "image/png" | "image/webp";
+        };
+        AvatarUploadUrlDto: {
+            uploadUrl: string;
+            publicUrl: string;
+            key: string;
+        };
+        PublicUserMediaSummaryDto: {
+            id: string;
+            /** @enum {string} */
+            type: "movie" | "show";
+            title: string;
+            slug: string;
+            poster: components["schemas"]["ImageDto"] | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+        };
+        PublicUserMediaListItemDto: {
+            id: string;
+            /** @enum {string} */
+            state: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
+            /** @description 0-100 rating */
+            rating: number | null;
+            /** @description Arbitrary progress payload (JSON) */
+            progress?: Record<string, never> | null;
+            notes?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            mediaSummary: components["schemas"]["PublicUserMediaSummaryDto"];
+        };
+        PaginatedPublicUserMediaResponseDto: {
+            data: components["schemas"]["PublicUserMediaListItemDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        PostListItemDto: {
+            /**
+             * @description Post ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description URL slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug: string;
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+            /**
+             * @description Post excerpt (first 200 chars of body)
+             * @example Ми додали нові функції для покращення вашого досвіду...
+             */
+            excerpt: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Featured image URL
+             * @example https://cdn.ratingo.com/journal/featured.jpg
+             */
+            featuredImageUrl?: string | null;
+            /**
+             * Format: date-time
+             * @description Publication date
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt: string;
+            /**
+             * Format: date-time
+             * @description Creation date
+             * @example 2026-01-14T15:30:00.000Z
+             */
+            createdAt: string;
+        };
+        PostPaginationMetaDto: {
+            /**
+             * @description Total number of posts
+             * @example 42
+             */
+            total: number;
+            /**
+             * @description Current page number
+             * @example 1
+             */
+            page: number;
+            /**
+             * @description Total number of pages
+             * @example 5
+             */
+            totalPages: number;
+            /**
+             * @description Posts per page
+             * @example 10
+             */
+            limit: number;
+        };
+        PostListResponseDto: {
+            /** @description List of posts */
+            posts: components["schemas"]["PostListItemDto"][];
+            /** @description Pagination metadata */
+            meta: components["schemas"]["PostPaginationMetaDto"];
+        };
+        PostNavigationLinkDto: {
+            /**
+             * @description Post slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug: string;
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+        };
+        PostNavigationDto: {
+            /** @description Previous post (older) */
+            prev?: components["schemas"]["PostNavigationLinkDto"] | null;
+            /** @description Next post (newer) */
+            next?: components["schemas"]["PostNavigationLinkDto"] | null;
+        };
+        PostDetailDto: {
+            /**
+             * @description Post ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description URL slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug: string;
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+            /**
+             * @description Post excerpt (first 200 chars of body)
+             * @example Ми додали нові функції для покращення вашого досвіду...
+             */
+            excerpt: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Featured image URL
+             * @example https://cdn.ratingo.com/journal/featured.jpg
+             */
+            featuredImageUrl?: string | null;
+            /**
+             * Format: date-time
+             * @description Publication date
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt: string;
+            /**
+             * Format: date-time
+             * @description Creation date
+             * @example 2026-01-14T15:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @description Post body in Markdown format
+             * @example ## Нові функції
+             *
+             *     Ми додали...
+             */
+            body: string;
+            /**
+             * @description Rendered HTML content
+             * @example <h2>Нові функції</h2><p>Ми додали...</p>
+             */
+            bodyHtml: string;
+            /**
+             * @description Context identifier
+             * @example trending
+             */
+            contextId?: string | null;
+            /**
+             * @description Meta title for SEO
+             * @example Що нового в Ratingo | Журнал
+             */
+            metaTitle?: string | null;
+            /**
+             * @description Meta description for SEO
+             * @example Дізнайтеся про останні оновлення Ratingo...
+             */
+            metaDescription?: string | null;
+            /**
+             * Format: date-time
+             * @description Last update date
+             * @example 2026-01-15T12:00:00.000Z
+             */
+            updatedAt: string;
+            /** @description Navigation links to adjacent posts */
+            navigation: components["schemas"]["PostNavigationDto"];
+        };
+        AdminPostDto: {
+            /**
+             * @description Post ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description URL slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug: string;
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+            /**
+             * @description Post excerpt (first 200 chars of body)
+             * @example Ми додали нові функції для покращення вашого досвіду...
+             */
+            excerpt: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Featured image URL
+             * @example https://cdn.ratingo.com/journal/featured.jpg
+             */
+            featuredImageUrl?: string | null;
+            /**
+             * Format: date-time
+             * @description Publication date
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt: string;
+            /**
+             * Format: date-time
+             * @description Creation date
+             * @example 2026-01-14T15:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @description Post body in Markdown format
+             * @example ## Нові функції
+             *
+             *     Ми додали...
+             */
+            body: string;
+            /**
+             * @description Rendered HTML content
+             * @example <h2>Нові функції</h2><p>Ми додали...</p>
+             */
+            bodyHtml: string;
+            /**
+             * @description Context identifier
+             * @example trending
+             */
+            contextId?: string | null;
+            /**
+             * @description Meta title for SEO
+             * @example Що нового в Ratingo | Журнал
+             */
+            metaTitle?: string | null;
+            /**
+             * @description Meta description for SEO
+             * @example Дізнайтеся про останні оновлення Ratingo...
+             */
+            metaDescription?: string | null;
+            /**
+             * Format: date-time
+             * @description Last update date
+             * @example 2026-01-15T12:00:00.000Z
+             */
+            updatedAt: string;
+            /** @description Navigation links to adjacent posts */
+            navigation: components["schemas"]["PostNavigationDto"];
+            /**
+             * @description Whether post is a draft
+             * @example false
+             */
+            isDraft: boolean;
+            /**
+             * @description Author user ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            authorId: string;
+        };
+        AdminPostListResponseDto: {
+            /** @description List of posts with admin details */
+            posts: components["schemas"]["AdminPostDto"][];
+            /** @description Pagination metadata */
+            meta: components["schemas"]["PostPaginationMetaDto"];
+        };
+        CreatePostDto: {
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+            /**
+             * @description Post body in Markdown format
+             * @example ## Нові функції
+             *
+             *     Ми додали...
+             */
+            body: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Custom URL slug (auto-generated from title if not provided)
+             * @example shcho-novoho-v-ratingo
+             */
+            slug?: string;
+            /**
+             * @description Featured image URL or path for Open Graph previews
+             * @example /api/journal/images/uuid.jpg
+             */
+            featuredImageUrl?: string;
+            /**
+             * @description Context identifier for linking post to product features
+             * @example trending
+             */
+            contextId?: string;
+            /**
+             * @description Custom meta title for SEO (defaults to post title)
+             * @example Що нового в Ratingo | Журнал
+             */
+            metaTitle?: string;
+            /**
+             * @description Custom meta description for SEO (defaults to excerpt)
+             * @example Дізнайтеся про останні оновлення Ratingo...
+             */
+            metaDescription?: string;
+            /**
+             * @description Save as draft without publishing
+             * @default true
+             * @example true
+             */
+            isDraft: boolean;
+            /**
+             * @description Publication date (for scheduling). ISO 8601 format.
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt?: string;
+        };
+        UpdatePostDto: {
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title?: string;
+            /**
+             * @description Post body in Markdown format
+             * @example ## Нові функції
+             *
+             *     Ми додали...
+             */
+            body?: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type?: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Custom URL slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug?: string;
+            /**
+             * @description Featured image URL or path for Open Graph previews
+             * @example /api/journal/images/uuid.jpg
+             */
+            featuredImageUrl?: string;
+            /**
+             * @description Context identifier for linking post to product features
+             * @example trending
+             */
+            contextId?: string;
+            /**
+             * @description Custom meta title for SEO
+             * @example Що нового в Ratingo | Журнал
+             */
+            metaTitle?: string;
+            /**
+             * @description Custom meta description for SEO
+             * @example Дізнайтеся про останні оновлення Ratingo...
+             */
+            metaDescription?: string;
+            /**
+             * @description Save as draft without publishing
+             * @example true
+             */
+            isDraft?: boolean;
+            /**
+             * @description Publication date (for scheduling). ISO 8601 format.
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt?: string;
+        };
+        ImageUploadResponseDto: {
+            /**
+             * @description CDN URL of uploaded image
+             * @example https://cdn.ratingo.com/journal/abc123.jpg
+             */
+            url: string;
+        };
+        ReviewAuthorDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example user123 */
+            username: string;
+            /** @example https://example.com/avatar.jpg */
+            avatarUrl: string | null;
+            /**
+             * @description Whether the author shows their ratings publicly
+             * @example true
+             */
+            showRatings: boolean;
+            /**
+             * @description Whether the author profile is public
+             * @example true
+             */
+            isProfilePublic: boolean;
+        };
+        ReviewResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /** @example Чудовий фільм! Візуальні ефекти на висоті. */
+            content: string;
+            /**
+             * @description Rating 0-100, null if author has showRatings=false
+             * @example 85
+             */
+            rating: number | null;
+            /** @example false */
+            hasSpoiler: boolean;
+            /** @example 42 */
+            likesCount: number;
+            /** @example 3 */
+            dislikesCount: number;
+            /** @example 5 */
+            repliesCount: number;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            updatedAt: string;
+            author: components["schemas"]["ReviewAuthorDto"];
+            /**
+             * @description Current user vote (null if not voted or not authenticated)
+             * @example like
+             */
+            currentUserVote: string | null;
+        };
+        ReviewListResponseDto: {
+            data: components["schemas"]["ReviewResponseDto"][];
+            /**
+             * @example {
+             *       "total": 100,
+             *       "limit": 20,
+             *       "offset": 0
+             *     }
+             */
+            meta: Record<string, never>;
+        };
+        ReplyAuthorDto: {
+            /** @description Author UUID */
+            id: string;
+            /** @description Author username */
+            username: string;
+            /** @description Author avatar URL */
+            avatarUrl?: string;
+            /** @description Whether author profile is public */
+            isProfilePublic: boolean;
+        };
+        ReplyResponseDto: {
+            /** @description Reply UUID */
+            id: string;
+            /** @description Review UUID this reply belongs to */
+            reviewId: string;
+            /** @description Parent reply UUID for nested replies */
+            parentReplyId?: string;
+            /** @description Username of the person being replied to */
+            replyToUsername?: string;
+            /** @description Reply content */
+            content: string;
+            /** @description Reply author info */
+            author: components["schemas"]["ReplyAuthorDto"];
+            /**
+             * Format: date-time
+             * @description When reply was created
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When reply was last updated
+             */
+            updatedAt: string;
+        };
+        CreateReviewDto: {
+            /**
+             * @description Media item UUID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            mediaItemId: string;
+            /**
+             * @description Review content (max 280 characters)
+             * @example Чудовий фільм! Візуальні ефекти на висоті.
+             */
+            content: string;
+            /**
+             * @description Rating from 0 to 100
+             * @example 85
+             */
+            rating: number;
+            /**
+             * @description Whether the review contains spoilers
+             * @default false
+             * @example false
+             */
+            hasSpoiler: boolean;
+            /**
+             * @description Media type hint. When provided, allows the correct default user-media state to be chosen for first-time entries (watching for shows, completed for movies).
+             * @example movie
+             * @enum {string}
+             */
+            mediaType?: "movie" | "show";
+        };
+        ReviewMutationResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /** @example Чудовий фільм! */
+            content: string;
+            /** @example 85 */
+            rating: number;
+            /** @example false */
+            hasSpoiler: boolean;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            updatedAt: string;
+        };
+        UpdateReviewDto: {
+            /**
+             * @description Updated review content (max 280 characters)
+             * @example Переглянув ще раз - стало ще краще!
+             */
+            content?: string;
+            /**
+             * @description Updated rating from 0 to 100
+             * @example 90
+             */
+            rating?: number;
+            /**
+             * @description Whether the review contains spoilers
+             * @example true
+             */
+            hasSpoiler?: boolean;
+        };
+        ReviewVoteDto: {
+            /**
+             * @description Vote type: like or dislike
+             * @example like
+             * @enum {string}
+             */
+            voteType: "like" | "dislike";
+        };
+        VoteResultDto: {
+            /**
+             * @description Action taken
+             * @example added
+             * @enum {string}
+             */
+            action: "added" | "changed" | "removed";
+            /**
+             * @description Current vote type (null if removed)
+             * @example like
+             */
+            currentVote: string | null;
+        };
+        CreateReplyDto: {
+            /** @description Reply content */
+            content: string;
+            /**
+             * Format: uuid
+             * @description Parent reply ID for nested replies
+             */
+            parentReplyId?: string;
+            /** @description Username of the person being replied to */
+            replyToUsername?: string;
+        };
+        ReplyMutationResponseDto: {
+            /** @description Reply UUID */
+            id: string;
+            /** @description Review UUID */
+            reviewId: string;
+            /** @description Parent reply UUID */
+            parentReplyId?: string;
+            /** @description Username of the person being replied to */
+            replyToUsername?: string;
+            /** @description Reply content */
+            content: string;
+            /**
+             * Format: date-time
+             * @description When reply was created
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When reply was last updated
+             */
+            updatedAt: string;
+        };
+        CreateReportDto: {
+            /**
+             * @description Report reason
+             * @example spam
+             * @enum {string}
+             */
+            reason: "spam" | "harassment" | "hate_speech" | "misinformation" | "spoiler_unmarked" | "other";
+            /** @description Additional details about the report */
+            details?: string;
+        };
+        ReportResponseDto: {
+            /** @description Report UUID */
+            id: string;
+            /** @description Review UUID */
+            reviewId: string;
+            /**
+             * @description Report reason
+             * @enum {string}
+             */
+            reason: "spam" | "harassment" | "hate_speech" | "misinformation" | "spoiler_unmarked" | "other";
+            /** @description Additional details */
+            details?: string;
+            /**
+             * @description Report status
+             * @enum {string}
+             */
+            status: "pending" | "reviewed" | "dismissed" | "actioned";
+            /**
+             * Format: date-time
+             * @description When report was created
+             */
+            createdAt: string;
+        };
+        ReportReviewAuthorDto: {
+            /** @description Author UUID */
+            id: string;
+            /** @description Author username */
+            username: string;
+        };
+        ReportReviewDto: {
+            /** @description Review UUID */
+            id: string;
+            /** @description Review content */
+            content: string;
+            /** @description Whether review contains spoilers */
+            hasSpoiler: boolean;
+            /** @description Whether review is deleted */
+            isDeleted: boolean;
+            /** @description Review author */
+            author: components["schemas"]["ReportReviewAuthorDto"];
+        };
+        ReporterDto: {
+            /** @description Reporter UUID */
+            id: string;
+            /** @description Reporter username */
+            username: string;
+        };
+        ReportWithReviewDto: {
+            /** @description Report UUID */
+            id: string;
+            /** @description Review UUID */
+            reviewId: string;
+            /**
+             * @description Report reason
+             * @enum {string}
+             */
+            reason: "spam" | "harassment" | "hate_speech" | "misinformation" | "spoiler_unmarked" | "other";
+            /** @description Additional details */
+            details?: string;
+            /**
+             * @description Report status
+             * @enum {string}
+             */
+            status: "pending" | "reviewed" | "dismissed" | "actioned";
+            /**
+             * Format: date-time
+             * @description When report was created
+             */
+            createdAt: string;
+            /** @description Reported review */
+            review: components["schemas"]["ReportReviewDto"];
+            /** @description Reporter info */
+            reporter: components["schemas"]["ReporterDto"];
+            /** @description Moderator UUID who resolved */
+            moderatorId?: string;
+            /** @description Moderator notes */
+            moderatorNotes?: string;
+            /**
+             * Format: date-time
+             * @description When report was resolved
+             */
+            resolvedAt?: string;
+        };
+        AdminReportListResponseDto: {
+            /** @description Reports */
+            data: components["schemas"]["ReportWithReviewDto"][];
+            /** @description Total count */
+            total: number;
+        };
+        ResolveReportDto: {
+            /**
+             * @description New status
+             * @enum {string}
+             */
+            status: "reviewed" | "dismissed" | "actioned";
+            /** @description Moderator notes */
+            moderatorNotes?: string;
+            /** @description Whether to hide the review (soft delete) */
+            hideReview?: boolean;
+        };
+        KeyHealthSnapshotDto: {
+            /**
+             * @example tmdb
+             * @enum {string}
+             */
+            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            /**
+             * @example valid
+             * @enum {string}
+             */
+            status: "valid" | "degraded" | "invalid" | "unknown";
+            /** @description HTTP status observed by the probe */
+            statusCode: number | null;
+            /** @description Probe latency in milliseconds */
+            latencyMs: number | null;
+            /** @description Error message or quota note */
+            detail: string | null;
+            quotaRemaining: number | null;
+            quotaLimit: number | null;
+            /** Format: date-time */
+            checkedAt: string;
+        };
+        ProviderFailureCountsDto: {
+            /** @description 401/403 responses seen on live requests */
+            unauthorized: number;
+            /** @description 429 responses seen on live requests */
+            rateLimited: number;
+        };
+        ProviderKeyHealthDto: {
+            /**
+             * @example tmdb
+             * @enum {string}
+             */
+            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            latest: components["schemas"]["KeyHealthSnapshotDto"] | null;
+            failures: components["schemas"]["ProviderFailureCountsDto"];
+        };
+        KeyHealthDashboardDto: {
+            providers: components["schemas"]["ProviderKeyHealthDto"][];
+        };
+        KeyHealthHistoryDto: {
+            /**
+             * @example tmdb
+             * @enum {string}
+             */
+            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            items: components["schemas"]["KeyHealthSnapshotDto"][];
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  CatalogMoviesController_getTrendingMovies: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
-        sort?:
-          'trending' | 'popularity' | 'ratingo' | 'releaseDate' | 'lastAirDate' | 'tmdbPopularity';
-        order?: 'asc' | 'desc';
-        /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
-        genres?: string;
-        /** @description Min ratingoScore (0-100) */
-        minRatingo?: number;
-        /** @description Min qualityScore (0-100), the score behind the card verdict */
-        minQuality?: number;
-        /** @description Vote source for minVotes filter */
-        voteSource?: 'tmdb' | 'trakt';
-        /** @description Min votes for selected voteSource */
-        minVotes?: number;
-        /** @description Release year (shortcut) */
-        year?: number;
-        /** @description Release year from (inclusive) */
-        yearFrom?: number;
-        /** @description Release year to (inclusive) */
-        yearTo?: number;
-        /** @description List context: home = stricter freshness filtering; catalog = permissive */
-        context?: 'home' | 'catalog';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMovieResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogMoviesController_getPopularMovies: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
-        sort?:
-          'trending' | 'popularity' | 'ratingo' | 'releaseDate' | 'lastAirDate' | 'tmdbPopularity';
-        order?: 'asc' | 'desc';
-        /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
-        genres?: string;
-        /** @description Min ratingoScore (0-100) */
-        minRatingo?: number;
-        /** @description Min qualityScore (0-100), the score behind the card verdict */
-        minQuality?: number;
-        /** @description Vote source for minVotes filter */
-        voteSource?: 'tmdb' | 'trakt';
-        /** @description Min votes for selected voteSource */
-        minVotes?: number;
-        /** @description Release year (shortcut) */
-        year?: number;
-        /** @description Release year from (inclusive) */
-        yearFrom?: number;
-        /** @description Release year to (inclusive) */
-        yearTo?: number;
-        /** @description List context: home = stricter freshness filtering; catalog = permissive */
-        context?: 'home' | 'catalog';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMovieResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogMoviesController_getNowPlaying: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
-        sort?:
-          'trending' | 'popularity' | 'ratingo' | 'releaseDate' | 'lastAirDate' | 'tmdbPopularity';
-        order?: 'asc' | 'desc';
-        /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
-        genres?: string;
-        /** @description Min ratingoScore (0-100) */
-        minRatingo?: number;
-        /** @description Min qualityScore (0-100), the score behind the card verdict */
-        minQuality?: number;
-        /** @description Vote source for minVotes filter */
-        voteSource?: 'tmdb' | 'trakt';
-        /** @description Min votes for selected voteSource */
-        minVotes?: number;
-        /** @description Release year (shortcut) */
-        year?: number;
-        /** @description Release year from (inclusive) */
-        yearFrom?: number;
-        /** @description Release year to (inclusive) */
-        yearTo?: number;
-        /** @description List context: home = stricter freshness filtering; catalog = permissive */
-        context?: 'home' | 'catalog';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMovieResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogMoviesController_getNewReleases: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
-        sort?:
-          'trending' | 'popularity' | 'ratingo' | 'releaseDate' | 'lastAirDate' | 'tmdbPopularity';
-        order?: 'asc' | 'desc';
-        /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
-        genres?: string;
-        /** @description Min ratingoScore (0-100) */
-        minRatingo?: number;
-        /** @description Min qualityScore (0-100), the score behind the card verdict */
-        minQuality?: number;
-        /** @description Vote source for minVotes filter */
-        voteSource?: 'tmdb' | 'trakt';
-        /** @description Min votes for selected voteSource */
-        minVotes?: number;
-        /** @description Release year (shortcut) */
-        year?: number;
-        /** @description Release year from (inclusive) */
-        yearFrom?: number;
-        /** @description Release year to (inclusive) */
-        yearTo?: number;
-        /** @description List context: home = stricter freshness filtering; catalog = permissive */
-        context?: 'home' | 'catalog';
-        /** @description Days to look back */
-        daysBack?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMovieResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogMoviesController_getNewOnDigital: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
-        sort?:
-          'trending' | 'popularity' | 'ratingo' | 'releaseDate' | 'lastAirDate' | 'tmdbPopularity';
-        order?: 'asc' | 'desc';
-        /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
-        genres?: string;
-        /** @description Min ratingoScore (0-100) */
-        minRatingo?: number;
-        /** @description Min qualityScore (0-100), the score behind the card verdict */
-        minQuality?: number;
-        /** @description Vote source for minVotes filter */
-        voteSource?: 'tmdb' | 'trakt';
-        /** @description Min votes for selected voteSource */
-        minVotes?: number;
-        /** @description Release year (shortcut) */
-        year?: number;
-        /** @description Release year from (inclusive) */
-        yearFrom?: number;
-        /** @description Release year to (inclusive) */
-        yearTo?: number;
-        /** @description List context: home = stricter freshness filtering; catalog = permissive */
-        context?: 'home' | 'catalog';
-        /** @description Days to look back */
-        daysBack?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMovieResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogMoviesController_getMovieBySlug: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        slug: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MovieResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogShowsController_getTrendingShows: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
-        sort?:
-          'trending' | 'popularity' | 'ratingo' | 'releaseDate' | 'lastAirDate' | 'tmdbPopularity';
-        order?: 'asc' | 'desc';
-        /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
-        genres?: string;
-        /** @description Min ratingoScore (0-100) */
-        minRatingo?: number;
-        /** @description Min qualityScore (0-100), the score behind the card verdict */
-        minQuality?: number;
-        /** @description Vote source for minVotes filter */
-        voteSource?: 'tmdb' | 'trakt';
-        /** @description Min votes for selected voteSource */
-        minVotes?: number;
-        /** @description Release year (shortcut) */
-        year?: number;
-        /** @description Release year from (inclusive) */
-        yearFrom?: number;
-        /** @description Release year to (inclusive) */
-        yearTo?: number;
-        /** @description List context: home = stricter freshness filtering; catalog = permissive */
-        context?: 'home' | 'catalog';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['TrendingShowsResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogShowsController_getPopularShows: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
-        sort?:
-          'trending' | 'popularity' | 'ratingo' | 'releaseDate' | 'lastAirDate' | 'tmdbPopularity';
-        order?: 'asc' | 'desc';
-        /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
-        genres?: string;
-        /** @description Min ratingoScore (0-100) */
-        minRatingo?: number;
-        /** @description Min qualityScore (0-100), the score behind the card verdict */
-        minQuality?: number;
-        /** @description Vote source for minVotes filter */
-        voteSource?: 'tmdb' | 'trakt';
-        /** @description Min votes for selected voteSource */
-        minVotes?: number;
-        /** @description Release year (shortcut) */
-        year?: number;
-        /** @description Release year from (inclusive) */
-        yearFrom?: number;
-        /** @description Release year to (inclusive) */
-        yearTo?: number;
-        /** @description List context: home = stricter freshness filtering; catalog = permissive */
-        context?: 'home' | 'catalog';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['TrendingShowsResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogShowsController_getNewEpisodes: {
-    parameters: {
-      query?: {
-        /** @description Number of days to look back. */
-        days?: number;
-        /** @description Max number of shows to return. */
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['NewEpisodesResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogShowsController_getCalendar: {
-    parameters: {
-      query?: {
-        /** @description Start date (ISO string). Default: today. */
-        startDate?: string;
-        /** @description Number of days to include (default: 7). */
-        days?: number;
-        /** @description When true, returns only episodes from shows the authenticated user is currently watching and premieres of shows they saved to watch later. */
-        personalized?: 'true' | 'false';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['CalendarResponseDto'];
-          };
-        };
-      };
-      /** @description Invalid query parameters (days must be <= 90; personalized must be 'true' or 'false') */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Authentication required for personalized calendar */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogShowsController_getShowBySlug: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        slug: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ShowResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogShowsController_requestShowSync: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        slug: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['SyncRequestResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Authentication required */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogSearchController_search: {
-    parameters: {
-      query: {
-        query: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['SearchResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogSearchController_importMovie: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        tmdbId: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ImportResultDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogSearchController_importShow: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        tmdbId: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ImportResultDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogSearchController_getImportStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Job ID returned from import endpoint */
-        jobId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Import job status */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: {
-              /** @enum {string} */
-              status?: 'queued' | 'processing' | 'ready' | 'failed';
-              /** @description Media slug (available when ready) */
-              slug?: string | null;
-              /** @description Error message (on failure) */
-              errorMessage?: string | null;
+    CatalogMoviesController_getTrendingMovies: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
+                order?: "asc" | "desc";
+                /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
+                genres?: string;
+                /** @description Min ratingoScore (0-100) */
+                minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
+                /** @description Vote source for minVotes filter */
+                voteSource?: "tmdb" | "trakt";
+                /** @description Min votes for selected voteSource */
+                minVotes?: number;
+                /** @description Release year (shortcut) */
+                year?: number;
+                /** @description Release year from (inclusive) */
+                yearFrom?: number;
+                /** @description Release year to (inclusive) */
+                yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
             };
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogProvidersController_getProviders: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ProvidersListDto'];
-          };
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogSitemapController_getMovieSitemap: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['SitemapResponseDto'];
-          };
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  CatalogSitemapController_getShowSitemap: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['SitemapResponseDto'];
-          };
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_batchRatings: {
-    parameters: {
-      query: {
-        /** @description Comma-separated media item UUIDs (max 100) */
-        ids: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Batch ratings */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['BatchRatingsResponseDto'];
-          };
-        };
-      };
-      /** @description Invalid UUIDs or empty list */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_listContinue: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Continue items */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UserMediaStateDto'][];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_getImportStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Import batch statuses */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ImportBatchStatusDto'][];
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_cancelImportBatches: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CancelImportBatchesDto'];
-      };
-    };
-    responses: {
-      /** @description Cancel result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['CancelImportBatchesResponseDto'];
-          };
-        };
-      };
-      /** @description Invalid request body */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_getState: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description User media state */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UserMediaStateDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_setState: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SetUserMediaStateDto'];
-      };
-    };
-    responses: {
-      /** @description Upserted user media state */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UserMediaStateDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_list: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description User media states */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UserMediaStateDto'][];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_pauseMedia: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Media item paused */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UserMediaStateDto'];
-          };
-        };
-      };
-      /** @description Cannot pause: item must be in watching or caught_up state */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_resumeMedia: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Media item resumed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UserMediaStateDto'];
-          };
-        };
-      };
-      /** @description Cannot resume: item is not paused */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserMediaController_importMedia: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ImportMediaDto'];
-      };
-    };
-    responses: {
-      /** @description Import result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['CsvImportResultDto'];
-          };
-        };
-      };
-      /** @description Invalid request body or source */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  MeListsController_ratings: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMeUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  MeListsController_watchlist: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMeUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  MeListsController_history: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-        /** @description Narrow history to a single state (must be one of HISTORY_STATES). */
-        state?: 'watching' | 'completed' | 'paused' | 'caught_up';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMeUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  MeListsController_activity: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMeUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  MeListsController_paused: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMeUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  MeListsController_caughtUp: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMeUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  MeListsController_dropped: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedMeUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  MeListsController_listCounts: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MeListCountsResponseDto'];
-          };
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  MeListsController_favoriteUpdates: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['FavoriteUpdatesResponseDto'];
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  EpisodeProgressController_markBatchWatched: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BatchEpisodeIdsDto'];
-      };
-    };
-    responses: {
-      /** @description Episodes marked as watched */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Invalid episode IDs or episodes from different shows */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description First episode not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  EpisodeProgressController_markBatchUnwatched: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BatchEpisodeIdsDto'];
-      };
-    };
-    responses: {
-      /** @description Episodes marked as unwatched */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Invalid episode IDs or episodes from different shows */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description First episode not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  EpisodeProgressController_markWatched: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Episode UUID */
-        episodeId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Episode marked as watched */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Episode not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  EpisodeProgressController_markUnwatched: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Episode UUID */
-        episodeId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Episode marked as unwatched */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  EpisodeProgressController_getShowProgress: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Show UUID */
-        showId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Show progress */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ShowProgressDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  NotificationsController_list: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description Filter by unread only */
-        unread?: boolean;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['NotificationListResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  NotificationsController_getUnreadCount: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UnreadCountResponseDto'];
-          };
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  NotificationsController_markAsRead: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        notificationId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MarkReadResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  NotificationsController_markAllAsRead: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MarkReadResponseDto'];
-          };
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SavedItemsController_saveItem: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SaveItemDto'];
-      };
-    };
-    responses: {
-      /** @description Item saved with current status */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['SaveActionResultDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SavedItemsController_unsaveItem: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UnsaveItemDto'];
-      };
-    };
-    responses: {
-      /** @description Item removed with current status */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UnsaveActionResultDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SavedItemsController_getBatchStatus: {
-    parameters: {
-      query: {
-        /** @description Comma-separated list of media item UUIDs (max 100) */
-        ids: string[];
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['BatchStatusResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SavedItemsController_getStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MediaSaveStatusDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SavedItemsController_listForLater: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedSavedItemsResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SavedItemsController_listConsidering: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedSavedItemsResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SubscriptionsController_subscribe: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SubscribeDto'];
-      };
-    };
-    responses: {
-      /** @description Subscribed with current status */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['SubscribeActionResultDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SubscriptionsController_unsubscribe: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UnsubscribeDto'];
-      };
-    };
-    responses: {
-      /** @description Unsubscribed with current status */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UnsubscribeActionResultDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SubscriptionsController_getStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MediaSubscriptionStatusDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  SubscriptionsController_listActive: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['SubscriptionWithMediaResponseDto'][];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_getJobStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Ingestion job status */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: {
-              id?: string;
-              /** @enum {string} */
-              status?: 'queued' | 'processing' | 'ready' | 'failed';
-              errorMessage?: string | null;
-              /** Format: date-time */
-              updatedAt?: string | null;
-              /** @description Media slug (available when status is ready) */
-              slug?: string | null;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
+                };
             };
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_sync: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SyncDto'];
-      };
-    };
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_syncTrending: {
-    parameters: {
-      query?: {
-        /** @description Number of pages to fetch in dispatcher mode (20 items per page) */
-        pages?: number;
-        /** @description Media type filter — sync only movies or only shows */
-        type?: 'movie' | 'show';
-        /** @description Single page number (legacy mode) */
-        page?: string;
-        /** @description Sync Trakt stats after ingestion (default: true) */
-        syncStats?: string;
-        /** @description Bypass dedupe */
-        force?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SyncTrendingDto'];
-      };
-    };
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_syncNowPlaying: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SyncNowPlayingDto'];
-      };
-    };
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_updateNowPlayingFlags: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SyncNowPlayingDto'];
-      };
-    };
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_syncNewReleases: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SyncNewReleasesDto'];
-      };
-    };
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_syncSnapshots: {
-    parameters: {
-      query?: {
-        /** @description Region code for snapshots */
-        region?: string;
-        /** @description Bypass daily deduplication */
-        force?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_syncTrackedShows: {
-    parameters: {
-      query?: {
-        /** @description Bypass hourly deduplication */
-        force?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_backfillImdb: {
-    parameters: {
-      query?: {
-        /** @description Bypass daily deduplication */
-        force?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Backfill job queued */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['IngestionJobResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_backfillAltTitles: {
-    parameters: {
-      query?: {
-        /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
-        force?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Backfill job queued */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['IngestionJobResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  IngestionController_backfillMdblistRatings: {
-    parameters: {
-      query?: {
-        /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
-        force?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Backfill job queued */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['IngestionJobResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid bearer token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Authenticated user does not have admin role */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  PolicyController_getPolicies: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description List of policies */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PoliciesListDto'];
-          };
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  PolicyController_createPolicy: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** @description Policy configuration */
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreatePolicyDto'];
-      };
-    };
-    responses: {
-      /** @description Policy created */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['CreatePolicyResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  PolicyController_getPolicyById: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Policy ID */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Policy details */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PolicyDetailDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Policy not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  PolicyController_preparePolicy: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Policy ID to prepare */
-        id: string;
-      };
-      cookie?: never;
-    };
-    /** @description Optional batch size and concurrency settings */
-    requestBody?: {
-      content: {
-        'application/json': components['schemas']['PrepareOptionsDto'];
-      };
-    };
-    responses: {
-      /** @description Policy preparation started */
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PrepareResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  RunController_getRuns: {
-    parameters: {
-      query?: {
-        /** @description Number of runs to return (default: 20) */
-        limit?: number;
-        /** @description Offset for pagination (default: 0) */
-        offset?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description List of evaluation runs */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['RunsListDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  RunController_getRunStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Run ID to check */
-        runId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Run status and progress */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['RunStatusDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  RunController_promoteRun: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Run ID to promote */
-        runId: string;
-      };
-      cookie?: never;
-    };
-    /** @description Optional coverage and error thresholds (defaults: 100% coverage, 0 errors) */
-    requestBody?: {
-      content: {
-        'application/json': components['schemas']['PromoteOptionsDto'];
-      };
-    };
-    responses: {
-      /** @description Promotion result */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ActionResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  RunController_cancelRun: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Run ID to cancel */
-        runId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Cancellation result */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ActionResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  RunController_getDiff: {
-    parameters: {
-      query?: {
-        /** @description Number of sample items to return (default: 50) */
-        sampleSize?: number;
-      };
-      header?: never;
-      path: {
-        /** @description Run ID to compute diff for */
-        runId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Diff report */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['DiffReportDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  RunController_backfillContext: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** @description Context to backfill and optional batch size */
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BackfillRequestDto'];
-      };
-    };
-    responses: {
-      /** @description Backfill started */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['BackfillResponseDto'];
-          };
-        };
-      };
-      /** @description Invalid context */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description No active policy found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  DryRunController_executeDryRun: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['DryRunRequestDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['DryRunResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  DryRunController_executeDryRunDiff: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['DryRunRequestDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['DryRunResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ProvidersController_listProviders: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ProvidersListDto'];
-          };
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ProvidersController_listUnmapped: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description Sort by field */
-        sortBy?: 'count' | 'lastSeen';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['UnmappedProvidersListDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ProvidersController_listMappings: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        /** @description Filter by provider ID */
-        providerId?: string;
-        /** @description Filter by region */
-        region?: string;
-        /** @description Include global mappings */
-        includeGlobal?: boolean;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MappingsListDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ProvidersController_createMapping: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateMappingRequestDto'];
-      };
-    };
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MappingDto'];
-          };
-        };
-      };
-      /** @description Invalid provider ID or mapping already exists */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ProvidersController_updateMapping: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Mapping ID */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateMappingRequestDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MappingDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Mapping not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ProvidersController_deleteMapping: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Mapping ID */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Mapping deleted */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Mapping not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ProvidersController_resolveProvider: {
-    parameters: {
-      query: {
-        /** @description TMDB provider ID to resolve */
-        tmdbId: number;
-        /** @description Region for resolution */
-        region?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ResolveResultDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_syncTrendingStats: {
-    parameters: {
-      query?: {
-        /** @description Number of trending items to sync per type (movies + shows) */
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_syncEligibleTrending: {
-    parameters: {
-      query?: {
-        /** @description Number of items per batch */
-        batchSize?: number;
-        /** @description Keyset cursor: sync only items with a media id greater than this one */
-        afterId?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_getStatsByTmdbId: {
-    parameters: {
-      query?: {
-        /** @description Media type (TMDB movie and TV ids overlap; recommended) */
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path: {
-        /** @description TMDB ID of the media item */
-        tmdbId: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_analyzeDropOff: {
-    parameters: {
-      query?: {
-        /** @description TMDB ID of specific show to analyze */
-        tmdbId?: number;
-        /** @description Max shows to analyze */
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_analyzeDropOffById: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description TMDB ID of the show to analyze */
-        tmdbId: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_getDropOffAnalysis: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description TMDB ID of the show */
-        tmdbId: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_backfillTotalWatchers: {
-    parameters: {
-      query?: {
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-        /** @description Max items to backfill */
-        limit?: number;
-        /** @description Minimum Trakt votes to consider item as corrupted */
-        minVotes?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_backfillWatchersCount: {
-    parameters: {
-      query?: {
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-        /** @description Max items to backfill */
-        limit?: number;
-        /** @description Minimum total_watchers to consider item as corrupted */
-        minTotalWatchers?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_recalculateScores: {
-    parameters: {
-      query?: {
-        /** @description Filter by media type */
-        type?: 'movie' | 'show';
-        /** @description Number of items per batch */
-        batchSize?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  StatsController_reconcileCommunityRatings: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  HomeController_getHero: {
-    parameters: {
-      query?: {
-        type?: 'movie' | 'show';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      default: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HeroItemDto'][];
-        };
-      };
-    };
-  };
-  HomeController_getWatchingNow: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      default: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HeroItemDto'][];
-        };
-      };
-    };
-  };
-  InsightsController_getMovements: {
-    parameters: {
-      query?: {
-        window?: '30d' | '90d' | '365d';
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['RiseFallResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_register: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RegisterDto'];
-      };
-    };
-    responses: {
-      /** @description Tokens pair */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AuthTokensDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Too many registration attempts */
-      429: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_login: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['LoginDto'];
-      };
-    };
-    responses: {
-      /** @description Tokens pair */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AuthTokensDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Invalid credentials */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Too many login attempts */
-      429: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_refresh: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RefreshDto'];
-      };
-    };
-    responses: {
-      /** @description Tokens pair */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AuthTokensDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Too many refresh attempts */
-      429: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_logout: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_changePassword: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ChangePasswordDto'];
-      };
-    };
-    responses: {
-      /** @description Password changed successfully */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Not authenticated */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Invalid current password */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_me: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Current authenticated user */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['MeDto'];
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_googleAuth: {
-    parameters: {
-      query?: {
-        /** @description URL to redirect after auth */
-        returnTo?: string;
-        /** @description Frontend origin to return to; must be on the OAuth return allow-list */
-        returnOrigin?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Redirect to Google */
-      302: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_facebookAuth: {
-    parameters: {
-      query?: {
-        /** @description URL to redirect after auth */
-        returnTo?: string;
-        /** @description Frontend origin to return to; must be on the OAuth return allow-list */
-        returnOrigin?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Redirect to Facebook */
-      302: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_exchangeCode: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ExchangeCodeDto'];
-      };
-    };
-    responses: {
-      /** @description Tokens pair */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AuthTokensDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description OAUTH_EXCHANGE_EXPIRED or OAUTH_EXCHANGE_USED */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Too many exchange attempts */
-      429: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_getLinkedAccounts: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Linked accounts */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['LinkedAccountDto'][];
-          };
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_unlinkProvider: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description OAuth provider to unlink */
-        provider: 'google' | 'facebook';
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Provider unlinked */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Cannot unlink last authentication method */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AuthController_getConfig: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Auth configuration */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AuthConfigDto'];
-          };
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UsersController_me: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UsersController_updateProfile: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateProfileDto'];
-      };
-    };
-    responses: {
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UsersController_createAvatarUploadUrl: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateAvatarUploadUrlDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AvatarUploadUrlDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  PublicUsersController_getPublicProfile: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        username: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  PublicUsersController_getRatings: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-      };
-      header?: never;
-      path: {
-        username: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedPublicUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  PublicUsersController_getWatchlist: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-      };
-      header?: never;
-      path: {
-        username: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedPublicUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  PublicUsersController_getHistory: {
-    parameters: {
-      query?: {
-        limit?: number;
-        offset?: number;
-        sort?: 'recent' | 'rating' | 'releaseDate';
-      };
-      header?: never;
-      path: {
-        username: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PaginatedPublicUserMediaResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  JournalPostsController_getPosts: {
-    parameters: {
-      query?: {
-        /** @description Filter by post type(s). Comma-separated for multiple types (union). */
-        type?: string[];
-        /** @description Filter by context identifier */
-        context?: string;
-        /** @description Page number (1-based) */
-        page?: number;
-        /** @description Number of posts per page */
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Paginated list of posts */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PostListResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  JournalPostsController_getPostBySlug: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Post URL slug */
-        slug: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Full post details with navigation */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['PostDetailDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminJournalController_getPosts: {
-    parameters: {
-      query?: {
-        /** @description Filter by post type(s). Comma-separated for multiple types (union). */
-        type?: string[];
-        /** @description Filter by context identifier */
-        context?: string;
-        /** @description Page number (1-based) */
-        page?: number;
-        /** @description Number of posts per page */
-        limit?: number;
-        /** @description Filter by post status */
-        status?: 'draft' | 'published' | 'scheduled';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Paginated list of posts */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AdminPostListResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminJournalController_createPost: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreatePostDto'];
-      };
-    };
-    responses: {
-      /** @description Post created */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AdminPostDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminJournalController_getPostById: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Post UUID */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Full post details */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AdminPostDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminJournalController_deletePost: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Post UUID */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Post deleted */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: {
-              success?: boolean;
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminJournalController_updatePost: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Post UUID */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdatePostDto'];
-      };
-    };
-    responses: {
-      /** @description Updated post */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AdminPostDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminJournalController_publishPost: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Post UUID */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Published post */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AdminPostDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminJournalController_unpublishPost: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Post UUID */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Unpublished post (draft) */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AdminPostDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminJournalController_uploadImage: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'multipart/form-data': {
-          /**
-           * Format: binary
-           * @description Image file (jpg, png, webp, gif). Max 5MB.
-           */
-          file: string;
-        };
-      };
-    };
-    responses: {
-      /** @description Uploaded image URL */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ImageUploadResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  JournalImagesController_getImage: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Image filename */
-        filename: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Image file */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'image/jpeg': unknown;
-          'image/png': unknown;
-          'image/webp': unknown;
-          'image/gif': unknown;
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ReviewsController_listForMedia: {
-    parameters: {
-      query?: {
-        /** @description Sort order: newest, oldest, or most_liked */
-        sort?: 'newest' | 'oldest' | 'most_liked';
-        /** @description Number of reviews to return */
-        limit?: number;
-        /** @description Offset for pagination */
-        offset?: number;
-        /** @description Hide reviews marked as spoilers */
-        hideSpoilers?: boolean;
-      };
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ReviewListResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ReviewsController_getById: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Review UUID */
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ReviewResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  ReviewsController_listReplies: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Review UUID */
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ReplyResponseDto'][];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserReviewsController_create: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateReviewDto'];
-      };
-    };
-    responses: {
-      /** @description Review created */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ReviewMutationResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserReviewsController_getMyReviewForMedia: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Media item UUID */
-        mediaItemId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Review found */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ReviewMutationResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserReviewsController_delete: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Review UUID */
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Review deleted */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserReviewsController_update: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Review UUID */
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateReviewDto'];
-      };
-    };
-    responses: {
-      /** @description Review updated */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ReviewMutationResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserReviewsController_vote: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Review UUID */
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReviewVoteDto'];
-      };
-    };
-    responses: {
-      /** @description Vote registered */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['VoteResultDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserReviewsController_unvote: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Review UUID */
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Vote removed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['VoteResultDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserReviewsController_createReply: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Review UUID */
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateReplyDto'];
-      };
-    };
-    responses: {
-      /** @description Reply created */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ReplyMutationResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserReviewsController_deleteReply: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Reply UUID */
-        replyId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Reply deleted */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  UserReviewsController_report: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Review UUID */
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateReportDto'];
-      };
-    };
-    responses: {
-      /** @description Report submitted */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['ReportResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminReviewsController_listReports: {
-    parameters: {
-      query?: {
-        /** @description Filter by status */
-        status?: 'pending' | 'reviewed' | 'dismissed' | 'actioned';
-        /** @description Limit */
-        limit?: number;
-        /** @description Offset */
-        offset?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Paginated reports list */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['AdminReportListResponseDto'];
-          };
-        };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  AdminReviewsController_resolveReport: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Report UUID */
-        reportId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ResolveReportDto'];
-      };
-    };
-    responses: {
-      /** @description Report resolved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: {
-              success?: boolean;
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
-          };
         };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
     };
-  };
-  AdminReviewsController_forceDeleteReview: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Review UUID */
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Review deleted */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: {
-              success?: boolean;
+    CatalogMoviesController_getPopularMovies: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
+                order?: "asc" | "desc";
+                /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
+                genres?: string;
+                /** @description Min ratingoScore (0-100) */
+                minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
+                /** @description Vote source for minVotes filter */
+                voteSource?: "tmdb" | "trakt";
+                /** @description Min votes for selected voteSource */
+                minVotes?: number;
+                /** @description Release year (shortcut) */
+                year?: number;
+                /** @description Release year from (inclusive) */
+                yearFrom?: number;
+                /** @description Release year to (inclusive) */
+                yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
             };
-          };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Admin role required */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
     };
-  };
-  MonitoringController_getKeys: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    CatalogMoviesController_getNowPlaying: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
+                order?: "asc" | "desc";
+                /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
+                genres?: string;
+                /** @description Min ratingoScore (0-100) */
+                minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
+                /** @description Vote source for minVotes filter */
+                voteSource?: "tmdb" | "trakt";
+                /** @description Min votes for selected voteSource */
+                minVotes?: number;
+                /** @description Release year (shortcut) */
+                year?: number;
+                /** @description Release year from (inclusive) */
+                yearFrom?: number;
+                /** @description Release year to (inclusive) */
+                yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
+    CatalogMoviesController_getNewReleases: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
+                order?: "asc" | "desc";
+                /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
+                genres?: string;
+                /** @description Min ratingoScore (0-100) */
+                minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
+                /** @description Vote source for minVotes filter */
+                voteSource?: "tmdb" | "trakt";
+                /** @description Min votes for selected voteSource */
+                minVotes?: number;
+                /** @description Release year (shortcut) */
+                year?: number;
+                /** @description Release year from (inclusive) */
+                yearFrom?: number;
+                /** @description Release year to (inclusive) */
+                yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
+                /** @description Days to look back */
+                daysBack?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['KeyHealthDashboardDto'];
-          };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
     };
-  };
-  MonitoringController_checkNow: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    CatalogMoviesController_getNewOnDigital: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
+                order?: "asc" | "desc";
+                /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
+                genres?: string;
+                /** @description Min ratingoScore (0-100) */
+                minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
+                /** @description Vote source for minVotes filter */
+                voteSource?: "tmdb" | "trakt";
+                /** @description Min votes for selected voteSource */
+                minVotes?: number;
+                /** @description Release year (shortcut) */
+                year?: number;
+                /** @description Release year from (inclusive) */
+                yearFrom?: number;
+                /** @description Release year to (inclusive) */
+                yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
+                /** @description Days to look back */
+                daysBack?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
+    CatalogMoviesController_getMovieBySlug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['KeyHealthDashboardDto'];
-          };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MovieResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
     };
-  };
-  MonitoringController_getHistory: {
-    parameters: {
-      query?: {
-        limit?: number;
-      };
-      header?: never;
-      path: {
-        provider: 'tmdb' | 'trakt' | 'mdblist' | 'omdb' | 's3';
-      };
-      cookie?: never;
+    CatalogShowsController_getTrendingShows: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
+                order?: "asc" | "desc";
+                /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
+                genres?: string;
+                /** @description Min ratingoScore (0-100) */
+                minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
+                /** @description Vote source for minVotes filter */
+                voteSource?: "tmdb" | "trakt";
+                /** @description Min votes for selected voteSource */
+                minVotes?: number;
+                /** @description Release year (shortcut) */
+                year?: number;
+                /** @description Release year from (inclusive) */
+                yearFrom?: number;
+                /** @description Release year to (inclusive) */
+                yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["TrendingShowsResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
+    CatalogShowsController_getPopularShows: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
+                order?: "asc" | "desc";
+                /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
+                genres?: string;
+                /** @description Min ratingoScore (0-100) */
+                minRatingo?: number;
+                /** @description Min qualityScore (0-100), the score behind the card verdict */
+                minQuality?: number;
+                /** @description Vote source for minVotes filter */
+                voteSource?: "tmdb" | "trakt";
+                /** @description Min votes for selected voteSource */
+                minVotes?: number;
+                /** @description Release year (shortcut) */
+                year?: number;
+                /** @description Release year from (inclusive) */
+                yearFrom?: number;
+                /** @description Release year to (inclusive) */
+                yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': {
-            /** @enum {boolean} */
-            success: true;
-            data: components['schemas']['KeyHealthHistoryDto'];
-          };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["TrendingShowsResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
-      };
-      /** @description Validation failed or malformed input */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Missing or invalid access token */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Resource not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
     };
-  };
+    CatalogShowsController_getNewEpisodes: {
+        parameters: {
+            query?: {
+                /** @description Number of days to look back. */
+                days?: number;
+                /** @description Max number of shows to return. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["NewEpisodesResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogShowsController_getCalendar: {
+        parameters: {
+            query?: {
+                /** @description Start date (ISO string). Default: today. */
+                startDate?: string;
+                /** @description Number of days to include (default: 7). */
+                days?: number;
+                /** @description When true, returns only episodes from shows the authenticated user is currently watching and premieres of shows they saved to watch later. */
+                personalized?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CalendarResponseDto"];
+                    };
+                };
+            };
+            /** @description Invalid query parameters (days must be <= 90; personalized must be 'true' or 'false') */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required for personalized calendar */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogShowsController_getShowBySlug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ShowResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogShowsController_requestShowSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SyncRequestResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogSearchController_search: {
+        parameters: {
+            query: {
+                query: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SearchResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogSearchController_importMovie: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImportResultDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogSearchController_importShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImportResultDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogSearchController_getImportStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Job ID returned from import endpoint */
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Import job status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: {
+                            /** @enum {string} */
+                            status?: "queued" | "processing" | "ready" | "failed";
+                            /** @description Media slug (available when ready) */
+                            slug?: string | null;
+                            /** @description Error message (on failure) */
+                            errorMessage?: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogProvidersController_getProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ProvidersListDto"];
+                    };
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogSitemapController_getMovieSitemap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SitemapResponseDto"];
+                    };
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogSitemapController_getShowSitemap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SitemapResponseDto"];
+                    };
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_batchRatings: {
+        parameters: {
+            query: {
+                /** @description Comma-separated media item UUIDs (max 100) */
+                ids: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Batch ratings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["BatchRatingsResponseDto"];
+                    };
+                };
+            };
+            /** @description Invalid UUIDs or empty list */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_listContinue: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Continue items */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"][];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_getImportStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Import batch statuses */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImportBatchStatusDto"][];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_cancelImportBatches: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelImportBatchesDto"];
+            };
+        };
+        responses: {
+            /** @description Cancel result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CancelImportBatchesResponseDto"];
+                    };
+                };
+            };
+            /** @description Invalid request body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_getState: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User media state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_setState: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetUserMediaStateDto"];
+            };
+        };
+        responses: {
+            /** @description Upserted user media state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_list: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User media states */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"][];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_pauseMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Media item paused */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
+                };
+            };
+            /** @description Cannot pause: item must be in watching or caught_up state */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_resumeMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Media item resumed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
+                };
+            };
+            /** @description Cannot resume: item is not paused */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserMediaController_importMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportMediaDto"];
+            };
+        };
+        responses: {
+            /** @description Import result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CsvImportResultDto"];
+                    };
+                };
+            };
+            /** @description Invalid request body or source */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MeListsController_ratings: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MeListsController_watchlist: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MeListsController_history: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+                /** @description Narrow history to a single state (must be one of HISTORY_STATES). */
+                state?: "watching" | "completed" | "paused" | "caught_up";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MeListsController_activity: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MeListsController_paused: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MeListsController_caughtUp: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MeListsController_dropped: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MeListsController_listCounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MeListCountsResponseDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MeListsController_favoriteUpdates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["FavoriteUpdatesResponseDto"];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    EpisodeProgressController_markBatchWatched: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchEpisodeIdsDto"];
+            };
+        };
+        responses: {
+            /** @description Episodes marked as watched */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid episode IDs or episodes from different shows */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description First episode not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    EpisodeProgressController_markBatchUnwatched: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchEpisodeIdsDto"];
+            };
+        };
+        responses: {
+            /** @description Episodes marked as unwatched */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid episode IDs or episodes from different shows */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description First episode not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    EpisodeProgressController_markWatched: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Episode UUID */
+                episodeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Episode marked as watched */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Episode not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    EpisodeProgressController_markUnwatched: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Episode UUID */
+                episodeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Episode marked as unwatched */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    EpisodeProgressController_getShowProgress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Show UUID */
+                showId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Show progress */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ShowProgressDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    NotificationsController_list: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Filter by unread only */
+                unread?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["NotificationListResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    NotificationsController_getUnreadCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnreadCountResponseDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    NotificationsController_markAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MarkReadResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    NotificationsController_markAllAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MarkReadResponseDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SavedItemsController_saveItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveItemDto"];
+            };
+        };
+        responses: {
+            /** @description Item saved with current status */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SaveActionResultDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SavedItemsController_unsaveItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnsaveItemDto"];
+            };
+        };
+        responses: {
+            /** @description Item removed with current status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnsaveActionResultDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SavedItemsController_getBatchStatus: {
+        parameters: {
+            query: {
+                /** @description Comma-separated list of media item UUIDs (max 100) */
+                ids: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["BatchStatusResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SavedItemsController_getStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MediaSaveStatusDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SavedItemsController_listForLater: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedSavedItemsResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SavedItemsController_listConsidering: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedSavedItemsResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SubscriptionsController_subscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscribeDto"];
+            };
+        };
+        responses: {
+            /** @description Subscribed with current status */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SubscribeActionResultDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SubscriptionsController_unsubscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnsubscribeDto"];
+            };
+        };
+        responses: {
+            /** @description Unsubscribed with current status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnsubscribeActionResultDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SubscriptionsController_getStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MediaSubscriptionStatusDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SubscriptionsController_listActive: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SubscriptionWithMediaResponseDto"][];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_getJobStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ingestion job status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: {
+                            id?: string;
+                            /** @enum {string} */
+                            status?: "queued" | "processing" | "ready" | "failed";
+                            errorMessage?: string | null;
+                            /** Format: date-time */
+                            updatedAt?: string | null;
+                            /** @description Media slug (available when status is ready) */
+                            slug?: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_sync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncDto"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_syncTrending: {
+        parameters: {
+            query?: {
+                /** @description Number of pages to fetch in dispatcher mode (20 items per page) */
+                pages?: number;
+                /** @description Media type filter — sync only movies or only shows */
+                type?: "movie" | "show";
+                /** @description Single page number (legacy mode) */
+                page?: string;
+                /** @description Sync Trakt stats after ingestion (default: true) */
+                syncStats?: string;
+                /** @description Bypass dedupe */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncTrendingDto"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_syncNowPlaying: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncNowPlayingDto"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_updateNowPlayingFlags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncNowPlayingDto"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_syncNewReleases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncNewReleasesDto"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_syncSnapshots: {
+        parameters: {
+            query?: {
+                /** @description Region code for snapshots */
+                region?: string;
+                /** @description Bypass daily deduplication */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_syncTrackedShows: {
+        parameters: {
+            query?: {
+                /** @description Bypass hourly deduplication */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_backfillImdb: {
+        parameters: {
+            query?: {
+                /** @description Bypass daily deduplication */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Backfill job queued */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_backfillAltTitles: {
+        parameters: {
+            query?: {
+                /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Backfill job queued */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_backfillMdblistRatings: {
+        parameters: {
+            query?: {
+                /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Backfill job queued */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authenticated user does not have admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PolicyController_getPolicies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of policies */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PoliciesListDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PolicyController_createPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Policy configuration */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePolicyDto"];
+            };
+        };
+        responses: {
+            /** @description Policy created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CreatePolicyResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PolicyController_getPolicyById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Policy ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Policy details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PolicyDetailDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Policy not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PolicyController_preparePolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Policy ID to prepare */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Optional batch size and concurrency settings */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PrepareOptionsDto"];
+            };
+        };
+        responses: {
+            /** @description Policy preparation started */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PrepareResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    RunController_getRuns: {
+        parameters: {
+            query?: {
+                /** @description Number of runs to return (default: 20) */
+                limit?: number;
+                /** @description Offset for pagination (default: 0) */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of evaluation runs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["RunsListDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    RunController_getRunStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Run ID to check */
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Run status and progress */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["RunStatusDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    RunController_promoteRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Run ID to promote */
+                runId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Optional coverage and error thresholds (defaults: 100% coverage, 0 errors) */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PromoteOptionsDto"];
+            };
+        };
+        responses: {
+            /** @description Promotion result */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ActionResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    RunController_cancelRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Run ID to cancel */
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cancellation result */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ActionResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    RunController_getDiff: {
+        parameters: {
+            query?: {
+                /** @description Number of sample items to return (default: 50) */
+                sampleSize?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Run ID to compute diff for */
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Diff report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["DiffReportDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    RunController_backfillContext: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Context to backfill and optional batch size */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackfillRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Backfill started */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["BackfillResponseDto"];
+                    };
+                };
+            };
+            /** @description Invalid context */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No active policy found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    DryRunController_executeDryRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DryRunRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["DryRunResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    DryRunController_executeDryRunDiff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DryRunRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["DryRunResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ProvidersController_listProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ProvidersListDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ProvidersController_listUnmapped: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Sort by field */
+                sortBy?: "count" | "lastSeen";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnmappedProvidersListDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ProvidersController_listMappings: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Filter by provider ID */
+                providerId?: string;
+                /** @description Filter by region */
+                region?: string;
+                /** @description Include global mappings */
+                includeGlobal?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MappingsListDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ProvidersController_createMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMappingRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MappingDto"];
+                    };
+                };
+            };
+            /** @description Invalid provider ID or mapping already exists */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ProvidersController_updateMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Mapping ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMappingRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MappingDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Mapping not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ProvidersController_deleteMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Mapping ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mapping deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Mapping not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ProvidersController_resolveProvider: {
+        parameters: {
+            query: {
+                /** @description TMDB provider ID to resolve */
+                tmdbId: number;
+                /** @description Region for resolution */
+                region?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ResolveResultDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_syncTrendingStats: {
+        parameters: {
+            query?: {
+                /** @description Number of trending items to sync per type (movies + shows) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_syncEligibleTrending: {
+        parameters: {
+            query?: {
+                /** @description Number of items per batch */
+                batchSize?: number;
+                /** @description Keyset cursor: sync only items with a media id greater than this one */
+                afterId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_getStatsByTmdbId: {
+        parameters: {
+            query?: {
+                /** @description Media type (TMDB movie and TV ids overlap; recommended) */
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path: {
+                /** @description TMDB ID of the media item */
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_analyzeDropOff: {
+        parameters: {
+            query?: {
+                /** @description TMDB ID of specific show to analyze */
+                tmdbId?: number;
+                /** @description Max shows to analyze */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_analyzeDropOffById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description TMDB ID of the show to analyze */
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_getDropOffAnalysis: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description TMDB ID of the show */
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_backfillTotalWatchers: {
+        parameters: {
+            query?: {
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+                /** @description Max items to backfill */
+                limit?: number;
+                /** @description Minimum Trakt votes to consider item as corrupted */
+                minVotes?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_backfillWatchersCount: {
+        parameters: {
+            query?: {
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+                /** @description Max items to backfill */
+                limit?: number;
+                /** @description Minimum total_watchers to consider item as corrupted */
+                minTotalWatchers?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_recalculateScores: {
+        parameters: {
+            query?: {
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+                /** @description Number of items per batch */
+                batchSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StatsController_reconcileCommunityRatings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    HomeController_getHero: {
+        parameters: {
+            query?: {
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeroItemDto"][];
+                };
+            };
+        };
+    };
+    HomeController_getWatchingNow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeroItemDto"][];
+                };
+            };
+        };
+    };
+    InsightsController_getMovements: {
+        parameters: {
+            query?: {
+                window?: "30d" | "90d" | "365d";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["RiseFallResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterDto"];
+            };
+        };
+        responses: {
+            /** @description Tokens pair */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many registration attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginDto"];
+            };
+        };
+        responses: {
+            /** @description Tokens pair */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid credentials */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Too many login attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshDto"];
+            };
+        };
+        responses: {
+            /** @description Tokens pair */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many refresh attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Password changed successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid current password */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current authenticated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MeDto"];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_googleAuth: {
+        parameters: {
+            query?: {
+                /** @description URL to redirect after auth */
+                returnTo?: string;
+                /** @description Frontend origin to return to; must be on the OAuth return allow-list */
+                returnOrigin?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to Google */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_facebookAuth: {
+        parameters: {
+            query?: {
+                /** @description URL to redirect after auth */
+                returnTo?: string;
+                /** @description Frontend origin to return to; must be on the OAuth return allow-list */
+                returnOrigin?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to Facebook */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_exchangeCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExchangeCodeDto"];
+            };
+        };
+        responses: {
+            /** @description Tokens pair */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description OAUTH_EXCHANGE_EXPIRED or OAUTH_EXCHANGE_USED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Too many exchange attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_getLinkedAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Linked accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["LinkedAccountDto"][];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_unlinkProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description OAuth provider to unlink */
+                provider: "google" | "facebook";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Provider unlinked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Cannot unlink last authentication method */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AuthController_getConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Auth configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthConfigDto"];
+                    };
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UsersController_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UsersController_updateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileDto"];
+            };
+        };
+        responses: {
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UsersController_createAvatarUploadUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAvatarUploadUrlDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AvatarUploadUrlDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PublicUsersController_getPublicProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PublicUsersController_getRatings: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+            };
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PublicUsersController_getWatchlist: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+            };
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PublicUsersController_getHistory: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+            };
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    JournalPostsController_getPosts: {
+        parameters: {
+            query?: {
+                /** @description Filter by post type(s). Comma-separated for multiple types (union). */
+                type?: string[];
+                /** @description Filter by context identifier */
+                context?: string;
+                /** @description Page number (1-based) */
+                page?: number;
+                /** @description Number of posts per page */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of posts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PostListResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    JournalPostsController_getPostBySlug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post URL slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Full post details with navigation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PostDetailDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminJournalController_getPosts: {
+        parameters: {
+            query?: {
+                /** @description Filter by post type(s). Comma-separated for multiple types (union). */
+                type?: string[];
+                /** @description Filter by context identifier */
+                context?: string;
+                /** @description Page number (1-based) */
+                page?: number;
+                /** @description Number of posts per page */
+                limit?: number;
+                /** @description Filter by post status */
+                status?: "draft" | "published" | "scheduled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of posts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostListResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminJournalController_createPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePostDto"];
+            };
+        };
+        responses: {
+            /** @description Post created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminJournalController_getPostById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Full post details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminJournalController_deletePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Post deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: {
+                            success?: boolean;
+                        };
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminJournalController_updatePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePostDto"];
+            };
+        };
+        responses: {
+            /** @description Updated post */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminJournalController_publishPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published post */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminJournalController_unpublishPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unpublished post (draft) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminJournalController_uploadImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description Image file (jpg, png, webp, gif). Max 5MB.
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Uploaded image URL */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImageUploadResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    JournalImagesController_getImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Image filename */
+                filename: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": unknown;
+                    "image/png": unknown;
+                    "image/webp": unknown;
+                    "image/gif": unknown;
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ReviewsController_listForMedia: {
+        parameters: {
+            query?: {
+                /** @description Sort order: newest, oldest, or most_liked */
+                sort?: "newest" | "oldest" | "most_liked";
+                /** @description Number of reviews to return */
+                limit?: number;
+                /** @description Offset for pagination */
+                offset?: number;
+                /** @description Hide reviews marked as spoilers */
+                hideSpoilers?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewListResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ReviewsController_getById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ReviewsController_listReplies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReplyResponseDto"][];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserReviewsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewDto"];
+            };
+        };
+        responses: {
+            /** @description Review created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewMutationResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserReviewsController_getMyReviewForMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Review found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewMutationResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserReviewsController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Review deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserReviewsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReviewDto"];
+            };
+        };
+        responses: {
+            /** @description Review updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewMutationResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserReviewsController_vote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewVoteDto"];
+            };
+        };
+        responses: {
+            /** @description Vote registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["VoteResultDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserReviewsController_unvote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Vote removed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["VoteResultDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserReviewsController_createReply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReplyDto"];
+            };
+        };
+        responses: {
+            /** @description Reply created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReplyMutationResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserReviewsController_deleteReply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Reply UUID */
+                replyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reply deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UserReviewsController_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReportDto"];
+            };
+        };
+        responses: {
+            /** @description Report submitted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReportResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminReviewsController_listReports: {
+        parameters: {
+            query?: {
+                /** @description Filter by status */
+                status?: "pending" | "reviewed" | "dismissed" | "actioned";
+                /** @description Limit */
+                limit?: number;
+                /** @description Offset */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated reports list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminReportListResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminReviewsController_resolveReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Report UUID */
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveReportDto"];
+            };
+        };
+        responses: {
+            /** @description Report resolved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: {
+                            success?: boolean;
+                        };
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminReviewsController_forceDeleteReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Review deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: {
+                            success?: boolean;
+                        };
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MonitoringController_getKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["KeyHealthDashboardDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MonitoringController_checkNow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["KeyHealthDashboardDto"];
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    MonitoringController_getHistory: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["KeyHealthHistoryDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
 }

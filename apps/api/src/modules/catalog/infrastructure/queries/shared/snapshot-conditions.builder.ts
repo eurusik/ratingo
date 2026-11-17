@@ -1,6 +1,6 @@
 import { and, eq, gt, isNull, isNotNull, notExists, sql, type SQL } from 'drizzle-orm';
 
-import { isNotUnreleasedMovie } from '@/database/movie-release-conditions';
+import { excludeUnreleasedMovies } from '@/database/movie-release-conditions';
 import * as schema from '@/database/schema';
 import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
@@ -76,7 +76,7 @@ export function buildSnapshotCandidateConditions(options: SnapshotConditionsOpti
   }
 
   if (releasedBy) {
-    conditions.push(isNotUnreleasedMovie(releasedBy));
+    conditions.push(excludeUnreleasedMovies(releasedBy));
   }
 
   return conditions;

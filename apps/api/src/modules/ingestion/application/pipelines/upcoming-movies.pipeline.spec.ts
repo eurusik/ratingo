@@ -113,6 +113,14 @@ describe('UpcomingMoviesPipeline', () => {
       );
     });
 
+    it('keeps the soon window for an unknown scope', async () => {
+      await pipeline.refresh('Soon' as never);
+
+      expect(upcomingMoviesRepository.findTmdbIdsToRefresh).toHaveBeenCalledWith(
+        expect.objectContaining({ releasedBefore: new Date(NOW.getTime() + 14 * DAY_MS) }),
+      );
+    });
+
     it('re-syncs already imported movies with an upr-prefixed day-scoped job id', async () => {
       upcomingMoviesRepository.findTmdbIdsToRefresh.mockResolvedValue([10, 20]);
 

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, asc, eq, gt, isNull, lt, lte, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gt, isNull, lt, lte, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -48,7 +48,7 @@ export class UpcomingMoviesRepository implements IUpcomingMoviesRepository {
           .from(schema.mediaItems)
           .innerJoin(schema.movies, eq(schema.movies.mediaItemId, schema.mediaItems.id))
           .where(and(...conditions))
-          .orderBy(asc(releaseDate))
+          .orderBy(sql`${schema.mediaItems.lastSyncedAt} asc nulls first`, asc(releaseDate))
           .limit(query.limit),
       { limit: query.limit },
     );

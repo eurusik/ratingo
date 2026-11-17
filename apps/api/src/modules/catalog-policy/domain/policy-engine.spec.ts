@@ -12,7 +12,11 @@ import {
   checkContentClassExcluded,
 } from './policy-engine';
 import { PolicyConfig, PolicyEngineInput, GlobalRequirements } from './types/policy.types';
-import { EligibilityStatus, EvaluationContext } from './constants/evaluation.constants';
+import {
+  EligibilityStatus,
+  EvaluationContext,
+  EvaluationReason,
+} from './constants/evaluation.constants';
 import { ContentClass } from './classification.service';
 
 describe('Policy Engine', () => {
@@ -1412,7 +1416,7 @@ describe('Policy Engine', () => {
       });
 
       expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-      expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+      expect(result.reasons).toContain(EvaluationReason.MISSING_GLOBAL_SIGNALS);
     });
 
     it('skips the Global Gate in upcoming context', () => {
@@ -1431,7 +1435,7 @@ describe('Policy Engine', () => {
       );
 
       expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.reasons).toContain(EvaluationReason.BLOCKED_COUNTRY);
     });
 
     it('still requires a readable title in upcoming context', () => {
@@ -1442,7 +1446,7 @@ describe('Policy Engine', () => {
       );
 
       expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-      expect(result.reasons).toContain('MISSING_TRANSLATED_TITLE');
+      expect(result.reasons).toContain(EvaluationReason.MISSING_TRANSLATED_TITLE);
     });
 
     it('does not require an overview in upcoming context', () => {

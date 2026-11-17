@@ -49,6 +49,18 @@ describe('UpcomingMoviesRepository', () => {
     );
   });
 
+  it('refreshes the least recently synced movies first', async () => {
+    const { db, chain } = buildDb([]);
+
+    await new UpcomingMoviesRepository(db as never).findTmdbIdsToRefresh(query);
+
+    const [lastSynced, releaseDate] = chain.orderBy.mock.calls[0] as SQL[];
+    expect(new PgDialect().sqlToQuery(lastSynced).sql).toBe(
+      '"media_items"."last_synced_at" asc nulls first',
+    );
+    expect(new PgDialect().sqlToQuery(releaseDate).sql).toMatch(/^coalesce\(.*\) asc$/);
+  });
+
   it('has no upper release bound when releasedBefore is null', async () => {
     const { db, chain } = buildDb([]);
 

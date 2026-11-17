@@ -388,25 +388,7 @@ export class TmdbAdapter implements MetadataProviderPort {
     region = NEW_RELEASES_REGION,
   ): Promise<number[]> {
     const query = this.buildNewReleasesQuery(daysBack, region);
-    const ids: number[] = [];
-    let pagesFetched = 0;
-    let totalPages = 0;
-
-    for (let page = 1; page <= MAX_PAGES; page++) {
-      const data = await this.fetch<TmdbPaginatedResponse>('/discover/movie', {
-        ...query,
-        page: page.toString(),
-      });
-
-      const pageIds = (data.results ?? []).map((m) => m.id);
-      ids.push(...pageIds);
-
-      pagesFetched = page;
-      totalPages = data.total_pages;
-
-      // Stop if we've reached the last page
-      if (page >= data.total_pages) break;
-    }
+    const { ids, pagesFetched, totalPages } = await this.discoverMovieIds(query);
 
     if (totalPages > MAX_PAGES) {
       this.logger.warn(
@@ -453,7 +435,22 @@ export class TmdbAdapter implements MetadataProviderPort {
     query: UpcomingDiscoverQuery,
     minPopularity: number,
   ): Promise<number[]> {
-    const params = this.buildUpcomingQuery(query);
+    const { ids, pagesFetched, totalPages } = await this.discoverMovieIds(
+      this.buildUpcomingQuery(query),
+      minPopularity,
+    );
+
+    this.logger.log(
+      `upcoming region=${query.region} releaseTypes=${query.releaseTypes} lookaheadDays=${query.lookaheadDays} pagesFetched=${pagesFetched} totalPages=${totalPages} idsFound=${ids.length}`,
+    );
+
+    return ids;
+  }
+
+  private async discoverMovieIds(
+    params: Record<string, string>,
+    minPopularity = 0,
+  ): Promise<{ ids: number[]; pagesFetched: number; totalPages: number }> {
     const ids: number[] = [];
     let pagesFetched = 0;
     let totalPages = 0;
@@ -465,21 +462,17 @@ export class TmdbAdapter implements MetadataProviderPort {
       });
 
       const results = data.results ?? [];
-      const popular = results.filter((m) => (m.popularity ?? 0) >= minPopularity);
-      ids.push(...popular.map((m) => m.id));
+      const kept = results.filter((m) => (m.popularity ?? 0) >= minPopularity);
+      ids.push(...kept.map((m) => m.id));
 
       pagesFetched = page;
       totalPages = data.total_pages;
 
-      const reachedPopularityFloor = popular.length < results.length;
+      const reachedPopularityFloor = kept.length < results.length;
       if (reachedPopularityFloor || page >= data.total_pages) break;
     }
 
-    this.logger.log(
-      `upcoming region=${query.region} releaseTypes=${query.releaseTypes} lookaheadDays=${query.lookaheadDays} pagesFetched=${pagesFetched} totalPages=${totalPages} idsFound=${ids.length}`,
-    );
-
-    return ids;
+    return { ids, pagesFetched, totalPages };
   }
 
   private buildUpcomingQuery(query: UpcomingDiscoverQuery): Record<string, string> {

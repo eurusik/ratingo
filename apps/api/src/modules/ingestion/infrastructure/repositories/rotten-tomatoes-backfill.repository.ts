@@ -6,7 +6,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
-import { isNotUnreleasedMovie } from '@/database/movie-release-conditions';
+import { excludeUnreleasedMovies } from '@/database/movie-release-conditions';
 import * as schema from '@/database/schema';
 import { anyOf } from '@/database/sql-conditions';
 import { type BackfillPage } from '@/modules/ingestion/domain/repositories/backfill-page.interface';
@@ -45,7 +45,7 @@ export class RottenTomatoesBackfillRepository implements IRottenTomatoesBackfill
         isNull(schema.mediaItems.rtFetchedAt),
         lt(schema.mediaItems.rtFetchedAt, fetchedBefore),
       ),
-      isNotUnreleasedMovie(releasedBy),
+      excludeUnreleasedMovies(releasedBy),
     ];
 
     if (cursor) {
