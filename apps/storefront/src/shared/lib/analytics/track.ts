@@ -27,42 +27,55 @@ function normalize(params: GtagParams): Record<string, string | number> {
   return result;
 }
 
-export function track<E extends AnalyticsEventName>(name: E, params: AnalyticsEvents[E]): void {
-  const send = gtag();
+function clarity(): ((...args: unknown[]) => void) | null {
+  if (typeof window === 'undefined') return null;
+  return typeof window.clarity === 'function' ? window.clarity : null;
+}
+
+function attempt(send: (() => void) | null): void {
   if (!send) return;
   try {
-    send('event', name, normalize(params as GtagParams));
+    send();
   } catch {
     return;
   }
+}
+
+function setClarityTags(tags: Record<string, string>): void {
+  const call = clarity();
+  if (!call) return;
+  for (const [key, value] of Object.entries(tags)) {
+    attempt(() => call('set', key, value));
+  }
+}
+
+export function track<E extends AnalyticsEventName>(name: E, params: AnalyticsEvents[E]): void {
+  const sendGtag = gtag();
+  attempt(sendGtag && (() => sendGtag('event', name, normalize(params as GtagParams))));
+  const sendClarity = clarity();
+  if (name !== 'web_vitals') attempt(sendClarity && (() => sendClarity('event', name)));
 }
 
 export function setUserProperties(properties: Record<string, string>): void {
-  const send = gtag();
-  if (!send) return;
-  try {
-    send('set', 'user_properties', properties);
-  } catch {
-    return;
-  }
+  const sendGtag = gtag();
+  attempt(sendGtag && (() => sendGtag('set', 'user_properties', properties)));
+  setClarityTags(properties);
 }
 
 export function identifyUser(userId: string | null): void {
-  const send = gtag();
-  if (!send) return;
-  try {
-    send('set', { user_id: userId });
-    send('set', 'user_properties', { logged_in: userId ? 'true' : 'false' });
-  } catch {
-    return;
-  }
+  const loggedIn = userId ? 'true' : 'false';
+  const sendGtag = gtag();
+  attempt(
+    sendGtag &&
+      (() => {
+        sendGtag('set', { user_id: userId });
+        sendGtag('set', 'user_properties', { logged_in: loggedIn });
+      }),
+  );
+  setClarityTags({ logged_in: loggedIn });
 }
 
 export function identifyClarityUser(userId: string): void {
-  if (typeof window === 'undefined' || typeof window.clarity !== 'function') return;
-  try {
-    window.clarity('identify', userId);
-  } catch {
-    return;
-  }
+  const call = clarity();
+  attempt(call && (() => call('identify', userId)));
 }
