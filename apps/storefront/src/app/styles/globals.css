@@ -6,6 +6,54 @@
   --animate-signal-ring: signal-ring 3s ease-out infinite;
   --animate-season-forward: season-forward 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
   --animate-season-back: season-back 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  --animate-brand-play: brand-play 1.6s ease-in-out infinite;
+  --animate-oauth-ring: oauth-ring 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  --animate-oauth-bar: oauth-bar 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  --animate-oauth-rise: oauth-rise 500ms 150ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  --animate-oauth-nudge: oauth-nudge 400ms 100ms ease-in-out;
+
+  @keyframes brand-play {
+    50% {
+      transform: translateX(3px);
+      opacity: 0.75;
+    }
+  }
+
+  @keyframes oauth-ring {
+    from {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    to {
+      transform: scale(2.1);
+      opacity: 0;
+    }
+  }
+
+  @keyframes oauth-bar {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
+
+  @keyframes oauth-rise {
+    from {
+      transform: translateY(0.5rem);
+      opacity: 0;
+    }
+  }
+
+  @keyframes oauth-nudge {
+    25% {
+      transform: translateX(-4px);
+    }
+    75% {
+      transform: translateX(4px);
+    }
+  }
 
   @keyframes season-forward {
     from {
@@ -75,70 +123,6 @@
 
   p {
     text-wrap: pretty;
-  }
-}
-
-@layer components {
-  .page {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    max-width: 40rem;
-    margin: 0 auto;
-    padding: 0 max(1rem, var(--safe-right)) 2rem max(1rem, var(--safe-left));
-  }
-
-  @media (width >= 48rem) {
-    .page {
-      margin: 0;
-      padding-inline: 0;
-    }
-  }
-
-  .page--centered {
-    padding-block: max(2rem, var(--safe-top)) max(2rem, var(--safe-bottom));
-    min-height: 100dvh;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .muted {
-    color: var(--muted);
-  }
-
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .actions--centered {
-    justify-content: center;
-  }
-
-  .action {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--tap-target);
-    padding: 0 1rem;
-    border: 1px solid var(--border);
-    border-radius: calc(var(--radius) * 0.75);
-    background: transparent;
-    color: var(--foreground);
-    font: inherit;
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  @media (hover: hover) {
-    .action:hover {
-      border-color: var(--accent);
-    }
-  }
-
-  .action:active {
-    border-color: var(--accent);
-    background: var(--default);
   }
 }
 

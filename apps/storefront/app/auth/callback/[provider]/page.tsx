@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { OAuthCallbackPage } from '@/pages/auth-callback';
 import { OAUTH_PROVIDERS } from '@/shared/auth';
 
@@ -12,6 +13,14 @@ export function generateStaticParams() {
   return OAUTH_PROVIDERS.map((provider) => ({ provider }));
 }
 
-export default function OAuthCallbackRoute() {
-  return <OAuthCallbackPage />;
+interface OAuthCallbackRouteProps {
+  params: Promise<{ provider: string }>;
+}
+
+export default async function OAuthCallbackRoute({ params }: OAuthCallbackRouteProps) {
+  const { provider } = await params;
+  const oauthProvider = OAUTH_PROVIDERS.find((candidate) => candidate === provider);
+  if (!oauthProvider) notFound();
+
+  return <OAuthCallbackPage provider={oauthProvider} />;
 }
