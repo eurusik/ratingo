@@ -9,25 +9,22 @@ import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
+import {
+  isTelemetryEnabled,
+  METRICS_EXPORT_INTERVAL_MS,
+  toServiceVersion,
+} from '@ratingo/node-telemetry';
 
 import { type AppRole, getAppRole } from '../common/runtime/app-role';
 
-import {
-  HEALTH_PATH_PREFIX,
-  METRICS_EXPORT_INTERVAL_MS,
-  SERVICE_NAME_BY_ROLE,
-  SHORT_COMMIT_SHA_LENGTH,
-} from './telemetry.constants';
-
-export const isTelemetryEnabled = (env: NodeJS.ProcessEnv = process.env): boolean =>
-  Boolean(env.OTEL_EXPORTER_OTLP_ENDPOINT) && env.OTEL_SDK_DISABLED !== 'true';
+import { HEALTH_PATH_PREFIX, SERVICE_NAME_BY_ROLE } from './telemetry.constants';
 
 export const buildServiceAttributes = (
   role: AppRole,
   env: NodeJS.ProcessEnv = process.env,
 ): Record<string, string> => ({
   'service.name': env.OTEL_SERVICE_NAME || SERVICE_NAME_BY_ROLE[role],
-  'service.version': env.RAILWAY_GIT_COMMIT_SHA?.slice(0, SHORT_COMMIT_SHA_LENGTH) ?? 'local',
+  'service.version': toServiceVersion(env.RAILWAY_GIT_COMMIT_SHA),
   'deployment.environment.name': env.RAILWAY_ENVIRONMENT_NAME ?? env.NODE_ENV ?? 'development',
   'app.role': role,
 });

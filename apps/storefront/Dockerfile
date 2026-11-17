@@ -7,6 +7,7 @@ COPY apps/storefront/package.json apps/storefront/package.json
 COPY packages/ui/package.json packages/ui/package.json
 COPY packages/web-core/package.json packages/web-core/package.json
 COPY packages/api-contract/package.json packages/api-contract/package.json
+COPY packages/node-telemetry/package.json packages/node-telemetry/package.json
 
 RUN npm ci --include-workspace-root --workspace=storefront --no-audit --no-fund
 

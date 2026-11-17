@@ -1,7 +1,8 @@
 import { type Counter, metrics } from '@opentelemetry/api';
+import { UNMATCHED_ROUTE } from '@ratingo/node-telemetry';
 import type { Instrumentation } from 'next';
 
-import { METER_NAME, MISSING_LABEL, REQUEST_ERRORS_METRIC, UNMATCHED_ROUTE } from './constants';
+import { METER_NAME, MISSING_LABEL, REQUEST_ERRORS_METRIC } from './constants';
 
 type RequestErrorContext = Parameters<Instrumentation.onRequestError>[2];
 

@@ -67,14 +67,14 @@ jobs:
           if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
             api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true; storefront_image=true
           else
-            api=$(match '^(apps/api/|knip\.json$)')
+            api=$(match '^(apps/api/|packages/node-telemetry/|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|knip\.json$)')
-            storefront=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui)/|knip\.json$)')
+            storefront=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|knip\.json$)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
             migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
             smoke=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|e2e/smoke/|playwright\.smoke\.config\.ts$|\.dockerignore$)')
-            storefront_image=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui)/|\.dockerignore$)')
+            storefront_image=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|\.dockerignore$)')
           fi
 
           if (( large )); then
@@ -126,6 +126,18 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck --workspace=api
+
+      - name: node-telemetry lint
+        run: npm run lint --workspace=@ratingo/node-telemetry
+
+      - name: node-telemetry typecheck
+        run: npm run typecheck --workspace=@ratingo/node-telemetry
+
+      - name: node-telemetry unit tests
+        run: npm test --workspace=@ratingo/node-telemetry -- --ci
+
+      - name: node-telemetry build
+        run: npm run build --workspace=@ratingo/node-telemetry
 
       - if: success() && github.event_name == 'push'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
@@ -185,6 +197,9 @@ jobs:
 
       - name: Find unused files, exports and dependencies with knip
         run: npm run lint:dead-code --workspace=api
+
+      - name: Find unused files, exports and dependencies in node-telemetry with knip
+        run: npm run lint:dead-code --workspace=@ratingo/node-telemetry
 
   migrations:
     name: migrations

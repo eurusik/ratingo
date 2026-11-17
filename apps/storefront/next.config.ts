@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
     staleTimes: { dynamic: DYNAMIC_PAGE_REUSE_SECONDS },
     isrFlushToDisk: false,
   },
-  transpilePackages: ['@ratingo/web-core', '@ratingo/ui'],
+  transpilePackages: ['@ratingo/web-core', '@ratingo/ui', '@ratingo/node-telemetry'],
   async redirects() {
     return [...LEGACY_REDIRECTS, ...HIDDEN_UNTIL_PORTED, ...MOVED_TO_ADMIN_HOST];
   },
