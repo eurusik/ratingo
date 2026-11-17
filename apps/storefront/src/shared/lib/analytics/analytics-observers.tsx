@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useReportWebVitals } from 'next/web-vitals';
 import { useAuth } from '@ratingo/web-core/auth';
-import { identifyUser, setUserProperties, track } from './track';
+import { identifyClarityUser, identifyUser, setUserProperties, track } from './track';
 
 const STANDALONE_QUERY = '(display-mode: standalone)';
 
@@ -25,6 +25,7 @@ export function AnalyticsIdentity() {
   useEffect(() => {
     if (isLoading) return;
     identifyUser(userId);
+    if (userId) identifyClarityUser(userId);
   }, [isLoading, userId]);
 
   return null;

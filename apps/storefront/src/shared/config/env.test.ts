@@ -3,6 +3,7 @@ const ORIGINAL_ENV = process.env;
 interface DeploymentEnv {
   APP_ENV?: string;
   NEXT_PUBLIC_GA_MEASUREMENT_ID?: string;
+  NEXT_PUBLIC_CLARITY_PROJECT_ID?: string;
   NEXT_PUBLIC_API_URL?: string;
   API_INTERNAL_URL?: string;
 }
@@ -26,17 +27,23 @@ describe('site environment gating', () => {
 
     expect(env.IS_PRODUCTION_SITE).toBe(true);
     expect(env.GA_MEASUREMENT_ID).toBe('G-Y3TXZS9VBK');
+    expect(env.CLARITY_PROJECT_ID).toBe('zf60w3prn8');
   });
 
   it.each<[string, DeploymentEnv]>([
     ['the dev deployment', { APP_ENV: 'dev' }],
     ['a CI build', { APP_ENV: 'ci' }],
     ['a local build', {}],
-  ])('keeps %s out of search and Google Analytics', (_name, deployment) => {
-    const env = loadEnv({ ...deployment, NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-OVERRIDE' });
+  ])('keeps %s out of search, Google Analytics and Clarity', (_name, deployment) => {
+    const env = loadEnv({
+      ...deployment,
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-OVERRIDE',
+      NEXT_PUBLIC_CLARITY_PROJECT_ID: 'override',
+    });
 
     expect(env.IS_PRODUCTION_SITE).toBe(false);
     expect(env.GA_MEASUREMENT_ID).toBeNull();
+    expect(env.CLARITY_PROJECT_ID).toBeNull();
   });
 
   it('lets the production site override the analytics property', () => {
@@ -46,6 +53,15 @@ describe('site environment gating', () => {
     });
 
     expect(env.GA_MEASUREMENT_ID).toBe('G-OVERRIDE');
+  });
+
+  it('lets the production site override the Clarity project', () => {
+    const env = loadEnv({
+      APP_ENV: 'production',
+      NEXT_PUBLIC_CLARITY_PROJECT_ID: 'override',
+    });
+
+    expect(env.CLARITY_PROJECT_ID).toBe('override');
   });
 });
 
