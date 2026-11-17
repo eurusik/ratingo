@@ -414,9 +414,9 @@
       "label": "Твоя статистика",
       "movies": "Фільми",
       "shows": "Серіали",
-      "watchlist": "Список",
+      "watchlist": "Хочу подивитись",
       "emptyWatchlist": "Поки порожньо",
-      "findToWatch": "Знайти, що подивитись"
+      "find": "Знайти"
     },
     "theme": "Тема",
     "themes": {
