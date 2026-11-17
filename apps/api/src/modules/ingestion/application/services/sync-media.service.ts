@@ -23,6 +23,8 @@ import { ScoreCalculatorService, type ScoreInput } from '@/modules/shared/score-
 import { TmdbAdapter } from '@/modules/tmdb/public';
 import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '@/modules/trakt/public';
 
+import { isUnreleasedMovie } from '../helpers/movie-release';
+
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 
 // Score display multiplier (0-1 to 0-100)
@@ -195,7 +197,8 @@ export class SyncMediaService {
 
       // Step 10: Evaluate catalog eligibility (both catalog and trending contexts if applicable)
       const isTrending = trending !== undefined && trending.score > 0;
-      await this.evaluateCatalog(mediaItem, logPrefix, isTrending);
+      const isUpcoming = this.isUpcomingMovie(classified, type);
+      await this.evaluateCatalog(mediaItem, logPrefix, { isTrending, isUpcoming });
 
       // Step 11: Emit domain event for cross-module consumers (e.g. link pending import items)
       this.emitMediaSynced(tmdbId, type, mediaItem, logPrefix);
@@ -512,11 +515,23 @@ export class SyncMediaService {
     }
   }
 
+  private isUpcomingMovie(media: NormalizedMedia, type: MediaType): boolean {
+    if (type !== MediaType.MOVIE) return false;
+    return isUnreleasedMovie(
+      {
+        releaseDate: media.releaseDate,
+        theatricalReleaseDate: media.details?.theatricalReleaseDate,
+        digitalReleaseDate: media.details?.digitalReleaseDate,
+      },
+      this.clock.now(),
+    );
+  }
+
   /** Triggers catalog eligibility evaluation if service available. */
   private async evaluateCatalog(
     mediaItem: { id: string } | null,
     logPrefix: string,
-    isTrending: boolean = false,
+    surfaces: { isTrending: boolean; isUpcoming: boolean },
   ): Promise<void> {
     if (!this.catalogEvaluator) return;
     if (!mediaItem) return;
@@ -530,15 +545,23 @@ export class SyncMediaService {
 
       // Additionally evaluate for trending context if item came from trending pipeline
       // This allows relaxed requirements for trending display surface
-      if (isTrending) {
+      if (surfaces.isTrending) {
         await this.catalogEvaluator.evaluateOne({
           mediaItemId: mediaItem.id,
           context: EvaluationContext.TRENDING,
         });
-        this.logger.debug(`${logPrefix} Evaluated catalog + trending eligibility`);
-      } else {
-        this.logger.debug(`${logPrefix} Evaluated catalog eligibility`);
       }
+
+      if (surfaces.isUpcoming) {
+        await this.catalogEvaluator.evaluateOne({
+          mediaItemId: mediaItem.id,
+          context: EvaluationContext.UPCOMING,
+        });
+      }
+
+      this.logger.debug(
+        `${logPrefix} Evaluated catalog eligibility (trending=${surfaces.isTrending}, upcoming=${surfaces.isUpcoming})`,
+      );
     } catch (evalError) {
       this.logger.warn(`${logPrefix} Catalog evaluation failed: ${errorMessage(evalError)}`);
     }

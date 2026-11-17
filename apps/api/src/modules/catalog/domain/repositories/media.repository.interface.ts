@@ -271,6 +271,7 @@ export interface IMediaRepository {
     limit: number;
     snapshotDate?: Date;
     region?: string;
+    releasedBy?: Date;
   }): Promise<SnapshotCandidate[]>;
 
   /**

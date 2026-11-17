@@ -10,6 +10,7 @@ import { TrendingPipeline } from '../pipelines/trending.pipeline';
 import { TrackedShowsPipeline } from '../pipelines/tracked-shows.pipeline';
 import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
 import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
+import { UpcomingMoviesPipeline } from '../pipelines/upcoming-movies.pipeline';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
@@ -27,6 +28,7 @@ describe('SyncWorker', () => {
   let trackedShowsPipeline: any;
   let nowPlayingPipeline: any;
   let newReleasesPipeline: any;
+  let upcomingMoviesPipeline: any;
   let backfillImdbPipeline: any;
   let backfillAltTitlesPipeline: any;
   let backfillMdblistRatingsPipeline: any;
@@ -68,6 +70,11 @@ describe('SyncWorker', () => {
       sync: jest.fn().mockResolvedValue(undefined),
     };
 
+    upcomingMoviesPipeline = {
+      sync: jest.fn().mockResolvedValue(undefined),
+      refresh: jest.fn().mockResolvedValue(undefined),
+    };
+
     backfillImdbPipeline = {
       dispatch: jest.fn().mockResolvedValue(undefined),
       processItem: jest.fn().mockResolvedValue(undefined),
@@ -92,6 +99,7 @@ describe('SyncWorker', () => {
         { provide: TrackedShowsPipeline, useValue: trackedShowsPipeline },
         { provide: NowPlayingPipeline, useValue: nowPlayingPipeline },
         { provide: NewReleasesPipeline, useValue: newReleasesPipeline },
+        { provide: UpcomingMoviesPipeline, useValue: upcomingMoviesPipeline },
         { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
         { provide: BackfillMdblistRatingsPipeline, useValue: backfillMdblistRatingsPipeline },
@@ -273,6 +281,24 @@ describe('SyncWorker', () => {
       } as Job;
       await worker.process(job);
       expect(newReleasesPipeline.sync).toHaveBeenCalledWith('UA', 30);
+    });
+  });
+
+  describe('process - upcoming movies pipeline', () => {
+    it('should delegate SYNC_UPCOMING_MOVIES to upcoming movies pipeline', async () => {
+      const job = { name: IngestionJob.SYNC_UPCOMING_MOVIES, data: {}, id: '14' } as Job;
+      await worker.process(job);
+      expect(upcomingMoviesPipeline.sync).toHaveBeenCalled();
+    });
+
+    it('should delegate REFRESH_UPCOMING_MOVIES with its scope', async () => {
+      const job = {
+        name: IngestionJob.REFRESH_UPCOMING_MOVIES,
+        data: { scope: 'all' },
+        id: '15',
+      } as Job;
+      await worker.process(job);
+      expect(upcomingMoviesPipeline.refresh).toHaveBeenCalledWith('all');
     });
   });
 

@@ -29,6 +29,13 @@ export const NEW_RELEASES_REGION = 'US';
 export const NEW_RELEASES_MIN_VOTE_COUNT = 5;
 export const NEW_RELEASES_MAX_PRIMARY_RELEASE_AGE_DAYS = 180;
 
+export const UPCOMING_MOVIES_REGIONS = ['US', 'UA'] as const;
+export const UPCOMING_MOVIES_THEATRICAL_LOOKAHEAD_DAYS = 183;
+export const UPCOMING_MOVIES_DIGITAL_REGION = 'US';
+export const UPCOMING_MOVIES_DIGITAL_LOOKAHEAD_DAYS = 60;
+export const UPCOMING_MOVIES_MIN_POPULARITY = 5;
+export const UPCOMING_MOVIES_SOON_DAYS = 14;
+
 // Digital Release Freshness — only show movies originally released within this window
 // Excludes re-releases of old classics (e.g., Harry Potter re-released on Max)
 export const DIGITAL_RELEASE_MAX_AGE_DAYS = 365;

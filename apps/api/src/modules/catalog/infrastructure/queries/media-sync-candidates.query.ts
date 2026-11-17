@@ -196,6 +196,7 @@ export class MediaSyncCandidatesQuery {
           cursor: options.cursor,
           snapshotDate: options.snapshotDate,
           region: options.region,
+          releasedBy: options.releasedBy,
         });
 
         const rows = await this.db

@@ -59,7 +59,12 @@ const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt'];
 // Quality-driven contexts (gate applies by default)
 const QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'search'];
 // Freshness-driven contexts (gate excluded by default)
-const FRESHNESS_CONTEXTS: EvaluationContext[] = ['now_playing', 'new_digital', 'trending'];
+const FRESHNESS_CONTEXTS: EvaluationContext[] = [
+  'now_playing',
+  'new_digital',
+  'upcoming',
+  'trending',
+];
 const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'search'];
 
 const CONTEXT_LABELS: Record<EvaluationContext, string> = {
@@ -69,6 +74,7 @@ const CONTEXT_LABELS: Record<EvaluationContext, string> = {
   now_playing: 'Now Playing',
   new_digital: 'New on Digital',
   search: 'Search',
+  upcoming: 'Upcoming',
 };
 
 /** Editor for global quality gate requirements. */

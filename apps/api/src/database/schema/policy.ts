@@ -42,6 +42,7 @@ export const evaluationContextEnum = pgEnum('evaluation_context', [
   'now_playing',
   'new_digital',
   'search',
+  'upcoming',
 ]);
 
 // --- CATALOG POLICY ENGINE ---

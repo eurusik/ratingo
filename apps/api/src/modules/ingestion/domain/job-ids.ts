@@ -35,6 +35,14 @@ export function buildNewReleaseJobId(tmdbId: number): string {
   return `nr_movie_${tmdbId}_${formatUtcDayId()}`;
 }
 
+export function buildUpcomingMovieJobId(tmdbId: number): string {
+  return `up_movie_${tmdbId}_${formatUtcDayId()}`;
+}
+
+export function buildUpcomingRefreshJobId(tmdbId: number): string {
+  return `upr_movie_${tmdbId}_${formatUtcDayId()}`;
+}
+
 export function buildMdblistRatingsJobId(mediaItemId: string, day: string): string {
   return `backfill-mdblist-ratings_${mediaItemId}_${day}`;
 }

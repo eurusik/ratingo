@@ -7,6 +7,8 @@ export enum IngestionJob {
   SYNC_SHOW = 'sync-show',
   SYNC_NOW_PLAYING = 'sync-now-playing',
   SYNC_NEW_RELEASES = 'sync-new-releases',
+  SYNC_UPCOMING_MOVIES = 'sync-upcoming-movies',
+  REFRESH_UPCOMING_MOVIES = 'refresh-upcoming-movies',
   UPDATE_NOW_PLAYING_FLAGS = 'update-now-playing-flags',
   SYNC_SNAPSHOTS = 'sync-snapshots',
 
@@ -49,6 +51,14 @@ export enum IngestionJob {
   /** Item job: fetches RT ratings (critics + audience) from MDBList. @queue ratings-backfill */
   BACKFILL_MDBLIST_RATINGS_ITEM = 'backfill-mdblist-ratings-item',
 }
+
+export const UpcomingMoviesRefreshScope = {
+  ALL: 'all',
+  SOON: 'soon',
+} as const;
+
+export type UpcomingMoviesRefreshScopeType =
+  (typeof UpcomingMoviesRefreshScope)[keyof typeof UpcomingMoviesRefreshScope];
 
 export interface SyncMediaJobData {
   tmdbId: number;

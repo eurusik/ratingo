@@ -1,3 +1,5 @@
+import { PgDialect } from 'drizzle-orm/pg-core';
+
 import {
   buildSnapshotCandidateConditions,
   type SnapshotConditionsOptions,
@@ -172,6 +174,18 @@ describe('snapshot-conditions.builder', () => {
 
         expect(conditions.length).toBe(6);
       });
+    });
+  });
+
+  describe('unreleased movies', () => {
+    it('excludes movies released after releasedBy', () => {
+      const releasedBy = new Date('2026-11-17T00:00:00.000Z');
+      const conditions = buildSnapshotCandidateConditions({ policyVersion: 1, releasedBy });
+
+      expect(conditions.length).toBe(6);
+      const { sql, params } = new PgDialect().sqlToQuery(conditions[5]);
+      expect(sql).toContain('not exists (select 1 from "movies"');
+      expect(params).toEqual([releasedBy.toISOString()]);
     });
   });
 });

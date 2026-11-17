@@ -36,6 +36,7 @@ describe('RottenTomatoesBackfillRepository', () => {
 
       const result = await new RottenTomatoesBackfillRepository(db as never).findCandidates({
         fetchedBefore,
+        releasedBy: fetchedBefore,
         cursor: 'cursor-1',
         limit: 250,
       });
@@ -48,12 +49,29 @@ describe('RottenTomatoesBackfillRepository', () => {
       expect(params).toEqual(expect.arrayContaining([fetchedBefore.toISOString(), 'cursor-1']));
     });
 
+    it('skips movies that are not released yet', async () => {
+      const { db, chain } = buildDb([]);
+      const releasedBy = new Date('2026-11-17T00:00:00.000Z');
+
+      await new RottenTomatoesBackfillRepository(db as never).findCandidates({
+        fetchedBefore: new Date('2026-08-01T00:00:00.000Z'),
+        releasedBy,
+        limit: 10,
+      });
+
+      const { sql, params } = renderWhere(chain.where);
+      expect(sql).toContain('not exists (select 1 from "movies"');
+      expect(sql).toMatch(/coalesce\("movies"\."theatrical_release_date".*\) > \$/);
+      expect(params).toContain(releasedBy.toISOString());
+    });
+
     it('wraps database failures in DatabaseException', async () => {
       const { db } = buildDb(new Error('connection lost'));
 
       await expect(
         new RottenTomatoesBackfillRepository(db as never).findCandidates({
           fetchedBefore: new Date(),
+          releasedBy: new Date(),
           limit: 10,
         }),
       ).rejects.toBeInstanceOf(DatabaseException);

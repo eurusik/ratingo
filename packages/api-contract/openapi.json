@@ -17633,7 +17633,7 @@
           },
           "appliesTo": {
             "type": "array",
-            "description": "Contexts where global gate applies. Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. Freshness surfaces (now_playing, new_digital) are excluded by default.",
+            "description": "Contexts where global gate applies. Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. Freshness surfaces (now_playing, new_digital, upcoming) are excluded by default.",
             "example": [
               "catalog",
               "homepage",
@@ -17648,7 +17648,8 @@
                 "trending",
                 "now_playing",
                 "new_digital",
-                "search"
+                "search",
+                "upcoming"
               ]
             }
           },

@@ -131,6 +131,7 @@ export const EvaluationContext = {
   NOW_PLAYING: 'now_playing',
   NEW_DIGITAL: 'new_digital',
   SEARCH: 'search',
+  UPCOMING: 'upcoming',
 } as const;
 
 export type EvaluationContextType = (typeof EvaluationContext)[keyof typeof EvaluationContext];
