@@ -1,4 +1,4 @@
-FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS deps
+FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS deps
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY packages/*/package.json ./packages/
 RUN npm ci --include-workspace-root --workspace=api --workspace=@ratingo/node-telemetry
 
 
-FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS build
+FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS build
 
 WORKDIR /app
 
@@ -28,7 +28,7 @@ COPY . .
 RUN npm run build --workspace=api
 
 
-FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS prod-deps
+FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS prod-deps
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -42,7 +42,7 @@ COPY packages/*/package.json ./packages/
 RUN npm ci --omit=dev --include-workspace-root --workspace=api
 
 
-FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS runner
+FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
