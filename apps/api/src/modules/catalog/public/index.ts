@@ -32,7 +32,9 @@ export {
   effectiveMovieReleaseDate,
   isMovieReleasingFrom,
   resolveMovieRelease,
+  type MovieReleaseDates,
 } from '../domain/utils/movie-release.utils';
+export { computeReleaseStatus } from '../domain/utils/release-status.utils';
 export { MovieReleaseDateKind } from '../domain/constants/movie-release.constants';
 export { generateSlug } from '@/common/utils/slug.util';
 

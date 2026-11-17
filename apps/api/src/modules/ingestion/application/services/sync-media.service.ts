@@ -3,13 +3,16 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { ReleaseStatus } from '@/common/enums/release-status.enum';
 import { startOfUtcDay } from '@/common/utils/date.util';
 import { errorMessage, toError } from '@/common/utils/error.utils';
 import {
+  computeReleaseStatus,
   generateSlug,
   type IMediaRepository,
   isMovieReleasingFrom,
   MEDIA_REPOSITORY,
+  type MovieReleaseDates,
 } from '@/modules/catalog/public';
 import {
   type ICatalogPolicyEvaluator,
@@ -33,6 +36,14 @@ import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 
 // Score display multiplier (0-1 to 0-100)
 const SCORE_PERCENT_MULTIPLIER = 100;
+
+function movieReleaseDates(media: NormalizedMedia): MovieReleaseDates {
+  return {
+    releaseDate: media.releaseDate,
+    theatricalReleaseDate: media.details?.theatricalReleaseDate,
+    digitalReleaseDate: media.details?.digitalReleaseDate,
+  };
+}
 
 /**
  * Result of checking if media exists.
@@ -340,9 +351,7 @@ export class SyncMediaService {
     const { imdbId } = media.externalIds;
 
     const [traktRating, omdbRatings] = await Promise.all([
-      type === MediaType.MOVIE
-        ? this.traktRatingsAdapter.getMovieRatingsByTmdbId(tmdbId)
-        : this.traktRatingsAdapter.getShowRatingsByTmdbId(tmdbId),
+      this.fetchTraktRatings(media, tmdbId, type),
       imdbId ? this.aggregatedRatings.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
     ]);
 
@@ -364,6 +373,17 @@ export class SyncMediaService {
         ratingRottenTomatoes: omdbRatings.rottenTomatoes,
       }),
     };
+  }
+
+  private fetchTraktRatings(media: NormalizedMedia, tmdbId: number, type: MediaType) {
+    if (type === MediaType.SHOW) return this.traktRatingsAdapter.getShowRatingsByTmdbId(tmdbId);
+    if (this.isUnreleasedMovie(media)) return Promise.resolve(null);
+    return this.traktRatingsAdapter.getMovieRatingsByTmdbId(tmdbId);
+  }
+
+  private isUnreleasedMovie(media: NormalizedMedia): boolean {
+    const releaseStatus = computeReleaseStatus(movieReleaseDates(media), this.clock.now());
+    return releaseStatus === ReleaseStatus.UPCOMING;
   }
 
   /**
@@ -521,14 +541,7 @@ export class SyncMediaService {
 
   private isUpcomingMovie(media: NormalizedMedia, type: MediaType): boolean {
     if (type !== MediaType.MOVIE) return false;
-    return isMovieReleasingFrom(
-      {
-        releaseDate: media.releaseDate,
-        theatricalReleaseDate: media.details?.theatricalReleaseDate,
-        digitalReleaseDate: media.details?.digitalReleaseDate,
-      },
-      startOfUtcDay(this.clock.now()),
-    );
+    return isMovieReleasingFrom(movieReleaseDates(media), startOfUtcDay(this.clock.now()));
   }
 
   /** Triggers catalog eligibility evaluation if service available. */
