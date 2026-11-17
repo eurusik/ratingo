@@ -67,6 +67,15 @@ function supportsScrollEnd(): boolean {
   return 'onscrollend' in window;
 }
 
+interface Slide {
+  pane: number;
+  hasResumed: boolean;
+}
+
+function slideToward(pane: number): Slide {
+  return { pane, hasResumed: false };
+}
+
 interface PanePreview {
   weekKey: string;
   pane: number;
@@ -79,7 +88,7 @@ export function useWeekCarousel(weekKey: string, tryStep: (step: WeekStep) => bo
     weekKey,
     tryStep,
     lastCommittedWeek: undefined as string | undefined,
-    isSliding: false,
+    slide: undefined as Slide | undefined,
     queuedSteps: [] as WeekStep[],
   });
 
@@ -95,9 +104,12 @@ export function useWeekCarousel(weekKey: string, tryStep: (step: WeekStep) => bo
     const state = latest.current;
     state.lastCommittedWeek = undefined;
     const queued = state.queuedSteps.shift();
-    state.isSliding = queued !== undefined;
-    if (queued !== undefined)
-      requestAnimationFrame(() => scrollToPane(element, paneOfStep(queued)));
+    state.slide = queued === undefined ? undefined : slideToward(paneOfStep(queued));
+    if (queued === undefined) return;
+    const frame = requestAnimationFrame(() => {
+      if (state.slide) scrollToPane(element, state.slide.pane);
+    });
+    return () => cancelAnimationFrame(frame);
   }, [weekKey]);
 
   useEffect(() => {
@@ -108,15 +120,28 @@ export function useWeekCarousel(weekKey: string, tryStep: (step: WeekStep) => bo
     const waitsForScrollEnd = supportsScrollEnd();
 
     const stopSliding = () => {
-      latest.current.isSliding = false;
+      latest.current.slide = undefined;
       latest.current.queuedSteps = [];
+    };
+    const resumeOrStopSliding = () => {
+      const { slide } = latest.current;
+      if (!slide) return;
+      if (slide.hasResumed) {
+        stopSliding();
+        return;
+      }
+      slide.hasResumed = true;
+      scrollToPane(element, slide.pane);
     };
     const commit = () => {
       clearTimeout(timer);
       const state = latest.current;
       if (isTouching || state.lastCommittedWeek === state.weekKey) return;
       const step = weekStepOf(nearestPane(element));
-      if (step === undefined) return;
+      if (step === undefined) {
+        resumeOrStopSliding();
+        return;
+      }
       state.lastCommittedWeek = state.weekKey;
       if (state.tryStep(step)) return;
       state.lastCommittedWeek = undefined;
@@ -145,7 +170,14 @@ export function useWeekCarousel(weekKey: string, tryStep: (step: WeekStep) => bo
       isTouching = false;
       if (!waitsForScrollEnd) commitLater();
     };
-    const keepCentred = new ResizeObserver(() => recentre(element));
+    let observedWidth: number | undefined;
+    const keepCentred = new ResizeObserver(() => {
+      if (element.clientWidth === observedWidth) return;
+      observedWidth = element.clientWidth;
+      const { slide } = latest.current;
+      if (slide) scrollToPane(element, slide.pane);
+      else recentre(element);
+    });
 
     keepCentred.observe(element);
     element.addEventListener('scroll', onScroll, { passive: true });
@@ -175,12 +207,12 @@ export function useWeekCarousel(weekKey: string, tryStep: (step: WeekStep) => bo
       return;
     }
     const state = latest.current;
-    if (state.isSliding) {
+    if (state.slide) {
       state.queuedSteps.push(step);
       return;
     }
-    state.isSliding = true;
-    scrollToPane(element, paneOfStep(step));
+    state.slide = slideToward(paneOfStep(step));
+    scrollToPane(element, state.slide.pane);
   }, []);
 
   return {
