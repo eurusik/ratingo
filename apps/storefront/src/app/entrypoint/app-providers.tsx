@@ -16,9 +16,11 @@ import {
   isMediaDetailsPath,
 } from '@/shared/config';
 import {
+  AnalyticsIdentity,
   BrowserBackScrollRestorer,
   RouteCommitSignal,
   ServiceWorkerProvider,
+  WebVitalsReporter,
   navigateForward,
 } from '@/shared/lib';
 import { I18nProvider, type Dictionary, type Locale } from '@/shared/i18n';
@@ -51,6 +53,7 @@ export function AppProviders({ locale, dictionary, children }: AppProvidersProps
         <ViewTransitionTraversalGuard />
         {NavigationDebugPanel ? <NavigationDebugPanel /> : null}
         <RouteCommitSignal />
+        <WebVitalsReporter />
         <BrowserBackScrollRestorer />
         <AriaI18nProvider locale={locale}>
           <RouterProvider
@@ -61,7 +64,10 @@ export function AppProviders({ locale, dictionary, children }: AppProvidersProps
           >
             <I18nProvider locale={locale} dictionary={dictionary}>
               <QueryClientProvider client={getQueryClient()}>
-                <AuthProvider>{children}</AuthProvider>
+                <AuthProvider>
+                  <AnalyticsIdentity />
+                  {children}
+                </AuthProvider>
               </QueryClientProvider>
             </I18nProvider>
             <DeferredToastRegion placement="bottom" />
