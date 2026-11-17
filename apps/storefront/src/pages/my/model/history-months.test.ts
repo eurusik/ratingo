@@ -11,6 +11,7 @@ function watched(id: string, title: string, updatedAt: string): UserMediaState {
     rating: null,
     progress: null,
     notes: null,
+    stateImplied: false,
     createdAt: updatedAt,
     updatedAt,
     mediaSummary: { id, type: 'movie', title, slug: id, poster: null },

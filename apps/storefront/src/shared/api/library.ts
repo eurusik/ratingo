@@ -117,10 +117,14 @@ export const libraryApi = {
     mediaItemId: string,
     rating: number | null,
     mediaType: MediaType,
-  ): Promise<UserMediaState> {
-    return apiPatch<UserMediaState>(`user-media/${mediaItemId}`, {
+  ): Promise<UserMediaState | null> {
+    return apiPatch<UserMediaState | null>(`user-media/${mediaItemId}`, {
       rating,
       mediaType,
     } satisfies SetUserMediaState);
+  },
+
+  removeFromLibrary(mediaItemId: string): Promise<void> {
+    return apiDelete(`user-media/${mediaItemId}`);
   },
 } as const;

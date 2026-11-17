@@ -3,16 +3,24 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from '@heroui/react';
 import { useRefreshWatchProgress } from '@/entities/episode';
-import { useLibraryListsStore, useLibraryStore, useMediaStateStore } from '@/entities/library';
+import {
+  useLibraryListsStore,
+  useLibraryStore,
+  useMediaStateStore,
+  type LibraryList,
+} from '@/entities/library';
+import { useRemoveFromLibrary } from '@/features/remove-from-library';
 import { useTranslation } from '@/shared/i18n';
 import { showUndoToast, track } from '@/shared/lib';
 import { moveSpecs, type MoveSpec, type MoveSpecs } from './library-move-specs';
 import { useLibraryMoveActions } from './library-moves';
+import type { LibraryTitle } from './library-title';
 
 type Act<K extends keyof MoveSpecs> = (...args: Parameters<MoveSpecs[K]>) => void;
 
 export type LibraryActions = { [K in keyof MoveSpecs]: Act<K> } & {
   refresh: () => Promise<void>;
+  removeFromLibrary: (title: LibraryTitle, from: LibraryList) => void;
 };
 
 export function useLibraryActions(): LibraryActions {
@@ -22,6 +30,7 @@ export function useLibraryActions(): LibraryActions {
   const mediaStates = useMediaStateStore();
   const moves = useLibraryMoveActions();
   const refreshWatchProgress = useRefreshWatchProgress();
+  const remove = useRemoveFromLibrary();
 
   const refresh = useCallback(async () => {
     await Promise.all([lists.refresh(), refreshWatchProgress()]);
@@ -77,10 +86,27 @@ export function useLibraryActions(): LibraryActions {
     [dict, lists, moves, settle],
   );
 
+  const removeFromLibrary = useCallback(
+    (title: LibraryTitle, from: LibraryList) => {
+      const { mediaItemId } = title;
+      const token = moves.track(mediaItemId, 'gone');
+      lists.move({ from });
+      remove(title, {
+        onUndo: () => {
+          lists.move({ to: from });
+          moves.forget(mediaItemId, token);
+        },
+        onSettled: () => moves.forget(mediaItemId, token),
+      });
+    },
+    [lists, moves, remove],
+  );
+
   return useMemo(() => {
     const specs = moveSpecs(dict);
     return {
       refresh,
+      removeFromLibrary,
       pause: (...args) => run('pause', specs.pause(...args)),
       drop: (...args) => run('drop', specs.drop(...args)),
       dropPaused: (...args) => run('dropPaused', specs.dropPaused(...args)),
@@ -91,5 +117,5 @@ export function useLibraryActions(): LibraryActions {
       markEpisodeWatched: (...args) => run('markEpisodeWatched', specs.markEpisodeWatched(...args)),
       rate: (...args) => run('rate', specs.rate(...args)),
     } satisfies LibraryActions;
-  }, [dict, refresh, run]);
+  }, [dict, refresh, removeFromLibrary, run]);
 }

@@ -26,6 +26,11 @@ describe('UserMediaService', () => {
     findTypeById: jest.fn(),
   };
 
+  const episodeProgressRepo = {
+    countWatchedForMedia: jest.fn(),
+    deleteAllForMedia: jest.fn(),
+  };
+
   const cards = {
     enrichUserMedia: jest.fn((items: any[]) => items),
   };
@@ -42,6 +47,7 @@ describe('UserMediaService', () => {
 
     // Default: lookup finds nothing -> the (client) mediaType hint is used as fallback
     mediaLookup.findTypeById.mockResolvedValue(null);
+    episodeProgressRepo.countWatchedForMedia.mockResolvedValue(0);
 
     // Default: upsertWithGuard simulates the transactional behavior by calling
     // guard with the value currently returned by findOne (the "locked" row),
@@ -57,6 +63,7 @@ describe('UserMediaService', () => {
       cards as any,
       eventEmitter as any,
       mediaLookup as any,
+      episodeProgressRepo as any,
     );
   });
 
@@ -1168,6 +1175,159 @@ describe('UserMediaService', () => {
       await service.setState({ userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.PAUSED });
 
       expect(mediaLookup.findTypeById).not.toHaveBeenCalled();
+    });
+  });
+  describe('stateImplied', () => {
+    const upsertedWith = () => repo.upsertWithGuard.mock.calls[0][0];
+
+    it('marks a rating-only first entry as implied', async () => {
+      repo.findOne.mockResolvedValue(null);
+      mediaLookup.findTypeById.mockResolvedValue(MediaType.MOVIE);
+
+      await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: 80 });
+
+      expect(upsertedWith()).toEqual(
+        expect.objectContaining({ state: USER_MEDIA_STATE.COMPLETED, stateImplied: true }),
+      );
+    });
+
+    it('clears the flag when the user picks a state', async () => {
+      repo.findOne.mockResolvedValue({ state: USER_MEDIA_STATE.COMPLETED, stateImplied: true });
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.COMPLETED,
+      });
+
+      expect(upsertedWith()).toEqual(expect.objectContaining({ stateImplied: false }));
+    });
+
+    it('keeps the existing flag on a rating-only update', async () => {
+      repo.findOne.mockResolvedValue({ state: USER_MEDIA_STATE.COMPLETED, stateImplied: false });
+
+      await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: 60 });
+
+      expect(upsertedWith().stateImplied).toBeUndefined();
+    });
+
+    it('marks an automatic first state as implied', async () => {
+      repo.findOne.mockResolvedValue(null);
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.WATCHING,
+        stateImplied: true,
+      });
+
+      expect(upsertedWith()).toEqual(expect.objectContaining({ stateImplied: true }));
+    });
+
+    it('keeps the existing flag on an automatic transition', async () => {
+      repo.findOne.mockResolvedValue({ state: USER_MEDIA_STATE.PLANNED, stateImplied: false });
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.WATCHING,
+        stateImplied: true,
+      });
+
+      expect(upsertedWith().stateImplied).toBeUndefined();
+    });
+
+    it('marks a synced first rating as implied', async () => {
+      repo.findOne.mockResolvedValue(null);
+      mediaLookup.findTypeById.mockResolvedValue(MediaType.MOVIE);
+
+      await service.syncRating('u1', 'm1', 70);
+
+      expect(repo.upsert).toHaveBeenCalledWith(expect.objectContaining({ stateImplied: true }));
+    });
+  });
+
+  describe('clearing the rating of an implied entry', () => {
+    const impliedEntry = {
+      state: USER_MEDIA_STATE.COMPLETED,
+      stateImplied: true,
+      rating: 80,
+      progress: null,
+      notes: null,
+    };
+
+    it('removes the entry and emits rating-changed(null)', async () => {
+      repo.findOne.mockResolvedValue(impliedEntry);
+
+      const result = await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: null });
+
+      expect(result).toBeNull();
+      expect(repo.delete).toHaveBeenCalledWith('u1', 'm1');
+      expect(repo.upsertWithGuard).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        new UserMediaRatingChangedEvent('u1', 'm1', null),
+      );
+    });
+
+    it.each([
+      ['the state was chosen by the user', { stateImplied: false }],
+      ['it has notes', { notes: 'rewatch' }],
+      ['it has progress', { progress: { seasons: { 1: 2 } } }],
+    ])('keeps the entry when %s', async (_label, override) => {
+      repo.findOne.mockResolvedValue({ ...impliedEntry, ...override });
+
+      await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: null });
+
+      expect(repo.delete).not.toHaveBeenCalled();
+      expect(repo.upsertWithGuard).toHaveBeenCalled();
+    });
+
+    it('keeps the entry when episodes are marked', async () => {
+      repo.findOne.mockResolvedValue({ ...impliedEntry, state: USER_MEDIA_STATE.WATCHING });
+      episodeProgressRepo.countWatchedForMedia.mockResolvedValue(3);
+
+      await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: null });
+
+      expect(repo.delete).not.toHaveBeenCalled();
+      expect(episodeProgressRepo.countWatchedForMedia).toHaveBeenCalledWith('u1', 'm1');
+    });
+
+    it('keeps the entry when the request also changes the state', async () => {
+      repo.findOne.mockResolvedValue(impliedEntry);
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        rating: null,
+        state: USER_MEDIA_STATE.COMPLETED,
+      });
+
+      expect(repo.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('removeFromLibrary', () => {
+    it('deletes episode marks and the state, emitting rating-changed(null) for a rated row', async () => {
+      repo.findOne.mockResolvedValue({ state: USER_MEDIA_STATE.WATCHING, rating: 70 });
+
+      await service.removeFromLibrary('u1', 'm1');
+
+      expect(episodeProgressRepo.deleteAllForMedia).toHaveBeenCalledWith('u1', 'm1');
+      expect(repo.delete).toHaveBeenCalledWith('u1', 'm1');
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        new UserMediaRatingChangedEvent('u1', 'm1', null),
+      );
+    });
+
+    it('is a no-op for a title that is not in the library', async () => {
+      repo.findOne.mockResolvedValue(null);
+
+      await service.removeFromLibrary('u1', 'm1');
+
+      expect(repo.delete).toHaveBeenCalledWith('u1', 'm1');
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
   });
 });

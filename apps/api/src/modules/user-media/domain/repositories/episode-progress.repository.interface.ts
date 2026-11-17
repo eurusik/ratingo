@@ -32,4 +32,6 @@ export interface IEpisodeProgressRepository {
   /** Validates a batch of episode IDs in a single query, returning existing count and distinct show count. */
   validateEpisodeBatch(episodeIds: string[]): Promise<EpisodeBatchValidation>;
   getEpisodeMediaInfo(episodeId: string): Promise<EpisodeMediaInfo | null>;
+  countWatchedForMedia(userId: string, mediaItemId: string): Promise<number>;
+  deleteAllForMedia(userId: string, mediaItemId: string): Promise<void>;
 }

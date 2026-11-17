@@ -57,6 +57,7 @@ export class MeListsController {
       rating: item.rating,
       progress: item.progress,
       notes: item.notes,
+      stateImplied: item.stateImplied,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
       mediaSummary: item.mediaSummary,

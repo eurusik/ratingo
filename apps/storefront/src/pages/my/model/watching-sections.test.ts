@@ -14,6 +14,7 @@ function show(id: string, overrides: Partial<UserMediaState> = {}): UserMediaSta
     rating: null,
     progress: null,
     notes: null,
+    stateImplied: false,
     createdAt: PAST,
     updatedAt: PAST,
     mediaSummary: { id, type: 'show', title: `Show ${id}`, slug: id, poster: null },

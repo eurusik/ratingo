@@ -86,6 +86,8 @@ export class SetUserMediaStateDto {
     nullable: true,
     minimum: 0,
     maximum: 100,
+    description:
+      'Rating 0-100. Clearing it (null, alone) on an entry that exists only because of that rating removes the entry; the response is then null.',
   })
   @IsOptional()
   @ValidateIf((_, value) => value !== null)

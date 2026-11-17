@@ -16,6 +16,10 @@ import { UserMediaStateChangedEvent } from '../domain/events/user-media-state-ch
 import type { IMediaLookupPort } from '../domain/ports/media-lookup.port';
 import type { IRatingSyncPort } from '../domain/ports/rating-sync.port';
 import {
+  EPISODE_PROGRESS_REPOSITORY,
+  type IEpisodeProgressRepository,
+} from '../domain/repositories/episode-progress.repository.interface';
+import {
   type IUserMediaStateRepository,
   type ListWithMediaOptions,
   USER_MEDIA_STATE_REPOSITORY,
@@ -38,6 +42,8 @@ export class UserMediaService implements IRatingSyncPort {
     private readonly eventEmitter: EventEmitter2,
     @Inject(MEDIA_LOOKUP_PORT)
     private readonly mediaLookup: IMediaLookupPort,
+    @Inject(EPISODE_PROGRESS_REPOSITORY)
+    private readonly episodeProgressRepo: IEpisodeProgressRepository,
   ) {}
 
   /**
@@ -79,7 +85,11 @@ export class UserMediaService implements IRatingSyncPort {
         throw new BadRequestException(USER_MEDIA_STATE_ERRORS.PROGRESS_NOT_ALLOWED);
       }
 
-      const result = await this.repo.upsert({ ...data, state: USER_MEDIA_STATE.WATCHING });
+      const result = await this.repo.upsert({
+        ...data,
+        state: USER_MEDIA_STATE.WATCHING,
+        stateImplied: this.resolveStateImplied(data, existing),
+      });
       if (data.rating !== undefined) {
         await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating ?? null);
       }
@@ -104,6 +114,11 @@ export class UserMediaService implements IRatingSyncPort {
     const existing = await this.repo.findOne(data.userId, data.mediaItemId);
 
     if (data.rating === null && !data.state && !existing) {
+      return null;
+    }
+
+    if (existing && (await this.isImpliedRatingOnlyEntryCleared(data, existing))) {
+      await this.deleteState(data.userId, data.mediaItemId);
       return null;
     }
 
@@ -143,7 +158,11 @@ export class UserMediaService implements IRatingSyncPort {
       }
     };
 
-    const upsertData: UpsertUserMediaStateData = { ...data, state: resolvedState };
+    const upsertData: UpsertUserMediaStateData = {
+      ...data,
+      state: resolvedState,
+      stateImplied: this.resolveStateImplied(data, existing),
+    };
     // Moving to completed / dropped / planned ends active watching: explicitly clear
     // stale progress, otherwise the item lingers in /continue (progress IS NOT NULL).
     if (
@@ -208,7 +227,13 @@ export class UserMediaService implements IRatingSyncPort {
       ? existing.state
       : this.resolveDefaultState(null, await this.resolveMediaType(mediaItemId, mediaType));
 
-    await this.repo.upsert({ userId, mediaItemId, rating, state: resolvedState });
+    await this.repo.upsert({
+      userId,
+      mediaItemId,
+      rating,
+      state: resolvedState,
+      ...(!existing && { stateImplied: true }),
+    });
 
     if ((existing?.rating ?? null) !== rating) {
       await this.emitRatingChanged(userId, mediaItemId, rating);
@@ -242,6 +267,11 @@ export class UserMediaService implements IRatingSyncPort {
     if (existing?.rating != null) {
       await this.emitRatingChanged(userId, mediaItemId, null);
     }
+  }
+
+  async removeFromLibrary(userId: string, mediaItemId: string): Promise<void> {
+    await this.episodeProgressRepo.deleteAllForMedia(userId, mediaItemId);
+    await this.deleteState(userId, mediaItemId);
   }
 
   /**
@@ -507,6 +537,33 @@ export class UserMediaService implements IRatingSyncPort {
     const type = await this.mediaLookup.findTypeById(mediaItemId);
     if (type === MediaType.SHOW || type === MediaType.MOVIE) return type;
     return hint;
+  }
+
+  private resolveStateImplied(
+    data: SetUserMediaStateInput,
+    existing: UserMediaState | null,
+  ): boolean | undefined {
+    if (data.state !== undefined && !data.stateImplied) return false;
+    return existing ? undefined : true;
+  }
+
+  private async isImpliedRatingOnlyEntryCleared(
+    data: SetUserMediaStateInput,
+    existing: UserMediaState,
+  ): Promise<boolean> {
+    const clearsRatingOnly =
+      data.rating === null &&
+      data.state === undefined &&
+      data.progress === undefined &&
+      data.notes === undefined;
+    if (!clearsRatingOnly || !existing.stateImplied) return false;
+    if (existing.progress != null) return false;
+    if (existing.notes != null && existing.notes.trim() !== '') return false;
+    const watchedEpisodes = await this.episodeProgressRepo.countWatchedForMedia(
+      data.userId,
+      data.mediaItemId,
+    );
+    return watchedEpisodes === 0;
   }
 
   private resolveDefaultState(

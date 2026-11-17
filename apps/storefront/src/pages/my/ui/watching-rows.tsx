@@ -72,6 +72,12 @@ function WatchingMenu({ title, actions }: { title: LibraryTitle; actions: Librar
           onAction: () => actions.drop(title),
           isDanger: true,
         },
+        {
+          id: 'remove',
+          label: dict.library.remove,
+          onAction: () => actions.removeFromLibrary(title, 'watching'),
+          isDanger: true,
+        },
       ]}
     />
   );

@@ -30,6 +30,12 @@ export function ShelfRowItem({ row, actions }: { row: ShelfRow; actions: Library
         ]
       : []),
     { id: 'open', label: dict.my.actions.open, href: mediaRoute(title.type, title.slug) },
+    {
+      id: 'remove',
+      label: dict.library.remove,
+      isDanger: true,
+      onAction: () => actions.removeFromLibrary(title, row.kind),
+    },
   ];
 
   return (
