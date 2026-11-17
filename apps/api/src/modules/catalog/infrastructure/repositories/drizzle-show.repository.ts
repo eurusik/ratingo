@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, notExists, notInArray, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -108,7 +108,96 @@ export class DrizzleShowRepository implements IShowRepository {
         .returning({ id: schema.seasons.id });
 
       await this.upsertEpisodes(drizzleTx, seasonRecord.id, showId, season.episodes);
+      await this.pruneStaleEpisodes(drizzleTx, showId, seasonRecord.id, season);
     }
+
+    await this.pruneStaleSeasons(
+      drizzleTx,
+      showId,
+      seasons.map((s) => s.number),
+    );
+  }
+
+  private async pruneStaleEpisodes(
+    drizzleTx: DrizzleTransaction,
+    showId: string,
+    seasonId: string,
+    season: NormalizedSeason,
+  ): Promise<void> {
+    if (season.episodes.length === 0) return;
+
+    const removed = await drizzleTx
+      .delete(schema.episodes)
+      .where(
+        and(
+          eq(schema.episodes.seasonId, seasonId),
+          notInArray(
+            schema.episodes.number,
+            season.episodes.map((ep) => ep.number),
+          ),
+          this.notWatchedByAnyUser(drizzleTx),
+        ),
+      )
+      .returning({ id: schema.episodes.id });
+
+    if (removed.length > 0) {
+      this.logger.log(
+        `Pruned ${removed.length} stale episode(s) from season ${season.number} of show ${showId}`,
+      );
+    }
+  }
+
+  private async pruneStaleSeasons(
+    drizzleTx: DrizzleTransaction,
+    showId: string,
+    keptSeasonNumbers: number[],
+  ): Promise<void> {
+    const isStaleSeason = and(
+      eq(schema.seasons.showId, showId),
+      notInArray(schema.seasons.number, keptSeasonNumbers),
+    );
+
+    await drizzleTx
+      .delete(schema.episodes)
+      .where(
+        and(
+          inArray(
+            schema.episodes.seasonId,
+            drizzleTx.select({ id: schema.seasons.id }).from(schema.seasons).where(isStaleSeason),
+          ),
+          this.notWatchedByAnyUser(drizzleTx),
+        ),
+      );
+
+    const removed = await drizzleTx
+      .delete(schema.seasons)
+      .where(
+        and(
+          isStaleSeason,
+          notExists(
+            drizzleTx
+              .select({ id: schema.episodes.id })
+              .from(schema.episodes)
+              .where(eq(schema.episodes.seasonId, schema.seasons.id)),
+          ),
+        ),
+      )
+      .returning({ number: schema.seasons.number });
+
+    if (removed.length > 0) {
+      this.logger.log(
+        `Pruned stale season(s) ${removed.map((s) => s.number).join(', ')} of show ${showId}`,
+      );
+    }
+  }
+
+  private notWatchedByAnyUser(drizzleTx: DrizzleTransaction) {
+    return notExists(
+      drizzleTx
+        .select({ episodeId: schema.userEpisodeProgress.episodeId })
+        .from(schema.userEpisodeProgress)
+        .where(eq(schema.userEpisodeProgress.episodeId, schema.episodes.id)),
+    );
   }
 
   /**

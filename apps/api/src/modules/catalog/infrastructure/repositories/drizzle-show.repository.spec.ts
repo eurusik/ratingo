@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PgDialect } from 'drizzle-orm/pg-core';
+import { PgDialect, QueryBuilder } from 'drizzle-orm/pg-core';
 import { DrizzleShowRepository } from './drizzle-show.repository';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import { DatabaseException } from '@/common/exceptions/database.exception';
@@ -25,6 +25,7 @@ const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods:
     'innerJoin',
     'limit',
     'orderBy',
+    'delete',
     ...extraMethods,
   ];
   chainMethods.forEach((m) => {
@@ -81,11 +82,30 @@ describe('DrizzleShowRepository', () => {
     }).compile();
   };
 
+  const dialect = new PgDialect();
+  let deleteChain: any;
+
+  const createPruneTx = () => {
+    deleteChain = createThenable([]);
+    const qb = new QueryBuilder();
+    return {
+      insert: jest.fn().mockReturnValue(insertChain),
+      delete: jest.fn().mockReturnValue(deleteChain),
+      select: jest.fn((fields: any) => qb.select(fields)),
+    } as any;
+  };
+
+  const renderedDeletes = (tx: any) =>
+    tx.delete.mock.calls.map(([table]: any[], i: number) => ({
+      table: table[Symbol.for('drizzle:Name')],
+      where: dialect.sqlToQuery(deleteChain.where.mock.calls[i][0]),
+    }));
+
   describe('upsertDetails', () => {
     it('should upsert show details, seasons, episodes', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleShowRepository);
-      const tx = { insert: jest.fn().mockReturnValue(insertChain) } as any;
+      const tx = createPruneTx();
 
       await repository.upsertDetails(tx, 'media-1', {
         seasons: [{ number: 1, episodes: [{ number: 1, title: 'Pilot' }] }],
@@ -99,7 +119,7 @@ describe('DrizzleShowRepository', () => {
     it('should not overwrite existing episode columns with null (COALESCE on conflict)', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleShowRepository);
-      const tx = { insert: jest.fn().mockReturnValue(insertChain) } as any;
+      const tx = createPruneTx();
 
       await repository.upsertDetails(tx, 'media-1', {
         seasons: [{ number: 1, episodes: [{ number: 1, title: 'Pilot' }] }],
@@ -121,6 +141,96 @@ describe('DrizzleShowRepository', () => {
       for (const sqlText of Object.values(rendered)) {
         expect(sqlText).toMatch(/^COALESCE\(excluded\./);
       }
+    });
+
+    describe('pruning stale rows', () => {
+      it('should delete episodes missing from the source season but keep watched ones', async () => {
+        const module: TestingModule = await setup();
+        repository = module.get(DrizzleShowRepository);
+        const tx = createPruneTx();
+
+        await repository.upsertDetails(tx, 'media-1', {
+          seasons: [
+            {
+              number: 1,
+              episodes: [
+                { number: 1, title: 'E1' },
+                { number: 2, title: 'E2' },
+              ],
+            },
+          ],
+        });
+
+        const [episodePrune] = renderedDeletes(tx);
+        expect(episodePrune.table).toBe('episodes');
+        expect(episodePrune.where.sql).toContain('"episodes"."season_id" = $1');
+        expect(episodePrune.where.sql).toContain('"episodes"."number" not in ($2, $3)');
+        expect(episodePrune.where.sql).toContain(
+          'not exists (select "episode_id" from "user_episode_progress" where "user_episode_progress"."episode_id" = "episodes"."id")',
+        );
+        expect(episodePrune.where.params).toEqual(['show-id', 1, 2]);
+      });
+
+      it('should not prune episodes of a season that came without episodes', async () => {
+        const module: TestingModule = await setup();
+        repository = module.get(DrizzleShowRepository);
+        const tx = createPruneTx();
+
+        await repository.upsertDetails(tx, 'media-1', {
+          seasons: [{ number: 1, episodes: [] }],
+        });
+
+        const tables = renderedDeletes(tx).map((d: any) => d.table);
+        expect(tables).toEqual(['episodes', 'seasons']);
+        expect(renderedDeletes(tx)[0].where.sql).toContain('"seasons"."number" not in ($2)');
+      });
+
+      it('should delete seasons missing from the source once they hold no episodes', async () => {
+        const module: TestingModule = await setup();
+        repository = module.get(DrizzleShowRepository);
+        const tx = createPruneTx();
+
+        await repository.upsertDetails(tx, 'media-1', {
+          seasons: [
+            { number: 1, episodes: [{ number: 1, title: 'E1' }] },
+            { number: 2, episodes: [{ number: 1, title: 'E1' }] },
+          ],
+        });
+
+        const deletes = renderedDeletes(tx);
+        expect(deletes.map((d: any) => d.table)).toEqual([
+          'episodes',
+          'episodes',
+          'episodes',
+          'seasons',
+        ]);
+
+        const staleEpisodes = deletes[2].where;
+        expect(staleEpisodes.sql).toContain(
+          '"episodes"."season_id" in (select "id" from "seasons" where ("seasons"."show_id" = $1 and "seasons"."number" not in ($2, $3)))',
+        );
+        expect(staleEpisodes.sql).toContain(
+          'not exists (select "episode_id" from "user_episode_progress"',
+        );
+        expect(staleEpisodes.params).toEqual(['show-id', 1, 2]);
+
+        const staleSeasons = deletes[3].where;
+        expect(staleSeasons.sql).toContain('"seasons"."show_id" = $1');
+        expect(staleSeasons.sql).toContain('"seasons"."number" not in ($2, $3)');
+        expect(staleSeasons.sql).toContain(
+          'not exists (select "id" from "episodes" where "episodes"."season_id" = "seasons"."id")',
+        );
+      });
+
+      it('should not prune anything when the payload has no seasons', async () => {
+        const module: TestingModule = await setup();
+        repository = module.get(DrizzleShowRepository);
+        const tx = createPruneTx();
+
+        await repository.upsertDetails(tx, 'media-1', { totalEpisodes: 4 });
+
+        expect(tx.delete).not.toHaveBeenCalled();
+      });
     });
 
     it('should propagate errors', async () => {
