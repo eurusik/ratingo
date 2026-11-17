@@ -5,6 +5,7 @@ type GtagParams = Record<string, string | number | boolean | null | undefined>;
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
+    clarity?: (...args: unknown[]) => void;
   }
 }
 
@@ -52,6 +53,15 @@ export function identifyUser(userId: string | null): void {
   try {
     send('set', { user_id: userId });
     send('set', 'user_properties', { logged_in: userId ? 'true' : 'false' });
+  } catch {
+    return;
+  }
+}
+
+export function identifyClarityUser(userId: string): void {
+  if (typeof window === 'undefined' || typeof window.clarity !== 'function') return;
+  try {
+    window.clarity('identify', userId);
   } catch {
     return;
   }
