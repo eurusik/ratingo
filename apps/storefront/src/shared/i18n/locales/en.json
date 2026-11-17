@@ -412,9 +412,11 @@
   "profile": {
     "stats": {
       "label": "Your stats",
-      "moviesRated": "movies rated",
-      "showsRated": "shows rated",
-      "watchlist": "saved"
+      "movies": "Movies",
+      "shows": "Shows",
+      "watchlist": "Watchlist",
+      "emptyWatchlist": "Nothing yet",
+      "findToWatch": "Find something to watch"
     },
     "theme": "Theme",
     "themes": {

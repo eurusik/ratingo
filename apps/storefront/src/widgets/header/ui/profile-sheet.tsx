@@ -66,7 +66,7 @@ export function ProfileSheet({ user }: { user: MeDto }) {
   return (
     <Sheet trigger={trigger} isOpen={isOpen} onOpenChange={setIsOpen} title={dict.header.profile}>
       <div className="flex flex-col gap-2">
-        <ProfileSummary user={user} />
+        <ProfileSummary user={user} layout="rows" onNavigate={close} />
         <ul className="mt-2 flex flex-col divide-y divide-separator">
           <li>
             <SettingRow icon={Moon} label={dict.profile.theme}>

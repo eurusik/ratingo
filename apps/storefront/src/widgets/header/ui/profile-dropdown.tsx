@@ -40,9 +40,9 @@ export function ProfileDropdown({ user }: { user: MeDto }) {
       >
         <UserAvatar user={user} />
       </Dropdown.Trigger>
-      <Dropdown.Popover placement="bottom end" className="w-80">
+      <Dropdown.Popover placement="bottom end" className="w-96">
         <div className="p-3">
-          <ProfileSummary user={user} />
+          <ProfileSummary user={user} layout="tiles" onNavigate={() => setIsOpen(false)} />
         </div>
         <Dropdown.Menu aria-label={dict.header.profile} onAction={onAction}>
           <Dropdown.Section
