@@ -222,6 +222,38 @@ describe('DrizzleShowRepository', () => {
         );
       });
 
+      it('should keep seasons when the payload lists fewer seasons than TMDB reports', async () => {
+        const module: TestingModule = await setup();
+        repository = module.get(DrizzleShowRepository);
+        const tx = createPruneTx();
+
+        await repository.upsertDetails(tx, 'media-1', {
+          totalSeasons: 6,
+          seasons: [
+            { number: 1, episodes: [] },
+            { number: 2, episodes: [] },
+          ],
+        });
+
+        expect(tx.delete).not.toHaveBeenCalled();
+      });
+
+      it('should prune seasons when the payload covers every TMDB season', async () => {
+        const module: TestingModule = await setup();
+        repository = module.get(DrizzleShowRepository);
+        const tx = createPruneTx();
+
+        await repository.upsertDetails(tx, 'media-1', {
+          totalSeasons: 2,
+          seasons: [
+            { number: 1, episodes: [] },
+            { number: 2, episodes: [] },
+          ],
+        });
+
+        expect(renderedDeletes(tx).map((d: any) => d.table)).toEqual(['episodes', 'seasons']);
+      });
+
       it('should not prune anything when the payload has no seasons', async () => {
         const module: TestingModule = await setup();
         repository = module.get(DrizzleShowRepository);
