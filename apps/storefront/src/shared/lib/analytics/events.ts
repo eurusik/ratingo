@@ -34,6 +34,22 @@ export interface AnalyticsEvents {
   browse_change: { category: string; change: 'filter' | 'sort' | 'pool' };
   calendar_change: { action: 'step' | 'this_week' | 'mode' | 'swipe'; mode?: string };
   share: { result: 'shared' | 'copied' | 'cancelled' | 'failed' };
+  app_error: {
+    kind: 'mutation' | 'query' | 'render' | 'not_found';
+    area: string;
+    status?: number;
+    code?: string;
+  };
+  login_failed: { method: SignInMethod; reason: string; mode?: 'login' | 'sign_up' };
+  onboarding: { step: 'shown' | 'start_show' | 'want_movie' | 'search' | 'import' };
+  library_import: {
+    stage: 'start' | 'success' | 'failed';
+    source?: string;
+    items?: number;
+  };
+  notification_open: { type: string };
+  undo: Record<string, never>;
+  pwa_install: Record<string, never>;
   web_vitals: { metric_name: string; value: number; metric_id: string; metric_rating: string };
 }
 

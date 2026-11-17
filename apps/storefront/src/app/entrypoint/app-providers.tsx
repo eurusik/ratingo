@@ -17,6 +17,7 @@ import {
 } from '@/shared/config';
 import {
   AnalyticsIdentity,
+  ApiErrorReporter,
   BrowserBackScrollRestorer,
   RouteCommitSignal,
   ServiceWorkerProvider,
@@ -25,6 +26,7 @@ import {
 } from '@/shared/lib';
 import { I18nProvider, type Dictionary, type Locale } from '@/shared/i18n';
 import { DeferredToastRegion } from './deferred-toast-region';
+import { LibrarySizeReporter } from './library-size-reporter';
 
 configureStorefrontApi();
 
@@ -66,6 +68,8 @@ export function AppProviders({ locale, dictionary, children }: AppProvidersProps
               <QueryClientProvider client={getQueryClient()}>
                 <AuthProvider>
                   <AnalyticsIdentity />
+                  <LibrarySizeReporter />
+                  <ApiErrorReporter />
                   {children}
                 </AuthProvider>
               </QueryClientProvider>

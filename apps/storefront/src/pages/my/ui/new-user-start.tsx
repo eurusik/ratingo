@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +19,7 @@ import { useLibrarySave } from '@/features/save-to-library';
 import { catalogApi, libraryApi } from '@/shared/api';
 import { IMPORT_ROUTE } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { interleave } from '@/shared/lib';
+import { interleave, track } from '@/shared/lib';
 import type { LibraryActions } from '../model/library-actions';
 
 const POPULAR_SHOWS = 3;
@@ -45,6 +45,7 @@ function StartShowButton({ media, actions }: { media: TrendingMedia; actions: Li
     setIsStarted(true);
     try {
       mediaStates.write(media.mediaItemId, await libraryApi.startWatching(media.mediaItemId));
+      track('onboarding', { step: 'start_show' });
     } catch (error) {
       console.error('Starting a popular show failed', { mediaItemId: media.mediaItemId, error });
       setIsStarted(false);
@@ -82,7 +83,10 @@ function WantMovieButton({ media }: { media: TrendingMedia }) {
       size="sm"
       variant={isWanted ? 'secondary' : 'outline'}
       aria-pressed={isWanted}
-      onPress={() => toggleSaved({ mediaItemId: media.mediaItemId, title: media.title })}
+      onPress={() => {
+        if (!isWanted) track('onboarding', { step: 'want_movie' });
+        toggleSaved({ mediaItemId: media.mediaItemId, title: media.title });
+      }}
       aria-label={interpolate(dict.my.newUser.wantLabel, { title: media.title })}
       className={cn(ACTION_CLASS, isWanted && 'text-accent')}
     >
@@ -138,6 +142,10 @@ export function NewUserStart({ actions }: { actions: LibraryActions }) {
     staleTime: POPULAR_STALE_MS,
   });
 
+  useEffect(() => {
+    track('onboarding', { step: 'shown' });
+  }, []);
+
   return (
     <div className="flex max-w-[860px] flex-col gap-4">
       <section
@@ -150,7 +158,10 @@ export function NewUserStart({ actions }: { actions: LibraryActions }) {
         <p className="text-[15px] text-muted">{dict.my.newUser.text}</p>
         <button
           type="button"
-          onClick={openSearch}
+          onClick={() => {
+            track('onboarding', { step: 'search' });
+            openSearch();
+          }}
           className="flex h-12 items-center gap-2.5 rounded-full border border-border bg-default px-3.5 text-start text-base text-muted outline-none focus-visible:outline-2 focus-visible:outline-focus"
         >
           <Search aria-hidden className="size-4.5" />
@@ -173,6 +184,7 @@ export function NewUserStart({ actions }: { actions: LibraryActions }) {
       </section>
       <Link
         href={IMPORT_ROUTE}
+        onClick={() => track('onboarding', { step: 'import' })}
         className="flex items-center gap-3.5 rounded-[20px] bg-surface px-4.5 py-4 text-foreground no-underline outline-none focus-visible:outline-2 focus-visible:outline-focus"
       >
         <span

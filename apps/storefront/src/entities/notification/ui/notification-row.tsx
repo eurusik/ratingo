@@ -8,6 +8,7 @@ import { cn } from '@ratingo/web-core/lib';
 import type { NotificationItem } from '@/shared/api';
 import { mediaRoute } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import { notificationDetail, notificationText, notificationTone } from '../model/notification-copy';
 import { notificationTime } from '../model/notification-time';
 
@@ -50,7 +51,10 @@ export function NotificationRow({ item, now, onOpen, actions, className }: Notif
     >
       <Link
         href={mediaRoute(media.type, media.slug)}
-        onClick={() => onOpen(item)}
+        onClick={() => {
+          track('notification_open', { type: item.trigger });
+          onOpen(item);
+        }}
         className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-foreground no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus md:gap-4"
       >
         <NotificationPoster item={item} />

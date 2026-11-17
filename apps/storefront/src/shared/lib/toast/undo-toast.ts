@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { toast } from '@heroui/react';
+import { track } from '../analytics/track';
 
 const openToastByKey = new Map<string, string>();
 
@@ -34,6 +35,7 @@ export function showUndoToast({
         if (isUndone) return;
         isUndone = true;
         toast.close(toastId);
+        track('undo', {});
         onUndo();
       },
     },

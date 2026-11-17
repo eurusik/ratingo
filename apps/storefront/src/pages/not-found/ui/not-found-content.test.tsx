@@ -41,7 +41,22 @@ function renderAt(pathname: string) {
 }
 
 describe('NotFoundContent', () => {
-  afterEach(() => jest.mocked(catalogApi.search).mockReset());
+  afterEach(() => {
+    jest.mocked(catalogApi.search).mockReset();
+    delete window.gtag;
+  });
+
+  it('reports the missing page once without its path', () => {
+    window.gtag = jest.fn();
+
+    renderAt('/no-such-page');
+
+    expect(window.gtag).toHaveBeenCalledTimes(1);
+    expect(window.gtag).toHaveBeenCalledWith('event', 'app_error', {
+      kind: 'not_found',
+      area: 'page',
+    });
+  });
 
   it('offers an empty search and what people watch for an unknown page', () => {
     renderAt('/no-such-page');

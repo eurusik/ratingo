@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useSyncExternalStore } from 'react';
+import { track } from '../analytics/track';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -29,11 +30,15 @@ export function InstallPromptCapture(): null {
       publish(event as BeforeInstallPromptEvent);
     };
     const forget = () => publish(null);
+    const installed = () => {
+      track('pwa_install', {});
+      forget();
+    };
     window.addEventListener('beforeinstallprompt', capture);
-    window.addEventListener('appinstalled', forget);
+    window.addEventListener('appinstalled', installed);
     return () => {
       window.removeEventListener('beforeinstallprompt', capture);
-      window.removeEventListener('appinstalled', forget);
+      window.removeEventListener('appinstalled', installed);
     };
   }, []);
 

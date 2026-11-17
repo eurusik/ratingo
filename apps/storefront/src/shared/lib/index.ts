@@ -1,8 +1,11 @@
 export {
   AnalyticsIdentity,
+  ApiErrorReporter,
+  NotFoundReporter,
   SiteAnalytics,
   WebVitalsReporter,
   identifyUser,
+  setUserProperties,
   track,
   type AnalyticsEventName,
   type AnalyticsEvents,
