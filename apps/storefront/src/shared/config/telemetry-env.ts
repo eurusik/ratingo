@@ -1,4 +1,4 @@
-import { toServiceVersion } from '@ratingo/node-telemetry';
+import { isTelemetryEnabled, toServiceVersion } from '@ratingo/node-telemetry';
 
 const DEFAULT_SERVICE_NAME = 'ratingo-storefront';
 const DEFAULT_TRACES_EXPORT_RATIO = 0.1;
@@ -26,7 +26,7 @@ function readTracesExportRatio(env: NodeJS.ProcessEnv): number {
 
 export function readTelemetryEnv(env: NodeJS.ProcessEnv = process.env): TelemetryEnv {
   return {
-    enabled: Boolean(env.OTEL_EXPORTER_OTLP_ENDPOINT) && env.OTEL_SDK_DISABLED !== 'true',
+    enabled: isTelemetryEnabled(env),
     tracesExportRatio: readTracesExportRatio(env),
     serviceName: env.OTEL_SERVICE_NAME || DEFAULT_SERVICE_NAME,
     serviceVersion: toServiceVersion(env.RAILWAY_GIT_COMMIT_SHA),

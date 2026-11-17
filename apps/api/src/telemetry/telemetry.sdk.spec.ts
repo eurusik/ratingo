@@ -1,32 +1,8 @@
 import { type IncomingMessage } from 'node:http';
 
-import {
-  buildServiceAttributes,
-  isHealthCheck,
-  isTelemetryEnabled,
-  startTelemetry,
-} from './telemetry.sdk';
+import { buildServiceAttributes, isHealthCheck, startTelemetry } from './telemetry.sdk';
 
 describe('telemetry.sdk', () => {
-  describe('isTelemetryEnabled', () => {
-    it('is disabled without an OTLP endpoint', () => {
-      expect(isTelemetryEnabled({})).toBe(false);
-    });
-
-    it('is enabled when an OTLP endpoint is configured', () => {
-      expect(isTelemetryEnabled({ OTEL_EXPORTER_OTLP_ENDPOINT: 'http://alloy:4318' })).toBe(true);
-    });
-
-    it('respects OTEL_SDK_DISABLED', () => {
-      expect(
-        isTelemetryEnabled({
-          OTEL_EXPORTER_OTLP_ENDPOINT: 'http://alloy:4318',
-          OTEL_SDK_DISABLED: 'true',
-        }),
-      ).toBe(false);
-    });
-  });
-
   describe('buildServiceAttributes', () => {
     it('names the worker role ratingo-worker and tags Railway metadata', () => {
       expect(

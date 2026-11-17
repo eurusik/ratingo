@@ -9,18 +9,15 @@ import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
-import { toServiceVersion } from '@ratingo/node-telemetry';
+import {
+  isTelemetryEnabled,
+  METRICS_EXPORT_INTERVAL_MS,
+  toServiceVersion,
+} from '@ratingo/node-telemetry';
 
 import { type AppRole, getAppRole } from '../common/runtime/app-role';
 
-import {
-  HEALTH_PATH_PREFIX,
-  METRICS_EXPORT_INTERVAL_MS,
-  SERVICE_NAME_BY_ROLE,
-} from './telemetry.constants';
-
-export const isTelemetryEnabled = (env: NodeJS.ProcessEnv = process.env): boolean =>
-  Boolean(env.OTEL_EXPORTER_OTLP_ENDPOINT) && env.OTEL_SDK_DISABLED !== 'true';
+import { HEALTH_PATH_PREFIX, SERVICE_NAME_BY_ROLE } from './telemetry.constants';
 
 export const buildServiceAttributes = (
   role: AppRole,

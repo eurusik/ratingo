@@ -1,3 +1,5 @@
+export { isTelemetryEnabled, METRICS_EXPORT_INTERVAL_MS } from './export-config';
+export { HTTP_DURATION_BUCKETS_SECONDS, UNMATCHED_ROUTE } from './http-conventions';
 export {
   EVENT_LOOP_DELAY_METRIC,
   EVENT_LOOP_UTILIZATION_METRIC,

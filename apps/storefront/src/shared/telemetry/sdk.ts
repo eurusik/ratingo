@@ -8,11 +8,11 @@ import {
   NodeTracerProvider,
   type SpanProcessor,
 } from '@opentelemetry/sdk-trace-node';
-import { registerRuntimeMetrics } from '@ratingo/node-telemetry';
+import { METRICS_EXPORT_INTERVAL_MS, registerRuntimeMetrics } from '@ratingo/node-telemetry';
 
 import { type TelemetryEnv, readTelemetryEnv } from '@/shared/config/index.server';
 
-import { METER_NAME, METRICS_EXPORT_INTERVAL_MS } from './constants';
+import { METER_NAME } from './constants';
 import { NextSpanMetricsProcessor } from './next-span-metrics';
 import { SampledExportProcessor } from './sampled-export-processor';
 

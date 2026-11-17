@@ -7,10 +7,13 @@ import {
   SpanStatusCode,
 } from '@opentelemetry/api';
 import type { ReadableSpan, Span, SpanProcessor } from '@opentelemetry/sdk-trace-node';
-import { NS_PER_SECOND } from '@ratingo/node-telemetry';
+import {
+  HTTP_DURATION_BUCKETS_SECONDS,
+  NS_PER_SECOND,
+  UNMATCHED_ROUTE,
+} from '@ratingo/node-telemetry';
 
 import {
-  DURATION_BUCKETS_SECONDS,
   FAILED_FETCH_STATUS,
   FETCH_DURATION_METRIC,
   KNOWN_HTTP_METHODS,
@@ -20,7 +23,6 @@ import {
   RENDER_DURATION_METRIC,
   REQUEST_DURATION_METRIC,
   UNKNOWN_HOST,
-  UNMATCHED_ROUTE,
 } from './constants';
 
 export const toSeconds = ([seconds, nanos]: HrTime): number => seconds + nanos / NS_PER_SECOND;
@@ -86,7 +88,7 @@ export class NextSpanMetricsProcessor implements SpanProcessor {
       meter.createHistogram(name, {
         description,
         unit: 's',
-        advice: { explicitBucketBoundaries: DURATION_BUCKETS_SECONDS },
+        advice: { explicitBucketBoundaries: HTTP_DURATION_BUCKETS_SECONDS },
       });
 
     this.bySpanType = new Map<string, SpanMetric>([

@@ -1,12 +1,11 @@
 import { type Meter, metrics } from '@opentelemetry/api';
+import { HTTP_DURATION_BUCKETS_SECONDS, UNMATCHED_ROUTE } from '@ratingo/node-telemetry';
 import { type FastifyInstance } from 'fastify';
 
 import {
   HEALTH_PATH_PREFIX,
-  HTTP_DURATION_BUCKETS_SECONDS,
   HTTP_REQUEST_DURATION_METRIC,
   METER_NAME,
-  UNMATCHED_ROUTE,
 } from './telemetry.constants';
 
 const MS_PER_SECOND = 1000;
