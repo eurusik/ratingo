@@ -93,3 +93,55 @@ describe('identifyClarityUser', () => {
     expect(() => identifyClarityUser('user-uuid')).not.toThrow();
   });
 });
+
+describe('Clarity mirroring', () => {
+  afterEach(() => {
+    delete window.gtag;
+    delete window.clarity;
+  });
+
+  it('mirrors product events by name only', () => {
+    window.clarity = jest.fn();
+
+    track('app_error', { kind: 'not_found', area: 'page' });
+
+    expect(window.clarity).toHaveBeenCalledWith('event', 'app_error');
+  });
+
+  it('keeps noisy web vitals out of Clarity', () => {
+    window.clarity = jest.fn();
+
+    track('web_vitals', { metric_name: 'LCP', value: 1, metric_id: 'a', metric_rating: 'good' });
+
+    expect(window.clarity).not.toHaveBeenCalled();
+  });
+
+  it('reaches Clarity even when gtag is missing, and the reverse', () => {
+    window.clarity = jest.fn();
+    expect(() => setUserProperties({ library_size: '1-5' })).not.toThrow();
+    expect(window.clarity).toHaveBeenCalledWith('set', 'library_size', '1-5');
+
+    delete window.clarity;
+    window.gtag = jest.fn();
+    track('app_error', { kind: 'not_found', area: 'page' });
+    expect(window.gtag).toHaveBeenCalledTimes(1);
+  });
+
+  it('tags sessions with the sign-in state', () => {
+    window.clarity = jest.fn();
+
+    identifyUser('user-uuid');
+    identifyUser(null);
+
+    expect(window.clarity).toHaveBeenNthCalledWith(1, 'set', 'logged_in', 'true');
+    expect(window.clarity).toHaveBeenNthCalledWith(2, 'set', 'logged_in', 'false');
+  });
+
+  it('survives a throwing Clarity', () => {
+    window.clarity = jest.fn(() => {
+      throw new Error('boom');
+    });
+
+    expect(() => track('app_error', { kind: 'not_found', area: 'page' })).not.toThrow();
+  });
+});
