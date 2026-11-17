@@ -14,9 +14,9 @@ import {
   PROCESS_CPU_TIME_METRIC,
   PROCESS_MEMORY_METRIC,
 } from './metric-names';
-import { NS_PER_SECOND, US_PER_SECOND } from './units';
+import { EVENT_LOOP_RESOLUTION_MS, toStallSeconds } from './event-loop-stall';
+import { US_PER_SECOND } from './units';
 
-const EVENT_LOOP_RESOLUTION_MS = 20;
 const EVENT_LOOP_PERCENTILES = [50, 99] as const;
 
 interface RuntimeInstruments {
@@ -54,11 +54,11 @@ function observeEventLoopDelay(
     return;
   }
   EVENT_LOOP_PERCENTILES.forEach((percentile) =>
-    result.observe(gauge, delay.percentile(percentile) / NS_PER_SECOND, {
+    result.observe(gauge, toStallSeconds(delay.percentile(percentile)), {
       percentile: `p${percentile}`,
     }),
   );
-  result.observe(gauge, delay.max / NS_PER_SECOND, { percentile: 'max' });
+  result.observe(gauge, toStallSeconds(delay.max), { percentile: 'max' });
   delay.reset();
 }
 
