@@ -33,14 +33,14 @@ function mockViewport(isDesktop: boolean) {
   );
 }
 
-function renderMenu({ isAdmin }: { isAdmin: boolean }) {
+function renderMenu({ isAdmin, user = USER }: { isAdmin: boolean; user?: MeDto }) {
   jest
     .mocked(useAuth)
     .mockReturnValue({ logout, isAdmin } as unknown as ReturnType<typeof useAuth>);
   jest.mocked(useColorTheme).mockReturnValue({ theme: 'dark', setTheme });
   render(
     <I18nProvider locale="uk" dictionary={uk}>
-      <ProfileMenu user={USER} />
+      <ProfileMenu user={user} />
     </I18nProvider>,
   );
   fireEvent.click(screen.getByRole('button', { name: uk.header.profile }));
@@ -59,9 +59,13 @@ describe('ProfileMenu', () => {
 
     const sheet = await screen.findByRole('dialog', { name: uk.header.profile });
     expect(within(sheet).getByText('ivan@example.com')).toBeInTheDocument();
-    expect(within(sheet).getByText(uk.profile.stats.moviesRated).nextSibling).toHaveTextContent(
-      '42',
-    );
+    const stats = within(sheet).getByRole('list', { name: uk.profile.stats.label });
+    expect(
+      within(stats).getByRole('link', { name: `${uk.profile.stats.movies}: 42` }),
+    ).toHaveAttribute('href', '/my?list=history');
+    expect(
+      within(stats).getByRole('link', { name: `${uk.profile.stats.watchlist}: 77` }),
+    ).toHaveAttribute('href', '/my?list=plan');
     expect(within(sheet).queryByRole('link', { name: uk.profile.admin })).not.toBeInTheDocument();
 
     fireEvent.click(within(sheet).getByRole('radio', { name: uk.profile.themes.light }));
@@ -90,5 +94,22 @@ describe('ProfileMenu', () => {
 
     fireEvent.click(within(menu).getByRole('menuitem', { name: uk.profile.signOut }));
     expect(logout).toHaveBeenCalledTimes(1);
+  });
+
+  it('groups thousands with a narrow no-break space and offers discovery for an empty watchlist', async () => {
+    mockViewport(true);
+    renderMenu({
+      isAdmin: false,
+      user: { ...USER, stats: { moviesRated: 2311, showsRated: 514, watchlistCount: 0 } },
+    });
+
+    const stats = await screen.findByRole('list', { name: uk.profile.stats.label });
+    const { movies, watchlist, emptyWatchlist, findToWatch } = uk.profile.stats;
+    expect(within(stats).getByRole('link', { name: `${movies}: 2\u202f311` })).toBeInTheDocument();
+    expect(
+      within(stats).getByRole('link', {
+        name: `${watchlist}: ${emptyWatchlist}. ${findToWatch}`,
+      }),
+    ).toHaveAttribute('href', '/browse');
   });
 });

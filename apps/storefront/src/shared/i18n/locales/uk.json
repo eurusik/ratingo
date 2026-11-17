@@ -412,9 +412,11 @@
   "profile": {
     "stats": {
       "label": "Твоя статистика",
-      "moviesRated": "оцінено фільмів",
-      "showsRated": "оцінено серіалів",
-      "watchlist": "у списку"
+      "movies": "Фільми",
+      "shows": "Серіали",
+      "watchlist": "Список",
+      "emptyWatchlist": "Поки порожньо",
+      "findToWatch": "Знайти, що подивитись"
     },
     "theme": "Тема",
     "themes": {
