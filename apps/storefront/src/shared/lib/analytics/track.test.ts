@@ -1,4 +1,4 @@
-import { identifyUser, setUserProperties, track } from './track';
+import { identifyClarityUser, identifyUser, setUserProperties, track } from './track';
 
 describe('track', () => {
   afterEach(() => {
@@ -73,5 +73,23 @@ describe('setUserProperties', () => {
     setUserProperties({ library_size: '3-9' });
 
     expect(gtag).toHaveBeenCalledWith('set', 'user_properties', { library_size: '3-9' });
+  });
+});
+
+describe('identifyClarityUser', () => {
+  afterEach(() => {
+    delete window.clarity;
+  });
+
+  it('passes only the user id to Clarity', () => {
+    window.clarity = jest.fn();
+
+    identifyClarityUser('user-uuid');
+
+    expect(window.clarity).toHaveBeenCalledWith('identify', 'user-uuid');
+  });
+
+  it('does nothing when Clarity is not loaded', () => {
+    expect(() => identifyClarityUser('user-uuid')).not.toThrow();
   });
 });
