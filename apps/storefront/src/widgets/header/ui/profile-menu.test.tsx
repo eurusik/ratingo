@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useAuth, type MeDto } from '@ratingo/web-core/auth';
 import { useColorTheme } from '@ratingo/ui/theme';
+import { useLibraryCounts } from '@/entities/library';
+import type { LibraryCounts } from '@/shared/api';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { ProfileMenu } from './profile-menu';
 
@@ -9,6 +11,10 @@ const refresh = jest.fn();
 jest.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }));
 jest.mock('@ratingo/web-core/auth', () => ({ useAuth: jest.fn() }));
 jest.mock('@ratingo/ui/theme', () => ({ useColorTheme: jest.fn() }));
+jest.mock('@/entities/library', () => ({
+  ...jest.requireActual('@/entities/library'),
+  useLibraryCounts: jest.fn(),
+}));
 
 const uk = getDictionary('uk');
 const logout = jest.fn();
@@ -33,7 +39,20 @@ function mockViewport(isDesktop: boolean) {
   );
 }
 
-function renderMenu({ isAdmin, user = USER }: { isAdmin: boolean; user?: MeDto }) {
+function planCounts(forLater: number, considering: number): LibraryCounts {
+  return { forLater, considering } as LibraryCounts;
+}
+
+function renderMenu({
+  isAdmin,
+  user = USER,
+  counts = planCounts(70, 7),
+}: {
+  isAdmin: boolean;
+  user?: MeDto;
+  counts?: LibraryCounts | null;
+}) {
+  jest.mocked(useLibraryCounts).mockReturnValue(counts ?? undefined);
   jest
     .mocked(useAuth)
     .mockReturnValue({ logout, isAdmin } as unknown as ReturnType<typeof useAuth>);
@@ -100,16 +119,26 @@ describe('ProfileMenu', () => {
     mockViewport(true);
     renderMenu({
       isAdmin: false,
-      user: { ...USER, stats: { moviesRated: 2311, showsRated: 514, watchlistCount: 0 } },
+      user: { ...USER, stats: { moviesRated: 2311, showsRated: 514, watchlistCount: 3 } },
+      counts: planCounts(0, 0),
     });
 
     const stats = await screen.findByRole('list', { name: uk.profile.stats.label });
-    const { movies, watchlist, emptyWatchlist, findToWatch } = uk.profile.stats;
+    const { movies, watchlist, emptyWatchlist, find } = uk.profile.stats;
     expect(within(stats).getByRole('link', { name: `${movies}: 2\u202f311` })).toBeInTheDocument();
     expect(
-      within(stats).getByRole('link', {
-        name: `${watchlist}: ${emptyWatchlist}. ${findToWatch}`,
-      }),
+      within(stats).getByRole('link', { name: `${watchlist}: ${emptyWatchlist}. ${find}` }),
     ).toHaveAttribute('href', '/browse');
+  });
+
+  it('keeps the watchlist link on the plan list while its count is loading', async () => {
+    mockViewport(true);
+    renderMenu({ isAdmin: false, counts: null });
+
+    const stats = await screen.findByRole('list', { name: uk.profile.stats.label });
+    expect(within(stats).getByRole('link', { name: uk.profile.stats.watchlist })).toHaveAttribute(
+      'href',
+      '/my?list=plan',
+    );
   });
 });

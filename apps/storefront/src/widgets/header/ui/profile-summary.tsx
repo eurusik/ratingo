@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 import type { MeDto } from '@ratingo/web-core/auth';
-import { libraryListRoute } from '@/entities/library';
+import { libraryListRoute, listCount, useLibraryCounts } from '@/entities/library';
+import type { LibraryCounts } from '@/shared/api';
 import { BROWSE_ROUTE } from '@/shared/config';
 import { useTranslation, type Dictionary } from '@/shared/i18n';
 import { UserAvatar } from './user-avatar';
@@ -10,10 +11,12 @@ type ProfileStatsLayout = 'tiles' | 'rows';
 
 type StatLabels = Dictionary['profile']['stats'];
 
+type StatValue = { kind: 'count'; text: string } | { kind: 'empty' } | { kind: 'loading' };
+
 interface ProfileStat {
   label: string;
   href: string;
-  count?: string;
+  value: StatValue;
 }
 
 const NARROW_NO_BREAK_SPACE = ' ';
@@ -32,38 +35,62 @@ function formatStatCount(locale: string, count: number): string {
     .join('');
 }
 
-function profileStats(stats: MeDto['stats'], labels: StatLabels, locale: string): ProfileStat[] {
-  const isWatchlistEmpty = stats.watchlistCount === 0;
+function countValue(locale: string, count: number): StatValue {
+  return { kind: 'count', text: formatStatCount(locale, count) };
+}
+
+function watchlistStat(
+  counts: LibraryCounts | undefined,
+  labels: StatLabels,
+  locale: string,
+): ProfileStat {
+  const count = counts ? listCount(counts, 'plan') : undefined;
+  const value: StatValue =
+    count === undefined
+      ? { kind: 'loading' }
+      : count === 0
+        ? { kind: 'empty' }
+        : countValue(locale, count);
+  return {
+    label: labels.watchlist,
+    href: value.kind === 'empty' ? BROWSE_ROUTE : libraryListRoute('plan'),
+    value,
+  };
+}
+
+function profileStats(
+  stats: MeDto['stats'],
+  counts: LibraryCounts | undefined,
+  labels: StatLabels,
+  locale: string,
+): ProfileStat[] {
   return [
     {
       label: labels.movies,
       href: libraryListRoute('history'),
-      count: formatStatCount(locale, stats.moviesRated),
+      value: countValue(locale, stats.moviesRated),
     },
     {
       label: labels.shows,
       href: libraryListRoute('history'),
-      count: formatStatCount(locale, stats.showsRated),
+      value: countValue(locale, stats.showsRated),
     },
-    {
-      label: labels.watchlist,
-      href: isWatchlistEmpty ? BROWSE_ROUTE : libraryListRoute('plan'),
-      count: isWatchlistEmpty ? undefined : formatStatCount(locale, stats.watchlistCount),
-    },
+    watchlistStat(counts, labels, locale),
   ];
 }
 
-function accessibleName(stat: ProfileStat, labels: StatLabels): string {
-  const value = stat.count ?? `${labels.emptyWatchlist}. ${labels.findToWatch}`;
-  return `${stat.label}: ${value}`;
+function accessibleName({ label, value }: ProfileStat, labels: StatLabels): string {
+  if (value.kind === 'count') return `${label}: ${value.text}`;
+  if (value.kind === 'empty') return `${label}: ${labels.emptyWatchlist}. ${labels.find}`;
+  return label;
 }
 
 const LINK_CLASS =
   'text-foreground no-underline transition-colors hover:bg-surface-tertiary focus-visible:outline-2 focus-visible:outline-focus';
 
 const LAYOUT_LINK_CLASS: Record<ProfileStatsLayout, string> = {
-  tiles: `@container flex min-h-28 flex-col gap-4 rounded-2xl bg-surface-secondary px-3.5 pt-3.5 pb-4 ${LINK_CLASS}`,
-  rows: `flex min-h-16 items-center gap-3 rounded-xl ps-4 pe-3.5 ${LINK_CLASS}`,
+  tiles: `@container flex min-h-26 flex-col justify-between rounded-2xl bg-surface-secondary p-3.5 ${LINK_CLASS}`,
+  rows: `flex min-h-14 items-center gap-3 rounded-xl ps-4 pe-3.5 ${LINK_CLASS}`,
 };
 
 const LAYOUT_LIST_CLASS: Record<ProfileStatsLayout, string> = {
@@ -71,25 +98,50 @@ const LAYOUT_LIST_CLASS: Record<ProfileStatsLayout, string> = {
   rows: 'flex flex-col gap-0.5 rounded-2xl bg-surface-secondary p-1.5',
 };
 
+const LAYOUT_COUNT_CLASS: Record<ProfileStatsLayout, string> = {
+  tiles: 'text-[min(1.625rem,30cqi)]',
+  rows: 'text-[22px]',
+};
+
 const CHEVRON_CLASS = 'size-4 shrink-0 text-muted';
 
-const COUNT_CLASS = 'font-extrabold leading-none tracking-tight tabular-nums whitespace-nowrap';
+function StatValueView({
+  value,
+  labels,
+  layout,
+}: {
+  value: StatValue;
+  labels: StatLabels;
+  layout: ProfileStatsLayout;
+}) {
+  if (value.kind === 'loading') {
+    return <span aria-hidden className="h-[22px] w-10 rounded-md bg-surface-tertiary" />;
+  }
+  if (value.kind === 'empty') {
+    return (
+      <span className="flex items-center gap-1 text-[15px] leading-none font-bold whitespace-nowrap text-accent">
+        {labels.find}
+        <ArrowRight aria-hidden className="size-4" />
+      </span>
+    );
+  }
+  return (
+    <span
+      className={`${LAYOUT_COUNT_CLASS[layout]} leading-none font-extrabold tracking-tight whitespace-nowrap tabular-nums`}
+    >
+      {value.text}
+    </span>
+  );
+}
 
 function TileContent({ stat, labels }: { stat: ProfileStat; labels: StatLabels }) {
   return (
     <>
-      <span className="flex items-center justify-between gap-1 text-sm font-medium text-muted">
+      <span className="flex items-start justify-between gap-1 text-sm leading-tight font-medium text-muted">
         {stat.label}
         <ChevronRight aria-hidden className={CHEVRON_CLASS} />
       </span>
-      {stat.count === undefined ? (
-        <span className="flex flex-col gap-1 text-xs leading-tight font-semibold">
-          <span className="text-sm">{labels.emptyWatchlist}</span>
-          <span className="text-accent">{labels.findToWatch}</span>
-        </span>
-      ) : (
-        <span className={`text-[min(2.125rem,30cqi)] ${COUNT_CLASS}`}>{stat.count}</span>
-      )}
+      <StatValueView value={stat.value} labels={labels} layout="tiles" />
     </>
   );
 }
@@ -98,12 +150,8 @@ function RowContent({ stat, labels }: { stat: ProfileStat; labels: StatLabels })
   return (
     <>
       <span className="min-w-0 flex-1 text-base font-medium text-muted">{stat.label}</span>
-      {stat.count === undefined ? (
-        <span className="text-[15px] font-semibold text-accent">{labels.findToWatch}</span>
-      ) : (
-        <span className={`text-[26px] ${COUNT_CLASS}`}>{stat.count}</span>
-      )}
-      <ChevronRight aria-hidden className={CHEVRON_CLASS} />
+      <StatValueView value={stat.value} labels={labels} layout="rows" />
+      {stat.value.kind === 'empty' ? null : <ChevronRight aria-hidden className={CHEVRON_CLASS} />}
     </>
   );
 }
@@ -118,8 +166,9 @@ export function ProfileSummary({
   onNavigate: () => void;
 }) {
   const { dict, locale } = useTranslation();
+  const counts = useLibraryCounts();
   const labels = dict.profile.stats;
-  const stats = profileStats(user.stats, labels, locale);
+  const stats = profileStats(user.stats, counts, labels, locale);
   const Content = layout === 'tiles' ? TileContent : RowContent;
 
   return (
