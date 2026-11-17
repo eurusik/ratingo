@@ -12,6 +12,7 @@ import {
   type IMediaRepository,
   isMovieReleasingFrom,
   MEDIA_REPOSITORY,
+  type MovieReleaseDates,
 } from '@/modules/catalog/public';
 import {
   type ICatalogPolicyEvaluator,
@@ -35,6 +36,14 @@ import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 
 // Score display multiplier (0-1 to 0-100)
 const SCORE_PERCENT_MULTIPLIER = 100;
+
+function movieReleaseDates(media: NormalizedMedia): MovieReleaseDates {
+  return {
+    releaseDate: media.releaseDate,
+    theatricalReleaseDate: media.details?.theatricalReleaseDate,
+    digitalReleaseDate: media.details?.digitalReleaseDate,
+  };
+}
 
 /**
  * Result of checking if media exists.
@@ -373,14 +382,7 @@ export class SyncMediaService {
   }
 
   private isUnreleasedMovie(media: NormalizedMedia): boolean {
-    const releaseStatus = computeReleaseStatus(
-      {
-        releaseDate: media.releaseDate,
-        theatricalReleaseDate: media.details?.theatricalReleaseDate,
-        digitalReleaseDate: media.details?.digitalReleaseDate,
-      },
-      this.clock.now(),
-    );
+    const releaseStatus = computeReleaseStatus(movieReleaseDates(media), this.clock.now());
     return releaseStatus === ReleaseStatus.UPCOMING;
   }
 
@@ -539,14 +541,7 @@ export class SyncMediaService {
 
   private isUpcomingMovie(media: NormalizedMedia, type: MediaType): boolean {
     if (type !== MediaType.MOVIE) return false;
-    return isMovieReleasingFrom(
-      {
-        releaseDate: media.releaseDate,
-        theatricalReleaseDate: media.details?.theatricalReleaseDate,
-        digitalReleaseDate: media.details?.digitalReleaseDate,
-      },
-      startOfUtcDay(this.clock.now()),
-    );
+    return isMovieReleasingFrom(movieReleaseDates(media), startOfUtcDay(this.clock.now()));
   }
 
   /** Triggers catalog eligibility evaluation if service available. */

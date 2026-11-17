@@ -66,6 +66,18 @@ describe('TraktKeyProbe', () => {
     expect(httpGet).toHaveBeenCalledTimes(1);
   });
 
+  it('sends a single request per token without retrying', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('{}', { status: HttpStatus.SERVICE_UNAVAILABLE }));
+    httpGet.mockRestore();
+
+    await new TraktKeyProbe(config, rateLimit).probe();
+
+    expect(rateLimit.acquire).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('maps a 429 to degraded', async () => {
     httpGet.mockResolvedValue({
       data: null,

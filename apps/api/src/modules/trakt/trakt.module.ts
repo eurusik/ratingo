@@ -12,7 +12,7 @@ import { TraktRatingsAdapter } from './infrastructure/adapters/trakt-ratings.ada
 
 /**
  * Leaf module for the Trakt external API.
- * Provides ratings, trending-lists and shared rate-limit ports — no dependencies on other feature modules.
+ * Provides ratings and trending-lists ports — no dependencies on other feature modules.
  */
 @Module({
   imports: [ConfigModule.forFeature(traktConfig)],
