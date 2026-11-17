@@ -1,3 +1,5 @@
+export {};
+
 function mockKyPatch(body: unknown) {
   jest.doMock('ky', () => {
     const mockInstance = {
