@@ -25,7 +25,7 @@ export const SITE_URL = withoutTrailingSlashes(
 
 export const IS_PRODUCTION_SITE = process.env.APP_ENV === 'production';
 
-const DEFAULT_GA_MEASUREMENT_ID = 'G-MPY73Y7DBB';
+const DEFAULT_GA_MEASUREMENT_ID = 'G-Y3TXZS9VBK';
 
 export const GA_MEASUREMENT_ID = IS_PRODUCTION_SITE
   ? process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || DEFAULT_GA_MEASUREMENT_ID
