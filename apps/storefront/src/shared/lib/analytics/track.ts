@@ -40,7 +40,7 @@ export function identifyUser(userId: string | null): void {
   const send = gtag();
   if (!send) return;
   try {
-    send('set', { user_id: userId ?? undefined });
+    send('set', { user_id: userId });
     send('set', 'user_properties', { logged_in: userId ? 'true' : 'false' });
   } catch {
     return;

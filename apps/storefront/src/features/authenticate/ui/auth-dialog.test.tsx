@@ -46,6 +46,40 @@ describe('AuthDialog', () => {
   afterEach(() => {
     act(() => closeAuth());
     jest.clearAllMocks();
+    delete window.gtag;
+  });
+
+  it('reports an email login after it succeeds', async () => {
+    window.gtag = jest.fn();
+    login.mockResolvedValue(undefined);
+    renderDialog();
+    act(() => openAuth());
+    await screen.findByRole('dialog', { name: uk.auth.loginTitle });
+    type(uk.auth.email, 'ivan@example.com');
+    type(uk.auth.password, 'S3curePassw0rd');
+
+    fireEvent.click(screen.getByRole('button', { name: uk.auth.submitLogin }));
+
+    await waitFor(() =>
+      expect(window.gtag).toHaveBeenCalledWith('event', 'login', { method: 'email' }),
+    );
+  });
+
+  it('reports an email sign up after registering', async () => {
+    window.gtag = jest.fn();
+    register.mockResolvedValue(undefined);
+    renderDialog();
+    act(() => openAuth({ mode: 'register' }));
+    await screen.findByRole('dialog', { name: uk.auth.registerTitle });
+    type(uk.auth.email, 'ivan_42@example.com');
+    type(uk.auth.password, 'Abcdefg1');
+
+    fireEvent.click(screen.getByRole('button', { name: uk.auth.submitRegister }));
+
+    await waitFor(() =>
+      expect(window.gtag).toHaveBeenCalledWith('event', 'sign_up', { method: 'email' }),
+    );
+    expect(window.gtag).not.toHaveBeenCalledWith('event', 'login', expect.anything());
   });
 
   it('names the title a guest wanted to save and offers only enabled providers first', async () => {
@@ -93,6 +127,7 @@ describe('AuthDialog', () => {
   });
 
   it('shows one error banner when the credentials are wrong', async () => {
+    window.gtag = jest.fn();
     login.mockRejectedValue(new ApiError(ErrorCode.UNAUTHORIZED, 401, 'Unauthorized'));
     renderDialog();
     act(() => openAuth());
@@ -104,6 +139,7 @@ describe('AuthDialog', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(uk.auth.errors.invalidCredentials);
     expect(login).toHaveBeenCalledWith({ email: 'ivan@example.com', password: 'wrong' });
+    expect(window.gtag).not.toHaveBeenCalledWith('event', 'login', expect.anything());
   });
 
   it('closes and replays the guest action after signing in', async () => {

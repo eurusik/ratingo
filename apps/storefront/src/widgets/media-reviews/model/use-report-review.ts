@@ -5,6 +5,7 @@ import { toast } from '@heroui/react';
 import { ErrorCode, getApiErrorCode } from '@ratingo/web-core/api';
 import { reviewsApi, type ReportReason } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import { reportedReviews } from './review-visibility';
 
 export const REPORT_REASONS = [
@@ -41,6 +42,7 @@ export function useReportReview(onReported: () => void) {
   return useMutation({
     mutationFn: sendReport,
     onSuccess: (outcome, { reviewId }) => {
+      track('review_interaction', { action: 'report' });
       reportedReviews.add(reviewId);
       toast.success(outcome === 'sent' ? dict.reviews.report.sent : dict.reviews.report.already);
       onReported();

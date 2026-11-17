@@ -19,7 +19,7 @@ interface WeekBarProps extends ModePillsProps {
   today: DateKey;
   stripWeeks?: StripWeek[];
   list: RefObject<HTMLElement | null>;
-  tryStep: (step: WeekStep) => boolean;
+  tryStep: (step: WeekStep, action?: 'swipe') => boolean;
   onThisWeek: () => void;
   onDayPick: (key: DateKey) => void;
 }

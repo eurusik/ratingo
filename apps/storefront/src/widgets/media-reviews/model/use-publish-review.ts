@@ -6,6 +6,7 @@ import { ErrorCode, getApiErrorCode } from '@ratingo/web-core/api';
 import { useMediaStateStore } from '@/entities/library';
 import { reviewsApi, type Review, type ReviewDraft } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import { refreshMediaReviewsAndWait } from './review-cache';
 import type { ReviewedMedia } from './reviewed-media';
 
@@ -42,7 +43,14 @@ export function usePublishReview(media: ReviewedMedia) {
         throw new ReviewPublishError(await publishFailureOf(error));
       }
     },
-    onSuccess: async (_review, { editing }) => {
+    onSuccess: async (_review, { draft, editing }) => {
+      track('review_publish', {
+        is_edit: Boolean(editing),
+        has_spoiler: draft.hasSpoiler,
+        has_text: draft.content.trim().length > 0,
+        rating: draft.rating ?? null,
+        media_type: media.type,
+      });
       mediaState.refresh(media.mediaItemId);
       await refreshMediaReviewsAndWait(queryClient, media.mediaItemId);
       toast.success(editing ? dict.reviews.toast.saved : dict.reviews.toast.published);

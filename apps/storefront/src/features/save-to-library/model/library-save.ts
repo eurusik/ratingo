@@ -4,9 +4,9 @@ import { useCallback } from 'react';
 import { useMutation, useQueryClient, type Mutation } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
 import { LIBRARY_QUERY_KEY, NOT_SAVED, isSaved, useLibraryStore } from '@/entities/library';
-import { libraryApi, type MediaSaveStatus } from '@/shared/api';
+import { libraryApi, type MediaSaveStatus, type SaveList } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { closeUndoToast, showUndoToast } from '@/shared/lib';
+import { closeUndoToast, showUndoToast, track } from '@/shared/lib';
 import { ensureSaved, planListChanges } from './save-plan';
 
 export interface SavableMedia {
@@ -29,6 +29,10 @@ interface AppliedChange {
 }
 
 const SAVE_MUTATION_KEY = [...LIBRARY_QUERY_KEY, 'save'] as const;
+
+function activeList(status: MediaSaveStatus): SaveList {
+  return status.isConsidering && !status.isForLater ? 'considering' : 'for_later';
+}
 
 async function targetFor(intent: SaveIntent, before: MediaSaveStatus): Promise<MediaSaveStatus> {
   if (intent.kind === 'save') return ensureSaved(before);
@@ -74,7 +78,11 @@ export function useLibrarySave() {
     scope: { id: 'save-to-library' },
     mutationFn: applyChange,
     onMutate: ({ media, optimistic }) => store.write(media.mediaItemId, optimistic),
-    onSuccess: ({ after }, { media }) => {
+    onSuccess: ({ before, after }, { media, intent }) => {
+      track('save_to_library', {
+        action: intent.kind,
+        list: activeList(isSaved(after) ? after : before),
+      });
       if (isLatestChange(media.mediaItemId)) store.write(media.mediaItemId, after);
     },
     onError: (error, { media }) => {

@@ -56,7 +56,7 @@ describe('identifyUser', () => {
 
     expect(gtag).toHaveBeenCalledWith('set', { user_id: 'user-1' });
     expect(gtag).toHaveBeenCalledWith('set', 'user_properties', { logged_in: 'true' });
-    expect(gtag).toHaveBeenCalledWith('set', { user_id: undefined });
+    expect(gtag).toHaveBeenCalledWith('set', { user_id: null });
     expect(gtag).toHaveBeenCalledWith('set', 'user_properties', { logged_in: 'false' });
   });
 });

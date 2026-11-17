@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { toast } from '@heroui/react';
 import { useTranslation } from '@/shared/i18n';
+import { track } from '../analytics/track';
 import { useBrowserOrigin } from '../browser';
 
 type ShareOutcome = 'shared' | 'copied' | 'cancelled' | 'failed';
@@ -39,6 +40,7 @@ export function useShareLink(): (link: SharedLink) => Promise<void> {
     async ({ href, title }) => {
       if (!origin) return;
       const outcome = await shareLink({ url: new URL(href, origin).href, title });
+      track('share', { result: outcome });
       if (outcome === 'copied') toast(dict.common.linkCopied);
       if (outcome === 'failed') toast.danger(dict.common.shareFailed);
     },
