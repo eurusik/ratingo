@@ -1,4 +1,14 @@
-export { SiteAnalytics } from './analytics';
+export {
+  AnalyticsIdentity,
+  SiteAnalytics,
+  WebVitalsReporter,
+  identifyUser,
+  track,
+  type AnalyticsEventName,
+  type AnalyticsEvents,
+  type AnalyticsMediaType,
+  type SignInMethod,
+} from './analytics';
 export { useBrowserOrigin, useBrowserPath, useIsApplePlatform, useIsOffline } from './browser';
 export { useClientNow } from './client-now';
 export { useDebouncedValue } from './debounced-value';

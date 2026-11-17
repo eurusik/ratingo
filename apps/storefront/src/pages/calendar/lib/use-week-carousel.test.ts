@@ -80,7 +80,7 @@ describe('useWeekCarousel', () => {
     act(() => {
       scroller.dispatchEvent(new Event('scrollend'));
     });
-    expect(onStep).toHaveBeenCalledWith(1);
+    expect(onStep).toHaveBeenCalledWith(1, 'swipe');
   });
 
   it('waits for the finger to lift before committing', () => {
@@ -101,7 +101,7 @@ describe('useWeekCarousel', () => {
       jest.runAllTimers();
     });
     jest.useRealTimers();
-    expect(onStep).toHaveBeenCalledWith(-1);
+    expect(onStep).toHaveBeenCalledWith(-1, 'swipe');
   });
 
   it('slides to the neighbour week from the arrow buttons', () => {

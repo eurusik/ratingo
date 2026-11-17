@@ -6,6 +6,7 @@ import { toast } from '@heroui/react';
 import { reviewsApi, type Review, type VoteType } from '@/shared/api';
 import { useSignedInAction } from '@/shared/auth';
 import { useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import { refreshMediaReviews, updateReviewEverywhere } from './review-cache';
 import { nextVote, withVote } from './review-vote';
 
@@ -26,6 +27,7 @@ export function useReviewVote(mediaItemId: string): (review: Review, pressed: Vo
       updateReviewEverywhere(queryClient, mediaItemId, reviewId, (review) =>
         withVote(review, vote),
       ),
+    onSuccess: () => track('review_interaction', { action: 'vote' }),
     onError: (error, { reviewId }, restore) => {
       console.error('Voting on a review failed', { reviewId, error });
       restore?.();

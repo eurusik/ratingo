@@ -96,9 +96,13 @@ describe('useEpisodesTracker', () => {
       isLoading: false,
       user: { id: 'user-1' },
     } as ReturnType<typeof useAuth>);
+    window.gtag = jest.fn();
   });
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => {
+    jest.clearAllMocks();
+    delete window.gtag;
+  });
 
   it('summarizes the progress over aired episodes only', async () => {
     fakeServer(['s1e1']);
@@ -121,6 +125,43 @@ describe('useEpisodesTracker', () => {
 
     await waitFor(() => expect(server.has('s1e2')).toBe(false));
     expect(result.current.notice).toBeUndefined();
+  });
+
+  it('tracks a toggle once after it syncs and not its undo', async () => {
+    fakeServer(['s1e1']);
+    const { result } = await renderTracker();
+
+    act(() => result.current.toggle(SEASONS[0].episodes[1], true));
+
+    await waitFor(() =>
+      expect(window.gtag).toHaveBeenCalledWith('event', 'episode_mark', {
+        action: 'toggle',
+        source: 'sheet',
+      }),
+    );
+
+    act(() => result.current.undoNotice());
+    await waitFor(() => expect(api.markUnwatched).toHaveBeenCalled());
+    expect(window.gtag).toHaveBeenCalledTimes(1);
+  });
+
+  it('tracks a season reset and skips a failed save', async () => {
+    fakeServer(['s2e1']);
+    const { result } = await renderTracker();
+
+    act(() => result.current.resetSeason(SEASONS[1]));
+    await waitFor(() =>
+      expect(window.gtag).toHaveBeenCalledWith('event', 'episode_mark', {
+        action: 'reset_season',
+        source: 'sheet',
+      }),
+    );
+
+    api.markManyWatched.mockRejectedValueOnce(new Error('down'));
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    act(() => result.current.catchUp());
+    await waitFor(() => expect(toast.danger).toHaveBeenCalled());
+    expect(window.gtag).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the notice while the viewer holds it and hides it after release', async () => {

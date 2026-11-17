@@ -3,7 +3,7 @@
 import { useAuth } from '@ratingo/web-core/auth';
 import { useColorTheme, type ColorTheme } from '@ratingo/ui/theme';
 import { useChangeLocale, useTranslation, type Locale } from '@/shared/i18n';
-import { useInstallApp } from '@/shared/lib';
+import { track, useInstallApp } from '@/shared/lib';
 
 export const COLOR_THEMES: readonly ColorTheme[] = ['dark', 'light'];
 export const LOCALES: readonly Locale[] = ['uk', 'en'];
@@ -24,6 +24,9 @@ export function useProfileActions() {
     },
     installApp,
     isAdmin,
-    signOut: () => void logout(),
+    signOut: () => {
+      track('logout', {});
+      void logout();
+    },
   };
 }

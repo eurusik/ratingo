@@ -11,7 +11,7 @@ import {
 } from '@/entities/library';
 import { libraryApi, type MediaType, type WatchState } from '@/shared/api';
 import { interpolate, useTranslation, type Dictionary, type Locale } from '@/shared/i18n';
-import { formatScore, scoreFromRating, showUndoToast } from '@/shared/lib';
+import { formatScore, scoreFromRating, showUndoToast, track } from '@/shared/lib';
 
 interface RatableMedia {
   mediaItemId: string;
@@ -61,6 +61,7 @@ export function useRateMedia(media: RatableMedia): MediaRating {
     },
     onSuccess: ({ before, saved }, rating) => {
       store.write(media.mediaItemId, saved);
+      track('rate_title', { rating, media_type: media.type });
       if (rating !== null) removeFromWatchlistIfNeeded(rating, before?.state);
     },
     onError: (error) => {

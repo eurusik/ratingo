@@ -2,6 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 import { useAuth } from '@ratingo/web-core/auth';
+import { track } from '@/shared/lib';
 import { forgetPendingIntent } from './pending-intent';
 
 export type AuthMode = 'login' | 'register';
@@ -37,6 +38,7 @@ const readRequest = () => currentRequest;
 const readServerRequest = () => null;
 
 export function openAuth({ mode = 'login', ...rest }: Partial<AuthRequest> = {}): void {
+  track('auth_prompt', { intent: rest.intent?.kind ?? 'none' });
   publish({ mode, ...rest });
 }
 

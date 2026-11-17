@@ -19,9 +19,12 @@ import {
 } from '@/entities/episode';
 import { useMediaStateStore } from '@/entities/library';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { useClientNow } from '@/shared/lib';
+import { track, useClientNow } from '@/shared/lib';
 
 const NOTICE_VISIBLE_MS = 8000;
+
+type TrackedAction =
+  'toggle' | 'mark_season' | 'reset_season' | 'reset_all' | 'catch_up' | 'mark_through';
 
 export interface EpisodesShow {
   showId: string;
@@ -118,9 +121,14 @@ export function useEpisodesTracker({
   });
   const summary = useMemo(() => summarizeProgress(seasons, watched, now), [seasons, watched, now]);
 
-  const apply = (change: WatchChange, message: string, narrow?: NoticeAction) => {
+  const apply = (
+    action: TrackedAction,
+    change: WatchChange,
+    message: string,
+    narrow?: NoticeAction,
+  ) => {
     if (change.episodeIds.length === 0) return;
-    setWatched(change);
+    setWatched(change, () => track('episode_mark', { action, source: 'sheet' }));
     notice.show(message, opposite(change), narrow);
   };
 
@@ -128,6 +136,7 @@ export function useEpisodesTracker({
     const first = episodeById(seasons, episodeIds[0]) ?? episode;
     const others = episodeIds.filter((id) => id !== episode.id);
     apply(
+      'toggle',
       { episodeIds, watched: true },
       interpolate(labels.range, {
         from: episodeShortCode(first, dict),
@@ -144,7 +153,11 @@ export function useEpisodesTracker({
     if (episode.id === undefined) return;
     const code = episodeCode(episode, dict);
     if (!isWatched) {
-      apply({ episodeIds: [episode.id], watched: false }, interpolate(labels.unwatched, { code }));
+      apply(
+        'toggle',
+        { episodeIds: [episode.id], watched: false },
+        interpolate(labels.unwatched, { code }),
+      );
       return;
     }
     const episodeIds = unwatchedThrough(seasonsOfEpisode(seasons, episode), episode, watched, now);
@@ -152,23 +165,30 @@ export function useEpisodesTracker({
       markRange(episode, episodeIds);
       return;
     }
-    apply({ episodeIds: [episode.id], watched: true }, interpolate(labels.watched, { code }));
+    apply(
+      'toggle',
+      { episodeIds: [episode.id], watched: true },
+      interpolate(labels.watched, { code }),
+    );
   };
 
   const markSeason = (season: Season) =>
     apply(
+      'mark_season',
       { episodeIds: unwatchedAired([season], watched, now), watched: true },
       interpolate(labels.seasonWatched, { number: season.number }),
     );
 
   const resetSeason = (season: Season) =>
     apply(
+      'reset_season',
       { episodeIds: watchedIn(season, watched), watched: false },
       interpolate(labels.seasonReset, { number: season.number }),
     );
 
   const resetAll = () =>
     apply(
+      'reset_all',
       { episodeIds: seasons.flatMap((season) => watchedIn(season, watched)), watched: false },
       labels.allReset,
     );
@@ -176,6 +196,7 @@ export function useEpisodesTracker({
   const catchUp = () => {
     const episodeIds = unwatchedAired(seasons, watched, now);
     apply(
+      'catch_up',
       { episodeIds, watched: true },
       interpolate(labels.caughtUp, { episodes: countEpisodes(episodeIds.length, dict, locale) }),
     );
@@ -183,6 +204,7 @@ export function useEpisodesTracker({
 
   const markThrough = (episode: Episode) =>
     apply(
+      'mark_through',
       { episodeIds: unwatchedThrough(seasons, episode, watched, now), watched: true },
       interpolate(labels.pickedUntil, { code: episodeCode(episode, dict) }),
     );

@@ -17,6 +17,54 @@ function gateway(result: ImportResult, statuses: ImportJobStatus[] = []): Import
   };
 }
 
+describe('importUntilReady analytics', () => {
+  beforeEach(() => {
+    window.gtag = jest.fn();
+  });
+
+  afterEach(() => {
+    delete (window as { gtag?: unknown }).gtag;
+  });
+
+  it('reports a ready import', async () => {
+    const api = gateway({ status: 'exists', type: 'show', tmdbId: 1, slug: 'andor' });
+
+    await importUntilReady('show', 1, signal, api);
+
+    expect(window.gtag).toHaveBeenCalledWith('event', 'title_import', {
+      media_type: 'show',
+      result: 'ready',
+    });
+  });
+
+  it.each<[string, ImportResult, ImportJobStatus[], string]>([
+    ['not_found', { status: 'not_found', type: 'movie', tmdbId: 3 }, [], 'not_found'],
+    [
+      'failed',
+      { status: 'importing', type: 'movie', tmdbId: 3, jobId: 'job-2' },
+      [{ status: 'failed' }],
+      'failed',
+    ],
+    ['timeout', { status: 'importing', type: 'movie', tmdbId: 3, jobId: 'job-3' }, [], 'timeout'],
+  ])('reports %s', async (_case, result, statuses, reason) => {
+    await importUntilReady('movie', 3, signal, gateway(result, statuses)).catch(() => undefined);
+
+    expect(window.gtag).toHaveBeenCalledWith('event', 'title_import', {
+      media_type: 'movie',
+      result: reason,
+    });
+  });
+
+  it('reports nothing when the import is cancelled', async () => {
+    const api = gateway({ status: 'importing', type: 'movie', tmdbId: 4, jobId: 'job-4' });
+    jest.mocked(api.wait).mockRejectedValue(new Error('aborted'));
+
+    await importUntilReady('movie', 4, signal, api).catch(() => undefined);
+
+    expect(window.gtag).not.toHaveBeenCalled();
+  });
+});
+
 describe('importUntilReady', () => {
   it('opens a title the catalog already has', async () => {
     const api = gateway({ status: 'exists', type: 'movie', tmdbId: 1, slug: 'dune-1984' });

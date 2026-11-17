@@ -62,7 +62,7 @@ interface WatchedShow {
   onFailed?: () => void;
 }
 
-type SetWatched = (change: WatchChange) => void;
+type SetWatched = (change: WatchChange, onSaved?: () => void) => void;
 
 const NO_SEASONS: readonly Season[] = [];
 
@@ -77,7 +77,7 @@ export function useSetEpisodesWatched({
   const queryKey = showProgressKey(userId, showId);
   const mutationKey = watchMutationKey(showId);
 
-  const { mutate } = useMutation({
+  const { mutateAsync } = useMutation({
     mutationKey,
     scope: { id: mutationKey.join(':') },
     mutationFn: sendWatchChange,
@@ -99,7 +99,8 @@ export function useSetEpisodesWatched({
     },
   });
 
-  return (change) => {
-    if (change.episodeIds.length > 0) mutate(change);
+  return (change, onSaved) => {
+    if (change.episodeIds.length === 0) return;
+    mutateAsync(change).then(onSaved, () => undefined);
   };
 }

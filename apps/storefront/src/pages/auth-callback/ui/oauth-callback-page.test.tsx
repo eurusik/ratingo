@@ -15,6 +15,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('@/shared/lib', () => ({
+  ...jest.requireActual('@/shared/lib'),
   replaceDocumentLocation: jest.fn(),
   useBrowserOrigin: () => 'https://ratingo.test',
 }));
@@ -45,6 +46,10 @@ describe('OAuthCallbackPage', () => {
     localStorage.clear();
   });
 
+  afterEach(() => {
+    delete window.gtag;
+  });
+
   it('exchanges the code once, stores the tokens and returns to the requested page', async () => {
     const exchange = jest.spyOn(authApi, 'exchangeOAuthCode').mockResolvedValue(STORED_TOKENS);
 
@@ -59,6 +64,16 @@ describe('OAuthCallbackPage', () => {
     expect(exchange).toHaveBeenCalledWith('one-time');
     expect(tokenStorage.getAccessToken()).toBe('access');
     expect(tokenStorage.getRefreshToken()).toBe('refresh');
+  });
+
+  it('reports the provider login before leaving the page, and nothing on failure', async () => {
+    window.gtag = jest.fn();
+    jest.spyOn(authApi, 'exchangeOAuthCode').mockResolvedValue(STORED_TOKENS);
+
+    renderCallback('code=one-time', 'facebook');
+
+    await waitFor(() => expect(replaceDocumentLocation).toHaveBeenCalled());
+    expect(window.gtag).toHaveBeenCalledWith('event', 'login', { method: 'facebook' });
   });
 
   it('never sends the user to another origin', async () => {

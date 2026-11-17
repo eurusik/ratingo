@@ -2,6 +2,7 @@
 
 import { useOptimistic, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { track } from '@/shared/lib';
 import type { BrowseCategorySlug } from './browse-category';
 import { browseHref, type BrowseState } from './browse-state';
 
@@ -32,7 +33,16 @@ export function useBrowseNavigation(current: BrowseLocation) {
   return {
     shown,
     isPending,
-    apply: (state: BrowseState) => go({ slug: shown.slug, state }, 'replace'),
-    open: (next: BrowseLocation) => go(next, 'push'),
+    apply: (state: BrowseState) => {
+      track('browse_change', {
+        category: shown.slug,
+        change: state.sort === shown.state.sort ? 'filter' : 'sort',
+      });
+      go({ slug: shown.slug, state }, 'replace');
+    },
+    open: (next: BrowseLocation) => {
+      track('browse_change', { category: shown.slug, change: 'pool' });
+      go(next, 'push');
+    },
   };
 }

@@ -8,6 +8,7 @@ import { useMediaStateStore } from '@/entities/library';
 import { libraryApi, type CalendarEpisode, type CalendarRange } from '@/shared/api';
 import { useSignedInAction } from '@/shared/auth';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import { withTracked } from './calendar-range';
 import { viewerCalendarKey } from './calendar-keys';
 
@@ -26,6 +27,7 @@ export function useStartWatching(onStarted: () => void): StartWatching {
   const { mutate, isPending, variables } = useMutation({
     mutationFn: (episode: CalendarEpisode) => libraryApi.startWatching(episode.showId),
     onSuccess: (mediaState, episode) => {
+      track('library_action', { action: 'start_from_calendar' });
       onStarted();
       mediaStateStore.write(episode.showId, mediaState);
       queryClient.setQueriesData<CalendarRange>(

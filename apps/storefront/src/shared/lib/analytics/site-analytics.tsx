@@ -11,7 +11,9 @@ function googleTagBootstrap(measurementId: string): string {
     'window.dataLayer = window.dataLayer || [];',
     'function gtag(){dataLayer.push(arguments);}',
     "gtag('js', new Date());",
-    `gtag('config', ${JSON.stringify(measurementId)});`,
+    'var pageUrl = new URL(window.location.href);',
+    "['code', 'state', 'token'].forEach(function (key) { pageUrl.searchParams.delete(key); });",
+    `gtag('config', ${JSON.stringify(measurementId)}, { page_location: pageUrl.href });`,
   ].join('\n');
 }
 

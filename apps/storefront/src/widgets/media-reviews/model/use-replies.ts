@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { reviewsApi, type ReplyDraft } from '@/shared/api';
+import { track } from '@/shared/lib';
 import { refreshMediaReviews } from './review-cache';
 import { repliesKey } from './review-keys';
 import { toReplyThread } from './reply-thread';
@@ -21,6 +22,7 @@ export function useSendReply(reviewId: string, mediaItemId: string) {
   return useMutation({
     mutationFn: (draft: ReplyDraft) => reviewsApi.createReply(reviewId, draft),
     onSuccess: async () => {
+      track('review_interaction', { action: 'reply' });
       refreshMediaReviews(queryClient, mediaItemId);
       await queryClient.invalidateQueries({ queryKey: repliesKey(reviewId) });
     },
