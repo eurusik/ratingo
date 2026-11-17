@@ -192,6 +192,27 @@ describe('MediaReviews', () => {
     return screen.findByRole('textbox', { name: 'Текст відгуку' });
   }
 
+  it('puts the cursor in the review field as soon as the sheet opens', async () => {
+    const text = await openComposerWithRating();
+
+    await waitFor(() => expect(text).toHaveFocus());
+  });
+
+  it('continues an edited review from the end of its text', async () => {
+    signIn('mine-id');
+    const mine = reviewBy('mine', { content: 'Звук — окремий персонаж' });
+    listing([mine]);
+    jest.mocked(reviewsApi.getMine).mockResolvedValue(mine);
+    renderReviews();
+
+    const card = await screen.findByRole('article', { name: 'Відгук mine' });
+    fireEvent.click(within(card).getByRole('button', { name: 'Редагувати' }));
+    const text = await screen.findByRole<HTMLTextAreaElement>('textbox', { name: 'Текст відгуку' });
+
+    await waitFor(() => expect(text).toHaveFocus());
+    expect(text.selectionStart).toBe('Звук — окремий персонаж'.length);
+  });
+
   it('marks a review as a spoiler with the switch under the field', async () => {
     const text = await openComposerWithRating();
     fireEvent.change(text, { target: { value: 'Пол стає імператором' } });

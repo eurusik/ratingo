@@ -43,13 +43,12 @@ export function ReviewDialogs({
   reportReview,
   onCloseReport,
 }: ReviewDialogsProps) {
-  const hasComposed = useMountedOnceOpened(isPhone && compose.isOpen);
   const hasOpenedThread = useMountedOnceOpened(isPhone && threadReview !== null);
   const hasReported = useMountedOnceOpened(reportReview !== null);
 
   return (
     <>
-      {isPhone && hasComposed ? (
+      {isPhone ? (
         <ComposeSheet
           key={compose.session}
           isOpen={compose.isOpen}

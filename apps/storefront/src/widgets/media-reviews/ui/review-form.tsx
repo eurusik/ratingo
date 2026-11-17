@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Button,
   Description,
@@ -34,11 +34,6 @@ const PRESET_CLASSES: Record<FormLayout, string> = {
 const TEXT_AREA_CLASSES: Record<FormLayout, string> = {
   sheet: 'min-h-24 flex-1 resize-none',
   inline: 'min-h-45 max-h-100 resize-y [field-sizing:content]',
-};
-
-const RATING_BLOCK_CLASSES: Record<FormLayout, string> = {
-  sheet: 'group-has-[textarea:focus]/compose:hidden',
-  inline: '',
 };
 
 const SPOILER_SWITCH_CLASSES: Record<FormLayout, string> = {
@@ -220,6 +215,14 @@ export function ReviewForm(props: ReviewFormProps) {
   const textRef = useRef<HTMLTextAreaElement>(null);
   const copy = dict.reviews.compose;
   const isSheet = layout === 'sheet';
+  const focusesTextOnOpen = isSheet || editing !== null;
+  const hidesRatingWhileTyping = isSheet && draft.rating !== null;
+
+  useLayoutEffect(() => {
+    const text = textRef.current;
+    if (!focusesTextOnOpen || !text) return;
+    text.setSelectionRange(text.value.length, text.value.length);
+  }, [focusesTextOnOpen]);
 
   const clearPublishErrorThen =
     <T,>(change: (value: T) => void) =>
@@ -263,7 +266,10 @@ export function ReviewForm(props: ReviewFormProps) {
       {props.layout === 'sheet' ? (
         <SheetHeader title={props.title} onCancel={props.onCancel} />
       ) : null}
-      <div ref={presetsRef} className={`flex flex-col gap-2 ${RATING_BLOCK_CLASSES[layout]}`}>
+      <div
+        ref={presetsRef}
+        className={`flex flex-col gap-2 ${hidesRatingWhileTyping ? 'group-has-[textarea:focus]/compose:hidden' : ''}`}
+      >
         <span className="text-base font-bold">{copy.ratingTitle}</span>
         <RatingPresets
           rating={draft.rating}
@@ -298,7 +304,7 @@ export function ReviewForm(props: ReviewFormProps) {
           ref={textRef}
           variant="secondary"
           autoComplete="off"
-          autoFocus={editing !== null && !isSheet}
+          autoFocus={focusesTextOnOpen}
           placeholder={copy.placeholder}
           className={`w-full rounded-[20px] px-4.5 py-4 text-base leading-normal sm:text-base ${TEXT_AREA_CLASSES[layout]}`}
         />
