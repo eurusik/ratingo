@@ -23,6 +23,7 @@ After finishing each step, review the changed code before moving on, and fix wha
 - `apps/pg-backup/` — daily `pg_dump` of prod to the Railway bucket (Railway cron service `Backup CRON`, own Dockerfile)
 - `packages/api-contract/` — Shared OpenAPI types (auto-generated)
 - `packages/web-core/` — Framework-agnostic web code shared by the web apps (`@ratingo/web-core/{api,auth,query,i18n,lib}`): no `next/*` imports, no `process.env`, config passed in by the app
+- `packages/node-telemetry/` — OpenTelemetry runtime metrics shared by the API and the storefront (`registerRuntimeMetrics(meter)`, metric names, `toServiceVersion`): no Nest/Next imports, no `process.env`. TypeScript tooling, Jest and Next read `src`; the compiled API loads `dist`, which `apps/api` builds in its `pre*` scripts and the API Dockerfile copies into the runtime image. Renaming a metric or label breaks the Grafana dashboards and alerts that query it
 
 ## Branches & Deploy
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`

@@ -1,5 +1,4 @@
 export const METER_NAME = 'ratingo';
-export const SHORT_COMMIT_SHA_LENGTH = 7;
 export const METRICS_EXPORT_INTERVAL_MS = 60_000;
 export const HEALTH_PATH_PREFIX = '/api/health';
 export const UNMATCHED_ROUTE = 'unmatched';
@@ -19,10 +18,6 @@ export const QUEUE_JOB_RESULT = {
   FAILED: 'failed',
 } as const;
 export type QueueJobResult = (typeof QUEUE_JOB_RESULT)[keyof typeof QUEUE_JOB_RESULT];
-export const EVENT_LOOP_DELAY_METRIC = 'app.process.event_loop.delay';
-export const EVENT_LOOP_RESOLUTION_MS = 20;
-export const EVENT_LOOP_PERCENTILES = [50, 99] as const;
-export const PROCESS_MEMORY_METRIC = 'app.process.memory';
 export const IMPORT_LINK_SWEEP_METRIC = 'app.import.link.sweep';
 export const SERVICE_NAME_BY_ROLE = {
   api: 'ratingo-api',

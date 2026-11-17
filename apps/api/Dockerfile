@@ -5,10 +5,11 @@ WORKDIR /app
 # Install dependencies (monorepo workspace-aware)
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
+COPY packages/node-telemetry/package.json packages/node-telemetry/package.json
 COPY apps/*/package.json ./apps/
 COPY packages/*/package.json ./packages/
 
-RUN npm ci --include-workspace-root --workspace=api
+RUN npm ci --include-workspace-root --workspace=api --workspace=@ratingo/node-telemetry
 
 
 FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS build
@@ -34,6 +35,7 @@ ENV NODE_ENV=production
 
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
+COPY packages/node-telemetry/package.json packages/node-telemetry/package.json
 COPY apps/*/package.json ./apps/
 COPY packages/*/package.json ./packages/
 
@@ -49,6 +51,7 @@ COPY --from=prod-deps /app ./
 
 # Copy compiled API bundle
 COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/packages/node-telemetry/dist ./packages/node-telemetry/dist
 
 # Copy drizzle config and migrations for db:migrate
 COPY apps/api/drizzle.config.js ./apps/api/drizzle.config.js

@@ -1,4 +1,5 @@
-const SHORT_COMMIT_SHA_LENGTH = 7;
+import { toServiceVersion } from '@ratingo/node-telemetry';
+
 const DEFAULT_SERVICE_NAME = 'ratingo-storefront';
 const DEFAULT_TRACES_EXPORT_RATIO = 0.1;
 const NO_TRACES = 0;
@@ -28,7 +29,7 @@ export function readTelemetryEnv(env: NodeJS.ProcessEnv = process.env): Telemetr
     enabled: Boolean(env.OTEL_EXPORTER_OTLP_ENDPOINT) && env.OTEL_SDK_DISABLED !== 'true',
     tracesExportRatio: readTracesExportRatio(env),
     serviceName: env.OTEL_SERVICE_NAME || DEFAULT_SERVICE_NAME,
-    serviceVersion: env.RAILWAY_GIT_COMMIT_SHA?.slice(0, SHORT_COMMIT_SHA_LENGTH) ?? 'local',
+    serviceVersion: toServiceVersion(env.RAILWAY_GIT_COMMIT_SHA),
     environmentName: env.RAILWAY_ENVIRONMENT_NAME ?? env.NODE_ENV ?? 'development',
   };
 }

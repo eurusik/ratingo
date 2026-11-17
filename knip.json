@@ -30,6 +30,9 @@
     },
     "packages/web-core": {
       "project": ["src/**/*.{ts,tsx}", "*.{cjs,ts}"]
+    },
+    "packages/node-telemetry": {
+      "project": ["src/**/*.ts", "*.cjs"]
     }
   },
   "ignoreIssues": {

@@ -11,6 +11,7 @@ const storefrontJestConfig = createJestConfig({
   roots: ['<rootDir>/src', '<rootDir>/app'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@ratingo/node-telemetry$': '<rootDir>/../../packages/node-telemetry/src',
   },
   testMatch: ['**/*.test.(ts|tsx)'],
 });

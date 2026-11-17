@@ -7,6 +7,7 @@ import {
   SpanStatusCode,
 } from '@opentelemetry/api';
 import type { ReadableSpan, Span, SpanProcessor } from '@opentelemetry/sdk-trace-node';
+import { NS_PER_SECOND } from '@ratingo/node-telemetry';
 
 import {
   DURATION_BUCKETS_SECONDS,
@@ -15,7 +16,6 @@ import {
   KNOWN_HTTP_METHODS,
   MISSING_LABEL,
   NEXT_SPAN_TYPE,
-  NS_PER_SECOND,
   OTHER_METHOD,
   RENDER_DURATION_METRIC,
   REQUEST_DURATION_METRIC,
