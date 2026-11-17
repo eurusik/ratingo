@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/movies/upcoming": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Upcoming movies
+         * @description Returns movies eligible for the upcoming surface that release between today and today + days, sorted by TMDB popularity.
+         */
+        get: operations["CatalogMoviesController_getUpcoming"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/movies/{slug}": {
         parameters: {
             query?: never;
@@ -116,6 +136,26 @@ export interface paths {
          * @description Returns full movie details including genres and stats.
          */
         get: operations["CatalogMoviesController_getMovieBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Release calendar for shows and movies
+         * @description Returns episodes and movie releases within the date range, grouped by day. Days without releases are omitted. The non-personalized calendar lists the 5 most popular movies per day.
+         */
+        get: operations["CatalogCalendarController_getCalendar"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2718,6 +2758,54 @@ export interface components {
             data: components["schemas"]["MovieListItemDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
         };
+        UpcomingMovieDto: {
+            id: string;
+            mediaItemId: string;
+            tmdbId: number;
+            title: string;
+            slug: string;
+            /**
+             * @default ready
+             * @example ready
+             * @enum {string}
+             */
+            ingestionStatus: "importing" | "ready" | "failed";
+            overview: string | null;
+            poster?: components["schemas"]["ImageDto"] | null;
+            backdrop?: components["schemas"]["ImageDto"] | null;
+            /** @example 120.5 */
+            popularity: number;
+            /** Format: date-time */
+            releaseDate: string | null;
+            /** Format: date-time */
+            theatricalReleaseDate: string | null;
+            /** Format: date-time */
+            digitalReleaseDate: string | null;
+            runtime: number | null;
+            stats: components["schemas"]["RatingoStatsDto"];
+            externalRatings: components["schemas"]["ExternalRatingsDto"];
+            genres: components["schemas"]["GenreDto"][];
+            card?: components["schemas"]["CardMetaDto"];
+            /**
+             * Format: date-time
+             * @description Release date the movie is listed under: theatrical, then digital, then primary.
+             */
+            effectiveReleaseDate: string;
+            /**
+             * @example theatrical
+             * @enum {string}
+             */
+            releaseDateKind: "theatrical" | "digital";
+            /**
+             * @description Country of the release date (UA or US); null when unknown.
+             * @example US
+             */
+            releaseCountry: string | null;
+        };
+        PaginatedUpcomingMovieResponseDto: {
+            data: components["schemas"]["UpcomingMovieDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
         UserMediaStateDto: {
             /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */
             id: string;
@@ -3031,6 +3119,120 @@ export interface components {
             /** @description Computed verdict for movie details page. Clients use messageKey for i18n lookup. */
             verdict?: components["schemas"]["MovieVerdictDto"] | null;
         };
+        CalendarEpisodeDto: {
+            /** @example 0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90 */
+            episodeId: string;
+            /**
+             * @description Media item ID of the show.
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            showId: string;
+            /**
+             * @description Show record ID used by episode progress endpoints.
+             * @example 7c9e6679-7425-40de-944b-e07fc1f90ae7
+             */
+            showRecordId: string;
+            /** @example arcane */
+            showSlug: string;
+            /** @example Arcane */
+            showTitle: string;
+            /** @example /path/to/poster.jpg */
+            posterPath?: string | null;
+            /** @example 2 */
+            seasonNumber: number;
+            /** @example 1 */
+            episodeNumber: number;
+            /** @example Heavy Is the Crown */
+            title: string | null;
+            /** @example Overview... */
+            overview?: string | null;
+            /** Format: date-time */
+            airDate: string;
+            /** @example 45 */
+            runtime?: number | null;
+            /** @example http://image.com/1.jpg */
+            stillPath?: string | null;
+            /**
+             * @description Number of episodes in the season, when known.
+             * @example 8
+             */
+            seasonEpisodeCount: number | null;
+            /**
+             * @description TMDB popularity of the show.
+             * @example 312.4
+             */
+            showPopularity: number;
+            /**
+             * @description The viewer is watching this show.
+             * @example false
+             */
+            isTracked: boolean;
+            /**
+             * @description The viewer saved this show to watch later.
+             * @example false
+             */
+            isSaved: boolean;
+            /**
+             * @description The viewer marked this episode as watched.
+             * @example false
+             */
+            isWatched: boolean;
+        };
+        CalendarMovieDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /** @example 693134 */
+            tmdbId: number;
+            /** @example dune-part-two */
+            slug: string;
+            /** @example Dune: Part Two */
+            title: string;
+            poster: components["schemas"]["ImageDto"] | null;
+            /**
+             * Format: date-time
+             * @description Release date the movie is listed under: theatrical, then digital, then primary.
+             */
+            releaseDate: string;
+            /** @enum {string} */
+            releaseDateKind: "theatrical" | "digital";
+            /**
+             * @description Country of the release date (UA or US); null when unknown.
+             * @example US
+             */
+            releaseCountry: string | null;
+            /**
+             * @description TMDB popularity.
+             * @example 312.4
+             */
+            popularity: number;
+            /**
+             * @description The viewer planned this movie or saved it to watch later.
+             * @example false
+             */
+            isSavedForLater: boolean;
+            /**
+             * @description The viewer set a release reminder.
+             * @example false
+             */
+            isReminderSet: boolean;
+        };
+        CatalogCalendarDayDto: {
+            /** @example 2026-11-20 */
+            date: string;
+            episodes: components["schemas"]["CalendarEpisodeDto"][];
+            movies: components["schemas"]["CalendarMovieDto"][];
+            /** @description Movies released that day beyond the ones listed (only in the non-personalized calendar). */
+            moreMoviesCount?: number;
+        };
+        CatalogCalendarResponseDto: {
+            /** @example 2026-11-17T00:00:00.000Z */
+            startDate: string;
+            /** @example 2026-11-24T00:00:00.000Z */
+            endDate: string;
+            /** @description Number of shows the user is currently watching (saved shows are not counted). Only present when personalized=true and shows are included. */
+            watchingShowsCount?: number;
+            days: components["schemas"]["CatalogCalendarDayDto"][];
+        };
         ShowProgressDto: {
             /**
              * @description Show ID
@@ -3091,65 +3293,6 @@ export interface components {
         };
         NewEpisodesResponseDto: {
             data: components["schemas"]["NewEpisodeDto"][];
-        };
-        CalendarEpisodeDto: {
-            /** @example 0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90 */
-            episodeId: string;
-            /**
-             * @description Media item ID of the show.
-             * @example 123e4567-e89b-12d3-a456-426614174000
-             */
-            showId: string;
-            /**
-             * @description Show record ID used by episode progress endpoints.
-             * @example 7c9e6679-7425-40de-944b-e07fc1f90ae7
-             */
-            showRecordId: string;
-            /** @example arcane */
-            showSlug: string;
-            /** @example Arcane */
-            showTitle: string;
-            /** @example /path/to/poster.jpg */
-            posterPath?: string | null;
-            /** @example 2 */
-            seasonNumber: number;
-            /** @example 1 */
-            episodeNumber: number;
-            /** @example Heavy Is the Crown */
-            title: string | null;
-            /** @example Overview... */
-            overview?: string | null;
-            /** Format: date-time */
-            airDate: string;
-            /** @example 45 */
-            runtime?: number | null;
-            /** @example http://image.com/1.jpg */
-            stillPath?: string | null;
-            /**
-             * @description Number of episodes in the season, when known.
-             * @example 8
-             */
-            seasonEpisodeCount: number | null;
-            /**
-             * @description TMDB popularity of the show.
-             * @example 312.4
-             */
-            showPopularity: number;
-            /**
-             * @description The viewer is watching this show.
-             * @example false
-             */
-            isTracked: boolean;
-            /**
-             * @description The viewer saved this show to watch later.
-             * @example false
-             */
-            isSaved: boolean;
-            /**
-             * @description The viewer marked this episode as watched.
-             * @example false
-             */
-            isWatched: boolean;
         };
         CalendarDayDto: {
             /** @example 2024-11-09 */
@@ -6673,6 +6816,52 @@ export interface operations {
             };
         };
     };
+    CatalogMoviesController_getUpcoming: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Release window from today, in days. */
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedUpcomingMovieResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     CatalogMoviesController_getMovieBySlug: {
         parameters: {
             query?: never;
@@ -6713,6 +6902,61 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogCalendarController_getCalendar: {
+        parameters: {
+            query?: {
+                /** @description Start date (ISO string). Default: today. */
+                startDate?: string;
+                /** @description Number of days to include. */
+                days?: number;
+                /** @description When true, returns only the viewer's releases: episodes of shows they watch, premieres of shows they saved, and movies they saved or set a release reminder for. Requires authentication. */
+                personalized?: "true" | "false";
+                /** @description Limits the calendar to shows or movies. */
+                type?: "show" | "movie";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CatalogCalendarResponseDto"];
+                    };
+                };
+            };
+            /** @description Invalid query parameters (days must be <= 90; personalized must be 'true' or 'false'; type must be 'show' or 'movie') */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required for personalized calendar */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Internal server error */
             500: {

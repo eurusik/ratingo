@@ -3,7 +3,7 @@ import {
   EvaluationContext,
   EvaluationContextType,
   FAN_OUT_EVALUATION_CONTEXTS,
-  isUnreleasedMovieContext,
+  isUpcomingMovieContext,
 } from './evaluation.constants';
 
 describe('ACTIVE_EVALUATION_CONTEXTS', () => {
@@ -43,9 +43,9 @@ describe('FAN_OUT_EVALUATION_CONTEXTS', () => {
   });
 });
 
-describe('isUnreleasedMovieContext', () => {
+describe('isUpcomingMovieContext', () => {
   it('is true only for upcoming', () => {
-    const scoped = Object.values(EvaluationContext).filter(isUnreleasedMovieContext);
+    const scoped = Object.values(EvaluationContext).filter(isUpcomingMovieContext);
 
     expect(scoped).toEqual([EvaluationContext.UPCOMING]);
   });

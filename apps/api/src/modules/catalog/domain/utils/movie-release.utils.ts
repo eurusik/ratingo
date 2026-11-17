@@ -1,16 +1,17 @@
+import { FALLBACK_REGION, PRIMARY_REGION } from '@/common/constants/region.constants';
+
+import {
+  MovieReleaseDateKind,
+  type MovieReleaseDateKindType,
+} from '../constants/movie-release.constants';
+
+import { isoDayOf, toIsoDay } from './iso-day.utils';
+
 export interface MovieReleaseDates {
   releaseDate?: Date | null;
   theatricalReleaseDate?: Date | null;
   digitalReleaseDate?: Date | null;
 }
-
-export const MovieReleaseDateKind = {
-  THEATRICAL: 'theatrical',
-  DIGITAL: 'digital',
-} as const;
-
-export type MovieReleaseDateKindType =
-  (typeof MovieReleaseDateKind)[keyof typeof MovieReleaseDateKind];
 
 export interface EffectiveMovieRelease {
   date: Date;
@@ -34,7 +35,48 @@ export function effectiveMovieReleaseDate(dates: MovieReleaseDates): Date | null
   return effectiveMovieRelease(dates)?.date ?? null;
 }
 
-export function isUnreleasedMovie(dates: MovieReleaseDates, now: Date): boolean {
+export function isMovieReleasingFrom(dates: MovieReleaseDates, day: Date): boolean {
   const releaseDate = effectiveMovieReleaseDate(dates);
-  return releaseDate !== null && releaseDate.getTime() > now.getTime();
+  return releaseDate !== null && releaseDate.getTime() >= day.getTime();
+}
+
+export interface MovieReleaseEntry {
+  country: string;
+  type: number;
+  date: string;
+}
+
+export interface MovieRelease extends EffectiveMovieRelease {
+  country: string | null;
+}
+
+const TMDB_RELEASE_TYPE_BY_KIND: Record<MovieReleaseDateKindType, number> = {
+  [MovieReleaseDateKind.THEATRICAL]: 3,
+  [MovieReleaseDateKind.DIGITAL]: 4,
+};
+
+const RELEASE_COUNTRY_PREFERENCE = [PRIMARY_REGION, FALLBACK_REGION];
+
+function findReleaseCountry(
+  release: EffectiveMovieRelease,
+  releases: readonly MovieReleaseEntry[],
+): string | null {
+  const releaseDay = toIsoDay(release.date);
+  const matching = releases.filter(
+    (entry) =>
+      entry.type === TMDB_RELEASE_TYPE_BY_KIND[release.kind] && isoDayOf(entry.date) === releaseDay,
+  );
+  const preferred = RELEASE_COUNTRY_PREFERENCE.find((country) =>
+    matching.some((entry) => entry.country === country),
+  );
+  return preferred ?? matching.at(0)?.country ?? null;
+}
+
+export function resolveMovieRelease(
+  dates: MovieReleaseDates,
+  releases: readonly MovieReleaseEntry[] | null,
+): MovieRelease | null {
+  const release = effectiveMovieRelease(dates);
+  if (!release) return null;
+  return { ...release, country: findReleaseCountry(release, releases ?? []) };
 }

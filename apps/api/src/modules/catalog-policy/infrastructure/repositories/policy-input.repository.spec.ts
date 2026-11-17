@@ -298,7 +298,7 @@ describe('PolicyInputRepository', () => {
       expect(params).toContain(cutoff.toISOString());
     });
 
-    it('keeps only unreleased movies when asked', async () => {
+    it('keeps only movies releasing on or after the given day', async () => {
       const queryMock = {
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
@@ -308,10 +308,11 @@ describe('PolicyInputRepository', () => {
       mockDb.select.mockReturnValue(queryMock);
 
       const now = new Date('2026-11-17T00:00:00.000Z');
-      await repository.fetchBatchIds({ batchSize: 10, unreleasedMoviesAt: now });
+      await repository.fetchBatchIds({ batchSize: 10, moviesReleasingFrom: now });
 
       const { sql, params } = renderWhere(queryMock.where);
       expect(sql).toContain('exists (select 1 from "movies" where');
+      expect(sql).toMatch(/coalesce\(.*\) >= \$/);
       expect(sql).not.toContain('not exists');
       expect(params).toContain(now.toISOString());
     });

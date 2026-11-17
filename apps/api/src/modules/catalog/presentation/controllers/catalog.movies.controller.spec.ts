@@ -3,6 +3,7 @@ import { CatalogMoviesController } from './catalog.movies.controller';
 import { MOVIE_REPOSITORY } from '@/modules/catalog/domain/repositories/movie.repository.interface';
 import { CatalogUserStateEnricher } from '@/modules/catalog/application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from '@/modules/catalog/application/services/movie-details.service';
+import { UpcomingMoviesService } from '@/modules/catalog/application/services/upcoming-movies.service';
 import { NotFoundException } from '@nestjs/common';
 import { CardEnrichmentService } from '@/modules/shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '@/modules/shared/cards';
@@ -13,6 +14,7 @@ describe('CatalogMoviesController', () => {
   let userStateEnricher: any;
   let cards: any;
   let movieDetailsService: any;
+  let upcomingMoviesService: { findUpcoming: jest.Mock };
 
   beforeEach(async () => {
     const mockMovieRepository = {
@@ -49,6 +51,14 @@ describe('CatalogMoviesController', () => {
       getBySlug: jest.fn(),
     };
 
+    upcomingMoviesService = {
+      findUpcoming: jest
+        .fn()
+        .mockResolvedValue(
+          Object.assign([{ id: 'up-1', title: 'Soon', releaseDateKind: 'digital' }], { total: 4 }),
+        ),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogMoviesController],
       providers: [
@@ -56,6 +66,7 @@ describe('CatalogMoviesController', () => {
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
         { provide: CardEnrichmentService, useValue: mockCards },
         { provide: MovieDetailsService, useValue: mockMovieDetailsService },
+        { provide: UpcomingMoviesService, useValue: upcomingMoviesService },
       ],
     }).compile();
 
@@ -72,6 +83,22 @@ describe('CatalogMoviesController', () => {
 
       expect(movieRepository.findTrending).toHaveBeenCalledWith({ limit: 10, offset: 0 });
       expect(result.meta).toEqual({ count: 1, total: 1, limit: 10, offset: 0, hasMore: false });
+    });
+  });
+
+  describe('getUpcoming', () => {
+    it('passes the window and page to the service and enriches the result', async () => {
+      const query = { limit: 1, offset: 0, days: 30 };
+
+      const result = await controller.getUpcoming(query, { id: 'user-1' });
+
+      expect(upcomingMoviesService.findUpcoming).toHaveBeenCalledWith(query);
+      expect(userStateEnricher.enrichItemList).toHaveBeenCalledWith('user-1', expect.any(Array));
+      expect(cards.enrichCatalogItems).toHaveBeenCalledWith(expect.any(Array), {
+        context: CARD_LIST_CONTEXT.DEFAULT,
+      });
+      expect(result.data[0]).toMatchObject({ id: 'up-1', releaseDateKind: 'digital' });
+      expect(result.meta).toEqual({ count: 1, total: 4, limit: 1, offset: 0, hasMore: true });
     });
   });
 

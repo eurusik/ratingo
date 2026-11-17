@@ -6,6 +6,7 @@ import { CurrentUser } from '@/modules/auth/public';
 import { OptionalJwtAuthGuard } from '@/modules/auth/public';
 import { CatalogUserStateEnricher } from '@/modules/catalog/application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from '@/modules/catalog/application/services/movie-details.service';
+import { UpcomingMoviesService } from '@/modules/catalog/application/services/upcoming-movies.service';
 import {
   type IMovieRepository,
   MOVIE_REPOSITORY,
@@ -18,6 +19,10 @@ import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-day
 import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 import { MovieResponseDto } from '../dtos/movie-response.dto';
 import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
+import {
+  PaginatedUpcomingMovieResponseDto,
+  UpcomingMoviesQueryDto,
+} from '../dtos/upcoming-movies.dto';
 import { CatalogDomainExceptionFilter } from '../filters';
 import { buildPaginationMeta } from '../utils/pagination.utils';
 import {
@@ -27,7 +32,7 @@ import {
 } from '../utils/query-normalizer';
 
 /**
- * Public movie catalog endpoints (trending, listings, details).
+ * Public movie catalog endpoints (trending, listings, upcoming, details).
  */
 @ApiTags('Public: Catalog')
 @UseGuards(OptionalJwtAuthGuard)
@@ -40,6 +45,7 @@ export class CatalogMoviesController {
     private readonly userStateEnricher: CatalogUserStateEnricher,
     private readonly cards: CardEnrichmentService,
     private readonly movieDetailsService: MovieDetailsService,
+    private readonly upcomingMoviesService: UpcomingMoviesService,
   ) {}
 
   @Get('trending')
@@ -144,6 +150,26 @@ export class CatalogMoviesController {
     });
 
     return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
+  }
+
+  @Get('upcoming')
+  @ApiOperation({
+    summary: 'Upcoming movies',
+    description:
+      'Returns movies eligible for the upcoming surface that release between today and today + days, sorted by TMDB popularity.',
+  })
+  @ApiOkResponse({ type: PaginatedUpcomingMovieResponseDto })
+  async getUpcoming(
+    @Query() query: UpcomingMoviesQueryDto,
+    @CurrentUser() user?: { id: string } | null,
+  ): Promise<PaginatedUpcomingMovieResponseDto> {
+    const movies = await this.upcomingMoviesService.findUpcoming(query);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, movies);
+    const withCards = this.cards.enrichCatalogItems(data, {
+      context: CARD_LIST_CONTEXT.DEFAULT,
+    });
+
+    return { data: withCards, meta: buildPaginationMeta(query, movies) };
   }
 
   @Get(':slug')

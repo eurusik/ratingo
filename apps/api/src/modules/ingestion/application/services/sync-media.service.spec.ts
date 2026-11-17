@@ -966,6 +966,26 @@ describe('SyncMediaService', () => {
       });
     });
 
+    it('should keep evaluating the upcoming context on the release day itself', async () => {
+      const clock = (service as unknown as { clock: { now: jest.Mock } }).clock;
+      clock.now.mockReturnValue(new Date('2026-11-17T15:00:00Z'));
+      tmdbAdapter.getMovie.mockResolvedValue({
+        ...mockMedia,
+        releaseDate: new Date('2026-11-17T00:00:00Z'),
+        details: { theatricalReleaseDate: new Date('2026-11-17T00:00:00Z') },
+      });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(NO_AGGREGATED_RATINGS);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncMovie(550);
+
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.UPCOMING,
+      });
+    });
+
     it('should not evaluate the upcoming context for a show with a future date', async () => {
       tmdbAdapter.getShow.mockResolvedValue({
         ...mockMedia,

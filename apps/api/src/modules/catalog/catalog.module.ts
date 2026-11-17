@@ -14,6 +14,7 @@ import { VerdictModule } from '../shared/verdict/verdict.module';
 import { TmdbModule } from '../tmdb/tmdb.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 
+import { CatalogCalendarService } from './application/services/catalog-calendar.service';
 import { CatalogImportService } from './application/services/catalog-import.service';
 import { CatalogSearchService } from './application/services/catalog-search.service';
 import { CatalogSitemapService } from './application/services/catalog-sitemap.service';
@@ -22,6 +23,7 @@ import { MovieDetailsService } from './application/services/movie-details.servic
 import { ShowDetailsService } from './application/services/show-details.service';
 import { ShowSyncService } from './application/services/show-sync.service';
 import { ShowsCalendarService } from './application/services/shows-calendar.service';
+import { UpcomingMoviesService } from './application/services/upcoming-movies.service';
 import { COOLDOWN_GATE_PORT } from './domain/ports/cooldown-gate.port';
 import { IMPORT_JOB_PORT } from './domain/ports/import-job.port';
 import { MEDIA_METADATA_PORT } from './domain/ports/media-metadata.port';
@@ -42,6 +44,7 @@ import {
 import { TmdbMetadataAdapter } from './infrastructure/adapters/tmdb-metadata.adapter';
 import { UserStateAdapter } from './infrastructure/adapters/user-state.adapter';
 import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
+import { CalendarMoviesQuery } from './infrastructure/queries/calendar-movies.query';
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 import { MediaSearchQuery } from './infrastructure/queries/media-search.query';
 import { MediaStubUpsertQuery } from './infrastructure/queries/media-stub-upsert.query';
@@ -59,6 +62,7 @@ import { WatchOffersQuery } from './infrastructure/queries/shared/watch-offers.q
 import { ShowDetailsQuery } from './infrastructure/queries/show-details.query';
 import { TrendingMoviesQuery } from './infrastructure/queries/trending-movies.query';
 import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
+import { UpcomingMoviesQuery } from './infrastructure/queries/upcoming-movies.query';
 import { WatchingNowMediaQuery } from './infrastructure/queries/watching-now-media.query';
 import { WatchingShowsCountQuery } from './infrastructure/queries/watching-shows-count.query';
 import { DrizzleGenreRepository } from './infrastructure/repositories/drizzle-genre.repository';
@@ -67,6 +71,7 @@ import { DrizzleMovieRepository } from './infrastructure/repositories/drizzle-mo
 import { DrizzleShowRepository } from './infrastructure/repositories/drizzle-show.repository';
 import { DrizzleSitemapRepository } from './infrastructure/repositories/drizzle-sitemap.repository';
 import { DrizzleProvidersRepository } from './infrastructure/repositories/providers.repository';
+import { CatalogCalendarController } from './presentation/controllers/catalog.calendar.controller';
 import { CatalogMoviesController } from './presentation/controllers/catalog.movies.controller';
 import { CatalogProvidersController } from './presentation/controllers/catalog.providers.controller';
 import { CatalogSearchController } from './presentation/controllers/catalog.search.controller';
@@ -89,6 +94,7 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
   ],
   controllers: apiOnly(
     CatalogMoviesController,
+    CatalogCalendarController,
     CatalogShowsController,
     CatalogSearchController,
     CatalogProvidersController,
@@ -102,6 +108,8 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     MovieDetailsService,
     ShowDetailsService,
     ShowsCalendarService,
+    CatalogCalendarService,
+    UpcomingMoviesService,
     ShowSyncService,
     // Redis client for sync cooldown gate (7-day TTL per show)
     {
@@ -129,6 +137,8 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     TrendingMoviesQuery,
     PopularMoviesQuery,
     MovieListingsQuery,
+    UpcomingMoviesQuery,
+    CalendarMoviesQuery,
 
     // Query Objects - Mixed Media
     HeroMediaQuery,

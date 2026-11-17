@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import * as fc from 'fast-check';
 
 import { ReleaseStatus } from '@/common/enums/release-status.enum';
 import { CLOCK_PORT } from '@/modules/shared/clock';
@@ -192,6 +193,34 @@ describe('MovieDetailsService', () => {
       const result = await service.getBySlug('test-movie');
 
       expect(result.releaseStatus).toBe(ReleaseStatus.NEW_ON_STREAMING);
+    });
+
+    it('is upcoming exactly when the effective release date is still ahead', async () => {
+      const day = (offset: number): Date => new Date(testNow.getTime() + offset * 86_400_000);
+      const maybeOffset = fc.option(fc.integer({ min: -60, max: 60 }), { nil: null });
+
+      await fc.assert(
+        fc.asyncProperty(
+          maybeOffset,
+          maybeOffset,
+          maybeOffset,
+          async (theatrical, digital, primary) => {
+            movieRepository.findBySlug.mockResolvedValue({
+              ...mockMovie,
+              theatricalReleaseDate: theatrical === null ? null : day(theatrical),
+              digitalReleaseDate: digital === null ? null : day(digital),
+              releaseDate: primary === null ? null : day(primary),
+            });
+
+            const { releaseStatus } = await service.getBySlug('test-movie');
+
+            const effective = theatrical ?? digital ?? primary;
+            expect(releaseStatus === ReleaseStatus.UPCOMING).toBe(
+              effective !== null && effective > 0,
+            );
+          },
+        ),
+      );
     });
 
     it('should include verdict in response', async () => {

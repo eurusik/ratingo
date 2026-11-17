@@ -3,11 +3,12 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { startOfUtcDay } from '@/common/utils/date.util';
 import { errorMessage, toError } from '@/common/utils/error.utils';
 import {
   generateSlug,
   type IMediaRepository,
-  isUnreleasedMovie,
+  isMovieReleasingFrom,
   MEDIA_REPOSITORY,
 } from '@/modules/catalog/public';
 import {
@@ -520,13 +521,13 @@ export class SyncMediaService {
 
   private isUpcomingMovie(media: NormalizedMedia, type: MediaType): boolean {
     if (type !== MediaType.MOVIE) return false;
-    return isUnreleasedMovie(
+    return isMovieReleasingFrom(
       {
         releaseDate: media.releaseDate,
         theatricalReleaseDate: media.details?.theatricalReleaseDate,
         digitalReleaseDate: media.details?.digitalReleaseDate,
       },
-      this.clock.now(),
+      startOfUtcDay(this.clock.now()),
     );
   }
 

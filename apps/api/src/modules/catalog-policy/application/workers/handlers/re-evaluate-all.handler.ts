@@ -10,6 +10,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
 
+import { startOfUtcDay } from '@/common/utils/date.util';
 import { toError } from '@/common/utils/error.utils';
 import { RunFinalizeService } from '@/modules/catalog-policy/application/services/run-finalize.service';
 import {
@@ -20,7 +21,7 @@ import {
 import {
   RunStatus,
   type EvaluationContextType,
-  isUnreleasedMovieContext,
+  isUpcomingMovieContext,
 } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import { RunNotFoundError } from '@/modules/catalog-policy/domain/errors';
 import {
@@ -91,7 +92,9 @@ export class ReEvaluateAllHandler {
       this.logger.warn(`Run ${runId} has no snapshotCutoff, no items will be dispatched`);
     }
 
-    const unreleasedMoviesAt = isUnreleasedMovieContext(context) ? this.clock.now() : undefined;
+    const moviesReleasingFrom = isUpcomingMovieContext(context)
+      ? startOfUtcDay(this.clock.now())
+      : undefined;
 
     let { cursor } = payload;
     let totalDispatched = 0;
@@ -108,7 +111,7 @@ export class ReEvaluateAllHandler {
             batchSize,
             cursor,
             updatedAtWindow,
-            unreleasedMoviesAt,
+            moviesReleasingFrom,
           })
         : [];
 

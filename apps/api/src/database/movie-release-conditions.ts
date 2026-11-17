@@ -1,4 +1,4 @@
-import { and, eq, exists, gt, notExists, sql, type SQL } from 'drizzle-orm';
+import { and, eq, exists, gt, gte, notExists, sql, type SQL } from 'drizzle-orm';
 
 import * as schema from './schema';
 
@@ -6,17 +6,17 @@ export function effectiveMovieReleaseDate(): SQL<Date | null> {
   return sql<Date | null>`coalesce(${schema.movies.theatricalReleaseDate}, ${schema.movies.digitalReleaseDate}, ${schema.mediaItems.releaseDate})`;
 }
 
-function unreleasedMovieRow(now: Date): SQL {
+function movieRowReleasing(releaseCondition: SQL): SQL {
   return sql`(select 1 from ${schema.movies} where ${and(
     eq(schema.movies.mediaItemId, schema.mediaItems.id),
-    gt(effectiveMovieReleaseDate(), now.toISOString()),
+    releaseCondition,
   )})`;
 }
 
 export function excludeUnreleasedMovies(now: Date): SQL {
-  return notExists(unreleasedMovieRow(now));
+  return notExists(movieRowReleasing(gt(effectiveMovieReleaseDate(), now.toISOString())));
 }
 
-export function onlyUnreleasedMovies(now: Date): SQL {
-  return exists(unreleasedMovieRow(now));
+export function onlyMoviesReleasingFrom(day: Date): SQL {
+  return exists(movieRowReleasing(gte(effectiveMovieReleaseDate(), day.toISOString())));
 }

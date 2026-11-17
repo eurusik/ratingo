@@ -19,7 +19,7 @@ export interface FetchBatchIdsOptions {
   /** Cursor (last ID) for pagination */
   cursor?: string;
   updatedAtWindow?: UpdatedAtWindow;
-  unreleasedMoviesAt?: Date;
+  moviesReleasingFrom?: Date;
 }
 
 export type UpdatedAtWindow = { updatedAtOrBefore: Date } | { updatedAfter: Date };

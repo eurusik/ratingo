@@ -1,3 +1,5 @@
+import { MS_PER_DAY } from '@/common/constants';
+
 /**
  * Formats a date as a UTC day identifier string (YYYYMMDD).
  * Used for generating consistent cache keys and job IDs.
@@ -31,4 +33,12 @@ export function utcDateFromDayId(dayId: string): Date {
   const month = parseInt(dayId.slice(4, 6), 10) - 1;
   const day = parseInt(dayId.slice(6, 8), 10);
   return new Date(Date.UTC(year, month, day));
+}
+
+export function startOfUtcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+export function addUtcDays(date: Date, days: number): Date {
+  return new Date(date.getTime() + days * MS_PER_DAY);
 }

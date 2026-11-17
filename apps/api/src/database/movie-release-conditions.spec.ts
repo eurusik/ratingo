@@ -3,7 +3,7 @@ import { PgDialect } from 'drizzle-orm/pg-core';
 import {
   effectiveMovieReleaseDate,
   excludeUnreleasedMovies,
-  onlyUnreleasedMovies,
+  onlyMoviesReleasingFrom,
 } from './movie-release-conditions';
 
 const render = (condition: Parameters<PgDialect['sqlToQuery']>[0]) =>
@@ -28,12 +28,12 @@ describe('movie-release-conditions', () => {
     expect(params).toEqual([now.toISOString()]);
   });
 
-  it('keeps only movies whose effective release date is after now', () => {
-    const now = new Date('2026-11-17T00:00:00.000Z');
-    const { sql, params } = render(onlyUnreleasedMovies(now));
+  it('keeps only movies whose effective release date is on or after the given day', () => {
+    const today = new Date('2026-11-17T00:00:00.000Z');
+    const { sql, params } = render(onlyMoviesReleasingFrom(today));
 
     expect(sql).toMatch(/^exists \(select 1 from "movies" where/);
-    expect(sql).toMatch(/coalesce\(.*\) > \$1/);
-    expect(params).toEqual([now.toISOString()]);
+    expect(sql).toMatch(/coalesce\(.*\) >= \$1/);
+    expect(params).toEqual([today.toISOString()]);
   });
 });

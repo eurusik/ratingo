@@ -8,6 +8,7 @@ import { createCatalogPolicyApp, CatalogPolicyE2eContext, createTestPolicy } fro
 import {
   RunStatus,
   ACTIVE_EVALUATION_CONTEXTS,
+  FAN_OUT_EVALUATION_CONTEXTS,
 } from '../../src/modules/catalog-policy/domain/constants/evaluation.constants';
 
 describe('Policy Activation Flow (e2e)', () => {
@@ -505,7 +506,7 @@ describe('Policy Activation Flow (e2e)', () => {
    * Property 4: Complete Context Coverage After Evaluation
    *
    * For any policy activation trigger, the system SHALL create RE_EVALUATE_ALL
-   * jobs for ALL contexts in ACTIVE_EVALUATION_CONTEXTS.
+   * jobs for ALL contexts in FAN_OUT_EVALUATION_CONTEXTS.
    */
   describe('Property 4: Complete Context Coverage (Fan-Out)', () => {
     beforeEach(() => {
@@ -525,20 +526,20 @@ describe('Policy Activation Flow (e2e)', () => {
       // Assert: Verify jobs were created for all active contexts
       const reEvaluateAllJobs = ctx.queue.jobs.filter((j) => j.name === 're-evaluate-all');
 
-      // Should have exactly ACTIVE_EVALUATION_CONTEXTS.length jobs
-      expect(reEvaluateAllJobs.length).toBe(ACTIVE_EVALUATION_CONTEXTS.length);
+      // Should have exactly FAN_OUT_EVALUATION_CONTEXTS.length jobs
+      expect(reEvaluateAllJobs.length).toBe(FAN_OUT_EVALUATION_CONTEXTS.length);
 
       // Each active context should have exactly one job
       const dispatchedContexts = reEvaluateAllJobs.map((j) => j.data.context);
 
-      for (const expectedContext of ACTIVE_EVALUATION_CONTEXTS) {
+      for (const expectedContext of FAN_OUT_EVALUATION_CONTEXTS) {
         const count = dispatchedContexts.filter((c) => c === expectedContext).length;
         expect(count).toBe(1);
       }
 
-      // All dispatched contexts should be from ACTIVE_EVALUATION_CONTEXTS
+      // All dispatched contexts should be from FAN_OUT_EVALUATION_CONTEXTS
       for (const context of dispatchedContexts) {
-        expect(ACTIVE_EVALUATION_CONTEXTS).toContain(context);
+        expect(FAN_OUT_EVALUATION_CONTEXTS).toContain(context);
       }
     });
 
@@ -555,7 +556,7 @@ describe('Policy Activation Flow (e2e)', () => {
       for (const job of reEvaluateAllJobs) {
         expect(job.data.context).toBeDefined();
         expect(typeof job.data.context).toBe('string');
-        expect(ACTIVE_EVALUATION_CONTEXTS).toContain(job.data.context);
+        expect(FAN_OUT_EVALUATION_CONTEXTS).toContain(job.data.context);
       }
     });
 

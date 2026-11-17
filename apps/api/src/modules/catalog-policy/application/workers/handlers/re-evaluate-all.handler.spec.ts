@@ -279,7 +279,7 @@ describe('ReEvaluateAllHandler', () => {
     });
 
     describe('unreleased movie contexts', () => {
-      it('dispatches the upcoming context only for movies not yet released', async () => {
+      it('dispatches the upcoming context only for movies releasing today or later', async () => {
         mockRunRepository.findById.mockResolvedValue(mockRun);
         mockPolicyInputRepository.fetchBatchIds
           .mockResolvedValueOnce(['movie-1'])
@@ -292,7 +292,7 @@ describe('ReEvaluateAllHandler', () => {
           batchSize: 100,
           cursor: undefined,
           updatedAtWindow: { updatedAtOrBefore: mockRun.snapshotCutoff },
-          unreleasedMoviesAt: NOW,
+          moviesReleasingFrom: new Date('2026-11-17T00:00:00Z'),
         });
         expect(mockQueue.addBulk).toHaveBeenCalledWith([
           expect.objectContaining({
@@ -311,7 +311,7 @@ describe('ReEvaluateAllHandler', () => {
 
         await handler.handle(validPayload);
 
-        expect(mockPolicyInputRepository.fetchBatchIds.mock.calls[0][0].unreleasedMoviesAt).toBe(
+        expect(mockPolicyInputRepository.fetchBatchIds.mock.calls[0][0].moviesReleasingFrom).toBe(
           undefined,
         );
       });

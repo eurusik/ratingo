@@ -162,6 +162,18 @@ describe('EvaluateItemHandler', () => {
         );
       });
 
+      it('logs but does not count failed upcoming evaluations in the run', async () => {
+        mockRunRepository.findById.mockResolvedValue(mockRun);
+        mockEvaluationService.evaluateOne.mockRejectedValue(new Error('Evaluation failed'));
+
+        await handler.handle({ ...validPayload, context: EvaluationContext.UPCOMING });
+
+        expect(mockRunRepository.recordError).not.toHaveBeenCalled();
+        expect(Logger.prototype.error).toHaveBeenCalledWith(
+          expect.stringContaining('not counted in run coverage'),
+        );
+      });
+
       it('should truncate stack trace to 500 characters', async () => {
         mockRunRepository.findById.mockResolvedValue(mockRun);
         const longStack = 'a'.repeat(1000);
