@@ -3,6 +3,7 @@ export {
   ApiErrorReporter,
   NotFoundReporter,
   SiteAnalytics,
+  clarityBootstrap,
   googleTagBootstrap,
   WebVitalsReporter,
   identifyUser,
