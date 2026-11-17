@@ -53,12 +53,7 @@ export class MovieDetailsService {
     const card = this.buildCard(movie, enriched.userState);
     const now = this.clock.now();
 
-    const releaseStatus = computeReleaseStatus(
-      movie.releaseDate,
-      movie.theatricalReleaseDate,
-      movie.digitalReleaseDate,
-      now,
-    );
+    const releaseStatus = computeReleaseStatus(movie, now);
 
     const verdict = this.computeVerdict(movie, releaseStatus, card);
 

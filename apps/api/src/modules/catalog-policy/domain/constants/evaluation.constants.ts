@@ -158,6 +158,19 @@ export const ACTIVE_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
   EvaluationContext.TRENDING,
 ] as const;
 
+export const UNRELEASED_MOVIE_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
+  EvaluationContext.UPCOMING,
+] as const;
+
+export const FAN_OUT_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
+  ...ACTIVE_EVALUATION_CONTEXTS,
+  ...UNRELEASED_MOVIE_EVALUATION_CONTEXTS,
+] as const;
+
+export function isUnreleasedMovieContext(context: EvaluationContextType): boolean {
+  return UNRELEASED_MOVIE_EVALUATION_CONTEXTS.includes(context);
+}
+
 /**
  * Default max age (in minutes) before a running run is considered stale.
  * Used by RunFinalizeService.finalizeStaleRuns().

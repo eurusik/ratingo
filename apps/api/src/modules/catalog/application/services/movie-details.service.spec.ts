@@ -158,6 +158,42 @@ describe('MovieDetailsService', () => {
       expect(result.releaseStatus).toBe(ReleaseStatus.IN_THEATERS);
     });
 
+    it('treats a digital-only premiere with a past festival date as upcoming', async () => {
+      const festivalPremiere = new Date(testNow);
+      festivalPremiere.setDate(testNow.getDate() - 30);
+      const digitalPremiere = new Date(testNow);
+      digitalPremiere.setDate(testNow.getDate() + 10);
+
+      movieRepository.findBySlug.mockResolvedValue({
+        ...mockMovie,
+        releaseDate: festivalPremiere,
+        theatricalReleaseDate: null,
+        digitalReleaseDate: digitalPremiere,
+      });
+
+      const result = await service.getBySlug('test-movie');
+
+      expect(result.releaseStatus).toBe(ReleaseStatus.UPCOMING);
+    });
+
+    it('treats a movie already on streaming as released even if its primary date is ahead', async () => {
+      const primaryDate = new Date(testNow);
+      primaryDate.setDate(testNow.getDate() + 30);
+      const digitalPremiere = new Date(testNow);
+      digitalPremiere.setDate(testNow.getDate() - 3);
+
+      movieRepository.findBySlug.mockResolvedValue({
+        ...mockMovie,
+        releaseDate: primaryDate,
+        theatricalReleaseDate: null,
+        digitalReleaseDate: digitalPremiere,
+      });
+
+      const result = await service.getBySlug('test-movie');
+
+      expect(result.releaseStatus).toBe(ReleaseStatus.NEW_ON_STREAMING);
+    });
+
     it('should include verdict in response', async () => {
       movieRepository.findBySlug.mockResolvedValue(mockMovie);
 

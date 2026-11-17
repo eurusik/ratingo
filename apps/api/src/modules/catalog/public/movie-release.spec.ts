@@ -1,6 +1,11 @@
 import * as fc from 'fast-check';
 
-import { effectiveMovieReleaseDate, isUnreleasedMovie } from './movie-release';
+import {
+  effectiveMovieRelease,
+  effectiveMovieReleaseDate,
+  isUnreleasedMovie,
+  MovieReleaseDateKind,
+} from './index';
 
 const NOW = new Date('2026-11-17T12:00:00Z');
 const day = (offset: number): Date => new Date(NOW.getTime() + offset * 24 * 60 * 60 * 1000);
@@ -29,6 +34,35 @@ describe('movie-release', () => {
 
     it('returns null without any date', () => {
       expect(effectiveMovieReleaseDate({})).toBeNull();
+    });
+  });
+
+  describe('effectiveMovieRelease', () => {
+    it('labels a theatrical date as theatrical', () => {
+      expect(
+        effectiveMovieRelease({ theatricalReleaseDate: day(2), digitalReleaseDate: day(9) }),
+      ).toEqual({
+        date: day(2),
+        kind: MovieReleaseDateKind.THEATRICAL,
+      });
+    });
+
+    it('labels a digital fallback as digital', () => {
+      expect(effectiveMovieRelease({ digitalReleaseDate: day(4), releaseDate: day(-50) })).toEqual({
+        date: day(4),
+        kind: MovieReleaseDateKind.DIGITAL,
+      });
+    });
+
+    it('labels the primary release date fallback as theatrical', () => {
+      expect(effectiveMovieRelease({ releaseDate: day(7) })).toEqual({
+        date: day(7),
+        kind: MovieReleaseDateKind.THEATRICAL,
+      });
+    });
+
+    it('returns null without any date', () => {
+      expect(effectiveMovieRelease({ releaseDate: null })).toBeNull();
     });
   });
 

@@ -20,6 +20,7 @@ import {
 import {
   RunStatus,
   type EvaluationContextType,
+  isUnreleasedMovieContext,
 } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import { RunNotFoundError } from '@/modules/catalog-policy/domain/errors';
 import {
@@ -29,6 +30,7 @@ import {
   type IPolicyInputRepository,
   type UpdatedAtWindow,
 } from '@/modules/catalog-policy/domain/repositories';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 
 import type { ReEvaluateAllPayload, EvaluateCatalogItemPayload } from '../types/job-payloads';
 import { validateContextPayload } from '../utils/context-validator';
@@ -47,6 +49,8 @@ export class ReEvaluateAllHandler {
     private readonly finalizeService: RunFinalizeService,
     @InjectQueue(CATALOG_POLICY_QUEUE)
     private readonly catalogQueue: Queue,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
   ) {}
 
   /**
@@ -87,6 +91,8 @@ export class ReEvaluateAllHandler {
       this.logger.warn(`Run ${runId} has no snapshotCutoff, no items will be dispatched`);
     }
 
+    const unreleasedMoviesAt = isUnreleasedMovieContext(context) ? this.clock.now() : undefined;
+
     let { cursor } = payload;
     let totalDispatched = 0;
 
@@ -98,7 +104,12 @@ export class ReEvaluateAllHandler {
       }
 
       const batch = updatedAtWindow
-        ? await this.policyInputRepository.fetchBatchIds({ batchSize, cursor, updatedAtWindow })
+        ? await this.policyInputRepository.fetchBatchIds({
+            batchSize,
+            cursor,
+            updatedAtWindow,
+            unreleasedMoviesAt,
+          })
         : [];
 
       if (batch.length === 0) {

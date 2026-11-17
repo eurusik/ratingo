@@ -4,7 +4,12 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { errorMessage, toError } from '@/common/utils/error.utils';
-import { generateSlug, type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
+import {
+  generateSlug,
+  type IMediaRepository,
+  isUnreleasedMovie,
+  MEDIA_REPOSITORY,
+} from '@/modules/catalog/public';
 import {
   type ICatalogPolicyEvaluator,
   CATALOG_POLICY_EVALUATOR,
@@ -22,8 +27,6 @@ import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 import { ScoreCalculatorService, type ScoreInput } from '@/modules/shared/score-calculator';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '@/modules/trakt/public';
-
-import { isUnreleasedMovie } from '../helpers/movie-release';
 
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 

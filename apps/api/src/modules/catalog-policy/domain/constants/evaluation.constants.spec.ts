@@ -2,6 +2,8 @@ import {
   ACTIVE_EVALUATION_CONTEXTS,
   EvaluationContext,
   EvaluationContextType,
+  FAN_OUT_EVALUATION_CONTEXTS,
+  isUnreleasedMovieContext,
 } from './evaluation.constants';
 
 describe('ACTIVE_EVALUATION_CONTEXTS', () => {
@@ -25,5 +27,26 @@ describe('ACTIVE_EVALUATION_CONTEXTS', () => {
     ACTIVE_EVALUATION_CONTEXTS.forEach((context: EvaluationContextType) => {
       expect(validContexts).toContain(context);
     });
+  });
+});
+
+describe('FAN_OUT_EVALUATION_CONTEXTS', () => {
+  it('re-evaluates every active context plus upcoming', () => {
+    expect(FAN_OUT_EVALUATION_CONTEXTS).toEqual([
+      ...ACTIVE_EVALUATION_CONTEXTS,
+      EvaluationContext.UPCOMING,
+    ]);
+  });
+
+  it('keeps upcoming out of the contexts every item must cover', () => {
+    expect(ACTIVE_EVALUATION_CONTEXTS).not.toContain(EvaluationContext.UPCOMING);
+  });
+});
+
+describe('isUnreleasedMovieContext', () => {
+  it('is true only for upcoming', () => {
+    const scoped = Object.values(EvaluationContext).filter(isUnreleasedMovieContext);
+
+    expect(scoped).toEqual([EvaluationContext.UPCOMING]);
   });
 });

@@ -27,6 +27,17 @@ export type {
 } from '../domain/repositories/media.repository.interface';
 
 // Domain utilities
+export {
+  effectiveMovieRelease,
+  effectiveMovieReleaseDate,
+  isUnreleasedMovie,
+  MovieReleaseDateKind,
+} from '../domain/utils/movie-release.utils';
+export type {
+  EffectiveMovieRelease,
+  MovieReleaseDateKindType,
+  MovieReleaseDates,
+} from '../domain/utils/movie-release.utils';
 export { generateSlug } from '@/common/utils/slug.util';
 
 export { COOLDOWN_REDIS_CLIENT } from '../infrastructure/adapters/redis-cooldown-gate.adapter';

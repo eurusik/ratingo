@@ -17,9 +17,12 @@ import {
   POLICY_INPUT_REPOSITORY,
 } from '@/modules/catalog-policy/domain/repositories';
 import { RunFinalizeService } from '@/modules/catalog-policy/application/services/run-finalize.service';
+import { CLOCK_PORT } from '@/modules/shared/clock';
 import type { ReEvaluateAllPayload } from '../types/job-payloads';
 
 import { ReEvaluateAllHandler } from './re-evaluate-all.handler';
+
+const NOW = new Date('2026-11-17T12:00:00Z');
 
 describe('ReEvaluateAllHandler', () => {
   let handler: ReEvaluateAllHandler;
@@ -73,6 +76,10 @@ describe('ReEvaluateAllHandler', () => {
         {
           provide: getQueueToken(CATALOG_POLICY_QUEUE),
           useValue: mockQueue,
+        },
+        {
+          provide: CLOCK_PORT,
+          useValue: { now: () => NOW },
         },
       ],
     }).compile();
@@ -268,6 +275,45 @@ describe('ReEvaluateAllHandler', () => {
         });
         expect(mockRunRepository.update).not.toHaveBeenCalled();
         expect(mockFinalizeService.finalizeRun).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('unreleased movie contexts', () => {
+      it('dispatches the upcoming context only for movies not yet released', async () => {
+        mockRunRepository.findById.mockResolvedValue(mockRun);
+        mockPolicyInputRepository.fetchBatchIds
+          .mockResolvedValueOnce(['movie-1'])
+          .mockResolvedValueOnce([]);
+        mockFinalizeService.finalizeRun.mockResolvedValue({ finalized: false });
+
+        await handler.handle({ ...validPayload, context: EvaluationContext.UPCOMING });
+
+        expect(mockPolicyInputRepository.fetchBatchIds).toHaveBeenCalledWith({
+          batchSize: 100,
+          cursor: undefined,
+          updatedAtWindow: { updatedAtOrBefore: mockRun.snapshotCutoff },
+          unreleasedMoviesAt: NOW,
+        });
+        expect(mockQueue.addBulk).toHaveBeenCalledWith([
+          expect.objectContaining({
+            data: expect.objectContaining({
+              mediaItemId: 'movie-1',
+              context: EvaluationContext.UPCOMING,
+            }),
+            opts: expect.objectContaining({ jobId: 'eval_run-123_movie-1_upcoming' }),
+          }),
+        ]);
+      });
+
+      it('does not narrow the batch for the catalog context', async () => {
+        mockRunRepository.findById.mockResolvedValue(mockRun);
+        mockFinalizeService.finalizeRun.mockResolvedValue({ finalized: false });
+
+        await handler.handle(validPayload);
+
+        expect(mockPolicyInputRepository.fetchBatchIds.mock.calls[0][0].unreleasedMoviesAt).toBe(
+          undefined,
+        );
       });
     });
 
