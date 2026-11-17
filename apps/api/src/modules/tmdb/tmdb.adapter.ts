@@ -12,6 +12,7 @@ import {
   NEW_RELEASES_MAX_PRIMARY_RELEASE_AGE_DAYS,
   UPCOMING_MOVIES_DIGITAL_LOOKAHEAD_DAYS,
   UPCOMING_MOVIES_DIGITAL_REGION,
+  UPCOMING_MOVIES_MAX_PRIMARY_RELEASE_AGE_DAYS,
   UPCOMING_MOVIES_MIN_POPULARITY,
   UPCOMING_MOVIES_REGIONS,
   UPCOMING_MOVIES_THEATRICAL_LOOKAHEAD_DAYS,
@@ -484,6 +485,7 @@ export class TmdbAdapter implements MetadataProviderPort {
       region: query.region,
       'release_date.gte': daysAhead(0),
       'release_date.lte': daysAhead(query.lookaheadDays),
+      'primary_release_date.gte': daysAhead(-UPCOMING_MOVIES_MAX_PRIMARY_RELEASE_AGE_DAYS),
       with_release_type: query.releaseTypes,
       sort_by: 'popularity.desc',
     };

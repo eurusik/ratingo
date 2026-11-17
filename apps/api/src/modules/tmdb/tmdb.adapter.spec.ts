@@ -603,16 +603,24 @@ describe('TmdbAdapter', () => {
           with_release_type: '3|2',
           'release_date.gte': '2026-11-17',
           'release_date.lte': '2027-05-19',
+          'primary_release_date.gte': '2025-11-17',
           sort_by: 'popularity.desc',
         }),
       );
-      expect(calls[1]).toEqual(expect.objectContaining({ region: 'UA', with_release_type: '3|2' }));
+      expect(calls[1]).toEqual(
+        expect.objectContaining({
+          region: 'UA',
+          with_release_type: '3|2',
+          'primary_release_date.gte': '2025-11-17',
+        }),
+      );
       expect(calls[2]).toEqual(
         expect.objectContaining({
           region: 'US',
           with_release_type: '4',
           'release_date.gte': '2026-11-17',
           'release_date.lte': '2027-01-16',
+          'primary_release_date.gte': '2025-11-17',
         }),
       );
       calls.forEach((params) => expect(params['vote_count.gte']).toBeUndefined());

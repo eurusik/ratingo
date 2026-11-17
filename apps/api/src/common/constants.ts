@@ -34,6 +34,7 @@ export const UPCOMING_MOVIES_THEATRICAL_LOOKAHEAD_DAYS = 183;
 export const UPCOMING_MOVIES_DIGITAL_REGION = 'US';
 export const UPCOMING_MOVIES_DIGITAL_LOOKAHEAD_DAYS = 60;
 export const UPCOMING_MOVIES_MIN_POPULARITY = 5;
+export const UPCOMING_MOVIES_MAX_PRIMARY_RELEASE_AGE_DAYS = 365;
 export const UPCOMING_MOVIES_SOON_DAYS = 14;
 
 // Digital Release Freshness — only show movies originally released within this window
