@@ -6,7 +6,7 @@ import { Sheet } from '@/shared/ui';
 import { useGuardedClose } from '../lib/use-guarded-close';
 import { useReviewDraft } from '../model/use-review-draft';
 import { DiscardDraftDialog } from './discard-draft-dialog';
-import { SheetReviewForm } from './review-form';
+import { SheetReviewForm } from './sheet-review-form';
 import { useReviewsActions } from './reviews-context';
 
 interface ComposeSheetProps {

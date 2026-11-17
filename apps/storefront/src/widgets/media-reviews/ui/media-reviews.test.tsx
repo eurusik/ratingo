@@ -221,7 +221,11 @@ describe('MediaReviews', () => {
     expect(spoiler).not.toBeChecked();
     expect(spoiler).toHaveAccessibleDescription('Текст сховаємо, доки не натиснуть «Показати»');
 
-    fireEvent.click(spoiler);
+    const control = spoiler.closest('label')?.querySelector('[data-slot="switch-control"]');
+    expect(control).toBeInTheDocument();
+    fireEvent.mouseDown(control!, { button: 0, detail: 1 });
+    fireEvent.mouseUp(control!, { button: 0, detail: 1 });
+    fireEvent.click(control!, { button: 0, detail: 1 });
 
     expect(spoiler).toBeChecked();
     fireEvent.click(screen.getByRole('button', { name: 'Опублікувати' }));

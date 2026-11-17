@@ -5,7 +5,7 @@ import { useTranslation } from '@/shared/i18n';
 import { useGuardedClose } from '../lib/use-guarded-close';
 import { useReviewDraft } from '../model/use-review-draft';
 import { DiscardDraftDialog } from './discard-draft-dialog';
-import { InlineReviewForm } from './review-form';
+import { InlineReviewForm } from './inline-review-form';
 import { useReviewsActions } from './reviews-context';
 
 interface InlineComposeProps {

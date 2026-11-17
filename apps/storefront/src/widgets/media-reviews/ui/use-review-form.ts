@@ -16,6 +16,13 @@ function useCaretAtEndOnOpen(textRef: RefObject<HTMLTextAreaElement | null>, isE
   }, [textRef, isEnabled]);
 }
 
+export interface ReviewFormProps {
+  draft: ReviewDraftState;
+  editing: Review | null;
+  onPublished: () => void;
+  onCancel: () => void;
+}
+
 interface ReviewFormOptions {
   firstPresetRef: RefObject<HTMLButtonElement | null>;
   textRef: RefObject<HTMLTextAreaElement | null>;
@@ -38,9 +45,13 @@ export function useReviewForm({
   const [shownGaps, setShownGaps] = useState<DraftGaps>(NO_GAPS);
   useCaretAtEndOnOpen(textRef, focusesTextOnOpen);
 
-  const resumeEditing = (filled: Partial<DraftGaps>) => {
-    publish.reset();
-    setShownGaps((current) => ({ ...current, ...filled }));
+  const clearPublishFailure = () => {
+    if (publish.isError) publish.reset();
+  };
+
+  const clearShownGap = (gap: keyof DraftGaps) => {
+    clearPublishFailure();
+    setShownGaps((current) => (current[gap] ? { ...current, [gap]: false } : current));
   };
 
   const focusFirstGap = (gaps: DraftGaps) => {
@@ -53,24 +64,27 @@ export function useReviewForm({
     isPublishing: publish.isPending,
     publishFailure: publish.error?.failure ?? null,
     changeRating: (rating: number) => {
-      resumeEditing({ isRatingMissing: false });
+      clearShownGap('isRatingMissing');
       draft.setRating(rating);
     },
     changeContent: (content: string) => {
-      resumeEditing({ isTextMissing: false });
+      clearShownGap('isTextMissing');
       draft.setContent(content);
     },
     changeSpoiler: (hasSpoiler: boolean) => {
-      resumeEditing({});
+      clearPublishFailure();
       draft.setHasSpoiler(hasSpoiler);
     },
     submit: (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (publish.isPending) return;
-      setShownGaps(draft.gaps);
-      focusFirstGap(draft.gaps);
       const ready = draft.toDraft();
-      if (ready) publish.mutate({ draft: ready, editing }, { onSuccess: onPublished });
+      if (!ready) {
+        setShownGaps(draft.gaps);
+        focusFirstGap(draft.gaps);
+        return;
+      }
+      publish.mutate({ draft: ready, editing }, { onSuccess: onPublished });
     },
   };
 }

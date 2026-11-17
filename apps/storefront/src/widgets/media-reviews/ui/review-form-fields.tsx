@@ -199,7 +199,7 @@ export function ReviewTextField({
       />
       <LengthCounter length={draft.content.length} />
       <FieldError>
-        <span role="alert">{copy.errors.empty}</span>
+        <span role={form.shownGaps.isRatingMissing ? undefined : 'alert'}>{copy.errors.empty}</span>
       </FieldError>
     </TextField>
   );
@@ -234,14 +234,16 @@ export function SpoilerSwitch({ draft, form, controlSide }: SpoilerSwitchProps) 
       aria-label={copy.spoiler}
       isSelected={draft.hasSpoiler}
       onChange={form.changeSpoiler}
-      className={`min-h-tap items-center gap-3 ${sideClass}`}
+      className={controlSide === 'end' ? 'w-full' : undefined}
     >
-      <Switch.Control>
-        <Switch.Thumb />
-      </Switch.Control>
-      <Switch.Content className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-start">
-        <Label className="text-base font-semibold">{copy.spoiler}</Label>
-        <Description className="text-[13px] leading-snug">{copy.spoilerHint}</Description>
+      <Switch.Content className={`flex min-h-tap items-center gap-3 ${sideClass}`}>
+        <Switch.Control>
+          <Switch.Thumb />
+        </Switch.Control>
+        <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-start">
+          <Label className="text-base font-semibold">{copy.spoiler}</Label>
+          <Description className="text-[13px] leading-snug">{copy.spoilerHint}</Description>
+        </span>
       </Switch.Content>
     </Switch>
   );
