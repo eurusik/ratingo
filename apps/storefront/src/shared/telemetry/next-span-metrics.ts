@@ -14,7 +14,9 @@ import {
 } from '@ratingo/node-telemetry';
 
 import {
+  COLD_CACHE_ENTRY_REASON,
   FAILED_FETCH_STATUS,
+  FETCH_CACHE_STATUS,
   FETCH_DURATION_METRIC,
   KNOWN_HTTP_METHODS,
   MISSING_LABEL,
@@ -65,12 +67,19 @@ function fetchStatus(span: ReadableSpan): number | undefined {
   return span.status.code === SpanStatusCode.ERROR ? FAILED_FETCH_STATUS : undefined;
 }
 
+function fetchCacheStatus({ attributes }: ReadableSpan): string {
+  const status = asString(attributes['next.fetch.cache_status']) ?? MISSING_LABEL;
+  const reason = asString(attributes['next.fetch.cache_reason']);
+  return status === FETCH_CACHE_STATUS.SKIP && reason?.includes(COLD_CACHE_ENTRY_REASON)
+    ? FETCH_CACHE_STATUS.MISS
+    : status;
+}
+
 function fetchAttributes(span: ReadableSpan): Attributes {
   return {
     'server.address': asString(span.attributes['net.peer.name']) ?? UNKNOWN_HOST,
     'http.request.method': normalizeMethod(span.attributes['http.method']),
-    'next.fetch.cache_status':
-      asString(span.attributes['next.fetch.cache_status']) ?? MISSING_LABEL,
+    'next.fetch.cache_status': fetchCacheStatus(span),
     ...statusAttribute(fetchStatus(span)),
   };
 }
