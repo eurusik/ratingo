@@ -10,6 +10,12 @@ import {
   NEW_RELEASES_REGION,
   NEW_RELEASES_MIN_VOTE_COUNT,
   NEW_RELEASES_MAX_PRIMARY_RELEASE_AGE_DAYS,
+  UPCOMING_MOVIES_DIGITAL_LOOKAHEAD_DAYS,
+  UPCOMING_MOVIES_DIGITAL_REGION,
+  UPCOMING_MOVIES_MAX_PRIMARY_RELEASE_AGE_DAYS,
+  UPCOMING_MOVIES_MIN_POPULARITY,
+  UPCOMING_MOVIES_REGIONS,
+  UPCOMING_MOVIES_THEATRICAL_LOOKAHEAD_DAYS,
 } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 import {
@@ -52,6 +58,27 @@ const TMDB_RETRY_CONFIG: Partial<RetryConfig> = {
 /** Safety limit to prevent infinite loops when paginating */
 const MAX_PAGES = 10;
 const TMDB_THEATRICAL_RELEASE_TYPE = '3';
+const TMDB_THEATRICAL_OR_LIMITED_RELEASE_TYPES = '3|2';
+const TMDB_DIGITAL_RELEASE_TYPE = '4';
+
+interface UpcomingDiscoverQuery {
+  region: string;
+  releaseTypes: string;
+  lookaheadDays: number;
+}
+
+const UPCOMING_DISCOVER_QUERIES: readonly UpcomingDiscoverQuery[] = [
+  ...UPCOMING_MOVIES_REGIONS.map((region) => ({
+    region,
+    releaseTypes: TMDB_THEATRICAL_OR_LIMITED_RELEASE_TYPES,
+    lookaheadDays: UPCOMING_MOVIES_THEATRICAL_LOOKAHEAD_DAYS,
+  })),
+  {
+    region: UPCOMING_MOVIES_DIGITAL_REGION,
+    releaseTypes: TMDB_DIGITAL_RELEASE_TYPE,
+    lookaheadDays: UPCOMING_MOVIES_DIGITAL_LOOKAHEAD_DAYS,
+  },
+];
 
 /**
  * TMDB API response for paginated results.
@@ -77,6 +104,7 @@ interface TmdbResultItem {
   first_air_date?: string;
   poster_path?: string | null;
   vote_average?: number;
+  popularity?: number;
 }
 
 /**
@@ -361,25 +389,7 @@ export class TmdbAdapter implements MetadataProviderPort {
     region = NEW_RELEASES_REGION,
   ): Promise<number[]> {
     const query = this.buildNewReleasesQuery(daysBack, region);
-    const ids: number[] = [];
-    let pagesFetched = 0;
-    let totalPages = 0;
-
-    for (let page = 1; page <= MAX_PAGES; page++) {
-      const data = await this.fetch<TmdbPaginatedResponse>('/discover/movie', {
-        ...query,
-        page: page.toString(),
-      });
-
-      const pageIds = (data.results ?? []).map((m) => m.id);
-      ids.push(...pageIds);
-
-      pagesFetched = page;
-      totalPages = data.total_pages;
-
-      // Stop if we've reached the last page
-      if (page >= data.total_pages) break;
-    }
+    const { ids, pagesFetched, totalPages } = await this.discoverMovieIds(query);
 
     if (totalPages > MAX_PAGES) {
       this.logger.warn(
@@ -405,6 +415,78 @@ export class TmdbAdapter implements MetadataProviderPort {
       'primary_release_date.gte': daysAgo(NEW_RELEASES_MAX_PRIMARY_RELEASE_AGE_DAYS),
       with_release_type: TMDB_THEATRICAL_RELEASE_TYPE,
       'vote_count.gte': NEW_RELEASES_MIN_VOTE_COUNT.toString(),
+      sort_by: 'popularity.desc',
+    };
+  }
+
+  public async getUpcomingMovieIds(
+    minPopularity = UPCOMING_MOVIES_MIN_POPULARITY,
+  ): Promise<number[]> {
+    const ids = new Set<number>();
+
+    for (const query of UPCOMING_DISCOVER_QUERIES) {
+      const queryIds = await this.discoverUpcomingIds(query, minPopularity);
+      queryIds.forEach((id) => ids.add(id));
+    }
+
+    return [...ids];
+  }
+
+  private async discoverUpcomingIds(
+    query: UpcomingDiscoverQuery,
+    minPopularity: number,
+  ): Promise<number[]> {
+    const { ids, pagesFetched, totalPages } = await this.discoverMovieIds(
+      this.buildUpcomingQuery(query),
+      minPopularity,
+    );
+
+    this.logger.log(
+      `upcoming region=${query.region} releaseTypes=${query.releaseTypes} lookaheadDays=${query.lookaheadDays} pagesFetched=${pagesFetched} totalPages=${totalPages} idsFound=${ids.length}`,
+    );
+
+    return ids;
+  }
+
+  private async discoverMovieIds(
+    params: Record<string, string>,
+    minPopularity = 0,
+  ): Promise<{ ids: number[]; pagesFetched: number; totalPages: number }> {
+    const ids: number[] = [];
+    let pagesFetched = 0;
+    let totalPages = 0;
+
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const data = await this.fetch<TmdbPaginatedResponse>('/discover/movie', {
+        ...params,
+        page: page.toString(),
+      });
+
+      const results = data.results ?? [];
+      const kept = results.filter((m) => (m.popularity ?? 0) >= minPopularity);
+      ids.push(...kept.map((m) => m.id));
+
+      pagesFetched = page;
+      totalPages = data.total_pages;
+
+      const reachedPopularityFloor = kept.length < results.length;
+      if (reachedPopularityFloor || page >= data.total_pages) break;
+    }
+
+    return { ids, pagesFetched, totalPages };
+  }
+
+  private buildUpcomingQuery(query: UpcomingDiscoverQuery): Record<string, string> {
+    const now = Date.now();
+    const daysAhead = (days: number) =>
+      new Date(now + days * MS_PER_DAY).toISOString().split('T')[0];
+
+    return {
+      region: query.region,
+      'release_date.gte': daysAhead(0),
+      'release_date.lte': daysAhead(query.lookaheadDays),
+      'primary_release_date.gte': daysAhead(-UPCOMING_MOVIES_MAX_PRIMARY_RELEASE_AGE_DAYS),
+      with_release_type: query.releaseTypes,
       sort_by: 'popularity.desc',
     };
   }

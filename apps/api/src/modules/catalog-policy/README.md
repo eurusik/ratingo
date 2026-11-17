@@ -126,6 +126,7 @@ Different surfaces have different requirements:
 | `search`      | Yes         | No                | Search results      |
 | `now_playing` | No          | No                | In theaters         |
 | `new_digital` | No          | No                | New digital release |
+| `upcoming`    | No          | No                | Not released yet    |
 
 ### Title Readability
 

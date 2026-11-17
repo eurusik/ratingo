@@ -178,8 +178,9 @@ Different display surfaces have different requirements:
 | `search` | Yes | No | Search results |
 | `now_playing` | No | No | Currently in theaters |
 | `new_digital` | No | No | New digital releases |
+| `upcoming` | No | No | Movies not released yet (evaluated on sync while the release date is in the future) |
 
-**Why?** New releases (`now_playing`, `new_digital`) may not have enough votes/ratings yet, so we skip the global quality gate for them.
+**Why?** New releases (`now_playing`, `new_digital`) may not have enough votes/ratings yet, and unreleased movies (`upcoming`) have none, so we skip the global quality gate for them. Blocked countries/languages and title readability still apply.
 
 ```typescript
 // Same content, different results based on context

@@ -64,18 +64,21 @@ describe('SnapshotsPipeline', () => {
         cursor: undefined,
         snapshotDate: expect.any(Date),
         region: 'UA',
+        releasedBy: expect.any(Date),
       });
       expect(mediaRepository.findSnapshotCandidates).toHaveBeenNthCalledWith(2, {
         limit: 500,
         cursor: 'id3',
         snapshotDate: expect.any(Date),
         region: 'UA',
+        releasedBy: expect.any(Date),
       });
       expect(mediaRepository.findSnapshotCandidates).toHaveBeenNthCalledWith(3, {
         limit: 500,
         cursor: 'id5',
         snapshotDate: expect.any(Date),
         region: 'UA',
+        releasedBy: expect.any(Date),
       });
 
       expect(snapshotsService.syncSnapshotBatch).toHaveBeenCalledTimes(2);

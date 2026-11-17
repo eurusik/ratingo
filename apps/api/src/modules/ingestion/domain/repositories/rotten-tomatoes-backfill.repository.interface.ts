@@ -18,7 +18,7 @@ export interface RottenTomatoesFetchResult {
 
 export interface IRottenTomatoesBackfillRepository {
   findCandidates(
-    page: BackfillPage & { fetchedBefore: Date },
+    page: BackfillPage & { fetchedBefore: Date; releasedBy: Date },
   ): Promise<RottenTomatoesBackfillCandidate[]>;
   findLastFetchedAt(mediaItemId: string): Promise<Date | null>;
   saveFetchResult(mediaItemId: string, result: RottenTomatoesFetchResult): Promise<void>;

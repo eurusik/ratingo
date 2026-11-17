@@ -13,6 +13,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
+import { onlyMoviesReleasingFrom } from '@/database/movie-release-conditions';
 import * as schema from '@/database/schema';
 import {
   type IPolicyInputRepository,
@@ -143,7 +144,7 @@ export class PolicyInputRepository implements IPolicyInputRepository {
    * Uses cursor-based pagination with ordered results.
    */
   async fetchBatchIds(options: FetchBatchIdsOptions): Promise<string[]> {
-    const { batchSize, cursor, updatedAtWindow } = options;
+    const { batchSize, cursor, updatedAtWindow, moviesReleasingFrom } = options;
 
     const conditions = [
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
@@ -156,6 +157,10 @@ export class PolicyInputRepository implements IPolicyInputRepository {
           ? gt(schema.mediaItems.updatedAt, updatedAtWindow.updatedAfter)
           : lte(schema.mediaItems.updatedAt, updatedAtWindow.updatedAtOrBefore),
       );
+    }
+
+    if (moviesReleasingFrom) {
+      conditions.push(onlyMoviesReleasingFrom(moviesReleasingFrom));
     }
 
     if (cursor) {

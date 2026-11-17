@@ -1044,6 +1044,98 @@
         ]
       }
     },
+    "/api/catalog/movies/upcoming": {
+      "get": {
+        "description": "Returns movies eligible for the upcoming surface that release between today and today + days, sorted by TMDB popularity.",
+        "operationId": "CatalogMoviesController_getUpcoming",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Release window from today, in days.",
+            "schema": {
+              "minimum": 0,
+              "maximum": 365,
+              "default": 120,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedUpcomingMovieResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Upcoming movies",
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
     "/api/catalog/movies/{slug}": {
       "get": {
         "description": "Returns full movie details including genres and stats.",
@@ -1116,6 +1208,108 @@
           }
         },
         "summary": "Get movie details by slug",
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/calendar": {
+      "get": {
+        "description": "Returns episodes and movie releases within the date range, grouped by day. Days without releases are omitted. The non-personalized calendar lists the 5 most popular movies per day.",
+        "operationId": "CatalogCalendarController_getCalendar",
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start date (ISO string). Default: today.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Number of days to include.",
+            "schema": {
+              "minimum": 0,
+              "maximum": 90,
+              "default": 7,
+              "type": "number"
+            }
+          },
+          {
+            "name": "personalized",
+            "required": false,
+            "in": "query",
+            "description": "When true, returns only the viewer's releases: episodes of shows they watch, premieres of shows they saved, and movies they saved or set a release reminder for. Requires authentication.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Limits the calendar to shows or movies.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "show",
+                "movie"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CatalogCalendarResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters (days must be <= 90; personalized must be 'true' or 'false'; type must be 'show' or 'movie')"
+          },
+          "401": {
+            "description": "Authentication required for personalized calendar"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Release calendar for shows and movies",
         "tags": [
           "Public: Catalog"
         ]
@@ -14059,6 +14253,153 @@
           "meta"
         ]
       },
+      "UpcomingMovieDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mediaItemId": {
+            "type": "string"
+          },
+          "tmdbId": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "ingestionStatus": {
+            "type": "string",
+            "example": "ready",
+            "enum": [
+              "importing",
+              "ready",
+              "failed"
+            ],
+            "default": "ready"
+          },
+          "overview": {
+            "type": "string",
+            "nullable": true
+          },
+          "poster": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "backdrop": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "popularity": {
+            "type": "number",
+            "example": 120.5
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "theatricalReleaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "digitalReleaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "runtime": {
+            "type": "number",
+            "nullable": true
+          },
+          "stats": {
+            "$ref": "#/components/schemas/RatingoStatsDto"
+          },
+          "externalRatings": {
+            "$ref": "#/components/schemas/ExternalRatingsDto"
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GenreDto"
+            }
+          },
+          "card": {
+            "$ref": "#/components/schemas/CardMetaDto"
+          },
+          "effectiveReleaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Release date the movie is listed under: theatrical, then digital, then primary."
+          },
+          "releaseDateKind": {
+            "type": "string",
+            "enum": [
+              "theatrical",
+              "digital"
+            ],
+            "example": "theatrical"
+          },
+          "releaseCountry": {
+            "type": "string",
+            "nullable": true,
+            "example": "US",
+            "description": "Country of the release date (UA or US); null when unknown."
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "tmdbId",
+          "title",
+          "slug",
+          "ingestionStatus",
+          "overview",
+          "popularity",
+          "releaseDate",
+          "theatricalReleaseDate",
+          "digitalReleaseDate",
+          "runtime",
+          "stats",
+          "externalRatings",
+          "genres",
+          "effectiveReleaseDate",
+          "releaseDateKind",
+          "releaseCountry"
+        ]
+      },
+      "PaginatedUpcomingMovieResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpcomingMovieDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
       "UserMediaStateDto": {
         "type": "object",
         "properties": {
@@ -14726,6 +15067,246 @@
           "ingestionStatus"
         ]
       },
+      "CalendarEpisodeDto": {
+        "type": "object",
+        "properties": {
+          "episodeId": {
+            "type": "string",
+            "example": "0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90"
+          },
+          "showId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "Media item ID of the show."
+          },
+          "showRecordId": {
+            "type": "string",
+            "example": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+            "description": "Show record ID used by episode progress endpoints."
+          },
+          "showSlug": {
+            "type": "string",
+            "example": "arcane"
+          },
+          "showTitle": {
+            "type": "string",
+            "example": "Arcane"
+          },
+          "posterPath": {
+            "type": "string",
+            "example": "/path/to/poster.jpg",
+            "nullable": true
+          },
+          "seasonNumber": {
+            "type": "number",
+            "example": 2
+          },
+          "episodeNumber": {
+            "type": "number",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Heavy Is the Crown",
+            "nullable": true
+          },
+          "overview": {
+            "type": "string",
+            "example": "Overview...",
+            "nullable": true
+          },
+          "airDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "runtime": {
+            "type": "number",
+            "example": 45,
+            "nullable": true
+          },
+          "stillPath": {
+            "type": "string",
+            "example": "http://image.com/1.jpg",
+            "nullable": true
+          },
+          "seasonEpisodeCount": {
+            "type": "number",
+            "example": 8,
+            "nullable": true,
+            "description": "Number of episodes in the season, when known."
+          },
+          "showPopularity": {
+            "type": "number",
+            "example": 312.4,
+            "description": "TMDB popularity of the show."
+          },
+          "isTracked": {
+            "type": "boolean",
+            "example": false,
+            "description": "The viewer is watching this show."
+          },
+          "isSaved": {
+            "type": "boolean",
+            "example": false,
+            "description": "The viewer saved this show to watch later."
+          },
+          "isWatched": {
+            "type": "boolean",
+            "example": false,
+            "description": "The viewer marked this episode as watched."
+          }
+        },
+        "required": [
+          "episodeId",
+          "showId",
+          "showRecordId",
+          "showSlug",
+          "showTitle",
+          "seasonNumber",
+          "episodeNumber",
+          "title",
+          "airDate",
+          "seasonEpisodeCount",
+          "showPopularity",
+          "isTracked",
+          "isSaved",
+          "isWatched"
+        ]
+      },
+      "CalendarMovieDto": {
+        "type": "object",
+        "properties": {
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "tmdbId": {
+            "type": "number",
+            "example": 693134
+          },
+          "slug": {
+            "type": "string",
+            "example": "dune-part-two"
+          },
+          "title": {
+            "type": "string",
+            "example": "Dune: Part Two"
+          },
+          "poster": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Release date the movie is listed under: theatrical, then digital, then primary."
+          },
+          "releaseDateKind": {
+            "type": "string",
+            "enum": [
+              "theatrical",
+              "digital"
+            ]
+          },
+          "releaseCountry": {
+            "type": "string",
+            "nullable": true,
+            "example": "US",
+            "description": "Country of the release date (UA or US); null when unknown."
+          },
+          "popularity": {
+            "type": "number",
+            "example": 312.4,
+            "description": "TMDB popularity."
+          },
+          "isSavedForLater": {
+            "type": "boolean",
+            "example": false,
+            "description": "The viewer planned this movie or saved it to watch later."
+          },
+          "isReminderSet": {
+            "type": "boolean",
+            "example": false,
+            "description": "The viewer set a release reminder."
+          }
+        },
+        "required": [
+          "mediaItemId",
+          "tmdbId",
+          "slug",
+          "title",
+          "poster",
+          "releaseDate",
+          "releaseDateKind",
+          "releaseCountry",
+          "popularity",
+          "isSavedForLater",
+          "isReminderSet"
+        ]
+      },
+      "CatalogCalendarDayDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-11-20"
+          },
+          "episodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarEpisodeDto"
+            }
+          },
+          "movies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarMovieDto"
+            }
+          },
+          "moreMoviesCount": {
+            "type": "number",
+            "description": "Movies released that day beyond the ones listed (only in the non-personalized calendar)."
+          }
+        },
+        "required": [
+          "date",
+          "episodes",
+          "movies"
+        ]
+      },
+      "CatalogCalendarResponseDto": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "example": "2026-11-17T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-11-24T00:00:00.000Z"
+          },
+          "watchingShowsCount": {
+            "type": "number",
+            "description": "Number of shows the user is currently watching (saved shows are not counted). Only present when personalized=true and shows are included."
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogCalendarDayDto"
+            }
+          }
+        },
+        "required": [
+          "startDate",
+          "endDate",
+          "days"
+        ]
+      },
       "ShowProgressDto": {
         "type": "object",
         "properties": {
@@ -14919,112 +15500,6 @@
         },
         "required": [
           "data"
-        ]
-      },
-      "CalendarEpisodeDto": {
-        "type": "object",
-        "properties": {
-          "episodeId": {
-            "type": "string",
-            "example": "0b6f2c1e-5d8a-4f3b-9c2e-7a1d4e6f8b90"
-          },
-          "showId": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
-            "description": "Media item ID of the show."
-          },
-          "showRecordId": {
-            "type": "string",
-            "example": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-            "description": "Show record ID used by episode progress endpoints."
-          },
-          "showSlug": {
-            "type": "string",
-            "example": "arcane"
-          },
-          "showTitle": {
-            "type": "string",
-            "example": "Arcane"
-          },
-          "posterPath": {
-            "type": "string",
-            "example": "/path/to/poster.jpg",
-            "nullable": true
-          },
-          "seasonNumber": {
-            "type": "number",
-            "example": 2
-          },
-          "episodeNumber": {
-            "type": "number",
-            "example": 1
-          },
-          "title": {
-            "type": "string",
-            "example": "Heavy Is the Crown",
-            "nullable": true
-          },
-          "overview": {
-            "type": "string",
-            "example": "Overview...",
-            "nullable": true
-          },
-          "airDate": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "runtime": {
-            "type": "number",
-            "example": 45,
-            "nullable": true
-          },
-          "stillPath": {
-            "type": "string",
-            "example": "http://image.com/1.jpg",
-            "nullable": true
-          },
-          "seasonEpisodeCount": {
-            "type": "number",
-            "example": 8,
-            "nullable": true,
-            "description": "Number of episodes in the season, when known."
-          },
-          "showPopularity": {
-            "type": "number",
-            "example": 312.4,
-            "description": "TMDB popularity of the show."
-          },
-          "isTracked": {
-            "type": "boolean",
-            "example": false,
-            "description": "The viewer is watching this show."
-          },
-          "isSaved": {
-            "type": "boolean",
-            "example": false,
-            "description": "The viewer saved this show to watch later."
-          },
-          "isWatched": {
-            "type": "boolean",
-            "example": false,
-            "description": "The viewer marked this episode as watched."
-          }
-        },
-        "required": [
-          "episodeId",
-          "showId",
-          "showRecordId",
-          "showSlug",
-          "showTitle",
-          "seasonNumber",
-          "episodeNumber",
-          "title",
-          "airDate",
-          "seasonEpisodeCount",
-          "showPopularity",
-          "isTracked",
-          "isSaved",
-          "isWatched"
         ]
       },
       "CalendarDayDto": {
@@ -17633,7 +18108,7 @@
           },
           "appliesTo": {
             "type": "array",
-            "description": "Contexts where global gate applies. Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. Freshness surfaces (now_playing, new_digital) are excluded by default.",
+            "description": "Contexts where global gate applies. Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. Freshness surfaces (now_playing, new_digital, upcoming) are excluded by default.",
             "example": [
               "catalog",
               "homepage",
@@ -17648,7 +18123,8 @@
                 "trending",
                 "now_playing",
                 "new_digital",
-                "search"
+                "search",
+                "upcoming"
               ]
             }
           },

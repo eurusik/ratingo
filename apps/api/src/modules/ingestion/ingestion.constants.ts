@@ -6,6 +6,8 @@ export {
   RATINGS_BACKFILL_QUEUE,
   DEFAULT_INGESTION_JOB_OPTIONS,
   IngestionJob,
+  UpcomingMoviesRefreshScope,
+  type UpcomingMoviesRefreshScopeType,
 } from '../shared/contracts';
 
 /**
@@ -136,3 +138,7 @@ export const MDBLIST_DAILY_BUDGET = 900;
  * daily triggers until fully drained.
  */
 export const TMDB_BACKFILL_RUN_CAP = 20_000;
+
+export const UPCOMING_REFRESH_MIN_SYNC_AGE_HOURS = 20;
+
+export const UPCOMING_REFRESH_RUN_CAP = 2_000;

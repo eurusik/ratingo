@@ -1,12 +1,12 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { NEW_RELEASES_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '@/common/constants';
-import { MediaType } from '@/common/enums/media-type.enum';
 import { type IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import { buildNewReleaseJobId } from '@/modules/ingestion/domain/job-ids';
 import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 
+import { findMissingMovieTmdbIds } from '../helpers/missing-movies.helper';
 import { BulkJobService } from '../services/bulk-job.service';
 
 /**
@@ -42,7 +42,7 @@ export class NewReleasesPipeline {
 
     if (tmdbIds.length === 0) return;
 
-    const missingTmdbIds = await this.filterMissing(tmdbIds);
+    const missingTmdbIds = await findMissingMovieTmdbIds(this.mediaRepository, tmdbIds);
 
     if (missingTmdbIds.length === 0) {
       this.logger.log('All new releases already exist in database');
@@ -64,12 +64,5 @@ export class NewReleasesPipeline {
     this.logger.log(
       `New releases sync complete: total=${tmdbIds.length}, enqueued=${result.enqueued}, deduped=${result.deduped}`,
     );
-  }
-
-  private async filterMissing(tmdbIds: number[]): Promise<number[]> {
-    // TMDB movie/TV id spaces overlap — a show with the same id must not mask a missing movie
-    const existingMedia = await this.mediaRepository.findManyByTmdbIds(tmdbIds, MediaType.MOVIE);
-    const existingTmdbIds = new Set(existingMedia.map((m) => m.tmdbId));
-    return tmdbIds.filter((id) => !existingTmdbIds.has(id));
   }
 }

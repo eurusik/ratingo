@@ -298,6 +298,39 @@ describe('PolicyInputRepository', () => {
       expect(params).toContain(cutoff.toISOString());
     });
 
+    it('keeps only movies releasing on or after the given day', async () => {
+      const queryMock = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([{ id: 'movie-1' }]),
+      };
+      mockDb.select.mockReturnValue(queryMock);
+
+      const now = new Date('2026-11-17T00:00:00.000Z');
+      await repository.fetchBatchIds({ batchSize: 10, moviesReleasingFrom: now });
+
+      const { sql, params } = renderWhere(queryMock.where);
+      expect(sql).toContain('exists (select 1 from "movies" where');
+      expect(sql).toMatch(/coalesce\(.*\) >= \$/);
+      expect(sql).not.toContain('not exists');
+      expect(params).toContain(now.toISOString());
+    });
+
+    it('does not filter by release date by default', async () => {
+      const queryMock = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([]),
+      };
+      mockDb.select.mockReturnValue(queryMock);
+
+      await repository.fetchBatchIds({ batchSize: 10 });
+
+      expect(renderWhere(queryMock.where).sql).not.toContain('"movies"');
+    });
+
     it('should keep only items updated after the window bound', async () => {
       const queryMock = {
         from: jest.fn().mockReturnThis(),

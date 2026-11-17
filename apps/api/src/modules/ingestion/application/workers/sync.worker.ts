@@ -7,7 +7,10 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
-import { type SyncMediaJobData } from '@/modules/shared/contracts';
+import {
+  type SyncMediaJobData,
+  type UpcomingMoviesRefreshScopeType,
+} from '@/modules/shared/contracts';
 
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
@@ -17,6 +20,7 @@ import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
 import { SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
 import { TrackedShowsPipeline } from '../pipelines/tracked-shows.pipeline';
 import { TrendingPipeline } from '../pipelines/trending.pipeline';
+import { UpcomingMoviesPipeline } from '../pipelines/upcoming-movies.pipeline';
 import { MediaPageCacheService } from '../services/media-page-cache.service';
 import { SyncMediaService } from '../services/sync-media.service';
 
@@ -47,6 +51,7 @@ export class SyncWorker extends WorkerHost {
     private readonly trackedShowsPipeline: TrackedShowsPipeline,
     private readonly nowPlayingPipeline: NowPlayingPipeline,
     private readonly newReleasesPipeline: NewReleasesPipeline,
+    private readonly upcomingMoviesPipeline: UpcomingMoviesPipeline,
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
     private readonly backfillMdblistRatingsPipeline: BackfillMdblistRatingsPipeline,
@@ -94,6 +99,7 @@ export class SyncWorker extends WorkerHost {
         title?: string;
         originalTitle?: string | null;
         dayId?: string;
+        scope?: UpcomingMoviesRefreshScopeType;
       },
       unknown,
       string
@@ -153,6 +159,13 @@ export class SyncWorker extends WorkerHost {
         // New releases pipeline
         case IngestionJob.SYNC_NEW_RELEASES:
           await this.newReleasesPipeline.sync(job.data.region, job.data.daysBack);
+          break;
+
+        case IngestionJob.SYNC_UPCOMING_MOVIES:
+          await this.upcomingMoviesPipeline.sync();
+          break;
+        case IngestionJob.REFRESH_UPCOMING_MOVIES:
+          await this.upcomingMoviesPipeline.refresh(job.data.scope);
           break;
 
         // IMDb backfill pipeline

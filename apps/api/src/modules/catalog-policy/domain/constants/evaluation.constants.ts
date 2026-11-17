@@ -131,6 +131,7 @@ export const EvaluationContext = {
   NOW_PLAYING: 'now_playing',
   NEW_DIGITAL: 'new_digital',
   SEARCH: 'search',
+  UPCOMING: 'upcoming',
 } as const;
 
 export type EvaluationContextType = (typeof EvaluationContext)[keyof typeof EvaluationContext];
@@ -156,6 +157,19 @@ export const ACTIVE_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
   EvaluationContext.CATALOG,
   EvaluationContext.TRENDING,
 ] as const;
+
+const UPCOMING_MOVIE_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
+  EvaluationContext.UPCOMING,
+] as const;
+
+export const FAN_OUT_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
+  ...ACTIVE_EVALUATION_CONTEXTS,
+  ...UPCOMING_MOVIE_EVALUATION_CONTEXTS,
+] as const;
+
+export function isUpcomingMovieContext(context: EvaluationContextType): boolean {
+  return UPCOMING_MOVIE_EVALUATION_CONTEXTS.includes(context);
+}
 
 /**
  * Default max age (in minutes) before a running run is considered stale.

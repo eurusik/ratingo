@@ -38,6 +38,7 @@ const EVALUATION_CONTEXTS: EvaluationContext[] = [
   'now_playing',
   'new_digital',
   'search',
+  'upcoming',
 ];
 
 /**
@@ -139,7 +140,7 @@ export class GlobalRequirementsDto {
     description:
       'Contexts where global gate applies. ' +
       "Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. " +
-      'Freshness surfaces (now_playing, new_digital) are excluded by default.',
+      'Freshness surfaces (now_playing, new_digital, upcoming) are excluded by default.',
     example: ['catalog', 'homepage', 'trending', 'search'],
     enum: EVALUATION_CONTEXTS,
     isArray: true,

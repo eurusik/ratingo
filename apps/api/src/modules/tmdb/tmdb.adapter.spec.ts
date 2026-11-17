@@ -579,6 +579,115 @@ describe('TmdbAdapter', () => {
     });
   });
 
+  describe('getUpcomingMovieIds', () => {
+    const page = (results: Array<{ id: number; popularity?: number }>, totalPages = 1) => ({
+      ok: true,
+      json: () => Promise.resolve({ page: 1, total_pages: totalPages, results }),
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('queries US and UA theatrical windows and the US digital window without a vote filter', async () => {
+      jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-17T12:00:00Z'));
+      mockFetch.mockResolvedValue(page([]));
+
+      await adapter.getUpcomingMovieIds();
+
+      const calls = mockFetch.mock.calls.map((c) => Object.fromEntries(new URL(c[0]).searchParams));
+      expect(calls).toHaveLength(3);
+      expect(calls[0]).toEqual(
+        expect.objectContaining({
+          region: 'US',
+          with_release_type: '3|2',
+          'release_date.gte': '2026-11-17',
+          'release_date.lte': '2027-05-19',
+          'primary_release_date.gte': '2025-11-17',
+          sort_by: 'popularity.desc',
+        }),
+      );
+      expect(calls[1]).toEqual(
+        expect.objectContaining({
+          region: 'UA',
+          with_release_type: '3|2',
+          'primary_release_date.gte': '2025-11-17',
+        }),
+      );
+      expect(calls[2]).toEqual(
+        expect.objectContaining({
+          region: 'US',
+          with_release_type: '4',
+          'release_date.gte': '2026-11-17',
+          'release_date.lte': '2027-01-16',
+          'primary_release_date.gte': '2025-11-17',
+        }),
+      );
+      calls.forEach((params) => expect(params['vote_count.gte']).toBeUndefined());
+    });
+
+    it('merges ids across queries without duplicates', async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          page([
+            { id: 1, popularity: 50 },
+            { id: 2, popularity: 40 },
+          ]),
+        )
+        .mockResolvedValueOnce(
+          page([
+            { id: 2, popularity: 30 },
+            { id: 3, popularity: 20 },
+          ]),
+        )
+        .mockResolvedValueOnce(
+          page([
+            { id: 4, popularity: 10 },
+            { id: 1, popularity: 9 },
+          ]),
+        );
+
+      const result = await adapter.getUpcomingMovieIds();
+
+      expect(result).toEqual([1, 2, 3, 4]);
+    });
+
+    it('drops items below the popularity floor and stops paging once it is reached', async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          page(
+            [
+              { id: 1, popularity: 12 },
+              { id: 2, popularity: 1 },
+            ],
+            5,
+          ),
+        )
+        .mockResolvedValue(page([]));
+
+      const result = await adapter.getUpcomingMovieIds(5);
+
+      expect(result).toEqual([1]);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it('treats a missing popularity as below the floor', async () => {
+      mockFetch.mockResolvedValueOnce(page([{ id: 7 }])).mockResolvedValue(page([]));
+
+      const result = await adapter.getUpcomingMovieIds();
+
+      expect(result).toEqual([]);
+    });
+
+    it('caps pagination per query', async () => {
+      mockFetch.mockResolvedValue(page([{ id: 1, popularity: 99 }], 25));
+
+      await adapter.getUpcomingMovieIds();
+
+      expect(mockFetch).toHaveBeenCalledTimes(30);
+    });
+  });
+
   describe('searchMulti', () => {
     it('should search for movies and shows', async () => {
       const mockResults = {

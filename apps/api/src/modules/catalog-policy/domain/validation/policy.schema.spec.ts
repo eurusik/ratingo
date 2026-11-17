@@ -294,6 +294,17 @@ describe('Policy Schema Validation', () => {
       expect(result.contextRequirements?.trending?.minOverviewChars).toBe(60);
     });
 
+    it('should accept requirements for the upcoming context', () => {
+      const policy = createValidPolicy({
+        contextRequirements: { upcoming: { requireReadableTitle: true } },
+        globalRequirements: { appliesTo: ['catalog', 'upcoming'] },
+      });
+
+      const result = validatePolicyOrThrow(policy);
+      expect(result.contextRequirements?.upcoming?.requireReadableTitle).toBe(true);
+      expect(result.globalRequirements?.appliesTo).toContain('upcoming');
+    });
+
     it('should accept policy without contextRequirements', () => {
       const policy = createValidPolicy();
       delete (policy as Record<string, unknown>).contextRequirements;

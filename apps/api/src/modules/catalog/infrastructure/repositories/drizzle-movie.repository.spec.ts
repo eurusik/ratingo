@@ -6,6 +6,8 @@ import { MovieDetailsQuery } from '../queries/movie-details.query';
 import { PopularMoviesQuery } from '../queries/popular-movies.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
 import { MovieListingsQuery } from '../queries/movie-listings.query';
+import { UpcomingMoviesQuery } from '../queries/upcoming-movies.query';
+import { CalendarMoviesQuery } from '../queries/calendar-movies.query';
 import { createDrizzleThenable } from '../__test__/drizzle-mock.utils';
 
 describe('DrizzleMovieRepository', () => {
@@ -15,6 +17,8 @@ describe('DrizzleMovieRepository', () => {
   let trendingMoviesQuery: any;
   let popularMoviesQuery: any;
   let movieListingsQuery: any;
+  let upcomingMoviesQuery: any;
+  let calendarMoviesQuery: any;
   let insertChain: any;
   let selectChain: any;
   let updateChain: any;
@@ -37,6 +41,8 @@ describe('DrizzleMovieRepository', () => {
     trendingMoviesQuery = { execute: jest.fn().mockResolvedValue(['trending']) };
     popularMoviesQuery = { execute: jest.fn().mockResolvedValue(['popular']) };
     movieListingsQuery = { execute: jest.fn().mockResolvedValue(['listings']) };
+    upcomingMoviesQuery = { execute: jest.fn().mockResolvedValue(['upcoming']) };
+    calendarMoviesQuery = { execute: jest.fn().mockResolvedValue({ movies: [] }) };
 
     return Test.createTestingModule({
       providers: [
@@ -46,6 +52,8 @@ describe('DrizzleMovieRepository', () => {
         { provide: TrendingMoviesQuery, useValue: trendingMoviesQuery },
         { provide: PopularMoviesQuery, useValue: popularMoviesQuery },
         { provide: MovieListingsQuery, useValue: movieListingsQuery },
+        { provide: UpcomingMoviesQuery, useValue: upcomingMoviesQuery },
+        { provide: CalendarMoviesQuery, useValue: calendarMoviesQuery },
       ],
     }).compile();
   };
@@ -121,6 +129,10 @@ describe('DrizzleMovieRepository', () => {
           { provide: TrendingMoviesQuery, useValue: trendingMoviesQuery },
           { provide: PopularMoviesQuery, useValue: popularMoviesQuery },
           { provide: MovieListingsQuery, useValue: movieListingsQuery },
+          { provide: UpcomingMoviesQuery, useValue: upcomingMoviesQuery },
+          { provide: CalendarMoviesQuery, useValue: calendarMoviesQuery },
+          { provide: UpcomingMoviesQuery, useValue: upcomingMoviesQuery },
+          { provide: CalendarMoviesQuery, useValue: calendarMoviesQuery },
         ],
       }).compile();
       repository = module.get(DrizzleMovieRepository);
@@ -230,6 +242,28 @@ describe('DrizzleMovieRepository', () => {
         offset: 10,
         daysBack: 14,
       });
+    });
+  });
+
+  describe('upcoming releases', () => {
+    const range = {
+      from: new Date('2026-11-17T00:00:00.000Z'),
+      toExclusive: new Date('2026-11-24T00:00:00.000Z'),
+    };
+
+    it('findUpcoming delegates to UpcomingMoviesQuery', async () => {
+      repository = (await setup()).get(DrizzleMovieRepository);
+      const options = { ...range, limit: 20, offset: 0 };
+
+      await expect(repository.findUpcoming(options)).resolves.toEqual(['upcoming']);
+      expect(upcomingMoviesQuery.execute).toHaveBeenCalledWith(options);
+    });
+
+    it('findReleasesByDateRange delegates to CalendarMoviesQuery', async () => {
+      repository = (await setup()).get(DrizzleMovieRepository);
+
+      await repository.findReleasesByDateRange(range, { perDayLimit: 5 });
+      expect(calendarMoviesQuery.execute).toHaveBeenCalledWith(range, { perDayLimit: 5 });
     });
   });
 });

@@ -56,6 +56,7 @@ export class SnapshotsPipeline {
         cursor,
         snapshotDate,
         region: normalizedRegion,
+        releasedBy: snapshotDate,
       });
 
       if (candidates.length === 0) break;

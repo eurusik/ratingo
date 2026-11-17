@@ -1,6 +1,7 @@
 import { type IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { type MovieStatus } from '@/common/enums/movie-status.enum';
 
+import type { MovieReleaseDateKindType } from '../constants/movie-release.constants';
 import type {
   ImageData,
   VideoData,
@@ -90,6 +91,49 @@ export interface MovieListQueryOptions extends ScoreFilterOptions {
   context?: ListContext;
 }
 
+interface MovieReleaseLabel {
+  releaseDateKind: MovieReleaseDateKindType;
+  releaseCountry: string | null;
+}
+
+export type UpcomingMovie = MovieWithMedia &
+  MovieReleaseLabel & {
+    effectiveReleaseDate: Date;
+  };
+
+export interface ReleaseDateRange {
+  from: Date;
+  toExclusive: Date;
+}
+
+export interface UpcomingMoviesQueryOptions extends ReleaseDateRange {
+  limit: number;
+  offset: number;
+}
+
+export interface CalendarMovie extends MovieReleaseLabel {
+  mediaItemId: string;
+  tmdbId: number;
+  slug: string;
+  title: string;
+  poster: ImageData | null;
+  releaseDate: Date;
+  popularity: number;
+  isSavedForLater: boolean;
+  isReminderSet: boolean;
+}
+
+export interface CalendarMoviesOptions {
+  viewerId?: string;
+  personalized?: boolean;
+  perDayLimit?: number;
+}
+
+export interface CalendarMovieReleases {
+  movies: CalendarMovie[];
+  movieCountByDay: ReadonlyMap<string, number>;
+}
+
 /**
  * Movie details - full information for detail page.
  */
@@ -149,6 +193,13 @@ export interface IMovieRepository {
    * Finds popular movies (historically popular, no freshness gate).
    */
   findPopular(options?: MovieListQueryOptions): Promise<TrendingQueryResult<TrendingMovieItem>>;
+
+  findUpcoming(options: UpcomingMoviesQueryOptions): Promise<WithTotal<UpcomingMovie>>;
+
+  findReleasesByDateRange(
+    range: ReleaseDateRange,
+    options?: CalendarMoviesOptions,
+  ): Promise<CalendarMovieReleases>;
 
   /**
    * Sets isNowPlaying flag for movies.

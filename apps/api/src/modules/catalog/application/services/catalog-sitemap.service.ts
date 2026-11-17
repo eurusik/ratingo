@@ -1,34 +1,30 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { MediaType } from '@/common/enums/media-type.enum';
 import {
   type ISitemapRepository,
   SITEMAP_REPOSITORY,
   type SitemapItem,
 } from '@/modules/catalog/domain/repositories/sitemap.repository.interface';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 
 /**
  * Provides lightweight slug + updatedAt lists for sitemap generation.
- * Returns all non-deleted, fully-ingested movies or shows.
+ * Returns non-deleted, fully-ingested shows and movies that are already out.
  */
 @Injectable()
 export class CatalogSitemapService {
   constructor(
     @Inject(SITEMAP_REPOSITORY)
     private readonly sitemapRepository: ISitemapRepository,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
   ) {}
 
-  /**
-   * Returns slug and updatedAt for all active movies.
-   */
   getMovieSitemapItems(): Promise<SitemapItem[]> {
-    return this.sitemapRepository.findReadyItems(MediaType.MOVIE);
+    return this.sitemapRepository.findReleasedMovies(this.clock.now());
   }
 
-  /**
-   * Returns slug and updatedAt for all active shows.
-   */
   getShowSitemapItems(): Promise<SitemapItem[]> {
-    return this.sitemapRepository.findReadyItems(MediaType.SHOW);
+    return this.sitemapRepository.findReadyShows();
   }
 }

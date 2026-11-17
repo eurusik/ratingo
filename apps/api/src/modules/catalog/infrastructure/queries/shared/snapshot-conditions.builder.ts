@@ -1,5 +1,6 @@
 import { and, eq, gt, isNull, isNotNull, notExists, sql, type SQL } from 'drizzle-orm';
 
+import { excludeUnreleasedMovies } from '@/database/movie-release-conditions';
 import * as schema from '@/database/schema';
 import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
 
@@ -19,6 +20,7 @@ export interface SnapshotConditionsOptions {
   snapshotDate?: Date;
   /** Region of the snapshot used for the "already snapshotted" exclusion. */
   region?: string;
+  releasedBy?: Date;
 }
 
 /**
@@ -46,7 +48,7 @@ export interface SnapshotConditionsOptions {
  * ```
  */
 export function buildSnapshotCandidateConditions(options: SnapshotConditionsOptions): SQL[] {
-  const { policyVersion, cursor, snapshotDate, region } = options;
+  const { policyVersion, cursor, snapshotDate, region, releasedBy } = options;
 
   const conditions: SQL[] = [
     isNull(schema.mediaItems.deletedAt),
@@ -71,6 +73,10 @@ export function buildSnapshotCandidateConditions(options: SnapshotConditionsOpti
         )})`,
       ),
     );
+  }
+
+  if (releasedBy) {
+    conditions.push(excludeUnreleasedMovies(releasedBy));
   }
 
   return conditions;

@@ -8,7 +8,10 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { toError } from '@/common/utils/error.utils';
 import { CatalogEvaluationService } from '@/modules/catalog-policy/application/services/catalog-evaluation.service';
-import { RunStatus } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
+import {
+  isUpcomingMovieContext,
+  RunStatus,
+} from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import {
   CATALOG_EVALUATION_RUN_REPOSITORY,
   type ICatalogEvaluationRunRepository,
@@ -80,6 +83,13 @@ export class EvaluateItemHandler {
           `Evaluation attempt failed for ${mediaItemId} (run ${runId}, context ${context}), will retry: ${err.message}`,
         );
         throw err;
+      }
+
+      if (isUpcomingMovieContext(context)) {
+        this.logger.error(
+          `Failed to evaluate ${mediaItemId} for run ${runId} (context ${context}); not counted in run coverage: ${toError(error).message}`,
+        );
+        return;
       }
 
       await this.recordError(runId, mediaItemId, error);

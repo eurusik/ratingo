@@ -925,6 +925,84 @@ describe('SyncMediaService', () => {
       });
     });
 
+    it('should also evaluate the upcoming context for a movie released in the future', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({
+        ...mockMedia,
+        releaseDate: new Date('2999-01-01'),
+        details: { theatricalReleaseDate: new Date('2999-01-01') },
+      });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(NO_AGGREGATED_RATINGS);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncMovie(550);
+
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledTimes(2);
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.CATALOG,
+      });
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.UPCOMING,
+      });
+    });
+
+    it('should use the digital date for a digital-only future movie', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({
+        ...mockMedia,
+        releaseDate: new Date('2001-01-01'),
+        details: { theatricalReleaseDate: null, digitalReleaseDate: new Date('2999-01-01') },
+      });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(NO_AGGREGATED_RATINGS);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncMovie(550);
+
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.UPCOMING,
+      });
+    });
+
+    it('should keep evaluating the upcoming context on the release day itself', async () => {
+      const clock = (service as unknown as { clock: { now: jest.Mock } }).clock;
+      clock.now.mockReturnValue(new Date('2026-11-17T15:00:00Z'));
+      tmdbAdapter.getMovie.mockResolvedValue({
+        ...mockMedia,
+        releaseDate: new Date('2026-11-17T00:00:00Z'),
+        details: { theatricalReleaseDate: new Date('2026-11-17T00:00:00Z') },
+      });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(NO_AGGREGATED_RATINGS);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncMovie(550);
+
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.UPCOMING,
+      });
+    });
+
+    it('should not evaluate the upcoming context for a show with a future date', async () => {
+      tmdbAdapter.getShow.mockResolvedValue({
+        ...mockMedia,
+        type: MediaType.SHOW,
+        releaseDate: new Date('2999-01-01'),
+      });
+      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(NO_AGGREGATED_RATINGS);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncShow(550);
+
+      expect(catalogEvaluator.evaluateOne).not.toHaveBeenCalledWith(
+        expect.objectContaining({ context: EvaluationContext.UPCOMING }),
+      );
+    });
+
     it('should handle evaluation failure gracefully', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
