@@ -42,9 +42,14 @@ export class TvMazeEnrichmentService {
       const episodes = await this.fetchEpisodes(media);
       if (episodes.length === 0) return media;
 
-      const mergedSeasons = this.mergeSeasons(episodes, media.details?.seasons);
-      const nextAirDate = this.findNextAirDate(episodes);
-      const lastAirDate = this.findLastAirDate(episodes);
+      const { seasons: mergedSeasons, acceptedEpisodes } = this.mergeSeasons(
+        episodes,
+        media.details?.seasons,
+      );
+      if (acceptedEpisodes.length === 0) return media;
+
+      const nextAirDate = this.findNextAirDate(acceptedEpisodes);
+      const lastAirDate = this.findLastAirDate(acceptedEpisodes);
 
       const tvmazeTotalEpisodes = mergedSeasons
         .filter((s) => s.number > 0)
@@ -56,9 +61,7 @@ export class TvMazeEnrichmentService {
           ...media.details,
           seasons: mergedSeasons,
           totalEpisodes:
-            tvmazeTotalEpisodes > (media.details?.totalEpisodes ?? 0)
-              ? tvmazeTotalEpisodes
-              : media.details?.totalEpisodes,
+            tvmazeTotalEpisodes > 0 ? tvmazeTotalEpisodes : media.details?.totalEpisodes,
           // Episodes were fetched successfully, so a missing future episode means "no next
           // episode": write explicit null (pickDefined keeps null, drops undefined) so a stale
           // past nextAirDate gets cleared. A TMDB value is kept only while still in the future.
@@ -92,24 +95,11 @@ export class TvMazeEnrichmentService {
     for (const name of namesToTry) {
       const episodes = await this.episodeSchedule.getEpisodesByShowName(name);
       if (episodes.length === 0) continue;
-
-      // Validate year match to prevent wrong show association
-      const tmdbYear = media.releaseDate?.getFullYear();
-      const firstEpisodeYear = episodes[0]?.airDate?.getFullYear();
-
-      if (tmdbYear && firstEpisodeYear) {
-        const yearDiff = Math.abs(tmdbYear - firstEpisodeYear);
-        if (yearDiff > MAX_YEAR_TOLERANCE) {
-          this.logger.warn(
-            `TVMaze name match rejected: year mismatch tmdb=${tmdbYear} tvmaze=${firstEpisodeYear} for "${name}" (imdbId=${imdbId ?? 'none'})`,
-          );
-          continue; // Try next name
-        }
-      }
+      if (!this.isNameMatchVerified(name, media, episodes)) continue;
 
       // Accepted — log for monitoring
       this.logger.log(
-        `TVMaze name search fallback matched "${name}" (year=${firstEpisodeYear}, imdbId=${imdbId ?? 'none'})`,
+        `TVMaze name search fallback matched "${name}" (year=${this.earliestAirDate(episodes)?.getFullYear()}, imdbId=${imdbId ?? 'none'})`,
       );
       return episodes;
     }
@@ -117,11 +107,34 @@ export class TvMazeEnrichmentService {
     return [];
   }
 
+  private isNameMatchVerified(
+    name: string,
+    media: NormalizedMedia,
+    episodes: ScheduledEpisode[],
+  ): boolean {
+    const tmdbYear = media.releaseDate?.getFullYear();
+    const tvmazeYear = this.earliestAirDate(episodes)?.getFullYear();
+
+    const rejectionReason = this.nameMatchRejectionReason(tmdbYear, tvmazeYear);
+    if (!rejectionReason) return true;
+
+    this.logger.warn(
+      `TVMaze name match rejected: ${rejectionReason} tmdb=${tmdbYear ?? 'none'} tvmaze=${tvmazeYear ?? 'none'} for "${name}" (imdbId=${media.externalIds.imdbId ?? 'none'})`,
+    );
+    return false;
+  }
+
+  private nameMatchRejectionReason(tmdbYear?: number, tvmazeYear?: number): string | null {
+    if (!tmdbYear || !tvmazeYear) return 'cannot verify year';
+    if (this.isYearMismatch(tmdbYear, tvmazeYear)) return 'year mismatch';
+    return null;
+  }
+
   /** Merges TVMaze episodes with TMDB season metadata. */
   private mergeSeasons(
     scheduledEpisodes: ScheduledEpisode[],
     tmdbSeasons?: NormalizedSeason[],
-  ): NormalizedSeason[] {
+  ): { seasons: NormalizedSeason[]; acceptedEpisodes: NormalizedEpisode[] } {
     // Group episodes by season
     const seasonMap = new Map<number, ScheduledEpisode[]>();
     for (const ep of scheduledEpisodes) {
@@ -133,16 +146,17 @@ export class TvMazeEnrichmentService {
 
     // Build TMDB lookup
     const tmdbSeasonMap = new Map<number, NormalizedSeason>();
-    if (tmdbSeasons) {
-      for (const s of tmdbSeasons) {
-        tmdbSeasonMap.set(s.number, s);
-      }
+    for (const s of tmdbSeasons ?? []) {
+      tmdbSeasonMap.set(s.number, s);
     }
 
     const merged: NormalizedSeason[] = [];
+    const usedSeasonNumbers = new Set<number>();
+    const acceptedEpisodes: NormalizedEpisode[] = [];
 
     // Merge TVMaze with TMDB metadata
     for (const [seasonNum, episodes] of seasonMap.entries()) {
+      if (!this.shouldUseTvMazeSeason(seasonNum, episodes, tmdbSeasonMap)) continue;
       const tmdbSeason = tmdbSeasonMap.get(seasonNum);
 
       const cleanEpisodes: NormalizedEpisode[] = episodes.map((e) => {
@@ -150,6 +164,8 @@ export class TvMazeEnrichmentService {
         return rest;
       });
 
+      usedSeasonNumbers.add(seasonNum);
+      acceptedEpisodes.push(...cleanEpisodes);
       merged.push({
         number: seasonNum,
         tmdbId: tmdbSeason?.tmdbId,
@@ -163,15 +179,51 @@ export class TvMazeEnrichmentService {
     }
 
     // Add TMDB-only seasons (e.g. Specials)
-    if (tmdbSeasons) {
-      for (const s of tmdbSeasons) {
-        if (!seasonMap.has(s.number)) {
-          merged.push(s);
-        }
+    for (const s of tmdbSeasons ?? []) {
+      if (!usedSeasonNumbers.has(s.number)) {
+        merged.push(s);
       }
     }
 
-    return merged.sort((a, b) => a.number - b.number);
+    return { seasons: merged.sort((a, b) => a.number - b.number), acceptedEpisodes };
+  }
+
+  private shouldUseTvMazeSeason(
+    seasonNum: number,
+    episodes: ScheduledEpisode[],
+    tmdbSeasonMap: Map<number, NormalizedSeason>,
+  ): boolean {
+    if (tmdbSeasonMap.size === 0) return true;
+
+    const tmdbSeason = tmdbSeasonMap.get(seasonNum);
+    if (!tmdbSeason) {
+      this.logger.warn(
+        `TVMaze season ${seasonNum} skipped: not present in TMDB (${episodes.length} episodes)`,
+      );
+      return false;
+    }
+
+    const tmdbYear = tmdbSeason.airDate?.getFullYear();
+    const tvmazeYear = this.earliestAirDate(episodes)?.getFullYear();
+    if (tmdbYear && tvmazeYear && this.isYearMismatch(tmdbYear, tvmazeYear)) {
+      this.logger.warn(
+        `TVMaze season ${seasonNum} skipped: year mismatch tmdb=${tmdbYear} tvmaze=${tvmazeYear}`,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  private isYearMismatch(tmdbYear: number, tvmazeYear: number): boolean {
+    return Math.abs(tmdbYear - tvmazeYear) > MAX_YEAR_TOLERANCE;
+  }
+
+  private earliestAirDate(episodes: NormalizedEpisode[]): Date | null {
+    return episodes.reduce<Date | null>(
+      (earliest, e) => (e.airDate && (!earliest || e.airDate < earliest) ? e.airDate : earliest),
+      null,
+    );
   }
 
   /** Returns the date only if it is still in the future, otherwise null. */
@@ -180,7 +232,7 @@ export class TvMazeEnrichmentService {
   }
 
   /** Finds next air date from future episodes. */
-  private findNextAirDate(episodes: ScheduledEpisode[]): Date | null {
+  private findNextAirDate(episodes: NormalizedEpisode[]): Date | null {
     const now = new Date();
     const future = episodes.filter((e) => e.airDate && e.airDate > now);
 
@@ -192,7 +244,7 @@ export class TvMazeEnrichmentService {
   }
 
   /** Finds last air date from already-aired episodes. */
-  private findLastAirDate(episodes: ScheduledEpisode[]): Date | null {
+  private findLastAirDate(episodes: NormalizedEpisode[]): Date | null {
     const now = new Date();
     const aired = episodes.filter((e) => e.airDate && e.airDate <= now);
 

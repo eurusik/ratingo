@@ -347,7 +347,7 @@ describe('TvMazeEnrichmentService', () => {
         },
       ]);
 
-      const result = await service.enrich(mockShow);
+      const result = await service.enrich({ ...mockShow, releaseDate: new Date('2024-01-01') });
 
       expect(episodeSchedule.getEpisodesByShowName).toHaveBeenCalledWith('Test Show Original');
       expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
@@ -370,7 +370,7 @@ describe('TvMazeEnrichmentService', () => {
         },
       ]);
 
-      const result = await service.enrich(mockShow);
+      const result = await service.enrich({ ...mockShow, releaseDate: new Date('2024-01-01') });
 
       expect(episodeSchedule.getEpisodesByShowName).toHaveBeenCalledTimes(2);
       expect(episodeSchedule.getEpisodesByShowName).toHaveBeenNthCalledWith(
@@ -386,6 +386,7 @@ describe('TvMazeEnrichmentService', () => {
         ...mockShow,
         originalTitle: null,
         externalIds: { tmdbId: 1000 },
+        releaseDate: new Date('2024-05-01'),
       };
 
       episodeSchedule.getEpisodesByShowName.mockResolvedValue([
@@ -461,7 +462,7 @@ describe('TvMazeEnrichmentService', () => {
       expect(result.details?.seasons?.[0].episodes[0].title).toBe('Episode 1');
     });
 
-    it('should skip year validation when releaseDate missing', async () => {
+    it('should reject name match when releaseDate is missing', async () => {
       const showWithoutReleaseDate = {
         ...mockShow,
         releaseDate: null,
@@ -483,11 +484,10 @@ describe('TvMazeEnrichmentService', () => {
 
       const result = await service.enrich(showWithoutReleaseDate);
 
-      // Should accept without year check
-      expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
+      expect(result).toEqual(showWithoutReleaseDate);
     });
 
-    it('should skip year validation when episode airDate missing', async () => {
+    it('should reject name match when episode airDate is missing', async () => {
       const showFrom2024 = {
         ...mockShow,
         releaseDate: new Date('2024-01-01'),
@@ -509,8 +509,7 @@ describe('TvMazeEnrichmentService', () => {
 
       const result = await service.enrich(showFrom2024);
 
-      // Should accept without year check
-      expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
+      expect(result).toEqual(showFrom2024);
     });
 
     it('should update totalEpisodes when TVMaze finds more episodes than TMDB metadata', async () => {
@@ -581,6 +580,139 @@ describe('TvMazeEnrichmentService', () => {
 
       // Season 0 must not inflate totalEpisodes
       expect(result.details?.totalEpisodes).toBe(12);
+    });
+
+    describe('season sanity checks against TMDB', () => {
+      const episode = (seasonNumber: number, number: number, airDate: string | null) => ({
+        seasonNumber,
+        number,
+        title: `S${seasonNumber}E${number}`,
+        airDate: airDate ? new Date(airDate) : null,
+        runtime: 60,
+        overview: null,
+        stillPath: null,
+        rating: null,
+      });
+
+      const showWithTwoSeasons: NormalizedMedia = {
+        ...mockShow,
+        details: {
+          totalEpisodes: 15,
+          seasons: [
+            {
+              number: 1,
+              name: 'Season 1',
+              tmdbId: 101,
+              airDate: new Date('2022-10-02'),
+              episodeCount: 7,
+              episodes: [],
+            },
+            {
+              number: 2,
+              name: 'Season 2',
+              tmdbId: 102,
+              airDate: new Date('2024-05-12'),
+              episodeCount: 8,
+              episodes: [],
+            },
+          ],
+        },
+      };
+
+      it('should drop a TVMaze season that TMDB does not have (spin-off folded in)', async () => {
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
+          ...Array.from({ length: 7 }, (_, i) => episode(1, i + 1, '2022-10-02')),
+          ...Array.from({ length: 8 }, (_, i) => episode(2, i + 1, '2024-05-12')),
+          ...Array.from({ length: 7 }, (_, i) => episode(3, i + 1, '2099-06-07')),
+        ]);
+
+        const result = await service.enrich(showWithTwoSeasons);
+
+        expect(result.details?.seasons?.map((s) => s.number)).toEqual([1, 2]);
+        expect(result.details?.totalEpisodes).toBe(15);
+        expect(result.details?.nextAirDate).toBeNull();
+      });
+
+      it('should keep the TMDB season when the TVMaze season airs in a different year', async () => {
+        const anthologySeason: NormalizedMedia = {
+          ...mockShow,
+          details: {
+            totalEpisodes: 8,
+            seasons: [
+              {
+                number: 1,
+                name: 'Miniseries',
+                tmdbId: 301,
+                airDate: new Date('2026-09-17'),
+                episodeCount: 8,
+                episodes: [],
+              },
+            ],
+          },
+        };
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue(
+          Array.from({ length: 10 }, (_, i) => episode(1, i + 1, '2022-09-21')),
+        );
+
+        const result = await service.enrich(anthologySeason);
+
+        expect(result).toEqual(anthologySeason);
+      });
+
+      it('should accept a TVMaze season without TMDB air date', async () => {
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue([episode(1, 1, '2020-01-01')]);
+
+        const result = await service.enrich(mockShow);
+
+        expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
+      });
+
+      it('should accept every TVMaze season when TMDB lists no seasons', async () => {
+        const showWithoutSeasons: NormalizedMedia = { ...mockShow, details: {} };
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
+          episode(1, 1, '2020-01-01'),
+          episode(2, 1, '2021-01-01'),
+        ]);
+
+        const result = await service.enrich(showWithoutSeasons);
+
+        expect(result.details?.seasons?.map((s) => s.number)).toEqual([1, 2]);
+        expect(result.details?.totalEpisodes).toBe(2);
+      });
+
+      it('should lower totalEpisodes when TVMaze has fewer episodes than stored', async () => {
+        const overcounted: NormalizedMedia = {
+          ...mockShow,
+          details: {
+            totalEpisodes: 5,
+            seasons: [{ number: 1, name: 'Season 1', tmdbId: 101, episodeCount: 5, episodes: [] }],
+          },
+        };
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue(
+          Array.from({ length: 4 }, (_, i) => episode(1, i + 1, '2026-09-25')),
+        );
+
+        const result = await service.enrich(overcounted);
+
+        expect(result.details?.totalEpisodes).toBe(4);
+        expect(result.details?.seasons?.[0].episodeCount).toBe(4);
+      });
+
+      it('should validate name matches against the earliest air date, not the first item', async () => {
+        const showFrom2026: NormalizedMedia = {
+          ...mockShow,
+          externalIds: { tmdbId: 1000 },
+          releaseDate: new Date('2026-09-17'),
+        };
+        episodeSchedule.getEpisodesByShowName.mockResolvedValue([
+          episode(3, 1, '2026-09-17'),
+          episode(1, 1, '2022-09-21'),
+        ]);
+
+        const result = await service.enrich(showFrom2026);
+
+        expect(result).toEqual(showFrom2026);
+      });
     });
 
     it('should deduplicate when originalTitle equals title', async () => {

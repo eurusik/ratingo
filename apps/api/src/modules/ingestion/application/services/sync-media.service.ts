@@ -311,9 +311,7 @@ export class SyncMediaService {
           ...media.details,
           seasons: updatedSeasons,
           totalEpisodes:
-            totalEpisodesFromSeasons > (media.details?.totalEpisodes ?? 0)
-              ? totalEpisodesFromSeasons
-              : media.details?.totalEpisodes,
+            totalEpisodesFromSeasons > 0 ? totalEpisodesFromSeasons : media.details?.totalEpisodes,
           // TMDB is lower priority than TVMaze for air dates.
           // Existing value (set by TVMaze) takes precedence — only use TMDB if nothing else available.
           lastAirDate: media.details?.lastAirDate ?? lastAirDate,
