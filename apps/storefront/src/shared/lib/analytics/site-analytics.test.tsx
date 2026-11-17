@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { SiteAnalytics, googleTagBootstrap } from './site-analytics';
+import { SiteAnalytics, clarityBootstrap, googleTagBootstrap } from './site-analytics';
 
 const GOOGLE_TAG = 'https://www.googletagmanager.com/gtag/js?id=G-TEST';
 
@@ -11,32 +11,25 @@ jest.mock('next/script', () => ({
 }));
 
 describe('SiteAnalytics', () => {
-  it('renders nothing without analytics ids', () => {
-    const { container } = render(
-      <SiteAnalytics googleMeasurementId={null} clarityProjectId={null} />,
-    );
+  it('renders nothing without a measurement id', () => {
+    const { container } = render(<SiteAnalytics googleMeasurementId={null} />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('loads the Clarity tag for the project id', () => {
-    const { getByTestId, queryByTestId } = render(
-      <SiteAnalytics googleMeasurementId={null} clarityProjectId="abc123" />,
-    );
-
-    expect(getByTestId('microsoft-clarity').textContent).toContain(
-      'https://www.clarity.ms/tag/abc123',
-    );
-    expect(queryByTestId(GOOGLE_TAG)).toBeNull();
-  });
-
-  it('loads Google Analytics alongside Clarity', () => {
-    const { getByTestId } = render(
-      <SiteAnalytics googleMeasurementId="G-TEST" clarityProjectId="abc123" />,
-    );
+  it('loads the Google tag for the measurement id', () => {
+    const { getByTestId } = render(<SiteAnalytics googleMeasurementId="G-TEST" />);
 
     expect(getByTestId(GOOGLE_TAG)).toBeInTheDocument();
-    expect(getByTestId('microsoft-clarity')).toBeInTheDocument();
+  });
+});
+
+describe('clarityBootstrap', () => {
+  it('queues calls on window.clarity and loads the tag for the project id', () => {
+    const script = clarityBootstrap('abc123');
+
+    expect(script).toContain('c[a].q=c[a].q||[]');
+    expect(script).toContain('"https://www.clarity.ms/tag/abc123"');
   });
 });
 
