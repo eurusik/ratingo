@@ -12,7 +12,7 @@ export interface I18nContextValue<Dictionary extends object> {
 
 export interface I18nProviderProps<Dictionary extends object> {
   locale: Locale;
-  dictionary: Dictionary;
+  dictionary: Partial<Dictionary>;
   children: ReactNode;
 }
 
@@ -20,14 +20,11 @@ export function createI18n<Dictionary extends object>() {
   const I18nContext = createContext<I18nContextValue<Dictionary> | null>(null);
 
   function I18nProvider({ locale, dictionary, children }: I18nProviderProps<Dictionary>) {
-    const value = useMemo(
-      () => ({
-        locale,
-        dict: dictionary,
-        t: (path: string) => getByPath(dictionary, path),
-      }),
-      [locale, dictionary],
-    );
+    const outer = useContext(I18nContext);
+    const value = useMemo(() => {
+      const dict = (outer ? { ...outer.dict, ...dictionary } : dictionary) as Dictionary;
+      return { locale, dict, t: (path: string) => getByPath(dict, path) };
+    }, [locale, dictionary, outer]);
 
     return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
   }

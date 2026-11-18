@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { RouteTranslationScope } from '@/app/entrypoint';
 import { OAuthCallbackPage } from '@/pages/auth-callback';
 import { OAUTH_PROVIDERS } from '@/shared/auth';
 
@@ -22,5 +23,9 @@ export default async function OAuthCallbackRoute({ params }: OAuthCallbackRouteP
   const oauthProvider = OAUTH_PROVIDERS.find((candidate) => candidate === provider);
   if (!oauthProvider) notFound();
 
-  return <OAuthCallbackPage provider={oauthProvider} />;
+  return (
+    <RouteTranslationScope namespaces={['oauth']}>
+      <OAuthCallbackPage provider={oauthProvider} />
+    </RouteTranslationScope>
+  );
 }

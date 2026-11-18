@@ -3,7 +3,6 @@ import type { TrendingMedia } from '@/entities/media';
 import type { HomeItem, NewEpisode } from '@/shared/api';
 import {
   buildHomeHero,
-  chooseList,
   anySectionLoads,
   toAiredAt,
   toEpisodeRelease,
@@ -101,31 +100,6 @@ describe('toReleaseRail', () => {
 
     expect(rail.map((media) => media.mediaItemId)).toEqual(['digger', 'clay']);
     expect(rail.every((media) => media.event === undefined)).toBe(true);
-  });
-});
-
-describe('chooseList', () => {
-  const ORDER = ['show', 'movie'] as const;
-  const counts = fc.record({ show: fc.nat({ max: 3 }), movie: fc.nat({ max: 3 }) });
-
-  it('keeps the chosen list while it has titles and otherwise falls back to the first one that does', () => {
-    fc.assert(
-      fc.property(counts, fc.constantFrom(...ORDER), (sizes, chosen) => {
-        const lists = { show: Array(sizes.show).fill(0), movie: Array(sizes.movie).fill(0) };
-        const { available, active } = chooseList(lists, ORDER, chosen);
-
-        expect(available).toEqual(ORDER.filter((key) => sizes[key] > 0));
-        if (sizes[chosen] > 0) expect(active).toBe(chosen);
-        else expect(active).toBe(available[0]);
-      }),
-    );
-  });
-
-  it('has nothing to show when every list is empty', () => {
-    expect(chooseList({ show: [], movie: [] }, ORDER, 'show')).toEqual({
-      available: [],
-      active: undefined,
-    });
   });
 });
 

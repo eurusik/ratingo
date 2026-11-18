@@ -483,7 +483,8 @@
       "save": "Save",
       "unsave": "Remove from saved",
       "open": "Open",
-      "share": "Share"
+      "share": "Share",
+      "hint": "Long press or press Alt + ArrowDown to open menu"
     },
     "toast": {
       "saved": "“{title}” saved",

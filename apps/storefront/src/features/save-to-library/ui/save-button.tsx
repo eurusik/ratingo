@@ -1,64 +1,138 @@
 'use client';
 
-import type { Key } from 'react';
-import { Dropdown, Label, ToggleButton } from '@heroui/react';
-import { Check, Plus } from 'lucide-react';
-import type { MediaSummary } from '@/entities/media';
-import { mediaRoute } from '@/shared/config';
-import { interpolate, useTranslation } from '@/shared/i18n';
-import { useShareLink } from '@/shared/lib';
+import { useId, useRef, useState, type ComponentType, type RefObject } from 'react';
+import { useTranslation } from '@/shared/i18n';
 import { useSaveToggle } from '../model/save-toggle';
+import {
+  SaveIcon,
+  saveButtonClass,
+  saveButtonLabel,
+  type SaveButtonProps,
+} from './save-button-parts';
+import type { SaveMenuButtonProps } from './save-menu-button';
+import { useMenuIntent, type MenuIntent } from './use-menu-intent';
 
-type SaveButtonTone = 'surface' | 'overlay';
+const HEROUI_ICON_TOGGLE_BUTTON =
+  'toggle-button toggle-button--icon-only toggle-button--md toggle-button--default';
 
-const TONE_CLASSES: Record<SaveButtonTone, string> = {
-  surface: '',
-  overlay: 'poster-glass',
+const OPENS_MENU: Record<MenuIntent, boolean> = {
+  hover: false,
+  focus: false,
+  longPress: true,
+  shortcut: true,
 };
 
-const MENU_KEYS = { toggle: 'toggle', open: 'open', share: 'share' } as const;
-
-interface SaveButtonProps {
-  media: Pick<MediaSummary, 'mediaItemId' | 'title' | 'type' | 'slug'>;
-  tone?: SaveButtonTone;
+interface LoadedMenuButton {
+  MenuButton: ComponentType<SaveMenuButtonProps>;
+  handoff: Pick<SaveMenuButtonProps, 'autoFocus' | 'defaultOpen'>;
 }
 
-export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
-  const { dict } = useTranslation();
-  const share = useShareLink();
-  const { saved, toggle } = useSaveToggle(media);
-  const href = mediaRoute(media.type, media.slug);
-  const toggleLabel = saved ? dict.saveToLibrary.menu.unsave : dict.saveToLibrary.menu.save;
+type MenuButtonComponent = LoadedMenuButton['MenuButton'];
 
-  const onMenuAction = (key: Key) => {
-    if (key === MENU_KEYS.toggle) toggle();
-    if (key === MENU_KEYS.share) void share({ href, title: media.title });
+export const preloadSaveMenuButton = () =>
+  import('./save-menu-button').then((module) => module.SaveMenuButton);
+
+export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
+  const [loaded, setLoaded] = useState<LoadedMenuButton | null>(null);
+  const instantButtonRef = useRef<HTMLButtonElement>(null);
+  const pointerGestureRef = useRef(false);
+  const isLoadingMenuButton = useRef(false);
+  const wantsOpenMenu = useRef(false);
+  const deferredMenuButton = useRef<MenuButtonComponent | null>(null);
+
+  if (loaded) {
+    const { MenuButton, handoff } = loaded;
+    return <MenuButton media={media} tone={tone} {...handoff} />;
+  }
+
+  const showMenuButton = (MenuButton: MenuButtonComponent) => {
+    setLoaded({
+      MenuButton,
+      handoff: {
+        autoFocus: document.activeElement === instantButtonRef.current,
+        defaultOpen: wantsOpenMenu.current,
+      },
+    });
+  };
+
+  const showMenuButtonUnlessPressed = (MenuButton: MenuButtonComponent) => {
+    if (pointerGestureRef.current && !wantsOpenMenu.current) {
+      deferredMenuButton.current = MenuButton;
+      return;
+    }
+    showMenuButton(MenuButton);
+  };
+
+  const showDeferredMenuButton = () => {
+    const MenuButton = deferredMenuButton.current;
+    deferredMenuButton.current = null;
+    if (MenuButton) showMenuButton(MenuButton);
+  };
+
+  const swapToMenuButton = (intent: MenuIntent) => {
+    wantsOpenMenu.current ||= OPENS_MENU[intent];
+    if (isLoadingMenuButton.current) return;
+    isLoadingMenuButton.current = true;
+    void preloadSaveMenuButton().then(showMenuButtonUnlessPressed, () => {
+      isLoadingMenuButton.current = false;
+    });
   };
 
   return (
-    <Dropdown trigger="longPress">
-      <ToggleButton
-        isIconOnly
-        isSelected={saved}
-        onPress={toggle}
-        aria-label={interpolate(dict.saveToLibrary.save, { title: media.title })}
-        className={`size-11 shrink-0 touch-manipulation rounded-full select-none [-webkit-touch-callout:none] data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground ${TONE_CLASSES[tone]}`}
-      >
-        {saved ? <Check aria-hidden className="size-5" /> : <Plus aria-hidden className="size-5" />}
-      </ToggleButton>
-      <Dropdown.Popover placement="bottom end">
-        <Dropdown.Menu onAction={onMenuAction}>
-          <Dropdown.Item id={MENU_KEYS.toggle} textValue={toggleLabel}>
-            <Label>{toggleLabel}</Label>
-          </Dropdown.Item>
-          <Dropdown.Item id={MENU_KEYS.open} href={href} textValue={dict.saveToLibrary.menu.open}>
-            <Label>{dict.saveToLibrary.menu.open}</Label>
-          </Dropdown.Item>
-          <Dropdown.Item id={MENU_KEYS.share} textValue={dict.saveToLibrary.menu.share}>
-            <Label>{dict.saveToLibrary.menu.share}</Label>
-          </Dropdown.Item>
-        </Dropdown.Menu>
-      </Dropdown.Popover>
-    </Dropdown>
+    <InstantSaveButton
+      buttonRef={instantButtonRef}
+      media={media}
+      tone={tone}
+      pointerGestureRef={pointerGestureRef}
+      onMenuIntent={swapToMenuButton}
+      onGestureEnd={showDeferredMenuButton}
+    />
+  );
+}
+
+interface InstantSaveButtonProps extends Required<SaveButtonProps> {
+  buttonRef: RefObject<HTMLButtonElement | null>;
+  pointerGestureRef: RefObject<boolean>;
+  onMenuIntent: (intent: MenuIntent) => void;
+  onGestureEnd: () => void;
+}
+
+function InstantSaveButton({
+  buttonRef,
+  media,
+  tone,
+  pointerGestureRef,
+  onMenuIntent,
+  onGestureEnd,
+}: InstantSaveButtonProps) {
+  const { dict } = useTranslation();
+  const hintId = useId();
+  const { saved, toggle } = useSaveToggle(media);
+  const intentHandlers = useMenuIntent({
+    onIntent: onMenuIntent,
+    onActivate: toggle,
+    onGestureEnd,
+    pointerGestureRef,
+  });
+
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      data-slot="toggle-button"
+      data-selected={saved || undefined}
+      aria-pressed={saved}
+      aria-haspopup
+      aria-expanded={false}
+      aria-label={saveButtonLabel(dict, media.title)}
+      aria-describedby={hintId}
+      className={`${HEROUI_ICON_TOGGLE_BUTTON} ${saveButtonClass(tone)}`}
+      {...intentHandlers}
+    >
+      <SaveIcon saved={saved} />
+      <span id={hintId} hidden>
+        {dict.saveToLibrary.menu.hint}
+      </span>
+    </button>
   );
 }

@@ -14,7 +14,10 @@ export function TrackShowsCard() {
   if (isLoading || user) return null;
 
   return (
-    <section aria-labelledby="track-shows" className="px-4 md:px-0">
+    <section
+      aria-labelledby="track-shows"
+      className="below-fold px-4 [--fold-size:12rem] md:px-0 md:[--fold-size:11rem]"
+    >
       <Card className="gap-3 rounded-3xl p-5 md:max-w-2xl md:p-6">
         <Card.Header className="gap-1.5 p-0">
           <h2 id="track-shows" className="text-xl font-extrabold tracking-tight">

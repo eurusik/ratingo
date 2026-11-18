@@ -54,6 +54,27 @@ describe('createI18n', () => {
     expect(result.current.t('greeting.hello')).toBe('Hello');
   });
 
+  it('adds a nested provider dictionary on top of the outer one', () => {
+    const { I18nProvider: ScopedProvider, useTranslation: useScoped } = createI18n<{
+      common: { ok: string };
+      home: { title: string };
+    }>();
+    function Wrapper({ children }: { children: ReactNode }) {
+      return (
+        <ScopedProvider locale="en" dictionary={{ common: { ok: 'OK' } }}>
+          <ScopedProvider locale="en" dictionary={{ home: { title: 'Home' } }}>
+            {children}
+          </ScopedProvider>
+        </ScopedProvider>
+      );
+    }
+
+    const { result } = renderHook(() => useScoped(), { wrapper: Wrapper });
+
+    expect(result.current.dict.common.ok).toBe('OK');
+    expect(result.current.t('home.title')).toBe('Home');
+  });
+
   it('throws outside the provider', () => {
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
