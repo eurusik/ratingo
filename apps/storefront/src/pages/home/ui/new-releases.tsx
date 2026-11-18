@@ -23,7 +23,7 @@ export function NewReleases({ rail }: { rail: RailStart<ReleaseList, TrendingMed
     <section
       aria-labelledby={SECTION_ID}
       aria-busy={!filter.items}
-      className="flex below-fold flex-col gap-2 [--fold-size:28.5rem]"
+      className="flex below-fold fold-bleed flex-col gap-2 [--fold-size:28.5rem] md:[--fold-bleed-inline:var(--page-gutter)]"
     >
       <SectionHeader
         id={SECTION_ID}

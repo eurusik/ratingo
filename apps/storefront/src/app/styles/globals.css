@@ -230,6 +230,13 @@
   contain-intrinsic-size: auto var(--fold-size);
 }
 
+@utility fold-bleed {
+  padding-block: 1rem;
+  margin-block: -1rem;
+  padding-inline: var(--fold-bleed-inline, 0px);
+  margin-inline: calc(var(--fold-bleed-inline, 0px) * -1);
+}
+
 :root:is([data-nav-transition], [data-scroll-restoring]) .below-fold {
   content-visibility: visible;
 }

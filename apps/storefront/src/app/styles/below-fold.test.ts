@@ -24,4 +24,12 @@ describe('below-fold', () => {
 
     expect(override).toContain('content-visibility: visible');
   });
+
+  it('widens the contained box over the shadow and gutter bleed of the rails without moving them', () => {
+    const bleed = ruleBody('@utility fold-bleed');
+
+    expect(bleed).toContain('padding-block: 1rem');
+    expect(bleed).toContain('margin-block: -1rem');
+    expect(bleed).toContain('margin-inline: calc(var(--fold-bleed-inline, 0px) * -1)');
+  });
 });
