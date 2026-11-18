@@ -1,0 +1,17 @@
+name: Idea
+description: Something you'd like Ratingo to have or do better
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: Describe the idea in a few sentences. Why it would help you matters more than how to build it.
+    validations:
+      required: true
+  - type: checkboxes
+    id: build
+    attributes:
+      label: Want to build it?
+      options:
+        - label: I'd like to try making a PR for this

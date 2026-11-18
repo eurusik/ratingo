@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/eurusik/ratingo/discussions
+    about: Ask anything that isn't a bug or a concrete idea
