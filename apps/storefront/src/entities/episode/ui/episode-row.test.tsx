@@ -48,6 +48,12 @@ describe('EpisodeRow', () => {
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
+  it('says the date is not known yet for an episode without an air date', () => {
+    renderRow({ episode: { ...EPISODE, airDate: undefined }, isAired: false });
+
+    expect(screen.getByText(/Дата ще невідома/)).toBeInTheDocument();
+  });
+
   it('becomes a pick button while choosing where the viewer stopped', () => {
     const onPick = jest.fn();
     renderRow({ onWatchedChange: jest.fn(), onPick });

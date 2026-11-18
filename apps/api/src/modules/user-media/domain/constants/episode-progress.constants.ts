@@ -10,6 +10,8 @@ export const EPISODE_PROGRESS_ERRORS = {
   PARTIAL_NOT_FOUND: (requested: number, found: number) =>
     `Some episodes were not found (requested ${requested}, found ${found})`,
   DIFFERENT_SHOWS: 'All episodes must belong to the same show',
+  NOT_AIRED: (id: string) => `Episode ${id} has not aired yet`,
+  BATCH_NOT_AIRED: (count: number) => `${count} episode(s) have not aired yet`,
 } as const;
 
 /**

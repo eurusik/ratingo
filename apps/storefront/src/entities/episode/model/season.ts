@@ -26,12 +26,19 @@ function byNumber(left: { number: number }, right: { number: number }): number {
   return left.number - right.number;
 }
 
+const PLACEHOLDER_TITLES = new Set(['tba', 'tbd']);
+
+function announcedTitle(title: string | null | undefined): string | undefined {
+  const trimmed = title?.trim();
+  return trimmed && !PLACEHOLDER_TITLES.has(trimmed.toLowerCase()) ? trimmed : undefined;
+}
+
 function toEpisode(episode: ShowEpisode, seasonNumber: number): Episode {
   return {
     id: episode.id ?? undefined,
     seasonNumber,
     number: episode.number,
-    title: episode.title?.trim() || undefined,
+    title: announcedTitle(episode.title),
     airDate: episode.airDate ?? undefined,
     runtimeMinutes: positiveNumber(episode.runtime),
     rating: positiveNumber(episode.voteAverage),
@@ -52,10 +59,20 @@ export function toSeasons(seasons: readonly ShowSeason[]): Season[] {
     .sort(byNumber);
 }
 
-export function hasAired(episode: Episode, now: number): boolean {
-  if (!episode.airDate) return true;
+function airTime(episode: Episode): number | undefined {
+  if (!episode.airDate) return undefined;
   const airedAt = Date.parse(episode.airDate);
-  return Number.isNaN(airedAt) || airedAt <= now;
+  return Number.isNaN(airedAt) ? undefined : airedAt;
+}
+
+export function hasAired(episode: Episode, now: number): boolean {
+  const airedAt = airTime(episode);
+  return airedAt !== undefined && airedAt <= now;
+}
+
+function isUpcoming(episode: Episode, now: number): boolean {
+  const airedAt = airTime(episode);
+  return airedAt !== undefined && airedAt > now;
 }
 
 export function isTrackable(episode: Episode, now: number): episode is TrackableEpisode {
@@ -69,7 +86,5 @@ export function trackableEpisodes(seasons: readonly Season[], now: number): Trac
 }
 
 export function nextUpcoming(seasons: readonly Season[], now: number): Episode | undefined {
-  return seasons
-    .flatMap((season) => season.episodes)
-    .find((episode) => episode.airDate !== undefined && !hasAired(episode, now));
+  return seasons.flatMap((season) => season.episodes).find((episode) => isUpcoming(episode, now));
 }

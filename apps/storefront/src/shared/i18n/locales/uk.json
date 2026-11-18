@@ -874,6 +874,7 @@
     "episodeCode": "С{season} · Е{episode}",
     "episodeShort": "Е{episode}",
     "untitled": "Серія {number}",
+    "dateUnknown": "Дата ще невідома",
     "episodeAria": "{code}: {title}",
     "next": "Далі",
     "markSeason": "Весь сезон",

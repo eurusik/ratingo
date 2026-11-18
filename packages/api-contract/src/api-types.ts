@@ -8716,12 +8716,14 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Invalid episode IDs or episodes from different shows */
+            /** @description Invalid episode IDs, episodes from different shows, or EPISODE_NOT_AIRED when any episode has no air date or airs later */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
             /** @description Unauthorized */
             401: {
@@ -8819,7 +8821,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Validation failed or malformed input */
+            /** @description EPISODE_NOT_AIRED when the episode has no air date or airs later */
             400: {
                 headers: {
                     [name: string]: unknown;

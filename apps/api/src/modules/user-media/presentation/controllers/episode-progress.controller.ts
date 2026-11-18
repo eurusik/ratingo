@@ -30,6 +30,8 @@ import { EpisodeProgressService } from '@/modules/user-media/application/episode
 import { BatchEpisodeIdsDto } from '../dto/batch-episode-ids.dto';
 import { ShowProgressDto } from '../dto/episode-progress.dto';
 
+const ERROR_RESPONSE_REF = { $ref: '#/components/schemas/ErrorResponse' };
+
 @ApiTags('Me: Episode Progress')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -40,7 +42,11 @@ export class EpisodeProgressController {
   @ApiBody({ type: BatchEpisodeIdsDto })
   @ApiNoContentResponse({ description: 'Episodes marked as watched' })
   @ApiNotFoundResponse({ description: 'First episode not found' })
-  @ApiBadRequestResponse({ description: 'Invalid episode IDs or episodes from different shows' })
+  @ApiBadRequestResponse({
+    description:
+      'Invalid episode IDs, episodes from different shows, or EPISODE_NOT_AIRED when any episode has no air date or airs later',
+    schema: ERROR_RESPONSE_REF,
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'Batch mark episodes as watched (auth: Bearer)' })
   @Post('episodes/batch/watch')
@@ -70,6 +76,10 @@ export class EpisodeProgressController {
   @ApiParam({ name: 'episodeId', type: String, description: 'Episode UUID' })
   @ApiNoContentResponse({ description: 'Episode marked as watched' })
   @ApiNotFoundResponse({ description: 'Episode not found' })
+  @ApiBadRequestResponse({
+    description: 'EPISODE_NOT_AIRED when the episode has no air date or airs later',
+    schema: ERROR_RESPONSE_REF,
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'Mark episode as watched (auth: Bearer)' })
   @Post('episodes/:episodeId/watch')
