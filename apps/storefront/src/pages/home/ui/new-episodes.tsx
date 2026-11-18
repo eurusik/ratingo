@@ -61,7 +61,10 @@ export function NewEpisodes({ releases }: { releases: EpisodeRelease[] }) {
   if (releases.length === 0) return null;
 
   return (
-    <section aria-labelledby="new-episodes" className="flex flex-col gap-2">
+    <section
+      aria-labelledby="new-episodes"
+      className="flex below-fold fold-bleed flex-col gap-2 [--fold-size:17rem] md:[--fold-size:25rem] md:[--fold-bleed-inline:var(--page-gutter)]"
+    >
       <SectionHeader
         id="new-episodes"
         title={dict.home.newEpisodes}

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getRequestLocale } from '@/app/entrypoint';
+import { RouteTranslationScope, getRequestLocale } from '@/app/entrypoint';
 import { HomePage, homeMetadata } from '@/pages/home';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -7,5 +7,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomeRoute() {
-  return <HomePage locale={await getRequestLocale()} />;
+  return (
+    <RouteTranslationScope namespaces={['home', 'library', 'rail']}>
+      <HomePage locale={await getRequestLocale()} />
+    </RouteTranslationScope>
+  );
 }

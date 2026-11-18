@@ -85,20 +85,6 @@ export function toReleaseRail(items: readonly TrendingMedia[]): TrendingMedia[] 
     .map((media) => ({ ...media, event: undefined }));
 }
 
-export interface ListChoice<K extends string> {
-  available: K[];
-  active?: K;
-}
-
-export function chooseList<K extends string>(
-  lists: Record<K, readonly unknown[]>,
-  order: readonly K[],
-  chosen: K,
-): ListChoice<K> {
-  const available = order.filter((key) => lists[key].length > 0);
-  return { available, active: available.includes(chosen) ? chosen : available[0] };
-}
-
 function toIsoOffset(zone: string | undefined): string {
   if (!zone || zone === 'Z') return 'Z';
   const digits = zone.slice(1).replace(':', '');

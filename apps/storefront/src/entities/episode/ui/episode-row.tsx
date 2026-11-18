@@ -6,7 +6,8 @@ import { Check } from 'lucide-react';
 import { cn } from '@ratingo/web-core/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { formatScore } from '@/shared/lib';
-import { episodeCode, episodeMeta, episodeShortCode, episodeTitle } from '../model/episode-format';
+import { episodeCode, episodeShortCode } from '../model/episode-code';
+import { episodeMeta, episodeTitle } from '../model/episode-format';
 import type { Episode } from '../model/season';
 import { EpisodeStill } from './episode-still';
 

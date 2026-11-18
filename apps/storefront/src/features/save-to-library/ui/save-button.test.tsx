@@ -1,5 +1,6 @@
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { I18nProvider as AriaI18nProvider, toggleButtonVariants } from '@heroui/react';
 import { ToastProvider } from '@heroui/react/toast';
 import { useAuth } from '@ratingo/web-core/auth';
 import { libraryApi } from '@/shared/api';
@@ -16,6 +17,21 @@ const ANDOR = { mediaItemId: 'andor-id', title: 'Андор', type: 'show', slug
 const NOT_SAVED = { isForLater: false, isConsidering: false };
 const FOR_LATER_ONLY = { isForLater: true, isConsidering: false };
 
+class TestPointerEvent extends MouseEvent {
+  pointerId = 1;
+  pointerType = 'mouse';
+  width = 1;
+  height = 1;
+}
+
+class TouchPointerEvent extends TestPointerEvent {
+  pointerType = 'touch';
+}
+
+function stubPointerEvents(PointerEvent: typeof TestPointerEvent) {
+  Object.assign(window, { PointerEvent });
+}
+
 function signIn(isAuthenticated: boolean) {
   jest.mocked(useAuth).mockReturnValue({ isAuthenticated } as ReturnType<typeof useAuth>);
 }
@@ -26,10 +42,12 @@ function renderButton() {
   });
   render(
     <QueryClientProvider client={queryClient}>
-      <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
-        <SaveButton media={ANDOR} />
-        <ToastProvider />
-      </I18nProvider>
+      <AriaI18nProvider locale="uk">
+        <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
+          <SaveButton media={ANDOR} />
+          <ToastProvider />
+        </I18nProvider>
+      </AriaI18nProvider>
     </QueryClientProvider>,
   );
   return screen.getByRole('button', { name: 'Зберегти «Андор»' });
@@ -56,6 +74,8 @@ describe('SaveButton', () => {
   afterEach(() => {
     act(() => closeAuth());
     jest.clearAllMocks();
+    jest.useRealTimers();
+    Reflect.deleteProperty(window, 'PointerEvent');
   });
 
   it('saves at once, shows the check and offers to undo', async () => {
@@ -182,13 +202,7 @@ describe('SaveButton', () => {
   });
 
   it('opens the menu on a long press', async () => {
-    class TouchPointerEvent extends MouseEvent {
-      pointerId = 1;
-      pointerType = 'touch';
-      width = 1;
-      height = 1;
-    }
-    Object.assign(window, { PointerEvent: TouchPointerEvent });
+    stubPointerEvents(TouchPointerEvent);
     jest.useFakeTimers();
     signIn(true);
     const button = renderButton();
@@ -196,11 +210,145 @@ describe('SaveButton', () => {
     fireEvent(button, new TouchPointerEvent('pointerdown', { bubbles: true, button: 0 }));
     act(() => jest.advanceTimersByTime(600));
     fireEvent(button, new TouchPointerEvent('pointerup', { bubbles: true, button: 0 }));
+    fireEvent.click(button);
 
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
     expect(libraryApi.save).not.toHaveBeenCalled();
-    jest.useRealTimers();
-    Reflect.deleteProperty(window, 'PointerEvent');
+  });
+
+  it('swaps in the menu button on mouse hover and keeps the saved state', async () => {
+    signIn(true);
+    server = FOR_LATER_ONLY;
+    const button = renderButton();
+    await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+
+    fireEvent(button, new TestPointerEvent('pointerover', { bubbles: true }));
+
+    await waitFor(() => expect(button).not.toBeInTheDocument());
+    const menuButton = screen.getByRole('button', { name: 'Зберегти «Андор»' });
+    expect(menuButton).toHaveAttribute('aria-pressed', 'true');
+    expect(menuButton).toHaveAccessibleDescription(
+      'Довго або звичайно натисніть комбінацію клавіш Alt і стрілка вниз, щоб відкрити меню',
+    );
+  });
+
+  it('keeps keyboard focus on the button when the menu button takes over', async () => {
+    signIn(true);
+    const button = renderButton();
+
+    act(() => button.focus());
+
+    await waitFor(() => expect(button).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Зберегти «Андор»' })).toHaveFocus(),
+    );
+  });
+
+  it('leaves focus where the user moved it while the menu button was loading', async () => {
+    signIn(true);
+    const button = renderButton();
+    const elsewhere = document.createElement('button');
+    document.body.append(elsewhere);
+
+    try {
+      act(() => {
+        button.focus();
+        elsewhere.focus();
+      });
+
+      await waitFor(() => expect(button).not.toBeInTheDocument());
+      expect(elsewhere).toHaveFocus();
+    } finally {
+      elsewhere.remove();
+    }
+  });
+
+  it('wears the same HeroUI toggle classes as the menu button', () => {
+    signIn(true);
+
+    expect(renderButton().className).toContain(toggleButtonVariants({ isIconOnly: true }));
+  });
+
+  it('describes the long-press menu before the menu button loads', () => {
+    signIn(true);
+
+    expect(renderButton()).toHaveAccessibleDescription(
+      'Довго або звичайно натисніть комбінацію клавіш Alt і стрілка вниз, щоб відкрити меню',
+    );
+  });
+
+  it('saves on a tap when the phone focuses the button after the finger lifts', async () => {
+    stubPointerEvents(TouchPointerEvent);
+    signIn(true);
+    const button = renderButton();
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
+
+    fireEvent.pointerDown(button, { button: 0 });
+    fireEvent.pointerUp(button, { button: 0 });
+    fireEvent.pointerLeave(button);
+    act(() => button.focus());
+    fireEvent.click(button);
+
+    await waitFor(() => expect(libraryApi.save).toHaveBeenCalledWith('andor-id', 'for_later'));
+    expect(button).toBeInTheDocument();
+  });
+
+  it('waits for a press to finish before swapping in the menu button, so the click still saves', async () => {
+    stubPointerEvents(TestPointerEvent);
+    signIn(true);
+    const button = renderButton();
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
+
+    fireEvent(button, new TestPointerEvent('pointerover', { bubbles: true }));
+    fireEvent.pointerDown(button, { button: 0 });
+    await act(() => import('./save-menu-button'));
+    expect(button).toBeInTheDocument();
+    fireEvent.pointerUp(button, { button: 0 });
+    fireEvent.click(button);
+
+    await waitFor(() => expect(libraryApi.save).toHaveBeenCalledWith('andor-id', 'for_later'));
+    await waitFor(() => expect(button).not.toBeInTheDocument());
+  });
+
+  it('leaves the right mouse button to the browser context menu', () => {
+    stubPointerEvents(TestPointerEvent);
+    jest.useFakeTimers();
+    signIn(true);
+    const button = renderButton();
+
+    fireEvent.pointerDown(button, { button: 2 });
+    act(() => jest.advanceTimersByTime(600));
+    const contextMenuAllowed = fireEvent.contextMenu(button);
+
+    expect(contextMenuAllowed).toBe(true);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('still opens the menu when a hover follows the keyboard shortcut', async () => {
+    signIn(true);
+    const button = renderButton();
+
+    fireEvent.keyDown(button, { key: 'ArrowDown', altKey: true });
+    fireEvent(button, new TestPointerEvent('pointerover', { bubbles: true }));
+
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+  });
+
+  it('announces a menu popup the same way before and after the swap', async () => {
+    signIn(true);
+    const button = renderButton();
+    const popupAttributes = (element: HTMLElement) => [
+      element.getAttribute('aria-haspopup'),
+      element.getAttribute('aria-expanded'),
+    ];
+    const instantAttributes = popupAttributes(button);
+
+    fireEvent(button, new TestPointerEvent('pointerover', { bubbles: true }));
+    await waitFor(() => expect(button).not.toBeInTheDocument());
+
+    expect(popupAttributes(screen.getByRole('button', { name: 'Зберегти «Андор»' }))).toEqual(
+      instantAttributes,
+    );
   });
 
   it('never removes a title the server already has when its status has not loaded yet', async () => {
