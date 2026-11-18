@@ -33,6 +33,10 @@ const MOVED_TO_ADMIN_HOST = [
   { source: '/admin/:path*', destination: `${ADMIN_ORIGIN}/admin/:path*`, permanent: false },
 ];
 
+const ICON_CACHE_CONTROL = 'public, max-age=86400, stale-while-revalidate=604800';
+
+const ICON_PATHS = ['/icons/:path*', '/favicon.ico', '/manifest.webmanifest'];
+
 const DYNAMIC_PAGE_REUSE_SECONDS = process.env.NODE_ENV === 'production' ? 300 : 0;
 
 const nextConfig: NextConfig = {
@@ -54,6 +58,10 @@ const nextConfig: NextConfig = {
         source: '/sw.js',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }],
       },
+      ...ICON_PATHS.map((source) => ({
+        source,
+        headers: [{ key: 'Cache-Control', value: ICON_CACHE_CONTROL }],
+      })),
     ];
   },
   async rewrites() {

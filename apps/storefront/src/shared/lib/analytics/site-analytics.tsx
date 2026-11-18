@@ -6,16 +6,11 @@ const CLARITY_TAG_URL = 'https://www.clarity.ms/tag/';
 
 interface SiteAnalyticsProps {
   googleMeasurementId: string | null;
+  clarityProjectId: string | null;
 }
 
-export function clarityBootstrap(projectId: string): string {
-  return [
-    '(function(c,l,a,r,i,t,y){',
-    'c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};',
-    't=l.createElement(r);t.async=1;t.src=i;',
-    'y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);',
-    `})(window,document,"clarity","script",${JSON.stringify(`${CLARITY_TAG_URL}${projectId}`)});`,
-  ].join('\n');
+export function clarityQueueStub(): string {
+  return 'window.clarity=window.clarity||function(){(window.clarity.q=window.clarity.q||[]).push(arguments)};';
 }
 
 export function googleTagBootstrap(measurementId: string): string {
@@ -29,15 +24,21 @@ export function googleTagBootstrap(measurementId: string): string {
   ].join('\n');
 }
 
-function GoogleAnalytics({ measurementId }: { measurementId: string }) {
+export function SiteAnalytics({ googleMeasurementId, clarityProjectId }: SiteAnalyticsProps) {
   return (
-    <Script
-      src={`${GOOGLE_TAG_URL}?id=${encodeURIComponent(measurementId)}`}
-      strategy="afterInteractive"
-    />
+    <>
+      {googleMeasurementId ? (
+        <Script
+          src={`${GOOGLE_TAG_URL}?id=${encodeURIComponent(googleMeasurementId)}`}
+          strategy="afterInteractive"
+        />
+      ) : null}
+      {clarityProjectId ? (
+        <Script
+          src={`${CLARITY_TAG_URL}${encodeURIComponent(clarityProjectId)}`}
+          strategy="lazyOnload"
+        />
+      ) : null}
+    </>
   );
-}
-
-export function SiteAnalytics({ googleMeasurementId }: SiteAnalyticsProps) {
-  return googleMeasurementId ? <GoogleAnalytics measurementId={googleMeasurementId} /> : null;
 }

@@ -1,4 +1,4 @@
-export { SiteAnalytics, clarityBootstrap, googleTagBootstrap } from './site-analytics';
+export { SiteAnalytics, clarityQueueStub, googleTagBootstrap } from './site-analytics';
 export { AnalyticsIdentity, WebVitalsReporter } from './analytics-observers';
 export { ApiErrorReporter } from './api-error-reporter';
 export { NotFoundReporter } from './not-found-reporter';

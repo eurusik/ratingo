@@ -6,6 +6,7 @@ import { configureStorefrontApi } from '@/shared/api';
 import {
   CLARITY_PROJECT_ID,
   GA_MEASUREMENT_ID,
+  IMAGE_HOST_ORIGIN,
   IS_PRODUCTION_SITE,
   SITE_URL,
 } from '@/shared/config';
@@ -17,7 +18,7 @@ import {
   buildOrganizationJsonLd,
   buildRootMetadata,
   buildWebSiteJsonLd,
-  clarityBootstrap,
+  clarityQueueStub,
   googleTagBootstrap,
 } from '@/shared/lib';
 import '@/app/styles/globals.css';
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={locale} suppressHydrationWarning>
       <body>
+        {IMAGE_HOST_ORIGIN ? <link rel="preconnect" href={IMAGE_HOST_ORIGIN} /> : null}
         {GA_MEASUREMENT_ID ? (
           <Script id="google-analytics" strategy="beforeInteractive">
             {googleTagBootstrap(GA_MEASUREMENT_ID)}
@@ -56,7 +58,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         ) : null}
         {CLARITY_PROJECT_ID ? (
           <Script id="microsoft-clarity" strategy="beforeInteractive">
-            {clarityBootstrap(CLARITY_PROJECT_ID)}
+            {clarityQueueStub()}
           </Script>
         ) : null}
         <JsonLd data={buildOrganizationJsonLd(SITE_URL)} />
@@ -64,7 +66,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <AppProviders locale={locale} dictionary={getDictionary(locale)}>
           {children}
         </AppProviders>
-        <SiteAnalytics googleMeasurementId={GA_MEASUREMENT_ID} />
+        <SiteAnalytics
+          googleMeasurementId={GA_MEASUREMENT_ID}
+          clarityProjectId={CLARITY_PROJECT_ID}
+        />
       </body>
     </html>
   );

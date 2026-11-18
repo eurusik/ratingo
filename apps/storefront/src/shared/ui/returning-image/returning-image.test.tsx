@@ -39,4 +39,21 @@ describe('ReturningImage', () => {
     expect(renderImage('https://image.tmdb.org/oldest.jpg')).toHaveAttribute('loading', 'lazy');
     expect(renderImage('https://image.tmdb.org/newer-199.jpg')).toHaveAttribute('loading', 'eager');
   });
+
+  it('lets the browser pick a width from the offered sources', () => {
+    const image = render(
+      <ReturningImage
+        unoptimized
+        src="https://image.tmdb.org/t/p/w342/poster.jpg"
+        srcSet="https://image.tmdb.org/t/p/w154/poster.jpg 154w"
+        sizes="96px"
+        alt=""
+        width={96}
+        height={144}
+      />,
+    ).container.querySelector('img')!;
+
+    expect(image).toHaveAttribute('srcset', 'https://image.tmdb.org/t/p/w154/poster.jpg 154w');
+    expect(image).toHaveAttribute('sizes', '96px');
+  });
 });
