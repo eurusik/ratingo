@@ -24,6 +24,7 @@ So in November 2025 I started building my own. A year and about 1,400 commits la
 - Keep a list of what you watch, plan to watch and gave up on
 - Tick off episodes and get a calendar of the ones coming up
 - Get a reminder when your show has a new episode
+- Bring your history over from Kinobaza, IMDb or TMDB
 - Install it on your phone like an app
 
 ## Inside
