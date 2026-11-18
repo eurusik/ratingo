@@ -136,7 +136,7 @@ describe('useEpisodesTracker', () => {
     await waitFor(() =>
       expect(window.gtag).toHaveBeenCalledWith('event', 'episode_mark', {
         action: 'toggle',
-        source: 'sheet',
+        origin: 'sheet',
       }),
     );
 
@@ -153,7 +153,7 @@ describe('useEpisodesTracker', () => {
     await waitFor(() =>
       expect(window.gtag).toHaveBeenCalledWith('event', 'episode_mark', {
         action: 'reset_season',
-        source: 'sheet',
+        origin: 'sheet',
       }),
     );
 

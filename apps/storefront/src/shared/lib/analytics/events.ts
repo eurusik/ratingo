@@ -5,7 +5,7 @@ export type SignInMethod = 'email' | 'google' | 'facebook';
 export interface AnalyticsEvents {
   search: { results_count: number; filter: string };
   search_no_results: { search_term: string; filter: string };
-  open_title: { source: string; media_type: AnalyticsMediaType; in_catalog: boolean };
+  open_title: { origin: string; media_type: AnalyticsMediaType; in_catalog: boolean };
   title_import: {
     media_type: AnalyticsMediaType;
     result: 'ready' | 'not_found' | 'failed' | 'timeout' | 'unreachable';
@@ -28,7 +28,7 @@ export interface AnalyticsEvents {
     media_type?: AnalyticsMediaType;
   };
   review_interaction: { action: 'vote' | 'reply' | 'report' | 'delete' };
-  episode_mark: { action: string; source: 'sheet' | 'calendar' | 'library' };
+  episode_mark: { action: string; origin: 'sheet' | 'calendar' | 'library' };
   episode_reminder: { enabled: boolean };
   library_action: { action: string };
   browse_change: { category: string; change: 'filter' | 'sort' | 'pool' };
@@ -44,7 +44,7 @@ export interface AnalyticsEvents {
   onboarding: { step: 'shown' | 'start_show' | 'want_movie' | 'search' | 'import' };
   library_import: {
     stage: 'start' | 'success' | 'failed';
-    source?: string;
+    origin?: string;
     items?: number;
   };
   notification_open: { type: string };
