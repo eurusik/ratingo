@@ -22,7 +22,7 @@ export function NewReleases({ rail }: { rail: RailStart<ReleaseList, TrendingMed
   return (
     <section
       aria-labelledby={SECTION_ID}
-      className="flex below-fold flex-col gap-2 [--fold-size:24rem] md:[--fold-size:30rem]"
+      className="flex below-fold flex-col gap-2 [--fold-size:28.5rem]"
     >
       <SectionHeader
         id={SECTION_ID}

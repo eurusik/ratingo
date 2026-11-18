@@ -63,7 +63,7 @@ export function NewEpisodes({ releases }: { releases: EpisodeRelease[] }) {
   return (
     <section
       aria-labelledby="new-episodes"
-      className="flex below-fold flex-col gap-2 [--fold-size:15rem] md:[--fold-size:20rem]"
+      className="flex below-fold flex-col gap-2 [--fold-size:17rem] md:[--fold-size:25rem]"
     >
       <SectionHeader
         id="new-episodes"
