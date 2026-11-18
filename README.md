@@ -24,6 +24,7 @@ So in November 2025 I started building my own. A year and about 1,400 commits la
 - Keep a list of what you watch, plan to watch and gave up on
 - Tick off episodes and get a calendar of the ones coming up
 - Get a reminder when your show has a new episode
+- Bring your history over from Kinobaza, IMDb or TMDB
 - Install it on your phone like an app
 
 ## Inside
@@ -54,11 +55,15 @@ npm run dev:api                       # localhost:3001
 npm run dev:storefront                # localhost:3003
 ```
 
-## Help make it better
+## It's yours too
 
-I'd really appreciate your help making Ratingo better. Spotted a bug, or something feels off or missing? [Open an issue](https://github.com/eurusik/ratingo/issues/new) and describe what happened. I'll pick it up, and once it's fixed I'll reply there so you know.
+Ratingo is open, and I'd love for it not to stay a one-person project.
 
-And if you just like it, a star tells me I'm not the only one.
+- **Use it.** Everything is free at [ratingo.top](https://ratingo.top).
+- **Improve it.** Found a bug or have an idea? [Open an issue](https://github.com/eurusik/ratingo/issues/new/choose) and I'll reply there once it's fixed. Want to write code? Pick a [good first issue](https://github.com/eurusik/ratingo/contribute) and I'll help you get the PR merged. [CONTRIBUTING.md](CONTRIBUTING.md) has the details.
+- **Make it yours.** Fork it, change it, run your own version for another country or language. It's MIT, no need to ask.
+
+Questions that aren't bugs go to [Discussions](https://github.com/eurusik/ratingo/discussions). And if you just like it, a star tells me I'm not the only one.
 
 MIT licensed.
 
