@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import Script from 'next/script';
-import { preconnect } from 'react-dom';
 import { AppProviders, getRequestLocale } from '@/app/entrypoint';
 import { configureStorefrontApi } from '@/shared/api';
 import {
@@ -47,11 +46,11 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const locale = await getRequestLocale();
-  if (IMAGE_HOST_ORIGIN) preconnect(IMAGE_HOST_ORIGIN);
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <body>
+        {IMAGE_HOST_ORIGIN ? <link rel="preconnect" href={IMAGE_HOST_ORIGIN} /> : null}
         {GA_MEASUREMENT_ID ? (
           <Script id="google-analytics" strategy="beforeInteractive">
             {googleTagBootstrap(GA_MEASUREMENT_ID)}
