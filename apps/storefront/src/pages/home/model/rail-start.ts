@@ -7,7 +7,7 @@ export const RELEASE_LISTS: readonly ReleaseList[] = ['nowPlaying', 'newOnDigita
 export const TOP_TEN_LISTS: readonly MediaType[] = ['show', 'movie'];
 
 export interface RailStart<K extends string, T> {
-  available: K[];
+  available: readonly K[];
   first?: { list: K; items: T[] };
 }
 

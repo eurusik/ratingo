@@ -32,4 +32,11 @@ describe('below-fold', () => {
     expect(bleed).toContain('margin-block: -1rem');
     expect(bleed).toContain('margin-inline: calc(var(--fold-bleed-inline, 0px) * -1)');
   });
+
+  it('lets taps through the bleed padding to the section it overlaps', () => {
+    const bleed = ruleBody('@utility fold-bleed');
+
+    expect(bleed).toContain('pointer-events: none');
+    expect(bleed).toMatch(/& > \* \{\s*pointer-events: auto/);
+  });
 });

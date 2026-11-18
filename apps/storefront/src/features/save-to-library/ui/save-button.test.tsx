@@ -24,6 +24,14 @@ class TestPointerEvent extends MouseEvent {
   height = 1;
 }
 
+class TouchPointerEvent extends TestPointerEvent {
+  pointerType = 'touch';
+}
+
+function stubPointerEvents(PointerEvent: typeof TestPointerEvent) {
+  Object.assign(window, { PointerEvent });
+}
+
 function signIn(isAuthenticated: boolean) {
   jest.mocked(useAuth).mockReturnValue({ isAuthenticated } as ReturnType<typeof useAuth>);
 }
@@ -66,6 +74,8 @@ describe('SaveButton', () => {
   afterEach(() => {
     act(() => closeAuth());
     jest.clearAllMocks();
+    jest.useRealTimers();
+    Reflect.deleteProperty(window, 'PointerEvent');
   });
 
   it('saves at once, shows the check and offers to undo', async () => {
@@ -192,10 +202,7 @@ describe('SaveButton', () => {
   });
 
   it('opens the menu on a long press', async () => {
-    class TouchPointerEvent extends TestPointerEvent {
-      pointerType = 'touch';
-    }
-    Object.assign(window, { PointerEvent: TouchPointerEvent });
+    stubPointerEvents(TouchPointerEvent);
     jest.useFakeTimers();
     signIn(true);
     const button = renderButton();
@@ -207,8 +214,6 @@ describe('SaveButton', () => {
 
     expect(await screen.findByRole('menu')).toBeInTheDocument();
     expect(libraryApi.save).not.toHaveBeenCalled();
-    jest.useRealTimers();
-    Reflect.deleteProperty(window, 'PointerEvent');
   });
 
   it('swaps in the menu button on mouse hover and keeps the saved state', async () => {
@@ -245,14 +250,17 @@ describe('SaveButton', () => {
     const elsewhere = document.createElement('button');
     document.body.append(elsewhere);
 
-    act(() => {
-      button.focus();
-      elsewhere.focus();
-    });
+    try {
+      act(() => {
+        button.focus();
+        elsewhere.focus();
+      });
 
-    await waitFor(() => expect(button).not.toBeInTheDocument());
-    expect(elsewhere).toHaveFocus();
-    elsewhere.remove();
+      await waitFor(() => expect(button).not.toBeInTheDocument());
+      expect(elsewhere).toHaveFocus();
+    } finally {
+      elsewhere.remove();
+    }
   });
 
   it('wears the same HeroUI toggle classes as the menu button', () => {
@@ -269,19 +277,78 @@ describe('SaveButton', () => {
     );
   });
 
-  it('handles a tap itself even though the phone focuses the button after lifting the finger', async () => {
+  it('saves on a tap when the phone focuses the button after the finger lifts', async () => {
+    stubPointerEvents(TouchPointerEvent);
     signIn(true);
     const button = renderButton();
     await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
 
-    fireEvent.pointerDown(button, { pointerType: 'touch' });
-    fireEvent.pointerUp(button, { pointerType: 'touch' });
-    fireEvent.pointerLeave(button, { pointerType: 'touch' });
+    fireEvent.pointerDown(button, { button: 0 });
+    fireEvent.pointerUp(button, { button: 0 });
+    fireEvent.pointerLeave(button);
     act(() => button.focus());
     fireEvent.click(button);
 
     await waitFor(() => expect(libraryApi.save).toHaveBeenCalledWith('andor-id', 'for_later'));
     expect(button).toBeInTheDocument();
+  });
+
+  it('waits for a press to finish before swapping in the menu button, so the click still saves', async () => {
+    stubPointerEvents(TestPointerEvent);
+    signIn(true);
+    const button = renderButton();
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
+
+    fireEvent(button, new TestPointerEvent('pointerover', { bubbles: true }));
+    fireEvent.pointerDown(button, { button: 0 });
+    await act(() => import('./save-menu-button'));
+    expect(button).toBeInTheDocument();
+    fireEvent.pointerUp(button, { button: 0 });
+    fireEvent.click(button);
+
+    await waitFor(() => expect(libraryApi.save).toHaveBeenCalledWith('andor-id', 'for_later'));
+    await waitFor(() => expect(button).not.toBeInTheDocument());
+  });
+
+  it('leaves the right mouse button to the browser context menu', () => {
+    stubPointerEvents(TestPointerEvent);
+    jest.useFakeTimers();
+    signIn(true);
+    const button = renderButton();
+
+    fireEvent.pointerDown(button, { button: 2 });
+    act(() => jest.advanceTimersByTime(600));
+    const contextMenuAllowed = fireEvent.contextMenu(button);
+
+    expect(contextMenuAllowed).toBe(true);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('still opens the menu when a hover follows the keyboard shortcut', async () => {
+    signIn(true);
+    const button = renderButton();
+
+    fireEvent.keyDown(button, { key: 'ArrowDown', altKey: true });
+    fireEvent(button, new TestPointerEvent('pointerover', { bubbles: true }));
+
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+  });
+
+  it('announces a menu popup the same way before and after the swap', async () => {
+    signIn(true);
+    const button = renderButton();
+    const popupAttributes = (element: HTMLElement) => [
+      element.getAttribute('aria-haspopup'),
+      element.getAttribute('aria-expanded'),
+    ];
+    const instantAttributes = popupAttributes(button);
+
+    fireEvent(button, new TestPointerEvent('pointerover', { bubbles: true }));
+    await waitFor(() => expect(button).not.toBeInTheDocument());
+
+    expect(popupAttributes(screen.getByRole('button', { name: 'Зберегти «Андор»' }))).toEqual(
+      instantAttributes,
+    );
   });
 
   it('never removes a title the server already has when its status has not loaded yet', async () => {

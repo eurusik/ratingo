@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 import { whenIdleOnFastConnection } from '@/shared/lib';
 import { SectionError, SegmentedFilter } from '@/shared/ui';
 import { activeList, type RailStart } from '../model/rail-start';
@@ -10,14 +10,23 @@ const RAIL_STALE_MS = 60_000;
 
 const lastChosenListBySection = new Map<string, string>();
 
-function railQueryKey(sectionId: string, list: string | undefined) {
-  return ['home-rail', sectionId, list];
+function railQueryOptions<K extends string, T>(
+  sectionId: string,
+  list: K | undefined,
+  loadList: (list: K) => Promise<T[]>,
+) {
+  return queryOptions({
+    queryKey: ['home-rail', sectionId, list],
+    queryFn: list === undefined ? skipToken : () => loadList(list),
+    staleTime: RAIL_STALE_MS,
+  });
 }
 
 export interface RailFilterState<K extends string, T> {
   active?: K;
   available: readonly K[];
   items?: T[];
+  isLoadingList: boolean;
   loadFailed: boolean;
   isRetrying: boolean;
   retry: () => void;
@@ -40,21 +49,14 @@ export function useRailFilter<K extends string, T>(
   const scrollerRef = useRef<HTMLDivElement>(null);
   const active = activeList(available, chosen);
   const listToFetch = active === first?.list ? undefined : active;
-  const fetched = useQuery({
-    queryKey: railQueryKey(sectionId, listToFetch),
-    queryFn: listToFetch === undefined ? skipToken : () => loadList(listToFetch),
-    staleTime: RAIL_STALE_MS,
-  });
+  const fetched = useQuery(railQueryOptions(sectionId, listToFetch, loadList));
   const items = listToFetch === undefined ? first?.items : fetched.data;
+  const loadFailed = listToFetch !== undefined && fetched.isError;
 
   const prefetchOthers = () => {
     for (const list of available) {
       if (list === first?.list) continue;
-      void queryClient.prefetchQuery({
-        queryKey: railQueryKey(sectionId, list),
-        queryFn: () => loadList(list),
-        staleTime: RAIL_STALE_MS,
-      });
+      void queryClient.prefetchQuery(railQueryOptions(sectionId, list, loadList));
     }
   };
   const prefetchOthersOnIdle = useEffectEvent(prefetchOthers);
@@ -71,7 +73,8 @@ export function useRailFilter<K extends string, T>(
     active,
     available,
     items,
-    loadFailed: listToFetch !== undefined && fetched.isError,
+    isLoadingList: items === undefined && !loadFailed,
+    loadFailed,
     isRetrying: fetched.isFetching,
     retry: () => void fetched.refetch(),
     select,

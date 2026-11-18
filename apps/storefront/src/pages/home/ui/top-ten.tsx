@@ -19,7 +19,11 @@ export function TopTen({ rail }: { rail: RailStart<MediaType, TrendingMedia> }) 
   if (!filter.active) return null;
 
   return (
-    <section aria-labelledby={SECTION_ID} aria-busy={!filter.items} className="flex flex-col gap-2">
+    <section
+      aria-labelledby={SECTION_ID}
+      aria-busy={filter.isLoadingList}
+      className="flex flex-col gap-2"
+    >
       <SectionHeader
         id={SECTION_ID}
         title={title}

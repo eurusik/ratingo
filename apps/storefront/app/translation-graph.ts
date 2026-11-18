@@ -9,10 +9,10 @@ const NAMESPACES = new Set(Object.keys(getDictionary()));
 const ROUTE_FILE = /^(page|layout|loading|error|not-found|template|global-error)\.tsx$/;
 const USE_CLIENT = /^['"]use client['"]/m;
 const NAMESPACE_READ = /\bdict\.([a-zA-Z]+)/g;
-const UNTRACKABLE_READ = /\{[^}]*\}\s*=\s*dict\s*;|\bdict\[/;
+const UNTRACKABLE_READ = /\{[^}]*\}\s*=\s*dict\b(?!\.)|\bdict\[|\{\s*dict\s*:\s*[a-z_$]/;
 const SCOPE = /<\w*TranslationScope\b[^>]*?namespaces=\{\[([^\]]*)\]\}/g;
 const QUOTED_NAMESPACE = /'([a-zA-Z]+)'/g;
-const STATIC_EDGE = /^\s*(import|export)\s+(type\s+)?([\s\S]*?)\s+from\s+['"]([^'"]+)['"]/gm;
+const STATIC_EDGE = /^\s*(import|export)\s+(type\s+)?([^;]*?)\s+from\s+['"]([^'"]+)['"]/gm;
 const DYNAMIC_IMPORT = /import\(\s*['"]([^'"]+)['"]\s*\)/g;
 const SIDE_EFFECT_IMPORT = /^\s*import\s+['"]([^'"]+)['"]/gm;
 

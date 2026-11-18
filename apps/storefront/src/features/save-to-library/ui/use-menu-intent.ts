@@ -1,19 +1,48 @@
-import { useEffect, useRef, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  type ButtonHTMLAttributes,
+  type RefObject,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+} from 'react';
 
 const LONG_PRESS_MS = 500;
+const PRIMARY_BUTTON = 0;
 const HOVER_POINTERS = new Set(['mouse', 'pen']);
 const MENU_SHORTCUT_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Enter', ' ']);
 
 export type MenuIntent = 'hover' | 'focus' | 'longPress' | 'shortcut';
 
-interface MenuIntentHandlers {
+interface MenuIntentOptions {
   onIntent: (intent: MenuIntent) => void;
   onActivate: () => void;
+  onGestureEnd: () => void;
+  pointerGestureRef: RefObject<boolean>;
 }
 
-export function useMenuIntent({ onIntent, onActivate }: MenuIntentHandlers) {
+type IntentEventHandlers = Pick<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  | 'onPointerDown'
+  | 'onPointerUp'
+  | 'onPointerCancel'
+  | 'onPointerLeave'
+  | 'onPointerEnter'
+  | 'onFocus'
+  | 'onBlur'
+  | 'onKeyDown'
+  | 'onContextMenu'
+  | 'onClick'
+>;
+
+export function useMenuIntent({
+  onIntent,
+  onActivate,
+  onGestureEnd,
+  pointerGestureRef,
+}: MenuIntentOptions): IntentEventHandlers {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isPointerGesture = useRef(false);
   const longPressFired = useRef(false);
 
   const cancelLongPress = () => {
@@ -24,13 +53,21 @@ export function useMenuIntent({ onIntent, onActivate }: MenuIntentHandlers) {
   useEffect(() => cancelLongPress, []);
 
   const endPointerGesture = () => {
-    isPointerGesture.current = false;
+    pointerGestureRef.current = false;
     cancelLongPress();
+    onGestureEnd();
+  };
+
+  const consumeLongPress = () => {
+    const fired = longPressFired.current;
+    longPressFired.current = false;
+    return fired;
   };
 
   return {
-    onPointerDown: () => {
-      isPointerGesture.current = true;
+    onPointerDown: (event: PointerEvent) => {
+      if (event.button !== PRIMARY_BUTTON) return;
+      pointerGestureRef.current = true;
       longPressFired.current = false;
       cancelLongPress();
       longPressTimer.current = setTimeout(() => {
@@ -46,8 +83,9 @@ export function useMenuIntent({ onIntent, onActivate }: MenuIntentHandlers) {
       if (HOVER_POINTERS.has(event.pointerType)) onIntent('hover');
     },
     onFocus: () => {
-      if (!isPointerGesture.current) onIntent('focus');
+      if (!pointerGestureRef.current) onIntent('focus');
     },
+    onBlur: endPointerGesture,
     onKeyDown: (event: KeyboardEvent) => {
       longPressFired.current = false;
       if (!event.altKey || !MENU_SHORTCUT_KEYS.has(event.key)) return;
@@ -55,12 +93,11 @@ export function useMenuIntent({ onIntent, onActivate }: MenuIntentHandlers) {
       onIntent('shortcut');
     },
     onContextMenu: (event: MouseEvent) => {
-      if (isPointerGesture.current) event.preventDefault();
+      if (pointerGestureRef.current) event.preventDefault();
     },
     onClick: () => {
-      isPointerGesture.current = false;
-      if (longPressFired.current) longPressFired.current = false;
-      else onActivate();
+      if (!consumeLongPress()) onActivate();
+      endPointerGesture();
     },
   };
 }
