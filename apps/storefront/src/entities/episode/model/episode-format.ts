@@ -49,13 +49,18 @@ export function seasonName(season: Season, dict: Dictionary): string {
   return season.name ?? interpolate(dict.episodes.season, { number: season.number });
 }
 
+function upcomingDateLabel(episode: Episode, dict: Dictionary, locale: Locale): string {
+  const date = episode.airDate ? formatAirDate(locale, episode.airDate) : undefined;
+  return date ?? dict.episodes.dateUnknown;
+}
+
 export function episodeMeta(
   episode: Episode,
   isAired: boolean,
   dict: Dictionary,
   locale: Locale,
 ): string {
-  const date = !isAired && episode.airDate ? formatAirDate(locale, episode.airDate) : undefined;
+  const date = isAired ? undefined : upcomingDateLabel(episode, dict, locale);
   const runtime =
     episode.runtimeMinutes === undefined
       ? undefined

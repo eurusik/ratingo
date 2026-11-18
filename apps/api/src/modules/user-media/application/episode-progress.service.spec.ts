@@ -1,9 +1,12 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { ErrorCode } from '@/common/enums/error-code.enum';
+
 import { SavedItemsService } from '@/modules/user-actions/application/saved-items.service';
 import { SubscriptionsService } from '@/modules/user-actions/application/subscriptions.service';
 import { SAVED_ITEM_LIST } from '@/modules/user-actions/domain/entities';
+import { CLOCK_PORT } from '@/modules/shared/clock';
 import { UNSAVE_CONTEXT } from '../domain/constants/episode-progress.constants';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
 import { SHOW_STATUS_PORT, type IShowStatusPort } from '../domain/ports/show-status.port';
@@ -18,6 +21,9 @@ import { UserMediaService } from './user-media.service';
 
 describe('EpisodeProgressService', () => {
   let service: EpisodeProgressService;
+
+  const NOW = new Date('2026-11-17T12:00:00Z');
+  const mockClock = { now: () => NOW };
 
   const mockEpisodeProgressRepo: jest.Mocked<IEpisodeProgressRepository> = {
     markWatched: jest.fn(),
@@ -56,6 +62,13 @@ describe('EpisodeProgressService', () => {
     mediaItemId: 'media-1',
     seasonNumber: 1,
     episodeNumber: 1,
+    airDate: new Date('2024-01-01T00:00:00Z'),
+  };
+
+  const undatedEpisodeInfo: EpisodeMediaInfo = { ...episodeInfo, airDate: null };
+  const upcomingEpisodeInfo: EpisodeMediaInfo = {
+    ...episodeInfo,
+    airDate: new Date('2027-07-09T12:00:00Z'),
   };
 
   beforeEach(async () => {
@@ -67,6 +80,7 @@ describe('EpisodeProgressService', () => {
         { provide: UserMediaService, useValue: mockUserMediaService },
         { provide: SavedItemsService, useValue: mockSavedItemsService },
         { provide: SubscriptionsService, useValue: mockSubscriptionsService },
+        { provide: CLOCK_PORT, useValue: mockClock },
       ],
     }).compile();
 
@@ -75,7 +89,7 @@ describe('EpisodeProgressService', () => {
     mockShowStatusPort.isOngoing.mockResolvedValue(false);
     // Default: all episodes belong to one show and all exist
     mockEpisodeProgressRepo.validateEpisodeBatch.mockImplementation(async (ids: string[]) =>
-      Promise.resolve({ existingCount: ids.length, distinctShowCount: 1 }),
+      Promise.resolve({ existingCount: ids.length, distinctShowCount: 1, unairedCount: 0 }),
     );
   });
 
@@ -86,6 +100,30 @@ describe('EpisodeProgressService', () => {
       await expect(service.markWatched('user-1', 'non-existent')).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it.each([
+      ['has no air date', undatedEpisodeInfo],
+      ['airs in the future', upcomingEpisodeInfo],
+    ])('should reject an episode that %s', async (_label, info) => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(info);
+
+      await expect(service.markWatched('user-1', 'ep-1')).rejects.toMatchObject({
+        code: ErrorCode.EPISODE_NOT_AIRED,
+      });
+      expect(mockEpisodeProgressRepo.markWatched).not.toHaveBeenCalled();
+      expect(mockEpisodeProgressRepo.getShowProgress).not.toHaveBeenCalled();
+      expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+    });
+
+    it('should count progress as of the injected clock', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([]);
+      mockUserMediaService.getState.mockResolvedValue(null);
+
+      await service.markWatched('user-1', 'ep-1');
+
+      expect(mockEpisodeProgressRepo.getShowProgress).toHaveBeenCalledWith('user-1', 'show-1', NOW);
     });
 
     it('should mark episode as watched', async () => {
@@ -438,6 +476,58 @@ describe('EpisodeProgressService', () => {
       );
     });
 
+    it.each([
+      ['has no air date', undatedEpisodeInfo],
+      ['airs in the future', upcomingEpisodeInfo],
+    ])(
+      'should reject a single episode that %s without querying the batch',
+      async (_label, info) => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(info);
+
+        await expect(service.markBatchWatched('user-1', ['ep-1'])).rejects.toMatchObject({
+          code: ErrorCode.EPISODE_NOT_AIRED,
+        });
+        expect(mockEpisodeProgressRepo.validateEpisodeBatch).not.toHaveBeenCalled();
+        expect(mockEpisodeProgressRepo.markManyWatched).not.toHaveBeenCalled();
+        expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+      },
+    );
+
+    it('should validate a multi-episode batch as of the injected clock', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([]);
+      mockUserMediaService.getState.mockResolvedValue(null);
+
+      await service.markBatchWatched('user-1', ['ep-1', 'ep-2']);
+
+      expect(mockEpisodeProgressRepo.validateEpisodeBatch).toHaveBeenCalledWith(
+        ['ep-1', 'ep-2'],
+        NOW,
+      );
+      expect(mockEpisodeProgressRepo.markManyWatched).toHaveBeenCalledWith('user-1', [
+        'ep-1',
+        'ep-2',
+      ]);
+    });
+
+    it('should reject the whole batch when any episode has not aired', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
+        existingCount: 3,
+        distinctShowCount: 1,
+        unairedCount: 2,
+      });
+
+      await expect(
+        service.markBatchWatched('user-1', ['ep-1', 'ep-2', 'ep-3']),
+      ).rejects.toMatchObject({ code: ErrorCode.EPISODE_NOT_AIRED });
+      expect(mockEpisodeProgressRepo.validateEpisodeBatch).toHaveBeenCalledWith(
+        ['ep-1', 'ep-2', 'ep-3'],
+        NOW,
+      );
+      expect(mockEpisodeProgressRepo.markManyWatched).not.toHaveBeenCalled();
+    });
+
     it('should call markManyWatched with all episode IDs', async () => {
       mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
       mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
@@ -530,6 +620,7 @@ describe('EpisodeProgressService', () => {
       mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
         existingCount: 1,
         distinctShowCount: 1,
+        unairedCount: 0,
       });
 
       await expect(service.markBatchWatched('user-1', ['ep-1', 'nonexistent-ep'])).rejects.toThrow(
@@ -544,6 +635,7 @@ describe('EpisodeProgressService', () => {
       mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
         existingCount: 2,
         distinctShowCount: 2,
+        unairedCount: 0,
       });
 
       await expect(service.markBatchWatched('user-1', ['ep-1', 'ep-2'])).rejects.toThrow(
@@ -568,6 +660,16 @@ describe('EpisodeProgressService', () => {
   });
 
   describe('markUnwatched', () => {
+    it('should unmark an episode that has no air date', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(undatedEpisodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([]);
+      mockUserMediaService.getState.mockResolvedValue(null);
+
+      await service.markUnwatched('user-1', 'ep-1');
+
+      expect(mockEpisodeProgressRepo.markUnwatched).toHaveBeenCalledWith('user-1', 'ep-1');
+    });
+
     it('should mark episode as unwatched', async () => {
       mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
       mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
@@ -761,6 +863,24 @@ describe('EpisodeProgressService', () => {
   });
 
   describe('markBatchUnwatched', () => {
+    it('should still unmark episodes that have not aired', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(undatedEpisodeInfo);
+      mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
+        existingCount: 2,
+        distinctShowCount: 1,
+        unairedCount: 2,
+      });
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([]);
+      mockUserMediaService.getState.mockResolvedValue(null);
+
+      await service.markBatchUnwatched('user-1', ['ep-1', 'ep-2']);
+
+      expect(mockEpisodeProgressRepo.markManyUnwatched).toHaveBeenCalledWith('user-1', [
+        'ep-1',
+        'ep-2',
+      ]);
+    });
+
     it('should call markManyUnwatched with all episode IDs', async () => {
       mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
       mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
@@ -792,6 +912,7 @@ describe('EpisodeProgressService', () => {
       mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
         existingCount: 1,
         distinctShowCount: 1,
+        unairedCount: 0,
       });
 
       await expect(
@@ -806,6 +927,7 @@ describe('EpisodeProgressService', () => {
       mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
         existingCount: 2,
         distinctShowCount: 2,
+        unairedCount: 0,
       });
 
       await expect(service.markBatchUnwatched('user-1', ['ep-1', 'ep-2'])).rejects.toThrow(
@@ -872,7 +994,7 @@ describe('EpisodeProgressService', () => {
       const result = await service.getShowProgress('user-1', 'show-1');
 
       expect(result).toEqual(progress);
-      expect(mockEpisodeProgressRepo.getShowProgress).toHaveBeenCalledWith('user-1', 'show-1');
+      expect(mockEpisodeProgressRepo.getShowProgress).toHaveBeenCalledWith('user-1', 'show-1', NOW);
     });
   });
 });

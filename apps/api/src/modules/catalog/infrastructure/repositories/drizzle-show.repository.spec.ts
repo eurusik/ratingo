@@ -144,7 +144,7 @@ describe('DrizzleShowRepository', () => {
     });
 
     describe('pruning stale rows', () => {
-      it('should delete episodes missing from the source season but keep watched ones', async () => {
+      it('should delete episodes missing from the source season but keep watched dated ones', async () => {
         const module: TestingModule = await setup();
         repository = module.get(DrizzleShowRepository);
         const tx = createPruneTx();
@@ -166,7 +166,7 @@ describe('DrizzleShowRepository', () => {
         expect(episodePrune.where.sql).toContain('"episodes"."season_id" = $1');
         expect(episodePrune.where.sql).toContain('"episodes"."number" not in ($2, $3)');
         expect(episodePrune.where.sql).toContain(
-          'not exists (select "episode_id" from "user_episode_progress" where "user_episode_progress"."episode_id" = "episodes"."id")',
+          '("episodes"."air_date" is null or not exists (select "episode_id" from "user_episode_progress" where "user_episode_progress"."episode_id" = "episodes"."id"))',
         );
         expect(episodePrune.where.params).toEqual(['show-id', 1, 2]);
       });
@@ -210,7 +210,7 @@ describe('DrizzleShowRepository', () => {
           '"episodes"."season_id" in (select "id" from "seasons" where ("seasons"."show_id" = $1 and "seasons"."number" not in ($2, $3)))',
         );
         expect(staleEpisodes.sql).toContain(
-          'not exists (select "episode_id" from "user_episode_progress"',
+          '("episodes"."air_date" is null or not exists (select "episode_id" from "user_episode_progress" where "user_episode_progress"."episode_id" = "episodes"."id"))',
         );
         expect(staleEpisodes.params).toEqual(['show-id', 1, 2]);
 

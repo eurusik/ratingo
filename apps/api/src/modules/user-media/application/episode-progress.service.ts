@@ -1,5 +1,15 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
+import { ErrorCode } from '@/common/enums/error-code.enum';
+import { AppException } from '@/common/exceptions/app.exception';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 import { SavedItemsService } from '@/modules/user-actions/public';
 import { SubscriptionsService } from '@/modules/user-actions/public';
 import { SAVED_ITEM_LIST } from '@/modules/user-actions/public';
@@ -9,11 +19,13 @@ import {
   UNSAVE_CONTEXT,
 } from '../domain/constants/episode-progress.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
+import { hasEpisodeAired } from '../domain/policies/episode-airing.policy';
 import { isDisposableImpliedEntry } from '../domain/policies/implied-entry.policy';
 import { SHOW_STATUS_PORT, type IShowStatusPort } from '../domain/ports/show-status.port';
 import {
   EPISODE_PROGRESS_REPOSITORY,
   type IEpisodeProgressRepository,
+  type EpisodeMediaInfo,
   type SeasonProgressInfo,
 } from '../domain/repositories/episode-progress.repository.interface';
 
@@ -31,6 +43,8 @@ export class EpisodeProgressService {
     private readonly userMediaService: UserMediaService,
     private readonly savedItemsService: SavedItemsService,
     private readonly subscriptionsService: SubscriptionsService,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
   ) {}
 
   async markWatched(userId: string, episodeId: string): Promise<void> {
@@ -38,6 +52,10 @@ export class EpisodeProgressService {
 
     if (!episodeInfo) {
       throw new NotFoundException(EPISODE_PROGRESS_ERRORS.NOT_FOUND(episodeId));
+    }
+
+    if (!this.hasAired(episodeInfo, this.clock.now())) {
+      throw this.notAiredError(EPISODE_PROGRESS_ERRORS.NOT_AIRED(episodeId));
     }
 
     await this.episodeProgressRepo.markWatched(userId, episodeId);
@@ -49,7 +67,10 @@ export class EpisodeProgressService {
 
   async markBatchWatched(userId: string, episodeIds: string[]): Promise<void> {
     const uniqueIds = [...new Set(episodeIds)];
-    const { showId, mediaItemId } = await this.validateBatchAndGetInfo(uniqueIds);
+    const { showId, mediaItemId, unairedCount } = await this.validateBatchAndGetInfo(uniqueIds);
+    if (unairedCount > 0) {
+      throw this.notAiredError(EPISODE_PROGRESS_ERRORS.BATCH_NOT_AIRED(unairedCount));
+    }
     await this.episodeProgressRepo.markManyWatched(userId, uniqueIds);
     await this.trySyncState(
       () => this.syncStateAfterWatch(userId, showId, mediaItemId),
@@ -79,7 +100,15 @@ export class EpisodeProgressService {
   }
 
   async getShowProgress(userId: string, showId: string): Promise<SeasonProgressInfo[]> {
-    return this.episodeProgressRepo.getShowProgress(userId, showId);
+    return this.episodeProgressRepo.getShowProgress(userId, showId, this.clock.now());
+  }
+
+  private hasAired(episode: EpisodeMediaInfo, now: Date): boolean {
+    return hasEpisodeAired(episode.airDate?.getTime() ?? null, now.getTime());
+  }
+
+  private notAiredError(message: string): AppException {
+    return new AppException(ErrorCode.EPISODE_NOT_AIRED, message, HttpStatus.BAD_REQUEST);
   }
 
   private async trySyncState(fn: () => Promise<void>, context: string): Promise<void> {
@@ -92,7 +121,7 @@ export class EpisodeProgressService {
 
   private async validateBatchAndGetInfo(
     episodeIds: string[],
-  ): Promise<{ showId: string; mediaItemId: string }> {
+  ): Promise<{ showId: string; mediaItemId: string; unairedCount: number }> {
     if (episodeIds.length === 0) {
       throw new BadRequestException(EPISODE_PROGRESS_ERRORS.EMPTY_BATCH);
     }
@@ -103,22 +132,27 @@ export class EpisodeProgressService {
       throw new NotFoundException(EPISODE_PROGRESS_ERRORS.NOT_FOUND(episodeIds[0]));
     }
 
-    if (episodeIds.length > 1) {
-      const { existingCount, distinctShowCount } =
-        await this.episodeProgressRepo.validateEpisodeBatch(episodeIds);
+    const now = this.clock.now();
+    const info = { showId: episodeInfo.showId, mediaItemId: episodeInfo.mediaItemId };
 
-      if (existingCount !== episodeIds.length) {
-        throw new BadRequestException(
-          EPISODE_PROGRESS_ERRORS.PARTIAL_NOT_FOUND(episodeIds.length, existingCount),
-        );
-      }
-
-      if (distinctShowCount !== 1) {
-        throw new BadRequestException(EPISODE_PROGRESS_ERRORS.DIFFERENT_SHOWS);
-      }
+    if (episodeIds.length === 1) {
+      return { ...info, unairedCount: this.hasAired(episodeInfo, now) ? 0 : 1 };
     }
 
-    return { showId: episodeInfo.showId, mediaItemId: episodeInfo.mediaItemId };
+    const { existingCount, distinctShowCount, unairedCount } =
+      await this.episodeProgressRepo.validateEpisodeBatch(episodeIds, now);
+
+    if (existingCount !== episodeIds.length) {
+      throw new BadRequestException(
+        EPISODE_PROGRESS_ERRORS.PARTIAL_NOT_FOUND(episodeIds.length, existingCount),
+      );
+    }
+
+    if (distinctShowCount !== 1) {
+      throw new BadRequestException(EPISODE_PROGRESS_ERRORS.DIFFERENT_SHOWS);
+    }
+
+    return { ...info, unairedCount };
   }
 
   /**
@@ -130,7 +164,11 @@ export class EpisodeProgressService {
     showId: string,
     mediaItemId: string,
   ): Promise<void> {
-    const seasonProgress = await this.episodeProgressRepo.getShowProgress(userId, showId);
+    const seasonProgress = await this.episodeProgressRepo.getShowProgress(
+      userId,
+      showId,
+      this.clock.now(),
+    );
     const totalEpisodes = seasonProgress.reduce((sum, s) => sum + s.totalCount, 0);
     const watchedEpisodes = seasonProgress.reduce((sum, s) => sum + s.watchedCount, 0);
 
@@ -221,7 +259,11 @@ export class EpisodeProgressService {
     showId: string,
     mediaItemId: string,
   ): Promise<void> {
-    const seasonProgress = await this.episodeProgressRepo.getShowProgress(userId, showId);
+    const seasonProgress = await this.episodeProgressRepo.getShowProgress(
+      userId,
+      showId,
+      this.clock.now(),
+    );
     const watchedEpisodes = seasonProgress.reduce((sum, s) => sum + s.watchedCount, 0);
 
     const currentState = await this.userMediaService.getState(userId, mediaItemId);

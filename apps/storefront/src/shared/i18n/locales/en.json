@@ -874,6 +874,7 @@
     "episodeCode": "S{season} · E{episode}",
     "episodeShort": "E{episode}",
     "untitled": "Episode {number}",
+    "dateUnknown": "Date not announced yet",
     "episodeAria": "{code}: {title}",
     "next": "Next",
     "markSeason": "Whole season",
