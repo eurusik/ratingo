@@ -47,10 +47,10 @@ export function useOpenTitle(onOpened: () => void) {
 
   const open = (title: SearchTitle) => {
     if (title.isInCatalog && title.slug) {
-      track('open_title', { source: 'search', media_type: title.type, in_catalog: true });
+      track('open_title', { origin: 'search', media_type: title.type, in_catalog: true });
       navigate(title, title.slug);
     } else if (title.tmdbId !== undefined) {
-      track('open_title', { source: 'search', media_type: title.type, in_catalog: false });
+      track('open_title', { origin: 'search', media_type: title.type, in_catalog: false });
       startImport(title, title.tmdbId);
     }
   };

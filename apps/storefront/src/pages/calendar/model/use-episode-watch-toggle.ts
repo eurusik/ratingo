@@ -33,7 +33,7 @@ function useOptimisticWatched(episode: CalendarEpisode) {
       (range) => range && withWatched(range, episode.episodeId, isWatched),
     );
     setWatched({ episodeIds: [episode.episodeId], watched: isWatched }, () => {
-      if (isTracked) track('episode_mark', { action: 'toggle', source: 'calendar' });
+      if (isTracked) track('episode_mark', { action: 'toggle', origin: 'calendar' });
     });
   };
 }

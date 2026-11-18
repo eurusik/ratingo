@@ -51,17 +51,17 @@ export function useImportWizard(): ImportWizard {
     if (!source || state.step !== 'preview' || state.isImporting) return;
     if (items.length > MAX_IMPORT_ITEMS) return;
     dispatch({ type: 'importStarted' });
-    track('library_import', { stage: 'start', source, items: items.length });
+    track('library_import', { stage: 'start', origin: source, items: items.length });
     importMedia.mutate(
       { source, items, overwrite: state.overwrite },
       {
         onSuccess: (result) => {
-          track('library_import', { stage: 'success', source, items: items.length });
+          track('library_import', { stage: 'success', origin: source, items: items.length });
           dispatch({ type: 'importSucceeded', result, finishedAt: Date.now() });
         },
         onError: (error) => {
           console.error('Import failed', { source, count: items.length, error });
-          track('library_import', { stage: 'failed', source, items: items.length });
+          track('library_import', { stage: 'failed', origin: source, items: items.length });
           dispatch({ type: 'importFailed' });
           toast.danger(dict.settings.import.preview.failed);
         },

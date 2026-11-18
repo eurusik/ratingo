@@ -128,7 +128,7 @@ export function useEpisodesTracker({
     narrow?: NoticeAction,
   ) => {
     if (change.episodeIds.length === 0) return;
-    setWatched(change, () => track('episode_mark', { action, source: 'sheet' }));
+    setWatched(change, () => track('episode_mark', { action, origin: 'sheet' }));
     notice.show(message, opposite(change), narrow);
   };
 

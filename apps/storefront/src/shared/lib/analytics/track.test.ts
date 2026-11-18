@@ -14,11 +14,11 @@ describe('track', () => {
     window.gtag = gtag;
 
     track('rate_title', { rating: null, media_type: 'movie' });
-    track('open_title', { source: 'search', media_type: 'show', in_catalog: false });
+    track('open_title', { origin: 'search', media_type: 'show', in_catalog: false });
 
     expect(gtag).toHaveBeenNthCalledWith(1, 'event', 'rate_title', { media_type: 'movie' });
     expect(gtag).toHaveBeenNthCalledWith(2, 'event', 'open_title', {
-      source: 'search',
+      origin: 'search',
       media_type: 'show',
       in_catalog: 'false',
     });
