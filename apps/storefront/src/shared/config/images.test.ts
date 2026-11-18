@@ -54,4 +54,39 @@ describe('media image urls', () => {
 
     expect(images.tmdbPosterUrl(other, 'w342')).toBe(other);
   });
+
+  it('offers the proxied TMDB poster in the requested widths', () => {
+    const images = loadImages('https://img.ratingo.top');
+
+    expect(
+      images.tmdbPosterSrcSet('https://img.ratingo.top/tmdb/w342/poster.jpg', ['w154', 'w185']),
+    ).toBe(
+      'https://img.ratingo.top/tmdb/w154/poster.jpg 154w, https://img.ratingo.top/tmdb/w185/poster.jpg 185w',
+    );
+  });
+
+  it('offers direct TMDB posters in the requested widths', () => {
+    const images = loadImages(undefined);
+
+    expect(images.tmdbPosterSrcSet('https://image.tmdb.org/t/p/original/poster.jpg', ['w92'])).toBe(
+      'https://image.tmdb.org/t/p/w92/poster.jpg 92w',
+    );
+  });
+
+  it('offers no widths for posters TMDB does not resize', () => {
+    const images = loadImages('https://img.ratingo.top');
+
+    expect(images.tmdbPosterSrcSet(TVMAZE_STILL, ['w154'])).toBeUndefined();
+  });
+
+  it('offers no widths without a poster', () => {
+    const images = loadImages('https://img.ratingo.top');
+
+    expect(images.tmdbPosterSrcSet(undefined, ['w154'])).toBeUndefined();
+  });
+
+  it('exposes the image host origin for preconnecting', () => {
+    expect(loadImages('https://img.ratingo.top/').IMAGE_HOST_ORIGIN).toBe('https://img.ratingo.top');
+    expect(loadImages(undefined).IMAGE_HOST_ORIGIN).toBe('https://image.tmdb.org');
+  });
 });

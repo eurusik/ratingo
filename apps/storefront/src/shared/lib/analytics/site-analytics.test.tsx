@@ -1,35 +1,41 @@
 import { render } from '@testing-library/react';
-import { SiteAnalytics, clarityBootstrap, googleTagBootstrap } from './site-analytics';
+import { SiteAnalytics, clarityQueueStub, googleTagBootstrap } from './site-analytics';
 
 const GOOGLE_TAG = 'https://www.googletagmanager.com/gtag/js?id=G-TEST';
+const CLARITY_TAG = 'https://www.clarity.ms/tag/abc123';
 
 jest.mock('next/script', () => ({
   __esModule: true,
-  default: ({ id, src, children }: { id?: string; src?: string; children?: string }) => (
-    <script data-testid={id ?? src}>{children}</script>
+  default: ({ src, strategy }: { src?: string; strategy?: string }) => (
+    <script data-testid={src} data-strategy={strategy} />
   ),
 }));
 
 describe('SiteAnalytics', () => {
-  it('renders nothing without a measurement id', () => {
-    const { container } = render(<SiteAnalytics googleMeasurementId={null} />);
+  it('renders nothing without ids', () => {
+    const { container } = render(
+      <SiteAnalytics googleMeasurementId={null} clarityProjectId={null} />,
+    );
 
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('loads the Google tag for the measurement id', () => {
-    const { getByTestId } = render(<SiteAnalytics googleMeasurementId="G-TEST" />);
+  it('loads the Google tag once interactive and Clarity after the page has loaded', () => {
+    const { getByTestId } = render(
+      <SiteAnalytics googleMeasurementId="G-TEST" clarityProjectId="abc123" />,
+    );
 
-    expect(getByTestId(GOOGLE_TAG)).toBeInTheDocument();
+    expect(getByTestId(GOOGLE_TAG)).toHaveAttribute('data-strategy', 'afterInteractive');
+    expect(getByTestId(CLARITY_TAG)).toHaveAttribute('data-strategy', 'lazyOnload');
   });
 });
 
-describe('clarityBootstrap', () => {
-  it('queues calls on window.clarity and loads the tag for the project id', () => {
-    const script = clarityBootstrap('abc123');
+describe('clarityQueueStub', () => {
+  it('queues calls on window.clarity until the tag loads', () => {
+    const script = clarityQueueStub();
 
-    expect(script).toContain('c[a].q=c[a].q||[]');
-    expect(script).toContain('"https://www.clarity.ms/tag/abc123"');
+    expect(script).toContain('window.clarity.q=window.clarity.q||[]');
+    expect(script).not.toContain('clarity.ms');
   });
 });
 

@@ -12,7 +12,13 @@ export {
 } from './env';
 export { BRAND_NAME, BRAND_TAGLINE } from './brand';
 export { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from './breakpoints';
-export { tmdbPosterUrl, tmdbStillUrl } from './images';
+export {
+  IMAGE_HOST_ORIGIN,
+  tmdbPosterSrcSet,
+  tmdbPosterUrl,
+  tmdbStillUrl,
+  type TmdbPosterWidth,
+} from './images';
 export { SERVICE_TIME_ZONE } from './time-zone';
 export {
   HOME_ROUTE,

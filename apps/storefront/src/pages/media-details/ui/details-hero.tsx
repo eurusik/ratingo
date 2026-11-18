@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
-import Image from 'next/image';
 import { MediaTypeIcon } from '@/entities/media';
-import { BROWSE_ROUTE } from '@/shared/config';
+import { BROWSE_ROUTE, DESKTOP_MEDIA_QUERY, tmdbPosterSrcSet } from '@/shared/config';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import { SHARED_ART_TARGET } from '@/shared/lib';
-import { BackdropPicture, DownscaledBlur } from '@/shared/ui';
+import { BackdropPicture, DownscaledBlur, ReturningImage } from '@/shared/ui';
 import { watchingNowLabel } from '../model/details-format';
 import { browseHrefFor } from '../model/details-routes';
 import { DETAILS_REVEAL } from '../model/details-reveal';
@@ -13,6 +12,8 @@ import { ArrivingArt } from './arriving-art';
 import { DetailsBreadcrumbs } from './details-breadcrumbs';
 import { IdentityLine } from './identity-line';
 import { WatchingNowBadge } from './watching-now-badge';
+
+const HERO_POSTER_WIDTHS = ['w185', 'w342', 'w500'] as const;
 
 const DETAILS_BACKDROP_FOCUS = 'object-top md:object-[center_25%]';
 
@@ -64,13 +65,14 @@ function Poster({ view }: { view: MediaDetailsView }) {
       {view.posterUrl ? (
         <>
           <ArrivingArt />
-          <Image
+          <ReturningImage
             src={view.posterUrl}
+            srcSet={tmdbPosterSrcSet(view.posterUrl, HERO_POSTER_WIDTHS)}
             alt=""
             fill
             unoptimized
             loading="eager"
-            sizes="(min-width: 48rem) 240px, 120px"
+            sizes={`${DESKTOP_MEDIA_QUERY} 240px, 120px`}
             className="object-cover"
           />
         </>
