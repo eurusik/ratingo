@@ -24,7 +24,7 @@ import {
   WebVitalsReporter,
   navigateForward,
 } from '@/shared/lib';
-import { I18nProvider, type Dictionary, type Locale } from '@/shared/i18n';
+import type { Locale } from '@/shared/i18n';
 import { DeferredToastRegion } from './deferred-toast-region';
 import { LibrarySizeReporter } from './library-size-reporter';
 
@@ -42,11 +42,10 @@ const NavigationDebugPanel = NAVIGATION_DEBUG_ENABLED
 
 interface AppProvidersProps {
   locale: Locale;
-  dictionary: Dictionary;
   children: ReactNode;
 }
 
-export function AppProviders({ locale, dictionary, children }: AppProvidersProps) {
+export function AppProviders({ locale, children }: AppProvidersProps) {
   const router = useRouter();
 
   return (
@@ -64,16 +63,14 @@ export function AppProviders({ locale, dictionary, children }: AppProvidersProps
               else router.push(href);
             }}
           >
-            <I18nProvider locale={locale} dictionary={dictionary}>
-              <QueryClientProvider client={getQueryClient()}>
-                <AuthProvider>
-                  <AnalyticsIdentity />
-                  <LibrarySizeReporter />
-                  <ApiErrorReporter />
-                  {children}
-                </AuthProvider>
-              </QueryClientProvider>
-            </I18nProvider>
+            <QueryClientProvider client={getQueryClient()}>
+              <AuthProvider>
+                <AnalyticsIdentity />
+                <LibrarySizeReporter />
+                <ApiErrorReporter />
+                {children}
+              </AuthProvider>
+            </QueryClientProvider>
             <DeferredToastRegion placement="bottom" />
           </RouterProvider>
         </AriaI18nProvider>

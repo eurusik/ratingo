@@ -32,19 +32,6 @@ export function episodeTitle(episode: Episode, dict: Dictionary): string {
   return episode.title ?? interpolate(dict.episodes.untitled, { number: episode.number });
 }
 
-type EpisodeNumbers = Pick<Episode, 'seasonNumber' | 'number'>;
-
-export function episodeCode(episode: EpisodeNumbers, dict: Dictionary): string {
-  return interpolate(dict.episodes.episodeCode, {
-    season: episode.seasonNumber,
-    episode: episode.number,
-  });
-}
-
-export function episodeShortCode(episode: EpisodeNumbers, dict: Dictionary): string {
-  return interpolate(dict.episodes.episodeShort, { episode: episode.number });
-}
-
 export function seasonName(season: Season, dict: Dictionary): string {
   return season.name ?? interpolate(dict.episodes.season, { number: season.number });
 }

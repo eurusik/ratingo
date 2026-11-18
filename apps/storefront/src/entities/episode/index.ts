@@ -1,8 +1,7 @@
+export { episodeCode, episodeShortCode } from './model/episode-code';
 export {
   countEpisodes,
-  episodeCode,
   episodeMeta,
-  episodeShortCode,
   episodeTitle,
   formatAirDate,
   seasonName,

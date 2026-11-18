@@ -10,7 +10,7 @@ import {
   IS_PRODUCTION_SITE,
   SITE_URL,
 } from '@/shared/config';
-import { getDictionary } from '@/shared/i18n';
+import { TranslationScope, getDictionary } from '@/shared/i18n';
 import {
   APP_THEME_COLOR,
   JsonLd,
@@ -63,8 +63,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         ) : null}
         <JsonLd data={buildOrganizationJsonLd(SITE_URL)} />
         <JsonLd data={buildWebSiteJsonLd(SITE_URL)} />
-        <AppProviders locale={locale} dictionary={getDictionary(locale)}>
-          {children}
+        <AppProviders locale={locale}>
+          <TranslationScope locale={locale} namespaces={['common']}>
+            {children}
+          </TranslationScope>
         </AppProviders>
         <SiteAnalytics
           googleMeasurementId={GA_MEASUREMENT_ID}

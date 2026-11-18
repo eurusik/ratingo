@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getRequestLocale } from '@/app/entrypoint';
 import { OfflinePage } from '@/pages/offline';
-import { getDictionary } from '@/shared/i18n';
+import { TranslationScope, getDictionary } from '@/shared/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = getDictionary(await getRequestLocale());
@@ -9,6 +9,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: dict.offline.title, robots: { index: false, follow: false } };
 }
 
-export default function OfflineRoute() {
-  return <OfflinePage />;
+export default async function OfflineRoute() {
+  return (
+    <TranslationScope locale={await getRequestLocale()} namespaces={['offline']}>
+      <OfflinePage />
+    </TranslationScope>
+  );
 }
