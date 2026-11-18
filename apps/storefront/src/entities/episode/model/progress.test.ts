@@ -2,6 +2,7 @@ import fc from 'fast-check';
 import type { ShowProgress } from '@/shared/api';
 import {
   applyWatchChange,
+  currentSeason,
   seasonProgress,
   summarizeProgress,
   unwatchedAired,
@@ -129,6 +130,28 @@ describe('summarizeProgress', () => {
   it('has no next episode once everything aired is watched', () => {
     const watched = new Set(['s1e1', 's1e2', 's1e3', 's2e1', 's2e2']);
     expect(summarizeProgress(SEASONS, watched, NOW)).toEqual({ watched: 5, aired: 5 });
+  });
+
+  it('finishes a show whose latest season has only undated or upcoming placeholders', () => {
+    const seasons: Season[] = [
+      ...SEASONS,
+      {
+        number: 3,
+        episodes: [
+          episode(3, 1, '2027-07-09'),
+          { id: 's3e2', seasonNumber: 3, number: 2 },
+          { id: 's3e3', seasonNumber: 3, number: 3 },
+        ],
+      },
+    ];
+    const watched = new Set(['s1e1', 's1e2', 's1e3', 's2e1', 's2e2']);
+
+    const summary = summarizeProgress(seasons, watched, NOW);
+
+    expect(summary).toEqual({ watched: 5, aired: 5 });
+    expect(seasonProgress(seasons[2], watched, NOW)).toEqual({ watched: 0, aired: 0 });
+    expect(currentSeason(seasons, summary, watched, NOW).number).toBe(2);
+    expect(unwatchedThrough(seasons, seasons[2].episodes[1], watched, NOW)).toEqual([]);
   });
 });
 
