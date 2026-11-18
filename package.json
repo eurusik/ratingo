@@ -4,7 +4,6 @@
   "packageManager": "npm@10.8.1",
   "description": "Ratingo — україномовний сервіс, який показує, що зараз дивляться у світі: фільми та серіали, їхні рейтинги, та коли виходять нові серії.",
   "author": "eurusik",
-  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/eurusik/ratingo.git"
