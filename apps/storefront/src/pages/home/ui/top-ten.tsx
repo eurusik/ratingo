@@ -4,19 +4,16 @@ import { TopRankTile, type TrendingMedia } from '@/entities/media';
 import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
+import { loadTrendingList } from '../api/home-rails';
+import type { RailStart } from '../model/home-feed';
+import { TileRowSkeleton } from './home-skeletons';
 import { RailFilterBar, useRailFilter } from './rail-filter';
 
 const SECTION_ID = 'top-ten';
-const TYPES: readonly [MediaType, ...MediaType[]] = ['show', 'movie'];
 
-interface TopTenProps {
-  shows: TrendingMedia[];
-  movies: TrendingMedia[];
-}
-
-export function TopTen({ shows, movies }: TopTenProps) {
+export function TopTen({ rail }: { rail: RailStart<MediaType, TrendingMedia> }) {
   const { dict } = useTranslation();
-  const filter = useRailFilter(SECTION_ID, { show: shows, movie: movies }, TYPES);
+  const filter = useRailFilter(SECTION_ID, rail, loadTrendingList);
   const title = dict.home.topTen;
 
   if (!filter.active) return null;
@@ -35,20 +32,25 @@ export function TopTen({ shows, movies }: TopTenProps) {
         available={filter.available}
         active={filter.active}
         onSelect={filter.select}
+        onIntent={filter.prefetchOthers}
       />
-      <Rail
-        label={title}
-        isOrdered
-        itemSize="tile"
-        scrollerRef={filter.scrollerRef}
-        memoryKey={filter.memoryKey}
-      >
-        {filter.items.map((media, index) => (
-          <RailItem key={media.mediaItemId}>
-            <TopRankTile media={media} rank={index + 1} />
-          </RailItem>
-        ))}
-      </Rail>
+      {filter.items ? (
+        <Rail
+          label={title}
+          isOrdered
+          itemSize="tile"
+          scrollerRef={filter.scrollerRef}
+          memoryKey={filter.memoryKey}
+        >
+          {filter.items.map((media, index) => (
+            <RailItem key={media.mediaItemId}>
+              <TopRankTile media={media} rank={index + 1} />
+            </RailItem>
+          ))}
+        </Rail>
+      ) : (
+        <TileRowSkeleton />
+      )}
     </section>
   );
 }

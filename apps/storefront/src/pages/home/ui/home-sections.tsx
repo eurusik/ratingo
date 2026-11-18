@@ -1,7 +1,14 @@
 import type { TrendingMedia } from '@/entities/media';
 import type { HomeItem } from '@/shared/api';
 import type { TrendingLists } from '../api/load-home-feed';
-import { buildHomeHero, toReleaseRail, type EpisodeRelease, type Loaded } from '../model/home-feed';
+import {
+  RELEASE_LISTS,
+  TOP_TEN_LISTS,
+  buildHomeHero,
+  startRail,
+  type EpisodeRelease,
+  type Loaded,
+} from '../model/home-feed';
 import { HeroBanner } from './hero-banner';
 import { HomeSectionError } from './home-section-error';
 import { NewEpisodes } from './new-episodes';
@@ -27,7 +34,8 @@ export async function TopTenSection({ trending }: { trending: Promise<Loaded<Tre
   const loaded = await trending;
   if (!loaded.ok) return <HomeSectionError section="topTen" />;
 
-  return <TopTen shows={loaded.data.shows} movies={loaded.data.movies} />;
+  const { shows, movies } = loaded.data;
+  return <TopTen rail={startRail({ show: shows, movie: movies }, TOP_TEN_LISTS)} />;
 }
 
 export async function NewEpisodesSection({
@@ -50,12 +58,9 @@ export async function NewReleasesSection({ nowPlaying, newOnDigital }: NewReleas
   const [cinemas, streaming] = await Promise.all([nowPlaying, newOnDigital]);
   if (!cinemas.ok && !streaming.ok) return <HomeSectionError section="newReleases" />;
 
-  return (
-    <NewReleases
-      lists={{
-        nowPlaying: cinemas.ok ? toReleaseRail(cinemas.data) : [],
-        newOnDigital: streaming.ok ? toReleaseRail(streaming.data) : [],
-      }}
-    />
-  );
+  const lists = {
+    nowPlaying: cinemas.ok ? cinemas.data : [],
+    newOnDigital: streaming.ok ? streaming.data : [],
+  };
+  return <NewReleases rail={startRail(lists, RELEASE_LISTS)} />;
 }

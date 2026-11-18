@@ -1,5 +1,5 @@
 import { fromHomeItem, type TrendingMedia } from '@/entities/media';
-import type { HomeItem, NewEpisode } from '@/shared/api';
+import type { HomeItem, MediaType, NewEpisode } from '@/shared/api';
 import { tmdbPosterUrl } from '@/shared/config';
 
 export const TOP_TEN_COUNT = 10;
@@ -85,18 +85,34 @@ export function toReleaseRail(items: readonly TrendingMedia[]): TrendingMedia[] 
     .map((media) => ({ ...media, event: undefined }));
 }
 
-export interface ListChoice<K extends string> {
+export type ReleaseList = 'nowPlaying' | 'newOnDigital';
+
+export const RELEASE_LISTS: readonly [ReleaseList, ...ReleaseList[]] = [
+  'nowPlaying',
+  'newOnDigital',
+];
+
+export const TOP_TEN_LISTS: readonly [MediaType, ...MediaType[]] = ['show', 'movie'];
+
+export interface RailStart<K extends string, T> {
   available: K[];
-  active?: K;
+  first?: { list: K; items: T[] };
 }
 
-export function chooseList<K extends string>(
-  lists: Record<K, readonly unknown[]>,
+export function startRail<K extends string, T>(
+  lists: Record<K, T[]>,
   order: readonly K[],
-  chosen: K,
-): ListChoice<K> {
-  const available = order.filter((key) => lists[key].length > 0);
-  return { available, active: available.includes(chosen) ? chosen : available[0] };
+): RailStart<K, T> {
+  const available = order.filter((list) => lists[list].length > 0);
+  const [firstList] = available;
+  return {
+    available,
+    first: firstList === undefined ? undefined : { list: firstList, items: lists[firstList] },
+  };
+}
+
+export function activeList<K extends string>(available: readonly K[], chosen?: K): K | undefined {
+  return chosen !== undefined && available.includes(chosen) ? chosen : available[0];
 }
 
 function toIsoOffset(zone: string | undefined): string {

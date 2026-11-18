@@ -87,15 +87,31 @@ export function HeroSkeleton() {
   );
 }
 
+export function CardRowSkeleton() {
+  return (
+    <RailSkeletonRow
+      count={CARD_PLACEHOLDERS}
+      Placeholder={TrendingCardSkeleton}
+      itemClassName="md:w-[calc((100%-1.5rem)/3)]"
+    />
+  );
+}
+
+export function TileRowSkeleton() {
+  return (
+    <RailSkeletonRow
+      count={TILE_PLACEHOLDERS}
+      Placeholder={TopRankTileSkeleton}
+      itemClassName="md:w-[calc((100%-5.25rem)/8)]"
+    />
+  );
+}
+
 export function CardRailSkeleton() {
   return (
     <div aria-hidden className="flex flex-col gap-2">
       <HeaderSkeleton />
-      <RailSkeletonRow
-        count={CARD_PLACEHOLDERS}
-        Placeholder={TrendingCardSkeleton}
-        itemClassName="md:w-[calc((100%-1.5rem)/3)]"
-      />
+      <CardRowSkeleton />
     </div>
   );
 }
@@ -104,11 +120,7 @@ export function TileRailSkeleton() {
   return (
     <div aria-hidden className="flex flex-col gap-2">
       <HeaderSkeleton />
-      <RailSkeletonRow
-        count={TILE_PLACEHOLDERS}
-        Placeholder={TopRankTileSkeleton}
-        itemClassName="md:w-[calc((100%-5.25rem)/8)]"
-      />
+      <TileRowSkeleton />
     </div>
   );
 }

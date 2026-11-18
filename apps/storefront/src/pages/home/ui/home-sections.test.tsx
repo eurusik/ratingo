@@ -6,7 +6,8 @@ import type { TrendingMedia } from '@/entities/media';
 import { openSearch } from '@/features/search';
 import { openAuth } from '@/shared/auth';
 import { I18nProvider, getDictionary, type Locale } from '@/shared/i18n';
-import type { EpisodeRelease } from '../model/home-feed';
+import { loadReleaseList, loadTrendingList } from '../api/home-rails';
+import { RELEASE_LISTS, TOP_TEN_LISTS, startRail, type EpisodeRelease } from '../model/home-feed';
 import { HeroBanner } from './hero-banner';
 import { HomeOutage } from './home-outage';
 import { HomeSectionError } from './home-section-error';
@@ -25,6 +26,7 @@ jest.mock('@/shared/auth', () => ({
   ...jest.requireActual('@/shared/auth'),
   openAuth: jest.fn(),
 }));
+jest.mock('../api/home-rails', () => ({ loadTrendingList: jest.fn(), loadReleaseList: jest.fn() }));
 jest.mock('@/shared/api', () => ({
   libraryApi: { getSaveStatuses: jest.fn(), getRatings: jest.fn() },
 }));
@@ -38,6 +40,14 @@ function media(id: string, type: TrendingMedia['type'], extra?: Partial<Trending
 const ANDOR = media('Андор', 'show', { verdict: 'good', watchingNow: 340 });
 const DUNE = media('Дюна', 'movie');
 const BARBIE = media('Барбі', 'movie');
+
+function topTen(shows: TrendingMedia[], movies: TrendingMedia[]) {
+  return startRail({ show: shows, movie: movies }, TOP_TEN_LISTS);
+}
+
+function newReleases(nowPlaying: TrendingMedia[], newOnDigital: TrendingMedia[]) {
+  return startRail({ nowPlaying, newOnDigital }, RELEASE_LISTS);
+}
 
 function renderIn(ui: ReactNode, locale: Locale = 'uk') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -59,8 +69,9 @@ beforeEach(() => {
 });
 
 describe('TopTen', () => {
-  it('ranks shows first and switches to movies', () => {
-    renderIn(<TopTen shows={[ANDOR]} movies={[DUNE, BARBIE]} />);
+  it('ranks shows first and fetches movies when switched to them', async () => {
+    jest.mocked(loadTrendingList).mockResolvedValue([DUNE, BARBIE]);
+    renderIn(<TopTen rail={topTen([ANDOR], [DUNE, BARBIE])} />);
 
     const shows = screen.getByRole('list', { name: uk.home.topTen });
     expect(within(shows).getAllByRole('listitem')).toHaveLength(1);
@@ -68,7 +79,8 @@ describe('TopTen', () => {
 
     fireEvent.click(screen.getByRole('radio', { name: uk.home.typeFilter.movie }));
 
-    const movies = screen.getByRole('list', { name: uk.home.topTen });
+    const movies = await screen.findByRole('list', { name: uk.home.topTen });
+    expect(loadTrendingList).toHaveBeenCalledWith('movie');
     expect(movies.tagName).toBe('OL');
     expect(within(movies).getAllByRole('listitem')).toHaveLength(2);
     expect(within(movies).getByRole('link', { name: /Дюна/ })).toHaveAttribute(
@@ -78,43 +90,65 @@ describe('TopTen', () => {
   });
 
   it('shows the only type that loaded, without a filter', () => {
-    renderIn(<TopTen shows={[]} movies={[DUNE]} />);
+    renderIn(<TopTen rail={topTen([], [DUNE])} />);
 
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Дюна/ })).toBeInTheDocument();
   });
 
   it('renders nothing when nothing is ranked', () => {
-    const { container } = renderIn(<TopTen shows={[]} movies={[]} />);
+    const { container } = renderIn(<TopTen rail={topTen([], [])} />);
 
     expect(container).toBeEmptyDOMElement();
   });
 });
 
 describe('NewReleases', () => {
-  it('opens on cinemas with a save control and switches to streaming', () => {
-    renderIn(<NewReleases lists={{ nowPlaying: [DUNE], newOnDigital: [BARBIE] }} />);
+  it('opens on cinemas with a save control and switches to streaming', async () => {
+    jest.mocked(loadReleaseList).mockResolvedValue([BARBIE]);
+    renderIn(<NewReleases rail={newReleases([DUNE], [BARBIE])} />);
 
     const cinemas = screen.getByRole('list', { name: uk.home.newReleases });
     expect(within(cinemas).getByRole('button', { name: 'Зберегти «Дюна»' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('radio', { name: uk.home.releaseFilter.newOnDigital }));
 
-    const streaming = screen.getByRole('list', { name: uk.home.newReleases });
+    const streaming = await screen.findByRole('list', { name: uk.home.newReleases });
     expect(within(streaming).getByRole('link', { name: 'Барбі' })).toBeInTheDocument();
     expect(within(streaming).queryByRole('link', { name: 'Дюна' })).not.toBeInTheDocument();
   });
 
+  it('shows a skeleton row, not an empty rail, while the other list loads', async () => {
+    let finish: (items: TrendingMedia[]) => void = () => {};
+    jest.mocked(loadReleaseList).mockReturnValue(new Promise((resolve) => (finish = resolve)));
+    renderIn(<NewReleases rail={newReleases([DUNE], [BARBIE])} />);
+
+    fireEvent.click(screen.getByRole('radio', { name: uk.home.releaseFilter.newOnDigital }));
+
+    expect(screen.queryByRole('list', { name: uk.home.newReleases })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: uk.home.newReleases })).toBeInTheDocument();
+    finish([BARBIE]);
+    expect(await screen.findByRole('link', { name: 'Барбі' })).toBeInTheDocument();
+  });
+
+  it('starts loading the other list as soon as the filter is touched', () => {
+    jest.mocked(loadReleaseList).mockResolvedValue([BARBIE]);
+    renderIn(<NewReleases rail={newReleases([DUNE], [BARBIE])} />);
+
+    fireEvent.pointerDown(screen.getByRole('radio', { name: uk.home.releaseFilter.newOnDigital }));
+
+    expect(loadReleaseList).toHaveBeenCalledWith('newOnDigital');
+  });
+
   it('falls back to the list that still has titles after a refresh', () => {
-    const { rerender } = renderIn(
-      <NewReleases lists={{ nowPlaying: [DUNE], newOnDigital: [BARBIE] }} />,
-    );
+    jest.mocked(loadReleaseList).mockResolvedValue([BARBIE]);
+    const { rerender } = renderIn(<NewReleases rail={newReleases([DUNE], [BARBIE])} />);
     fireEvent.click(screen.getByRole('radio', { name: uk.home.releaseFilter.newOnDigital }));
 
     rerender(
       <QueryClientProvider client={new QueryClient()}>
         <I18nProvider locale="uk" dictionary={uk}>
-          <NewReleases lists={{ nowPlaying: [DUNE], newOnDigital: [] }} />
+          <NewReleases rail={newReleases([DUNE], [])} />
         </I18nProvider>
       </QueryClientProvider>,
     );
@@ -169,6 +203,31 @@ describe('NewEpisodes', () => {
     expect(link).toHaveTextContent('С26 · Е6');
     expect(link).toHaveTextContent('Сезон 26, серія 6');
     expect(within(link).getByText(/13 лист/)).toHaveAttribute('dateTime', release.airedAt);
+  });
+});
+
+describe('below-the-fold sections', () => {
+  it('let the browser skip rendering new episodes, new releases and the sign-in card off screen', () => {
+    const release: EpisodeRelease = {
+      mediaItemId: 'law',
+      slug: 'law',
+      showTitle: 'Закон і порядок',
+      episodeTitle: 'Do No Harm',
+      season: 26,
+      episode: 6,
+      airedAt: '2026-11-12T23:30:00Z',
+    };
+    renderIn(
+      <>
+        <NewEpisodes releases={[release]} />
+        <NewReleases rail={newReleases([DUNE], [])} />
+        <TrackShowsCard />
+      </>,
+    );
+
+    for (const name of [uk.home.newEpisodes, uk.home.newReleases, uk.home.track.title]) {
+      expect(screen.getByRole('region', { name })).toHaveClass('below-fold');
+    }
   });
 });
 
