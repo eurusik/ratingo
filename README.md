@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1><img src="apps/storefront/public/icons/icon-192.png" width="40" height="40" align="middle" alt="" />&nbsp;Ratingo</h1>
+<h1><img src="apps/storefront/public/icons/icon-192.png" width="40" height="40" align="absmiddle" alt="" />&nbsp;Ratingo</h1>
 
 What to watch tonight, and when the next episode is out. In Ukrainian.
 
