@@ -1,64 +1,113 @@
 'use client';
 
-import type { Key } from 'react';
-import { Dropdown, Label, ToggleButton } from '@heroui/react';
+import {
+  useId,
+  useRef,
+  useState,
+  type ComponentType,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react';
+import { toggleButtonVariants } from '@heroui/react';
 import { Check, Plus } from 'lucide-react';
-import type { MediaSummary } from '@/entities/media';
-import { mediaRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { useShareLink } from '@/shared/lib';
 import { useSaveToggle } from '../model/save-toggle';
+import { SAVE_BUTTON_CLASS, TONE_CLASSES, type SaveButtonProps } from './save-button-look';
+import type { SaveMenuButtonProps } from './save-menu-button';
+import { useLongPress } from './use-long-press';
 
-type SaveButtonTone = 'surface' | 'overlay';
+const MENU_SHORTCUT_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Enter', ' ']);
+const LOOK = toggleButtonVariants({ isIconOnly: true });
 
-const TONE_CLASSES: Record<SaveButtonTone, string> = {
-  surface: '',
-  overlay: 'poster-glass',
-};
+type Handoff = Pick<SaveMenuButtonProps, 'autoFocus' | 'defaultOpen'>;
 
-const MENU_KEYS = { toggle: 'toggle', open: 'open', share: 'share' } as const;
-
-interface SaveButtonProps {
-  media: Pick<MediaSummary, 'mediaItemId' | 'title' | 'type' | 'slug'>;
-  tone?: SaveButtonTone;
+interface LoadedMenuButton {
+  MenuButton: ComponentType<SaveMenuButtonProps>;
+  handoff: Handoff;
 }
 
-export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
-  const { dict } = useTranslation();
-  const share = useShareLink();
-  const { saved, toggle } = useSaveToggle(media);
-  const href = mediaRoute(media.type, media.slug);
-  const toggleLabel = saved ? dict.saveToLibrary.menu.unsave : dict.saveToLibrary.menu.save;
+export const preloadSaveMenuButton = () =>
+  import('./save-menu-button').then((module) => module.SaveMenuButton);
 
-  const onMenuAction = (key: Key) => {
-    if (key === MENU_KEYS.toggle) toggle();
-    if (key === MENU_KEYS.share) void share({ href, title: media.title });
+export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
+  const [loaded, setLoaded] = useState<LoadedMenuButton | null>(null);
+
+  if (loaded) {
+    const { MenuButton, handoff } = loaded;
+    return <MenuButton media={media} tone={tone} {...handoff} />;
+  }
+
+  const handOff = (handoff: Handoff) => {
+    void preloadSaveMenuButton().then((MenuButton) => setLoaded({ MenuButton, handoff }));
+  };
+
+  return <InstantSaveButton media={media} tone={tone} onHandOff={handOff} />;
+}
+
+interface InstantSaveButtonProps extends SaveButtonProps {
+  onHandOff: (handoff: Handoff) => void;
+}
+
+function InstantSaveButton({ media, tone = 'surface', onHandOff }: InstantSaveButtonProps) {
+  const { dict } = useTranslation();
+  const hintId = useId();
+  const { saved, toggle } = useSaveToggle(media);
+  const pointerIsDown = useRef(false);
+  const longPress = useLongPress(() => onHandOff({ autoFocus: false, defaultOpen: true }));
+
+  const onPointerDown = () => {
+    pointerIsDown.current = true;
+    longPress.start();
+  };
+
+  const onPointerEnd = () => {
+    pointerIsDown.current = false;
+    longPress.cancel();
+  };
+
+  const onPointerEnter = (event: PointerEvent) => {
+    if (event.pointerType === 'mouse') onHandOff({ autoFocus: false, defaultOpen: false });
+  };
+
+  const onFocus = () => {
+    if (!pointerIsDown.current) onHandOff({ autoFocus: true, defaultOpen: false });
+  };
+
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (!event.altKey || !MENU_SHORTCUT_KEYS.has(event.key)) return;
+    event.preventDefault();
+    onHandOff({ autoFocus: true, defaultOpen: true });
+  };
+
+  const onClick = () => {
+    if (!longPress.consumeLongPress()) toggle();
   };
 
   return (
-    <Dropdown trigger="longPress">
-      <ToggleButton
-        isIconOnly
-        isSelected={saved}
-        onPress={toggle}
-        aria-label={interpolate(dict.saveToLibrary.save, { title: media.title })}
-        className={`size-11 shrink-0 touch-manipulation rounded-full select-none [-webkit-touch-callout:none] data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground ${TONE_CLASSES[tone]}`}
-      >
-        {saved ? <Check aria-hidden className="size-5" /> : <Plus aria-hidden className="size-5" />}
-      </ToggleButton>
-      <Dropdown.Popover placement="bottom end">
-        <Dropdown.Menu onAction={onMenuAction}>
-          <Dropdown.Item id={MENU_KEYS.toggle} textValue={toggleLabel}>
-            <Label>{toggleLabel}</Label>
-          </Dropdown.Item>
-          <Dropdown.Item id={MENU_KEYS.open} href={href} textValue={dict.saveToLibrary.menu.open}>
-            <Label>{dict.saveToLibrary.menu.open}</Label>
-          </Dropdown.Item>
-          <Dropdown.Item id={MENU_KEYS.share} textValue={dict.saveToLibrary.menu.share}>
-            <Label>{dict.saveToLibrary.menu.share}</Label>
-          </Dropdown.Item>
-        </Dropdown.Menu>
-      </Dropdown.Popover>
-    </Dropdown>
+    <button
+      type="button"
+      data-slot="toggle-button"
+      data-selected={saved || undefined}
+      aria-pressed={saved}
+      aria-label={interpolate(dict.saveToLibrary.save, { title: media.title })}
+      aria-describedby={hintId}
+      className={`${LOOK} ${SAVE_BUTTON_CLASS} ${TONE_CLASSES[tone]}`}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerEnd}
+      onPointerCancel={onPointerEnd}
+      onPointerLeave={onPointerEnd}
+      onPointerEnter={onPointerEnter}
+      onFocus={onFocus}
+      onKeyDown={onKeyDown}
+      onClick={onClick}
+      onContextMenu={(event) => {
+        if (longPress.isPressing()) event.preventDefault();
+      }}
+    >
+      {saved ? <Check aria-hidden className="size-5" /> : <Plus aria-hidden className="size-5" />}
+      <span id={hintId} hidden>
+        {dict.saveToLibrary.menu.hint}
+      </span>
+    </button>
   );
 }

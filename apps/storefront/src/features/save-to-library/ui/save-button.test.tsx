@@ -1,5 +1,6 @@
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { I18nProvider as AriaI18nProvider } from '@heroui/react';
 import { ToastProvider } from '@heroui/react/toast';
 import { useAuth } from '@ratingo/web-core/auth';
 import { libraryApi } from '@/shared/api';
@@ -16,6 +17,13 @@ const ANDOR = { mediaItemId: 'andor-id', title: 'Андор', type: 'show', slug
 const NOT_SAVED = { isForLater: false, isConsidering: false };
 const FOR_LATER_ONLY = { isForLater: true, isConsidering: false };
 
+class TestPointerEvent extends MouseEvent {
+  pointerId = 1;
+  pointerType = 'mouse';
+  width = 1;
+  height = 1;
+}
+
 function signIn(isAuthenticated: boolean) {
   jest.mocked(useAuth).mockReturnValue({ isAuthenticated } as ReturnType<typeof useAuth>);
 }
@@ -26,10 +34,12 @@ function renderButton() {
   });
   render(
     <QueryClientProvider client={queryClient}>
-      <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
-        <SaveButton media={ANDOR} />
-        <ToastProvider />
-      </I18nProvider>
+      <AriaI18nProvider locale="uk">
+        <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
+          <SaveButton media={ANDOR} />
+          <ToastProvider />
+        </I18nProvider>
+      </AriaI18nProvider>
     </QueryClientProvider>,
   );
   return screen.getByRole('button', { name: 'Зберегти «Андор»' });
@@ -182,11 +192,8 @@ describe('SaveButton', () => {
   });
 
   it('opens the menu on a long press', async () => {
-    class TouchPointerEvent extends MouseEvent {
-      pointerId = 1;
+    class TouchPointerEvent extends TestPointerEvent {
       pointerType = 'touch';
-      width = 1;
-      height = 1;
     }
     Object.assign(window, { PointerEvent: TouchPointerEvent });
     jest.useFakeTimers();
@@ -196,11 +203,60 @@ describe('SaveButton', () => {
     fireEvent(button, new TouchPointerEvent('pointerdown', { bubbles: true, button: 0 }));
     act(() => jest.advanceTimersByTime(600));
     fireEvent(button, new TouchPointerEvent('pointerup', { bubbles: true, button: 0 }));
+    fireEvent.click(button);
 
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
     expect(libraryApi.save).not.toHaveBeenCalled();
     jest.useRealTimers();
     Reflect.deleteProperty(window, 'PointerEvent');
+  });
+
+  it('swaps in the menu button on mouse hover and keeps the saved state', async () => {
+    signIn(true);
+    server = FOR_LATER_ONLY;
+    const button = renderButton();
+    await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+
+    fireEvent(button, new TestPointerEvent('pointerover', { bubbles: true }));
+
+    await waitFor(() => expect(button).not.toBeInTheDocument());
+    const menuButton = screen.getByRole('button', { name: 'Зберегти «Андор»' });
+    expect(menuButton).toHaveAttribute('aria-pressed', 'true');
+    expect(menuButton).toHaveAccessibleDescription(
+      'Довго або звичайно натисніть комбінацію клавіш Alt і стрілка вниз, щоб відкрити меню',
+    );
+  });
+
+  it('keeps keyboard focus on the button when the menu button takes over', async () => {
+    signIn(true);
+    const button = renderButton();
+
+    act(() => button.focus());
+
+    await waitFor(() => expect(button).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Зберегти «Андор»' })).toHaveFocus();
+  });
+
+  it('describes the long-press menu before the menu button loads', () => {
+    signIn(true);
+
+    expect(renderButton()).toHaveAccessibleDescription(
+      'Довго або звичайно натисніть комбінацію клавіш Alt і стрілка вниз, щоб відкрити меню',
+    );
+  });
+
+  it('stays the instant button when focus comes from a tap', async () => {
+    signIn(true);
+    const button = renderButton();
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
+
+    fireEvent.pointerDown(button, { pointerType: 'touch' });
+    act(() => button.focus());
+    fireEvent.pointerUp(button, { pointerType: 'touch' });
+    fireEvent.click(button);
+
+    await waitFor(() => expect(libraryApi.save).toHaveBeenCalledWith('andor-id', 'for_later'));
+    expect(button).toBeInTheDocument();
   });
 
   it('never removes a title the server already has when its status has not loaded yet', async () => {
