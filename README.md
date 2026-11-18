@@ -1,126 +1,65 @@
 <div align="center">
 
-# Ratingo
+<h1><img src="apps/storefront/public/icons/icon-192.png" width="40" height="40" align="middle" alt="" />&nbsp;Ratingo</h1>
 
-**What the world is watching right now — and whether it's worth it**
+What to watch tonight, and when the next episode is out. In Ukrainian.
 
-A Ukrainian-language service that shows what the world is watching right now:\
-movies, TV shows, their ratings, where to stream them legally, and when new episodes drop.
+**[ratingo.top](https://ratingo.top)**
 
-[ratingo.top](https://ratingo.top)
+<br />
+
+<a href="https://ratingo.top"><img src="assets/readme/home.jpg" width="800" height="444" alt="Ratingo home page: this week's most watched shows and films" /></a>
 
 </div>
 
----
+Hi, I'm Eugene. Frontend at monobank; before that, tech lead at Silpo and Rozetka, plus stints at Mastercard and EA, where I worked on Battlelog.
 
-## Why Ratingo?
+I watch a lot of TV shows and kept losing track of them. Which episode was I on, when does the next season start, is this new thing any good or just loud marketing. IMDb, Trakt and TV Time each cover a piece of it. None of them in Ukrainian.
 
-Every streaming platform tells you everything is a must-watch. We don't.
+So in November 2025 I started building my own. A year and about 1,400 commits later, people use it every day. Not many yet, but they keep coming back.
 
-Ratingo exists to give you the full picture — fast. What's trending, what's actually good, where to watch it, and whether it's worth your time. No pirate links, no clickbait, no algorithmic chaos. Just content that matters, with honest ratings from multiple sources in one place.
+## What you can do there
 
-Ukrainian by default. Built for clarity, not for clicks.
+- See what people are watching this week, with TMDB, Trakt, IMDb and Metacritic ratings next to each other
+- Keep a list of what you watch, plan to watch and gave up on
+- Tick off episodes and get a calendar of the ones coming up
+- Get a reminder when your show has a new episode
+- Install it on your phone like an app
 
-## What's Inside
-
-- **Trending movies & shows** — tracked over 30 and 90 days, based on real viewer activity
-- **Aggregated ratings** — TMDB, Trakt, IMDb, Metacritic — compared side by side
-- **Rich content cards** — descriptions, cast, trailers, Ukrainian translations
-- **Streaming availability** — legal platforms for Ukraine and the US
-- **Episode calendar** — know exactly when the next episode drops
-- **Ratingo Score** — our own composite rating that balances quality, popularity, and freshness so a classic and a new release compete fairly
-- **Honest verdicts** — if a show scores 5.8, we won't pretend it's great
-- **Drop-off analysis** — see where viewers stop watching a show before you start
-
-## How We Pick Content
-
-Data comes from open movie databases and is updated regularly. Random videos, fan projects, and questionable releases don't make it in — only proper movies and TV shows. The catalog is governed by a versioned policy engine, not manual curation or hardcoded lists.
-
-## Principles
-
-- **Ukrainian first** — default language, built for Ukrainian-speaking audiences
-- **Clarity over engagement** — designed to be useful, not addictive
-- **Legal sources only** — streaming links point to legitimate platforms
-- **Less noise, more signal** — every screen element earns its place
-- **Honesty before hype** — the verdict engine doesn't sugarcoat bad ratings
-
-## Status
-
-Actively developed. The catalog is steadily growing, new features are being added, and data quality is continuously improving.
-
----
-
-## Under the Hood
-
-For those who care about how the sausage is made.
-
-### Architecture
-
-Turborepo monorepo. Clean Architecture with four layers per module (Presentation → Application → Domain → Infrastructure). Domain layer has zero framework dependencies — pure functions, pure logic.
+## Inside
 
 ```
-ratingo/
-├── apps/
-│   ├── api/             NestJS + Fastify + Drizzle ORM + PostgreSQL
-│   └── web-client/      Next.js 16 + React 19 + TanStack Query
-├── packages/
-│   └── api-contract/    Shared OpenAPI types (auto-generated)
+apps/api          NestJS, Fastify, Drizzle, PostgreSQL, BullMQ
+apps/storefront   Next.js 16, React 19, TanStack Query
 ```
 
-### Three Core Engines
+It started as a weekend project and turned into the place where I try things I don't get to try at work. A few I'm happy with:
 
-| Engine | What it does |
-|--------|-------------|
-| **Policy Engine** | Pure-function rules that decide what enters the catalog — country/language filters, content classification, breakout rules for exceptions |
-| **Score Calculator** | Computes the Ratingo Score from multiple rating sources with normalization, confidence gates, and freshness decay |
-| **Verdict Engine** | Generates user-facing recommendations — "honesty before hype" is the design DNA |
+- Nobody picks titles for the catalog by hand. A set of plain functions decides, and every "no" comes with a reason, so I can always see why something is missing.
+- A classic with 200k votes and a show that came out on Friday get one comparable number, the Ratingo Score.
+- Each data provider has its own queue. When Trakt rate-limits me, TMDB sync keeps going.
+- The API domain code doesn't know Nest or Drizzle exist, so it's tested without a database.
 
-Background processing runs on **BullMQ** with Redis — trending sync, stats enrichment, policy evaluation, drop-off analysis. All jobs are idempotent.
+It runs on Railway, metrics go to Grafana, and Postgres gets backed up every night. The domain once expired and the site went dark for a day, so now I have a reminder for that too.
 
-### Tech Stack
-
-| Layer | Tech |
-|-------|------|
-| Backend | NestJS, Fastify, Drizzle ORM, BullMQ |
-| Frontend | Next.js 16, React 19, TanStack Query, Tailwind CSS, shadcn/ui |
-| Database | PostgreSQL 16, Redis |
-| Data sources | TMDB, Trakt, OMDb, TVMaze |
-| Infra | Turborepo, Docker, GitHub Actions, Vercel |
-| Quality | Jest (3 190+ tests), ESLint, Prettier, Commitlint |
-
-### Getting Started
+## Run it yourself
 
 ```bash
-git clone https://github.com/eurusik/ratingo.git
-cd ratingo && npm install
-
-docker-compose up -d                          # PostgreSQL + Redis
-cd apps/api && npm run db:migrate && cd ../..  # apply migrations
-
-npm run dev:api      # localhost:3001
-npm run dev:client   # localhost:3002
+git clone https://github.com/eurusik/ratingo.git && cd ratingo
+npm install
+docker-compose up -d                  # Postgres + Redis
+cp apps/api/.env.example apps/api/.env   # add your TMDB, Trakt and OMDb keys
+npm run db:migrate --workspace=api
+npm run dev:api                       # localhost:3001
+npm run dev:storefront                # localhost:3003
 ```
 
-<details>
-<summary>More commands</summary>
+## Help make it better
 
-```bash
-npm run build:all          # Build everything (Turborepo)
-npm run test:api           # Run backend tests (3 190+)
-npm run lint:api           # Lint backend
-npm run contracts:update   # Regenerate OpenAPI types after API changes
-```
+I'd really appreciate your help making Ratingo better. Spotted a bug, or something feels off or missing? [Open an issue](https://github.com/eurusik/ratingo/issues/new) and describe what happened. I'll pick it up, and once it's fixed I'll reply there so you know.
 
-</details>
+And if you just like it, a star tells me I'm not the only one.
 
----
+MIT licensed.
 
-## Feedback
-
-Something broken? Missing a feature? Have an idea? — [open an issue](https://github.com/eurusik/ratingo/issues). Feedback directly shapes what gets built next.
-
-If Ratingo feels useful — a star on the repo or a recommendation to a friend goes a long way.
-
-## License
-
-All rights reserved.
+<p align="center">Made in Ukraine 🇺🇦 💙💛</p>
