@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, eq, inArray, lte, sql } from 'drizzle-orm';
+import { and, eq, inArray, lte, type SQL, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { firstOrUndefined } from '@/common/utils/array.utils';
@@ -120,7 +120,7 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
     );
   }
 
-  async getShowProgress(userId: string, showId: string): Promise<SeasonProgressInfo[]> {
+  async getShowProgress(userId: string, showId: string, asOf: Date): Promise<SeasonProgressInfo[]> {
     return withDbError(
       'get show progress',
       this.logger,
@@ -140,7 +140,7 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
           })
           .from(schema.seasons)
           .innerJoin(schema.episodes, eq(schema.episodes.seasonId, schema.seasons.id))
-          .where(and(eq(schema.seasons.showId, showId), lte(schema.episodes.airDate, new Date())))
+          .where(and(eq(schema.seasons.showId, showId), this.airedAsOf(asOf)))
           .orderBy(schema.seasons.number, schema.episodes.number);
 
         const seasonMap = new Map<
@@ -178,8 +178,8 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
     );
   }
 
-  async validateEpisodeBatch(episodeIds: string[]): Promise<EpisodeBatchValidation> {
-    if (episodeIds.length === 0) return { existingCount: 0, distinctShowCount: 0 };
+  async validateEpisodeBatch(episodeIds: string[], asOf: Date): Promise<EpisodeBatchValidation> {
+    if (episodeIds.length === 0) return { existingCount: 0, distinctShowCount: 0, unairedCount: 0 };
     return withDbError(
       'validate episode batch',
       this.logger,
@@ -187,8 +187,9 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
         const row = firstOrUndefined(
           await this.db
             .select({
-              existingCount: sql<number>`count(*)`,
-              distinctShowCount: sql<number>`count(distinct ${schema.episodes.showId})`,
+              existingCount: sql<number>`count(*)::int`,
+              distinctShowCount: sql<number>`count(distinct ${schema.episodes.showId})::int`,
+              unairedCount: sql<number>`(count(*) - count(*) filter (where ${this.airedAsOf(asOf)}))::int`,
             })
             .from(schema.episodes)
             .where(inArray(schema.episodes.id, episodeIds)),
@@ -197,6 +198,7 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
         return {
           existingCount: Number(row?.existingCount ?? 0),
           distinctShowCount: Number(row?.distinctShowCount ?? 0),
+          unairedCount: Number(row?.unairedCount ?? 0),
         };
       },
       { count: episodeIds.length },
@@ -215,6 +217,7 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
             mediaItemId: schema.shows.mediaItemId,
             seasonNumber: schema.seasons.number,
             episodeNumber: schema.episodes.number,
+            airDate: schema.episodes.airDate,
           })
           .from(schema.episodes)
           .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
@@ -278,5 +281,9 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
       },
       { userId, mediaItemId },
     );
+  }
+
+  private airedAsOf(asOf: Date): SQL {
+    return lte(schema.episodes.airDate, asOf);
   }
 }

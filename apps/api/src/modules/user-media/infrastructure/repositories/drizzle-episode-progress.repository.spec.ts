@@ -1,7 +1,11 @@
+import { PgDialect } from 'drizzle-orm/pg-core';
+
 import { DrizzleEpisodeProgressRepository } from './drizzle-episode-progress.repository';
 import { DatabaseException } from '@/common/exceptions/database.exception';
 
 describe('DrizzleEpisodeProgressRepository', () => {
+  const ASOF = new Date('2026-11-17T12:00:00Z');
+  const dialect = new PgDialect();
   const makeDbMock = () => {
     // Create a mock that handles different query patterns:
     // - insert().values().onConflictDoNothing()
@@ -141,25 +145,50 @@ describe('DrizzleEpisodeProgressRepository', () => {
       const db = makeDbMock();
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      const result = await repo.validateEpisodeBatch([]);
+      const result = await repo.validateEpisodeBatch([], ASOF);
 
-      expect(result).toEqual({ existingCount: 0, distinctShowCount: 0 });
+      expect(result).toEqual({ existingCount: 0, distinctShowCount: 0, unairedCount: 0 });
       expect(db.select).not.toHaveBeenCalled();
     });
 
-    it('should return both counts in a single query', async () => {
+    it('should return all counts in a single query', async () => {
       const db = makeDbMock();
       db.whereMock.mockImplementation(() => {
-        const result: any = Promise.resolve([{ existingCount: 3, distinctShowCount: 1 }]);
+        const result: any = Promise.resolve([
+          { existingCount: 3, distinctShowCount: 1, unairedCount: 2 },
+        ]);
         result.orderBy = db.orderByMock;
         return result;
       });
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      const result = await repo.validateEpisodeBatch(['ep-1', 'ep-2', 'ep-3']);
+      const result = await repo.validateEpisodeBatch(['ep-1', 'ep-2', 'ep-3'], ASOF);
 
-      expect(result).toEqual({ existingCount: 3, distinctShowCount: 1 });
+      expect(result).toEqual({ existingCount: 3, distinctShowCount: 1, unairedCount: 2 });
       expect(db.select).toHaveBeenCalledTimes(1);
+    });
+
+    it('should count undated and future episodes as unaired as of the given time', async () => {
+      const db = makeDbMock();
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      await repo.validateEpisodeBatch(['ep-1', 'ep-2'], ASOF);
+
+      const fields = db.select.mock.calls[0][0];
+      const unaired = dialect.sqlToQuery(fields.unairedCount);
+      expect(unaired.sql).toBe(
+        '(count(*) - count(*) filter (where "episodes"."air_date" <= $1))::int',
+      );
+      expect(unaired.params).toEqual([ASOF.toISOString()]);
+    });
+
+    it('should return zeros when the query yields no row', async () => {
+      const db = makeDbMock();
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      const result = await repo.validateEpisodeBatch(['ep-1', 'ep-2'], ASOF);
+
+      expect(result).toEqual({ existingCount: 0, distinctShowCount: 0, unairedCount: 0 });
     });
 
     it('should throw DatabaseException on error', async () => {
@@ -171,7 +200,7 @@ describe('DrizzleEpisodeProgressRepository', () => {
       });
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      await expect(repo.validateEpisodeBatch(['ep-1'])).rejects.toThrow(DatabaseException);
+      await expect(repo.validateEpisodeBatch(['ep-1'], ASOF)).rejects.toThrow(DatabaseException);
     });
   });
 
@@ -227,7 +256,7 @@ describe('DrizzleEpisodeProgressRepository', () => {
       ]);
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      const result = await repo.getShowProgress('user-1', 'show-1');
+      const result = await repo.getShowProgress('user-1', 'show-1', ASOF);
 
       expect(result).toEqual([
         {
@@ -245,12 +274,23 @@ describe('DrizzleEpisodeProgressRepository', () => {
       ]);
     });
 
+    it('should only count episodes aired as of the given time', async () => {
+      const db = makeDbMock();
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      await repo.getShowProgress('user-1', 'show-1', ASOF);
+
+      const where = dialect.sqlToQuery(db.whereMock.mock.calls[0][0]);
+      expect(where.sql).toContain('"episodes"."air_date" <= $');
+      expect(where.params).toContain(ASOF.toISOString());
+    });
+
     it('should return empty array for show with no seasons', async () => {
       const db = makeDbMock();
       // Default orderByMock returns []
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      const result = await repo.getShowProgress('user-1', 'show-1');
+      const result = await repo.getShowProgress('user-1', 'show-1', ASOF);
 
       expect(result).toEqual([]);
     });
@@ -265,7 +305,7 @@ describe('DrizzleEpisodeProgressRepository', () => {
       ]);
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      const result = await repo.getShowProgress('user-1', 'show-1');
+      const result = await repo.getShowProgress('user-1', 'show-1', ASOF);
 
       expect(result.map((s) => s.seasonNumber)).toEqual([1, 2, 3]);
     });
@@ -275,7 +315,9 @@ describe('DrizzleEpisodeProgressRepository', () => {
       db.orderByMock.mockRejectedValue(new Error('DB error'));
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      await expect(repo.getShowProgress('user-1', 'show-1')).rejects.toThrow(DatabaseException);
+      await expect(repo.getShowProgress('user-1', 'show-1', ASOF)).rejects.toThrow(
+        DatabaseException,
+      );
     });
   });
 
@@ -288,6 +330,7 @@ describe('DrizzleEpisodeProgressRepository', () => {
         mediaItemId: 'media-1',
         seasonNumber: 1,
         episodeNumber: 3,
+        airDate: new Date('2024-01-01T00:00:00Z'),
       };
 
       // Override the chain for getEpisodeMediaInfo which uses limit

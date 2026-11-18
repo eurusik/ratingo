@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, eq, inArray, isNull, notExists, notInArray, type SQL, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, notExists, notInArray, or, type SQL, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -48,6 +48,10 @@ interface ShowDetailsPayload {
  * Drizzle implementation of IShowRepository.
  * Acts as a thin facade, delegating complex queries to Query Objects.
  */
+interface PrunedEpisode {
+  airDate: Date | null;
+}
+
 @Injectable()
 export class DrizzleShowRepository implements IShowRepository {
   private readonly logger = new Logger(DrizzleShowRepository.name);
@@ -116,16 +120,12 @@ export class DrizzleShowRepository implements IShowRepository {
 
       const seasonCameWithEpisodes = season.episodes.length > 0;
       if (seasonCameWithEpisodes) {
-        const pruned = await this.deleteUnwatchedEpisodesMissingFrom(
+        const pruned = await this.deletePrunableEpisodesMissingFrom(
           drizzleTx,
           seasonRecord.id,
           season.episodes.map((ep) => ep.number),
         );
-        if (pruned > 0) {
-          this.logger.log(
-            `Pruned ${pruned} stale episode(s) from season ${season.number} of show ${showId}`,
-          );
-        }
+        this.logPrunedEpisodes(pruned, `season ${season.number} of show ${showId}`);
       }
     }
   }
@@ -135,22 +135,29 @@ export class DrizzleShowRepository implements IShowRepository {
     return regularSeasonCount >= (totalSeasons ?? 0);
   }
 
-  private async deleteUnwatchedEpisodesMissingFrom(
+  private async deletePrunableEpisodesMissingFrom(
     drizzleTx: DrizzleTransaction,
     seasonId: string,
     keptEpisodeNumbers: number[],
-  ): Promise<number> {
-    const removed = await drizzleTx
+  ): Promise<PrunedEpisode[]> {
+    return drizzleTx
       .delete(schema.episodes)
       .where(
         and(
           eq(schema.episodes.seasonId, seasonId),
           notInArray(schema.episodes.number, keptEpisodeNumbers),
-          this.notWatchedByAnyUser(drizzleTx),
+          this.isPrunableEpisode(drizzleTx),
         ),
       )
-      .returning({ id: schema.episodes.id });
-    return removed.length;
+      .returning({ airDate: schema.episodes.airDate });
+  }
+
+  private logPrunedEpisodes(pruned: PrunedEpisode[], scope: string): void {
+    if (pruned.length === 0) return;
+    const undated = pruned.filter((episode) => episode.airDate === null).length;
+    this.logger.log(
+      `Pruned ${pruned.length} stale episode(s) from ${scope}; ${undated} were undated and lost any watch marks with them`,
+    );
   }
 
   private async pruneStaleSeasons(
@@ -163,7 +170,8 @@ export class DrizzleShowRepository implements IShowRepository {
       notInArray(schema.seasons.number, keptSeasonNumbers),
     );
 
-    await this.deleteUnwatchedEpisodesOfSeasons(drizzleTx, isStaleSeason);
+    const prunedEpisodes = await this.deletePrunableEpisodesOfSeasons(drizzleTx, isStaleSeason);
+    this.logPrunedEpisodes(prunedEpisodes, `stale seasons of show ${showId}`);
     const removedNumbers = await this.deleteEmptySeasons(drizzleTx, isStaleSeason);
 
     if (removedNumbers.length > 0) {
@@ -171,11 +179,11 @@ export class DrizzleShowRepository implements IShowRepository {
     }
   }
 
-  private async deleteUnwatchedEpisodesOfSeasons(
+  private async deletePrunableEpisodesOfSeasons(
     drizzleTx: DrizzleTransaction,
     seasonFilter: SQL | undefined,
-  ): Promise<void> {
-    await drizzleTx
+  ): Promise<PrunedEpisode[]> {
+    return drizzleTx
       .delete(schema.episodes)
       .where(
         and(
@@ -183,9 +191,10 @@ export class DrizzleShowRepository implements IShowRepository {
             schema.episodes.seasonId,
             drizzleTx.select({ id: schema.seasons.id }).from(schema.seasons).where(seasonFilter),
           ),
-          this.notWatchedByAnyUser(drizzleTx),
+          this.isPrunableEpisode(drizzleTx),
         ),
-      );
+      )
+      .returning({ airDate: schema.episodes.airDate });
   }
 
   private async deleteEmptySeasons(
@@ -209,12 +218,15 @@ export class DrizzleShowRepository implements IShowRepository {
     return removed.map((s) => s.number);
   }
 
-  private notWatchedByAnyUser(drizzleTx: DrizzleTransaction): SQL {
-    return notExists(
-      drizzleTx
-        .select({ episodeId: schema.userEpisodeProgress.episodeId })
-        .from(schema.userEpisodeProgress)
-        .where(eq(schema.userEpisodeProgress.episodeId, schema.episodes.id)),
+  private isPrunableEpisode(drizzleTx: DrizzleTransaction): SQL | undefined {
+    return or(
+      isNull(schema.episodes.airDate),
+      notExists(
+        drizzleTx
+          .select({ episodeId: schema.userEpisodeProgress.episodeId })
+          .from(schema.userEpisodeProgress)
+          .where(eq(schema.userEpisodeProgress.episodeId, schema.episodes.id)),
+      ),
     );
   }
 
