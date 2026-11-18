@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { whenIdleOnFastConnection } from '@/shared/lib';
-import { SegmentedFilter } from '@/shared/ui';
+import { SectionError, SegmentedFilter } from '@/shared/ui';
 import { activeList, type RailStart } from '../model/home-feed';
 
 const RAIL_STALE_MS = 60_000;
@@ -33,10 +33,8 @@ export function useRailFilter<K extends string, T>(
   const scrollerRef = useRef<HTMLDivElement>(null);
   const active = activeList(available, chosen);
   const isFirstList = active === first?.list;
-  const { data: fetchedItems } = useQuery(
-    railQuery(sectionId, isFirstList ? undefined : active, loadList),
-  );
-  const items = isFirstList ? first?.items : fetchedItems;
+  const fetched = useQuery(railQuery(sectionId, isFirstList ? undefined : active, loadList));
+  const items = isFirstList ? first?.items : fetched.data;
 
   const otherLists = available.filter((list) => list !== first?.list);
   const prefetchOthers = () => {
@@ -57,6 +55,9 @@ export function useRailFilter<K extends string, T>(
     active,
     available,
     items,
+    loadFailed: !isFirstList && fetched.isError,
+    isRetrying: fetched.isFetching,
+    retry: () => void fetched.refetch(),
     select,
     prefetchOthers,
     scrollerRef,
@@ -92,6 +93,27 @@ export function RailFilterBar<K extends string>({
         onChange={onSelect}
         className="md:px-0"
       />
+    </div>
+  );
+}
+
+interface RailBodyProps<T> {
+  filter: Pick<
+    ReturnType<typeof useRailFilter<string, T>>,
+    'items' | 'loadFailed' | 'isRetrying' | 'retry'
+  >;
+  failedTitle: string;
+  skeleton: ReactNode;
+  children: (items: T[]) => ReactNode;
+}
+
+export function RailBody<T>({ filter, failedTitle, skeleton, children }: RailBodyProps<T>) {
+  if (filter.items) return children(filter.items);
+  if (!filter.loadFailed) return skeleton;
+
+  return (
+    <div className="px-4 md:px-0">
+      <SectionError title={failedTitle} onRetry={filter.retry} isRetrying={filter.isRetrying} />
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import { loadReleaseList } from '../api/home-rails';
 import type { RailStart, ReleaseList } from '../model/home-feed';
 import { CardRowSkeleton } from './home-skeletons';
-import { RailFilterBar, useRailFilter } from './rail-filter';
+import { RailBody, RailFilterBar, useRailFilter } from './rail-filter';
 
 const SECTION_ID = 'new-releases';
 
@@ -38,21 +38,25 @@ export function NewReleases({ rail }: { rail: RailStart<ReleaseList, TrendingMed
         onSelect={filter.select}
         onIntent={filter.prefetchOthers}
       />
-      {filter.items ? (
-        <Rail label={title} scrollerRef={filter.scrollerRef} memoryKey={filter.memoryKey}>
-          {filter.items.map((media) => (
-            <RailItem key={media.mediaItemId}>
-              <TrendingCard
-                media={media}
-                actions={<SaveButton media={media} tone="overlay" />}
-                footer={<OwnScoreChip mediaItemId={media.mediaItemId} />}
-              />
-            </RailItem>
-          ))}
-        </Rail>
-      ) : (
-        <CardRowSkeleton />
-      )}
+      <RailBody
+        filter={filter}
+        failedTitle={dict.home.failed.newReleases}
+        skeleton={<CardRowSkeleton />}
+      >
+        {(items) => (
+          <Rail label={title} scrollerRef={filter.scrollerRef} memoryKey={filter.memoryKey}>
+            {items.map((media) => (
+              <RailItem key={media.mediaItemId}>
+                <TrendingCard
+                  media={media}
+                  actions={<SaveButton media={media} tone="overlay" />}
+                  footer={<OwnScoreChip mediaItemId={media.mediaItemId} />}
+                />
+              </RailItem>
+            ))}
+          </Rail>
+        )}
+      </RailBody>
     </section>
   );
 }

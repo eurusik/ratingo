@@ -131,6 +131,17 @@ describe('NewReleases', () => {
     expect(await screen.findByRole('link', { name: 'Барбі' })).toBeInTheDocument();
   });
 
+  it('offers a retry instead of an endless skeleton when the other list fails', async () => {
+    jest.mocked(loadReleaseList).mockRejectedValueOnce(new Error('offline'));
+    renderIn(<NewReleases rail={newReleases([DUNE], [BARBIE])} />);
+
+    fireEvent.click(screen.getByRole('radio', { name: uk.home.releaseFilter.newOnDigital }));
+    jest.mocked(loadReleaseList).mockResolvedValue([BARBIE]);
+    fireEvent.click(await screen.findByRole('button', { name: uk.common.retry }));
+
+    expect(await screen.findByRole('link', { name: 'Барбі' })).toBeInTheDocument();
+  });
+
   it('starts loading the other list as soon as the filter is touched', () => {
     jest.mocked(loadReleaseList).mockResolvedValue([BARBIE]);
     renderIn(<NewReleases rail={newReleases([DUNE], [BARBIE])} />);

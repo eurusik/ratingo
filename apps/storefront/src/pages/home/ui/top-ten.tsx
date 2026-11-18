@@ -7,7 +7,7 @@ import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import { loadTrendingList } from '../api/home-rails';
 import type { RailStart } from '../model/home-feed';
 import { TileRowSkeleton } from './home-skeletons';
-import { RailFilterBar, useRailFilter } from './rail-filter';
+import { RailBody, RailFilterBar, useRailFilter } from './rail-filter';
 
 const SECTION_ID = 'top-ten';
 
@@ -34,23 +34,27 @@ export function TopTen({ rail }: { rail: RailStart<MediaType, TrendingMedia> }) 
         onSelect={filter.select}
         onIntent={filter.prefetchOthers}
       />
-      {filter.items ? (
-        <Rail
-          label={title}
-          isOrdered
-          itemSize="tile"
-          scrollerRef={filter.scrollerRef}
-          memoryKey={filter.memoryKey}
-        >
-          {filter.items.map((media, index) => (
-            <RailItem key={media.mediaItemId}>
-              <TopRankTile media={media} rank={index + 1} />
-            </RailItem>
-          ))}
-        </Rail>
-      ) : (
-        <TileRowSkeleton />
-      )}
+      <RailBody
+        filter={filter}
+        failedTitle={dict.home.failed.topTen}
+        skeleton={<TileRowSkeleton />}
+      >
+        {(items) => (
+          <Rail
+            label={title}
+            isOrdered
+            itemSize="tile"
+            scrollerRef={filter.scrollerRef}
+            memoryKey={filter.memoryKey}
+          >
+            {items.map((media, index) => (
+              <RailItem key={media.mediaItemId}>
+                <TopRankTile media={media} rank={index + 1} />
+              </RailItem>
+            ))}
+          </Rail>
+        )}
+      </RailBody>
     </section>
   );
 }
