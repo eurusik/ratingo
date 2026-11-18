@@ -9,7 +9,7 @@ describe('SiteFooter', () => {
     render(<SiteFooter dict={uk} />);
 
     const footer = screen.getByRole('contentinfo');
-    expect(footer).toHaveClass('hidden', 'md:block');
+    expect(footer).toHaveClass('hidden', 'md:block', 'below-fold');
     const links = within(footer).getByRole('navigation', { name: uk.footer.label });
     expect(within(links).getAllByRole('link')).toHaveLength(1);
     expect(

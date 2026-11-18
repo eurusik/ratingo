@@ -25,7 +25,7 @@ function ExternalLink({
 
 export function SiteFooter({ dict }: { dict: Dictionary }) {
   return (
-    <footer className="mt-16 hidden border-t border-separator md:block">
+    <footer className="mt-16 hidden below-fold border-t border-separator [--fold-size:12rem] md:block">
       <Container className="flex flex-col gap-6 py-10">
         <div className="flex items-start justify-between gap-12">
           <div className="flex max-w-md flex-col gap-2">

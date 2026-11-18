@@ -225,6 +225,15 @@
   transition: none;
 }
 
+@utility below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: auto var(--fold-size);
+}
+
+:root:is([data-nav-transition], [data-scroll-restoring]) .below-fold {
+  content-visibility: visible;
+}
+
 :root[data-scroll-restoring] :is([data-top-bar], [data-top-bar] *) {
   transition: none;
 }
