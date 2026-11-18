@@ -267,14 +267,15 @@ describe('SaveButton', () => {
     );
   });
 
-  it('stays the instant button when focus comes from a tap', async () => {
+  it('handles a tap itself even though the phone focuses the button after lifting the finger', async () => {
     signIn(true);
     const button = renderButton();
     await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
 
     fireEvent.pointerDown(button, { pointerType: 'touch' });
-    act(() => button.focus());
     fireEvent.pointerUp(button, { pointerType: 'touch' });
+    fireEvent.pointerLeave(button, { pointerType: 'touch' });
+    act(() => button.focus());
     fireEvent.click(button);
 
     await waitFor(() => expect(libraryApi.save).toHaveBeenCalledWith('andor-id', 'for_later'));

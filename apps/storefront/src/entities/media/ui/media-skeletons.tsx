@@ -4,12 +4,14 @@ export function TrendingCardSkeleton() {
   return (
     <Card className="w-77.5 gap-0 overflow-hidden rounded-3xl p-0 md:w-full">
       <Skeleton className="h-62.5 w-full rounded-none" />
-      <div className="flex flex-col gap-2.5 px-4 pt-4 pb-5">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-1.5 px-4 pt-3.5 pb-4">
+        <div className="flex h-6 items-center gap-2.5">
           <Skeleton className="h-5 flex-1 rounded-full" />
-          <Skeleton className="h-7 w-16 rounded-full" />
+          <Skeleton className="h-6 w-16 rounded-full" />
         </div>
-        <Skeleton className="h-3.5 w-28 rounded-full" />
+        <div className="flex h-6 items-center">
+          <Skeleton className="h-3.5 w-28 rounded-full" />
+        </div>
       </div>
     </Card>
   );
@@ -24,8 +26,8 @@ export function TopRankTileSkeleton() {
         <Skeleton className="h-[0.8em] w-1/2 rounded-full" />
       </div>
       <div className="flex flex-wrap gap-1.5">
-        <Skeleton className="h-7 w-16 rounded-full" />
-        <Skeleton className="h-7 w-14 rounded-full" />
+        <Skeleton className="h-6 w-16 rounded-full" />
+        <Skeleton className="h-6 w-14 rounded-full" />
       </div>
     </div>
   );

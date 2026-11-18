@@ -13,7 +13,7 @@ interface MenuIntentHandlers {
 
 export function useMenuIntent({ onIntent, onActivate }: MenuIntentHandlers) {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isPointerDown = useRef(false);
+  const isPointerGesture = useRef(false);
   const longPressFired = useRef(false);
 
   const cancelLongPress = () => {
@@ -23,14 +23,14 @@ export function useMenuIntent({ onIntent, onActivate }: MenuIntentHandlers) {
 
   useEffect(() => cancelLongPress, []);
 
-  const endPointerPress = () => {
-    isPointerDown.current = false;
+  const endPointerGesture = () => {
+    isPointerGesture.current = false;
     cancelLongPress();
   };
 
   return {
     onPointerDown: () => {
-      isPointerDown.current = true;
+      isPointerGesture.current = true;
       longPressFired.current = false;
       cancelLongPress();
       longPressTimer.current = setTimeout(() => {
@@ -39,14 +39,14 @@ export function useMenuIntent({ onIntent, onActivate }: MenuIntentHandlers) {
         onIntent('longPress');
       }, LONG_PRESS_MS);
     },
-    onPointerUp: endPointerPress,
-    onPointerCancel: endPointerPress,
-    onPointerLeave: endPointerPress,
+    onPointerUp: cancelLongPress,
+    onPointerCancel: endPointerGesture,
+    onPointerLeave: cancelLongPress,
     onPointerEnter: (event: PointerEvent) => {
       if (HOVER_POINTERS.has(event.pointerType)) onIntent('hover');
     },
     onFocus: () => {
-      if (!isPointerDown.current) onIntent('focus');
+      if (!isPointerGesture.current) onIntent('focus');
     },
     onKeyDown: (event: KeyboardEvent) => {
       longPressFired.current = false;
@@ -55,9 +55,10 @@ export function useMenuIntent({ onIntent, onActivate }: MenuIntentHandlers) {
       onIntent('shortcut');
     },
     onContextMenu: (event: MouseEvent) => {
-      if (isPointerDown.current) event.preventDefault();
+      if (isPointerGesture.current) event.preventDefault();
     },
     onClick: () => {
+      isPointerGesture.current = false;
       if (longPressFired.current) longPressFired.current = false;
       else onActivate();
     },
