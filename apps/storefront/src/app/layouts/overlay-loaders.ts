@@ -10,7 +10,7 @@ export const loadSearchDialog = () =>
 export const loadSaveButton = () =>
   import('@/features/save-to-library').then((module) => module.SaveButton);
 
-const loadSaveMenuButton = () =>
+const warmSaveMenuButton = () =>
   import('@/features/save-to-library').then((module) => module.preloadSaveMenuButton());
 
 export const loadPendingSaveReplay = () =>
@@ -23,7 +23,7 @@ export function useWarmOverlays(): boolean {
 
   useEffect(() => {
     return whenIdleOnFastConnection(() => {
-      void loadSaveMenuButton().catch(ignoreFailedPreload);
+      void warmSaveMenuButton().catch(ignoreFailedPreload);
       void Promise.all([loadSearchDialog(), loadAuthDialog()])
         .then(() => setIsWarm(true))
         .catch(ignoreFailedPreload);

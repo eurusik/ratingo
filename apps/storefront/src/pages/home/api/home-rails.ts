@@ -1,6 +1,7 @@
 import { fromTrendingMovie, fromTrendingShow, type TrendingMedia } from '@/entities/media';
 import { catalogApi, type CatalogCache, type MediaType } from '@/shared/api';
-import { TOP_TEN_COUNT, toReleaseRail, type ReleaseList } from '../model/home-feed';
+import { TOP_TEN_COUNT, toReleaseRail } from '../model/home-feed';
+import type { ReleaseList } from '../model/rail-start';
 
 const MOVIE_RAIL_COUNT = 12;
 

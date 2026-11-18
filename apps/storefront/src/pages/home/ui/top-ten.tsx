@@ -5,7 +5,7 @@ import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import { loadTrendingList } from '../api/home-rails';
-import type { RailStart } from '../model/home-feed';
+import type { RailStart } from '../model/rail-start';
 import { TileRowSkeleton } from './home-skeletons';
 import { RailBody, RailFilterBar, useRailFilter } from './rail-filter';
 
@@ -19,12 +19,12 @@ export function TopTen({ rail }: { rail: RailStart<MediaType, TrendingMedia> }) 
   if (!filter.active) return null;
 
   return (
-    <section aria-labelledby={SECTION_ID} className="flex flex-col gap-2">
+    <section aria-labelledby={SECTION_ID} aria-busy={!filter.items} className="flex flex-col gap-2">
       <SectionHeader
         id={SECTION_ID}
         title={title}
         caption={dict.home.topTenCaption}
-        trailing={<RailPager scrollerRef={filter.scrollerRef} />}
+        trailing={<RailPager key={filter.pagerKey} scrollerRef={filter.scrollerRef} />}
       />
       <RailFilterBar
         label={dict.home.typeFilter.label}

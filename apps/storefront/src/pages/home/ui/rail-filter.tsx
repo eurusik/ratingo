@@ -1,52 +1,68 @@
 'use client';
 
-import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 import { whenIdleOnFastConnection } from '@/shared/lib';
 import { SectionError, SegmentedFilter } from '@/shared/ui';
-import { activeList, type RailStart } from '../model/home-feed';
+import { activeList, type RailStart } from '../model/rail-start';
 
 const RAIL_STALE_MS = 60_000;
 
-const chosenBySection = new Map<string, string>();
+const lastChosenListBySection = new Map<string, string>();
 
-function railQuery<K extends string, T>(
-  sectionId: string,
-  list: K | undefined,
-  loadList: (list: K) => Promise<T[]>,
-) {
-  return {
-    queryKey: ['home-rail', sectionId, list],
-    queryFn: () => loadList(list as K),
-    staleTime: RAIL_STALE_MS,
-    enabled: list !== undefined,
-  };
+function railQueryKey(sectionId: string, list: string | undefined) {
+  return ['home-rail', sectionId, list];
+}
+
+export interface RailFilterState<K extends string, T> {
+  active?: K;
+  available: readonly K[];
+  items?: T[];
+  loadFailed: boolean;
+  isRetrying: boolean;
+  retry: () => void;
+  select: (next: K) => void;
+  prefetchOthers: () => void;
+  scrollerRef: RefObject<HTMLDivElement | null>;
+  memoryKey: string;
+  pagerKey: string;
 }
 
 export function useRailFilter<K extends string, T>(
   sectionId: string,
   { available, first }: RailStart<K, T>,
   loadList: (list: K) => Promise<T[]>,
-) {
+): RailFilterState<K, T> {
   const queryClient = useQueryClient();
-  const [chosen, setChosen] = useState(() => chosenBySection.get(sectionId) as K | undefined);
+  const [chosen, setChosen] = useState(
+    () => lastChosenListBySection.get(sectionId) as K | undefined,
+  );
   const scrollerRef = useRef<HTMLDivElement>(null);
   const active = activeList(available, chosen);
-  const isFirstList = active === first?.list;
-  const fetched = useQuery(railQuery(sectionId, isFirstList ? undefined : active, loadList));
-  const items = isFirstList ? first?.items : fetched.data;
+  const listToFetch = active === first?.list ? undefined : active;
+  const fetched = useQuery({
+    queryKey: railQueryKey(sectionId, listToFetch),
+    queryFn: listToFetch === undefined ? skipToken : () => loadList(listToFetch),
+    staleTime: RAIL_STALE_MS,
+  });
+  const items = listToFetch === undefined ? first?.items : fetched.data;
 
-  const otherLists = available.filter((list) => list !== first?.list);
   const prefetchOthers = () => {
-    for (const list of otherLists)
-      void queryClient.prefetchQuery(railQuery(sectionId, list, loadList));
+    for (const list of available) {
+      if (list === first?.list) continue;
+      void queryClient.prefetchQuery({
+        queryKey: railQueryKey(sectionId, list),
+        queryFn: () => loadList(list),
+        staleTime: RAIL_STALE_MS,
+      });
+    }
   };
-  const prefetchOthersWhenIdle = useEffectEvent(prefetchOthers);
+  const prefetchOthersOnIdle = useEffectEvent(prefetchOthers);
 
-  useEffect(() => whenIdleOnFastConnection(() => prefetchOthersWhenIdle()), []);
+  useEffect(() => whenIdleOnFastConnection(() => prefetchOthersOnIdle()), []);
 
   const select = (next: K) => {
-    chosenBySection.set(sectionId, next);
+    lastChosenListBySection.set(sectionId, next);
     setChosen(next);
     if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
   };
@@ -55,13 +71,14 @@ export function useRailFilter<K extends string, T>(
     active,
     available,
     items,
-    loadFailed: !isFirstList && fetched.isError,
+    loadFailed: listToFetch !== undefined && fetched.isError,
     isRetrying: fetched.isFetching,
     retry: () => void fetched.refetch(),
     select,
     prefetchOthers,
     scrollerRef,
     memoryKey: `${sectionId}:${active}`,
+    pagerKey: `${sectionId}:${active}:${items ? 'ready' : 'waiting'}`,
   };
 }
 
@@ -98,10 +115,7 @@ export function RailFilterBar<K extends string>({
 }
 
 interface RailBodyProps<T> {
-  filter: Pick<
-    ReturnType<typeof useRailFilter<string, T>>,
-    'items' | 'loadFailed' | 'isRetrying' | 'retry'
-  >;
+  filter: Pick<RailFilterState<string, T>, 'items' | 'loadFailed' | 'isRetrying' | 'retry'>;
   failedTitle: string;
   skeleton: ReactNode;
   children: (items: T[]) => ReactNode;
@@ -109,7 +123,7 @@ interface RailBodyProps<T> {
 
 export function RailBody<T>({ filter, failedTitle, skeleton, children }: RailBodyProps<T>) {
   if (filter.items) return children(filter.items);
-  if (!filter.loadFailed) return skeleton;
+  if (!filter.loadFailed) return <div aria-hidden>{skeleton}</div>;
 
   return (
     <div className="px-4 md:px-0">

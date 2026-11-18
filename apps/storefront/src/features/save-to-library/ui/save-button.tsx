@@ -1,25 +1,28 @@
 'use client';
 
-import {
-  useId,
-  useRef,
-  useState,
-  type ComponentType,
-  type KeyboardEvent,
-  type PointerEvent,
-} from 'react';
-import { toggleButtonVariants } from '@heroui/react';
-import { Check, Plus } from 'lucide-react';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { useId, useRef, useState, type ComponentType, type RefObject } from 'react';
+import { useTranslation } from '@/shared/i18n';
 import { useSaveToggle } from '../model/save-toggle';
-import { SAVE_BUTTON_CLASS, TONE_CLASSES, type SaveButtonProps } from './save-button-look';
+import {
+  SaveIcon,
+  saveButtonClass,
+  saveButtonLabel,
+  type SaveButtonProps,
+} from './save-button-parts';
 import type { SaveMenuButtonProps } from './save-menu-button';
-import { useLongPress } from './use-long-press';
+import { useMenuIntent, type MenuIntent } from './use-menu-intent';
 
-const MENU_SHORTCUT_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Enter', ' ']);
-const LOOK = toggleButtonVariants({ isIconOnly: true });
+const HEROUI_ICON_TOGGLE_BUTTON =
+  'toggle-button toggle-button--icon-only toggle-button--md toggle-button--default';
 
 type Handoff = Pick<SaveMenuButtonProps, 'autoFocus' | 'defaultOpen'>;
+
+const HANDOFF_BY_INTENT: Record<MenuIntent, Handoff> = {
+  hover: { autoFocus: false, defaultOpen: false },
+  focus: { autoFocus: true, defaultOpen: false },
+  longPress: { autoFocus: false, defaultOpen: true },
+  shortcut: { autoFocus: true, defaultOpen: true },
+};
 
 interface LoadedMenuButton {
   MenuButton: ComponentType<SaveMenuButtonProps>;
@@ -31,80 +34,67 @@ export const preloadSaveMenuButton = () =>
 
 export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
   const [loaded, setLoaded] = useState<LoadedMenuButton | null>(null);
+  const instantButtonRef = useRef<HTMLButtonElement>(null);
+  const latestIntent = useRef<MenuIntent | null>(null);
 
   if (loaded) {
     const { MenuButton, handoff } = loaded;
     return <MenuButton media={media} tone={tone} {...handoff} />;
   }
 
-  const handOff = (handoff: Handoff) => {
-    void preloadSaveMenuButton().then((MenuButton) => setLoaded({ MenuButton, handoff }));
-  };
-
-  return <InstantSaveButton media={media} tone={tone} onHandOff={handOff} />;
-}
-
-interface InstantSaveButtonProps extends SaveButtonProps {
-  onHandOff: (handoff: Handoff) => void;
-}
-
-function InstantSaveButton({ media, tone = 'surface', onHandOff }: InstantSaveButtonProps) {
-  const { dict } = useTranslation();
-  const hintId = useId();
-  const { saved, toggle } = useSaveToggle(media);
-  const pointerIsDown = useRef(false);
-  const longPress = useLongPress(() => onHandOff({ autoFocus: false, defaultOpen: true }));
-
-  const onPointerDown = () => {
-    pointerIsDown.current = true;
-    longPress.start();
-  };
-
-  const onPointerEnd = () => {
-    pointerIsDown.current = false;
-    longPress.cancel();
-  };
-
-  const onPointerEnter = (event: PointerEvent) => {
-    if (event.pointerType === 'mouse') onHandOff({ autoFocus: false, defaultOpen: false });
-  };
-
-  const onFocus = () => {
-    if (!pointerIsDown.current) onHandOff({ autoFocus: true, defaultOpen: false });
-  };
-
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (!event.altKey || !MENU_SHORTCUT_KEYS.has(event.key)) return;
-    event.preventDefault();
-    onHandOff({ autoFocus: true, defaultOpen: true });
-  };
-
-  const onClick = () => {
-    if (!longPress.consumeLongPress()) toggle();
+  const swapToMenuButton = (intent: MenuIntent) => {
+    const isLoading = latestIntent.current !== null;
+    latestIntent.current = intent;
+    if (isLoading) return;
+    void preloadSaveMenuButton().then(
+      (MenuButton) => {
+        const handoff = HANDOFF_BY_INTENT[latestIntent.current ?? intent];
+        const stillFocused = document.activeElement === instantButtonRef.current;
+        setLoaded({
+          MenuButton,
+          handoff: { ...handoff, autoFocus: handoff.autoFocus && stillFocused },
+        });
+      },
+      () => {
+        latestIntent.current = null;
+      },
+    );
   };
 
   return (
+    <InstantSaveButton
+      buttonRef={instantButtonRef}
+      media={media}
+      tone={tone}
+      onMenuIntent={swapToMenuButton}
+    />
+  );
+}
+
+interface InstantSaveButtonProps extends Required<SaveButtonProps> {
+  buttonRef: RefObject<HTMLButtonElement | null>;
+  onMenuIntent: (intent: MenuIntent) => void;
+}
+
+function InstantSaveButton({ buttonRef, media, tone, onMenuIntent }: InstantSaveButtonProps) {
+  const { dict } = useTranslation();
+  const hintId = useId();
+  const { saved, toggle } = useSaveToggle(media);
+  const intentHandlers = useMenuIntent({ onIntent: onMenuIntent, onActivate: toggle });
+
+  return (
     <button
+      ref={buttonRef}
       type="button"
       data-slot="toggle-button"
       data-selected={saved || undefined}
       aria-pressed={saved}
-      aria-label={interpolate(dict.saveToLibrary.save, { title: media.title })}
+      aria-label={saveButtonLabel(dict, media.title)}
       aria-describedby={hintId}
-      className={`${LOOK} ${SAVE_BUTTON_CLASS} ${TONE_CLASSES[tone]}`}
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerEnd}
-      onPointerCancel={onPointerEnd}
-      onPointerLeave={onPointerEnd}
-      onPointerEnter={onPointerEnter}
-      onFocus={onFocus}
-      onKeyDown={onKeyDown}
-      onClick={onClick}
-      onContextMenu={(event) => {
-        if (longPress.isPressing()) event.preventDefault();
-      }}
+      className={`${HEROUI_ICON_TOGGLE_BUTTON} ${saveButtonClass(tone)}`}
+      {...intentHandlers}
     >
-      {saved ? <Check aria-hidden className="size-5" /> : <Plus aria-hidden className="size-5" />}
+      <SaveIcon saved={saved} />
       <span id={hintId} hidden>
         {dict.saveToLibrary.menu.hint}
       </span>

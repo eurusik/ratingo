@@ -1,11 +1,6 @@
 import type { ReactNode } from 'react';
-import { getRequestLocale } from '@/app/entrypoint';
-import { TranslationScope } from '@/shared/i18n';
+import { RouteTranslationScope } from '@/app/entrypoint';
 
-export default async function BrowseScopeLayout({ children }: { children: ReactNode }) {
-  return (
-    <TranslationScope locale={await getRequestLocale()} namespaces={['browse']}>
-      {children}
-    </TranslationScope>
-  );
+export default function BrowseRouteLayout({ children }: { children: ReactNode }) {
+  return <RouteTranslationScope namespaces={['browse']}>{children}</RouteTranslationScope>;
 }

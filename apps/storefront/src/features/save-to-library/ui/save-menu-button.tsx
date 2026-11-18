@@ -2,26 +2,25 @@
 
 import type { Key } from 'react';
 import { Dropdown, Label, ToggleButton } from '@heroui/react';
-import { Check, Plus } from 'lucide-react';
 import { mediaRoute } from '@/shared/config';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { useTranslation } from '@/shared/i18n';
 import { useShareLink } from '@/shared/lib';
 import { useSaveToggle } from '../model/save-toggle';
-import { SAVE_BUTTON_CLASS, TONE_CLASSES, type SaveButtonProps } from './save-button-look';
+import {
+  SaveIcon,
+  saveButtonClass,
+  saveButtonLabel,
+  type SaveButtonProps,
+} from './save-button-parts';
 
 const MENU_KEYS = { toggle: 'toggle', open: 'open', share: 'share' } as const;
 
-export interface SaveMenuButtonProps extends SaveButtonProps {
+export interface SaveMenuButtonProps extends Required<SaveButtonProps> {
   autoFocus: boolean;
   defaultOpen: boolean;
 }
 
-export function SaveMenuButton({
-  media,
-  tone = 'surface',
-  autoFocus,
-  defaultOpen,
-}: SaveMenuButtonProps) {
+export function SaveMenuButton({ media, tone, autoFocus, defaultOpen }: SaveMenuButtonProps) {
   const { dict } = useTranslation();
   const share = useShareLink();
   const { saved, toggle } = useSaveToggle(media);
@@ -40,10 +39,10 @@ export function SaveMenuButton({
         isIconOnly
         isSelected={saved}
         onPress={toggle}
-        aria-label={interpolate(dict.saveToLibrary.save, { title: media.title })}
-        className={`${SAVE_BUTTON_CLASS} ${TONE_CLASSES[tone]}`}
+        aria-label={saveButtonLabel(dict, media.title)}
+        className={saveButtonClass(tone)}
       >
-        {saved ? <Check aria-hidden className="size-5" /> : <Plus aria-hidden className="size-5" />}
+        <SaveIcon saved={saved} />
       </ToggleButton>
       <Dropdown.Popover placement="bottom end">
         <Dropdown.Menu onAction={onMenuAction}>

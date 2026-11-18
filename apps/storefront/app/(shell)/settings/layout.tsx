@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react';
-import { getRequestLocale } from '@/app/entrypoint';
-import { TranslationScope } from '@/shared/i18n';
+import { RouteTranslationScope } from '@/app/entrypoint';
 
-export default async function SettingsRouteLayout({ children }: { children: ReactNode }) {
+export default function SettingsRouteLayout({ children }: { children: ReactNode }) {
   return (
-    <TranslationScope locale={await getRequestLocale()} namespaces={['details', 'my', 'settings']}>
+    <RouteTranslationScope namespaces={['details', 'my', 'settings']}>
       {children}
-    </TranslationScope>
+    </RouteTranslationScope>
   );
 }

@@ -1,14 +1,10 @@
 import type { ReactNode } from 'react';
-import { getRequestLocale } from '@/app/entrypoint';
-import { TranslationScope } from '@/shared/i18n';
+import { RouteTranslationScope } from '@/app/entrypoint';
 
-export default async function CalendarRouteLayout({ children }: { children: ReactNode }) {
+export default function CalendarRouteLayout({ children }: { children: ReactNode }) {
   return (
-    <TranslationScope
-      locale={await getRequestLocale()}
-      namespaces={['calendar', 'details', 'reminder']}
-    >
+    <RouteTranslationScope namespaces={['calendar', 'details', 'reminder']}>
       {children}
-    </TranslationScope>
+    </RouteTranslationScope>
   );
 }

@@ -1,14 +1,10 @@
 import type { ReactNode } from 'react';
-import { getRequestLocale } from '@/app/entrypoint';
-import { TranslationScope } from '@/shared/i18n';
+import { RouteTranslationScope } from '@/app/entrypoint';
 
-export default async function DetailsScopeLayout({ children }: { children: ReactNode }) {
+export default function DetailsRouteLayout({ children }: { children: ReactNode }) {
   return (
-    <TranslationScope
-      locale={await getRequestLocale()}
-      namespaces={['details', 'library', 'reminder', 'reviews']}
-    >
+    <RouteTranslationScope namespaces={['details', 'library', 'reminder', 'reviews']}>
       {children}
-    </TranslationScope>
+    </RouteTranslationScope>
   );
 }

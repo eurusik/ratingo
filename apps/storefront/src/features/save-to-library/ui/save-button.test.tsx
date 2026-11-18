@@ -1,6 +1,6 @@
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { I18nProvider as AriaI18nProvider } from '@heroui/react';
+import { I18nProvider as AriaI18nProvider, toggleButtonVariants } from '@heroui/react';
 import { ToastProvider } from '@heroui/react/toast';
 import { useAuth } from '@ratingo/web-core/auth';
 import { libraryApi } from '@/shared/api';
@@ -235,6 +235,28 @@ describe('SaveButton', () => {
 
     await waitFor(() => expect(button).not.toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Зберегти «Андор»' })).toHaveFocus();
+  });
+
+  it('leaves focus where the user moved it while the menu button was loading', async () => {
+    signIn(true);
+    const button = renderButton();
+    const elsewhere = document.createElement('button');
+    document.body.append(elsewhere);
+
+    act(() => {
+      button.focus();
+      elsewhere.focus();
+    });
+
+    await waitFor(() => expect(button).not.toBeInTheDocument());
+    expect(elsewhere).toHaveFocus();
+    elsewhere.remove();
+  });
+
+  it('wears the same HeroUI toggle classes as the menu button', () => {
+    signIn(true);
+
+    expect(renderButton().className).toContain(toggleButtonVariants({ isIconOnly: true }));
   });
 
   it('describes the long-press menu before the menu button loads', () => {

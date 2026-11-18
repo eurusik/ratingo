@@ -1,14 +1,8 @@
 import type { TrendingMedia } from '@/entities/media';
 import type { HomeItem } from '@/shared/api';
 import type { TrendingLists } from '../api/load-home-feed';
-import {
-  RELEASE_LISTS,
-  TOP_TEN_LISTS,
-  buildHomeHero,
-  startRail,
-  type EpisodeRelease,
-  type Loaded,
-} from '../model/home-feed';
+import { buildHomeHero, type EpisodeRelease, type Loaded } from '../model/home-feed';
+import { RELEASE_LISTS, TOP_TEN_LISTS, startRail } from '../model/rail-start';
 import { HeroBanner } from './hero-banner';
 import { HomeSectionError } from './home-section-error';
 import { NewEpisodes } from './new-episodes';

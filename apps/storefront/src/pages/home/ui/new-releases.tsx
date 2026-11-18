@@ -6,7 +6,7 @@ import { SaveButton } from '@/features/save-to-library';
 import { useTranslation } from '@/shared/i18n';
 import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import { loadReleaseList } from '../api/home-rails';
-import type { RailStart, ReleaseList } from '../model/home-feed';
+import type { RailStart, ReleaseList } from '../model/rail-start';
 import { CardRowSkeleton } from './home-skeletons';
 import { RailBody, RailFilterBar, useRailFilter } from './rail-filter';
 
@@ -22,13 +22,14 @@ export function NewReleases({ rail }: { rail: RailStart<ReleaseList, TrendingMed
   return (
     <section
       aria-labelledby={SECTION_ID}
+      aria-busy={!filter.items}
       className="flex below-fold flex-col gap-2 [--fold-size:28.5rem]"
     >
       <SectionHeader
         id={SECTION_ID}
         title={title}
         caption={dict.home.newReleasesCaption}
-        trailing={<RailPager scrollerRef={filter.scrollerRef} />}
+        trailing={<RailPager key={filter.pagerKey} scrollerRef={filter.scrollerRef} />}
       />
       <RailFilterBar
         label={dict.home.releaseFilter.label}
