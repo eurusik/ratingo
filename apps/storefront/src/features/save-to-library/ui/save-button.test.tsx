@@ -234,7 +234,9 @@ describe('SaveButton', () => {
     act(() => button.focus());
 
     await waitFor(() => expect(button).not.toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Зберегти «Андор»' })).toHaveFocus();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Зберегти «Андор»' })).toHaveFocus(),
+    );
   });
 
   it('leaves focus where the user moved it while the menu button was loading', async () => {
