@@ -295,6 +295,15 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
       .map((s) => s.trigger);
   }
 
+  async findKnownTriggersForMedia(
+    userId: string,
+    mediaItemId: string,
+  ): Promise<SubscriptionTrigger[]> {
+    return this.subscriptions
+      .filter((s) => s.userId === userId && s.mediaItemId === mediaItemId)
+      .map((s) => s.trigger);
+  }
+
   async listActiveWithMedia(userId: string, limit = 20, offset = 0): Promise<any[]> {
     return this.subscriptions
       .filter((s) => s.userId === userId && s.isActive)
@@ -330,6 +339,12 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
   async deactivateForEndedShow(): Promise<number> {
     return 0;
   }
+
+  async claimMovieReleases(): Promise<any[]> {
+    return [];
+  }
+
+  async releaseClaims(): Promise<void> {}
 }
 
 const buildMediaIds = (count: number): string =>

@@ -1,8 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { type MediaType } from '@/common/enums/media-type.enum';
 
+import { SAVED_ITEM_EVENTS, type SavedForLaterEvent } from '../domain/constants/events.constants';
 import { type UserSavedItem, type SavedItemList, SAVED_ITEM_LIST } from '../domain/entities';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import {
@@ -38,6 +40,7 @@ export class SavedItemsService {
     private readonly savedItemRepo: IUserSavedItemRepository,
     @Inject(USER_MEDIA_ACTION_REPOSITORY)
     private readonly actionRepo: IUserMediaActionRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -77,6 +80,10 @@ export class SavedItemsService {
     });
 
     this.logger.log(`User ${userId} saved ${mediaItemId} to ${list}`);
+    if (list === SAVED_ITEM_LIST.FOR_LATER) {
+      const event: SavedForLaterEvent = { userId, mediaItemId };
+      this.eventEmitter.emit(SAVED_ITEM_EVENTS.SAVED_FOR_LATER, event);
+    }
     return item;
   }
 

@@ -398,7 +398,10 @@
     },
     "text": {
       "release": "{title} is now in cinemas",
-      "on_streaming": "{title} is now available at home",
+      "release_us": "{title} is out in the US",
+      "release_world": "{title}: world premiere",
+      "on_streaming": "{title} is out on digital",
+      "on_streaming_us": "{title} is out on digital in the US",
       "new_season": "{title} is back with season {season}",
       "new_season_unknown": "{title} has a new season coming",
       "new_episode": "{title}: episode {code} is out",

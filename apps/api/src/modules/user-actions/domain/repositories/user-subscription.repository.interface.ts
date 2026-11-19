@@ -2,6 +2,7 @@ import { type MediaType } from '@/common/enums/media-type.enum';
 import { type ImageData } from '@/common/types/media.types';
 
 import {
+  type SUBSCRIPTION_TRIGGER,
   type UserSubscription,
   type SubscriptionTrigger,
 } from '../entities/user-subscription.entity';
@@ -48,6 +49,27 @@ export interface NotifiedSubscription {
   mediaItemId: string;
 }
 
+export type MovieReleaseTrigger =
+  typeof SUBSCRIPTION_TRIGGER.RELEASE | typeof SUBSCRIPTION_TRIGGER.ON_STREAMING;
+
+export interface ReleaseDayWindow {
+  from: Date;
+  toExclusive: Date;
+}
+
+interface MovieReleaseEntryRow {
+  country: string;
+  type: number;
+  date: string;
+}
+
+export interface ClaimedMovieRelease extends NotifiedSubscription {
+  theatricalReleaseDate: Date | null;
+  digitalReleaseDate: Date | null;
+  releaseDate: Date | null;
+  releases: MovieReleaseEntryRow[] | null;
+}
+
 /**
  * Repository contract for user subscription operations.
  */
@@ -92,6 +114,8 @@ export interface IUserSubscriptionRepository {
    * @returns {Promise<SubscriptionTrigger[]>} Active triggers
    */
   findActiveTriggersForMedia(userId: string, mediaItemId: string): Promise<SubscriptionTrigger[]>;
+
+  findKnownTriggersForMedia(userId: string, mediaItemId: string): Promise<SubscriptionTrigger[]>;
 
   /**
    * Lists active subscriptions with media summary.
@@ -148,4 +172,11 @@ export interface IUserSubscriptionRepository {
    * that has ended or been canceled.
    */
   deactivateForEndedShow(mediaItemId: string): Promise<number>;
+
+  claimMovieReleases(
+    trigger: MovieReleaseTrigger,
+    window: ReleaseDayWindow,
+  ): Promise<ClaimedMovieRelease[]>;
+
+  releaseClaims(subscriptionIds: string[]): Promise<void>;
 }

@@ -35,6 +35,43 @@ describe('notification copy', () => {
     );
   });
 
+  it('names the country of a cinema release', () => {
+    const release = (releaseCountry: string | null) =>
+      notificationText(
+        notification({ payload: { releaseKind: 'theatrical', releaseCountry } }),
+        uk,
+      );
+    expect(release('UA')).toBe('Анора — уже в кіно');
+    expect(release('US')).toBe('Анора — вийшов у США');
+    expect(release('GB')).toBe('Анора — світова прем’єра');
+    expect(release(null)).toBe('Анора — світова прем’єра');
+  });
+
+  it('calls a digital release a digital release, never a home viewing', () => {
+    expect(
+      notificationText(
+        notification({
+          trigger: 'on_streaming',
+          payload: { releaseKind: 'digital', releaseCountry: 'US' },
+        }),
+        uk,
+      ),
+    ).toBe('Анора — вийшов у цифровому релізі в США');
+    expect(
+      notificationText(
+        notification({ payload: { releaseKind: 'digital', releaseCountry: null } }),
+        uk,
+      ),
+    ).toBe('Анора — вийшов у цифровому релізі');
+  });
+
+  it('keeps the plain wording for notifications without release details', () => {
+    expect(notificationText(notification({}), uk)).toBe('Анора — уже в кіно');
+    expect(notificationText(notification({ trigger: 'on_streaming' }), uk)).toBe(
+      'Анора — вийшов у цифровому релізі',
+    );
+  });
+
   it('reminds where a released title came from', () => {
     expect(notificationDetail(notification({ trigger: 'on_streaming' }), uk, 'uk')).toBe(
       uk.notifications.sub.fromPlan,

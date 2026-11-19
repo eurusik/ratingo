@@ -3953,6 +3953,13 @@ export interface components {
             episodeKey?: string;
             /** @example 2025-01-15 */
             airDate?: string;
+            /**
+             * @example digital
+             * @enum {string}
+             */
+            releaseKind?: "theatrical" | "digital";
+            /** @example US */
+            releaseCountry?: string | null;
         };
         NotificationMediaSummaryDto: {
             /** @example uuid-123 */

@@ -31,9 +31,26 @@ function episodeLabel(episodeKey: string | undefined, dict: Dictionary): string 
   });
 }
 
+type NotificationTexts = Dictionary['notifications']['text'];
+
+const HOME_COUNTRY = 'UA';
+const US = 'US';
+
+function releaseTemplate(item: NotificationItem, text: NotificationTexts): string {
+  const kind = item.payload?.releaseKind;
+  const country = item.payload?.releaseCountry;
+  const isDigital = kind ? kind === 'digital' : item.trigger === 'on_streaming';
+  if (isDigital) return country === US ? text.on_streaming_us : text.on_streaming;
+  if (!kind || country === HOME_COUNTRY) return text.release;
+  return country === US ? text.release_us : text.release_world;
+}
+
 export function notificationText(item: NotificationItem, dict: Dictionary): string {
   const { text } = dict.notifications;
   const title = item.mediaSummary.title;
+  if (item.trigger === 'release' || item.trigger === 'on_streaming') {
+    return interpolate(releaseTemplate(item, text), { title });
+  }
   if (item.trigger === 'new_season') {
     const season = seasonOf(item);
     return season === undefined

@@ -49,6 +49,12 @@ export class NotificationPayloadDto {
 
   @ApiProperty({ example: '2025-01-15', required: false })
   airDate?: string;
+
+  @ApiProperty({ example: 'digital', enum: ['theatrical', 'digital'], required: false })
+  releaseKind?: 'theatrical' | 'digital';
+
+  @ApiProperty({ example: 'US', type: String, nullable: true, required: false })
+  releaseCountry?: string | null;
 }
 
 /**

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SyncWorker } from './sync.worker';
 import { SyncMediaService } from '../services/sync-media.service';
 import { MediaPageCacheService } from '../services/media-page-cache.service';
+import { SubscriptionTriggerService } from '@/modules/user-actions/public';
 import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import { Job } from 'bullmq';
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -33,8 +34,10 @@ describe('SyncWorker', () => {
   let backfillAltTitlesPipeline: any;
   let backfillMdblistRatingsPipeline: any;
   let mediaPageCache: any;
+  let subscriptionTriggerService: { notifyMovieReleases: jest.Mock };
 
   beforeEach(async () => {
+    subscriptionTriggerService = { notifyMovieReleases: jest.fn().mockResolvedValue([]) };
     mediaPageCache = {
       invalidateAfterSync: jest.fn().mockResolvedValue(undefined),
     };
@@ -104,6 +107,7 @@ describe('SyncWorker', () => {
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
         { provide: BackfillMdblistRatingsPipeline, useValue: backfillMdblistRatingsPipeline },
         { provide: MediaPageCacheService, useValue: mediaPageCache },
+        { provide: SubscriptionTriggerService, useValue: subscriptionTriggerService },
       ],
     }).compile();
 
@@ -229,6 +233,16 @@ describe('SyncWorker', () => {
   });
 
   describe('process - tracked shows pipeline', () => {
+    it('should delegate NOTIFY_MOVIE_RELEASES to the subscription trigger service', async () => {
+      await worker.process({
+        id: 'job-movie-releases',
+        name: IngestionJob.NOTIFY_MOVIE_RELEASES,
+        data: {},
+      } as any);
+
+      expect(subscriptionTriggerService.notifyMovieReleases).toHaveBeenCalledTimes(1);
+    });
+
     it('should delegate SYNC_TRACKED_SHOWS to tracked shows pipeline', async () => {
       const job = {
         name: IngestionJob.SYNC_TRACKED_SHOWS,

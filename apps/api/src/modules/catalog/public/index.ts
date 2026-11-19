@@ -30,6 +30,7 @@ export type {
 export {
   effectiveMovieRelease,
   effectiveMovieReleaseDate,
+  findReleaseCountry,
   isMovieReleasingFrom,
   resolveMovieRelease,
   type MovieReleaseDates,

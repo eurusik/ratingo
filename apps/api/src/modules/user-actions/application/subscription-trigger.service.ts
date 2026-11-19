@@ -2,17 +2,32 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { ShowStatus } from '@/common/enums/show-status.enum';
+import { addUtcDays, startOfUtcDay } from '@/common/utils/date.util';
 import { errorMessage } from '@/common/utils/error.utils';
+import {
+  findReleaseCountry,
+  MovieReleaseDateKind,
+  resolveMovieRelease,
+} from '@/modules/catalog/public';
 import type { ShowSyncDiff } from '@/modules/ingestion/public';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 
 import { SHOW_EVENTS } from '../domain/constants/events.constants';
+import { MOVIE_RELEASE_NOTIFY_WINDOW_DAYS } from '../domain/constants/subscription.constants';
+import {
+  NOTIFICATION_RELEASE_KIND,
+  type NotificationReleaseKind,
+} from '../domain/entities/user-notification.entity';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 import {
   type IUserNotificationRepository,
   USER_NOTIFICATION_REPOSITORY,
 } from '../domain/repositories/user-notification.repository.interface';
 import {
+  type ClaimedMovieRelease,
   type IUserSubscriptionRepository,
+  type MovieReleaseTrigger,
+  type ReleaseDayWindow,
   USER_SUBSCRIPTION_REPOSITORY,
 } from '../domain/repositories/user-subscription.repository.interface';
 
@@ -22,14 +37,27 @@ export interface SubscriptionNotificationEvent {
   mediaItemId: string;
   trigger: string;
   payload: {
-    tmdbId: number;
+    tmdbId?: number;
     episodeKey?: string;
     seasonNumber?: number;
     airDate?: string;
     statusFrom?: string | null;
     statusTo?: string;
+    releaseKind?: NotificationReleaseKind;
+    releaseCountry?: string | null;
   };
 }
+
+interface MovieReleaseNotice {
+  airDate: string;
+  releaseKind: NotificationReleaseKind;
+  releaseCountry: string | null;
+}
+
+const MOVIE_RELEASE_TRIGGERS: readonly MovieReleaseTrigger[] = [
+  SUBSCRIPTION_TRIGGER.ON_STREAMING,
+  SUBSCRIPTION_TRIGGER.RELEASE,
+];
 
 @Injectable()
 export class SubscriptionTriggerService {
@@ -41,7 +69,90 @@ export class SubscriptionTriggerService {
     @Inject(USER_NOTIFICATION_REPOSITORY)
     private readonly notificationRepo: IUserNotificationRepository,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
   ) {}
+
+  async notifyMovieReleases(): Promise<SubscriptionNotificationEvent[]> {
+    const window = this.movieReleaseWindow();
+    const events: SubscriptionNotificationEvent[] = [];
+
+    for (const trigger of MOVIE_RELEASE_TRIGGERS) {
+      events.push(...(await this.notifyClaimedMovieReleases(trigger, window)));
+    }
+
+    this.logger.log(
+      `Movie releases from ${window.from.toISOString()}: ${events.length} notifications generated`,
+    );
+    return events;
+  }
+
+  private async notifyClaimedMovieReleases(
+    trigger: MovieReleaseTrigger,
+    window: ReleaseDayWindow,
+  ): Promise<SubscriptionNotificationEvent[]> {
+    const claimed = await this.subscriptionRepo.claimMovieReleases(trigger, window);
+    const events = claimed.flatMap((release) => this.toMovieReleaseEvent(trigger, release));
+    if (events.length === 0) return events;
+
+    try {
+      await this.persistNotifications(events);
+    } catch (error) {
+      await this.subscriptionRepo.releaseClaims(events.map((event) => event.subscriptionId));
+      throw error;
+    }
+    return events;
+  }
+
+  private movieReleaseWindow(): ReleaseDayWindow {
+    const today = startOfUtcDay(this.clock.now());
+    return {
+      from: addUtcDays(today, -MOVIE_RELEASE_NOTIFY_WINDOW_DAYS),
+      toExclusive: addUtcDays(today, 1),
+    };
+  }
+
+  private toMovieReleaseEvent(
+    trigger: MovieReleaseTrigger,
+    release: ClaimedMovieRelease,
+  ): SubscriptionNotificationEvent[] {
+    const notice = this.buildReleaseNotice(trigger, release);
+    if (!notice) {
+      this.logger.error(`Claimed ${trigger} subscription ${release.id} without a release date`);
+      return [];
+    }
+    return [
+      {
+        subscriptionId: release.id,
+        userId: release.userId,
+        mediaItemId: release.mediaItemId,
+        trigger,
+        payload: notice,
+      },
+    ];
+  }
+
+  private buildReleaseNotice(
+    trigger: MovieReleaseTrigger,
+    release: ClaimedMovieRelease,
+  ): MovieReleaseNotice | null {
+    if (trigger === SUBSCRIPTION_TRIGGER.ON_STREAMING) {
+      if (!release.digitalReleaseDate) return null;
+      const digital = { date: release.digitalReleaseDate, kind: MovieReleaseDateKind.DIGITAL };
+      return {
+        airDate: release.digitalReleaseDate.toISOString(),
+        releaseKind: NOTIFICATION_RELEASE_KIND.DIGITAL,
+        releaseCountry: findReleaseCountry(digital, release.releases ?? []),
+      };
+    }
+    const resolved = resolveMovieRelease(release, release.releases);
+    if (!resolved) return null;
+    return {
+      airDate: resolved.date.toISOString(),
+      releaseKind: resolved.kind,
+      releaseCountry: resolved.country,
+    };
+  }
 
   async handleShowDiff(diff: ShowSyncDiff): Promise<SubscriptionNotificationEvent[]> {
     if (!diff.hasChanges) {
@@ -96,6 +207,8 @@ export class SubscriptionTriggerService {
           seasonNumber: event.payload.seasonNumber,
           episodeKey: event.payload.episodeKey,
           airDate: event.payload.airDate,
+          releaseKind: event.payload.releaseKind,
+          releaseCountry: event.payload.releaseCountry,
         },
       }));
 

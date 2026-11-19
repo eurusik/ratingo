@@ -4,17 +4,20 @@ import { apiOnly } from '@/common/runtime/app-role';
 import { DatabaseModule } from '@/database/database.module';
 
 import { AutoResubscribeOnRestoreListener } from './application/listeners/auto-resubscribe-on-restore.listener';
+import { AutoSubscribeMovieOnPlanListener } from './application/listeners/auto-subscribe-movie-on-plan.listener';
 import { AutoUnsubscribeOnDropListener } from './application/listeners/auto-unsubscribe-on-drop.listener';
 import { NotificationsService } from './application/notifications.service';
 import { SavedItemsService } from './application/saved-items.service';
 import { SubscriptionTriggerService } from './application/subscription-trigger.service';
 import { SubscriptionsService } from './application/subscriptions.service';
+import { MOVIE_RELEASE_PORT } from './domain/ports/movie-release.port';
 import { SHOW_STATE_PORT } from './domain/ports/show-state.port';
 import { USER_PREFERENCE_PORT } from './domain/ports/user-preference.port';
 import { USER_MEDIA_ACTION_REPOSITORY } from './domain/repositories/user-media-action.repository.interface';
 import { USER_NOTIFICATION_REPOSITORY } from './domain/repositories/user-notification.repository.interface';
 import { USER_SAVED_ITEM_REPOSITORY } from './domain/repositories/user-saved-item.repository.interface';
 import { USER_SUBSCRIPTION_REPOSITORY } from './domain/repositories/user-subscription.repository.interface';
+import { DrizzleMovieReleaseAdapter } from './infrastructure/adapters/drizzle-movie-release.adapter';
 import { DrizzleShowStateAdapter } from './infrastructure/adapters/drizzle-show-state.adapter';
 import { DrizzleUserPreferenceAdapter } from './infrastructure/adapters/drizzle-user-preference.adapter';
 import { DrizzleUserMediaActionRepository } from './infrastructure/repositories/drizzle-user-media-action.repository';
@@ -43,6 +46,7 @@ import { SubscriptionsController } from './presentation/controllers/subscription
     SubscriptionTriggerService,
     AutoUnsubscribeOnDropListener,
     AutoResubscribeOnRestoreListener,
+    AutoSubscribeMovieOnPlanListener,
     {
       provide: USER_MEDIA_ACTION_REPOSITORY,
       useClass: DrizzleUserMediaActionRepository,
@@ -62,6 +66,10 @@ import { SubscriptionsController } from './presentation/controllers/subscription
     {
       provide: SHOW_STATE_PORT,
       useClass: DrizzleShowStateAdapter,
+    },
+    {
+      provide: MOVIE_RELEASE_PORT,
+      useClass: DrizzleMovieReleaseAdapter,
     },
     {
       provide: USER_PREFERENCE_PORT,

@@ -246,6 +246,13 @@
       "when": 1794934760230,
       "tag": "0034_user_media_state_implied",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1795080762490,
+      "tag": "0035_movie_release_auto_subscriptions",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,8 @@ import { USER_MEDIA_ACTION_REPOSITORY } from '../domain/repositories/user-media-
 import { USER_NOTIFICATION_REPOSITORY } from '../domain/repositories/user-notification.repository.interface';
 import { SHOW_STATE_PORT } from '../domain/ports/show-state.port';
 import { USER_PREFERENCE_PORT } from '../domain/ports/user-preference.port';
+import { MOVIE_RELEASE_PORT } from '../domain/ports/movie-release.port';
+import { CLOCK_PORT } from '@/modules/shared/clock';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 import type { ShowSyncDiff } from '@/modules/ingestion/public';
 
@@ -205,6 +207,11 @@ describe('Notification Flow Integration', () => {
         { provide: SHOW_STATE_PORT, useValue: showStatePort },
         { provide: USER_PREFERENCE_PORT, useValue: userPreferencePort },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+        {
+          provide: MOVIE_RELEASE_PORT,
+          useValue: { findMovieReleaseSchedule: jest.fn().mockResolvedValue(null) },
+        },
+        { provide: CLOCK_PORT, useValue: { now: () => new Date('2026-11-19T06:00:00Z') } },
       ],
     }).compile();
 
