@@ -9,6 +9,7 @@ import { DatabaseModule } from '@/database/database.module';
 import { AutoResubscribeOnRestoreListener } from './application/listeners/auto-resubscribe-on-restore.listener';
 import { AutoSubscribeMovieOnPlanListener } from './application/listeners/auto-subscribe-movie-on-plan.listener';
 import { AutoUnsubscribeOnDropListener } from './application/listeners/auto-unsubscribe-on-drop.listener';
+import { AutoUnsubscribeOnUnplanListener } from './application/listeners/auto-unsubscribe-on-unplan.listener';
 import { MovieReleaseNotificationsScheduler } from './application/movie-release-notifications.scheduler';
 import { MovieReleaseNotifier } from './application/movie-release-notifier.service';
 import { NotificationsService } from './application/notifications.service';
@@ -26,6 +27,7 @@ import { USER_SUBSCRIPTION_REPOSITORY } from './domain/repositories/user-subscri
 import { DrizzleMovieReleaseAdapter } from './infrastructure/adapters/drizzle-movie-release.adapter';
 import { DrizzleShowStateAdapter } from './infrastructure/adapters/drizzle-show-state.adapter';
 import { DrizzleUserPreferenceAdapter } from './infrastructure/adapters/drizzle-user-preference.adapter';
+import { AutoPlanSubscriptionsQuery } from './infrastructure/queries/auto-plan-subscriptions.query';
 import { ClaimMovieReleasesQuery } from './infrastructure/queries/claim-movie-releases.query';
 import { DrizzleUserMediaActionRepository } from './infrastructure/repositories/drizzle-user-media-action.repository';
 import { DrizzleUserNotificationRepository } from './infrastructure/repositories/drizzle-user-notification.repository';
@@ -61,10 +63,12 @@ import { USER_NOTIFICATIONS_JOB_OPTIONS, USER_NOTIFICATIONS_QUEUE } from './user
     SubscriptionTriggerService,
     MovieReleaseNotifier,
     ClaimMovieReleasesQuery,
+    AutoPlanSubscriptionsQuery,
     ...workerOnly(UserNotificationsWorker, MovieReleaseNotificationsScheduler),
     AutoUnsubscribeOnDropListener,
     AutoResubscribeOnRestoreListener,
     AutoSubscribeMovieOnPlanListener,
+    AutoUnsubscribeOnUnplanListener,
     {
       provide: USER_MEDIA_ACTION_REPOSITORY,
       useClass: DrizzleUserMediaActionRepository,

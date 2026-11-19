@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { BROWSE_CATEGORY_SLUGS } from '@/pages/browse';
 import { configureStorefrontApi, sitemapApi } from '@/shared/api';
 import { SITE_URL } from '@/shared/config';
 import { buildSitemap } from '@/shared/lib';
@@ -20,5 +21,9 @@ export async function generateSitemap(): Promise<MetadataRoute.Sitemap> {
     orEmpty('shows', () => sitemapApi.getMedia('shows')),
   ]);
 
-  return buildSitemap(SITE_URL, { now: new Date(), movies, shows });
+  return buildSitemap(SITE_URL, {
+    browseCategories: BROWSE_CATEGORY_SLUGS,
+    movies,
+    shows,
+  });
 }

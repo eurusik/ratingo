@@ -741,6 +741,7 @@
     },
     "upcoming": {
       "release": "Вихід {date}",
+      "dateUnknown": "Дата виходу ще невідома",
       "noScore": "Фільм ще не вийшов — оцінки з’являться після прем’єри"
     },
     "actions": {
@@ -1134,6 +1135,7 @@
     "minutes": "{minutes} хв",
     "quotedTitle": "«{title}»",
     "savedNote": "у «Хочу подивитись»",
+    "reminderNote": "нагадаємо, коли вийде",
     "premiere": "Прем’єра",
     "finale": "Фінал сезону",
     "moreShows": {

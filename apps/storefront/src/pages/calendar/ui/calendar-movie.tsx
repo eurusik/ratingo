@@ -2,13 +2,24 @@
 
 import { memo } from 'react';
 import { MediaPoster } from '@/entities/media';
-import { ReminderToggle } from '@/features/media-reminder';
+import { useIsReminderOn } from '@/features/media-reminder';
+import { SaveButton } from '@/features/save-to-library';
 import type { CalendarMovie } from '@/shared/api';
 import { mediaRoute } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { ForwardLink } from '@/shared/ui';
+import { movieLine } from '../model/movie-line';
 import { useCalendarContext } from './calendar-context';
 import { RELEASE_ROW } from './calendar-layout';
+
+function ComingOutMovieLine({ movie }: { movie: CalendarMovie }) {
+  const { dict } = useTranslation();
+  const isReminderOn = useIsReminderOn(
+    { mediaItemId: movie.mediaItemId, title: movie.title, isReminderSet: movie.isReminderSet },
+    'release',
+  );
+  return movieLine(movie, isReminderOn, dict);
+}
 
 export const CalendarMovieItem = memo(function CalendarMovieItem({
   movie,
@@ -17,8 +28,6 @@ export const CalendarMovieItem = memo(function CalendarMovieItem({
 }) {
   const { dict } = useTranslation();
   const { now } = useCalendarContext();
-  const line = dict.release[movie.releaseDateKind];
-  const subtitle = movie.isSavedForLater ? `${line} · ${dict.calendar.savedNote}` : line;
   const isComingOut = Date.parse(movie.releaseDate) > now;
 
   return (
@@ -30,17 +39,19 @@ export const CalendarMovieItem = memo(function CalendarMovieItem({
         <MediaPoster type="movie" posterUrl={movie.poster?.small} size="row" />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="truncate text-[15px] font-bold">{movie.title}</span>
-          <span className="truncate text-[13px] text-muted">{subtitle}</span>
+          <span className="truncate text-[13px] text-muted">
+            {isComingOut ? <ComingOutMovieLine movie={movie} /> : movieLine(movie, false, dict)}
+          </span>
         </span>
       </ForwardLink>
       {isComingOut ? (
-        <ReminderToggle
+        <SaveButton
           media={{
             mediaItemId: movie.mediaItemId,
             title: movie.title,
-            isReminderSet: movie.isReminderSet,
+            slug: movie.slug,
+            type: 'movie',
           }}
-          trigger="release"
         />
       ) : null}
     </li>

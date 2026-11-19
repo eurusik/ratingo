@@ -1,6 +1,8 @@
 import type { Season, TrackingState } from '@/entities/episode';
 import type { MediaType } from '@/shared/api';
 
+export type UpcomingKind = 'dated' | 'undated';
+
 export interface ActionMedia {
   mediaItemId: string;
   type: MediaType;
@@ -11,5 +13,5 @@ export interface ActionMedia {
   seasonCount?: number;
   episodeCount?: number;
   trackingState?: TrackingState;
-  isUpcoming?: boolean;
+  upcoming?: UpcomingKind;
 }

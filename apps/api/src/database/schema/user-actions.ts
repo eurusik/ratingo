@@ -168,6 +168,7 @@ export const userSubscriptions = pgTable(
     channel: text('channel').default('push'),
 
     isActive: boolean('is_active').default(true).notNull(),
+    autoPlan: boolean('auto_plan').default(false).notNull(),
     lastNotifiedAt: timestamp('last_notified_at'),
 
     // Dedup markers to prevent duplicate notifications
