@@ -18,6 +18,7 @@ export { SubscriptionsService } from '../application/subscriptions.service';
 
 // Domain constants
 export { SHOW_EVENTS } from '../domain/constants/events.constants';
+export { USER_NOTIFICATIONS_QUEUE } from '../user-actions.constants';
 
 // Repository interfaces and tokens
 export {

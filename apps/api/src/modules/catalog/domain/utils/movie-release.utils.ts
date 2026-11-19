@@ -57,7 +57,7 @@ const TMDB_RELEASE_TYPE_BY_KIND: Record<MovieReleaseDateKindType, number> = {
 
 const RELEASE_COUNTRY_PREFERENCE = [PRIMARY_REGION, FALLBACK_REGION];
 
-function findReleaseCountry(
+export function findReleaseCountry(
   release: EffectiveMovieRelease,
   releases: readonly MovieReleaseEntry[],
 ): string | null {

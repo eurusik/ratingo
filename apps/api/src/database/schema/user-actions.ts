@@ -255,6 +255,8 @@ export const userNotifications = pgTable(
       airDate?: string;
       statusFrom?: string | null;
       statusTo?: string;
+      releaseKind?: 'theatrical' | 'digital';
+      releaseCountry?: string | null;
     }>(),
 
     // Read status

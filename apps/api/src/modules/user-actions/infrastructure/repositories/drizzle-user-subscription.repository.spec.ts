@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleUserSubscriptionRepository } from './drizzle-user-subscription.repository';
+import { ClaimMovieReleasesQuery } from '../queries/claim-movie-releases.query';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import { DatabaseException } from '@/common/exceptions/database.exception';
 import { SUBSCRIPTION_TRIGGER } from '@/modules/user-actions/domain/entities/user-subscription.entity';
@@ -90,6 +91,7 @@ describe('DrizzleUserSubscriptionRepository', () => {
     return Test.createTestingModule({
       providers: [
         DrizzleUserSubscriptionRepository,
+        ClaimMovieReleasesQuery,
         { provide: DATABASE_CONNECTION, useValue: db },
       ],
     }).compile();
@@ -353,6 +355,124 @@ describe('DrizzleUserSubscriptionRepository', () => {
       repository = module.get(DrizzleUserSubscriptionRepository);
 
       await expect(repository.findTrackedShowTmdbIds()).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('claimMovieReleases', () => {
+    const window = {
+      from: new Date('2026-11-16T00:00:00Z'),
+      toExclusive: new Date('2026-11-20T00:00:00Z'),
+    };
+
+    const claimedWhere = () => {
+      const where = db.update.mock.results[0].value.where.mock.calls[0][0];
+      return new PgDialect().sqlToQuery(where);
+    };
+
+    it('claims only active, never-notified subscriptions whose date is inside the window', async () => {
+      const module = await setup({ resolveUpdate: [] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      await repository.claimMovieReleases(SUBSCRIPTION_TRIGGER.ON_STREAMING, window);
+
+      const { sql, params } = claimedWhere();
+      expect(sql).toContain('"user_subscriptions"."last_notified_at" is null');
+      expect(sql).toContain('"movies"."digital_release_date" >= $');
+      expect(sql).toContain('"movies"."digital_release_date" < $');
+      expect(params).toEqual(
+        expect.arrayContaining([
+          SUBSCRIPTION_TRIGGER.ON_STREAMING,
+          window.from.toISOString(),
+          window.toExclusive.toISOString(),
+        ]),
+      );
+    });
+
+    it('skips subscriptions created after the movie was already out', async () => {
+      const module = await setup({ resolveUpdate: [] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      await repository.claimMovieReleases(SUBSCRIPTION_TRIGGER.ON_STREAMING, window);
+
+      expect(claimedWhere().sql).toContain(
+        `"user_subscriptions"."created_at" < "movies"."digital_release_date" + interval '1 day'`,
+      );
+    });
+
+    it('uses the effective release date for release and skips movies whose digital release is notified in the same window', async () => {
+      const module = await setup({ resolveUpdate: [] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      await repository.claimMovieReleases(SUBSCRIPTION_TRIGGER.RELEASE, window);
+
+      const { sql } = claimedWhere();
+      expect(sql).toContain(
+        'coalesce("movies"."theatrical_release_date", "movies"."digital_release_date", "media_items"."release_date") >= $',
+      );
+      expect(sql).toContain('not (("movies"."digital_release_date" >= $');
+      expect(sql).toContain('exists (select 1 from "user_subscriptions" "other_subs" where');
+      expect(sql).toContain('"other_subs"."user_id" = "user_subscriptions"."user_id"');
+    });
+
+    it('returns each claimed subscription with its release notice', async () => {
+      const row = {
+        id: 'sub-id-1',
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        theatricalReleaseDate: new Date('2026-11-18T00:00:00Z'),
+        digitalReleaseDate: null,
+        releaseDate: null,
+        releases: [{ country: 'US', type: 3, date: '2026-11-18T00:00:00.000Z' }],
+      };
+      const module = await setup({ resolveUpdate: [row] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      await expect(
+        repository.claimMovieReleases(SUBSCRIPTION_TRIGGER.RELEASE, window),
+      ).resolves.toEqual([
+        {
+          id: 'sub-id-1',
+          userId: 'user-id-1',
+          mediaItemId: 'media-id-1',
+          release: { releasedOn: row.theatricalReleaseDate, kind: 'theatrical', country: 'US' },
+        },
+      ]);
+    });
+
+    it('hands back a claim it cannot describe instead of keeping it silently', async () => {
+      const row = {
+        id: 'sub-id-1',
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        theatricalReleaseDate: null,
+        digitalReleaseDate: null,
+        releaseDate: null,
+        releases: null,
+      };
+      const module = await setup({ resolveUpdate: [row] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      await expect(
+        repository.claimMovieReleases(SUBSCRIPTION_TRIGGER.ON_STREAMING, window),
+      ).resolves.toEqual([]);
+
+      const handBack = db.update.mock.results[1].value;
+      expect(handBack.set).toHaveBeenCalledWith(expect.objectContaining({ lastNotifiedAt: null }));
+    });
+  });
+
+  describe('findKnownTriggersForMedia', () => {
+    it('returns triggers of active and inactive subscriptions', async () => {
+      const module = await setup({
+        resolveSelect: [{ trigger: 'release' }, { trigger: 'on_streaming' }],
+      });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      const triggers = await repository.findKnownTriggersForMedia('user-id-1', 'media-id-1');
+
+      expect(triggers).toEqual(['release', 'on_streaming']);
+      const where = db.select.mock.results[0].value.where.mock.calls[0][0];
+      expect(new PgDialect().sqlToQuery(where).sql).not.toContain('is_active');
     });
   });
 });

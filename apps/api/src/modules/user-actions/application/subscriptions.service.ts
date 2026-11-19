@@ -1,12 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { startOfUtcDay } from '@/common/utils/date.util';
 import { parseSeasonFromEpisodeKey } from '@/modules/ingestion/public';
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 
 import { SUBSCRIPTION_CONTEXT } from '../domain/constants/subscription.constants';
 import { type UserSubscription, type SubscriptionTrigger } from '../domain/entities';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
+import { type IMovieReleasePort, MOVIE_RELEASE_PORT } from '../domain/ports/movie-release.port';
 import { type IShowStatePort, SHOW_STATE_PORT } from '../domain/ports/show-state.port';
 import {
   type IUserPreferencePort,
@@ -21,6 +24,8 @@ import {
   USER_SUBSCRIPTION_REPOSITORY,
   type SubscriptionWithMedia,
 } from '../domain/repositories/user-subscription.repository.interface';
+
+import { pendingMovieReleaseTriggers } from './movie-release-triggers';
 
 export interface SubscribePayload {
   userId: string;
@@ -43,6 +48,10 @@ export class SubscriptionsService {
     private readonly showStatePort: IShowStatePort,
     @Inject(USER_PREFERENCE_PORT)
     private readonly userPreferencePort: IUserPreferencePort,
+    @Inject(MOVIE_RELEASE_PORT)
+    private readonly movieReleasePort: IMovieReleasePort,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
   ) {}
 
   async subscribe(payload: SubscribePayload): Promise<UserSubscription> {
@@ -147,6 +156,30 @@ export class SubscriptionsService {
           context: SUBSCRIPTION_CONTEXT.AUTO_WATCH,
         });
       }
+    }
+  }
+
+  async autoSubscribeForMovie(userId: string, mediaItemId: string): Promise<void> {
+    const schedule = await this.movieReleasePort.findMovieReleaseSchedule(mediaItemId);
+    if (!schedule) return;
+
+    const [autoSubscribe, knownTriggers] = await Promise.all([
+      this.userPreferencePort.getAutoSubscribeOnWatch(userId),
+      this.subscriptionRepo.findKnownTriggersForMedia(userId, mediaItemId),
+    ]);
+    if (!autoSubscribe) return;
+
+    const today = startOfUtcDay(this.clock.now());
+    const triggers = pendingMovieReleaseTriggers(schedule, today).filter(
+      (trigger) => !knownTriggers.includes(trigger),
+    );
+    for (const trigger of triggers) {
+      await this.subscribe({
+        userId,
+        mediaItemId,
+        trigger,
+        context: SUBSCRIPTION_CONTEXT.AUTO_PLAN,
+      });
     }
   }
 }
