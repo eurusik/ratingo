@@ -21,6 +21,23 @@ describe('SectionHeader', () => {
     expect(screen.getByRole('link', { name: 'Увесь топ' })).toHaveAttribute('href', '/browse');
   });
 
+  it('names the action link more precisely when its text is shared', () => {
+    render(
+      <SectionHeader
+        id="upcoming"
+        title="Скоро в прокаті"
+        actionHref="/calendar?type=movie"
+        actionLabel="Календар →"
+        actionAriaLabel="Календар фільмів"
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: 'Календар фільмів' })).toHaveAttribute(
+      'href',
+      '/calendar?type=movie',
+    );
+  });
+
   it('omits the action without a link', () => {
     render(<SectionHeader id="mine" title="Твої серіали" />);
 

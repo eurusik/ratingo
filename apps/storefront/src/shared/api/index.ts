@@ -19,15 +19,19 @@ export {
   type MediaType,
   type MovieDetails,
   type NewEpisode,
+  type ReleaseKind,
   type SearchItem,
   type ShowDetails,
   type ShowSeason,
   type TrendingMovie,
   type TrendingShow,
+  type UpcomingMovie,
 } from './catalog';
 export {
   calendarApi,
   type CalendarEpisode,
+  type CalendarMediaType,
+  type CalendarMovie,
   type CalendarRange,
   type CalendarRangeQuery,
 } from './calendar';

@@ -6,7 +6,7 @@ import { buttonVariants } from '@heroui/react';
 import type { MediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { isPlainClick } from '@/shared/lib';
-import { EdgeFade, useHorizontalScroller } from '@/shared/ui';
+import { EdgeFade, TitleSwitch, useHorizontalScroller } from '@/shared/ui';
 import {
   browseCategoriesOfType,
   counterpartCategory,
@@ -37,24 +37,26 @@ function openInPlace(next: BrowseLocation, onOpen: (next: BrowseLocation) => voi
 
 export function TypeSwitch({ category, state, onOpen }: BrowseNavProps) {
   const { dict } = useTranslation();
+  const targets = MEDIA_TYPES.map((type) => ({
+    type,
+    next: locationOf(counterpartCategory(category, type), state),
+  }));
+  const options = targets.map(({ type, next }) => ({
+    id: type,
+    label: dict.browse.type[type],
+    href: browseHref(next.slug, next.state),
+  }));
 
   return (
-    <nav aria-label={dict.browse.typeLabel} className="flex items-baseline gap-5">
-      {MEDIA_TYPES.map((type) => {
-        const next = locationOf(counterpartCategory(category, type), state);
-        return (
-          <Link
-            key={type}
-            href={browseHref(next.slug, next.state)}
-            onClick={openInPlace(next, onOpen)}
-            aria-current={type === category.type ? 'page' : undefined}
-            className="flex min-h-tap items-center rounded-lg text-3xl font-extrabold tracking-tight text-muted no-underline transition-colors outline-none hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-[current=page]:text-foreground md:text-4xl"
-          >
-            {dict.browse.type[type]}
-          </Link>
-        );
-      })}
-    </nav>
+    <TitleSwitch
+      label={dict.browse.typeLabel}
+      options={options}
+      value={category.type}
+      onSelect={(type) => {
+        const target = targets.find((candidate) => candidate.type === type);
+        if (target) onOpen(target.next);
+      }}
+    />
   );
 }
 

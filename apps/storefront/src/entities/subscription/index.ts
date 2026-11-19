@@ -1,1 +1,1 @@
-export { SUBSCRIPTIONS_KEY, followedTitlesKey, remindedShowsKey } from './model/subscription-keys';
+export { SUBSCRIPTIONS_KEY, followedTitlesKey, remindersKey } from './model/subscription-keys';
