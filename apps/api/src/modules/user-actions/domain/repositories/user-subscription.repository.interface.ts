@@ -25,6 +25,7 @@ export interface UpsertSubscriptionData {
   lastNotifiedSeasonNumber?: number | null;
   /** Initial dedup marker for new_episode trigger. */
   lastNotifiedEpisodeKey?: string | null;
+  autoPlan?: boolean;
 }
 
 /**
@@ -113,7 +114,9 @@ export interface IUserSubscriptionRepository {
    */
   findActiveTriggersForMedia(userId: string, mediaItemId: string): Promise<SubscriptionTrigger[]>;
 
-  findKnownTriggersForMedia(userId: string, mediaItemId: string): Promise<SubscriptionTrigger[]>;
+  findTriggersClosedToAutoPlan(userId: string, mediaItemId: string): Promise<SubscriptionTrigger[]>;
+
+  deactivateAbandonedAutoPlan(userId: string, mediaItemId: string): Promise<SubscriptionTrigger[]>;
 
   /**
    * Lists active subscriptions with media summary.

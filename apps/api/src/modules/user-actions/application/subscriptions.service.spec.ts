@@ -47,7 +47,8 @@ describe('SubscriptionsService', () => {
       findActiveTriggersForMedia: jest.fn().mockResolvedValue([SUBSCRIPTION_TRIGGER.RELEASE]),
       listActiveWithMedia: jest.fn().mockResolvedValue([mockSubscriptionWithMedia]),
       countActive: jest.fn().mockResolvedValue(1),
-      findKnownTriggersForMedia: jest.fn().mockResolvedValue([]),
+      findTriggersClosedToAutoPlan: jest.fn().mockResolvedValue([]),
+      deactivateAbandonedAutoPlan: jest.fn().mockResolvedValue([]),
     };
 
     movieReleasePort = {
@@ -96,6 +97,7 @@ describe('SubscriptionsService', () => {
         userId: 'user-id-1',
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.RELEASE,
+        autoPlan: false,
       });
       expect(actionRepo.create).toHaveBeenCalledWith({
         userId: 'user-id-1',
@@ -121,6 +123,7 @@ describe('SubscriptionsService', () => {
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
         lastNotifiedSeasonNumber: 2,
+        autoPlan: false,
       });
     });
 
@@ -138,6 +141,7 @@ describe('SubscriptionsService', () => {
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.NEW_EPISODE,
         lastNotifiedEpisodeKey: 'S3E5',
+        autoPlan: false,
       });
     });
 
@@ -155,6 +159,7 @@ describe('SubscriptionsService', () => {
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
         lastNotifiedSeasonNumber: 0,
+        autoPlan: false,
       });
     });
 
@@ -170,6 +175,7 @@ describe('SubscriptionsService', () => {
         userId: 'user-id-1',
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.RELEASE,
+        autoPlan: false,
       });
     });
   });
@@ -320,6 +326,9 @@ describe('SubscriptionsService', () => {
       expect(actionRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ action: USER_MEDIA_ACTION.SUBSCRIBE, context: 'auto-plan' }),
       );
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ autoPlan: true }),
+      );
     });
 
     it('respects the auto-subscribe preference', async () => {
@@ -352,10 +361,10 @@ describe('SubscriptionsService', () => {
       expect(subscribedTriggers()).toEqual([SUBSCRIPTION_TRIGGER.ON_STREAMING]);
     });
 
-    it('does not bring back a subscription the user turned off', async () => {
+    it('skips triggers that are active or that the user turned off', async () => {
       userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(true);
       movieReleasePort.findMovieReleaseSchedule.mockResolvedValue(upcoming);
-      subscriptionRepo.findKnownTriggersForMedia.mockResolvedValue([
+      subscriptionRepo.findTriggersClosedToAutoPlan.mockResolvedValue([
         SUBSCRIPTION_TRIGGER.ON_STREAMING,
       ]);
 
@@ -375,6 +384,40 @@ describe('SubscriptionsService', () => {
       await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
 
       expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('unsubscribeAbandonedAutoPlan', () => {
+    it('logs an automatic unsubscribe for every dropped trigger', async () => {
+      subscriptionRepo.deactivateAbandonedAutoPlan.mockResolvedValue([
+        SUBSCRIPTION_TRIGGER.ON_STREAMING,
+        SUBSCRIPTION_TRIGGER.RELEASE,
+      ]);
+
+      await service.unsubscribeAbandonedAutoPlan('user-id-1', 'media-id-1');
+
+      expect(subscriptionRepo.deactivateAbandonedAutoPlan).toHaveBeenCalledWith(
+        'user-id-1',
+        'media-id-1',
+      );
+      expect(actionRepo.create.mock.calls.map((call: any[]) => call[0])).toEqual([
+        expect.objectContaining({
+          action: USER_MEDIA_ACTION.UNSUBSCRIBE,
+          context: 'auto-plan',
+          payload: { trigger: SUBSCRIPTION_TRIGGER.ON_STREAMING },
+        }),
+        expect.objectContaining({
+          action: USER_MEDIA_ACTION.UNSUBSCRIBE,
+          context: 'auto-plan',
+          payload: { trigger: SUBSCRIPTION_TRIGGER.RELEASE },
+        }),
+      ]);
+    });
+
+    it('logs nothing when the movie is still planned', async () => {
+      await service.unsubscribeAbandonedAutoPlan('user-id-1', 'media-id-1');
+
+      expect(actionRepo.create).not.toHaveBeenCalled();
     });
   });
 });

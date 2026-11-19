@@ -201,6 +201,7 @@ class InMemorySavedItemRepository implements IUserSavedItemRepository {
 }
 
 type SubscriptionWithMedia = UserSubscription & {
+  autoPlan: boolean;
   mediaSummary: {
     id: string;
     type: MediaType;
@@ -213,6 +214,11 @@ type SubscriptionWithMedia = UserSubscription & {
 
 class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
   private subscriptions: SubscriptionWithMedia[] = [];
+  private isPlanned: (userId: string, mediaItemId: string) => Promise<boolean> = async () => false;
+
+  setPlannedCheck(check: (userId: string, mediaItemId: string) => Promise<boolean>) {
+    this.isPlanned = check;
+  }
 
   private makeSummary(mediaItemId: string) {
     return {
@@ -234,6 +240,7 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
     );
     if (existing) {
       existing.isActive = true;
+      existing.autoPlan = data.autoPlan ?? false;
       existing.updatedAt = new Date();
       return existing;
     }
@@ -244,6 +251,7 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
       trigger: data.trigger,
       channel: data.channel ?? 'push',
       isActive: true,
+      autoPlan: data.autoPlan ?? false,
       lastNotifiedAt: null,
       lastNotifiedEpisodeKey: null,
       lastNotifiedSeasonNumber: null,
@@ -266,6 +274,7 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
     );
     if (sub) {
       sub.isActive = false;
+      sub.autoPlan = false;
       sub.updatedAt = new Date();
       return true;
     }
@@ -297,13 +306,29 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
       .map((s) => s.trigger);
   }
 
-  async findKnownTriggersForMedia(
+  async findTriggersClosedToAutoPlan(
     userId: string,
     mediaItemId: string,
   ): Promise<SubscriptionTrigger[]> {
-    return this.subscriptions
-      .filter((s) => s.userId === userId && s.mediaItemId === mediaItemId)
+    return this.forMedia(userId, mediaItemId)
+      .filter((s) => s.isActive || !s.autoPlan)
       .map((s) => s.trigger);
+  }
+
+  async deactivateAbandonedAutoPlan(
+    userId: string,
+    mediaItemId: string,
+  ): Promise<SubscriptionTrigger[]> {
+    if (await this.isPlanned(userId, mediaItemId)) return [];
+    const released = this.forMedia(userId, mediaItemId).filter((s) => s.isActive && s.autoPlan);
+    released.forEach((s) => {
+      s.isActive = false;
+    });
+    return released.map((s) => s.trigger);
+  }
+
+  private forMedia(userId: string, mediaItemId: string) {
+    return this.subscriptions.filter((s) => s.userId === userId && s.mediaItemId === mediaItemId);
   }
 
   async listActiveWithMedia(userId: string, limit = 20, offset = 0): Promise<any[]> {
@@ -392,6 +417,9 @@ describe('User Actions E2E', () => {
     const savedItemRepo = new InMemorySavedItemRepository();
     const subscriptionRepo = new InMemorySubscriptionRepository();
     savedItemRepo.setSubscriptionRepo(subscriptionRepo);
+    subscriptionRepo.setPlannedCheck(async (userId, mediaItemId) =>
+      (await savedItemRepo.findListsForMedia(userId, mediaItemId)).includes('for_later'),
+    );
 
     const moduleFixture: TestingModule = await createE2eTestingModule({
       imports: [AuthModule, UsersModule, UserActionsModule],
@@ -769,6 +797,39 @@ describe('User Actions E2E', () => {
         .filter((sub: { mediaItemId: string }) => sub.mediaItemId === UPCOMING_MOVIE_ID)
         .map((sub: { trigger: string }) => sub.trigger);
       expect(triggers.sort()).toEqual(['on_streaming', 'release']);
+    });
+
+    it('drops the automatic reminders but keeps the bell once the movie leaves for later', async () => {
+      const token = await registerAndLogin('unplan');
+      const auth = { Authorization: `Bearer ${token}` };
+      const server = app.getHttpServer();
+
+      await request(server)
+        .post(`${savedItemsUrl}/${UPCOMING_MOVIE_ID}`)
+        .set(auth)
+        .send({ list: 'for_later' });
+      await request(server)
+        .post(`${subscriptionsUrl}/${UPCOMING_MOVIE_ID}`)
+        .set(auth)
+        .send({ trigger: 'release' });
+      await request(server)
+        .delete(`${savedItemsUrl}/${UPCOMING_MOVIE_ID}`)
+        .set(auth)
+        .send({ list: 'for_later' });
+
+      const afterRemoval = await request(server)
+        .get(`${subscriptionsUrl}/${UPCOMING_MOVIE_ID}/status`)
+        .set(auth);
+      expect(afterRemoval.body.data.triggers).toEqual(['release']);
+
+      await request(server)
+        .post(`${savedItemsUrl}/${UPCOMING_MOVIE_ID}`)
+        .set(auth)
+        .send({ list: 'for_later' });
+      const afterResave = await request(server)
+        .get(`${subscriptionsUrl}/${UPCOMING_MOVIE_ID}/status`)
+        .set(auth);
+      expect([...afterResave.body.data.triggers].sort()).toEqual(['on_streaming', 'release']);
     });
 
     it('should list active subscriptions', async () => {

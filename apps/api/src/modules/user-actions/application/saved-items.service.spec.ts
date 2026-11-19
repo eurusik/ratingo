@@ -6,6 +6,7 @@ import { USER_MEDIA_ACTION_REPOSITORY } from '../domain/repositories/user-media-
 import { SAVED_ITEM_LIST } from '../domain/entities/user-saved-item.entity';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { ItemRemovedFromForLaterEvent } from '../domain/events/item-removed-from-for-later.event';
 import { ItemSavedForLaterEvent } from '../domain/events/item-saved-for-later.event';
 
 describe('SavedItemsService', () => {
@@ -214,11 +215,47 @@ describe('SavedItemsService', () => {
     });
 
     it('stays quiet for the considering list', async () => {
+      savedItemRepo.remove.mockResolvedValue(false);
+
       await service.saveItem({
         userId: 'user-id-1',
         mediaItemId: 'media-id-1',
         list: SAVED_ITEM_LIST.CONSIDERING,
       });
+
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('removed from for later event', () => {
+    const removedEvent = new ItemRemovedFromForLaterEvent('user-id-1', 'media-id-1');
+
+    it('announces a title taken out of for later', async () => {
+      await service.unsaveItem('user-id-1', 'media-id-1', SAVED_ITEM_LIST.FOR_LATER);
+
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        ItemRemovedFromForLaterEvent.eventName,
+        removedEvent,
+      );
+    });
+
+    it('announces a title moved from for later to considering', async () => {
+      await service.saveItem({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        list: SAVED_ITEM_LIST.CONSIDERING,
+      });
+
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        ItemRemovedFromForLaterEvent.eventName,
+        removedEvent,
+      );
+    });
+
+    it('stays quiet when nothing was removed or the list is considering', async () => {
+      await service.unsaveItem('user-id-1', 'media-id-1', SAVED_ITEM_LIST.CONSIDERING);
+      savedItemRepo.remove.mockResolvedValue(false);
+      await service.unsaveItem('user-id-1', 'media-id-1', SAVED_ITEM_LIST.FOR_LATER);
 
       expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });

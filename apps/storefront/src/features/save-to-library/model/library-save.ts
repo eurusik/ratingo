@@ -55,8 +55,8 @@ async function applyChange({ media, intent }: StatusChange): Promise<AppliedChan
   return { before, after };
 }
 
-function addedForLater({ before, after }: AppliedChange): boolean {
-  return after.isForLater && !before.isForLater;
+function changedForLater({ before, after }: AppliedChange): boolean {
+  return after.isForLater !== before.isForLater;
 }
 
 function changesMedia(mediaItemId: string) {
@@ -89,7 +89,7 @@ export function useLibrarySave() {
         list: activeList(isSaved(after) ? after : before),
       });
       if (isLatestChange(media.mediaItemId)) store.write(media.mediaItemId, after);
-      if (addedForLater({ before, after })) {
+      if (changedForLater({ before, after })) {
         void queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEY });
       }
     },

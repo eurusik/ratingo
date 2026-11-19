@@ -25,6 +25,7 @@ import {
   type MovieReleaseTrigger,
   type ReleaseDayWindow,
 } from '@/modules/user-actions/domain/repositories/user-subscription.repository.interface';
+import { AutoPlanSubscriptionsQuery } from '@/modules/user-actions/infrastructure/queries/auto-plan-subscriptions.query';
 import { ClaimMovieReleasesQuery } from '@/modules/user-actions/infrastructure/queries/claim-movie-releases.query';
 
 /**
@@ -38,6 +39,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly claimMovieReleasesQuery: ClaimMovieReleasesQuery,
+    private readonly autoPlanSubscriptionsQuery: AutoPlanSubscriptionsQuery,
   ) {}
 
   /**
@@ -61,6 +63,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             trigger: data.trigger,
             channel: data.channel ?? 'push',
             isActive: true,
+            autoPlan: data.autoPlan ?? false,
             // Initialize dedup markers to prevent immediate notifications
             lastNotifiedSeasonNumber: data.lastNotifiedSeasonNumber ?? null,
             lastNotifiedEpisodeKey: data.lastNotifiedEpisodeKey ?? null,
@@ -74,6 +77,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             ],
             set: {
               isActive: true,
+              autoPlan: data.autoPlan ?? false,
               updatedAt: new Date(),
               // Update markers only if reactivating (was inactive)
               // This is handled by conditional update: only set if current isActive = false
@@ -111,7 +115,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
       async () => {
         const result = await this.db
           .update(schema.userSubscriptions)
-          .set({ isActive: false, updatedAt: new Date() })
+          .set({ isActive: false, autoPlan: false, updatedAt: new Date() })
           .where(
             and(
               eq(schema.userSubscriptions.userId, userId),
@@ -197,27 +201,15 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     );
   }
 
-  async findKnownTriggersForMedia(
+  findTriggersClosedToAutoPlan(
     userId: string,
     mediaItemId: string,
   ): Promise<SubscriptionTrigger[]> {
-    return withDbError(
-      'find known triggers for media',
-      this.logger,
-      async () => {
-        const rows = await this.db
-          .select({ trigger: schema.userSubscriptions.trigger })
-          .from(schema.userSubscriptions)
-          .where(
-            and(
-              eq(schema.userSubscriptions.userId, userId),
-              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
-            ),
-          );
-        return rows.map((r) => r.trigger as SubscriptionTrigger);
-      },
-      { userId, mediaItemId },
-    );
+    return this.autoPlanSubscriptionsQuery.findTriggersClosedToAutoPlan(userId, mediaItemId);
+  }
+
+  deactivateAbandonedAutoPlan(userId: string, mediaItemId: string): Promise<SubscriptionTrigger[]> {
+    return this.autoPlanSubscriptionsQuery.deactivateAbandoned(userId, mediaItemId);
   }
 
   /**
