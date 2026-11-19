@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { useMutation, useQueryClient, type Mutation } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
 import { LIBRARY_QUERY_KEY, NOT_SAVED, isSaved, useLibraryStore } from '@/entities/library';
+import { SUBSCRIPTIONS_KEY } from '@/entities/subscription';
 import { libraryApi, type MediaSaveStatus, type SaveList } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { closeUndoToast, showUndoToast, track } from '@/shared/lib';
@@ -54,6 +55,10 @@ async function applyChange({ media, intent }: StatusChange): Promise<AppliedChan
   return { before, after };
 }
 
+function addedForLater({ before, after }: AppliedChange): boolean {
+  return after.isForLater && !before.isForLater;
+}
+
 function changesMedia(mediaItemId: string) {
   return (mutation: Mutation<unknown, unknown, unknown>) =>
     (mutation.state.variables as StatusChange | undefined)?.media.mediaItemId === mediaItemId;
@@ -84,6 +89,9 @@ export function useLibrarySave() {
         list: activeList(isSaved(after) ? after : before),
       });
       if (isLatestChange(media.mediaItemId)) store.write(media.mediaItemId, after);
+      if (addedForLater({ before, after })) {
+        void queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEY });
+      }
     },
     onError: (error, { media }) => {
       console.error('Updating the library failed', { mediaItemId: media.mediaItemId, error });
