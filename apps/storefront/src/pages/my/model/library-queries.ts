@@ -57,6 +57,7 @@ function loadRecentEpisodes() {
     startDate: dateKey(Date.now() - (RECENT_DAYS - 1) * DAY_MS),
     days: RECENT_DAYS,
     personalized: true,
+    type: 'show',
   });
 }
 

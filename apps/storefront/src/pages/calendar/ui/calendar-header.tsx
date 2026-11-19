@@ -4,11 +4,14 @@ import { useId, useState } from 'react';
 import { Button } from '@heroui/react';
 import { Info } from 'lucide-react';
 import { cn } from '@ratingo/web-core/lib';
+import type { CalendarMediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
-import { HEADER_ROW, INFO_BUTTON_SIZE, PAGE_TITLE_TEXT } from './calendar-layout';
+import { SegmentedFilter, TitleSwitch } from '@/shared/ui';
+import { CALENDAR_TYPES } from '../model/calendar-query';
+import { HEADER_ROW, INFO_BUTTON_SIZE, PHONE_TYPE_ROW } from './calendar-layout';
 import { ModePills, type ModePillsProps } from './mode-pills';
 
-function ModesInfoToggle() {
+function ModesInfoToggle({ type }: { type: CalendarMediaType }) {
   const { dict } = useTranslation();
   const [isOpen, setOpen] = useState(false);
   const noteId = useId();
@@ -28,23 +31,49 @@ function ModesInfoToggle() {
       </Button>
       <div id={noteId} role="note" hidden={!isOpen} className="basis-full">
         <p className="max-w-xl rounded-2xl bg-surface-secondary px-3.5 py-3 text-sm leading-relaxed text-muted">
-          {dict.calendar.modesInfo}
+          {dict.calendar.modesInfo[type]}
         </p>
       </div>
     </>
   );
 }
 
-export function CalendarHeader(props: ModePillsProps) {
+interface CalendarHeaderProps extends ModePillsProps {
+  typeHref: (type: CalendarMediaType) => string;
+  onTypeChange: (type: CalendarMediaType) => void;
+}
+
+export function CalendarHeader({ typeHref, onTypeChange, ...modePills }: CalendarHeaderProps) {
   const { dict } = useTranslation();
+  const { type } = modePills;
+  const options = CALENDAR_TYPES.map((option) => ({
+    id: option,
+    label: dict.calendar.types[option],
+    href: typeHref(option),
+  }));
 
   return (
     <div className={HEADER_ROW}>
-      <h1 className={PAGE_TITLE_TEXT}>{dict.calendar.title}</h1>
+      <h1 className="sr-only">{dict.calendar.title}</h1>
+      <div className={PHONE_TYPE_ROW}>
+        <SegmentedFilter
+          label={dict.calendar.typeLabel}
+          options={options}
+          value={type}
+          onChange={onTypeChange}
+          isFullWidth
+        />
+      </div>
       <div className="contents max-md:hidden">
+        <TitleSwitch
+          label={dict.calendar.typeLabel}
+          options={options}
+          value={type}
+          onSelect={onTypeChange}
+        />
         <span aria-hidden className="h-7 w-px shrink-0 bg-separator" />
-        <ModePills {...props} />
-        <ModesInfoToggle />
+        <ModePills {...modePills} />
+        <ModesInfoToggle type={type} />
       </div>
     </div>
   );

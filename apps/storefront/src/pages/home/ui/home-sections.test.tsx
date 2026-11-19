@@ -7,7 +7,7 @@ import { openSearch } from '@/features/search';
 import { openAuth } from '@/shared/auth';
 import { I18nProvider, getDictionary, type Locale } from '@/shared/i18n';
 import { loadReleaseList, loadTrendingList } from '../api/home-rails';
-import type { EpisodeRelease } from '../model/home-feed';
+import type { EpisodeRelease, UpcomingRelease } from '../model/home-feed';
 import { RELEASE_LISTS, TOP_TEN_LISTS, startRail } from '../model/rail-start';
 import { HeroBanner } from './hero-banner';
 import { HomeOutage } from './home-outage';
@@ -17,6 +17,7 @@ import { NewReleases } from './new-releases';
 import { TopTen } from './top-ten';
 import { TopThree } from './top-three';
 import { TrackShowsCard } from './track-shows-card';
+import { UpcomingMovies } from './upcoming-movies';
 
 const refresh = jest.fn();
 
@@ -301,5 +302,33 @@ describe('HomeOutage', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: uk.common.retry }));
     expect(refresh).toHaveBeenCalled();
+  });
+});
+
+describe('UpcomingMovies', () => {
+  const release: UpcomingRelease = {
+    mediaItemId: 'doom',
+    slug: 'doom',
+    title: 'Месники: Сходження Доктора Дума',
+    releaseDate: '2026-12-18T00:00:00.000Z',
+    kind: 'theatrical',
+  };
+
+  it('shows the release day, the kind and a link to the movie calendar', () => {
+    renderIn(<UpcomingMovies releases={[release]} />);
+
+    expect(screen.getByRole('heading', { name: 'Скоро в прокаті' })).toBeInTheDocument();
+    expect(screen.getByText('18 груд')).toBeInTheDocument();
+    expect(screen.getByText('в кіно')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Календар фільмів' })).toHaveAttribute(
+      'href',
+      '/calendar?type=movie',
+    );
+  });
+
+  it('hides the rail when nothing is coming', () => {
+    const { container } = renderIn(<UpcomingMovies releases={[]} />);
+
+    expect(container).toBeEmptyDOMElement();
   });
 });

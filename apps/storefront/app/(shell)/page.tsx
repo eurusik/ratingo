@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomeRoute() {
   return (
-    <RouteTranslationScope namespaces={['home', 'library', 'rail']}>
+    <RouteTranslationScope namespaces={['home', 'library', 'rail', 'release']}>
       <HomePage locale={await getRequestLocale()} />
     </RouteTranslationScope>
   );

@@ -45,7 +45,7 @@ function episode(showId: string, overrides: Partial<CalendarEpisode> = {}): Cale
 }
 
 function range(episodes: CalendarEpisode[]): CalendarRange {
-  return { startDate: PAST, endDate: PAST, days: [{ date: '2026-11-14', episodes }] };
+  return { startDate: PAST, endDate: PAST, days: [{ date: '2026-11-14', episodes, movies: [] }] };
 }
 
 describe('splitWatching', () => {

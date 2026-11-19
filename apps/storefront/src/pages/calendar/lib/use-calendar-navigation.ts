@@ -1,6 +1,7 @@
 'use client';
 
 import type { RefObject } from 'react';
+import type { CalendarMediaType } from '@/shared/api';
 import { track } from '@/shared/lib';
 import type { WeekStep } from './use-week-carousel';
 import {
@@ -61,6 +62,11 @@ export function useCalendarNavigation({
     changeMode: (mode: CalendarMode) => {
       track('calendar_change', { action: 'mode', mode });
       goTo({ ...location, mode });
+    },
+    changeType: (type: CalendarMediaType) => {
+      track('calendar_change', { action: 'type', type });
+      setLocation({ ...location, type, mode: undefined });
+      scrollToListStart(list.current);
     },
     keepResolvedMode: () => setLocation(withResolvedMode(location)),
   };

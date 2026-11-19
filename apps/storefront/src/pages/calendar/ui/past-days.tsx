@@ -9,7 +9,7 @@ import { capitalizeFirst } from '@/shared/lib';
 import { dayHeadingId, daySectionProps } from '../lib/day-anchor';
 import { formatDay } from '../model/calendar-format';
 import { summarizePast, type CalendarDay, type PastSummary } from '../model/week-layout';
-import { DayEpisodes } from './day-episodes';
+import { DayReleases } from './day-releases';
 
 const PAST_ROW = 'flex h-13 items-center gap-2 px-3.5 text-[15px] font-semibold';
 
@@ -33,7 +33,7 @@ function PastDaySection({ day }: { day: CalendarDay }) {
       <h3 id={headingId} className="text-[13px] font-semibold text-muted">
         {capitalizeFirst(formatDay(locale, day.key, 'weekdayDayMonth'))}
       </h3>
-      <DayEpisodes day={day} />
+      <DayReleases day={day} />
     </section>
   );
 }

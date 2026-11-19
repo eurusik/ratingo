@@ -1,9 +1,11 @@
-import type { CalendarEpisode, CalendarRange } from '@/shared/api';
+import type { CalendarEpisode, CalendarMovie, CalendarRange } from '@/shared/api';
 import { kyivDateKey, weekDays, weekStartOf, type DateKey } from './calendar-dates';
 
 export interface CalendarDay {
   key: DateKey;
   episodes: CalendarEpisode[];
+  movies: CalendarMovie[];
+  moreMovies: number;
 }
 
 export interface StripWeek {
@@ -19,7 +21,8 @@ export interface WeekLayout {
 export type PastSummary =
   | { kind: 'unwatched'; count: number }
   | { kind: 'allWatched' }
-  | { kind: 'episodes'; count: number };
+  | { kind: 'episodes'; count: number }
+  | { kind: 'movies'; count: number };
 
 function byAirTimeThenPopularity(left: CalendarEpisode, right: CalendarEpisode): number {
   return (
@@ -33,23 +36,48 @@ function rangeEpisodes(range: CalendarRange): CalendarEpisode[] {
   return range.days.flatMap((day) => day.episodes);
 }
 
-export function groupEpisodesByDay(range: CalendarRange, weekStart: DateKey): CalendarDay[] {
-  const buckets = new Map(weekDays(weekStart).map((key) => [key, [] as CalendarEpisode[]]));
+function byPopularity(left: CalendarMovie, right: CalendarMovie): number {
+  return right.popularity - left.popularity;
+}
+
+function emptyDay(key: DateKey): CalendarDay {
+  return { key, episodes: [], movies: [], moreMovies: 0 };
+}
+
+export function groupByDay(range: CalendarRange, weekStart: DateKey): CalendarDay[] {
+  const buckets = new Map(weekDays(weekStart).map((key) => [key, emptyDay(key)]));
   for (const episode of rangeEpisodes(range)) {
-    buckets.get(kyivDateKey(episode.airDate))?.push(episode);
+    buckets.get(kyivDateKey(episode.airDate))?.episodes.push(episode);
   }
-  return [...buckets].map(([key, episodes]) => ({
-    key,
-    episodes: episodes.sort(byAirTimeThenPopularity),
+  for (const rangeDay of range.days) {
+    const day = buckets.get(rangeDay.date);
+    if (!day) continue;
+    day.movies.push(...rangeDay.movies);
+    day.moreMovies += rangeDay.moreMoviesCount ?? 0;
+  }
+  return [...buckets.values()].map((day) => ({
+    ...day,
+    episodes: day.episodes.sort(byAirTimeThenPopularity),
+    movies: day.movies.sort(byPopularity),
   }));
 }
 
 export function emptyCalendarDays(weekStart: DateKey): CalendarDay[] {
-  return weekDays(weekStart).map((key) => ({ key, episodes: [] }));
+  return weekDays(weekStart).map(emptyDay);
+}
+
+export function movieCount(day: CalendarDay): number {
+  return day.movies.length + day.moreMovies;
+}
+
+function hasReleases(day: CalendarDay): boolean {
+  return day.episodes.length > 0 || movieCount(day) > 0;
 }
 
 export function summarizePast(days: readonly CalendarDay[]): PastSummary {
   const episodes = days.flatMap((day) => day.episodes);
+  const movies = days.reduce((sum, day) => sum + movieCount(day), 0);
+  if (episodes.length === 0 && movies > 0) return { kind: 'movies', count: movies };
   const tracked = episodes.filter((episode) => episode.isTracked);
   const unwatched = tracked.filter((episode) => !episode.isWatched).length;
   if (unwatched > 0) return { kind: 'unwatched', count: unwatched };
@@ -61,11 +89,11 @@ export function splitWeek(
   days: readonly CalendarDay[],
   collapseBefore: DateKey | undefined,
 ): WeekLayout {
-  const withEpisodes = days.filter((day) => day.episodes.length > 0);
-  if (collapseBefore === undefined) return { past: [], upcoming: withEpisodes };
+  const withReleases = days.filter(hasReleases);
+  if (collapseBefore === undefined) return { past: [], upcoming: withReleases };
   return {
-    past: withEpisodes.filter((day) => day.key < collapseBefore),
-    upcoming: withEpisodes.filter((day) => day.key >= collapseBefore),
+    past: withReleases.filter((day) => day.key < collapseBefore),
+    upcoming: withReleases.filter((day) => day.key >= collapseBefore),
   };
 }
 

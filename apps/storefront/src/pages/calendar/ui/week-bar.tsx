@@ -32,6 +32,7 @@ export function WeekBar({
   tryStep,
   onThisWeek,
   onDayPick,
+  type,
   mode,
   onModeChange,
 }: WeekBarProps) {
@@ -72,12 +73,14 @@ export function WeekBar({
           today={today}
           onStep={slideTo}
           onToday={goToToday}
+          type={type}
           mode={mode}
           onModeChange={changeMode}
         />
         <WeekStrip
           scroller={scroller}
           stripWeeks={stripWeeks}
+          type={type}
           today={today}
           activeDay={pinnedDay ?? visibleDay}
           isCompact={isStuck}

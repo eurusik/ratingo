@@ -1,4 +1,4 @@
-import type { CalendarEpisode, CalendarRange } from '@/shared/api';
+import type { CalendarEpisode, CalendarMovie, CalendarRange } from '@/shared/api';
 
 export function calendarEpisode(overrides: Partial<CalendarEpisode> = {}): CalendarEpisode {
   return {
@@ -29,7 +29,24 @@ export function calendarRange(
   return {
     startDate: '2026-11-08T00:00:00.000Z',
     endDate: '2026-11-16T00:00:00.000Z',
-    days: [{ date: '2026-11-08', episodes }],
+    days: [{ date: '2026-11-08', episodes, movies: [] }],
     watchingShowsCount,
+  };
+}
+
+export function calendarMovie(overrides: Partial<CalendarMovie> = {}): CalendarMovie {
+  return {
+    mediaItemId: `movie-${Math.random().toString(36).slice(2)}`,
+    tmdbId: 1,
+    slug: 'movie-a',
+    title: 'Movie A',
+    poster: null,
+    releaseDate: '2026-11-12T00:00:00.000Z',
+    releaseDateKind: 'theatrical',
+    releaseCountry: 'US',
+    popularity: 10,
+    isSavedForLater: false,
+    isReminderSet: false,
+    ...overrides,
   };
 }

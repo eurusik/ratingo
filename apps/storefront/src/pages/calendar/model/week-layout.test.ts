@@ -1,29 +1,47 @@
-import { calendarEpisode as episode, calendarRange as range } from './calendar-episode.fixture';
+import type { CalendarEpisode, CalendarMovie, CalendarRange } from '@/shared/api';
+import {
+  calendarEpisode as episode,
+  calendarMovie as movie,
+  calendarRange as range,
+} from './calendar-episode.fixture';
 import {
   firstEpisodeFrom,
   pickableDays,
   splitWeek,
   buildStripWeek,
   summarizePast,
-  groupEpisodesByDay,
+  groupByDay,
   type CalendarDay,
 } from './week-layout';
 
-describe('groupEpisodesByDay', () => {
+function calendarDay(
+  key: string,
+  episodes: CalendarEpisode[],
+  movies: CalendarMovie[] = [],
+  moreMovies = 0,
+): CalendarDay {
+  return { key, episodes, movies, moreMovies };
+}
+
+function movieRange(days: CalendarRange['days']): CalendarRange {
+  return { ...range([]), days };
+}
+
+describe('groupByDay', () => {
   it('buckets episodes by Kyiv day and drops the lead day', () => {
     const sundayNight = episode({ airDate: '2026-11-08T22:30:00.000Z' });
     const lead = episode({ airDate: '2026-11-08T12:00:00.000Z' });
-    const days = groupEpisodesByDay(range([sundayNight, lead]), '2026-11-09');
+    const days = groupByDay(range([sundayNight, lead]), '2026-11-09');
 
     expect(days).toHaveLength(7);
-    expect(days[0]).toEqual({ key: '2026-11-09', episodes: [sundayNight] });
+    expect(days[0]).toEqual(calendarDay('2026-11-09', [sundayNight]));
     expect(days.flatMap((day) => day.episodes)).not.toContain(lead);
   });
 
   it('uses Kyiv summer time across the March clock change', () => {
     const mondayAfterChange = episode({ airDate: '2026-03-29T21:30:00.000Z' });
     const sundayBeforeChange = episode({ airDate: '2026-03-29T20:30:00.000Z' });
-    const days = groupEpisodesByDay(range([mondayAfterChange, sundayBeforeChange]), '2026-03-30');
+    const days = groupByDay(range([mondayAfterChange, sundayBeforeChange]), '2026-03-30');
 
     expect(days[0].episodes).toEqual([mondayAfterChange]);
   });
@@ -32,15 +50,31 @@ describe('groupEpisodesByDay', () => {
     const late = episode({ airDate: '2026-11-12T20:00:00.000Z', showPopularity: 99 });
     const popular = episode({ airDate: '2026-11-12T19:00:00.000Z', showPopularity: 50 });
     const niche = episode({ airDate: '2026-11-12T19:00:00.000Z', showPopularity: 5 });
-    const [, , , thursday] = groupEpisodesByDay(range([late, niche, popular]), '2026-11-09');
+    const [, , , thursday] = groupByDay(range([late, niche, popular]), '2026-11-09');
 
     expect(thursday.episodes).toEqual([popular, niche, late]);
+  });
+
+  it('puts movies on their API day by popularity and keeps the count of the rest', () => {
+    const niche = movie({ popularity: 3 });
+    const popular = movie({ popularity: 90 });
+    const lead = movie();
+    const days = groupByDay(
+      movieRange([
+        { date: '2026-11-08', episodes: [], movies: [lead], moreMoviesCount: 4 },
+        { date: '2026-11-12', episodes: [], movies: [niche, popular], moreMoviesCount: 7 },
+      ]),
+      '2026-11-09',
+    );
+
+    expect(days[3]).toEqual(calendarDay('2026-11-12', [], [popular, niche], 7));
+    expect(days.flatMap((day) => day.movies)).not.toContain(lead);
   });
 });
 
 describe('summarizePast', () => {
   const day = (episodes: CalendarDay['episodes']): CalendarDay[] => [
-    { key: '2026-11-10', episodes },
+    calendarDay('2026-11-10', episodes),
   ];
 
   it('counts unwatched tracked episodes', () => {
@@ -59,18 +93,27 @@ describe('summarizePast', () => {
   it('falls back to the episode count for untracked shows', () => {
     expect(summarizePast(day([episode(), episode()]))).toEqual({ kind: 'episodes', count: 2 });
   });
+
+  it('counts listed and hidden movies on movie days', () => {
+    const days = [
+      calendarDay('2026-11-10', [], [movie(), movie()], 3),
+      calendarDay('2026-11-11', [], [movie()]),
+    ];
+    expect(summarizePast(days)).toEqual({ kind: 'movies', count: 6 });
+  });
 });
 
 describe('splitWeek', () => {
   const days: CalendarDay[] = [
-    { key: '2026-11-09', episodes: [episode()] },
-    { key: '2026-11-10', episodes: [] },
-    { key: '2026-11-15', episodes: [episode()] },
+    calendarDay('2026-11-09', [episode()]),
+    calendarDay('2026-11-10', []),
+    calendarDay('2026-11-12', [], [], 2),
+    calendarDay('2026-11-15', [], [movie()]),
   ];
 
   it('collapses days before today and drops empty ones', () => {
     const layout = splitWeek(days, '2026-11-15');
-    expect(layout.past.map((day) => day.key)).toEqual(['2026-11-09']);
+    expect(layout.past.map((day) => day.key)).toEqual(['2026-11-09', '2026-11-12']);
     expect(layout.upcoming.map((day) => day.key)).toEqual(['2026-11-15']);
   });
 
@@ -81,12 +124,9 @@ describe('splitWeek', () => {
 
 describe('pickableDays', () => {
   it('offers past days only while the past block can open', () => {
-    const upcoming: CalendarDay = { key: '2026-11-15', episodes: [episode()] };
-    const watchedPast: CalendarDay = {
-      key: '2026-11-10',
-      episodes: [episode({ isTracked: true, isWatched: true })],
-    };
-    const unwatchedPast: CalendarDay = { key: '2026-11-11', episodes: [episode()] };
+    const upcoming = calendarDay('2026-11-15', [episode()]);
+    const watchedPast = calendarDay('2026-11-10', [episode({ isTracked: true, isWatched: true })]);
+    const unwatchedPast = calendarDay('2026-11-11', [episode()]);
 
     expect([...pickableDays({ past: [watchedPast], upcoming: [upcoming] })]).toEqual([
       '2026-11-15',
@@ -106,7 +146,7 @@ describe('firstEpisodeFrom', () => {
 
 describe('buildStripWeek', () => {
   it('marks the days a neighbour week will let the viewer open', () => {
-    const days = groupEpisodesByDay(
+    const days = groupByDay(
       range([episode({ airDate: '2026-11-18T19:00:00.000Z' })]),
       '2026-11-16',
     );

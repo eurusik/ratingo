@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { episodeCode } from '@/entities/episode';
 import { MediaPoster } from '@/entities/media';
-import { SERVICE_TIME_ZONE, mediaRoute } from '@/shared/config';
+import { SERVICE_TIME_ZONE, calendarRouteFor, mediaRoute } from '@/shared/config';
 import { SHARED_ART_SOURCE } from '@/shared/lib';
 import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
 import { ForwardLink, Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
@@ -69,6 +69,9 @@ export function NewEpisodes({ releases }: { releases: EpisodeRelease[] }) {
         id="new-episodes"
         title={dict.home.newEpisodes}
         caption={dict.home.newEpisodesCaption}
+        actionHref={calendarRouteFor('show')}
+        actionLabel={dict.home.calendarAction}
+        actionAriaLabel={dict.home.calendarLabel.show}
         trailing={<RailPager scrollerRef={scroller} />}
       />
       <Rail label={dict.home.newEpisodes} itemSize="tile" scrollerRef={scroller}>

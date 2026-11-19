@@ -2,11 +2,12 @@
 
 import { memo, type MouseEvent } from 'react';
 import { cn, pluralize } from '@ratingo/web-core/lib';
+import type { CalendarMediaType } from '@/shared/api';
 import { interpolate, useTranslation, type Dictionary, type Locale } from '@/shared/i18n';
 import { dayAnchor } from '../lib/day-anchor';
 import type { DateKey } from '../model/calendar-dates';
 import { formatDay } from '../model/calendar-format';
-import type { CalendarDay } from '../model/week-layout';
+import { movieCount, type CalendarDay } from '../model/week-layout';
 import { dayTileHeight } from './calendar-layout';
 
 const MAX_DOTS = 3;
@@ -52,13 +53,46 @@ function tileTone({ isToday, isPickable, isActive }: TileState): TileTone {
   return isPickable ? 'pickable' : 'empty';
 }
 
-function tileLabel(day: CalendarDay, isToday: boolean, dict: Dictionary, locale: Locale): string {
-  const count = day.episodes.length;
+interface DayCount {
+  type: CalendarMediaType;
+  count: number;
+}
+
+function dayCount(day: CalendarDay): DayCount {
+  const movies = movieCount(day);
+  return day.episodes.length === 0 && movies > 0
+    ? { type: 'movie', count: movies }
+    : { type: 'show', count: day.episodes.length };
+}
+
+function countLabel({ type, count }: DayCount, dict: Dictionary, locale: Locale): string {
+  const forms = type === 'movie' ? dict.calendar.moviesCount : dict.calendar.episodesCount;
+  return interpolate(pluralize(count, forms, locale), { count });
+}
+
+function dotKeys(day: CalendarDay): string[] {
+  const keys = [
+    ...day.episodes.map((episode) => episode.episodeId),
+    ...day.movies.map((movie) => movie.mediaItemId),
+  ];
+  return keys.slice(0, MAX_DOTS);
+}
+
+function tileLabel(
+  day: CalendarDay,
+  type: CalendarMediaType,
+  isToday: boolean,
+  { dict, locale }: { dict: Dictionary; locale: Locale },
+): string {
+  const { count, type: countedType } = dayCount(day);
   const weekday = formatDay(locale, day.key, 'weekdayDayMonth');
   const fullDay = isToday ? `${dict.calendar.today}, ${weekday}` : weekday;
   return count > 0
-    ? interpolate(pluralize(count, dict.calendar.dayTile, locale), { day: fullDay, count })
-    : interpolate(dict.calendar.dayTileEmpty, { day: fullDay });
+    ? interpolate(pluralize(count, dict.calendar.dayTile[countedType], locale), {
+        day: fullDay,
+        count,
+      })
+    : interpolate(dict.calendar.dayTileEmpty[type], { day: fullDay });
 }
 
 function ariaCurrent(isToday: boolean, isActive: boolean): 'date' | 'true' | undefined {
@@ -96,8 +130,8 @@ function PhoneTileContent({ day, tone, isToday, isCompact }: PhoneTileContentPro
         </span>
       </span>
       <span className="flex h-1.25 gap-0.75 md:hidden">
-        {day.episodes.slice(0, MAX_DOTS).map((episode) => (
-          <span key={episode.episodeId} className="size-1.25 rounded-full bg-accent" />
+        {dotKeys(day).map((key) => (
+          <span key={key} className="size-1.25 rounded-full bg-accent" />
         ))}
       </span>
     </>
@@ -106,7 +140,7 @@ function PhoneTileContent({ day, tone, isToday, isCompact }: PhoneTileContentPro
 
 function DesktopTileContent({ day, isToday, isCompact }: DesktopTileContentProps) {
   const { dict, locale } = useTranslation();
-  const count = day.episodes.length;
+  const counted = dayCount(day);
 
   return (
     <>
@@ -116,14 +150,14 @@ function DesktopTileContent({ day, isToday, isCompact }: DesktopTileContentProps
         </span>
         <span className="text-sm font-semibold">{formatDay(locale, day.key, 'weekdayShort')}</span>
       </span>
-      {count > 0 && !isCompact ? (
+      {counted.count > 0 && !isCompact ? (
         <span
           className={cn(
             'hidden text-xs tabular-nums md:block',
             isToday ? 'text-accent-foreground' : 'text-muted',
           )}
         >
-          {interpolate(pluralize(count, dict.calendar.episodesCount, locale), { count })}
+          {countLabel(counted, dict, locale)}
         </span>
       ) : null}
     </>
@@ -132,6 +166,7 @@ function DesktopTileContent({ day, isToday, isCompact }: DesktopTileContentProps
 
 interface DayTileProps extends Omit<TileState, 'isToday'> {
   day: CalendarDay;
+  type: CalendarMediaType;
   today: DateKey;
   isCompact: boolean;
   onPick?: (key: DateKey) => void;
@@ -139,16 +174,17 @@ interface DayTileProps extends Omit<TileState, 'isToday'> {
 
 export const DayTile = memo(function DayTile({
   day,
+  type,
   today,
   isPickable,
   isActive,
   isCompact,
   onPick,
 }: DayTileProps) {
-  const { dict, locale } = useTranslation();
+  const translation = useTranslation();
   const isToday = day.key === today;
   const tone = tileTone({ isToday, isPickable, isActive });
-  const label = tileLabel(day, isToday, dict, locale);
+  const label = tileLabel(day, type, isToday, translation);
   const className = cn(TILE_FRAME, dayTileHeight(isCompact), TONES[tone].frame);
   const content = (
     <span aria-hidden className="contents">
