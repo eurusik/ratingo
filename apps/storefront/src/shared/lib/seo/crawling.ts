@@ -18,7 +18,6 @@ interface DatedSlug {
 }
 
 export interface SitemapSources {
-  now: Date;
   browseCategories: readonly string[];
   movies: readonly DatedSlug[];
   shows: readonly DatedSlug[];
@@ -66,13 +65,11 @@ function detailEntry(url: string, lastModified: string): MetadataRoute.Sitemap[n
 export function buildSitemap(siteUrl: string, sources: SitemapSources): MetadataRoute.Sitemap {
   const staticEntries = STATIC_PAGES.map((page) => ({
     url: page.path === HOME_ROUTE ? siteUrl : `${siteUrl}${page.path}`,
-    lastModified: sources.now,
     changeFrequency: page.changeFrequency,
     priority: page.priority,
   }));
   const browseEntries = sources.browseCategories.map((slug) => ({
     url: `${siteUrl}${BROWSE_ROUTE}/${slug}`,
-    lastModified: sources.now,
     changeFrequency: BROWSE_PAGE_CHANGE_FREQUENCY,
     priority: BROWSE_PAGE_PRIORITY,
   }));

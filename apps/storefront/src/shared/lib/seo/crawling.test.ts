@@ -1,7 +1,6 @@
 import { buildRobots, buildSitemap } from './crawling';
 
 const SITE_URL = 'https://ratingo.top';
-const NOW = new Date('2026-11-13T00:00:00.000Z');
 
 describe('buildRobots', () => {
   it('allows indexing and exposes the sitemap on the production site', () => {
@@ -35,7 +34,6 @@ describe('buildRobots', () => {
 
 describe('buildSitemap', () => {
   const sitemap = buildSitemap(SITE_URL, {
-    now: NOW,
     browseCategories: ['shows-trending', 'movies-trending'],
     movies: [{ slug: 'tenet-2020', updatedAt: '2026-01-02T00:00:00.000Z' }],
     shows: [{ slug: 'outlander-2014', updatedAt: '2026-03-04T00:00:00.000Z' }],
@@ -44,7 +42,6 @@ describe('buildSitemap', () => {
   it('lists the home page first with top priority', () => {
     expect(sitemap[0]).toEqual({
       url: SITE_URL,
-      lastModified: NOW,
       changeFrequency: 'daily',
       priority: 1,
     });
@@ -78,6 +75,13 @@ describe('buildSitemap', () => {
       ]),
     );
     expect(urls).not.toContain('https://ratingo.top/browse');
+  });
+
+  it('gives a change date only to pages that know when they changed', () => {
+    const undated = sitemap.filter((entry) => !entry.url.match(/\/(movies|shows)\//));
+
+    expect(undated.length).toBeGreaterThan(0);
+    expect(undated.every((entry) => entry.lastModified === undefined)).toBe(true);
   });
 
   it('leaves the journal out until it is ported', () => {

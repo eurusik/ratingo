@@ -22,7 +22,6 @@ export async function generateSitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   return buildSitemap(SITE_URL, {
-    now: new Date(),
     browseCategories: BROWSE_CATEGORY_SLUGS,
     movies,
     shows,

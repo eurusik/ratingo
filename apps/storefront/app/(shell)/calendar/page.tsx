@@ -1,10 +1,20 @@
 import type { Metadata } from 'next';
 import { connection } from 'next/server';
 import { getRequestLocale } from '@/app/entrypoint';
-import { CalendarPage, calendarMetadata } from '@/pages/calendar';
+import {
+  CalendarPage,
+  calendarMetadata,
+  parseCalendarType,
+  type CalendarSearchParams,
+} from '@/pages/calendar';
 
-export async function generateMetadata(): Promise<Metadata> {
-  return calendarMetadata(await getRequestLocale());
+interface CalendarRouteProps {
+  searchParams: Promise<CalendarSearchParams>;
+}
+
+export async function generateMetadata({ searchParams }: CalendarRouteProps): Promise<Metadata> {
+  const [locale, { type }] = await Promise.all([getRequestLocale(), searchParams]);
+  return calendarMetadata(locale, parseCalendarType(type));
 }
 
 export default async function CalendarRoute() {
