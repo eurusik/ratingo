@@ -44,13 +44,17 @@ function isCalendarType(value: string | undefined): value is CalendarMediaType {
   return CALENDAR_TYPES.some((type) => type === value);
 }
 
+export function parseCalendarType(value: string | string[] | undefined): CalendarMediaType {
+  const type = single(value);
+  return isCalendarType(type) ? type : DEFAULT_CALENDAR_TYPE;
+}
+
 export function parseCalendarLocation(
   params: CalendarSearchParams,
   today: DateKey,
 ): CalendarLocation {
   const week = single(params.week);
   const mode = single(params.mode);
-  const type = single(params.type);
   const requestedWeekStart = week && isDateKey(week) ? weekStartOf(week) : undefined;
   return {
     weekStart:
@@ -58,7 +62,7 @@ export function parseCalendarLocation(
         ? requestedWeekStart
         : weekStartOf(today),
     mode: isCalendarMode(mode) ? mode : undefined,
-    type: isCalendarType(type) ? type : DEFAULT_CALENDAR_TYPE,
+    type: parseCalendarType(params.type),
   };
 }
 
