@@ -1,5 +1,4 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
-import { useAuth } from '@ratingo/web-core/auth';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { AuthDialogLoading } from './auth-dialog-loading';
 import { useIsDialogCodePending } from './overlay-loaders';
@@ -7,7 +6,7 @@ import { useIsDialogCodePending } from './overlay-loaders';
 const mockRequired: string[] = [];
 const mockSearchRequiredWhenSignInLoaded: boolean[] = [];
 
-jest.mock('@ratingo/web-core/auth', () => ({ useAuth: jest.fn() }));
+jest.mock('@ratingo/web-core/auth', () => ({ tokenStorage: { getRefreshToken: jest.fn() } }));
 jest.mock('@/shared/lib', () => ({
   ...jest.requireActual('@/shared/lib'),
   whenIdleOnFastConnection: (run: () => void) => {
@@ -34,7 +33,7 @@ jest.mock('@/features/save-to-library', () => {
   return { __esModule: true, preloadSaveMenuButton: () => Promise.resolve() };
 });
 
-async function warmFromCleanSlate(isAuthenticated: boolean): Promise<boolean> {
+async function warmFromCleanSlate(readRefreshToken: () => string | null): Promise<boolean> {
   mockRequired.length = 0;
   mockSearchRequiredWhenSignInLoaded.length = 0;
   let searchWasRequired = true;
@@ -42,7 +41,7 @@ async function warmFromCleanSlate(isAuthenticated: boolean): Promise<boolean> {
     const testing = await import('@testing-library/react/pure');
     const auth = await import('@ratingo/web-core/auth');
     const loaders = await import('./overlay-loaders');
-    jest.mocked(auth.useAuth).mockReturnValue({ isAuthenticated } as ReturnType<typeof useAuth>);
+    jest.mocked(auth.tokenStorage.getRefreshToken).mockImplementation(readRefreshToken);
     const { result, unmount } = testing.renderHook(() => loaders.useWarmOverlays());
     await testing.waitFor(() => expect(result.current).toBe(true));
     unmount();
@@ -53,14 +52,22 @@ async function warmFromCleanSlate(isAuthenticated: boolean): Promise<boolean> {
 
 describe('useWarmOverlays', () => {
   it('loads the sign-in dialog before the other overlays for a guest', async () => {
-    const searchWasRequired = await warmFromCleanSlate(false);
+    const searchWasRequired = await warmFromCleanSlate(() => null);
 
     expect(searchWasRequired).toBe(false);
     expect(mockRequired.toSorted()).toEqual(['authenticate', 'save-to-library', 'search']);
   });
 
+  it('treats a visitor whose storage is blocked as a guest', async () => {
+    const searchWasRequired = await warmFromCleanSlate(() => {
+      throw new DOMException('Access denied', 'SecurityError');
+    });
+
+    expect(searchWasRequired).toBe(false);
+  });
+
   it('warms every overlay together for a signed-in user', async () => {
-    const searchWasRequired = await warmFromCleanSlate(true);
+    const searchWasRequired = await warmFromCleanSlate(() => 'refresh-token');
 
     expect(searchWasRequired).toBe(true);
     expect(mockRequired.toSorted()).toEqual(['authenticate', 'save-to-library', 'search']);
