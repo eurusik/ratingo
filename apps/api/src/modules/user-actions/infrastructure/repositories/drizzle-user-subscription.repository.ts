@@ -21,7 +21,11 @@ import {
   type UpsertSubscriptionData,
   type SubscriptionWithMedia,
   type NotifiedSubscription,
+  type ClaimedMovieRelease,
+  type MovieReleaseTrigger,
+  type ReleaseDayWindow,
 } from '@/modules/user-actions/domain/repositories/user-subscription.repository.interface';
+import { ClaimMovieReleasesQuery } from '@/modules/user-actions/infrastructure/queries/claim-movie-releases.query';
 
 /**
  * Drizzle implementation of user subscription repository.
@@ -33,6 +37,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly claimMovieReleasesQuery: ClaimMovieReleasesQuery,
   ) {}
 
   /**
@@ -184,6 +189,29 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
               eq(schema.userSubscriptions.userId, userId),
               eq(schema.userSubscriptions.mediaItemId, mediaItemId),
               eq(schema.userSubscriptions.isActive, true),
+            ),
+          );
+        return rows.map((r) => r.trigger as SubscriptionTrigger);
+      },
+      { userId, mediaItemId },
+    );
+  }
+
+  async findKnownTriggersForMedia(
+    userId: string,
+    mediaItemId: string,
+  ): Promise<SubscriptionTrigger[]> {
+    return withDbError(
+      'find known triggers for media',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({ trigger: schema.userSubscriptions.trigger })
+          .from(schema.userSubscriptions)
+          .where(
+            and(
+              eq(schema.userSubscriptions.userId, userId),
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
             ),
           );
         return rows.map((r) => r.trigger as SubscriptionTrigger);
@@ -439,6 +467,17 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
       },
       { mediaItemId },
     );
+  }
+
+  claimMovieReleases(
+    trigger: MovieReleaseTrigger,
+    window: ReleaseDayWindow,
+  ): Promise<ClaimedMovieRelease[]> {
+    return this.claimMovieReleasesQuery.claim(trigger, window);
+  }
+
+  releaseClaims(subscriptionIds: string[]): Promise<void> {
+    return this.claimMovieReleasesQuery.handBack(subscriptionIds);
   }
 
   private mapRow(row: typeof schema.userSubscriptions.$inferSelect): UserSubscription {

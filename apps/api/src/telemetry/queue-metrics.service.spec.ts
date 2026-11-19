@@ -39,6 +39,7 @@ describe('QueueMetricsService', () => {
       fakeQueue('catalog-policy-queue', failing),
       fakeQueue('stats-queue', stats),
       fakeQueue('monitoring-queue', others),
+      fakeQueue('user-notifications', others),
     );
   };
 
@@ -66,7 +67,14 @@ describe('QueueMetricsService', () => {
     const queues = new Set(points.map((point) => point.attributes.queue));
 
     expect(queues).toEqual(
-      new Set(['ingestion', 'backfill', 'ratings-backfill', 'stats-queue', 'monitoring-queue']),
+      new Set([
+        'ingestion',
+        'backfill',
+        'ratings-backfill',
+        'stats-queue',
+        'monitoring-queue',
+        'user-notifications',
+      ]),
     );
   });
 

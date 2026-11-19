@@ -1,15 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SavedItemsService } from './saved-items.service';
 import { USER_SAVED_ITEM_REPOSITORY } from '../domain/repositories/user-saved-item.repository.interface';
 import { USER_MEDIA_ACTION_REPOSITORY } from '../domain/repositories/user-media-action.repository.interface';
 import { SAVED_ITEM_LIST } from '../domain/entities/user-saved-item.entity';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { ItemSavedForLaterEvent } from '../domain/events/item-saved-for-later.event';
 
 describe('SavedItemsService', () => {
   let service: SavedItemsService;
   let savedItemRepo: any;
   let actionRepo: any;
+  let eventEmitter: { emitAsync: jest.Mock };
 
   const mockSavedItem = {
     id: 'saved-id-1',
@@ -40,6 +43,8 @@ describe('SavedItemsService', () => {
       count: jest.fn().mockResolvedValue(1),
     };
 
+    eventEmitter = { emitAsync: jest.fn().mockResolvedValue([]) };
+
     actionRepo = {
       create: jest.fn().mockResolvedValue({ id: 'action-id-1' }),
     };
@@ -49,6 +54,7 @@ describe('SavedItemsService', () => {
         SavedItemsService,
         { provide: USER_SAVED_ITEM_REPOSITORY, useValue: savedItemRepo },
         { provide: USER_MEDIA_ACTION_REPOSITORY, useValue: actionRepo },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
@@ -190,6 +196,31 @@ describe('SavedItemsService', () => {
         0,
         MediaType.MOVIE,
       );
+    });
+  });
+
+  describe('saved for later event', () => {
+    it('announces a for_later save so a movie can be auto-subscribed', async () => {
+      await service.saveItem({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        list: SAVED_ITEM_LIST.FOR_LATER,
+      });
+
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        ItemSavedForLaterEvent.eventName,
+        new ItemSavedForLaterEvent('user-id-1', 'media-id-1'),
+      );
+    });
+
+    it('stays quiet for the considering list', async () => {
+      await service.saveItem({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        list: SAVED_ITEM_LIST.CONSIDERING,
+      });
+
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
   });
 });

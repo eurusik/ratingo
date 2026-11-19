@@ -6,6 +6,8 @@ import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entit
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import { SHOW_STATE_PORT } from '../domain/ports/show-state.port';
 import { USER_PREFERENCE_PORT } from '../domain/ports/user-preference.port';
+import { MOVIE_RELEASE_PORT } from '../domain/ports/movie-release.port';
+import { CLOCK_PORT } from '@/modules/shared/clock';
 
 describe('SubscriptionsService', () => {
   let service: SubscriptionsService;
@@ -13,6 +15,7 @@ describe('SubscriptionsService', () => {
   let actionRepo: any;
   let showStatePort: any;
   let userPreferencePort: any;
+  let movieReleasePort: any;
 
   const mockSubscription = {
     id: 'sub-id-1',
@@ -44,6 +47,11 @@ describe('SubscriptionsService', () => {
       findActiveTriggersForMedia: jest.fn().mockResolvedValue([SUBSCRIPTION_TRIGGER.RELEASE]),
       listActiveWithMedia: jest.fn().mockResolvedValue([mockSubscriptionWithMedia]),
       countActive: jest.fn().mockResolvedValue(1),
+      findKnownTriggersForMedia: jest.fn().mockResolvedValue([]),
+    };
+
+    movieReleasePort = {
+      findMovieReleaseSchedule: jest.fn().mockResolvedValue(null),
     };
 
     actionRepo = {
@@ -65,6 +73,8 @@ describe('SubscriptionsService', () => {
         { provide: USER_MEDIA_ACTION_REPOSITORY, useValue: actionRepo },
         { provide: SHOW_STATE_PORT, useValue: showStatePort },
         { provide: USER_PREFERENCE_PORT, useValue: userPreferencePort },
+        { provide: MOVIE_RELEASE_PORT, useValue: movieReleasePort },
+        { provide: CLOCK_PORT, useValue: { now: () => new Date('2026-11-19T06:00:00Z') } },
       ],
     }).compile();
 
@@ -282,6 +292,87 @@ describe('SubscriptionsService', () => {
       ]);
 
       await service.autoSubscribeForShow('user-id-1', 'media-id-1');
+
+      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('autoSubscribeForMovie', () => {
+    const upcoming = {
+      theatricalReleaseDate: new Date('2026-12-18T00:00:00Z'),
+      digitalReleaseDate: null,
+      releaseDate: null,
+    };
+
+    const subscribedTriggers = () =>
+      subscriptionRepo.upsert.mock.calls.map((call: any[]) => call[0].trigger);
+
+    it('subscribes to the digital release first and the cinema release second', async () => {
+      userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(true);
+      movieReleasePort.findMovieReleaseSchedule.mockResolvedValue(upcoming);
+
+      await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
+
+      expect(subscribedTriggers()).toEqual([
+        SUBSCRIPTION_TRIGGER.ON_STREAMING,
+        SUBSCRIPTION_TRIGGER.RELEASE,
+      ]);
+      expect(actionRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ action: USER_MEDIA_ACTION.SUBSCRIBE, context: 'auto-plan' }),
+      );
+    });
+
+    it('respects the auto-subscribe preference', async () => {
+      userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(false);
+      movieReleasePort.findMovieReleaseSchedule.mockResolvedValue(upcoming);
+
+      await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
+
+      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for shows and unknown media', async () => {
+      userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(true);
+      movieReleasePort.findMovieReleaseSchedule.mockResolvedValue(null);
+
+      await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
+
+      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('subscribes only to the digital release of a movie already in cinemas', async () => {
+      userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(true);
+      movieReleasePort.findMovieReleaseSchedule.mockResolvedValue({
+        ...upcoming,
+        theatricalReleaseDate: new Date('2026-11-01T00:00:00Z'),
+      });
+
+      await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
+
+      expect(subscribedTriggers()).toEqual([SUBSCRIPTION_TRIGGER.ON_STREAMING]);
+    });
+
+    it('does not bring back a subscription the user turned off', async () => {
+      userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(true);
+      movieReleasePort.findMovieReleaseSchedule.mockResolvedValue(upcoming);
+      subscriptionRepo.findKnownTriggersForMedia.mockResolvedValue([
+        SUBSCRIPTION_TRIGGER.ON_STREAMING,
+      ]);
+
+      await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
+
+      expect(subscribedTriggers()).toEqual([SUBSCRIPTION_TRIGGER.RELEASE]);
+    });
+
+    it('subscribes to nothing for a movie that is fully out', async () => {
+      userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(true);
+      movieReleasePort.findMovieReleaseSchedule.mockResolvedValue({
+        theatricalReleaseDate: new Date('2026-08-01T00:00:00Z'),
+        digitalReleaseDate: new Date('2026-10-01T00:00:00Z'),
+        releaseDate: null,
+      });
+
+      await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
 
       expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
     });

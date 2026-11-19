@@ -17111,6 +17111,19 @@
           "airDate": {
             "type": "string",
             "example": "2025-01-15"
+          },
+          "releaseKind": {
+            "type": "string",
+            "example": "digital",
+            "enum": [
+              "theatrical",
+              "digital"
+            ]
+          },
+          "releaseCountry": {
+            "type": "string",
+            "example": "US",
+            "nullable": true
           }
         }
       },

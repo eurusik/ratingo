@@ -10,6 +10,7 @@ import {
 } from '../modules/ingestion/public';
 import { MONITORING_QUEUE } from '../modules/monitoring/public';
 import { STATS_QUEUE } from '../modules/stats/public';
+import { USER_NOTIFICATIONS_QUEUE } from '../modules/user-actions/public';
 
 import { QueueJobMetricsService } from './queue-job-metrics.service';
 import { QueueMetricsService } from './queue-metrics.service';
@@ -24,6 +25,7 @@ import { QueueMetricsService } from './queue-metrics.service';
       { name: CATALOG_POLICY_QUEUE },
       { name: STATS_QUEUE },
       { name: MONITORING_QUEUE },
+      { name: USER_NOTIFICATIONS_QUEUE },
     ),
   ],
   providers: [QueueMetricsService, QueueJobMetricsService],

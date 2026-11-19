@@ -1,5 +1,13 @@
 import { type SubscriptionTrigger } from './user-subscription.entity';
 
+export const NOTIFICATION_RELEASE_KIND = {
+  THEATRICAL: 'theatrical',
+  DIGITAL: 'digital',
+} as const;
+
+export type NotificationReleaseKind =
+  (typeof NOTIFICATION_RELEASE_KIND)[keyof typeof NOTIFICATION_RELEASE_KIND];
+
 /**
  * Payload for notification events.
  */
@@ -9,6 +17,8 @@ export interface NotificationPayload {
   airDate?: string;
   statusFrom?: string | null;
   statusTo?: string;
+  releaseKind?: NotificationReleaseKind;
+  releaseCountry?: string | null;
 }
 
 /**
