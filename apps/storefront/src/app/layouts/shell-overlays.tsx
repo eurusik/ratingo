@@ -11,15 +11,17 @@ import {
   type SearchTitle,
 } from '@/features/search';
 import { WhatsNew } from '@/features/whats-new';
-import { hasPendingIntent, useAuthRequest } from '@/shared/auth';
+import { closeAuth, hasPendingIntent, useAuthRequest } from '@/shared/auth';
 import { InstallPromptCapture } from '@/shared/lib';
 import {
   loadAuthDialog,
   loadPendingSaveReplay,
   loadSaveButton,
   loadSearchDialog,
+  useIsDialogCodePending,
   useWarmOverlays,
 } from './overlay-loaders';
+import { AuthDialogLoading } from './auth-dialog-loading';
 
 const AuthDialog = dynamic(loadAuthDialog, { ssr: false });
 const SearchDialog = dynamic(loadSearchDialog, { ssr: false });
@@ -42,7 +44,8 @@ const readNoIntentOnServer = () => false;
 
 export function ShellOverlays() {
   const hasOpenedSearch = useHasOpened(useIsSearchOpen());
-  const hasOpenedAuth = useHasOpened(useAuthRequest() !== null);
+  const isAuthRequested = useAuthRequest() !== null;
+  const hasOpenedAuth = useHasOpened(isAuthRequested);
   const hasIntentFromRedirect = useSyncExternalStore(
     subscribeToNothing,
     hasPendingIntent,
@@ -52,6 +55,12 @@ export function ShellOverlays() {
   useTrackingHintsSession();
   useSearchFromUrl();
   const isWarm = useWarmOverlays();
+  const isAuthDialogPending = useIsDialogCodePending({
+    isRequested: isAuthRequested,
+    isWarm,
+    load: loadAuthDialog,
+    onLoadFailed: closeAuth,
+  });
 
   return (
     <>
@@ -60,6 +69,7 @@ export function ShellOverlays() {
       {hasIntentFromRedirect ? <PendingSaveReplay /> : null}
       {isWarm || hasOpenedSearch ? <SearchDialog renderActions={renderSearchActions} /> : null}
       {isWarm || hasOpenedAuth ? <AuthDialog /> : null}
+      {isAuthDialogPending ? <AuthDialogLoading /> : null}
       <WhatsNew />
     </>
   );
