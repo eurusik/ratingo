@@ -62,6 +62,31 @@ describe('fromMovieDetails', () => {
     expect(unrated.verdict).toBeUndefined();
     expect(unrated.community).toEqual({ raters: [], ratingCount: 0, averageScore: undefined });
   });
+
+  it('has no upcoming release once the movie is out', () => {
+    expect(view.upcomingRelease).toBeUndefined();
+  });
+
+  it.each([
+    [
+      'the theatrical date first',
+      { theatricalReleaseDate: '2026-12-18T00:00:00.000Z', digitalReleaseDate: '2027-02-01' },
+      { date: '2026-12-18T00:00:00.000Z', kind: 'theatrical' },
+    ],
+    [
+      'the digital date for streaming premieres',
+      { theatricalReleaseDate: null, digitalReleaseDate: '2026-12-24T00:00:00.000Z' },
+      { date: '2026-12-24T00:00:00.000Z', kind: 'digital' },
+    ],
+    [
+      'the primary date as a fallback',
+      {},
+      { date: '2026-07-15T00:00:00.000Z', kind: 'theatrical' },
+    ],
+  ])('dates an upcoming movie by %s', (_case, dates, expected) => {
+    const upcoming = fromMovieDetails({ ...MOVIE, ...dates, releaseStatus: 'upcoming' });
+    expect(upcoming.upcomingRelease).toEqual(expected);
+  });
 });
 
 describe('fromShowDetails', () => {

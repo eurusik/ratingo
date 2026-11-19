@@ -26,10 +26,38 @@ function RailSkeletonRow({ count, Placeholder, itemClassName }: RailSkeletonRowP
   );
 }
 
-function HeaderSkeleton() {
+interface HeaderSkeletonProps {
+  hasCaption?: boolean;
+  hasAction?: boolean;
+}
+
+function HeaderSkeleton({ hasCaption = true, hasAction = false }: HeaderSkeletonProps) {
   return (
-    <div className="flex min-h-tap items-center px-4 md:px-0">
-      <Skeleton className="h-5 w-40 rounded-full" />
+    <div className="flex flex-col gap-0.5 px-4 md:px-0">
+      <div className="flex min-h-tap items-center justify-between gap-3">
+        <Skeleton className="h-5 w-40 rounded-full" />
+        {hasAction ? <Skeleton className="h-3.5 w-20 rounded-full" /> : null}
+      </div>
+      {hasCaption ? (
+        <div className="flex h-4 items-center">
+          <Skeleton className="h-3 w-56 rounded-full" />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function UpcomingTileSkeleton() {
+  return (
+    <div className="flex w-24 flex-col gap-1.5 md:w-full md:gap-2">
+      <Skeleton className="h-36 w-24 rounded-xl md:aspect-2/3 md:h-auto md:w-full" />
+      <div className="flex min-h-[2lh] flex-col justify-around text-[13px] leading-tight md:text-sm">
+        <Skeleton className="h-[0.8em] w-4/5 rounded-full" />
+        <Skeleton className="h-[0.8em] w-1/2 rounded-full" />
+      </div>
+      <div className="flex h-4 items-center">
+        <Skeleton className="h-3 w-16 rounded-full" />
+      </div>
     </div>
   );
 }
@@ -116,11 +144,24 @@ export function CardRailSkeleton() {
   );
 }
 
-export function TileRailSkeleton() {
+export function TileRailSkeleton({ hasAction = false }: { hasAction?: boolean }) {
   return (
     <div aria-hidden className="flex flex-col gap-2">
-      <HeaderSkeleton />
+      <HeaderSkeleton hasAction={hasAction} />
       <TileRowSkeleton />
+    </div>
+  );
+}
+
+export function UpcomingRailSkeleton() {
+  return (
+    <div aria-hidden className="flex flex-col gap-2">
+      <HeaderSkeleton hasAction />
+      <RailSkeletonRow
+        count={TILE_PLACEHOLDERS}
+        Placeholder={UpcomingTileSkeleton}
+        itemClassName="md:w-[calc((100%-5.25rem)/8)]"
+      />
     </div>
   );
 }
@@ -128,7 +169,7 @@ export function TileRailSkeleton() {
 export function TopThreeSkeleton() {
   return (
     <div aria-hidden className="flex flex-col gap-2">
-      <HeaderSkeleton />
+      <HeaderSkeleton hasCaption={false} />
       <div className="grid gap-2 px-4 md:grid-cols-3 md:gap-3 md:px-0">
         {Array.from({ length: TOP_THREE_PLACEHOLDERS }, (_, index) => (
           <Skeleton key={index} className="h-30 rounded-2xl" />

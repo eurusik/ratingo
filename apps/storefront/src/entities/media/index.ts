@@ -7,6 +7,7 @@ export {
   type TrendingMedia,
 } from './model/media';
 export { toGridMedia, type GridMedia } from './model/grid-media';
+export { formatReleaseBadge, formatReleaseDate } from './model/release-label';
 export { ratingVerdict, VERDICT_TONES, type RatingVerdict } from './model/score';
 export { EventBadge } from './ui/event-badge';
 export { ExternalRatings } from './ui/external-ratings';

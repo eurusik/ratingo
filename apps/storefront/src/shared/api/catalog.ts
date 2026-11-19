@@ -13,6 +13,8 @@ export type TrendingMovie = components['schemas']['MovieListItemDto'];
 export type TrendingShow = components['schemas']['ShowTrendingItemDto'];
 export type HomeItem = components['schemas']['HeroItemDto'];
 export type NewEpisode = components['schemas']['NewEpisodeDto'];
+export type UpcomingMovie = components['schemas']['UpcomingMovieDto'];
+export type ReleaseKind = UpcomingMovie['releaseDateKind'];
 export type MovieDetails = components['schemas']['MovieResponseDto'];
 export type ShowDetails = components['schemas']['ShowResponseDto'];
 export type ShowSeason = components['schemas']['SeasonDto'];
@@ -105,6 +107,14 @@ export const catalogApi = {
 
   getNewOnDigitalMovies(limit: number, cache?: CatalogCache): Promise<TrendingMovie[]> {
     return getMovieList('catalog/movies/new-on-digital', limit, cache);
+  },
+
+  async getUpcomingMovies(limit: number, cache?: CatalogCache): Promise<UpcomingMovie[]> {
+    const page = await apiGet<GetData<'/api/catalog/movies/upcoming'>>('catalog/movies/upcoming', {
+      searchParams: { limit },
+      ...cacheOptions(cache),
+    });
+    return page.data;
   },
 
   async getNewEpisodes(days: number, limit: number, cache?: CatalogCache): Promise<NewEpisode[]> {

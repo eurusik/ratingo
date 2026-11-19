@@ -19,7 +19,7 @@ import {
   type Episode,
   type Season,
 } from '@/entities/episode';
-import { ReminderToggle } from '@/features/episode-reminder';
+import { ReminderToggle } from '@/features/media-reminder';
 import { WantToWatchButton } from '@/features/save-to-library';
 import { formatCount, interpolate, useTranslation } from '@/shared/i18n';
 import { preloadWhenIdle } from '@/shared/lib';
@@ -237,7 +237,7 @@ function WatchingCard({
                 })}
               </p>
               <ReminderToggle
-                show={{ mediaItemId: media.mediaItemId, title: media.title }}
+                media={{ mediaItemId: media.mediaItemId, title: media.title }}
                 look="text"
                 className="-me-2"
               />

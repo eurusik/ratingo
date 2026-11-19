@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useAuth } from '@ratingo/web-core/auth';
-import type { CalendarRange } from '@/shared/api';
+import type { CalendarMediaType, CalendarRange } from '@/shared/api';
 import { addDays, WEEK_LENGTH, type DateKey } from './calendar-dates';
 import { hasTrackedShows } from './calendar-range';
 import {
@@ -18,7 +18,7 @@ import {
   emptyCalendarDays,
   firstEpisodeFrom,
   buildStripWeek,
-  groupEpisodesByDay,
+  groupByDay,
   weekLayoutFor,
   type StripWeek,
 } from './week-layout';
@@ -37,9 +37,12 @@ function useViewerStatus(): ViewerStatus {
 }
 
 function useActiveRange(location: CalendarLocation) {
-  const request = weekRequest(location.weekStart);
-  const personalized = useCalendarRange({ query: { ...request, personalized: true } });
-  const mode = useCalendarMode({ requested: location.mode, personalized });
+  const request = { ...weekRequest(location.weekStart), type: location.type };
+  const personalized = useCalendarRange({
+    query: { ...request, personalized: true },
+    isEnabled: location.type === 'show' || location.mode === 'mine',
+  });
+  const mode = useCalendarMode({ requested: location.mode, personalized, type: location.type });
   const everyone = useCalendarRange({
     query: { ...request, personalized: false },
     isEnabled: mode !== undefined,
@@ -54,12 +57,12 @@ function likelyMode(mode: CalendarMode | undefined, viewer: ViewerStatus) {
 
 export function useCalendarWeek({ location, today }: CalendarWeekInputs) {
   const viewer = useViewerStatus();
-  const { weekStart } = location;
+  const { weekStart, type } = location;
   const { mode, active } = useActiveRange(location);
   const isGuestInMine = mode === 'mine' && viewer === 'guest';
 
   const days = useMemo(() => {
-    if (active.data) return groupEpisodesByDay(active.data, weekStart);
+    if (active.data) return groupByDay(active.data, weekStart);
     return isGuestInMine ? emptyCalendarDays(weekStart) : undefined;
   }, [active.data, isGuestInMine, weekStart]);
   const layout = useMemo(
@@ -78,12 +81,14 @@ export function useCalendarWeek({ location, today }: CalendarWeekInputs) {
     today,
     current: currentStripWeek,
     mode: likelyMode(mode, viewer),
+    type,
     isEnabled: viewer !== 'resolving',
   });
   const nextEpisode = useRestingWeekNextEpisode(weekStart, isResting);
 
   return {
     mode,
+    type,
     viewer,
     active,
     layout,
@@ -98,7 +103,7 @@ export function useCalendarWeek({ location, today }: CalendarWeekInputs) {
 function useRestingWeekNextEpisode(weekStart: DateKey, isResting: boolean) {
   const nextWeekStart = addDays(weekStart, WEEK_LENGTH);
   const upcoming = useCalendarRange({
-    query: { ...upcomingRequest(nextWeekStart), personalized: true },
+    query: { ...upcomingRequest(nextWeekStart), personalized: true, type: 'show' },
     isEnabled: isResting,
   });
   return isResting ? firstEpisodeFrom(upcoming.data, nextWeekStart) : undefined;
@@ -107,6 +112,7 @@ function useRestingWeekNextEpisode(weekStart: DateKey, isResting: boolean) {
 interface NeighbourInputs {
   today: DateKey;
   mode: CalendarMode | undefined;
+  type: CalendarMediaType;
   isEnabled: boolean;
 }
 
@@ -120,9 +126,11 @@ const OTHER_MODE = { mine: 'all', all: 'mine' } as const satisfies Record<
   CalendarMode
 >;
 
-function useWarmNeighbour(weekStart: DateKey, mode: CalendarMode | undefined, isEnabled: boolean) {
+type WarmNeighbourInputs = Omit<NeighbourInputs, 'today'>;
+
+function useWarmNeighbour(weekStart: DateKey, { mode, type, isEnabled }: WarmNeighbourInputs) {
   useCalendarRange({
-    query: { ...weekRequest(weekStart), personalized: mode === 'mine' },
+    query: { ...weekRequest(weekStart), personalized: mode === 'mine', type },
     isEnabled: isEnabled && mode !== undefined,
   });
 }
@@ -134,8 +142,9 @@ function useStripWeeks({ weekStart, current, ...neighbours }: StripWeeksInputs) 
   const next = useNeighbourWeek(nextWeekStart, neighbours);
   const otherMode = neighbours.mode && OTHER_MODE[neighbours.mode];
   const isReadyToWarm = neighbours.isEnabled && current !== undefined;
-  useWarmNeighbour(previousWeekStart, otherMode, isReadyToWarm);
-  useWarmNeighbour(nextWeekStart, otherMode, isReadyToWarm);
+  const warm = { mode: otherMode, type: neighbours.type, isEnabled: isReadyToWarm };
+  useWarmNeighbour(previousWeekStart, warm);
+  useWarmNeighbour(nextWeekStart, warm);
   return useMemo(
     () => (current ? [previous, current, next] : undefined),
     [previous, current, next],
@@ -144,10 +153,10 @@ function useStripWeeks({ weekStart, current, ...neighbours }: StripWeeksInputs) 
 
 function useNeighbourWeek(
   weekStart: DateKey,
-  { today, mode, isEnabled }: NeighbourInputs,
+  { today, mode, type, isEnabled }: NeighbourInputs,
 ): StripWeek {
   const { data } = useCalendarRange({
-    query: { ...weekRequest(weekStart), personalized: mode === 'mine' },
+    query: { ...weekRequest(weekStart), personalized: mode === 'mine', type },
     isEnabled: isEnabled && mode !== undefined,
   });
   return useMemo(() => neighbourWeek(data, weekStart, today), [data, weekStart, today]);
@@ -159,7 +168,7 @@ function neighbourWeek(
   today: DateKey,
 ): StripWeek {
   return data
-    ? buildStripWeek(groupEpisodesByDay(data, weekStart), weekStart, today)
+    ? buildStripWeek(groupByDay(data, weekStart), weekStart, today)
     : { days: emptyCalendarDays(weekStart), pickable: NO_PICKABLE_DAYS };
 }
 

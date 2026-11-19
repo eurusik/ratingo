@@ -1,3 +1,4 @@
+import { CalendarClock } from 'lucide-react';
 import { CardGlow, VerdictChip } from '@/entities/media';
 import { getDictionary, type Dictionary, type Locale } from '@/shared/i18n';
 import type { MediaDetailsView } from '../model/details-view';
@@ -19,8 +20,33 @@ function verdictMessage(view: MediaDetailsView, messages: VerdictMessages): stri
   return isMessageKey(byType, key) ? byType[key] : undefined;
 }
 
+function UpcomingVerdict({ message, dict }: { message?: string; dict: Dictionary }) {
+  return (
+    <div className="flex items-center gap-4">
+      <span
+        aria-hidden
+        className="flex size-18 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent md:size-19"
+      >
+        <CalendarClock className="size-8" />
+      </span>
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <p className="text-sm leading-snug font-semibold text-muted">
+          {dict.details.upcoming.noScore}
+        </p>
+        {message ? (
+          <p className="text-lg leading-tight font-bold md:text-[19px]">{message}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function VerdictBlock({ view, dict }: { view: MediaDetailsView; dict: Dictionary }) {
   const message = verdictMessage(view, dict.details.verdict);
+
+  if (view.type === 'movie' && view.upcomingRelease) {
+    return <UpcomingVerdict message={message} dict={dict} />;
+  }
 
   if (view.score === undefined || !view.verdict) {
     return (

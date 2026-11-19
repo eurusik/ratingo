@@ -6,7 +6,7 @@ export const STATUS_BAR_BACKDROP =
 export const HEADER_ROW =
   'md:flex md:flex-wrap md:items-center md:gap-x-5 md:gap-y-3 md:border-b md:border-separator md:pb-4';
 
-export const PAGE_TITLE_TEXT = 'text-4xl font-extrabold tracking-tight max-md:sr-only';
+export const PHONE_TYPE_ROW = 'pt-1 pb-2 md:hidden';
 
 export const MODE_PILL = 'min-h-tap shrink-0 rounded-full px-4 transition-none md:min-h-10';
 
@@ -61,9 +61,11 @@ export const DAY_SECTION =
 
 export const DAY_HEADING_TEXT = 'text-[17px] font-extrabold md:text-xl';
 
-export const EPISODE_LIST = 'flex flex-col md:grid md:grid-cols-2 md:gap-3.5 xl:grid-cols-3';
+export const RELEASE_LIST = 'flex flex-col md:grid md:grid-cols-2 md:gap-3.5 xl:grid-cols-3';
 
-export const EPISODE_ROW =
+export const MORE_MOVIES_TEXT = 'pt-2.5 text-sm text-muted md:pt-3';
+
+export const RELEASE_ROW =
   'flex items-center gap-3 border-b border-separator py-2 md:rounded-2xl md:border-0 md:bg-surface md:p-2.5';
 
 export const CALENDAR_LIST = 'flex flex-1 flex-col';

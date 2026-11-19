@@ -40,6 +40,7 @@ export function myListRoute(list: string, defaultList: string): string {
 
 export const BROWSE_ROUTE = '/browse';
 export const CALENDAR_ROUTE = '/calendar';
+export const CALENDAR_TYPE_PARAM = 'type';
 export const OFFLINE_ROUTE = '/~offline';
 export const SETTINGS_ROUTE = '/settings';
 export const PROFILE_SETTINGS_ROUTE = '/settings/profile';
@@ -52,6 +53,10 @@ export const PUBLIC_PROFILE_ROUTE = '/u';
 
 export function publicProfileRoute(username: string): string {
   return `${PUBLIC_PROFILE_ROUTE}/${encodeURIComponent(username)}`;
+}
+
+export function calendarRouteFor(type: 'show' | 'movie'): string {
+  return type === 'show' ? CALENDAR_ROUTE : `${CALENDAR_ROUTE}?${CALENDAR_TYPE_PARAM}=${type}`;
 }
 
 export function isSettingsPath(pathname: string): boolean {

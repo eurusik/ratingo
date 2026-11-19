@@ -5,7 +5,7 @@ import { Button, Checkbox } from '@heroui/react';
 import { Plus } from 'lucide-react';
 import { cn } from '@ratingo/web-core/lib';
 import { EpisodeStill } from '@/entities/episode';
-import { ReminderToggle } from '@/features/episode-reminder';
+import { ReminderToggle } from '@/features/media-reminder';
 import type { CalendarEpisode } from '@/shared/api';
 import { showSeasonRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
@@ -14,7 +14,7 @@ import { episodeAction, episodeMark, type EpisodeMark } from '../model/day-plan'
 import { calendarEpisodeCode, episodeLine } from '../model/episode-line';
 import { useEpisodeWatchToggle } from '../model/use-episode-watch-toggle';
 import { useCalendarContext } from './calendar-context';
-import { EPISODE_ROW } from './calendar-layout';
+import { RELEASE_ROW } from './calendar-layout';
 
 const MARK_CLASS: Record<EpisodeMark, string> = {
   premiere: 'bg-foreground text-background',
@@ -95,7 +95,7 @@ export const CalendarEpisodeItem = memo(function CalendarEpisodeItem({
   const action = episodeAction(episode, { mode, now, viewer });
 
   return (
-    <li className={EPISODE_ROW}>
+    <li className={RELEASE_ROW}>
       <ForwardLink
         href={showHref(episode)}
         className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-foreground no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
@@ -125,7 +125,7 @@ export const CalendarEpisodeItem = memo(function CalendarEpisodeItem({
       </ForwardLink>
       {action === 'watch' ? <WatchCheckbox episode={episode} /> : null}
       {action === 'remind' ? (
-        <ReminderToggle show={{ mediaItemId: episode.showId, title: episode.showTitle }} />
+        <ReminderToggle media={{ mediaItemId: episode.showId, title: episode.showTitle }} />
       ) : null}
       {action === 'start' ? <StartWatchingButton episode={episode} /> : null}
     </li>

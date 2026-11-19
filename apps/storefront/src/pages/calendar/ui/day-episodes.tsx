@@ -10,11 +10,11 @@ import { planDay } from '../model/day-plan';
 import type { CalendarDay } from '../model/week-layout';
 import { useCalendarContext } from './calendar-context';
 import { CalendarEpisodeItem } from './calendar-episode';
-import { EPISODE_LIST } from './calendar-layout';
+import { RELEASE_LIST } from './calendar-layout';
 
 function EpisodeList({ id, episodes }: { id?: string; episodes: readonly CalendarEpisode[] }) {
   return (
-    <ul id={id} className={EPISODE_LIST}>
+    <ul id={id} className={RELEASE_LIST}>
       {episodes.map((episode) => (
         <CalendarEpisodeItem key={episode.episodeId} episode={episode} />
       ))}

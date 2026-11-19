@@ -1,7 +1,12 @@
 import type { TrendingMedia } from '@/entities/media';
 import type { HomeItem } from '@/shared/api';
 import type { TrendingLists } from '../api/load-home-feed';
-import { buildHomeHero, type EpisodeRelease, type Loaded } from '../model/home-feed';
+import {
+  buildHomeHero,
+  type EpisodeRelease,
+  type Loaded,
+  type UpcomingRelease,
+} from '../model/home-feed';
 import { RELEASE_LISTS, TOP_TEN_LISTS, startRail } from '../model/rail-start';
 import { HeroBanner } from './hero-banner';
 import { HomeSectionError } from './home-section-error';
@@ -9,6 +14,7 @@ import { NewEpisodes } from './new-episodes';
 import { NewReleases } from './new-releases';
 import { TopTen } from './top-ten';
 import { TopThree } from './top-three';
+import { UpcomingMovies } from './upcoming-movies';
 
 export async function HeroSection({ hero }: { hero: Promise<Loaded<HomeItem[]>> }) {
   const loaded = await hero;
@@ -57,4 +63,15 @@ export async function NewReleasesSection({ nowPlaying, newOnDigital }: NewReleas
     newOnDigital: streaming.ok ? streaming.data : [],
   };
   return <NewReleases rail={startRail(lists, RELEASE_LISTS)} />;
+}
+
+export async function UpcomingSection({
+  upcoming,
+}: {
+  upcoming: Promise<Loaded<UpcomingRelease[]>>;
+}) {
+  const loaded = await upcoming;
+  if (!loaded.ok) return null;
+
+  return <UpcomingMovies releases={loaded.data} />;
 }

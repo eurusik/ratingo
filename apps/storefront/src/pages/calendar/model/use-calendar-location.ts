@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { CALENDAR_TYPE_PARAM } from '@/shared/config';
 import type { DateKey } from './calendar-dates';
 import { calendarHref, parseCalendarLocation, type CalendarLocation } from './calendar-query';
 
@@ -18,7 +19,11 @@ interface LocationState extends TrackedLocation {
 function useUrlLocation(today: DateKey): TrackedLocation {
   const searchParams = useSearchParams();
   const location = parseCalendarLocation(
-    { week: searchParams?.get('week') ?? undefined, mode: searchParams?.get('mode') ?? undefined },
+    {
+      week: searchParams?.get('week') ?? undefined,
+      mode: searchParams?.get('mode') ?? undefined,
+      type: searchParams?.get(CALENDAR_TYPE_PARAM) ?? undefined,
+    },
     today,
   );
   return { href: calendarHref(location, today), location };

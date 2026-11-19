@@ -41,3 +41,4 @@ export { SideNavItem } from './split-shell/side-nav-item';
 export { SignInPrompt } from './split-shell/sign-in-prompt';
 export { SplitShell } from './split-shell/split-shell';
 export { Sheet } from './sheet';
+export { TitleSwitch } from './title-switch/title-switch';

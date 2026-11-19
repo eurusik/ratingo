@@ -1,6 +1,6 @@
 import { toSeasons, type Season } from '@/entities/episode';
 import { ratingVerdict, type RatingSource, type RatingVerdict } from '@/entities/media';
-import type { MediaType, MovieDetails, ShowDetails } from '@/shared/api';
+import type { MediaType, MovieDetails, ReleaseKind, ShowDetails } from '@/shared/api';
 import { percentFromScore, positiveNumber, scoreFromPercent, yearFromDate } from '@/shared/lib';
 import { toCredits, type Credits } from './credits';
 import { toTrailers, type Trailer } from './trailers';
@@ -43,10 +43,16 @@ interface DetailsBase {
   trailers: Trailer[];
 }
 
+interface UpcomingReleaseDate {
+  date: string;
+  kind: ReleaseKind;
+}
+
 export interface MovieDetailsView extends DetailsBase {
   type: Extract<MediaType, 'movie'>;
   runtimeMinutes?: number;
   status?: MovieStatus;
+  upcomingRelease?: UpcomingReleaseDate;
   budget?: number;
   revenue?: number;
 }
@@ -108,12 +114,26 @@ function toBase(media: MovieDetails | ShowDetails): DetailsBase {
   };
 }
 
+type MovieReleaseDates = Partial<
+  Record<'theatricalReleaseDate' | 'digitalReleaseDate', string | null>
+>;
+
+function upcomingReleaseOf(
+  movie: MovieDetails & MovieReleaseDates,
+): UpcomingReleaseDate | undefined {
+  if (movie.releaseStatus !== 'upcoming') return undefined;
+  if (movie.theatricalReleaseDate) return { date: movie.theatricalReleaseDate, kind: 'theatrical' };
+  if (movie.digitalReleaseDate) return { date: movie.digitalReleaseDate, kind: 'digital' };
+  return movie.releaseDate ? { date: movie.releaseDate, kind: 'theatrical' } : undefined;
+}
+
 export function fromMovieDetails(movie: MovieDetails): MovieDetailsView {
   return {
     ...toBase(movie),
     type: 'movie',
     runtimeMinutes: positiveNumber(movie.runtime),
     status: movie.status ?? undefined,
+    upcomingRelease: upcomingReleaseOf(movie),
     budget: positiveNumber(movie.budget),
     revenue: positiveNumber(movie.revenue),
   };

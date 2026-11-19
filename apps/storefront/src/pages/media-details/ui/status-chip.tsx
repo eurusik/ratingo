@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Chip } from '@heroui/react';
-import { CalendarPlus, Check, Clapperboard, Clock, X } from 'lucide-react';
+import { CalendarClock, CalendarPlus, Check, Clapperboard, Clock, X } from 'lucide-react';
 import type { ShowStatus } from '../model/details-view';
 
 type StatusTone = 'success' | 'default' | 'danger' | 'accent';
@@ -31,9 +31,7 @@ interface ShowStatusChipProps {
   label: string;
 }
 
-export function ShowStatusChip({ status, label }: ShowStatusChipProps) {
-  const { tone, icon } = STATUS_LOOK[status];
-
+function StatusChip({ tone, icon, label }: { tone: StatusTone; icon: ReactNode; label: string }) {
   return (
     <Chip
       size="md"
@@ -44,5 +42,20 @@ export function ShowStatusChip({ status, label }: ShowStatusChipProps) {
       <span className={`flex items-center ${TONE_ICON_COLOR[tone]}`}>{icon}</span>
       {label}
     </Chip>
+  );
+}
+
+export function ShowStatusChip({ status, label }: ShowStatusChipProps) {
+  const { tone, icon } = STATUS_LOOK[status];
+  return <StatusChip tone={tone} icon={icon} label={label} />;
+}
+
+export function UpcomingReleaseChip({ label }: { label: string }) {
+  return (
+    <StatusChip
+      tone="accent"
+      icon={<CalendarClock aria-hidden className={ICON_CLASS} />}
+      label={label}
+    />
   );
 }
