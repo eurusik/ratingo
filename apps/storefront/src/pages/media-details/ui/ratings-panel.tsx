@@ -25,7 +25,11 @@ function VerdictBlock({ view, dict }: { view: MediaDetailsView; dict: Dictionary
   if (view.score === undefined || !view.verdict) {
     return (
       <div className="flex items-center gap-2">
-        <p className="text-base font-semibold text-muted">{dict.details.ratings.noScore}</p>
+        <p className="text-base font-semibold text-muted">
+          {view.type === 'movie' && view.upcomingRelease
+            ? dict.details.upcoming.noScore
+            : dict.details.ratings.noScore}
+        </p>
         <ScoreExplainer />
       </div>
     );

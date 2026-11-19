@@ -2,6 +2,7 @@
 
 import { Bell } from 'lucide-react';
 import { useAuth } from '@ratingo/web-core/auth';
+import { ReminderToggle } from '@/features/media-reminder';
 import { RemoveFromLibraryButton } from '@/features/remove-from-library';
 import { SaveToWatchCta, WantToWatchButton } from '@/features/save-to-library';
 import { useTranslation } from '@/shared/i18n';
@@ -16,6 +17,20 @@ import { ShowActionsSkeleton } from './show-actions-skeleton';
 import { ShowTracking } from './show-tracking';
 
 export type { ActionMedia } from '../model/action-media';
+
+function UpcomingMovieActions({ media }: { media: ActionMedia }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <WantToWatchButton media={media} className="flex-1 md:flex-none" />
+      <ReminderToggle
+        media={{ mediaItemId: media.mediaItemId, title: media.title }}
+        trigger="release"
+        look="button"
+      />
+      <DesktopShare media={media} />
+    </div>
+  );
+}
 
 function MovieActions({ media }: { media: ActionMedia }) {
   const rating = useRateMedia(media);
@@ -74,10 +89,16 @@ function ShowActions({ media }: { media: ActionMedia }) {
   return <ShowTracking media={media} />;
 }
 
+function MediaActions({ media }: { media: ActionMedia }) {
+  if (media.type === 'show') return <ShowActions media={media} />;
+  if (media.isUpcoming) return <UpcomingMovieActions media={media} />;
+  return <MovieActions media={media} />;
+}
+
 export function HeroActions({ media }: { media: ActionMedia }) {
   return (
     <div className="flex flex-col gap-2">
-      {media.type === 'movie' ? <MovieActions media={media} /> : <ShowActions media={media} />}
+      <MediaActions media={media} />
       <RemoveFromLibraryButton media={media} />
     </div>
   );
