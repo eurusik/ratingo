@@ -12,7 +12,7 @@ What to watch tonight, and when the next episode is out. In Ukrainian.
 
 </div>
 
-Hi, I'm Eugene. Frontend at monobank; before that, tech lead at Silpo and Rozetka, plus stints at Mastercard and EA, where I worked on Battlelog.
+I’m Eugene, a frontend engineer at monobank. I started out at EA working on Battlelog, then moved through Mastercard and Rozetka, and led frontend as a tech lead at Silpo before joining Mono.
 
 I watch a lot of TV shows and kept losing track of them. Which episode was I on, when does the next season start, is this new thing any good or just loud marketing. IMDb, Trakt and TV Time each cover a piece of it. None of them in Ukrainian.
 
