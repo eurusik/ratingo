@@ -1,6 +1,6 @@
 import { calendarKey, isSameRangeAfterSignIn } from './calendar-keys';
 
-const query = { startDate: '2026-11-08', days: 8, personalized: false };
+const query = { startDate: '2026-11-08', days: 8, personalized: false, type: 'show' } as const;
 
 describe('isSameRangeAfterSignIn', () => {
   it('reuses guest data only for the same range right after sign-in', () => {
@@ -15,6 +15,11 @@ describe('isSameRangeAfterSignIn', () => {
       'another week',
       calendarKey({ viewerId: null, ...query }),
       { viewerId: 'a', ...query, startDate: '2026-11-15' },
+    ],
+    [
+      'another type',
+      calendarKey({ viewerId: null, ...query }),
+      { viewerId: 'a', ...query, type: 'movie' as const },
     ],
   ])('never reuses data after %s', (_case, previous, next) => {
     expect(isSameRangeAfterSignIn(previous, calendarKey(next))).toBe(false);

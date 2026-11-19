@@ -9,7 +9,7 @@ import { addDays, type DateKey } from '../model/calendar-dates';
 import { formatDay } from '../model/calendar-format';
 import type { CalendarDay } from '../model/week-layout';
 import { DAY_HEADING_TEXT, DAY_SECTION } from './calendar-layout';
-import { DayEpisodes } from './day-episodes';
+import { DayReleases } from './day-releases';
 
 function dayTitle(key: DateKey, today: DateKey, dict: Dictionary, locale: Locale): string {
   if (key === today) return dict.calendar.today;
@@ -48,7 +48,7 @@ export const CalendarDaySection = memo(function CalendarDaySection({
           {formatDay(locale, day.key, 'dayMonth')}
         </span>
       </h3>
-      <DayEpisodes day={day} />
+      <DayReleases day={day} />
     </section>
   );
 });

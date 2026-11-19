@@ -30,9 +30,15 @@ export interface AnalyticsEvents {
   review_interaction: { action: 'vote' | 'reply' | 'report' | 'delete' };
   episode_mark: { action: string; origin: 'sheet' | 'calendar' | 'library' };
   episode_reminder: { enabled: boolean };
+  release_reminder: { enabled: boolean };
   library_action: { action: string };
   browse_change: { category: string; change: 'filter' | 'sort' | 'pool' };
-  calendar_change: { action: 'step' | 'this_week' | 'mode' | 'swipe'; mode?: string };
+  calendar_change: {
+    action: 'step' | 'this_week' | 'mode' | 'type' | 'swipe';
+    mode?: string;
+    media_type?: AnalyticsMediaType;
+  };
+  calendar_open: { origin: 'home_upcoming' | 'home_episodes' };
   share: { result: 'shared' | 'copied' | 'cancelled' | 'failed' };
   app_error: {
     kind: 'mutation' | 'query' | 'render' | 'not_found';

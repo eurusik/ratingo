@@ -11,4 +11,5 @@ export interface ActionMedia {
   seasonCount?: number;
   episodeCount?: number;
   trackingState?: TrackingState;
+  isUpcoming?: boolean;
 }

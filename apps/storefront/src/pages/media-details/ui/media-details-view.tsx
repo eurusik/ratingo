@@ -26,7 +26,9 @@ function reviewedMediaOf({ mediaItemId, type, slug, title }: View): ReviewedMedi
 }
 
 function actionMediaOf(view: View, trackingState: TrackingState | undefined): ActionMedia {
-  if (view.type === 'movie') return reviewedMediaOf(view);
+  if (view.type === 'movie') {
+    return { ...reviewedMediaOf(view), isUpcoming: view.upcomingRelease !== undefined };
+  }
   return {
     ...reviewedMediaOf(view),
     trackingState,

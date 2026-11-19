@@ -1,5 +1,5 @@
-import type { CalendarRangeQuery } from '@/shared/api';
-import { CALENDAR_ROUTE } from '@/shared/config';
+import type { CalendarMediaType, CalendarRangeQuery } from '@/shared/api';
+import { CALENDAR_ROUTE, CALENDAR_TYPE_PARAM } from '@/shared/config';
 import {
   addDays,
   isDateKey,
@@ -11,6 +11,10 @@ import {
 
 export const CALENDAR_MODES = ['mine', 'all'] as const;
 
+export const CALENDAR_TYPES = ['show', 'movie'] as const satisfies readonly CalendarMediaType[];
+
+const DEFAULT_CALENDAR_TYPE: CalendarMediaType = 'show';
+
 const RANGE_LEAD_DAYS = 1;
 const UPCOMING_LOOKAHEAD_DAYS = 90;
 
@@ -19,11 +23,13 @@ export type CalendarMode = (typeof CALENDAR_MODES)[number];
 export interface CalendarSearchParams {
   week?: string | string[];
   mode?: string | string[];
+  type?: string | string[];
 }
 
 export interface CalendarLocation {
   weekStart: DateKey;
   mode?: CalendarMode;
+  type: CalendarMediaType;
 }
 
 function single(value: string | string[] | undefined): string | undefined {
@@ -34,12 +40,17 @@ function isCalendarMode(value: string | undefined): value is CalendarMode {
   return CALENDAR_MODES.some((mode) => mode === value);
 }
 
+function isCalendarType(value: string | undefined): value is CalendarMediaType {
+  return CALENDAR_TYPES.some((type) => type === value);
+}
+
 export function parseCalendarLocation(
   params: CalendarSearchParams,
   today: DateKey,
 ): CalendarLocation {
   const week = single(params.week);
   const mode = single(params.mode);
+  const type = single(params.type);
   const requestedWeekStart = week && isDateKey(week) ? weekStartOf(week) : undefined;
   return {
     weekStart:
@@ -47,11 +58,13 @@ export function parseCalendarLocation(
         ? requestedWeekStart
         : weekStartOf(today),
     mode: isCalendarMode(mode) ? mode : undefined,
+    type: isCalendarType(type) ? type : DEFAULT_CALENDAR_TYPE,
   };
 }
 
-export function calendarHref({ weekStart, mode }: CalendarLocation, today: DateKey): string {
+export function calendarHref({ weekStart, mode, type }: CalendarLocation, today: DateKey): string {
   const params = new URLSearchParams();
+  if (type !== DEFAULT_CALENDAR_TYPE) params.set(CALENDAR_TYPE_PARAM, type);
   if (weekStart !== weekStartOf(today)) params.set('week', weekStart);
   if (mode) params.set('mode', mode);
   const query = params.toString();

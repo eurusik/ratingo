@@ -28,6 +28,14 @@
     "episodeLabel": "Season {season}, episode {episode}",
     "newReleases": "New releases",
     "newReleasesCaption": "Just out in cinemas and on streaming",
+    "upcoming": "Coming soon",
+    "upcomingCaption": "The most anticipated movies of the coming months",
+    "calendarAction": "Calendar →",
+    "calendarLabel": {
+      "show": "Episode calendar",
+      "movie": "Movie calendar"
+    },
+    "upcomingDate": "Out {date}",
     "releaseFilter": {
       "label": "Where to watch",
       "nowPlaying": "In cinemas",
@@ -728,6 +736,10 @@
       "Rumored": "Rumored",
       "Canceled": "Canceled"
     },
+    "upcoming": {
+      "release": "Out {date}",
+      "noScore": "Not out yet — ratings will appear after the premiere"
+    },
     "actions": {
       "rate": "Rate",
       "watched": "Watched · {score}",
@@ -1059,15 +1071,26 @@
   },
   "calendar": {
     "title": "Calendar",
-    "metaTitle": "Episode calendar",
-    "metaDescription": "New episode releases by day of the week, in Kyiv time.",
-    "modesLabel": "Which shows",
+    "typeLabel": "Shows or movies",
+    "types": {
+      "show": "Shows",
+      "movie": "Movies"
+    },
+    "metaTitle": "Episode and movie calendar",
+    "metaDescription": "New episodes and movie premieres by day of the week, in Kyiv time.",
+    "modesLabel": {
+      "show": "Which shows",
+      "movie": "Which movies"
+    },
     "modes": {
       "mine": "Mine",
       "all": "All"
     },
     "modesInfoLabel": "What “Mine” includes",
-    "modesInfo": "“Mine” is the shows you watch plus premieres from “Want to watch”.",
+    "modesInfo": {
+      "show": "“Mine” is the shows you watch plus premieres from “Want to watch”.",
+      "movie": "“Mine” is the movies in “Want to watch” plus the ones you asked us to remind you about."
+    },
     "weekNames": {
       "current": "This week",
       "next": "Next week",
@@ -1079,15 +1102,30 @@
     "tomorrow": "Tomorrow",
     "daysLabel": "Days of the week",
     "dayTile": {
-      "one": "{day}, {count} episode",
-      "few": "{day}, {count} episodes",
-      "many": "{day}, {count} episodes"
+      "show": {
+        "one": "{day}, {count} episode",
+        "few": "{day}, {count} episodes",
+        "many": "{day}, {count} episodes"
+      },
+      "movie": {
+        "one": "{day}, {count} movie",
+        "few": "{day}, {count} movies",
+        "many": "{day}, {count} movies"
+      }
     },
-    "dayTileEmpty": "{day}, no episodes",
+    "dayTileEmpty": {
+      "show": "{day}, no episodes",
+      "movie": "{day}, no movies"
+    },
     "episodesCount": {
       "one": "{count} episode",
       "few": "{count} episodes",
       "many": "{count} episodes"
+    },
+    "moviesCount": {
+      "one": "{count} movie",
+      "few": "{count} movies",
+      "many": "{count} movies"
     },
     "morning": "morning",
     "minutes": "{minutes} min",
@@ -1100,6 +1138,11 @@
       "few": "{count} more shows by popularity",
       "many": "{count} more shows by popularity"
     },
+    "moreMovies": {
+      "one": "{count} more movie that day",
+      "few": "{count} more movies that day",
+      "many": "{count} more movies that day"
+    },
     "past": {
       "unwatched": {
         "one": "Earlier this week · {count} unwatched",
@@ -1110,6 +1153,11 @@
         "one": "Earlier this week · {count} episode",
         "few": "Earlier this week · {count} episodes",
         "many": "Earlier this week · {count} episodes"
+      },
+      "movies": {
+        "one": "Earlier this week · {count} movie",
+        "few": "Earlier this week · {count} movies",
+        "many": "Earlier this week · {count} movies"
       },
       "allWatched": "Earlier this week · all watched"
     },
@@ -1122,14 +1170,26 @@
       "unwatched": "Unmarked: {show} {code}"
     },
     "guest": {
-      "title": "Your shows will be here",
-      "body": "Sign in and mark what you watch — we’ll show only the episodes you’re waiting for.",
+      "show": {
+        "title": "Your shows will be here",
+        "body": "Sign in and mark what you watch — we’ll show only the episodes you’re waiting for."
+      },
+      "movie": {
+        "title": "Your movies will be here",
+        "body": "Sign in and add movies to “Want to watch” — we’ll show when they come out."
+      },
       "signIn": "Sign in",
       "showAll": "Show all"
     },
-    "noShows": {
-      "title": "Nothing here yet",
-      "body": "Start watching a show or save it to “Want to watch”, and its new episodes will appear here.",
+    "noOwnReleases": {
+      "show": {
+        "title": "Nothing here yet",
+        "body": "Start watching a show or save it to “Want to watch”, and its new episodes will appear here."
+      },
+      "movie": {
+        "title": "Nothing here yet",
+        "body": "Add a movie to “Want to watch” or turn on a reminder, and its premiere will appear here."
+      },
       "showAll": "Show all"
     },
     "restWeek": {
@@ -1137,17 +1197,26 @@
       "next": "Next new episode — {episode}, {date}",
       "nextWeek": "Next week"
     },
-    "emptyWeek": "No new episodes this week",
+    "emptyWeek": {
+      "show": "No new episodes this week",
+      "movie": "No movie premieres this week"
+    },
     "loadError": "Couldn’t load the calendar",
     "lessShows": "Show less",
     "weekShown": "Showing the week of {range}"
   },
   "reminder": {
     "remind": "Remind me",
-    "label": "Remind me about new episodes: {show}",
-    "on": "We'll remind you about new episodes: {show}",
-    "off": "Reminder turned off: {show}",
-    "failed": "Couldn't change the reminder."
+    "label": "Remind me about new episodes: {title}",
+    "on": "We'll remind you about new episodes: {title}",
+    "off": "Reminder turned off: {title}",
+    "failed": "Couldn't change the reminder.",
+    "release": {
+      "remind": "Remind me",
+      "label": "Remind me when it’s out: {title}",
+      "on": "We’ll remind you when it’s out: {title}",
+      "off": "Reminder turned off: {title}"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -1560,5 +1629,9 @@
     },
     "iosIconHint": "To see the new icon on your Home Screen, remove Ratingo and add it again: Share → “Add to Home Screen”. Your ratings and lists are saved in your account — just sign in again.",
     "gotIt": "Got it"
+  },
+  "release": {
+    "theatrical": "in theaters",
+    "digital": "streaming"
   }
 }

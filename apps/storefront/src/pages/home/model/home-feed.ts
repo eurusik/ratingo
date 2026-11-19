@@ -1,8 +1,10 @@
 import { fromHomeItem, type TrendingMedia } from '@/entities/media';
-import type { HomeItem, NewEpisode } from '@/shared/api';
+import type { HomeItem, NewEpisode, ReleaseKind, UpcomingMovie } from '@/shared/api';
 import { tmdbPosterUrl } from '@/shared/config';
 
 export const TOP_TEN_COUNT = 10;
+
+export const UPCOMING_COUNT = 10;
 
 const TOP_THREE_COUNT = 3;
 
@@ -108,5 +110,25 @@ export function toEpisodeRelease(item: NewEpisode): EpisodeRelease {
     season: item.seasonNumber,
     episode: item.episodeNumber,
     airedAt: toAiredAt(item.airDate),
+  };
+}
+
+export interface UpcomingRelease {
+  mediaItemId: string;
+  slug: string;
+  title: string;
+  posterUrl?: string;
+  releaseDate: string;
+  kind: ReleaseKind;
+}
+
+export function toUpcomingRelease(movie: UpcomingMovie): UpcomingRelease {
+  return {
+    mediaItemId: movie.mediaItemId,
+    slug: movie.slug,
+    title: movie.title,
+    posterUrl: movie.poster?.small,
+    releaseDate: movie.effectiveReleaseDate,
+    kind: movie.releaseDateKind,
   };
 }

@@ -20,6 +20,7 @@ interface SegmentedFilterProps<T extends string> {
   descriptionId?: string;
   isDisabled?: boolean;
   isScrollable?: boolean;
+  isFullWidth?: boolean;
   className?: string;
 }
 
@@ -31,6 +32,7 @@ export function SegmentedFilter<T extends string>({
   descriptionId,
   isDisabled,
   isScrollable,
+  isFullWidth,
   className,
 }: SegmentedFilterProps<T>) {
   const onSelectionChange = (keys: Set<Key>) => {
@@ -45,19 +47,24 @@ export function SegmentedFilter<T extends string>({
       aria-describedby={descriptionId}
       selectionMode="single"
       disallowEmptySelection
-      isDetached
+      isDetached={!isFullWidth}
+      fullWidth={isFullWidth}
       isDisabled={isDisabled}
       size="sm"
       selectedKeys={[value]}
       onSelectionChange={onSelectionChange}
       className={cn(isScrollable ? 'w-max' : 'px-4', className)}
     >
-      {options.map((option) => (
+      {options.map((option, index) => (
         <ToggleButton
           key={option.id}
           id={option.id}
-          className="min-h-tap shrink-0 gap-1.5 rounded-full px-4"
+          className={cn(
+            'min-h-tap shrink-0 gap-1.5 px-4',
+            isFullWidth ? 'flex-1 font-semibold' : 'rounded-full',
+          )}
         >
+          {isFullWidth && index > 0 ? <ToggleButtonGroup.Separator /> : null}
           {option.label}
           {option.count === undefined ? null : (
             <span className="tabular-nums opacity-70">{option.count}</span>

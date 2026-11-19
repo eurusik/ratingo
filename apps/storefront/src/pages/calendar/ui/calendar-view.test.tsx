@@ -11,7 +11,7 @@ import {
   type UserMediaState,
 } from '@/shared/api';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
-import { calendarEpisode, calendarRange } from '../model/calendar-episode.fixture';
+import { calendarEpisode, calendarMovie, calendarRange } from '../model/calendar-episode.fixture';
 import { CalendarView } from './calendar-view';
 
 jest.mock('next/navigation', () => {
@@ -128,7 +128,61 @@ describe('CalendarView', () => {
       startDate: '2026-11-08',
       days: 8,
       personalized: false,
+      type: 'show',
     });
+  });
+
+  it('switches to movie premieres with their kind and the count of the rest', async () => {
+    signIn(null);
+    const movieDay = {
+      date: '2026-11-13',
+      episodes: [],
+      movies: [
+        calendarMovie({
+          mediaItemId: 'dune',
+          title: 'Дюна',
+          releaseCountry: null,
+          releaseDate: '2026-11-13T00:00:00.000Z',
+        }),
+      ],
+      moreMoviesCount: 3,
+    };
+    const releasedDay = {
+      date: '2026-11-11',
+      episodes: [],
+      movies: [calendarMovie({ title: 'Аврора', releaseDate: '2026-11-11T00:00:00.000Z' })],
+    };
+    jest
+      .mocked(calendarApi.getRange)
+      .mockImplementation(async ({ type }) =>
+        type === 'movie' ? { ...range([]), days: [releasedDay, movieDay] } : range([OTHER_SHOW]),
+      );
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    renderCalendar();
+    await screen.findByText('Сімпсони');
+
+    fireEvent.click(screen.getByRole('link', { name: 'Фільми' }));
+
+    expect(gtag).toHaveBeenCalledWith('event', 'calendar_change', {
+      action: 'type',
+      media_type: 'movie',
+    });
+    delete window.gtag;
+
+    expect(await screen.findByText('Дюна')).toBeInTheDocument();
+    expect(screen.getAllByText('в кіно')).toHaveLength(2);
+    expect(screen.getByText('Ще 3 фільми цього дня')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Нагадати про вихід: Дюна' })).toBeInTheDocument();
+    expect(screen.getByText('Аврора')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Нагадати про вихід: Аврора' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Фільми' })).toHaveAttribute('aria-current', 'page');
+    expect(window.location.search).toBe('?type=movie');
+    expect(calendarApi.getRange).toHaveBeenCalledWith(
+      expect.objectContaining({ personalized: false, type: 'movie' }),
+    );
   });
 
   it('invites guests who pick “Mine” to sign in', async () => {

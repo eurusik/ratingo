@@ -1,7 +1,8 @@
-import { formatCount, getDictionary, type Locale } from '@/shared/i18n';
+import { formatReleaseDate } from '@/entities/media';
+import { formatCount, getDictionary, interpolate, type Locale } from '@/shared/i18n';
 import { formatRuntime } from '../model/details-format';
 import type { MediaDetailsView } from '../model/details-view';
-import { ShowStatusChip } from './show-status-chip';
+import { ShowStatusChip, UpcomingReleaseChip } from './status-chip';
 
 function lengthOf(view: MediaDetailsView, locale: Locale): string | undefined {
   const dict = getDictionary(locale).details;
@@ -13,8 +14,19 @@ function lengthOf(view: MediaDetailsView, locale: Locale): string | undefined {
     : formatCount(view.seasonCount, dict.seasons, locale);
 }
 
+function upcomingLabel(view: MediaDetailsView, locale: Locale): string | undefined {
+  const release = view.type === 'movie' ? view.upcomingRelease : undefined;
+  if (!release) return undefined;
+  const dict = getDictionary(locale);
+  const date = interpolate(dict.details.upcoming.release, {
+    date: formatReleaseDate(locale, release.date),
+  });
+  return `${date} · ${dict.release[release.kind]}`;
+}
+
 export function IdentityLine({ view, locale }: { view: MediaDetailsView; locale: Locale }) {
   const dict = getDictionary(locale).details;
+  const upcoming = upcomingLabel(view, locale);
   const facts = [view.year, lengthOf(view, locale)].filter(Boolean).join(' · ');
   const showStatus = view.type === 'show' ? view.status : undefined;
   const genres = view.genres.join(', ');
@@ -34,6 +46,7 @@ export function IdentityLine({ view, locale }: { view: MediaDetailsView; locale:
       {showStatus ? (
         <ShowStatusChip status={showStatus} label={dict.showStatus[showStatus]} />
       ) : null}
+      {upcoming ? <UpcomingReleaseChip label={upcoming} /> : null}
     </div>
   );
 }

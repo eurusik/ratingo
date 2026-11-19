@@ -8,12 +8,14 @@ import {
   NewEpisodesSection,
   NewReleasesSection,
   TopTenSection,
+  UpcomingSection,
 } from './home-sections';
 import {
   CardRailSkeleton,
   HeroSkeleton,
   TileRailSkeleton,
   TopThreeSkeleton,
+  UpcomingRailSkeleton,
 } from './home-skeletons';
 import { TrackShowsCard } from './track-shows-card';
 
@@ -31,8 +33,9 @@ function HomeFeedSkeleton() {
     <>
       <HeroSkeletons />
       <TileRailSkeleton />
-      <TileRailSkeleton />
+      <TileRailSkeleton hasAction />
       <CardRailSkeleton />
+      <UpcomingRailSkeleton />
     </>
   );
 }
@@ -57,11 +60,14 @@ export function HomePage({ locale }: { locale: Locale }) {
           <Suspense fallback={<TileRailSkeleton />}>
             <TopTenSection trending={feed.trending} />
           </Suspense>
-          <Suspense fallback={<TileRailSkeleton />}>
+          <Suspense fallback={<TileRailSkeleton hasAction />}>
             <NewEpisodesSection releases={feed.newEpisodes} />
           </Suspense>
           <Suspense fallback={<CardRailSkeleton />}>
             <NewReleasesSection nowPlaying={feed.nowPlaying} newOnDigital={feed.newOnDigital} />
+          </Suspense>
+          <Suspense fallback={<UpcomingRailSkeleton />}>
+            <UpcomingSection upcoming={feed.upcoming} />
           </Suspense>
           <TrackShowsCard />
         </UnlessFeedIsDown>

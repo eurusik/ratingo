@@ -18,7 +18,7 @@ function factsOf(view: MediaDetailsView, locale: Locale): Fact[] {
   if (view.type === 'movie') {
     return [
       { label: dict.facts.status, value: view.status && dict.movieStatus[view.status] },
-      { label: dict.facts.premiere, value: date(view.releaseDate) },
+      { label: dict.facts.premiere, value: date(view.upcomingRelease?.date ?? view.releaseDate) },
       { label: dict.facts.budget, value: money(view.budget) },
       { label: dict.facts.revenue, value: money(view.revenue) },
     ];

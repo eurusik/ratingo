@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { Button, Card } from '@heroui/react';
 import { openAuth } from '@/shared/auth';
-import type { CalendarEpisode } from '@/shared/api';
+import type { CalendarEpisode, CalendarMediaType } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { SectionError } from '@/shared/ui';
 import { kyivDateKey } from '../model/calendar-dates';
@@ -29,14 +29,19 @@ function PromptCard({ title, body, actions }: PromptProps) {
   );
 }
 
-export function GuestPrompt({ onShowAll }: { onShowAll: () => void }) {
+interface TypedPromptProps {
+  type: CalendarMediaType;
+  onShowAll: () => void;
+}
+
+export function GuestPrompt({ type, onShowAll }: TypedPromptProps) {
   const { dict } = useTranslation();
   const copy = dict.calendar.guest;
 
   return (
     <PromptCard
-      title={copy.title}
-      body={copy.body}
+      title={copy[type].title}
+      body={copy[type].body}
       actions={
         <>
           <Button className={PROMPT_BUTTON} onPress={() => openAuth({ mode: 'login' })}>
@@ -51,14 +56,14 @@ export function GuestPrompt({ onShowAll }: { onShowAll: () => void }) {
   );
 }
 
-export function NoShowsPrompt({ onShowAll }: { onShowAll: () => void }) {
+export function NoOwnReleasesPrompt({ type, onShowAll }: TypedPromptProps) {
   const { dict } = useTranslation();
-  const copy = dict.calendar.noShows;
+  const copy = dict.calendar.noOwnReleases;
 
   return (
     <PromptCard
-      title={copy.title}
-      body={copy.body}
+      title={copy[type].title}
+      body={copy[type].body}
       actions={
         <Button variant="secondary" className={PROMPT_BUTTON} onPress={onShowAll}>
           {copy.showAll}
@@ -95,12 +100,12 @@ export function RestWeekNote({ upcoming, onNextWeek }: RestWeekProps) {
   );
 }
 
-export function EmptyWeekNote() {
+export function EmptyWeekNote({ type }: { type: CalendarMediaType }) {
   const { dict } = useTranslation();
 
   return (
     <div className={DASHED_NOTE}>
-      <p className="text-base font-bold">{dict.calendar.emptyWeek}</p>
+      <p className="text-base font-bold">{dict.calendar.emptyWeek[type]}</p>
     </div>
   );
 }

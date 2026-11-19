@@ -10,6 +10,7 @@ import { revealSection } from '../lib/reveal-section';
 import { useCalendarNavigation } from '../lib/use-calendar-navigation';
 import { usePageMarker } from '../lib/use-page-marker';
 import type { DateKey } from '../model/calendar-dates';
+import { calendarHref } from '../model/calendar-query';
 import { useCalendarLocation } from '../model/use-calendar-location';
 import { useClientToday } from '../model/use-client-today';
 import { useCalendarWeek, type CalendarWeek } from '../model/use-calendar-week';
@@ -22,7 +23,7 @@ import {
   CalendarError,
   EmptyWeekNote,
   GuestPrompt,
-  NoShowsPrompt,
+  NoOwnReleasesPrompt,
   RestWeekNote,
 } from './calendar-notices';
 import { CalendarListSkeleton } from './calendar-skeleton';
@@ -36,7 +37,7 @@ interface NoticeActions {
 }
 
 function weekNotice(week: CalendarWeek, { onShowAll, onNextWeek }: NoticeActions): ReactNode {
-  if (week.isGuestInMine) return <GuestPrompt onShowAll={onShowAll} />;
+  if (week.isGuestInMine) return <GuestPrompt type={week.type} onShowAll={onShowAll} />;
   if (!week.layout && week.active.isError) {
     return (
       <CalendarError
@@ -48,7 +49,11 @@ function weekNotice(week: CalendarWeek, { onShowAll, onNextWeek }: NoticeActions
   if (!week.layout) return null;
   if (week.isResting) return <RestWeekNote upcoming={week.nextEpisode} onNextWeek={onNextWeek} />;
   if (!week.isEmptyWeek) return null;
-  return week.mode === 'mine' ? <NoShowsPrompt onShowAll={onShowAll} /> : <EmptyWeekNote />;
+  return week.mode === 'mine' ? (
+    <NoOwnReleasesPrompt type={week.type} onShowAll={onShowAll} />
+  ) : (
+    <EmptyWeekNote type={week.type} />
+  );
 }
 
 interface CalendarBodyProps {
@@ -81,7 +86,9 @@ function CalendarBody({
 
   const notice = weekNotice(week, { onShowAll, onNextWeek });
   if (notice) return <div className={NOTICE_AREA}>{notice}</div>;
-  if (!layout || !context) return <CalendarListSkeleton label={dict.common.loading} />;
+  if (!layout || !context) {
+    return <CalendarListSkeleton label={dict.common.loading} type={week.type} />;
+  }
 
   return (
     <CalendarProvider value={context}>
@@ -134,20 +141,31 @@ export function CalendarView({ today: serverToday }: { today: DateKey }) {
   return (
     <div data-calendar-root className={CALENDAR_ROOT}>
       <div aria-hidden className={STATUS_BAR_BACKDROP} />
-      <CalendarHeader mode={week.mode} onModeChange={navigation.changeMode} />
+      <CalendarHeader
+        type={location.type}
+        typeHref={(type) => calendarHref({ ...location, type, mode: undefined }, today)}
+        onTypeChange={navigation.changeType}
+        mode={week.mode}
+        onModeChange={navigation.changeMode}
+      />
       <WeekBar
         weekStart={weekStart}
         today={today}
         stripWeeks={week.stripWeeks}
         list={list}
         tryStep={navigation.tryStep}
+        type={location.type}
         mode={week.mode}
         onModeChange={navigation.changeMode}
         onThisWeek={navigation.goToThisWeek}
         onDayPick={pickDay}
       />
       <div ref={list} aria-busy={week.active.isFetching} className={CALENDAR_LIST}>
-        <div key={`${weekStart}:${week.mode}`} data-calendar-list-swap className={CALENDAR_LIST}>
+        <div
+          key={`${weekStart}:${location.type}:${week.mode}`}
+          data-calendar-list-swap
+          className={CALENDAR_LIST}
+        >
           <CalendarBody
             week={week}
             today={today}
