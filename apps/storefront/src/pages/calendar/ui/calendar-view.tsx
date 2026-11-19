@@ -8,6 +8,7 @@ import { useRememberedFlag } from '../lib/remembered-flag';
 import { dayAnchor } from '../lib/day-anchor';
 import { revealSection } from '../lib/reveal-section';
 import { useCalendarNavigation } from '../lib/use-calendar-navigation';
+import { useHasChanged } from '../lib/use-has-changed';
 import { usePageMarker } from '../lib/use-page-marker';
 import type { DateKey } from '../model/calendar-dates';
 import { calendarHref } from '../model/calendar-query';
@@ -119,6 +120,8 @@ export function CalendarView({ today: serverToday }: { today: DateKey }) {
     PAST_DAYS_OPEN_BY_DEFAULT,
   );
   const week = useCalendarWeek({ location, today });
+  const listKey = `${weekStart}:${location.type}:${week.mode}`;
+  const isListSwapped = useHasChanged(listKey);
   const pastDays = week.layout?.past;
   const pastKeys = useMemo(() => new Set(pastDays?.map((day) => day.key)), [pastDays]);
 
@@ -162,8 +165,8 @@ export function CalendarView({ today: serverToday }: { today: DateKey }) {
       />
       <div ref={list} aria-busy={week.active.isFetching} className={CALENDAR_LIST}>
         <div
-          key={`${weekStart}:${location.type}:${week.mode}`}
-          data-calendar-list-swap
+          key={listKey}
+          data-calendar-list-swap={isListSwapped ? '' : undefined}
           className={CALENDAR_LIST}
         >
           <CalendarBody
