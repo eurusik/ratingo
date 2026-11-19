@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useState } from 'react';
-import { useAuth } from '@ratingo/web-core/auth';
+import { tokenStorage } from '@ratingo/web-core/auth';
 import { useDebouncedValue, whenIdleOnFastConnection } from '@/shared/lib';
 
 export const loadAuthDialog = () =>
@@ -40,16 +40,24 @@ async function warmOverlays(signInFirst: boolean): Promise<boolean> {
   return warmed.every(Boolean);
 }
 
+function hasStoredSession(): boolean {
+  try {
+    return tokenStorage.getRefreshToken() !== null;
+  } catch {
+    return false;
+  }
+}
+
 export function useWarmOverlays(): boolean {
-  const { isAuthenticated, isLoading } = useAuth();
   const [isWarm, setIsWarm] = useState(false);
 
-  const warm = useEffectEvent(() => {
-    const isGuest = !isLoading && !isAuthenticated;
-    void warmOverlays(isGuest).then(setIsWarm);
-  });
-
-  useEffect(() => whenIdleOnFastConnection(() => warm()), []);
+  useEffect(
+    () =>
+      whenIdleOnFastConnection(() => {
+        void warmOverlays(!hasStoredSession()).then(setIsWarm);
+      }),
+    [],
+  );
 
   return isWarm;
 }
