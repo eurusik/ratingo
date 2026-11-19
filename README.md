@@ -2,71 +2,71 @@
 
 <h1><img src="apps/storefront/public/icons/icon-192.png" width="40" height="40" align="absmiddle" alt="" />&nbsp;Ratingo</h1>
 
-What to watch tonight, and when the next episode is out. In Ukrainian.
+Що подивитися сьогодні ввечері і коли вийде наступна серія. Українською.
 
 **[ratingo.top](https://ratingo.top)**
 
-🆕 **New:** movie release calendar and reminders. [Read the announcement →](https://github.com/eurusik/ratingo/discussions/413)
+🆕 **Нове:** календар фільмів і нагадування про вихід. [Читати анонс →](https://github.com/eurusik/ratingo/discussions/413)
 
 <br />
 
-<a href="https://ratingo.top"><img src="assets/readme/home.jpg" width="800" height="444" alt="Ratingo home page: this week's most watched shows and films" /></a>
+<a href="https://ratingo.top"><img src="assets/readme/home.jpg" width="800" height="444" alt="Головна Ratingo: найпопулярніші серіали й фільми тижня" /></a>
 
 </div>
 
-I’m Eugene, a frontend engineer at monobank. I started out at EA working on Battlelog, then moved through Mastercard and Rozetka, and led frontend as a tech lead at Silpo before joining Mono.
+Я Євген, фронтенд-інженер у monobank. Починав в EA на Battlelog, потім були Mastercard і Rozetka, а перед Mono я вів фронтенд як техлід у Сільпо.
 
-I watch a lot of TV shows and kept losing track of them. Which episode was I on, when does the next season start, is this new thing any good or just loud marketing. IMDb, Trakt and TV Time each cover a piece of it. None of them in Ukrainian.
+Я дивлюся багато серіалів і постійно губився. На якій я серії, коли новий сезон, ця новинка справді хороша чи просто гучний маркетинг. IMDb, Trakt і TV Time закривають кожен свій шматок. І жоден українською.
 
-So in November 2025 I started building my own. A year and about 1,400 commits later, people use it every day. Not many yet, but they keep coming back.
+Тож у листопаді 2025 я почав робити свій. Рік і приблизно 1 400 комітів потому ним користуються щодня. Людей поки небагато, але вони повертаються.
 
-## What you can do there
+## Що там можна
 
-- See what people are watching this week, with TMDB, Trakt, IMDb and Metacritic ratings next to each other
-- Keep a list of what you watch, plan to watch and gave up on
-- Tick off episodes and get a calendar of the ones coming up
-- Get a reminder when your show has a new episode
-- Bring your history over from Kinobaza, IMDb or TMDB
-- Install it on your phone like an app
+- Побачити, що дивляться цього тижня, з рейтингами TMDB, Trakt, IMDb і Metacritic поруч
+- Вести списки: що дивишся, що плануєш і що кинув
+- Відмічати серії й мати календар тих, що виходять
+- Отримувати нагадування про нові серії і про вихід збережених фільмів
+- Перенести історію з Kinobaza, IMDb чи TMDB
+- Встановити сайт на телефон як застосунок
 
-## Inside
+## Усередині
 
 ```
 apps/api          NestJS, Fastify, Drizzle, PostgreSQL, BullMQ
 apps/storefront   Next.js 16, React 19, TanStack Query
 ```
 
-It started as a weekend project and turned into the place where I try things I don't get to try at work. A few I'm happy with:
+Починалося як проєкт на вихідні, а стало місцем, де я пробую те, до чого на роботі не доходять руки. Кілька речей, якими я задоволений:
 
-- Nobody picks titles for the catalog by hand. A set of plain functions decides, and every "no" comes with a reason, so I can always see why something is missing.
-- A classic with 200k votes and a show that came out on Friday get one comparable number, the Ratingo Score.
-- Each data provider has its own queue. When Trakt rate-limits me, TMDB sync keeps going.
-- The API domain code doesn't know Nest or Drizzle exist, so it's tested without a database.
+- Ніхто не відбирає фільми в каталог вручну. Вирішує набір простих функцій, і кожне «ні» має причину, тож я завжди бачу, чому чогось немає.
+- Класика з 200 тисячами голосів і серіал, що вийшов у п'ятницю, отримують одне порівнюване число, Ratingo Score.
+- У кожного джерела даних своя черга. Коли Trakt мене обмежує, синхронізація з TMDB працює далі.
+- Доменний код API не знає про Nest і Drizzle, тому тестується без бази.
 
-It runs on Railway, metrics go to Grafana, and Postgres gets backed up every night. The domain once expired and the site went dark for a day, so now I have a reminder for that too.
+Працює на Railway, метрики йдуть у Grafana, а Postgres щоночі бекапиться. Одного разу домен протермінувався і сайт день лежав, тож тепер у мене й на це є нагадування.
 
-## Run it yourself
+## Запустити в себе
 
 ```bash
 git clone https://github.com/eurusik/ratingo.git && cd ratingo
 npm install
 docker-compose up -d                  # Postgres + Redis
-cp apps/api/.env.example apps/api/.env   # add your TMDB, Trakt and OMDb keys
+cp apps/api/.env.example apps/api/.env   # додай свої ключі TMDB, Trakt і OMDb
 npm run db:migrate --workspace=api
 npm run dev:api                       # localhost:3001
 npm run dev:storefront                # localhost:3003
 ```
 
-## It's yours too
+## Він і твій теж
 
-Ratingo is open, and I'd love for it not to stay a one-person project.
+Ratingo відкритий, і я дуже хочу, щоб він не лишався проєктом однієї людини.
 
-- **Use it.** Everything is free at [ratingo.top](https://ratingo.top).
-- **Improve it.** Found a bug or have an idea? [Open an issue](https://github.com/eurusik/ratingo/issues/new/choose) and I'll reply there once it's fixed. Want to write code? Pick a [good first issue](https://github.com/eurusik/ratingo/contribute) and I'll help you get the PR merged. [CONTRIBUTING.md](CONTRIBUTING.md) has the details.
-- **Make it yours.** Fork it, change it, run your own version for another country or language. It's MIT, no need to ask.
+- **Користуйся.** Усе безкоштовно на [ratingo.top](https://ratingo.top).
+- **Покращуй.** Знайшов баг чи маєш ідею? [Відкрий ішʼю](https://github.com/eurusik/ratingo/issues/new/choose), відповім там же. Хочеш писати код? Глянь [Roadmap](https://github.com/eurusik/ratingo/issues/412), обери щось і напиши в ішʼю, що береш, допоможу довести PR до злиття. Деталі в [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Зроби своє.** Форкай, змінюй, запускай свою версію для іншої країни чи мови. Ліцензія MIT, питати не треба.
 
-Questions that aren't bugs go to [Discussions](https://github.com/eurusik/ratingo/discussions). And if you just like it, a star tells me I'm not the only one.
+Питання, які не баги, пиши в [Discussions](https://github.com/eurusik/ratingo/discussions). А якщо просто подобається, зірочка підкаже, що я такий не один.
 
-MIT licensed.
+Ліцензія MIT.
 
-<p align="center">Made in Ukraine 🇺🇦 💙💛</p>
+<p align="center">Зроблено в Україні 🇺🇦 💙💛</p>
