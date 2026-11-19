@@ -63,6 +63,22 @@ describe('fromMovieDetails', () => {
     expect(unrated.community).toEqual({ raters: [], ratingCount: 0, averageScore: undefined });
   });
 
+  it.each([
+    ['in production', 'In Production', true],
+    ['only rumored', 'Rumored', true],
+    ['released', 'Released', false],
+    ['without a status', null, false],
+  ])('treats an undated movie that is %s accordingly', (_case, status, isUnknown) => {
+    const undated = fromMovieDetails({ ...MOVIE, releaseDate: null, status } as MovieDetails);
+    expect(undated.isReleaseDateUnknown).toBe(isUnknown);
+    expect(undated.upcomingRelease).toBeUndefined();
+  });
+
+  it('knows the release date of a dated movie in production', () => {
+    const dated = fromMovieDetails({ ...MOVIE, status: 'Post Production' });
+    expect(dated.isReleaseDateUnknown).toBe(false);
+  });
+
   it('has no upcoming release once the movie is out', () => {
     expect(view.upcomingRelease).toBeUndefined();
   });

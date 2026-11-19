@@ -15,9 +15,11 @@ function lengthOf(view: MediaDetailsView, locale: Locale): string | undefined {
 }
 
 function upcomingLabel(view: MediaDetailsView, locale: Locale): string | undefined {
-  const release = view.type === 'movie' ? view.upcomingRelease : undefined;
-  if (!release) return undefined;
+  if (view.type !== 'movie') return undefined;
   const dict = getDictionary(locale);
+  if (view.isReleaseDateUnknown) return dict.details.upcoming.dateUnknown;
+  const release = view.upcomingRelease;
+  if (!release) return undefined;
   const date = interpolate(dict.details.upcoming.release, {
     date: formatReleaseDate(locale, release.date),
   });

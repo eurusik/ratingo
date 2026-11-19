@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient, type Mutation } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
+import { CALENDAR_QUERY_KEY } from '@/entities/episode';
 import { LIBRARY_QUERY_KEY, NOT_SAVED, isSaved, useLibraryStore } from '@/entities/library';
 import { SUBSCRIPTIONS_KEY } from '@/entities/subscription';
 import { libraryApi, type MediaSaveStatus, type SaveList } from '@/shared/api';
@@ -91,6 +92,7 @@ export function useLibrarySave() {
       if (isLatestChange(media.mediaItemId)) store.write(media.mediaItemId, after);
       if (changedForLater({ before, after })) {
         void queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEY });
+        void queryClient.invalidateQueries({ queryKey: CALENDAR_QUERY_KEY });
       }
     },
     onError: (error, { media }) => {

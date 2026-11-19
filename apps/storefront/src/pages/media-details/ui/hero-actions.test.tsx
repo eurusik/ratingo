@@ -188,6 +188,24 @@ describe('HeroActions', () => {
     expect(screen.queryByRole('button', { name: 'Прибрати з бібліотеки' })).not.toBeInTheDocument();
   });
 
+  it('offers only want-to-watch and the release reminder for an upcoming movie', async () => {
+    signIn(true);
+    renderActions({ ...DUNE, upcoming: 'dated' });
+
+    expect(await screen.findByRole('button', { name: 'Хочу подивитись' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Нагадати/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Оцінити' })).not.toBeInTheDocument();
+  });
+
+  it('offers only want-to-watch for a movie with no release date yet', async () => {
+    signIn(true);
+    renderActions({ ...DUNE, upcoming: 'undated' });
+
+    expect(await screen.findByRole('button', { name: 'Хочу подивитись' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Нагадати/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Оцінити' })).not.toBeInTheDocument();
+  });
+
   it('asks a guest to sign in before rating', async () => {
     signIn(false);
     renderActions(DUNE);

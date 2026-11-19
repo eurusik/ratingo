@@ -44,7 +44,7 @@ function UpcomingVerdict({ message, dict }: { message?: string; dict: Dictionary
 function VerdictBlock({ view, dict }: { view: MediaDetailsView; dict: Dictionary }) {
   const message = verdictMessage(view, dict.details.verdict);
 
-  if (view.type === 'movie' && view.upcomingRelease) {
+  if (view.type === 'movie' && (view.upcomingRelease || view.isReleaseDateUnknown)) {
     return <UpcomingVerdict message={message} dict={dict} />;
   }
 
