@@ -6,12 +6,13 @@ import { USER_MEDIA_ACTION_REPOSITORY } from '../domain/repositories/user-media-
 import { SAVED_ITEM_LIST } from '../domain/entities/user-saved-item.entity';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { ItemSavedForLaterEvent } from '../domain/events/item-saved-for-later.event';
 
 describe('SavedItemsService', () => {
   let service: SavedItemsService;
   let savedItemRepo: any;
   let actionRepo: any;
-  let eventEmitter: { emit: jest.Mock };
+  let eventEmitter: { emitAsync: jest.Mock };
 
   const mockSavedItem = {
     id: 'saved-id-1',
@@ -42,7 +43,7 @@ describe('SavedItemsService', () => {
       count: jest.fn().mockResolvedValue(1),
     };
 
-    eventEmitter = { emit: jest.fn() };
+    eventEmitter = { emitAsync: jest.fn().mockResolvedValue([]) };
 
     actionRepo = {
       create: jest.fn().mockResolvedValue({ id: 'action-id-1' }),
@@ -206,10 +207,10 @@ describe('SavedItemsService', () => {
         list: SAVED_ITEM_LIST.FOR_LATER,
       });
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith('saved-item.for-later', {
-        userId: 'user-id-1',
-        mediaItemId: 'media-id-1',
-      });
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        ItemSavedForLaterEvent.eventName,
+        new ItemSavedForLaterEvent('user-id-1', 'media-id-1'),
+      );
     });
 
     it('stays quiet for the considering list', async () => {
@@ -219,7 +220,7 @@ describe('SavedItemsService', () => {
         list: SAVED_ITEM_LIST.CONSIDERING,
       });
 
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
   });
 });

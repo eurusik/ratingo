@@ -31,6 +31,8 @@ import { MediaType } from '../src/common/enums/media-type.enum';
 import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-module';
 import { MAX_PAGE_SIZE } from '../src/common/constants';
 import { testUuid } from './support/test-uuid';
+import { MOVIE_RELEASE_PORT } from '../src/modules/user-actions/domain/ports/movie-release.port';
+import { USER_PREFERENCE_PORT } from '../src/modules/user-actions/domain/ports/user-preference.port';
 import { InMemoryRefreshTokensRepository, InMemoryUsersRepository } from './users/_fakes';
 
 // In-memory repositories for E2E tests
@@ -347,6 +349,19 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
   async releaseClaims(): Promise<void> {}
 }
 
+const UPCOMING_MOVIE_ID = testUuid('upcoming-movie');
+
+const upcomingMovieReleases = {
+  findMovieReleaseSchedule: async (mediaItemId: string) =>
+    mediaItemId === UPCOMING_MOVIE_ID
+      ? {
+          theatricalReleaseDate: new Date('2099-06-01'),
+          digitalReleaseDate: null,
+          releaseDate: null,
+        }
+      : null,
+};
+
 const buildMediaIds = (count: number): string =>
   Array.from({ length: count }, (_, index) => testUuid(`media-${index}`)).join(',');
 
@@ -391,6 +406,10 @@ describe('User Actions E2E', () => {
       .useValue(savedItemRepo)
       .overrideProvider(USER_SUBSCRIPTION_REPOSITORY)
       .useValue(subscriptionRepo)
+      .overrideProvider(MOVIE_RELEASE_PORT)
+      .useValue(upcomingMovieReleases)
+      .overrideProvider(USER_PREFERENCE_PORT)
+      .useValue({ getAutoSubscribeOnWatch: async () => true })
       .compile();
 
     app = await createE2eApp(moduleFixture);
@@ -731,6 +750,25 @@ describe('User Actions E2E', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data.triggers).toContain('release');
+    });
+
+    it('subscribes to an upcoming movie once it is saved for later', async () => {
+      const token = await registerAndLogin('plan');
+
+      const saved = await request(app.getHttpServer())
+        .post(`${savedItemsUrl}/${UPCOMING_MOVIE_ID}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ list: 'for_later' });
+      expect(saved.status).toBe(201);
+
+      const res = await request(app.getHttpServer())
+        .get(subscriptionsUrl)
+        .set('Authorization', `Bearer ${token}`);
+
+      const triggers = res.body.data.data
+        .filter((sub: { mediaItemId: string }) => sub.mediaItemId === UPCOMING_MOVIE_ID)
+        .map((sub: { trigger: string }) => sub.trigger);
+      expect(triggers.sort()).toEqual(['on_streaming', 'release']);
     });
 
     it('should list active subscriptions', async () => {

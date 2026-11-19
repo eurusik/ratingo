@@ -1,6 +1,7 @@
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { type ImageData } from '@/common/types/media.types';
 
+import { type NotificationReleaseKind } from '../entities/user-notification.entity';
 import {
   type SUBSCRIPTION_TRIGGER,
   type UserSubscription,
@@ -57,17 +58,14 @@ export interface ReleaseDayWindow {
   toExclusive: Date;
 }
 
-interface MovieReleaseEntryRow {
-  country: string;
-  type: number;
-  date: string;
+export interface MovieReleaseNotice {
+  releasedOn: Date;
+  kind: NotificationReleaseKind;
+  country: string | null;
 }
 
 export interface ClaimedMovieRelease extends NotifiedSubscription {
-  theatricalReleaseDate: Date | null;
-  digitalReleaseDate: Date | null;
-  releaseDate: Date | null;
-  releases: MovieReleaseEntryRow[] | null;
+  release: MovieReleaseNotice;
 }
 
 /**

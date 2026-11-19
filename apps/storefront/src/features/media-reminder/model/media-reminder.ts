@@ -29,17 +29,36 @@ export function reminderCopy(dict: Dictionary, trigger: ReminderTrigger): Remind
 
 type RemindedMedia = Readonly<Record<ReminderTrigger, ReadonlySet<string>>>;
 
+const SUBSCRIPTION_TRIGGERS_BY_REMINDER = {
+  new_episode: ['new_episode'],
+  release: ['release', 'on_streaming'],
+} as const satisfies Record<ReminderTrigger, readonly SubscriptionTrigger[]>;
+
 function isReminderTrigger(trigger: SubscriptionTrigger): trigger is ReminderTrigger {
   return Object.hasOwn(REMINDER_EVENTS, trigger);
+}
+
+function reminderOf(trigger: SubscriptionTrigger): ReminderTrigger | undefined {
+  if (isReminderTrigger(trigger)) return trigger;
+  return trigger === 'on_streaming' ? 'release' : undefined;
 }
 
 async function fetchReminded(): Promise<RemindedMedia> {
   const subscriptions = await fetchAllPages(PAGE_SIZE, subscriptionsApi.list);
   const reminded = { new_episode: new Set<string>(), release: new Set<string>() };
   for (const { trigger, isActive, mediaItemId } of subscriptions) {
-    if (isActive && isReminderTrigger(trigger)) reminded[trigger].add(mediaItemId);
+    const reminder = reminderOf(trigger);
+    if (isActive && reminder) reminded[reminder].add(mediaItemId);
   }
   return reminded;
+}
+
+async function turnReminderOff(mediaItemId: string, trigger: ReminderTrigger): Promise<void> {
+  await Promise.all(
+    SUBSCRIPTION_TRIGGERS_BY_REMINDER[trigger].map((subscriptionTrigger) =>
+      subscriptionsApi.unsubscribe(mediaItemId, subscriptionTrigger),
+    ),
+  );
 }
 
 function withMedia(
@@ -83,7 +102,7 @@ export function useMediaReminder(media: ReminderMedia, trigger: ReminderTrigger)
   const { mutate, isPending } = useMutation({
     mutationFn: async (turnOn: boolean) => {
       if (turnOn) await subscriptionsApi.subscribe(media.mediaItemId, trigger);
-      else await subscriptionsApi.unsubscribe(media.mediaItemId, trigger);
+      else await turnReminderOff(media.mediaItemId, trigger);
     },
     onMutate: async (turnOn) => {
       await queryClient.cancelQueries({ queryKey });

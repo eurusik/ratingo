@@ -34,15 +34,15 @@ function episodeLabel(episodeKey: string | undefined, dict: Dictionary): string 
 type NotificationTexts = Dictionary['notifications']['text'];
 
 const HOME_COUNTRY = 'UA';
-const US = 'US';
+const US_COUNTRY = 'US';
 
 function releaseTemplate(item: NotificationItem, text: NotificationTexts): string {
   const kind = item.payload?.releaseKind;
   const country = item.payload?.releaseCountry;
   const isDigital = kind ? kind === 'digital' : item.trigger === 'on_streaming';
-  if (isDigital) return country === US ? text.on_streaming_us : text.on_streaming;
+  if (isDigital) return country === US_COUNTRY ? text.on_streaming_us : text.on_streaming;
   if (!kind || country === HOME_COUNTRY) return text.release;
-  return country === US ? text.release_us : text.release_world;
+  return country === US_COUNTRY ? text.release_us : text.release_world;
 }
 
 export function notificationText(item: NotificationItem, dict: Dictionary): string {

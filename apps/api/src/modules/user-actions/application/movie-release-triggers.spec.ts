@@ -2,11 +2,11 @@ import * as fc from 'fast-check';
 
 import { addUtcDays, utcDateFromDayId } from '@/common/utils/date.util';
 
-import { MOVIE_DIGITAL_RELEASE_AWAIT_DAYS } from '../constants/subscription.constants';
-import { SUBSCRIPTION_TRIGGER } from '../entities/user-subscription.entity';
-import { type MovieReleaseSchedule } from '../ports/movie-release.port';
+import { MOVIE_DIGITAL_RELEASE_AWAIT_DAYS } from '../domain/constants/subscription.constants';
+import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
+import { type MovieReleaseSchedule } from '../domain/ports/movie-release.port';
 
-import { pendingMovieReleaseTriggers } from './pending-movie-release-triggers';
+import { pendingMovieReleaseTriggers } from './movie-release-triggers';
 
 const today = utcDateFromDayId('20261119');
 

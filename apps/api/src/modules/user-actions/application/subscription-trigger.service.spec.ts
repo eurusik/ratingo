@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubscriptionTriggerService } from './subscription-trigger.service';
-import { CLOCK_PORT } from '@/modules/shared/clock';
 import { ShowSyncDiff } from '@/modules/ingestion/domain/interfaces/show-sync-diff.interface';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 import { USER_NOTIFICATION_REPOSITORY } from '../domain/repositories/user-notification.repository.interface';
@@ -37,8 +36,6 @@ describe('SubscriptionTriggerService', () => {
       atomicNotifyNewEpisode: jest.fn().mockResolvedValue(options.notifiedSubs ?? []),
       atomicNotifyNewSeason: jest.fn().mockResolvedValue(options.notifiedSubs ?? []),
       deactivateForEndedShow: jest.fn().mockResolvedValue(options.notifiedSubs?.length ?? 0),
-      claimMovieReleases: jest.fn().mockResolvedValue([]),
-      releaseClaims: jest.fn().mockResolvedValue(undefined),
     };
 
     notificationRepo = {
@@ -51,7 +48,6 @@ describe('SubscriptionTriggerService', () => {
         { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: subscriptionRepo },
         { provide: USER_NOTIFICATION_REPOSITORY, useValue: notificationRepo },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
-        { provide: CLOCK_PORT, useValue: { now: () => new Date('2026-11-19T06:00:00Z') } },
       ],
     }).compile();
 
@@ -230,7 +226,6 @@ describe('SubscriptionTriggerService', () => {
           { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: notifyingSubscriptionRepo },
           { provide: USER_NOTIFICATION_REPOSITORY, useValue: stubNotificationRepo },
           { provide: EventEmitter2, useValue: { emit: jest.fn() } },
-          { provide: CLOCK_PORT, useValue: { now: () => new Date('2026-11-19T06:00:00Z') } },
         ],
       }).compile();
       const emitter = module.get(EventEmitter2);
@@ -260,7 +255,6 @@ describe('SubscriptionTriggerService', () => {
             useValue: { createMany: jest.fn().mockResolvedValue(0) },
           },
           { provide: EventEmitter2, useValue: { emit: jest.fn() } },
-          { provide: CLOCK_PORT, useValue: { now: () => new Date('2026-11-19T06:00:00Z') } },
         ],
       }).compile();
       const emitter = module.get(EventEmitter2);
@@ -291,7 +285,6 @@ describe('SubscriptionTriggerService', () => {
             useValue: { createMany: jest.fn().mockResolvedValue(0) },
           },
           { provide: EventEmitter2, useValue: { emit: jest.fn() } },
-          { provide: CLOCK_PORT, useValue: { now: () => new Date('2026-11-19T06:00:00Z') } },
         ],
       }).compile();
       const emitter = module.get(EventEmitter2);
@@ -336,156 +329,6 @@ describe('SubscriptionTriggerService', () => {
       notificationRepo.createMany.mockRejectedValueOnce(new Error('DB error'));
 
       await expect(service.handleShowDiff(mockDiff)).rejects.toThrow('DB error');
-    });
-  });
-
-  describe('notifyMovieReleases', () => {
-    const claimed = (overrides: Record<string, unknown> = {}) => ({
-      id: 'sub-1',
-      userId: 'user-1',
-      mediaItemId: 'movie-1',
-      theatricalReleaseDate: null,
-      digitalReleaseDate: null,
-      releaseDate: null,
-      releases: [],
-      ...overrides,
-    });
-
-    const claimFor = (trigger: string, rows: unknown[]) =>
-      subscriptionRepo.claimMovieReleases.mockImplementation(async (t: string) =>
-        t === trigger ? rows : [],
-      );
-
-    it('looks back three days and up to the end of today, never just today', async () => {
-      await setup();
-
-      await service.notifyMovieReleases();
-
-      const expectedWindow = {
-        from: new Date('2026-11-16T00:00:00Z'),
-        toExclusive: new Date('2026-11-20T00:00:00Z'),
-      };
-      expect(subscriptionRepo.claimMovieReleases).toHaveBeenCalledWith(
-        SUBSCRIPTION_TRIGGER.ON_STREAMING,
-        expectedWindow,
-      );
-      expect(subscriptionRepo.claimMovieReleases).toHaveBeenCalledWith(
-        SUBSCRIPTION_TRIGGER.RELEASE,
-        expectedWindow,
-      );
-    });
-
-    it('creates no notifications when nothing was released', async () => {
-      await setup();
-
-      const events = await service.notifyMovieReleases();
-
-      expect(events).toEqual([]);
-      expect(notificationRepo.createMany).not.toHaveBeenCalled();
-    });
-
-    it('labels a cinema release with its country', async () => {
-      await setup();
-      claimFor(SUBSCRIPTION_TRIGGER.RELEASE, [
-        claimed({
-          theatricalReleaseDate: new Date('2026-11-18T00:00:00Z'),
-          releases: [{ country: 'US', type: 3, date: '2026-11-18T00:00:00.000Z' }],
-        }),
-      ]);
-
-      await service.notifyMovieReleases();
-
-      expect(notificationRepo.createMany).toHaveBeenCalledWith([
-        expect.objectContaining({
-          subscriptionId: 'sub-1',
-          trigger: SUBSCRIPTION_TRIGGER.RELEASE,
-          payload: expect.objectContaining({
-            airDate: '2026-11-18T00:00:00.000Z',
-            releaseKind: 'theatrical',
-            releaseCountry: 'US',
-          }),
-        }),
-      ]);
-    });
-
-    it('labels a digital release by its digital date', async () => {
-      await setup();
-      claimFor(SUBSCRIPTION_TRIGGER.ON_STREAMING, [
-        claimed({
-          theatricalReleaseDate: new Date('2026-09-01T00:00:00Z'),
-          digitalReleaseDate: new Date('2026-11-17T00:00:00Z'),
-          releases: [{ country: 'US', type: 4, date: '2026-11-17T00:00:00.000Z' }],
-        }),
-      ]);
-
-      await service.notifyMovieReleases();
-
-      expect(notificationRepo.createMany).toHaveBeenCalledWith([
-        expect.objectContaining({
-          trigger: SUBSCRIPTION_TRIGGER.ON_STREAMING,
-          payload: expect.objectContaining({
-            airDate: '2026-11-17T00:00:00.000Z',
-            releaseKind: 'digital',
-            releaseCountry: 'US',
-          }),
-        }),
-      ]);
-    });
-
-    it('marks a cinema-reminder for a digital-only movie as a digital release', async () => {
-      await setup();
-      claimFor(SUBSCRIPTION_TRIGGER.RELEASE, [
-        claimed({ digitalReleaseDate: new Date('2026-11-19T00:00:00Z') }),
-      ]);
-
-      await service.notifyMovieReleases();
-
-      expect(notificationRepo.createMany).toHaveBeenCalledWith([
-        expect.objectContaining({
-          payload: expect.objectContaining({ releaseKind: 'digital', releaseCountry: null }),
-        }),
-      ]);
-    });
-
-    it('hands the claim back when the notification cannot be stored, so a retry sends it', async () => {
-      await setup();
-      claimFor(SUBSCRIPTION_TRIGGER.RELEASE, [
-        claimed({ theatricalReleaseDate: new Date('2026-11-18T00:00:00Z') }),
-      ]);
-      notificationRepo.createMany.mockRejectedValue(new Error('insert failed'));
-
-      await expect(service.notifyMovieReleases()).rejects.toThrow('insert failed');
-      expect(subscriptionRepo.releaseClaims).toHaveBeenCalledWith(['sub-1']);
-    });
-
-    it('stores digital releases before claiming cinema releases', async () => {
-      await setup();
-      claimFor(SUBSCRIPTION_TRIGGER.ON_STREAMING, [
-        claimed({ digitalReleaseDate: new Date('2026-11-17T00:00:00Z') }),
-      ]);
-
-      await service.notifyMovieReleases();
-
-      const persistOrder = notificationRepo.createMany.mock.invocationCallOrder[0];
-      const releaseClaimOrder = subscriptionRepo.claimMovieReleases.mock.invocationCallOrder[1];
-      expect(persistOrder).toBeLessThan(releaseClaimOrder);
-    });
-
-    it('sends one notification per subscription across repeated runs', async () => {
-      await setup();
-      const notified = new Set<string>();
-      subscriptionRepo.claimMovieReleases.mockImplementation(async (trigger: string) => {
-        if (trigger !== SUBSCRIPTION_TRIGGER.RELEASE || notified.has('sub-1')) return [];
-        notified.add('sub-1');
-        return [claimed({ theatricalReleaseDate: new Date('2026-11-18T00:00:00Z') })];
-      });
-
-      const first = await service.notifyMovieReleases();
-      const second = await service.notifyMovieReleases();
-
-      expect(first).toHaveLength(1);
-      expect(second).toEqual([]);
-      expect(notificationRepo.createMany).toHaveBeenCalledTimes(1);
     });
   });
 });

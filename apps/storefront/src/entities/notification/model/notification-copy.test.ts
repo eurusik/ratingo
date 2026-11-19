@@ -42,7 +42,7 @@ describe('notification copy', () => {
         uk,
       );
     expect(release('UA')).toBe('Анора — уже в кіно');
-    expect(release('US')).toBe('Анора — вийшов у США');
+    expect(release('US')).toBe('Анора — прем’єра в США');
     expect(release('GB')).toBe('Анора — світова прем’єра');
     expect(release(null)).toBe('Анора — світова прем’єра');
   });
@@ -56,19 +56,19 @@ describe('notification copy', () => {
         }),
         uk,
       ),
-    ).toBe('Анора — вийшов у цифровому релізі в США');
+    ).toBe('Анора — уже в цифровому релізі в США');
     expect(
       notificationText(
         notification({ payload: { releaseKind: 'digital', releaseCountry: null } }),
         uk,
       ),
-    ).toBe('Анора — вийшов у цифровому релізі');
+    ).toBe('Анора — уже в цифровому релізі');
   });
 
   it('keeps the plain wording for notifications without release details', () => {
     expect(notificationText(notification({}), uk)).toBe('Анора — уже в кіно');
     expect(notificationText(notification({ trigger: 'on_streaming' }), uk)).toBe(
-      'Анора — вийшов у цифровому релізі',
+      'Анора — уже в цифровому релізі',
     );
   });
 

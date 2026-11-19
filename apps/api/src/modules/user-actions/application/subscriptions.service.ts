@@ -24,7 +24,8 @@ import {
   USER_SUBSCRIPTION_REPOSITORY,
   type SubscriptionWithMedia,
 } from '../domain/repositories/user-subscription.repository.interface';
-import { pendingMovieReleaseTriggers } from '../domain/services/pending-movie-release-triggers';
+
+import { pendingMovieReleaseTriggers } from './movie-release-triggers';
 
 export interface SubscribePayload {
   userId: string;

@@ -11,7 +11,6 @@ import {
   type SyncMediaJobData,
   type UpcomingMoviesRefreshScopeType,
 } from '@/modules/shared/contracts';
-import { SubscriptionTriggerService } from '@/modules/user-actions/public';
 
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
@@ -57,7 +56,6 @@ export class SyncWorker extends WorkerHost {
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
     private readonly backfillMdblistRatingsPipeline: BackfillMdblistRatingsPipeline,
     private readonly mediaPageCache: MediaPageCacheService,
-    private readonly subscriptionTriggerService: SubscriptionTriggerService,
   ) {
     super();
   }
@@ -168,10 +166,6 @@ export class SyncWorker extends WorkerHost {
           break;
         case IngestionJob.REFRESH_UPCOMING_MOVIES:
           await this.upcomingMoviesPipeline.refresh(job.data.scope);
-          break;
-
-        case IngestionJob.NOTIFY_MOVIE_RELEASES:
-          await this.subscriptionTriggerService.notifyMovieReleases();
           break;
 
         // IMDb backfill pipeline

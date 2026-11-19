@@ -2,10 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
 import { errorMessage } from '@/common/utils/error.utils';
-import {
-  SAVED_ITEM_EVENTS,
-  type SavedForLaterEvent,
-} from '@/modules/user-actions/domain/constants/events.constants';
+import { ItemSavedForLaterEvent } from '@/modules/user-actions/domain/events/item-saved-for-later.event';
 import { USER_MEDIA_STATE, UserMediaStateChangedEvent } from '@/modules/user-media/public';
 
 import { SubscriptionsService } from '../subscriptions.service';
@@ -22,8 +19,8 @@ export class AutoSubscribeMovieOnPlanListener {
     await this.subscribe(event.userId, event.mediaItemId);
   }
 
-  @OnEvent(SAVED_ITEM_EVENTS.SAVED_FOR_LATER)
-  async onSavedForLater(event: SavedForLaterEvent): Promise<void> {
+  @OnEvent(ItemSavedForLaterEvent.eventName)
+  async onSavedForLater(event: ItemSavedForLaterEvent): Promise<void> {
     await this.subscribe(event.userId, event.mediaItemId);
   }
 

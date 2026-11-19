@@ -398,10 +398,10 @@
     },
     "text": {
       "release": "{title} — уже в кіно",
-      "release_us": "{title} — вийшов у США",
+      "release_us": "{title} — прем’єра в США",
       "release_world": "{title} — світова прем’єра",
-      "on_streaming": "{title} — вийшов у цифровому релізі",
-      "on_streaming_us": "{title} — вийшов у цифровому релізі в США",
+      "on_streaming": "{title} — уже в цифровому релізі",
+      "on_streaming_us": "{title} — уже в цифровому релізі в США",
       "new_season": "{title} — повернувся сезон {season}",
       "new_season_unknown": "{title} — повертається новий сезон",
       "new_episode": "{title} — вийшла серія {code}",

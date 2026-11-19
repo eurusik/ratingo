@@ -1,21 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import {
-  and,
-  desc,
-  eq,
-  gte,
-  sql,
-  isNull,
-  inArray,
-  isNotNull,
-  or,
-  ne,
-  lt,
-  not,
-  type SQL,
-} from 'drizzle-orm';
-import { alias } from 'drizzle-orm/pg-core';
+import { and, desc, eq, sql, isNull, inArray, or, ne, lt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
@@ -25,7 +10,6 @@ import { ImageMapper } from '@/common/mappers/image.mapper';
 import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
-import { effectiveMovieReleaseDate } from '@/database/movie-release-conditions';
 import * as schema from '@/database/schema';
 import {
   type UserSubscription,
@@ -41,10 +25,7 @@ import {
   type MovieReleaseTrigger,
   type ReleaseDayWindow,
 } from '@/modules/user-actions/domain/repositories/user-subscription.repository.interface';
-
-const subs = schema.userSubscriptions;
-const OTHER_SUBS_ALIAS = 'other_subs';
-const otherSubs = alias(schema.userSubscriptions, OTHER_SUBS_ALIAS);
+import { ClaimMovieReleasesQuery } from '@/modules/user-actions/infrastructure/queries/claim-movie-releases.query';
 
 /**
  * Drizzle implementation of user subscription repository.
@@ -56,6 +37,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly claimMovieReleasesQuery: ClaimMovieReleasesQuery,
   ) {}
 
   /**
@@ -224,9 +206,14 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
       this.logger,
       async () => {
         const rows = await this.db
-          .select({ trigger: subs.trigger })
-          .from(subs)
-          .where(and(eq(subs.userId, userId), eq(subs.mediaItemId, mediaItemId)));
+          .select({ trigger: schema.userSubscriptions.trigger })
+          .from(schema.userSubscriptions)
+          .where(
+            and(
+              eq(schema.userSubscriptions.userId, userId),
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+            ),
+          );
         return rows.map((r) => r.trigger as SubscriptionTrigger);
       },
       { userId, mediaItemId },
@@ -482,80 +469,15 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     );
   }
 
-  async claimMovieReleases(
+  claimMovieReleases(
     trigger: MovieReleaseTrigger,
     window: ReleaseDayWindow,
   ): Promise<ClaimedMovieRelease[]> {
-    const triggerDate = this.movieTriggerDate(trigger);
-    const claimedAt = new Date();
-    return withDbError(
-      'claim movie release notifications',
-      this.logger,
-      () =>
-        this.db
-          .update(subs)
-          .set({ lastNotifiedAt: claimedAt, updatedAt: claimedAt })
-          .from(schema.movies)
-          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.movies.mediaItemId))
-          .where(
-            and(
-              eq(schema.movies.mediaItemId, subs.mediaItemId),
-              eq(subs.trigger, trigger),
-              eq(subs.isActive, true),
-              isNull(subs.lastNotifiedAt),
-              isNull(schema.mediaItems.deletedAt),
-              gte(triggerDate, window.from.toISOString()),
-              lt(triggerDate, window.toExclusive.toISOString()),
-              sql`${subs.createdAt} < ${triggerDate} + interval '1 day'`,
-              trigger === SUBSCRIPTION_TRIGGER.RELEASE
-                ? not(this.digitalReleaseCoveredByStreamingSubscription())
-                : undefined,
-            ),
-          )
-          .returning({
-            id: subs.id,
-            userId: subs.userId,
-            mediaItemId: subs.mediaItemId,
-            theatricalReleaseDate: schema.movies.theatricalReleaseDate,
-            digitalReleaseDate: schema.movies.digitalReleaseDate,
-            releaseDate: schema.mediaItems.releaseDate,
-            releases: schema.movies.releases,
-          }),
-      { trigger, from: window.from.toISOString() },
-    );
+    return this.claimMovieReleasesQuery.claim(trigger, window);
   }
 
-  async releaseClaims(subscriptionIds: string[]): Promise<void> {
-    if (subscriptionIds.length === 0) return;
-    return withDbError(
-      'release movie release claims',
-      this.logger,
-      async () => {
-        await this.db
-          .update(subs)
-          .set({ lastNotifiedAt: null, updatedAt: new Date() })
-          .where(inArray(subs.id, subscriptionIds));
-      },
-      { count: subscriptionIds.length },
-    );
-  }
-
-  private movieTriggerDate(trigger: MovieReleaseTrigger): SQL<Date | null> {
-    return trigger === SUBSCRIPTION_TRIGGER.RELEASE
-      ? effectiveMovieReleaseDate()
-      : sql<Date | null>`${schema.movies.digitalReleaseDate}`;
-  }
-
-  private digitalReleaseCoveredByStreamingSubscription(): SQL {
-    const activeStreamingSubscription = and(
-      eq(otherSubs.userId, subs.userId),
-      eq(otherSubs.mediaItemId, subs.mediaItemId),
-      eq(otherSubs.trigger, SUBSCRIPTION_TRIGGER.ON_STREAMING),
-      eq(otherSubs.isActive, true),
-    );
-    return sql`(${isNull(schema.movies.theatricalReleaseDate)} and ${isNotNull(
-      schema.movies.digitalReleaseDate,
-    )} and exists (select 1 from ${subs} ${sql.identifier(OTHER_SUBS_ALIAS)} where ${activeStreamingSubscription}))`;
+  releaseClaims(subscriptionIds: string[]): Promise<void> {
+    return this.claimMovieReleasesQuery.handBack(subscriptionIds);
   }
 
   private mapRow(row: typeof schema.userSubscriptions.$inferSelect): UserSubscription {

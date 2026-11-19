@@ -34,9 +34,13 @@ export {
   isMovieReleasingFrom,
   resolveMovieRelease,
   type MovieReleaseDates,
+  type MovieReleaseEntry,
 } from '../domain/utils/movie-release.utils';
 export { computeReleaseStatus } from '../domain/utils/release-status.utils';
-export { MovieReleaseDateKind } from '../domain/constants/movie-release.constants';
+export {
+  MovieReleaseDateKind,
+  type MovieReleaseDateKindType,
+} from '../domain/constants/movie-release.constants';
 export { generateSlug } from '@/common/utils/slug.util';
 
 export { COOLDOWN_REDIS_CLIENT } from '../infrastructure/adapters/redis-cooldown-gate.adapter';

@@ -10,7 +10,6 @@ export enum IngestionJob {
   SYNC_UPCOMING_MOVIES = 'sync-upcoming-movies',
   REFRESH_UPCOMING_MOVIES = 'refresh-upcoming-movies',
   UPDATE_NOW_PLAYING_FLAGS = 'update-now-playing-flags',
-  NOTIFY_MOVIE_RELEASES = 'notify-movie-releases',
   SYNC_SNAPSHOTS = 'sync-snapshots',
 
   /** Dispatcher job: iterates over all media and queues item jobs */

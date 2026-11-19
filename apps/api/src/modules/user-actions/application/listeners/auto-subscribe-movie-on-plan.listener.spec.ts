@@ -1,5 +1,6 @@
 import { USER_MEDIA_STATE, UserMediaStateChangedEvent } from '@/modules/user-media/public';
 
+import { ItemSavedForLaterEvent } from '@/modules/user-actions/domain/events/item-saved-for-later.event';
 import { type SubscriptionsService } from '../subscriptions.service';
 
 import { AutoSubscribeMovieOnPlanListener } from './auto-subscribe-movie-on-plan.listener';
@@ -38,7 +39,7 @@ describe('AutoSubscribeMovieOnPlanListener', () => {
   it('auto-subscribes when a title is saved for later', async () => {
     const { listener, subscriptionsService } = setup();
 
-    await listener.onSavedForLater({ userId: 'user-1', mediaItemId: 'movie-1' });
+    await listener.onSavedForLater(new ItemSavedForLaterEvent('user-1', 'movie-1'));
 
     expect(subscriptionsService.autoSubscribeForMovie).toHaveBeenCalledWith('user-1', 'movie-1');
   });
@@ -48,7 +49,7 @@ describe('AutoSubscribeMovieOnPlanListener', () => {
     subscriptionsService.autoSubscribeForMovie.mockRejectedValue(new Error('db down'));
 
     await expect(
-      listener.onSavedForLater({ userId: 'user-1', mediaItemId: 'movie-1' }),
+      listener.onSavedForLater(new ItemSavedForLaterEvent('user-1', 'movie-1')),
     ).resolves.toBeUndefined();
   });
 });

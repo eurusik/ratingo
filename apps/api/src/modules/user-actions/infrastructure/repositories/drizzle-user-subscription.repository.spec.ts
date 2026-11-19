@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleUserSubscriptionRepository } from './drizzle-user-subscription.repository';
+import { ClaimMovieReleasesQuery } from '../queries/claim-movie-releases.query';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import { DatabaseException } from '@/common/exceptions/database.exception';
 import { SUBSCRIPTION_TRIGGER } from '@/modules/user-actions/domain/entities/user-subscription.entity';
@@ -90,6 +91,7 @@ describe('DrizzleUserSubscriptionRepository', () => {
     return Test.createTestingModule({
       providers: [
         DrizzleUserSubscriptionRepository,
+        ClaimMovieReleasesQuery,
         { provide: DATABASE_CONNECTION, useValue: db },
       ],
     }).compile();
@@ -397,7 +399,7 @@ describe('DrizzleUserSubscriptionRepository', () => {
       );
     });
 
-    it('uses the effective release date for release and leaves digital-only movies to on_streaming', async () => {
+    it('uses the effective release date for release and skips movies whose digital release is notified in the same window', async () => {
       const module = await setup({ resolveUpdate: [] });
       repository = module.get(DrizzleUserSubscriptionRepository);
 
@@ -407,27 +409,55 @@ describe('DrizzleUserSubscriptionRepository', () => {
       expect(sql).toContain(
         'coalesce("movies"."theatrical_release_date", "movies"."digital_release_date", "media_items"."release_date") >= $',
       );
-      expect(sql).toContain('not ("movies"."theatrical_release_date" is null');
+      expect(sql).toContain('not (("movies"."digital_release_date" >= $');
       expect(sql).toContain('exists (select 1 from "user_subscriptions" "other_subs" where');
       expect(sql).toContain('"other_subs"."user_id" = "user_subscriptions"."user_id"');
     });
 
-    it('returns the claimed rows with release data', async () => {
-      const claimed = {
+    it('returns each claimed subscription with its release notice', async () => {
+      const row = {
         id: 'sub-id-1',
         userId: 'user-id-1',
         mediaItemId: 'media-id-1',
-        theatricalReleaseDate: new Date('2026-11-18'),
+        theatricalReleaseDate: new Date('2026-11-18T00:00:00Z'),
         digitalReleaseDate: null,
         releaseDate: null,
-        releases: [],
+        releases: [{ country: 'US', type: 3, date: '2026-11-18T00:00:00.000Z' }],
       };
-      const module = await setup({ resolveUpdate: [claimed] });
+      const module = await setup({ resolveUpdate: [row] });
       repository = module.get(DrizzleUserSubscriptionRepository);
 
       await expect(
         repository.claimMovieReleases(SUBSCRIPTION_TRIGGER.RELEASE, window),
-      ).resolves.toEqual([claimed]);
+      ).resolves.toEqual([
+        {
+          id: 'sub-id-1',
+          userId: 'user-id-1',
+          mediaItemId: 'media-id-1',
+          release: { releasedOn: row.theatricalReleaseDate, kind: 'theatrical', country: 'US' },
+        },
+      ]);
+    });
+
+    it('hands back a claim it cannot describe instead of keeping it silently', async () => {
+      const row = {
+        id: 'sub-id-1',
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        theatricalReleaseDate: null,
+        digitalReleaseDate: null,
+        releaseDate: null,
+        releases: null,
+      };
+      const module = await setup({ resolveUpdate: [row] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      await expect(
+        repository.claimMovieReleases(SUBSCRIPTION_TRIGGER.ON_STREAMING, window),
+      ).resolves.toEqual([]);
+
+      const handBack = db.update.mock.results[1].value;
+      expect(handBack.set).toHaveBeenCalledWith(expect.objectContaining({ lastNotifiedAt: null }));
     });
   });
 

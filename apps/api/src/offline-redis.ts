@@ -11,6 +11,7 @@ import {
 } from './modules/ingestion/public';
 import { MONITORING_QUEUE, MONITORING_REDIS_CLIENT } from './modules/monitoring/public';
 import { STATS_QUEUE } from './modules/stats/public';
+import { USER_NOTIFICATIONS_QUEUE } from './modules/user-actions/public';
 
 const APP_QUEUE_NAMES = [
   INGESTION_QUEUE,
@@ -20,6 +21,7 @@ const APP_QUEUE_NAMES = [
   CATALOG_POLICY_QUEUE,
   HEALTH_QUEUE,
   MONITORING_QUEUE,
+  USER_NOTIFICATIONS_QUEUE,
 ];
 
 const APP_REDIS_CLIENTS = [COOLDOWN_REDIS_CLIENT, MONITORING_REDIS_CLIENT];
