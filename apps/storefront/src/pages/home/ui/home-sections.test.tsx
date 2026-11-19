@@ -326,6 +326,23 @@ describe('UpcomingMovies', () => {
     );
   });
 
+  it('reports opening a movie and the movie calendar', () => {
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    renderIn(<UpcomingMovies releases={[release]} />);
+
+    fireEvent.click(screen.getByRole('link', { name: /Месники/ }), { metaKey: true });
+    fireEvent.click(screen.getByRole('link', { name: 'Календар фільмів' }), { metaKey: true });
+
+    expect(gtag).toHaveBeenCalledWith('event', 'open_title', {
+      origin: 'home_upcoming',
+      media_type: 'movie',
+      in_catalog: 'true',
+    });
+    expect(gtag).toHaveBeenCalledWith('event', 'calendar_open', { origin: 'home_upcoming' });
+    delete window.gtag;
+  });
+
   it('hides the rail when nothing is coming', () => {
     const { container } = renderIn(<UpcomingMovies releases={[]} />);
 

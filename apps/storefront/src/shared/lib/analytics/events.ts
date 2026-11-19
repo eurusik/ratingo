@@ -36,8 +36,9 @@ export interface AnalyticsEvents {
   calendar_change: {
     action: 'step' | 'this_week' | 'mode' | 'type' | 'swipe';
     mode?: string;
-    type?: string;
+    media_type?: AnalyticsMediaType;
   };
+  calendar_open: { origin: 'home_upcoming' | 'home_episodes' };
   share: { result: 'shared' | 'copied' | 'cancelled' | 'failed' };
   app_error: {
     kind: 'mutation' | 'query' | 'render' | 'not_found';

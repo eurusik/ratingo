@@ -64,7 +64,7 @@ export function useCalendarNavigation({
       goTo({ ...location, mode });
     },
     changeType: (type: CalendarMediaType) => {
-      track('calendar_change', { action: 'type', type });
+      track('calendar_change', { action: 'type', media_type: type });
       setLocation({ ...location, type, mode: undefined });
       scrollToListStart(list.current);
     },

@@ -157,10 +157,18 @@ describe('CalendarView', () => {
       .mockImplementation(async ({ type }) =>
         type === 'movie' ? { ...range([]), days: [releasedDay, movieDay] } : range([OTHER_SHOW]),
       );
+    const gtag = jest.fn();
+    window.gtag = gtag;
     renderCalendar();
     await screen.findByText('Сімпсони');
 
     fireEvent.click(screen.getByRole('link', { name: 'Фільми' }));
+
+    expect(gtag).toHaveBeenCalledWith('event', 'calendar_change', {
+      action: 'type',
+      media_type: 'movie',
+    });
+    delete window.gtag;
 
     expect(await screen.findByText('Дюна')).toBeInTheDocument();
     expect(screen.getAllByText('в кіно')).toHaveLength(2);

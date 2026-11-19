@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { SectionHeader } from './section-header';
 
 describe('SectionHeader', () => {
@@ -21,7 +21,8 @@ describe('SectionHeader', () => {
     expect(screen.getByRole('link', { name: 'Увесь топ' })).toHaveAttribute('href', '/browse');
   });
 
-  it('names the action link more precisely when its text is shared', () => {
+  it('names the action link more precisely and reports its clicks', () => {
+    const onActionClick = jest.fn();
     render(
       <SectionHeader
         id="upcoming"
@@ -29,8 +30,11 @@ describe('SectionHeader', () => {
         actionHref="/calendar?type=movie"
         actionLabel="Календар →"
         actionAriaLabel="Календар фільмів"
+        onActionClick={onActionClick}
       />,
     );
+    fireEvent.click(screen.getByRole('link', { name: 'Календар фільмів' }), { metaKey: true });
+    expect(onActionClick).toHaveBeenCalledTimes(1);
 
     expect(screen.getByRole('link', { name: 'Календар фільмів' })).toHaveAttribute(
       'href',

@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { formatReleaseBadge, formatReleaseDate, MediaPoster } from '@/entities/media';
 import { calendarRouteFor, mediaRoute } from '@/shared/config';
-import { SHARED_ART_SOURCE } from '@/shared/lib';
+import { SHARED_ART_SOURCE, track } from '@/shared/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { ForwardLink, Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import type { UpcomingRelease } from '../model/home-feed';
@@ -16,6 +16,9 @@ function UpcomingTile({ release }: { release: UpcomingRelease }) {
   return (
     <ForwardLink
       href={mediaRoute('movie', release.slug)}
+      onClick={() =>
+        track('open_title', { origin: 'home_upcoming', media_type: 'movie', in_catalog: true })
+      }
       className="flex w-24 flex-col gap-1.5 text-foreground no-underline md:w-full md:gap-2"
     >
       <span {...SHARED_ART_SOURCE} className="relative">
@@ -59,6 +62,7 @@ export function UpcomingMovies({ releases }: { releases: UpcomingRelease[] }) {
         actionHref={calendarRouteFor('movie')}
         actionLabel={dict.home.calendarAction}
         actionAriaLabel={dict.home.calendarLabel.movie}
+        onActionClick={() => track('calendar_open', { origin: 'home_upcoming' })}
         trailing={<RailPager scrollerRef={scroller} />}
       />
       <Rail label={dict.home.upcoming} itemSize="tile" scrollerRef={scroller}>

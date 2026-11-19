@@ -8,6 +8,7 @@ interface SectionHeaderProps {
   actionHref?: string;
   actionLabel?: string;
   actionAriaLabel?: string;
+  onActionClick?: () => void;
   trailing?: ReactNode;
 }
 
@@ -18,6 +19,7 @@ export function SectionHeader({
   actionHref,
   actionLabel,
   actionAriaLabel,
+  onActionClick,
   trailing,
 }: SectionHeaderProps) {
   const action =
@@ -25,6 +27,7 @@ export function SectionHeader({
       <Link
         href={actionHref}
         aria-label={actionAriaLabel}
+        onClick={onActionClick}
         className="inline-flex min-h-tap shrink-0 items-center text-sm font-medium text-link no-underline"
       >
         {actionLabel}
