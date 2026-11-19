@@ -35,7 +35,11 @@ export const CalendarMovieItem = memo(function CalendarMovieItem({
       </ForwardLink>
       {isComingOut ? (
         <ReminderToggle
-          media={{ mediaItemId: movie.mediaItemId, title: movie.title }}
+          media={{
+            mediaItemId: movie.mediaItemId,
+            title: movie.title,
+            isReminderSet: movie.isReminderSet,
+          }}
           trigger="release"
         />
       ) : null}

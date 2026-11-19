@@ -55,7 +55,7 @@ export function SegmentedFilter<T extends string>({
       onSelectionChange={onSelectionChange}
       className={cn(isScrollable ? 'w-max' : 'px-4', className)}
     >
-      {options.map((option, index) => (
+      {options.map((option) => (
         <ToggleButton
           key={option.id}
           id={option.id}
@@ -64,7 +64,6 @@ export function SegmentedFilter<T extends string>({
             isFullWidth ? 'flex-1 font-semibold' : 'rounded-full',
           )}
         >
-          {isFullWidth && index > 0 ? <ToggleButtonGroup.Separator /> : null}
           {option.label}
           {option.count === undefined ? null : (
             <span className="tabular-nums opacity-70">{option.count}</span>
