@@ -1,15 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsNotIn, IsOptional, IsString } from 'class-validator';
 
 import { ImageDto } from '@/common/dtos/image.dto';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { SUBSCRIPTION_CONTEXT } from '@/modules/user-actions/domain/constants/subscription.constants';
 import {
   SUBSCRIPTION_TRIGGER,
   type SubscriptionTrigger,
 } from '@/modules/user-actions/domain/entities/user-subscription.entity';
 
 const SUBSCRIPTION_TRIGGER_VALUES = Object.values(SUBSCRIPTION_TRIGGER);
+const SYSTEM_CONTEXTS = Object.values(SUBSCRIPTION_CONTEXT);
 
 /**
  * DTO for subscribing to notifications.
@@ -26,6 +28,7 @@ export class SubscribeDto {
   @ApiProperty({ example: 'verdict', required: false, description: 'Where the action originated' })
   @IsOptional()
   @IsString()
+  @IsNotIn(SYSTEM_CONTEXTS)
   context?: string;
 
   @ApiProperty({
@@ -53,6 +56,7 @@ export class UnsubscribeDto {
   @ApiProperty({ example: 'card', required: false })
   @IsOptional()
   @IsString()
+  @IsNotIn(SYSTEM_CONTEXTS)
   context?: string;
 }
 

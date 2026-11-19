@@ -12,6 +12,15 @@ import { movieLine } from '../model/movie-line';
 import { useCalendarContext } from './calendar-context';
 import { RELEASE_ROW } from './calendar-layout';
 
+function ComingOutMovieLine({ movie }: { movie: CalendarMovie }) {
+  const { dict } = useTranslation();
+  const isReminderOn = useIsReminderOn(
+    { mediaItemId: movie.mediaItemId, title: movie.title, isReminderSet: movie.isReminderSet },
+    'release',
+  );
+  return movieLine(movie, isReminderOn, dict);
+}
+
 export const CalendarMovieItem = memo(function CalendarMovieItem({
   movie,
 }: {
@@ -20,11 +29,6 @@ export const CalendarMovieItem = memo(function CalendarMovieItem({
   const { dict } = useTranslation();
   const { now } = useCalendarContext();
   const isComingOut = Date.parse(movie.releaseDate) > now;
-  const isReminderOn = useIsReminderOn(
-    { mediaItemId: movie.mediaItemId, title: movie.title, isReminderSet: movie.isReminderSet },
-    'release',
-  );
-  const subtitle = movieLine(movie, { isComingOut, isReminderOn }, dict);
 
   return (
     <li className={RELEASE_ROW}>
@@ -35,7 +39,9 @@ export const CalendarMovieItem = memo(function CalendarMovieItem({
         <MediaPoster type="movie" posterUrl={movie.poster?.small} size="row" />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="truncate text-[15px] font-bold">{movie.title}</span>
-          <span className="truncate text-[13px] text-muted">{subtitle}</span>
+          <span className="truncate text-[13px] text-muted">
+            {isComingOut ? <ComingOutMovieLine movie={movie} /> : movieLine(movie, false, dict)}
+          </span>
         </span>
       </ForwardLink>
       {isComingOut ? (
