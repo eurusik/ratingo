@@ -8,7 +8,6 @@ import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 import { SAVED_ITEM_LIST } from '@/modules/user-actions/domain/entities';
 import { type SubscriptionTrigger } from '@/modules/user-actions/domain/entities/user-subscription.entity';
-import { USER_MEDIA_STATE } from '@/modules/user-media/public';
 
 @Injectable()
 export class AutoPlanSubscriptionsQuery {
@@ -55,7 +54,7 @@ export class AutoPlanSubscriptionsQuery {
               this.forMedia(userId, mediaItemId),
               schema.userSubscriptions.isActive,
               schema.userSubscriptions.autoPlan,
-              not(this.stillPlanned(userId, mediaItemId)),
+              not(this.stillSavedForLater(userId, mediaItemId)),
             ),
           )
           .returning({ trigger: schema.userSubscriptions.trigger });
@@ -72,20 +71,12 @@ export class AutoPlanSubscriptionsQuery {
     );
   }
 
-  private stillPlanned(userId: string, mediaItemId: string) {
-    return sql`(
-      exists (
-        select 1 from ${schema.userSavedItems}
-        where ${schema.userSavedItems.userId} = ${userId}
-          and ${schema.userSavedItems.mediaItemId} = ${mediaItemId}
-          and ${schema.userSavedItems.list} = ${SAVED_ITEM_LIST.FOR_LATER}
-      )
-      or exists (
-        select 1 from ${schema.userMediaState}
-        where ${schema.userMediaState.userId} = ${userId}
-          and ${schema.userMediaState.mediaItemId} = ${mediaItemId}
-          and ${schema.userMediaState.state} = ${USER_MEDIA_STATE.PLANNED}
-      )
+  private stillSavedForLater(userId: string, mediaItemId: string) {
+    return sql`exists (
+      select 1 from ${schema.userSavedItems}
+      where ${schema.userSavedItems.userId} = ${userId}
+        and ${schema.userSavedItems.mediaItemId} = ${mediaItemId}
+        and ${schema.userSavedItems.list} = ${SAVED_ITEM_LIST.FOR_LATER}
     )`;
   }
 }

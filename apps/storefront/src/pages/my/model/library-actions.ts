@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
 import { useRefreshWatchProgress } from '@/entities/episode';
 import {
@@ -9,6 +10,7 @@ import {
   useMediaStateStore,
   type LibraryList,
 } from '@/entities/library';
+import { SUBSCRIPTIONS_KEY } from '@/entities/subscription';
 import { useRemoveFromLibrary } from '@/features/remove-from-library';
 import { useTranslation } from '@/shared/i18n';
 import { showUndoToast, track } from '@/shared/lib';
@@ -23,8 +25,13 @@ export type LibraryActions = { [K in keyof MoveSpecs]: Act<K> } & {
   removeFromLibrary: (title: LibraryTitle, from: LibraryList) => void;
 };
 
+function touchesPlan({ from, to }: MoveSpec): boolean {
+  return from === 'plan' || to === 'plan';
+}
+
 export function useLibraryActions(): LibraryActions {
   const { dict } = useTranslation();
+  const queryClient = useQueryClient();
   const lists = useLibraryListsStore();
   const saveStatuses = useLibraryStore();
   const mediaStates = useMediaStateStore();
@@ -49,13 +56,14 @@ export function useLibraryActions(): LibraryActions {
       }
       mediaStates.refresh(mediaItemId);
       saveStatuses.refresh(mediaItemId);
+      if (touchesPlan(spec)) void queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEY });
       await refresh().catch((error: unknown) => {
         console.error('Refreshing the library failed', { mediaItemId, error });
       });
       if (token !== undefined) moves.forget(mediaItemId, token);
       return isSaved;
     },
-    [dict, mediaStates, moves, refresh, saveStatuses],
+    [dict, mediaStates, moves, queryClient, refresh, saveStatuses],
   );
 
   const run = useCallback(

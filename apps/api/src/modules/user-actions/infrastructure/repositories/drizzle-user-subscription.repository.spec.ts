@@ -479,7 +479,7 @@ describe('DrizzleUserSubscriptionRepository', () => {
       expect(renderWhere()).toMatch(/"is_active" or not "user_subscriptions"\."auto_plan"/);
     });
 
-    it('switches off only automatic rows of a movie that is no longer planned', async () => {
+    it('switches off only automatic rows of a movie no longer saved for later', async () => {
       const module = await setup({ resolveUpdate: [{ trigger: 'on_streaming' }] });
       repository = module.get(DrizzleUserSubscriptionRepository);
 
@@ -490,11 +490,11 @@ describe('DrizzleUserSubscriptionRepository', () => {
         db.update.mock.results[0].value.where.mock.calls[0][0],
       );
       expect(where.sql).toContain('"user_subscriptions"."auto_plan"');
-      expect(where.sql).toContain('not (');
+      expect(where.sql).toContain('not exists (');
       expect(where.sql).toContain('"user_saved_items"');
-      expect(where.sql).toContain('"user_media_state"');
+      expect(where.sql).not.toContain('"user_media_state"');
       expect(where.params).toEqual(
-        expect.arrayContaining(['user-id-1', 'media-id-1', 'for_later', 'planned']),
+        expect.arrayContaining(['user-id-1', 'media-id-1', 'for_later']),
       );
     });
   });
