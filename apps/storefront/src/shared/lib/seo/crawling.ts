@@ -19,6 +19,7 @@ interface DatedSlug {
 
 export interface SitemapSources {
   now: Date;
+  browseCategories: readonly string[];
   movies: readonly DatedSlug[];
   shows: readonly DatedSlug[];
 }
@@ -31,8 +32,11 @@ interface StaticPage {
 
 const STATIC_PAGES: readonly StaticPage[] = [
   { path: HOME_ROUTE, changeFrequency: 'daily', priority: 1.0 },
-  { path: BROWSE_ROUTE, changeFrequency: 'daily', priority: 0.9 },
+  { path: CALENDAR_ROUTE, changeFrequency: 'daily', priority: 0.9 },
 ];
+
+const BROWSE_PAGE_CHANGE_FREQUENCY: ChangeFrequency = 'daily';
+const BROWSE_PAGE_PRIORITY = 0.8;
 
 const DETAIL_PAGE_CHANGE_FREQUENCY: ChangeFrequency = 'weekly';
 const DETAIL_PAGE_PRIORITY = 0.7;
@@ -46,7 +50,6 @@ const DISALLOWED_PATHS = [
   '/serwist',
   OFFLINE_ROUTE,
   SETTINGS_ROUTE,
-  CALENDAR_ROUTE,
   MY_ROUTE,
   NOTIFICATIONS_ROUTE,
 ];
@@ -67,6 +70,12 @@ export function buildSitemap(siteUrl: string, sources: SitemapSources): Metadata
     changeFrequency: page.changeFrequency,
     priority: page.priority,
   }));
+  const browseEntries = sources.browseCategories.map((slug) => ({
+    url: `${siteUrl}${BROWSE_ROUTE}/${slug}`,
+    lastModified: sources.now,
+    changeFrequency: BROWSE_PAGE_CHANGE_FREQUENCY,
+    priority: BROWSE_PAGE_PRIORITY,
+  }));
   const movieEntries = sources.movies.map((movie) =>
     detailEntry(`${siteUrl}${mediaRoute('movie', movie.slug)}`, movie.updatedAt),
   );
@@ -74,7 +83,7 @@ export function buildSitemap(siteUrl: string, sources: SitemapSources): Metadata
     detailEntry(`${siteUrl}${mediaRoute('show', show.slug)}`, show.updatedAt),
   );
 
-  return [...staticEntries, ...movieEntries, ...showEntries];
+  return [...staticEntries, ...browseEntries, ...movieEntries, ...showEntries];
 }
 
 export function buildRobots(siteUrl: string, indexingEnabled: boolean): MetadataRoute.Robots {

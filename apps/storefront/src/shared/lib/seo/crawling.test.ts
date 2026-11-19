@@ -19,6 +19,12 @@ describe('buildRobots', () => {
     );
   });
 
+  it('lets crawlers reach the public calendar', () => {
+    const [rule] = [buildRobots(SITE_URL, true).rules].flat();
+
+    expect(rule?.disallow).not.toContain('/calendar');
+  });
+
   it('blocks all crawling anywhere else', () => {
     const result = buildRobots(SITE_URL, false);
 
@@ -30,6 +36,7 @@ describe('buildRobots', () => {
 describe('buildSitemap', () => {
   const sitemap = buildSitemap(SITE_URL, {
     now: NOW,
+    browseCategories: ['shows-trending', 'movies-trending'],
     movies: [{ slug: 'tenet-2020', updatedAt: '2026-01-02T00:00:00.000Z' }],
     shows: [{ slug: 'outlander-2014', updatedAt: '2026-03-04T00:00:00.000Z' }],
   });
@@ -58,6 +65,19 @@ describe('buildSitemap', () => {
         priority: 0.7,
       },
     ]);
+  });
+
+  it('lists the calendar and each browse category at its canonical URL', () => {
+    const urls = sitemap.map((entry) => entry.url);
+
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        'https://ratingo.top/calendar',
+        'https://ratingo.top/browse/shows-trending',
+        'https://ratingo.top/browse/movies-trending',
+      ]),
+    );
+    expect(urls).not.toContain('https://ratingo.top/browse');
   });
 
   it('leaves the journal out until it is ported', () => {
