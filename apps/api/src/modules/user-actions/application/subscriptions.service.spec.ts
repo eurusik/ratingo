@@ -163,6 +163,19 @@ describe('SubscriptionsService', () => {
       });
     });
 
+    it('keeps a subscription manual even when its context reads auto-plan', async () => {
+      await service.subscribe({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        trigger: SUBSCRIPTION_TRIGGER.RELEASE,
+        context: 'auto-plan',
+      });
+
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ autoPlan: false }),
+      );
+    });
+
     it('should not fetch show state for non-show triggers', async () => {
       await service.subscribe({
         userId: 'user-id-1',

@@ -86,13 +86,19 @@ export interface MediaReminder {
 function useReminderState(media: ReminderMedia, trigger: ReminderTrigger) {
   const { user, isAuthenticated } = useAuth();
   const queryKey = remindersKey(user?.id ?? null);
-  const { data } = useQuery({
+  const { mediaItemId } = media;
+  const isReminded = useCallback(
+    (reminded: RemindedMedia) => reminded[trigger].has(mediaItemId),
+    [trigger, mediaItemId],
+  );
+  const { data: remindedNow } = useQuery({
     queryKey,
     queryFn: fetchReminded,
     enabled: isAuthenticated,
     staleTime: REMINDERS_STALE_MS,
+    select: isReminded,
   });
-  const knownIsOn = data?.[trigger].has(media.mediaItemId) ?? media.isReminderSet ?? false;
+  const knownIsOn = remindedNow ?? media.isReminderSet ?? false;
   return { queryKey, isOn: isAuthenticated && knownIsOn };
 }
 

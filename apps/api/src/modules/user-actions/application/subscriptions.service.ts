@@ -33,6 +33,7 @@ export interface SubscribePayload {
   trigger: SubscriptionTrigger;
   context?: string;
   reasonKey?: string;
+  autoPlan?: boolean;
 }
 
 @Injectable()
@@ -55,7 +56,7 @@ export class SubscriptionsService {
   ) {}
 
   async subscribe(payload: SubscribePayload): Promise<UserSubscription> {
-    const { userId, mediaItemId, trigger, context, reasonKey } = payload;
+    const { userId, mediaItemId, trigger, context, reasonKey, autoPlan = false } = payload;
 
     const initialMarkers: {
       lastNotifiedSeasonNumber?: number | null;
@@ -81,7 +82,7 @@ export class SubscriptionsService {
       userId,
       mediaItemId,
       trigger,
-      autoPlan: context === SUBSCRIPTION_CONTEXT.AUTO_PLAN,
+      autoPlan,
       ...initialMarkers,
     });
 
@@ -180,6 +181,7 @@ export class SubscriptionsService {
         mediaItemId,
         trigger,
         context: SUBSCRIPTION_CONTEXT.AUTO_PLAN,
+        autoPlan: true,
       });
     }
   }
