@@ -56,6 +56,7 @@ function withMedia(
 export interface ReminderMedia {
   mediaItemId: string;
   title: string;
+  isReminderSet?: boolean;
 }
 
 export interface MediaReminder {
@@ -75,7 +76,8 @@ export function useMediaReminder(media: ReminderMedia, trigger: ReminderTrigger)
     enabled: isAuthenticated,
     staleTime: REMINDERS_STALE_MS,
   });
-  const isOn = isAuthenticated && (data?.[trigger].has(media.mediaItemId) ?? false);
+  const knownIsOn = data?.[trigger].has(media.mediaItemId) ?? media.isReminderSet ?? false;
+  const isOn = isAuthenticated && knownIsOn;
   const copy = reminderCopy(dict, trigger);
 
   const { mutate, isPending } = useMutation({
