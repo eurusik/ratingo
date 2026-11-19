@@ -6,6 +6,8 @@ What to watch tonight, and when the next episode is out. In Ukrainian.
 
 **[ratingo.top](https://ratingo.top)**
 
+🆕 **New:** movie release calendar and reminders. [Read the announcement →](https://github.com/eurusik/ratingo/discussions/413)
+
 <br />
 
 <a href="https://ratingo.top"><img src="assets/readme/home.jpg" width="800" height="444" alt="Ratingo home page: this week's most watched shows and films" /></a>
