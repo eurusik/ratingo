@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { DrizzleUserSubscriptionRepository } from './drizzle-user-subscription.repository';
+import { AutoPlanSubscriptionsQuery } from '../queries/auto-plan-subscriptions.query';
 import { ClaimMovieReleasesQuery } from '../queries/claim-movie-releases.query';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import { DatabaseException } from '@/common/exceptions/database.exception';
@@ -92,6 +93,7 @@ describe('DrizzleUserSubscriptionRepository', () => {
       providers: [
         DrizzleUserSubscriptionRepository,
         ClaimMovieReleasesQuery,
+        AutoPlanSubscriptionsQuery,
         { provide: DATABASE_CONNECTION, useValue: db },
       ],
     }).compile();
@@ -461,18 +463,39 @@ describe('DrizzleUserSubscriptionRepository', () => {
     });
   });
 
-  describe('findKnownTriggersForMedia', () => {
-    it('returns triggers of active and inactive subscriptions', async () => {
+  describe('auto plan subscriptions', () => {
+    const renderWhere = () =>
+      new PgDialect().sqlToQuery(db.select.mock.results[0]?.value.where.mock.calls[0][0]).sql;
+
+    it('treats active rows and rows the user switched off as closed to auto plan', async () => {
       const module = await setup({
         resolveSelect: [{ trigger: 'release' }, { trigger: 'on_streaming' }],
       });
       repository = module.get(DrizzleUserSubscriptionRepository);
 
-      const triggers = await repository.findKnownTriggersForMedia('user-id-1', 'media-id-1');
+      const triggers = await repository.findTriggersClosedToAutoPlan('user-id-1', 'media-id-1');
 
       expect(triggers).toEqual(['release', 'on_streaming']);
-      const where = db.select.mock.results[0].value.where.mock.calls[0][0];
-      expect(new PgDialect().sqlToQuery(where).sql).not.toContain('is_active');
+      expect(renderWhere()).toMatch(/"is_active" or not "user_subscriptions"\."auto_plan"/);
+    });
+
+    it('switches off only automatic rows of a movie that is no longer planned', async () => {
+      const module = await setup({ resolveUpdate: [{ trigger: 'on_streaming' }] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      const triggers = await repository.deactivateAbandonedAutoPlan('user-id-1', 'media-id-1');
+
+      expect(triggers).toEqual(['on_streaming']);
+      const where = new PgDialect().sqlToQuery(
+        db.update.mock.results[0].value.where.mock.calls[0][0],
+      );
+      expect(where.sql).toContain('"user_subscriptions"."auto_plan"');
+      expect(where.sql).toContain('not (');
+      expect(where.sql).toContain('"user_saved_items"');
+      expect(where.sql).toContain('"user_media_state"');
+      expect(where.params).toEqual(
+        expect.arrayContaining(['user-id-1', 'media-id-1', 'for_later', 'planned']),
+      );
     });
   });
 });

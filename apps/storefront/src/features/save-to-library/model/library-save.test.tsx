@@ -26,7 +26,8 @@ function renderWithReminders() {
   const { result } = renderHook(() => useLibrarySave(), { wrapper });
   const remindersStale = () => queryClient.getQueryState(REMINDERS)?.isInvalidated;
   const settled = () => queryClient.isMutating() === 0;
-  return { result, remindersStale, settled };
+  const markRemindersFresh = () => queryClient.setQueryData(REMINDERS, []);
+  return { result, remindersStale, settled, markRemindersFresh };
 }
 
 describe('useLibrarySave reminders', () => {
@@ -39,6 +40,24 @@ describe('useLibrarySave reminders', () => {
 
     act(() => result.current.save(DUNE));
 
+    await waitFor(() => expect(remindersStale()).toBe(true));
+  });
+
+  it('refreshes reminders once a title leaves for later, since the API drops its automatic ones', async () => {
+    jest.mocked(libraryApi.getSaveStatuses).mockResolvedValue({});
+    jest.mocked(libraryApi.save).mockResolvedValue({ isForLater: true, isConsidering: false });
+    jest.mocked(libraryApi.unsave).mockResolvedValue({ isForLater: false, isConsidering: false });
+    const { result, remindersStale, settled, markRemindersFresh } = renderWithReminders();
+    act(() => result.current.save(DUNE));
+    await waitFor(() => expect(settled()).toBe(true));
+    jest.mocked(libraryApi.getSaveStatuses).mockResolvedValue({
+      [DUNE.mediaItemId]: { isForLater: true, isConsidering: false },
+    });
+    markRemindersFresh();
+
+    act(() => result.current.removeIfSaved(DUNE, 'removed'));
+
+    await waitFor(() => expect(libraryApi.unsave).toHaveBeenCalled());
     await waitFor(() => expect(remindersStale()).toBe(true));
   });
 

@@ -81,6 +81,7 @@ export class SubscriptionsService {
       userId,
       mediaItemId,
       trigger,
+      autoPlan: context === SUBSCRIPTION_CONTEXT.AUTO_PLAN,
       ...initialMarkers,
     });
 
@@ -163,15 +164,15 @@ export class SubscriptionsService {
     const schedule = await this.movieReleasePort.findMovieReleaseSchedule(mediaItemId);
     if (!schedule) return;
 
-    const [autoSubscribe, knownTriggers] = await Promise.all([
+    const [autoSubscribe, closedTriggers] = await Promise.all([
       this.userPreferencePort.getAutoSubscribeOnWatch(userId),
-      this.subscriptionRepo.findKnownTriggersForMedia(userId, mediaItemId),
+      this.subscriptionRepo.findTriggersClosedToAutoPlan(userId, mediaItemId),
     ]);
     if (!autoSubscribe) return;
 
     const today = startOfUtcDay(this.clock.now());
     const triggers = pendingMovieReleaseTriggers(schedule, today).filter(
-      (trigger) => !knownTriggers.includes(trigger),
+      (trigger) => !closedTriggers.includes(trigger),
     );
     for (const trigger of triggers) {
       await this.subscribe({
@@ -180,6 +181,24 @@ export class SubscriptionsService {
         trigger,
         context: SUBSCRIPTION_CONTEXT.AUTO_PLAN,
       });
+    }
+  }
+
+  async unsubscribeAbandonedAutoPlan(userId: string, mediaItemId: string): Promise<void> {
+    const triggers = await this.subscriptionRepo.deactivateAbandonedAutoPlan(userId, mediaItemId);
+    for (const trigger of triggers) {
+      await this.actionRepo.create({
+        userId,
+        mediaItemId,
+        action: USER_MEDIA_ACTION.UNSUBSCRIBE,
+        context: SUBSCRIPTION_CONTEXT.AUTO_PLAN,
+        payload: { trigger },
+      });
+    }
+    if (triggers.length > 0) {
+      this.logger.log(
+        `User ${userId} no longer plans ${mediaItemId}, unsubscribed from ${triggers.join(', ')}`,
+      );
     }
   }
 }

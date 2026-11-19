@@ -6,6 +6,7 @@ import { type MediaType } from '@/common/enums/media-type.enum';
 
 import { type UserSavedItem, type SavedItemList, SAVED_ITEM_LIST } from '../domain/entities';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
+import { ItemRemovedFromForLaterEvent } from '../domain/events/item-removed-from-for-later.event';
 import { ItemSavedForLaterEvent } from '../domain/events/item-saved-for-later.event';
 import {
   type IUserMediaActionRepository,
@@ -62,6 +63,7 @@ export class SavedItemsService {
       this.logger.log(
         `User ${userId} auto-removed ${mediaItemId} from ${otherList} (moved to ${list})`,
       );
+      await this.announceIfLeftForLater(userId, mediaItemId, otherList);
     }
 
     const item = await this.savedItemRepo.upsert({ userId, mediaItemId, list, reasonKey });
@@ -115,9 +117,22 @@ export class SavedItemsService {
         payload: { list },
       });
       this.logger.log(`User ${userId} unsaved ${mediaItemId} from ${list}`);
+      await this.announceIfLeftForLater(userId, mediaItemId, list);
     }
 
     return removed;
+  }
+
+  private async announceIfLeftForLater(
+    userId: string,
+    mediaItemId: string,
+    list: SavedItemList,
+  ): Promise<void> {
+    if (list !== SAVED_ITEM_LIST.FOR_LATER) return;
+    await this.eventEmitter.emitAsync(
+      ItemRemovedFromForLaterEvent.eventName,
+      new ItemRemovedFromForLaterEvent(userId, mediaItemId),
+    );
   }
 
   /**
