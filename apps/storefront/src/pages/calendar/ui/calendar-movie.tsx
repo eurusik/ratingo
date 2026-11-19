@@ -2,11 +2,13 @@
 
 import { memo } from 'react';
 import { MediaPoster } from '@/entities/media';
-import { ReminderToggle } from '@/features/media-reminder';
+import { useIsReminderOn } from '@/features/media-reminder';
+import { SaveButton } from '@/features/save-to-library';
 import type { CalendarMovie } from '@/shared/api';
 import { mediaRoute } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { ForwardLink } from '@/shared/ui';
+import { movieLine } from '../model/movie-line';
 import { useCalendarContext } from './calendar-context';
 import { RELEASE_ROW } from './calendar-layout';
 
@@ -17,9 +19,12 @@ export const CalendarMovieItem = memo(function CalendarMovieItem({
 }) {
   const { dict } = useTranslation();
   const { now } = useCalendarContext();
-  const line = dict.release[movie.releaseDateKind];
-  const subtitle = movie.isSavedForLater ? `${line} · ${dict.calendar.savedNote}` : line;
   const isComingOut = Date.parse(movie.releaseDate) > now;
+  const isReminderOn = useIsReminderOn(
+    { mediaItemId: movie.mediaItemId, title: movie.title, isReminderSet: movie.isReminderSet },
+    'release',
+  );
+  const subtitle = movieLine(movie, { isComingOut, isReminderOn }, dict);
 
   return (
     <li className={RELEASE_ROW}>
@@ -34,13 +39,13 @@ export const CalendarMovieItem = memo(function CalendarMovieItem({
         </span>
       </ForwardLink>
       {isComingOut ? (
-        <ReminderToggle
+        <SaveButton
           media={{
             mediaItemId: movie.mediaItemId,
             title: movie.title,
-            isReminderSet: movie.isReminderSet,
+            slug: movie.slug,
+            type: 'movie',
           }}
-          trigger="release"
         />
       ) : null}
     </li>

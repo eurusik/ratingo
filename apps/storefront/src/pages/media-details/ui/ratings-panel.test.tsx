@@ -17,6 +17,7 @@ const movie: MovieDetailsView = {
   community: { raters: [], ratingCount: 0 },
   credits: { cast: [], directors: [], writers: [], creators: [] },
   trailers: [],
+  isReleaseDateUnknown: false,
 };
 
 function inUkrainian(ui: ReactNode) {
@@ -40,6 +41,15 @@ describe('RatingsPanel', () => {
       upcomingRelease: { date: '2026-12-25T00:00:00.000Z', kind: 'theatrical' as const },
     };
     inUkrainian(<RatingsPanel view={upcoming} locale="uk" />);
+
+    expect(screen.queryByText('Слабко')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Фільм ще не вийшов — оцінки з’являться після прем’єри'),
+    ).toBeInTheDocument();
+  });
+
+  it('does not judge a movie whose release date is not known yet', () => {
+    inUkrainian(<RatingsPanel view={{ ...movie, isReleaseDateUnknown: true }} locale="uk" />);
 
     expect(screen.queryByText('Слабко')).not.toBeInTheDocument();
     expect(

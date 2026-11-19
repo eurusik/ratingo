@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
+import { CALENDAR_QUERY_KEY } from '@/entities/episode';
 import { remindersKey } from '@/entities/subscription';
 import { libraryApi } from '@/shared/api';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
@@ -12,10 +13,12 @@ jest.mock('@/shared/api', () => ({
 
 const DUNE = { mediaItemId: 'dune-id', title: 'Дюна' };
 const REMINDERS = remindersKey('user-id');
+const CALENDAR = [...CALENDAR_QUERY_KEY, 'week'];
 
 function renderWithReminders() {
   const queryClient = new QueryClient();
   queryClient.setQueryData(REMINDERS, []);
+  queryClient.setQueryData(CALENDAR, []);
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
@@ -26,8 +29,9 @@ function renderWithReminders() {
   const { result } = renderHook(() => useLibrarySave(), { wrapper });
   const remindersStale = () => queryClient.getQueryState(REMINDERS)?.isInvalidated;
   const settled = () => queryClient.isMutating() === 0;
+  const calendarStale = () => queryClient.getQueryState(CALENDAR)?.isInvalidated;
   const markRemindersFresh = () => queryClient.setQueryData(REMINDERS, []);
-  return { result, remindersStale, settled, markRemindersFresh };
+  return { result, remindersStale, calendarStale, settled, markRemindersFresh };
 }
 
 describe('useLibrarySave reminders', () => {
@@ -36,11 +40,12 @@ describe('useLibrarySave reminders', () => {
   it('refreshes reminders once a title lands in for later, since the API subscribes to its release', async () => {
     jest.mocked(libraryApi.getSaveStatuses).mockResolvedValue({});
     jest.mocked(libraryApi.save).mockResolvedValue({ isForLater: true, isConsidering: false });
-    const { result, remindersStale } = renderWithReminders();
+    const { result, remindersStale, calendarStale } = renderWithReminders();
 
     act(() => result.current.save(DUNE));
 
     await waitFor(() => expect(remindersStale()).toBe(true));
+    expect(calendarStale()).toBe(true);
   });
 
   it('refreshes reminders once a title leaves for later, since the API drops its automatic ones', async () => {

@@ -741,6 +741,7 @@
     },
     "upcoming": {
       "release": "Out {date}",
+      "dateUnknown": "Release date not announced yet",
       "noScore": "Not out yet — ratings will appear after the premiere"
     },
     "actions": {
@@ -1134,6 +1135,7 @@
     "minutes": "{minutes} min",
     "quotedTitle": "“{title}”",
     "savedNote": "in “Want to watch”",
+    "reminderNote": "we'll remind you when it's out",
     "premiere": "Premiere",
     "finale": "Season finale",
     "moreShows": {

@@ -343,6 +343,14 @@ describe('UpcomingMovies', () => {
     delete window.gtag;
   });
 
+  it('saves a movie from its poster without leaving the rail', () => {
+    renderIn(<UpcomingMovies releases={[release]} />);
+
+    const save = screen.getByRole('button', { name: `Зберегти «${release.title}»` });
+    expect(save.closest('a')).toBeNull();
+    expect(screen.getByRole('link', { name: /Месники/ })).toHaveAttribute('href', '/movies/doom');
+  });
+
   it('hides the rail when nothing is coming', () => {
     const { container } = renderIn(<UpcomingMovies releases={[]} />);
 

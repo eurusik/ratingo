@@ -53,6 +53,7 @@ export interface MovieDetailsView extends DetailsBase {
   runtimeMinutes?: number;
   status?: MovieStatus;
   upcomingRelease?: UpcomingReleaseDate;
+  isReleaseDateUnknown: boolean;
   budget?: number;
   revenue?: number;
 }
@@ -118,6 +119,20 @@ type MovieReleaseDates = Partial<
   Record<'theatricalReleaseDate' | 'digitalReleaseDate', string | null>
 >;
 
+const UNRELEASED_STATUSES: ReadonlySet<MovieStatus> = new Set([
+  'Rumored',
+  'Planned',
+  'In Production',
+  'Post Production',
+]);
+
+function isReleaseDateUnknown(movie: MovieDetails & MovieReleaseDates): boolean {
+  const hasDate = Boolean(
+    movie.releaseDate || movie.theatricalReleaseDate || movie.digitalReleaseDate,
+  );
+  return !hasDate && movie.status != null && UNRELEASED_STATUSES.has(movie.status);
+}
+
 function upcomingReleaseOf(
   movie: MovieDetails & MovieReleaseDates,
 ): UpcomingReleaseDate | undefined {
@@ -134,6 +149,7 @@ export function fromMovieDetails(movie: MovieDetails): MovieDetailsView {
     runtimeMinutes: positiveNumber(movie.runtime),
     status: movie.status ?? undefined,
     upcomingRelease: upcomingReleaseOf(movie),
+    isReleaseDateUnknown: isReleaseDateUnknown(movie),
     budget: positiveNumber(movie.budget),
     revenue: positiveNumber(movie.revenue),
   };

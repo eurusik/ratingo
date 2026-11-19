@@ -173,11 +173,12 @@ describe('CalendarView', () => {
     expect(await screen.findByText('Дюна')).toBeInTheDocument();
     expect(screen.getAllByText('в кіно')).toHaveLength(2);
     expect(screen.getByText('Ще 3 фільми цього дня')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Нагадати про вихід: Дюна' })).toBeInTheDocument();
-    expect(screen.getByText('Аврора')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Зберегти «Дюна»' })).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Нагадати про вихід: Аврора' }),
+      screen.queryByRole('button', { name: 'Нагадати про вихід: Дюна' }),
     ).not.toBeInTheDocument();
+    expect(screen.getByText('Аврора')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Зберегти «Аврора»' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Фільми' })).toHaveAttribute('aria-current', 'page');
     expect(window.location.search).toBe('?type=movie');
     expect(calendarApi.getRange).toHaveBeenCalledWith(

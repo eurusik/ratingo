@@ -83,11 +83,8 @@ export interface MediaReminder {
   toggle: () => void;
 }
 
-export function useMediaReminder(media: ReminderMedia, trigger: ReminderTrigger): MediaReminder {
-  const { dict } = useTranslation();
-  const queryClient = useQueryClient();
+function useReminderState(media: ReminderMedia, trigger: ReminderTrigger) {
   const { user, isAuthenticated } = useAuth();
-  const runSignedIn = useSignedInAction();
   const queryKey = remindersKey(user?.id ?? null);
   const { data } = useQuery({
     queryKey,
@@ -96,7 +93,18 @@ export function useMediaReminder(media: ReminderMedia, trigger: ReminderTrigger)
     staleTime: REMINDERS_STALE_MS,
   });
   const knownIsOn = data?.[trigger].has(media.mediaItemId) ?? media.isReminderSet ?? false;
-  const isOn = isAuthenticated && knownIsOn;
+  return { queryKey, isOn: isAuthenticated && knownIsOn };
+}
+
+export function useIsReminderOn(media: ReminderMedia, trigger: ReminderTrigger): boolean {
+  return useReminderState(media, trigger).isOn;
+}
+
+export function useMediaReminder(media: ReminderMedia, trigger: ReminderTrigger): MediaReminder {
+  const { dict } = useTranslation();
+  const queryClient = useQueryClient();
+  const runSignedIn = useSignedInAction();
+  const { queryKey, isOn } = useReminderState(media, trigger);
   const copy = reminderCopy(dict, trigger);
 
   const { mutate, isPending } = useMutation({
