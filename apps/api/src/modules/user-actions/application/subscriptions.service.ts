@@ -4,6 +4,7 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { startOfUtcDay } from '@/common/utils/date.util';
 import { parseSeasonFromEpisodeKey } from '@/modules/ingestion/public';
 import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
+import { isAwaitingPremiere } from '@/modules/shared/show-premiere';
 
 import { SUBSCRIPTION_CONTEXT } from '../domain/constants/subscription.constants';
 import { type UserSubscription, type SubscriptionTrigger } from '../domain/entities';
@@ -26,7 +27,6 @@ import {
 } from '../domain/repositories/user-subscription.repository.interface';
 
 import { pendingMovieReleaseTriggers } from './movie-release-triggers';
-import { isAwaitingPremiere } from './show-premiere';
 
 export interface SubscribePayload {
   userId: string;
