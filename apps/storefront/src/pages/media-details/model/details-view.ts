@@ -66,6 +66,8 @@ export interface ShowDetailsView extends DetailsBase {
   episodeCount?: number;
   status?: ShowStatus;
   lastAirDate?: string;
+  premiereDate?: string;
+  isPremiereDateUnknown: boolean;
 }
 
 export type MediaDetailsView = MovieDetailsView | ShowDetailsView;
@@ -155,7 +157,22 @@ export function fromMovieDetails(movie: MovieDetails): MovieDetailsView {
   };
 }
 
-export function fromShowDetails(show: ShowDetails): ShowDetailsView {
+const UNRELEASED_SHOW_STATUSES: ReadonlySet<ShowStatus> = new Set([
+  'Planned',
+  'In Production',
+  'Pilot',
+]);
+
+function premiereDateOf(show: ShowDetails, now: Date): string | undefined {
+  if (!show.releaseDate) return undefined;
+  return Date.parse(show.releaseDate) > now.getTime() ? show.releaseDate : undefined;
+}
+
+function isPremiereDateUnknown(show: ShowDetails): boolean {
+  return !show.releaseDate && show.status != null && UNRELEASED_SHOW_STATUSES.has(show.status);
+}
+
+export function fromShowDetails(show: ShowDetails, now: Date): ShowDetailsView {
   return {
     ...toBase(show),
     type: 'show',
@@ -165,5 +182,7 @@ export function fromShowDetails(show: ShowDetails): ShowDetailsView {
     episodeCount: positiveNumber(show.totalEpisodes),
     status: show.status ?? undefined,
     lastAirDate: show.lastAirDate ?? undefined,
+    premiereDate: premiereDateOf(show, now),
+    isPremiereDateUnknown: isPremiereDateUnknown(show),
   };
 }

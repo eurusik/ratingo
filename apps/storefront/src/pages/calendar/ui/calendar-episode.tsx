@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import { cn } from '@ratingo/web-core/lib';
 import { EpisodeStill } from '@/entities/episode';
 import { ReminderToggle } from '@/features/media-reminder';
+import { SaveButton } from '@/features/save-to-library';
 import type { CalendarEpisode } from '@/shared/api';
 import { showSeasonRoute } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
@@ -128,6 +129,16 @@ export const CalendarEpisodeItem = memo(function CalendarEpisodeItem({
         <ReminderToggle media={{ mediaItemId: episode.showId, title: episode.showTitle }} />
       ) : null}
       {action === 'start' ? <StartWatchingButton episode={episode} /> : null}
+      {action === 'save' ? (
+        <SaveButton
+          media={{
+            mediaItemId: episode.showId,
+            title: episode.showTitle,
+            slug: episode.showSlug,
+            type: 'show',
+          }}
+        />
+      ) : null}
     </li>
   );
 });

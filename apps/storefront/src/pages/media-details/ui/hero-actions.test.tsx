@@ -206,6 +206,20 @@ describe('HeroActions', () => {
     expect(screen.queryByRole('button', { name: 'Оцінити' })).not.toBeInTheDocument();
   });
 
+  it.each(['dated', 'undated'] as const)(
+    'offers want-to-watch and the episode reminder for a %s show that is not out yet',
+    async (upcoming) => {
+      signIn(true);
+      renderActions({ ...SHOGUN, upcoming });
+
+      expect(await screen.findByRole('button', { name: 'Хочу подивитись' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Нагадати/ })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Нагадати про вихід/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Ще не дивишся?' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Оцінити/ })).not.toBeInTheDocument();
+    },
+  );
+
   it('asks a guest to sign in before rating', async () => {
     signIn(false);
     renderActions(DUNE);

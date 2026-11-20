@@ -405,6 +405,7 @@
       "new_season": "{title} — повернувся сезон {season}",
       "new_season_unknown": "{title} — повертається новий сезон",
       "new_episode": "{title} — вийшла серія {code}",
+      "series_premiere": "{title} — прем’єра серіалу",
       "status_changed": "{title} — оголошено дату виходу"
     },
     "sub": {
@@ -742,7 +743,9 @@
     "upcoming": {
       "release": "Вихід {date}",
       "dateUnknown": "Дата виходу ще невідома",
-      "noScore": "Фільм ще не вийшов — оцінки з’являться після прем’єри"
+      "noScore": "Фільм ще не вийшов — оцінки з’являться після прем’єри",
+      "premiere": "Прем’єра {date}",
+      "noScoreShow": "Серіал ще не вийшов — оцінки з’являться після прем’єри"
     },
     "actions": {
       "rate": "Оцінити",

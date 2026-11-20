@@ -18,14 +18,15 @@ import { ShowTracking } from './show-tracking';
 
 export type { ActionMedia } from '../model/action-media';
 
-function UpcomingMovieActions({ media }: { media: ActionMedia }) {
+function UpcomingActions({ media }: { media: ActionMedia }) {
+  const isShow = media.type === 'show';
   return (
     <div className="flex items-center gap-2.5">
       <WantToWatchButton media={media} className="flex-1 md:flex-none" />
-      {media.upcoming === 'dated' ? (
+      {isShow || media.upcoming === 'dated' ? (
         <ReminderToggle
           media={{ mediaItemId: media.mediaItemId, title: media.title }}
-          trigger="release"
+          trigger={isShow ? 'new_episode' : 'release'}
           look="button"
         />
       ) : null}
@@ -92,8 +93,8 @@ function ShowActions({ media }: { media: ActionMedia }) {
 }
 
 function MediaActions({ media }: { media: ActionMedia }) {
+  if (media.upcoming) return <UpcomingActions media={media} />;
   if (media.type === 'show') return <ShowActions media={media} />;
-  if (media.upcoming) return <UpcomingMovieActions media={media} />;
   return <MovieActions media={media} />;
 }
 

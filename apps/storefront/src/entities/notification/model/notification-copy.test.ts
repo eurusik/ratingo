@@ -26,6 +26,15 @@ describe('notification copy', () => {
     expect(text).not.toContain('S4E3');
   });
 
+  it('calls the first episode of a show its premiere', () => {
+    expect(
+      notificationText(
+        notification({ trigger: 'new_episode', payload: { episodeKey: 'S1E1' } }),
+        uk,
+      ),
+    ).toBe('Анора — прем’єра серіалу');
+  });
+
   it('names the season when it is known', () => {
     expect(
       notificationText(notification({ trigger: 'new_season', payload: { seasonNumber: 4 } }), uk),

@@ -27,9 +27,10 @@ function reviewedMediaOf({ mediaItemId, type, slug, title }: View): ReviewedMedi
 }
 
 function upcomingKindOf(view: View): UpcomingKind | undefined {
-  if (view.type !== 'movie') return undefined;
-  if (view.upcomingRelease) return 'dated';
-  return view.isReleaseDateUnknown ? 'undated' : undefined;
+  const isDated = view.type === 'movie' ? Boolean(view.upcomingRelease) : Boolean(view.premiereDate);
+  if (isDated) return 'dated';
+  const isUndated = view.type === 'movie' ? view.isReleaseDateUnknown : view.isPremiereDateUnknown;
+  return isUndated ? 'undated' : undefined;
 }
 
 function actionMediaOf(view: View, trackingState: TrackingState | undefined): ActionMedia {
@@ -38,6 +39,7 @@ function actionMediaOf(view: View, trackingState: TrackingState | undefined): Ac
   }
   return {
     ...reviewedMediaOf(view),
+    upcoming: upcomingKindOf(view),
     trackingState,
     showId: view.showId,
     seasons: view.seasons,

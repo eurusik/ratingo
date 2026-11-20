@@ -405,6 +405,7 @@
       "new_season": "{title} is back with season {season}",
       "new_season_unknown": "{title} has a new season coming",
       "new_episode": "{title}: episode {code} is out",
+      "series_premiere": "{title}: the series premiere is out",
       "status_changed": "{title}: release date announced"
     },
     "sub": {
@@ -742,7 +743,9 @@
     "upcoming": {
       "release": "Out {date}",
       "dateUnknown": "Release date not announced yet",
-      "noScore": "Not out yet — ratings will appear after the premiere"
+      "noScore": "Not out yet — ratings will appear after the premiere",
+      "premiere": "Premieres {date}",
+      "noScoreShow": "Not out yet — ratings will appear after the premiere"
     },
     "actions": {
       "rate": "Rate",

@@ -35,6 +35,7 @@ type NotificationTexts = Dictionary['notifications']['text'];
 
 const HOME_COUNTRY = 'UA';
 const US_COUNTRY = 'US';
+const SERIES_PREMIERE_KEY = 'S1E1';
 
 function releaseTemplate(item: NotificationItem, text: NotificationTexts): string {
   const kind = item.payload?.releaseKind;
@@ -58,6 +59,9 @@ export function notificationText(item: NotificationItem, dict: Dictionary): stri
       : interpolate(text.new_season, { title, season });
   }
   if (item.trigger === 'new_episode') {
+    if (item.payload?.episodeKey === SERIES_PREMIERE_KEY) {
+      return interpolate(text.series_premiere, { title });
+    }
     return interpolate(text.new_episode, {
       title,
       code: episodeLabel(item.payload?.episodeKey, dict),

@@ -106,16 +106,19 @@ describe('fromMovieDetails', () => {
 });
 
 describe('fromShowDetails', () => {
+  const NOW = new Date('2026-11-20T12:00:00.000Z');
+  const SHOW = {
+    ...MOVIE,
+    showId: 'show-1',
+    seasons: [{ number: 1, episodes: [{ id: 'e1', number: 1 }] }],
+    totalSeasons: 2,
+    totalEpisodes: 20,
+    status: 'Returning Series',
+    lastAirDate: '2026-10-30T12:00:00.000Z',
+  } as unknown as ShowDetails;
+
   it('carries seasons, episodes and the show status', () => {
-    const show = fromShowDetails({
-      ...MOVIE,
-      showId: 'show-1',
-      seasons: [{ number: 1, episodes: [{ id: 'e1', number: 1 }] }],
-      totalSeasons: 2,
-      totalEpisodes: 20,
-      status: 'Returning Series',
-      lastAirDate: '2026-10-30T12:00:00.000Z',
-    } as unknown as ShowDetails);
+    const show = fromShowDetails(SHOW, NOW);
 
     expect(show).toMatchObject({
       type: 'show',
@@ -125,5 +128,35 @@ describe('fromShowDetails', () => {
       episodeCount: 20,
       status: 'Returning Series',
     });
+  });
+
+  it('has no premiere once the show is out', () => {
+    const show = fromShowDetails(SHOW, NOW);
+    expect(show.premiereDate).toBeUndefined();
+    expect(show.isPremiereDateUnknown).toBe(false);
+  });
+
+  it('knows the premiere date of a show that is not out yet', () => {
+    const show = fromShowDetails(
+      { ...SHOW, status: 'In Production', releaseDate: '2027-02-10T00:00:00.000Z' },
+      NOW,
+    );
+    expect(show.premiereDate).toBe('2027-02-10T00:00:00.000Z');
+    expect(show.isPremiereDateUnknown).toBe(false);
+  });
+
+  it.each([
+    ['Planned', true],
+    ['In Production', true],
+    ['Pilot', true],
+    ['Returning Series', false],
+    ['Ended', false],
+  ])('treats an undated %s show as date unknown: %s', (status, isUnknown) => {
+    const show = fromShowDetails(
+      { ...SHOW, status, releaseDate: null } as unknown as ShowDetails,
+      NOW,
+    );
+    expect(show.isPremiereDateUnknown).toBe(isUnknown);
+    expect(show.premiereDate).toBeUndefined();
   });
 });
