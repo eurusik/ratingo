@@ -14,7 +14,7 @@ export const UPCOMING_COUNT = 10;
 
 export const PREMIERES_COUNT = 20;
 
-const MIN_PREMIERES = 5;
+const MIN_PREMIERES_TO_SHOW = 5;
 
 const TOP_THREE_COUNT = 3;
 
@@ -152,7 +152,7 @@ export interface PremiereRelease {
 }
 
 export function toPremiereRail(shows: readonly AnticipatedShow[]): PremiereRelease[] {
-  if (shows.length < MIN_PREMIERES) return [];
+  if (shows.length < MIN_PREMIERES_TO_SHOW) return [];
   return shows.map((show) => ({
     mediaItemId: show.mediaItemId,
     slug: show.slug,

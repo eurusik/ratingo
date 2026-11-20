@@ -1,19 +1,26 @@
 'use client';
 
-import type { ComponentProps } from 'react';
 import { formatReleaseBadge, formatReleaseDate, MediaPoster } from '@/entities/media';
 import { SaveButton } from '@/features/save-to-library';
+import type { MediaType } from '@/shared/api';
 import { mediaRoute } from '@/shared/config';
 import { SHARED_ART_SOURCE } from '@/shared/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { ForwardLink } from '@/shared/ui';
 
+export interface ReleaseTileMedia {
+  mediaItemId: string;
+  title: string;
+  slug: string;
+  type: MediaType;
+}
+
 interface ReleaseTileProps {
-  media: ComponentProps<typeof SaveButton>['media'];
+  media: ReleaseTileMedia;
   posterUrl?: string;
   date: string;
   dateLabel: string;
-  note: string;
+  note?: string;
   onOpen: () => void;
 }
 
@@ -43,7 +50,7 @@ export function ReleaseTile({ media, posterUrl, date, dateLabel, note, onOpen }:
         <span className="sr-only">
           {interpolate(dateLabel, { date: formatReleaseDate(locale, date) })}
         </span>
-        <span className="truncate text-xs text-muted">{note}</span>
+        {note ? <span className="truncate text-xs text-muted">{note}</span> : null}
       </ForwardLink>
       <div className="absolute end-1 top-1 z-10">
         <SaveButton media={media} tone="overlay" />

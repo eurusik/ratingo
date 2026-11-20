@@ -315,12 +315,11 @@ describe('AnticipatedPremieres', () => {
     premiereDate: '2026-12-25T00:00:00.000Z',
   };
 
-  it('shows the premiere day, the show note and a link to the show calendar', () => {
+  it('shows the premiere day and links to the show and the show calendar', () => {
     renderIn(<AnticipatedPremieres premieres={[premiere]} />);
 
     expect(screen.getByRole('heading', { name: uk.home.premieres })).toBeInTheDocument();
     expect(screen.getByText('25 груд')).toBeInTheDocument();
-    expect(screen.getByText(uk.home.premiereNote)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Гаррі Поттер/ })).toHaveAttribute(
       'href',
       '/shows/harry-potter',
