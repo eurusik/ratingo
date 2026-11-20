@@ -22,7 +22,7 @@ const REMINDER_EVENTS = {
   premiere: 'premiere_reminder',
 } as const satisfies Record<ReminderTrigger, string>;
 
-type ReminderCopy = Pick<Dictionary['reminder'], 'remind' | 'label' | 'on' | 'off'>;
+type ReminderCopy = Pick<Dictionary['reminder'], 'remind' | 'active' | 'label' | 'on' | 'off'>;
 
 export function reminderCopy(dict: Dictionary, trigger: ReminderTrigger): ReminderCopy {
   return trigger === 'new_episode' ? dict.reminder : dict.reminder[trigger];

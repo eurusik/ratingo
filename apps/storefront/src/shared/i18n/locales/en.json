@@ -408,11 +408,13 @@
       "new_episode": "{title}: episode {code} is out",
       "premiere": "{title}: the series premiere is out",
       "premiere_batch": "{title}: premiere, episodes 1–{last} are out",
-      "status_changed": "{title}: release date announced"
+      "status_changed": "{title}: release date announced",
+      "status_changed_show": "{title}: premiere date announced"
     },
     "sub": {
       "fromPlan": "From your Want to watch",
       "airDate": "Out {date}",
+      "premiereDate": "Premieres {date}",
       "remind": "We'll remind you on release day"
     },
     "footnote": "New episodes of what you watch live in My. You can turn on notifications for them in settings.",
@@ -1217,18 +1219,21 @@
   },
   "reminder": {
     "remind": "Remind me",
+    "active": "Reminder on",
     "label": "Remind me about new episodes: {title}",
     "on": "We'll remind you about new episodes: {title}",
     "off": "Reminder turned off: {title}",
     "failed": "Couldn't change the reminder.",
     "release": {
       "remind": "Remind me",
+      "active": "Reminder on",
       "label": "Remind me when it’s out: {title}",
       "on": "We’ll remind you when it’s out: {title}",
       "off": "Reminder turned off: {title}"
     },
     "premiere": {
       "remind": "Remind me",
+      "active": "Reminder on",
       "label": "Remind me about the premiere: {title}",
       "on": "We’ll remind you about the premiere: {title}",
       "off": "Reminder turned off: {title}"

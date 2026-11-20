@@ -49,14 +49,18 @@ export function ReminderToggle({
       size={look === 'text' ? 'sm' : 'md'}
       variant={buttonVariant(look, isOn)}
       aria-pressed={isOn}
-      aria-label={isIconOnly ? interpolate(copy.label, { title: media.title }) : undefined}
+      aria-label={
+        isIconOnly ? interpolate(isOn ? copy.on : copy.label, { title: media.title }) : undefined
+      }
       onPress={toggle}
       className={cn(LOOK_CLASS[look], isOn && 'text-accent', className)}
     >
       <Icon aria-hidden className="size-4.5" />
       {isIconOnly ? null : (
         <>
-          <span className={cn(look === 'button' && 'max-md:sr-only')}>{copy.remind}</span>
+          <span className={cn(look === 'button' && 'max-md:sr-only')}>
+            {isOn ? copy.active : copy.remind}
+          </span>
           <span className="sr-only">{`: ${media.title}`}</span>
         </>
       )}

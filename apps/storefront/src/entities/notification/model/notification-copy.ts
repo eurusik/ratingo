@@ -69,6 +69,9 @@ export function notificationText(item: NotificationItem, dict: Dictionary): stri
       : interpolate(text.new_season, { title, season });
   }
   if (item.trigger === 'premiere') return premiereText(item, text, title);
+  if (item.trigger === 'status_changed' && item.mediaSummary.type === 'show') {
+    return interpolate(text.status_changed_show, { title });
+  }
   if (item.trigger === 'new_episode') {
     return interpolate(text.new_episode, {
       title,
@@ -93,7 +96,9 @@ export function notificationDetail(
   if (item.trigger === 'release' || item.trigger === 'on_streaming') return sub.fromPlan;
   if (item.trigger === 'status_changed') {
     const airDate = item.payload?.airDate;
-    return airDate ? interpolate(sub.airDate, { date: formatDay(locale, airDate) }) : sub.remind;
+    if (!airDate) return sub.remind;
+    const template = item.mediaSummary.type === 'show' ? sub.premiereDate : sub.airDate;
+    return interpolate(template, { date: formatDay(locale, airDate) });
   }
   return undefined;
 }
