@@ -1,7 +1,7 @@
 import { Skeleton } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import type { TrackingState } from '@/entities/episode';
-import { ActionsSkeleton } from './actions-skeleton';
+import { ActionsSkeleton, MoreMenuSkeleton } from './actions-skeleton';
 
 const CARD = 'flex flex-col gap-3 rounded-3xl bg-surface/45 p-4';
 
@@ -26,6 +26,7 @@ function StartSkeleton() {
           <Skeleton className="h-12 flex-1 rounded-full md:w-48 md:flex-none" />
           <Skeleton className="h-12 w-28 rounded-full" />
         </div>
+        <MoreMenuSkeleton />
       </div>
     </div>
   );
@@ -55,7 +56,10 @@ function WatchingSkeleton({ hasUpcoming }: { hasUpcoming: boolean }) {
           />
         ) : null}
       </div>
-      <Skeleton className="h-13 w-full rounded-full md:w-32" />
+      <div className="flex items-center gap-2.5">
+        <Skeleton className="h-13 w-full rounded-full md:w-32" />
+        <MoreMenuSkeleton />
+      </div>
     </div>
   );
 }

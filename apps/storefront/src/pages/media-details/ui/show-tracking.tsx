@@ -29,7 +29,7 @@ import { useRememberTracking } from '../model/use-remember-tracking';
 import { useRateMedia } from '../model/use-rate-media';
 import type { ActionMedia } from '../model/action-media';
 import { RatingTrigger, type TriggerLook } from './rating-trigger';
-import { DesktopShare } from './share-button';
+import { DesktopMoreMenu } from './more-menu';
 import { TrackingCard } from './tracking-card';
 import { RatingDialog } from './rating-dialog';
 import { ShowActionsSkeleton } from './show-actions-skeleton';
@@ -102,7 +102,7 @@ function StartCard({ media, onWatchedUntil }: { media: ActionMedia; onWatchedUnt
               ) : null}
               <RateAction media={media} look="compactScore" />
             </div>
-            <DesktopShare media={media} />
+            <DesktopMoreMenu media={media} />
           </div>
         </>
       )}
@@ -284,7 +284,7 @@ function EpisodeTracking({ media, showId, seasons }: TrackedShow) {
           />
           <div className="flex items-center gap-2.5 *:flex-1 md:*:flex-none">
             <RateAction media={media} look="myScore" />
-            <DesktopShare media={media} />
+            <DesktopMoreMenu media={media} />
           </div>
         </div>
       ) : (
