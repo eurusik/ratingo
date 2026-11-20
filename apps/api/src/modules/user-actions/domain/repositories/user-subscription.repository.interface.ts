@@ -25,6 +25,7 @@ export interface UpsertSubscriptionData {
   lastNotifiedSeasonNumber?: number | null;
   /** Initial dedup marker for new_episode trigger. */
   lastNotifiedEpisodeKey?: string | null;
+  knownPremiereDate?: Date | null;
 }
 
 /**
@@ -54,6 +55,7 @@ export interface AutoPlanActivation {
   userId: string;
   mediaItemId: string;
   trigger: SubscriptionTrigger;
+  knownPremiereDate?: Date | null;
 }
 
 export type MovieReleaseTrigger =
@@ -177,7 +179,10 @@ export interface IUserSubscriptionRepository {
 
   claimPremieres(mediaItemId: string): Promise<NotifiedSubscription[]>;
 
-  findAwaitingPremiere(mediaItemId: string): Promise<NotifiedSubscription[]>;
+  claimPremiereDateAnnouncements(
+    mediaItemId: string,
+    premiereDate: Date,
+  ): Promise<NotifiedSubscription[]>;
 
   /**
    * Deactivates all new_season/new_episode subscriptions for a show

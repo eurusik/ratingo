@@ -7,12 +7,14 @@ import {
   formatEpisodeKey,
   formatSeasonKey,
   formatDateToIso,
+  parseSeasonFromEpisodeKey,
 } from '@/modules/ingestion/domain/interfaces/show-sync-diff.interface';
 import {
   TRACKED_SHOW_REPOSITORY,
   type ITrackedShowRepository,
   type TrackedShow,
 } from '@/modules/ingestion/domain/repositories/tracked-show.repository.interface';
+import { SPECIALS_SEASON_NUMBER } from '@/modules/ingestion/ingestion.constants';
 import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 
 import { SyncMediaService } from './sync-media.service';
@@ -34,6 +36,11 @@ interface ShowSnapshot {
  * SubscriptionTriggerService handles dedup via atomic UPDATE conditions
  * (lastNotifiedEpisodeKey, lastNotifiedSeasonNumber).
  */
+function hasAiredRegularEpisode(lastEpisodeKey: string | null): boolean {
+  const season = parseSeasonFromEpisodeKey(lastEpisodeKey);
+  return season !== null && season > SPECIALS_SEASON_NUMBER;
+}
+
 @Injectable()
 export class TrackedSyncService {
   private readonly logger = new Logger(TrackedSyncService.name);
@@ -63,7 +70,7 @@ export class TrackedSyncService {
       return createEmptyDiff(tmdbId, beforeStatus?.mediaItemId ?? '');
     }
 
-    return this.buildCurrentStateDiff(tmdbId, snapshot, beforeStatus);
+    return this.buildCurrentStateDiff(tmdbId, snapshot, beforeStatus?.status ?? null);
   }
 
   private async getShowStatus(tmdbId: number): Promise<TrackedShow | null> {
@@ -111,9 +118,8 @@ export class TrackedSyncService {
   private buildCurrentStateDiff(
     tmdbId: number,
     snapshot: ShowSnapshot,
-    before: TrackedShow | null,
+    previousStatus: string | null,
   ): ShowSyncDiff {
-    const previousStatus = before?.status ?? null;
     const diff: ShowSyncDiff = {
       tmdbId,
       mediaItemId: snapshot.mediaItemId,
@@ -148,10 +154,10 @@ export class TrackedSyncService {
       }
     }
 
-    const announcedPremiere = this.announcedPremiereDate(before, snapshot);
-    if (announcedPremiere) {
+    const upcomingPremiere = this.upcomingPremiereDate(snapshot);
+    if (upcomingPremiere) {
       diff.hasChanges = true;
-      diff.changes.premiereDateAnnounced = { airDate: announcedPremiere };
+      diff.changes.upcomingPremiere = { airDate: upcomingPremiere };
     }
 
     // Status change: still use before/after comparison (sync may update status from TMDB)
@@ -169,11 +175,9 @@ export class TrackedSyncService {
     return diff;
   }
 
-  private announcedPremiereDate(before: TrackedShow | null, snapshot: ShowSnapshot): string | null {
-    const { firstAirDate, lastEpisodeKey } = snapshot;
-    const wasUndated = before !== null && before.firstAirDate === null;
-    if (!wasUndated || !firstAirDate || lastEpisodeKey) return null;
-    if (firstAirDate.getTime() <= this.clock.now().getTime()) return null;
+  private upcomingPremiereDate({ firstAirDate, lastEpisodeKey }: ShowSnapshot): string | null {
+    if (!firstAirDate || firstAirDate.getTime() <= this.clock.now().getTime()) return null;
+    if (hasAiredRegularEpisode(lastEpisodeKey)) return null;
     return formatDateToIso(firstAirDate);
   }
 }

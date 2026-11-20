@@ -58,7 +58,7 @@ interface ShowSyncChanges {
    * Next air date changed.
    * Informational only, no notification triggered.
    */
-  premiereDateAnnounced?: {
+  upcomingPremiere?: {
     airDate: string;
   };
 

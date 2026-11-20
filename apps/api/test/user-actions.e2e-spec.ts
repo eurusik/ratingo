@@ -348,7 +348,7 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
     return [];
   }
 
-  async findAwaitingPremiere(): Promise<[]> {
+  async claimPremiereDateAnnouncements(): Promise<[]> {
     return [];
   }
 

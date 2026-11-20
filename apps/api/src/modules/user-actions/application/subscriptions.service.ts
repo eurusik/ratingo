@@ -61,6 +61,7 @@ export class SubscriptionsService {
     const initialMarkers: {
       lastNotifiedSeasonNumber?: number | null;
       lastNotifiedEpisodeKey?: string | null;
+      knownPremiereDate?: Date | null;
     } = {};
 
     if (
@@ -77,6 +78,10 @@ export class SubscriptionsService {
       if (trigger !== SUBSCRIPTION_TRIGGER.NEW_SEASON) {
         initialMarkers.lastNotifiedEpisodeKey = lastEpisodeKey;
       }
+    }
+
+    if (trigger === SUBSCRIPTION_TRIGGER.PREMIERE) {
+      initialMarkers.knownPremiereDate = await this.knownPremiereDateOf(mediaItemId);
     }
 
     const subscription = await this.subscriptionRepo.upsert({
@@ -174,13 +179,24 @@ export class SubscriptionsService {
     const facts = await this.showStatePort.findShowPremiereFacts(mediaItemId, now);
     if (!facts || !isAwaitingPremiere(facts, now)) return;
 
-    await this.subscribeForPlan(userId, mediaItemId, [SUBSCRIPTION_TRIGGER.PREMIERE]);
+    await this.subscribeForPlan(
+      userId,
+      mediaItemId,
+      [SUBSCRIPTION_TRIGGER.PREMIERE],
+      facts.firstAirDate,
+    );
+  }
+
+  private async knownPremiereDateOf(mediaItemId: string): Promise<Date | null> {
+    const facts = await this.showStatePort.findShowPremiereFacts(mediaItemId, this.clock.now());
+    return facts?.firstAirDate ?? null;
   }
 
   private async subscribeForPlan(
     userId: string,
     mediaItemId: string,
     triggers: SubscriptionTrigger[],
+    knownPremiereDate: Date | null = null,
   ): Promise<void> {
     if (triggers.length === 0) return;
 
@@ -195,6 +211,7 @@ export class SubscriptionsService {
         userId,
         mediaItemId,
         trigger,
+        knownPremiereDate,
       });
       if (!activated) continue;
       await this.actionRepo.create({

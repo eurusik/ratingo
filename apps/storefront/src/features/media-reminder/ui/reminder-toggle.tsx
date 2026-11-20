@@ -42,6 +42,7 @@ export function ReminderToggle({
   const copy = reminderCopy(dict, trigger);
   const Icon = isOn ? BellRing : Bell;
   const isIconOnly = look === 'icon';
+  const iconLabel = interpolate(isOn ? copy.on : copy.label, { title: media.title });
 
   return (
     <Button
@@ -49,9 +50,7 @@ export function ReminderToggle({
       size={look === 'text' ? 'sm' : 'md'}
       variant={buttonVariant(look, isOn)}
       aria-pressed={isOn}
-      aria-label={
-        isIconOnly ? interpolate(isOn ? copy.on : copy.label, { title: media.title }) : undefined
-      }
+      aria-label={isIconOnly ? iconLabel : undefined}
       onPress={toggle}
       className={cn(LOOK_CLASS[look], isOn && 'text-accent', className)}
     >
