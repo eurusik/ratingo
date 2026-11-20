@@ -1,11 +1,14 @@
 import type { TrendingMedia } from '@/entities/media';
 import { catalogApi, type CatalogCache, type HomeItem } from '@/shared/api';
 import {
+  PREMIERES_COUNT,
   toEpisodeRelease,
+  toPremiereRail,
   toUpcomingRelease,
   UPCOMING_COUNT,
   type EpisodeRelease,
   type Loaded,
+  type PremiereRelease,
   type UpcomingRelease,
 } from '../model/home-feed';
 import { loadReleaseList, loadTrendingList } from './home-rails';
@@ -25,6 +28,7 @@ export interface HomeFeed {
   newEpisodes: Promise<Loaded<EpisodeRelease[]>>;
   nowPlaying: Promise<Loaded<TrendingMedia[]>>;
   newOnDigital: Promise<Loaded<TrendingMedia[]>>;
+  premieres: Promise<Loaded<PremiereRelease[]>>;
   upcoming: Promise<Loaded<UpcomingRelease[]>>;
 }
 
@@ -55,6 +59,11 @@ async function loadUpcomingReleases(): Promise<UpcomingRelease[]> {
   return movies.map(toUpcomingRelease);
 }
 
+async function loadPremieres(): Promise<PremiereRelease[]> {
+  const shows = await catalogApi.getAnticipatedShows(PREMIERES_COUNT, HOME_CACHE);
+  return toPremiereRail(shows);
+}
+
 export function startHomeFeed(): HomeFeed {
   return {
     hero: settle('hero', () => catalogApi.getHomeHero(HOME_CACHE)),
@@ -62,6 +71,7 @@ export function startHomeFeed(): HomeFeed {
     newEpisodes: settle('new episodes', loadEpisodeReleases),
     nowPlaying: settle('now playing', () => loadReleaseList('nowPlaying', HOME_CACHE)),
     newOnDigital: settle('new on digital', () => loadReleaseList('newOnDigital', HOME_CACHE)),
+    premieres: settle('premieres', loadPremieres),
     upcoming: settle('upcoming', loadUpcomingReleases),
   };
 }

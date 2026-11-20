@@ -6,7 +6,8 @@ export type HomeBlock =
   | 'home_top_ten'
   | 'home_episodes'
   | 'home_releases'
-  | 'home_upcoming';
+  | 'home_upcoming'
+  | 'home_premieres';
 
 export type SignInMethod = 'email' | 'google' | 'facebook';
 
@@ -54,7 +55,7 @@ export interface AnalyticsEvents {
     media_type?: AnalyticsMediaType;
   };
   home_rail_change: { section: string; list: string };
-  calendar_open: { origin: 'home_upcoming' | 'home_episodes' };
+  calendar_open: { origin: 'home_upcoming' | 'home_episodes' | 'home_premieres' };
   share: { result: 'shared' | 'copied' | 'cancelled' | 'failed' };
   app_error: {
     kind: 'mutation' | 'query' | 'render' | 'not_found';

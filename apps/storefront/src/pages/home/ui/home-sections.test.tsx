@@ -7,8 +7,9 @@ import { openSearch } from '@/features/search';
 import { openAuth } from '@/shared/auth';
 import { I18nProvider, getDictionary, type Locale } from '@/shared/i18n';
 import { loadReleaseList, loadTrendingList } from '../api/home-rails';
-import type { EpisodeRelease, UpcomingRelease } from '../model/home-feed';
+import type { EpisodeRelease, PremiereRelease, UpcomingRelease } from '../model/home-feed';
 import { RELEASE_LISTS, TOP_TEN_LISTS, startRail } from '../model/rail-start';
+import { AnticipatedPremieres } from './anticipated-premieres';
 import { HeroBanner } from './hero-banner';
 import { HomeOutage } from './home-outage';
 import { HomeSectionError } from './home-section-error';
@@ -305,6 +306,58 @@ describe('HomeOutage', () => {
   });
 });
 
+describe('AnticipatedPremieres', () => {
+  const premiere: PremiereRelease = {
+    mediaItemId: 'hp',
+    slug: 'harry-potter',
+    title: 'Гаррі Поттер',
+    posterUrl: 'https://image.tmdb.org/t/p/w342/hp.jpg',
+    premiereDate: '2026-12-25T00:00:00.000Z',
+  };
+
+  it('shows the premiere day, the show note and a link to the show calendar', () => {
+    renderIn(<AnticipatedPremieres premieres={[premiere]} />);
+
+    expect(screen.getByRole('heading', { name: uk.home.premieres })).toBeInTheDocument();
+    expect(screen.getByText('25 груд')).toBeInTheDocument();
+    expect(screen.getByText(uk.home.premiereNote)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Гаррі Поттер/ })).toHaveAttribute(
+      'href',
+      '/shows/harry-potter',
+    );
+    expect(screen.getByRole('link', { name: uk.home.calendarLabel.show })).toHaveAttribute(
+      'href',
+      '/calendar',
+    );
+  });
+
+  it('reports opening a show and the show calendar', () => {
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    renderIn(<AnticipatedPremieres premieres={[premiere]} />);
+
+    fireEvent.click(screen.getByRole('link', { name: /Гаррі Поттер/ }), { metaKey: true });
+    fireEvent.click(screen.getByRole('link', { name: uk.home.calendarLabel.show }), {
+      metaKey: true,
+    });
+
+    expect(gtag).toHaveBeenCalledWith('event', 'open_title', {
+      origin: 'home_premieres',
+      media_type: 'show',
+      in_catalog: 'true',
+      position: 1,
+    });
+    expect(gtag).toHaveBeenCalledWith('event', 'calendar_open', { origin: 'home_premieres' });
+    delete window.gtag;
+  });
+
+  it('renders nothing without premieres', () => {
+    const { container } = renderIn(<AnticipatedPremieres premieres={[]} />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+});
+
 describe('UpcomingMovies', () => {
   const release: UpcomingRelease = {
     mediaItemId: 'doom',
@@ -375,7 +428,12 @@ describe('opening a title from the home page', () => {
   });
 
   it.each([
-    ['home_hero', <HeroBanner key="hero" hero={ANDOR} />, /Андор/, { media_type: 'show', position: 1 }],
+    [
+      'home_hero',
+      <HeroBanner key="hero" hero={ANDOR} />,
+      /Андор/,
+      { media_type: 'show', position: 1 },
+    ],
     [
       'home_top_picks',
       <TopThree key="picks" items={[ANDOR, DUNE]} firstRank={2} />,

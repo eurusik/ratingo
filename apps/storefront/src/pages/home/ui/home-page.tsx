@@ -7,6 +7,7 @@ import {
   HeroSection,
   NewEpisodesSection,
   NewReleasesSection,
+  PremieresSection,
   TopTenSection,
   UpcomingSection,
 } from './home-sections';
@@ -65,6 +66,9 @@ export function HomePage({ locale }: { locale: Locale }) {
           </Suspense>
           <Suspense fallback={<CardRailSkeleton />}>
             <NewReleasesSection nowPlaying={feed.nowPlaying} newOnDigital={feed.newOnDigital} />
+          </Suspense>
+          <Suspense fallback={<UpcomingRailSkeleton />}>
+            <PremieresSection premieres={feed.premieres} />
           </Suspense>
           <Suspense fallback={<UpcomingRailSkeleton />}>
             <UpcomingSection upcoming={feed.upcoming} />
