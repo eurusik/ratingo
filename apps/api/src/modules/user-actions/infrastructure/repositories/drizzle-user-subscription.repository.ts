@@ -405,6 +405,30 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     );
   }
 
+  findAwaitingPremiere(mediaItemId: string): Promise<NotifiedSubscription[]> {
+    return withDbError(
+      'find subscriptions awaiting premiere',
+      this.logger,
+      () =>
+        this.db
+          .select({
+            id: schema.userSubscriptions.id,
+            userId: schema.userSubscriptions.userId,
+            mediaItemId: schema.userSubscriptions.mediaItemId,
+          })
+          .from(schema.userSubscriptions)
+          .where(
+            and(
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+              eq(schema.userSubscriptions.trigger, SUBSCRIPTION_TRIGGER.PREMIERE),
+              eq(schema.userSubscriptions.isActive, true),
+              isNull(schema.userSubscriptions.lastNotifiedEpisodeKey),
+            ),
+          ),
+      { mediaItemId },
+    );
+  }
+
   async claimPremieres(mediaItemId: string): Promise<NotifiedSubscription[]> {
     return withDbError(
       'claim show premieres',

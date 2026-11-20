@@ -58,6 +58,10 @@ interface ShowSyncChanges {
    * Next air date changed.
    * Informational only, no notification triggered.
    */
+  premiereDateAnnounced?: {
+    airDate: string;
+  };
+
   nextAirDateChanged?: {
     /** ISO date string or null */
     from: string | null;

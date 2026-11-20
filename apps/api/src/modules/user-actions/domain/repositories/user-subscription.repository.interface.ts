@@ -177,6 +177,8 @@ export interface IUserSubscriptionRepository {
 
   claimPremieres(mediaItemId: string): Promise<NotifiedSubscription[]>;
 
+  findAwaitingPremiere(mediaItemId: string): Promise<NotifiedSubscription[]>;
+
   /**
    * Deactivates all new_season/new_episode subscriptions for a show
    * that has ended or been canceled.

@@ -60,6 +60,10 @@ export class SubscriptionTriggerService {
       events.push(...(await this.handlePremiere(diff)));
     }
 
+    if (diff.changes.premiereDateAnnounced) {
+      events.push(...(await this.handlePremiereDateAnnounced(diff)));
+    }
+
     if (diff.changes.newSeason) {
       const seasonEvents = await this.handleNewSeason(diff);
       events.push(...seasonEvents);
@@ -166,6 +170,27 @@ export class SubscriptionTriggerService {
         episodeKey: newEpisode.key,
         airDate: newEpisode.airDate,
       },
+    }));
+  }
+
+  private async handlePremiereDateAnnounced(
+    diff: ShowSyncDiff,
+  ): Promise<SubscriptionNotificationEvent[]> {
+    const { premiereDateAnnounced } = diff.changes;
+    if (!premiereDateAnnounced) return [];
+
+    const awaiting = await this.subscriptionRepo.findAwaitingPremiere(diff.mediaItemId);
+    if (awaiting.length > 0) {
+      this.logger.log(
+        `Premiere date of show ${diff.tmdbId} announced: ${awaiting.length} subscriptions notified`,
+      );
+    }
+    return awaiting.map((sub) => ({
+      subscriptionId: sub.id,
+      userId: sub.userId,
+      mediaItemId: sub.mediaItemId,
+      trigger: SUBSCRIPTION_TRIGGER.STATUS_CHANGED,
+      payload: { tmdbId: diff.tmdbId, airDate: premiereDateAnnounced.airDate },
     }));
   }
 

@@ -3,6 +3,7 @@ export interface TrackedShow {
   status: string | null;
   totalSeasons: number | null;
   nextAirDate: Date | null;
+  firstAirDate: Date | null;
 }
 
 export interface AiredEpisode {

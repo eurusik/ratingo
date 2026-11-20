@@ -52,6 +52,66 @@ describe('TrackedSyncService', () => {
     });
   });
 
+  const before = (status: string | null, firstAirDate: Date | null = new Date('2024-01-01')) => ({
+    mediaItemId: 'media-1',
+    status,
+    totalSeasons: 2,
+    nextAirDate: null,
+    firstAirDate,
+  });
+
+  describe('premiere date announcement', () => {
+    const undatedSnapshot = {
+      mediaItemId: 'media-1',
+      status: 'Planned',
+      totalSeasons: 1,
+      nextAirDate: null,
+      firstAirDate: new Date('2026-03-12T00:00:00.000Z'),
+      lastEpisodeKey: null,
+      lastEpisodeAirDate: null,
+    };
+
+    it('reports a premiere date that just appeared for a show that had none', () => {
+      const diff = (service as any).buildCurrentStateDiff(
+        12345,
+        undatedSnapshot,
+        before('Planned', null),
+      );
+
+      expect(diff.hasChanges).toBe(true);
+      expect(diff.changes.premiereDateAnnounced).toEqual({ airDate: '2026-03-12' });
+    });
+
+    it.each([
+      ['the date was already known', before('Planned')],
+      ['the show was not tracked before', null],
+    ])('stays quiet when %s', (_case, previous) => {
+      const diff = (service as any).buildCurrentStateDiff(12345, undatedSnapshot, previous);
+
+      expect(diff.changes.premiereDateAnnounced).toBeUndefined();
+    });
+
+    it('stays quiet when the new date is already in the past', () => {
+      const diff = (service as any).buildCurrentStateDiff(
+        12345,
+        { ...undatedSnapshot, firstAirDate: new Date('2025-12-01T00:00:00.000Z') },
+        before('Planned', null),
+      );
+
+      expect(diff.changes.premiereDateAnnounced).toBeUndefined();
+    });
+
+    it('stays quiet when episodes are already out', () => {
+      const diff = (service as any).buildCurrentStateDiff(
+        12345,
+        { ...undatedSnapshot, lastEpisodeKey: 'S1E1', lastEpisodeAirDate: new Date('2025-12-30') },
+        before('Planned', null),
+      );
+
+      expect(diff.changes.premiereDateAnnounced).toBeUndefined();
+    });
+  });
+
   describe('buildCurrentStateDiff', () => {
     it('should report current aired episode and season', () => {
       const snapshot = {
@@ -63,7 +123,11 @@ describe('TrackedSyncService', () => {
         lastEpisodeAirDate: new Date('2025-03-01'),
       };
 
-      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
+      const diff = (service as any).buildCurrentStateDiff(
+        12345,
+        snapshot,
+        before('Returning Series'),
+      );
 
       expect(diff.hasChanges).toBe(true);
       expect(diff.changes.newEpisode).toEqual({
@@ -90,7 +154,11 @@ describe('TrackedSyncService', () => {
         lastEpisodeAirDate: null,
       };
 
-      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
+      const diff = (service as any).buildCurrentStateDiff(
+        12345,
+        snapshot,
+        before('Returning Series'),
+      );
 
       expect(diff.hasChanges).toBe(false);
       expect(diff.changes.newEpisode).toBeUndefined();
@@ -107,7 +175,11 @@ describe('TrackedSyncService', () => {
         lastEpisodeAirDate: new Date('2025-01-20'),
       };
 
-      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
+      const diff = (service as any).buildCurrentStateDiff(
+        12345,
+        snapshot,
+        before('Returning Series'),
+      );
 
       expect(diff.hasChanges).toBe(true);
       expect(diff.changes.statusChanged).toEqual({
@@ -126,7 +198,11 @@ describe('TrackedSyncService', () => {
         lastEpisodeAirDate: new Date('2025-02-10'),
       };
 
-      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
+      const diff = (service as any).buildCurrentStateDiff(
+        12345,
+        snapshot,
+        before('Returning Series'),
+      );
 
       expect(diff.changes.statusChanged).toBeUndefined();
     });
@@ -141,7 +217,11 @@ describe('TrackedSyncService', () => {
         lastEpisodeAirDate: null,
       };
 
-      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
+      const diff = (service as any).buildCurrentStateDiff(
+        12345,
+        snapshot,
+        before('Returning Series'),
+      );
 
       expect(diff.hasChanges).toBe(true);
       expect(diff.changes.statusChanged).toEqual({

@@ -22,6 +22,7 @@ interface ShowSnapshot {
   status: string | null;
   totalSeasons: number | null;
   nextAirDate: Date | null;
+  firstAirDate: Date | null;
   lastEpisodeKey: string | null; // 'S2E5' format — last AIRED episode
   lastEpisodeAirDate: Date | null;
 }
@@ -62,7 +63,7 @@ export class TrackedSyncService {
       return createEmptyDiff(tmdbId, beforeStatus?.mediaItemId ?? '');
     }
 
-    return this.buildCurrentStateDiff(tmdbId, snapshot, beforeStatus?.status ?? null);
+    return this.buildCurrentStateDiff(tmdbId, snapshot, beforeStatus);
   }
 
   private async getShowStatus(tmdbId: number): Promise<TrackedShow | null> {
@@ -97,6 +98,7 @@ export class TrackedSyncService {
         status: show.status,
         totalSeasons: show.totalSeasons,
         nextAirDate: show.nextAirDate,
+        firstAirDate: show.firstAirDate,
         lastEpisodeKey,
         lastEpisodeAirDate,
       };
@@ -109,8 +111,9 @@ export class TrackedSyncService {
   private buildCurrentStateDiff(
     tmdbId: number,
     snapshot: ShowSnapshot,
-    previousStatus: string | null,
+    before: TrackedShow | null,
   ): ShowSyncDiff {
+    const previousStatus = before?.status ?? null;
     const diff: ShowSyncDiff = {
       tmdbId,
       mediaItemId: snapshot.mediaItemId,
@@ -145,6 +148,12 @@ export class TrackedSyncService {
       }
     }
 
+    const announcedPremiere = this.announcedPremiereDate(before, snapshot);
+    if (announcedPremiere) {
+      diff.hasChanges = true;
+      diff.changes.premiereDateAnnounced = { airDate: announcedPremiere };
+    }
+
     // Status change: still use before/after comparison (sync may update status from TMDB)
     if (previousStatus !== snapshot.status && snapshot.status !== null) {
       diff.hasChanges = true;
@@ -158,5 +167,13 @@ export class TrackedSyncService {
     }
 
     return diff;
+  }
+
+  private announcedPremiereDate(before: TrackedShow | null, snapshot: ShowSnapshot): string | null {
+    const { firstAirDate, lastEpisodeKey } = snapshot;
+    const wasUndated = before !== null && before.firstAirDate === null;
+    if (!wasUndated || !firstAirDate || lastEpisodeKey) return null;
+    if (firstAirDate.getTime() <= this.clock.now().getTime()) return null;
+    return formatDateToIso(firstAirDate);
   }
 }
