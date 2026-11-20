@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { BackLink } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
-import { ShareButton } from './share-button';
+import { MoreMenu, type MoreMenuMedia } from './more-menu';
 import { WatchingNowBadge } from './watching-now-badge';
 
 const TITLE_SHOWN_FROM_PX = 260;
@@ -28,13 +28,12 @@ function useIsScrolledPast(offset: number): boolean {
 }
 
 interface DetailsTopBarProps {
-  title: string;
-  shareHref: string;
+  media: MoreMenuMedia;
   backHref: string;
   watchingLabel?: string;
 }
 
-export function DetailsTopBar({ title, shareHref, backHref, watchingLabel }: DetailsTopBarProps) {
+export function DetailsTopBar({ media, backHref, watchingLabel }: DetailsTopBarProps) {
   const { dict } = useTranslation();
   const isScrolled = useIsScrolledPast(TITLE_SHOWN_FROM_PX);
   const buttonTone = isScrolled ? 'bg-transparent' : 'bg-surface/75 backdrop-blur-xl';
@@ -60,13 +59,13 @@ export function DetailsTopBar({ title, shareHref, backHref, watchingLabel }: Det
         <div className="flex min-w-0 flex-1 justify-center">
           {isScrolled ? (
             <span aria-hidden className="truncate text-base font-bold">
-              {title}
+              {media.title}
             </span>
           ) : watchingLabel ? (
             <WatchingNowBadge label={watchingLabel} />
           ) : null}
         </div>
-        <ShareButton href={shareHref} title={title} className={`${GLASS_BUTTON} ${buttonTone}`} />
+        <MoreMenu media={media} className={`${GLASS_BUTTON} ${buttonTone}`} />
       </div>
     </div>
   );

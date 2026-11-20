@@ -3,14 +3,13 @@
 import { Bell } from 'lucide-react';
 import { useAuth } from '@ratingo/web-core/auth';
 import { ReminderToggle, type ReminderTrigger } from '@/features/media-reminder';
-import { RemoveFromLibraryButton } from '@/features/remove-from-library';
 import { SaveToWatchCta, WantToWatchButton } from '@/features/save-to-library';
 import { useTranslation } from '@/shared/i18n';
 import { useRateMedia } from '../model/use-rate-media';
 import type { ActionMedia } from '../model/action-media';
 import { ActionsSkeleton } from './actions-skeleton';
 import { RatingTrigger } from './rating-trigger';
-import { DesktopShare } from './share-button';
+import { DesktopMoreMenu } from './more-menu';
 import { TrackingCard } from './tracking-card';
 import { RatingDialog } from './rating-dialog';
 import { ShowActionsSkeleton } from './show-actions-skeleton';
@@ -35,7 +34,7 @@ function UpcomingActions({ media }: { media: ActionMedia }) {
           look="button"
         />
       ) : null}
-      <DesktopShare media={media} />
+      <DesktopMoreMenu media={media} />
     </div>
   );
 }
@@ -55,7 +54,7 @@ function MovieActions({ media }: { media: ActionMedia }) {
         rating={rating}
         trigger={<RatingTrigger rating={rating} look="watched" />}
       />
-      <DesktopShare media={media} />
+      <DesktopMoreMenu media={media} />
     </div>
   );
 }
@@ -104,10 +103,5 @@ function MediaActions({ media }: { media: ActionMedia }) {
 }
 
 export function HeroActions({ media }: { media: ActionMedia }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <MediaActions media={media} />
-      <RemoveFromLibraryButton media={media} />
-    </div>
-  );
+  return <MediaActions media={media} />;
 }

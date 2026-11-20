@@ -8,7 +8,7 @@ import { libraryApi } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { showUndoToast, track } from '@/shared/lib';
 
-export interface RemovableMedia {
+interface RemovableMedia {
   mediaItemId: string;
   title: string;
 }

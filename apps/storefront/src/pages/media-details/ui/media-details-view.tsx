@@ -5,7 +5,7 @@ import {
   type ReviewedMedia,
 } from '@/widgets/media-reviews';
 import type { TrackingState } from '@/entities/episode';
-import { HOME_ROUTE, mediaRoute } from '@/shared/config';
+import { HOME_ROUTE } from '@/shared/config';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import { hasCredits } from '../model/credits';
 import { watchingNowLabel } from '../model/details-format';
@@ -53,8 +53,7 @@ export function MediaDetailsView({ view, locale, trackingState }: MediaDetailsVi
     <article className="flex flex-col gap-7 pb-10 md:gap-10">
       <RevealAfterSkeleton />
       <DetailsTopBar
-        title={view.title}
-        shareHref={mediaRoute(view.type, view.slug)}
+        media={reviewedMediaOf(view)}
         backHref={HOME_ROUTE}
         watchingLabel={
           view.watchingNow === undefined
