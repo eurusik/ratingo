@@ -76,6 +76,25 @@ describe('episodeAction', () => {
     expect(episodeAction(episode(), { ...context, mode: 'all' })).toBe('start');
   });
 
+  it('offers to save a show whose first episode has not aired yet, in both modes', () => {
+    const premiere = { seasonNumber: 1, episodeNumber: 1, airDate: FUTURE };
+    expect(episodeAction(episode(premiere), context)).toBe('save');
+    expect(episodeAction(episode({ ...premiere, isSaved: true }), context)).toBe('save');
+    expect(episodeAction(episode(premiere), { ...context, mode: 'all', viewer: 'guest' })).toBe(
+      'save',
+    );
+  });
+
+  it('offers to start once the series premiere has aired, or for a season premiere', () => {
+    const allMode = { ...context, mode: 'all' as const };
+    expect(
+      episodeAction(episode({ seasonNumber: 1, episodeNumber: 1, airDate: AIRED }), allMode),
+    ).toBe('start');
+    expect(
+      episodeAction(episode({ seasonNumber: 3, episodeNumber: 1, airDate: FUTURE }), allMode),
+    ).toBe('start');
+  });
+
   it('hides actions while the viewer is unknown', () => {
     expect(
       episodeAction(episode({ isTracked: true, airDate: AIRED }), {

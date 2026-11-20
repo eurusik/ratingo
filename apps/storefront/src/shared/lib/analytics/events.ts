@@ -45,6 +45,7 @@ export interface AnalyticsEvents {
   episode_mark: { action: string; origin: 'sheet' | 'calendar' | 'library' };
   episode_reminder: { enabled: boolean };
   release_reminder: { enabled: boolean };
+  premiere_reminder: { enabled: boolean };
   library_action: { action: string };
   browse_change: { category: string; change: 'filter' | 'sort' | 'pool' };
   calendar_change: {

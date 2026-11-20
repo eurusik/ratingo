@@ -3,14 +3,15 @@ import { USER_MEDIA_STATE, UserMediaStateChangedEvent } from '@/modules/user-med
 import { ItemSavedForLaterEvent } from '@/modules/user-actions/domain/events/item-saved-for-later.event';
 import { type SubscriptionsService } from '../subscriptions.service';
 
-import { AutoSubscribeMovieOnPlanListener } from './auto-subscribe-movie-on-plan.listener';
+import { AutoSubscribeOnPlanListener } from './auto-subscribe-on-plan.listener';
 
-describe('AutoSubscribeMovieOnPlanListener', () => {
+describe('AutoSubscribeOnPlanListener', () => {
   const setup = () => {
     const subscriptionsService = {
       autoSubscribeForMovie: jest.fn().mockResolvedValue(undefined),
+      autoSubscribeForPremiere: jest.fn().mockResolvedValue(undefined),
     };
-    const listener = new AutoSubscribeMovieOnPlanListener(
+    const listener = new AutoSubscribeOnPlanListener(
       subscriptionsService as unknown as SubscriptionsService,
     );
     return { listener, subscriptionsService };
@@ -24,6 +25,7 @@ describe('AutoSubscribeMovieOnPlanListener', () => {
     );
 
     expect(subscriptionsService.autoSubscribeForMovie).toHaveBeenCalledWith('user-1', 'movie-1');
+    expect(subscriptionsService.autoSubscribeForPremiere).toHaveBeenCalledWith('user-1', 'movie-1');
   });
 
   it('ignores other state changes', async () => {
@@ -34,14 +36,16 @@ describe('AutoSubscribeMovieOnPlanListener', () => {
     );
 
     expect(subscriptionsService.autoSubscribeForMovie).not.toHaveBeenCalled();
+    expect(subscriptionsService.autoSubscribeForPremiere).not.toHaveBeenCalled();
   });
 
   it('auto-subscribes when a title is saved for later', async () => {
     const { listener, subscriptionsService } = setup();
 
-    await listener.onSavedForLater(new ItemSavedForLaterEvent('user-1', 'movie-1'));
+    await listener.onSavedForLater(new ItemSavedForLaterEvent('user-1', 'show-1'));
 
-    expect(subscriptionsService.autoSubscribeForMovie).toHaveBeenCalledWith('user-1', 'movie-1');
+    expect(subscriptionsService.autoSubscribeForMovie).toHaveBeenCalledWith('user-1', 'show-1');
+    expect(subscriptionsService.autoSubscribeForPremiere).toHaveBeenCalledWith('user-1', 'show-1');
   });
 
   it('keeps the save working when auto-subscribe fails', async () => {
@@ -51,5 +55,14 @@ describe('AutoSubscribeMovieOnPlanListener', () => {
     await expect(
       listener.onSavedForLater(new ItemSavedForLaterEvent('user-1', 'movie-1')),
     ).resolves.toBeUndefined();
+  });
+
+  it('still tries the show reminder when the movie one fails', async () => {
+    const { listener, subscriptionsService } = setup();
+    subscriptionsService.autoSubscribeForMovie.mockRejectedValue(new Error('db down'));
+
+    await listener.onSavedForLater(new ItemSavedForLaterEvent('user-1', 'show-1'));
+
+    expect(subscriptionsService.autoSubscribeForPremiere).toHaveBeenCalledWith('user-1', 'show-1');
   });
 });

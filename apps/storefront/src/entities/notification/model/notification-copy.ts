@@ -10,6 +10,7 @@ const KIND_TONES: Record<NotificationTrigger, NotificationTone> = {
   release: 'warning',
   on_streaming: 'warning',
   status_changed: 'default',
+  premiere: 'warning',
 };
 
 export function notificationTone(trigger: NotificationTrigger): NotificationTone {
@@ -20,18 +21,28 @@ function seasonOf(item: NotificationItem): number | undefined {
   return item.payload?.seasonNumber ?? undefined;
 }
 
-const EPISODE_KEY = /^S(\d+)E(\d+)$/i;
+type NotificationTexts = Dictionary['notifications']['text'];
 
-function episodeLabel(episodeKey: string | undefined, dict: Dictionary): string {
+const EPISODE_KEY = /^S(\d+)E(\d+)$/i;
+const FIRST_EPISODE_NUMBER = 1;
+
+type EpisodeNumbers = Record<'season' | 'episode', number>;
+
+function parseEpisodeKey(episodeKey: string | undefined): EpisodeNumbers | undefined {
   const match = episodeKey ? EPISODE_KEY.exec(episodeKey) : null;
-  if (!match) return episodeKey ?? '';
-  return interpolate(dict.episodes.episodeCode, {
-    season: Number(match[1]),
-    episode: Number(match[2]),
-  });
+  return match ? { season: Number(match[1]), episode: Number(match[2]) } : undefined;
 }
 
-type NotificationTexts = Dictionary['notifications']['text'];
+function premiereText(item: NotificationItem, text: NotificationTexts, title: string): string {
+  const last = parseEpisodeKey(item.payload?.episodeKey)?.episode;
+  if (last === undefined || last <= FIRST_EPISODE_NUMBER) return interpolate(text.premiere, { title });
+  return interpolate(text.premiere_batch, { title, last });
+}
+
+function episodeLabel(episodeKey: string | undefined, dict: Dictionary): string {
+  const numbers = parseEpisodeKey(episodeKey);
+  return numbers ? interpolate(dict.episodes.episodeCode, numbers) : (episodeKey ?? '');
+}
 
 const HOME_COUNTRY = 'UA';
 const US_COUNTRY = 'US';
@@ -57,6 +68,7 @@ export function notificationText(item: NotificationItem, dict: Dictionary): stri
       ? interpolate(text.new_season_unknown, { title })
       : interpolate(text.new_season, { title, season });
   }
+  if (item.trigger === 'premiere') return premiereText(item, text, title);
   if (item.trigger === 'new_episode') {
     return interpolate(text.new_episode, {
       title,

@@ -4,6 +4,7 @@ import type { CalendarMode } from './calendar-query';
 const VISIBLE_SHOWS_PER_DAY = 3;
 const PREMIERE_EPISODE_NUMBER = 1;
 const SPECIALS_SEASON_NUMBER = 0;
+const FIRST_SEASON_NUMBER = 1;
 
 export interface DayPlan {
   visible: CalendarEpisode[];
@@ -13,7 +14,7 @@ export interface DayPlan {
 
 export type EpisodeMark = 'premiere' | 'finale';
 
-export type EpisodeAction = 'watch' | 'remind' | 'start' | 'none';
+export type EpisodeAction = 'watch' | 'remind' | 'start' | 'save' | 'none';
 
 export type ViewerStatus = 'resolving' | 'guest' | 'signedIn';
 
@@ -57,6 +58,13 @@ function hasAired(episode: CalendarEpisode, now: number): boolean {
   return Date.parse(episode.airDate) <= now;
 }
 
+function isSeriesPremiere(episode: CalendarEpisode): boolean {
+  return (
+    episode.seasonNumber === FIRST_SEASON_NUMBER &&
+    episode.episodeNumber === PREMIERE_EPISODE_NUMBER
+  );
+}
+
 interface ActionContext {
   mode: CalendarMode;
   now: number;
@@ -71,5 +79,6 @@ export function episodeAction(
   if (viewer === 'signedIn' && episode.isTracked) {
     return hasAired(episode, now) ? 'watch' : 'remind';
   }
+  if (isSeriesPremiere(episode) && !hasAired(episode, now)) return 'save';
   return mode === 'all' || episode.isSaved ? 'start' : 'none';
 }

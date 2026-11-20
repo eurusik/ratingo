@@ -70,17 +70,18 @@ describe('fromMovieDetails', () => {
     ['without a status', null, false],
   ])('treats an undated movie that is %s accordingly', (_case, status, isUnknown) => {
     const undated = fromMovieDetails({ ...MOVIE, releaseDate: null, status } as MovieDetails);
-    expect(undated.isReleaseDateUnknown).toBe(isUnknown);
+    expect(undated.upcoming).toBe(isUnknown ? 'undated' : undefined);
     expect(undated.upcomingRelease).toBeUndefined();
   });
 
   it('knows the release date of a dated movie in production', () => {
     const dated = fromMovieDetails({ ...MOVIE, status: 'Post Production' });
-    expect(dated.isReleaseDateUnknown).toBe(false);
+    expect(dated.upcoming).not.toBe('undated');
   });
 
   it('has no upcoming release once the movie is out', () => {
     expect(view.upcomingRelease).toBeUndefined();
+    expect(view.upcoming).toBeUndefined();
   });
 
   it.each([
@@ -106,16 +107,19 @@ describe('fromMovieDetails', () => {
 });
 
 describe('fromShowDetails', () => {
+  const NOW = new Date('2026-11-20T12:00:00.000Z');
+  const SHOW = {
+    ...MOVIE,
+    showId: 'show-1',
+    seasons: [{ number: 1, episodes: [{ id: 'e1', number: 1 }] }],
+    totalSeasons: 2,
+    totalEpisodes: 20,
+    status: 'Returning Series',
+    lastAirDate: '2026-10-30T12:00:00.000Z',
+  } as unknown as ShowDetails;
+
   it('carries seasons, episodes and the show status', () => {
-    const show = fromShowDetails({
-      ...MOVIE,
-      showId: 'show-1',
-      seasons: [{ number: 1, episodes: [{ id: 'e1', number: 1 }] }],
-      totalSeasons: 2,
-      totalEpisodes: 20,
-      status: 'Returning Series',
-      lastAirDate: '2026-10-30T12:00:00.000Z',
-    } as unknown as ShowDetails);
+    const show = fromShowDetails(SHOW, NOW);
 
     expect(show).toMatchObject({
       type: 'show',
@@ -125,5 +129,50 @@ describe('fromShowDetails', () => {
       episodeCount: 20,
       status: 'Returning Series',
     });
+  });
+
+  it('has no premiere once the show is out', () => {
+    const show = fromShowDetails(SHOW, NOW);
+    expect(show.premiereDate).toBeUndefined();
+    expect(show.upcoming).toBeUndefined();
+  });
+
+  it('knows the premiere date of a show that is not out yet', () => {
+    const show = fromShowDetails(
+      { ...SHOW, status: 'In Production', releaseDate: '2027-02-10T00:00:00.000Z' },
+      NOW,
+    );
+    expect(show.premiereDate).toBe('2027-02-10T00:00:00.000Z');
+    expect(show.upcoming).toBe('dated');
+  });
+
+  it('is out once an episode has aired, even if the first air date says otherwise', () => {
+    const show = fromShowDetails(
+      {
+        ...SHOW,
+        releaseDate: '2027-02-10T00:00:00.000Z',
+        seasons: [
+          { number: 1, episodes: [{ id: 'e1', number: 1, airDate: '2026-11-01T00:00:00.000Z' }] },
+        ],
+      } as unknown as ShowDetails,
+      NOW,
+    );
+    expect(show.premiereDate).toBeUndefined();
+    expect(show.upcoming).toBeUndefined();
+  });
+
+  it.each([
+    ['Planned', true],
+    ['In Production', true],
+    ['Pilot', true],
+    ['Returning Series', false],
+    ['Ended', false],
+  ])('treats an undated %s show as date unknown: %s', (status, isUnknown) => {
+    const show = fromShowDetails(
+      { ...SHOW, status, releaseDate: null } as unknown as ShowDetails,
+      NOW,
+    );
+    expect(show.upcoming).toBe(isUnknown ? 'undated' : undefined);
+    expect(show.premiereDate).toBeUndefined();
   });
 });

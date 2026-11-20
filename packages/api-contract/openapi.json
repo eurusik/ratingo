@@ -17183,7 +17183,8 @@
               "new_season",
               "new_episode",
               "on_streaming",
-              "status_changed"
+              "status_changed",
+              "premiere"
             ]
           },
           "payload": {
@@ -17554,7 +17555,8 @@
               "new_season",
               "new_episode",
               "on_streaming",
-              "status_changed"
+              "status_changed",
+              "premiere"
             ],
             "example": "release",
             "description": "Trigger type: release, new_season, or on_streaming"
@@ -17628,7 +17630,8 @@
               "new_season",
               "new_episode",
               "on_streaming",
-              "status_changed"
+              "status_changed",
+              "premiere"
             ],
             "example": "release"
           },
@@ -17669,7 +17672,8 @@
               "new_season",
               "new_episode",
               "on_streaming",
-              "status_changed"
+              "status_changed",
+              "premiere"
             ],
             "example": "release",
             "description": "Trigger type to unsubscribe from"
@@ -17768,7 +17772,8 @@
               "new_season",
               "new_episode",
               "on_streaming",
-              "status_changed"
+              "status_changed",
+              "premiere"
             ],
             "example": "release"
           },

@@ -66,7 +66,7 @@ export class NotificationItemDto {
 
   @ApiProperty({
     example: 'new_season',
-    enum: ['release', 'new_season', 'new_episode', 'on_streaming', 'status_changed'],
+    enum: ['release', 'new_season', 'new_episode', 'on_streaming', 'status_changed', 'premiere'],
   })
   trigger: string;
 

@@ -72,6 +72,7 @@ export const subscriptionTriggerEnum = pgEnum('subscription_trigger', [
   'new_episode',
   'on_streaming',
   'status_changed',
+  'premiere',
 ]);
 
 /**
