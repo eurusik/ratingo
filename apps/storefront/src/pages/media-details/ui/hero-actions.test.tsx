@@ -158,34 +158,44 @@ describe('HeroActions', () => {
     );
   });
 
-  it('lets a viewer take a title out of the library and undo it', async () => {
+  async function openMoreMenu() {
+    fireEvent.click(await screen.findByRole('button', { name: 'Ще дії: Дюна: Частина друга' }));
+  }
+
+  it('lets a viewer take a title out of the library from the more menu and undo it', async () => {
     jest.mocked(libraryApi.getMediaState).mockResolvedValue(stateWith(80));
     signIn(true);
     renderActions(DUNE);
+    await screen.findByRole('button', { name: 'Переглянуто · 8,0. Змінити оцінку' });
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Прибрати з бібліотеки' }));
+    await openMoreMenu();
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Прибрати з бібліотеки' }));
 
     expect(
       await screen.findByText('Прибрано з бібліотеки: Дюна: Частина друга'),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Прибрати з бібліотеки' })).not.toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Оцінити' })).toBeInTheDocument();
 
     const [undo] = await screen.findAllByRole('button', { name: 'Скасувати' });
     fireEvent.click(undo!);
 
     expect(
-      await screen.findByRole('button', { name: 'Прибрати з бібліотеки' }),
+      await screen.findByRole('button', { name: 'Переглянуто · 8,0. Змінити оцінку' }),
     ).toBeInTheDocument();
     expect(libraryApi.removeFromLibrary).not.toHaveBeenCalled();
   });
 
-  it('offers no removal for a title that is not in the library', async () => {
+  it('offers only sharing in the more menu for a title that is not in the library', async () => {
     signIn(true);
     renderActions(DUNE);
+    await screen.findByRole('button', { name: 'Оцінити' });
 
-    expect(await screen.findByRole('button', { name: 'Оцінити' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Прибрати з бібліотеки' })).not.toBeInTheDocument();
+    await openMoreMenu();
+
+    expect(await screen.findByRole('menuitem', { name: 'Поділитися' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('menuitem', { name: 'Прибрати з бібліотеки' }),
+    ).not.toBeInTheDocument();
   });
 
   it('offers only want-to-watch and the release reminder for an upcoming movie', async () => {
