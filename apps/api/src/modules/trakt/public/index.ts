@@ -13,7 +13,11 @@
 
 // Ports (contracts + tokens)
 export { TraktRatingsPort, TRAKT_RATINGS_PORT } from '../domain/ports/trakt-ratings.port';
-export { TraktListsPort, TRAKT_LISTS_PORT } from '../domain/ports/trakt-lists.port';
+export {
+  AnticipatedShow,
+  TraktListsPort,
+  TRAKT_LISTS_PORT,
+} from '../domain/ports/trakt-lists.port';
 export { TraktRateLimitPort, TRAKT_RATE_LIMIT_PORT } from '../domain/ports/trakt-rate-limit.port';
 
 // Domain constants

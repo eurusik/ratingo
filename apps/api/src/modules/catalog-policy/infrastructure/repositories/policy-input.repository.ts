@@ -15,6 +15,8 @@ import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import { onlyMoviesReleasingFrom } from '@/database/movie-release-conditions';
 import * as schema from '@/database/schema';
+import { onlyShowsAwaitingPremiere } from '@/database/show-premiere-conditions';
+import { anyOf } from '@/database/sql-conditions';
 import {
   type IPolicyInputRepository,
   type FetchBatchIdsOptions,
@@ -144,7 +146,7 @@ export class PolicyInputRepository implements IPolicyInputRepository {
    * Uses cursor-based pagination with ordered results.
    */
   async fetchBatchIds(options: FetchBatchIdsOptions): Promise<string[]> {
-    const { batchSize, cursor, updatedAtWindow, moviesReleasingFrom } = options;
+    const { batchSize, cursor, updatedAtWindow, upcoming } = options;
 
     const conditions = [
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
@@ -159,8 +161,13 @@ export class PolicyInputRepository implements IPolicyInputRepository {
       );
     }
 
-    if (moviesReleasingFrom) {
-      conditions.push(onlyMoviesReleasingFrom(moviesReleasingFrom));
+    if (upcoming) {
+      conditions.push(
+        anyOf(
+          onlyMoviesReleasingFrom(upcoming.moviesReleasingFrom),
+          onlyShowsAwaitingPremiere(upcoming.showsAwaitingPremiereAsOf),
+        ),
+      );
     }
 
     if (cursor) {

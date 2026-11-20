@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
 import { toError } from '@/common/utils/error.utils';
-import { type TraktListsPort } from '@/modules/trakt/domain/ports/trakt-lists.port';
+import {
+  type AnticipatedShow,
+  type TraktListsPort,
+} from '@/modules/trakt/domain/ports/trakt-lists.port';
 
 import { BaseTraktHttp } from './base-trakt-http';
 import {
+  type TraktAnticipatedShow,
   type TraktTrendingMovie,
   type TraktTrendingShow,
   type TraktEndpoint,
@@ -80,5 +84,20 @@ export class TraktListsAdapter extends BaseTraktHttp implements TraktListsPort {
     }>
   > {
     return this.getTrendingWithWatchers(TRAKT_ENDPOINT.SHOWS, limit);
+  }
+
+  async getAnticipatedShows(limit: number): Promise<AnticipatedShow[] | null> {
+    try {
+      const anticipated = await this.fetch<TraktAnticipatedShow[]>(
+        `/${TRAKT_ENDPOINT.SHOWS}/anticipated?limit=${limit}`,
+      );
+      return anticipated.flatMap((item, index) => {
+        const tmdbId = item.show?.ids?.tmdb;
+        return tmdbId ? [{ tmdbId, listCount: item.list_count, rank: index + 1 }] : [];
+      });
+    } catch (error) {
+      this.logger.warn(`Failed to get anticipated shows: ${toError(error).toString()}`);
+      return null;
+    }
   }
 }

@@ -1,3 +1,9 @@
+export interface AnticipatedShow {
+  tmdbId: number;
+  listCount: number;
+  rank: number;
+}
+
 /**
  * Port interface for trending lists operations.
  * Abstracts external API calls for trending media with watchers data.
@@ -22,6 +28,8 @@ export interface TraktListsPort {
   getTrendingShowsWithWatchers(
     limit?: number,
   ): Promise<Array<{ tmdbId: number; watchers: number; rank: number }>>;
+
+  getAnticipatedShows(limit: number): Promise<AnticipatedShow[] | null>;
 }
 
 /**

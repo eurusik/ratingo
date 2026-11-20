@@ -79,6 +79,22 @@ export interface TrendingShowItem {
 /**
  * Show data for listing.
  */
+export interface AnticipatedShow {
+  mediaItemId: string;
+  slug: string;
+  title: string;
+  poster: ImageData;
+  premiereDate: Date;
+  listCount: number;
+}
+
+export interface AnticipatedShowsQueryOptions {
+  from: Date;
+  toExclusive: Date;
+  minListCount: number;
+  limit: number;
+}
+
 export interface ShowListItem {
   tmdbId: number;
   title: string;
@@ -262,6 +278,8 @@ export interface IShowRepository {
    * Finds popular shows (historically popular, no freshness gate).
    */
   findPopular(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>>;
+
+  findAnticipated(options: AnticipatedShowsQueryOptions): Promise<AnticipatedShow[]>;
 
   /**
    * Finds full show details by slug.

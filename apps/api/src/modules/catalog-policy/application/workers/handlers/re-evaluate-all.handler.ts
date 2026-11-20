@@ -21,7 +21,7 @@ import {
 import {
   RunStatus,
   type EvaluationContextType,
-  isUpcomingMovieContext,
+  isUpcomingContext,
 } from '@/modules/catalog-policy/domain/constants/evaluation.constants';
 import { RunNotFoundError } from '@/modules/catalog-policy/domain/errors';
 import {
@@ -29,6 +29,7 @@ import {
   POLICY_INPUT_REPOSITORY,
   type ICatalogEvaluationRunRepository,
   type IPolicyInputRepository,
+  type UpcomingReleaseWindow,
   type UpdatedAtWindow,
 } from '@/modules/catalog-policy/domain/repositories';
 import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
@@ -92,9 +93,7 @@ export class ReEvaluateAllHandler {
       this.logger.warn(`Run ${runId} has no snapshotCutoff, no items will be dispatched`);
     }
 
-    const moviesReleasingFrom = isUpcomingMovieContext(context)
-      ? startOfUtcDay(this.clock.now())
-      : undefined;
+    const upcoming = isUpcomingContext(context) ? this.upcomingReleaseWindow() : undefined;
 
     let { cursor } = payload;
     let totalDispatched = 0;
@@ -111,7 +110,7 @@ export class ReEvaluateAllHandler {
             batchSize,
             cursor,
             updatedAtWindow,
-            moviesReleasingFrom,
+            upcoming,
           })
         : [];
 
@@ -157,6 +156,11 @@ export class ReEvaluateAllHandler {
         `Dispatched ${batch.length} evaluation jobs for run=${runId}, context=${context} (total: ${totalDispatched})`,
       );
     }
+  }
+
+  private upcomingReleaseWindow(): UpcomingReleaseWindow {
+    const now = this.clock.now();
+    return { moviesReleasingFrom: startOfUtcDay(now), showsAwaitingPremiereAsOf: now };
   }
 
   private toUpdatedAtWindow(

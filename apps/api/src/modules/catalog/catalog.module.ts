@@ -14,6 +14,7 @@ import { VerdictModule } from '../shared/verdict/verdict.module';
 import { TmdbModule } from '../tmdb/tmdb.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 
+import { AnticipatedShowsService } from './application/services/anticipated-shows.service';
 import { CatalogCalendarService } from './application/services/catalog-calendar.service';
 import { CatalogImportService } from './application/services/catalog-import.service';
 import { CatalogSearchService } from './application/services/catalog-search.service';
@@ -43,6 +44,7 @@ import {
 } from './infrastructure/adapters/redis-cooldown-gate.adapter';
 import { TmdbMetadataAdapter } from './infrastructure/adapters/tmdb-metadata.adapter';
 import { UserStateAdapter } from './infrastructure/adapters/user-state.adapter';
+import { AnticipatedShowsQuery } from './infrastructure/queries/anticipated-shows.query';
 import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
 import { CalendarMoviesQuery } from './infrastructure/queries/calendar-movies.query';
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
@@ -110,6 +112,7 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     ShowsCalendarService,
     CatalogCalendarService,
     UpcomingMoviesService,
+    AnticipatedShowsService,
     ShowSyncService,
     // Redis client for sync cooldown gate (7-day TTL per show)
     {
@@ -127,6 +130,7 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     ShowDetailsQuery,
     CalendarEpisodesQuery,
     NewEpisodesQuery,
+    AnticipatedShowsQuery,
     {
       provide: WATCHING_SHOWS_COUNT_PORT,
       useClass: WatchingShowsCountQuery,

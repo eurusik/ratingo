@@ -30,6 +30,7 @@ import { CATALOG_DEFAULT_CALENDAR_DAYS, CATALOG_MAX_CALENDAR_DAYS } from '@/comm
 import { CurrentUser } from '@/modules/auth/public';
 import { JwtAuthGuard } from '@/modules/auth/public';
 import { OptionalJwtAuthGuard } from '@/modules/auth/public';
+import { AnticipatedShowsService } from '@/modules/catalog/application/services/anticipated-shows.service';
 import { CatalogUserStateEnricher } from '@/modules/catalog/application/services/catalog-userstate-enricher.service';
 import { ShowDetailsService } from '@/modules/catalog/application/services/show-details.service';
 import { ShowSyncService } from '@/modules/catalog/application/services/show-sync.service';
@@ -41,6 +42,10 @@ import {
 import { CARD_LIST_CONTEXT } from '@/modules/shared/cards';
 import { CardEnrichmentService } from '@/modules/shared/cards';
 
+import {
+  AnticipatedShowsQueryDto,
+  AnticipatedShowsResponseDto,
+} from '../dtos/anticipated-shows.dto';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesQueryDto } from '../dtos/new-episodes-query.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
@@ -68,6 +73,7 @@ export class CatalogShowsController {
     private readonly showDetailsService: ShowDetailsService,
     private readonly showsCalendarService: ShowsCalendarService,
     private readonly showSyncService: ShowSyncService,
+    private readonly anticipatedShowsService: AnticipatedShowsService,
   ) {}
 
   @Get('trending')
@@ -114,6 +120,19 @@ export class CatalogShowsController {
       data: withCards,
       meta: buildPaginationMeta(normalizedQuery, shows),
     };
+  }
+
+  @Get('anticipated')
+  @ApiOperation({
+    summary: 'Most anticipated show premieres',
+    description:
+      'Returns shows from the latest Trakt anticipated snapshot on at least 1000 lists that premiere within the next 90 days, have a poster and are eligible for the upcoming surface, ordered by premiere date.',
+  })
+  @ApiOkResponse({ type: AnticipatedShowsResponseDto })
+  async getAnticipated(
+    @Query() query: AnticipatedShowsQueryDto,
+  ): Promise<AnticipatedShowsResponseDto> {
+    return { data: await this.anticipatedShowsService.findAnticipated(query.limit) };
   }
 
   @Get('new-episodes')
