@@ -70,17 +70,18 @@ describe('fromMovieDetails', () => {
     ['without a status', null, false],
   ])('treats an undated movie that is %s accordingly', (_case, status, isUnknown) => {
     const undated = fromMovieDetails({ ...MOVIE, releaseDate: null, status } as MovieDetails);
-    expect(undated.isReleaseDateUnknown).toBe(isUnknown);
+    expect(undated.upcoming).toBe(isUnknown ? 'undated' : undefined);
     expect(undated.upcomingRelease).toBeUndefined();
   });
 
   it('knows the release date of a dated movie in production', () => {
     const dated = fromMovieDetails({ ...MOVIE, status: 'Post Production' });
-    expect(dated.isReleaseDateUnknown).toBe(false);
+    expect(dated.upcoming).not.toBe('undated');
   });
 
   it('has no upcoming release once the movie is out', () => {
     expect(view.upcomingRelease).toBeUndefined();
+    expect(view.upcoming).toBeUndefined();
   });
 
   it.each([
@@ -133,7 +134,7 @@ describe('fromShowDetails', () => {
   it('has no premiere once the show is out', () => {
     const show = fromShowDetails(SHOW, NOW);
     expect(show.premiereDate).toBeUndefined();
-    expect(show.isPremiereDateUnknown).toBe(false);
+    expect(show.upcoming).toBeUndefined();
   });
 
   it('knows the premiere date of a show that is not out yet', () => {
@@ -142,7 +143,22 @@ describe('fromShowDetails', () => {
       NOW,
     );
     expect(show.premiereDate).toBe('2027-02-10T00:00:00.000Z');
-    expect(show.isPremiereDateUnknown).toBe(false);
+    expect(show.upcoming).toBe('dated');
+  });
+
+  it('is out once an episode has aired, even if the first air date says otherwise', () => {
+    const show = fromShowDetails(
+      {
+        ...SHOW,
+        releaseDate: '2027-02-10T00:00:00.000Z',
+        seasons: [
+          { number: 1, episodes: [{ id: 'e1', number: 1, airDate: '2026-11-01T00:00:00.000Z' }] },
+        ],
+      } as unknown as ShowDetails,
+      NOW,
+    );
+    expect(show.premiereDate).toBeUndefined();
+    expect(show.upcoming).toBeUndefined();
   });
 
   it.each([
@@ -156,7 +172,7 @@ describe('fromShowDetails', () => {
       { ...SHOW, status, releaseDate: null } as unknown as ShowDetails,
       NOW,
     );
-    expect(show.isPremiereDateUnknown).toBe(isUnknown);
+    expect(show.upcoming).toBe(isUnknown ? 'undated' : undefined);
     expect(show.premiereDate).toBeUndefined();
   });
 });

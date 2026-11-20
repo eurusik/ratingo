@@ -1,9 +1,10 @@
-import { toSeasons, type Season } from '@/entities/episode';
+import { hasAired, toSeasons, type Season } from '@/entities/episode';
 import { ratingVerdict, type RatingSource, type RatingVerdict } from '@/entities/media';
 import type { MediaType, MovieDetails, ReleaseKind, ShowDetails } from '@/shared/api';
 import { percentFromScore, positiveNumber, scoreFromPercent, yearFromDate } from '@/shared/lib';
 import { toCredits, type Credits } from './credits';
 import { toTrailers, type Trailer } from './trailers';
+import type { UpcomingKind } from './action-media';
 
 type MovieStatus = NonNullable<MovieDetails['status']>;
 export type ShowStatus = NonNullable<ShowDetails['status']>;
@@ -41,6 +42,7 @@ interface DetailsBase {
   community: Community;
   credits: Credits;
   trailers: Trailer[];
+  upcoming?: UpcomingKind;
 }
 
 interface UpcomingReleaseDate {
@@ -53,7 +55,6 @@ export interface MovieDetailsView extends DetailsBase {
   runtimeMinutes?: number;
   status?: MovieStatus;
   upcomingRelease?: UpcomingReleaseDate;
-  isReleaseDateUnknown: boolean;
   budget?: number;
   revenue?: number;
 }
@@ -67,7 +68,6 @@ export interface ShowDetailsView extends DetailsBase {
   status?: ShowStatus;
   lastAirDate?: string;
   premiereDate?: string;
-  isPremiereDateUnknown: boolean;
 }
 
 export type MediaDetailsView = MovieDetailsView | ShowDetailsView;
@@ -135,6 +135,11 @@ function isReleaseDateUnknown(movie: MovieDetails & MovieReleaseDates): boolean 
   return !hasDate && movie.status != null && UNRELEASED_STATUSES.has(movie.status);
 }
 
+function upcomingKind(isDated: boolean, isUndated: boolean): UpcomingKind | undefined {
+  if (isDated) return 'dated';
+  return isUndated ? 'undated' : undefined;
+}
+
 function upcomingReleaseOf(
   movie: MovieDetails & MovieReleaseDates,
 ): UpcomingReleaseDate | undefined {
@@ -145,13 +150,14 @@ function upcomingReleaseOf(
 }
 
 export function fromMovieDetails(movie: MovieDetails): MovieDetailsView {
+  const upcomingRelease = upcomingReleaseOf(movie);
   return {
     ...toBase(movie),
     type: 'movie',
     runtimeMinutes: positiveNumber(movie.runtime),
     status: movie.status ?? undefined,
-    upcomingRelease: upcomingReleaseOf(movie),
-    isReleaseDateUnknown: isReleaseDateUnknown(movie),
+    upcomingRelease,
+    upcoming: upcomingKind(Boolean(upcomingRelease), isReleaseDateUnknown(movie)),
     budget: positiveNumber(movie.budget),
     revenue: positiveNumber(movie.revenue),
   };
@@ -172,17 +178,29 @@ function isPremiereDateUnknown(show: ShowDetails): boolean {
   return !show.releaseDate && show.status != null && UNRELEASED_SHOW_STATUSES.has(show.status);
 }
 
+function hasAiredEpisode(seasons: readonly Season[], now: Date): boolean {
+  return seasons.some((season) =>
+    season.episodes.some((episode) => hasAired(episode, now.getTime())),
+  );
+}
+
 export function fromShowDetails(show: ShowDetails, now: Date): ShowDetailsView {
+  const seasons = toSeasons(show.seasons);
+  const isAwaitingPremiere = !hasAiredEpisode(seasons, now);
+  const premiereDate = isAwaitingPremiere ? premiereDateOf(show, now) : undefined;
   return {
     ...toBase(show),
     type: 'show',
     showId: show.showId,
-    seasons: toSeasons(show.seasons),
+    seasons,
     seasonCount: positiveNumber(show.totalSeasons),
     episodeCount: positiveNumber(show.totalEpisodes),
     status: show.status ?? undefined,
     lastAirDate: show.lastAirDate ?? undefined,
-    premiereDate: premiereDateOf(show, now),
-    isPremiereDateUnknown: isPremiereDateUnknown(show),
+    premiereDate,
+    upcoming: upcomingKind(
+      Boolean(premiereDate),
+      isAwaitingPremiere && isPremiereDateUnknown(show),
+    ),
   };
 }

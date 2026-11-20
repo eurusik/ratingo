@@ -12,12 +12,11 @@ const movie: MovieDetailsView = {
   community: { raters: [], ratingCount: 0 },
   credits: { cast: [], directors: [], writers: [], creators: [] },
   trailers: [],
-  isReleaseDateUnknown: false,
 };
 
 describe('IdentityLine', () => {
   it('says the release date is not known yet for an undated movie in the works', () => {
-    render(<IdentityLine view={{ ...movie, isReleaseDateUnknown: true }} locale="uk" />);
+    render(<IdentityLine view={{ ...movie, upcoming: 'undated' }} locale="uk" />);
 
     expect(screen.getByText('Дата виходу ще невідома')).toBeInTheDocument();
   });
@@ -25,6 +24,7 @@ describe('IdentityLine', () => {
   it('shows the release day of an upcoming movie', () => {
     const upcoming = {
       ...movie,
+      upcoming: 'dated' as const,
       upcomingRelease: { date: '2026-12-25T00:00:00.000Z', kind: 'theatrical' as const },
     };
     render(<IdentityLine view={upcoming} locale="uk" />);
@@ -34,24 +34,22 @@ describe('IdentityLine', () => {
   });
 
   describe('show', () => {
-    const show: ShowDetailsView = {
-      ...movie,
-      type: 'show',
-      showId: 'show-1',
-      seasons: [],
-      isPremiereDateUnknown: false,
-    };
+    const { runtimeMinutes: _runtime, status: _status, ...base } = movie;
+    const show: ShowDetailsView = { ...base, type: 'show', showId: 'show-1', seasons: [] };
 
     it('shows the premiere day of a show that is not out yet', () => {
       render(
-        <IdentityLine view={{ ...show, premiereDate: '2027-02-10T00:00:00.000Z' }} locale="uk" />,
+        <IdentityLine
+          view={{ ...show, upcoming: 'dated', premiereDate: '2027-02-10T00:00:00.000Z' }}
+          locale="uk"
+        />,
       );
 
       expect(screen.getByText(/^Прем’єра /)).toBeInTheDocument();
     });
 
     it('says the premiere date is not known yet', () => {
-      render(<IdentityLine view={{ ...show, isPremiereDateUnknown: true }} locale="uk" />);
+      render(<IdentityLine view={{ ...show, upcoming: 'undated' }} locale="uk" />);
 
       expect(screen.getByText('Дата виходу ще невідома')).toBeInTheDocument();
     });

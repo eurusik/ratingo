@@ -26,13 +26,30 @@ describe('notification copy', () => {
     expect(text).not.toContain('S4E3');
   });
 
-  it('calls the first episode of a show its premiere', () => {
+  it('announces the premiere of a show', () => {
     expect(
       notificationText(
-        notification({ trigger: 'new_episode', payload: { episodeKey: 'S1E1' } }),
+        notification({ trigger: 'premiere', payload: { episodeKey: 'S1E1' } }),
         uk,
       ),
     ).toBe('Анора — прем’єра серіалу');
+  });
+
+  it('says how many episodes came out when the premiere drops several at once', () => {
+    expect(
+      notificationText(
+        notification({ trigger: 'premiere', payload: { episodeKey: 'S1E8' } }),
+        uk,
+      ),
+    ).toBe('Анора — прем’єра: вийшли серії 1–8');
+  });
+
+  it('keeps a plain episode notification for S1E1 that is not a premiere reminder', () => {
+    const text = notificationText(
+      notification({ trigger: 'new_episode', payload: { episodeKey: 'S1E1' } }),
+      uk,
+    );
+    expect(text).not.toContain('прем’єра');
   });
 
   it('names the season when it is known', () => {

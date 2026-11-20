@@ -2,7 +2,7 @@
 
 import { Bell } from 'lucide-react';
 import { useAuth } from '@ratingo/web-core/auth';
-import { ReminderToggle } from '@/features/media-reminder';
+import { ReminderToggle, type ReminderTrigger } from '@/features/media-reminder';
 import { RemoveFromLibraryButton } from '@/features/remove-from-library';
 import { SaveToWatchCta, WantToWatchButton } from '@/features/save-to-library';
 import { useTranslation } from '@/shared/i18n';
@@ -18,15 +18,20 @@ import { ShowTracking } from './show-tracking';
 
 export type { ActionMedia } from '../model/action-media';
 
+function upcomingReminderOf(media: ActionMedia): ReminderTrigger | undefined {
+  if (media.type === 'show') return 'premiere';
+  return media.upcoming === 'dated' ? 'release' : undefined;
+}
+
 function UpcomingActions({ media }: { media: ActionMedia }) {
-  const isShow = media.type === 'show';
+  const reminder = upcomingReminderOf(media);
   return (
     <div className="flex items-center gap-2.5">
       <WantToWatchButton media={media} className="flex-1 md:flex-none" />
-      {isShow || media.upcoming === 'dated' ? (
+      {reminder ? (
         <ReminderToggle
           media={{ mediaItemId: media.mediaItemId, title: media.title }}
-          trigger={isShow ? 'new_episode' : 'release'}
+          trigger={reminder}
           look="button"
         />
       ) : null}

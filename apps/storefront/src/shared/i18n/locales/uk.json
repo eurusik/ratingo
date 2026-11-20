@@ -394,7 +394,8 @@
       "on_streaming": "Вийшов",
       "new_season": "Новий сезон",
       "new_episode": "Нова серія",
-      "status_changed": "Дата виходу"
+      "status_changed": "Дата виходу",
+      "premiere": "Прем’єра"
     },
     "text": {
       "release": "{title} — уже в кіно",
@@ -405,7 +406,8 @@
       "new_season": "{title} — повернувся сезон {season}",
       "new_season_unknown": "{title} — повертається новий сезон",
       "new_episode": "{title} — вийшла серія {code}",
-      "series_premiere": "{title} — прем’єра серіалу",
+      "premiere": "{title} — прем’єра серіалу",
+      "premiere_batch": "{title} — прем’єра: вийшли серії 1–{last}",
       "status_changed": "{title} — оголошено дату виходу"
     },
     "sub": {
@@ -1224,6 +1226,12 @@
       "label": "Нагадати про вихід: {title}",
       "on": "Нагадаємо, коли вийде: {title}",
       "off": "Нагадування вимкнено: {title}"
+    },
+    "premiere": {
+      "remind": "Нагадати про прем’єру",
+      "label": "Нагадати про прем’єру: {title}",
+      "on": "Нагадаємо про прем’єру: {title}",
+      "off": "Нагадування вимкнено: {title}"
     }
   },
   "settings": {
@@ -1328,7 +1336,8 @@
         "new_season": "новий сезон",
         "new_episode": "нові серії",
         "on_streaming": "поява онлайн",
-        "status_changed": "дата виходу"
+        "status_changed": "дата виходу",
+        "premiere": "прем’єра"
       },
       "automatic": "Автоматично",
       "autoSubscribe": "Стежити за серіалом, коли починаю",

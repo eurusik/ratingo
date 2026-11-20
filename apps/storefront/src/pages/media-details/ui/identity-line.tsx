@@ -1,7 +1,7 @@
 import { formatReleaseDate } from '@/entities/media';
 import { formatCount, getDictionary, interpolate, type Locale } from '@/shared/i18n';
 import { formatRuntime } from '../model/details-format';
-import type { MediaDetailsView, ShowDetailsView } from '../model/details-view';
+import type { MediaDetailsView } from '../model/details-view';
 import { ShowStatusChip, UpcomingReleaseChip } from './status-chip';
 
 function lengthOf(view: MediaDetailsView, locale: Locale): string | undefined {
@@ -14,23 +14,24 @@ function lengthOf(view: MediaDetailsView, locale: Locale): string | undefined {
     : formatCount(view.seasonCount, dict.seasons, locale);
 }
 
-function premiereLabel(view: ShowDetailsView, locale: Locale): string | undefined {
-  const dict = getDictionary(locale).details.upcoming;
-  if (view.isPremiereDateUnknown) return dict.dateUnknown;
-  if (!view.premiereDate) return undefined;
-  return interpolate(dict.premiere, { date: formatReleaseDate(locale, view.premiereDate) });
-}
-
-function upcomingLabel(view: MediaDetailsView, locale: Locale): string | undefined {
-  if (view.type === 'show') return premiereLabel(view, locale);
+function datedUpcomingLabel(view: MediaDetailsView, locale: Locale): string | undefined {
   const dict = getDictionary(locale);
-  if (view.isReleaseDateUnknown) return dict.details.upcoming.dateUnknown;
+  if (view.type === 'show') {
+    if (!view.premiereDate) return undefined;
+    const date = formatReleaseDate(locale, view.premiereDate);
+    return interpolate(dict.details.upcoming.premiere, { date });
+  }
   const release = view.upcomingRelease;
   if (!release) return undefined;
   const date = interpolate(dict.details.upcoming.release, {
     date: formatReleaseDate(locale, release.date),
   });
   return `${date} · ${dict.release[release.kind]}`;
+}
+
+function upcomingLabel(view: MediaDetailsView, locale: Locale): string | undefined {
+  if (view.upcoming === 'undated') return getDictionary(locale).details.upcoming.dateUnknown;
+  return view.upcoming === 'dated' ? datedUpcomingLabel(view, locale) : undefined;
 }
 
 export function IdentityLine({ view, locale }: { view: MediaDetailsView; locale: Locale }) {

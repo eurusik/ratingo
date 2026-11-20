@@ -44,11 +44,11 @@ function UpcomingVerdict({ note, message }: { note: string; message?: string }) 
 function VerdictBlock({ view, dict }: { view: MediaDetailsView; dict: Dictionary }) {
   const message = verdictMessage(view, dict.details.verdict);
 
-  if (view.type === 'movie' && (view.upcomingRelease || view.isReleaseDateUnknown)) {
-    return <UpcomingVerdict note={dict.details.upcoming.noScore} message={message} />;
-  }
-  if (view.type === 'show' && (view.premiereDate || view.isPremiereDateUnknown)) {
-    return <UpcomingVerdict note={dict.details.upcoming.noScoreShow} message={message} />;
+  if (view.upcoming) {
+    const { noScore, noScoreShow } = dict.details.upcoming;
+    return (
+      <UpcomingVerdict note={view.type === 'show' ? noScoreShow : noScore} message={message} />
+    );
   }
 
   if (view.score === undefined || !view.verdict) {
