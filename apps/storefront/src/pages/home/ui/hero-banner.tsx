@@ -7,6 +7,7 @@ import { mediaRoute } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
 import { BackdropPicture, DownscaledBlur, ForwardLink } from '@/shared/ui';
 import type { HeroMedia } from '../model/home-feed';
+import { trackHomeOpen } from '../model/track-home-open';
 import { HERO_FRAME_CLASS } from './hero-frame';
 import { RankCorner } from './rank-corner';
 
@@ -63,6 +64,7 @@ export function HeroBanner({ hero }: { hero: HeroMedia }) {
         >
           <ForwardLink
             href={mediaRoute(hero.type, hero.slug)}
+            onClick={() => trackHomeOpen({ origin: 'home_hero', mediaType: hero.type, position: 1 })}
             className="text-foreground no-underline outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus md:after:rounded-3xl"
           >
             <span className="sr-only">{dict.home.leadBadge}: </span>

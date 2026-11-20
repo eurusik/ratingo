@@ -7,6 +7,7 @@ import { useTranslation } from '@/shared/i18n';
 import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import { loadReleaseList } from '../api/home-rails';
 import type { RailStart, ReleaseList } from '../model/rail-start';
+import { trackHomeOpen } from '../model/track-home-open';
 import { CardRowSkeleton } from './home-skeletons';
 import { RailBody, RailFilterBar, useRailFilter } from './rail-filter';
 
@@ -46,12 +47,20 @@ export function NewReleases({ rail }: { rail: RailStart<ReleaseList, TrendingMed
       >
         {(items) => (
           <Rail label={title} scrollerRef={filter.scrollerRef} memoryKey={filter.memoryKey}>
-            {items.map((media) => (
+            {items.map((media, index) => (
               <RailItem key={media.mediaItemId}>
                 <TrendingCard
                   media={media}
                   actions={<SaveButton media={media} tone="overlay" />}
                   footer={<OwnScoreChip mediaItemId={media.mediaItemId} />}
+                  onOpen={() =>
+                    trackHomeOpen({
+                      origin: 'home_releases',
+                      mediaType: media.type,
+                      position: index + 1,
+                      list: filter.active,
+                    })
+                  }
                 />
               </RailItem>
             ))}

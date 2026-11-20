@@ -6,6 +6,7 @@ import { useTranslation } from '@/shared/i18n';
 import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import { loadTrendingList } from '../api/home-rails';
 import type { RailStart } from '../model/rail-start';
+import { trackHomeOpen } from '../model/track-home-open';
 import { TileRowSkeleton } from './home-skeletons';
 import { RailBody, RailFilterBar, useRailFilter } from './rail-filter';
 
@@ -53,7 +54,17 @@ export function TopTen({ rail }: { rail: RailStart<MediaType, TrendingMedia> }) 
           >
             {items.map((media, index) => (
               <RailItem key={media.mediaItemId}>
-                <TopRankTile media={media} rank={index + 1} />
+                <TopRankTile
+                  media={media}
+                  rank={index + 1}
+                  onOpen={() =>
+                    trackHomeOpen({
+                      origin: 'home_top_ten',
+                      mediaType: media.type,
+                      position: index + 1,
+                    })
+                  }
+                />
               </RailItem>
             ))}
           </Rail>

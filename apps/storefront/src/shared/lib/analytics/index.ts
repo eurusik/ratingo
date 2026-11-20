@@ -7,5 +7,6 @@ export type {
   AnalyticsEventName,
   AnalyticsEvents,
   AnalyticsMediaType,
+  HomeBlock,
   SignInMethod,
 } from './events';

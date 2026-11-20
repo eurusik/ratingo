@@ -8,6 +8,7 @@ import { SHARED_ART_SOURCE, track } from '@/shared/lib';
 import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
 import { ForwardLink, Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import type { EpisodeRelease } from '../model/home-feed';
+import { trackHomeOpen } from '../model/track-home-open';
 
 const airDateFormats = new Map<Locale, Intl.DateTimeFormat>();
 
@@ -25,13 +26,14 @@ function formatAirDate(locale: Locale, airedAt: string): string {
   return Number.isNaN(date.getTime()) ? '' : format.format(date);
 }
 
-function EpisodeTile({ release }: { release: EpisodeRelease }) {
+function EpisodeTile({ release, position }: { release: EpisodeRelease; position: number }) {
   const { dict, locale } = useTranslation();
   const numbers = { season: release.season, episode: release.episode };
 
   return (
     <ForwardLink
       href={mediaRoute('show', release.slug)}
+      onClick={() => trackHomeOpen({ origin: 'home_episodes', mediaType: 'show', position })}
       className="flex w-24 flex-col gap-1.5 text-foreground no-underline md:w-full md:gap-2"
     >
       <span {...SHARED_ART_SOURCE} className="relative">
@@ -76,9 +78,9 @@ export function NewEpisodes({ releases }: { releases: EpisodeRelease[] }) {
         trailing={<RailPager scrollerRef={scroller} />}
       />
       <Rail label={dict.home.newEpisodes} itemSize="tile" scrollerRef={scroller}>
-        {releases.map((release) => (
+        {releases.map((release, index) => (
           <RailItem key={release.mediaItemId}>
-            <EpisodeTile release={release} />
+            <EpisodeTile release={release} position={index + 1} />
           </RailItem>
         ))}
       </Rail>
