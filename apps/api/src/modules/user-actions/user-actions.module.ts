@@ -7,7 +7,7 @@ import schedulerConfig from '@/config/scheduler.config';
 import { DatabaseModule } from '@/database/database.module';
 
 import { AutoResubscribeOnRestoreListener } from './application/listeners/auto-resubscribe-on-restore.listener';
-import { AutoSubscribeMovieOnPlanListener } from './application/listeners/auto-subscribe-movie-on-plan.listener';
+import { AutoSubscribeOnPlanListener } from './application/listeners/auto-subscribe-on-plan.listener';
 import { AutoUnsubscribeOnDropListener } from './application/listeners/auto-unsubscribe-on-drop.listener';
 import { AutoUnsubscribeOnUnplanListener } from './application/listeners/auto-unsubscribe-on-unplan.listener';
 import { MovieReleaseNotificationsScheduler } from './application/movie-release-notifications.scheduler';
@@ -67,7 +67,7 @@ import { USER_NOTIFICATIONS_JOB_OPTIONS, USER_NOTIFICATIONS_QUEUE } from './user
     ...workerOnly(UserNotificationsWorker, MovieReleaseNotificationsScheduler),
     AutoUnsubscribeOnDropListener,
     AutoResubscribeOnRestoreListener,
-    AutoSubscribeMovieOnPlanListener,
+    AutoSubscribeOnPlanListener,
     AutoUnsubscribeOnUnplanListener,
     {
       provide: USER_MEDIA_ACTION_REPOSITORY,

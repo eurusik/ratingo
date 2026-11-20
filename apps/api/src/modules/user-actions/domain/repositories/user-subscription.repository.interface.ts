@@ -118,6 +118,8 @@ export interface IUserSubscriptionRepository {
 
   deactivateAbandonedAutoPlan(userId: string, mediaItemId: string): Promise<SubscriptionTrigger[]>;
 
+  detachFromPlan(userId: string, mediaItemId: string): Promise<void>;
+
   /**
    * Lists active subscriptions with media summary.
    *

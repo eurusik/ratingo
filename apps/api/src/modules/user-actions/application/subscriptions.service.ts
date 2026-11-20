@@ -141,6 +141,8 @@ export class SubscriptionsService {
   }
 
   async autoSubscribeForShow(userId: string, mediaItemId: string): Promise<void> {
+    await this.subscriptionRepo.detachFromPlan(userId, mediaItemId);
+
     const [autoSubscribe, existing] = await Promise.all([
       this.userPreferencePort.getAutoSubscribeOnWatch(userId),
       this.subscriptionRepo.findActiveTriggersForMedia(userId, mediaItemId),
@@ -184,6 +186,25 @@ export class SubscriptionsService {
         autoPlan: true,
       });
     }
+  }
+
+  async autoSubscribeForUpcomingShow(userId: string, mediaItemId: string): Promise<void> {
+    const isUnreleased = await this.showStatePort.isUnreleasedShow(mediaItemId, this.clock.now());
+    if (!isUnreleased) return;
+
+    const [autoSubscribe, closedTriggers] = await Promise.all([
+      this.userPreferencePort.getAutoSubscribeOnWatch(userId),
+      this.subscriptionRepo.findTriggersClosedToAutoPlan(userId, mediaItemId),
+    ]);
+    if (!autoSubscribe || closedTriggers.includes(SUBSCRIPTION_TRIGGER.NEW_EPISODE)) return;
+
+    await this.subscribe({
+      userId,
+      mediaItemId,
+      trigger: SUBSCRIPTION_TRIGGER.NEW_EPISODE,
+      context: SUBSCRIPTION_CONTEXT.AUTO_PLAN,
+      autoPlan: true,
+    });
   }
 
   async unsubscribeAbandonedAutoPlan(userId: string, mediaItemId: string): Promise<void> {

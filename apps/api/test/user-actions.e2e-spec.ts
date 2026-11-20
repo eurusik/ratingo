@@ -32,6 +32,7 @@ import { createE2eApp, createE2eTestingModule } from './support/e2e-testing-modu
 import { MAX_PAGE_SIZE } from '../src/common/constants';
 import { testUuid } from './support/test-uuid';
 import { MOVIE_RELEASE_PORT } from '../src/modules/user-actions/domain/ports/movie-release.port';
+import { SHOW_STATE_PORT } from '../src/modules/user-actions/domain/ports/show-state.port';
 import { USER_PREFERENCE_PORT } from '../src/modules/user-actions/domain/ports/user-preference.port';
 import { InMemoryRefreshTokensRepository, InMemoryUsersRepository } from './users/_fakes';
 
@@ -327,6 +328,14 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
     return released.map((s) => s.trigger);
   }
 
+  async detachFromPlan(userId: string, mediaItemId: string): Promise<void> {
+    this.forMedia(userId, mediaItemId)
+      .filter((s) => s.isActive && s.autoPlan)
+      .forEach((s) => {
+        s.autoPlan = false;
+      });
+  }
+
   private forMedia(userId: string, mediaItemId: string) {
     return this.subscriptions.filter((s) => s.userId === userId && s.mediaItemId === mediaItemId);
   }
@@ -387,6 +396,13 @@ const upcomingMovieReleases = {
       : null,
 };
 
+const UPCOMING_SHOW_ID = testUuid('upcoming-show');
+
+const upcomingShowState = {
+  getLastAiredEpisodeKey: async () => null,
+  isUnreleasedShow: async (mediaItemId: string) => mediaItemId === UPCOMING_SHOW_ID,
+};
+
 const buildMediaIds = (count: number): string =>
   Array.from({ length: count }, (_, index) => testUuid(`media-${index}`)).join(',');
 
@@ -436,6 +452,8 @@ describe('User Actions E2E', () => {
       .useValue(subscriptionRepo)
       .overrideProvider(MOVIE_RELEASE_PORT)
       .useValue(upcomingMovieReleases)
+      .overrideProvider(SHOW_STATE_PORT)
+      .useValue(upcomingShowState)
       .overrideProvider(USER_PREFERENCE_PORT)
       .useValue({ getAutoSubscribeOnWatch: async () => true })
       .compile();
@@ -830,6 +848,27 @@ describe('User Actions E2E', () => {
         .get(`${subscriptionsUrl}/${UPCOMING_MOVIE_ID}/status`)
         .set(auth);
       expect([...afterResave.body.data.triggers].sort()).toEqual(['on_streaming', 'release']);
+    });
+
+    it('reminds about the premiere of an upcoming show saved for later, and stops once it is removed', async () => {
+      const token = await registerAndLogin('showplan');
+      const auth = { Authorization: `Bearer ${token}` };
+      const server = app.getHttpServer();
+      const status = async () =>
+        (await request(server).get(`${subscriptionsUrl}/${UPCOMING_SHOW_ID}/status`).set(auth)).body
+          .data.triggers;
+
+      await request(server)
+        .post(`${savedItemsUrl}/${UPCOMING_SHOW_ID}`)
+        .set(auth)
+        .send({ list: 'for_later' });
+      expect(await status()).toEqual(['new_episode']);
+
+      await request(server)
+        .delete(`${savedItemsUrl}/${UPCOMING_SHOW_ID}`)
+        .set(auth)
+        .send({ list: 'for_later' });
+      expect(await status()).toEqual([]);
     });
 
     it('should list active subscriptions', async () => {

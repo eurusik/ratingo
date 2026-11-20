@@ -64,6 +64,26 @@ export class AutoPlanSubscriptionsQuery {
     );
   }
 
+  detachFromPlan(userId: string, mediaItemId: string): Promise<void> {
+    return withDbError(
+      'detach auto plan subscriptions',
+      this.logger,
+      async () => {
+        await this.db
+          .update(schema.userSubscriptions)
+          .set({ autoPlan: false, updatedAt: new Date() })
+          .where(
+            and(
+              this.forMedia(userId, mediaItemId),
+              schema.userSubscriptions.isActive,
+              schema.userSubscriptions.autoPlan,
+            ),
+          );
+      },
+      { userId, mediaItemId },
+    );
+  }
+
   private forMedia(userId: string, mediaItemId: string) {
     return and(
       eq(schema.userSubscriptions.userId, userId),

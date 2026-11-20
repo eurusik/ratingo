@@ -212,6 +212,10 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     return this.autoPlanSubscriptionsQuery.deactivateAbandoned(userId, mediaItemId);
   }
 
+  detachFromPlan(userId: string, mediaItemId: string): Promise<void> {
+    return this.autoPlanSubscriptionsQuery.detachFromPlan(userId, mediaItemId);
+  }
+
   /**
    * Lists active subscriptions with media summary.
    *

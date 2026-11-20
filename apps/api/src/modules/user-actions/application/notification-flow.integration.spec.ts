@@ -123,6 +123,7 @@ describe('Notification Flow Integration', () => {
           return results;
         }),
       deactivateForEndedShow: jest.fn().mockResolvedValue(0),
+      detachFromPlan: jest.fn().mockResolvedValue(undefined),
     };
 
     // Mock show state port (current aired state: S2E10)
