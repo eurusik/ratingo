@@ -338,6 +338,7 @@ describe('UpcomingMovies', () => {
       origin: 'home_upcoming',
       media_type: 'movie',
       in_catalog: 'true',
+      position: 1,
     });
     expect(gtag).toHaveBeenCalledWith('event', 'calendar_open', { origin: 'home_upcoming' });
     delete window.gtag;
@@ -355,5 +356,74 @@ describe('UpcomingMovies', () => {
     const { container } = renderIn(<UpcomingMovies releases={[]} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe('opening a title from the home page', () => {
+  const episode: EpisodeRelease = {
+    mediaItemId: 'law',
+    slug: 'law',
+    showTitle: 'Закон і порядок',
+    episodeTitle: 'Do No Harm',
+    season: 26,
+    episode: 6,
+    airedAt: '2026-11-12T23:30:00Z',
+  };
+
+  afterEach(() => {
+    delete window.gtag;
+  });
+
+  it.each([
+    ['home_hero', <HeroBanner key="hero" hero={ANDOR} />, /Андор/, { media_type: 'show', position: 1 }],
+    [
+      'home_top_picks',
+      <TopThree key="picks" items={[ANDOR, DUNE]} firstRank={2} />,
+      /Дюна/,
+      { media_type: 'movie', position: 3 },
+    ],
+    [
+      'home_top_ten',
+      <TopTen key="top" rail={topTen([], [BARBIE, DUNE])} />,
+      /Дюна/,
+      { media_type: 'movie', position: 2 },
+    ],
+    [
+      'home_episodes',
+      <NewEpisodes key="episodes" releases={[episode]} />,
+      /Закон/,
+      { media_type: 'show', position: 1 },
+    ],
+    [
+      'home_releases',
+      <NewReleases key="releases" rail={newReleases([], [BARBIE, DUNE])} />,
+      /Дюна/,
+      { media_type: 'movie', position: 2, list: 'newOnDigital' },
+    ],
+  ])('reports the block %s and the place of the opened title', (origin, block, link, details) => {
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    renderIn(block);
+
+    fireEvent.click(screen.getByRole('link', { name: link }), { metaKey: true });
+
+    expect(gtag).toHaveBeenCalledWith('event', 'open_title', {
+      origin,
+      in_catalog: 'true',
+      ...details,
+    });
+  });
+
+  it('reports switching a rail to another list', () => {
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    jest.mocked(loadTrendingList).mockResolvedValue([DUNE]);
+    renderIn(<TopTen rail={topTen([ANDOR], [DUNE])} />);
+
+    const other = screen.getByRole('radio', { checked: false });
+    fireEvent.click(other);
+
+    const list = other.textContent === uk.home.typeFilter.movie ? 'movie' : 'show';
+    expect(gtag).toHaveBeenCalledWith('event', 'home_rail_change', { section: 'top-ten', list });
   });
 });

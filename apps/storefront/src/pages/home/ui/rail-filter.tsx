@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { queryOptions, skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
-import { whenIdleOnFastConnection } from '@/shared/lib';
+import { track, whenIdleOnFastConnection } from '@/shared/lib';
 import { SectionError, SegmentedFilter } from '@/shared/ui';
 import { activeList, type RailStart } from '../model/rail-start';
 
@@ -65,6 +65,7 @@ export function useRailFilter<K extends string, T>(
 
   const select = (next: K) => {
     lastChosenListBySection.set(sectionId, next);
+    track('home_rail_change', { section: sectionId, list: next });
     setChosen(next);
     if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
   };

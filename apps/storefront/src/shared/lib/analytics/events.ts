@@ -1,11 +1,25 @@
 export type AnalyticsMediaType = 'movie' | 'show';
 
+export type HomeBlock =
+  | 'home_hero'
+  | 'home_top_picks'
+  | 'home_top_ten'
+  | 'home_episodes'
+  | 'home_releases'
+  | 'home_upcoming';
+
 export type SignInMethod = 'email' | 'google' | 'facebook';
 
 export interface AnalyticsEvents {
   search: { results_count: number; filter: string };
   search_no_results: { search_term: string; filter: string };
-  open_title: { origin: string; media_type: AnalyticsMediaType; in_catalog: boolean };
+  open_title: {
+    origin: 'search' | HomeBlock;
+    media_type: AnalyticsMediaType;
+    in_catalog: boolean;
+    position?: number;
+    list?: string;
+  };
   title_import: {
     media_type: AnalyticsMediaType;
     result: 'ready' | 'not_found' | 'failed' | 'timeout' | 'unreachable';
@@ -38,6 +52,7 @@ export interface AnalyticsEvents {
     mode?: string;
     media_type?: AnalyticsMediaType;
   };
+  home_rail_change: { section: string; list: string };
   calendar_open: { origin: 'home_upcoming' | 'home_episodes' };
   share: { result: 'shared' | 'copied' | 'cancelled' | 'failed' };
   app_error: {
