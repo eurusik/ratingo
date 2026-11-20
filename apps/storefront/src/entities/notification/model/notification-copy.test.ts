@@ -26,6 +26,50 @@ describe('notification copy', () => {
     expect(text).not.toContain('S4E3');
   });
 
+  it('tells about an announced premiere date of a show', () => {
+    const item = notification({
+      trigger: 'status_changed',
+      payload: { airDate: '2027-03-12' },
+      mediaSummary: { id: 'm', type: 'show', title: 'Бог війни', slug: 'boh-viyny', poster: null },
+    });
+
+    expect(notificationText(item, uk)).toBe('Бог війни — оголошено дату прем’єри');
+    expect(notificationDetail(item, uk, 'uk')).toBe('Прем’єра 12 березня');
+  });
+
+  it('keeps the release wording for an announced movie date', () => {
+    const item = notification({ trigger: 'status_changed', payload: { airDate: '2027-03-12' } });
+
+    expect(notificationText(item, uk)).toBe('Анора — оголошено дату виходу');
+    expect(notificationDetail(item, uk, 'uk')).toBe('Вихід 12 березня');
+  });
+
+  it('announces the premiere of a show', () => {
+    expect(
+      notificationText(
+        notification({ trigger: 'premiere', payload: { episodeKey: 'S1E1' } }),
+        uk,
+      ),
+    ).toBe('Анора — прем’єра серіалу');
+  });
+
+  it('says how many episodes came out when the premiere drops several at once', () => {
+    expect(
+      notificationText(
+        notification({ trigger: 'premiere', payload: { episodeKey: 'S1E8' } }),
+        uk,
+      ),
+    ).toBe('Анора — прем’єра: вийшли серії 1–8');
+  });
+
+  it('keeps a plain episode notification for S1E1 that is not a premiere reminder', () => {
+    const text = notificationText(
+      notification({ trigger: 'new_episode', payload: { episodeKey: 'S1E1' } }),
+      uk,
+    );
+    expect(text).not.toContain('прем’єра');
+  });
+
   it('names the season when it is known', () => {
     expect(
       notificationText(notification({ trigger: 'new_season', payload: { seasonNumber: 4 } }), uk),

@@ -3982,7 +3982,7 @@ export interface components {
              * @example new_season
              * @enum {string}
              */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed" | "premiere";
             payload: components["schemas"]["NotificationPayloadDto"] | null;
             /** @example false */
             isRead: boolean;
@@ -4140,7 +4140,7 @@ export interface components {
              * @example release
              * @enum {string}
              */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed" | "premiere";
             /**
              * @description Where the action originated
              * @example verdict
@@ -4185,7 +4185,7 @@ export interface components {
              * @example release
              * @enum {string}
              */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed" | "premiere";
             /** @example true */
             isActive: boolean;
             /** @description Current subscription status after action */
@@ -4202,7 +4202,7 @@ export interface components {
              * @example release
              * @enum {string}
              */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed" | "premiere";
             /** @example card */
             context?: string;
         };
@@ -4237,7 +4237,7 @@ export interface components {
              * @example release
              * @enum {string}
              */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed" | "premiere";
             /** @example true */
             isActive: boolean;
             /**

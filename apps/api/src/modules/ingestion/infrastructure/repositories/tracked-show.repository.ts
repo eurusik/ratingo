@@ -35,6 +35,7 @@ export class TrackedShowRepository implements ITrackedShowRepository {
               status: schema.shows.status,
               totalSeasons: schema.shows.totalSeasons,
               nextAirDate: schema.shows.nextAirDate,
+              firstAirDate: schema.mediaItems.releaseDate,
             })
             .from(schema.mediaItems)
             .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))

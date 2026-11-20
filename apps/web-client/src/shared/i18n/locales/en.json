@@ -708,7 +708,8 @@
         "new_season": "Done! We'll notify you about the new season",
         "new_episode": "Done! We'll notify you about new episodes",
         "on_streaming": "Done! We'll notify you when it's on streaming",
-        "status_changed": "Done! We'll notify you about status changes"
+        "status_changed": "Done! We'll notify you about status changes",
+        "premiere": "Done! We'll notify you about the premiere"
       },
       "unsubscribed": "Notifications disabled"
     },
@@ -718,14 +719,16 @@
         "new_season": "New season",
         "new_episode": "New episode",
         "on_streaming": "On streaming",
-        "status_changed": "Status changed"
+        "status_changed": "Status changed",
+        "premiere": "Premiere"
       },
       "message": {
         "release": "We'll notify you when it's released",
         "new_season": "We'll notify you when a new season is out",
         "new_episode": "We'll notify you when a new episode is out",
         "on_streaming": "We'll notify you when it's on streaming",
-        "status_changed": "We'll notify you when the status changes"
+        "status_changed": "We'll notify you when the status changes",
+        "premiere": "We'll notify you on the premiere day"
       },
       "disabled": "Notifications disabled"
     },
@@ -880,7 +883,8 @@
       "newEpisode": "New episode released",
       "onStreaming": "Available on streaming",
       "released": "Released",
-      "statusChanged": "Status changed"
+      "statusChanged": "Release date announced",
+      "premiere": "Series premiere"
     }
   },
   "settings": {

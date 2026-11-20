@@ -16,7 +16,6 @@ import { CastSection } from './cast-section';
 import { DetailsHero } from './details-hero';
 import { DetailsTopBar } from './details-top-bar';
 import { FactsCard } from './facts-card';
-import type { UpcomingKind } from '../model/action-media';
 import { HeroActions, type ActionMedia } from './hero-actions';
 import { RatingsPanel } from './ratings-panel';
 import { RevealAfterSkeleton } from './reveal-after-skeleton';
@@ -26,18 +25,13 @@ function reviewedMediaOf({ mediaItemId, type, slug, title }: View): ReviewedMedi
   return { mediaItemId, type, slug, title };
 }
 
-function upcomingKindOf(view: View): UpcomingKind | undefined {
-  if (view.type !== 'movie') return undefined;
-  if (view.upcomingRelease) return 'dated';
-  return view.isReleaseDateUnknown ? 'undated' : undefined;
-}
-
 function actionMediaOf(view: View, trackingState: TrackingState | undefined): ActionMedia {
   if (view.type === 'movie') {
-    return { ...reviewedMediaOf(view), upcoming: upcomingKindOf(view) };
+    return { ...reviewedMediaOf(view), upcoming: view.upcoming };
   }
   return {
     ...reviewedMediaOf(view),
+    upcoming: view.upcoming,
     trackingState,
     showId: view.showId,
     seasons: view.seasons,

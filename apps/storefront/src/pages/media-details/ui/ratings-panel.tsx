@@ -20,7 +20,7 @@ function verdictMessage(view: MediaDetailsView, messages: VerdictMessages): stri
   return isMessageKey(byType, key) ? byType[key] : undefined;
 }
 
-function UpcomingVerdict({ message, dict }: { message?: string; dict: Dictionary }) {
+function UpcomingVerdict({ note, message }: { note: string; message?: string }) {
   return (
     <div className="flex items-center gap-4">
       <span
@@ -31,7 +31,7 @@ function UpcomingVerdict({ message, dict }: { message?: string; dict: Dictionary
       </span>
       <div className="flex min-w-0 flex-col gap-1.5">
         <p className="text-sm leading-snug font-semibold text-muted">
-          {dict.details.upcoming.noScore}
+          {note}
         </p>
         {message ? (
           <p className="text-lg leading-tight font-bold md:text-[19px]">{message}</p>
@@ -44,8 +44,11 @@ function UpcomingVerdict({ message, dict }: { message?: string; dict: Dictionary
 function VerdictBlock({ view, dict }: { view: MediaDetailsView; dict: Dictionary }) {
   const message = verdictMessage(view, dict.details.verdict);
 
-  if (view.type === 'movie' && (view.upcomingRelease || view.isReleaseDateUnknown)) {
-    return <UpcomingVerdict message={message} dict={dict} />;
+  if (view.upcoming) {
+    const { noScore, noScoreShow } = dict.details.upcoming;
+    return (
+      <UpcomingVerdict note={view.type === 'show' ? noScoreShow : noScore} message={message} />
+    );
   }
 
   if (view.score === undefined || !view.verdict) {

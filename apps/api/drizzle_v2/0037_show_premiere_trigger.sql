@@ -1,0 +1,1 @@
+ALTER TYPE "public"."subscription_trigger" ADD VALUE IF NOT EXISTS 'premiere';

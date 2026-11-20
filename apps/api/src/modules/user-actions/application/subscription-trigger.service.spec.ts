@@ -31,8 +31,10 @@ describe('SubscriptionTriggerService', () => {
     mediaItemId: 'media-123',
   };
 
-  const setup = async (options: { notifiedSubs?: any[] } = {}) => {
+  const setup = async (options: { notifiedSubs?: any[]; premieres?: any[] } = {}) => {
     subscriptionRepo = {
+      claimPremieres: jest.fn().mockResolvedValue(options.premieres ?? []),
+      claimPremiereDateAnnouncements: jest.fn().mockResolvedValue(options.premieres ?? []),
       atomicNotifyNewEpisode: jest.fn().mockResolvedValue(options.notifiedSubs ?? []),
       atomicNotifyNewSeason: jest.fn().mockResolvedValue(options.notifiedSubs ?? []),
       deactivateForEndedShow: jest.fn().mockResolvedValue(options.notifiedSubs?.length ?? 0),
@@ -54,6 +56,79 @@ describe('SubscriptionTriggerService', () => {
     service = module.get<SubscriptionTriggerService>(SubscriptionTriggerService);
     return { service, subscriptionRepo, notificationRepo };
   };
+
+  describe('premiere', () => {
+    const premiereDiff: ShowSyncDiff = {
+      tmdbId: 777,
+      mediaItemId: 'show-new',
+      hasChanges: true,
+      changes: { newEpisode: { season: 1, episode: 1, airDate: '2027-02-10', key: 'S1E1' } },
+    };
+
+    it('notifies everyone waiting for the premiere once the first episode is out', async () => {
+      await setup({ premieres: [{ id: 'sub-p', userId: 'user-9', mediaItemId: 'show-new' }] });
+
+      const events = await service.handleShowDiff(premiereDiff);
+
+      expect(subscriptionRepo.claimPremieres).toHaveBeenCalledWith('show-new');
+      expect(events).toContainEqual({
+        subscriptionId: 'sub-p',
+        userId: 'user-9',
+        mediaItemId: 'show-new',
+        trigger: SUBSCRIPTION_TRIGGER.PREMIERE,
+        payload: { tmdbId: 777, episodeKey: 'S1E1', airDate: '2027-02-10' },
+      });
+      expect(notificationRepo.createMany).toHaveBeenCalledWith([
+        expect.objectContaining({ trigger: SUBSCRIPTION_TRIGGER.PREMIERE, userId: 'user-9' }),
+      ]);
+    });
+
+    it('tells everyone waiting for the premiere when its date is announced', async () => {
+      await setup({ premieres: [{ id: 'sub-p', userId: 'user-9', mediaItemId: 'show-new' }] });
+
+      const events = await service.handleShowDiff({
+        ...premiereDiff,
+        changes: { upcomingPremiere: { airDate: '2027-03-12' } },
+      });
+
+      expect(subscriptionRepo.claimPremiereDateAnnouncements).toHaveBeenCalledWith(
+        'show-new',
+        new Date('2027-03-12'),
+      );
+      expect(subscriptionRepo.claimPremieres).not.toHaveBeenCalled();
+      expect(events).toEqual([
+        {
+          subscriptionId: 'sub-p',
+          userId: 'user-9',
+          mediaItemId: 'show-new',
+          trigger: SUBSCRIPTION_TRIGGER.STATUS_CHANGED,
+          payload: { tmdbId: 777, airDate: '2027-03-12' },
+        },
+      ]);
+    });
+
+    it('does not count an aired special as the premiere', async () => {
+      await setup();
+
+      await service.handleShowDiff({
+        ...premiereDiff,
+        changes: { newEpisode: { season: 0, episode: 1, airDate: '2026-12-01', key: 'S0E1' } },
+      });
+
+      expect(subscriptionRepo.claimPremieres).not.toHaveBeenCalled();
+    });
+
+    it('does not look for premieres when no episode came out', async () => {
+      await setup();
+
+      await service.handleShowDiff({
+        ...premiereDiff,
+        changes: { statusChanged: { from: 'Planned', to: 'In Production' } },
+      });
+
+      expect(subscriptionRepo.claimPremieres).not.toHaveBeenCalled();
+    });
+  });
 
   describe('handleShowDiff', () => {
     it('should return empty array when no changes', async () => {
@@ -247,6 +322,7 @@ describe('SubscriptionTriggerService', () => {
             useValue: {
               atomicNotifyNewEpisode: jest.fn().mockResolvedValue([]),
               atomicNotifyNewSeason: jest.fn().mockResolvedValue([]),
+              claimPremieres: jest.fn().mockResolvedValue([]),
               deactivateForEndedShow: jest.fn().mockResolvedValue(0),
             },
           },
@@ -277,6 +353,7 @@ describe('SubscriptionTriggerService', () => {
             useValue: {
               atomicNotifyNewEpisode: jest.fn().mockResolvedValue([]),
               atomicNotifyNewSeason: jest.fn().mockResolvedValue([]),
+              claimPremieres: jest.fn().mockResolvedValue([]),
               deactivateForEndedShow: jest.fn().mockResolvedValue(0),
             },
           },

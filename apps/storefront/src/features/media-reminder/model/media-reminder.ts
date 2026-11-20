@@ -11,7 +11,7 @@ import { useSignedInAction } from '@/shared/auth';
 import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
 import { track } from '@/shared/lib';
 
-export type ReminderTrigger = Extract<SubscriptionTrigger, 'new_episode' | 'release'>;
+export type ReminderTrigger = Extract<SubscriptionTrigger, 'new_episode' | 'release' | 'premiere'>;
 
 const PAGE_SIZE = 100;
 const REMINDERS_STALE_MS = 5 * 60 * 1000;
@@ -19,12 +19,13 @@ const REMINDERS_STALE_MS = 5 * 60 * 1000;
 const REMINDER_EVENTS = {
   new_episode: 'episode_reminder',
   release: 'release_reminder',
+  premiere: 'premiere_reminder',
 } as const satisfies Record<ReminderTrigger, string>;
 
-type ReminderCopy = Pick<Dictionary['reminder'], 'remind' | 'label' | 'on' | 'off'>;
+type ReminderCopy = Pick<Dictionary['reminder'], 'remind' | 'active' | 'label' | 'on' | 'off'>;
 
 export function reminderCopy(dict: Dictionary, trigger: ReminderTrigger): ReminderCopy {
-  return trigger === 'release' ? dict.reminder.release : dict.reminder;
+  return trigger === 'new_episode' ? dict.reminder : dict.reminder[trigger];
 }
 
 type RemindedMedia = Readonly<Record<ReminderTrigger, ReadonlySet<string>>>;
@@ -32,6 +33,7 @@ type RemindedMedia = Readonly<Record<ReminderTrigger, ReadonlySet<string>>>;
 const SUBSCRIPTION_TRIGGERS_BY_REMINDER = {
   new_episode: ['new_episode'],
   release: ['release', 'on_streaming'],
+  premiere: ['premiere'],
 } as const satisfies Record<ReminderTrigger, readonly SubscriptionTrigger[]>;
 
 function isReminderTrigger(trigger: SubscriptionTrigger): trigger is ReminderTrigger {
@@ -45,7 +47,11 @@ function reminderOf(trigger: SubscriptionTrigger): ReminderTrigger | undefined {
 
 async function fetchReminded(): Promise<RemindedMedia> {
   const subscriptions = await fetchAllPages(PAGE_SIZE, subscriptionsApi.list);
-  const reminded = { new_episode: new Set<string>(), release: new Set<string>() };
+  const reminded = {
+    new_episode: new Set<string>(),
+    release: new Set<string>(),
+    premiere: new Set<string>(),
+  };
   for (const { trigger, isActive, mediaItemId } of subscriptions) {
     const reminder = reminderOf(trigger);
     if (isActive && reminder) reminded[reminder].add(mediaItemId);

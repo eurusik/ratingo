@@ -4,6 +4,7 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { startOfUtcDay } from '@/common/utils/date.util';
 import { parseSeasonFromEpisodeKey } from '@/modules/ingestion/public';
 import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
+import { isAwaitingPremiere } from '@/modules/shared/show-premiere';
 
 import { SUBSCRIPTION_CONTEXT } from '../domain/constants/subscription.constants';
 import { type UserSubscription, type SubscriptionTrigger } from '../domain/entities';
@@ -33,7 +34,6 @@ export interface SubscribePayload {
   trigger: SubscriptionTrigger;
   context?: string;
   reasonKey?: string;
-  autoPlan?: boolean;
 }
 
 @Injectable()
@@ -56,16 +56,18 @@ export class SubscriptionsService {
   ) {}
 
   async subscribe(payload: SubscribePayload): Promise<UserSubscription> {
-    const { userId, mediaItemId, trigger, context, reasonKey, autoPlan = false } = payload;
+    const { userId, mediaItemId, trigger, context, reasonKey } = payload;
 
     const initialMarkers: {
       lastNotifiedSeasonNumber?: number | null;
       lastNotifiedEpisodeKey?: string | null;
+      knownPremiereDate?: Date | null;
     } = {};
 
     if (
       trigger === SUBSCRIPTION_TRIGGER.NEW_SEASON ||
-      trigger === SUBSCRIPTION_TRIGGER.NEW_EPISODE
+      trigger === SUBSCRIPTION_TRIGGER.NEW_EPISODE ||
+      trigger === SUBSCRIPTION_TRIGGER.PREMIERE
     ) {
       const lastEpisodeKey = await this.showStatePort.getLastAiredEpisodeKey(mediaItemId);
       const airedSeason = parseSeasonFromEpisodeKey(lastEpisodeKey) ?? 0;
@@ -73,16 +75,19 @@ export class SubscriptionsService {
       if (trigger === SUBSCRIPTION_TRIGGER.NEW_SEASON) {
         initialMarkers.lastNotifiedSeasonNumber = airedSeason;
       }
-      if (trigger === SUBSCRIPTION_TRIGGER.NEW_EPISODE) {
+      if (trigger !== SUBSCRIPTION_TRIGGER.NEW_SEASON) {
         initialMarkers.lastNotifiedEpisodeKey = lastEpisodeKey;
       }
+    }
+
+    if (trigger === SUBSCRIPTION_TRIGGER.PREMIERE) {
+      initialMarkers.knownPremiereDate = await this.knownPremiereDateOf(mediaItemId);
     }
 
     const subscription = await this.subscriptionRepo.upsert({
       userId,
       mediaItemId,
       trigger,
-      autoPlan,
       ...initialMarkers,
     });
 
@@ -165,23 +170,56 @@ export class SubscriptionsService {
     const schedule = await this.movieReleasePort.findMovieReleaseSchedule(mediaItemId);
     if (!schedule) return;
 
+    const today = startOfUtcDay(this.clock.now());
+    await this.subscribeForPlan(userId, mediaItemId, pendingMovieReleaseTriggers(schedule, today));
+  }
+
+  async autoSubscribeForPremiere(userId: string, mediaItemId: string): Promise<void> {
+    const now = this.clock.now();
+    const facts = await this.showStatePort.findShowPremiereFacts(mediaItemId, now);
+    if (!facts || !isAwaitingPremiere(facts, now)) return;
+
+    await this.subscribeForPlan(
+      userId,
+      mediaItemId,
+      [SUBSCRIPTION_TRIGGER.PREMIERE],
+      facts.firstAirDate,
+    );
+  }
+
+  private async knownPremiereDateOf(mediaItemId: string): Promise<Date | null> {
+    const facts = await this.showStatePort.findShowPremiereFacts(mediaItemId, this.clock.now());
+    return facts?.firstAirDate ?? null;
+  }
+
+  private async subscribeForPlan(
+    userId: string,
+    mediaItemId: string,
+    triggers: SubscriptionTrigger[],
+    knownPremiereDate: Date | null = null,
+  ): Promise<void> {
+    if (triggers.length === 0) return;
+
     const [autoSubscribe, closedTriggers] = await Promise.all([
       this.userPreferencePort.getAutoSubscribeOnWatch(userId),
       this.subscriptionRepo.findTriggersClosedToAutoPlan(userId, mediaItemId),
     ]);
     if (!autoSubscribe) return;
 
-    const today = startOfUtcDay(this.clock.now());
-    const triggers = pendingMovieReleaseTriggers(schedule, today).filter(
-      (trigger) => !closedTriggers.includes(trigger),
-    );
-    for (const trigger of triggers) {
-      await this.subscribe({
+    for (const trigger of triggers.filter((candidate) => !closedTriggers.includes(candidate))) {
+      const activated = await this.subscriptionRepo.activateAutoPlan({
         userId,
         mediaItemId,
         trigger,
+        knownPremiereDate,
+      });
+      if (!activated) continue;
+      await this.actionRepo.create({
+        userId,
+        mediaItemId,
+        action: USER_MEDIA_ACTION.SUBSCRIBE,
         context: SUBSCRIPTION_CONTEXT.AUTO_PLAN,
-        autoPlan: true,
+        payload: { trigger },
       });
     }
   }

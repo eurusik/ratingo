@@ -12,6 +12,7 @@ export const SUBSCRIPTION_TRIGGER = {
   NEW_EPISODE: 'new_episode',
   ON_STREAMING: 'on_streaming',
   STATUS_CHANGED: 'status_changed',
+  PREMIERE: 'premiere',
 } as const;
 
 export type SubscriptionTrigger = (typeof SUBSCRIPTION_TRIGGER)[keyof typeof SUBSCRIPTION_TRIGGER];

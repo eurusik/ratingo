@@ -394,7 +394,8 @@
       "on_streaming": "Out now",
       "new_season": "New season",
       "new_episode": "New episode",
-      "status_changed": "Release date"
+      "status_changed": "Release date",
+      "premiere": "Premiere"
     },
     "text": {
       "release": "{title} is now in cinemas",
@@ -405,11 +406,15 @@
       "new_season": "{title} is back with season {season}",
       "new_season_unknown": "{title} has a new season coming",
       "new_episode": "{title}: episode {code} is out",
-      "status_changed": "{title}: release date announced"
+      "premiere": "{title}: the series premiere is out",
+      "premiere_batch": "{title}: premiere, episodes 1–{last} are out",
+      "status_changed": "{title}: release date announced",
+      "status_changed_show": "{title}: premiere date announced"
     },
     "sub": {
       "fromPlan": "From your Want to watch",
       "airDate": "Out {date}",
+      "premiereDate": "Premieres {date}",
       "remind": "We'll remind you on release day"
     },
     "footnote": "New episodes of what you watch live in My. You can turn on notifications for them in settings.",
@@ -742,7 +747,9 @@
     "upcoming": {
       "release": "Out {date}",
       "dateUnknown": "Release date not announced yet",
-      "noScore": "Not out yet — ratings will appear after the premiere"
+      "noScore": "Not out yet — ratings will appear after the premiere",
+      "premiere": "Premieres {date}",
+      "noScoreShow": "Not out yet — ratings will appear after the premiere"
     },
     "actions": {
       "rate": "Rate",
@@ -1212,14 +1219,23 @@
   },
   "reminder": {
     "remind": "Remind me",
+    "active": "Reminder on",
     "label": "Remind me about new episodes: {title}",
     "on": "We'll remind you about new episodes: {title}",
     "off": "Reminder turned off: {title}",
     "failed": "Couldn't change the reminder.",
     "release": {
       "remind": "Remind me",
+      "active": "Reminder on",
       "label": "Remind me when it’s out: {title}",
       "on": "We’ll remind you when it’s out: {title}",
+      "off": "Reminder turned off: {title}"
+    },
+    "premiere": {
+      "remind": "Remind me",
+      "active": "Reminder on",
+      "label": "Remind me about the premiere: {title}",
+      "on": "We’ll remind you about the premiere: {title}",
       "off": "Reminder turned off: {title}"
     }
   },
@@ -1325,7 +1341,8 @@
         "new_season": "new season",
         "new_episode": "new episodes",
         "on_streaming": "streaming",
-        "status_changed": "release date"
+        "status_changed": "release date",
+        "premiere": "premiere"
       },
       "automatic": "Automatic",
       "autoSubscribe": "Follow a show when I start it",

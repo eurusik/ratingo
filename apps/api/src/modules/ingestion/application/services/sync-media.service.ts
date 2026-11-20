@@ -29,6 +29,7 @@ import {
 import { NormalizationService } from '@/modules/provider/public';
 import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 import { ScoreCalculatorService, type ScoreInput } from '@/modules/shared/score-calculator';
+import { isAwaitingPremiere, premiereFactsOf } from '@/modules/shared/show-premiere';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '@/modules/trakt/public';
 
@@ -348,6 +349,8 @@ export class SyncMediaService {
     tmdbId: number,
     type: MediaType,
   ): Promise<NormalizedMedia> {
+    if (type === MediaType.SHOW && this.isShowAwaitingPremiere(media)) return media;
+
     const { imdbId } = media.externalIds;
 
     const [traktRating, omdbRatings] = await Promise.all([
@@ -379,6 +382,11 @@ export class SyncMediaService {
     if (type === MediaType.SHOW) return this.traktRatingsAdapter.getShowRatingsByTmdbId(tmdbId);
     if (this.isUnreleasedMovie(media)) return Promise.resolve(null);
     return this.traktRatingsAdapter.getMovieRatingsByTmdbId(tmdbId);
+  }
+
+  private isShowAwaitingPremiere(media: NormalizedMedia): boolean {
+    const now = this.clock.now();
+    return isAwaitingPremiere(premiereFactsOf(media, now), now);
   }
 
   private isUnreleasedMovie(media: NormalizedMedia): boolean {

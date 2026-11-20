@@ -75,6 +75,7 @@ export function NotificationCard({
       new_episode: dict.notifications.events.newEpisode,
       on_streaming: dict.notifications.events.onStreaming,
       status_changed: dict.notifications.events.statusChanged,
+      premiere: dict.notifications.events.premiere,
     }[trigger] ?? trigger;
 
   const posterUrl = thumbnailUrl(mediaSummary.poster);

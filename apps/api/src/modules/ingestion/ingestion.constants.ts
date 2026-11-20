@@ -15,6 +15,8 @@ export {
  */
 export const TRACKED_SHOWS_CHUNK_SIZE = 50;
 
+export const SPECIALS_SEASON_NUMBER = 0;
+
 /**
  * Delay between TMDB API calls in milliseconds.
  * TMDB allows ~40 req/s; a 300ms delay (~3.3 req/s) stays well within it.

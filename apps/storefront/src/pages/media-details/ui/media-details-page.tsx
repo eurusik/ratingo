@@ -69,7 +69,7 @@ export async function ShowDetailsPage({ slug, locale, trackingHints }: ShowDetai
   if (!show) notFound();
   return (
     <DetailsDocument
-      view={fromShowDetails(show)}
+      view={fromShowDetails(show, new Date())}
       jsonLd={showJsonLd(show)}
       locale={locale}
       trackingState={trackingStateFor(trackingHints, show.slug)}

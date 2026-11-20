@@ -7,7 +7,11 @@ import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 import { SAVED_ITEM_LIST } from '@/modules/user-actions/domain/entities';
-import { type SubscriptionTrigger } from '@/modules/user-actions/domain/entities/user-subscription.entity';
+import {
+  SUBSCRIPTION_TRIGGER,
+  type SubscriptionTrigger,
+} from '@/modules/user-actions/domain/entities/user-subscription.entity';
+import { type AutoPlanActivation } from '@/modules/user-actions/domain/repositories/user-subscription.repository.interface';
 
 @Injectable()
 export class AutoPlanSubscriptionsQuery {
@@ -61,6 +65,51 @@ export class AutoPlanSubscriptionsQuery {
         return rows.map((row) => row.trigger as SubscriptionTrigger);
       },
       { userId, mediaItemId },
+    );
+  }
+
+  activate({
+    userId,
+    mediaItemId,
+    trigger,
+    knownPremiereDate = null,
+  }: AutoPlanActivation): Promise<boolean> {
+    return withDbError(
+      'activate auto plan subscription',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .insert(schema.userSubscriptions)
+          .values({
+            userId,
+            mediaItemId,
+            trigger,
+            isActive: true,
+            autoPlan: true,
+            knownPremiereDate,
+          })
+          .onConflictDoUpdate({
+            target: [
+              schema.userSubscriptions.userId,
+              schema.userSubscriptions.mediaItemId,
+              schema.userSubscriptions.trigger,
+              schema.userSubscriptions.channel,
+            ],
+            set: {
+              isActive: true,
+              autoPlan: true,
+              updatedAt: new Date(),
+              ...(trigger === SUBSCRIPTION_TRIGGER.PREMIERE && {
+                lastNotifiedEpisodeKey: null,
+                knownPremiereDate,
+              }),
+            },
+            setWhere: not(schema.userSubscriptions.isActive),
+          })
+          .returning({ id: schema.userSubscriptions.id });
+        return rows.length > 0;
+      },
+      { userId, mediaItemId, trigger },
     );
   }
 

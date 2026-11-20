@@ -8,8 +8,8 @@ import { USER_MEDIA_STATE, UserMediaStateChangedEvent } from '@/modules/user-med
 import { SubscriptionsService } from '../subscriptions.service';
 
 @Injectable()
-export class AutoSubscribeMovieOnPlanListener {
-  private readonly logger = new Logger(AutoSubscribeMovieOnPlanListener.name);
+export class AutoSubscribeOnPlanListener {
+  private readonly logger = new Logger(AutoSubscribeOnPlanListener.name);
 
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
@@ -25,12 +25,20 @@ export class AutoSubscribeMovieOnPlanListener {
   }
 
   private async subscribe(userId: string, mediaItemId: string): Promise<void> {
+    const target = `user=${userId}, media=${mediaItemId}`;
+    await this.attempt(`Movie auto-subscribe failed: ${target}`, () =>
+      this.subscriptionsService.autoSubscribeForMovie(userId, mediaItemId),
+    );
+    await this.attempt(`Premiere auto-subscribe failed: ${target}`, () =>
+      this.subscriptionsService.autoSubscribeForPremiere(userId, mediaItemId),
+    );
+  }
+
+  private async attempt(failureMessage: string, run: () => Promise<void>): Promise<void> {
     try {
-      await this.subscriptionsService.autoSubscribeForMovie(userId, mediaItemId);
+      await run();
     } catch (error) {
-      this.logger.warn(
-        `Movie auto-subscribe failed: user=${userId}, media=${mediaItemId}: ${errorMessage(error)}`,
-      );
+      this.logger.warn(`${failureMessage}: ${errorMessage(error)}`);
     }
   }
 }

@@ -72,6 +72,7 @@ export const subscriptionTriggerEnum = pgEnum('subscription_trigger', [
   'new_episode',
   'on_streaming',
   'status_changed',
+  'premiere',
 ]);
 
 /**
@@ -174,6 +175,7 @@ export const userSubscriptions = pgTable(
     // Dedup markers to prevent duplicate notifications
     lastNotifiedEpisodeKey: text('last_notified_episode_key'), // e.g., 'S2E5'
     lastNotifiedSeasonNumber: integer('last_notified_season_number'),
+    knownPremiereDate: timestamp('known_premiere_date'),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

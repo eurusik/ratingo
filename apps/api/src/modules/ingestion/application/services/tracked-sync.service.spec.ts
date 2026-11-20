@@ -52,6 +52,43 @@ describe('TrackedSyncService', () => {
     });
   });
 
+  describe('upcoming premiere', () => {
+    const awaiting = {
+      mediaItemId: 'media-1',
+      status: 'Planned',
+      totalSeasons: 1,
+      nextAirDate: null,
+      firstAirDate: new Date('2026-03-12T00:00:00.000Z'),
+      lastEpisodeKey: null,
+      lastEpisodeAirDate: null,
+    };
+    const diffOf = (snapshot: object) =>
+      (service as any).buildCurrentStateDiff(12345, snapshot, 'Planned');
+
+    it('reports the premiere date of a show that has not aired yet', () => {
+      const diff = diffOf(awaiting);
+
+      expect(diff.hasChanges).toBe(true);
+      expect(diff.changes.upcomingPremiere).toEqual({ airDate: '2026-03-12' });
+    });
+
+    it('still counts a show with only an aired special as awaiting its premiere', () => {
+      const diff = diffOf({ ...awaiting, lastEpisodeKey: 'S0E1' });
+
+      expect(diff.changes.upcomingPremiere).toEqual({ airDate: '2026-03-12' });
+    });
+
+    it.each([
+      ['it has no date yet', { firstAirDate: null }],
+      ['the date has passed', { firstAirDate: new Date('2025-12-01T00:00:00.000Z') }],
+      ['a regular episode is out', { lastEpisodeKey: 'S1E1' }],
+    ])('reports nothing when %s', (_case, change) => {
+      const diff = diffOf({ ...awaiting, ...change });
+
+      expect(diff.changes.upcomingPremiere).toBeUndefined();
+    });
+  });
+
   describe('buildCurrentStateDiff', () => {
     it('should report current aired episode and season', () => {
       const snapshot = {
