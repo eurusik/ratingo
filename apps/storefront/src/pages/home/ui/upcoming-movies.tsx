@@ -12,7 +12,7 @@ import { trackHomeOpen } from '../model/track-home-open';
 
 const SECTION_ID = 'upcoming-movies';
 
-function UpcomingTile({ release }: { release: UpcomingRelease }) {
+function UpcomingTile({ release, position }: { release: UpcomingRelease; position: number }) {
   const { dict, locale } = useTranslation();
   const media = {
     mediaItemId: release.mediaItemId,
@@ -25,7 +25,7 @@ function UpcomingTile({ release }: { release: UpcomingRelease }) {
     <div className="relative w-24 md:w-full">
       <ForwardLink
         href={mediaRoute('movie', release.slug)}
-        onClick={() => trackHomeOpen('home_upcoming', 'movie')}
+        onClick={() => trackHomeOpen({ origin: 'home_upcoming', mediaType: 'movie', position })}
         className="flex flex-col gap-1.5 text-foreground no-underline md:gap-2"
       >
         <span {...SHARED_ART_SOURCE} className="relative">
@@ -77,9 +77,9 @@ export function UpcomingMovies({ releases }: { releases: UpcomingRelease[] }) {
         trailing={<RailPager scrollerRef={scroller} />}
       />
       <Rail label={dict.home.upcoming} itemSize="tile" scrollerRef={scroller}>
-        {releases.map((release) => (
+        {releases.map((release, index) => (
           <RailItem key={release.mediaItemId}>
-            <UpcomingTile release={release} />
+            <UpcomingTile release={release} position={index + 1} />
           </RailItem>
         ))}
       </Rail>

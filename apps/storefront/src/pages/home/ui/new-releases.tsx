@@ -47,13 +47,20 @@ export function NewReleases({ rail }: { rail: RailStart<ReleaseList, TrendingMed
       >
         {(items) => (
           <Rail label={title} scrollerRef={filter.scrollerRef} memoryKey={filter.memoryKey}>
-            {items.map((media) => (
+            {items.map((media, index) => (
               <RailItem key={media.mediaItemId}>
                 <TrendingCard
                   media={media}
                   actions={<SaveButton media={media} tone="overlay" />}
                   footer={<OwnScoreChip mediaItemId={media.mediaItemId} />}
-                  onOpen={() => trackHomeOpen('home_releases', media.type)}
+                  onOpen={() =>
+                    trackHomeOpen({
+                      origin: 'home_releases',
+                      mediaType: media.type,
+                      position: index + 1,
+                      list: filter.active,
+                    })
+                  }
                 />
               </RailItem>
             ))}

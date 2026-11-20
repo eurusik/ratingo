@@ -12,6 +12,7 @@ export {
   type AnalyticsEventName,
   type AnalyticsEvents,
   type AnalyticsMediaType,
+  type HomeBlock,
   type SignInMethod,
 } from './analytics';
 export { useBrowserOrigin, useBrowserPath, useIsApplePlatform, useIsOffline } from './browser';

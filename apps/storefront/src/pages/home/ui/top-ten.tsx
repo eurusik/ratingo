@@ -57,7 +57,13 @@ export function TopTen({ rail }: { rail: RailStart<MediaType, TrendingMedia> }) 
                 <TopRankTile
                   media={media}
                   rank={index + 1}
-                  onOpen={() => trackHomeOpen('home_top_ten', media.type)}
+                  onOpen={() =>
+                    trackHomeOpen({
+                      origin: 'home_top_ten',
+                      mediaType: media.type,
+                      position: index + 1,
+                    })
+                  }
                 />
               </RailItem>
             ))}

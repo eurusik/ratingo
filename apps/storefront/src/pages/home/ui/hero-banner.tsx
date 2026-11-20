@@ -64,7 +64,7 @@ export function HeroBanner({ hero }: { hero: HeroMedia }) {
         >
           <ForwardLink
             href={mediaRoute(hero.type, hero.slug)}
-            onClick={() => trackHomeOpen('home_hero', hero.type)}
+            onClick={() => trackHomeOpen({ origin: 'home_hero', mediaType: hero.type, position: 1 })}
             className="text-foreground no-underline outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus md:after:rounded-3xl"
           >
             <span className="sr-only">{dict.home.leadBadge}: </span>
