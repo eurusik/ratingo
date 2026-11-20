@@ -36,9 +36,9 @@
       "movie": "Календар фільмів"
     },
     "upcomingDate": "Виходить {date}",
-    "premieres": "Найочікуваніші прем'єри",
+    "premieres": "Найочікуваніші прем’єри",
     "premieresCaption": "Нові серіали, яких чекають найбільше",
-    "premiereDate": "Прем'єра {date}",
+    "premiereDate": "Прем’єра {date}",
     "premiereKind": {
       "newShow": "Новий серіал"
     },

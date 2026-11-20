@@ -313,14 +313,14 @@ import {
 
 ### Shows
 
-| Method | Path                          | Description                                              |
-| ------ | ----------------------------- | -------------------------------------------------------- |
-| `GET`  | `/catalog/shows/trending`     | Trending shows                                           |
-| `GET`  | `/catalog/shows/popular`      | Popular shows (classics)                                 |
-| `GET`  | `/catalog/shows/new-episodes` | Shows with recent episodes (`days`, `limit`)             |
-| `GET`  | `/catalog/shows/anticipated`  | Trakt-anticipated premieres in the next 90 days, by date |
-| `GET`  | `/catalog/shows/calendar`     | Episode calendar (`startDate`, `days`)                   |
-| `GET`  | `/catalog/shows/:slug`        | Full show details with seasons                           |
+| Method | Path                          | Description                                  |
+| ------ | ----------------------------- | -------------------------------------------- |
+| `GET`  | `/catalog/shows/trending`     | Trending shows                               |
+| `GET`  | `/catalog/shows/popular`      | Popular shows (classics)                     |
+| `GET`  | `/catalog/shows/new-episodes` | Shows with recent episodes (`days`, `limit`) |
+| `GET`  | `/catalog/shows/anticipated`  | Trakt-anticipated premieres ahead, by date   |
+| `GET`  | `/catalog/shows/calendar`     | Episode calendar (`startDate`, `days`)       |
+| `GET`  | `/catalog/shows/:slug`        | Full show details with seasons               |
 
 ### Release calendar
 

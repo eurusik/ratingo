@@ -98,7 +98,7 @@ export class AnticipatedShowsPipeline {
       return;
     }
 
-    const result = await this.bulkJobService.enqueueBulk(
+    await this.bulkJobService.enqueueBulk(
       tmdbIds.map((tmdbId) => ({
         name: IngestionJob.SYNC_SHOW,
         data: { tmdbId },
@@ -111,9 +111,5 @@ export class AnticipatedShowsPipeline {
     if (tmdbIds.length >= runCap) {
       this.logger.warn(`${label} hit run cap (${runCap}); the rest waits for the next run`);
     }
-
-    this.logger.log(
-      `${label}: found=${tmdbIds.length}, enqueued=${result.enqueued}, deduped=${result.deduped}`,
-    );
   }
 }

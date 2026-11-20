@@ -76,9 +76,6 @@ export interface TrendingShowItem {
   hasRecentEpisode: boolean;
 }
 
-/**
- * Show data for listing.
- */
 export interface AnticipatedShow {
   mediaItemId: string;
   slug: string;
@@ -95,6 +92,9 @@ export interface AnticipatedShowsQueryOptions {
   limit: number;
 }
 
+/**
+ * Show data for listing.
+ */
 export interface ShowListItem {
   tmdbId: number;
   title: string;

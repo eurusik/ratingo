@@ -95,12 +95,12 @@ describe('AnticipatedShowsPipeline', () => {
       {
         name: IngestionJob.SYNC_SHOW,
         data: { tmdbId: 10 },
-        opts: { jobId: 'ant_show_10_20261120' },
+        opts: { jobId: expect.stringMatching(/^ant_show_10_\d{8}$/) },
       },
       {
         name: IngestionJob.SYNC_SHOW,
         data: { tmdbId: 20 },
-        opts: { jobId: 'ant_show_20_20261120' },
+        opts: { jobId: expect.stringMatching(/^ant_show_20_\d{8}$/) },
       },
     ]);
   });
@@ -119,7 +119,7 @@ describe('AnticipatedShowsPipeline', () => {
       {
         name: IngestionJob.SYNC_SHOW,
         data: { tmdbId: 30 },
-        opts: { jobId: 'antr_show_30_20261120' },
+        opts: { jobId: expect.stringMatching(/^antr_show_30_\d{8}$/) },
       },
     ]);
   });
