@@ -8,6 +8,7 @@ import { SHARED_ART_SOURCE, track } from '@/shared/lib';
 import { interpolate, useTranslation, type Locale } from '@/shared/i18n';
 import { ForwardLink, Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import type { EpisodeRelease } from '../model/home-feed';
+import { trackHomeOpen } from '../model/track-home-open';
 
 const airDateFormats = new Map<Locale, Intl.DateTimeFormat>();
 
@@ -32,6 +33,7 @@ function EpisodeTile({ release }: { release: EpisodeRelease }) {
   return (
     <ForwardLink
       href={mediaRoute('show', release.slug)}
+      onClick={() => trackHomeOpen('home_episodes', 'show')}
       className="flex w-24 flex-col gap-1.5 text-foreground no-underline md:w-full md:gap-2"
     >
       <span {...SHARED_ART_SOURCE} className="relative">

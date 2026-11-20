@@ -8,12 +8,14 @@ import { MediaPoster } from './media-poster';
 interface TopRankTileProps {
   media: TrendingMedia;
   rank: number;
+  onOpen?: () => void;
 }
 
-export function TopRankTile({ media, rank }: TopRankTileProps) {
+export function TopRankTile({ media, rank, onOpen }: TopRankTileProps) {
   return (
     <ForwardLink
       href={mediaRoute(media.type, media.slug)}
+      onClick={onOpen}
       className="flex w-24 flex-col gap-1.5 text-foreground no-underline md:w-full md:gap-2"
     >
       <span {...SHARED_ART_SOURCE} className="relative">

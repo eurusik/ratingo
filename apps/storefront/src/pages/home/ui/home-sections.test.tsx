@@ -357,3 +357,44 @@ describe('UpcomingMovies', () => {
     expect(container).toBeEmptyDOMElement();
   });
 });
+
+describe('opening a title from the home page', () => {
+  const episode: EpisodeRelease = {
+    mediaItemId: 'law',
+    slug: 'law',
+    showTitle: 'Закон і порядок',
+    episodeTitle: 'Do No Harm',
+    season: 26,
+    episode: 6,
+    airedAt: '2026-11-12T23:30:00Z',
+  };
+
+  afterEach(() => {
+    delete window.gtag;
+  });
+
+  it.each([
+    ['home_hero', <HeroBanner key="hero" hero={ANDOR} />, /Андор/, 'show'],
+    ['home_top_picks', <TopThree key="picks" items={[DUNE]} firstRank={2} />, /Дюна/, 'movie'],
+    ['home_top_ten', <TopTen key="top" rail={topTen([], [DUNE])} />, /Дюна/, 'movie'],
+    ['home_episodes', <NewEpisodes key="episodes" releases={[episode]} />, /Закон/, 'show'],
+    [
+      'home_releases',
+      <NewReleases key="releases" rail={newReleases([DUNE], [])} />,
+      /Дюна/,
+      'movie',
+    ],
+  ])('reports which block %s the title was opened from', (origin, block, link, mediaType) => {
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    renderIn(block);
+
+    fireEvent.click(screen.getByRole('link', { name: link }), { metaKey: true });
+
+    expect(gtag).toHaveBeenCalledWith('event', 'open_title', {
+      origin,
+      media_type: mediaType,
+      in_catalog: 'true',
+    });
+  });
+});

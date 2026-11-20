@@ -8,6 +8,7 @@ import { SHARED_ART_SOURCE, track } from '@/shared/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { ForwardLink, Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import type { UpcomingRelease } from '../model/home-feed';
+import { trackHomeOpen } from '../model/track-home-open';
 
 const SECTION_ID = 'upcoming-movies';
 
@@ -24,9 +25,7 @@ function UpcomingTile({ release }: { release: UpcomingRelease }) {
     <div className="relative w-24 md:w-full">
       <ForwardLink
         href={mediaRoute('movie', release.slug)}
-        onClick={() =>
-          track('open_title', { origin: 'home_upcoming', media_type: 'movie', in_catalog: true })
-        }
+        onClick={() => trackHomeOpen('home_upcoming', 'movie')}
         className="flex flex-col gap-1.5 text-foreground no-underline md:gap-2"
       >
         <span {...SHARED_ART_SOURCE} className="relative">
