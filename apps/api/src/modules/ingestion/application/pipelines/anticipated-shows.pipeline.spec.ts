@@ -3,6 +3,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { ANTICIPATED_SHOWS_MIN_LIST_COUNT } from '@/common/constants';
 import { ANTICIPATED_SHOWS_REPOSITORY } from '@/modules/ingestion/domain/repositories/anticipated-shows.repository.interface';
 import {
+  ANTICIPATED_IMPORT_RUN_CAP,
   ANTICIPATED_REFRESH_RUN_CAP,
   ANTICIPATED_SHOWS_FETCH_LIMIT,
   IngestionJob,
@@ -86,7 +87,10 @@ describe('AnticipatedShowsPipeline', () => {
 
     await pipeline.sync();
 
-    expect(repository.findMissingTmdbIds).toHaveBeenCalledWith(ANTICIPATED_SHOWS_MIN_LIST_COUNT);
+    expect(repository.findMissingTmdbIds).toHaveBeenCalledWith({
+      minListCount: ANTICIPATED_SHOWS_MIN_LIST_COUNT,
+      limit: ANTICIPATED_IMPORT_RUN_CAP,
+    });
     expect(enqueuedJobs(0)).toEqual([
       {
         name: IngestionJob.SYNC_SHOW,

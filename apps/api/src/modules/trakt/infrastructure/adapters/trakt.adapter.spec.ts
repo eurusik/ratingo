@@ -169,7 +169,7 @@ describe('Trakt adapters', () => {
   });
 
   describe('lists adapter: anticipated shows', () => {
-    it('maps list counts and ranks, skipping shows without a TMDB id', async () => {
+    it('maps list counts and Trakt ranks, skipping shows without a TMDB id and repeats', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         json: () =>
@@ -177,6 +177,7 @@ describe('Trakt adapters', () => {
             { list_count: 60000, show: { ids: { tmdb: 1 } } },
             { list_count: 25000, show: { ids: {} } },
             { list_count: 900, show: { ids: { tmdb: 3 } } },
+            { list_count: 800, show: { ids: { tmdb: 1 } } },
           ]),
       });
 

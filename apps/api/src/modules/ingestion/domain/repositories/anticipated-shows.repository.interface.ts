@@ -1,7 +1,8 @@
-export interface AnticipatedShowEntry {
-  tmdbId: number;
-  listCount: number;
-  rank: number;
+import { type AnticipatedShowRanking } from '@/modules/trakt/public';
+
+export interface AnticipatedShowsImportQuery {
+  minListCount: number;
+  limit: number;
 }
 
 export interface AnticipatedShowsRefreshQuery {
@@ -11,8 +12,8 @@ export interface AnticipatedShowsRefreshQuery {
 }
 
 export interface IAnticipatedShowsRepository {
-  replaceSnapshot(shows: readonly AnticipatedShowEntry[], fetchedAt: Date): Promise<void>;
-  findMissingTmdbIds(minListCount: number): Promise<number[]>;
+  replaceSnapshot(shows: readonly AnticipatedShowRanking[], fetchedAt: Date): Promise<void>;
+  findMissingTmdbIds(query: AnticipatedShowsImportQuery): Promise<number[]>;
   findTmdbIdsToRefresh(query: AnticipatedShowsRefreshQuery): Promise<number[]>;
   findLatestFetchedAt(): Promise<Date | null>;
 }

@@ -10,15 +10,23 @@ import {
   type IAnticipatedShowsRepository,
 } from '@/modules/ingestion/domain/repositories/anticipated-shows.repository.interface';
 import {
+  ANTICIPATED_IMPORT_RUN_CAP,
+  ANTICIPATED_REFRESH_MIN_SYNC_AGE_HOURS,
   ANTICIPATED_REFRESH_RUN_CAP,
   ANTICIPATED_SHOWS_FETCH_LIMIT,
   IngestionJob,
-  UPCOMING_REFRESH_MIN_SYNC_AGE_HOURS,
 } from '@/modules/ingestion/ingestion.constants';
 import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 import { TRAKT_LISTS_PORT, type TraktListsPort } from '@/modules/trakt/public';
 
 import { BulkJobService } from '../services/bulk-job.service';
+
+interface ShowSyncBatch {
+  label: string;
+  tmdbIds: number[];
+  runCap: number;
+  buildJobId: (tmdbId: number) => string;
+}
 
 @Injectable()
 export class AnticipatedShowsPipeline {
@@ -55,40 +63,38 @@ export class AnticipatedShowsPipeline {
   }
 
   private async importMissingShows(): Promise<void> {
-    const tmdbIds = await this.anticipatedShowsRepository.findMissingTmdbIds(
-      ANTICIPATED_SHOWS_MIN_LIST_COUNT,
-    );
+    const tmdbIds = await this.anticipatedShowsRepository.findMissingTmdbIds({
+      minListCount: ANTICIPATED_SHOWS_MIN_LIST_COUNT,
+      limit: ANTICIPATED_IMPORT_RUN_CAP,
+    });
 
-    if (tmdbIds.length === 0) {
-      this.logger.log('All anticipated shows already exist in database');
-      return;
-    }
-
-    const result = await this.bulkJobService.enqueueBulk(
-      tmdbIds.map((tmdbId) => ({
-        name: IngestionJob.SYNC_SHOW,
-        data: { tmdbId },
-        opts: { jobId: buildAnticipatedShowJobId(tmdbId) },
-      })),
-      this.logger,
-      'Anticipated shows import',
-    );
-
-    this.logger.log(
-      `Anticipated shows import: missing=${tmdbIds.length}, enqueued=${result.enqueued}, deduped=${result.deduped}`,
-    );
+    await this.enqueueShowSyncs({
+      label: 'Anticipated shows import',
+      tmdbIds,
+      runCap: ANTICIPATED_IMPORT_RUN_CAP,
+      buildJobId: buildAnticipatedShowJobId,
+    });
   }
 
   private async refreshShows(): Promise<void> {
     const now = this.clock.now().getTime();
     const tmdbIds = await this.anticipatedShowsRepository.findTmdbIdsToRefresh({
       minListCount: ANTICIPATED_SHOWS_MIN_LIST_COUNT,
-      syncedBefore: new Date(now - UPCOMING_REFRESH_MIN_SYNC_AGE_HOURS * MS_PER_HOUR),
+      syncedBefore: new Date(now - ANTICIPATED_REFRESH_MIN_SYNC_AGE_HOURS * MS_PER_HOUR),
       limit: ANTICIPATED_REFRESH_RUN_CAP,
     });
 
+    await this.enqueueShowSyncs({
+      label: 'Anticipated shows refresh',
+      tmdbIds,
+      runCap: ANTICIPATED_REFRESH_RUN_CAP,
+      buildJobId: buildAnticipatedRefreshJobId,
+    });
+  }
+
+  private async enqueueShowSyncs({ label, tmdbIds, runCap, buildJobId }: ShowSyncBatch) {
     if (tmdbIds.length === 0) {
-      this.logger.log('No anticipated shows to refresh');
+      this.logger.log(`${label}: nothing to sync`);
       return;
     }
 
@@ -96,20 +102,18 @@ export class AnticipatedShowsPipeline {
       tmdbIds.map((tmdbId) => ({
         name: IngestionJob.SYNC_SHOW,
         data: { tmdbId },
-        opts: { jobId: buildAnticipatedRefreshJobId(tmdbId) },
+        opts: { jobId: buildJobId(tmdbId) },
       })),
       this.logger,
-      'Anticipated shows refresh',
+      label,
     );
 
-    if (tmdbIds.length >= ANTICIPATED_REFRESH_RUN_CAP) {
-      this.logger.warn(
-        `Anticipated shows refresh hit run cap (${ANTICIPATED_REFRESH_RUN_CAP}); the rest waits for the next run`,
-      );
+    if (tmdbIds.length >= runCap) {
+      this.logger.warn(`${label} hit run cap (${runCap}); the rest waits for the next run`);
     }
 
     this.logger.log(
-      `Anticipated shows refresh: found=${tmdbIds.length}, enqueued=${result.enqueued}, deduped=${result.deduped}`,
+      `${label}: found=${tmdbIds.length}, enqueued=${result.enqueued}, deduped=${result.deduped}`,
     );
   }
 }

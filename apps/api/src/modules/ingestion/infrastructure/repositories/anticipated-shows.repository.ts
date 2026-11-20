@@ -9,10 +9,11 @@ import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 import { anyOf } from '@/database/sql-conditions';
 import {
-  type AnticipatedShowEntry,
+  type AnticipatedShowsImportQuery,
   type AnticipatedShowsRefreshQuery,
   type IAnticipatedShowsRepository,
 } from '@/modules/ingestion/domain/repositories/anticipated-shows.repository.interface';
+import { type AnticipatedShowRanking } from '@/modules/trakt/public';
 
 @Injectable()
 export class AnticipatedShowsRepository implements IAnticipatedShowsRepository {
@@ -23,7 +24,7 @@ export class AnticipatedShowsRepository implements IAnticipatedShowsRepository {
     private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
-  replaceSnapshot(shows: readonly AnticipatedShowEntry[], fetchedAt: Date): Promise<void> {
+  replaceSnapshot(shows: readonly AnticipatedShowRanking[], fetchedAt: Date): Promise<void> {
     return withDbError(
       'replace anticipated shows snapshot',
       this.logger,
@@ -39,7 +40,7 @@ export class AnticipatedShowsRepository implements IAnticipatedShowsRepository {
     );
   }
 
-  async findMissingTmdbIds(minListCount: number): Promise<number[]> {
+  async findMissingTmdbIds(query: AnticipatedShowsImportQuery): Promise<number[]> {
     const rows = await withDbError(
       'find anticipated shows missing from the catalog',
       this.logger,
@@ -50,12 +51,13 @@ export class AnticipatedShowsRepository implements IAnticipatedShowsRepository {
           .leftJoin(schema.mediaItems, this.joinShow())
           .where(
             and(
-              gte(schema.traktAnticipatedShows.listCount, minListCount),
+              gte(schema.traktAnticipatedShows.listCount, query.minListCount),
               isNull(schema.mediaItems.id),
             ),
           )
-          .orderBy(asc(schema.traktAnticipatedShows.rank)),
-      { minListCount },
+          .orderBy(asc(schema.traktAnticipatedShows.rank))
+          .limit(query.limit),
+      { limit: query.limit },
     );
 
     return rows.map((row) => row.tmdbId);

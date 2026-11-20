@@ -52,9 +52,13 @@ describe('AnticipatedShowsRepository', () => {
     it('returns snapshot shows above the threshold with no show row in the catalog', async () => {
       const { db, chain } = buildSelectDb([{ tmdbId: 5 }]);
 
-      const result = await new AnticipatedShowsRepository(db as never).findMissingTmdbIds(1000);
+      const result = await new AnticipatedShowsRepository(db as never).findMissingTmdbIds({
+        minListCount: 1000,
+        limit: 100,
+      });
 
       expect(result).toEqual([5]);
+      expect(chain.limit).toHaveBeenCalledWith(100);
       const join = render(chain.leftJoin.mock.calls[0][1] as SQL);
       expect(join.sql).toContain('"media_items"."tmdb_id" = "trakt_anticipated_shows"."tmdb_id"');
       expect(join.params).toContain('show');

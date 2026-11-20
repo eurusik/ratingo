@@ -22,10 +22,10 @@ export class AnticipatedShowsService {
   ) {}
 
   findAnticipated(limit: number): Promise<AnticipatedShow[]> {
-    const today = startOfUtcDay(this.clock.now());
+    const now = this.clock.now();
     return this.showRepository.findAnticipated({
-      from: today,
-      toExclusive: addUtcDays(today, ANTICIPATED_SHOWS_WINDOW_DAYS + 1),
+      from: now,
+      toExclusive: addUtcDays(startOfUtcDay(now), ANTICIPATED_SHOWS_WINDOW_DAYS + 1),
       minListCount: ANTICIPATED_SHOWS_MIN_LIST_COUNT,
       limit,
     });

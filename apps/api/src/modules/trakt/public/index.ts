@@ -14,7 +14,7 @@
 // Ports (contracts + tokens)
 export { TraktRatingsPort, TRAKT_RATINGS_PORT } from '../domain/ports/trakt-ratings.port';
 export {
-  AnticipatedShow,
+  AnticipatedShowRanking,
   TraktListsPort,
   TRAKT_LISTS_PORT,
 } from '../domain/ports/trakt-lists.port';

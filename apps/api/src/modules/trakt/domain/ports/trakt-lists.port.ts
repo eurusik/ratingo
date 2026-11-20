@@ -1,4 +1,4 @@
-export interface AnticipatedShow {
+export interface AnticipatedShowRanking {
   tmdbId: number;
   listCount: number;
   rank: number;
@@ -29,7 +29,7 @@ export interface TraktListsPort {
     limit?: number,
   ): Promise<Array<{ tmdbId: number; watchers: number; rank: number }>>;
 
-  getAnticipatedShows(limit: number): Promise<AnticipatedShow[] | null>;
+  getAnticipatedShows(limit: number): Promise<AnticipatedShowRanking[] | null>;
 }
 
 /**

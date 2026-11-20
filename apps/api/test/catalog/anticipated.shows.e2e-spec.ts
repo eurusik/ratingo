@@ -38,8 +38,8 @@ describe('Catalog E2E - Anticipated show premieres', () => {
       }),
     ]);
     const { from, toExclusive, minListCount, limit } = ctx.showsRepo.lastAnticipatedOptions!;
-    expect(from.toISOString()).toMatch(/T00:00:00\.000Z$/);
-    expect((toExclusive.getTime() - from.getTime()) / 86_400_000).toBe(91);
+    expect(toExclusive.toISOString()).toMatch(/T00:00:00\.000Z$/);
+    expect(Math.ceil((toExclusive.getTime() - from.getTime()) / 86_400_000)).toBe(91);
     expect(minListCount).toBe(1000);
     expect(limit).toBe(10);
   });
