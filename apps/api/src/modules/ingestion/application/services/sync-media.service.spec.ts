@@ -487,17 +487,16 @@ describe('SyncMediaService', () => {
       expect(traktAdapter.getMovieRatingsByTmdbId).toHaveBeenCalledWith(550);
     });
 
-    it('should still call Trakt for a show with a future date', async () => {
-      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
+    it('skips Trakt for a show whose first air date is still ahead too', async () => {
       tmdbAdapter.getShow.mockResolvedValue({
         ...mockMedia,
         type: MediaType.SHOW,
-        releaseDate: new Date('2027-01-01'),
+        releaseDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       });
 
       await service.syncShow(550);
 
-      expect(traktAdapter.getShowRatingsByTmdbId).toHaveBeenCalledWith(550);
+      expect(traktAdapter.getShowRatingsByTmdbId).not.toHaveBeenCalled();
     });
   });
 
@@ -534,6 +533,58 @@ describe('SyncMediaService', () => {
         MediaType.SHOW,
       );
       expect(mediaRepository.upsert).toHaveBeenCalled();
+    });
+
+    const daysFromNow = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+    it('skips Trakt and OMDb/MDBList for a show awaiting its premiere, and still saves it', async () => {
+      tmdbAdapter.getShow.mockResolvedValue({
+        ...mockShow,
+        releaseDate: daysFromNow(60),
+        details: { status: 'In Production', seasons: [] },
+      });
+
+      await service.syncShow(1000);
+
+      expect(traktAdapter.getShowRatingsByTmdbId).not.toHaveBeenCalled();
+      expect(aggregatedRatings.getAggregatedRatings).not.toHaveBeenCalled();
+      expect(mediaRepository.upsert).toHaveBeenCalled();
+    });
+
+    it('treats an aired special as not yet premiered', async () => {
+      tmdbAdapter.getShow.mockResolvedValue({
+        ...mockShow,
+        releaseDate: daysFromNow(60),
+        details: {
+          status: 'Planned',
+          seasons: [
+            { number: 0, episodes: [{ number: 1, title: 'Teaser', airDate: daysFromNow(-5) }] },
+          ],
+        },
+      });
+
+      await service.syncShow(1000);
+
+      expect(traktAdapter.getShowRatingsByTmdbId).not.toHaveBeenCalled();
+    });
+
+    it('fetches ratings once a regular episode has aired', async () => {
+      tmdbAdapter.getShow.mockResolvedValue({
+        ...mockShow,
+        releaseDate: daysFromNow(60),
+        details: {
+          status: 'Returning Series',
+          seasons: [
+            { number: 1, episodes: [{ number: 1, title: 'Pilot', airDate: daysFromNow(-1) }] },
+          ],
+        },
+      });
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(NO_AGGREGATED_RATINGS);
+
+      await service.syncShow(1000);
+
+      expect(traktAdapter.getShowRatingsByTmdbId).toHaveBeenCalledWith(1000);
+      expect(aggregatedRatings.getAggregatedRatings).toHaveBeenCalled();
     });
 
     it('should not sync when show not found in TMDB', async () => {
