@@ -7,12 +7,14 @@ import {
   formatEpisodeKey,
   formatSeasonKey,
   formatDateToIso,
+  parseSeasonFromEpisodeKey,
 } from '@/modules/ingestion/domain/interfaces/show-sync-diff.interface';
 import {
   TRACKED_SHOW_REPOSITORY,
   type ITrackedShowRepository,
   type TrackedShow,
 } from '@/modules/ingestion/domain/repositories/tracked-show.repository.interface';
+import { SPECIALS_SEASON_NUMBER } from '@/modules/ingestion/ingestion.constants';
 import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 
 import { SyncMediaService } from './sync-media.service';
@@ -22,6 +24,7 @@ interface ShowSnapshot {
   status: string | null;
   totalSeasons: number | null;
   nextAirDate: Date | null;
+  firstAirDate: Date | null;
   lastEpisodeKey: string | null; // 'S2E5' format — last AIRED episode
   lastEpisodeAirDate: Date | null;
 }
@@ -33,6 +36,11 @@ interface ShowSnapshot {
  * SubscriptionTriggerService handles dedup via atomic UPDATE conditions
  * (lastNotifiedEpisodeKey, lastNotifiedSeasonNumber).
  */
+function hasAiredRegularEpisode(lastEpisodeKey: string | null): boolean {
+  const season = parseSeasonFromEpisodeKey(lastEpisodeKey);
+  return season !== null && season > SPECIALS_SEASON_NUMBER;
+}
+
 @Injectable()
 export class TrackedSyncService {
   private readonly logger = new Logger(TrackedSyncService.name);
@@ -97,6 +105,7 @@ export class TrackedSyncService {
         status: show.status,
         totalSeasons: show.totalSeasons,
         nextAirDate: show.nextAirDate,
+        firstAirDate: show.firstAirDate,
         lastEpisodeKey,
         lastEpisodeAirDate,
       };
@@ -145,6 +154,12 @@ export class TrackedSyncService {
       }
     }
 
+    const upcomingPremiere = this.upcomingPremiereDate(snapshot);
+    if (upcomingPremiere) {
+      diff.hasChanges = true;
+      diff.changes.upcomingPremiere = { airDate: upcomingPremiere };
+    }
+
     // Status change: still use before/after comparison (sync may update status from TMDB)
     if (previousStatus !== snapshot.status && snapshot.status !== null) {
       diff.hasChanges = true;
@@ -158,5 +173,11 @@ export class TrackedSyncService {
     }
 
     return diff;
+  }
+
+  private upcomingPremiereDate({ firstAirDate, lastEpisodeKey }: ShowSnapshot): string | null {
+    if (!firstAirDate || firstAirDate.getTime() <= this.clock.now().getTime()) return null;
+    if (hasAiredRegularEpisode(lastEpisodeKey)) return null;
+    return formatDateToIso(firstAirDate);
   }
 }

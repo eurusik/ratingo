@@ -206,6 +206,36 @@ describe('SubscriptionsService', () => {
         }),
       );
     });
+
+    it('remembers the premiere date the user already knows about', async () => {
+      showStatePort.findShowPremiereFacts.mockResolvedValueOnce({
+        firstAirDate: new Date('2027-02-10T00:00:00Z'),
+        status: 'Planned',
+        hasAiredEpisode: false,
+      });
+
+      await service.subscribe({
+        userId: 'user-id-1',
+        mediaItemId: 'show-1',
+        trigger: SUBSCRIPTION_TRIGGER.PREMIERE,
+      });
+
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ knownPremiereDate: new Date('2027-02-10T00:00:00Z') }),
+      );
+    });
+
+    it('leaves the date unknown for an undated show, so its announcement reaches the user', async () => {
+      await service.subscribe({
+        userId: 'user-id-1',
+        mediaItemId: 'show-1',
+        trigger: SUBSCRIPTION_TRIGGER.PREMIERE,
+      });
+
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ knownPremiereDate: null }),
+      );
+    });
   });
 
   describe('unsubscribe', () => {
@@ -354,6 +384,7 @@ describe('SubscriptionsService', () => {
         userId: 'user-id-1',
         mediaItemId: 'show-1',
         trigger: SUBSCRIPTION_TRIGGER.PREMIERE,
+        knownPremiereDate: new Date('2027-02-10T00:00:00Z'),
       });
       expect(actionRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({

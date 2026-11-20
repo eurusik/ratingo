@@ -17,6 +17,7 @@ import {
 } from '../domain/repositories/user-notification.repository.interface';
 import {
   type IUserSubscriptionRepository,
+  type NotifiedSubscription,
   USER_SUBSCRIPTION_REPOSITORY,
 } from '../domain/repositories/user-subscription.repository.interface';
 
@@ -33,6 +34,20 @@ export interface SubscriptionNotificationEvent {
     statusFrom?: string | null;
     statusTo?: string;
   };
+}
+
+function toNotificationEvents(
+  subscriptions: NotifiedSubscription[],
+  trigger: SubscriptionTrigger,
+  payload: SubscriptionNotificationEvent['payload'],
+): SubscriptionNotificationEvent[] {
+  return subscriptions.map((sub) => ({
+    subscriptionId: sub.id,
+    userId: sub.userId,
+    mediaItemId: sub.mediaItemId,
+    trigger,
+    payload,
+  }));
 }
 
 @Injectable()
@@ -58,6 +73,10 @@ export class SubscriptionTriggerService {
       const episodeEvents = await this.handleNewEpisode(diff);
       events.push(...episodeEvents);
       events.push(...(await this.handlePremiere(diff)));
+    }
+
+    if (diff.changes.upcomingPremiere) {
+      events.push(...(await this.handleUpcomingPremiere(diff)));
     }
 
     if (diff.changes.newSeason) {
@@ -156,17 +175,32 @@ export class SubscriptionTriggerService {
     if (claimed.length > 0) {
       this.logger.log(`Premiere of show ${diff.tmdbId}: ${claimed.length} subscriptions notified`);
     }
-    return claimed.map((sub) => ({
-      subscriptionId: sub.id,
-      userId: sub.userId,
-      mediaItemId: sub.mediaItemId,
-      trigger: SUBSCRIPTION_TRIGGER.PREMIERE,
-      payload: {
-        tmdbId: diff.tmdbId,
-        episodeKey: newEpisode.key,
-        airDate: newEpisode.airDate,
-      },
-    }));
+    return toNotificationEvents(claimed, SUBSCRIPTION_TRIGGER.PREMIERE, {
+      tmdbId: diff.tmdbId,
+      episodeKey: newEpisode.key,
+      airDate: newEpisode.airDate,
+    });
+  }
+
+  private async handleUpcomingPremiere(
+    diff: ShowSyncDiff,
+  ): Promise<SubscriptionNotificationEvent[]> {
+    const { upcomingPremiere } = diff.changes;
+    if (!upcomingPremiere) return [];
+
+    const told = await this.subscriptionRepo.claimPremiereDateAnnouncements(
+      diff.mediaItemId,
+      new Date(upcomingPremiere.airDate),
+    );
+    if (told.length > 0) {
+      this.logger.log(
+        `Premiere date of show ${diff.tmdbId} announced: ${told.length} subscriptions notified`,
+      );
+    }
+    return toNotificationEvents(told, SUBSCRIPTION_TRIGGER.STATUS_CHANGED, {
+      tmdbId: diff.tmdbId,
+      airDate: upcomingPremiere.airDate,
+    });
   }
 
   private async handleNewSeason(diff: ShowSyncDiff): Promise<SubscriptionNotificationEvent[]> {

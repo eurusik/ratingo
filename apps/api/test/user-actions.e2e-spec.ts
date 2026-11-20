@@ -348,6 +348,10 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
     return [];
   }
 
+  async claimPremiereDateAnnouncements(): Promise<[]> {
+    return [];
+  }
+
   private forMedia(userId: string, mediaItemId: string) {
     return this.subscriptions.filter((s) => s.userId === userId && s.mediaItemId === mediaItemId);
   }

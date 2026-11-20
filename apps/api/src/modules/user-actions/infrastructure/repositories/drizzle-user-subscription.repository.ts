@@ -68,6 +68,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             // Initialize dedup markers to prevent immediate notifications
             lastNotifiedSeasonNumber: data.lastNotifiedSeasonNumber ?? null,
             lastNotifiedEpisodeKey: data.lastNotifiedEpisodeKey ?? null,
+            knownPremiereDate: data.knownPremiereDate ?? null,
           })
           .onConflictDoUpdate({
             target: [
@@ -84,6 +85,9 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
               // This is handled by conditional update: only set if current isActive = false
               ...(data.lastNotifiedSeasonNumber !== undefined && {
                 lastNotifiedSeasonNumber: sql`CASE WHEN ${schema.userSubscriptions.isActive} = false THEN ${data.lastNotifiedSeasonNumber} ELSE ${schema.userSubscriptions.lastNotifiedSeasonNumber} END`,
+              }),
+              ...(data.knownPremiereDate !== undefined && {
+                knownPremiereDate: data.knownPremiereDate,
               }),
               ...(data.lastNotifiedEpisodeKey !== undefined && {
                 lastNotifiedEpisodeKey: sql`CASE WHEN ${schema.userSubscriptions.isActive} = false THEN ${data.lastNotifiedEpisodeKey} ELSE ${schema.userSubscriptions.lastNotifiedEpisodeKey} END`,
@@ -402,6 +406,35 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             mediaItemId: schema.userSubscriptions.mediaItemId,
           }),
       { mediaItemId, episodeKey },
+    );
+  }
+
+  claimPremiereDateAnnouncements(
+    mediaItemId: string,
+    premiereDate: Date,
+  ): Promise<NotifiedSubscription[]> {
+    return withDbError(
+      'claim premiere date announcements',
+      this.logger,
+      () =>
+        this.db
+          .update(schema.userSubscriptions)
+          .set({ knownPremiereDate: premiereDate, updatedAt: new Date() })
+          .where(
+            and(
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+              eq(schema.userSubscriptions.trigger, SUBSCRIPTION_TRIGGER.PREMIERE),
+              eq(schema.userSubscriptions.isActive, true),
+              isNull(schema.userSubscriptions.knownPremiereDate),
+              isNull(schema.userSubscriptions.lastNotifiedEpisodeKey),
+            ),
+          )
+          .returning({
+            id: schema.userSubscriptions.id,
+            userId: schema.userSubscriptions.userId,
+            mediaItemId: schema.userSubscriptions.mediaItemId,
+          }),
+      { mediaItemId },
     );
   }
 

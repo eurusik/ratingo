@@ -68,14 +68,26 @@ export class AutoPlanSubscriptionsQuery {
     );
   }
 
-  activate({ userId, mediaItemId, trigger }: AutoPlanActivation): Promise<boolean> {
+  activate({
+    userId,
+    mediaItemId,
+    trigger,
+    knownPremiereDate = null,
+  }: AutoPlanActivation): Promise<boolean> {
     return withDbError(
       'activate auto plan subscription',
       this.logger,
       async () => {
         const rows = await this.db
           .insert(schema.userSubscriptions)
-          .values({ userId, mediaItemId, trigger, isActive: true, autoPlan: true })
+          .values({
+            userId,
+            mediaItemId,
+            trigger,
+            isActive: true,
+            autoPlan: true,
+            knownPremiereDate,
+          })
           .onConflictDoUpdate({
             target: [
               schema.userSubscriptions.userId,
@@ -87,7 +99,10 @@ export class AutoPlanSubscriptionsQuery {
               isActive: true,
               autoPlan: true,
               updatedAt: new Date(),
-              ...(trigger === SUBSCRIPTION_TRIGGER.PREMIERE && { lastNotifiedEpisodeKey: null }),
+              ...(trigger === SUBSCRIPTION_TRIGGER.PREMIERE && {
+                lastNotifiedEpisodeKey: null,
+                knownPremiereDate,
+              }),
             },
             setWhere: not(schema.userSubscriptions.isActive),
           })

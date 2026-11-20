@@ -1,10 +1,8 @@
-export const SHOW_STATE_PORT = Symbol('SHOW_STATE_PORT');
+import { type ShowPremiereFacts } from '@/modules/shared/show-premiere';
 
-export interface ShowPremiereFacts {
-  firstAirDate: Date | null;
-  status: string | null;
-  hasAiredEpisode: boolean;
-}
+export type { ShowPremiereFacts };
+
+export const SHOW_STATE_PORT = Symbol('SHOW_STATE_PORT');
 
 export interface IShowStatePort {
   getLastAiredEpisodeKey(mediaItemId: string): Promise<string | null>;
