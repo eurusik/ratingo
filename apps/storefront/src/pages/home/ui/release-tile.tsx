@@ -8,6 +8,16 @@ import { SHARED_ART_SOURCE } from '@/shared/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { ForwardLink } from '@/shared/ui';
 
+export interface ReleaseNote {
+  text: string;
+  tone: 'muted' | 'accent';
+}
+
+const NOTE_TONE_CLASS: Record<ReleaseNote['tone'], string> = {
+  muted: 'text-muted',
+  accent: 'text-accent',
+};
+
 export interface ReleaseTileMedia {
   mediaItemId: string;
   title: string;
@@ -20,7 +30,7 @@ interface ReleaseTileProps {
   posterUrl?: string;
   date: string;
   dateLabel: string;
-  note?: string;
+  note?: ReleaseNote;
   onOpen: () => void;
 }
 
@@ -50,7 +60,9 @@ export function ReleaseTile({ media, posterUrl, date, dateLabel, note, onOpen }:
         <span className="sr-only">
           {interpolate(dateLabel, { date: formatReleaseDate(locale, date) })}
         </span>
-        {note ? <span className="truncate text-xs text-muted">{note}</span> : null}
+        {note ? (
+          <span className={`truncate text-xs ${NOTE_TONE_CLASS[note.tone]}`}>{note.text}</span>
+        ) : null}
       </ForwardLink>
       <div className="absolute end-1 top-1 z-10">
         <SaveButton media={media} tone="overlay" />

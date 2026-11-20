@@ -204,6 +204,7 @@ describe('toPremiereRail', () => {
       title: 'a',
       posterUrl: 's/a',
       premiereDate: '2026-12-25T00:00:00.000Z',
+      kind: 'newShow',
     });
   });
 });

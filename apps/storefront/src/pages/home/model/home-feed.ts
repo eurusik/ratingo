@@ -143,12 +143,15 @@ export function toUpcomingRelease(movie: UpcomingMovie): UpcomingRelease {
   };
 }
 
+export type PremiereKind = 'newShow';
+
 export interface PremiereRelease {
   mediaItemId: string;
   slug: string;
   title: string;
   posterUrl: string;
   premiereDate: string;
+  kind: PremiereKind;
 }
 
 export function toPremiereRail(shows: readonly AnticipatedShow[]): PremiereRelease[] {
@@ -159,5 +162,6 @@ export function toPremiereRail(shows: readonly AnticipatedShow[]): PremiereRelea
     title: show.title,
     posterUrl: show.poster.small,
     premiereDate: show.premiereDate,
+    kind: 'newShow',
   }));
 }

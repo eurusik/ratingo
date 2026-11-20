@@ -26,6 +26,7 @@ export function AnticipatedPremieres({ premieres }: { premieres: PremiereRelease
         },
         posterUrl: premiere.posterUrl,
         date: premiere.premiereDate,
+        note: { text: dict.home.premiereKind[premiere.kind], tone: 'accent' },
       }))}
     />
   );

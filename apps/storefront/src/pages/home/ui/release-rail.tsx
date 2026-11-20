@@ -6,13 +6,13 @@ import { track } from '@/shared/lib';
 import { useTranslation } from '@/shared/i18n';
 import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import { trackHomeOpen } from '../model/track-home-open';
-import { ReleaseTile, type ReleaseTileMedia } from './release-tile';
+import { ReleaseTile, type ReleaseNote, type ReleaseTileMedia } from './release-tile';
 
 interface ReleaseRailItem {
   media: ReleaseTileMedia;
   posterUrl?: string;
   date: string;
-  note?: string;
+  note?: ReleaseNote;
 }
 
 interface ReleaseRailProps {

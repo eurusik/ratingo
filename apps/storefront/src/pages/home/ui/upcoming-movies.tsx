@@ -26,7 +26,7 @@ export function UpcomingMovies({ releases }: { releases: UpcomingRelease[] }) {
         },
         posterUrl: release.posterUrl,
         date: release.releaseDate,
-        note: dict.release[release.kind],
+        note: { text: dict.release[release.kind], tone: 'muted' },
       }))}
     />
   );

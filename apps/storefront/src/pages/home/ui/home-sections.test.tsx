@@ -313,13 +313,15 @@ describe('AnticipatedPremieres', () => {
     title: 'Гаррі Поттер',
     posterUrl: 'https://image.tmdb.org/t/p/w342/hp.jpg',
     premiereDate: '2026-12-25T00:00:00.000Z',
+    kind: 'newShow',
   };
 
-  it('shows the premiere day and links to the show and the show calendar', () => {
+  it('shows the premiere day, a new show note and links to the show and the show calendar', () => {
     renderIn(<AnticipatedPremieres premieres={[premiere]} />);
 
     expect(screen.getByRole('heading', { name: uk.home.premieres })).toBeInTheDocument();
     expect(screen.getByText('25 груд')).toBeInTheDocument();
+    expect(screen.getByText('Новий серіал')).toHaveClass('text-accent');
     expect(screen.getByRole('link', { name: /Гаррі Поттер/ })).toHaveAttribute(
       'href',
       '/shows/harry-potter',
