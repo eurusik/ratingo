@@ -29,16 +29,16 @@ export class AutoSubscribeOnPlanListener {
     await this.attempt(`Movie auto-subscribe failed: ${target}`, () =>
       this.subscriptionsService.autoSubscribeForMovie(userId, mediaItemId),
     );
-    await this.attempt(`Upcoming show auto-subscribe failed: ${target}`, () =>
-      this.subscriptionsService.autoSubscribeForUpcomingShow(userId, mediaItemId),
+    await this.attempt(`Premiere auto-subscribe failed: ${target}`, () =>
+      this.subscriptionsService.autoSubscribeForPremiere(userId, mediaItemId),
     );
   }
 
-  private async attempt(failure: string, run: () => Promise<void>): Promise<void> {
+  private async attempt(failureMessage: string, run: () => Promise<void>): Promise<void> {
     try {
       await run();
     } catch (error) {
-      this.logger.warn(`${failure}: ${errorMessage(error)}`);
+      this.logger.warn(`${failureMessage}: ${errorMessage(error)}`);
     }
   }
 }

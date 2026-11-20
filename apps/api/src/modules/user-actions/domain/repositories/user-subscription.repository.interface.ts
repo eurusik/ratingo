@@ -25,7 +25,6 @@ export interface UpsertSubscriptionData {
   lastNotifiedSeasonNumber?: number | null;
   /** Initial dedup marker for new_episode trigger. */
   lastNotifiedEpisodeKey?: string | null;
-  autoPlan?: boolean;
 }
 
 /**
@@ -49,6 +48,12 @@ export interface NotifiedSubscription {
   id: string;
   userId: string;
   mediaItemId: string;
+}
+
+export interface AutoPlanActivation {
+  userId: string;
+  mediaItemId: string;
+  trigger: SubscriptionTrigger;
 }
 
 export type MovieReleaseTrigger =
@@ -118,7 +123,7 @@ export interface IUserSubscriptionRepository {
 
   deactivateAbandonedAutoPlan(userId: string, mediaItemId: string): Promise<SubscriptionTrigger[]>;
 
-  detachFromPlan(userId: string, mediaItemId: string): Promise<void>;
+  activateAutoPlan(data: AutoPlanActivation): Promise<boolean>;
 
   /**
    * Lists active subscriptions with media summary.
@@ -169,6 +174,8 @@ export interface IUserSubscriptionRepository {
    * Only updates rows where the season number is lower (or null).
    */
   atomicNotifyNewSeason(mediaItemId: string, seasonNumber: number): Promise<NotifiedSubscription[]>;
+
+  claimPremieres(mediaItemId: string): Promise<NotifiedSubscription[]>;
 
   /**
    * Deactivates all new_season/new_episode subscriptions for a show

@@ -19,6 +19,7 @@ import {
 import {
   type IUserSubscriptionRepository,
   type UpsertSubscriptionData,
+  type AutoPlanActivation,
   type SubscriptionWithMedia,
   type NotifiedSubscription,
   type ClaimedMovieRelease,
@@ -63,7 +64,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             trigger: data.trigger,
             channel: data.channel ?? 'push',
             isActive: true,
-            autoPlan: data.autoPlan ?? false,
+            autoPlan: false,
             // Initialize dedup markers to prevent immediate notifications
             lastNotifiedSeasonNumber: data.lastNotifiedSeasonNumber ?? null,
             lastNotifiedEpisodeKey: data.lastNotifiedEpisodeKey ?? null,
@@ -77,7 +78,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             ],
             set: {
               isActive: true,
-              autoPlan: data.autoPlan ?? false,
+              autoPlan: false,
               updatedAt: new Date(),
               // Update markers only if reactivating (was inactive)
               // This is handled by conditional update: only set if current isActive = false
@@ -212,8 +213,8 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     return this.autoPlanSubscriptionsQuery.deactivateAbandoned(userId, mediaItemId);
   }
 
-  detachFromPlan(userId: string, mediaItemId: string): Promise<void> {
-    return this.autoPlanSubscriptionsQuery.detachFromPlan(userId, mediaItemId);
+  activateAutoPlan(data: AutoPlanActivation): Promise<boolean> {
+    return this.autoPlanSubscriptionsQuery.activate(data);
   }
 
   /**
@@ -352,11 +353,13 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             // Active subscriptions only
             eq(schema.userSubscriptions.isActive, true),
             // Show-related triggers
-            inArray(schema.userSubscriptions.trigger, ['new_season', 'new_episode']),
+            inArray(schema.userSubscriptions.trigger, ['new_season', 'new_episode', 'premiere']),
             // Only shows
             eq(schema.mediaItems.type, MediaType.SHOW),
-            // Not ended or canceled (status is in shows table)
-            sql`${schema.shows.status} NOT IN (${ShowStatus.ENDED}, ${ShowStatus.CANCELED})`,
+            or(
+              isNull(schema.shows.status),
+              sql`${schema.shows.status} NOT IN (${ShowStatus.ENDED}, ${ShowStatus.CANCELED})`,
+            ),
             // Not soft-deleted
             isNull(schema.mediaItems.deletedAt),
           ),
@@ -399,6 +402,35 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             mediaItemId: schema.userSubscriptions.mediaItemId,
           }),
       { mediaItemId, episodeKey },
+    );
+  }
+
+  async claimPremieres(mediaItemId: string): Promise<NotifiedSubscription[]> {
+    return withDbError(
+      'claim show premieres',
+      this.logger,
+      async () => {
+        const closed = await this.db
+          .update(schema.userSubscriptions)
+          .set({ isActive: false, lastNotifiedAt: new Date(), updatedAt: new Date() })
+          .where(
+            and(
+              eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+              eq(schema.userSubscriptions.trigger, SUBSCRIPTION_TRIGGER.PREMIERE),
+              eq(schema.userSubscriptions.isActive, true),
+            ),
+          )
+          .returning({
+            id: schema.userSubscriptions.id,
+            userId: schema.userSubscriptions.userId,
+            mediaItemId: schema.userSubscriptions.mediaItemId,
+            episodeAiredAtSubscribe: schema.userSubscriptions.lastNotifiedEpisodeKey,
+          });
+        return closed
+          .filter((row) => row.episodeAiredAtSubscribe === null)
+          .map((row) => ({ id: row.id, userId: row.userId, mediaItemId: row.mediaItemId }));
+      },
+      { mediaItemId },
     );
   }
 
@@ -455,6 +487,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
               inArray(schema.userSubscriptions.trigger, [
                 SUBSCRIPTION_TRIGGER.NEW_SEASON,
                 SUBSCRIPTION_TRIGGER.NEW_EPISODE,
+                SUBSCRIPTION_TRIGGER.PREMIERE,
               ]),
             ),
           )

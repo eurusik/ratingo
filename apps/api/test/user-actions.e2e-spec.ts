@@ -241,7 +241,7 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
     );
     if (existing) {
       existing.isActive = true;
-      existing.autoPlan = data.autoPlan ?? false;
+      existing.autoPlan = false;
       existing.updatedAt = new Date();
       return existing;
     }
@@ -252,7 +252,7 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
       trigger: data.trigger,
       channel: data.channel ?? 'push',
       isActive: true,
-      autoPlan: data.autoPlan ?? false,
+      autoPlan: false,
       lastNotifiedAt: null,
       lastNotifiedEpisodeKey: null,
       lastNotifiedSeasonNumber: null,
@@ -328,12 +328,24 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
     return released.map((s) => s.trigger);
   }
 
-  async detachFromPlan(userId: string, mediaItemId: string): Promise<void> {
-    this.forMedia(userId, mediaItemId)
-      .filter((s) => s.isActive && s.autoPlan)
-      .forEach((s) => {
-        s.autoPlan = false;
-      });
+  async activateAutoPlan(data: {
+    userId: string;
+    mediaItemId: string;
+    trigger: SubscriptionTrigger;
+  }): Promise<boolean> {
+    const existing = this.forMedia(data.userId, data.mediaItemId).find(
+      (s) => s.trigger === data.trigger,
+    );
+    if (existing?.isActive) return false;
+    const sub = existing ?? ((await this.upsert(data)) as SubscriptionWithMedia);
+    sub.isActive = true;
+    sub.autoPlan = true;
+    sub.lastNotifiedEpisodeKey = null;
+    return true;
+  }
+
+  async claimPremieres(): Promise<[]> {
+    return [];
   }
 
   private forMedia(userId: string, mediaItemId: string) {
@@ -400,7 +412,10 @@ const UPCOMING_SHOW_ID = testUuid('upcoming-show');
 
 const upcomingShowState = {
   getLastAiredEpisodeKey: async () => null,
-  isUnreleasedShow: async (mediaItemId: string) => mediaItemId === UPCOMING_SHOW_ID,
+  findShowPremiereFacts: async (mediaItemId: string) =>
+    mediaItemId === UPCOMING_SHOW_ID
+      ? { firstAirDate: new Date('2099-03-01'), status: 'Planned', hasAiredEpisode: false }
+      : null,
 };
 
 const buildMediaIds = (count: number): string =>
@@ -862,7 +877,7 @@ describe('User Actions E2E', () => {
         .post(`${savedItemsUrl}/${UPCOMING_SHOW_ID}`)
         .set(auth)
         .send({ list: 'for_later' });
-      expect(await status()).toEqual(['new_episode']);
+      expect(await status()).toEqual(['premiere']);
 
       await request(server)
         .delete(`${savedItemsUrl}/${UPCOMING_SHOW_ID}`)

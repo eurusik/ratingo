@@ -1,21 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, desc, eq, gt, inArray, isNull, lte, notExists, or } from 'drizzle-orm';
+import { and, desc, eq, exists, gt, isNull, lte } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
-import { ShowStatus } from '@/common/enums/show-status.enum';
+import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { errorMessage } from '@/common/utils/error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
-import { type IShowStatePort } from '@/modules/user-actions/domain/ports/show-state.port';
-
-const UNDATED_UNRELEASED_STATUSES: string[] = [
-  ShowStatus.PLANNED,
-  ShowStatus.IN_PRODUCTION,
-  ShowStatus.PILOT,
-];
+import { SPECIALS_SEASON_NUMBER } from '@/modules/user-actions/domain/constants/subscription.constants';
+import {
+  type IShowStatePort,
+  type ShowPremiereFacts,
+} from '@/modules/user-actions/domain/ports/show-state.port';
 
 @Injectable()
 export class DrizzleShowStateAdapter implements IShowStatePort {
@@ -53,13 +51,17 @@ export class DrizzleShowStateAdapter implements IShowStatePort {
     }
   }
 
-  isUnreleasedShow(mediaItemId: string, asOf: Date): Promise<boolean> {
+  findShowPremiereFacts(mediaItemId: string, asOf: Date): Promise<ShowPremiereFacts | null> {
     return withDbError(
-      'check unreleased show',
+      'find show premiere facts',
       this.logger,
       async () => {
         const rows = await this.db
-          .select({ id: schema.mediaItems.id })
+          .select({
+            firstAirDate: schema.mediaItems.releaseDate,
+            status: schema.shows.status,
+            hasAiredEpisode: exists(this.airedEpisodes(asOf)).mapWith(Boolean),
+          })
           .from(schema.mediaItems)
           .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
           .where(
@@ -67,31 +69,26 @@ export class DrizzleShowStateAdapter implements IShowStatePort {
               eq(schema.mediaItems.id, mediaItemId),
               eq(schema.mediaItems.type, MediaType.SHOW),
               isNull(schema.mediaItems.deletedAt),
-              or(
-                gt(schema.mediaItems.releaseDate, asOf),
-                and(
-                  isNull(schema.mediaItems.releaseDate),
-                  inArray(schema.shows.status, UNDATED_UNRELEASED_STATUSES),
-                ),
-              ),
-              notExists(
-                this.db
-                  .select({ id: schema.episodes.id })
-                  .from(schema.episodes)
-                  .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
-                  .where(
-                    and(
-                      eq(schema.seasons.showId, schema.shows.id),
-                      lte(schema.episodes.airDate, asOf),
-                    ),
-                  ),
-              ),
             ),
           )
           .limit(1);
-        return rows.length > 0;
+        return firstOrUndefined(rows) ?? null;
       },
       { mediaItemId },
     );
+  }
+
+  private airedEpisodes(asOf: Date) {
+    return this.db
+      .select({ id: schema.episodes.id })
+      .from(schema.episodes)
+      .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
+      .where(
+        and(
+          eq(schema.seasons.showId, schema.shows.id),
+          gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
+          lte(schema.episodes.airDate, asOf),
+        ),
+      );
   }
 }

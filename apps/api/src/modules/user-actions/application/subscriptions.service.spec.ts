@@ -49,7 +49,7 @@ describe('SubscriptionsService', () => {
       countActive: jest.fn().mockResolvedValue(1),
       findTriggersClosedToAutoPlan: jest.fn().mockResolvedValue([]),
       deactivateAbandonedAutoPlan: jest.fn().mockResolvedValue([]),
-      detachFromPlan: jest.fn().mockResolvedValue(undefined),
+      activateAutoPlan: jest.fn().mockResolvedValue(true),
     };
 
     movieReleasePort = {
@@ -62,7 +62,7 @@ describe('SubscriptionsService', () => {
 
     showStatePort = {
       getLastAiredEpisodeKey: jest.fn().mockResolvedValue(null),
-      isUnreleasedShow: jest.fn().mockResolvedValue(false),
+      findShowPremiereFacts: jest.fn().mockResolvedValue(null),
     };
 
     userPreferencePort = {
@@ -99,7 +99,6 @@ describe('SubscriptionsService', () => {
         userId: 'user-id-1',
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.RELEASE,
-        autoPlan: false,
       });
       expect(actionRepo.create).toHaveBeenCalledWith({
         userId: 'user-id-1',
@@ -125,7 +124,6 @@ describe('SubscriptionsService', () => {
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
         lastNotifiedSeasonNumber: 2,
-        autoPlan: false,
       });
     });
 
@@ -143,7 +141,6 @@ describe('SubscriptionsService', () => {
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.NEW_EPISODE,
         lastNotifiedEpisodeKey: 'S3E5',
-        autoPlan: false,
       });
     });
 
@@ -161,7 +158,6 @@ describe('SubscriptionsService', () => {
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
         lastNotifiedSeasonNumber: 0,
-        autoPlan: false,
       });
     });
 
@@ -173,9 +169,8 @@ describe('SubscriptionsService', () => {
         context: 'auto-plan',
       });
 
-      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({ autoPlan: false }),
-      );
+      expect(subscriptionRepo.upsert).toHaveBeenCalledTimes(1);
+      expect(subscriptionRepo.activateAutoPlan).not.toHaveBeenCalled();
     });
 
     it('should not fetch show state for non-show triggers', async () => {
@@ -190,8 +185,26 @@ describe('SubscriptionsService', () => {
         userId: 'user-id-1',
         mediaItemId: 'media-id-1',
         trigger: SUBSCRIPTION_TRIGGER.RELEASE,
-        autoPlan: false,
       });
+    });
+  });
+
+  describe('premiere bell', () => {
+    it('marks a manual premiere bell on an aired show as past the premiere so it never fires', async () => {
+      showStatePort.getLastAiredEpisodeKey.mockResolvedValueOnce('S1E4');
+
+      await service.subscribe({
+        userId: 'user-id-1',
+        mediaItemId: 'show-1',
+        trigger: SUBSCRIPTION_TRIGGER.PREMIERE,
+      });
+
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          trigger: SUBSCRIPTION_TRIGGER.PREMIERE,
+          lastNotifiedEpisodeKey: 'S1E4',
+        }),
+      );
     });
   });
 
@@ -316,67 +329,76 @@ describe('SubscriptionsService', () => {
 
       expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
     });
-
-    it('takes over reminders the plan turned on, even with the preference off', async () => {
-      userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValueOnce(false);
-
-      await service.autoSubscribeForShow('user-id-1', 'media-id-1');
-
-      expect(subscriptionRepo.detachFromPlan).toHaveBeenCalledWith('user-id-1', 'media-id-1');
-    });
   });
 
-  describe('autoSubscribeForUpcomingShow', () => {
+  describe('autoSubscribeForPremiere', () => {
+    const awaiting = {
+      firstAirDate: new Date('2027-02-10T00:00:00Z'),
+      status: 'Planned',
+      hasAiredEpisode: false,
+    };
+
     beforeEach(() => {
-      showStatePort.isUnreleasedShow.mockResolvedValue(true);
+      showStatePort.findShowPremiereFacts.mockResolvedValue(awaiting);
       userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(true);
     });
 
-    it('turns on the new episode reminder as an automatic plan reminder', async () => {
-      await service.autoSubscribeForUpcomingShow('user-id-1', 'show-1');
+    it('turns on the premiere reminder as an automatic plan reminder and logs it', async () => {
+      await service.autoSubscribeForPremiere('user-id-1', 'show-1');
 
-      expect(showStatePort.isUnreleasedShow).toHaveBeenCalledWith(
+      expect(showStatePort.findShowPremiereFacts).toHaveBeenCalledWith(
         'show-1',
         new Date('2026-11-19T06:00:00Z'),
       );
-      expect(subscriptionRepo.upsert).toHaveBeenCalledTimes(1);
-      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          mediaItemId: 'show-1',
-          trigger: SUBSCRIPTION_TRIGGER.NEW_EPISODE,
-          autoPlan: true,
-          lastNotifiedEpisodeKey: null,
-        }),
-      );
+      expect(subscriptionRepo.activateAutoPlan).toHaveBeenCalledWith({
+        userId: 'user-id-1',
+        mediaItemId: 'show-1',
+        trigger: SUBSCRIPTION_TRIGGER.PREMIERE,
+      });
       expect(actionRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ context: 'auto-plan' }),
+        expect.objectContaining({
+          action: USER_MEDIA_ACTION.SUBSCRIBE,
+          context: 'auto-plan',
+          payload: { trigger: SUBSCRIPTION_TRIGGER.PREMIERE },
+        }),
       );
     });
 
-    it('does nothing for a show that is already out or for a movie', async () => {
-      showStatePort.isUnreleasedShow.mockResolvedValue(false);
+    it('logs nothing when another request already turned it on', async () => {
+      subscriptionRepo.activateAutoPlan.mockResolvedValue(false);
 
-      await service.autoSubscribeForUpcomingShow('user-id-1', 'show-1');
+      await service.autoSubscribeForPremiere('user-id-1', 'show-1');
 
-      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+      expect(actionRepo.create).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['a show that is already out', { ...awaiting, hasAiredEpisode: true }],
+      ['a movie or unknown media', null],
+    ])('does nothing for %s', async (_case, facts) => {
+      showStatePort.findShowPremiereFacts.mockResolvedValue(facts);
+
+      await service.autoSubscribeForPremiere('user-id-1', 'show-1');
+
+      expect(subscriptionRepo.activateAutoPlan).not.toHaveBeenCalled();
     });
 
     it('respects the auto-subscribe preference', async () => {
       userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(false);
 
-      await service.autoSubscribeForUpcomingShow('user-id-1', 'show-1');
+      await service.autoSubscribeForPremiere('user-id-1', 'show-1');
 
-      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+      expect(subscriptionRepo.activateAutoPlan).not.toHaveBeenCalled();
     });
 
     it('leaves the reminder alone when it is active or the user turned it off', async () => {
       subscriptionRepo.findTriggersClosedToAutoPlan.mockResolvedValue([
-        SUBSCRIPTION_TRIGGER.NEW_EPISODE,
+        SUBSCRIPTION_TRIGGER.PREMIERE,
       ]);
 
-      await service.autoSubscribeForUpcomingShow('user-id-1', 'show-1');
+      await service.autoSubscribeForPremiere('user-id-1', 'show-1');
 
-      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+      expect(subscriptionRepo.activateAutoPlan).not.toHaveBeenCalled();
     });
   });
 
@@ -388,7 +410,7 @@ describe('SubscriptionsService', () => {
     };
 
     const subscribedTriggers = () =>
-      subscriptionRepo.upsert.mock.calls.map((call: any[]) => call[0].trigger);
+      subscriptionRepo.activateAutoPlan.mock.calls.map((call: any[]) => call[0].trigger);
 
     it('subscribes to the digital release first and the cinema release second', async () => {
       userPreferencePort.getAutoSubscribeOnWatch.mockResolvedValue(true);
@@ -403,9 +425,7 @@ describe('SubscriptionsService', () => {
       expect(actionRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ action: USER_MEDIA_ACTION.SUBSCRIBE, context: 'auto-plan' }),
       );
-      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({ autoPlan: true }),
-      );
+      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
     });
 
     it('respects the auto-subscribe preference', async () => {
@@ -414,7 +434,7 @@ describe('SubscriptionsService', () => {
 
       await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
 
-      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+      expect(subscriptionRepo.activateAutoPlan).not.toHaveBeenCalled();
     });
 
     it('does nothing for shows and unknown media', async () => {
@@ -423,7 +443,7 @@ describe('SubscriptionsService', () => {
 
       await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
 
-      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+      expect(subscriptionRepo.activateAutoPlan).not.toHaveBeenCalled();
     });
 
     it('subscribes only to the digital release of a movie already in cinemas', async () => {
@@ -460,7 +480,7 @@ describe('SubscriptionsService', () => {
 
       await service.autoSubscribeForMovie('user-id-1', 'media-id-1');
 
-      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+      expect(subscriptionRepo.activateAutoPlan).not.toHaveBeenCalled();
     });
   });
 

@@ -6,7 +6,11 @@ import { errorMessage } from '@/common/utils/error.utils';
 import type { ShowSyncDiff } from '@/modules/ingestion/public';
 
 import { SHOW_EVENTS } from '../domain/constants/events.constants';
-import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
+import { SPECIALS_SEASON_NUMBER } from '../domain/constants/subscription.constants';
+import {
+  SUBSCRIPTION_TRIGGER,
+  type SubscriptionTrigger,
+} from '../domain/entities/user-subscription.entity';
 import {
   type IUserNotificationRepository,
   USER_NOTIFICATION_REPOSITORY,
@@ -53,6 +57,7 @@ export class SubscriptionTriggerService {
     if (diff.changes.newEpisode) {
       const episodeEvents = await this.handleNewEpisode(diff);
       events.push(...episodeEvents);
+      events.push(...(await this.handlePremiere(diff)));
     }
 
     if (diff.changes.newSeason) {
@@ -90,8 +95,7 @@ export class SubscriptionTriggerService {
         userId: event.userId,
         mediaItemId: event.mediaItemId,
         subscriptionId: event.subscriptionId,
-        trigger: event.trigger as
-          'release' | 'new_season' | 'new_episode' | 'on_streaming' | 'status_changed',
+        trigger: event.trigger as SubscriptionTrigger,
         payload: {
           seasonNumber: event.payload.seasonNumber,
           episodeKey: event.payload.episodeKey,
@@ -142,6 +146,27 @@ export class SubscriptionTriggerService {
     this.eventEmitter.emit(SHOW_EVENTS.NEW_EPISODE, { mediaItemId: diff.mediaItemId });
 
     return events;
+  }
+
+  private async handlePremiere(diff: ShowSyncDiff): Promise<SubscriptionNotificationEvent[]> {
+    const { newEpisode } = diff.changes;
+    if (!newEpisode || newEpisode.season <= SPECIALS_SEASON_NUMBER) return [];
+
+    const claimed = await this.subscriptionRepo.claimPremieres(diff.mediaItemId);
+    if (claimed.length > 0) {
+      this.logger.log(`Premiere of show ${diff.tmdbId}: ${claimed.length} subscriptions notified`);
+    }
+    return claimed.map((sub) => ({
+      subscriptionId: sub.id,
+      userId: sub.userId,
+      mediaItemId: sub.mediaItemId,
+      trigger: SUBSCRIPTION_TRIGGER.PREMIERE,
+      payload: {
+        tmdbId: diff.tmdbId,
+        episodeKey: newEpisode.key,
+        airDate: newEpisode.airDate,
+      },
+    }));
   }
 
   private async handleNewSeason(diff: ShowSyncDiff): Promise<SubscriptionNotificationEvent[]> {

@@ -9,7 +9,7 @@ describe('AutoSubscribeOnPlanListener', () => {
   const setup = () => {
     const subscriptionsService = {
       autoSubscribeForMovie: jest.fn().mockResolvedValue(undefined),
-      autoSubscribeForUpcomingShow: jest.fn().mockResolvedValue(undefined),
+      autoSubscribeForPremiere: jest.fn().mockResolvedValue(undefined),
     };
     const listener = new AutoSubscribeOnPlanListener(
       subscriptionsService as unknown as SubscriptionsService,
@@ -25,10 +25,7 @@ describe('AutoSubscribeOnPlanListener', () => {
     );
 
     expect(subscriptionsService.autoSubscribeForMovie).toHaveBeenCalledWith('user-1', 'movie-1');
-    expect(subscriptionsService.autoSubscribeForUpcomingShow).toHaveBeenCalledWith(
-      'user-1',
-      'movie-1',
-    );
+    expect(subscriptionsService.autoSubscribeForPremiere).toHaveBeenCalledWith('user-1', 'movie-1');
   });
 
   it('ignores other state changes', async () => {
@@ -39,7 +36,7 @@ describe('AutoSubscribeOnPlanListener', () => {
     );
 
     expect(subscriptionsService.autoSubscribeForMovie).not.toHaveBeenCalled();
-    expect(subscriptionsService.autoSubscribeForUpcomingShow).not.toHaveBeenCalled();
+    expect(subscriptionsService.autoSubscribeForPremiere).not.toHaveBeenCalled();
   });
 
   it('auto-subscribes when a title is saved for later', async () => {
@@ -48,10 +45,7 @@ describe('AutoSubscribeOnPlanListener', () => {
     await listener.onSavedForLater(new ItemSavedForLaterEvent('user-1', 'show-1'));
 
     expect(subscriptionsService.autoSubscribeForMovie).toHaveBeenCalledWith('user-1', 'show-1');
-    expect(subscriptionsService.autoSubscribeForUpcomingShow).toHaveBeenCalledWith(
-      'user-1',
-      'show-1',
-    );
+    expect(subscriptionsService.autoSubscribeForPremiere).toHaveBeenCalledWith('user-1', 'show-1');
   });
 
   it('keeps the save working when auto-subscribe fails', async () => {
@@ -69,9 +63,6 @@ describe('AutoSubscribeOnPlanListener', () => {
 
     await listener.onSavedForLater(new ItemSavedForLaterEvent('user-1', 'show-1'));
 
-    expect(subscriptionsService.autoSubscribeForUpcomingShow).toHaveBeenCalledWith(
-      'user-1',
-      'show-1',
-    );
+    expect(subscriptionsService.autoSubscribeForPremiere).toHaveBeenCalledWith('user-1', 'show-1');
   });
 });

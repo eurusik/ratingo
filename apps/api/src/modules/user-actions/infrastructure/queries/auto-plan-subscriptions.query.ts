@@ -7,7 +7,11 @@ import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 import { SAVED_ITEM_LIST } from '@/modules/user-actions/domain/entities';
-import { type SubscriptionTrigger } from '@/modules/user-actions/domain/entities/user-subscription.entity';
+import {
+  SUBSCRIPTION_TRIGGER,
+  type SubscriptionTrigger,
+} from '@/modules/user-actions/domain/entities/user-subscription.entity';
+import { type AutoPlanActivation } from '@/modules/user-actions/domain/repositories/user-subscription.repository.interface';
 
 @Injectable()
 export class AutoPlanSubscriptionsQuery {
@@ -64,23 +68,33 @@ export class AutoPlanSubscriptionsQuery {
     );
   }
 
-  detachFromPlan(userId: string, mediaItemId: string): Promise<void> {
+  activate({ userId, mediaItemId, trigger }: AutoPlanActivation): Promise<boolean> {
     return withDbError(
-      'detach auto plan subscriptions',
+      'activate auto plan subscription',
       this.logger,
       async () => {
-        await this.db
-          .update(schema.userSubscriptions)
-          .set({ autoPlan: false, updatedAt: new Date() })
-          .where(
-            and(
-              this.forMedia(userId, mediaItemId),
-              schema.userSubscriptions.isActive,
-              schema.userSubscriptions.autoPlan,
-            ),
-          );
+        const rows = await this.db
+          .insert(schema.userSubscriptions)
+          .values({ userId, mediaItemId, trigger, isActive: true, autoPlan: true })
+          .onConflictDoUpdate({
+            target: [
+              schema.userSubscriptions.userId,
+              schema.userSubscriptions.mediaItemId,
+              schema.userSubscriptions.trigger,
+              schema.userSubscriptions.channel,
+            ],
+            set: {
+              isActive: true,
+              autoPlan: true,
+              updatedAt: new Date(),
+              ...(trigger === SUBSCRIPTION_TRIGGER.PREMIERE && { lastNotifiedEpisodeKey: null }),
+            },
+            setWhere: not(schema.userSubscriptions.isActive),
+          })
+          .returning({ id: schema.userSubscriptions.id });
+        return rows.length > 0;
       },
-      { userId, mediaItemId },
+      { userId, mediaItemId, trigger },
     );
   }
 
