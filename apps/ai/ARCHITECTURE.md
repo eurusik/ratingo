@@ -81,24 +81,183 @@ apps/ai/
 | Manifests                 | zod schemas for `agent.yaml` and task frontmatter, validated at boot                                                         |
 | Telemetry                 | Metric names for `app.ai.*`                                                                                                  |
 
-### What an agent app contains
+## File structure
+
+Naming follows what the repo already does: `apps/api` for NestJS modules, `packages/node-telemetry` for framework-free packages, `apps/pg-backup` for small services.
+
+- Files: `kebab-case.<role>.ts`, where role is `port`, `adapter`, `repository`, `service`, `worker`, `controller`, `module`, `constants`, `schema`, `tool`, `rule`, `collector`, `mapper`, `template`.
+- Tests sit next to the file: `*.test.ts` in packages, `*.spec.ts` in Nest apps, like today.
+- Ports are named after what the domain needs (`metrics.port.ts`), adapters after the technology plus the port (`prometheus.metrics-adapter.ts`).
+
+### `packages/ai-core`
+
+Framework-free like `@ratingo/node-telemetry`: no Nest imports, no `process.env`; apps pass config in. Organised by capability; each folder keeps its port next to its adapters.
+
+```
+packages/ai-core/
+├── package.json · tsconfig.json · tsconfig.build.json · jest.config.cjs
+└── src/
+    ├── index.ts                        # the only public entry
+    ├── model/
+    │   ├── model.port.ts               # ModelPort, MODEL_PORT
+    │   ├── model.types.ts              # ChatMessage, ToolCall, StopReason, ModelUsage, ResponseSchema, ModelCapabilities
+    │   ├── model-ref.ts                # "provider:model" parsing, aliases
+    │   ├── model-pricing.ts
+    │   ├── model-fallback.ts           # transport/5xx/429 only, before the first turn
+    │   └── adapters/
+    │       ├── anthropic/
+    │       │   ├── anthropic.model-adapter.ts
+    │       │   └── anthropic.mapper.ts
+    │       └── stub/
+    │           ├── stub.model-adapter.ts
+    │           └── stub.scenarios.ts   # normal, runaway, tool-error, refusal, budget, transport-failure
+    ├── tools/
+    │   ├── define-tool.ts
+    │   ├── tool-registry.ts            # manifest allowlist, output caps
+    │   ├── tool-source.port.ts
+    │   ├── redact.ts
+    │   └── sources/
+    │       ├── native.tool-source.ts
+    │       ├── mcp.tool-source.ts      # allowlisted servers, minimal env
+    │       └── skill.tool-source.ts    # names in context, body on demand
+    ├── loop/
+    │   ├── agent-loop.ts
+    │   ├── budget.ts                   # worst-case pre-check, strictest level wins
+    │   └── structured-output.ts        # zod validation, one repair attempt
+    ├── runs/
+    │   ├── run.ts                      # Run aggregate
+    │   ├── run.repository.ts           # RUN_REPOSITORY port
+    │   └── telemetry.run-repository.ts # metrics and logs only
+    ├── manifest/
+    │   ├── agent-manifest.schema.ts
+    │   ├── task.schema.ts
+    │   └── agent-folder.loader.ts      # reads agent/, validates, fails fast
+    ├── clock/
+    │   └── clock.port.ts
+    └── telemetry/
+        └── ai-metric-names.ts          # app.ai.*
+```
+
+### `apps/ai/veronica`
+
+NestJS + Fastify, modules shaped like `apps/api/src/modules/*`. `agent/` holds everything specific to Veronica that is not code.
 
 ```
 apps/ai/veronica/
-├── src/
-│   ├── main.ts               # HTTP: Telegram webhook, internal API, health
-│   ├── config/               # Joi env schema
-│   └── modules/
-│       ├── digest/           # collectors, rules, template; METRICS/ANALYTICS/PRODUCT_STATS ports
-│       ├── chat/             # Conversation aggregate, router, confirmations
-│       ├── investigation/    # read-only tools over the digest ports
-│       └── notify/           # NOTIFIER_PORT, Telegram adapter
-├── agent/                    # agent.yaml, prompts/, tasks/*.md, skills/
-├── drizzle/                  # migrations for the `ai` schema
-└── Dockerfile
+├── package.json · nest-cli.json · tsconfig*.json · jest.config.js · Dockerfile · drizzle.config.ts
+├── drizzle/                            # `ai` schema migrations, own journal
+├── agent/
+│   ├── agent.yaml
+│   ├── prompts/
+│   │   ├── system.md
+│   │   ├── digest-text.md
+│   │   ├── investigation.md
+│   │   └── router.md
+│   ├── tasks/
+│   │   └── daily-digest.md
+│   └── skills/
+│       ├── ratingo-queues/SKILL.md
+│       └── ratingo-external-apis/SKILL.md
+└── src/
+    ├── main.ts
+    ├── app.module.ts
+    ├── config/
+    │   ├── env.schema.ts               # Joi, only Veronica's variables
+    │   ├── models.config.ts            # aliases, prices, fallbacks
+    │   └── digest.config.ts            # thresholds, minimum volumes
+    ├── telemetry/
+    │   └── telemetry.sdk.ts
+    ├── database/
+    │   └── schema.ts                   # ai.runs
+    ├── core/
+    │   └── ai-core.module.ts           # Nest wiring for @ratingo/ai-core: MODEL_PORT, tools, loop, runs
+    └── modules/
+        ├── digest/
+        │   ├── digest.module.ts · digest.constants.ts · public/index.ts
+        │   ├── domain/
+        │   │   ├── entities/snapshot.ts · digest-item.ts
+        │   │   ├── constants/digest-level.constants.ts      # action, note, ok
+        │   │   ├── ports/metrics.port.ts · analytics.port.ts · product-stats.port.ts
+        │   │   └── rules/queues.rule.ts · freshness.rule.ts · external-apis.rule.ts · site.rule.ts · backup.rule.ts
+        │   ├── application/
+        │   │   ├── collectors/queues.collector.ts · site.collector.ts · people.collector.ts · catalog.collector.ts · infra.collector.ts
+        │   │   ├── services/digest.service.ts · digest-scheduler.service.ts
+        │   │   └── workers/digest.worker.ts
+        │   └── infrastructure/
+        │       ├── adapters/prometheus.metrics-adapter.ts · ga4.analytics-adapter.ts · reporting.product-stats-adapter.ts
+        │       └── templates/telegram-digest.template.ts
+        ├── investigation/
+        │   ├── investigation.module.ts · public/index.ts
+        │   ├── application/
+        │   │   ├── services/investigation.service.ts
+        │   │   └── tools/prom-query.tool.ts · loki-query.tool.ts · queue-state.tool.ts · product-stats.tool.ts
+        │   └── infrastructure/adapters/loki.logs-adapter.ts
+        ├── chat/
+        │   ├── chat.module.ts · chat.constants.ts · public/index.ts
+        │   ├── domain/
+        │   │   ├── entities/conversation.ts · pending-action.ts
+        │   │   ├── constants/route.constants.ts            # commands, mentions, patterns
+        │   │   └── ports/conversation.repository.ts · pending-action.repository.ts · agent-gateway.port.ts
+        │   ├── application/services/chat.service.ts · router.service.ts · confirmation.service.ts
+        │   ├── infrastructure/
+        │   │   ├── repositories/redis.conversation-repository.ts · redis.pending-action-repository.ts
+        │   │   └── adapters/http.agent-gateway-adapter.ts
+        │   └── presentation/controllers/telegram-webhook.controller.ts
+        ├── notify/
+        │   ├── notify.module.ts · public/index.ts
+        │   ├── domain/ports/notifier.port.ts
+        │   └── infrastructure/adapters/telegram.notifier-adapter.ts
+        └── runs/
+            ├── runs.module.ts · public/index.ts
+            └── infrastructure/repositories/postgres.run-repository.ts
 ```
 
-Happy follows the same shape with `review/` (`CODE_HOST_PORT`, GitHub App adapter) instead of `digest/`, `chat/` and `notify/`.
+### `apps/ai/happy`
+
+Same shape, one domain module. No `database/` and no `drizzle/`: review state lives on GitHub.
+
+```
+apps/ai/happy/
+├── package.json · nest-cli.json · tsconfig*.json · jest.config.js · Dockerfile
+├── agent/
+│   ├── agent.yaml
+│   └── prompts/
+│       ├── review.md
+│       └── triage.md
+└── src/
+    ├── main.ts · app.module.ts
+    ├── config/env.schema.ts · models.config.ts · review.config.ts   # repos, author allowlist, skip patterns
+    ├── telemetry/telemetry.sdk.ts
+    ├── core/ai-core.module.ts
+    └── modules/review/
+        ├── review.module.ts · review.constants.ts · public/index.ts
+        ├── domain/
+        │   ├── entities/review-state.ts · finding.ts · pull-request.ts
+        │   ├── constants/severity.constants.ts · skip-patterns.constants.ts
+        │   ├── ports/code-host.port.ts
+        │   └── policies/rule-selector.ts · finding-validator.ts · finding-fingerprint.ts · output-sanitizer.ts
+        ├── application/
+        │   ├── services/review.service.ts · ask-review.service.ts
+        │   └── workers/review.worker.ts                     # one job per PR, coalesced
+        ├── infrastructure/
+        │   ├── adapters/github-app.code-host-adapter.ts
+        │   ├── mappers/github.mapper.ts
+        │   └── state/review-state-marker.codec.ts           # hidden marker in the summary comment
+        └── presentation/controllers/github-webhook.controller.ts · internal-review.controller.ts
+```
+
+`internal-review.controller.ts` is what Veronica's `ask_happy` calls over the private network.
+
+### `apps/ai/dume` (later)
+
+Same shape with a `search/` module and read-only tools over code, logs, metrics and the `reporting` views.
+
+### Placement rules
+
+- Anything two agents need goes to `packages/ai-core`, never into one agent to be imported by another.
+- An agent-specific integration stays in that agent, even if it might be reused later; it moves to the core on the second real use.
+- Prompts, tasks and skills live in `agent/`, never in `src/`. Code does not contain Ratingo hosts, IDs or chat IDs.
+- Domain folders (`domain/`) depend on nothing outside the module and `@ratingo/ai-core` types.
 
 ---
 
