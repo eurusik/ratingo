@@ -1,0 +1,32 @@
+export const AI_METRIC_NAMES = {
+  RUNS: 'app.ai.runs',
+  RUN_COST: 'app.ai.run.cost',
+  RUN_TOKENS: 'app.ai.run.tokens',
+  RUN_DURATION: 'app.ai.run.duration',
+  TOOL_CALLS: 'app.ai.tool.calls',
+} as const;
+
+export const AI_METRIC_ATTRIBUTES = {
+  AGENT: 'agent',
+  TASK: 'task',
+  TRIGGER: 'trigger',
+  OUTCOME: 'outcome',
+  TOKEN_KIND: 'kind',
+  TOOL: 'tool',
+} as const;
+
+export const AI_TOKEN_KINDS = {
+  INPUT: 'input',
+  OUTPUT: 'output',
+  CACHE_READ: 'cache_read',
+  CACHE_WRITE: 'cache_write',
+  REASONING: 'reasoning',
+} as const;
+
+export const AI_METRIC_UNITS = {
+  COST: 'USD',
+  DURATION: 's',
+  TOKENS: '{token}',
+} as const;
+
+export const NO_TASK_LABEL = 'none';

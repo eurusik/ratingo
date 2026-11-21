@@ -1,0 +1,41 @@
+{
+  "name": "@ratingo/ai-core",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "cd ../.. && eslint packages/ai-core/src",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "lint:dead-code": "cd ../.. && knip --workspace packages/ai-core"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.12.0",
+    "yaml": "^2.8.1",
+    "zod": "^4.3.5"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": "^1.9.0"
+  },
+  "devDependencies": {
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/sdk-metrics": "2.12.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20",
+    "fast-check": "^4.5.2",
+    "jest": "^29.7.0",
+    "knip": "6.44.1",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5"
+  }
+}
