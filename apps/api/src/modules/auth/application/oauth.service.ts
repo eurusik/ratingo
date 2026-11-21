@@ -72,7 +72,7 @@ export class OAuthService {
   async loginWithOAuth(
     payload: OAuthUserPayload,
     clientMeta?: ClientMeta,
-  ): Promise<{ user: User; tokens: AuthTokens }> {
+  ): Promise<{ user: User; tokens: AuthTokens; isNewUser: boolean }> {
     // 1. Find by provider + providerAccountId in oauth_accounts
     const existingLink = await this.oauthAccountsRepository.findByProviderAccount(
       payload.provider,
@@ -80,6 +80,7 @@ export class OAuthService {
     );
 
     let user: User | null = null;
+    let isNewUser = false;
 
     if (existingLink) {
       user = await this.usersService.getById(existingLink.userId);
@@ -127,10 +128,11 @@ export class OAuthService {
         displayName: payload.name || null,
         avatarUrl: payload.picture,
       });
+      isNewUser = true;
     }
 
     const tokens = await this.tokenService.issueTokens(user, clientMeta);
-    return { user, tokens };
+    return { user, tokens, isNewUser };
   }
 
   /**
