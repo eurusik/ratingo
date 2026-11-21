@@ -10,6 +10,7 @@ import { firstOrUndefined } from '@/common/utils/array.utils';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
+import { SPECIALS_SEASON_NUMBER } from '@/modules/user-media/domain/constants/episode-progress.constants';
 import {
   type UserMediaState,
   USER_MEDIA_STATE,
@@ -673,18 +674,22 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     );
   }
 
-  async bulkTransitionCaughtUpToWatching(mediaItemId: string): Promise<UserMediaState[]> {
+  async bulkTransitionCaughtUpWithUnwatchedAiredEpisode(
+    mediaItemId: string,
+    asOf: Date,
+  ): Promise<UserMediaState[]> {
     return withDbError(
       'bulk transition caught_up to watching',
       this.logger,
       async () => {
         const rows = await this.db
           .update(schema.userMediaState)
-          .set({ state: USER_MEDIA_STATE.WATCHING, updatedAt: new Date() })
+          .set({ state: USER_MEDIA_STATE.WATCHING, updatedAt: asOf })
           .where(
             and(
               eq(schema.userMediaState.mediaItemId, mediaItemId),
               eq(schema.userMediaState.state, USER_MEDIA_STATE.CAUGHT_UP),
+              this.hasUnwatchedAiredEpisode(mediaItemId, asOf),
             ),
           )
           .returning();
@@ -692,6 +697,22 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       },
       { mediaItemId },
     );
+  }
+
+  private hasUnwatchedAiredEpisode(mediaItemId: string, asOf: Date): SQL {
+    return sql`EXISTS (
+      SELECT 1 FROM ${schema.episodes} e
+      JOIN ${schema.seasons} s ON s.id = e.season_id
+      JOIN ${schema.shows} sh ON sh.id = s.show_id
+      WHERE sh.media_item_id = ${mediaItemId}
+      AND s.number > ${SPECIALS_SEASON_NUMBER}
+      AND e.air_date <= ${asOf.toISOString()}::timestamp
+      AND NOT EXISTS (
+        SELECT 1 FROM ${schema.userEpisodeProgress} uep
+        WHERE uep.user_id = ${schema.userMediaState.userId}
+        AND uep.episode_id = e.id
+      )
+    )`;
   }
 
   /**
