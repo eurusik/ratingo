@@ -1,11 +1,12 @@
 import fc from 'fast-check';
 import type { TrendingMedia } from '@/entities/media';
-import type { HomeItem, NewEpisode } from '@/shared/api';
+import type { AnticipatedShow, HomeItem, NewEpisode } from '@/shared/api';
 import {
   buildHomeHero,
   anySectionLoads,
   toAiredAt,
   toEpisodeRelease,
+  toPremiereRail,
   toReleaseRail,
 } from './home-feed';
 
@@ -170,5 +171,40 @@ describe('anySectionLoads', () => {
         expect(await anySectionLoads(sections)).toBe(outcomes.includes(true));
       }),
     );
+  });
+});
+
+describe('toPremiereRail', () => {
+  const show = (id: string): AnticipatedShow => ({
+    mediaItemId: id,
+    slug: id,
+    title: id,
+    poster: {
+      thumb: `t/${id}`,
+      small: `s/${id}`,
+      medium: `m/${id}`,
+      large: `l/${id}`,
+      original: `o/${id}`,
+    },
+    premiereDate: '2026-12-25T00:00:00.000Z',
+    listCount: 1000,
+  });
+
+  it('hides the rail when fewer than five shows qualify', () => {
+    expect(toPremiereRail(['a', 'b', 'c', 'd'].map(show))).toEqual([]);
+  });
+
+  it('keeps the API order and uses the small poster', () => {
+    const rail = toPremiereRail(['a', 'b', 'c', 'd', 'e'].map(show));
+
+    expect(rail.map((premiere) => premiere.slug)).toEqual(['a', 'b', 'c', 'd', 'e']);
+    expect(rail[0]).toEqual({
+      mediaItemId: 'a',
+      slug: 'a',
+      title: 'a',
+      posterUrl: 's/a',
+      premiereDate: '2026-12-25T00:00:00.000Z',
+      kind: 'newShow',
+    });
   });
 });

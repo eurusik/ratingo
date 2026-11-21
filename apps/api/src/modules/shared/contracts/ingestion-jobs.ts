@@ -9,6 +9,7 @@ export enum IngestionJob {
   SYNC_NEW_RELEASES = 'sync-new-releases',
   SYNC_UPCOMING_MOVIES = 'sync-upcoming-movies',
   REFRESH_UPCOMING_MOVIES = 'refresh-upcoming-movies',
+  SYNC_ANTICIPATED_SHOWS = 'sync-anticipated-shows',
   UPDATE_NOW_PLAYING_FLAGS = 'update-now-playing-flags',
   SYNC_SNAPSHOTS = 'sync-snapshots',
 

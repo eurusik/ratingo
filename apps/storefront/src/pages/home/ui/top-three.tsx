@@ -38,7 +38,9 @@ function TopThreeCard({ media, rank }: { media: TrendingMedia; rank: number }) {
         <Card.Title className="line-clamp-2 text-base leading-tight font-extrabold">
           <ForwardLink
             href={mediaRoute(media.type, media.slug)}
-            onClick={() => trackHomeOpen({ origin: 'home_top_picks', mediaType: media.type, position: rank })}
+            onClick={() =>
+              trackHomeOpen({ origin: 'home_top_picks', mediaType: media.type, position: rank })
+            }
             className="text-foreground no-underline outline-none after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
           >
             {media.title}

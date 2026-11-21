@@ -1,10 +1,20 @@
 import { fromHomeItem, type TrendingMedia } from '@/entities/media';
-import type { HomeItem, NewEpisode, ReleaseKind, UpcomingMovie } from '@/shared/api';
+import type {
+  AnticipatedShow,
+  HomeItem,
+  NewEpisode,
+  ReleaseKind,
+  UpcomingMovie,
+} from '@/shared/api';
 import { tmdbPosterUrl } from '@/shared/config';
 
 export const TOP_TEN_COUNT = 10;
 
 export const UPCOMING_COUNT = 10;
+
+export const PREMIERES_COUNT = 20;
+
+const MIN_PREMIERES_TO_SHOW = 5;
 
 const TOP_THREE_COUNT = 3;
 
@@ -131,4 +141,27 @@ export function toUpcomingRelease(movie: UpcomingMovie): UpcomingRelease {
     releaseDate: movie.effectiveReleaseDate,
     kind: movie.releaseDateKind,
   };
+}
+
+export type PremiereKind = 'newShow';
+
+export interface PremiereRelease {
+  mediaItemId: string;
+  slug: string;
+  title: string;
+  posterUrl: string;
+  premiereDate: string;
+  kind: PremiereKind;
+}
+
+export function toPremiereRail(shows: readonly AnticipatedShow[]): PremiereRelease[] {
+  if (shows.length < MIN_PREMIERES_TO_SHOW) return [];
+  return shows.map((show) => ({
+    mediaItemId: show.mediaItemId,
+    slug: show.slug,
+    title: show.title,
+    posterUrl: show.poster.small,
+    premiereDate: show.premiereDate,
+    kind: 'newShow',
+  }));
 }

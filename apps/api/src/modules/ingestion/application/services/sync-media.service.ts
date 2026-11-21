@@ -213,7 +213,7 @@ export class SyncMediaService {
 
       // Step 10: Evaluate catalog eligibility (both catalog and trending contexts if applicable)
       const isTrending = trending !== undefined && trending.score > 0;
-      const isUpcoming = this.isUpcomingMovie(classified, type);
+      const isUpcoming = this.isAwaitingRelease(classified, type);
       await this.evaluateCatalog(mediaItem, logPrefix, { isTrending, isUpcoming });
 
       // Step 11: Emit domain event for cross-module consumers (e.g. link pending import items)
@@ -547,8 +547,8 @@ export class SyncMediaService {
     }
   }
 
-  private isUpcomingMovie(media: NormalizedMedia, type: MediaType): boolean {
-    if (type !== MediaType.MOVIE) return false;
+  private isAwaitingRelease(media: NormalizedMedia, type: MediaType): boolean {
+    if (type === MediaType.SHOW) return this.isShowAwaitingPremiere(media);
     return isMovieReleasingFrom(movieReleaseDates(media), startOfUtcDay(this.clock.now()));
   }
 

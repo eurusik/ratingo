@@ -158,17 +158,17 @@ export const ACTIVE_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
   EvaluationContext.TRENDING,
 ] as const;
 
-const UPCOMING_MOVIE_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
+const UPCOMING_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
   EvaluationContext.UPCOMING,
 ] as const;
 
 export const FAN_OUT_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
   ...ACTIVE_EVALUATION_CONTEXTS,
-  ...UPCOMING_MOVIE_EVALUATION_CONTEXTS,
+  ...UPCOMING_EVALUATION_CONTEXTS,
 ] as const;
 
-export function isUpcomingMovieContext(context: EvaluationContextType): boolean {
-  return UPCOMING_MOVIE_EVALUATION_CONTEXTS.includes(context);
+export function isUpcomingContext(context: EvaluationContextType): boolean {
+  return UPCOMING_EVALUATION_CONTEXTS.includes(context);
 }
 
 /**

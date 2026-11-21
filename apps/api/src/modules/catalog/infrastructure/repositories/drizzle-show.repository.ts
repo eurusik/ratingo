@@ -8,6 +8,8 @@ import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 import {
+  type AnticipatedShow,
+  type AnticipatedShowsQueryOptions,
   type CalendarEpisode,
   type CalendarEpisodesOptions,
   type IShowRepository,
@@ -25,6 +27,7 @@ import { type DropOffAnalysis } from '@/modules/shared/drop-off-analyzer';
 
 import { SeasonEpisodePersistenceMapper } from '../mappers/season-episode-persistence.mapper';
 import { ShowPersistenceMapper } from '../mappers/show-persistence.mapper';
+import { AnticipatedShowsQuery } from '../queries/anticipated-shows.query';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
 import { NewEpisodesQuery } from '../queries/new-episodes.query';
 import { PopularShowsQuery } from '../queries/popular-shows.query';
@@ -64,6 +67,7 @@ export class DrizzleShowRepository implements IShowRepository {
     private readonly showDetailsQuery: ShowDetailsQuery,
     private readonly calendarEpisodesQuery: CalendarEpisodesQuery,
     private readonly newEpisodesQuery: NewEpisodesQuery,
+    private readonly anticipatedShowsQuery: AnticipatedShowsQuery,
   ) {}
 
   /**
@@ -315,6 +319,10 @@ export class DrizzleShowRepository implements IShowRepository {
    */
   async findPopular(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>> {
     return this.popularShowsQuery.execute(options);
+  }
+
+  findAnticipated(options: AnticipatedShowsQueryOptions): Promise<AnticipatedShow[]> {
+    return this.anticipatedShowsQuery.execute(options);
   }
 
   /**

@@ -5,9 +5,11 @@ import {
   buildHomeHero,
   type EpisodeRelease,
   type Loaded,
+  type PremiereRelease,
   type UpcomingRelease,
 } from '../model/home-feed';
 import { RELEASE_LISTS, TOP_TEN_LISTS, startRail } from '../model/rail-start';
+import { AnticipatedPremieres } from './anticipated-premieres';
 import { HeroBanner } from './hero-banner';
 import { HomeSectionError } from './home-section-error';
 import { NewEpisodes } from './new-episodes';
@@ -74,4 +76,15 @@ export async function UpcomingSection({
   if (!loaded.ok) return null;
 
   return <UpcomingMovies releases={loaded.data} />;
+}
+
+export async function PremieresSection({
+  premieres,
+}: {
+  premieres: Promise<Loaded<PremiereRelease[]>>;
+}) {
+  const loaded = await premieres;
+  if (!loaded.ok) return null;
+
+  return <AnticipatedPremieres premieres={loaded.data} />;
 }

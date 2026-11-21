@@ -73,6 +73,11 @@ export interface TraktTrendingShow {
   show: TraktShow | null;
 }
 
+export interface TraktAnticipatedShow {
+  list_count: number;
+  show: TraktShow | null;
+}
+
 /**
  * Search result item for movie.
  */

@@ -5,6 +5,7 @@ import { CardEnrichmentService } from '@/modules/shared/cards/application/card-e
 import { ShowsCalendarService } from '@/modules/catalog/application/services/shows-calendar.service';
 import { CatalogUserStateEnricher } from '@/modules/catalog/application/services/catalog-userstate-enricher.service';
 import { ShowDetailsService } from '@/modules/catalog/application/services/show-details.service';
+import { AnticipatedShowsService } from '@/modules/catalog/application/services/anticipated-shows.service';
 import { ShowSyncService } from '@/modules/catalog/application/services/show-sync.service';
 import { ShowNotFoundError } from '@/modules/catalog/domain/errors';
 import { SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
@@ -18,6 +19,8 @@ describe('CatalogShowsController', () => {
   let showDetailsService: any;
   let showsCalendarService: any;
   let showSyncService: any;
+
+  const anticipatedShowsService = { findAnticipated: jest.fn() };
 
   beforeEach(async () => {
     const mockShowRepository = {
@@ -74,6 +77,7 @@ describe('CatalogShowsController', () => {
               .mockResolvedValue({ queued: true, lastSyncedAt: null, cooldownExpiresAt: null }),
           },
         },
+        { provide: AnticipatedShowsService, useValue: anticipatedShowsService },
       ],
     }).compile();
 
@@ -102,6 +106,16 @@ describe('CatalogShowsController', () => {
       expect(showRepository.findPopular).toHaveBeenCalledWith({ limit: 10, offset: 0 });
       expect(result.meta).toEqual({ count: 1, total: 1, limit: 10, offset: 0, hasMore: false });
       expect(userStateEnricher.enrichItemList).toHaveBeenCalled();
+    });
+  });
+
+  describe('getAnticipated', () => {
+    it('wraps the anticipated premieres in data', async () => {
+      const shows = [{ mediaItemId: 'm1', slug: 'harry-potter' }];
+      anticipatedShowsService.findAnticipated.mockResolvedValue(shows);
+
+      await expect(controller.getAnticipated({ limit: 20 })).resolves.toEqual({ data: shows });
+      expect(anticipatedShowsService.findAnticipated).toHaveBeenCalledWith(20);
     });
   });
 
