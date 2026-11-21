@@ -50,13 +50,36 @@ apps/ai/
 
 Adding an agent means adding a folder under `agents/`. Adding a data source means adding a collector or a tool. Adding a channel means adding a delivery adapter. Adding a model provider means adding an adapter and one line of config. None of these touch the agent loop.
 
-### Routing: no orchestrator agent
+### Routing
 
-The platform is the front door, not a "super agent". Triggers route deterministically: the daily schedule starts Veronica, a GitHub `pull_request` webhook starts Happy, a Telegram button starts the run it belongs to. No model decides who handles what, so routing costs nothing and never guesses wrong.
+The platform is the front door, not a "super agent". Events route deterministically: the daily schedule starts Veronica, a GitHub `pull_request` webhook starts Happy, a Telegram button starts the run it belongs to. No model decides who handles an event, so this routing costs nothing and never guesses wrong.
 
-Inside a run, the loop can split work into parallel sub-runs of the same agent, each with a clean context and its own budget. Agents do not call each other directly; they read each other's results through `RUN_REPOSITORY` (for example, Veronica's digest reports what Happy reviewed yesterday).
+Inside a run, the loop can split work into parallel sub-runs of the same agent, each with a clean context and its own budget. Agents share results through `RUN_REPOSITORY` (for example, Veronica's digest reports what Happy reviewed yesterday).
 
-An orchestrator becomes useful only when a free-form entry point exists, such as chatting with the bot in Telegram. Then a thin router comes first: deterministic matches, and a cheap classification call only when nothing matches. Agents may later be exposed to each other as tools (`ask_agent`), with the callee's own credentials and budget.
+### Chat: asking the bot
+
+One Telegram bot is the conversational entry point. You write to it in plain language; it hands the request to the right agent.
+
+```
+"Veronica, why did trending not update?"         → Veronica, investigation
+"Happy, review https://github.com/.../pull/431"  → Happy, review of that PR
+"find where we call MDBList and how often it 429s" → router decides
+```
+
+A message is routed in this order, cheapest first:
+
+1. **Commands:** `/digest`, `/review <PR>`, `/ask <agent> <question>`.
+2. **Mentions:** a message that starts with an agent's name or alias goes to that agent.
+3. **Patterns:** a GitHub PR link goes to Happy; deterministic matches live in config.
+4. **Router agent:** only when nothing above matches. A small agent on the `fast` alias whose only tools are the other agents (`ask_veronica`, `ask_happy`, later more). It picks one, passes a clear brief, and returns the answer. If the request is ambiguous it asks back instead of guessing.
+
+Rules for chat:
+
+- **Agents as tools keep their own boundaries.** When the router calls Happy, the call runs as Happy: Happy's credentials, Happy's model, Happy's budget. The router itself holds no integration credentials.
+- **Conversations.** A Telegram reply thread is one conversation, stored with a TTL, so follow-ups ("and yesterday?") keep context. Each turn is a run in `RUN_REPOSITORY` with its cost.
+- **Confirmation for writes.** Anything that changes state outside the bot (posting a review, re-running a job, opening an issue) is proposed with a button and runs only after you press it.
+- **Access.** Only allowlisted Telegram user IDs; everyone else gets no answer.
+- **Search and "go find".** Open-ended lookups across code, logs, metrics and data go to a later agent with read-only access to all of them (working name **DUM-E**), so Veronica stays focused on operations and Happy on review.
 
 ### Clean / Hexagonal, same rules as `apps/api`
 
@@ -257,7 +280,9 @@ Logs carry run IDs and outcomes, not prompt or PR contents. A Grafana dashboard 
 3. **Investigation buttons:** loop with read-only tools.
 4. **Happy in shadow mode:** GitHub App, incremental review, check run summary.
 5. **Happy live**, CodeRabbit off.
-6. **Later:** weekly digest, instant alerts without a model, chat with Veronica in Telegram, skills catalog, more agents.
+6. **Chat:** Telegram conversations with commands, mentions and patterns, then the router agent with agents as tools.
+7. **DUM-E:** read-only search across code, logs, metrics and data.
+8. **Later:** weekly digest, instant alerts without a model, skills catalog, more agents.
 
 ---
 
