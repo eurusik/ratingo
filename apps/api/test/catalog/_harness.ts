@@ -192,7 +192,7 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     return this.upsert(data);
   }
 
-  async bulkTransitionCaughtUpToWatching(mediaItemId: string): Promise<any[]> {
+  async bulkTransitionCaughtUpWithUnwatchedAiredEpisode(mediaItemId: string): Promise<any[]> {
     const transitioned: any[] = [];
     for (const s of this.states) {
       if (s.mediaItemId === mediaItemId && s.state === 'caught_up') {

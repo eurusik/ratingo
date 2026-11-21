@@ -22,14 +22,12 @@ import { ImageMapper } from '@/common/mappers/image.mapper';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
+import { SPECIALS_SEASON_NUMBER } from '@/modules/user-media/domain/constants/episode-progress.constants';
 import {
   type FavoriteUpdateItem,
   type FavoriteUpdatesOptions,
   type UserMediaSummary,
 } from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
-
-/** Season number 0 is used for "Specials" — we exclude them from episode queries. */
-const SPECIALS_SEASON_NUMBER = 0;
 
 /** If >= this many episodes share the same air date, it's a batch release (e.g. Netflix). */
 const BATCH_RELEASE_THRESHOLD = 3;
