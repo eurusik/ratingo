@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
+import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
 import { SHOW_EVENTS } from '@/modules/user-actions/public';
 import { UserMediaStateChangedEvent } from '@/modules/user-media/domain/events/user-media-state-changed.event';
 import {
@@ -8,10 +9,6 @@ import {
   type IUserMediaStateRepository,
 } from '@/modules/user-media/domain/repositories/user-media-state.repository.interface';
 
-/**
- * Transitions caught_up → watching when a new episode is detected during sync.
- * Uses a single bulk UPDATE instead of N+1 per-user calls.
- */
 @Injectable()
 export class CaughtUpTransitionListener {
   private readonly logger = new Logger(CaughtUpTransitionListener.name);
@@ -20,6 +17,8 @@ export class CaughtUpTransitionListener {
     @Inject(USER_MEDIA_STATE_REPOSITORY)
     private readonly repo: IUserMediaStateRepository,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
   ) {}
 
   @OnEvent(SHOW_EVENTS.NEW_EPISODE)
@@ -27,7 +26,10 @@ export class CaughtUpTransitionListener {
     let transitioned;
 
     try {
-      transitioned = await this.repo.bulkTransitionCaughtUpToWatching(payload.mediaItemId);
+      transitioned = await this.repo.bulkTransitionCaughtUpWithUnwatchedAiredEpisode(
+        payload.mediaItemId,
+        this.clock.now(),
+      );
     } catch (error) {
       this.logger.warn(
         `Failed to bulk transition caught_up → watching for media=${payload.mediaItemId}`,

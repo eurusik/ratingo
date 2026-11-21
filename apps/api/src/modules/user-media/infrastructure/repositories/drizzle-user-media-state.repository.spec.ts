@@ -394,6 +394,53 @@ describe('DrizzleUserMediaStateRepository', () => {
     });
   });
 
+  describe('bulkTransitionCaughtUpWithUnwatchedAiredEpisode', () => {
+    const asOf = new Date('2026-11-20T12:00:00Z');
+
+    const makeUpdateDb = (returned: any[]) => {
+      const chain: any = {
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue(returned),
+      };
+      return { update: jest.fn().mockReturnValue(chain), chain };
+    };
+
+    const renderWhere = (db: ReturnType<typeof makeUpdateDb>) =>
+      render(db.chain.where.mock.calls[0][0]).replace(/\s+/g, ' ');
+
+    it('only moves caught_up viewers who have an unwatched regular episode aired by asOf', async () => {
+      const db = makeUpdateDb([]);
+      const repo = new DrizzleUserMediaStateRepository(db as any, mockQuery);
+
+      await repo.bulkTransitionCaughtUpWithUnwatchedAiredEpisode('m1', asOf);
+
+      const where = renderWhere(db);
+      expect(where).toContain('"user_media_state"."state" = $');
+      expect(where).toContain('EXISTS ( SELECT 1 FROM "episodes" e');
+      expect(where).toContain('AND s.number > $');
+      expect(where).toMatch(/AND e\.air_date <= \$\d+::timestamp/);
+      expect(where).toContain(
+        'AND NOT EXISTS ( SELECT 1 FROM "user_episode_progress" uep WHERE uep.user_id = "user_media_state"."user_id" AND uep.episode_id = e.id )',
+      );
+      const params = dialect.sqlToQuery(db.chain.where.mock.calls[0][0]).params;
+      expect(params).toEqual(expect.arrayContaining(['m1', 'caught_up', 0, asOf.toISOString()]));
+    });
+
+    it('returns the moved rows mapped to domain states', async () => {
+      const db = makeUpdateDb([{ id: 's1', userId: 'u1', mediaItemId: 'm1', state: 'watching' }]);
+      const repo = new DrizzleUserMediaStateRepository(db as any, mockQuery);
+      (repo as any).mapRow = jest.fn((r) => ({ ...r, mapped: true }));
+
+      const result = await repo.bulkTransitionCaughtUpWithUnwatchedAiredEpisode('m1', asOf);
+
+      expect(db.chain.set).toHaveBeenCalledWith({ state: 'watching', updatedAt: asOf });
+      expect(result).toEqual([
+        { id: 's1', userId: 'u1', mediaItemId: 'm1', state: 'watching', mapped: true },
+      ]);
+    });
+  });
+
   describe('bulkImport', () => {
     const makeBulkDb = (returned: any[]) => {
       const chain: any = {
