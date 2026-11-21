@@ -328,13 +328,14 @@ export class AuthController {
 
     // Login mode (existing logic)
     const clientMeta = extractClientMeta(req);
-    const { user } = await this.oauthService.loginWithOAuth(oauthUser, clientMeta);
+    const { user, isNewUser } = await this.oauthService.loginWithOAuth(oauthUser, clientMeta);
     const code = await this.oauthService.generateExchangeCode(user.id, clientMeta);
 
     const returnTo = statePayload?.returnTo || '/';
     const provider = statePayload?.provider || oauthUser.provider;
+    const newUserParam = isNewUser ? '&new=1' : '';
 
-    const redirectUrl = `${redirectBase}/auth/callback/${provider}?code=${encodeURIComponent(code)}&returnTo=${encodeURIComponent(returnTo)}`;
+    const redirectUrl = `${redirectBase}/auth/callback/${provider}?code=${encodeURIComponent(code)}&returnTo=${encodeURIComponent(returnTo)}${newUserParam}`;
     await res.redirect(redirectUrl, HTTP_REDIRECT_FOUND);
   }
 

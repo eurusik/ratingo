@@ -35,6 +35,7 @@ export function useOAuthCodeExchange(
   const code = params.get('code');
   const providerError = params.get('error');
   const returnTo = toSafeReturnPath(params.get('returnTo'));
+  const isNewUser = params.get('new') === '1';
   const [exchangeFailure, setExchangeFailure] = useState<ExchangeFailure | null>(null);
   const exchangedCode = useRef<string | null>(null);
   const reportedFailure = useRef<string | null>(null);
@@ -47,7 +48,7 @@ export function useOAuthCodeExchange(
       .exchangeOAuthCode(code)
       .then((tokens) => {
         tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
-        track('login', { method: provider });
+        track(isNewUser ? 'sign_up' : 'login', { method: provider });
         replaceDocumentLocation(returnTo);
       })
       .catch((error: unknown) => {
@@ -56,7 +57,7 @@ export function useOAuthCodeExchange(
           errorCode: error instanceof ApiError ? error.code : UNKNOWN_EXCHANGE_ERROR,
         });
       });
-  }, [code, provider, providerError, returnTo]);
+  }, [code, isNewUser, provider, providerError, returnTo]);
 
   const errorCode = resolveErrorCode(code, providerError, exchangeFailure);
 

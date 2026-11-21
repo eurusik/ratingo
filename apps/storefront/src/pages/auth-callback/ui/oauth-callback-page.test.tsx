@@ -76,6 +76,17 @@ describe('OAuthCallbackPage', () => {
     expect(window.gtag).toHaveBeenCalledWith('event', 'login', { method: 'facebook' });
   });
 
+  it('reports a sign-up instead of a login when the account was just created', async () => {
+    window.gtag = jest.fn();
+    jest.spyOn(authApi, 'exchangeOAuthCode').mockResolvedValue(STORED_TOKENS);
+
+    renderCallback('code=one-time&new=1', 'google');
+
+    await waitFor(() => expect(replaceDocumentLocation).toHaveBeenCalled());
+    expect(window.gtag).toHaveBeenCalledWith('event', 'sign_up', { method: 'google' });
+    expect(window.gtag).not.toHaveBeenCalledWith('event', 'login', expect.anything());
+  });
+
   it('reports a provider error once, with the provider and the error code', () => {
     window.gtag = jest.fn();
 
