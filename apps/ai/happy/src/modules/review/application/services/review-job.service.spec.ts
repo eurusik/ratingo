@@ -102,4 +102,15 @@ describe('ReviewJobService', () => {
     expect(asked.published[0]?.report.title).toBe(CheckVoice.TRIVIAL);
     expect(asked.published[0]?.report.summary.split('\n')[0]).toBe(CheckVoice.TRIVIAL);
   });
+
+  it('runs an internal request as an explicit, chat-triggered review and publishes a skip', async () => {
+    const asked = setup(skipped);
+    const result = await asked.service.process({
+      ...JOB,
+      source: ReviewJobSource.INTERNAL_REQUEST,
+    });
+    expect(result).toBe(ReviewJobResult.PUBLISHED);
+    expect(asked.review.mock.calls[0]?.[1]).toBe('chat');
+    expect(asked.review.mock.calls[0]?.[2]).toEqual({ explicitRequest: true });
+  });
 });

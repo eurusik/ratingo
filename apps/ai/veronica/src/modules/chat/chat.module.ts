@@ -5,9 +5,11 @@ import IORedis from 'ioredis';
 
 import {
   CHANGES_CONFIG,
+  HAPPY_CONFIG,
   INFRA_CONFIG,
   TELEGRAM_CONFIG,
   type ChangesConfig,
+  type HappyConfig,
   type InfraConfig,
   type TelegramConfig,
 } from '../../config/config.constants';
@@ -15,11 +17,14 @@ import { DigestModule } from '../digest/public';
 import { NotifyModule } from '../notify/public';
 
 import { ChatCommandHandlers } from './application/commands/chat-command.handlers';
+import { HappyChatService } from './application/services/happy-chat.service';
+import { HappyFollowUpService } from './application/services/happy-follow-up.service';
 import { ChatService } from './application/services/chat.service';
 import { InvestigationRunner } from './application/services/investigation.runner';
 import { ChatWebhookService } from './application/services/chat-webhook.service';
 import { WebhookRegistrationService } from './application/services/webhook-registration.service';
 import { ChatWorker } from './application/workers/chat.worker';
+import { AskHappyExecutor } from './application/tools/ask-happy.executor';
 import { DigestSnapshotExecutor } from './application/tools/digest-snapshot.executor';
 import {
   INVESTIGATION_EXECUTORS,
@@ -37,9 +42,11 @@ import {
 import { CHAT_JOB_QUEUE } from './domain/ports/chat-job-queue.port';
 import { CHAT_METRICS_PORT } from './domain/ports/chat-metrics.port';
 import { CONVERSATION_STORE } from './domain/ports/conversation-store.port';
+import { HAPPY_CLIENT } from './domain/ports/happy-client.port';
 import { RECENT_CHANGES_PORT } from './domain/ports/recent-changes.port';
 import { WEBHOOK_SECRET_PORT } from './domain/ports/webhook-secret.port';
 import { GithubRecentChangesAdapter } from './infrastructure/adapters/github.recent-changes-adapter';
+import { HttpHappyClient } from './infrastructure/adapters/http.happy-client';
 import { BullmqChatJobQueue } from './infrastructure/queues/bullmq-chat-job-queue';
 import { HmacWebhookSecret } from './infrastructure/security/hmac-webhook-secret';
 import { RedisConversationStore } from './infrastructure/stores/redis.conversation-store';
@@ -83,10 +90,16 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
       inject: [CHANGES_CONFIG],
       useFactory: (config: ChangesConfig) => new GithubRecentChangesAdapter(config),
     },
+    {
+      provide: HAPPY_CLIENT,
+      inject: [HAPPY_CONFIG],
+      useFactory: (config: HappyConfig) => new HttpHappyClient(config),
+    },
     MetricsQueryExecutor,
     ProductStatsExecutor,
     DigestSnapshotExecutor,
     RecentChangesExecutor,
+    AskHappyExecutor,
     {
       provide: INVESTIGATION_EXECUTORS,
       inject: [
@@ -94,20 +107,25 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
         ProductStatsExecutor,
         DigestSnapshotExecutor,
         RecentChangesExecutor,
+        AskHappyExecutor,
       ],
       useFactory: (
         metrics: MetricsQueryExecutor,
         product: ProductStatsExecutor,
         snapshot: DigestSnapshotExecutor,
         changes: RecentChangesExecutor,
+        happy: AskHappyExecutor,
       ): InvestigationExecutors => ({
         metricsQuery: (input) => metrics.run(input),
         productStats: (input) => product.run(input),
         digestSnapshot: () => snapshot.run(),
         recentChanges: (input) => changes.run(input),
+        askHappy: (input) => happy.run(input),
       }),
     },
     InvestigationRunner,
+    HappyChatService,
+    HappyFollowUpService,
     ChatCommandHandlers,
     ChatService,
     ChatWebhookService,

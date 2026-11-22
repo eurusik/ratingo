@@ -14,6 +14,7 @@ import type {
 import { WebhookEventKind } from '../entities/webhook-event';
 
 import { isReviewCommand } from './review-command';
+import { isTrustedAuthor } from './trusted-author';
 
 export interface WebhookPolicyConfig {
   allowedRepositories: readonly string[];
@@ -33,9 +34,10 @@ const isAllowedRepository = (event: WebhookEvent, config: WebhookPolicyConfig): 
     (entry) => entry.toLowerCase() === repositoryName(event).toLowerCase(),
   );
 
-const isTrustedAuthor = (event: PullRequestWebhookEvent, config: WebhookPolicyConfig): boolean =>
-  event.headRepository?.toLowerCase() === repositoryName(event).toLowerCase() ||
-  config.allowedAuthors.includes(event.authorLogin);
+const isTrustedEventAuthor = (
+  event: PullRequestWebhookEvent,
+  config: WebhookPolicyConfig,
+): boolean => isTrustedAuthor(event, repositoryName(event), config.allowedAuthors);
 
 const decidePullRequest = (
   event: PullRequestWebhookEvent,
@@ -46,7 +48,7 @@ const decidePullRequest = (
   }
   if (!isAllowedRepository(event, config)) return ignore(IgnoreReason.REPOSITORY_NOT_ALLOWED);
   if (event.isDraft) return ignore(IgnoreReason.DRAFT);
-  if (!isTrustedAuthor(event, config)) return ignore(IgnoreReason.UNTRUSTED_FORK);
+  if (!isTrustedEventAuthor(event, config)) return ignore(IgnoreReason.UNTRUSTED_FORK);
   return {
     action: 'enqueue',
     job: {

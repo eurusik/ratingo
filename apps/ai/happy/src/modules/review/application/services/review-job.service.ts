@@ -33,10 +33,13 @@ export class ReviewJobService {
   ) {}
 
   async process(job: ReviewJob): Promise<ReviewJobResult> {
-    const outcome = await this.reviews.review(job.ref, RunTrigger.WEBHOOK, {
-      explicitRequest: job.source === ReviewJobSource.COMMAND,
-    });
-    if (outcome.status === ReviewStatus.SKIPPED && job.source !== ReviewJobSource.COMMAND) {
+    const explicitRequest = job.source !== ReviewJobSource.PULL_REQUEST;
+    const outcome = await this.reviews.review(
+      job.ref,
+      job.source === ReviewJobSource.INTERNAL_REQUEST ? RunTrigger.CHAT : RunTrigger.WEBHOOK,
+      { explicitRequest },
+    );
+    if (outcome.status === ReviewStatus.SKIPPED && !explicitRequest) {
       this.logger.log(`${formatPullRequest(job.ref)} skipped: ${outcome.reason}`);
       return ReviewJobResult.SKIPPED_SILENTLY;
     }

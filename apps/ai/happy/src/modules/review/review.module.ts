@@ -29,8 +29,8 @@ import {
   StaticTokenProvider,
   type GithubTokenProvider,
 } from './infrastructure/auth/github-token.provider';
-import { InternalReviewController } from './presentation/controllers/internal-review.controller';
-import { ServiceTokenGuard } from './presentation/guards/service-token.guard';
+import { PUBLISHED_CHECK_PORT } from './domain/ports/published-check.port';
+import { ReviewResultService } from './application/services/review-result.service';
 
 const CHECKS_PATH = path.resolve(__dirname, '../../../agent/checks');
 
@@ -49,13 +49,12 @@ const tokenProviderFor = (
     : new StaticTokenProvider(auth.token);
 
 @Module({
-  controllers: [InternalReviewController],
   providers: [
     ReviewService,
     ReviewJobService,
     TriageService,
     DeepReviewService,
-    ServiceTokenGuard,
+    ReviewResultService,
     {
       provide: CODE_HOST_PORT,
       inject: [GITHUB_CONFIG, CLOCK_PORT],
@@ -63,9 +62,11 @@ const tokenProviderFor = (
         new GithubCodeHostAdapter({
           tokens: tokenProviderFor(github.auth, github.apiUrl, clock),
           apiUrl: github.apiUrl,
+          ...(github.auth.kind === 'app' ? { appId: github.auth.appId } : {}),
         }),
     },
     { provide: CHECK_RUN_PUBLISHER_PORT, useExisting: CODE_HOST_PORT },
+    { provide: PUBLISHED_CHECK_PORT, useExisting: CODE_HOST_PORT },
     {
       provide: CHECK_SOURCE_PORT,
       useFactory: (): Promise<CheckSourcePort> => FolderCheckSourceAdapter.load(CHECKS_PATH),
@@ -77,6 +78,6 @@ const tokenProviderFor = (
         new OtelCheckMetricsAdapter(meter, new Set(source.list().map((check) => check.id))),
     },
   ],
-  exports: [ReviewService, ReviewJobService],
+  exports: [ReviewService, ReviewJobService, ReviewResultService],
 })
 export class ReviewModule {}

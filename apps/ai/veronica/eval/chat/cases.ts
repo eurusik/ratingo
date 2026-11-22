@@ -412,4 +412,36 @@ export const EVAL_CASES: readonly EvalCase[] = [
       answer: 'Гаразд не все: ключ TMDB недійсний, його треба оновити. Посилань я не надсилаю.',
     },
   },
+  {
+    id: 'happy-said-about-pr',
+    kind: EvalKind.KNOWN,
+    question: 'Що там Хеппі сказав про 470?',
+    fixtures: [
+      {
+        tool: 'ask_happy',
+        match: { pull_number: 470 },
+        response: {
+          pullRequest: 470,
+          found: true,
+          reviewRunningNow: false,
+          reviewed: true,
+          status: 'reviewed',
+          forCurrentCommit: true,
+          verdict: 'Затримую на вході: є що виправити.',
+          summary: 'Додає оплату.',
+          skipReason: null,
+          findingsBySeverity: { critical: 0, major: 2, minor: 1, nit: 0 },
+          questions: [{ where: 'src/pay.ts:12', text: 'Чи це навмисно?' }],
+          coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
+        },
+      },
+    ],
+    expectedTools: ['ask_happy'],
+    mustContain: [['важлив', 'серйозн'], ['2']],
+    reference: {
+      calls: [{ tool: 'ask_happy', input: { pull_number: 470 } }],
+      answer:
+        'Хеппі затримав PR 470: знайшов важливих зауважень 2 і одне дрібне, плюс одне питання до автора.',
+    },
+  },
 ];

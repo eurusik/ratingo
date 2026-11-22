@@ -37,7 +37,7 @@ describe('routeMessage', () => {
       text: 'why did trending not update?',
     });
     expect(routeMessage('Вероніко, що з чергами')).toMatchObject({ agent: AgentName.VERONICA });
-    expect(routeMessage('happy: перевір')).toMatchObject({ agent: AgentName.HAPPY });
+    expect(routeMessage('happy: перевір')).toMatchObject({ kind: IntentKind.HAPPY });
     expect(routeMessage('DUM-E знайди')).toMatchObject({ agent: AgentName.DUME });
   });
 
@@ -47,14 +47,32 @@ describe('routeMessage', () => {
   });
 
   it('prefers a mention over a pattern, and a command over both', () => {
-    expect(routeMessage(`Happy, review ${PR_LINK}`).kind).toBe(IntentKind.MENTION);
+    expect(routeMessage(`Veronica, review ${PR_LINK}`).kind).toBe(IntentKind.MENTION);
     expect(routeMessage(`/status ${PR_LINK}`).kind).toBe(IntentKind.COMMAND);
   });
 
-  it('routes a pull request link to the pattern intent', () => {
+  it('routes a pull request link to Happy', () => {
     expect(routeMessage(`глянь ${PR_LINK} будь ласка`)).toEqual({
-      kind: IntentKind.PATTERN,
-      pullRequest: { owner: 'eurusik', repo: 'ratingo', number: 431 },
+      kind: IntentKind.HAPPY,
+      target: { kind: 'link', pullRequest: { owner: 'eurusik', repo: 'ratingo', number: 431 } },
+    });
+  });
+
+  it.each([
+    ['Happy, глянь 470', 470],
+    ["Хеппі, рев'ю #470", 470],
+    ['happy: перевір PR 12', 12],
+  ])('routes «%s» to Happy with the number', (text, number) => {
+    expect(routeMessage(text)).toEqual({
+      kind: IntentKind.HAPPY,
+      target: { kind: 'number', number },
+    });
+  });
+
+  it('asks for a number when Happy is addressed without one', () => {
+    expect(routeMessage('Хеппі, привіт')).toEqual({
+      kind: IntentKind.HAPPY,
+      target: { kind: 'unclear' },
     });
   });
 
