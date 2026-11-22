@@ -8,11 +8,17 @@ const grafanaEnvSchema = z.object({
   GRAFANA_PROM_TOKEN: z.string().min(1).optional(),
 });
 
+const productStatsEnvSchema = z.object({
+  AI_READER_DATABASE_URL: z.string().min(1).optional(),
+});
+
 const modelEnvSchema = z.object({
   AI_MODEL_FAST: z.string().min(1).default(DEFAULT_FAST_MODEL),
 });
 
-export const previewEnvSchema = grafanaEnvSchema.extend(modelEnvSchema.shape);
+export const previewEnvSchema = grafanaEnvSchema
+  .extend(modelEnvSchema.shape)
+  .extend(productStatsEnvSchema.shape);
 
 export const serviceEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -24,4 +30,5 @@ export const serviceEnvSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_CHAT_ID: z.string().min(1),
   ...modelEnvSchema.shape,
+  ...productStatsEnvSchema.shape,
 });
