@@ -34,6 +34,15 @@ describe('env schemas', () => {
     );
   });
 
+  it('treats the Anthropic key as optional and rejects an empty value', () => {
+    expect(serviceEnvSchema.parse(VALID).ANTHROPIC_API_KEY).toBeUndefined();
+    expect(serviceEnvSchema.parse({ ...VALID, ANTHROPIC_API_KEY: 'k' }).ANTHROPIC_API_KEY).toBe(
+      'k',
+    );
+    expect(serviceEnvSchema.safeParse({ ...VALID, ANTHROPIC_API_KEY: '' }).success).toBe(false);
+    expect(previewEnvSchema.parse({ ANTHROPIC_API_KEY: 'k' }).ANTHROPIC_API_KEY).toBe('k');
+  });
+
   it('lets the preview run without any credential', () => {
     expect(previewEnvSchema.safeParse({}).success).toBe(true);
   });

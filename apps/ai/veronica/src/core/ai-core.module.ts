@@ -12,14 +12,17 @@ import {
   ToolRegistry,
   loadAgentFolder,
   type AgentFolder,
+  type ModelAliases,
   type ClockPort,
   type RunRepository,
 } from '@ratingo/ai-core';
 
-import { MODEL_ALIAS_NAMES, MODEL_PRICES, STUB_PROVIDER } from '../config/models.config';
+import { ANTHROPIC_CONFIG, MODEL_ALIASES, type AnthropicConfig } from '../config/config.constants';
+import { MODEL_ALIAS_NAMES, MODEL_PRICES } from '../config/models.config';
 
 import { AGENT_FOLDER, AGENT_LOOP } from './ai-core.constants';
 import { InterruptedRunsRecovery } from './interrupted-runs.recovery';
+import { assertAliasProvidersRegistered, buildModelProviders } from './model-providers';
 import { createDigestStubScript } from './stub-digest.script';
 
 const AGENT_FOLDER_PATH = path.resolve(__dirname, '../../agent');
@@ -36,15 +39,26 @@ const AGENT_FOLDER_PATH = path.resolve(__dirname, '../../agent');
     },
     {
       provide: AGENT_LOOP,
-      inject: [RUN_REPOSITORY, CLOCK_PORT],
-      useFactory: async (runs: RunRepository, clock: ClockPort) =>
-        new AgentLoop({
-          providers: { [STUB_PROVIDER]: new StubModelAdapter(createDigestStubScript()) },
+      inject: [RUN_REPOSITORY, CLOCK_PORT, ANTHROPIC_CONFIG, MODEL_ALIASES],
+      useFactory: async (
+        runs: RunRepository,
+        clock: ClockPort,
+        anthropic: AnthropicConfig,
+        aliases: ModelAliases,
+      ) => {
+        const providers = buildModelProviders(
+          new StubModelAdapter(createDigestStubScript()),
+          anthropic.apiKey,
+        );
+        assertAliasProvidersRegistered(aliases, providers);
+        return new AgentLoop({
+          providers,
           registry: await ToolRegistry.create([new NativeToolSource([])], []),
           runs,
           clock,
           prices: MODEL_PRICES,
-        }),
+        });
+      },
     },
   ],
   exports: [CLOCK_PORT, AGENT_FOLDER, AGENT_LOOP],
