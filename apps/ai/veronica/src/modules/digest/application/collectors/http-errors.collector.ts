@@ -1,0 +1,68 @@
+import { Inject, Injectable } from '@nestjs/common';
+
+import { BASELINE_OFFSET_DAYS } from '../../digest.constants';
+import { measured } from '../../domain/entities/measured';
+import type { HttpErrorStat } from '../../domain/entities/snapshot';
+import { HttpErrorKind } from '../../domain/entities/snapshot';
+import type { SourceReading } from '../../domain/entities/source-reading';
+import { available, unavailable } from '../../domain/entities/source-reading';
+import { METRICS_PORT, type MetricsPort, type MetricSample } from '../../domain/ports/metrics.port';
+
+import { baselineAt, guarded } from './collector-helpers';
+
+const CLIENT_REQUESTS = 'http_client_request_duration_seconds_count';
+const ANY_REQUESTS = `sum(increase(${CLIENT_REQUESTS}[24h]))`;
+const RELEVANT_ERRORS = `sum by (server_address, http_response_status_code) (increase(${CLIENT_REQUESTS}{http_response_status_code=~"401|403|429"}[24h]))`;
+
+const KIND_BY_STATUS: Readonly<Record<string, HttpErrorKind>> = {
+  '401': HttpErrorKind.AUTH,
+  '403': HttpErrorKind.AUTH,
+  '429': HttpErrorKind.RATE_LIMIT,
+};
+
+const keyOf = (server: string, kind: HttpErrorKind): string => `${server}|${kind}`;
+
+const countByServerAndKind = (samples: readonly MetricSample[]): Map<string, number> => {
+  const counts = new Map<string, number>();
+  for (const sample of samples) {
+    const kind = KIND_BY_STATUS[sample.labels.http_response_status_code ?? ''];
+    if (kind !== undefined) {
+      const key = keyOf(sample.labels.server_address ?? 'невідомий', kind);
+      counts.set(key, (counts.get(key) ?? 0) + sample.value);
+    }
+  }
+  return counts;
+};
+
+@Injectable()
+export class HttpErrorsCollector {
+  constructor(@Inject(METRICS_PORT) private readonly metrics: MetricsPort) {}
+
+  collect(nowMs: number): Promise<SourceReading<HttpErrorStat[]>> {
+    return guarded(async () => {
+      const baselineMs = baselineAt(nowMs, BASELINE_OFFSET_DAYS);
+      const [anyRequests, errors, baselineErrors] = await Promise.all([
+        this.metrics.instant(ANY_REQUESTS, nowMs),
+        this.metrics.instant(RELEVANT_ERRORS, nowMs),
+        this.metrics.instant(RELEVANT_ERRORS, baselineMs),
+      ]);
+      if (anyRequests.length === 0) {
+        return unavailable('метрик вихідних запитів немає');
+      }
+      const current = countByServerAndKind(errors);
+      const baseline = countByServerAndKind(baselineErrors);
+      return available(
+        [...current.entries()]
+          .map(([key, count]): HttpErrorStat => {
+            const [server = '', kind = ''] = key.split('|');
+            return {
+              server,
+              kind: kind as HttpErrorKind,
+              count: measured(Math.round(count), Math.round(baseline.get(key) ?? 0)),
+            };
+          })
+          .sort((a, b) => a.server.localeCompare(b.server)),
+      );
+    });
+  }
+}

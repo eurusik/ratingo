@@ -1,0 +1,9 @@
+name: veronica
+models:
+  default: fast
+tools: []
+skills: []
+mcp: []
+budgets:
+  perRunUsd: 0.05
+  perDayUsd: 0.5
