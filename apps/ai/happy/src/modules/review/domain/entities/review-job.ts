@@ -3,6 +3,7 @@ import type { PullRequestRef } from './pull-request';
 export const ReviewJobSource = {
   PULL_REQUEST: 'pull_request',
   COMMAND: 'command',
+  INTERNAL_REQUEST: 'internal_request',
 } as const;
 export type ReviewJobSource = (typeof ReviewJobSource)[keyof typeof ReviewJobSource];
 

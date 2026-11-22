@@ -30,3 +30,31 @@ export const IgnoreReason = {
   UNSUPPORTED_EVENT: 'unsupported_event',
 } as const;
 export type IgnoreReason = (typeof IgnoreReason)[keyof typeof IgnoreReason];
+
+export const InternalSkipReason = {
+  CLOSED: 'closed',
+  MERGED: 'merged',
+  UNTRUSTED_FORK: 'untrusted_fork',
+} as const;
+export type InternalSkipReason = (typeof InternalSkipReason)[keyof typeof InternalSkipReason];
+
+export const InternalRequestStatus = {
+  QUEUED: 'queued',
+  ALREADY_RUNNING: 'already_running',
+  ALREADY_REVIEWED: 'already_reviewed',
+  SKIPPED: 'skipped',
+  NOT_FOUND: 'not_found',
+} as const;
+export type InternalRequestStatus =
+  (typeof InternalRequestStatus)[keyof typeof InternalRequestStatus];
+
+export const MAX_PULL_NUMBER_DIGITS = 9;
+export const INTERNAL_PROXY_HEADERS: readonly string[] = [
+  'x-forwarded-for',
+  'x-forwarded-host',
+  'x-forwarded-proto',
+  'x-real-ip',
+  'forwarded',
+  'cf-connecting-ip',
+  'cf-ray',
+];

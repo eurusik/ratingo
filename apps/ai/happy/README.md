@@ -21,6 +21,19 @@ A command is the first non-blank text of a comment on a pull request, in any let
 
 An explicit command reviews a trivial pull request that would otherwise be skipped. It does not lift the `too_large` skip, and docs-only pull requests stay skipped.
 
+## Internal API for Veronica
+
+Veronica (`apps/ai/veronica`) asks Happy about pull requests over the Railway private network (`http://happy.railway.internal:3005`). Happy listens on `::` for that. The public hostname must keep serving only `/`, `/health` and `POST /webhooks/github`.
+
+| Request                                       | Result                                                                                                                                                                                                                                                      |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /internal/pull-requests/:number/review` | enqueues a review of the head commit (the same job as `/happy review`, published even for a trivial PR) and answers at once: `queued`, `already_running`, `already_reviewed`, `skipped` with `reason` (`closed`, `merged`, `untrusted_fork`) or `not_found` |
+| `GET /internal/pull-requests/:number/review`  | `not_found`, or `found` with `headSha`, `reviewPending` and `result` (status, voice line, summary, finding counts by severity, questions, coverage, the commit it was for, `current`, check-run URL) or `null`                                              |
+
+Auth is `Authorization: Bearer <HAPPY_SERVICE_TOKEN>`. Without `HAPPY_SERVICE_TOKEN` the API is disabled and answers 404, as it does to any request carrying a public proxy header (`X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP`...). A wrong token is 401. The repository is the first entry of `HAPPY_ALLOWED_REPOS`.
+
+Results are read back from the `Happy` check run of the commit. Its summary ends with a hidden `<!-- happy:result:v1 ... -->` marker with the structured result; check runs published before the marker existed come back with status `unknown`. Only check runs created by Happy's own GitHub App are read. No database is involved.
+
 ## Check title voice
 
 Happy speaks in one line, only in the check title and the first line of the check summary. Findings, questions and coverage notes stay factual. All lines live in `src/modules/review/domain/constants/check-voice.constants.ts`.
@@ -91,21 +104,21 @@ The machine account exists only so Happy can be tagged. It has no token in Railw
 
 Names only; values are secrets or per-environment.
 
-| Variable                                                    | Purpose                                                         |
-| ----------------------------------------------------------- | --------------------------------------------------------------- |
-| `PORT`                                                      | HTTP port (default 3005)                                        |
-| `REDIS_URL`                                                 | BullMQ queue and the durable daily spend counter                |
-| `GITHUB_APP_ID`                                             | numeric app id                                                  |
-| `GITHUB_APP_PRIVATE_KEY`                                    | the PEM private key; newlines may be written as `\n`            |
-| `GITHUB_WEBHOOK_SECRET`                                     | webhook secret, at least 16 characters                          |
-| `GITHUB_API_URL`                                            | optional, GitHub Enterprise only                                |
-| `HAPPY_ALLOWED_REPOS`                                       | comma-separated `owner/repo` list                               |
-| `HAPPY_ALLOWED_AUTHORS`                                     | optional, fork authors that may be reviewed                     |
-| `HAPPY_MENTION_HANDLE`                                      | optional, login that commands mention (default `happy-on-duty`) |
-| `HAPPY_SERVICE_TOKEN`                                       | optional, protects `/internal/review` (24+ characters)          |
-| `AI_MODEL_FAST`, `AI_MODEL_REVIEW`                          | model refs; default `stub:...` runs no real model               |
-| `ANTHROPIC_API_KEY`                                         | required when a model ref is `anthropic:...`                    |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | telemetry                                                       |
+| Variable                                                    | Purpose                                                                                     |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `PORT`                                                      | HTTP port (default 3005)                                                                    |
+| `REDIS_URL`                                                 | BullMQ queue and the durable daily spend counter                                            |
+| `GITHUB_APP_ID`                                             | numeric app id                                                                              |
+| `GITHUB_APP_PRIVATE_KEY`                                    | the PEM private key; newlines may be written as `\n`                                        |
+| `GITHUB_WEBHOOK_SECRET`                                     | webhook secret, at least 16 characters                                                      |
+| `GITHUB_API_URL`                                            | optional, GitHub Enterprise only                                                            |
+| `HAPPY_ALLOWED_REPOS`                                       | comma-separated `owner/repo` list                                                           |
+| `HAPPY_ALLOWED_AUTHORS`                                     | optional, fork authors that may be reviewed                                                 |
+| `HAPPY_MENTION_HANDLE`                                      | optional, login that commands mention (default `happy-on-duty`)                             |
+| `HAPPY_SERVICE_TOKEN`                                       | optional, bearer token of the internal API for Veronica (24+ characters); unset disables it |
+| `AI_MODEL_FAST`, `AI_MODEL_REVIEW`                          | model refs; default `stub:...` runs no real model                                           |
+| `ANTHROPIC_API_KEY`                                         | required when a model ref is `anthropic:...`                                                |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | telemetry                                                                                   |
 
 Keep one replica: the worker runs one job at a time and the budgets (`$0.60` per run, `$3` per day) are counted per service.
 

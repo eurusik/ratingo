@@ -52,4 +52,15 @@ describe('reviewJobId', () => {
     expect(reviewJobId(base)).not.toBe(reviewJobId({ ...base, commentId: 12 }));
     expect(reviewJobId(base)).toBe(reviewJobId({ ...base }));
   });
+
+  it('keeps an internal request apart from the automatic review of the same commit', () => {
+    const auto = jobArb;
+    fc.assert(
+      fc.property(auto, (job) => {
+        const request = { ...job, source: ReviewJobSource.INTERNAL_REQUEST };
+        const id = reviewJobId(request);
+        return id !== reviewJobId(job) && id === reviewJobId({ ...request }) && !id.includes(':');
+      }),
+    );
+  });
 });
