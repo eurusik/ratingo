@@ -1,5 +1,4 @@
 import { AlertKey } from '../../domain/constants/watchdog-rules.constants';
-
 import { WATCHDOG_STATE_KEYS } from '../../watchdog.constants';
 
 import { RedisWatchdogStateStore } from './redis.watchdog-state.store';

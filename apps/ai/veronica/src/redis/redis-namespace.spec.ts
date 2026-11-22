@@ -1,13 +1,12 @@
 import * as fc from 'fast-check';
 
-import { CONVERSATION_KEY_PREFIX } from '../modules/chat/chat.constants';
 import { CHAT_QUEUE, CHAT_QUEUE_PREFIX } from '../modules/chat/chat.constants';
+import { TurnRole } from '../modules/chat/domain/entities/conversation-turn';
+import { RedisConversationStore } from '../modules/chat/infrastructure/stores/redis.conversation-store';
 import { DIGEST_QUEUE, DIGEST_QUEUE_PREFIX } from '../modules/digest/digest.constants';
-import {
-  WATCHDOG_QUEUE,
-  WATCHDOG_QUEUE_PREFIX,
-  WATCHDOG_STATE_KEYS,
-} from '../modules/watchdog/watchdog.constants';
+import { AlertKey } from '../modules/watchdog/domain/constants/watchdog-rules.constants';
+import { RedisWatchdogStateStore } from '../modules/watchdog/infrastructure/stores/redis.watchdog-state.store';
+import { WATCHDOG_QUEUE, WATCHDOG_QUEUE_PREFIX } from '../modules/watchdog/watchdog.constants';
 
 import { collidesWithQueue, queueKey, queueNamespace, type QueueIdentity } from './redis-namespace';
 
@@ -17,17 +16,39 @@ const APP_QUEUES: readonly QueueIdentity[] = [
   { prefix: WATCHDOG_QUEUE_PREFIX, name: WATCHDOG_QUEUE },
 ];
 
-const APP_KEYS: readonly string[] = [
-  ...Object.values(WATCHDOG_STATE_KEYS),
-  `${CONVERSATION_KEY_PREFIX}10`,
-];
+const recordKeysUsedByStores = async (): Promise<string[]> => {
+  const keys: string[] = [];
+  const chain = {
+    rpush: (key: string) => (keys.push(key), chain),
+    ltrim: (key: string) => (keys.push(key), chain),
+    expire: (key: string) => (keys.push(key), chain),
+    exec: async () => [],
+  };
+  const redis = {
+    get: async (key: string) => (keys.push(key), null),
+    set: async (key: string) => (keys.push(key), 'OK'),
+    lrange: async (key: string) => (keys.push(key), []),
+    multi: () => chain,
+  };
+  const conversation = new RedisConversationStore(redis as never);
+  await conversation.recent('10');
+  await conversation.append('10', [{ role: TurnRole.USER, text: 'q' }]);
+  const watchdog = new RedisWatchdogStateStore(redis as never);
+  await watchdog.loadActive();
+  await watchdog.saveActive([AlertKey.HAPPY_DOWN]);
+  await watchdog.loadHappyFailures();
+  await watchdog.saveHappyFailures(1);
+  return [...new Set(keys)];
+};
 
 const word = fc.stringMatching(/^[a-z0-9-]{1,12}$/);
 const queueArb = fc.record({ prefix: word, name: word });
 
 describe('redis key namespaces', () => {
-  it('keeps every key the app builds outside the namespace of all its queues', () => {
-    for (const key of APP_KEYS) {
+  it('keeps every key the Redis stores actually build outside the namespace of all queues', async () => {
+    const keys = await recordKeysUsedByStores();
+    expect(keys.length).toBeGreaterThanOrEqual(3);
+    for (const key of keys) {
       expect(collidesWithQueue(key, APP_QUEUES)).toBe(false);
     }
   });
