@@ -9,8 +9,8 @@ import { guarded } from './collector-helpers';
 
 const DATABASE_UP = 'min(last_over_time(pg_up[15m]))';
 const REDIS_UP = 'min(last_over_time(redis_up[15m]))';
-const REDIS_MEMORY =
-  'max(last_over_time(redis_memory_used_bytes[15m]) / (last_over_time(redis_memory_max_bytes[15m]) > 0))';
+const REDIS_MEMORY_USED = 'max(last_over_time(redis_memory_used_bytes[15m]))';
+const REDIS_MEMORY_MAX = 'max(last_over_time(redis_memory_max_bytes[15m]))';
 
 @Injectable()
 export class InfraCollector {
@@ -18,10 +18,11 @@ export class InfraCollector {
 
   collect(nowMs: number): Promise<SourceReading<InfraStats>> {
     return guarded(async () => {
-      const [database, redis, memory] = await Promise.all([
+      const [database, redis, memoryUsed, memoryMax] = await Promise.all([
         this.metrics.instant(DATABASE_UP, nowMs),
         this.metrics.instant(REDIS_UP, nowMs),
-        this.metrics.instant(REDIS_MEMORY, nowMs),
+        this.metrics.instant(REDIS_MEMORY_USED, nowMs),
+        this.metrics.instant(REDIS_MEMORY_MAX, nowMs),
       ]);
       const databaseUp = database[0]?.value;
       const redisUp = redis[0]?.value;
@@ -31,7 +32,8 @@ export class InfraCollector {
       return available({
         databaseUp: databaseUp >= 1,
         redisUp: redisUp >= 1,
-        redisMemoryUsedRatio: memory[0]?.value ?? null,
+        redisMemoryUsedBytes: memoryUsed[0]?.value ?? null,
+        redisMemoryMaxBytes: memoryMax[0]?.value ?? null,
       });
     });
   }

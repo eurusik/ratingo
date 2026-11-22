@@ -43,7 +43,10 @@ export interface DigestTextResult {
 
 const NO_TEXT: DigestTextResult = { text: null, costUsd: null, runId: null };
 
-const trendOf = (current: number, baseline: number | null): string => {
+const NO_DATA_TREND = 'немає даних';
+
+const trendOf = (current: number | null, baseline: number | null): string => {
+  if (current === null) return NO_DATA_TREND;
   if (baseline === null || current === baseline) return 'так само';
   return current > baseline ? 'більше' : 'менше';
 };

@@ -1,6 +1,6 @@
 import { DigestBlock } from '../constants/digest-block.constants';
 import { DigestLevel } from '../constants/digest-level.constants';
-import type { DigestItem, RuleOutcome } from '../entities/digest';
+import type { DigestItem, Fact, RuleOutcome } from '../entities/digest';
 import { FactUnit } from '../entities/digest';
 import type { DigestThresholds } from '../entities/digest-thresholds';
 import { measured } from '../entities/measured';
@@ -17,7 +17,7 @@ const failureItem = (queue: QueueStats, limits: QueueThresholds): DigestItem | n
   const total = queue.completed24h.current + failed;
   const failureShare = share(failed, total);
   const failureFacts = [
-    factOf('помилок', FactUnit.COUNT, queue.failed24h),
+    factOf('впало', FactUnit.COUNT, queue.failed24h),
     factOf('частка помилок', FactUnit.PERCENT, measured(Math.round(failureShare * PERCENT))),
   ];
   if (failed >= limits.failureMinVolume && failureShare >= limits.failureShareForAction) {
@@ -44,7 +44,7 @@ const failureItem = (queue: QueueStats, limits: QueueThresholds): DigestItem | n
 };
 
 const drainItem = (queue: QueueStats, limits: QueueThresholds): DigestItem | null => {
-  if (queue.backlogNow < limits.minBacklog) {
+  if (queue.backlogNow === null || queue.backlogNow < limits.minBacklog) {
     return null;
   }
   const noteOnly = limits.backlogNoteOnly.includes(queue.queue);
@@ -87,6 +87,19 @@ const drainItem = (queue: QueueStats, limits: QueueThresholds): DigestItem | nul
   return null;
 };
 
+const largestQueueFact = (queues: readonly QueueStats[]): Fact => {
+  const peaks = queues.flatMap((queue) =>
+    queue.backlogMax24h === null ? [] : [{ queue: queue.queue, peak: queue.backlogMax24h }],
+  );
+  const largest = peaks.reduce<(typeof peaks)[number] | null>(
+    (best, entry) => (best === null || entry.peak.current > best.peak.current ? entry : best),
+    null,
+  );
+  return largest === null
+    ? { label: 'найбільша черга', unit: FactUnit.COUNT, current: null, baseline: null }
+    : factOf(`найбільша черга (${largest.queue}), пік`, FactUnit.COUNT, largest.peak);
+};
+
 export const evaluateQueues = (
   queues: readonly QueueStats[],
   thresholds: DigestThresholds,
@@ -100,9 +113,9 @@ export const evaluateQueues = (
   return {
     items,
     facts: [
-      factOf('виконано завдань', FactUnit.COUNT, sumMeasured(queues.map((q) => q.completed24h))),
-      factOf('помилок', FactUnit.COUNT, sumMeasured(queues.map((q) => q.failed24h))),
-      factOf('найбільша черга', FactUnit.COUNT, sumMeasured(queues.map((q) => q.backlogMax24h))),
+      factOf('оброблено в чергах', FactUnit.COUNT, sumMeasured(queues.map((q) => q.completed24h))),
+      factOf('впало', FactUnit.COUNT, sumMeasured(queues.map((q) => q.failed24h))),
+      largestQueueFact(queues),
     ],
   };
 };

@@ -54,6 +54,35 @@ describe('QueuesCollector', () => {
     expect(queries.some((query) => /state=~"[^"]*failed/.test(query))).toBe(false);
   });
 
+  it('keeps the peak per queue and leaves a missing backlog empty instead of zero', async () => {
+    const collector = new QueuesCollector(
+      metricsWith((query) => {
+        if (query.includes('max_over_time')) {
+          return [sample({ queue: 'ingestion' }, 391), sample({ queue: 'ratings-backfill' }, 174)];
+        }
+        if (query.includes('result="completed"')) {
+          return [
+            sample({ queue: 'ingestion' }, 10),
+            sample({ queue: 'ratings-backfill' }, 10),
+            sample({ queue: 'stats-queue' }, 10),
+          ];
+        }
+        return [];
+      }),
+    );
+    const reading = await collector.collect(NOW_MS);
+    expect(reading.state === 'ok' && reading.data.map((q) => q.backlogMax24h)).toEqual([
+      { current: 391, baseline: 391 },
+      { current: 174, baseline: 174 },
+      null,
+    ]);
+    expect(reading.state === 'ok' && reading.data.map((q) => q.backlogNow)).toEqual([
+      null,
+      null,
+      null,
+    ]);
+  });
+
   it('is unavailable when there are no queue metrics at all', async () => {
     const reading = await new QueuesCollector(metricsWith(() => [])).collect(NOW_MS);
     expect(reading).toEqual({ state: 'unavailable', reason: 'метрик черг немає' });
@@ -165,20 +194,41 @@ describe('BackupCollector', () => {
 });
 
 describe('InfraCollector', () => {
-  it('reads database and redis health and memory ratio', async () => {
-    const reading = await new InfraCollector(
-      metricsWith((query) =>
-        query.includes('pg_up')
-          ? [sample({}, 1)]
-          : query.includes('redis_up')
-            ? [sample({}, 0)]
-            : [sample({}, 0.4)],
-      ),
-    ).collect(NOW_MS);
+  const infraMetrics = (memory: { used?: number; max?: number }) =>
+    metricsWith((query) => {
+      if (query.includes('pg_up')) return [sample({}, 1)];
+      if (query.includes('redis_up')) return [sample({}, 0)];
+      if (query.includes('redis_memory_used_bytes')) {
+        return memory.used === undefined ? [] : [sample({}, memory.used)];
+      }
+      return memory.max === undefined ? [] : [sample({}, memory.max)];
+    });
+
+  it('reads database and redis health and both memory figures', async () => {
+    const reading = await new InfraCollector(infraMetrics({ used: 400, max: 1000 })).collect(
+      NOW_MS,
+    );
     expect(reading.state === 'ok' && reading.data).toEqual({
       databaseUp: true,
       redisUp: false,
-      redisMemoryUsedRatio: 0.4,
+      redisMemoryUsedBytes: 400,
+      redisMemoryMaxBytes: 1000,
+    });
+  });
+
+  it('keeps the used memory and leaves the maximum empty when redis has no maxmemory', async () => {
+    const reading = await new InfraCollector(infraMetrics({ used: 9_500_000 })).collect(NOW_MS);
+    expect(reading.state === 'ok' && reading.data).toMatchObject({
+      redisMemoryUsedBytes: 9_500_000,
+      redisMemoryMaxBytes: null,
+    });
+  });
+
+  it('leaves both memory figures empty instead of zero when redis exports none', async () => {
+    const reading = await new InfraCollector(infraMetrics({})).collect(NOW_MS);
+    expect(reading.state === 'ok' && reading.data).toMatchObject({
+      redisMemoryUsedBytes: null,
+      redisMemoryMaxBytes: null,
     });
   });
 });

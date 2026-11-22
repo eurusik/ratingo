@@ -4,7 +4,14 @@ import type { DigestItem, Fact, RuleOutcome } from '../entities/digest';
 import { FactUnit } from '../entities/digest';
 import type { DigestThresholds } from '../entities/digest-thresholds';
 import type { InfraStats } from '../entities/snapshot';
-import { PERCENT, itemOf } from './rule-helpers';
+import { BYTES_PER_MEGABYTE, PERCENT, itemOf } from './rule-helpers';
+
+const usedRatio = (infra: InfraStats): number | null =>
+  infra.redisMemoryUsedBytes !== null &&
+  infra.redisMemoryMaxBytes !== null &&
+  infra.redisMemoryMaxBytes > 0
+    ? infra.redisMemoryUsedBytes / infra.redisMemoryMaxBytes
+    : null;
 
 export const evaluateInfra = (infra: InfraStats, thresholds: DigestThresholds): RuleOutcome => {
   const items: DigestItem[] = [];
@@ -29,15 +36,25 @@ export const evaluateInfra = (infra: InfraStats, thresholds: DigestThresholds): 
       ),
     );
   }
-  if (infra.redisMemoryUsedRatio !== null) {
+  facts.push({
+    label: 'пам’ять Redis',
+    unit: FactUnit.MEGABYTES,
+    current:
+      infra.redisMemoryUsedBytes === null
+        ? null
+        : Math.round(infra.redisMemoryUsedBytes / BYTES_PER_MEGABYTE),
+    baseline: null,
+  });
+  const ratio = usedRatio(infra);
+  if (ratio !== null) {
     const used: Fact = {
-      label: 'пам’ять Redis',
+      label: 'заповнено пам’яті Redis',
       unit: FactUnit.PERCENT,
-      current: Math.round(infra.redisMemoryUsedRatio * PERCENT),
+      current: Math.round(ratio * PERCENT),
       baseline: null,
     };
     facts.push(used);
-    if (infra.redisMemoryUsedRatio >= thresholds.infra.redisMemoryRatioForNote) {
+    if (ratio >= thresholds.infra.redisMemoryRatioForNote) {
       items.push(
         itemOf(
           'infra-redis-memory',
