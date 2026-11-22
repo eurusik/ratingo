@@ -18,6 +18,8 @@ const finding = (overrides: Partial<Finding> = {}): Finding => ({
   topic: FindingTopic.LOGIC,
   kind: FindingKind.FINDING,
   checkId: null,
+  failureScenario: 'Конкретний вхід і хибний результат',
+  impact: 'Хто або що страждає від цього',
   message: 'Сума рахується без округлення',
   evidence: { path: 'a.ts', line: 2, excerpt: 'const total = price * quantity;' },
   ...overrides,

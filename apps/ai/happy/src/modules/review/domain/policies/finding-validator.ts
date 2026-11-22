@@ -1,4 +1,8 @@
-import { MAX_FINDINGS, MAX_QUESTIONS } from '../constants/review-limits.constants';
+import {
+  MAX_FINDINGS,
+  MAX_QUESTIONS,
+  MIN_GATE_TEXT_CHARS,
+} from '../constants/review-limits.constants';
 import { FindingKind } from '../constants/finding-classification.constants';
 import { SEVERITY_ORDER, type Severity } from '../constants/severity.constants';
 import type { Check } from '../entities/check';
@@ -61,6 +65,10 @@ const capSeverity = (
     : finding.severity;
 };
 
+const hasGateText = (finding: Finding): boolean =>
+  finding.failureScenario.trim().length >= MIN_GATE_TEXT_CHARS &&
+  finding.impact.trim().length >= MIN_GATE_TEXT_CHARS;
+
 const isProven = (finding: Finding, index: DiffIndex, evidenceFiles: EvidenceFiles): boolean =>
   finding.evidence.path === finding.file &&
   index.get(finding.file)?.commentable.has(finding.evidence.line) === true &&
@@ -71,7 +79,9 @@ const settledKind = (
   index: DiffIndex,
   evidenceFiles: EvidenceFiles,
 ): FindingKind =>
-  finding.kind === FindingKind.FINDING && isProven(finding, index, evidenceFiles)
+  finding.kind === FindingKind.FINDING &&
+  hasGateText(finding) &&
+  isProven(finding, index, evidenceFiles)
     ? FindingKind.FINDING
     : FindingKind.QUESTION;
 

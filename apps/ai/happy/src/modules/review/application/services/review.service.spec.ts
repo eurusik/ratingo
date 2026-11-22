@@ -67,6 +67,8 @@ const proof = (path: string, line: number, excerpt: string) => ({
   topic: 'logic',
   kind: 'finding',
   checkId: null,
+  failureScenario: 'Конкретний вхід і хибний результат',
+  impact: 'Хто або що страждає від цього',
   evidence: { path, line, excerpt },
 });
 
@@ -515,6 +517,8 @@ describe('ReviewService', () => {
       topic: 'data_integrity',
       kind: 'finding',
       checkId,
+      failureScenario: 'Повторний запуск створює індекс, який уже існує',
+      impact: 'Міграція падає, і весь пакет міграцій відкочується',
       evidence: { path: MIGRATION, line: 2, excerpt: 'CREATE INDEX movies_title_idx' },
     });
 

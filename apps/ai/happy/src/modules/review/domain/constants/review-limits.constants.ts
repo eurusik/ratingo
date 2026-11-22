@@ -23,3 +23,5 @@ export const MAX_SELECTED_CHECKS = 5;
 export const MAX_EXTRA_CHECKS = 2;
 export const MAX_CHECK_BODY_WORDS = 600;
 export const MAX_RULE_SECTION_CHARS = 3_000;
+export const MIN_GATE_TEXT_CHARS = 20;
+export const MAX_GATE_TEXT_CHARS = 600;

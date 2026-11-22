@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { Module } from '@nestjs/common';
@@ -26,6 +27,9 @@ import {
 import { FolderCheckSourceAdapter } from '../src/modules/review/infrastructure/adapters/folder.check-source-adapter';
 import { RecordingCheckMetrics } from '../src/modules/review/infrastructure/testing/recording-check-metrics.testing';
 
+import { CheckOutcome } from '../src/modules/review/domain/entities/check';
+
+import { buildCaseDump, type CaseDump } from './case-dump';
 import { EVAL_CASES } from './cases';
 import { EVAL_RULES, renderPatch, type EvalCase } from './eval-case';
 import { scoreCase, summarize, type CaseResult, type CaseScore } from './scorer';
@@ -46,6 +50,8 @@ const hostFor = (testCase: EvalCase) =>
       ref: { owner: 'eval', repo: 'cases', number: 1 },
       headSha: HEAD_SHA,
       headRepository: EVAL_REPOSITORY,
+      title: `Update ${path.basename(testCase.path)}`,
+      body: '',
     }),
     files: [
       buildChangedFile({
@@ -80,15 +86,17 @@ async function main(): Promise<void> {
     const checkSource = await FolderCheckSourceAdapter.load(CHECKS_PATH);
     const config = app.get<ReviewConfig>(REVIEW_CONFIG, { strict: false });
     const scores: CaseScore[] = [];
+    const dumps: CaseDump[] = [];
     let costUsd = 0;
     for (const testCase of EVAL_CASES) {
+      const recorder = new RecordingCheckMetrics();
       const service = new ReviewService(
         hostFor(testCase),
         config,
         triage,
         deepReview,
         checkSource,
-        new RecordingCheckMetrics(),
+        recorder,
       );
       const outcome = await service.review(
         { owner: 'eval', repo: 'cases', number: 1 },
@@ -97,18 +105,29 @@ async function main(): Promise<void> {
       costUsd += outcome.costUsd;
       const completed =
         outcome.status === ReviewStatus.REVIEWED || outcome.status === ReviewStatus.INCOMPLETE;
+      const selectedCheckIds = recorder.events
+        .filter((event) => event.outcome === CheckOutcome.SELECTED)
+        .map((event) => event.checkId);
       const result: CaseResult = {
         caseId: testCase.id,
         kind: testCase.kind,
+        selectedCheckIds,
         findings: completed ? outcome.findings : [],
         questions: completed ? outcome.questions : [],
       };
       scores.push(scoreCase(testCase, result));
+      dumps.push(buildCaseDump(testCase, outcome, selectedCheckIds));
       process.stdout.write(
         `${testCase.kind.padEnd(KIND_COLUMN_WIDTH)} ${testCase.id.padEnd(ID_COLUMN_WIDTH)} status=${outcome.status} findings=${result.findings.length} questions=${result.questions.length}\n`,
       );
     }
     const metrics = summarize(scores);
+    if (env.EVAL_DUMP !== undefined && env.EVAL_DUMP !== '') {
+      await writeFile(
+        env.EVAL_DUMP,
+        `${JSON.stringify({ summary: metrics, cases: dumps }, null, 2)}\n`,
+      );
+    }
     process.stdout.write(
       [
         '',
@@ -117,6 +136,9 @@ async function main(): Promise<void> {
         `recall: ${percent(metrics.recall)}`,
         `false positives: ${metrics.falsePositives}`,
         `false positives on protected negatives: ${metrics.protectedFalsePositives}`,
+        `off target on the expected check: ${metrics.offTargetOnExpectedCheck}`,
+        `off target on another selected check: ${metrics.offTargetOnOtherCheck}`,
+        `off target outside any selected check: ${metrics.offTargetOutsideChecks}`,
         `unknown cases answered with a question: ${percent(metrics.unknownAsQuestionRate)}`,
         `question noise on known cases: ${metrics.noiseQuestions}`,
         `cost: $${costUsd.toFixed(COST_DECIMALS)}`,

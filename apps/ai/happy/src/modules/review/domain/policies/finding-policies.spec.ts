@@ -24,6 +24,8 @@ const withEvidence = (file: string, line: number) => ({
   topic: FindingTopic.LOGIC,
   kind: FindingKind.FINDING,
   checkId: null,
+  failureScenario: 'Конкретний вхід і хибний результат',
+  impact: 'Хто або що страждає від цього',
   evidence: { path: file, line, excerpt: EVIDENCE_LINE },
 });
 

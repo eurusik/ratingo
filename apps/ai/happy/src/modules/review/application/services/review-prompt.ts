@@ -11,7 +11,7 @@ import { wrapUntrusted } from '../../domain/policies/untrusted-content';
 
 const RULES_HEADING = '# Repository rules (trusted, from the base branch)';
 const CHECKS_HEADING =
-  '# Checks for this change (trusted). A finding that follows one of these checks sets checkId to its id; any other finding sets checkId to null.';
+  '# Checks for this change (trusted). A finding that follows one of these checks sets checkId to its id; any other finding sets checkId to null. For each check, first compare the code with its "Do not report" and "Looks risky but fine" sections; when the code matches them, report nothing for that check.';
 const TRUNCATED_RULES_NOTE = '\n[rules truncated; use get_rules for the rest]';
 
 export const DiffMode = {

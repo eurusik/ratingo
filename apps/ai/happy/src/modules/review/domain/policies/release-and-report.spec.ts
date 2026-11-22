@@ -102,6 +102,8 @@ const validated = (overrides: Partial<ValidatedFinding> = {}): ValidatedFinding 
   topic: FindingTopic.LOGIC,
   kind: FindingKind.FINDING,
   checkId: null,
+  failureScenario: 'Конкретний вхід і хибний результат',
+  impact: 'Хто або що страждає від цього',
   message: 'Помилка',
   evidence: { path: 'src/a.ts', line: 4, excerpt: 'const value = 1;' },
   fingerprint: 'f',

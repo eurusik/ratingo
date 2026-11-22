@@ -18,6 +18,8 @@ const build = (overrides: Partial<Finding> = {}): Finding => ({
   topic: FindingTopic.LOGIC,
   kind: FindingKind.FINDING,
   checkId: null,
+  failureScenario: 'Конкретний вхід і хибний результат',
+  impact: 'Хто або що страждає від цього',
   message: 'broken',
   evidence: { path: 'src/service.ts', line: 3, excerpt: 'const value = compute();' },
   ...overrides,

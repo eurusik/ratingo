@@ -15,6 +15,8 @@ export interface Finding {
   topic: FindingTopic;
   kind: FindingKind;
   checkId: string | null;
+  failureScenario: string;
+  impact: string;
   message: string;
   suggestion?: string;
   evidence: FindingEvidence;

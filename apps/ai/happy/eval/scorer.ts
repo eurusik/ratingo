@@ -4,11 +4,14 @@ import { EvalKind, expectedLine, type EvalCase } from './eval-case';
 
 const LINE_TOLERANCE = 2;
 
+type LocatedFinding = Pick<ValidatedFinding, 'file' | 'line' | 'checkId'>;
+
 export interface CaseResult {
   caseId: string;
   kind: EvalKind;
-  findings: readonly Pick<ValidatedFinding, 'file' | 'line'>[];
-  questions: readonly Pick<ValidatedFinding, 'file' | 'line'>[];
+  selectedCheckIds: readonly string[];
+  findings: readonly LocatedFinding[];
+  questions: readonly LocatedFinding[];
 }
 
 export interface CaseScore {
@@ -21,6 +24,9 @@ export interface CaseScore {
   unknownAsQuestion: number;
   unknownOverconfident: number;
   noiseQuestions: number;
+  offTargetOnExpectedCheck: number;
+  offTargetOnOtherCheck: number;
+  offTargetOutsideChecks: number;
 }
 
 export interface EvalMetrics {
@@ -30,6 +36,9 @@ export interface EvalMetrics {
   protectedFalsePositives: number;
   unknownAsQuestionRate: number | null;
   noiseQuestions: number;
+  offTargetOnExpectedCheck: number;
+  offTargetOnOtherCheck: number;
+  offTargetOutsideChecks: number;
   cases: number;
 }
 
@@ -46,7 +55,21 @@ const emptyScore = (result: CaseResult): CaseScore => ({
   unknownAsQuestion: 0,
   unknownOverconfident: 0,
   noiseQuestions: 0,
+  offTargetOnExpectedCheck: 0,
+  offTargetOnOtherCheck: 0,
+  offTargetOutsideChecks: 0,
 });
+
+const offTargetFindings = (
+  testCase: EvalCase,
+  result: CaseResult,
+  expected: number | null,
+): LocatedFinding[] =>
+  testCase.kind === EvalKind.POSITIVE
+    ? result.findings.filter(
+        (finding) => !(finding.file === testCase.path && near(finding.line, expected)),
+      )
+    : [...result.findings];
 
 export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => {
   const score = emptyScore(result);
@@ -73,6 +96,17 @@ export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => 
     score.unknownOverconfident = result.findings.length;
     score.falsePositives = result.findings.length;
   }
+  const offTarget = offTargetFindings(testCase, result, expected);
+  score.offTargetOnExpectedCheck = offTarget.filter(
+    (finding) => finding.checkId !== null && finding.checkId === testCase.checkId,
+  ).length;
+  score.offTargetOnOtherCheck = offTarget.filter(
+    (finding) =>
+      finding.checkId !== null &&
+      finding.checkId !== testCase.checkId &&
+      result.selectedCheckIds.includes(finding.checkId),
+  ).length;
+  score.offTargetOutsideChecks = offTarget.filter((finding) => finding.checkId === null).length;
   return score;
 };
 
@@ -95,6 +129,9 @@ export const summarize = (scores: readonly CaseScore[]): EvalMetrics => {
       unknownCases,
     ),
     noiseQuestions: sum((score) => score.noiseQuestions),
+    offTargetOnExpectedCheck: sum((score) => score.offTargetOnExpectedCheck),
+    offTargetOnOtherCheck: sum((score) => score.offTargetOnOtherCheck),
+    offTargetOutsideChecks: sum((score) => score.offTargetOutsideChecks),
     cases: scores.length,
   };
 };

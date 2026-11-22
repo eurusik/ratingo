@@ -18,6 +18,8 @@ const finding = (overrides: Partial<Finding> = {}): Finding => ({
   topic: FindingTopic.LOGIC,
   kind: FindingKind.FINDING,
   checkId: null,
+  failureScenario: 'Конкретний вхід і хибний результат',
+  impact: 'Хто або що страждає від цього',
   message: 'Помилка',
   evidence: { path: 'a.ts', line: 2, excerpt: 'const total = price * quantity;' },
   ...overrides,
@@ -55,5 +57,17 @@ describe('validateFindings with checks', () => {
       { selectedChecks },
     );
     expect(result.kept[0]?.severity).toBe(Severity.NIT);
+  });
+});
+
+describe('validateFindings report gate', () => {
+  it('shows a finding without a failure scenario or impact only as a question', () => {
+    const result = validateFindings(
+      [finding({ failureScenario: 'коротко' }), finding({ impact: '', message: 'інша' })],
+      INDEX,
+      FILES,
+    );
+    expect(result.kept).toHaveLength(0);
+    expect(result.questions).toHaveLength(2);
   });
 });

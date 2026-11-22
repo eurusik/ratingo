@@ -31,11 +31,17 @@ const result = (
   testCase: EvalCase,
   findings: number[] = [],
   questions: number[] = [],
+  checkIds: (string | null)[] = [],
 ): CaseResult => ({
   caseId: testCase.id,
   kind: testCase.kind,
-  findings: findings.map((line) => ({ file: 'a.ts', line })),
-  questions: questions.map((line) => ({ file: 'a.ts', line })),
+  selectedCheckIds: ['mine', 'other'],
+  findings: findings.map((line, index) => ({
+    file: 'a.ts',
+    line,
+    checkId: checkIds[index] ?? null,
+  })),
+  questions: questions.map((line) => ({ file: 'a.ts', line, checkId: null })),
 });
 
 describe('scoreCase', () => {
@@ -66,6 +72,55 @@ describe('scoreCase', () => {
       unknownAsQuestion: 0,
       unknownOverconfident: 1,
     });
+  });
+});
+
+describe('off-target split', () => {
+  it('separates findings on the expected check, on another selected check and outside checks', () => {
+    const withCheck: EvalCase = { ...PROTECTED, checkId: 'mine' };
+    const score = scoreCase(
+      withCheck,
+      result(withCheck, [1, 2, 3, 4], [], ['mine', 'other', null, 'mine']),
+    );
+    expect(score).toMatchObject({
+      offTargetOnExpectedCheck: 2,
+      offTargetOnOtherCheck: 1,
+      offTargetOutsideChecks: 1,
+      falsePositives: 4,
+    });
+  });
+
+  it('does not count the hit on a positive case as off target', () => {
+    const withCheck: EvalCase = { ...POSITIVE, checkId: 'mine' };
+    const score = scoreCase(withCheck, result(withCheck, [3, 20], [], ['mine', 'mine']));
+    expect(score).toMatchObject({ truePositives: 1, offTargetOnExpectedCheck: 1 });
+  });
+
+  it('keeps the three buckets within the false positives', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.tuple(fc.integer({ min: 1, max: 9 }), fc.constantFrom('mine', 'other', null)), {
+          maxLength: 8,
+        }),
+        (entries) => {
+          const score = scoreCase(
+            PROTECTED,
+            result(
+              PROTECTED,
+              entries.map(([line]) => line),
+              [],
+              entries.map(([, id]) => id),
+            ),
+          );
+          return (
+            score.offTargetOnExpectedCheck +
+              score.offTargetOnOtherCheck +
+              score.offTargetOutsideChecks <=
+            score.falsePositives
+          );
+        },
+      ),
+    );
   });
 });
 

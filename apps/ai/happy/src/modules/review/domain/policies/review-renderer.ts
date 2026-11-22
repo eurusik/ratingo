@@ -36,6 +36,12 @@ const safePath = (path: string): string => path.replace(/`/g, "'");
 const renderFinding = (finding: ValidatedFinding): string => {
   const head = `**${finding.kind === FindingKind.QUESTION ? 'питання' : finding.severity}** · ${finding.category} · \`${safePath(finding.file)}:${finding.line}\``;
   const lines = [head, sanitizeModelText(finding.message)];
+  if (finding.kind === FindingKind.FINDING) {
+    lines.push(
+      `Сценарій: ${sanitizeModelText(finding.failureScenario)}`,
+      `Наслідок: ${sanitizeModelText(finding.impact)}`,
+    );
+  }
   if (finding.suggestion !== undefined && finding.suggestion.trim().length > 0) {
     lines.push('Пропозиція:', renderSuggestion(finding.suggestion));
   }

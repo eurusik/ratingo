@@ -7,7 +7,7 @@ export const USER_MEDIA_TRANSITION_SIDE_EFFECTS_CASES: readonly EvalCase[] = [
     checkId: 'user-media-transition-side-effects',
     source:
       'b7ae8e28~1:apps/api/src/modules/user-media/infrastructure/repositories/drizzle-user-media-state.repository.ts',
-    title: 'Bulk caught_up to watching update with no check that an unwatched episode has aired',
+    title: 'Caught-up bulk transition by media item',
     path: 'apps/api/src/modules/user-media/infrastructure/repositories/drizzle-user-media-state.repository.ts',
     lines: [
       '  async bulkTransitionCaughtUpToWatching(mediaItemId: string): Promise<UserMediaState[]> {',
@@ -29,6 +29,7 @@ export const USER_MEDIA_TRANSITION_SIDE_EFFECTS_CASES: readonly EvalCase[] = [
       '      },',
       '      { mediaItemId },',
       '    );',
+      '  }',
     ],
     expectation: {
       defectId: 'caught-up-transition-without-new-aired-episode',
@@ -41,8 +42,7 @@ export const USER_MEDIA_TRANSITION_SIDE_EFFECTS_CASES: readonly EvalCase[] = [
     checkId: 'user-media-transition-side-effects',
     source:
       'HEAD:apps/api/src/modules/user-media/infrastructure/repositories/drizzle-user-media-state.repository.ts',
-    title:
-      'Bulk caught_up to watching update guarded by an unwatched aired episode as of the injected clock',
+    title: 'Caught-up bulk transition with episode lookup',
     path: 'apps/api/src/modules/user-media/infrastructure/repositories/drizzle-user-media-state.repository.ts',
     lines: [
       '  async bulkTransitionCaughtUpWithUnwatchedAiredEpisode(',
@@ -85,7 +85,6 @@ export const USER_MEDIA_TRANSITION_SIDE_EFFECTS_CASES: readonly EvalCase[] = [
       '      )',
       '    )`;',
       '  }',
-      '',
     ],
   },
 ];

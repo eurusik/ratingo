@@ -15,7 +15,10 @@ import {
   FINDING_KINDS,
   FINDING_TOPICS,
 } from '../../domain/constants/finding-classification.constants';
-import { MAX_EVIDENCE_EXCERPT_CHARS } from '../../domain/constants/review-limits.constants';
+import {
+  MAX_EVIDENCE_EXCERPT_CHARS,
+  MAX_GATE_TEXT_CHARS,
+} from '../../domain/constants/review-limits.constants';
 import { FINDING_CATEGORIES, FINDING_SEVERITIES } from '../../domain/constants/severity.constants';
 import type { Check } from '../../domain/entities/check';
 import type { Finding } from '../../domain/entities/finding';
@@ -45,6 +48,8 @@ const reviewSchema = z.object({
       topic: z.enum(FINDING_TOPICS),
       kind: z.enum(FINDING_KINDS),
       checkId: z.string().nullable(),
+      failureScenario: z.string(),
+      impact: z.string(),
       message: z.string(),
       suggestion: z.string().optional(),
       evidence: z.object({
@@ -144,6 +149,8 @@ export class DeepReviewService {
       findings: reply.findings.slice(0, MAX_RAW_FINDINGS).map(({ suggestion, ...finding }) => ({
         ...finding,
         message: clip(finding.message, MAX_FINDING_MESSAGE_CHARS),
+        failureScenario: clip(finding.failureScenario, MAX_GATE_TEXT_CHARS),
+        impact: clip(finding.impact, MAX_GATE_TEXT_CHARS),
         evidence: {
           ...finding.evidence,
           excerpt: clip(finding.evidence.excerpt, MAX_EVIDENCE_EXCERPT_CHARS),

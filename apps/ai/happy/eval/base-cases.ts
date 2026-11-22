@@ -2,9 +2,12 @@ import { EvalKind, type EvalCase } from './eval-case';
 
 const REPO_HEAD = [
   "import { Inject, Injectable } from '@nestjs/common';",
+  "import { and, eq } from 'drizzle-orm';",
   '',
   "import { DATABASE } from '../../../../database/database.constants';",
   "import { withDbError } from '../../../../common/db/with-db-error';",
+  "import type { Database } from '../../../../database/database.module';",
+  "import { watchlist } from '../../../../database/schema';",
   '',
   '@Injectable()',
   'export class PostgresWatchlistRepository {',
@@ -19,7 +22,7 @@ export const BASE_EVAL_CASES: readonly EvalCase[] = [
     title: 'Domain function reads the wall clock',
     path: 'apps/api/src/modules/catalog/domain/freshness.ts',
     lines: [
-      "import { FRESHNESS_WINDOW_DAYS } from './constants/freshness.constants';",
+      'export const FRESHNESS_WINDOW_DAYS = 30;',
       '',
       'const MS_PER_DAY = 24 * 60 * 60 * 1000;',
       '',
@@ -126,7 +129,7 @@ export const BASE_EVAL_CASES: readonly EvalCase[] = [
     title: 'Domain code that receives the time as an argument',
     path: 'apps/api/src/modules/catalog/domain/freshness.ts',
     lines: [
-      "import { FRESHNESS_WINDOW_DAYS } from './constants/freshness.constants';",
+      'export const FRESHNESS_WINDOW_DAYS = 30;',
       '',
       'const MS_PER_DAY = 24 * 60 * 60 * 1000;',
       '',
