@@ -15,6 +15,7 @@ import {
   type ReviewOutcome,
 } from '../src/modules/review/domain/entities/review-outcome';
 
+import { trackingOf } from '../src/modules/review/infrastructure/testing/outcome.testing';
 import { buildCaseDump } from './case-dump';
 import { EvalKind, type EvalCase } from './eval-case';
 
@@ -42,13 +43,16 @@ const finding: ValidatedFinding = {
   fingerprint: 'f',
 };
 
+const reviewedQuestion = { ...finding, kind: FindingKind.QUESTION, checkId: null };
+
 const reviewed: ReviewOutcome = {
   status: ReviewStatus.REVIEWED,
   ref: { owner: 'eval', repo: 'cases', number: 1 },
   headSha: 'h',
   summary: 's',
   findings: [finding],
-  questions: [{ ...finding, kind: FindingKind.QUESTION, checkId: null }],
+  questions: [reviewedQuestion],
+  tracking: trackingOf([finding], [reviewedQuestion]),
   dropped: [{ finding, reason: FindingDropReason.NOT_A_BUG, precedent: 'env-vars-trusted' }],
   reviewedFiles: ['a.ts'],
   coverage: { unreviewedFiles: [], gaps: [] },

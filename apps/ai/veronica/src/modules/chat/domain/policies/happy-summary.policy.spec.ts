@@ -15,6 +15,7 @@ const base: HappyResult = {
   questions: [{ file: 'src/a.ts', line: 4, text: 'Чи це навмисно?' }],
   coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
   checkRunUrl: 'https://github.com/eurusik/ratingo/runs/1',
+  review: null,
 };
 
 describe('renderHappyResult', () => {
@@ -27,6 +28,40 @@ describe('renderHappyResult', () => {
     expect(html).toContain('src/a.ts:4');
     expect(html).toContain('https://github.com/eurusik/ratingo/runs/1');
     expect(html).not.toContain('новіші зміни');
+  });
+
+  it('shows what changed since the last review after new commits', () => {
+    const html = renderHappyResult(470, {
+      ...base,
+      review: {
+        mode: 'incremental',
+        baseSha: 'abc1234',
+        fullReason: null,
+        files: 3,
+        statusCounts: { new: 1, stillOpen: 2, resolved: 3, needsRecheck: 0 },
+      },
+    });
+    expect(html).toContain('нові коміти: ✅ 3 виправлено · ⚠️ 2 лишилось · 🆕 1 нових');
+    expect(html).not.toContain('не підтверджено');
+  });
+
+  it('names the reason of a full review and the progress when there was an earlier review', () => {
+    const full = (fullReason: string, resolved: number) =>
+      renderHappyResult(470, {
+        ...base,
+        review: {
+          mode: 'full',
+          baseSha: null,
+          fullReason,
+          files: 9,
+          statusCounts: { new: 1, stillOpen: 0, resolved, needsRecheck: 2 },
+        },
+      });
+    expect(full('history_rewritten', 1)).toContain('Повне рев’ю: історію гілки переписано.');
+    expect(full('history_rewritten', 1)).toContain('від минулого огляду: ✅ 1 виправлено');
+    expect(full('history_rewritten', 1)).toContain('❓ 2 не підтверджено');
+    expect(full('no_previous', 0)).toContain('попереднього огляду не знайшов');
+    expect(full('something_new', 0)).toContain('причину не вказано');
   });
 
   it('never claims a clean review when coverage is incomplete', () => {

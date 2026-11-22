@@ -8,6 +8,7 @@ export interface PublishedCheck {
   title: string;
   snapshot: ReviewResultSnapshot | null;
   url: string | null;
+  trusted: boolean;
 }
 
 export interface PublishedCheckPort {

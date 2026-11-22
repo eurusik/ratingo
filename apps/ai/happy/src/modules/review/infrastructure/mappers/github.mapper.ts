@@ -2,13 +2,14 @@ import { z } from 'zod';
 
 import type {
   ChangedFile,
+  CommitComparison,
   OpenPullRequest,
   PullRequest,
   PullRequestRef,
 } from '../../domain/entities/pull-request';
 import { decodeResultMarker } from '../state/review-result-marker.codec';
 import type { PublishedCheck } from '../../domain/ports/published-check.port';
-import { FileStatus, PullRequestState } from '../../domain/entities/pull-request';
+import { CommitRelation, FileStatus, PullRequestState } from '../../domain/entities/pull-request';
 
 const pullRequestResponse = z.object({
   title: z.string(),
@@ -54,6 +55,11 @@ const openPullRequestsResponse = z.array(
     updated_at: z.string(),
   }),
 );
+
+const comparisonResponse = z.object({
+  status: z.string(),
+  files: z.array(fileResponse).optional(),
+});
 
 const commitsResponse = z.array(z.object({ sha: z.string() }));
 
@@ -117,6 +123,7 @@ export const mapPublishedChecks = (
       title: run.output.title ?? '',
       snapshot: decodeResultMarker(run.output.summary ?? ''),
       url: run.html_url?.startsWith(GITHUB_WEB_PREFIX) === true ? run.html_url : null,
+      trusted: appId !== undefined,
     }));
 
 export const mapOpenPullRequests = (payload: unknown): OpenPullRequest[] =>
@@ -129,3 +136,17 @@ export const mapOpenPullRequests = (payload: unknown): OpenPullRequest[] =>
 
 export const mapCommitShas = (payload: unknown): string[] =>
   commitsResponse.parse(payload).map((commit) => commit.sha);
+
+const RELATION_BY_GITHUB: Readonly<Record<string, CommitRelation>> = {
+  ahead: CommitRelation.AHEAD,
+  identical: CommitRelation.IDENTICAL,
+  behind: CommitRelation.BEHIND,
+};
+
+export const mapComparison = (payload: unknown): Omit<CommitComparison, 'truncated'> => {
+  const parsed = comparisonResponse.parse(payload);
+  return {
+    relation: RELATION_BY_GITHUB[parsed.status] ?? CommitRelation.DIVERGED,
+    files: mapChangedFiles(parsed.files ?? []),
+  };
+};

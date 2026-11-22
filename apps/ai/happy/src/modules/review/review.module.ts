@@ -13,6 +13,8 @@ import {
 
 import { DeepReviewService } from './application/services/deep-review.service';
 import { ReviewJobService } from './application/services/review-job.service';
+import { CarryOverService } from './application/services/carry-over.service';
+import { ReviewScopeService } from './application/services/review-scope.service';
 import { ReviewService } from './application/services/review.service';
 import { TriageService } from './application/services/triage.service';
 import { AI_METER } from '../../core/ai-core.constants';
@@ -51,6 +53,8 @@ const tokenProviderFor = (
 @Module({
   providers: [
     ReviewService,
+    ReviewScopeService,
+    CarryOverService,
     ReviewJobService,
     TriageService,
     DeepReviewService,

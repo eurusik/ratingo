@@ -1,3 +1,4 @@
+import { trackingOf } from '../../infrastructure/testing/outcome.testing';
 import { CheckVoice } from '../constants/check-voice.constants';
 import { FindingKind, FindingTopic } from '../constants/finding-classification.constants';
 import { FindingCategory, Severity } from '../constants/severity.constants';
@@ -114,7 +115,17 @@ const validated = (overrides: Partial<ValidatedFinding> = {}): ValidatedFinding 
 
 const review = (
   overrides: Partial<Omit<CompletedReview, 'markdown'>> = {},
-): Omit<CompletedReview, 'markdown'> => ({
+): Omit<CompletedReview, 'markdown'> => {
+  const merged = reviewBase(overrides);
+  return {
+    ...merged,
+    tracking: overrides.tracking ?? trackingOf(merged.findings, merged.questions),
+  };
+};
+
+const reviewBase = (
+  overrides: Partial<Omit<CompletedReview, 'markdown'>>,
+): Omit<CompletedReview, 'markdown' | 'tracking'> => ({
   status: ReviewStatus.REVIEWED,
   ref: { owner: 'a', repo: 'b', number: 3 },
   headSha: 'abcdef1234',

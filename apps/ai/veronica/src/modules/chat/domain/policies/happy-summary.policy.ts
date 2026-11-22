@@ -7,9 +7,11 @@ import {
 } from '../constants/happy.constants';
 import {
   HappyResultStatus,
+  HappyScopeMode,
   HappySeverity,
   type HappyQuestion,
   type HappyResult,
+  type HappyStatusCounts,
 } from '../entities/happy';
 
 import { clip, stripLinks } from './answer-sanitizer.policy';
@@ -31,6 +33,15 @@ const SKIP_REASON_TEXT: Readonly<Record<string, string>> = {
   nothing_to_review: 'немає що оглядати',
 };
 
+const FULL_REASON_TEXT: Readonly<Record<string, string>> = {
+  no_previous: 'попереднього огляду не знайшов',
+  requested: 'за твоїм запитом',
+  history_rewritten: 'історію гілки переписано',
+  compare_failed: 'не вдалося порівняти з минулим оглядом',
+  previous_unreadable: 'минулий огляд не вдалося прочитати',
+  previous_incomplete: 'минулий огляд був неповним',
+};
+
 const escapeHtml = (text: string): string =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -45,6 +56,31 @@ const countsLine = (result: HappyResult): string => {
   return result.coverage.complete
     ? 'Зауважень немає.'
     : 'У переглянутому зауважень не знайдено, але покриття неповне.';
+};
+
+const progressText = (counts: HappyStatusCounts): string =>
+  [
+    `✅ ${counts.resolved} виправлено`,
+    `⚠️ ${counts.stillOpen} лишилось`,
+    `🆕 ${counts.new} нових`,
+    ...(counts.needsRecheck > 0 ? [`❓ ${counts.needsRecheck} не підтверджено`] : []),
+  ].join(' · ');
+
+const hasProgress = (counts: HappyStatusCounts): boolean =>
+  counts.resolved + counts.stillOpen + counts.needsRecheck > 0;
+
+const reviewLines = (result: HappyResult): string[] => {
+  const review = result.review;
+  if (review === null) return [];
+  if (review.mode === HappyScopeMode.INCREMENTAL) {
+    return [`нові коміти: ${progressText(review.statusCounts)}`];
+  }
+  return [
+    `Повне рев’ю: ${FULL_REASON_TEXT[review.fullReason ?? ''] ?? 'причину не вказано'}.`,
+    ...(hasProgress(review.statusCounts)
+      ? [`від минулого огляду: ${progressText(review.statusCounts)}`]
+      : []),
+  ];
 };
 
 const questionLine = (question: HappyQuestion): string =>
@@ -85,6 +121,7 @@ const bodyFor = (result: HappyResult): string[] => {
     case HappyResultStatus.INCOMPLETE:
       return [
         ...(result.summary === '' ? [] : [safeText(result.summary, HAPPY_SUMMARY_MAX_CHARS)]),
+        ...reviewLines(result),
         countsLine(result),
         ...questionsBlock(result),
         ...coverageLine(result),

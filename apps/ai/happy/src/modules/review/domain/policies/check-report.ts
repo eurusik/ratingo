@@ -7,22 +7,23 @@ import {
 import { Severity } from '../constants/severity.constants';
 import { AnnotationLevel, CheckConclusion } from '../entities/check-report';
 import type { CheckAnnotation, CheckReport } from '../entities/check-report';
-import type { ValidatedFinding } from '../entities/finding';
+import type { TrackedFinding } from '../entities/tracked-finding';
 import type { ReviewOutcome } from '../entities/review-outcome';
 import { ReviewStatus } from '../entities/review-outcome';
 
 import { checkVoiceLine } from './check-voice';
+import { openFindings, openQuestions } from './finding-tracking';
 import { sanitizeModelText } from './output-sanitizer';
 import { buildResultSnapshot, renderResultMarker } from './review-result';
 
 const QUESTION_TITLE_PREFIX = 'Питання';
 
-const levelFor = (finding: ValidatedFinding, isQuestion: boolean): AnnotationLevel =>
+const levelFor = (finding: TrackedFinding, isQuestion: boolean): AnnotationLevel =>
   !isQuestion && (finding.severity === Severity.CRITICAL || finding.severity === Severity.MAJOR)
     ? AnnotationLevel.WARNING
     : AnnotationLevel.NOTICE;
 
-const toAnnotation = (finding: ValidatedFinding, isQuestion: boolean): CheckAnnotation => ({
+const toAnnotation = (finding: TrackedFinding, isQuestion: boolean): CheckAnnotation => ({
   path: finding.file,
   line: finding.line,
   level: levelFor(finding, isQuestion),
@@ -36,8 +37,8 @@ const toAnnotation = (finding: ValidatedFinding, isQuestion: boolean): CheckAnno
 const annotationsFor = (outcome: ReviewOutcome): CheckAnnotation[] =>
   outcome.status === ReviewStatus.REVIEWED || outcome.status === ReviewStatus.INCOMPLETE
     ? [
-        ...outcome.findings.map((finding) => toAnnotation(finding, false)),
-        ...outcome.questions.map((finding) => toAnnotation(finding, true)),
+        ...openFindings(outcome.tracking.findings).map((finding) => toAnnotation(finding, false)),
+        ...openQuestions(outcome.tracking.findings).map((finding) => toAnnotation(finding, true)),
       ].slice(0, MAX_CHECK_ANNOTATIONS)
     : [];
 

@@ -15,7 +15,13 @@ import {
   happySkippedReply,
   happyStartedReply,
 } from '../../domain/constants/chat-replies.constants';
-import { HappyLookupKind, HappyRequestKind } from '../../domain/entities/happy';
+import {
+  HappyLookupKind,
+  HappyRequestKind,
+  HappyReviewMode,
+  HappyScopeMode,
+  type HappyResult,
+} from '../../domain/entities/happy';
 import { HappyTargetKind, type HappyTarget } from '../../domain/entities/intent';
 import { renderHappyResult } from '../../domain/policies/happy-summary.policy';
 import { pullRequestTitle, renderPullRequestChoice } from '../../domain/policies/happy-pick.policy';
@@ -26,6 +32,9 @@ import {
   HappyUnavailableError,
   type HappyClientPort,
 } from '../../domain/ports/happy-client.port';
+
+const satisfiesMode = (result: HappyResult, mode: HappyReviewMode): boolean =>
+  mode === HappyReviewMode.AUTO || result.review?.mode === HappyScopeMode.FULL;
 
 type Resolution = { pullNumber: number } | { reply: string } | { pick: true };
 
@@ -38,13 +47,13 @@ export class HappyChatService {
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
   ) {}
 
-  async reply(chatId: string, target: HappyTarget): Promise<string> {
+  async reply(chatId: string, target: HappyTarget, mode: HappyReviewMode): Promise<string> {
     const resolution = this.resolve(target);
     if ('reply' in resolution) return resolution.reply;
     try {
       return 'pick' in resolution
-        ? await this.pick(chatId)
-        : await this.answer(chatId, resolution.pullNumber);
+        ? await this.pick(chatId, mode)
+        : await this.answer(chatId, resolution.pullNumber, mode);
     } catch (error) {
       if (error instanceof HappyUnavailableError) return HAPPY_UNAVAILABLE_REPLY;
       throw error;
@@ -66,42 +75,55 @@ export class HappyChatService {
     }
   }
 
-  private async pick(chatId: string): Promise<string> {
+  private async pick(chatId: string, mode: HappyReviewMode): Promise<string> {
     const open = await this.happy.listOpenPullRequests();
     const [only] = open;
     if (only === undefined) return HAPPY_NO_OPEN_PULL_REQUESTS_REPLY;
     if (open.length > 1) return renderPullRequestChoice(open, this.clock.nowMs());
-    const answer = await this.answer(chatId, only.number);
+    const answer = await this.answer(chatId, only.number, mode);
     return `${happyPickedPullRequestReply(only.number, pullRequestTitle(only.title))}\n\n${answer}`;
   }
 
-  private async answer(chatId: string, pullNumber: number): Promise<string> {
+  private async answer(chatId: string, pullNumber: number, mode: HappyReviewMode): Promise<string> {
     const lookup = await this.happy.latestResult(pullNumber);
     if (lookup.kind === HappyLookupKind.NOT_FOUND) return happyNotFoundReply(pullNumber);
-    if (lookup.result?.current === true) return renderHappyResult(pullNumber, lookup.result);
+    if (lookup.result?.current === true && satisfiesMode(lookup.result, mode)) {
+      return renderHappyResult(pullNumber, lookup.result);
+    }
     if (lookup.reviewPending) {
-      await this.followUp(chatId, pullNumber, lookup.headSha);
+      await this.followUp(chatId, pullNumber, lookup.headSha, mode);
       return happyAlreadyRunningReply(pullNumber);
     }
-    const request = await this.happy.requestReview(pullNumber);
+    const request = await this.happy.requestReview(pullNumber, mode);
     switch (request.kind) {
       case HappyRequestKind.NOT_FOUND:
         return happyNotFoundReply(pullNumber);
       case HappyRequestKind.SKIPPED:
         return happySkippedReply(pullNumber, request.reason);
       case HappyRequestKind.ALREADY_RUNNING:
-        await this.followUp(chatId, pullNumber, request.headSha);
+        await this.followUp(chatId, pullNumber, request.headSha, mode);
         return happyAlreadyRunningReply(pullNumber);
       case HappyRequestKind.QUEUED:
       case HappyRequestKind.ALREADY_REVIEWED:
-        await this.followUp(chatId, pullNumber, request.headSha);
+        await this.followUp(chatId, pullNumber, request.headSha, mode);
         return happyStartedReply(pullNumber);
     }
   }
 
-  private followUp(chatId: string, pullNumber: number, headSha: string): Promise<void> {
+  private followUp(
+    chatId: string,
+    pullNumber: number,
+    headSha: string,
+    mode: HappyReviewMode,
+  ): Promise<void> {
     return this.queue.scheduleHappyFollowUp(
-      { chatId, pullNumber, headSha, attempt: 1 },
+      {
+        chatId,
+        pullNumber,
+        headSha,
+        attempt: 1,
+        ...(mode === HappyReviewMode.FULL ? { mode } : {}),
+      },
       HAPPY_FOLLOW_UP_FIRST_DELAY_MS,
     );
   }

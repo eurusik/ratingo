@@ -10,12 +10,15 @@ import { RunTrigger } from '@ratingo/ai-core';
 import { REVIEW_CONFIG, type ReviewConfig } from '../src/config/config.constants';
 import { ConfigModule } from '../src/config/config.module';
 import { AiCoreModule } from '../src/core/ai-core.module';
+import { CarryOverService } from '../src/modules/review/application/services/carry-over.service';
+import { ReviewScopeService } from '../src/modules/review/application/services/review-scope.service';
 import { FileStatus } from '../src/modules/review/domain/entities/pull-request';
 import { ReviewStatus } from '../src/modules/review/domain/entities/review-outcome';
 import {
   buildChangedFile,
   buildFakeCodeHost,
   buildPullRequest,
+  FakePublishedChecks,
 } from '../src/modules/review/infrastructure/testing/fake-code-host.testing';
 import {
   DeepReviewService,
@@ -30,6 +33,14 @@ import { RecordingCheckMetrics } from '../src/modules/review/infrastructure/test
 import { CheckOutcome } from '../src/modules/review/domain/entities/check';
 
 import { buildCaseDump, type CaseDump } from './case-dump';
+import { INCREMENTAL_EVAL_CASES } from './incremental-cases';
+import {
+  buildIncrementalChecks,
+  buildIncrementalHost,
+  isDeterministicPass,
+  scoreIncrementalCase,
+  type IncrementalScore,
+} from './incremental-eval';
 import { EVAL_CASES } from './cases';
 import {
   EVAL_RULES,
@@ -94,6 +105,11 @@ const hostFor = (testCase: EvalCase) =>
     rules: [...EVAL_RULES],
   });
 
+const incrementalFound = (scores: readonly IncrementalScore[]): string => {
+  const expected = scores.filter((score) => score.newFindingFound !== null);
+  return `${expected.filter((score) => score.newFindingFound === true).length}/${expected.length}`;
+};
+
 const percent = (value: number | null): string =>
   value === null ? 'n/a' : `${(value * PERCENT).toFixed(PERCENT_DECIMALS)}%`;
 
@@ -118,13 +134,16 @@ async function main(): Promise<void> {
     let costUsd = 0;
     for (const testCase of EVAL_CASES) {
       const recorder = new RecordingCheckMetrics();
+      const host = hostFor(testCase);
       const service = new ReviewService(
-        hostFor(testCase),
+        host,
         config,
         triage,
         deepReview,
         checkSource,
         recorder,
+        new ReviewScopeService(host, new FakePublishedChecks(new Map(), [])),
+        new CarryOverService(host),
       );
       const outcome = await service.review(
         { owner: 'eval', repo: 'cases', number: 1 },
@@ -148,6 +167,30 @@ async function main(): Promise<void> {
       dumps.push(buildCaseDump(testCase, outcome, selectedCheckIds));
       process.stdout.write(
         `${testCase.kind.padEnd(KIND_COLUMN_WIDTH)} ${testCase.id.padEnd(ID_COLUMN_WIDTH)} status=${outcome.status} findings=${result.findings.length} questions=${result.questions.length}\n`,
+      );
+    }
+    const incrementalScores: IncrementalScore[] = [];
+    for (const testCase of INCREMENTAL_EVAL_CASES) {
+      const incrementalHost = buildIncrementalHost(testCase);
+      const service = new ReviewService(
+        incrementalHost,
+        config,
+        triage,
+        deepReview,
+        checkSource,
+        new RecordingCheckMetrics(),
+        new ReviewScopeService(incrementalHost, buildIncrementalChecks(testCase)),
+        new CarryOverService(incrementalHost),
+      );
+      const outcome = await service.review(
+        { owner: 'eval', repo: 'cases', number: 1 },
+        RunTrigger.MANUAL,
+      );
+      costUsd += outcome.costUsd;
+      const score = scoreIncrementalCase(testCase, outcome);
+      incrementalScores.push(score);
+      process.stdout.write(
+        `${'incremental'.padEnd(KIND_COLUMN_WIDTH)} ${testCase.id.padEnd(ID_COLUMN_WIDTH)} ${isDeterministicPass(score) ? 'ok' : `FAILED ${[...score.statusMismatches, ...score.droppedFindings.map((id) => `dropped ${id}`)].join('; ')}`}\n`,
       );
     }
     const metrics = summarize(scores);
@@ -177,6 +220,8 @@ async function main(): Promise<void> {
         `core files covered by the careful review: ${percent(metrics.coreFilesCoverage)}`,
         `unknown cases answered with a question: ${percent(metrics.unknownAsQuestionRate)}`,
         `question noise on known cases: ${metrics.noiseQuestions}`,
+        `incremental cases with a deterministic outcome: ${incrementalScores.filter(isDeterministicPass).length}/${incrementalScores.length}`,
+        `incremental cases where the new bug was found: ${incrementalFound(incrementalScores)}`,
         `cost: $${costUsd.toFixed(COST_DECIMALS)}`,
         structureOnly
           ? 'stub model: structure check only, the metrics above say nothing about quality'

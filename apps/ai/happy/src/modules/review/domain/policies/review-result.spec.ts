@@ -1,3 +1,4 @@
+import { trackingOf } from '../../infrastructure/testing/outcome.testing';
 import * as fc from 'fast-check';
 
 import { CheckVoice } from '../constants/check-voice.constants';
@@ -32,7 +33,15 @@ const finding = (
   fingerprint: 'f',
 });
 
-const completed = (overrides: Partial<CompletedReview> = {}): CompletedReview => ({
+const completed = (overrides: Partial<CompletedReview> = {}): CompletedReview => {
+  const merged = completedBase(overrides);
+  return {
+    ...merged,
+    tracking: overrides.tracking ?? trackingOf(merged.findings, merged.questions),
+  };
+};
+
+const completedBase = (overrides: Partial<CompletedReview>): Omit<CompletedReview, 'tracking'> => ({
   status: ReviewStatus.REVIEWED,
   ref: { owner: 'a', repo: 'b', number: 3 },
   headSha: 'abcdef1234',

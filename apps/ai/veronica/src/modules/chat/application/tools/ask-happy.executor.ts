@@ -40,6 +40,17 @@ export class AskHappyExecutor {
               text: clean(question.text, QUESTION_CHARS),
             })),
             coverage: result.coverage,
+            ...(result.review === null
+              ? {}
+              : {
+                  reviewScope: {
+                    mode: result.review.mode,
+                    baseSha: result.review.baseSha,
+                    fullReason: result.review.fullReason,
+                    files: result.review.files,
+                  },
+                  sinceLastReview: result.review.statusCounts,
+                }),
           }),
     };
   }

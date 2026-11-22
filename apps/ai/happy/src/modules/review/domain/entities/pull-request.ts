@@ -63,3 +63,17 @@ export const formatRepository = (ref: PullRequestRef): string => `${ref.owner}/$
 
 export const formatPullRequest = (ref: PullRequestRef): string =>
   `${formatRepository(ref)}#${ref.number}`;
+
+export const CommitRelation = {
+  AHEAD: 'ahead',
+  IDENTICAL: 'identical',
+  BEHIND: 'behind',
+  DIVERGED: 'diverged',
+} as const;
+export type CommitRelation = (typeof CommitRelation)[keyof typeof CommitRelation];
+
+export interface CommitComparison {
+  relation: CommitRelation;
+  files: ChangedFile[];
+  truncated: boolean;
+}

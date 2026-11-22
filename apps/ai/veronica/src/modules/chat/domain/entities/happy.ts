@@ -15,6 +15,33 @@ export const HappyResultStatus = {
 } as const;
 export type HappyResultStatus = (typeof HappyResultStatus)[keyof typeof HappyResultStatus];
 
+export const HappyReviewMode = {
+  AUTO: 'auto',
+  FULL: 'full',
+} as const;
+export type HappyReviewMode = (typeof HappyReviewMode)[keyof typeof HappyReviewMode];
+
+export const HappyScopeMode = {
+  INCREMENTAL: 'incremental',
+  FULL: 'full',
+} as const;
+export type HappyScopeMode = (typeof HappyScopeMode)[keyof typeof HappyScopeMode];
+
+export interface HappyStatusCounts {
+  new: number;
+  stillOpen: number;
+  resolved: number;
+  needsRecheck: number;
+}
+
+interface HappyReviewInfo {
+  mode: HappyScopeMode;
+  baseSha: string | null;
+  fullReason: string | null;
+  files: number;
+  statusCounts: HappyStatusCounts;
+}
+
 export interface HappyQuestion {
   file: string;
   line: number;
@@ -32,6 +59,7 @@ export interface HappyResult {
   questions: HappyQuestion[];
   coverage: { complete: boolean; unreviewedFiles: number; gaps: string[] };
   checkRunUrl: string | null;
+  review: HappyReviewInfo | null;
 }
 
 export const HappyLookupKind = {
@@ -72,6 +100,7 @@ export interface HappyFollowUp {
   pullNumber: number;
   headSha: string;
   attempt: number;
+  mode?: HappyReviewMode;
 }
 
 export interface HappyOpenPullRequest {

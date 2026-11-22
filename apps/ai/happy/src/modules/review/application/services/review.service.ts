@@ -1,11 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import type { RunTrigger } from '@ratingo/ai-core';
+import { RunStopReason, type RunTrigger } from '@ratingo/ai-core';
 
 import { REVIEW_CONFIG, type ReviewConfig } from '../../../../config/config.constants';
 import {
   MAX_CHANGED_FILES,
   MAX_EVIDENCE_FILES,
+  MAX_RECHECK_FINDINGS,
   MAX_READ_FILE_BYTES,
   MAX_REVIEWABLE_CHANGED_LINES,
   MAX_TOTAL_PATCH_CHARS,
@@ -28,6 +29,10 @@ import { CoverageGap, ReviewStatus } from '../../domain/entities/review-outcome'
 import { RepositoryNotAllowedError } from '../../domain/errors/review.errors';
 import { parseDiffLines, type DiffLines } from '../../domain/policies/diff-hunks';
 import { CheckOutcome, type Check } from '../../domain/entities/check';
+import { RequestedMode, ReviewMode } from '../../domain/entities/review-scope';
+import { FindingStatus, type TrackedFinding } from '../../domain/entities/tracked-finding';
+import { applyRecheck } from '../../domain/policies/finding-carry-over';
+import { mergeTracked } from '../../domain/policies/finding-tracking';
 import { validateFindings } from '../../domain/policies/finding-validator';
 import {
   buildReleaseChecklist,
@@ -50,8 +55,10 @@ import { CHECK_METRICS_PORT, type CheckMetricsPort } from '../../domain/ports/ch
 import { CHECK_SOURCE_PORT, type CheckSourcePort } from '../../domain/ports/check-source.port';
 import { CODE_HOST_PORT, type CodeHostPort } from '../../domain/ports/code-host.port';
 
+import { CarryOverService } from './carry-over.service';
 import { DeepReviewService, type DeepReviewResult } from './deep-review.service';
 import { chooseDiffMode, DiffMode } from './review-prompt';
+import { ReviewScopeService, type ScopePlan } from './review-scope.service';
 import { TriageService, type TriageResult } from './triage.service';
 
 const buildDiffIndex = (files: readonly ChangedFile[]): Map<string, DiffLines> =>
@@ -79,7 +86,21 @@ const skippedOutcome = (pr: PullRequest, reason: SkipReason): SkippedReview => {
 
 export interface ReviewOptions {
   explicitRequest?: boolean;
+  mode?: RequestedMode;
 }
+
+const EMPTY_TRIAGE: TriageResult = { focusFiles: [], ruleTopics: [], extraChecks: [], costUsd: 0 };
+
+const EMPTY_DEEP: DeepReviewResult = {
+  completed: true,
+  stopReason: RunStopReason.END,
+  budgetExhausted: false,
+  summary: 'Нових змін, які варто переглядати, з минулого рев’ю немає.',
+  findings: [],
+  recheck: [],
+  toolFailures: 0,
+  costUsd: 0,
+};
 
 @Injectable()
 export class ReviewService {
@@ -92,6 +113,8 @@ export class ReviewService {
     private readonly deepReview: DeepReviewService,
     @Inject(CHECK_SOURCE_PORT) private readonly checkSource: CheckSourcePort,
     @Inject(CHECK_METRICS_PORT) private readonly checkMetrics: CheckMetricsPort,
+    private readonly scopes: ReviewScopeService,
+    private readonly carryOver: CarryOverService,
   ) {}
 
   async review(
@@ -114,35 +137,73 @@ export class ReviewService {
       return this.releaseChecklist(pr, files, truncated);
     }
 
+    const plan = await this.scopes.plan(pr, files, options.mode ?? RequestedMode.AUTO);
+    const incremental = plan.incrementalFiles !== null;
+    const reviewFiles = plan.incrementalFiles ?? files;
     const rules = (await this.host.readRuleFiles(ref, pr.baseSha)).map(parseRule);
     const catalog = this.checkSource.list();
-    const preselected = selectChecks(catalog, selectableFiles(files));
-    const ranked = rankFiles(reviewableFiles(files), preselected);
-    const triaged = await this.triage.triage(pr, ranked, trigger, {
-      catalog,
-      selectedIds: preselected.map((check) => check.id),
+    const preselected = selectChecks(catalog, selectableFiles(reviewFiles));
+    const ranked = rankFiles(reviewableFiles(reviewFiles), preselected);
+    const carried = await this.carryOver.classify(pr, plan.previous, {
+      precise: incremental,
+      files: plan.touchedFiles,
     });
-    const checks = addExtraChecks(
-      preselected,
-      catalog,
-      triaged.extraChecks,
-      files.map((file) => file.path),
-    );
+    const recheck = carried
+      .filter((finding) => finding.status === FindingStatus.NEEDS_RECHECK)
+      .slice(0, MAX_RECHECK_FINDINGS);
+    const nothingToReview = incremental && ranked.length === 0;
+    const triaged = nothingToReview
+      ? EMPTY_TRIAGE
+      : await this.triage.triage(pr, ranked, trigger, {
+          catalog,
+          selectedIds: preselected.map((check) => check.id),
+        });
+    const checks = nothingToReview
+      ? []
+      : addExtraChecks(
+          preselected,
+          catalog,
+          triaged.extraChecks,
+          reviewFiles.map((file) => file.path),
+        );
     checks.forEach((check) => this.checkMetrics.record(check.id, CheckOutcome.SELECTED));
-    const diffMode = chooseDiffMode(files, triaged.focusFiles);
-    const deep = await this.deepReview.review({
-      host: this.host,
+    const diffMode = chooseDiffMode(reviewFiles, triaged.focusFiles);
+    const deep = nothingToReview
+      ? EMPTY_DEEP
+      : await this.deepReview.review({
+          host: this.host,
+          pr,
+          files: reviewFiles,
+          contextFiles: files,
+          history: {
+            incremental:
+              plan.scope.mode === ReviewMode.INCREMENTAL
+                ? { baseSha: plan.scope.baseSha, totalChangedFiles: files.length }
+                : null,
+            previous: carried.filter((finding) => finding.status !== FindingStatus.RESOLVED),
+            recheck,
+          },
+          focusFiles: triaged.focusFiles,
+          appliedRules: selectRules(rules, triaged.focusFiles, triaged.ruleTopics),
+          checks,
+          ruleSections: this.ruleSectionsFor(checks, rules),
+          diffMode,
+          allRules: rules,
+          trigger,
+        });
+    return this.completedOutcome({
       pr,
-      files,
-      focusFiles: triaged.focusFiles,
-      appliedRules: selectRules(rules, triaged.focusFiles, triaged.ruleTopics),
-      checks,
-      ruleSections: this.ruleSectionsFor(checks, rules),
+      reviewFiles,
+      ranked,
+      truncated: truncated || plan.truncated,
+      triaged,
+      deep,
       diffMode,
-      allRules: rules,
-      trigger,
+      checks,
+      plan,
+      carried,
+      rechecked: recheck,
     });
-    return this.completedOutcome(pr, files, ranked, truncated, triaged, deep, diffMode, checks);
   }
 
   private skipReasonFor(
@@ -258,29 +319,32 @@ export class ReviewService {
     return { unreviewedFiles, gaps };
   }
 
-  private async completedOutcome(
-    pr: PullRequest,
-    files: readonly ChangedFile[],
-    ranked: readonly RankedFile[],
-    truncated: boolean,
-    triaged: TriageResult,
-    deep: DeepReviewResult,
-    diffMode: DiffMode,
-    checks: readonly Check[],
-  ): Promise<CompletedReview> {
+  private async completedOutcome(input: CompletedInput): Promise<CompletedReview> {
+    const { pr, reviewFiles, ranked, truncated, triaged, deep, diffMode, checks, plan } = input;
     const evidence = await this.readEvidenceFiles(
       pr,
       deep.findings.map((finding) => finding.evidence.path),
     );
-    const validation = validateFindings(deep.findings, buildDiffIndex(files), evidence.files, {
-      selectedChecks: checks,
-    });
+    const validation = validateFindings(
+      deep.findings,
+      buildDiffIndex(reviewFiles),
+      evidence.files,
+      {
+        selectedChecks: checks,
+      },
+    );
     this.recordCheckOutcomes(validation.kept, validation.questions);
     for (const { finding, reason, precedent } of validation.dropped) {
       this.logger.warn(
         `Dropped finding ${finding.file}:${finding.line}: ${reason}${precedent === undefined ? '' : ` (${precedent})`}`,
       );
     }
+    const asked = new Set(input.rechecked.map((finding) => finding.fingerprint));
+    const answers = deep.recheck.filter((answer) => asked.has(answer.fingerprint));
+    const tracked = mergeTracked(applyRecheck(input.carried, answers), [
+      ...validation.kept,
+      ...validation.questions,
+    ]);
     const completed = {
       status: deep.completed ? ReviewStatus.REVIEWED : ReviewStatus.INCOMPLETE,
       ref: pr.ref,
@@ -289,6 +353,12 @@ export class ReviewService {
       findings: validation.kept,
       questions: validation.questions,
       dropped: validation.dropped,
+      tracking: {
+        scope: plan.scope,
+        reviewedFileCount: reviewFiles.length,
+        hadPrevious: plan.previousFound,
+        findings: tracked,
+      },
       reviewedFiles: triaged.focusFiles,
       coverage: this.coverageFor(ranked, truncated, triaged, deep, diffMode, evidence.failed),
       stopReason: deep.stopReason,
@@ -297,4 +367,18 @@ export class ReviewService {
     } as const;
     return { ...completed, markdown: renderCompletedReview(completed) };
   }
+}
+
+interface CompletedInput {
+  pr: PullRequest;
+  reviewFiles: readonly ChangedFile[];
+  ranked: readonly RankedFile[];
+  truncated: boolean;
+  triaged: TriageResult;
+  deep: DeepReviewResult;
+  diffMode: DiffMode;
+  checks: readonly Check[];
+  plan: ScopePlan;
+  carried: readonly TrackedFinding[];
+  rechecked: readonly TrackedFinding[];
 }
