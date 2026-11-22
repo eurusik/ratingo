@@ -22,7 +22,7 @@ Presentation → Application → Domain ← Infrastructure
 - Adapters map external types → domain types at the boundary
 
 ## Module Communication
-- `public/index.ts` exports tokens, types, pure domain functions and the application services other modules inject — never repositories or Drizzle code
+- `public/index.ts` exports tokens, types, pure domain functions and the application services other modules inject — never Drizzle repository implementations or infrastructure code
 - Import from other modules only through the `public/` barrel (or the `modules/shared/*` micro-module index)
 - No circular module dependencies (`import/no-cycle` is an error): put types two modules share into `modules/shared/contracts`
 - Use `EventEmitter2` events for loose coupling between modules
@@ -46,7 +46,7 @@ Request → [DTO validation] → normalizeListQuery() (catalog list endpoints on
 ## Error Flow
 - Application and infrastructure code throws the `AppException` family from `common/exceptions` (`NotFoundException`, `ValidationException`, `ExternalApiException`, `DatabaseException`) with an `ErrorCode` from `common/enums/error-code.enum.ts` — never plain `Error` or Nest's `BadRequestException`
 - Wrap repository DB calls with `withDbError()` → `DatabaseException`
-- Domain code stays HTTP-free: domain errors extend `Error` in `domain/errors/`; a module that defines them maps them in its application service or an exception filter
+- Domain code stays HTTP-free: domain errors extend `Error` in `domain/errors/`; the module maps them to HTTP in a `presentation/filters/` exception filter (see `catalog-policy` dry-run and policy-activation filters)
 - Responses are wrapped by the global filter/interceptor: `{ success: true, data }` / `{ success: false, error: { code, message } }`
 
 ## New Module Checklist
