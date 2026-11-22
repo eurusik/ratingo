@@ -30,7 +30,7 @@ Pull requests from `development` into `main` get a release checklist instead of 
 
 ## Setting up the GitHub App
 
-Permissions (nothing else): **Contents: read, Pull requests: read, Checks: write, Metadata: read**. Events: `pull_request`, `issue_comment`.
+Permissions (nothing else): **Contents: read, Pull requests: read, Issues: read, Checks: write, Metadata: read**. Events: `pull_request`, `issue_comment`. GitHub requires Issues: read for the `issue_comment` event; without it the manifest is rejected with "Default events are not supported by permissions: issue_comment".
 
 1. Deploy the Railway service first so it has a public URL (see the variables below; the service will not start without the App variables, so set placeholders and update them in step 5).
 2. Serve the manifest page locally and open it:

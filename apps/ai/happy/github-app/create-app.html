@@ -19,7 +19,7 @@
       const form = document.getElementById('form');
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const manifest = await (await fetch('./github-app-manifest.json')).json();
+        const manifest = await (await fetch('./github-app-manifest.json', { cache: 'no-store' })).json();
         const base = document.getElementById('domain').value.replace(/\/+$/, '');
         manifest.hook_attributes.url = base + '/webhooks/github';
         document.getElementById('manifest').value = JSON.stringify(manifest);

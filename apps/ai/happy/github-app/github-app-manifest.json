@@ -11,6 +11,7 @@
   "default_permissions": {
     "contents": "read",
     "pull_requests": "read",
+    "issues": "read",
     "checks": "write",
     "metadata": "read"
   }
