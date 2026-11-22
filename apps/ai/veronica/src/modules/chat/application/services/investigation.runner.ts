@@ -74,6 +74,7 @@ export interface InvestigationResult {
   toolCalls: RecordedCall[];
   costUsd: number;
   unverifiedNumbers: string[];
+  rawModelOutput: string;
 }
 
 interface Verdict {
@@ -81,6 +82,7 @@ interface Verdict {
   html: string;
   remember: string | null;
   unverified: string[];
+  raw: string;
 }
 
 const fenceSafe = (text: string): string => text.replaceAll('<<<', '‹‹‹').replaceAll('>>>', '›››');
@@ -120,6 +122,7 @@ export class InvestigationRunner {
         toolCalls: [],
         costUsd: 0,
         unverifiedNumbers: [],
+        rawModelOutput: '',
       };
     }
     const messageId = await this.transport.postMessage(chatId, SEARCHING_REPLY);
@@ -138,6 +141,7 @@ export class InvestigationRunner {
       toolCalls: recorder.calls,
       costUsd: run.snapshot().costUsd,
       unverifiedNumbers: verdict.unverified,
+      rawModelOutput: verdict.raw,
     };
   }
 
@@ -224,21 +228,32 @@ export class InvestigationRunner {
     ]);
     const unverified = unverifiedNumbers(text, known);
     if (unverified.length === 0) {
-      return { outcome: ChatOutcome.ANSWERED, html: text, remember: text, unverified };
+      return {
+        outcome: ChatOutcome.ANSWERED,
+        html: text,
+        remember: text,
+        unverified,
+        raw: output,
+      };
     }
     const redacted = redactUnverified(text, known);
     if (redacted.text === '') {
-      return this.fallback('UNVERIFIED', unverified);
+      return this.fallback('UNVERIFIED', unverified, output);
     }
     return {
       outcome: ChatOutcome.REDACTED,
       html: `${redacted.text}\n\n${REDACTED_NOTE}`,
       remember: redacted.text,
       unverified,
+      raw: output,
     };
   }
 
-  private async fallback(reason: FallbackReason, unverified: string[] = []): Promise<Verdict> {
+  private async fallback(
+    reason: FallbackReason,
+    unverified: string[] = [],
+    raw = '',
+  ): Promise<Verdict> {
     try {
       const status = await this.digests.status();
       return {
@@ -246,6 +261,7 @@ export class InvestigationRunner {
         html: `${FALLBACK_INTRO[reason]}\n\n${status.html}`,
         remember: null,
         unverified,
+        raw,
       };
     } catch (error) {
       this.logger.error(`Знімок для запасної відповіді не зібрано: ${errorName(error)}`);
@@ -254,6 +270,7 @@ export class InvestigationRunner {
         html: FALLBACK_FAILED_REPLY,
         remember: null,
         unverified,
+        raw,
       };
     }
   }

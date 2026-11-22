@@ -228,6 +228,7 @@ describe('InvestigationRunner', () => {
     const result = await chat.ask('скільки помилок?');
     expect(result.outcome).toBe(ChatOutcome.FALLBACK);
     expect(result.unverifiedNumbers).toEqual(['40']);
+    expect(result.rawModelOutput).toBe('Було 40 помилок.');
     expect(chat.finalHtml).toContain('Не зміг перевірити числа');
     expect(chat.finalHtml).toContain('СУХІ ДАНІ');
     expect(chat.stored).toEqual([]);

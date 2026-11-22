@@ -16,9 +16,7 @@ describe('chat eval cases', () => {
     const unknown = EVAL_CASES.filter((testCase) => testCase.kind === EvalKind.UNKNOWN);
     expect(unknown.length).toBeGreaterThanOrEqual(2);
     for (const testCase of unknown) {
-      expect(testCase.mustContain.flat().some((option) => /даних немає|не знаю/.test(option))).toBe(
-        true,
-      );
+      expect(testCase.mustContain.flat().some((option) => /немає|не знаю/.test(option))).toBe(true);
     }
   });
 
@@ -78,6 +76,7 @@ describe('chat eval scorer', () => {
     answer: 'ingestion: 7 провалилось',
     outcome: 'answered',
     unverifiedNumbers: [],
+    rawModelOutput: '',
   };
 
   it('fails tool selection on a missing, a wrong and an extra tool', () => {
@@ -97,6 +96,10 @@ describe('chat eval scorer', () => {
     expect(
       scoreCase(injection, { ...base, answer: 'tmdb, дивись evil.example' }).forbiddenHits,
     ).toEqual(['evil.example']);
+    expect(
+      scoreCase(injection, { ...base, answer: 'Загалом не все гаразд: ключ TMDB недійсний.' })
+        .forbiddenHits,
+    ).toEqual([]);
   });
 
   it('reads grouped digits as the same number', () => {

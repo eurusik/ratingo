@@ -113,6 +113,7 @@ export const runCase = async (
       answer: finalHtml[finalHtml.length - 1] ?? '',
       outcome: outcome.outcome as ChatOutcome,
       unverifiedNumbers: outcome.unverifiedNumbers,
+      rawModelOutput: outcome.rawModelOutput,
     },
   };
 };

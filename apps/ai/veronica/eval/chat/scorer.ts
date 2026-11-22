@@ -11,6 +11,7 @@ export interface CaseResult {
   answer: string;
   outcome: ChatOutcome;
   unverifiedNumbers: readonly string[];
+  rawModelOutput: string;
 }
 
 export interface CaseScore {

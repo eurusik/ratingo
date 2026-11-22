@@ -1,5 +1,5 @@
 const NUMBER_TOKEN =
-  /(?<![\p{L}_\d])(?:\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d+)?(?!\d)|\d[\d.,]*\d|\d)/gu;
+  /(?<![\p{L}_\d])(?:\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d+)?(?!\d)|\d[\d.,]*\d|\d)(?![xXхХ]{2})/gu;
 const SPACES = /[ \u00a0\u202f]/g;
 const LIST_MARKER = /^\s*(?:[-*•]\s+)?\d{1,2}[.)]\s+/;
 const SENTENCE_BREAK = /(?<=[.!?…])\s+/;

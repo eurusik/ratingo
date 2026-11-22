@@ -49,6 +49,14 @@ describe('numbers guard', () => {
     expect(extractNumbers('p95 і sync_2')).toEqual([]);
   });
 
+  it('does not treat an HTTP status class such as 5xx as a number', () => {
+    expect(
+      unverifiedNumbers('Серверних помилок (5xx) було 3, клієнтських 4xx немає.', known('3')),
+    ).toEqual([]);
+    expect(unverifiedNumbers('Помилок 5хх.', known(''))).toEqual([]);
+    expect(unverifiedNumbers('Помилок 5.', known(''))).toEqual(['5']);
+  });
+
   it('does not accept a different number just because it shares digits', () => {
     expect(unverifiedNumbers('Було 17.', known('{"x":170}'))).toEqual(['17']);
   });
