@@ -8,8 +8,46 @@ export const HELP_TITLE = '<b>Що я вмію</b>';
 
 export const SEARCHING_REPLY = '<i>шукаю…</i>';
 
-export const HAPPY_SOON_REPLY =
-  'Розмова з Хеппі тут ще не підключена. Поки що вона перевіряє pull request-и на GitHub.';
+export const HAPPY_NEEDS_NUMBER_REPLY =
+  'Скажи номер PR: «Хеппі, глянь 470», або надішли посилання на pull request.';
+
+export const HAPPY_UNAVAILABLE_REPLY =
+  'Хеппі зараз недоступний, тож не можу ні запустити огляд, ні показати результат. Спробуй трохи пізніше. Звіти й команди працюють як завжди.';
+
+export const happyForeignRepositoryReply = (repository: string): string =>
+  `Хеппі працює лише з репозиторієм ${repository}. Посилання на інший репозиторій пропускаю.`;
+
+export const happyNotFoundReply = (pullNumber: number): string =>
+  `Не знайшла PR №${pullNumber} у репозиторії. Перевір номер.`;
+
+export const happyStartedReply = (pullNumber: number): string =>
+  `Хеппі взявся за PR №${pullNumber}. Огляд займає кілька хвилин, напишу, щойно буде готово.`;
+
+export const happyAlreadyRunningReply = (pullNumber: number): string =>
+  `Хеппі вже оглядає PR №${pullNumber}. Напишу, щойно буде готово.`;
+
+const HAPPY_SKIP_REASON_TEXT: Readonly<Record<string, string>> = {
+  closed: 'уже закритий',
+  merged: 'уже злитий',
+  untrusted_fork: 'від автора з форка, якого немає серед довірених',
+};
+
+export const happySkippedReply = (pullNumber: number, reason: string): string =>
+  `Хеппі не оглядає PR №${pullNumber}: він ${HAPPY_SKIP_REASON_TEXT[reason] ?? 'не підходить для огляду'}.`;
+
+export const happyHeadMovedReply = (pullNumber: number): string =>
+  `У PR №${pullNumber} з'явився новий коміт, тож огляд попереднього не опублікували. Напиши «Хеппі, глянь ${pullNumber}» ще раз.`;
+
+export const happyNotPublishedReply = (pullNumber: number): string =>
+  `Хеппі закінчив роботу над PR №${pullNumber}, але результату не опублікував: PR міг змінитися чи закритися. Спробуй ще раз.`;
+
+export const happyGaveUpReply = (pullNumber: number, pullRequestUrl: string): string =>
+  `Хеппі досі не закінчив PR №${pullNumber}. Результат з'явиться в перевірці Happy на сторінці PR:\n${pullRequestUrl}`;
+
+export const HAPPY_HELP_LINES: readonly string[] = [
+  '«Хеппі, глянь 470»: огляд PR від Хеппі (готовий результат або новий огляд)',
+  'Посилання на PR цього репозиторію працює так само',
+];
 
 export const EMPTY_QUESTION_REPLY = 'Що саме цікавить? Напиши питання одним повідомленням.';
 

@@ -1,7 +1,9 @@
 import type { Intent } from '../entities/intent';
 import { IntentKind } from '../entities/intent';
+import { AgentName } from '../constants/chat.constants';
 
 import { parseCommand } from './command-parser.policy';
+import { parseHappyTarget } from './happy-target.policy';
 import { parseMention } from './mention-parser.policy';
 import { matchPullRequestLink } from './pattern-router.policy';
 
@@ -13,12 +15,14 @@ export const routeMessage = (text: string): Intent => {
       : { kind: IntentKind.UNKNOWN_COMMAND };
   }
   const mention = parseMention(text);
+  if (mention?.agent === AgentName.HAPPY) {
+    return { kind: IntentKind.HAPPY, target: parseHappyTarget(mention.text) };
+  }
   if (mention !== null) {
     return { kind: IntentKind.MENTION, agent: mention.agent, text: mention.text };
   }
-  const pullRequest = matchPullRequestLink(text);
-  if (pullRequest !== null) {
-    return { kind: IntentKind.PATTERN, pullRequest };
+  if (matchPullRequestLink(text) !== null) {
+    return { kind: IntentKind.HAPPY, target: parseHappyTarget(text) };
   }
   return { kind: IntentKind.FREE_FORM, text: text.trim() };
 };

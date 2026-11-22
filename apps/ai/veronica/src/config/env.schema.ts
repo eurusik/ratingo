@@ -27,6 +27,11 @@ const changesEnvSchema = z.object({
     .default(DEFAULT_GITHUB_REPOSITORY),
 });
 
+const happyEnvSchema = z.object({
+  HAPPY_INTERNAL_URL: z.string().min(1).optional(),
+  HAPPY_SERVICE_TOKEN: z.string().min(1).optional(),
+});
+
 const USER_ID_LIST = /^\d+(\s*,\s*\d+)*$/;
 
 const chatEnvSchema = z.object({
@@ -54,4 +59,5 @@ export const serviceEnvSchema = z.object({
   ...productStatsEnvSchema.shape,
   ...chatEnvSchema.shape,
   ...changesEnvSchema.shape,
+  ...happyEnvSchema.shape,
 });

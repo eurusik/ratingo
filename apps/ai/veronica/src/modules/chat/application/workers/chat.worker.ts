@@ -18,7 +18,9 @@ import {
   REDIS_CONNECTION,
 } from '../../chat.constants';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
+import type { HappyFollowUp } from '../../domain/entities/happy';
 import { ChatService } from '../services/chat.service';
+import { HappyFollowUpService } from '../services/happy-follow-up.service';
 
 const isIncomingMessage = (value: unknown): value is IncomingMessage => {
   const candidate = value as Partial<IncomingMessage> | null;
@@ -31,6 +33,16 @@ const isIncomingMessage = (value: unknown): value is IncomingMessage => {
   );
 };
 
+const isHappyFollowUp = (value: unknown): value is HappyFollowUp => {
+  const candidate = value as Partial<HappyFollowUp> | null;
+  return (
+    typeof candidate?.chatId === 'string' &&
+    typeof candidate.pullNumber === 'number' &&
+    typeof candidate.headSha === 'string' &&
+    typeof candidate.attempt === 'number'
+  );
+};
+
 @Injectable()
 export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(ChatWorker.name);
@@ -38,6 +50,7 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
 
   constructor(
     private readonly chat: ChatService,
+    private readonly followUps: HappyFollowUpService,
     @Inject(REDIS_CONNECTION) private readonly connection: IORedis,
   ) {}
 
@@ -58,12 +71,15 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   }
 
   async process(job: Pick<Job, 'name' | 'data'>): Promise<string> {
-    if (job.name !== CHAT_JOB_TYPES.MESSAGE || !isIncomingMessage(job.data)) {
+    try {
+      if (job.name === CHAT_JOB_TYPES.MESSAGE && isIncomingMessage(job.data)) {
+        return await this.chat.handle(job.data);
+      }
+      if (job.name === CHAT_JOB_TYPES.HAPPY_FOLLOW_UP && isHappyFollowUp(job.data)) {
+        return await this.followUps.handle(job.data);
+      }
       this.logger.warn(`Невідоме завдання чату ${job.name}`);
       return 'ignored';
-    }
-    try {
-      return await this.chat.handle(job.data);
     } catch (error) {
       if (error instanceof NotificationError && (!error.retryable || error.deliveryUnknown)) {
         throw new UnrecoverableError(error.message);

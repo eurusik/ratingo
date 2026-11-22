@@ -13,7 +13,16 @@ const message = (updateId: number): IncomingMessage => ({
 
 class DedupingQueue {
   readonly jobs = new Map<string, { name: string; data: unknown; opts: Record<string, unknown> }>();
+  readonly removed: string[] = [];
+  readonly states = new Map<string, string>();
   readonly close = jest.fn().mockResolvedValue(undefined);
+
+  async getJob(id: string) {
+    const state = this.states.get(id);
+    return state === undefined
+      ? undefined
+      : { getState: async () => state, remove: async () => void this.removed.push(id) };
+  }
 
   async add(name: string, data: unknown, opts: Record<string, unknown>) {
     const id = String(opts.jobId);
@@ -57,5 +66,23 @@ describe('BullmqChatJobQueue', () => {
     const queue = new DedupingQueue();
     await new BullmqChatJobQueue(queue as never).onApplicationShutdown();
     expect(queue.close).toHaveBeenCalled();
+  });
+
+  it('replaces a finished follow-up with the same id so a repeat request is not swallowed', async () => {
+    const queue = new DedupingQueue();
+    const followUp = { chatId: '10', pullNumber: 470, headSha: 'h1', attempt: 1 };
+    const id = 'happy-follow-up_10_470_h1_1';
+    queue.states.set(id, 'completed');
+    await new BullmqChatJobQueue(queue as never).scheduleHappyFollowUp(followUp, 30_000);
+    expect(queue.removed).toEqual([id]);
+    expect(queue.jobs.get(id)?.opts).toMatchObject({ delay: 30_000 });
+  });
+
+  it('keeps a follow-up that is still waiting', async () => {
+    const queue = new DedupingQueue();
+    const followUp = { chatId: '10', pullNumber: 470, headSha: 'h1', attempt: 1 };
+    queue.states.set('happy-follow-up_10_470_h1_1', 'delayed');
+    await new BullmqChatJobQueue(queue as never).scheduleHappyFollowUp(followUp, 30_000);
+    expect(queue.removed).toEqual([]);
   });
 });

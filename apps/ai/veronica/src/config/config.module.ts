@@ -5,6 +5,7 @@ import {
   CHANGES_CONFIG,
   CHAT_CONFIG,
   GRAFANA_CONFIG,
+  HAPPY_CONFIG,
   INFRA_CONFIG,
   MODEL_ALIASES,
   PRODUCT_STATS_CONFIG,
@@ -12,6 +13,7 @@ import {
   type AnthropicConfig,
   type ChangesConfig,
   type GrafanaConfig,
+  type HappyConfig,
   type InfraConfig,
   type ProductStatsConfig,
   type TelegramConfig,
@@ -41,11 +43,17 @@ export class ConfigModule {
       token: env.GITHUB_READ_TOKEN,
       repository: env.GITHUB_REPOSITORY,
     };
+    const happy: HappyConfig = {
+      internalUrl: env.HAPPY_INTERNAL_URL,
+      serviceToken: env.HAPPY_SERVICE_TOKEN,
+      repository: env.GITHUB_REPOSITORY,
+    };
     const providers = [
       { provide: ANTHROPIC_CONFIG, useValue: anthropic },
       { provide: GRAFANA_CONFIG, useValue: grafana },
       { provide: PRODUCT_STATS_CONFIG, useValue: productStats },
       { provide: CHANGES_CONFIG, useValue: changes },
+      { provide: HAPPY_CONFIG, useValue: happy },
       { provide: TELEGRAM_CONFIG, useValue: telegram },
       { provide: CHAT_CONFIG, useValue: buildChatConfig(env) },
       { provide: INFRA_CONFIG, useValue: infra },

@@ -16,23 +16,18 @@ import {
 import { AGENT_FOLDER } from '../../../../core/ai-core.constants';
 import { CHAT_TASK_NAME, NO_MODEL } from '../../chat.constants';
 import { ChatAction, CHAT_TRANSPORT, type ChatTransportPort } from '../../../notify/public';
-import {
-  AgentName,
-  ChatOutcome,
-  ChatRoute,
-  CommandLabel,
-} from '../../domain/constants/chat.constants';
+import { ChatOutcome, ChatRoute, CommandLabel } from '../../domain/constants/chat.constants';
 import {
   COMMAND_FAILED_REPLY,
-  HAPPY_SOON_REPLY,
   UNKNOWN_COMMAND_REPLY,
 } from '../../domain/constants/chat-replies.constants';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
-import { IntentKind, type Intent } from '../../domain/entities/intent';
+import { IntentKind, type HappyTarget, type Intent } from '../../domain/entities/intent';
 import { CHAT_METRICS_PORT, type ChatMetricsPort } from '../../domain/ports/chat-metrics.port';
 import { routeMessage } from '../../domain/policies/route-message.policy';
 import { ChatCommandHandlers } from '../commands/chat-command.handlers';
 
+import { HappyChatService } from './happy-chat.service';
 import { InvestigationRunner } from './investigation.runner';
 
 const commandLabelOf = (intent: Intent): CommandLabel => {
@@ -42,7 +37,7 @@ const commandLabelOf = (intent: Intent): CommandLabel => {
     case IntentKind.UNKNOWN_COMMAND:
       return CommandLabel.UNKNOWN;
     case IntentKind.MENTION:
-    case IntentKind.PATTERN:
+    case IntentKind.HAPPY:
     case IntentKind.FREE_FORM:
       return CommandLabel.FREE_TEXT;
   }
@@ -53,17 +48,21 @@ const routeOf = (intent: Intent): ChatRoute => {
     case IntentKind.COMMAND:
     case IntentKind.UNKNOWN_COMMAND:
       return ChatRoute.COMMAND;
-    case IntentKind.PATTERN:
+    case IntentKind.HAPPY:
       return ChatRoute.HAPPY;
     case IntentKind.MENTION:
-      return intent.agent === AgentName.HAPPY ? ChatRoute.HAPPY : ChatRoute.INVESTIGATION;
     case IntentKind.FREE_FORM:
       return ChatRoute.INVESTIGATION;
   }
 };
 
-const questionOf = (intent: Intent): string =>
-  intent.kind === IntentKind.MENTION || intent.kind === IntentKind.FREE_FORM ? intent.text : '';
+type InvestigationIntent = Extract<
+  Intent,
+  { kind: typeof IntentKind.MENTION | typeof IntentKind.FREE_FORM }
+>;
+
+const isInvestigationIntent = (intent: Intent): intent is InvestigationIntent =>
+  intent.kind === IntentKind.MENTION || intent.kind === IntentKind.FREE_FORM;
 
 const errorName = (error: unknown): string => (error instanceof Error ? error.name : 'error');
 
@@ -74,6 +73,7 @@ export class ChatService {
   constructor(
     private readonly commands: ChatCommandHandlers,
     private readonly investigation: InvestigationRunner,
+    private readonly happy: HappyChatService,
     @Inject(CHAT_TRANSPORT) private readonly transport: ChatTransportPort,
     @Inject(CHAT_METRICS_PORT) private readonly metrics: ChatMetricsPort,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
@@ -83,10 +83,10 @@ export class ChatService {
 
   async handle(message: IncomingMessage): Promise<ChatOutcome> {
     const intent = routeMessage(message.text);
-    const route = routeOf(intent);
-    if (route === ChatRoute.INVESTIGATION) {
+    if (isInvestigationIntent(intent)) {
       return this.investigate(intent, message);
     }
+    const route = routeOf(intent);
     const run = Run.start(
       {
         id: randomUUID(),
@@ -120,10 +120,13 @@ export class ChatService {
     }
   }
 
-  private async investigate(intent: Intent, message: IncomingMessage): Promise<ChatOutcome> {
+  private async investigate(
+    intent: InvestigationIntent,
+    message: IncomingMessage,
+  ): Promise<ChatOutcome> {
     const event = { command: commandLabelOf(intent), route: ChatRoute.INVESTIGATION };
     try {
-      const { outcome } = await this.investigation.answer(message.chatId, questionOf(intent));
+      const { outcome } = await this.investigation.answer(message.chatId, intent.text);
       this.metrics.record({ ...event, outcome });
       return outcome;
     } catch (error) {
@@ -133,7 +136,7 @@ export class ChatService {
   }
 
   private async replyFor(
-    intent: Intent,
+    intent: Exclude<Intent, InvestigationIntent>,
     chatId: string,
   ): Promise<{ html: string; failed: boolean }> {
     switch (intent.kind) {
@@ -141,11 +144,17 @@ export class ChatService {
         return this.runCommand(intent, chatId);
       case IntentKind.UNKNOWN_COMMAND:
         return { html: UNKNOWN_COMMAND_REPLY, failed: false };
-      case IntentKind.MENTION:
-      case IntentKind.PATTERN:
-      case IntentKind.FREE_FORM:
-        return { html: HAPPY_SOON_REPLY, failed: false };
+      case IntentKind.HAPPY:
+        return this.askHappy(intent.target, chatId);
     }
+  }
+
+  private async askHappy(
+    target: HappyTarget,
+    chatId: string,
+  ): Promise<{ html: string; failed: boolean }> {
+    await this.showTyping(chatId);
+    return { html: await this.happy.reply(chatId, target), failed: false };
   }
 
   private async runCommand(

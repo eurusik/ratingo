@@ -4,7 +4,7 @@ export const IntentKind = {
   COMMAND: 'command',
   UNKNOWN_COMMAND: 'unknown_command',
   MENTION: 'mention',
-  PATTERN: 'pattern',
+  HAPPY: 'happy',
   FREE_FORM: 'free_form',
 } as const;
 export type IntentKind = (typeof IntentKind)[keyof typeof IntentKind];
@@ -15,9 +15,20 @@ export interface PullRequestRef {
   number: number;
 }
 
+export const HappyTargetKind = {
+  LINK: 'link',
+  NUMBER: 'number',
+  UNCLEAR: 'unclear',
+} as const;
+
+export type HappyTarget =
+  | { kind: typeof HappyTargetKind.LINK; pullRequest: PullRequestRef }
+  | { kind: typeof HappyTargetKind.NUMBER; number: number }
+  | { kind: typeof HappyTargetKind.UNCLEAR };
+
 export type Intent =
   | { kind: typeof IntentKind.COMMAND; command: ChatCommand; args: string }
   | { kind: typeof IntentKind.UNKNOWN_COMMAND }
   | { kind: typeof IntentKind.MENTION; agent: AgentName; text: string }
-  | { kind: typeof IntentKind.PATTERN; pullRequest: PullRequestRef }
+  | { kind: typeof IntentKind.HAPPY; target: HappyTarget }
   | { kind: typeof IntentKind.FREE_FORM; text: string };
