@@ -8,6 +8,7 @@ import { LandingModule } from './landing/landing.module';
 import { ChatModule } from './modules/chat/public';
 import { DigestScheduleModule } from './modules/digest/public';
 import { RunsModule } from './modules/runs/public';
+import { WatchdogModule } from './modules/watchdog/public';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { RunsModule } from './modules/runs/public';
     AiCoreModule,
     DigestScheduleModule,
     ChatModule,
+    WatchdogModule,
     HealthModule,
     LandingModule,
   ],

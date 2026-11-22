@@ -9,6 +9,7 @@ export const CHAT_WORKER_CONCURRENCY = 2;
 export const CHAT_JOB_TYPES = {
   MESSAGE: 'chat-message',
   HAPPY_FOLLOW_UP: 'happy-follow-up',
+  EXCHANGE_RETENTION: 'exchange-retention',
 } as const;
 
 export const CHAT_JOB_OPTIONS = {
@@ -16,6 +17,13 @@ export const CHAT_JOB_OPTIONS = {
   backoff: { type: 'exponential', delay: ONE_MINUTE_MS },
   removeOnComplete: { age: SECONDS_PER_DAY },
   removeOnFail: { age: 7 * SECONDS_PER_DAY },
+} as const;
+
+export const EXCHANGE_RETENTION_SCHEDULE = {
+  id: 'exchange-retention',
+  pattern: '17 3 * * *',
+  timezone: 'Europe/Kyiv',
+  failedKeepSeconds: 7 * SECONDS_PER_DAY,
 } as const;
 
 export const CHAT_TASK_NAME = 'chat';

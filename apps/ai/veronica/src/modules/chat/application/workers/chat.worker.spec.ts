@@ -7,8 +7,17 @@ import { ChatWorker } from './chat.worker';
 
 const MESSAGE = { updateId: 1, userId: '10', chatId: '10', chatType: 'private', text: '/help' };
 
-const workerWith = (handle: jest.Mock, followUp: jest.Mock = jest.fn()) =>
-  new ChatWorker({ handle } as unknown as ChatService, { handle: followUp } as never, {} as never);
+const workerWith = (
+  handle: jest.Mock,
+  followUp: jest.Mock = jest.fn(),
+  purge: jest.Mock = jest.fn(),
+) =>
+  new ChatWorker(
+    { handle } as unknown as ChatService,
+    { handle: followUp } as never,
+    { purge } as never,
+    {} as never,
+  );
 
 describe('ChatWorker', () => {
   it('hands a chat job to the chat service', async () => {
@@ -17,6 +26,13 @@ describe('ChatWorker', () => {
       'handled',
     );
     expect(handle).toHaveBeenCalledWith(MESSAGE);
+  });
+
+  it('purges old exchanges on the retention job', async () => {
+    const purge = jest.fn().mockResolvedValue(4);
+    await expect(
+      workerWith(jest.fn(), jest.fn(), purge).process({ name: 'exchange-retention', data: {} }),
+    ).resolves.toBe('deleted:4');
   });
 
   it('ignores unknown job types and malformed payloads', async () => {

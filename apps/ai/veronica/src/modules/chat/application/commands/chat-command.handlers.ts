@@ -1,8 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { RunTrigger } from '@ratingo/ai-core';
 
 import { DigestBlock, DigestComposeService } from '../../../digest/public';
+import { LAST_EXCHANGES_LIMIT } from '../../domain/constants/exchange.constants';
+import { renderLastExchanges } from '../../domain/policies/last-exchanges.policy';
+import {
+  CHAT_EXCHANGE_LOG,
+  type ChatExchangeLogPort,
+} from '../../domain/ports/chat-exchange-log.port';
 import { ChatCommand } from '../../domain/constants/chat.constants';
 import { ON_DEMAND_DIGEST_NOTE } from '../../domain/constants/chat-replies.constants';
 
@@ -10,9 +16,12 @@ import { renderHelp } from './help.reply';
 
 @Injectable()
 export class ChatCommandHandlers {
-  constructor(private readonly digests: DigestComposeService) {}
+  constructor(
+    private readonly digests: DigestComposeService,
+    @Inject(CHAT_EXCHANGE_LOG) private readonly exchanges: ChatExchangeLogPort,
+  ) {}
 
-  async execute(command: ChatCommand): Promise<string> {
+  async execute(command: ChatCommand, chatId: string): Promise<string> {
     switch (command) {
       case ChatCommand.HELP:
         return renderHelp();
@@ -24,6 +33,10 @@ export class ChatCommandHandlers {
         return (await this.digests.blocks([DigestBlock.JOBS])).html;
       case ChatCommand.SITE:
         return (await this.digests.blocks([DigestBlock.SITE])).html;
+      case ChatCommand.LAST:
+        return renderLastExchanges(
+          await this.exchanges.recentConversational(chatId, LAST_EXCHANGES_LIMIT),
+        );
     }
   }
 

@@ -10,11 +10,13 @@ import {
 } from '../../../digest/testing/digest.testing';
 import type { Snapshot } from '../../../digest/domain/entities/snapshot';
 import { NotificationError } from '../../../notify/public';
+import { InMemoryChatExchangeLog } from '../../testing/in-memory-exchange-log.testing';
 import { ChatCommandHandlers } from '../commands/chat-command.handlers';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
 import type { ChatEvent } from '../../domain/ports/chat-metrics.port';
 import { ChatOutcome } from '../../domain/constants/chat.constants';
 
+import { ChatExchangeRecorder } from './chat-exchange-recorder.service';
 import { ChatService } from './chat.service';
 
 class Harness {
@@ -31,6 +33,9 @@ class Harness {
   readonly happyAsked: { chatId: string; target: unknown }[] = [];
 
   private readonly clock = new FixedClock(NOW_MS);
+  readonly exchangeLog = new InMemoryChatExchangeLog();
+  investigationRunId: string | null = 'run-1';
+  investigationNumbers: string[] = [];
 
   private readonly composer = new DigestComposeService(
     { take: async () => this.snapshot() } as never,
@@ -45,12 +50,19 @@ class Harness {
   );
 
   readonly service = new ChatService(
-    new ChatCommandHandlers(this.composer),
+    new ChatCommandHandlers(this.composer, this.exchangeLog),
     {
       answer: async (chatId: string, question: string) => {
         if (this.investigationFailure !== null) throw this.investigationFailure;
         this.asked.push({ chatId, question });
-        return { outcome: this.investigationOutcome, html: '', toolCalls: [], costUsd: 0 };
+        return {
+          runId: this.investigationRunId,
+          outcome: this.investigationOutcome,
+          html: 'відповідь',
+          toolCalls: [{ tool: 'metrics_query', input: {} }],
+          costUsd: 0,
+          unverifiedNumbers: this.investigationNumbers,
+        };
       },
     } as never,
     {
@@ -59,6 +71,7 @@ class Harness {
         return 'Хеппі відповів';
       },
     } as never,
+    new ChatExchangeRecorder(this.exchangeLog, this.clock),
     {
       sendMessage: async (chatId: string, html: string) => {
         if (this.sendFailure !== null) throw this.sendFailure;
@@ -286,5 +299,59 @@ describe('ChatService', () => {
         text: '/help',
       }),
     ).resolves.toBe('handled');
+  });
+
+  describe('exchange log', () => {
+    it('stores a command exchange with the final reply', async () => {
+      const chat = new Harness();
+      await chat.say('/help');
+      expect(chat.exchangeLog.entries).toHaveLength(1);
+      expect(chat.exchangeLog.entries[0]).toMatchObject({
+        route: 'command',
+        question: '/help',
+        answer: chat.reply,
+        outcome: 'answered',
+        runId: chat.runs[0]?.id,
+      });
+    });
+
+    it('stores an investigation exchange with cut numbers and tool names only', async () => {
+      const chat = new Harness();
+      chat.investigationOutcome = ChatOutcome.REDACTED;
+      chat.investigationNumbers = ['4521'];
+      await chat.say('скільки користувачів?');
+      expect(chat.exchangeLog.entries[0]).toMatchObject({
+        route: 'investigation',
+        outcome: 'redacted',
+        runId: 'run-1',
+        cutNumbers: ['4521'],
+        toolNames: ['metrics_query'],
+      });
+    });
+
+    it('skips the log when there is no run to link to', async () => {
+      const chat = new Harness();
+      chat.investigationRunId = null;
+      await chat.say('привіт, як справи?');
+      expect(chat.exchangeLog.entries).toHaveLength(0);
+    });
+
+    it('never breaks the reply when the log fails', async () => {
+      const chat = new Harness();
+      chat.exchangeLog.failure = new Error('db down');
+      await expect(chat.say('/help')).resolves.toBe('handled');
+      expect(chat.reply).toContain('/help');
+    });
+
+    it('shows the last exchanges on /last without listing commands', async () => {
+      const chat = new Harness();
+      chat.exchangeLog.costUsd = 0.0123;
+      await chat.say('скільки помилок за добу?');
+      await chat.say('/help');
+      await chat.say('/last');
+      expect(chat.reply).toContain('скільки помилок за добу?');
+      expect(chat.reply).toContain('$0.012');
+      expect(chat.reply).not.toContain('/help');
+    });
   });
 });
