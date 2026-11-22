@@ -1,7 +1,7 @@
 import { DIGEST_THRESHOLDS } from '../../../config/digest.config';
 
 import { measured } from '../domain/entities/measured';
-import type { QueueStats, Snapshot } from '../domain/entities/snapshot';
+import type { QueueStats, SiteStats, Snapshot } from '../domain/entities/snapshot';
 import { ApiKeyState, BackupResult } from '../domain/entities/snapshot';
 import { available, unavailable } from '../domain/entities/source-reading';
 
@@ -18,10 +18,20 @@ export const healthyQueue = (queue = 'ingestion'): QueueStats => ({
   failedJobs: [],
 });
 
+export const healthySite = (): SiteStats => ({
+  requests24h: measured(13500, 12800),
+  serverErrors24h: measured(0, 0),
+  renderP95Seconds: measured(0.17, 0.16),
+  peakRssBytes: measured(250 * 1024 * 1024, 240 * 1024 * 1024),
+  eventLoopDelayP99Seconds: measured(0.01, 0.01),
+  botShare: null,
+});
+
 export const greenSnapshot = (): Snapshot => ({
   date: '2026-11-22',
   generatedAtMs: NOW_MS,
   product: available({ newUsers: measured(14, 12), actions: measured(820, 790) }),
+  site: available(healthySite()),
   queues: available([healthyQueue('ingestion'), healthyQueue('stats-queue')]),
   apiKeys: available([
     { provider: 'TMDB', state: ApiKeyState.VALID },
@@ -66,4 +76,5 @@ export const unavailableSnapshot = (): Snapshot => ({
   queues: unavailable('Grafana недоступна'),
   scheduler: unavailable('метрики планувальника ще немає'),
   product: unavailable('звіти про людей ще не підключені'),
+  site: unavailable('метрик запитів сайту немає'),
 });

@@ -2,6 +2,7 @@ import { DigestBlock } from './digest-block.constants';
 
 export const DigestSource = {
   PRODUCT: 'product',
+  SITE: 'site',
   QUEUES: 'queues',
   API_KEYS: 'api_keys',
   HTTP_ERRORS: 'http_errors',
@@ -18,6 +19,7 @@ export const OPTIONAL_SOURCES: readonly DigestSource[] = [
 
 export const SOURCE_BLOCK: Readonly<Record<DigestSource, DigestBlock>> = {
   [DigestSource.PRODUCT]: DigestBlock.PEOPLE,
+  [DigestSource.SITE]: DigestBlock.SITE,
   [DigestSource.QUEUES]: DigestBlock.JOBS,
   [DigestSource.SCHEDULER]: DigestBlock.JOBS,
   [DigestSource.API_KEYS]: DigestBlock.SERVICES,
@@ -28,6 +30,7 @@ export const SOURCE_BLOCK: Readonly<Record<DigestSource, DigestBlock>> = {
 
 export const SOURCE_LABEL: Readonly<Record<DigestSource, string>> = {
   [DigestSource.PRODUCT]: 'люди',
+  [DigestSource.SITE]: 'сайт',
   [DigestSource.QUEUES]: 'черги',
   [DigestSource.API_KEYS]: 'ключі',
   [DigestSource.HTTP_ERRORS]: 'запити до сервісів',

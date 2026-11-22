@@ -24,6 +24,7 @@ import { evaluateInfra } from './infra.rule';
 import { evaluateProduct } from './product.rule';
 import { evaluateQueues } from './queues.rule';
 import { itemOf } from './rule-helpers';
+import { evaluateSite } from './site.rule';
 import { evaluateScheduler } from './scheduler.rule';
 
 interface SourceEvaluation {
@@ -44,6 +45,7 @@ const evaluateSource = <T>(
 
 const evaluateSources = (snapshot: Snapshot, thresholds: DigestThresholds): SourceEvaluation[] => [
   evaluateSource(Sources.PRODUCT, snapshot.product, (data) => evaluateProduct(data, thresholds)),
+  evaluateSource(Sources.SITE, snapshot.site, (data) => evaluateSite(data, thresholds)),
   evaluateSource(Sources.QUEUES, snapshot.queues, (data) => evaluateQueues(data, thresholds)),
   evaluateSource(Sources.SCHEDULER, snapshot.scheduler, (data) =>
     evaluateScheduler(data, thresholds),

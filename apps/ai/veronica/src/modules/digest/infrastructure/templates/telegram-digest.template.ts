@@ -34,6 +34,7 @@ const LEVEL_EMOJI: Readonly<Record<DigestLevel, string>> = {
 
 const BLOCK_TITLE: Readonly<Record<DigestBlock, string>> = {
   [DigestBlock.PEOPLE]: '👥 Люди',
+  [DigestBlock.SITE]: '🌐 Сайт',
   [DigestBlock.JOBS]: '⚙️ Черги',
   [DigestBlock.SERVICES]: '🔌 Сервіси',
   [DigestBlock.STORAGE]: '🗄 Дані',
@@ -45,6 +46,7 @@ const UNIT_SUFFIX: Readonly<Record<FactUnit, string>> = {
   [FactUnit.AGE_HOURS]: ' год тому',
   [FactUnit.PERCENT]: '%',
   [FactUnit.MEGABYTES]: ' МБ',
+  [FactUnit.MILLISECONDS]: ' мс',
 };
 
 const escapeHtml = (value: string): string =>
@@ -62,8 +64,11 @@ const groupDigits = (value: number): string =>
 
 const NO_DATA = 'немає даних';
 
+const formatPercent = (value: number): string =>
+  String(Math.round(value * 10) / 10).replace('.', ',');
+
 const formatValue = (value: number, unit: FactUnit): string =>
-  `${groupDigits(value)}${UNIT_SUFFIX[unit]}`;
+  `${unit === FactUnit.PERCENT ? formatPercent(value) : groupDigits(value)}${UNIT_SUFFIX[unit]}`;
 
 export const formatFact = (fact: Fact): string => {
   if (fact.current === null) {
