@@ -9,7 +9,6 @@ import { buildCheckReport } from './check-report';
 import { buildReleaseChecklist, isReleasePullRequest } from './release-checklist';
 import { renderReleaseChecklist } from './release-checklist-renderer';
 import { renderCompletedReview } from './review-renderer';
-import { RULE_CARD_IDS, cardsForPaths, renderRuleCard, selectRuleCards } from './rule-cards';
 
 const file = (
   path: string,
@@ -158,25 +157,5 @@ describe('review rendering and check report', () => {
     expect(report.annotations[0]?.level).toBe('warning');
     expect(report.annotations[45]?.level).toBe('notice');
     expect(report.summary.length).toBeLessThanOrEqual(60_000);
-  });
-});
-
-describe('rule cards', () => {
-  it('selects only the cards triage chose and ignores unknown ids', () => {
-    expect(selectRuleCards(['migrations', 'nope']).map((card) => card.id)).toEqual(['migrations']);
-    expect(selectRuleCards([])).toEqual([]);
-    expect(RULE_CARD_IDS.length).toBeGreaterThanOrEqual(5);
-  });
-
-  it('matches cards by path and renders the four parts', () => {
-    const ids = cardsForPaths(['apps/api/src/modules/media/domain/clock.ts']).map(
-      (card) => card.id,
-    );
-    expect(ids).toContain('domain-purity');
-    const text = renderRuleCard(selectRuleCards(['domain-purity'])[0]!);
-    expect(text).toContain('Violation:');
-    expect(text).toContain('Already protected, do not report:');
-    expect(text).toContain('Unclear, ask as a question:');
-    expect(text).toContain('Never report:');
   });
 });

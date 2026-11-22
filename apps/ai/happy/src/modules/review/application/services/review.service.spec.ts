@@ -155,7 +155,6 @@ describe('ReviewService', () => {
             risk: 'high',
             focusFiles: ['src/checkout.ts', 'ghost.ts'],
             ruleTopics: [],
-            ruleCards: [],
           }),
           StopReason.END,
         ),
@@ -409,7 +408,7 @@ describe('ReviewService', () => {
       respond: (request) =>
         reply(
           request.model,
-          text({ risk: 'low', focusFiles: ['src/checkout.ts'], ruleTopics: [], ruleCards: [] }),
+          text({ risk: 'low', focusFiles: ['src/checkout.ts'], ruleTopics: [] }),
           StopReason.END,
         ),
     };
@@ -444,27 +443,6 @@ describe('ReviewService', () => {
     expect(outcome.markdown).not.toContain('Зауважень немає.');
   });
 
-  it('puts only the cards triage chose into the review prompt', async () => {
-    const triage: StubScript = {
-      respond: (request) =>
-        reply(
-          request.model,
-          text({
-            risk: 'low',
-            focusFiles: ['src/checkout.ts'],
-            ruleTopics: [],
-            ruleCards: ['migrations'],
-          }),
-          StopReason.END,
-        ),
-    };
-    const { service, model } = await setup(buildFakeCodeHost(), { triage });
-    await service.review(TEST_REF, RunTrigger.WEBHOOK);
-    const system = requestsFor(model, STUB_REVIEW_MODEL)[0]?.system ?? '';
-    expect(system).toContain('Migrations are safe to re-run');
-    expect(system).not.toContain('Domain layer stays pure');
-  });
-
   it('demotes a finding whose excerpt is not on the cited line to a question', async () => {
     const host = buildFakeCodeHost({ contents: { 'head222:src/checkout.ts': FILE_BODY } });
     const review: StubScript = {
@@ -493,25 +471,5 @@ describe('ReviewService', () => {
     expect(outcome.findings).toHaveLength(0);
     expect(outcome.questions).toHaveLength(1);
     expect(outcome.markdown).toContain('Питання до автора');
-  });
-
-  it('keeps the triage result when it names a rule card that does not exist', async () => {
-    const triage: StubScript = {
-      respond: (request) =>
-        reply(
-          request.model,
-          text({
-            risk: 'low',
-            focusFiles: ['src/checkout.ts'],
-            ruleTopics: [],
-            ruleCards: ['no-such-card', 'migrations'],
-          }),
-          StopReason.END,
-        ),
-    };
-    const { service, model } = await setup(buildFakeCodeHost(), { triage });
-    await service.review(TEST_REF, RunTrigger.WEBHOOK);
-    const system = requestsFor(model, STUB_REVIEW_MODEL)[0]?.system ?? '';
-    expect(system).toContain('Migrations are safe to re-run');
   });
 });

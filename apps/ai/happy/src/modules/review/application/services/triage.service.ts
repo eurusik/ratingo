@@ -11,11 +11,6 @@ import {
   TRIAGE_MAX_TURNS,
   TRIAGE_ROLE,
 } from '../../../../config/review.config';
-import {
-  RULE_CARD_IDS,
-  cardsForPaths,
-  renderRuleCardCatalog,
-} from '../../domain/policies/rule-cards';
 import { MAX_FOCUS_FILES } from '../../domain/constants/review-limits.constants';
 import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
 import { reviewableFiles } from '../../domain/policies/skip-policy';
@@ -29,13 +24,11 @@ const triageSchema = z.object({
   risk: z.enum(['low', 'medium', 'high']),
   focusFiles: z.array(z.string()),
   ruleTopics: z.array(z.string()),
-  ruleCards: z.array(z.string()),
 });
 
 export interface TriageResult {
   focusFiles: string[];
   ruleTopics: string[];
-  ruleCardIds: string[];
   costUsd: number;
 }
 
@@ -82,7 +75,7 @@ export class TriageService {
       task: TRIAGE_TASK_NAME,
       role: TRIAGE_ROLE,
       trigger,
-      system: `${this.folder.prompts[TRIAGE_PROMPT_NAME] ?? ''}\n\nRule cards (ruleCards must use these ids only):\n${renderRuleCardCatalog()}`,
+      system: this.folder.prompts[TRIAGE_PROMPT_NAME] ?? '',
       prompt: buildPrompt(pr, candidates),
       responseSchema: triageSchema,
       tools: [],
@@ -98,7 +91,6 @@ export class TriageService {
       return {
         focusFiles: fallback,
         ruleTopics: [],
-        ruleCardIds: cardsForPaths(fallback).map((card) => card.id),
         costUsd,
       };
     }
@@ -110,7 +102,6 @@ export class TriageService {
       ruleTopics: reply.ruleTopics
         .slice(0, MAX_RULE_TOPICS)
         .map((topic) => topic.slice(0, MAX_TOPIC_CHARS)),
-      ruleCardIds: [...new Set(reply.ruleCards)].filter((id) => RULE_CARD_IDS.includes(id)),
       costUsd,
     };
   }

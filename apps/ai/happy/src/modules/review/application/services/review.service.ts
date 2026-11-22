@@ -34,7 +34,6 @@ import {
 import { renderReleaseChecklist } from '../../domain/policies/release-checklist-renderer';
 import { renderCompletedReview, renderSkippedReview } from '../../domain/policies/review-renderer';
 import { parseRule, selectRules } from '../../domain/policies/rule-selector';
-import { selectRuleCards } from '../../domain/policies/rule-cards';
 import { isSafePath } from '../../domain/policies/safe-path';
 import { decideEligibility, decideSkip, reviewableFiles } from '../../domain/policies/skip-policy';
 import { CODE_HOST_PORT, type CodeHostPort } from '../../domain/ports/code-host.port';
@@ -97,7 +96,6 @@ export class ReviewService {
       files,
       focusFiles: triaged.focusFiles,
       appliedRules: selectRules(rules, triaged.focusFiles, triaged.ruleTopics),
-      cards: selectRuleCards(triaged.ruleCardIds),
       diffMode,
       allRules: rules,
       trigger,

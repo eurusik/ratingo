@@ -10,7 +10,6 @@ export type EvalKind = (typeof EvalKind)[keyof typeof EvalKind];
 interface EvalExpectation {
   defectId: string;
   markerLine: string;
-  ruleCardId?: string;
 }
 
 export interface EvalCase {

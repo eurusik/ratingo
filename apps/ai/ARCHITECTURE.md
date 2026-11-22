@@ -450,7 +450,7 @@ Rules:
 7. **Findings:** structured output (file, line, severity, message, suggestion). Code checks every line against the diff hunks and drops the rest.
 8. **Posting:** one review with event `COMMENT` only, never `APPROVE` or `REQUEST_CHANGES`, plus a summary comment updated in place. Model text is stripped of `@mentions`, images and external links before posting.
 9. **Shadow mode first:** Happy posts only a check run with a `neutral` conclusion (summary in the output, findings as annotations) while CodeRabbit keeps reviewing. CodeRabbit is turned off once Happy finds as many real issues with less noise.
-10. **Precision:** each finding carries evidence that code checks against the head file, otherwise it becomes a question; rule cards chosen by triage; deterministic precedents; a coverage section that lists unreviewed files; a file-list prompt for large diffs. `apps/ai/happy/eval` measures it.
+10. **Precision:** each finding carries evidence that code checks against the head file, otherwise it becomes a question; deterministic precedents; a coverage section that lists unreviewed files; a file-list prompt for large diffs. `apps/ai/happy/eval` measures it.
 11. **Release PRs** (`development` into `main`) get a checklist from the diff (migrations, new env names, changed apps, dependencies) with no model call.
 
 Model: `review` alias. A cheap first pass on `fast` can mark risky files so the larger model reads only those. GitHub App permissions: `contents: read`, `pull_requests: read`, `checks: write`, `metadata: read`. Posting comments later needs `pull_requests: write`.

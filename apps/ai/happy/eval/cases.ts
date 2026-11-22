@@ -34,7 +34,6 @@ export const EVAL_CASES: readonly EvalCase[] = [
     expectation: {
       defectId: 'domain-purity-date',
       markerLine: 'Date.now()',
-      ruleCardId: 'domain-purity',
     },
   },
   {
@@ -59,7 +58,6 @@ export const EVAL_CASES: readonly EvalCase[] = [
     expectation: {
       defectId: 'repository-db-error',
       markerLine: 'await this.db.select()',
-      ruleCardId: 'repository-db-error',
     },
   },
   {
@@ -75,7 +73,6 @@ export const EVAL_CASES: readonly EvalCase[] = [
     expectation: {
       defectId: 'migration-index',
       markerLine: 'CREATE INDEX movies_title_idx',
-      ruleCardId: 'migrations',
     },
   },
   {
@@ -100,7 +97,6 @@ export const EVAL_CASES: readonly EvalCase[] = [
     expectation: {
       defectId: 'deep-import',
       markerLine: "'../../../media/application/services/media-query.service'",
-      ruleCardId: 'module-barrels',
     },
   },
   {

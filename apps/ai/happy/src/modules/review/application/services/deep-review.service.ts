@@ -16,7 +16,6 @@ import {
   FINDING_TOPICS,
 } from '../../domain/constants/finding-classification.constants';
 import { MAX_EVIDENCE_EXCERPT_CHARS } from '../../domain/constants/review-limits.constants';
-import type { RuleCard } from '../../domain/constants/rule-cards.constants';
 import { FINDING_CATEGORIES, FINDING_SEVERITIES } from '../../domain/constants/severity.constants';
 import type { Finding } from '../../domain/entities/finding';
 import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
@@ -56,7 +55,6 @@ export interface DeepReviewInput {
   files: readonly ChangedFile[];
   focusFiles: readonly string[];
   appliedRules: readonly RepoRule[];
-  cards: readonly RuleCard[];
   diffMode: DiffMode;
   allRules: readonly RepoRule[];
   trigger: RunTrigger;
@@ -99,11 +97,7 @@ export class DeepReviewService {
       task: REVIEW_TASK_NAME,
       role: REVIEW_ROLE,
       trigger: input.trigger,
-      system: buildReviewSystem(
-        this.folder.prompts[REVIEW_PROMPT_NAME] ?? '',
-        input.appliedRules,
-        input.cards,
-      ),
+      system: buildReviewSystem(this.folder.prompts[REVIEW_PROMPT_NAME] ?? '', input.appliedRules),
       prompt: buildReviewPrompt(input.pr, input.files, input.focusFiles, input.diffMode),
       responseSchema: reviewSchema,
       tools: countingFailures(

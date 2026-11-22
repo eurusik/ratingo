@@ -21,7 +21,6 @@ Pull requests from `development` into `main` get a release checklist instead of 
 
 - **Evidence.** Every finding carries `evidence {path, line, excerpt}`. The file is read at the head commit and the finding is kept as a finding only if that line contains the excerpt (at least 8 non-space characters, or the whole line). Otherwise it is demoted to a question.
 - **Report gate** in `agent/prompts/review.md`: changed-code evidence, a concrete failure scenario, try to disprove it, missing context is not a defect, one root cause is one finding.
-- **Rule cards** (`domain/constants/rule-cards.constants.ts`): short cards for the main Ratingo rules. Triage picks the ids; only those cards go into the review prompt.
 - **Precedents** (`domain/policies/precedents.ts`), decided on structured fields (topic, category, path, cited line), never on message text: environment variables are trusted, no denial-of-service advice, React XSS only with `dangerouslySetInnerHTML`, nothing in Markdown files, no security or performance findings in test files.
 - **Questions.** Unproven findings are shown as "Питання до автора", separate from findings and capped at 5.
 - **Coverage honesty.** Truncated listing, a stopped run, a failed tool call, an unreadable evidence file or a file list instead of diffs add a "Покриття неповне" section that lists the files not reviewed carefully. With a gap Happy never writes "Зауважень немає".

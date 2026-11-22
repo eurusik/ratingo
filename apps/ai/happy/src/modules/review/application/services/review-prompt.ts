@@ -3,16 +3,12 @@ import {
   MAX_PROMPT_PATCH_CHARS,
   MAX_RULES_CHARS,
 } from '../../domain/constants/review-limits.constants';
-import type { RuleCard } from '../../domain/constants/rule-cards.constants';
 import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
 import { parseDiffLines, toLineRanges } from '../../domain/policies/diff-hunks';
-import { renderRuleCard } from '../../domain/policies/rule-cards';
 import type { RepoRule } from '../../domain/policies/rule-selector';
 import { wrapUntrusted } from '../../domain/policies/untrusted-content';
 
 const RULES_HEADING = '# Repository rules (trusted, from the base branch)';
-const CARDS_HEADING =
-  '# Rule cards for this change (trusted). Report only what a card calls a violation.';
 const TRUNCATED_RULES_NOTE = '\n[rules truncated; use get_rules for the rest]';
 
 export const DiffMode = {
@@ -21,19 +17,13 @@ export const DiffMode = {
 } as const;
 export type DiffMode = (typeof DiffMode)[keyof typeof DiffMode];
 
-export const buildReviewSystem = (
-  basePrompt: string,
-  rules: readonly RepoRule[],
-  cards: readonly RuleCard[],
-): string => {
+export const buildReviewSystem = (basePrompt: string, rules: readonly RepoRule[]): string => {
   const joined = rules.map((rule) => `## ${rule.path}\n${rule.body}`).join('\n\n');
   const body =
     joined.length > MAX_RULES_CHARS
       ? `${joined.slice(0, MAX_RULES_CHARS)}${TRUNCATED_RULES_NOTE}`
       : joined;
-  const cardSection =
-    cards.length === 0 ? '' : `\n\n${CARDS_HEADING}\n${cards.map(renderRuleCard).join('\n\n')}`;
-  return `${basePrompt}\n\n${RULES_HEADING}\n${body}${cardSection}`;
+  return `${basePrompt}\n\n${RULES_HEADING}\n${body}`;
 };
 
 const renderPatch = (file: ChangedFile): string =>
@@ -47,7 +37,10 @@ const renderListEntry = (file: ChangedFile): string => {
   return `- ${file.path} (${file.status} +${file.additions} -${file.deletions})${ranges}`;
 };
 
-const focusedFiles = (files: readonly ChangedFile[], focusFiles: readonly string[]): ChangedFile[] => {
+const focusedFiles = (
+  files: readonly ChangedFile[],
+  focusFiles: readonly string[],
+): ChangedFile[] => {
   const byPath = new Map(files.map((file) => [file.path, file]));
   return focusFiles.flatMap((path) => byPath.get(path) ?? []);
 };
