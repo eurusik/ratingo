@@ -15,6 +15,8 @@ export const DIGEST_THRESHOLDS: DigestThresholds = {
   },
   http: {
     rateLimitCountForAction: 500,
+    rateLimitNoteMinCount: 20,
+    rateLimitGrowthRatioForNote: 0.5,
     serverNames: {
       'api.themoviedb.org': 'TMDB',
       'api.trakt.tv': 'Trakt',

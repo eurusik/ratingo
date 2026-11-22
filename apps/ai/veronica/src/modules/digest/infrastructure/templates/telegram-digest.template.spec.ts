@@ -49,7 +49,7 @@ describe('TelegramDigestTemplate', () => {
     const message = render(evaluateDigest(unavailableSnapshot(), THRESHOLDS));
     expect(message.html).toContain('⚠️ черги');
     expect(message.html).toContain('⚠️ люди');
-    expect(message.html).toContain('<b>⚙️ Завдання:</b> немає даних');
+    expect(message.html).toContain('<b>⚙️ Черги:</b> немає даних');
   });
 
   it('uses model wording for actions and the headline when given, and shows the cost', () => {
@@ -76,6 +76,36 @@ describe('TelegramDigestTemplate', () => {
     expect(formatFact({ ...fact, baseline: 9000, unit: FactUnit.HOURS })).toBe(
       'дій: 12 345 год (тиждень тому: 9 000 год)',
     );
+  });
+
+  it('renders a missing value as no data, never as zero', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom(...Object.values(FactUnit)),
+        fc.option(fc.integer({ min: 0, max: 100000 }), { nil: null }),
+        (unit, baseline) => {
+          const text = formatFact({ label: 'показник', unit, current: null, baseline });
+          expect(text).toBe('показник: немає даних');
+        },
+      ),
+    );
+  });
+
+  it('words the backup age and the redis memory plainly', () => {
+    const html = render(evaluateDigest(greenSnapshot(), THRESHOLDS)).html;
+    expect(html).toContain('останній бекап: 6 год тому');
+    expect(html).toContain('пам’ять Redis: 9 МБ');
+    expect(html).not.toContain('годин тому');
+    expect(html).not.toContain('пам’ять Redis: 0');
+  });
+
+  it('names the queue block plainly with plain-language lines', () => {
+    const html = render(evaluateDigest(greenSnapshot(), THRESHOLDS)).html;
+    expect(html).toContain('<b>⚙️ Черги:</b>');
+    expect(html).toContain('оброблено в чергах: 2 400 (тиждень тому: 2 200)');
+    expect(html).toContain('впало: 0 (тиждень тому: 0)');
+    expect(html).toContain('найбільша черга (ingestion), пік: 40 (тиждень тому: 38)');
+    expect(html).not.toContain('Завдання');
   });
 
   it('stays within the Telegram limit and escapes markup for any text', () => {

@@ -13,6 +13,8 @@ export interface DigestThresholds {
   };
   http: {
     rateLimitCountForAction: number;
+    rateLimitNoteMinCount: number;
+    rateLimitGrowthRatioForNote: number;
     serverNames: Readonly<Record<string, string>>;
   };
   backup: {
