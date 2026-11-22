@@ -10,6 +10,8 @@ import {
   buildPullRequest,
 } from '../../infrastructure/testing/fake-code-host.testing';
 
+import { trackingOf } from '../../infrastructure/testing/outcome.testing';
+
 import { ReviewJobResult, ReviewJobService } from './review-job.service';
 import type { ReviewService } from './review.service';
 
@@ -28,6 +30,7 @@ const reviewed = (headSha = 'head222'): ReviewOutcome => ({
   findings: [],
   questions: [],
   dropped: [],
+  tracking: trackingOf([]),
   reviewedFiles: [],
   coverage: { unreviewedFiles: [], gaps: [] },
   stopReason: 'end',
@@ -81,8 +84,8 @@ describe('ReviewJobService', () => {
     await outcomes.service.process(JOB);
     await outcomes.service.process({ ...JOB, source: ReviewJobSource.COMMAND, commentId: 4 });
     expect(outcomes.review.mock.calls.map((call) => call[2])).toEqual([
-      { explicitRequest: false },
-      { explicitRequest: true },
+      { explicitRequest: false, mode: 'auto' },
+      { explicitRequest: true, mode: 'auto' },
     ]);
   });
 
@@ -103,6 +106,12 @@ describe('ReviewJobService', () => {
     expect(asked.published[0]?.report.summary.split('\n')[0]).toBe(CheckVoice.TRIVIAL);
   });
 
+  it('passes the requested mode of a job through', async () => {
+    const outcomes = setup(reviewed());
+    await outcomes.service.process({ ...JOB, mode: 'full' });
+    expect(outcomes.review.mock.calls[0]?.[2]).toMatchObject({ mode: 'full' });
+  });
+
   it('runs an internal request as an explicit, chat-triggered review and publishes a skip', async () => {
     const asked = setup(skipped);
     const result = await asked.service.process({
@@ -111,6 +120,6 @@ describe('ReviewJobService', () => {
     });
     expect(result).toBe(ReviewJobResult.PUBLISHED);
     expect(asked.review.mock.calls[0]?.[1]).toBe('chat');
-    expect(asked.review.mock.calls[0]?.[2]).toEqual({ explicitRequest: true });
+    expect(asked.review.mock.calls[0]?.[2]).toEqual({ explicitRequest: true, mode: 'auto' });
   });
 });

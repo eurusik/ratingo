@@ -15,3 +15,5 @@ export type { OpenPullRequest, PullRequestRef } from '../domain/entities/pull-re
 export { CodeHostError } from '../domain/ports/code-host.port';
 export type { PublishedReviewResult } from '../domain/entities/review-result';
 export { PullRequestState, type PullRequest } from '../domain/entities/pull-request';
+export { RequestedMode } from '../domain/entities/review-scope';
+export type { ResultTracking } from '../domain/entities/review-result';

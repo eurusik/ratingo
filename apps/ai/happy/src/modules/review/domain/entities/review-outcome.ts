@@ -2,6 +2,8 @@ import type { SkipReason } from '../constants/skip-patterns.constants';
 
 import type { DroppedFinding, ValidatedFinding } from './finding';
 import type { PullRequestRef } from './pull-request';
+import type { ReviewScope } from './review-scope';
+import type { TrackedFinding } from './tracked-finding';
 
 export const ReviewStatus = {
   SKIPPED: 'skipped',
@@ -34,6 +36,13 @@ export interface SkippedReview {
   markdown: string;
 }
 
+export interface ReviewTracking {
+  scope: ReviewScope;
+  reviewedFileCount: number;
+  hadPrevious: boolean;
+  findings: TrackedFinding[];
+}
+
 export interface CompletedReview {
   status: typeof ReviewStatus.REVIEWED | typeof ReviewStatus.INCOMPLETE;
   ref: PullRequestRef;
@@ -42,6 +51,7 @@ export interface CompletedReview {
   findings: ValidatedFinding[];
   questions: ValidatedFinding[];
   dropped: DroppedFinding[];
+  tracking: ReviewTracking;
   reviewedFiles: string[];
   coverage: ReviewCoverage;
   stopReason: string;

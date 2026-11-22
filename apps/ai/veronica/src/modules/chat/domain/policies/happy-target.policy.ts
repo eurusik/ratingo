@@ -28,14 +28,20 @@ const NUMBERED_REQUEST = new RegExp(
     `(?:${PR_TOKEN}\\s*${NUMBER_MARK}?\\s*(\\d{1,9})|${NUMBER_MARK}\\s*(\\d{1,9})|(\\d{1,9})\\s+${PR_TOKEN})${POLITE_TAIL}`,
   'iu',
 );
+const BARE_VERB = `(?:глянь|переглянь|${REVIEW_NOUN}|review)${NOT_LETTER_AFTER}`;
+const BARE_NUMBER_REQUEST = new RegExp(
+  `${LEADING}${BARE_VERB}\\s+${PREPOSITION}${NUMBER_MARK}?\\s*(\\d{1,9})${POLITE_TAIL}`,
+  'iu',
+);
 const UNNUMBERED_REQUEST = new RegExp(
   `${LEADING}(?:${STANDALONE_REQUEST}|${VERB}\\s+${PREPOSITION}${PR_TOKEN})${POLITE_TAIL}`,
   'iu',
 );
 
-export const matchReviewRequest = (text: string): HappyTarget | null => {
+export const matchReviewRequest = (text: string, allowBareNumber = false): HappyTarget | null => {
   const trimmed = text.trim();
-  const groups = NUMBERED_REQUEST.exec(trimmed);
+  const groups =
+    NUMBERED_REQUEST.exec(trimmed) ?? (allowBareNumber ? BARE_NUMBER_REQUEST.exec(trimmed) : null);
   if (groups !== null) {
     const number = Number(groups[1] ?? groups[2] ?? groups[3]);
     return number > 0 ? { kind: HappyTargetKind.NUMBER, number } : null;

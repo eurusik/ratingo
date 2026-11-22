@@ -6,12 +6,12 @@ Step 1 is the manual CLI. Step 2 (this) adds automatic triggering through a GitH
 
 ## How a review starts
 
-| Event                                                                                                                                                                 | Result                                                                                      |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `pull_request` `opened`, `ready_for_review`, `reopened`                                                                                                               | one review of the head commit                                                               |
-| `issue_comment` starting with `@happy-on-duty scan` or `@happy-on-duty review` (or the aliases `/happy scan`, `/happy review`), from an owner, member or collaborator | a fresh review, forced for a trivial pull request and published even if it would be skipped |
-| `pull_request` `synchronize` (a new push)                                                                                                                             | ignored on purpose: review once when the PR is ready                                        |
-| drafts, repositories outside `HAPPY_ALLOWED_REPOS`, fork authors outside `HAPPY_ALLOWED_AUTHORS`                                                                      | ignored                                                                                     |
+| Event                                                                                                                                                                 | Result                                                                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pull_request` `opened`, `ready_for_review`, `reopened`                                                                                                               | one review of the head commit                                                                                                                                           |
+| `issue_comment` starting with `@happy-on-duty scan` or `@happy-on-duty review` (or the aliases `/happy scan`, `/happy review`), from an owner, member or collaborator | a fresh review, forced for a trivial pull request and published even if it would be skipped; incremental when a previous review exists, `review full` forces a full one |
+| `pull_request` `synchronize` (a new push)                                                                                                                             | ignored on purpose: review once when the PR is ready                                                                                                                    |
+| drafts, repositories outside `HAPPY_ALLOWED_REPOS`, fork authors outside `HAPPY_ALLOWED_AUTHORS`                                                                      | ignored                                                                                                                                                                 |
 
 The webhook controller verifies `X-Hub-Signature-256` over the raw body with a constant-time compare, enqueues a BullMQ job (`REDIS_URL`) and answers `202`. The job id is repository + pull request + head commit, so a redelivery is one job. A worker (concurrency 1) runs the review and publishes the check. Before publishing it re-reads the pull request and skips if it is closed, merged, or its head is no longer the reviewed commit. A pull request that Happy skips (trivial, docs only, too large) gets no check unless a collaborator asked with a command.
 
@@ -19,21 +19,48 @@ The webhook controller verifies `X-Hub-Signature-256` over the raw body with a c
 
 A command is the first non-blank text of a comment on a pull request, in any letter case: `@happy-on-duty scan`, `@happy-on-duty review`, `/happy scan` or `/happy review`. Text after it is allowed. A command inside a code block, inline code or a quote does not trigger anything. The mention handle is the constant `HAPPY_MENTION_HANDLE` (default `happy-on-duty`); the GitHub App `happy-for-ratingo` still does the work and publishes the check run.
 
+`/happy review` is smart: when Happy has already reviewed an earlier commit of the pull request and that commit is still an ancestor of the head, it reviews only the new commits and reports what happened to its earlier findings. `/happy review full` (also `@happy-on-duty review full`, `scan full`) always reviews the whole pull request.
+
 An explicit command reviews a trivial pull request that would otherwise be skipped. It does not lift the `too_large` skip, and docs-only pull requests stay skipped.
 
 ## Internal API for Veronica
 
 Veronica (`apps/ai/veronica`) asks Happy about pull requests over the Railway private network (`http://happy.railway.internal:8080` on Railway, where `PORT` is set by the platform). Happy listens on `::` for that. The public hostname must keep serving only `/`, `/health` and `POST /webhooks/github`.
 
-| Request                                       | Result                                                                                                                                                                                                                                                      |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /internal/pull-requests/:number/review` | enqueues a review of the head commit (the same job as `/happy review`, published even for a trivial PR) and answers at once: `queued`, `already_running`, `already_reviewed`, `skipped` with `reason` (`closed`, `merged`, `untrusted_fork`) or `not_found` |
-| `GET /internal/pull-requests/:number/review`  | `not_found`, or `found` with `headSha`, `reviewPending` and `result` (status, voice line, summary, finding counts by severity, questions, coverage, the commit it was for, `current`, check-run URL) or `null`                                              |
-| `GET /internal/pull-requests`                 | `ok` with up to six open pull requests, most recently updated first (number, title, author, `updatedAt`)                                                                                                                                                    |
+| Request                                       | Result                                                                                                                                                                                                                                                                                                                                        |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /internal/pull-requests/:number/review` | enqueues a review of the head commit (the same job as `/happy review`, published even for a trivial PR) and answers at once: `queued`, `already_running`, `already_reviewed`, `skipped` with `reason` (`closed`, `merged`, `untrusted_fork`) or `not_found`. Optional body `{"mode": "auto" \| "full"}`, default `auto`; anything else is 400 |
+| `GET /internal/pull-requests/:number/review`  | `not_found`, or `found` with `headSha`, `reviewPending` and `result` (status, voice line, summary, finding counts by severity, questions, coverage, the commit it was for, `current`, check-run URL, and `review` with `mode`, `baseSha`, `fullReason`, `files` and `statusCounts`) or `null`                                                 |
+| `GET /internal/pull-requests`                 | `ok` with up to six open pull requests, most recently updated first (number, title, author, `updatedAt`)                                                                                                                                                                                                                                      |
 
 Auth is `Authorization: Bearer <HAPPY_SERVICE_TOKEN>`. Without `HAPPY_SERVICE_TOKEN` the API is disabled and answers 404, as it does to any request carrying a public proxy header (`X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP`...). A wrong token is 401. The repository is the first entry of `HAPPY_ALLOWED_REPOS`.
 
-Results are read back from the `Happy` check run of the commit. Its summary ends with a hidden `<!-- happy:result:v1 ... -->` marker with the structured result; check runs published before the marker existed come back with status `unknown`. Only check runs created by Happy's own GitHub App are read. No database is involved.
+Results are read back from the `Happy` check run of the commit. Its summary ends with a hidden `<!-- happy:result:v2 ... -->` marker (base64url JSON with the result, the reviewed commit, the scope and the tracked findings). The v1 marker is still read, as a result without tracked state; check runs published before any marker existed come back with status `unknown`. The last marker in the summary wins. Only check runs created by Happy's own GitHub App are read. No database is involved.
+
+## Incremental review
+
+State lives only in the hidden marker of the `Happy` check run (see below), so there is no database.
+
+| Situation                                                                               | Mode        | What the summary says                                   |
+| --------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------- |
+| a complete earlier review exists and its commit is an ancestor of the head              | incremental | «Переглянув нові коміти abc1234..def5678 (3 файли)»     |
+| no earlier review is found (first review, or the old commit left the PR after a rebase) | full        | «Повне рев’ю: попереднього рев’ю … не знайдено»         |
+| the history diverged (force-push) or went behind                                        | full        | «Повне рев’ю: історію гілки переписано …»               |
+| the GitHub compare failed                                                               | full        | «Повне рев’ю: GitHub не віддав порівняння …»            |
+| the earlier marker is untrusted or has no tracked state (published before v2)           | full        | «Повне рев’ю: стан минулого рев’ю не вдалося прочитати» |
+| the earlier review was incomplete (stopped early, coverage gaps)                        | full        | «Повне рев’ю: минуле рев’ю було неповним»               |
+| a full review was asked (`/happy review full`, `mode: "full"`)                          | full        | «Повне рев’ю: повне рев’ю запросили явно»               |
+
+In incremental mode the model sees only the diff of the new commits (limited to files still in the pull request); the whole pull request stays available as read-only context through the tools. A new finding must be on a line the new commits changed. When the new commits touch only ignored files, no model is called.
+
+Each earlier open finding gets a status in the summary and in the marker:
+
+- ✅ resolved: its file was touched and the code excerpt is gone;
+- ⚠️ still open: the excerpt is still there and the new commits did not change the lines around it;
+- ❓ needs re-check: the lines around it changed, or the file could not be read; the model gives a verdict in the same run, and a finding without a verdict stays ❓;
+- 🆕 new.
+
+The summary shows the counts, the full current list and the resolved ones once. Resolved findings leave the tracked state after that. A full review sends every earlier finding to the model as ❓.
 
 ## Check title voice
 
@@ -133,7 +160,7 @@ The CLI keeps using a personal access token (`GITHUB_TOKEN`) and never publishes
 
 ## Eval set
 
-`eval/` holds 36 labelled cases: 12 base cases (5 real defects, 4 protected negatives that look risky but are guarded, 3 unknown cases that should become questions) and, for every check in the catalog, one real bug and one looks-risky-but-fine fixture trimmed from the commits that fixed or justified them (`eval/check-cases`, each cites its `source`). A jest spec fails CI if a check lacks either fixture, if its frontmatter is invalid or if the selector would not pick the check for its own fixtures and a scorer for precision, recall, false positives on protected negatives and the share of unknown cases answered with a question.
+`eval/` holds 36 labelled cases and 4 incremental ones (`eval/incremental-cases.ts`): 12 base cases (5 real defects, 4 protected negatives that look risky but are guarded, 3 unknown cases that should become questions) and, for every check in the catalog, one real bug and one looks-risky-but-fine fixture trimmed from the commits that fixed or justified them (`eval/check-cases`, each cites its `source`). A jest spec fails CI if a check lacks either fixture, if its frontmatter is invalid or if the selector would not pick the check for its own fixtures and a scorer for precision, recall, false positives on protected negatives and the share of unknown cases answered with a question.
 
 ```bash
 npm run eval --workspace=@ratingo/ai-happy
@@ -144,5 +171,7 @@ On the default stub model this only checks the structure (the structure is also 
 ```bash
 AI_MODEL_FAST=anthropic:claude-haiku-5-5 AI_MODEL_REVIEW=anthropic:claude-sonnet-5-5 ANTHROPIC_API_KEY=... npm run eval --workspace=@ratingo/ai-happy
 ```
+
+The incremental cases run a review with a previous result and a new commit: a fix commit resolves a finding, an unrelated commit keeps it open, a new bug appears in the new commit, and a force-push falls back to a full review. The run prints `incremental cases with a deterministic outcome` (mode, reason and finding statuses decided without a model; 4/4 expected, also with the stub) and `incremental cases where the new bug was found` (needs a real model; 0/1 with the stub).
 
 Compare the numbers with the previous run before changing a prompt, a card or a precedent.

@@ -1,13 +1,15 @@
 import type {
   ChangedFile,
   ChangedFiles,
+  CommitComparison,
   OpenPullRequest,
   PullRequest,
   PullRequestRef,
   RepoRuleFile,
 } from '../../domain/entities/pull-request';
-import { FileStatus, PullRequestState } from '../../domain/entities/pull-request';
+import { CommitRelation, FileStatus, PullRequestState } from '../../domain/entities/pull-request';
 import type { CodeHostPort, FileReadLimits } from '../../domain/ports/code-host.port';
+import type { PublishedCheck, PublishedCheckPort } from '../../domain/ports/published-check.port';
 
 export const TEST_REF: PullRequestRef = { owner: 'acme', repo: 'shop', number: 7 };
 
@@ -42,6 +44,7 @@ export interface FakeCodeHostData {
   contents: Record<string, string>;
   open: OpenPullRequest[];
   rules: RepoRuleFile[];
+  comparison: CommitComparison | Error;
 }
 
 export class FakeCodeHost implements CodeHostPort {
@@ -59,6 +62,11 @@ export class FakeCodeHost implements CodeHostPort {
 
   async listChangedFiles(): Promise<ChangedFiles> {
     return { files: this.data.files, truncated: false };
+  }
+
+  async compareCommits(): Promise<CommitComparison> {
+    if (this.data.comparison instanceof Error) throw this.data.comparison;
+    return this.data.comparison;
   }
 
   async readFile(
@@ -83,5 +91,21 @@ export const buildFakeCodeHost = (overrides: Partial<FakeCodeHostData> = {}): Fa
     contents: {},
     open: [],
     rules: [],
+    comparison: { relation: CommitRelation.AHEAD, files: [], truncated: false },
     ...overrides,
   });
+
+export class FakePublishedChecks implements PublishedCheckPort {
+  constructor(
+    private readonly checks: ReadonlyMap<string, PublishedCheck>,
+    private readonly recentShas: readonly string[],
+  ) {}
+
+  async findForCommit(_ref: PullRequestRef, sha: string): Promise<PublishedCheck | null> {
+    return this.checks.get(sha) ?? null;
+  }
+
+  async listRecentCommitShas(): Promise<string[]> {
+    return [...this.recentShas];
+  }
+}

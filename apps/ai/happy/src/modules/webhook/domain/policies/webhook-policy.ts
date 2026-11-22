@@ -13,7 +13,7 @@ import type {
 } from '../entities/webhook-event';
 import { WebhookEventKind } from '../entities/webhook-event';
 
-import { isReviewCommand } from './review-command';
+import { parseReviewCommand } from './review-command';
 import { isTrustedAuthor } from './trusted-author';
 
 export interface WebhookPolicyConfig {
@@ -64,12 +64,11 @@ const decideComment = (
   event: CommentWebhookEvent,
   config: WebhookPolicyConfig,
 ): WebhookDecision => {
-  if (
-    event.action !== COMMENT_CREATED_ACTION ||
-    !isReviewCommand(event.body, config.mentionHandle)
-  ) {
-    return ignore(IgnoreReason.NOT_A_COMMAND);
-  }
+  const command =
+    event.action === COMMENT_CREATED_ACTION
+      ? parseReviewCommand(event.body, config.mentionHandle)
+      : null;
+  if (command === null) return ignore(IgnoreReason.NOT_A_COMMAND);
   if (!event.isPullRequest) return ignore(IgnoreReason.NOT_A_PULL_REQUEST);
   if (!isAllowedRepository(event, config)) return ignore(IgnoreReason.REPOSITORY_NOT_ALLOWED);
   if (event.senderType === BOT_SENDER_TYPE) return ignore(IgnoreReason.BOT_SENDER);
@@ -83,6 +82,7 @@ const decideComment = (
       source: ReviewJobSource.COMMAND,
       headSha: null,
       commentId: event.commentId,
+      mode: command.mode,
     },
   };
 };

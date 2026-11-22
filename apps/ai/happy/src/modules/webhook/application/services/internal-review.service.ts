@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { REVIEW_CONFIG, type ReviewConfig } from '../../../../config/config.constants';
 import {
+  RequestedMode,
   ReviewJobSource,
   ReviewResultService,
   parseRepository,
@@ -49,7 +50,10 @@ export class InternalReviewService {
     private readonly results: ReviewResultService,
   ) {}
 
-  async request(pullNumber: number): Promise<ReviewRequestResult> {
+  async request(
+    pullNumber: number,
+    mode: RequestedMode = RequestedMode.AUTO,
+  ): Promise<ReviewRequestResult> {
     const ref = this.refFor(pullNumber);
     const pullRequest = await this.results.findPullRequest(ref);
     if (pullRequest === null) return { status: InternalRequestStatus.NOT_FOUND };
@@ -59,7 +63,7 @@ export class InternalReviewService {
     });
     if (skipReason !== null) return { status: InternalRequestStatus.SKIPPED, reason: skipReason };
     const headSha = pullRequest.headSha;
-    if (await this.results.hasResultFor(ref, headSha)) {
+    if (await this.results.hasResultFor(ref, headSha, mode)) {
       return { status: InternalRequestStatus.ALREADY_REVIEWED, headSha };
     }
     const state = await this.queue.enqueue({
@@ -67,6 +71,7 @@ export class InternalReviewService {
       source: ReviewJobSource.INTERNAL_REQUEST,
       headSha,
       commentId: null,
+      mode,
     });
     return { status: statusFor(state), headSha };
   }
@@ -84,9 +89,13 @@ export class InternalReviewService {
   }
 
   private async isReviewPending(ref: PullRequestRef, headSha: string): Promise<boolean> {
-    const sources = [ReviewJobSource.INTERNAL_REQUEST, ReviewJobSource.PULL_REQUEST];
+    const jobs = [
+      { source: ReviewJobSource.INTERNAL_REQUEST, mode: RequestedMode.AUTO },
+      { source: ReviewJobSource.INTERNAL_REQUEST, mode: RequestedMode.FULL },
+      { source: ReviewJobSource.PULL_REQUEST, mode: RequestedMode.AUTO },
+    ];
     const pending = await Promise.all(
-      sources.map((source) => this.queue.isPending({ ref, source, headSha, commentId: null })),
+      jobs.map((job) => this.queue.isPending({ ref, headSha, commentId: null, ...job })),
     );
     return pending.some(Boolean);
   }

@@ -201,6 +201,7 @@ describe('GithubCodeHostAdapter published checks', () => {
       counts: { critical: 0, major: 1, minor: 0, nit: 0 },
       questions: [],
       coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
+      tracking: null,
     });
 
   const run = (overrides: Record<string, unknown> = {}) => ({
@@ -250,6 +251,13 @@ describe('GithubCodeHostAdapter published checks', () => {
     expect(await adapter.findForCommit(TEST_REF, 'h1')).toBeNull();
   });
 
+  it('trusts a marker only when the check run is known to come from Happy’s own app', async () => {
+    const own = await adapterFor([run()], '42').adapter.findForCommit(TEST_REF, 'h1');
+    const unknown = await adapterFor([run()]).adapter.findForCommit(TEST_REF, 'h1');
+    expect(own?.trusted).toBe(true);
+    expect(unknown?.trusted).toBe(false);
+  });
+
   it('keeps a check without a marker and drops a link outside github.com', async () => {
     const { adapter } = adapterFor([
       run({
@@ -295,5 +303,44 @@ describe('GithubCodeHostAdapter open pull requests', () => {
       { number: 5, title: 'Fix', author: 'alice', updatedAt: '2026-11-22T10:00:00Z' },
     ]);
     expect(calls[0]?.url).toContain('/pulls?state=open&sort=updated&direction=desc&per_page=6');
+  });
+});
+
+describe('GithubCodeHostAdapter compare', () => {
+  it.each([
+    ['ahead', 'ahead'],
+    ['identical', 'identical'],
+    ['behind', 'behind'],
+    ['diverged', 'diverged'],
+    ['something-new', 'diverged'],
+  ])('maps the GitHub status %s to %s', async (status, relation) => {
+    const { adapter, calls } = adapterWith(() => json({ status, files: [filePayload(1)] }));
+    const comparison = await adapter.compareCommits(TEST_REF, 'base1', 'head1', {
+      maxFiles: 300,
+      maxPatchChars: 10_000,
+    });
+    expect(comparison.relation).toBe(relation);
+    expect(comparison.files.map((file) => file.path)).toEqual(['src/f1.ts']);
+    expect(calls[0]?.url).toBe('https://gh.test/repos/acme/shop/compare/base1...head1');
+  });
+
+  it('drops patches beyond the budget and reports the listing as truncated', async () => {
+    const big = '@@ -1 +1 @@\n+' + 'x'.repeat(50);
+    const { adapter } = adapterWith(() =>
+      json({ status: 'ahead', files: [filePayload(1, big), filePayload(2, big)] }),
+    );
+    const comparison = await adapter.compareCommits(TEST_REF, 'b', 'h', {
+      maxFiles: 300,
+      maxPatchChars: 100,
+    });
+    expect(comparison.files.map((file) => file.patch === null)).toEqual([false, true]);
+    expect(comparison.truncated).toBe(true);
+  });
+
+  it('throws a code host error when the base commit is gone', async () => {
+    const { adapter } = adapterWith(() => json({ message: 'Not Found' }, 404));
+    await expect(
+      adapter.compareCommits(TEST_REF, 'b', 'h', { maxFiles: 300, maxPatchChars: 100 }),
+    ).rejects.toBeInstanceOf(CodeHostError);
   });
 });

@@ -6,6 +6,7 @@ import type {
   PullRequest,
   PullRequestRef,
 } from '../../domain/entities/pull-request';
+import { RequestedMode, ReviewMode } from '../../domain/entities/review-scope';
 import {
   UNKNOWN_RESULT_STATUS,
   type PublishedReviewResult,
@@ -44,6 +45,7 @@ const toResult = (check: PublishedCheck, headSha: string): PublishedReviewResult
         counts: { critical: 0, major: 0, minor: 0, nit: 0 },
         questions: [],
         coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
+        tracking: null,
       }
     : { ...base, ...snapshot };
 };
@@ -74,8 +76,11 @@ export class ReviewResultService {
     return this.host.listOpenPullRequests(repository, limit);
   }
 
-  async hasResultFor(ref: PullRequestRef, sha: string): Promise<boolean> {
-    return (await this.checks.findForCommit(ref, sha)) !== null;
+  async hasResultFor(ref: PullRequestRef, sha: string, mode: RequestedMode): Promise<boolean> {
+    const check = await this.checks.findForCommit(ref, sha);
+    if (check === null) return false;
+    if (mode === RequestedMode.AUTO) return true;
+    return check.trusted && check.snapshot?.tracking?.scope.mode === ReviewMode.FULL;
   }
 
   async findPullRequest(ref: PullRequestRef): Promise<PullRequest | null> {

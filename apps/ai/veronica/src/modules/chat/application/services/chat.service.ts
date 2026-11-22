@@ -22,6 +22,7 @@ import {
   UNKNOWN_COMMAND_REPLY,
 } from '../../domain/constants/chat-replies.constants';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
+import { HappyReviewMode } from '../../domain/entities/happy';
 import { IntentKind, type HappyTarget, type Intent } from '../../domain/entities/intent';
 import { CHAT_METRICS_PORT, type ChatMetricsPort } from '../../domain/ports/chat-metrics.port';
 import { routeMessage } from '../../domain/policies/route-message.policy';
@@ -145,16 +146,17 @@ export class ChatService {
       case IntentKind.UNKNOWN_COMMAND:
         return { html: UNKNOWN_COMMAND_REPLY, failed: false };
       case IntentKind.HAPPY:
-        return this.askHappy(intent.target, chatId);
+        return this.askHappy(intent.target, chatId, intent.mode ?? HappyReviewMode.AUTO);
     }
   }
 
   private async askHappy(
     target: HappyTarget,
     chatId: string,
+    mode: HappyReviewMode,
   ): Promise<{ html: string; failed: boolean }> {
     await this.showTyping(chatId);
-    return { html: await this.happy.reply(chatId, target), failed: false };
+    return { html: await this.happy.reply(chatId, target, mode), failed: false };
   }
 
   private async runCommand(

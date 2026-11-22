@@ -18,7 +18,7 @@ import {
   REDIS_CONNECTION,
 } from '../../chat.constants';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
-import type { HappyFollowUp } from '../../domain/entities/happy';
+import { HappyReviewMode, type HappyFollowUp } from '../../domain/entities/happy';
 import { ChatService } from '../services/chat.service';
 import { HappyFollowUpService } from '../services/happy-follow-up.service';
 
@@ -39,7 +39,8 @@ const isHappyFollowUp = (value: unknown): value is HappyFollowUp => {
     typeof candidate?.chatId === 'string' &&
     typeof candidate.pullNumber === 'number' &&
     typeof candidate.headSha === 'string' &&
-    typeof candidate.attempt === 'number'
+    typeof candidate.attempt === 'number' &&
+    (candidate.mode === undefined || candidate.mode === HappyReviewMode.FULL)
   );
 };
 

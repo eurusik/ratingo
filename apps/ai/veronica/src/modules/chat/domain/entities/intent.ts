@@ -1,5 +1,7 @@
 import type { AgentName, ChatCommand } from '../constants/chat.constants';
 
+import type { HappyReviewMode } from './happy';
+
 export const IntentKind = {
   COMMAND: 'command',
   UNKNOWN_COMMAND: 'unknown_command',
@@ -32,5 +34,5 @@ export type Intent =
   | { kind: typeof IntentKind.COMMAND; command: ChatCommand; args: string }
   | { kind: typeof IntentKind.UNKNOWN_COMMAND }
   | { kind: typeof IntentKind.MENTION; agent: AgentName; text: string }
-  | { kind: typeof IntentKind.HAPPY; target: HappyTarget }
+  | { kind: typeof IntentKind.HAPPY; target: HappyTarget; mode?: HappyReviewMode }
   | { kind: typeof IntentKind.FREE_FORM; text: string };

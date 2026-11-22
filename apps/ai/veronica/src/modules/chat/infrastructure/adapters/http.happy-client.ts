@@ -6,6 +6,8 @@ import {
   HappyLookupKind,
   HappyRequestKind,
   HappyResultStatus,
+  HappyReviewMode,
+  HappyScopeMode,
   HappySeverity,
   type HappyLookup,
   type HappyOpenPullRequest,
@@ -37,6 +39,21 @@ const resultSchema = z.object({
     gaps: z.array(z.string()),
   }),
   checkRunUrl: z.string().nullable(),
+  review: z
+    .object({
+      mode: z.enum([HappyScopeMode.INCREMENTAL, HappyScopeMode.FULL]),
+      baseSha: z.string().nullable(),
+      fullReason: z.string().nullable(),
+      files: count,
+      statusCounts: z.object({
+        new: count,
+        stillOpen: count,
+        resolved: count,
+        needsRecheck: count,
+      }),
+    })
+    .nullish()
+    .transform((review) => review ?? null),
 });
 
 const lookupSchema = z.discriminatedUnion('status', [
@@ -80,8 +97,8 @@ export class HttpHappyClient implements HappyClientPort {
     private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
-  async requestReview(pullNumber: number): Promise<HappyReviewRequest> {
-    const body = await this.call('POST', `${INTERNAL_PATH}/${pullNumber}/review`);
+  async requestReview(pullNumber: number, mode: HappyReviewMode): Promise<HappyReviewRequest> {
+    const body = await this.call('POST', `${INTERNAL_PATH}/${pullNumber}/review`, { mode });
     const parsed = requestSchema.safeParse(body);
     if (!parsed.success) throw new HappyUnavailableError('unexpected response shape');
     const { status, ...rest } = parsed.data;
@@ -113,7 +130,11 @@ export class HttpHappyClient implements HappyClientPort {
     }));
   }
 
-  private async call(method: 'GET' | 'POST', path: string): Promise<unknown> {
+  private async call(
+    method: 'GET' | 'POST',
+    path: string,
+    payload?: Record<string, string>,
+  ): Promise<unknown> {
     const { internalUrl, serviceToken } = this.config;
     if (internalUrl === undefined || serviceToken === undefined) {
       throw new HappyUnavailableError('HAPPY_INTERNAL_URL or HAPPY_SERVICE_TOKEN is not set');
@@ -123,7 +144,12 @@ export class HttpHappyClient implements HappyClientPort {
     try {
       response = await this.fetchImpl(`${base}${path}`, {
         method,
-        headers: { authorization: `Bearer ${serviceToken}`, accept: 'application/json' },
+        headers: {
+          authorization: `Bearer ${serviceToken}`,
+          accept: 'application/json',
+          ...(payload === undefined ? {} : { 'content-type': 'application/json' }),
+        },
+        ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
         signal: AbortSignal.timeout(HAPPY_REQUEST_TIMEOUT_MS),
       });
     } catch (error) {

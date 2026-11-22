@@ -22,6 +22,8 @@ import {
 } from '../../../../config/models.config';
 import { AgentRunner } from '../../../../core/agent-runner.service';
 import { createReviewStubScript } from '../../../../core/stub-review.script';
+import { CarryOverService } from './carry-over.service';
+import { ReviewScopeService } from './review-scope.service';
 import { FolderCheckSourceAdapter } from '../../infrastructure/adapters/folder.check-source-adapter';
 import { RecordingCheckMetrics } from '../../infrastructure/testing/recording-check-metrics.testing';
 import { ReviewStatus } from '../../domain/entities/review-outcome';
@@ -31,6 +33,7 @@ import {
   buildChangedFile,
   buildFakeCodeHost,
   buildPullRequest,
+  FakePublishedChecks,
   type FakeCodeHost,
 } from '../../infrastructure/testing/fake-code-host.testing';
 
@@ -123,6 +126,8 @@ const setup = async (
     new DeepReviewService(folder, runner),
     checkSource,
     metrics,
+    new ReviewScopeService(host, new FakePublishedChecks(new Map(), [])),
+    new CarryOverService(host),
   );
   return { service, model, runs, host, metrics };
 };
