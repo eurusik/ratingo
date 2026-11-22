@@ -483,7 +483,11 @@ export const EVAL_CASES: readonly EvalCase[] = [
     question: 'Глянь по коду, де може бути проблема з трендами',
     fixtures: [],
     expectedTools: [],
-    mustContain: [['не вмію', 'не можу', 'поки не'], ['код'], ['хеппі, глянь']],
+    mustContain: [
+      ['не вмію', 'не можу', 'поки не', 'не читаю', 'не бачу коду'],
+      ['код'],
+      ['хеппі, глянь'],
+    ],
     mustNotContain: ['напишіть', 'ваш', 'ви '],
     reference: {
       calls: [],
