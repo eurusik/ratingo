@@ -94,16 +94,11 @@ describe('routeMessage', () => {
     'що Хеппі сказав про 470?',
     'глянь по коду де може бути проблема',
     'чому падає черга — глянь в коді',
+    'скільки PR злили за тиждень?',
+    'що там по 470',
   ])('keeps the question «%s» with the agent', (text) => {
     expect(routeMessage(text).kind).toBe(IntentKind.FREE_FORM);
   });
-
-  it.each(['що Хеппі сказав про 470?', 'скільки PR злили за тиждень?', 'що там по 470'])(
-    'keeps the question «%s» with the agent',
-    (text) => {
-      expect(routeMessage(text).kind).toBe(IntentKind.FREE_FORM);
-    },
-  );
 
   it('asks for a number when Happy is addressed without one', () => {
     expect(routeMessage('Хеппі, привіт')).toEqual({

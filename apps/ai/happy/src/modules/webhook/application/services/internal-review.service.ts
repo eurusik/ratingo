@@ -72,8 +72,7 @@ export class InternalReviewService {
   }
 
   listOpen(): Promise<OpenPullRequest[]> {
-    const { owner, repo } = this.refFor(0);
-    return this.results.listOpenPullRequests({ owner, repo }, OPEN_PULL_REQUESTS_LIMIT);
+    return this.results.listOpenPullRequests(this.repository(), OPEN_PULL_REQUESTS_LIMIT);
   }
 
   async latest(pullNumber: number): Promise<PullReviewState> {
@@ -92,10 +91,14 @@ export class InternalReviewService {
     return pending.some(Boolean);
   }
 
-  private refFor(pullNumber: number): PullRequestRef {
+  private repository(): { owner: string; repo: string } {
     const repository = parseRepository(this.config.allowedRepositories[0] ?? '');
     if (repository === null) throw new RepositoryNotConfiguredError();
-    return { ...repository, number: pullNumber };
+    return repository;
+  }
+
+  private refFor(pullNumber: number): PullRequestRef {
+    return { ...this.repository(), number: pullNumber };
   }
 }
 
