@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { zodToJsonSchema } from '../../../schema/zod-json-schema';
 import { ModelError, ModelErrorCategory } from '../../model.errors';
 import type { ModelRequest } from '../../model.types';
 import { ContentPartType, MessageRole, StopReason, textMessage } from '../../model.types';
@@ -316,6 +318,26 @@ describe('AnthropicModelAdapter', () => {
       expect(bodies[0]?.output_config).toEqual({
         format: { type: 'json_schema', schema: { type: 'object', properties: {} } },
       });
+    });
+  });
+
+  describe('structured output schema', () => {
+    it('sends no keyword Anthropic rejects for the digest reply schema', async () => {
+      const { adapter, bodies } = adapterReturning(() => jsonResponse(message()));
+      const digestReply = z.object({
+        headline: z.string().min(1).max(80),
+        actions: z.array(z.object({ id: z.string(), text: z.string().max(200) })).max(20),
+      });
+
+      await adapter.generate(
+        request({
+          responseSchema: { name: 'digest', jsonSchema: zodToJsonSchema(digestReply) },
+        }),
+      );
+
+      const sent = JSON.stringify(bodies[0]?.output_config);
+      expect(sent).not.toMatch(/maxItems|minItems|maxLength|minLength|minimum|maximum/);
+      expect(sent).toContain('"actions"');
     });
   });
 
