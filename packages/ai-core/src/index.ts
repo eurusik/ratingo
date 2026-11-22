@@ -51,6 +51,8 @@ export type { StubScenarioOptions, StubScript } from './model/adapters/stub/stub
 export { StubScenario, createStubScript } from './model/adapters/stub/stub.scenarios';
 export type { AnthropicAdapterConfig } from './model/adapters/anthropic/anthropic.model-adapter';
 export { createAnthropicModelAdapter } from './model/adapters/anthropic/anthropic.model-adapter';
+export type { ModelProvidersConfig } from './wiring/model-providers';
+export { createModelProviders } from './wiring/model-providers';
 export { ANTHROPIC_DEFAULT_PRICES } from './model/adapters/anthropic/anthropic.prices';
 
 export type { Tool, ToolContext, ToolSpec } from './tools/define-tool';
