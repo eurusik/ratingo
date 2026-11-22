@@ -33,7 +33,12 @@ export const greenSnapshot = (): Snapshot => ({
     lastResult: BackupResult.SUCCESS,
     sizeBytes: measured(512 * 1024 * 1024, 500 * 1024 * 1024),
   }),
-  infra: available({ databaseUp: true, redisUp: true, redisMemoryUsedRatio: 0.2 }),
+  infra: available({
+    databaseUp: true,
+    redisUp: true,
+    redisMemoryUsedBytes: 9_500_000,
+    redisMemoryMaxBytes: null,
+  }),
   scheduler: available([
     { jobName: 'sync-trending', lastSuccessAgeHours: 5, lastFailureAgeHours: null },
   ]),

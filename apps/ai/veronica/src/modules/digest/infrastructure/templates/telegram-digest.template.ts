@@ -34,7 +34,7 @@ const LEVEL_EMOJI: Readonly<Record<DigestLevel, string>> = {
 
 const BLOCK_TITLE: Readonly<Record<DigestBlock, string>> = {
   [DigestBlock.PEOPLE]: '👥 Люди',
-  [DigestBlock.JOBS]: '⚙️ Завдання',
+  [DigestBlock.JOBS]: '⚙️ Черги',
   [DigestBlock.SERVICES]: '🔌 Сервіси',
   [DigestBlock.STORAGE]: '🗄 Дані',
 };
@@ -42,6 +42,7 @@ const BLOCK_TITLE: Readonly<Record<DigestBlock, string>> = {
 const UNIT_SUFFIX: Readonly<Record<FactUnit, string>> = {
   [FactUnit.COUNT]: '',
   [FactUnit.HOURS]: ' год',
+  [FactUnit.AGE_HOURS]: ' год тому',
   [FactUnit.PERCENT]: '%',
   [FactUnit.MEGABYTES]: ' МБ',
 };
@@ -59,10 +60,15 @@ const safe = (value: string, max: number): string => escapeHtml(clip(value, max)
 const groupDigits = (value: number): string =>
   String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
+const NO_DATA = 'немає даних';
+
 const formatValue = (value: number, unit: FactUnit): string =>
   `${groupDigits(value)}${UNIT_SUFFIX[unit]}`;
 
 export const formatFact = (fact: Fact): string => {
+  if (fact.current === null) {
+    return `${fact.label}: ${NO_DATA}`;
+  }
   const base = `${fact.label}: ${formatValue(fact.current, fact.unit)}`;
   return fact.baseline === null
     ? base
@@ -122,7 +128,7 @@ const blockHasData = (block: BlockReport, digest: Digest): boolean =>
 
 const blockLine = (block: BlockReport, digest: Digest): string => {
   const title = `<b>${BLOCK_TITLE[block.block]}:</b>`;
-  if (!blockHasData(block, digest)) return `${title} немає даних`;
+  if (!blockHasData(block, digest)) return `${title} ${NO_DATA}`;
   const worst = block.items.some((item) => item.level === DigestLevel.ACTION)
     ? 'потрібна дія'
     : block.items.length > 0

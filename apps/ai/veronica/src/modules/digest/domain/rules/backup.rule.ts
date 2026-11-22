@@ -13,8 +13,8 @@ export const evaluateBackup = (backup: BackupStats, thresholds: DigestThresholds
   const items: DigestItem[] = [];
   if (backup.lastRunAgeHours !== null) {
     facts.push({
-      label: 'останній бекап, годин тому',
-      unit: FactUnit.HOURS,
+      label: 'останній бекап',
+      unit: FactUnit.AGE_HOURS,
       current: Math.round(backup.lastRunAgeHours),
       baseline: null,
     });

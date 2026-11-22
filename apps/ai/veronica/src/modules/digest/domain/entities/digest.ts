@@ -6,6 +6,7 @@ import type { SourceState } from './source-reading';
 export const FactUnit = {
   COUNT: 'count',
   HOURS: 'hours',
+  AGE_HOURS: 'age_hours',
   PERCENT: 'percent',
   MEGABYTES: 'megabytes',
 } as const;
@@ -14,7 +15,7 @@ export type FactUnit = (typeof FactUnit)[keyof typeof FactUnit];
 export interface Fact {
   label: string;
   unit: FactUnit;
-  current: number;
+  current: number | null;
   baseline: number | null;
 }
 

@@ -27,8 +27,8 @@ export interface FailedJob {
 
 export interface QueueStats {
   queue: string;
-  backlogNow: number;
-  backlogMax24h: Measured;
+  backlogNow: number | null;
+  backlogMax24h: Measured | null;
   completed24h: Measured;
   failed24h: Measured;
   retried24h: Measured;
@@ -61,7 +61,8 @@ export interface BackupStats {
 export interface InfraStats {
   databaseUp: boolean;
   redisUp: boolean;
-  redisMemoryUsedRatio: number | null;
+  redisMemoryUsedBytes: number | null;
+  redisMemoryMaxBytes: number | null;
 }
 
 export interface SchedulerJobStat {

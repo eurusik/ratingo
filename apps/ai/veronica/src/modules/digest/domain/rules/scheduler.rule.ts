@@ -41,5 +41,7 @@ export const evaluateScheduler = (
   items: jobs
     .map((job) => jobItem(job, thresholds))
     .filter((item): item is DigestItem => item !== null),
-  facts: [factOf('нічних завдань під наглядом', FactUnit.COUNT, measured(jobs.length))],
+  facts: [
+    factOf('нічних завдань за розкладом під наглядом', FactUnit.COUNT, measured(jobs.length)),
+  ],
 });

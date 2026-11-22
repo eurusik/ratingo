@@ -50,11 +50,8 @@ export class QueuesCollector {
       return available(
         queues.map((queue): QueueStats => ({
           queue,
-          backlogNow: current.backlogNow.get(queue) ?? 0,
-          backlogMax24h: measured(
-            Math.round(current.backlogMax.get(queue) ?? 0),
-            baseline.backlogMax.has(queue) ? Math.round(baseline.backlogMax.get(queue) ?? 0) : null,
-          ),
+          backlogNow: current.backlogNow.get(queue) ?? null,
+          backlogMax24h: this.backlogPeak(queue, current, baseline),
           completed24h: this.pair(queue, current.completed, baseline.completed, baselineKnown),
           failed24h: this.pair(queue, current.failed, baseline.failed, baselineKnown),
           retried24h: this.pair(queue, current.retried, baseline.retried, baselineKnown),
@@ -67,6 +64,15 @@ export class QueuesCollector {
         })),
       );
     });
+  }
+
+  private backlogPeak(queue: string, current: QueueReadings, baseline: QueueReadings) {
+    const peak = current.backlogMax.get(queue);
+    if (peak === undefined) {
+      return null;
+    }
+    const baselinePeak = baseline.backlogMax.get(queue);
+    return measured(Math.round(peak), baselinePeak === undefined ? null : Math.round(baselinePeak));
   }
 
   private pair(

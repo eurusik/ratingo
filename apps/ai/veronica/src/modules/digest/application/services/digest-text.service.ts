@@ -43,8 +43,8 @@ export interface DigestTextResult {
 
 const NO_TEXT: DigestTextResult = { text: null, costUsd: null, runId: null };
 
-const trendOf = (current: number, baseline: number | null): string => {
-  if (baseline === null || current === baseline) return 'так само';
+const trendOf = (current: number | null, baseline: number | null): string => {
+  if (current === null || baseline === null || current === baseline) return 'так само';
   return current > baseline ? 'більше' : 'менше';
 };
 

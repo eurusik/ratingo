@@ -51,16 +51,57 @@ describe('evaluateDigest', () => {
     expect(items.find((item) => item.id === 'api-key:Trakt')?.level).toBe(DigestLevel.NOTE);
   });
 
-  it('never alerts on 404s because they are not collected, and treats retried rate limits as notes', () => {
+  it('stays green when retried rate limits fall against the week before', () => {
     const snapshot = {
       ...greenSnapshot(),
       httpErrors: available([
-        { server: 'api.trakt.tv', kind: HttpErrorKind.RATE_LIMIT, count: measured(54, 40) },
+        { server: 'api.trakt.tv', kind: HttpErrorKind.RATE_LIMIT, count: measured(54, 72) },
+      ]),
+    };
+    const digest = evaluateDigest(snapshot, THRESHOLDS);
+    expect(digest.level).toBe(DigestLevel.OK);
+    expect(digest.blocks.flatMap((block) => block.items)).toEqual([]);
+  });
+
+  it('gives a note when rate limits grow against the week before', () => {
+    const snapshot = {
+      ...greenSnapshot(),
+      httpErrors: available([
+        { server: 'api.trakt.tv', kind: HttpErrorKind.RATE_LIMIT, count: measured(80, 40) },
       ]),
     };
     const items = evaluateDigest(snapshot, THRESHOLDS).blocks.flatMap((block) => block.items);
     expect(items).toHaveLength(1);
     expect(items[0]?.level).toBe(DigestLevel.NOTE);
+  });
+
+  it('never gives a rate-limit note when the count does not exceed the baseline', () => {
+    fc.assert(
+      fc.property(counts, fc.integer({ min: 0, max: 499 }), (baseline, extra) => {
+        const current = Math.min(baseline, extra);
+        const snapshot = {
+          ...greenSnapshot(),
+          httpErrors: available([
+            {
+              server: 'api.trakt.tv',
+              kind: HttpErrorKind.RATE_LIMIT,
+              count: measured(current, baseline),
+            },
+          ]),
+        };
+        expect(evaluateDigest(snapshot, THRESHOLDS).level).toBe(DigestLevel.OK);
+      }),
+    );
+  });
+
+  it('stays quiet about small rate-limit counts and unknown baselines', () => {
+    for (const count of [measured(15, 0), measured(300, null)]) {
+      const snapshot = {
+        ...greenSnapshot(),
+        httpErrors: available([{ server: 'api.trakt.tv', kind: HttpErrorKind.RATE_LIMIT, count }]),
+      };
+      expect(evaluateDigest(snapshot, THRESHOLDS).level).toBe(DigestLevel.OK);
+    }
   });
 
   it('escalates heavy rate limiting and any auth failure to an action', () => {
@@ -98,7 +139,12 @@ describe('evaluateDigest', () => {
     const snapshot = {
       ...greenSnapshot(),
       backup: available({ lastRunAgeHours: 50, lastResult: 'success' as const, sizeBytes: null }),
-      infra: available({ databaseUp: false, redisUp: true, redisMemoryUsedRatio: 0.9 }),
+      infra: available({
+        databaseUp: false,
+        redisUp: true,
+        redisMemoryUsedBytes: 900,
+        redisMemoryMaxBytes: 1000,
+      }),
     };
     const ids = evaluateDigest(snapshot, THRESHOLDS)
       .blocks.flatMap((block) => block.items)
@@ -224,5 +270,83 @@ describe('evaluateQueues', () => {
     const digest = evaluateDigest(blind as never, THRESHOLDS);
     expect(digest.level).toBe(DigestLevel.ACTION);
     expect(digest.blocks.flatMap((b) => b.items)[0]?.advice).toContain('сліпий');
+  });
+});
+
+describe('largest queue', () => {
+  const largestFact = (queues: Parameters<typeof evaluateQueues>[0]) =>
+    evaluateQueues(queues, THRESHOLDS).facts.find((fact) =>
+      fact.label.startsWith('найбільша черга'),
+    );
+
+  it('is the biggest single peak, never the sum of the peaks', () => {
+    const queues = [
+      { ...healthyQueue('ingestion'), backlogMax24h: measured(391, 380) },
+      { ...healthyQueue('ratings-backfill'), backlogMax24h: measured(174, 170) },
+      { ...healthyQueue('stats-queue'), backlogMax24h: measured(1, 1) },
+    ];
+    expect(largestFact(queues)).toEqual({
+      label: 'найбільша черга (ingestion), пік',
+      unit: 'count',
+      current: 391,
+      baseline: 380,
+    });
+  });
+
+  it('equals the maximum of the peaks for any queues', () => {
+    fc.assert(
+      fc.property(fc.array(queueArb, { minLength: 1, maxLength: 6 }), (queues) => {
+        const peaks = queues.map((queue) => queue.backlogMax24h.current);
+        expect(largestFact(queues)?.current).toBe(Math.max(...peaks));
+      }),
+    );
+  });
+
+  it('is reported as missing, not zero, when no queue has a backlog reading', () => {
+    const queues = [{ ...healthyQueue(), backlogMax24h: null, backlogNow: null }];
+    expect(largestFact(queues)).toEqual({
+      label: 'найбільша черга',
+      unit: 'count',
+      current: null,
+      baseline: null,
+    });
+  });
+});
+
+describe('redis memory', () => {
+  const infraFacts = (used: number | null, max: number | null) =>
+    evaluateDigest(
+      {
+        ...greenSnapshot(),
+        infra: available({
+          databaseUp: true,
+          redisUp: true,
+          redisMemoryUsedBytes: used,
+          redisMemoryMaxBytes: max,
+        }),
+      },
+      THRESHOLDS,
+    ).blocks.flatMap((block) => block.facts);
+
+  it('shows megabytes and no percentage when redis has no limit', () => {
+    const facts = infraFacts(9.5 * 1024 * 1024, null);
+    expect(facts).toContainEqual({
+      label: 'пам’ять Redis',
+      unit: 'megabytes',
+      current: 10,
+      baseline: null,
+    });
+    expect(facts.some((fact) => fact.unit === 'percent')).toBe(false);
+  });
+
+  it('shows a percentage only when a limit exists', () => {
+    const facts = infraFacts(500, 1000);
+    expect(facts.find((fact) => fact.unit === 'percent')?.current).toBe(50);
+  });
+
+  it('never turns missing memory into a number', () => {
+    const facts = infraFacts(null, null);
+    expect(facts.find((fact) => fact.label === 'пам’ять Redis')?.current).toBeNull();
+    expect(facts.some((fact) => fact.unit === 'percent')).toBe(false);
   });
 });

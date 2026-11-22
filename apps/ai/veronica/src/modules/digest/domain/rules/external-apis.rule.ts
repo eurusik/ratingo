@@ -4,6 +4,7 @@ import type { DigestItem, RuleOutcome } from '../entities/digest';
 import { FactUnit } from '../entities/digest';
 import type { DigestThresholds } from '../entities/digest-thresholds';
 import { measured } from '../entities/measured';
+import type { Measured } from '../entities/measured';
 import type { ApiKeyStat, HttpErrorStat } from '../entities/snapshot';
 import { ApiKeyState, HttpErrorKind } from '../entities/snapshot';
 import { factOf, itemOf, sumMeasured } from './rule-helpers';
@@ -50,6 +51,11 @@ export const evaluateApiKeys = (keys: readonly ApiKeyStat[]): RuleOutcome => ({
   ],
 });
 
+const isRateLimitGrowing = (count: Measured, thresholds: DigestThresholds): boolean =>
+  count.baseline !== null &&
+  count.current >= thresholds.http.rateLimitNoteMinCount &&
+  count.current >= count.baseline * (1 + thresholds.http.rateLimitGrowthRatioForNote);
+
 const httpItem = (error: HttpErrorStat, thresholds: DigestThresholds): DigestItem | null => {
   if (error.count.current <= 0) {
     return null;
@@ -66,13 +72,16 @@ const httpItem = (error: HttpErrorStat, thresholds: DigestThresholds): DigestIte
     );
   }
   const heavy = error.count.current >= thresholds.http.rateLimitCountForAction;
+  if (!heavy && !isRateLimitGrowing(error.count, thresholds)) {
+    return null;
+  }
   return itemOf(
     `http-rate-limit:${error.server}`,
     DigestBlock.SERVICES,
     heavy ? DigestLevel.ACTION : DigestLevel.NOTE,
     heavy
       ? `${name} часто обмежує швидкість: ліміт майже вичерпано. Зменш частоту запитів або підвищ тариф.`
-      : `${name} інколи обмежує швидкість. Поки що це не збій, але стеж, чи не росте.`,
+      : `${name} обмежує швидкість частіше, ніж тиждень тому. Поки що це не збій, але стеж, чи не росте.`,
     [fact],
   );
 };
