@@ -195,18 +195,21 @@ apps/ai/veronica/
         ├── chat/
         │   ├── chat.module.ts · chat.constants.ts · public/index.ts
         │   ├── domain/
-        │   │   ├── entities/conversation.ts · pending-action.ts
-        │   │   ├── constants/route.constants.ts            # commands, mentions, patterns
-        │   │   └── ports/conversation.repository.ts · pending-action.repository.ts · agent-gateway.port.ts
-        │   ├── application/services/chat.service.ts · router.service.ts · confirmation.service.ts
+        │   │   ├── entities/conversation.ts · intent.ts · pending-action.ts
+        │   │   ├── policies/allowlist.policy.ts · command-parser.policy.ts · mention-parser.policy.ts · pattern-router.policy.ts
+        │   │   └── ports/conversation-store.port.ts · pending-action-store.port.ts · happy-client.port.ts
+        │   ├── application/
+        │   │   ├── services/chat.service.ts · investigation.runner.ts
+        │   │   ├── commands/                                # one handler per command
+        │   │   └── workers/chat.worker.ts
         │   ├── infrastructure/
-        │   │   ├── repositories/redis.conversation-repository.ts · redis.pending-action-repository.ts
-        │   │   └── adapters/http.agent-gateway-adapter.ts
-        │   └── presentation/controllers/telegram-webhook.controller.ts
+        │   │   ├── stores/redis.conversation-store.ts · redis.pending-action-store.ts
+        │   │   └── adapters/http.happy-client.ts
+        │   └── presentation/telegram-webhook.controller.ts
         ├── notify/
         │   ├── notify.module.ts · public/index.ts
-        │   ├── domain/ports/notifier.port.ts
-        │   └── infrastructure/adapters/telegram.notifier-adapter.ts
+        │   ├── domain/ports/notifier.port.ts · chat-transport.port.ts · webhook-admin.port.ts
+        │   └── infrastructure/adapters/telegram.notifier-adapter.ts · telegram.chat-adapter.ts
         └── runs/
             ├── runs.module.ts · public/index.ts
             └── infrastructure/repositories/postgres.run-repository.ts
@@ -414,28 +417,79 @@ Per-job counters reset on every deploy, so a job that runs once a day looks like
 
 ## Veronica: chat and routing
 
-The Telegram bot runs in webhook mode (polling breaks with more than one replica) with Telegram's secret token header. It answers only when **both** the user ID and the chat ID are on the allowlist.
+The Telegram bot runs in webhook mode (polling breaks with more than one replica). Deterministic code comes first; the model answers only free-form questions.
 
 ```
-"Veronica, why did trending not update?"           → Veronica investigation
-"Happy, review https://github.com/.../pull/431"    → Happy, that PR
-"find where we call MDBList and how often it 429s"  → router decides
+"/status"                                            → command, no model
+"Veronica, why did trending not update?"             → investigation agent
+"Happy, review https://github.com/.../pull/431"      → Happy, that PR
+"how many people signed up this week?"               → free-form question → investigation agent
 ```
 
-Routing, cheapest first:
+### Principles
 
-1. **Commands:** `/digest`, `/review <PR>`, `/ask <agent> <question>`.
-2. **Mentions:** a message starting with an agent's name or alias.
-3. **Patterns:** a GitHub PR link goes to Happy. Patterns live in config.
-4. **Router:** only when nothing matches. A small run on the `fast` alias whose only tools are the other agents (`ask_happy`, later `ask_dume`) plus Veronica's own investigation. It passes a clear brief, or asks back when the request is ambiguous.
+- **Deterministic first.** Commands, mentions and patterns are plain code. The model is for free-form questions only.
+- **Veronica is read-only.** A write happens only after a confirm button.
+- **Agents keep their boundaries.** `ask_happy` is an HTTP call to Happy over the Railway private network with `HAPPY_SERVICE_TOKEN`. Veronica holds no GitHub write credentials.
+- **The webhook answers at once and the work runs in a queue.** Telegram never waits for a run.
 
-Rules:
+### Flow
 
-- **Event routing stays deterministic:** the schedule starts the digest, GitHub webhooks start Happy, buttons start the run they belong to. No model decides who handles an event.
-- **Agents keep their boundaries.** `ask_happy` is an HTTP call to Happy's service. The router holds no GitHub credentials.
-- **Conversations:** a Telegram reply thread is one `Conversation`, kept in Redis with a TTL. It holds message text, which is why it expires.
-- **Confirmation for writes:** anything that changes state outside the bot (posting a review, re-running a job, opening an issue) is offered as a button. The button carries an opaque single-use ID that maps to a pending action stored server-side with an expiry, never the action itself.
-- `/review` and the router act only on configured repositories.
+1. Telegram sends `POST /webhooks/telegram` through the Cloudflare WAF, which allows only that path (plus `GET /` and `/health`).
+2. The service verifies the secret header, then the allowlist: the sender's user ID **and** the chat ID, and the chat is private.
+3. It enqueues a BullMQ `chat` job (prefix `ai-veronica`, job id from the Telegram `update_id`) and returns 200 at once. A wrong secret gets 401; an unknown user, chat or update type gets 200 and is ignored, so the webhook reveals nothing about the allowlist.
+4. The worker routes the message, cheapest first: command → mention → pattern (a GitHub PR link goes to Happy) → free-form → investigation agent.
+5. It replies with sanitized Telegram HTML and records an `ai.runs` row (`trigger = chat`).
+
+The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_BOT_TOKEN, "ratingo-telegram-webhook"))`. It fits Telegram's charset and length, and rotating the bot token rotates it. On boot, when `TELEGRAM_WEBHOOK_URL` is set, the service registers the webhook (`allowed_updates: ["message"]`, `drop_pending_updates: false`) unless `getWebhookInfo` already matches.
+
+### Module layout `modules/chat`
+
+- **domain:** `Conversation`, `Intent`, `PendingAction`; policies `allowlist`, `command-parser`, `mention-parser`, `pattern-router`; ports `CHAT_TRANSPORT`, `CONVERSATION_STORE`, `PENDING_ACTION_STORE`, `HAPPY_CLIENT`. `CHAT_TRANSPORT` and the webhook admin port live in `modules/notify` next to the Telegram adapter; the chat module consumes them through `notify/public`.
+- **application:** `chat.service`, command handlers, `investigation.runner`, the BullMQ worker.
+- **infrastructure:** Telegram adapter (extends `notify`), Redis stores with TTL, Happy HTTP client.
+- **presentation:** `telegram-webhook.controller`.
+
+### Commands
+
+`/help`, `/digest` (builds and sends today's digest now through the digest pipeline without touching the daily `sent` claim, marked as on-demand), `/status` (one screen: block levels from the same rules engine), `/queues` and `/site` (those blocks in detail). Mentions, patterns and free text answer «Поки що розумію тільки команди: /help» until steps 2 and 3.
+
+### Investigation tools (read-only; steps 2–3)
+
+- `metrics_query`: only named PromQL templates with parameters, a window of at most 7 days, capped output. No free-form PromQL.
+- `product_stats`: the `reporting` views through `ai_reader`.
+- `digest_snapshot`: today's snapshot and rule outcomes.
+- `recent_changes`: deploys and merged PRs, read-only.
+- `ask_happy`: a question to Happy.
+
+No Railway logs and no free SQL; those are left to DUM-E later.
+
+### Security
+
+- The secret header is compared in constant time.
+- Allowlist: user ID and chat ID, private chat only for now.
+- User text and tool output are data, never instructions. They never choose tools or targets.
+- Output is sanitized: an allowlist of Telegram HTML tags, no links the bot did not build, the 4096-character limit.
+- Buttons carry an opaque single-use ID (TTL 15 minutes) that maps to a pending action stored server-side, never the action itself.
+- Per-message and per-day budgets, backed by the Redis spend store.
+
+### Failure modes
+
+- Model down: commands still work, and a free-form question gets honest raw numbers.
+- Telegram retries are idempotent by `update_id`.
+- Long runs post «шукаю…» first, then edit that same message.
+
+### Cost
+
+Commands cost $0. A free-form question on Haiku costs about $0.005–0.02.
+
+### Steps
+
+1. Webhook and commands (no model).
+2. Free-form Q&A with an eval set.
+3. Happy through Veronica (`ask_happy`, PR-link pattern).
+4. Confirm buttons.
+5. DUM-E.
 
 ---
 

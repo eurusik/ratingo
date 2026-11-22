@@ -21,7 +21,6 @@ import type {
   DigestRendererPort,
 } from '../../domain/ports/digest-renderer.port';
 
-export const TELEGRAM_MESSAGE_LIMIT = 4096;
 const SAFE_LENGTH = 3900;
 const ACTIONS_SHOWN = 8;
 const NOTES_SHOWN = 8;
@@ -219,7 +218,47 @@ const fitToLimit = (sections: Sections): string => {
   return assemble(current);
 };
 
+const blockDetail = (block: BlockReport, digest: Digest): string => {
+  const title = `<b>${BLOCK_TITLE[block.block]}</b>`;
+  if (!blockHasData(block, digest)) return `${title}\n${NO_DATA}`;
+  const items = block.items
+    .filter((item) => item.level !== DigestLevel.OK)
+    .map((item) => `${LEVEL_EMOJI[item.level]} ${safe(item.advice, LINE_MAX)}`);
+  const facts = block.facts.map((fact) => `• ${safe(formatFact(fact), LINE_MAX)}`);
+  const verdict = items.length === 0 ? [`${LEVEL_EMOJI[DigestLevel.OK]} усе гаразд`] : items;
+  return [title, ...verdict, ...facts].join('\n');
+};
+
 export class TelegramDigestTemplate implements DigestRendererPort {
+  renderStatus(digest: Digest): RenderedMessage {
+    const actions = actionLines(digest, null);
+    const sections: Sections = {
+      header: `${LEVEL_EMOJI[digest.level]} <b>${safe(defaultHeadline(digest), HEADLINE_MAX)}</b>`,
+      actions: actions.lines,
+      hiddenActions: actions.hidden,
+      notes: [],
+      blocks: DIGEST_BLOCK_ORDER.map((order) =>
+        digest.blocks.find((b) => b.block === order),
+      ).flatMap((block) => (block === undefined ? [] : [blockLine(block, digest)])),
+      interesting: null,
+      details: [],
+      footer: [sourceFooter(digest)],
+    };
+    return { html: fitToLimit(sections), silent: false };
+  }
+
+  renderBlocks(digest: Digest, blocks: readonly DigestBlock[]): RenderedMessage {
+    const wanted = digest.blocks.filter((report) => blocks.includes(report.block));
+    const parts = [
+      ...wanted.map((report) => blockDetail(report, digest)),
+      sourceFooter({
+        ...digest,
+        sources: digest.sources.filter((status) => blocks.includes(SOURCE_BLOCK[status.source])),
+      }),
+    ];
+    return { html: parts.join('\n\n'), silent: false };
+  }
+
   render({ digest, text, modelCostUsd }: DigestRenderInput): RenderedMessage {
     const headline = text?.headline ?? defaultHeadline(digest);
     const actions = actionLines(digest, text);

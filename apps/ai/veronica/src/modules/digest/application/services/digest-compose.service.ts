@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CLOCK_PORT, type ClockPort, type RunTrigger } from '@ratingo/ai-core';
 
 import { DIGEST_THRESHOLDS } from '../../../../config/digest.config';
+import type { DigestBlock } from '../../domain/constants/digest-block.constants';
 import type { Digest, RenderedMessage } from '../../domain/entities/digest';
 import {
   DIGEST_RENDERER_PORT,
@@ -28,9 +29,21 @@ export class DigestComposeService {
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
   ) {}
 
-  async compose(trigger: RunTrigger): Promise<ComposedDigest> {
+  async evaluate(): Promise<Digest> {
     const snapshot = await this.snapshots.take(this.clock.nowMs());
-    const digest = evaluateDigest(snapshot, DIGEST_THRESHOLDS);
+    return evaluateDigest(snapshot, DIGEST_THRESHOLDS);
+  }
+
+  async status(): Promise<RenderedMessage> {
+    return this.renderer.renderStatus(await this.evaluate());
+  }
+
+  async blocks(blocks: readonly DigestBlock[]): Promise<RenderedMessage> {
+    return this.renderer.renderBlocks(await this.evaluate(), blocks);
+  }
+
+  async compose(trigger: RunTrigger): Promise<ComposedDigest> {
+    const digest = await this.evaluate();
     const written = await this.texts.write(digest, trigger);
     return {
       digest,

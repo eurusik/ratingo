@@ -17,6 +17,16 @@ const modelEnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
 });
 
+const USER_ID_LIST = /^\d+(\s*,\s*\d+)*$/;
+
+const chatEnvSchema = z.object({
+  TELEGRAM_ALLOWED_USER_IDS: z.string().regex(USER_ID_LIST).optional(),
+  TELEGRAM_WEBHOOK_URL: z
+    .url()
+    .refine((value) => value.startsWith('https://'))
+    .optional(),
+});
+
 export const previewEnvSchema = grafanaEnvSchema
   .extend(modelEnvSchema.shape)
   .extend(productStatsEnvSchema.shape);
@@ -32,4 +42,5 @@ export const serviceEnvSchema = z.object({
   TELEGRAM_CHAT_ID: z.string().min(1),
   ...modelEnvSchema.shape,
   ...productStatsEnvSchema.shape,
+  ...chatEnvSchema.shape,
 });
