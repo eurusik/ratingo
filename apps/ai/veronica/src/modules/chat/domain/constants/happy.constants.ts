@@ -11,6 +11,8 @@ export const HAPPY_SUMMARY_MAX_CHARS = 400;
 export const HAPPY_QUESTION_MAX_CHARS = 160;
 export const HAPPY_QUESTIONS_SHOWN = 3;
 export const SHORT_SHA_LENGTH = 7;
+export const HAPPY_PICK_LIST_SHOWN = 5;
+export const HAPPY_PICK_TITLE_MAX_CHARS = 80;
 export const GITHUB_WEB_PREFIX = 'https://github.com/';
 
 export const HappyFollowUpAction = {

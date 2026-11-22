@@ -5,11 +5,13 @@ import {
   ReviewJobSource,
   ReviewResultService,
   parseRepository,
+  type OpenPullRequest,
   type PullRequestRef,
   type ReviewLookup,
 } from '../../../review/public';
 import {
   InternalRequestStatus,
+  OPEN_PULL_REQUESTS_LIMIT,
   type InternalSkipReason,
 } from '../../domain/constants/webhook.constants';
 import { decideInternalRequest } from '../../domain/policies/internal-request-policy';
@@ -69,6 +71,10 @@ export class InternalReviewService {
     return { status: statusFor(state), headSha };
   }
 
+  listOpen(): Promise<OpenPullRequest[]> {
+    return this.results.listOpenPullRequests(this.repository(), OPEN_PULL_REQUESTS_LIMIT);
+  }
+
   async latest(pullNumber: number): Promise<PullReviewState> {
     const ref = this.refFor(pullNumber);
     const lookup = await this.results.latest(ref);
@@ -85,10 +91,14 @@ export class InternalReviewService {
     return pending.some(Boolean);
   }
 
-  private refFor(pullNumber: number): PullRequestRef {
+  private repository(): { owner: string; repo: string } {
     const repository = parseRepository(this.config.allowedRepositories[0] ?? '');
     if (repository === null) throw new RepositoryNotConfiguredError();
-    return { ...repository, number: pullNumber };
+    return repository;
+  }
+
+  private refFor(pullNumber: number): PullRequestRef {
+    return { ...this.repository(), number: pullNumber };
   }
 }
 

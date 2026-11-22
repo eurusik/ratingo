@@ -43,6 +43,15 @@ const translate = (error: unknown): never => {
 export class InternalReviewController {
   constructor(private readonly reviews: InternalReviewService) {}
 
+  @Get()
+  async openPullRequests() {
+    try {
+      return { status: 'ok' as const, pullRequests: await this.reviews.listOpen() };
+    } catch (error) {
+      return translate(error);
+    }
+  }
+
   @Post(':number/review')
   @HttpCode(200)
   async request(@Param('number') number: string) {

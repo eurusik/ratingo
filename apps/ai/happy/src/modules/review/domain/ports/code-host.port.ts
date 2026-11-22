@@ -1,5 +1,6 @@
 import type {
   ChangedFiles,
+  OpenPullRequest,
   PullRequest,
   PullRequestRef,
   RepoRuleFile,
@@ -18,6 +19,10 @@ export interface ChangedFilesLimits {
 
 export interface CodeHostPort {
   getPullRequest(ref: PullRequestRef): Promise<PullRequest>;
+  listOpenPullRequests(
+    ref: Pick<PullRequestRef, 'owner' | 'repo'>,
+    limit: number,
+  ): Promise<OpenPullRequest[]>;
   listChangedFiles(ref: PullRequestRef, limits: ChangedFilesLimits): Promise<ChangedFiles>;
   readFile(
     ref: Pick<PullRequestRef, 'owner' | 'repo'>,

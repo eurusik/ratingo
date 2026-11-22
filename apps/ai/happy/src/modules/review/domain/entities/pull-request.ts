@@ -25,6 +25,13 @@ export interface PullRequest {
   headRepository: string | null;
 }
 
+export interface OpenPullRequest {
+  number: number;
+  title: string;
+  author: string;
+  updatedAt: string;
+}
+
 export const FileStatus = {
   ADDED: 'added',
   MODIFIED: 'modified',

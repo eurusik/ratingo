@@ -1,6 +1,7 @@
 import type {
   ChangedFile,
   ChangedFiles,
+  OpenPullRequest,
   PullRequest,
   PullRequestRef,
   RepoRuleFile,
@@ -39,6 +40,7 @@ export interface FakeCodeHostData {
   pr: PullRequest;
   files: ChangedFile[];
   contents: Record<string, string>;
+  open: OpenPullRequest[];
   rules: RepoRuleFile[];
 }
 
@@ -49,6 +51,10 @@ export class FakeCodeHost implements CodeHostPort {
 
   async getPullRequest(): Promise<PullRequest> {
     return this.data.pr;
+  }
+
+  async listOpenPullRequests(): Promise<OpenPullRequest[]> {
+    return this.data.open;
   }
 
   async listChangedFiles(): Promise<ChangedFiles> {
@@ -75,6 +81,7 @@ export const buildFakeCodeHost = (overrides: Partial<FakeCodeHostData> = {}): Fa
     pr: buildPullRequest(),
     files: [buildChangedFile()],
     contents: {},
+    open: [],
     rules: [],
     ...overrides,
   });

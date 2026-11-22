@@ -1,4 +1,9 @@
-import type { HappyLookup, HappyResult, HappyReviewRequest } from '../../domain/entities/happy';
+import type {
+  HappyLookup,
+  HappyOpenPullRequest,
+  HappyResult,
+  HappyReviewRequest,
+} from '../../domain/entities/happy';
 import { HappyUnavailableError } from '../../domain/ports/happy-client.port';
 
 import { HappyChatService } from './happy-chat.service';
@@ -23,7 +28,13 @@ const found = (result: HappyResult | null, reviewPending = false): HappyLookup =
   result,
 });
 
-const setup = (lookup: HappyLookup | Error, request?: HappyReviewRequest | Error) => {
+const NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
+
+const setup = (
+  lookup: HappyLookup | Error,
+  request?: HappyReviewRequest | Error,
+  open: HappyOpenPullRequest[] = [],
+) => {
   const latestResult = jest.fn(async () => {
     if (lookup instanceof Error) throw lookup;
     return lookup;
@@ -34,12 +45,13 @@ const setup = (lookup: HappyLookup | Error, request?: HappyReviewRequest | Error
   });
   const scheduled: { followUp: unknown; delay: number }[] = [];
   const service = new HappyChatService(
-    { latestResult, requestReview },
+    { latestResult, requestReview, listOpenPullRequests: async () => open },
     {
       enqueue: async () => undefined,
       scheduleHappyFollowUp: async (followUp, delay) => void scheduled.push({ followUp, delay }),
     },
     { repository: 'eurusik/ratingo' },
+    { nowMs: () => NOW_MS },
   );
   return { service, latestResult, requestReview, scheduled };
 };
@@ -111,5 +123,66 @@ describe('HappyChatService', () => {
 
   it('lets unexpected errors through for the queue to retry', async () => {
     await expect(setup(new Error('boom')).service.reply('10', number(1))).rejects.toThrow('boom');
+  });
+
+  describe('without a number', () => {
+    const pick = { kind: 'pick' as const };
+    const open = (number: number, title = 'Fix <b>trending</b>'): HappyOpenPullRequest => ({
+      number,
+      title,
+      author: 'alice',
+      updatedAtMs: NOW_MS - 2 * 3_600_000,
+    });
+
+    it('takes the only open pull request, names it and answers as with a number', async () => {
+      const { service, requestReview, scheduled } = setup(found(null), undefined, [open(471)]);
+      const html = await service.reply('10', pick);
+      expect(html).toContain('Беру PR №471 «Fix &lt;b&gt;trending&lt;/b&gt;»');
+      expect(html).toContain('Хеппі взявся');
+      expect(requestReview).toHaveBeenCalledWith(471);
+      expect(scheduled).toHaveLength(1);
+    });
+
+    it('shows a fresh result for the only open pull request without a new review', async () => {
+      const { service, requestReview } = setup(found(RESULT), undefined, [open(471)]);
+      const html = await service.reply('10', pick);
+      expect(html).toContain('Периметр чистий');
+      expect(requestReview).not.toHaveBeenCalled();
+    });
+
+    it('lists up to five when there are several and starts nothing', async () => {
+      const pulls = [1, 2, 3, 4, 5, 6].map((n) => open(n));
+      const { service, requestReview, latestResult } = setup(found(null), undefined, pulls);
+      const html = await service.reply('10', pick);
+      expect(html).toContain('Який глянути?');
+      expect(html).toContain('№5');
+      expect(html).not.toContain('№6');
+      expect(html).toContain('2 год тому');
+      expect(html).toContain('alice');
+      expect(requestReview).not.toHaveBeenCalled();
+      expect(latestResult).not.toHaveBeenCalled();
+    });
+
+    it('says there is nothing to review when no pull request is open', async () => {
+      const { service, requestReview } = setup(found(null), undefined, []);
+      expect(await service.reply('10', pick)).toContain('немає');
+      expect(requestReview).not.toHaveBeenCalled();
+    });
+
+    it('answers honestly when Happy cannot list pull requests', async () => {
+      const service = new HappyChatService(
+        {
+          latestResult: jest.fn(),
+          requestReview: jest.fn(),
+          listOpenPullRequests: async () => {
+            throw new HappyUnavailableError('HTTP 502');
+          },
+        },
+        { enqueue: jest.fn(), scheduleHappyFollowUp: jest.fn() },
+        { repository: 'eurusik/ratingo' },
+        { nowMs: () => NOW_MS },
+      );
+      expect(await service.reply('10', pick)).toContain('недоступний');
+    });
   });
 });
