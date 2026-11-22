@@ -36,6 +36,17 @@
     },
     "packages/ai-core": {
       "project": ["src/**/*.ts", "*.cjs"]
+    },
+    "apps/ai/veronica": {
+      "entry": ["src/main.ts", "src/scripts/*.ts"],
+      "project": ["src/**/*.ts", "*.{js,ts}"],
+      "jest": {
+        "config": ["jest.config.js"]
+      },
+      "drizzle": {
+        "config": ["drizzle.config.js"]
+      },
+      "ignoreDependencies": ["fastify"]
     }
   },
   "ignoreIssues": {
