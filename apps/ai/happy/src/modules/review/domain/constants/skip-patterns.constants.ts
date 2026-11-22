@@ -5,6 +5,7 @@ export const SkipReason = {
   DOCS_ONLY: 'docs_only',
   NOTHING_TO_REVIEW: 'nothing_to_review',
   TRIVIAL: 'trivial',
+  TOO_LARGE: 'too_large',
 } as const;
 export type SkipReason = (typeof SkipReason)[keyof typeof SkipReason];
 

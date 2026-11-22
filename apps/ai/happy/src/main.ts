@@ -9,7 +9,9 @@ import { AppModule } from './app.module';
 import { INFRA_CONFIG, type InfraConfig } from './config/config.constants';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
+    rawBody: true,
+  });
   app.enableShutdownHooks();
   const { port } = app.get<InfraConfig>(INFRA_CONFIG);
   await app.listen(port, '0.0.0.0');

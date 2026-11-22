@@ -10,5 +10,6 @@
     "incremental": false,
     "types": ["node"]
   },
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.testing.ts"]
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.testing.ts"],
+  "include": ["src/**/*.ts"]
 }

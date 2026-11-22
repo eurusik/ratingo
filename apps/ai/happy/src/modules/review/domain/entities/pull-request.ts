@@ -4,14 +4,23 @@ export interface PullRequestRef {
   number: number;
 }
 
+export const PullRequestState = {
+  OPEN: 'open',
+  CLOSED: 'closed',
+} as const;
+export type PullRequestState = (typeof PullRequestState)[keyof typeof PullRequestState];
+
 export interface PullRequest {
   ref: PullRequestRef;
+  state: PullRequestState;
+  merged: boolean;
   title: string;
   body: string;
   author: string;
   isDraft: boolean;
   baseRef: string;
   baseSha: string;
+  headRef: string;
   headSha: string;
   headRepository: string | null;
 }

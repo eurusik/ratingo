@@ -6,9 +6,8 @@ import {
   MAX_READ_FILE_BYTES,
   MAX_READ_FILE_LINES,
 } from '../../domain/constants/review-limits.constants';
-import { SENSITIVE_PATH_PATTERNS } from '../../domain/constants/skip-patterns.constants';
 import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
-import { matchesAnyGlob } from '../../domain/policies/glob-match';
+import { isSafePath } from '../../domain/policies/safe-path';
 import type { RepoRule } from '../../domain/policies/rule-selector';
 import { findRulesByTopic } from '../../domain/policies/rule-selector';
 import type { CodeHostPort } from '../../domain/ports/code-host.port';
@@ -23,11 +22,6 @@ export interface ReviewToolContext {
   files: readonly ChangedFile[];
   rules: readonly RepoRule[];
 }
-
-const isSafePath = (path: string): boolean =>
-  !path.startsWith('/') &&
-  !path.split('/').includes('..') &&
-  !matchesAnyGlob(SENSITIVE_PATH_PATTERNS, path);
 
 const numberLines = (content: string, start: number, end: number): string =>
   content

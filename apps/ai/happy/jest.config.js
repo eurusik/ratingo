@@ -1,12 +1,13 @@
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
-  rootDir: 'src',
+  rootDir: '.',
+  roots: ['<rootDir>/src', '<rootDir>/eval'],
   testRegex: '.*\\.spec\\.ts$',
-  transform: { '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/../tsconfig.json' }] },
+  transform: { '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }] },
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
-    '^@ratingo/ai-core$': '<rootDir>/../../../../packages/ai-core/src',
-    '^@ratingo/node-telemetry$': '<rootDir>/../../../../packages/node-telemetry/src',
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@ratingo/ai-core$': '<rootDir>/../../../packages/ai-core/src',
+    '^@ratingo/node-telemetry$': '<rootDir>/../../../packages/node-telemetry/src',
   },
 };

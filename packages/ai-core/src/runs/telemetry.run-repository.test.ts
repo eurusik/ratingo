@@ -151,6 +151,10 @@ describe('TelemetryRunRepository', () => {
       stopReason: 'end',
       turns: 1,
       costUsd: 0.004,
+      inputTokens: 100,
+      outputTokens: 20,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
     });
   });
 

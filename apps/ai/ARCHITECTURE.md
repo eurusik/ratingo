@@ -441,17 +441,19 @@ Rules:
 
 ## Happy: code review
 
-1. **Webhook:** GitHub App events `pull_request` (`opened`, `synchronize`, `ready_for_review`). The signature is checked against the raw body, the delivery ID is de-duplicated, and the handler returns 2xx at once after enqueueing a job.
-2. **Coalescing:** one job per PR (`jobId` per repo and PR, short delay), so a burst of pushes produces one review of the latest commit; a stale run is cancelled.
+1. **Webhook:** GitHub App events `pull_request` (`opened`, `ready_for_review`, `reopened`) and `issue_comment` with the exact command `@happy review` from an owner, member or collaborator. A new push (`synchronize`) does not start a review: Happy reviews once, when the PR is ready. The signature is checked against the raw body, and the handler returns 2xx at once after enqueueing a job.
+2. **Idempotency:** the job id is repository, PR and head commit (a command is keyed by its comment), so a redelivery is one job. Before publishing, the worker skips a PR that is closed, merged or no longer at the reviewed commit.
 3. **Scope:** drafts are skipped. Only PRs from the same repository or from allowlisted authors are reviewed, so a fork PR cannot spend the budget.
 4. **Incremental diff:** the hidden state marker records the last reviewed commit and posted finding fingerprints; only new changes are reviewed.
 5. **Filtering:** lockfiles, generated `packages/api-contract` types, snapshots and migration metadata are skipped.
 6. **Rules from the base branch.** `CLAUDE.md`, `.claude/rules/*.md` (matched by their `paths:` frontmatter), prompts and config are always read from the PR's base branch. Anything from the PR head is untrusted data inside clear delimiters, never instructions.
 7. **Findings:** structured output (file, line, severity, message, suggestion). Code checks every line against the diff hunks and drops the rest.
 8. **Posting:** one review with event `COMMENT` only, never `APPROVE` or `REQUEST_CHANGES`, plus a summary comment updated in place. Model text is stripped of `@mentions`, images and external links before posting.
-9. **Shadow mode first:** Happy posts only a check run with a `neutral` conclusion while CodeRabbit keeps reviewing. CodeRabbit is turned off once Happy finds as many real issues with less noise.
+9. **Shadow mode first:** Happy posts only a check run with a `neutral` conclusion (summary in the output, findings as annotations) while CodeRabbit keeps reviewing. CodeRabbit is turned off once Happy finds as many real issues with less noise.
+10. **Precision:** each finding carries evidence that code checks against the head file, otherwise it becomes a question; deterministic precedents; a coverage section that lists unreviewed files; a file-list prompt for large diffs. `apps/ai/happy/eval` measures it.
+11. **Release PRs** (`development` into `main`) get a checklist from the diff (migrations, new env names, changed apps, dependencies) with no model call.
 
-Model: `review` alias. A cheap first pass on `fast` can mark risky files so the larger model reads only those. GitHub App permissions: `contents: read`, `pull_requests: write`, `checks: write`.
+Model: `review` alias. A cheap first pass on `fast` can mark risky files so the larger model reads only those. GitHub App permissions: `contents: read`, `pull_requests: read`, `checks: write`, `metadata: read`. Posting comments later needs `pull_requests: write`.
 
 ---
 

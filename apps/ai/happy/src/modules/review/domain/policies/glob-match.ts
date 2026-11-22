@@ -1,4 +1,9 @@
-const REGEX_SPECIAL = /[.+^${}()|[\]\\]/g;
+const REGEX_SPECIAL = /[.+^$()|[\]\\]/g;
+
+const braceDepth = (pattern: string, index: number): number => {
+  const before = pattern.slice(0, index);
+  return (before.match(/\{/g)?.length ?? 0) - (before.match(/\}/g)?.length ?? 0);
+};
 
 const compiled = new Map<string, RegExp>();
 
@@ -12,6 +17,12 @@ const compile = (pattern: string): RegExp => {
       index += followedBySlash ? 2 : 1;
     } else if (char === '*') {
       source += '[^/]*';
+    } else if (char === '{') {
+      source += '(?:';
+    } else if (char === '}') {
+      source += ')';
+    } else if (char === ',' && braceDepth(pattern, index) > 0) {
+      source += '|';
     } else if (char === '?') {
       source += '[^/]';
     } else {

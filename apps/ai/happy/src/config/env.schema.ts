@@ -5,6 +5,7 @@ const DEFAULT_GITHUB_API_URL = 'https://api.github.com';
 const DEFAULT_FAST_MODEL = 'stub:triage';
 const DEFAULT_REVIEW_MODEL = 'stub:review';
 const MIN_SERVICE_TOKEN_CHARS = 24;
+const MIN_WEBHOOK_SECRET_CHARS = 16;
 
 const csvList = z
   .string()
@@ -35,7 +36,10 @@ export const cliEnvSchema = modelEnvSchema.extend(githubEnvSchema.shape).extend(
 export const serviceEnvSchema = modelEnvSchema.extend(githubEnvSchema.shape).extend({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(DEFAULT_PORT),
-  GITHUB_TOKEN: z.string().min(1),
+  REDIS_URL: z.string().min(1),
+  GITHUB_APP_ID: z.string().min(1),
+  GITHUB_APP_PRIVATE_KEY: z.string().min(1),
+  GITHUB_WEBHOOK_SECRET: z.string().min(MIN_WEBHOOK_SECRET_CHARS),
   HAPPY_ALLOWED_REPOS: csvList.refine((repos) => repos.length > 0, {
     message: 'at least one repository is required',
   }),

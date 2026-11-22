@@ -84,7 +84,7 @@ const spendLogger = new NestSpendLogger();
       },
     },
   ],
-  exports: [CLOCK_PORT, AGENT_FOLDER, AgentRunner],
+  exports: [CLOCK_PORT, AGENT_FOLDER, AI_METER, AgentRunner],
 })
 export class AiCoreModule implements OnModuleDestroy {
   constructor(@Inject(SPEND_REDIS) private readonly redis: Redis | null) {}

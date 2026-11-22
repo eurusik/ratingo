@@ -43,6 +43,20 @@ describe('sanitizeModelText', () => {
     );
   });
 
+  it('does not let a replaced link turn the text before it into an image opener', () => {
+    const clean = sanitizeModelText('!<https://a.b>(');
+    expect(clean).not.toMatch(/!\[[^\]]*\]\(/);
+    expect(sanitizeModelText('!<https://a.b>(see)')).not.toMatch(/!\[/);
+    expect(sanitizeModelText('!<https://a.b>')).toBe('[link removed]');
+  });
+
+  it('survives the case that failed CI (seed -1425297086, path 27:2:0:8)', () => {
+    fc.assert(
+      fc.property(proseArb, (text) => !/!\[[^\]]*\]\(/.test(sanitizeModelText(text))),
+      { seed: -1425297086, path: '27:2:0:8', numRuns: 200 },
+    );
+  });
+
   it('is idempotent', () => {
     fc.assert(
       fc.property(fc.oneof(proseArb, fc.string()), (text) => {

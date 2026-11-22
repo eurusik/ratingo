@@ -7,6 +7,7 @@ const AUTOLINK = /<(?:https?|ftp|mailto):[^>]*>/gi;
 const BARE_URL = /(?:https?|ftp):\/\/[^\s)>\]]+/gi;
 const WWW_URL = /\bwww\.[^\s)>\]]+/gi;
 const MENTION = /(^|[^\w`])@+(?=\w)/g;
+const IMAGE_OPENER = /!(?=\[)/g;
 const MAX_PASSES = 5;
 const LINK_REMOVED = '[link removed]';
 
@@ -19,7 +20,8 @@ const sanitizeOnce = (text: string): string =>
     .replace(AUTOLINK, LINK_REMOVED)
     .replace(BARE_URL, LINK_REMOVED)
     .replace(WWW_URL, LINK_REMOVED)
-    .replace(MENTION, '$1');
+    .replace(MENTION, '$1')
+    .replace(IMAGE_OPENER, '');
 
 const sanitizeProse = (text: string): string => {
   let current = text;
