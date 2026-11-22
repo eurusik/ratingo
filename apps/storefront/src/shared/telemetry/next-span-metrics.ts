@@ -14,11 +14,13 @@ import {
   UNMATCHED_ROUTE,
 } from '@ratingo/node-telemetry';
 
+import { isClientKind } from './client-kind';
 import { clientKindOf } from './client-kind-propagator';
 import {
   CLIENT_KIND,
   CLIENT_KIND_LABEL,
   CLIENT_KIND_SPAN_ATTRIBUTE,
+  type ClientKind,
   COLD_CACHE_ENTRY_REASON,
   FAILED_FETCH_STATUS,
   FETCH_CACHE_STATUS,
@@ -51,12 +53,17 @@ const routeOf = ({ attributes }: ReadableSpan): string =>
 const statusAttribute = (status: number | undefined): Attributes =>
   status === undefined ? {} : { 'http.response.status_code': status };
 
+function clientKindLabel(span: ReadableSpan): ClientKind {
+  const kind = span.attributes[CLIENT_KIND_SPAN_ATTRIBUTE];
+  return isClientKind(kind) ? kind : CLIENT_KIND.HUMAN;
+}
+
 function requestAttributes(span: ReadableSpan): Attributes {
   return {
     'http.request.method': normalizeMethod(span.attributes['http.method']),
     'http.route': routeOf(span),
     'next.rsc': span.attributes['next.rsc'] === true,
-    [CLIENT_KIND_LABEL]: asString(span.attributes[CLIENT_KIND_SPAN_ATTRIBUTE]) ?? CLIENT_KIND.HUMAN,
+    [CLIENT_KIND_LABEL]: clientKindLabel(span),
     ...statusAttribute(asNumber(span.attributes['http.status_code'])),
   };
 }

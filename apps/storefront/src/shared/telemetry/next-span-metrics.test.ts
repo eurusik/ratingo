@@ -7,7 +7,8 @@ import {
   type Meter,
   SpanStatusCode,
 } from '@opentelemetry/api';
-import type { ReadableSpan, Span } from '@opentelemetry/sdk-trace-node';
+import { CompositePropagator, W3CTraceContextPropagator } from '@opentelemetry/core';
+import { NodeTracerProvider, type ReadableSpan, type Span } from '@opentelemetry/sdk-trace-node';
 
 import { ClientKindPropagator } from './client-kind-propagator';
 import {
@@ -130,6 +131,48 @@ describe('NextSpanMetricsProcessor', () => {
     );
 
     expect(setAttribute).not.toHaveBeenCalled();
+  });
+
+  it('ignores a client kind on the span that is not one of the known kinds', () => {
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(
+      span({
+        'next.span_type': 'BaseServer.handleRequest',
+        'ratingo.client_kind': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
+      }),
+    );
+
+    expect(histograms.get(REQUEST_DURATION_METRIC)).toHaveBeenCalledWith(
+      0.25,
+      expect.objectContaining({ client_kind: 'human' }),
+    );
+  });
+
+  it('labels the metric end to end from the user agent through a real tracer provider', () => {
+    const { processor, histograms } = fakeMeter();
+    const provider = new NodeTracerProvider({ spanProcessors: [processor] });
+    const propagator = new CompositePropagator({
+      propagators: [new W3CTraceContextPropagator(), new ClientKindPropagator()],
+    });
+    const context = propagator.extract(
+      ROOT_CONTEXT,
+      { 'user-agent': 'Mozilla/5.0 (compatible; Bytespider)' },
+      defaultTextMapGetter,
+    );
+
+    provider
+      .getTracer('test')
+      .startSpan(
+        'GET',
+        { attributes: { 'next.span_type': 'BaseServer.handleRequest', 'http.method': 'GET' } },
+        context,
+      )
+      .end();
+
+    expect(histograms.get(REQUEST_DURATION_METRIC)).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.objectContaining({ client_kind: 'ai_crawler' }),
+    );
   });
 
   it('records render duration by route', () => {

@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 
-import { classifyClientKind } from './client-kind';
+import { classifyClientKind, isClientKind } from './client-kind';
 import { CLIENT_KIND } from './constants';
 
 const CHROME =
@@ -103,5 +103,15 @@ describe('classifyClientKind', () => {
         expect(Object.values(CLIENT_KIND)).toContain(classifyClientKind(userAgent));
       }),
     );
+  });
+});
+
+describe('isClientKind', () => {
+  it.each(['human', 'bot', 'ai_crawler'])('accepts %s', (value) => {
+    expect(isClientKind(value)).toBe(true);
+  });
+
+  it.each(['Googlebot/2.1', '', 'HUMAN', undefined, 7, null])('rejects %p', (value) => {
+    expect(isClientKind(value)).toBe(false);
   });
 });

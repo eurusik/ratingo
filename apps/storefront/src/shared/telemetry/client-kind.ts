@@ -7,6 +7,11 @@ import {
   USER_AGENT_MAX_LENGTH,
 } from './constants';
 
+const CLIENT_KINDS: ReadonlySet<string> = new Set(Object.values(CLIENT_KIND));
+
+export const isClientKind = (value: unknown): value is ClientKind =>
+  typeof value === 'string' && CLIENT_KINDS.has(value);
+
 const includesAny = (userAgent: string, markers: readonly string[]): boolean =>
   markers.some((marker) => userAgent.includes(marker));
 
