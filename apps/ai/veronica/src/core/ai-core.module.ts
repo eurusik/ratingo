@@ -19,6 +19,7 @@ import {
 import { MODEL_ALIAS_NAMES, MODEL_PRICES, STUB_PROVIDER } from '../config/models.config';
 
 import { AGENT_FOLDER, AGENT_LOOP } from './ai-core.constants';
+import { InterruptedRunsRecovery } from './interrupted-runs.recovery';
 import { createDigestStubScript } from './stub-digest.script';
 
 const AGENT_FOLDER_PATH = path.resolve(__dirname, '../../agent');
@@ -26,6 +27,7 @@ const AGENT_FOLDER_PATH = path.resolve(__dirname, '../../agent');
 @Global()
 @Module({
   providers: [
+    InterruptedRunsRecovery,
     { provide: CLOCK_PORT, useFactory: (): ClockPort => new SystemClock() },
     {
       provide: AGENT_FOLDER,

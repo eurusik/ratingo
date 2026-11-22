@@ -483,6 +483,23 @@ jobs:
     if: needs.changes.outputs.veronica == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ratingo
+          POSTGRES_PASSWORD: ratingo
+          POSTGRES_DB: veronica_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ratingo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://ratingo:ratingo@localhost:5432/veronica_test
+      VERONICA_TEST_DATABASE_URL: postgres://ratingo:ratingo@localhost:5432/veronica_test
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -499,7 +516,10 @@ jobs:
       - name: Typecheck
         run: npm run typecheck --workspace=@ratingo/ai-veronica
 
-      - name: Unit tests
+      - name: Apply ai schema migrations
+        run: npm run db:migrate --workspace=@ratingo/ai-veronica
+
+      - name: Unit and database tests
         run: npm test --workspace=@ratingo/ai-veronica -- --ci
 
       - name: Build

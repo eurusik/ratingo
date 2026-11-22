@@ -52,7 +52,7 @@ export class TelegramNotifierAdapter implements NotifierPort {
       });
     } catch (error) {
       const reason = error instanceof Error ? error.name : 'unknown';
-      throw new NotificationError(`Не вдалося звернутися до Telegram (${reason})`);
+      throw new NotificationError(`Не вдалося звернутися до Telegram (${reason})`, true, true);
     }
   }
 

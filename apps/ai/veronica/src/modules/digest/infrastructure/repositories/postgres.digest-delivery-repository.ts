@@ -1,4 +1,4 @@
-import { and, eq, lt, sql } from 'drizzle-orm';
+import { and, eq, lt, ne, sql } from 'drizzle-orm';
 
 import type { Database } from '../../../../database/database.module';
 import { digestDeliveries } from '../../../../database/schema';
@@ -8,6 +8,7 @@ import type {
 } from '../../domain/ports/digest-delivery.repository';
 
 const CLAIMED = 'claimed';
+const SENDING = 'sending';
 const SENT = 'sent';
 
 export class PostgresDigestDeliveryRepository implements DigestDeliveryRepository {
@@ -29,6 +30,13 @@ export class PostgresDigestDeliveryRepository implements DigestDeliveryRepositor
     return claimed.length > 0;
   }
 
+  async markSending(date: string): Promise<void> {
+    await this.db
+      .update(digestDeliveries)
+      .set({ status: SENDING })
+      .where(eq(digestDeliveries.digestDate, date));
+  }
+
   async markSent(delivery: DigestDelivery): Promise<void> {
     await this.db
       .update(digestDeliveries)
@@ -44,6 +52,6 @@ export class PostgresDigestDeliveryRepository implements DigestDeliveryRepositor
   async release(date: string): Promise<void> {
     await this.db
       .delete(digestDeliveries)
-      .where(and(eq(digestDeliveries.digestDate, date), eq(digestDeliveries.status, CLAIMED)));
+      .where(and(eq(digestDeliveries.digestDate, date), ne(digestDeliveries.status, SENT)));
   }
 }

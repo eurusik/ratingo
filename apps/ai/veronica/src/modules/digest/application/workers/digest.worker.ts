@@ -6,7 +6,7 @@ import {
   type OnModuleInit,
 } from '@nestjs/common';
 
-import { UnrecoverableError, Worker, type Job } from 'bullmq';
+import { UnrecoverableError, Worker, type Job, type Queue } from 'bullmq';
 import type IORedis from 'ioredis';
 
 import { RunTrigger } from '@ratingo/ai-core';
@@ -15,6 +15,7 @@ import {
   DIGEST_JOB_TYPES,
   DIGEST_QUEUE,
   DIGEST_QUEUE_PREFIX,
+  DIGEST_QUEUE_TOKEN,
   REDIS_CONNECTION,
 } from '../../digest.constants';
 import { NotificationError } from '../../../notify/public';
@@ -27,6 +28,7 @@ export class DigestWorker implements OnModuleInit, OnApplicationShutdown {
 
   constructor(
     private readonly delivery: DigestDeliveryService,
+    @Inject(DIGEST_QUEUE_TOKEN) private readonly queue: Queue,
     @Inject(REDIS_CONNECTION) private readonly connection: IORedis,
   ) {}
 
@@ -43,6 +45,8 @@ export class DigestWorker implements OnModuleInit, OnApplicationShutdown {
 
   async onApplicationShutdown(): Promise<void> {
     await this.worker?.close();
+    await this.queue.close();
+    this.connection.disconnect();
   }
 
   async process(job: Pick<Job, 'name'>): Promise<string> {

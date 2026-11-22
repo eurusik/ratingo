@@ -49,8 +49,10 @@ const UNIT_SUFFIX: Readonly<Record<FactUnit, string>> = {
 const escapeHtml = (value: string): string =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-const clip = (value: string, max: number): string =>
-  value.length > max ? `${value.slice(0, max - 1)}…` : value;
+const clip = (value: string, max: number): string => {
+  const characters = Array.from(value);
+  return characters.length > max ? `${characters.slice(0, max - 1).join('')}…` : value;
+};
 
 const safe = (value: string, max: number): string => escapeHtml(clip(value, max));
 

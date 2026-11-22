@@ -6,7 +6,7 @@ import { DigestWorker } from './digest.worker';
 import type { DigestDeliveryService } from '../services/digest-delivery.service';
 
 const workerWith = (deliver: jest.Mock) =>
-  new DigestWorker({ deliver } as unknown as DigestDeliveryService, {} as never);
+  new DigestWorker({ deliver } as unknown as DigestDeliveryService, {} as never, {} as never);
 
 describe('DigestWorker', () => {
   it('ignores unknown job types', async () => {

@@ -1,4 +1,4 @@
-import { Module, type OnApplicationShutdown, Inject } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
@@ -49,14 +49,4 @@ import { PostgresDigestDeliveryRepository } from './infrastructure/repositories/
     DigestWorker,
   ],
 })
-export class DigestScheduleModule implements OnApplicationShutdown {
-  constructor(
-    @Inject(DIGEST_QUEUE_TOKEN) private readonly queue: Queue,
-    @Inject(REDIS_CONNECTION) private readonly connection: IORedis,
-  ) {}
-
-  async onApplicationShutdown(): Promise<void> {
-    await this.queue.close();
-    this.connection.disconnect();
-  }
-}
+export class DigestScheduleModule {}

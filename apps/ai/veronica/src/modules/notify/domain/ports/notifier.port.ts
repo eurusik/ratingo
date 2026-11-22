@@ -13,6 +13,7 @@ export class NotificationError extends Error {
   constructor(
     message: string,
     readonly retryable: boolean = true,
+    readonly deliveryUnknown: boolean = false,
   ) {
     super(message);
     this.name = 'NotificationError';

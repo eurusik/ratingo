@@ -7,6 +7,7 @@ export interface DigestDelivery {
 
 export interface DigestDeliveryRepository {
   claim(date: string, nowMs: number, staleAfterMs: number): Promise<boolean>;
+  markSending(date: string): Promise<void>;
   markSent(delivery: DigestDelivery): Promise<void>;
   release(date: string): Promise<void>;
 }

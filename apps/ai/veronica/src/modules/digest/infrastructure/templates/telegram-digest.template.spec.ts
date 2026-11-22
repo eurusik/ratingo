@@ -154,4 +154,12 @@ describe('TelegramDigestTemplate', () => {
       .filter((item) => item.level === DigestLevel.ACTION).length;
     expect(numbered + hidden).toBe(total);
   });
+
+  it('never splits an emoji when clipping long model text', () => {
+    const digest = evaluateDigest(redSnapshot(), THRESHOLDS);
+    const headline = '😀'.repeat(400);
+    const html = render(digest, { headline, adviceById: {} }).html;
+    expect(html).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/);
+    expect(html).not.toMatch(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/);
+  });
 });
