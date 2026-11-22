@@ -13,6 +13,7 @@ import { DATABASE } from '../../database/database.constants';
 import type { Database } from '../../database/database.module';
 import { NotifyModule } from '../notify/public';
 
+import { WatchdogQueueRepair } from './application/services/watchdog-queue-repair.service';
 import { WatchdogSchedulerService } from './application/services/watchdog-scheduler.service';
 import { WatchdogService } from './application/services/watchdog.service';
 import { WatchdogWorker } from './application/workers/watchdog.worker';
@@ -20,12 +21,14 @@ import {
   DIGEST_DELIVERY_PROBE_PORT,
   FAILED_RUNS_PORT,
   HAPPY_HEALTH_PORT,
+  QUEUE_KEY_REPAIR_PORT,
   WATCHDOG_HEARTBEAT_PORT,
   WATCHDOG_STATE_PORT,
 } from './domain/ports/watchdog.ports';
 import { HttpHappyHealthAdapter } from './infrastructure/adapters/http.happy-health.adapter';
 import { PostgresDigestDeliveryProbe } from './infrastructure/repositories/postgres.digest-delivery-probe';
 import { PostgresFailedRunsRepository } from './infrastructure/repositories/postgres.failed-runs.repository';
+import { RedisQueueKeyRepair } from './infrastructure/stores/redis.queue-key-repair';
 import { RedisWatchdogStateStore } from './infrastructure/stores/redis.watchdog-state.store';
 import { OtelWatchdogHeartbeat } from './infrastructure/telemetry/otel-watchdog-heartbeat';
 import {
@@ -73,6 +76,12 @@ import {
       inject: [REDIS_CONNECTION],
       useFactory: (connection: IORedis) => new RedisWatchdogStateStore(connection),
     },
+    {
+      provide: QUEUE_KEY_REPAIR_PORT,
+      inject: [REDIS_CONNECTION],
+      useFactory: (connection: IORedis) => new RedisQueueKeyRepair(connection),
+    },
+    WatchdogQueueRepair,
     { provide: WATCHDOG_HEARTBEAT_PORT, useFactory: () => new OtelWatchdogHeartbeat() },
     WatchdogService,
     WatchdogSchedulerService,

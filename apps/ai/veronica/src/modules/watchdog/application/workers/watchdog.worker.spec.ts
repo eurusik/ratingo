@@ -3,7 +3,12 @@ import type { WatchdogService } from '../services/watchdog.service';
 import { WatchdogWorker } from './watchdog.worker';
 
 const workerWith = (tick: jest.Mock) =>
-  new WatchdogWorker({ tick } as unknown as WatchdogService, {} as never, {} as never);
+  new WatchdogWorker(
+    { tick } as unknown as WatchdogService,
+    { ensure: async () => undefined } as never,
+    {} as never,
+    {} as never,
+  );
 
 describe('WatchdogWorker', () => {
   it('runs a tick for a tick job', async () => {

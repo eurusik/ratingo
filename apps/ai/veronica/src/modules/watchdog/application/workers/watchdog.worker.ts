@@ -16,6 +16,7 @@ import {
   WATCHDOG_QUEUE_PREFIX,
   WATCHDOG_QUEUE_TOKEN,
 } from '../../watchdog.constants';
+import { WatchdogQueueRepair } from '../services/watchdog-queue-repair.service';
 import { WatchdogService } from '../services/watchdog.service';
 
 @Injectable()
@@ -25,11 +26,13 @@ export class WatchdogWorker implements OnModuleInit, OnApplicationShutdown {
 
   constructor(
     private readonly watchdog: WatchdogService,
+    private readonly queueRepair: WatchdogQueueRepair,
     @Inject(WATCHDOG_QUEUE_TOKEN) private readonly queue: Queue,
     @Inject(REDIS_CONNECTION) private readonly connection: IORedis,
   ) {}
 
-  onModuleInit(): void {
+  async onModuleInit(): Promise<void> {
+    await this.queueRepair.ensure();
     this.worker = new Worker(WATCHDOG_QUEUE, (job) => this.process(job), {
       connection: this.connection.duplicate(),
       prefix: WATCHDOG_QUEUE_PREFIX,

@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 
 import type { Queue } from 'bullmq';
 
+import { WatchdogQueueRepair } from './watchdog-queue-repair.service';
 import {
   WATCHDOG_INTERVAL_MS,
   WATCHDOG_JOB_OPTIONS,
@@ -14,9 +15,13 @@ import {
 export class WatchdogSchedulerService implements OnModuleInit {
   private readonly logger = new Logger(WatchdogSchedulerService.name);
 
-  constructor(@Inject(WATCHDOG_QUEUE_TOKEN) private readonly queue: Queue) {}
+  constructor(
+    @Inject(WATCHDOG_QUEUE_TOKEN) private readonly queue: Queue,
+    private readonly queueRepair: WatchdogQueueRepair,
+  ) {}
 
   async onModuleInit(): Promise<void> {
+    await this.queueRepair.ensure();
     await this.queue.upsertJobScheduler(
       WATCHDOG_SCHEDULER_ID,
       { every: WATCHDOG_INTERVAL_MS },

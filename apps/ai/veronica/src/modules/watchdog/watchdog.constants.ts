@@ -1,3 +1,4 @@
+import { queueKey } from '../../redis/redis-namespace';
 import { WATCHDOG_INTERVAL_MINUTES } from './domain/constants/watchdog-rules.constants';
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
@@ -21,11 +22,16 @@ export const WATCHDOG_JOB_OPTIONS = {
 } as const;
 
 export const WATCHDOG_STATE_KEYS = {
-  ACTIVE: 'ai-veronica:watchdog:active',
-  HAPPY_FAILURES: 'ai-veronica:watchdog:happy-failures',
+  ACTIVE: 'ai-veronica:watchdog-state:active',
+  HAPPY_FAILURES: 'ai-veronica:watchdog-state:happy-failures',
 } as const;
 export const WATCHDOG_ACTIVE_TTL_SECONDS = 7 * SECONDS_PER_DAY;
 export const WATCHDOG_HAPPY_FAILURES_TTL_SECONDS = SECONDS_PER_HOUR;
+
+export const LEGACY_ACTIVE_JOBS_LIST_KEY = queueKey(
+  { prefix: WATCHDOG_QUEUE_PREFIX, name: WATCHDOG_QUEUE },
+  'active',
+);
 
 export const HAPPY_HEALTH_PATH = '/health';
 export const HAPPY_HEALTH_TIMEOUT_MS = 5_000;

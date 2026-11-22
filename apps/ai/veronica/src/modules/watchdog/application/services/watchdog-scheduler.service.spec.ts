@@ -3,7 +3,10 @@ import { WatchdogSchedulerService } from './watchdog-scheduler.service';
 describe('WatchdogSchedulerService', () => {
   it('upserts one scheduler that fires every five minutes under a stable id', async () => {
     const upsertJobScheduler = jest.fn().mockResolvedValue(undefined);
-    const service = new WatchdogSchedulerService({ upsertJobScheduler } as never);
+    const service = new WatchdogSchedulerService(
+      { upsertJobScheduler } as never,
+      { ensure: async () => undefined } as never,
+    );
     await service.onModuleInit();
     await service.onModuleInit();
     const [id, repeat, template] = upsertJobScheduler.mock.calls[0];

@@ -28,3 +28,14 @@ export interface WatchdogHeartbeatPort {
   beat(nowMs: number): void;
 }
 export const WATCHDOG_HEARTBEAT_PORT = Symbol('WATCHDOG_HEARTBEAT_PORT');
+
+export const RepairOutcome = {
+  HEALTHY: 'healthy',
+  REPAIRED: 'repaired',
+} as const;
+export type RepairOutcome = (typeof RepairOutcome)[keyof typeof RepairOutcome];
+
+export interface QueueKeyRepairPort {
+  repairActiveJobsList(): Promise<{ outcome: RepairOutcome; foundType: string }>;
+}
+export const QUEUE_KEY_REPAIR_PORT = Symbol('QUEUE_KEY_REPAIR_PORT');

@@ -1,5 +1,7 @@
 import { AlertKey } from '../../domain/constants/watchdog-rules.constants';
 
+import { WATCHDOG_STATE_KEYS } from '../../watchdog.constants';
+
 import { RedisWatchdogStateStore } from './redis.watchdog-state.store';
 
 const fakeRedis = () => {
@@ -25,9 +27,9 @@ describe('RedisWatchdogStateStore', () => {
     await store.saveActive([AlertKey.HAPPY_DOWN, AlertKey.FAILED_RUNS]);
     await expect(store.loadActive()).resolves.toEqual([AlertKey.HAPPY_DOWN, AlertKey.FAILED_RUNS]);
     expect([...redis.ttls.values()].every((ttl) => typeof ttl === 'number' && ttl > 0)).toBe(true);
-    redis.values.set('ai-veronica:watchdog:active', '["bogus","happy_down"]');
+    redis.values.set(WATCHDOG_STATE_KEYS.ACTIVE, '["bogus","happy_down"]');
     await expect(store.loadActive()).resolves.toEqual([AlertKey.HAPPY_DOWN]);
-    redis.values.set('ai-veronica:watchdog:active', 'not json');
+    redis.values.set(WATCHDOG_STATE_KEYS.ACTIVE, 'not json');
     await expect(store.loadActive()).resolves.toEqual([]);
   });
 
@@ -37,7 +39,7 @@ describe('RedisWatchdogStateStore', () => {
     await expect(store.loadHappyFailures()).resolves.toBe(0);
     await store.saveHappyFailures(3);
     await expect(store.loadHappyFailures()).resolves.toBe(3);
-    redis.values.set('ai-veronica:watchdog:happy-failures', 'x');
+    redis.values.set(WATCHDOG_STATE_KEYS.HAPPY_FAILURES, 'x');
     await expect(store.loadHappyFailures()).resolves.toBe(0);
   });
 });
