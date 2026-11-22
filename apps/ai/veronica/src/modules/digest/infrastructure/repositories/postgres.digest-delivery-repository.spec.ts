@@ -13,8 +13,8 @@ describeWithDatabase('PostgresDigestDeliveryRepository', () => {
   let database: TestDatabase;
   let repository: PostgresDigestDeliveryRepository;
 
-  beforeAll(() => {
-    database = openTestDatabase();
+  beforeAll(async () => {
+    database = await openTestDatabase();
     repository = new PostgresDigestDeliveryRepository(database.db);
   });
   beforeEach(() => database.reset());
