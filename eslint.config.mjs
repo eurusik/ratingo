@@ -243,6 +243,7 @@ const apiModules = [
   'ingestion',
   'insights',
   'journal',
+  'monitoring',
   'provider',
   'reviews',
   'stats',
@@ -258,6 +259,7 @@ const sharedModules = [
   'contracts',
   'drop-off-analyzer',
   'score-calculator',
+  'show-premiere',
   'verdict',
 ];
 const domainInfrastructureZone = {

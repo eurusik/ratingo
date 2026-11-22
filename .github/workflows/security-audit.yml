@@ -31,9 +31,9 @@ jobs:
             node-version: 22
             issue-title: 'npm audit: high or critical advisories in API production dependencies'
           - job: web-audit
-            workspace: web-client
+            workspace: web-client --workspace=storefront --workspace=@ratingo/web-core --workspace=@ratingo/ui
             node-version: 24
-            issue-title: 'npm audit: high or critical advisories in web-client production dependencies'
+            issue-title: 'npm audit: high or critical advisories in web-client, storefront, web-core and ui production dependencies'
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}

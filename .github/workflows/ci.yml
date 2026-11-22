@@ -89,7 +89,7 @@ jobs:
           if (( large )); then
             deps=true
           else
-            deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
+            deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|apps/ai/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
           fi
 
           echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke storefront_image=$storefront_image ai_core=$ai_core veronica=$veronica happy=$happy"
