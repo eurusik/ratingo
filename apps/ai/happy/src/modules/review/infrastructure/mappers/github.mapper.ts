@@ -1,15 +1,18 @@
 import { z } from 'zod';
 
 import type { ChangedFile, PullRequest, PullRequestRef } from '../../domain/entities/pull-request';
-import { FileStatus } from '../../domain/entities/pull-request';
+import { FileStatus, PullRequestState } from '../../domain/entities/pull-request';
 
 const pullRequestResponse = z.object({
   title: z.string(),
+  state: z.string(),
+  merged: z.boolean().optional(),
   body: z.string().nullable(),
   draft: z.boolean().optional(),
   user: z.object({ login: z.string() }),
   base: z.object({ ref: z.string(), sha: z.string() }),
   head: z.object({
+    ref: z.string(),
     sha: z.string(),
     repo: z.object({ full_name: z.string() }).nullable(),
   }),
@@ -40,12 +43,15 @@ export const mapPullRequest = (ref: PullRequestRef, payload: unknown): PullReque
   const parsed = pullRequestResponse.parse(payload);
   return {
     ref,
+    state: parsed.state === 'open' ? PullRequestState.OPEN : PullRequestState.CLOSED,
+    merged: parsed.merged ?? false,
     title: parsed.title,
     body: parsed.body ?? '',
     author: parsed.user.login,
     isDraft: parsed.draft ?? false,
     baseRef: parsed.base.ref,
     baseSha: parsed.base.sha,
+    headRef: parsed.head.ref,
     headSha: parsed.head.sha,
     headRepository: parsed.head.repo?.full_name ?? null,
   };

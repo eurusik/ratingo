@@ -1,4 +1,5 @@
 import { CodeHostError } from '../../domain/ports/code-host.port';
+import { StaticTokenProvider } from '../auth/github-token.provider';
 import { TEST_REF } from '../testing/fake-code-host.testing';
 
 import { GithubCodeHostAdapter } from './github.code-host-adapter';
@@ -24,7 +25,7 @@ const adapterWith = (handler: (url: string, init: RequestInit) => Response) => {
   }) as unknown as typeof fetch;
   return {
     calls,
-    adapter: new GithubCodeHostAdapter({ token: TOKEN, apiUrl: 'https://gh.test', fetchFn }),
+    adapter: new GithubCodeHostAdapter({ tokens: new StaticTokenProvider(TOKEN), apiUrl: 'https://gh.test', fetchFn }),
   };
 };
 
@@ -33,11 +34,13 @@ describe('GithubCodeHostAdapter', () => {
     const { adapter, calls } = adapterWith(() =>
       json({
         title: 'T',
+        state: 'open',
+        merged: false,
         body: null,
         draft: true,
         user: { login: 'alice' },
         base: { ref: 'main', sha: 'b1' },
-        head: { sha: 'h1', repo: { full_name: 'acme/shop' } },
+        head: { ref: 'feat', sha: 'h1', repo: { full_name: 'acme/shop' } },
       }),
     );
     const pr = await adapter.getPullRequest(TEST_REF);
@@ -48,7 +51,7 @@ describe('GithubCodeHostAdapter', () => {
       headRepository: 'acme/shop',
     });
     expect(calls[0]?.url).toBe('https://gh.test/repos/acme/shop/pulls/7');
-    expect(calls[0]?.init.method).toBeUndefined();
+    expect(calls[0]?.init.method).toBe('GET');
     expect((calls[0]?.init.headers as Record<string, string>).Authorization).toBe(
       `Bearer ${TOKEN}`,
     );
@@ -147,7 +150,7 @@ describe('GithubCodeHostAdapter', () => {
 
   it('turns a network failure into a code host error', async () => {
     const adapter = new GithubCodeHostAdapter({
-      token: TOKEN,
+      tokens: new StaticTokenProvider(TOKEN),
       apiUrl: 'https://gh.test',
       fetchFn: (async () => {
         throw new Error(`connect failed with ${TOKEN}`);
@@ -156,5 +159,29 @@ describe('GithubCodeHostAdapter', () => {
     const failure = await adapter.getPullRequest(TEST_REF).catch((error: unknown) => error);
     expect(failure).toBeInstanceOf(CodeHostError);
     expect((failure as Error).message).not.toContain(TOKEN);
+  });
+
+  it('publishes a completed neutral check run with annotations', async () => {
+    const { adapter, calls } = adapterWith(() => json({ id: 1 }, 201));
+    await adapter.publish(TEST_REF, 'head222', {
+      conclusion: 'neutral',
+      title: 'Т',
+      summary: 'підсумок',
+      annotations: [{ path: 'src/a.ts', line: 3, level: 'warning', title: 'major', message: 'м' }],
+    });
+    expect(calls[0]?.url).toBe('https://gh.test/repos/acme/shop/check-runs');
+    expect(calls[0]?.init.method).toBe('POST');
+    const body = JSON.parse(String(calls[0]?.init.body)) as Record<string, unknown>;
+    expect(body).toMatchObject({
+      name: 'Happy',
+      head_sha: 'head222',
+      status: 'completed',
+      conclusion: 'neutral',
+      output: {
+        annotations: [
+          { path: 'src/a.ts', start_line: 3, end_line: 3, annotation_level: 'warning' },
+        ],
+      },
+    });
   });
 });

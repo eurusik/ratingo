@@ -30,3 +30,16 @@ export const parseDiffLines = (patch: string): DiffLines => {
   }
   return { commentable, added };
 };
+
+export const toLineRanges = (lines: ReadonlySet<number>): string => {
+  const ranges: [number, number][] = [];
+  for (const line of [...lines].sort((left, right) => left - right)) {
+    const last = ranges[ranges.length - 1];
+    if (last !== undefined && last[1] + 1 === line) {
+      last[1] = line;
+    } else {
+      ranges.push([line, line]);
+    }
+  }
+  return ranges.map(([start, end]) => (start === end ? `${start}` : `${start}-${end}`)).join(',');
+};

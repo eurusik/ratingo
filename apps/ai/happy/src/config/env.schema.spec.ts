@@ -1,6 +1,12 @@
 import { cliEnvSchema, serviceEnvSchema } from './env.schema';
 
-const SERVICE = { GITHUB_TOKEN: 't', HAPPY_ALLOWED_REPOS: 'acme/shop, acme/api' };
+const SERVICE = {
+  GITHUB_APP_ID: '12345',
+  GITHUB_APP_PRIVATE_KEY: 'key',
+  GITHUB_WEBHOOK_SECRET: 'a-webhook-secret-16',
+  REDIS_URL: 'redis://h:6379',
+  HAPPY_ALLOWED_REPOS: 'acme/shop, acme/api',
+};
 
 describe('env schemas', () => {
   it('applies defaults and parses the repository list', () => {
@@ -12,31 +18,33 @@ describe('env schemas', () => {
     expect(env.HAPPY_ALLOWED_AUTHORS).toEqual([]);
   });
 
-  it('requires a token and at least one repository', () => {
-    expect(serviceEnvSchema.safeParse({ HAPPY_ALLOWED_REPOS: 'a/b' }).success).toBe(false);
-    expect(serviceEnvSchema.safeParse({ GITHUB_TOKEN: 't' }).success).toBe(false);
+  it.each(['GITHUB_APP_ID', 'GITHUB_APP_PRIVATE_KEY', 'GITHUB_WEBHOOK_SECRET', 'REDIS_URL'])(
+    'requires %s',
+    (name) => {
+      const { [name as keyof typeof SERVICE]: _removed, ...rest } = SERVICE;
+      expect(serviceEnvSchema.safeParse(rest).success).toBe(false);
+    },
+  );
+
+  it('requires at least one repository', () => {
     expect(serviceEnvSchema.safeParse({ ...SERVICE, HAPPY_ALLOWED_REPOS: ' , ' }).success).toBe(
       false,
     );
   });
 
-  it('rejects a short service token and an empty Anthropic key', () => {
+  it('rejects a short webhook secret, short service token and empty Anthropic key', () => {
+    expect(serviceEnvSchema.safeParse({ ...SERVICE, GITHUB_WEBHOOK_SECRET: 'short' }).success).toBe(
+      false,
+    );
     expect(serviceEnvSchema.safeParse({ ...SERVICE, HAPPY_SERVICE_TOKEN: 'short' }).success).toBe(
       false,
     );
     expect(serviceEnvSchema.safeParse({ ...SERVICE, ANTHROPIC_API_KEY: '' }).success).toBe(false);
   });
 
-  it('treats Redis as optional and rejects an empty URL', () => {
-    expect(serviceEnvSchema.parse(SERVICE).REDIS_URL).toBeUndefined();
-    expect(serviceEnvSchema.parse({ ...SERVICE, REDIS_URL: 'redis://h:6379' }).REDIS_URL).toBe(
-      'redis://h:6379',
-    );
-    expect(serviceEnvSchema.safeParse({ ...SERVICE, REDIS_URL: '' }).success).toBe(false);
-  });
-
-  it('lets the CLI run with only a GitHub token', () => {
-    expect(cliEnvSchema.safeParse({ GITHUB_TOKEN: 't' }).success).toBe(true);
+  it('keeps Redis optional for the CLI and lets it run with only a GitHub token', () => {
+    expect(cliEnvSchema.parse({ GITHUB_TOKEN: 't' }).REDIS_URL).toBeUndefined();
+    expect(cliEnvSchema.safeParse({ GITHUB_TOKEN: 't', REDIS_URL: '' }).success).toBe(false);
     expect(cliEnvSchema.safeParse({}).success).toBe(false);
   });
 });

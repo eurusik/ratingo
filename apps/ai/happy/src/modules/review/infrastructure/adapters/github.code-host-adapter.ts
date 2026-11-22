@@ -1,3 +1,4 @@
+import type { CheckReport } from '../../domain/entities/check-report';
 import type {
   ChangedFile,
   ChangedFiles,
@@ -7,11 +8,16 @@ import type {
 } from '../../domain/entities/pull-request';
 import { isIgnoredFile } from '../../domain/policies/skip-policy';
 import {
+  CHECK_RUN_NAME,
+  type CheckRunPublisherPort,
+} from '../../domain/ports/check-run-publisher.port';
+import {
   CodeHostError,
   type ChangedFilesLimits,
   type CodeHostPort,
   type FileReadLimits,
 } from '../../domain/ports/code-host.port';
+import type { GithubTokenProvider } from '../auth/github-token.provider';
 import {
   directoryEntriesResponse,
   mapChangedFiles,
@@ -27,7 +33,7 @@ const MARKDOWN_SUFFIX = '.md';
 const DIRECTORY_ENTRY_TYPE = 'file';
 
 export interface GithubCodeHostConfig {
-  token: string;
+  tokens: GithubTokenProvider;
   apiUrl: string;
   fetchFn?: typeof fetch;
 }
@@ -54,7 +60,7 @@ const applyPatchBudget = (
   return file;
 };
 
-export class GithubCodeHostAdapter implements CodeHostPort {
+export class GithubCodeHostAdapter implements CodeHostPort, CheckRunPublisherPort {
   private readonly fetchFn: typeof fetch;
 
   constructor(private readonly config: GithubCodeHostConfig) {
@@ -62,7 +68,7 @@ export class GithubCodeHostAdapter implements CodeHostPort {
   }
 
   async getPullRequest(ref: PullRequestRef): Promise<PullRequest> {
-    const response = await this.request('get pull request', this.pullPath(ref));
+    const response = await this.request('get pull request', ref, this.pullPath(ref));
     return mapPullRequest(ref, await response.json());
   }
 
@@ -73,6 +79,7 @@ export class GithubCodeHostAdapter implements CodeHostPort {
     for (let page = 1; morePages && files.length < limits.maxFiles; page += 1) {
       const response = await this.request(
         'list changed files',
+        ref,
         `${this.pullPath(ref)}/files?per_page=${PAGE_SIZE}&page=${page}`,
       );
       const batch = mapChangedFiles(await response.json());
@@ -93,6 +100,7 @@ export class GithubCodeHostAdapter implements CodeHostPort {
   ): Promise<string | null> {
     const response = await this.request(
       'read file',
+      ref,
       `${this.contentsPath(ref, path)}?ref=${encodeURIComponent(gitRef)}`,
       { accept: 'application/vnd.github.raw+json', allowNotFound: true },
     );
@@ -119,6 +127,7 @@ export class GithubCodeHostAdapter implements CodeHostPort {
   private async listRuleFileNames(ref: RepositoryRef, baseSha: string): Promise<string[]> {
     const response = await this.request(
       'list rules',
+      ref,
       `${this.contentsPath(ref, RULES_DIRECTORY)}?ref=${encodeURIComponent(baseSha)}`,
       { allowNotFound: true },
     );
@@ -134,6 +143,34 @@ export class GithubCodeHostAdapter implements CodeHostPort {
       .sort();
   }
 
+  async publish(ref: PullRequestRef, headSha: string, report: CheckReport): Promise<void> {
+    await this.request('publish check run', ref, this.checkRunsPath(ref), {
+      method: 'POST',
+      body: {
+        name: CHECK_RUN_NAME,
+        head_sha: headSha,
+        status: 'completed',
+        conclusion: report.conclusion,
+        output: {
+          title: report.title,
+          summary: report.summary,
+          annotations: report.annotations.map((annotation) => ({
+            path: annotation.path,
+            start_line: annotation.line,
+            end_line: annotation.line,
+            annotation_level: annotation.level,
+            title: annotation.title,
+            message: annotation.message,
+          })),
+        },
+      },
+    });
+  }
+
+  private checkRunsPath(ref: RepositoryRef): string {
+    return `/repos/${encodeURIComponent(ref.owner)}/${encodeURIComponent(ref.repo)}/check-runs`;
+  }
+
   private pullPath(ref: PullRequestRef): string {
     return `/repos/${encodeURIComponent(ref.owner)}/${encodeURIComponent(ref.repo)}/pulls/${ref.number}`;
   }
@@ -145,18 +182,23 @@ export class GithubCodeHostAdapter implements CodeHostPort {
 
   private async request(
     operation: string,
+    repository: RepositoryRef,
     path: string,
-    options: { accept?: string; allowNotFound?: boolean } = {},
+    options: { accept?: string; allowNotFound?: boolean; method?: 'POST'; body?: unknown } = {},
   ): Promise<Response> {
+    const token = await this.config.tokens.tokenFor(repository);
     let response: Response;
     try {
       response = await this.fetchFn(`${this.config.apiUrl}${path}`, {
+        method: options.method ?? 'GET',
         headers: {
-          Authorization: `Bearer ${this.config.token}`,
+          Authorization: `Bearer ${token}`,
           Accept: options.accept ?? 'application/vnd.github+json',
           'X-GitHub-Api-Version': API_VERSION,
           'User-Agent': 'ratingo-happy',
+          ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
         },
+        ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
       });
     } catch {
       throw new CodeHostError(operation, null, 'network error');

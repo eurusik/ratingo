@@ -32,7 +32,7 @@ export const createReviewStubScript = (): StubScript => ({
       .join('\n');
     const reply = isReviewRequest(request.responseSchema?.jsonSchema)
       ? { summary: 'Stub review: no model was called, so nothing was checked.', findings: [] }
-      : { risk: 'low', focusFiles: changedPaths(prompt), ruleTopics: [] };
+      : { risk: 'low', focusFiles: changedPaths(prompt), ruleTopics: [], ruleCards: [] };
     return {
       model: formatModelRef({ provider: STUB_PROVIDER, model: request.model }),
       content: [{ type: ContentPartType.TEXT, text: JSON.stringify(reply) }],

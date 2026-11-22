@@ -7,11 +7,13 @@ import {
   MODEL_ALIASES,
   REDIS_CONFIG,
   REVIEW_CONFIG,
+  WEBHOOK_CONFIG,
   type AnthropicConfig,
   type GithubConfig,
   type InfraConfig,
   type RedisConfig,
   type ReviewConfig,
+  type WebhookConfig,
 } from './config.constants';
 import { cliEnvSchema, serviceEnvSchema } from './env.schema';
 import { buildModelAliases } from './models.config';
@@ -27,7 +29,15 @@ const exportProviders = (providers: { provide: symbol; useValue: unknown }[]): D
 export class ConfigModule {
   static forService(raw: NodeJS.ProcessEnv): DynamicModule {
     const env = serviceEnvSchema.parse(raw);
-    const github: GithubConfig = { token: env.GITHUB_TOKEN, apiUrl: env.GITHUB_API_URL };
+    const github: GithubConfig = {
+      auth: {
+        kind: 'app',
+        appId: env.GITHUB_APP_ID,
+        privateKey: env.GITHUB_APP_PRIVATE_KEY,
+      },
+      apiUrl: env.GITHUB_API_URL,
+    };
+    const webhook: WebhookConfig = { secret: env.GITHUB_WEBHOOK_SECRET };
     const anthropic: AnthropicConfig = { apiKey: env.ANTHROPIC_API_KEY };
     const infra: InfraConfig = { port: env.PORT };
     const redis: RedisConfig = { url: env.REDIS_URL };
@@ -38,6 +48,7 @@ export class ConfigModule {
     };
     return exportProviders([
       { provide: GITHUB_CONFIG, useValue: github },
+      { provide: WEBHOOK_CONFIG, useValue: webhook },
       { provide: ANTHROPIC_CONFIG, useValue: anthropic },
       { provide: INFRA_CONFIG, useValue: infra },
       { provide: REVIEW_CONFIG, useValue: review },
@@ -48,7 +59,10 @@ export class ConfigModule {
 
   static forCli(raw: NodeJS.ProcessEnv, repository: string): DynamicModule {
     const env = cliEnvSchema.parse(raw);
-    const github: GithubConfig = { token: env.GITHUB_TOKEN, apiUrl: env.GITHUB_API_URL };
+    const github: GithubConfig = {
+      auth: { kind: 'token', token: env.GITHUB_TOKEN },
+      apiUrl: env.GITHUB_API_URL,
+    };
     const anthropic: AnthropicConfig = { apiKey: env.ANTHROPIC_API_KEY };
     const review: ReviewConfig = {
       allowedRepositories: [repository],

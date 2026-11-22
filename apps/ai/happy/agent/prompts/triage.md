@@ -7,5 +7,6 @@ You get the pull request title and the list of changed files with their line cou
 - risk: low, medium or high, by how much a mistake in this change could hurt (data, security, money, public behavior)
 - focusFiles: the changed files that deserve a careful read, using paths exactly as listed; leave out generated, trivial or purely mechanical files
 - ruleTopics: up to a few short topics from the repository rules that apply to this change, for example "migrations", "domain layer", "frontend"
+- ruleCards: the ids of the rule cards (listed below) that this change could violate; choose only cards that clearly apply, and use an empty list when none do
 
-Reply with only a JSON object with those three fields.
+Reply with only a JSON object with those four fields.

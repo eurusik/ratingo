@@ -9,11 +9,12 @@
     "predev": "npm run build:packages",
     "dev": "nest start --watch",
     "start:prod": "node dist/main.js",
-    "lint": "cd ../../.. && eslint apps/ai/happy/src",
+    "lint": "cd ../../.. && eslint apps/ai/happy/src apps/ai/happy/eval",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "lint:dead-code": "cd ../../.. && knip --workspace apps/ai/happy",
-    "review": "npm run build:packages && ts-node --transpile-only src/scripts/review.ts"
+    "review": "npm run build:packages && ts-node --transpile-only src/scripts/review.ts",
+    "eval": "npm run build:packages && ts-node --transpile-only eval/run-eval.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.8",
@@ -29,6 +30,7 @@
     "@opentelemetry/sdk-node": "0.223.0",
     "@ratingo/ai-core": "*",
     "@ratingo/node-telemetry": "*",
+    "bullmq": "^5.65.1",
     "fastify": "5.12.8",
     "ioredis": "^5.8.2",
     "reflect-metadata": "^0.2.2",

@@ -1,3 +1,8 @@
 export { ReviewModule } from '../review.module';
 export { ReviewService } from '../application/services/review.service';
+export { ReviewJobService } from '../application/services/review-job.service';
+export { ReviewJobSource, type ReviewJob } from '../domain/entities/review-job';
+export { reviewJobId } from '../domain/policies/review-job-id';
 export { parseRepository } from '../presentation/parse-repository';
+export { RepositoryNotAllowedError } from '../domain/errors/review.errors';
+export type { PullRequestRef } from '../domain/entities/pull-request';

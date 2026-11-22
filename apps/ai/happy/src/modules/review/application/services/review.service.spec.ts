@@ -58,6 +58,14 @@ const reply = (
   usage: USAGE,
 });
 
+const FILE_BODY = 'const a = 1;\nconst b = 2;\nconst c = 3;';
+
+const proof = (path: string, line: number, excerpt: string) => ({
+  topic: 'logic',
+  kind: 'finding',
+  evidence: { path, line, excerpt },
+});
+
 const text = (value: unknown) => [{ type: ContentPartType.TEXT, text: JSON.stringify(value) }];
 
 interface Setup {
@@ -143,7 +151,7 @@ describe('ReviewService', () => {
       respond: (request) =>
         reply(
           request.model,
-          text({ risk: 'high', focusFiles: ['src/checkout.ts', 'ghost.ts'], ruleTopics: [] }),
+          text({ risk: 'high', focusFiles: ['src/checkout.ts', 'ghost.ts'], ruleTopics: [], ruleCards: [] }),
           StopReason.END,
         ),
     };
@@ -172,6 +180,7 @@ describe('ReviewService', () => {
                     severity: 'major',
                     category: 'correctness',
                     message: 'Перевір @bob значення https://evil.example',
+                    ...proof('src/checkout.ts', 2, 'line2'),
                   },
                   {
                     file: 'src/checkout.ts',
@@ -179,6 +188,7 @@ describe('ReviewService', () => {
                     severity: 'minor',
                     category: 'tests',
                     message: 'Рядка немає в diff',
+                    ...proof('src/checkout.ts', 500, 'line500'),
                   },
                   {
                     file: 'untouched.ts',
@@ -186,6 +196,7 @@ describe('ReviewService', () => {
                     severity: 'nit',
                     category: 'rules',
                     message: 'Файлу немає в diff',
+                    ...proof('untouched.ts', 1, 'anything'),
                   },
                 ],
               }),
@@ -197,7 +208,9 @@ describe('ReviewService', () => {
     const outcome = await service.review(TEST_REF, RunTrigger.MANUAL);
 
     expect(outcome.status).toBe(ReviewStatus.REVIEWED);
-    if (outcome.status === ReviewStatus.SKIPPED) throw new Error('unexpected skip');
+    if (outcome.status !== ReviewStatus.REVIEWED && outcome.status !== ReviewStatus.INCOMPLETE) {
+      throw new Error('unexpected outcome');
+    }
     expect(outcome.reviewedFiles).toEqual(['src/checkout.ts']);
     expect(outcome.findings).toHaveLength(1);
     expect(outcome.dropped).toHaveLength(2);
@@ -245,7 +258,9 @@ describe('ReviewService', () => {
     };
     const { service } = await setup(buildFakeCodeHost(), { triage: broken });
     const outcome = await service.review(TEST_REF, RunTrigger.MANUAL);
-    if (outcome.status === ReviewStatus.SKIPPED) throw new Error('unexpected skip');
+    if (outcome.status !== ReviewStatus.REVIEWED && outcome.status !== ReviewStatus.INCOMPLETE) {
+      throw new Error('unexpected outcome');
+    }
     expect(outcome.reviewedFiles).toEqual(['src/checkout.ts']);
   });
 
@@ -262,15 +277,19 @@ describe('ReviewService', () => {
       severity: 'minor',
       category: 'correctness',
       message: `Проблема номер ${index}`,
+      ...proof('src/checkout.ts', 2, 'const b = 2;'),
     }));
     const review: StubScript = {
       respond: (request) =>
         reply(request.model, text({ summary: 'Багато', findings: many }), StopReason.END),
     };
-    const { service } = await setup(buildFakeCodeHost(), { review });
+    const host = buildFakeCodeHost({ contents: { 'head222:src/checkout.ts': FILE_BODY } });
+    const { service } = await setup(host, { review });
     const outcome = await service.review(TEST_REF, RunTrigger.MANUAL);
     expect(outcome.status).toBe(ReviewStatus.REVIEWED);
-    if (outcome.status === ReviewStatus.SKIPPED) throw new Error('unexpected skip');
+    if (outcome.status !== ReviewStatus.REVIEWED && outcome.status !== ReviewStatus.INCOMPLETE) {
+      throw new Error('unexpected outcome');
+    }
     expect(outcome.findings.length).toBeGreaterThan(0);
   });
 
@@ -286,7 +305,10 @@ describe('ReviewService', () => {
 
   it('keeps a file name with a backtick from escaping the code span', async () => {
     const path = 'src/a`@victim`.ts';
-    const host = buildFakeCodeHost({ files: [buildChangedFile({ path })] });
+    const host = buildFakeCodeHost({
+      files: [buildChangedFile({ path })],
+      contents: { [`head222:${path}`]: FILE_BODY },
+    });
     const review: StubScript = {
       respond: (request) =>
         reply(
@@ -294,7 +316,14 @@ describe('ReviewService', () => {
           text({
             summary: 's',
             findings: [
-              { file: path, line: 2, severity: 'major', category: 'security', message: 'bad' },
+              {
+                file: path,
+                line: 2,
+                severity: 'major',
+                category: 'security',
+                message: 'bad',
+                ...proof(path, 2, 'const b = 2;'),
+              },
             ],
           }),
           StopReason.END,
@@ -310,5 +339,150 @@ describe('ReviewService', () => {
     const outcome = await service.review(TEST_REF, RunTrigger.MANUAL);
     expect(outcome.status).toBe(ReviewStatus.REVIEWED);
     expect(outcome.markdown).toContain('Зауважень немає.');
+  });
+
+  it('answers a development to main pull request with a checklist and no model call', async () => {
+    const host = buildFakeCodeHost({
+      pr: buildPullRequest({ baseRef: 'main', headRef: 'development' }),
+      files: [
+        buildChangedFile({
+          path: 'apps/api/drizzle_v2/0001_a.sql',
+          patch: '@@ -0,0 +1,1 @@\n+DROP TABLE old_things;',
+          additions: 1,
+        }),
+      ],
+    });
+    const { service, model } = await setup(host);
+    const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+    expect(outcome.status).toBe(ReviewStatus.CHECKLIST);
+    expect(outcome.costUsd).toBe(0);
+    expect(model.requests).toHaveLength(0);
+    expect(outcome.markdown).toContain('0001_a.sql');
+    expect(outcome.markdown).toContain('DROP TABLE');
+  });
+
+  it('still skips a draft release pull request', async () => {
+    const host = buildFakeCodeHost({
+      pr: buildPullRequest({ baseRef: 'main', headRef: 'development', isDraft: true }),
+    });
+    const { service } = await setup(host);
+    expect((await service.review(TEST_REF, RunTrigger.WEBHOOK)).status).toBe(ReviewStatus.SKIPPED);
+  });
+
+  it('refuses a pull request above the hard size cap without a model call', async () => {
+    const host = buildFakeCodeHost({ files: [buildChangedFile({ additions: 7000, deletions: 0 })] });
+    const { service, model } = await setup(host);
+    const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+    expect(outcome.status).toBe(ReviewStatus.SKIPPED);
+    expect(outcome.markdown).toContain('too_large');
+    expect(model.requests).toHaveLength(0);
+  });
+
+  it('sends only the file list with changed ranges when the diff is too big to inline', async () => {
+    const host = buildFakeCodeHost({ files: [buildChangedFile({ additions: 2000, deletions: 0 })] });
+    const { service, model } = await setup(host);
+    const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+    const prompt = JSON.stringify(requestsFor(model, STUB_REVIEW_MODEL)[0]?.messages[0]);
+    expect(prompt).toContain('too large to include');
+    expect(prompt).not.toContain('```diff');
+    expect(prompt).toContain('changed lines 2');
+    expect(outcome.markdown).toContain('Покриття неповне');
+  });
+
+  it('lists files triage left out and never claims there are no findings', async () => {
+    const host = buildFakeCodeHost({
+      files: [
+        buildChangedFile({ path: 'src/checkout.ts' }),
+        buildChangedFile({ path: 'src/other.ts', additions: 25 }),
+      ],
+    });
+    const triage: StubScript = {
+      respond: (request) =>
+        reply(
+          request.model,
+          text({ risk: 'low', focusFiles: ['src/checkout.ts'], ruleTopics: [], ruleCards: [] }),
+          StopReason.END,
+        ),
+    };
+    const { service } = await setup(host, { triage });
+    const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+    expect(outcome.markdown).toContain('src/other.ts');
+    expect(outcome.markdown).not.toContain('Зауважень немає.');
+  });
+
+  it('reports a failed file read as a coverage gap', async () => {
+    const host = buildFakeCodeHost();
+    jest.spyOn(host, 'readFile').mockRejectedValue(new Error('boom'));
+    let calls = 0;
+    const review: StubScript = {
+      respond: (request) =>
+        calls++ === 0
+          ? reply(
+              request.model,
+              [
+                {
+                  type: ContentPartType.TOOL_CALL,
+                  call: { id: 'c1', name: 'read_file', input: { path: 'src/checkout.ts' } },
+                },
+              ],
+              StopReason.TOOL_USE,
+            )
+          : reply(request.model, text({ summary: 's', findings: [] }), StopReason.END),
+    };
+    const { service } = await setup(host, { review });
+    const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+    expect(outcome.markdown).toContain('читання файлів не вдалась');
+    expect(outcome.markdown).not.toContain('Зауважень немає.');
+  });
+
+  it('puts only the cards triage chose into the review prompt', async () => {
+    const triage: StubScript = {
+      respond: (request) =>
+        reply(
+          request.model,
+          text({
+            risk: 'low',
+            focusFiles: ['src/checkout.ts'],
+            ruleTopics: [],
+            ruleCards: ['migrations'],
+          }),
+          StopReason.END,
+        ),
+    };
+    const { service, model } = await setup(buildFakeCodeHost(), { triage });
+    await service.review(TEST_REF, RunTrigger.WEBHOOK);
+    const system = requestsFor(model, STUB_REVIEW_MODEL)[0]?.system ?? '';
+    expect(system).toContain('Migrations are safe to re-run');
+    expect(system).not.toContain('Domain layer stays pure');
+  });
+
+  it('demotes a finding whose excerpt is not on the cited line to a question', async () => {
+    const host = buildFakeCodeHost({ contents: { 'head222:src/checkout.ts': FILE_BODY } });
+    const review: StubScript = {
+      respond: (request) =>
+        reply(
+          request.model,
+          text({
+            summary: 's',
+            findings: [
+              {
+                file: 'src/checkout.ts',
+                line: 2,
+                severity: 'major',
+                category: 'correctness',
+                message: 'Вигадана проблема',
+                ...proof('src/checkout.ts', 2, 'totally invented code line'),
+              },
+            ],
+          }),
+          StopReason.END,
+        ),
+    };
+    const { service } = await setup(host, { review });
+    const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+    if (outcome.status !== ReviewStatus.REVIEWED) throw new Error('unexpected outcome');
+    expect(outcome.findings).toHaveLength(0);
+    expect(outcome.questions).toHaveLength(1);
+    expect(outcome.markdown).toContain('Питання до автора');
   });
 });

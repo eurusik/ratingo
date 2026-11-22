@@ -5,19 +5,22 @@ import type {
   PullRequestRef,
   RepoRuleFile,
 } from '../../domain/entities/pull-request';
-import { FileStatus } from '../../domain/entities/pull-request';
+import { FileStatus, PullRequestState } from '../../domain/entities/pull-request';
 import type { CodeHostPort, FileReadLimits } from '../../domain/ports/code-host.port';
 
 export const TEST_REF: PullRequestRef = { owner: 'acme', repo: 'shop', number: 7 };
 
 export const buildPullRequest = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   ref: TEST_REF,
+  state: PullRequestState.OPEN,
+  merged: false,
   title: 'Add checkout',
   body: 'Adds the checkout flow',
   author: 'alice',
   isDraft: false,
   baseRef: 'main',
   baseSha: 'base111',
+  headRef: 'feature/checkout',
   headSha: 'head222',
   headRepository: 'acme/shop',
   ...overrides,

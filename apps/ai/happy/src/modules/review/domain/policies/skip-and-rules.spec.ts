@@ -79,7 +79,7 @@ describe('decideSkip', () => {
   it('lets an allowlisted fork author through', () => {
     const fork = buildPullRequest({ headRepository: 'alice/shop', author: 'alice' });
     expect(
-      decideSkip(fork, [file('src/a.ts')], { allowedAuthors: ['alice'], minChangedLines: 20 }),
+      decideSkip(fork, [file('src/a.ts')], { allowedAuthors: ['alice'], minChangedLines: 20, maxChangedLines: 6000 }),
     ).toBeNull();
   });
 
