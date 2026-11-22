@@ -10,6 +10,7 @@ import type {
   ToolDefinition,
 } from '../../model.types';
 import { ContentPartType, StopReason } from '../../model.types';
+import { sanitizeStructuredOutputSchema } from './anthropic.schema';
 
 export const ANTHROPIC_PROVIDER = 'anthropic';
 
@@ -97,7 +98,10 @@ function outputConfigParam(
     ? {}
     : {
         output_config: {
-          format: { type: JSON_SCHEMA_FORMAT, schema: request.responseSchema.jsonSchema },
+          format: {
+            type: JSON_SCHEMA_FORMAT,
+            schema: sanitizeStructuredOutputSchema(request.responseSchema.jsonSchema),
+          },
         },
       };
 }
