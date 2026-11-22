@@ -11,7 +11,7 @@ Ratingo — Ukrainian-language streaming content discovery service. NPM workspac
 - Use conventional commits (`feat:`, `fix:`, `refactor:`, `docs:`)
 
 ## Review After Every Step
-Review the changed code before moving on and fix what the reviews find, using the user-installed skills `code-review`, `clean-code`, `clean-ddd-hexagonal` (backend) and `vercel-react-best-practices` + `web-design-guidelines` (frontend). If a skill is unavailable, review against this file and `.claude/rules`.
+Review the changed code before moving on and fix what the reviews find, using the user-installed skills `code-review`, `clean-code`; backend (`apps/api`) also `clean-ddd-hexagonal` and `nestjs-best-practices`; frontend (`apps/storefront`, `apps/web-client`, web packages) also `vercel-react-best-practices` and `web-design-guidelines`, plus `feature-sliced-design` for the storefront. If a skill is unavailable, review against this file and `.claude/rules`.
 
 ## Layout
 - `apps/api/` — NestJS + Fastify + Drizzle ORM + PostgreSQL + BullMQ
