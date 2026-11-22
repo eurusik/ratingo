@@ -22,8 +22,8 @@ describeWithDatabase('PostgresRunRepository', () => {
   let database: TestDatabase;
   let repository: PostgresRunRepository;
 
-  beforeAll(() => {
-    database = openTestDatabase();
+  beforeAll(async () => {
+    database = await openTestDatabase();
     repository = new PostgresRunRepository(database.db);
   });
   beforeEach(() => database.reset());

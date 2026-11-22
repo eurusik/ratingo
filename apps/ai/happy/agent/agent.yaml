@@ -1,0 +1,15 @@
+name: happy
+models:
+  default: review
+  triage: fast
+tools: []
+skills: []
+mcp: []
+budgets:
+  perRunUsd: 0.6
+  perDayUsd: 3
+limits:
+  maxTurns: 12
+  timeoutMs: 300000
+  maxTokensPerCall: 8000
+  callTimeoutMs: 120000

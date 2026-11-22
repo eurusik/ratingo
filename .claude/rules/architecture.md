@@ -22,9 +22,9 @@ Presentation → Application → Domain ← Infrastructure
 - Adapters map external types → domain types at the boundary
 
 ## Module Communication
-- Expose only tokens + types via `public/index.ts` — never implementations
-- Import from other modules only through `public/` barrel
-- Use `forwardRef(() => Module)` for circular dependencies
+- `public/index.ts` exports tokens, types, pure domain functions and the application services other modules inject — never Drizzle repository implementations or infrastructure code
+- Import from other modules only through the `public/` barrel (or the `modules/shared/*` micro-module index)
+- No circular module dependencies (`import/no-cycle` is an error): put types two modules share into `modules/shared/contracts`
 - Use `EventEmitter2` events for loose coupling between modules
 
 ## Service Layer
@@ -35,18 +35,19 @@ Presentation → Application → Domain ← Infrastructure
 
 ## DTO Flow
 ```
-Request → [DTO validation] → normalizeListQuery() → Service(domain types) → Repository → Mapper(raw→domain) → [Response DTO]
+Request → [DTO validation] → normalizeListQuery() (catalog list endpoints only) → Service(domain types) → Repository → Mapper(raw→domain) → [Response DTO]
 ```
-- Request DTOs: `presentation/dtos/*-query.dto.ts` / `*-request.dto.ts` — validation only
-- Response DTOs: `presentation/dtos/*-response.dto.ts` — with `@ApiProperty` decorators
+- Request DTOs: `presentation/dto/*-query.dto.ts` / `*-request.dto.ts` — validation only
+- Response DTOs: `presentation/dto/*-response.dto.ts` — with `@ApiProperty` decorators
+- Most modules use `presentation/dto/`; `catalog`, `home` and `insights` use `dtos/` — follow the module you are in
 - Mappers: `infrastructure/mappers/` — raw DB rows → domain entities
 - Query objects: `infrastructure/queries/` — encapsulate complex SQL
 
 ## Error Flow
-- Domain errors: extend `Error` in `domain/errors/` — pure, no HTTP concepts
-- Exception filters in `presentation/filters/` map domain errors → HTTP responses
-- Infrastructure errors: wrap with `withDbError()` → `DatabaseException`
-- Application layer throws domain errors, presentation layer catches and maps
+- Application and infrastructure code throws the `AppException` family from `common/exceptions` (`NotFoundException`, `ValidationException`, `ExternalApiException`, `DatabaseException`) with an `ErrorCode` from `common/enums/error-code.enum.ts` — never plain `Error` or Nest's `BadRequestException`
+- Wrap repository DB calls with `withDbError()` → `DatabaseException`
+- Domain code stays HTTP-free: domain errors extend `Error` in `domain/errors/`; the module maps them to HTTP in a `presentation/filters/` exception filter (see `catalog-policy` dry-run and policy-activation filters)
+- Responses are wrapped by the global filter/interceptor: `{ success: true, data }` / `{ success: false, error: { code, message } }`
 
 ## New Module Checklist
 ```
@@ -66,9 +67,9 @@ module/
 │   └── mappers/         # Raw row → domain entity
 ├── presentation/
 │   ├── controllers/     # HTTP endpoints
-│   ├── dtos/            # Validation + Swagger
+│   ├── dto/             # Validation + Swagger
 │   └── filters/         # Domain error → HTTP mapping
 ├── public/
-│   └── index.ts         # Barrel: tokens + types only
-└── module.ts            # Wire Symbol → implementation
+│   └── index.ts         # Barrel: tokens, types, injectable services
+└── <module>.module.ts   # Wire Symbol → implementation
 ```

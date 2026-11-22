@@ -124,6 +124,10 @@ export class TelemetryRunRepository implements RunRepository {
       stopReason: run.stopReason,
       turns: run.turns,
       costUsd: run.costUsd,
+      inputTokens: run.usage.inputTokens,
+      outputTokens: run.usage.outputTokens,
+      cacheReadTokens: run.usage.cacheReadTokens,
+      cacheWriteTokens: run.usage.cacheWriteTokens,
     });
   }
 }

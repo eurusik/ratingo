@@ -10,6 +10,8 @@ import {
   StubModelAdapter,
   SystemClock,
   ToolRegistry,
+  assertAliasProvidersRegistered,
+  createModelProviders,
   loadAgentFolder,
   type AgentFolder,
   type ModelAliases,
@@ -22,7 +24,6 @@ import { MODEL_ALIAS_NAMES, MODEL_PRICES } from '../config/models.config';
 
 import { AGENT_FOLDER, AGENT_LOOP } from './ai-core.constants';
 import { InterruptedRunsRecovery } from './interrupted-runs.recovery';
-import { assertAliasProvidersRegistered, buildModelProviders } from './model-providers';
 import { createDigestStubScript } from './stub-digest.script';
 
 const AGENT_FOLDER_PATH = path.resolve(__dirname, '../../agent');
@@ -46,10 +47,10 @@ const AGENT_FOLDER_PATH = path.resolve(__dirname, '../../agent');
         anthropic: AnthropicConfig,
         aliases: ModelAliases,
       ) => {
-        const providers = buildModelProviders(
-          new StubModelAdapter(createDigestStubScript()),
-          anthropic.apiKey,
-        );
+        const providers = createModelProviders({
+          stub: new StubModelAdapter(createDigestStubScript()),
+          anthropicApiKey: anthropic.apiKey,
+        });
         assertAliasProvidersRegistered(aliases, providers);
         return new AgentLoop({
           providers,

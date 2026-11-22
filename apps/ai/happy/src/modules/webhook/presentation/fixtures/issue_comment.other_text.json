@@ -1,0 +1,41 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 455,
+    "title": "t",
+    "state": "open",
+    "user": {
+      "login": "eurusik"
+    },
+    "pull_request": {
+      "url": "https://api.github.com/repos/eurusik/ratingo/pulls/455"
+    }
+  },
+  "comment": {
+    "id": 4001,
+    "body": "@happy review please",
+    "author_association": "OWNER",
+    "user": {
+      "login": "x"
+    }
+  },
+  "repository": {
+    "id": 1,
+    "name": "ratingo",
+    "full_name": "eurusik/ratingo",
+    "private": true,
+    "owner": {
+      "login": "eurusik",
+      "id": 5,
+      "type": "User"
+    },
+    "default_branch": "development"
+  },
+  "sender": {
+    "login": "x",
+    "type": "User"
+  },
+  "installation": {
+    "id": 777
+  }
+}

@@ -47,6 +47,13 @@
         "config": ["drizzle.config.js"]
       },
       "ignoreDependencies": ["fastify"]
+    },
+    "apps/ai/happy": {
+      "entry": ["src/main.ts", "src/scripts/*.ts", "eval/run-eval.ts"],
+      "project": ["src/**/*.ts", "eval/**/*.ts", "*.{js,ts}"],
+      "jest": {
+        "config": ["jest.config.js"]
+      }
     }
   },
   "ignoreIssues": {
