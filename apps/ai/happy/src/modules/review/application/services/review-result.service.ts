@@ -1,7 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { RESULT_COMMIT_LOOKBACK } from '../../domain/constants/review-limits.constants';
-import type { PullRequest, PullRequestRef } from '../../domain/entities/pull-request';
+import type {
+  OpenPullRequest,
+  PullRequest,
+  PullRequestRef,
+} from '../../domain/entities/pull-request';
 import {
   UNKNOWN_RESULT_STATUS,
   type PublishedReviewResult,
@@ -61,6 +65,13 @@ export class ReviewResultService {
       headSha,
       result: published === null ? null : toResult(published, headSha),
     };
+  }
+
+  listOpenPullRequests(
+    repository: Pick<PullRequestRef, 'owner' | 'repo'>,
+    limit: number,
+  ): Promise<OpenPullRequest[]> {
+    return this.host.listOpenPullRequests(repository, limit);
   }
 
   async hasResultFor(ref: PullRequestRef, sha: string): Promise<boolean> {

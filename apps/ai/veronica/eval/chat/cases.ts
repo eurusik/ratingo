@@ -444,4 +444,55 @@ export const EVAL_CASES: readonly EvalCase[] = [
         'Хеппі затримав PR 470: знайшов важливих зауважень 2 і одне дрібне, плюс одне питання до автора.',
     },
   },
+  {
+    id: 'happy-result-stale',
+    kind: EvalKind.KNOWN,
+    question: 'Що Хеппі думає про пул 469?',
+    fixtures: [
+      {
+        tool: 'ask_happy',
+        match: { pull_number: 469 },
+        response: {
+          pullRequest: 469,
+          found: true,
+          reviewRunningNow: false,
+          reviewed: true,
+          status: 'unknown',
+          forCurrentCommit: false,
+          verdict: 'Периметр чистий. Проходь.',
+          summary: '',
+          skipReason: null,
+          findingsBySeverity: { critical: 0, major: 0, minor: 0, nit: 0 },
+          questions: [],
+          coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
+        },
+      },
+    ],
+    expectedTools: ['ask_happy'],
+    mustContain: [['хеппі, глянь'], ['469']],
+    mustNotContain: ['напишіть', 'попросіть', 'ваш'],
+    reference: {
+      calls: [{ tool: 'ask_happy', input: { pull_number: 469 } }],
+      answer:
+        'Актуального огляду PR 469 немає: є лише старий результат без подробиць. Напиши “Хеппі, глянь 469” — запущу ревʼю.',
+    },
+  },
+  {
+    id: 'code-question-honest',
+    kind: EvalKind.KNOWN,
+    question: 'Глянь по коду, де може бути проблема з трендами',
+    fixtures: [],
+    expectedTools: [],
+    mustContain: [
+      ['не вмію', 'не можу', 'поки не', 'не читаю', 'не бачу коду'],
+      ['код'],
+      ['хеппі, глянь'],
+    ],
+    mustNotContain: ['напишіть', 'ваш', 'ви '],
+    reference: {
+      calls: [],
+      answer:
+        'Код я сама поки не читаю, тож вгадувати не буду. Можу запустити огляд конкретного PR: напиши “Хеппі, глянь” і номер. Пошук по всьому коду з’явиться пізніше.',
+    },
+  },
 ];

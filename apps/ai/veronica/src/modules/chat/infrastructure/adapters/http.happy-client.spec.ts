@@ -99,4 +99,22 @@ describe('HttpHappyClient', () => {
     const { client } = clientWith(() => json({}, 500));
     await expect(client.latestResult(1)).rejects.not.toThrow(TOKEN);
   });
+
+  it('lists open pull requests with times as milliseconds', async () => {
+    const { client, calls } = clientWith(() =>
+      json({
+        status: 'ok',
+        pullRequests: [
+          { number: 471, title: 'Fix', author: 'alice', updatedAt: '2026-11-22T10:00:00Z' },
+        ],
+      }),
+    );
+    expect(await client.listOpenPullRequests()).toEqual([
+      { number: 471, title: 'Fix', author: 'alice', updatedAtMs: Date.UTC(2026, 10, 22, 10) },
+    ]);
+    expect(calls[0]?.url).toBe('http://happy.railway.internal:3005/internal/pull-requests');
+    await expect(
+      clientWith(() => json({ status: 'weird' })).client.listOpenPullRequests(),
+    ).rejects.toMatchObject({ name: 'HappyUnavailableError' });
+  });
 });

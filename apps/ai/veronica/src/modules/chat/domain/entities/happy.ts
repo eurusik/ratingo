@@ -73,3 +73,10 @@ export interface HappyFollowUp {
   headSha: string;
   attempt: number;
 }
+
+export interface HappyOpenPullRequest {
+  number: number;
+  title: string;
+  author: string;
+  updatedAtMs: number;
+}

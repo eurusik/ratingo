@@ -283,3 +283,17 @@ describe('GithubCodeHostAdapter published checks', () => {
     expect(calls[1]).toContain('per_page=5&page=3');
   });
 });
+
+describe('GithubCodeHostAdapter open pull requests', () => {
+  it('lists the most recently updated open pull requests', async () => {
+    const { adapter, calls } = adapterWith(() =>
+      json([
+        { number: 5, title: 'Fix', user: { login: 'alice' }, updated_at: '2026-11-22T10:00:00Z' },
+      ]),
+    );
+    expect(await adapter.listOpenPullRequests(TEST_REF, 6)).toEqual([
+      { number: 5, title: 'Fix', author: 'alice', updatedAt: '2026-11-22T10:00:00Z' },
+    ]);
+    expect(calls[0]?.url).toContain('/pulls?state=open&sort=updated&direction=desc&per_page=6');
+  });
+});

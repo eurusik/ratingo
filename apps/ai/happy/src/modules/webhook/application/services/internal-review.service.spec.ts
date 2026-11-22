@@ -108,3 +108,16 @@ describe('InternalReviewService.latest', () => {
     expect(await service.latest(7)).toEqual({ status: 'not_found' });
   });
 });
+
+describe('InternalReviewService.listOpen', () => {
+  it('lists open pull requests of the first configured repository', async () => {
+    const listOpenPullRequests = jest.fn().mockResolvedValue([{ number: 3 }]);
+    const service = new InternalReviewService(
+      CONFIG,
+      { enqueue: jest.fn(), isPending: jest.fn() },
+      { listOpenPullRequests } as never,
+    );
+    expect(await service.listOpen()).toEqual([{ number: 3 }]);
+    expect(listOpenPullRequests).toHaveBeenCalledWith({ owner: 'acme', repo: 'shop' }, 6);
+  });
+});

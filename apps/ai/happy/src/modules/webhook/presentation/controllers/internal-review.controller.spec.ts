@@ -6,7 +6,7 @@ import {
 
 import { InternalReviewController } from './internal-review.controller';
 
-const controllerWith = (overrides: Partial<Record<'request' | 'latest', jest.Mock>>) =>
+const controllerWith = (overrides: Partial<Record<'request' | 'latest' | 'listOpen', jest.Mock>>) =>
   new InternalReviewController({
     request: jest.fn(),
     latest: jest.fn(),
@@ -59,5 +59,19 @@ describe('InternalReviewController', () => {
     const controller = controllerWith({ request });
     await expect(controller.request('5')).rejects.toMatchObject({ status: 503 });
     await expect(controller.request('5')).rejects.toMatchObject({ status: 502 });
+  });
+
+  it('lists open pull requests and maps a host failure to 502', async () => {
+    const open = [{ number: 1, title: 'A', author: 'a', updatedAt: 'x' }];
+    const listOpen = jest
+      .fn()
+      .mockResolvedValueOnce(open)
+      .mockRejectedValueOnce(new CodeHostError('list open pull requests', 500, 'boom'));
+    const controller = controllerWith({ listOpen });
+    await expect(controller.openPullRequests()).resolves.toEqual({
+      status: 'ok',
+      pullRequests: open,
+    });
+    await expect(controller.openPullRequests()).rejects.toMatchObject({ status: 502 });
   });
 });

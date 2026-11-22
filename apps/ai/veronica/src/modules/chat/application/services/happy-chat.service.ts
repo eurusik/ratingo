@@ -1,19 +1,24 @@
 import { Inject, Injectable } from '@nestjs/common';
 
+import { CLOCK_PORT, type ClockPort } from '@ratingo/ai-core';
+
 import { HAPPY_CONFIG, type HappyConfig } from '../../../../config/config.constants';
 import { HAPPY_FOLLOW_UP_FIRST_DELAY_MS } from '../../domain/constants/happy.constants';
 import {
   HAPPY_NEEDS_NUMBER_REPLY,
+  HAPPY_NO_OPEN_PULL_REQUESTS_REPLY,
   HAPPY_UNAVAILABLE_REPLY,
   happyAlreadyRunningReply,
   happyForeignRepositoryReply,
   happyNotFoundReply,
+  happyPickedPullRequestReply,
   happySkippedReply,
   happyStartedReply,
 } from '../../domain/constants/chat-replies.constants';
 import { HappyLookupKind, HappyRequestKind } from '../../domain/entities/happy';
 import { HappyTargetKind, type HappyTarget } from '../../domain/entities/intent';
 import { renderHappyResult } from '../../domain/policies/happy-summary.policy';
+import { pullRequestTitle, renderPullRequestChoice } from '../../domain/policies/happy-pick.policy';
 import { isSameRepository } from '../../domain/policies/happy-target.policy';
 import { CHAT_JOB_QUEUE, type ChatJobQueuePort } from '../../domain/ports/chat-job-queue.port';
 import {
@@ -22,7 +27,7 @@ import {
   type HappyClientPort,
 } from '../../domain/ports/happy-client.port';
 
-type Resolution = { pullNumber: number } | { reply: string };
+type Resolution = { pullNumber: number } | { reply: string } | { pick: true };
 
 @Injectable()
 export class HappyChatService {
@@ -30,13 +35,16 @@ export class HappyChatService {
     @Inject(HAPPY_CLIENT) private readonly happy: HappyClientPort,
     @Inject(CHAT_JOB_QUEUE) private readonly queue: ChatJobQueuePort,
     @Inject(HAPPY_CONFIG) private readonly config: HappyConfig,
+    @Inject(CLOCK_PORT) private readonly clock: ClockPort,
   ) {}
 
   async reply(chatId: string, target: HappyTarget): Promise<string> {
     const resolution = this.resolve(target);
     if ('reply' in resolution) return resolution.reply;
     try {
-      return await this.answer(chatId, resolution.pullNumber);
+      return 'pick' in resolution
+        ? await this.pick(chatId)
+        : await this.answer(chatId, resolution.pullNumber);
     } catch (error) {
       if (error instanceof HappyUnavailableError) return HAPPY_UNAVAILABLE_REPLY;
       throw error;
@@ -51,9 +59,20 @@ export class HappyChatService {
         return isSameRepository(target.pullRequest, this.config.repository)
           ? { pullNumber: target.pullRequest.number }
           : { reply: happyForeignRepositoryReply(this.config.repository) };
+      case HappyTargetKind.PICK:
+        return { pick: true };
       case HappyTargetKind.UNCLEAR:
         return { reply: HAPPY_NEEDS_NUMBER_REPLY };
     }
+  }
+
+  private async pick(chatId: string): Promise<string> {
+    const open = await this.happy.listOpenPullRequests();
+    const [only] = open;
+    if (only === undefined) return HAPPY_NO_OPEN_PULL_REQUESTS_REPLY;
+    if (open.length > 1) return renderPullRequestChoice(open, this.clock.nowMs());
+    const answer = await this.answer(chatId, only.number);
+    return `${happyPickedPullRequestReply(only.number, pullRequestTitle(only.title))}\n\n${answer}`;
   }
 
   private async answer(chatId: string, pullNumber: number): Promise<string> {

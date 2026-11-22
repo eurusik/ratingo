@@ -2,6 +2,7 @@ import type { CheckReport } from '../../domain/entities/check-report';
 import type {
   ChangedFile,
   ChangedFiles,
+  OpenPullRequest,
   PullRequest,
   PullRequestRef,
   RepoRuleFile,
@@ -22,6 +23,7 @@ import {
   directoryEntriesResponse,
   mapChangedFiles,
   mapCommitShas,
+  mapOpenPullRequests,
   mapPublishedChecks,
   mapPullRequest,
 } from '../mappers/github.mapper';
@@ -77,6 +79,15 @@ export class GithubCodeHostAdapter
   async getPullRequest(ref: PullRequestRef): Promise<PullRequest> {
     const response = await this.request('get pull request', ref, this.pullPath(ref));
     return mapPullRequest(ref, await response.json());
+  }
+
+  async listOpenPullRequests(ref: RepositoryRef, limit: number): Promise<OpenPullRequest[]> {
+    const response = await this.request(
+      'list open pull requests',
+      ref,
+      `${this.repositoryPath(ref)}/pulls?state=open&sort=updated&direction=desc&per_page=${limit}`,
+    );
+    return mapOpenPullRequests(await response.json());
   }
 
   async listChangedFiles(ref: PullRequestRef, limits: ChangedFilesLimits): Promise<ChangedFiles> {

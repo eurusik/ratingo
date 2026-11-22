@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-import type { ChangedFile, PullRequest, PullRequestRef } from '../../domain/entities/pull-request';
+import type {
+  ChangedFile,
+  OpenPullRequest,
+  PullRequest,
+  PullRequestRef,
+} from '../../domain/entities/pull-request';
 import { decodeResultMarker } from '../state/review-result-marker.codec';
 import type { PublishedCheck } from '../../domain/ports/published-check.port';
 import { FileStatus, PullRequestState } from '../../domain/entities/pull-request';
@@ -40,6 +45,15 @@ const checkRunsResponse = z.object({
     }),
   ),
 });
+
+const openPullRequestsResponse = z.array(
+  z.object({
+    number: z.number().int(),
+    title: z.string(),
+    user: z.object({ login: z.string() }),
+    updated_at: z.string(),
+  }),
+);
 
 const commitsResponse = z.array(z.object({ sha: z.string() }));
 
@@ -104,6 +118,14 @@ export const mapPublishedChecks = (
       snapshot: decodeResultMarker(run.output.summary ?? ''),
       url: run.html_url?.startsWith(GITHUB_WEB_PREFIX) === true ? run.html_url : null,
     }));
+
+export const mapOpenPullRequests = (payload: unknown): OpenPullRequest[] =>
+  openPullRequestsResponse.parse(payload).map((pull) => ({
+    number: pull.number,
+    title: pull.title,
+    author: pull.user.login,
+    updatedAt: pull.updated_at,
+  }));
 
 export const mapCommitShas = (payload: unknown): string[] =>
   commitsResponse.parse(payload).map((commit) => commit.sha);

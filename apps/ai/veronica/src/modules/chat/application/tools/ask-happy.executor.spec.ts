@@ -17,7 +17,11 @@ const RESULT = {
 
 const executorWith = (latestResult: jest.Mock) => {
   const requestReview = jest.fn();
-  return { executor: new AskHappyExecutor({ latestResult, requestReview }), requestReview };
+  const listOpenPullRequests = jest.fn();
+  return {
+    executor: new AskHappyExecutor({ latestResult, requestReview, listOpenPullRequests }),
+    requestReview,
+  };
 };
 
 describe('AskHappyExecutor', () => {

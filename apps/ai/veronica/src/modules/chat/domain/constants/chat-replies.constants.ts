@@ -11,6 +11,16 @@ export const SEARCHING_REPLY = '<i>шукаю…</i>';
 export const HAPPY_NEEDS_NUMBER_REPLY =
   'Скажи номер PR: «Хеппі, глянь 470», або надішли посилання на pull request.';
 
+export const HAPPY_NO_OPEN_PULL_REQUESTS_REPLY = 'Відкритих PR зараз немає, глянути нічого.';
+
+export const HAPPY_CHOOSE_PULL_REQUEST_REPLY =
+  'Відкритих PR кілька. Який глянути? Напиши номер, наприклад «глянь #471».';
+
+export const HAPPY_MORE_PULL_REQUESTS_NOTE = 'Є й старіші відкриті PR, тут п’ять найновіших.';
+
+export const happyPickedPullRequestReply = (pullNumber: number, title: string): string =>
+  `Беру PR №${pullNumber} «${title}».`;
+
 export const HAPPY_UNAVAILABLE_REPLY =
   'Хеппі зараз недоступний, тож не можу ні запустити огляд, ні показати результат. Спробуй трохи пізніше. Звіти й команди працюють як завжди.';
 
@@ -47,6 +57,7 @@ export const happyGaveUpReply = (pullNumber: number, pullRequestUrl: string): st
 export const HAPPY_HELP_LINES: readonly string[] = [
   '«Хеппі, глянь 470»: огляд PR від Хеппі (готовий результат або новий огляд)',
   'Посилання на PR цього репозиторію працює так само',
+  '«Зроби ревью» без номера: один відкритий PR беру сама, з кількох питаю, який',
 ];
 
 export const EMPTY_QUESTION_REPLY = 'Що саме цікавить? Напиши питання одним повідомленням.';

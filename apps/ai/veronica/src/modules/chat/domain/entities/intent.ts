@@ -18,12 +18,14 @@ export interface PullRequestRef {
 export const HappyTargetKind = {
   LINK: 'link',
   NUMBER: 'number',
+  PICK: 'pick',
   UNCLEAR: 'unclear',
 } as const;
 
 export type HappyTarget =
   | { kind: typeof HappyTargetKind.LINK; pullRequest: PullRequestRef }
   | { kind: typeof HappyTargetKind.NUMBER; number: number }
+  | { kind: typeof HappyTargetKind.PICK }
   | { kind: typeof HappyTargetKind.UNCLEAR };
 
 export type Intent =

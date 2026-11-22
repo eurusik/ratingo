@@ -69,6 +69,37 @@ describe('routeMessage', () => {
     });
   });
 
+  it("routes a review request to Happy even without Happy's name", () => {
+    expect(routeMessage('а глянь 469 пр')).toEqual({
+      kind: IntentKind.HAPPY,
+      target: { kind: 'number', number: 469 },
+    });
+  });
+
+  it.each(['зроби ревью', 'а глянь шо там по мру', 'проревʼюй'])(
+    'routes «%s» to Happy to pick the pull request',
+    (text) => {
+      expect(routeMessage(text)).toEqual({ kind: IntentKind.HAPPY, target: { kind: 'pick' } });
+    },
+  );
+
+  it('routes a Happy mention with a pull request word and no number to the pick', () => {
+    expect(routeMessage('Хеппі, глянь мр')).toEqual({
+      kind: IntentKind.HAPPY,
+      target: { kind: 'pick' },
+    });
+  });
+
+  it.each([
+    'що Хеппі сказав про 470?',
+    'глянь по коду де може бути проблема',
+    'чому падає черга — глянь в коді',
+    'скільки PR злили за тиждень?',
+    'що там по 470',
+  ])('keeps the question «%s» with the agent', (text) => {
+    expect(routeMessage(text).kind).toBe(IntentKind.FREE_FORM);
+  });
+
   it('asks for a number when Happy is addressed without one', () => {
     expect(routeMessage('Хеппі, привіт')).toEqual({
       kind: IntentKind.HAPPY,

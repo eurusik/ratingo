@@ -26,6 +26,7 @@ const setup = (lookup: HappyLookup | Error) => {
         return lookup;
       },
       requestReview: jest.fn(),
+      listOpenPullRequests: jest.fn(),
     },
     {
       enqueue: async () => undefined,
