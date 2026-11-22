@@ -12,7 +12,6 @@ const FREE_PRICE: ModelPrice = {
 };
 
 export const STUB_PROVIDER = 'stub';
-export const ANTHROPIC_PROVIDER = 'anthropic';
 export const STUB_TRIAGE_MODEL = 'triage';
 export const STUB_REVIEW_MODEL = 'review';
 

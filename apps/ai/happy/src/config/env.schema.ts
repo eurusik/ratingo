@@ -24,6 +24,7 @@ const modelEnvSchema = z.object({
 
 const githubEnvSchema = z.object({
   GITHUB_API_URL: z.url().default(DEFAULT_GITHUB_API_URL),
+  REDIS_URL: z.string().min(1).optional(),
 });
 
 export const cliEnvSchema = modelEnvSchema.extend(githubEnvSchema.shape).extend({

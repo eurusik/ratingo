@@ -27,6 +27,14 @@ describe('env schemas', () => {
     expect(serviceEnvSchema.safeParse({ ...SERVICE, ANTHROPIC_API_KEY: '' }).success).toBe(false);
   });
 
+  it('treats Redis as optional and rejects an empty URL', () => {
+    expect(serviceEnvSchema.parse(SERVICE).REDIS_URL).toBeUndefined();
+    expect(serviceEnvSchema.parse({ ...SERVICE, REDIS_URL: 'redis://h:6379' }).REDIS_URL).toBe(
+      'redis://h:6379',
+    );
+    expect(serviceEnvSchema.safeParse({ ...SERVICE, REDIS_URL: '' }).success).toBe(false);
+  });
+
   it('lets the CLI run with only a GitHub token', () => {
     expect(cliEnvSchema.safeParse({ GITHUB_TOKEN: 't' }).success).toBe(true);
     expect(cliEnvSchema.safeParse({}).success).toBe(false);

@@ -5,10 +5,12 @@ import {
   GITHUB_CONFIG,
   INFRA_CONFIG,
   MODEL_ALIASES,
+  REDIS_CONFIG,
   REVIEW_CONFIG,
   type AnthropicConfig,
   type GithubConfig,
   type InfraConfig,
+  type RedisConfig,
   type ReviewConfig,
 } from './config.constants';
 import { cliEnvSchema, serviceEnvSchema } from './env.schema';
@@ -28,6 +30,7 @@ export class ConfigModule {
     const github: GithubConfig = { token: env.GITHUB_TOKEN, apiUrl: env.GITHUB_API_URL };
     const anthropic: AnthropicConfig = { apiKey: env.ANTHROPIC_API_KEY };
     const infra: InfraConfig = { port: env.PORT };
+    const redis: RedisConfig = { url: env.REDIS_URL };
     const review: ReviewConfig = {
       allowedRepositories: env.HAPPY_ALLOWED_REPOS,
       allowedAuthors: env.HAPPY_ALLOWED_AUTHORS,
@@ -38,6 +41,7 @@ export class ConfigModule {
       { provide: ANTHROPIC_CONFIG, useValue: anthropic },
       { provide: INFRA_CONFIG, useValue: infra },
       { provide: REVIEW_CONFIG, useValue: review },
+      { provide: REDIS_CONFIG, useValue: redis },
       { provide: MODEL_ALIASES, useValue: buildModelAliases(env) },
     ]);
   }
@@ -50,10 +54,12 @@ export class ConfigModule {
       allowedRepositories: [repository],
       allowedAuthors: env.HAPPY_ALLOWED_AUTHORS,
     };
+    const redis: RedisConfig = { url: env.REDIS_URL };
     return exportProviders([
       { provide: GITHUB_CONFIG, useValue: github },
       { provide: ANTHROPIC_CONFIG, useValue: anthropic },
       { provide: REVIEW_CONFIG, useValue: review },
+      { provide: REDIS_CONFIG, useValue: redis },
       { provide: MODEL_ALIASES, useValue: buildModelAliases(env) },
     ]);
   }

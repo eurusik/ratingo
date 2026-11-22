@@ -51,8 +51,12 @@ export type { StubScenarioOptions, StubScript } from './model/adapters/stub/stub
 export { StubScenario, createStubScript } from './model/adapters/stub/stub.scenarios';
 export type { AnthropicAdapterConfig } from './model/adapters/anthropic/anthropic.model-adapter';
 export { createAnthropicModelAdapter } from './model/adapters/anthropic/anthropic.model-adapter';
-export type { ModelProvidersConfig } from './wiring/model-providers';
-export { createModelProviders } from './wiring/model-providers';
+export type { ModelProvidersConfig, RegisteredProviders } from './wiring/model-providers';
+export {
+  UnregisteredModelProviderError,
+  assertAliasProvidersRegistered,
+  createModelProviders,
+} from './wiring/model-providers';
 export { ANTHROPIC_DEFAULT_PRICES } from './model/adapters/anthropic/anthropic.prices';
 
 export type { Tool, ToolContext, ToolSpec } from './tools/define-tool';
@@ -90,6 +94,10 @@ export { InMemoryRunRepository } from './runs/in-memory.run-repository';
 export type { RunLogger } from './runs/run-logger.port';
 export { TelemetryRunRepository } from './runs/telemetry.run-repository';
 export { markInterruptedRuns } from './runs/interrupted-runs';
+export type { SpendLogger, SpendStore } from './runs/spend-store.port';
+export type { RedisSpendClient } from './runs/redis.spend-store';
+export { RedisSpendStore } from './runs/redis.spend-store';
+export { DurableSpendRunRepository } from './runs/durable-spend.run-repository';
 
 export type { AgentManifest } from './manifest/agent-manifest.schema';
 export { agentManifestSchema } from './manifest/agent-manifest.schema';
