@@ -1,5 +1,5 @@
 import type { Intent } from '../entities/intent';
-import { HappyTargetKind, IntentKind } from '../entities/intent';
+import { IntentKind } from '../entities/intent';
 import { AgentName } from '../constants/chat.constants';
 
 import { parseCommand } from './command-parser.policy';
@@ -26,7 +26,7 @@ export const routeMessage = (text: string): Intent => {
   }
   const requested = matchReviewRequest(text);
   if (requested !== null) {
-    return { kind: IntentKind.HAPPY, target: { kind: HappyTargetKind.NUMBER, number: requested } };
+    return { kind: IntentKind.HAPPY, target: requested };
   }
   return { kind: IntentKind.FREE_FORM, text: text.trim() };
 };

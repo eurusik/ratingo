@@ -5,11 +5,13 @@ import {
   ReviewJobSource,
   ReviewResultService,
   parseRepository,
+  type OpenPullRequest,
   type PullRequestRef,
   type ReviewLookup,
 } from '../../../review/public';
 import {
   InternalRequestStatus,
+  OPEN_PULL_REQUESTS_LIMIT,
   type InternalSkipReason,
 } from '../../domain/constants/webhook.constants';
 import { decideInternalRequest } from '../../domain/policies/internal-request-policy';
@@ -67,6 +69,11 @@ export class InternalReviewService {
       commentId: null,
     });
     return { status: statusFor(state), headSha };
+  }
+
+  listOpen(): Promise<OpenPullRequest[]> {
+    const { owner, repo } = this.refFor(0);
+    return this.results.listOpenPullRequests({ owner, repo }, OPEN_PULL_REQUESTS_LIMIT);
   }
 
   async latest(pullNumber: number): Promise<PullReviewState> {

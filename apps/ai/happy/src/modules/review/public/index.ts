@@ -11,7 +11,7 @@ export { ReviewJobSource, type ReviewJob } from '../domain/entities/review-job';
 export { reviewJobId } from '../domain/policies/review-job-id';
 export { parseRepository } from '../presentation/parse-repository';
 export { RepositoryNotAllowedError } from '../domain/errors/review.errors';
-export type { PullRequestRef } from '../domain/entities/pull-request';
+export type { OpenPullRequest, PullRequestRef } from '../domain/entities/pull-request';
 export { CodeHostError } from '../domain/ports/code-host.port';
 export type { PublishedReviewResult } from '../domain/entities/review-result';
 export { PullRequestState, type PullRequest } from '../domain/entities/pull-request';

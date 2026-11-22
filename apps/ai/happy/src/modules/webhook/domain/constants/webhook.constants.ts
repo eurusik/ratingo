@@ -49,6 +49,7 @@ export type InternalRequestStatus =
   (typeof InternalRequestStatus)[keyof typeof InternalRequestStatus];
 
 export const MAX_PULL_NUMBER_DIGITS = 9;
+export const OPEN_PULL_REQUESTS_LIMIT = 6;
 export const INTERNAL_PROXY_HEADERS: readonly string[] = [
   'x-forwarded-for',
   'x-forwarded-host',

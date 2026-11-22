@@ -1,10 +1,11 @@
-import type { HappyLookup, HappyReviewRequest } from '../entities/happy';
+import type { HappyLookup, HappyOpenPullRequest, HappyReviewRequest } from '../entities/happy';
 
 export const HAPPY_CLIENT = Symbol('HAPPY_CLIENT');
 
 export interface HappyClientPort {
   requestReview(pullNumber: number): Promise<HappyReviewRequest>;
   latestResult(pullNumber: number): Promise<HappyLookup>;
+  listOpenPullRequests(): Promise<HappyOpenPullRequest[]>;
 }
 
 export class HappyUnavailableError extends Error {
