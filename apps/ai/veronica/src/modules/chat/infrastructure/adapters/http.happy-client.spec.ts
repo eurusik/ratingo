@@ -34,12 +34,13 @@ const RESULT = {
   questions: [],
   coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
   checkRunUrl: null,
+  review: null,
 };
 
 describe('HttpHappyClient', () => {
   it('requests a review with a bearer token on the private URL, once', async () => {
     const { client, calls } = clientWith(() => json({ status: 'queued', headSha: 'h1' }));
-    expect(await client.requestReview(470)).toEqual({ kind: 'queued', headSha: 'h1' });
+    expect(await client.requestReview(470, 'auto')).toEqual({ kind: 'queued', headSha: 'h1' });
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe(
       'http://happy.railway.internal:3005/internal/pull-requests/470/review',
@@ -50,11 +51,44 @@ describe('HttpHappyClient', () => {
     );
   });
 
+  it('sends the requested mode as JSON', async () => {
+    const { client, calls } = clientWith(() => json({ status: 'queued', headSha: 'h1' }));
+    await client.requestReview(470, 'full');
+    expect(calls[0]?.init.body).toBe(JSON.stringify({ mode: 'full' }));
+    expect((calls[0]?.init.headers as Record<string, string>)['content-type']).toBe(
+      'application/json',
+    );
+  });
+
+  it('reads the review scope of a result and tolerates a Happy that does not send it', async () => {
+    const review = {
+      mode: 'incremental',
+      baseSha: 'abc',
+      fullReason: null,
+      files: 2,
+      statusCounts: { new: 1, stillOpen: 0, resolved: 2, needsRecheck: 0 },
+    };
+    const withReview = clientWith(() =>
+      json({ status: 'found', headSha: 'h1', reviewPending: false, result: { ...RESULT, review } }),
+    );
+    expect(await withReview.client.latestResult(1)).toMatchObject({ result: { review } });
+    const { review: _unused, ...oldShape } = RESULT;
+    const withoutReview = clientWith(() =>
+      json({ status: 'found', headSha: 'h1', reviewPending: false, result: oldShape }),
+    );
+    expect(await withoutReview.client.latestResult(1)).toMatchObject({ result: { review: null } });
+  });
+
   it('maps a refusal and a missing pull request', async () => {
     expect(
-      await clientWith(() => json({ status: 'skipped', reason: 'merged' })).client.requestReview(1),
+      await clientWith(() => json({ status: 'skipped', reason: 'merged' })).client.requestReview(
+        1,
+        'auto',
+      ),
     ).toEqual({ kind: 'skipped', reason: 'merged' });
-    expect(await clientWith(() => json({ status: 'not_found' })).client.requestReview(1)).toEqual({
+    expect(
+      await clientWith(() => json({ status: 'not_found' })).client.requestReview(1, 'auto'),
+    ).toEqual({
       kind: 'not_found',
     });
   });
@@ -83,7 +117,9 @@ describe('HttpHappyClient', () => {
   ])('reports Happy as unavailable on %s', async (_name, handler) => {
     const { client } = clientWith(handler as never);
     await expect(client.latestResult(1)).rejects.toMatchObject({ name: 'HappyUnavailableError' });
-    await expect(client.requestReview(1)).rejects.toMatchObject({ name: 'HappyUnavailableError' });
+    await expect(client.requestReview(1, 'auto')).rejects.toMatchObject({
+      name: 'HappyUnavailableError',
+    });
   });
 
   it.each([

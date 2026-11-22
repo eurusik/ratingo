@@ -9,6 +9,8 @@ import {
   buildPullRequest,
 } from '../../infrastructure/testing/fake-code-host.testing';
 
+import { trackingOf } from '../../infrastructure/testing/outcome.testing';
+
 import { ReviewResultService } from './review-result.service';
 
 const SNAPSHOT: ReviewResultSnapshot = buildResultSnapshot({
@@ -19,6 +21,7 @@ const SNAPSHOT: ReviewResultSnapshot = buildResultSnapshot({
   findings: [],
   questions: [],
   dropped: [],
+  tracking: trackingOf([]),
   reviewedFiles: [],
   coverage: { unreviewedFiles: [], gaps: [] },
   stopReason: 'end',
@@ -35,6 +38,7 @@ const check = (
   title: 'Периметр чистий. Проходь.',
   snapshot,
   url: `https://github.com/acme/shop/runs/${headSha}`,
+  trusted: true,
 });
 
 const setup = (checks: Record<string, PublishedCheck>, recent: string[] = [], head = 'head222') => {

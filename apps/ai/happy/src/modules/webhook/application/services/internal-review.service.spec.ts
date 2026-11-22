@@ -48,6 +48,7 @@ describe('InternalReviewService.request', () => {
       source: 'internal_request',
       headSha: 'head222',
       commentId: null,
+      mode: 'auto',
     });
     expect(results.findPullRequest).toHaveBeenCalledWith(TEST_REF);
   });
@@ -65,6 +66,13 @@ describe('InternalReviewService.request', () => {
     const { service, enqueue } = setup({ hasResult: true });
     expect(await service.request(7)).toEqual({ status: 'already_reviewed', headSha: 'head222' });
     expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it('queues a full review with its own job and asks for a full result at the head', async () => {
+    const { service, enqueue, results } = setup({});
+    await service.request(7, 'full');
+    expect(results.hasResultFor).toHaveBeenCalledWith(TEST_REF, 'head222', 'full');
+    expect(enqueue).toHaveBeenCalledWith(expect.objectContaining({ mode: 'full' }));
   });
 
   it('answers not_found for a missing pull request without enqueueing', async () => {

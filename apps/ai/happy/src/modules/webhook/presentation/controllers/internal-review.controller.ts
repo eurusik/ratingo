@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -10,7 +11,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { CodeHostError } from '../../../review/public';
+import { z } from 'zod';
+
+import { CodeHostError, RequestedMode } from '../../../review/public';
 import {
   InternalReviewService,
   RepositoryNotConfiguredError,
@@ -20,6 +23,16 @@ import { InternalApiGuard } from '../guards/internal-api.guard';
 import { toLatestResponse } from '../internal-review.mapper';
 
 const PULL_NUMBER_PATTERN = new RegExp(`^[1-9]\\d{0,${MAX_PULL_NUMBER_DIGITS - 1}}$`);
+
+const requestBodySchema = z
+  .object({ mode: z.enum([RequestedMode.AUTO, RequestedMode.FULL]).default(RequestedMode.AUTO) })
+  .strict();
+
+const parseMode = (body: unknown): RequestedMode => {
+  const parsed = requestBodySchema.safeParse(body ?? {});
+  if (!parsed.success) throw new BadRequestException('mode must be "auto" or "full"');
+  return parsed.data.mode;
+};
 
 const parsePullNumber = (raw: string): number => {
   if (!PULL_NUMBER_PATTERN.test(raw)) {
@@ -54,10 +67,11 @@ export class InternalReviewController {
 
   @Post(':number/review')
   @HttpCode(200)
-  async request(@Param('number') number: string) {
+  async request(@Param('number') number: string, @Body() body: unknown) {
     const pullNumber = parsePullNumber(number);
+    const mode = parseMode(body);
     try {
-      return await this.reviews.request(pullNumber);
+      return await this.reviews.request(pullNumber, mode);
     } catch (error) {
       return translate(error);
     }

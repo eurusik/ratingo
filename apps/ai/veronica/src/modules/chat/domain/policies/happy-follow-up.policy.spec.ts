@@ -16,6 +16,7 @@ const result = (checkedSha: string): HappyResult => ({
   questions: [],
   coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
   checkRunUrl: null,
+  review: null,
 });
 
 const found = (headSha: string, reviewPending: boolean, checked: string | null): HappyLookup => ({
@@ -30,6 +31,30 @@ describe('decideHappyFollowUp', () => {
 
   it('delivers the result for the requested commit', () => {
     expect(decideHappyFollowUp(at(1), found('h1', false, 'h1'))).toBe('deliver');
+  });
+
+  it('waits for a full review until the result says it was full', () => {
+    const full = { headSha: 'h1', attempt: 1, mode: 'full' } as const;
+    const withScope = (mode: 'incremental' | 'full'): HappyLookup => ({
+      kind: 'found',
+      headSha: 'h1',
+      reviewPending: true,
+      result: {
+        ...result('h1'),
+        review: {
+          mode,
+          baseSha: null,
+          fullReason: null,
+          files: 1,
+          statusCounts: { new: 0, stillOpen: 0, resolved: 0, needsRecheck: 0 },
+        },
+      },
+    });
+    expect(decideHappyFollowUp(full, withScope('incremental'))).toBe('wait');
+    expect(decideHappyFollowUp(full, withScope('full'))).toBe('deliver');
+    expect(decideHappyFollowUp({ headSha: 'h1', attempt: 1 }, withScope('incremental'))).toBe(
+      'deliver',
+    );
   });
 
   it('waits while the review is pending', () => {

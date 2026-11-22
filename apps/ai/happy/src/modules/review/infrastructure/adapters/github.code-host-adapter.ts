@@ -2,6 +2,7 @@ import type { CheckReport } from '../../domain/entities/check-report';
 import type {
   ChangedFile,
   ChangedFiles,
+  CommitComparison,
   OpenPullRequest,
   PullRequest,
   PullRequestRef,
@@ -23,6 +24,7 @@ import {
   directoryEntriesResponse,
   mapChangedFiles,
   mapCommitShas,
+  mapComparison,
   mapOpenPullRequests,
   mapPublishedChecks,
   mapPullRequest,
@@ -36,6 +38,7 @@ const RULES_FILE = 'CLAUDE.md';
 const RULES_DIRECTORY = '.claude/rules';
 const MARKDOWN_SUFFIX = '.md';
 const DIRECTORY_ENTRY_TYPE = 'file';
+const COMPARE_FILES_CAP = 300;
 const LAST_PAGE_PATTERN = /[?&]page=(\d+)[^>]*>;\s*rel="last"/;
 
 export interface GithubCodeHostConfig {
@@ -108,6 +111,29 @@ export class GithubCodeHostAdapter
         budget.truncated || batch.length > room || (morePages && room <= PAGE_SIZE);
     }
     return { files, truncated: budget.truncated };
+  }
+
+  async compareCommits(
+    ref: RepositoryRef,
+    baseSha: string,
+    headSha: string,
+    limits: ChangedFilesLimits,
+  ): Promise<CommitComparison> {
+    const response = await this.request(
+      'compare commits',
+      ref,
+      `${this.repositoryPath(ref)}/compare/${encodeURIComponent(baseSha)}...${encodeURIComponent(headSha)}`,
+    );
+    const { relation, files } = mapComparison(await response.json());
+    const budget = { patchChars: 0, truncated: files.length >= COMPARE_FILES_CAP };
+    const limited = files
+      .slice(0, limits.maxFiles)
+      .map((file) => applyPatchBudget(file, limits, budget));
+    return {
+      relation,
+      files: limited,
+      truncated: budget.truncated || files.length > limits.maxFiles,
+    };
   }
 
   async readFile(

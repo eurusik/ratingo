@@ -1,4 +1,5 @@
 import type { PullRequestRef } from './pull-request';
+import type { RequestedMode } from './review-scope';
 
 export const ReviewJobSource = {
   PULL_REQUEST: 'pull_request',
@@ -12,4 +13,5 @@ export interface ReviewJob {
   source: ReviewJobSource;
   headSha: string | null;
   commentId: number | null;
+  mode?: RequestedMode;
 }

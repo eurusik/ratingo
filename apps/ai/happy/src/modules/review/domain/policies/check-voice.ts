@@ -4,8 +4,10 @@ import { Severity } from '../constants/severity.constants';
 import type { CompletedReview, ReviewOutcome } from '../entities/review-outcome';
 import { isCoverageComplete, ReviewStatus } from '../entities/review-outcome';
 
+import { openFindings, openQuestions } from './finding-tracking';
+
 const hasSeverity = (review: CompletedReview, severity: Severity): boolean =>
-  review.findings.some((finding) => finding.severity === severity);
+  openFindings(review.tracking.findings).some((finding) => finding.severity === severity);
 
 const isCoverageGap = (review: CompletedReview): boolean =>
   review.status === ReviewStatus.INCOMPLETE || !isCoverageComplete(review.coverage);
@@ -15,8 +17,8 @@ const completedVoice = (review: CompletedReview): string => {
   if (hasSeverity(review, Severity.CRITICAL)) return CheckVoice.CRITICAL;
   if (hasSeverity(review, Severity.MAJOR)) return CheckVoice.MAJOR;
   if (isCoverageGap(review)) return CheckVoice.COVERAGE_GAP;
-  if (review.findings.length > 0) return CheckVoice.MINOR;
-  if (review.questions.length > 0) return CheckVoice.QUESTIONS;
+  if (openFindings(review.tracking.findings).length > 0) return CheckVoice.MINOR;
+  if (openQuestions(review.tracking.findings).length > 0) return CheckVoice.QUESTIONS;
   return CheckVoice.CLEAN;
 };
 

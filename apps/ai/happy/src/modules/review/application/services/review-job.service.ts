@@ -5,6 +5,7 @@ import { RunTrigger } from '@ratingo/ai-core';
 import { formatPullRequest } from '../../domain/entities/pull-request';
 import { ReviewJobSource, type ReviewJob } from '../../domain/entities/review-job';
 import { ReviewStatus } from '../../domain/entities/review-outcome';
+import { RequestedMode } from '../../domain/entities/review-scope';
 import { buildCheckReport } from '../../domain/policies/check-report';
 import { decidePublishBlock } from '../../domain/policies/publish-guard';
 import {
@@ -37,7 +38,7 @@ export class ReviewJobService {
     const outcome = await this.reviews.review(
       job.ref,
       job.source === ReviewJobSource.INTERNAL_REQUEST ? RunTrigger.CHAT : RunTrigger.WEBHOOK,
-      { explicitRequest },
+      { explicitRequest, mode: job.mode ?? RequestedMode.AUTO },
     );
     if (outcome.status === ReviewStatus.SKIPPED && !explicitRequest) {
       this.logger.log(`${formatPullRequest(job.ref)} skipped: ${outcome.reason}`);

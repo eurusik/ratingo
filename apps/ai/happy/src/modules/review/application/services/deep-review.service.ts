@@ -28,6 +28,7 @@ import {
 import { FINDING_CATEGORIES, FINDING_SEVERITIES } from '../../domain/constants/severity.constants';
 import type { Check } from '../../domain/entities/check';
 import type { Finding } from '../../domain/entities/finding';
+import { RecheckVerdict, type RecheckAnswer } from '../../domain/entities/tracked-finding';
 import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
 import type { RepoRule } from '../../domain/policies/rule-selector';
 import type { CodeHostPort } from '../../domain/ports/code-host.port';
@@ -38,6 +39,7 @@ import {
   buildReviewPrompt,
   buildReviewSystem,
   type DiffMode,
+  type PromptHistory,
   type RuleSections,
 } from './review-prompt';
 
@@ -45,6 +47,14 @@ const MAX_RAW_FINDINGS = 40;
 
 const reviewSchema = z.object({
   summary: z.string(),
+  recheck: z
+    .array(
+      z.object({
+        fingerprint: z.string(),
+        verdict: z.enum([RecheckVerdict.RESOLVED, RecheckVerdict.STILL_OPEN]),
+      }),
+    )
+    .optional(),
   findings: z.array(
     z.object({
       file: z.string(),
@@ -71,6 +81,8 @@ export interface DeepReviewInput {
   host: CodeHostPort;
   pr: PullRequest;
   files: readonly ChangedFile[];
+  contextFiles: readonly ChangedFile[];
+  history: PromptHistory;
   focusFiles: readonly string[];
   appliedRules: readonly RepoRule[];
   checks: readonly Check[];
@@ -86,6 +98,7 @@ export interface DeepReviewResult {
   budgetExhausted: boolean;
   summary: string;
   findings: Finding[];
+  recheck: RecheckAnswer[];
   toolFailures: number;
   costUsd: number;
 }
@@ -124,13 +137,19 @@ export class DeepReviewService {
         input.checks,
         input.ruleSections,
       ),
-      prompt: buildReviewPrompt(input.pr, input.files, input.focusFiles, input.diffMode),
+      prompt: buildReviewPrompt(
+        input.pr,
+        input.files,
+        input.focusFiles,
+        input.diffMode,
+        input.history,
+      ),
       responseSchema: reviewSchema,
       tools: countingFailures(
         createReviewTools({
           host: input.host,
           pr: input.pr,
-          files: input.files,
+          files: input.contextFiles,
           rules: input.allRules,
         }),
         failures,
@@ -148,6 +167,7 @@ export class DeepReviewService {
         budgetExhausted,
         summary: '',
         findings: [],
+        recheck: [],
         toolFailures: failures.count,
         costUsd,
       };
@@ -171,6 +191,7 @@ export class DeepReviewService {
           ? {}
           : { suggestion: clip(suggestion, MAX_FINDING_SUGGESTION_CHARS) }),
       })),
+      recheck: reply.recheck ?? [],
       toolFailures: failures.count,
       costUsd,
     };

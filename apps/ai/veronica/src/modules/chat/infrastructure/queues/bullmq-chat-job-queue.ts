@@ -3,7 +3,7 @@ import type { OnApplicationShutdown } from '@nestjs/common';
 import type { Queue } from 'bullmq';
 
 import { CHAT_JOB_ID_PREFIX, CHAT_JOB_OPTIONS, CHAT_JOB_TYPES } from '../../chat.constants';
-import type { HappyFollowUp } from '../../domain/entities/happy';
+import { HappyReviewMode, type HappyFollowUp } from '../../domain/entities/happy';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
 import type { ChatJobQueuePort } from '../../domain/ports/chat-job-queue.port';
 
@@ -24,6 +24,7 @@ export class BullmqChatJobQueue implements ChatJobQueuePort, OnApplicationShutdo
       followUp.pullNumber,
       followUp.headSha,
       followUp.attempt,
+      ...(followUp.mode === HappyReviewMode.FULL ? [followUp.mode] : []),
     ].join('_');
     const existing = await this.queue.getJob(jobId);
     if (existing !== undefined) {

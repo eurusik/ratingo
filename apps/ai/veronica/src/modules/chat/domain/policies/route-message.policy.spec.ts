@@ -107,6 +107,59 @@ describe('routeMessage', () => {
     });
   });
 
+  it.each([
+    ['глянь 470 повністю', 470],
+    ['повне рев’ю 470', 470],
+    ['зроби повне ревю 470', 470],
+    ['Хеппі, глянь 470 повністю', 470],
+    ['full review 470', 470],
+    ['глянь PR 470 full', 470],
+  ])('routes «%s» to a full review of that pull request', (text, number) => {
+    expect(routeMessage(text)).toEqual({
+      kind: IntentKind.HAPPY,
+      target: { kind: 'number', number },
+      mode: 'full',
+    });
+  });
+
+  it('routes a full review of a linked pull request and of the pick', () => {
+    expect(routeMessage(`глянь ${PR_LINK} повністю`)).toMatchObject({
+      target: { kind: 'link' },
+      mode: 'full',
+    });
+    expect(routeMessage('зроби повне ревю')).toEqual({
+      kind: IntentKind.HAPPY,
+      target: { kind: 'pick' },
+      mode: 'full',
+    });
+  });
+
+  it.each([
+    ['глянь нові коміти в 470', 470],
+    ['Хеппі, глянь нові коміти 470', 470],
+    ['переглянь нові коміти у PR 470', 470],
+  ])('routes «%s» to an automatic review that looks at the new commits', (text, number) => {
+    expect(routeMessage(text)).toEqual({
+      kind: IntentKind.HAPPY,
+      target: { kind: 'number', number },
+    });
+  });
+
+  it('keeps the automatic mode for every request that does not ask for a full review', () => {
+    for (const text of ['Хеппі, глянь 470', 'а глянь 469 пр', `глянь ${PR_LINK}`]) {
+      const intent = routeMessage(text);
+      expect(intent.kind).toBe(IntentKind.HAPPY);
+      expect(intent).not.toHaveProperty('mode');
+    }
+  });
+
+  it.each(['повністю', 'повне 470', 'що Хеппі сказав про повне рев’ю 470', 'full 470'])(
+    'does not turn «%s» into a review request',
+    (text) => {
+      expect(routeMessage(text).kind).toBe(IntentKind.FREE_FORM);
+    },
+  );
+
   it('falls through to free-form', () => {
     expect(routeMessage('  скільки нових людей цього тижня  ')).toEqual({
       kind: IntentKind.FREE_FORM,

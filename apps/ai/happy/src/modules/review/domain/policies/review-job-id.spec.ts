@@ -1,5 +1,6 @@
 import * as fc from 'fast-check';
 
+import { RequestedMode } from '../entities/review-scope';
 import { ReviewJobSource, type ReviewJob } from '../entities/review-job';
 
 import { reviewJobId } from './review-job-id';
@@ -60,6 +61,20 @@ describe('reviewJobId', () => {
         const request = { ...job, source: ReviewJobSource.INTERNAL_REQUEST };
         const id = reviewJobId(request);
         return id !== reviewJobId(job) && id === reviewJobId({ ...request }) && !id.includes(':');
+      }),
+    );
+  });
+
+  it('keeps a full request apart from an automatic one for the same commit', () => {
+    fc.assert(
+      fc.property(jobArb, (job) => {
+        const request = { ...job, source: ReviewJobSource.INTERNAL_REQUEST };
+        const full = { ...request, mode: RequestedMode.FULL };
+        return (
+          reviewJobId(full) !== reviewJobId(request) &&
+          reviewJobId(full) === reviewJobId({ ...full }) &&
+          reviewJobId({ ...request, mode: RequestedMode.AUTO }) === reviewJobId(request)
+        );
       }),
     );
   });

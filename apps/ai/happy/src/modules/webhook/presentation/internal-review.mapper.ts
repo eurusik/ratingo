@@ -1,5 +1,16 @@
-import type { PublishedReviewResult } from '../../review/public';
+import type { PublishedReviewResult, ResultTracking } from '../../review/public';
 import type { PullReviewState } from '../application/services/internal-review.service';
+
+const toReviewResponse = (tracking: ResultTracking | null) =>
+  tracking === null
+    ? null
+    : {
+        mode: tracking.scope.mode,
+        baseSha: tracking.scope.baseSha,
+        fullReason: tracking.scope.reason,
+        files: tracking.scope.files,
+        statusCounts: tracking.counts,
+      };
 
 const toResultResponse = (result: PublishedReviewResult) => ({
   status: result.status,
@@ -12,6 +23,7 @@ const toResultResponse = (result: PublishedReviewResult) => ({
   questions: result.questions,
   coverage: result.coverage,
   checkRunUrl: result.checkRunUrl,
+  review: toReviewResponse(result.tracking),
 });
 
 export const toLatestResponse = (state: PullReviewState) =>

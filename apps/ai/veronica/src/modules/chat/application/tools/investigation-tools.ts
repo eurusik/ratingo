@@ -115,7 +115,7 @@ export const buildInvestigationTools = (executors: InvestigationExecutors): Tool
   defineTool({
     name: InvestigationTool.ASK_HAPPY,
     description:
-      'What Happy, the pull request reviewer, said about one pull request: the verdict, finding counts by severity, questions to the author and what was not reviewed. Only reads a finished result and never starts a review.',
+      'What Happy, the pull request reviewer, said about one pull request: the verdict, finding counts by severity, questions to the author and what was not reviewed. Includes whether it was a full review or only the new commits since the last one, with how many findings were fixed, still open and new. Only reads a finished result and never starts a review.',
     inputSchema: askHappyInput,
     readOnly: true,
     maxOutputChars: ASK_HAPPY_OUTPUT_CAP,

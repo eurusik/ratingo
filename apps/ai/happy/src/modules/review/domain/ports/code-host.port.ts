@@ -1,5 +1,6 @@
 import type {
   ChangedFiles,
+  CommitComparison,
   OpenPullRequest,
   PullRequest,
   PullRequestRef,
@@ -24,6 +25,12 @@ export interface CodeHostPort {
     limit: number,
   ): Promise<OpenPullRequest[]>;
   listChangedFiles(ref: PullRequestRef, limits: ChangedFilesLimits): Promise<ChangedFiles>;
+  compareCommits(
+    ref: Pick<PullRequestRef, 'owner' | 'repo'>,
+    baseSha: string,
+    headSha: string,
+    limits: ChangedFilesLimits,
+  ): Promise<CommitComparison>;
   readFile(
     ref: Pick<PullRequestRef, 'owner' | 'repo'>,
     path: string,

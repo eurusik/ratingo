@@ -14,6 +14,7 @@ const RESULT: HappyResult = {
   questions: [],
   coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
   checkRunUrl: null,
+  review: null,
 };
 
 const setup = (lookup: HappyLookup | Error) => {

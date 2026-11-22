@@ -152,7 +152,13 @@ describe('decideWebhook commands', () => {
 
   it('keys the job by the comment so a redelivery is one job', () => {
     expect(decideWebhook(comment(), CONFIG)).toMatchObject({
-      job: { source: ReviewJobSource.COMMAND, headSha: null, commentId: 9 },
+      job: { source: ReviewJobSource.COMMAND, headSha: null, commentId: 9, mode: 'auto' },
+    });
+  });
+
+  it('turns "review full" into a full review job', () => {
+    expect(decideWebhook(comment({ body: '/happy review full' }), CONFIG)).toMatchObject({
+      job: { mode: 'full' },
     });
   });
 });

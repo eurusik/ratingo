@@ -1,8 +1,11 @@
 import * as fc from 'fast-check';
 
-import { isReviewCommand } from './review-command';
+import { parseReviewCommand } from './review-command';
 
 const HANDLE = 'happy-on-duty';
+
+const isReviewCommand = (body: string, handle: string): boolean =>
+  parseReviewCommand(body, handle) !== null;
 const RETIRED_HANDLE = 'happy';
 const VERBS = ['scan', 'review'] as const;
 const TRIGGERS = [`@${HANDLE}`, '/happy'] as const;
@@ -84,5 +87,13 @@ describe('isReviewCommand', () => {
     expect(isReviewCommand(`@${HANDLE} scan`, 'night-watch')).toBe(false);
     expect(isReviewCommand('@a.b scan', 'a.b')).toBe(true);
     expect(isReviewCommand('@axb scan', 'a.b')).toBe(false);
+  });
+
+  it('reads the full modifier and defaults to auto', () => {
+    expect(parseReviewCommand(`@${HANDLE} review`, HANDLE)).toEqual({ mode: 'auto' });
+    expect(parseReviewCommand('/happy review full', HANDLE)).toEqual({ mode: 'full' });
+    expect(parseReviewCommand('/HAPPY Scan FULL please', HANDLE)).toEqual({ mode: 'full' });
+    expect(parseReviewCommand('/happy review fullness', HANDLE)).toEqual({ mode: 'auto' });
+    expect(parseReviewCommand('/happy review full-ish', HANDLE)).toEqual({ mode: 'auto' });
   });
 });
