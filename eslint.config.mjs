@@ -52,6 +52,11 @@ const aiCoreTelemetryRepositoryFiles = ['packages/ai-core/src/runs/telemetry.run
 const aiCoreLoaderFiles = ['packages/ai-core/src/manifest/agent-folder.loader.ts'];
 const aiCoreSystemClockFiles = ['packages/ai-core/src/clock/system.clock.ts'];
 const aiCoreTestFiles = ['packages/ai-core/src/**/*.test.ts'];
+const veronicaSourceFiles = ['apps/ai/veronica/src/**/*.ts'];
+const veronicaTestFiles = ['apps/ai/veronica/src/**/*.spec.ts', 'apps/ai/veronica/src/**/*.testing.ts'];
+const veronicaDomainFiles = ['apps/ai/veronica/src/modules/*/domain/**/*.ts'];
+const veronicaModuleFiles = ['apps/ai/veronica/src/modules/**/*.ts', 'apps/ai/veronica/src/core/**/*.ts'];
+const veronicaModules = ['digest', 'notify', 'runs'];
 const heroUiAutoFocusRule = { 'jsx-a11y/no-autofocus': ['error', { ignoreNonDOM: true }] };
 const webCoreTestFiles = ['packages/web-core/src/**/__tests__/**'];
 const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];
@@ -1262,6 +1267,102 @@ export default [
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
+    },
+  },
+  {
+    files: veronicaSourceFiles,
+    plugins: { import: importPlugin },
+    languageOptions: { parserOptions: { projectService: true } },
+    settings: {
+      'import/resolver': {
+        typescript: { project: path.join(tsconfigRootDir, 'apps/ai/veronica/tsconfig.json') },
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      'no-console': 'error',
+      'import/no-restricted-paths': [
+        'error',
+        {
+          basePath: tsconfigRootDir,
+          zones: [
+            {
+              target: './apps/ai/veronica/src/modules/*/domain/**/*',
+              from: './apps/ai/veronica/src/modules/*/{application,infrastructure,presentation}/**/*',
+              message: 'Domain must not depend on outer layers.',
+            },
+            {
+              target: './apps/ai/veronica/src/modules/*/application/**/*',
+              from: './apps/ai/veronica/src/modules/*/{infrastructure,presentation}/**/*',
+              message: 'Application depends on domain ports, never on adapters.',
+            },
+            {
+              target: './apps/ai/veronica/src/modules/*/infrastructure/**/*',
+              from: './apps/ai/veronica/src/modules/*/application/**/*',
+              message: 'Infrastructure implements domain ports and must not call application code.',
+            },
+            ...veronicaModules.flatMap((m) => [
+              {
+                target: `./apps/ai/veronica/src/modules/!(${m})/**/*`,
+                from: `./apps/ai/veronica/src/modules/${m}/!(public)/**/*`,
+                message: `Import from ${m}/public instead of internal files.`,
+              },
+              {
+                target: `./apps/ai/veronica/src/modules/!(${m})/**/*`,
+                from: `./apps/ai/veronica/src/modules/${m}/!(${m}.module).ts`,
+                message: `Import from ${m}/public instead of internal files.`,
+              },
+            ]),
+            {
+              target: './apps/ai/veronica/src/**/*',
+              from: './apps/ai/!(veronica)/**/*',
+              message: 'Agents never import each other: share through @ratingo/ai-core.',
+            },
+          ],
+        },
+      ],
+      ...typeSafetyRules,
+    },
+  },
+  {
+    files: veronicaDomainFiles,
+    ignores: veronicaTestFiles,
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        { name: 'Date', message: 'Use the injected ClockPort instead of Date.' },
+        { name: 'process', message: 'Domain code takes config as arguments, not from process.' },
+      ],
+      'no-restricted-properties': [
+        'error',
+        { object: 'Math', property: 'random', message: 'Inject randomness instead of Math.random().' },
+      ],
+    },
+  },
+  {
+    files: veronicaModuleFiles,
+    ignores: veronicaTestFiles,
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'Read env only in src/config and at the entry points.',
+        },
+      ],
+    },
+  },
+  {
+    files: veronicaTestFiles,
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      'import/no-restricted-paths': 'off',
     },
   },
   ...Object.entries(oversizedWebFilesToSplit).map(([file, currentLines]) => ({

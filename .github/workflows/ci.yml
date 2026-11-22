@@ -38,6 +38,7 @@ jobs:
       smoke: ${{ steps.filter.outputs.smoke }}
       storefront_image: ${{ steps.filter.outputs.storefront_image }}
       ai_core: ${{ steps.filter.outputs.ai_core }}
+      veronica: ${{ steps.filter.outputs.veronica }}
     steps:
       - id: filter
         env:
@@ -55,6 +56,7 @@ jobs:
             echo "smoke=false" >> "$GITHUB_OUTPUT"
             echo "storefront_image=true" >> "$GITHUB_OUTPUT"
             echo "ai_core=true" >> "$GITHUB_OUTPUT"
+            echo "veronica=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -67,7 +69,7 @@ jobs:
           large=$(( count >= 3000 ))
 
           if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
-            api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true; storefront_image=true; ai_core=true
+            api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true; storefront_image=true; ai_core=true; veronica=true
           else
             api=$(match '^(apps/api/|packages/node-telemetry/|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|knip\.json$)')
@@ -78,6 +80,7 @@ jobs:
             smoke=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|e2e/smoke/|playwright\.smoke\.config\.ts$|\.dockerignore$)')
             storefront_image=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|\.dockerignore$)')
             ai_core=$(match '^(packages/(ai-core|node-telemetry)/|knip\.json$)')
+            veronica=$(match '^(apps/ai/veronica/|packages/(ai-core|node-telemetry)/|knip\.json$|\.dockerignore$)')
           fi
 
           if (( large )); then
@@ -86,7 +89,7 @@ jobs:
             deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
           fi
 
-          echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke storefront_image=$storefront_image ai_core=$ai_core"
+          echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke storefront_image=$storefront_image ai_core=$ai_core veronica=$veronica"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "storefront=$storefront" >> "$GITHUB_OUTPUT"
@@ -97,6 +100,7 @@ jobs:
           echo "smoke=$smoke" >> "$GITHUB_OUTPUT"
           echo "storefront_image=$storefront_image" >> "$GITHUB_OUTPUT"
           echo "ai_core=$ai_core" >> "$GITHUB_OUTPUT"
+          echo "veronica=$veronica" >> "$GITHUB_OUTPUT"
 
   api:
     name: api
@@ -473,6 +477,57 @@ jobs:
       - name: Find unused files, exports and dependencies with knip
         run: npm run lint:dead-code --workspace=@ratingo/ai-core
 
+  veronica:
+    name: veronica
+    needs: changes
+    if: needs.changes.outputs.veronica == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ratingo
+          POSTGRES_PASSWORD: ratingo
+          POSTGRES_DB: veronica_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ratingo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://ratingo:ratingo@localhost:5432/veronica_test
+      VERONICA_TEST_DATABASE_URL: postgres://ratingo:ratingo@localhost:5432/veronica_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build shared packages
+        run: npm run build:packages --workspace=@ratingo/ai-veronica
+
+      - name: Lint
+        run: npm run lint --workspace=@ratingo/ai-veronica
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=@ratingo/ai-veronica
+
+      - name: Apply ai schema migrations
+        run: npm run db:migrate --workspace=@ratingo/ai-veronica
+
+      - name: Unit and database tests
+        run: npm test --workspace=@ratingo/ai-veronica -- --ci
+
+      - name: Build
+        run: npm run build --workspace=@ratingo/ai-veronica
+
+      - name: Find unused files, exports and dependencies with knip
+        run: npm run lint:dead-code --workspace=@ratingo/ai-veronica
+
   web-smoke:
     name: web-smoke
     needs: changes
@@ -572,7 +627,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, storefront, storefront-image, contracts, pg-backup, ai-core, web-smoke]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, storefront, storefront-image, contracts, pg-backup, ai-core, veronica, web-smoke]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
