@@ -43,6 +43,15 @@ const storefrontEnvReaders = [`${storefrontDir}/src/shared/config/**`];
 const webCoreSourceFiles = ['packages/web-core/src/**/*.{ts,tsx}'];
 const uiSourceFiles = ['packages/ui/src/**/*.{ts,tsx}'];
 const nodeTelemetrySourceFiles = ['packages/node-telemetry/src/**/*.ts'];
+const aiCoreSourceFiles = ['packages/ai-core/src/**/*.ts'];
+const aiCoreAnthropicAdapterFiles = [
+  'packages/ai-core/src/model/adapters/anthropic/anthropic.mapper.ts',
+  'packages/ai-core/src/model/adapters/anthropic/anthropic.model-adapter.ts',
+];
+const aiCoreTelemetryRepositoryFiles = ['packages/ai-core/src/runs/telemetry.run-repository.ts'];
+const aiCoreLoaderFiles = ['packages/ai-core/src/manifest/agent-folder.loader.ts'];
+const aiCoreSystemClockFiles = ['packages/ai-core/src/clock/system.clock.ts'];
+const aiCoreTestFiles = ['packages/ai-core/src/**/*.test.ts'];
 const heroUiAutoFocusRule = { 'jsx-a11y/no-autofocus': ['error', { ignoreNonDOM: true }] };
 const webCoreTestFiles = ['packages/web-core/src/**/__tests__/**'];
 const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];
@@ -99,6 +108,54 @@ const typeSafetyRules = {
   '@typescript-eslint/no-unsafe-return': 'error',
   '@typescript-eslint/no-unsafe-argument': 'error',
 };
+
+const aiCoreFrameworkPattern = {
+  group: ['@nestjs/*', 'next', 'next/*', '@/*'],
+  message: 'ai-core is shared by every agent app: no framework imports and no app aliases.',
+};
+const aiCoreGuardedImports = {
+  anthropic: {
+    group: ['@anthropic-ai/*'],
+    message: 'Provider SDKs are imported only inside their adapter folder under model/adapters.',
+  },
+  opentelemetry: {
+    group: ['@opentelemetry/*'],
+    message: 'OpenTelemetry is imported only by the telemetry run repository.',
+  },
+  node: {
+    group: ['node:*'],
+    message: 'Node built-ins are used only by the agent folder loader.',
+  },
+  yaml: {
+    group: ['yaml'],
+    message: 'YAML parsing belongs to the agent folder loader.',
+  },
+};
+const aiCoreImportRule = (allowed = []) => [
+  'error',
+  {
+    patterns: [
+      aiCoreFrameworkPattern,
+      ...Object.entries(aiCoreGuardedImports)
+        .filter(([name]) => !allowed.includes(name))
+        .map(([, pattern]) => pattern),
+    ],
+  },
+];
+const aiCoreRestrictedSyntax = [
+  {
+    selector: "MemberExpression[object.name='process'][property.name='env']",
+    message: 'ai-core takes its config and API keys from the caller instead of reading process.env.',
+  },
+  {
+    selector: "ThrowStatement > NewExpression[callee.name='Error']",
+    message: 'Throw typed errors that extend Error instead of the generic Error.',
+  },
+  {
+    selector: 'ForInStatement',
+    message: 'Use Object.keys/values/entries instead of for-in.',
+  },
+];
 
 const ratingoPlugin = { rules: { 'no-deep-relative-imports': noDeepRelativeImports } };
 
@@ -1087,6 +1144,124 @@ export default [
         },
       ],
       ...typeSafetyRules,
+    },
+  },
+  {
+    files: aiCoreSourceFiles,
+    plugins: { import: importPlugin },
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+      },
+    },
+    settings: {
+      'import/resolver': {
+        typescript: { project: path.join(tsconfigRootDir, 'packages/ai-core/tsconfig.json') },
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      'no-console': 'error',
+      'no-restricted-imports': aiCoreImportRule(),
+      'no-restricted-syntax': ['error', ...aiCoreRestrictedSyntax],
+      'no-restricted-globals': [
+        'error',
+        { name: 'Date', message: 'Use the injected ClockPort instead of Date.' },
+      ],
+      'no-restricted-properties': [
+        'error',
+        { object: 'Math', property: 'random', message: 'Inject randomness instead of Math.random().' },
+      ],
+      'import/no-restricted-paths': [
+        'error',
+        {
+          basePath: tsconfigRootDir,
+          zones: [
+            {
+              target: [
+                './packages/ai-core/src/{tools,loop,runs,manifest,clock,telemetry}/**/*',
+                './packages/ai-core/src/model/*.ts',
+              ],
+              from: './packages/ai-core/src/model/adapters/**/*',
+              message: 'Ports and the loop never depend on adapters; apps wire adapters in.',
+            },
+            {
+              target: './packages/ai-core/src/model/adapters/**/*',
+              from: './packages/ai-core/src/{tools,loop,runs,manifest,telemetry}/**/*',
+              message: 'Model adapters depend only on the model port and neutral types.',
+            },
+            {
+              target: './packages/ai-core/src/model/adapters/anthropic/**/*',
+              from: './packages/ai-core/src/model/adapters/stub/**/*',
+              message: 'Adapters never import each other.',
+            },
+            {
+              target: './packages/ai-core/src/model/adapters/stub/**/*',
+              from: './packages/ai-core/src/model/adapters/anthropic/**/*',
+              message: 'Adapters never import each other.',
+            },
+            {
+              target: './packages/ai-core/src/model/*.ts',
+              from: './packages/ai-core/src/{tools,loop,runs,manifest,telemetry}/**/*',
+              message: 'The model port and its types are the innermost layer.',
+            },
+            {
+              target: './packages/ai-core/src/tools/**/*',
+              from: './packages/ai-core/src/{loop,runs,manifest}/**/*',
+              message: 'Tools do not depend on the loop, the run log or manifests.',
+            },
+            {
+              target: './packages/ai-core/src/runs/{run,run.repository,run-logger.port}.ts',
+              from: './packages/ai-core/src/{runs/telemetry.run-repository,runs/in-memory.run-repository,telemetry}*',
+              message: 'The Run aggregate and its ports stay free of their adapters.',
+            },
+            {
+              target: './packages/ai-core/src/**/*',
+              from: './apps/**/*',
+              message: 'Packages never import apps.',
+            },
+          ],
+        },
+      ],
+      ...typeSafetyRules,
+    },
+  },
+  {
+    files: aiCoreAnthropicAdapterFiles,
+    rules: { 'no-restricted-imports': aiCoreImportRule(['anthropic']) },
+  },
+  {
+    files: aiCoreTelemetryRepositoryFiles,
+    rules: { 'no-restricted-imports': aiCoreImportRule(['opentelemetry']) },
+  },
+  {
+    files: aiCoreLoaderFiles,
+    rules: { 'no-restricted-imports': aiCoreImportRule(['node', 'yaml']) },
+  },
+  {
+    files: aiCoreSystemClockFiles,
+    rules: {
+      'no-restricted-globals': 'off',
+    },
+  },
+  {
+    files: aiCoreTestFiles,
+    rules: {
+      'no-restricted-globals': 'off',
+      'no-restricted-properties': 'off',
+      'no-restricted-imports': aiCoreImportRule(['anthropic', 'opentelemetry', 'node', 'yaml']),
+      'no-restricted-syntax': [
+        'error',
+        ...aiCoreRestrictedSyntax.filter(
+          (rule) => !rule.selector.startsWith('ThrowStatement'),
+        ),
+      ],
+      'import/no-restricted-paths': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
     },
   },
   ...Object.entries(oversizedWebFilesToSplit).map(([file, currentLines]) => ({
