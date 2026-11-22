@@ -1,10 +1,9 @@
 import { DigestBlock } from '../constants/digest-block.constants';
 import { DigestLevel } from '../constants/digest-level.constants';
-import type { DigestItem, RuleOutcome } from '../entities/digest';
+import type { DigestItem, Fact, RuleOutcome } from '../entities/digest';
 import { FactUnit } from '../entities/digest';
 import type { DigestThresholds } from '../entities/digest-thresholds';
 import { measured } from '../entities/measured';
-import type { Fact } from '../entities/digest';
 import type { QueueStats } from '../entities/snapshot';
 import { HOURS_PER_DAY, PERCENT, factOf, itemOf, share, sumMeasured } from './rule-helpers';
 
@@ -89,17 +88,16 @@ const drainItem = (queue: QueueStats, limits: QueueThresholds): DigestItem | nul
 };
 
 const largestQueueFact = (queues: readonly QueueStats[]): Fact => {
-  const largest = queues.reduce<QueueStats | null>(
-    (best, queue) =>
-      queue.backlogMax24h !== null &&
-      (best?.backlogMax24h == null || queue.backlogMax24h.current > best.backlogMax24h.current)
-        ? queue
-        : best,
+  const peaks = queues.flatMap((queue) =>
+    queue.backlogMax24h === null ? [] : [{ queue: queue.queue, peak: queue.backlogMax24h }],
+  );
+  const largest = peaks.reduce<(typeof peaks)[number] | null>(
+    (best, entry) => (best === null || entry.peak.current > best.peak.current ? entry : best),
     null,
   );
-  return largest?.backlogMax24h == null
+  return largest === null
     ? { label: 'найбільша черга', unit: FactUnit.COUNT, current: null, baseline: null }
-    : factOf(`найбільша черга (${largest.queue}), пік`, FactUnit.COUNT, largest.backlogMax24h);
+    : factOf(`найбільша черга (${largest.queue}), пік`, FactUnit.COUNT, largest.peak);
 };
 
 export const evaluateQueues = (
