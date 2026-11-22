@@ -45,8 +45,7 @@
       },
       "drizzle": {
         "config": ["drizzle.config.js"]
-      },
-      "ignoreDependencies": ["fastify"]
+      }
     },
     "apps/ai/happy": {
       "entry": ["src/main.ts", "src/scripts/*.ts", "eval/run-eval.ts"],
