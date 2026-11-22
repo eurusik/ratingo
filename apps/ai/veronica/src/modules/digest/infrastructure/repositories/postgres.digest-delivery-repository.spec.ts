@@ -2,7 +2,7 @@ import {
   describeWithDatabase,
   openTestDatabase,
   type TestDatabase,
-} from '../../../../testing/test-database';
+} from '../../../../testing/test-database.testing';
 
 import { PostgresDigestDeliveryRepository } from './postgres.digest-delivery-repository';
 

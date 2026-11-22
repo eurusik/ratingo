@@ -11,7 +11,7 @@ import {
   describeWithDatabase,
   openTestDatabase,
   type TestDatabase,
-} from '../../../../testing/test-database';
+} from '../../../../testing/test-database.testing';
 
 import { PostgresRunRepository } from './postgres.run-repository';
 
