@@ -12,7 +12,9 @@ import { decideWebhook } from './webhook-policy';
 
 const CONFIG = { allowedRepositories: ['eurusik/ratingo'], allowedAuthors: ['friend'] };
 
-const pullRequest = (overrides: Partial<PullRequestWebhookEvent> = {}): PullRequestWebhookEvent => ({
+const pullRequest = (
+  overrides: Partial<PullRequestWebhookEvent> = {},
+): PullRequestWebhookEvent => ({
   kind: WebhookEventKind.PULL_REQUEST,
   action: 'opened',
   ref: { owner: 'eurusik', repo: 'ratingo', number: 5 },
@@ -66,8 +68,10 @@ describe('decideWebhook pull requests', () => {
       decideWebhook(pullRequest({ headRepository: 'stranger/ratingo', authorLogin: 's' }), CONFIG),
     ).toMatchObject({ reason: IgnoreReason.UNTRUSTED_FORK });
     expect(
-      decideWebhook(pullRequest({ headRepository: 'friend/ratingo', authorLogin: 'friend' }), CONFIG)
-        .action,
+      decideWebhook(
+        pullRequest({ headRepository: 'friend/ratingo', authorLogin: 'friend' }),
+        CONFIG,
+      ).action,
     ).toBe('enqueue');
   });
 
@@ -87,8 +91,10 @@ describe('decideWebhook pull requests', () => {
 describe('decideWebhook commands', () => {
   it('accepts the exact command from owners, members and collaborators only', () => {
     fc.assert(
-      fc.property(fc.constantFrom('NONE', 'CONTRIBUTOR', 'FIRST_TIMER', 'MANNEQUIN'), (association) =>
-        decideWebhook(comment({ authorAssociation: association }), CONFIG).action === 'ignore',
+      fc.property(
+        fc.constantFrom('NONE', 'CONTRIBUTOR', 'FIRST_TIMER', 'MANNEQUIN'),
+        (association) =>
+          decideWebhook(comment({ authorAssociation: association }), CONFIG).action === 'ignore',
       ),
     );
     for (const association of ['OWNER', 'MEMBER', 'COLLABORATOR']) {

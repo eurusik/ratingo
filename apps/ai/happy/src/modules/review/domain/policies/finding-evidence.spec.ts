@@ -30,9 +30,18 @@ describe('validateFindings evidence', () => {
   });
 
   it.each([
-    ['the excerpt is on another line', { evidence: { path: 'a.ts', line: 1, excerpt: 'const total = price * quantity;' } }],
-    ['the excerpt is invented', { evidence: { path: 'a.ts', line: 2, excerpt: 'const total = price * qty * 2;' } }],
-    ['the evidence cites another file', { evidence: { path: 'b.ts', line: 2, excerpt: 'const total = price * quantity;' } }],
+    [
+      'the excerpt is on another line',
+      { evidence: { path: 'a.ts', line: 1, excerpt: 'const total = price * quantity;' } },
+    ],
+    [
+      'the excerpt is invented',
+      { evidence: { path: 'a.ts', line: 2, excerpt: 'const total = price * qty * 2;' } },
+    ],
+    [
+      'the evidence cites another file',
+      { evidence: { path: 'b.ts', line: 2, excerpt: 'const total = price * quantity;' } },
+    ],
   ])('demotes to a question when %s', (_name, overrides) => {
     const result = validateFindings(
       [finding(overrides)],
@@ -46,6 +55,27 @@ describe('validateFindings evidence', () => {
     expect(result.kept).toHaveLength(0);
     expect(result.questions).toHaveLength(1);
     expect(result.questions[0]?.kind).toBe(FindingKind.QUESTION);
+  });
+
+  it('demotes to a question when the evidence line is outside the changed code', () => {
+    const content = [
+      'keep',
+      'const total = price * quantity;',
+      'tail',
+      'const total = price * quantity;',
+    ].join('\n');
+    const result = validateFindings(
+      [
+        finding({
+          evidence: { path: 'a.ts', line: 4, excerpt: 'const total = price * quantity;' },
+        }),
+      ],
+      INDEX,
+      new Map([['a.ts', content]]),
+      CAPS,
+    );
+    expect(result.kept).toHaveLength(0);
+    expect(result.questions).toHaveLength(1);
   });
 
   it('demotes to a question when the head file could not be read', () => {

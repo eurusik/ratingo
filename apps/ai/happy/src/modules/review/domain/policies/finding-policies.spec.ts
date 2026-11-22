@@ -110,7 +110,9 @@ describe('validateFindings', () => {
   it('never keeps two findings with the same fingerprint', () => {
     fc.assert(
       fc.property(fc.array(findingArb, { maxLength: 30 }), (findings) => {
-        const prints = validateFindings(findings, index, EVIDENCE_FILES, caps(1000)).kept.map((f) => f.fingerprint);
+        const prints = validateFindings(findings, index, EVIDENCE_FILES, caps(1000)).kept.map(
+          (f) => f.fingerprint,
+        );
         return new Set(prints).size === prints.length;
       }),
     );

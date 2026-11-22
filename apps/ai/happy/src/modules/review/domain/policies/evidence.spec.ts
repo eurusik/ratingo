@@ -30,9 +30,9 @@ describe('evidenceHolds', () => {
     const content = ['const first = loadFirstValue();', 'const second = loadSecondValue();'].join(
       '\n',
     );
-    expect(
-      evidenceHolds({ path: 'a.ts', line: 1, excerpt: 'loadSecondValue()' }, content),
-    ).toBe(false);
+    expect(evidenceHolds({ path: 'a.ts', line: 1, excerpt: 'loadSecondValue()' }, content)).toBe(
+      false,
+    );
     expect(evidenceHolds({ path: 'a.ts', line: 2, excerpt: 'loadSecondValue()' }, content)).toBe(
       true,
     );
@@ -47,8 +47,10 @@ describe('evidenceHolds', () => {
 
   it('never holds for a missing file, a line past the end or an empty excerpt', () => {
     fc.assert(
-      fc.property(fc.string({ maxLength: 40 }), fc.integer({ min: 1, max: 5 }), (excerpt, line) =>
-        evidenceHolds({ path: 'a.ts', line, excerpt }, undefined) === false,
+      fc.property(
+        fc.string({ maxLength: 40 }),
+        fc.integer({ min: 1, max: 5 }),
+        (excerpt, line) => evidenceHolds({ path: 'a.ts', line, excerpt }, undefined) === false,
       ),
     );
     expect(evidenceHolds({ path: 'a.ts', line: 9, excerpt: 'const value = 1;' }, 'one')).toBe(

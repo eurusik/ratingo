@@ -10,6 +10,7 @@ import { UnrecoverableError, Worker, type Job, type Queue } from 'bullmq';
 import type IORedis from 'ioredis';
 
 import {
+  CodeHostError,
   RepositoryNotAllowedError,
   ReviewJobService,
   type ReviewJob,
@@ -21,6 +22,17 @@ import {
   REVIEW_QUEUE_PREFIX,
   REVIEW_REDIS,
 } from '../../webhook.constants';
+
+const HTTP_CLIENT_ERROR_MIN = 400;
+const HTTP_SERVER_ERROR_MIN = 500;
+const HTTP_TOO_MANY_REQUESTS = 429;
+
+const isPermanentRejection = (error: unknown): boolean =>
+  error instanceof CodeHostError &&
+  error.status !== null &&
+  error.status >= HTTP_CLIENT_ERROR_MIN &&
+  error.status < HTTP_SERVER_ERROR_MIN &&
+  error.status !== HTTP_TOO_MANY_REQUESTS;
 
 @Injectable()
 export class ReviewWorker implements OnModuleInit, OnApplicationShutdown {
@@ -58,8 +70,8 @@ export class ReviewWorker implements OnModuleInit, OnApplicationShutdown {
     try {
       return await this.jobs.process(job.data);
     } catch (error) {
-      if (error instanceof RepositoryNotAllowedError) {
-        throw new UnrecoverableError(error.message);
+      if (error instanceof RepositoryNotAllowedError || isPermanentRejection(error)) {
+        throw new UnrecoverableError(error instanceof Error ? error.message : 'rejected');
       }
       throw error;
     }

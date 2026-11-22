@@ -38,12 +38,17 @@ const dropReasonFor = (finding: Finding, index: DiffIndex): FindingDropReason | 
   return lines.commentable.has(finding.line) ? null : FindingDropReason.LINE_NOT_IN_DIFF;
 };
 
-const isProven = (finding: Finding, evidenceFiles: EvidenceFiles): boolean =>
+const isProven = (finding: Finding, index: DiffIndex, evidenceFiles: EvidenceFiles): boolean =>
   finding.evidence.path === finding.file &&
+  index.get(finding.file)?.commentable.has(finding.evidence.line) === true &&
   evidenceHolds(finding.evidence, evidenceFiles.get(finding.evidence.path));
 
-const settledKind = (finding: Finding, evidenceFiles: EvidenceFiles): FindingKind =>
-  finding.kind === FindingKind.FINDING && isProven(finding, evidenceFiles)
+const settledKind = (
+  finding: Finding,
+  index: DiffIndex,
+  evidenceFiles: EvidenceFiles,
+): FindingKind =>
+  finding.kind === FindingKind.FINDING && isProven(finding, index, evidenceFiles)
     ? FindingKind.FINDING
     : FindingKind.QUESTION;
 
@@ -61,7 +66,7 @@ export const validateFindings = (
     const reason = dropReasonFor(finding, index);
     const precedent = reason === null ? findPrecedent(finding) : null;
     const fingerprint = fingerprintFinding(finding);
-    const kind = settledKind(finding, evidenceFiles);
+    const kind = settledKind(finding, index, evidenceFiles);
     const bucket = kind === FindingKind.FINDING ? kept : questions;
     const cap = kind === FindingKind.FINDING ? caps.findings : caps.questions;
     if (reason !== null) {

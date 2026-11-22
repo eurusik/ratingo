@@ -1,6 +1,10 @@
 import * as fc from 'fast-check';
 
-import { FINDING_TOPICS, FindingKind, FindingTopic } from '../constants/finding-classification.constants';
+import {
+  FINDING_TOPICS,
+  FindingKind,
+  FindingTopic,
+} from '../constants/finding-classification.constants';
 import { FindingCategory, Severity } from '../constants/severity.constants';
 import type { Finding } from '../entities/finding';
 
@@ -21,15 +25,19 @@ const build = (overrides: Partial<Finding> = {}): Finding => ({
 describe('findPrecedent', () => {
   it('drops findings about environment variables and denial of service by topic alone', () => {
     fc.assert(
-      fc.property(fc.string({ maxLength: 40 }), fc.string({ maxLength: 40 }), (message, excerpt) => {
-        const base = { message, evidence: { path: 'src/service.ts', line: 1, excerpt } };
-        return (
-          findPrecedent(build({ ...base, topic: FindingTopic.ENV_CONFIG })) ===
-            PrecedentId.ENV_TRUSTED &&
-          findPrecedent(build({ ...base, topic: FindingTopic.DOS_RATE_LIMIT })) ===
-            PrecedentId.NO_DOS_ADVICE
-        );
-      }),
+      fc.property(
+        fc.string({ maxLength: 40 }),
+        fc.string({ maxLength: 40 }),
+        (message, excerpt) => {
+          const base = { message, evidence: { path: 'src/service.ts', line: 1, excerpt } };
+          return (
+            findPrecedent(build({ ...base, topic: FindingTopic.ENV_CONFIG })) ===
+              PrecedentId.ENV_TRUSTED &&
+            findPrecedent(build({ ...base, topic: FindingTopic.DOS_RATE_LIMIT })) ===
+              PrecedentId.NO_DOS_ADVICE
+          );
+        },
+      ),
     );
   });
 

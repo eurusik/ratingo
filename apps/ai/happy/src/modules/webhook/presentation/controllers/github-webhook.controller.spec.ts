@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 
-import { BadRequestException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 import { ReviewJobSource, reviewJobId, type ReviewJob } from '../../../review/public';
 import { WebhookService } from '../../application/services/webhook.service';

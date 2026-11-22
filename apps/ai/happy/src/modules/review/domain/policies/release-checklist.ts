@@ -6,6 +6,7 @@ import {
   MIGRATION_FILE_PATTERNS,
   RELEASE_BASE_BRANCH,
   RELEASE_HEAD_BRANCH,
+  TEST_FILE_PATTERNS,
 } from '../constants/release.constants';
 import type { ChangedFile, PullRequest } from '../entities/pull-request';
 import { FileStatus } from '../entities/pull-request';
@@ -44,11 +45,15 @@ const RISKY_SQL: readonly { risk: string; pattern: RegExp }[] = [
   { risk: 'DROP TABLE або DROP COLUMN', pattern: /\bDROP\s+(?:TABLE|COLUMN)\b/i },
   {
     risk: 'CREATE INDEX без CONCURRENTLY і без IF NOT EXISTS',
-    pattern: /^(?!.*\bCONCURRENTLY\b)(?!.*\bIF\s+NOT\s+EXISTS\b).*\bCREATE\s+(?:UNIQUE\s+)?INDEX\b/i,
+    pattern:
+      /^(?!.*\bCONCURRENTLY\b)(?!.*\bIF\s+NOT\s+EXISTS\b).*\bCREATE\s+(?:UNIQUE\s+)?INDEX\b/i,
   },
   { risk: 'ALTER TYPE ... ADD VALUE', pattern: /\bALTER\s+TYPE\b.*\bADD\s+VALUE\b/i },
   { risk: 'ADD COLUMN ... NOT NULL', pattern: /\bADD\s+COLUMN\b.*\bNOT\s+NULL\b/i },
-  { risk: 'CREATE TABLE без IF NOT EXISTS', pattern: /\bCREATE\s+TABLE\b(?!.*\bIF\s+NOT\s+EXISTS\b)/i },
+  {
+    risk: 'CREATE TABLE без IF NOT EXISTS',
+    pattern: /\bCREATE\s+TABLE\b(?!.*\bIF\s+NOT\s+EXISTS\b)/i,
+  },
 ];
 
 const changedLines = (patch: string | null, marker: string): string[] =>
@@ -83,7 +88,8 @@ const envNamesFromLine = (line: string, path: string): string[] => {
   return [...names, ...declared.filter((name): name is string => name !== undefined)];
 };
 
-const newEnvVars = (files: readonly ChangedFile[]): string[] => {
+const newEnvVars = (allFiles: readonly ChangedFile[]): string[] => {
+  const files = allFiles.filter((file) => !matchesAnyGlob(TEST_FILE_PATTERNS, file.path));
   const added = new Set<string>();
   const removed = new Set<string>();
   for (const file of files) {

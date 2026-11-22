@@ -11,7 +11,11 @@ import {
   TRIAGE_MAX_TURNS,
   TRIAGE_ROLE,
 } from '../../../../config/review.config';
-import { RULE_CARD_IDS, cardsForPaths, renderRuleCardCatalog } from '../../domain/policies/rule-cards';
+import {
+  RULE_CARD_IDS,
+  cardsForPaths,
+  renderRuleCardCatalog,
+} from '../../domain/policies/rule-cards';
 import { MAX_FOCUS_FILES } from '../../domain/constants/review-limits.constants';
 import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
 import { reviewableFiles } from '../../domain/policies/skip-policy';
@@ -25,7 +29,7 @@ const triageSchema = z.object({
   risk: z.enum(['low', 'medium', 'high']),
   focusFiles: z.array(z.string()),
   ruleTopics: z.array(z.string()),
-  ruleCards: z.array(z.enum(RULE_CARD_IDS)),
+  ruleCards: z.array(z.string()),
 });
 
 export interface TriageResult {
@@ -106,7 +110,7 @@ export class TriageService {
       ruleTopics: reply.ruleTopics
         .slice(0, MAX_RULE_TOPICS)
         .map((topic) => topic.slice(0, MAX_TOPIC_CHARS)),
-      ruleCardIds: [...new Set(reply.ruleCards)],
+      ruleCardIds: [...new Set(reply.ruleCards)].filter((id) => RULE_CARD_IDS.includes(id)),
       costUsd,
     };
   }

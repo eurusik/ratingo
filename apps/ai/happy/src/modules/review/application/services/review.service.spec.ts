@@ -151,7 +151,12 @@ describe('ReviewService', () => {
       respond: (request) =>
         reply(
           request.model,
-          text({ risk: 'high', focusFiles: ['src/checkout.ts', 'ghost.ts'], ruleTopics: [], ruleCards: [] }),
+          text({
+            risk: 'high',
+            focusFiles: ['src/checkout.ts', 'ghost.ts'],
+            ruleTopics: [],
+            ruleCards: [],
+          }),
           StopReason.END,
         ),
     };
@@ -370,7 +375,9 @@ describe('ReviewService', () => {
   });
 
   it('refuses a pull request above the hard size cap without a model call', async () => {
-    const host = buildFakeCodeHost({ files: [buildChangedFile({ additions: 7000, deletions: 0 })] });
+    const host = buildFakeCodeHost({
+      files: [buildChangedFile({ additions: 7000, deletions: 0 })],
+    });
     const { service, model } = await setup(host);
     const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
     expect(outcome.status).toBe(ReviewStatus.SKIPPED);
@@ -379,7 +386,9 @@ describe('ReviewService', () => {
   });
 
   it('sends only the file list with changed ranges when the diff is too big to inline', async () => {
-    const host = buildFakeCodeHost({ files: [buildChangedFile({ additions: 2000, deletions: 0 })] });
+    const host = buildFakeCodeHost({
+      files: [buildChangedFile({ additions: 2000, deletions: 0 })],
+    });
     const { service, model } = await setup(host);
     const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
     const prompt = JSON.stringify(requestsFor(model, STUB_REVIEW_MODEL)[0]?.messages[0]);
@@ -484,5 +493,25 @@ describe('ReviewService', () => {
     expect(outcome.findings).toHaveLength(0);
     expect(outcome.questions).toHaveLength(1);
     expect(outcome.markdown).toContain('Питання до автора');
+  });
+
+  it('keeps the triage result when it names a rule card that does not exist', async () => {
+    const triage: StubScript = {
+      respond: (request) =>
+        reply(
+          request.model,
+          text({
+            risk: 'low',
+            focusFiles: ['src/checkout.ts'],
+            ruleTopics: [],
+            ruleCards: ['no-such-card', 'migrations'],
+          }),
+          StopReason.END,
+        ),
+    };
+    const { service, model } = await setup(buildFakeCodeHost(), { triage });
+    await service.review(TEST_REF, RunTrigger.WEBHOOK);
+    const system = requestsFor(model, STUB_REVIEW_MODEL)[0]?.system ?? '';
+    expect(system).toContain('Migrations are safe to re-run');
   });
 });

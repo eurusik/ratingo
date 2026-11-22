@@ -26,9 +26,9 @@ describe('decidePublishBlock', () => {
 
   it('names the reason, merged first, then closed, then a moved head', () => {
     const open = { state: PullRequestState.OPEN, merged: false, headSha: 'aaa' };
-    expect(decidePublishBlock({ ...open, merged: true, state: PullRequestState.CLOSED }, 'aaa')).toBe(
-      PublishBlockReason.MERGED,
-    );
+    expect(
+      decidePublishBlock({ ...open, merged: true, state: PullRequestState.CLOSED }, 'aaa'),
+    ).toBe(PublishBlockReason.MERGED);
     expect(decidePublishBlock({ ...open, state: PullRequestState.CLOSED }, 'aaa')).toBe(
       PublishBlockReason.CLOSED,
     );

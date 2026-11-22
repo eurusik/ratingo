@@ -36,7 +36,7 @@ const isTrustedOrigin = (pr: PullRequest, config: Pick<SkipConfig, 'allowedAutho
   pr.headRepository?.toLowerCase() === formatRepository(pr.ref).toLowerCase() ||
   config.allowedAuthors.includes(pr.author);
 
-export const changedLines = (files: readonly ChangedFile[]): number =>
+const changedLines = (files: readonly ChangedFile[]): number =>
   files.reduce((sum, file) => sum + file.additions + file.deletions, 0);
 
 export const decideEligibility = (

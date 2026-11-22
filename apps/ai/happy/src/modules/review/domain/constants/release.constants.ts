@@ -23,3 +23,11 @@ export const ENV_SCHEMA_FILE_PATTERNS: readonly string[] = [
 ];
 
 export const MAX_LISTED_ITEMS = 25;
+
+export const TEST_FILE_PATTERNS: readonly string[] = [
+  '**/*.spec.ts',
+  '**/*.test.ts',
+  '**/*.testing.ts',
+  '**/test/**',
+  '**/fixtures/**',
+];

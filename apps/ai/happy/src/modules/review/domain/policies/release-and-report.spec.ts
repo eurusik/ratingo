@@ -11,7 +11,11 @@ import { renderReleaseChecklist } from './release-checklist-renderer';
 import { renderCompletedReview } from './review-renderer';
 import { RULE_CARD_IDS, cardsForPaths, renderRuleCard, selectRuleCards } from './rule-cards';
 
-const file = (path: string, patch: string | null, status: ChangedFile['status'] = FileStatus.MODIFIED): ChangedFile => ({
+const file = (
+  path: string,
+  patch: string | null,
+  status: ChangedFile['status'] = FileStatus.MODIFIED,
+): ChangedFile => ({
   path,
   status,
   additions: 1,
@@ -52,14 +56,29 @@ describe('release checklist', () => {
       ]),
     );
     expect(checklist.envVars).toEqual(['GITHUB_APP_ID', 'NEW_FLAG']);
-    expect(checklist.services).toEqual(['apps/ai/happy', 'apps/api', 'apps/storefront', 'корінь репозиторію']);
+    expect(
+      buildReleaseChecklist([
+        file('apps/api/src/a.spec.ts', '@@ -0,0 +1 @@\n+process.env.ONLY_IN_TEST'),
+      ]).envVars,
+    ).toEqual([]);
+    expect(checklist.services).toEqual([
+      'apps/ai/happy',
+      'apps/api',
+      'apps/storefront',
+      'корінь репозиторію',
+    ]);
     expect(checklist.dependencies[0]?.changes).toEqual([
       { name: 'bullmq', change: 'added' },
       { name: 'old-lib', change: 'removed' },
       { name: 'zod', change: 'changed' },
     ]);
     expect(checklist.lockfileChanged).toBe(true);
-    const markdown = renderReleaseChecklist({ owner: 'a', repo: 'b', number: 9 }, 'abcdef1234', checklist, false);
+    const markdown = renderReleaseChecklist(
+      { owner: 'a', repo: 'b', number: 9 },
+      'abcdef1234',
+      checklist,
+      false,
+    );
     expect(markdown).toContain('0042_add.sql');
     expect(markdown).toContain('вартість $0.0000');
   });
@@ -89,7 +108,9 @@ const validated = (overrides: Partial<ValidatedFinding> = {}): ValidatedFinding 
   ...overrides,
 });
 
-const review = (overrides: Partial<Omit<CompletedReview, 'markdown'>> = {}): Omit<CompletedReview, 'markdown'> => ({
+const review = (
+  overrides: Partial<Omit<CompletedReview, 'markdown'>> = {},
+): Omit<CompletedReview, 'markdown'> => ({
   status: ReviewStatus.REVIEWED,
   ref: { owner: 'a', repo: 'b', number: 3 },
   headSha: 'abcdef1234',
@@ -117,7 +138,9 @@ describe('review rendering and check report', () => {
 
   it('renders questions in their own section', () => {
     const markdown = renderCompletedReview(
-      review({ questions: [validated({ kind: FindingKind.QUESTION, message: 'Чи це навмисно?' })] }),
+      review({
+        questions: [validated({ kind: FindingKind.QUESTION, message: 'Чи це навмисно?' })],
+      }),
     );
     expect(markdown).toContain('### Питання до автора (1)');
     expect(markdown).toContain('Чи це навмисно?');
@@ -146,7 +169,9 @@ describe('rule cards', () => {
   });
 
   it('matches cards by path and renders the four parts', () => {
-    const ids = cardsForPaths(['apps/api/src/modules/media/domain/clock.ts']).map((card) => card.id);
+    const ids = cardsForPaths(['apps/api/src/modules/media/domain/clock.ts']).map(
+      (card) => card.id,
+    );
     expect(ids).toContain('domain-purity');
     const text = renderRuleCard(selectRuleCards(['domain-purity'])[0]!);
     expect(text).toContain('Violation:');

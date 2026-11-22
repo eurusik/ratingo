@@ -1,6 +1,7 @@
 import { UnrecoverableError } from 'bullmq';
 
 import {
+  CodeHostError,
   RepositoryNotAllowedError,
   ReviewJobSource,
   type ReviewJob,
@@ -46,5 +47,19 @@ describe('ReviewWorker', () => {
     await expect(
       flaky.process({ name: REVIEW_JOB_TYPES.REVIEW_PULL_REQUEST, data: JOB }),
     ).rejects.not.toBeInstanceOf(UnrecoverableError);
+  });
+
+  it('does not retry a rejected publish but retries a server error and rate limiting', async () => {
+    const run = (status: number) =>
+      workerWith(
+        jest.fn().mockRejectedValue(new CodeHostError('publish check run', status, 'x')),
+      ).process({
+        name: REVIEW_JOB_TYPES.REVIEW_PULL_REQUEST,
+        data: JOB,
+      });
+    await expect(run(403)).rejects.toBeInstanceOf(UnrecoverableError);
+    await expect(run(422)).rejects.toBeInstanceOf(UnrecoverableError);
+    await expect(run(429)).rejects.not.toBeInstanceOf(UnrecoverableError);
+    await expect(run(502)).rejects.not.toBeInstanceOf(UnrecoverableError);
   });
 });
