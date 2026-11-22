@@ -14,6 +14,7 @@ const productStatsEnvSchema = z.object({
 
 const modelEnvSchema = z.object({
   AI_MODEL_FAST: z.string().min(1).default(DEFAULT_FAST_MODEL),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
 });
 
 export const previewEnvSchema = grafanaEnvSchema
