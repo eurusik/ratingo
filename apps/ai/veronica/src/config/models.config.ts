@@ -12,6 +12,7 @@ const FREE_PRICE: ModelPrice = {
 };
 
 export const STUB_PROVIDER = 'stub';
+export const ANTHROPIC_PROVIDER = 'anthropic';
 
 export const MODEL_PRICES: PriceTable = {
   ...ANTHROPIC_DEFAULT_PRICES,
