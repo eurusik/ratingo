@@ -3,13 +3,14 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CLOCK_PORT, type ClockPort, type RunTrigger } from '@ratingo/ai-core';
 
 import { NOTIFIER_PORT, type NotifierPort } from '../../../notify/public';
+import { CLAIM_STALE_MS } from '../../digest.constants';
 import { kyivDateOf } from '../../domain/kyiv-day';
 import {
   DIGEST_DELIVERY_REPOSITORY,
   type DigestDeliveryRepository,
 } from '../../domain/ports/digest-delivery.repository';
 
-import { DigestComposeService } from './digest-compose.service';
+import { DigestComposeService, type ComposedDigest } from './digest-compose.service';
 
 export const DeliveryStatus = {
   SENT: 'sent',
@@ -31,12 +32,11 @@ export class DigestDeliveryService {
 
   async deliver(trigger: RunTrigger): Promise<DeliveryStatus> {
     const date = kyivDateOf(this.clock.nowMs());
-    if (await this.deliveries.wasSent(date)) {
-      this.logger.log(`Звіт за ${date} уже надіслано`);
+    if (!(await this.deliveries.claim(date, this.clock.nowMs(), CLAIM_STALE_MS))) {
+      this.logger.log(`Звіт за ${date} уже надіслано або надсилається`);
       return DeliveryStatus.ALREADY_SENT;
     }
-    const composed = await this.composer.compose(trigger);
-    await this.notifier.send(composed.message);
+    const composed = await this.composeAndSend(date, trigger);
     await this.deliveries.markSent({
       date,
       sentAtMs: this.clock.nowMs(),
@@ -45,5 +45,16 @@ export class DigestDeliveryService {
     });
     this.logger.log(`Звіт за ${date} надіслано`);
     return DeliveryStatus.SENT;
+  }
+
+  private async composeAndSend(date: string, trigger: RunTrigger): Promise<ComposedDigest> {
+    try {
+      const composed = await this.composer.compose(trigger);
+      await this.notifier.send(composed.message);
+      return composed;
+    } catch (error) {
+      await this.deliveries.release(date);
+      throw error;
+    }
   }
 }

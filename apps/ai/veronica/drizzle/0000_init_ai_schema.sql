@@ -2,8 +2,10 @@ CREATE SCHEMA IF NOT EXISTS "ai";
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "ai"."digest_deliveries" (
 	"digest_date" date PRIMARY KEY NOT NULL,
-	"sent_at_ms" bigint NOT NULL,
-	"silent" boolean NOT NULL,
+	"status" text NOT NULL,
+	"claimed_at_ms" bigint NOT NULL,
+	"sent_at_ms" bigint,
+	"silent" boolean,
 	"run_id" text
 );
 --> statement-breakpoint

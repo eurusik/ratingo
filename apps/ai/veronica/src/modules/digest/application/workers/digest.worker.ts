@@ -6,7 +6,7 @@ import {
   type OnModuleInit,
 } from '@nestjs/common';
 
-import { Worker, type Job } from 'bullmq';
+import { UnrecoverableError, Worker, type Job } from 'bullmq';
 import type IORedis from 'ioredis';
 
 import { RunTrigger } from '@ratingo/ai-core';
@@ -17,6 +17,7 @@ import {
   DIGEST_QUEUE_PREFIX,
   REDIS_CONNECTION,
 } from '../../digest.constants';
+import { NotificationError } from '../../../notify/public';
 import { DigestDeliveryService } from '../services/digest-delivery.service';
 
 @Injectable()
@@ -49,6 +50,13 @@ export class DigestWorker implements OnModuleInit, OnApplicationShutdown {
       this.logger.warn(`Невідомий тип завдання ${job.name}`);
       return 'ignored';
     }
-    return this.delivery.deliver(RunTrigger.SCHEDULE);
+    try {
+      return await this.delivery.deliver(RunTrigger.SCHEDULE);
+    } catch (error) {
+      if (error instanceof NotificationError && !error.retryable) {
+        throw new UnrecoverableError(error.message);
+      }
+      throw error;
+    }
   }
 }

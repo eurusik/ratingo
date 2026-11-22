@@ -8,6 +8,8 @@ export const DIGEST_JOB_TYPES = {
 
 const ONE_MINUTE_MS = 60_000;
 const SECONDS_PER_DAY = 24 * 60 * 60;
+export const MS_PER_DAY = SECONDS_PER_DAY * 1000;
+export const CLAIM_STALE_MS = 15 * ONE_MINUTE_MS;
 
 export const DIGEST_JOB_OPTIONS = {
   attempts: 8,

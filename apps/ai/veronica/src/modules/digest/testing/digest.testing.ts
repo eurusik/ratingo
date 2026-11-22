@@ -1,9 +1,9 @@
 import { DIGEST_THRESHOLDS } from '../../../config/digest.config';
 
-import { measured } from './entities/measured';
-import type { QueueStats, Snapshot } from './entities/snapshot';
-import { ApiKeyState, BackupResult } from './entities/snapshot';
-import { available, unavailable } from './entities/source-reading';
+import { measured } from '../domain/entities/measured';
+import type { QueueStats, Snapshot } from '../domain/entities/snapshot';
+import { ApiKeyState, BackupResult } from '../domain/entities/snapshot';
+import { available, unavailable } from '../domain/entities/source-reading';
 
 export const THRESHOLDS = DIGEST_THRESHOLDS;
 export const NOW_MS = Date.UTC(2026, 10, 22, 6, 0, 0);

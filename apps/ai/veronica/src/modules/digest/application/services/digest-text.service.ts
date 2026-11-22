@@ -19,22 +19,20 @@ import {
 
 import { MODEL_ALIASES } from '../../../../config/config.constants';
 import { AGENT_FOLDER, AGENT_LOOP } from '../../../../core/ai-core.constants';
-import { DIGEST_TASK_NAME } from '../../digest.constants';
+import { DIGEST_TASK_NAME, MS_PER_DAY } from '../../digest.constants';
+import { HEADLINE_MAX_CHARS, LINE_MAX_CHARS } from '../../domain/constants/digest-text.constants';
 import { DigestLevel } from '../../domain/constants/digest-level.constants';
 import type { Digest, DigestItem, DigestText } from '../../domain/entities/digest';
 
-const HEADLINE_MAX = 120;
-const LINE_MAX = 300;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const DIGIT = /\d/;
+const DIGIT = /\p{Nd}/u;
 const ACTIONS_MAX = 20;
 
 const replySchema = z.object({
-  headline: z.string().min(1).max(HEADLINE_MAX),
+  headline: z.string().min(1).max(HEADLINE_MAX_CHARS),
   actions: z
-    .array(z.object({ id: z.string(), text: z.string().min(1).max(LINE_MAX) }))
+    .array(z.object({ id: z.string(), text: z.string().min(1).max(LINE_MAX_CHARS) }))
     .max(ACTIONS_MAX),
-  interesting: z.string().min(1).max(LINE_MAX).optional(),
+  interesting: z.string().min(1).max(LINE_MAX_CHARS).optional(),
 });
 
 export interface DigestTextResult {

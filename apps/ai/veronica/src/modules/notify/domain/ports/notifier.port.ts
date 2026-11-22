@@ -10,7 +10,10 @@ export interface NotifierPort {
 export const NOTIFIER_PORT = Symbol('NOTIFIER_PORT');
 
 export class NotificationError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    readonly retryable: boolean = true,
+  ) {
     super(message);
     this.name = 'NotificationError';
   }

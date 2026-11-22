@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { SchedulerJobStat } from '../../domain/entities/snapshot';
 import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
+import { UNKNOWN_LABEL } from '../../domain/constants/digest-text.constants';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
 
 import { guarded, hoursSince } from './collector-helpers';
@@ -24,7 +25,7 @@ export class SchedulerCollector {
       }
       const jobs = new Map<string, SchedulerJobStat>();
       for (const sample of samples) {
-        const jobName = sample.labels.job_name ?? 'невідоме';
+        const jobName = sample.labels.job_name ?? UNKNOWN_LABEL;
         const job = jobs.get(jobName) ?? {
           jobName,
           lastSuccessAgeHours: null,

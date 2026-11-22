@@ -60,14 +60,20 @@ const missingSourcesItem = (evaluations: readonly SourceEvaluation[]): DigestIte
   const missing = evaluations.filter(
     (evaluation) => evaluation.outcome === null && !OPTIONAL_SOURCES.includes(evaluation.source),
   );
-  return missing.length === 0
-    ? null
-    : itemOf(
-        'sources-missing',
-        DigestBlock.SERVICES,
-        DigestLevel.NOTE,
-        `Немає даних про: ${missing.map((evaluation) => SOURCE_LABEL[evaluation.source]).join(', ')}. Перевір доступ до Grafana.`,
-      );
+  if (missing.length === 0) {
+    return null;
+  }
+  const required = evaluations.filter((e) => !OPTIONAL_SOURCES.includes(e.source));
+  const blind = missing.length === required.length;
+  const names = missing.map((evaluation) => SOURCE_LABEL[evaluation.source]).join(', ');
+  return itemOf(
+    'sources-missing',
+    DigestBlock.SERVICES,
+    blind ? DigestLevel.ACTION : DigestLevel.NOTE,
+    blind
+      ? `Звіт сліпий: немає жодних даних (${names}). Перевір токен і доступ до Grafana.`
+      : `Немає даних про: ${names}. Перевір доступ до Grafana.`,
+  );
 };
 
 const statusOf = (evaluation: SourceEvaluation): SourceStatus => ({

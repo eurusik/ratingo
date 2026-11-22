@@ -2,6 +2,10 @@ import { DigestBlock } from '../../domain/constants/digest-block.constants';
 import { DIGEST_BLOCK_ORDER } from '../../domain/constants/digest-block.constants';
 import { DigestLevel } from '../../domain/constants/digest-level.constants';
 import { SOURCE_BLOCK, SOURCE_LABEL } from '../../domain/constants/digest-source.constants';
+import {
+  HEADLINE_MAX_CHARS as HEADLINE_MAX,
+  LINE_MAX_CHARS as LINE_MAX,
+} from '../../domain/constants/digest-text.constants';
 import type {
   BlockReport,
   Digest,
@@ -19,8 +23,6 @@ import type {
 
 export const TELEGRAM_MESSAGE_LIMIT = 4096;
 const SAFE_LENGTH = 3900;
-const HEADLINE_MAX = 160;
-const LINE_MAX = 320;
 const ACTIONS_SHOWN = 8;
 const NOTES_SHOWN = 8;
 
@@ -91,16 +93,18 @@ const factsLine = (facts: readonly Fact[]): string =>
     ? ''
     : ` <i>${facts.map((fact) => safe(formatFact(fact), LINE_MAX)).join('; ')}</i>`;
 
-const actionLines = (digest: Digest, text: DigestText | null): string[] => {
+const actionLines = (
+  digest: Digest,
+  text: DigestText | null,
+): { lines: string[]; hidden: number } => {
   const actions = itemsOf(digest, DigestLevel.ACTION);
-  const shown = actions
+  const lines = actions
     .slice(0, ACTIONS_SHOWN)
     .map(
       (item, index) =>
         `${index + 1}. ${safe(adviceFor(item, text), LINE_MAX)}${factsLine(item.facts)}`,
     );
-  const hidden = actions.length - shown.length;
-  return hidden > 0 ? [...shown, `…і ще ${hidden}`] : shown;
+  return { lines, hidden: actions.length - lines.length };
 };
 
 const noteLines = (digest: Digest): string[] =>
@@ -151,6 +155,7 @@ const costFooter = (modelCostUsd: number | null): string =>
 interface Sections {
   header: string;
   actions: string[];
+  hiddenActions: number;
   notes: string[];
   blocks: string[];
   interesting: string | null;
@@ -161,7 +166,13 @@ interface Sections {
 const assemble = (sections: Sections): string =>
   [
     sections.header,
-    sections.actions.length > 0 ? ['<b>Що зробити</b>', ...sections.actions].join('\n') : null,
+    sections.actions.length > 0
+      ? [
+          '<b>Що зробити</b>',
+          ...sections.actions,
+          ...(sections.hiddenActions > 0 ? [`…і ще ${sections.hiddenActions}`] : []),
+        ].join('\n')
+      : null,
     sections.notes.length > 0 ? ['<b>Варто знати</b>', ...sections.notes].join('\n') : null,
     sections.blocks.join('\n'),
     sections.interesting,
@@ -186,7 +197,11 @@ const fitToLimit = (sections: Sections): string => {
     current = reduce(current);
   }
   while (assemble(current).length > SAFE_LENGTH && current.actions.length > 1) {
-    current = { ...current, actions: current.actions.slice(0, -1) };
+    current = {
+      ...current,
+      actions: current.actions.slice(0, -1),
+      hiddenActions: current.hiddenActions + 1,
+    };
   }
   return assemble(current);
 };
@@ -194,9 +209,11 @@ const fitToLimit = (sections: Sections): string => {
 export class TelegramDigestTemplate implements DigestRendererPort {
   render({ digest, text, modelCostUsd }: DigestRenderInput): RenderedMessage {
     const headline = text?.headline ?? defaultHeadline(digest);
+    const actions = actionLines(digest, text);
     const sections: Sections = {
       header: `${LEVEL_EMOJI[digest.level]} <b>${safe(headline, HEADLINE_MAX)}</b>`,
-      actions: actionLines(digest, text),
+      actions: actions.lines,
+      hiddenActions: actions.hidden,
       notes: noteLines(digest),
       blocks: DIGEST_BLOCK_ORDER.map((order) =>
         digest.blocks.find((b) => b.block === order),
@@ -204,7 +221,7 @@ export class TelegramDigestTemplate implements DigestRendererPort {
       interesting:
         text?.interesting === undefined ? null : `💡 ${safe(text.interesting, LINE_MAX)}`,
       details: detailLines(digest),
-      footer: [sourceFooter(digest), costFooter(modelCostUsd)],
+      footer: [sourceFooter(digest), costFooter(text === null ? null : modelCostUsd)],
     };
     return { html: fitToLimit(sections), silent: digest.level === DigestLevel.OK };
   }

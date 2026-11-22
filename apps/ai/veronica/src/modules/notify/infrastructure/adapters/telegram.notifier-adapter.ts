@@ -5,6 +5,15 @@ import { NotificationError } from '../../domain/ports/notifier.port';
 const TELEGRAM_API = 'https://api.telegram.org';
 const SEND_TIMEOUT_MS = 15_000;
 
+const HTTP_TOO_MANY_REQUESTS = 429;
+const HTTP_CLIENT_ERROR_MIN = 400;
+const HTTP_SERVER_ERROR_MIN = 500;
+
+const isRetryable = (status: number): boolean =>
+  status === HTTP_TOO_MANY_REQUESTS ||
+  status < HTTP_CLIENT_ERROR_MIN ||
+  status >= HTTP_SERVER_ERROR_MIN;
+
 interface TelegramReply {
   ok: boolean;
   description?: string;
@@ -22,6 +31,7 @@ export class TelegramNotifierAdapter implements NotifierPort {
     if (!response.ok || !reply.ok) {
       throw new NotificationError(
         `Telegram відхилив повідомлення (HTTP ${response.status}): ${reply.description ?? 'без опису'}`,
+        isRetryable(response.status),
       );
     }
   }

@@ -8,10 +8,10 @@ import {
   healthyQueue,
   redSnapshot,
   unavailableSnapshot,
-} from '../digest.testing';
+} from '../../testing/digest.testing';
 import { measured } from '../entities/measured';
 import { HttpErrorKind } from '../entities/snapshot';
-import { available } from '../entities/source-reading';
+import { available, unavailable } from '../entities/source-reading';
 
 import { evaluateDigest } from './evaluate-digest';
 import { evaluateQueues } from './queues.rule';
@@ -210,5 +210,19 @@ describe('evaluateQueues', () => {
   it('never uses the failed-kept gauge as a failure signal, only completed-job counts', () => {
     const queue = { ...healthyQueue(), failed24h: measured(0), backlogNow: 4 };
     expect(evaluateQueues([queue], THRESHOLDS).items).toEqual([]);
+  });
+
+  it('turns a fully blind digest into an action instead of a calm note', () => {
+    const blind = {
+      ...greenSnapshot(),
+      queues: unavailable<never>('x'),
+      apiKeys: unavailable<never>('x'),
+      httpErrors: unavailable<never>('x'),
+      backup: unavailable<never>('x'),
+      infra: unavailable<never>('x'),
+    };
+    const digest = evaluateDigest(blind as never, THRESHOLDS);
+    expect(digest.level).toBe(DigestLevel.ACTION);
+    expect(digest.blocks.flatMap((b) => b.items)[0]?.advice).toContain('сліпий');
   });
 });

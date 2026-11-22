@@ -1,4 +1,4 @@
-import { NOW_MS } from '../../domain/digest.testing';
+import { NOW_MS } from '../../testing/digest.testing';
 import type { MetricSample, MetricsPort } from '../../domain/ports/metrics.port';
 
 import { ApiKeysCollector } from './api-keys.collector';
@@ -118,6 +118,21 @@ describe('HttpErrorsCollector', () => {
       { server: 'api.themoviedb.org', kind: 'auth', count: { current: 3, baseline: 0 } },
       { server: 'api.trakt.tv', kind: 'rate_limit', count: { current: 54, baseline: 10 } },
     ]);
+  });
+
+  it('leaves the baseline unknown instead of zero when last week had no request metrics', async () => {
+    const collector = new HttpErrorsCollector(
+      metricsWith((query, atMs) => {
+        if (atMs < NOW_MS) return [];
+        if (query.startsWith('sum(increase')) return [sample({}, 5000)];
+        return [sample({ server_address: 'api.trakt.tv', http_response_status_code: '429' }, 3)];
+      }),
+    );
+    const reading = await collector.collect(NOW_MS);
+    expect(reading.state === 'ok' && reading.data[0]?.count).toEqual({
+      current: 3,
+      baseline: null,
+    });
   });
 
   it('is unavailable when no outgoing request metric exists, instead of reporting zero errors', async () => {

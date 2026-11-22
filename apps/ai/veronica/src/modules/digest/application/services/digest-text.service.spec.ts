@@ -15,7 +15,7 @@ import { ContentPartType, StopReason, createStubScript, StubScenario } from '@ra
 
 import { buildModelAliases, MODEL_PRICES } from '../../../../config/models.config';
 import { createDigestStubScript } from '../../../../core/stub-digest.script';
-import { NOW_MS, THRESHOLDS, redSnapshot } from '../../domain/digest.testing';
+import { NOW_MS, THRESHOLDS, redSnapshot } from '../../testing/digest.testing';
 import { evaluateDigest } from '../../domain/rules/evaluate-digest';
 
 import { DigestTextService } from './digest-text.service';

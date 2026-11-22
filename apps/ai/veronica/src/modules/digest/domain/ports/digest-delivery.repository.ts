@@ -6,8 +6,9 @@ export interface DigestDelivery {
 }
 
 export interface DigestDeliveryRepository {
-  wasSent(date: string): Promise<boolean>;
+  claim(date: string, nowMs: number, staleAfterMs: number): Promise<boolean>;
   markSent(delivery: DigestDelivery): Promise<void>;
+  release(date: string): Promise<void>;
 }
 
 export const DIGEST_DELIVERY_REPOSITORY = Symbol('DIGEST_DELIVERY_REPOSITORY');

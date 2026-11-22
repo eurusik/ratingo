@@ -6,7 +6,7 @@ import {
   greenSnapshot,
   redSnapshot,
   unavailableSnapshot,
-} from '../../domain/digest.testing';
+} from '../../testing/digest.testing';
 import type { Digest, DigestText, Fact } from '../../domain/entities/digest';
 import { FactUnit } from '../../domain/entities/digest';
 import { evaluateDigest } from '../../domain/rules/evaluate-digest';
@@ -120,5 +120,38 @@ describe('TelegramDigestTemplate', () => {
       const digest = evaluateDigest(snapshot, THRESHOLDS);
       expect(render(digest).html.startsWith(emojiByLevel[digest.level])).toBe(true);
     }
+  });
+
+  it('claims model text only when model text was used', () => {
+    const digest = evaluateDigest(redSnapshot(), THRESHOLDS);
+    expect(render(digest, null, 0.002).html).toContain('без моделі');
+    expect(render(digest, null, 0.002).html).not.toContain('$0.0020');
+  });
+
+  it('says how many actions were cut when the message is too long', () => {
+    const base = evaluateDigest(redSnapshot(), THRESHOLDS);
+    const items = Array.from({ length: 12 }, (_, index) => ({
+      id: `item-${index}`,
+      block: 'jobs' as const,
+      level: DigestLevel.ACTION,
+      advice: 'д'.repeat(320),
+      facts: [],
+    }));
+    const digest: Digest = {
+      ...base,
+      blocks: [
+        ...base.blocks.slice(0, 1),
+        { ...(base.blocks[1] as Digest['blocks'][number]), items },
+        ...base.blocks.slice(2),
+      ],
+    };
+    const html = render(digest).html;
+    const numbered = html.match(/^\d+\. /gm)?.length ?? 0;
+    const hidden = Number(/…і ще (\d+)/.exec(html)?.[1] ?? 0);
+    expect(hidden).toBeGreaterThan(0);
+    const total = digest.blocks
+      .flatMap((b) => b.items)
+      .filter((item) => item.level === DigestLevel.ACTION).length;
+    expect(numbered + hidden).toBe(total);
   });
 });

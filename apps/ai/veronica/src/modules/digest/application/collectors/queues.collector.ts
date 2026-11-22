@@ -5,6 +5,7 @@ import { measured } from '../../domain/entities/measured';
 import type { FailedJob, QueueStats } from '../../domain/entities/snapshot';
 import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
+import { UNKNOWN_LABEL } from '../../domain/constants/digest-text.constants';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
 
 import { baselineAt, guarded, valueByLabel } from './collector-helpers';
@@ -60,7 +61,7 @@ export class QueuesCollector {
           failedJobs: failedJobs
             .filter((sample) => sample.labels.queue === queue && sample.value > 0)
             .map((sample): FailedJob => ({
-              jobName: sample.labels.job_name ?? 'невідоме',
+              jobName: sample.labels.job_name ?? UNKNOWN_LABEL,
               count: Math.round(sample.value),
             })),
         })),

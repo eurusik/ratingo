@@ -30,7 +30,9 @@ export const runs = aiSchema.table('runs', {
 
 export const digestDeliveries = aiSchema.table('digest_deliveries', {
   digestDate: date('digest_date', { mode: 'string' }).primaryKey(),
-  sentAtMs: bigint('sent_at_ms', { mode: 'number' }).notNull(),
-  silent: boolean('silent').notNull(),
+  status: text('status').notNull(),
+  claimedAtMs: bigint('claimed_at_ms', { mode: 'number' }).notNull(),
+  sentAtMs: bigint('sent_at_ms', { mode: 'number' }),
+  silent: boolean('silent'),
   runId: text('run_id'),
 });

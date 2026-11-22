@@ -1,5 +1,5 @@
 {
-  "id": "555b338c-04f8-41c9-93b7-af8f3b4b939a",
+  "id": "95b3287d-9d7f-41f1-b3d5-201f71c3a4ae",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -14,17 +14,29 @@
           "primaryKey": true,
           "notNull": true
         },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claimed_at_ms": {
+          "name": "claimed_at_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
         "sent_at_ms": {
           "name": "sent_at_ms",
           "type": "bigint",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "silent": {
           "name": "silent",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "run_id": {
           "name": "run_id",

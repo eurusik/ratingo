@@ -1,4 +1,3 @@
-/** @type {import('drizzle-kit').Config} */
 module.exports = {
   dialect: 'postgresql',
   schema: './src/database/schema.ts',

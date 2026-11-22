@@ -1,3 +1,4 @@
+import { MS_PER_DAY } from '../../digest.constants';
 import type { MetricSample } from '../../domain/ports/metrics.port';
 import type { SourceReading } from '../../domain/entities/source-reading';
 import { unavailable } from '../../domain/entities/source-reading';
@@ -5,7 +6,6 @@ import { unavailable } from '../../domain/entities/source-reading';
 const MAX_REASON_LENGTH = 120;
 const MS_PER_SECOND = 1000;
 const MS_PER_HOUR = 60 * 60 * MS_PER_SECOND;
-const MS_PER_DAY = 24 * MS_PER_HOUR;
 
 export const baselineAt = (nowMs: number, days: number): number => nowMs - days * MS_PER_DAY;
 

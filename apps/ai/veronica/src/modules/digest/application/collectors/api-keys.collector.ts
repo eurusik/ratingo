@@ -4,6 +4,7 @@ import type { ApiKeyStat } from '../../domain/entities/snapshot';
 import { ApiKeyState } from '../../domain/entities/snapshot';
 import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
+import { UNKNOWN_LABEL } from '../../domain/constants/digest-text.constants';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
 
 import { guarded } from './collector-helpers';
@@ -30,7 +31,7 @@ export class ApiKeysCollector {
       return available(
         samples
           .map((sample): ApiKeyStat => ({
-            provider: sample.labels.provider ?? 'невідомий',
+            provider: sample.labels.provider ?? UNKNOWN_LABEL,
             state: stateOf(sample.value),
           }))
           .sort((a, b) => a.provider.localeCompare(b.provider)),

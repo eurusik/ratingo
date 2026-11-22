@@ -47,4 +47,15 @@ describe('TelegramNotifierAdapter', () => {
     const error = await adapter.send({ html: 'x', silent: false }).catch((e: unknown) => e);
     expect((error as Error).message).not.toContain('secret-token');
   });
+
+  it.each([
+    [400, false],
+    [403, false],
+    [429, true],
+    [502, true],
+  ])('marks HTTP %i as retryable=%s', async (status, retryable) => {
+    const adapter = new TelegramNotifierAdapter(CONFIG, reply(status, { ok: false }));
+    const error = await adapter.send({ html: 'x', silent: false }).catch((e: unknown) => e);
+    expect((error as NotificationError).retryable).toBe(retryable);
+  });
 });
