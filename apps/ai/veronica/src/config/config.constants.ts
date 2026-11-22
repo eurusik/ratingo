@@ -5,6 +5,7 @@ export const MODEL_ALIASES = Symbol('MODEL_ALIASES');
 export const ANTHROPIC_CONFIG = Symbol('ANTHROPIC_CONFIG');
 export const CHAT_CONFIG = Symbol('CHAT_CONFIG');
 export const PRODUCT_STATS_CONFIG = Symbol('PRODUCT_STATS_CONFIG');
+export const CHANGES_CONFIG = Symbol('CHANGES_CONFIG');
 
 export interface GrafanaConfig {
   baseUrl?: string;
@@ -33,4 +34,9 @@ export interface InfraConfig {
 export interface ChatConfig {
   allowedUserIds: readonly string[];
   webhookUrl?: string;
+}
+
+export interface ChangesConfig {
+  token?: string;
+  repository: string;
 }

@@ -13,6 +13,7 @@ import { NotificationError } from '../../../notify/public';
 import { ChatCommandHandlers } from '../commands/chat-command.handlers';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
 import type { ChatEvent } from '../../domain/ports/chat-metrics.port';
+import { ChatOutcome } from '../../domain/constants/chat.constants';
 
 import { ChatService } from './chat.service';
 
@@ -24,6 +25,9 @@ class Harness {
   sendFailure: Error | null = null;
   snapshot: () => Snapshot = greenSnapshot;
   composeTrigger: RunTrigger | null = null;
+  readonly asked: { chatId: string; question: string }[] = [];
+  investigationOutcome: ChatOutcome = ChatOutcome.ANSWERED;
+  investigationFailure: Error | null = null;
 
   private readonly clock = new FixedClock(NOW_MS);
 
@@ -42,10 +46,19 @@ class Harness {
   readonly service = new ChatService(
     new ChatCommandHandlers(this.composer),
     {
+      answer: async (chatId: string, question: string) => {
+        if (this.investigationFailure !== null) throw this.investigationFailure;
+        this.asked.push({ chatId, question });
+        return { outcome: this.investigationOutcome, html: '', toolCalls: [], costUsd: 0 };
+      },
+    } as never,
+    {
       sendMessage: async (chatId: string, html: string) => {
         if (this.sendFailure !== null) throw this.sendFailure;
         this.sent.push({ chatId, html });
       },
+      postMessage: async () => 1,
+      editMessage: async () => undefined,
       sendChatAction: async (_chatId: string, action: string) => void this.actions.push(action),
     },
     { record: (event: ChatEvent) => void this.events.push(event) },
@@ -151,14 +164,46 @@ describe('ChatService', () => {
   });
 
   it.each([
-    'Veronica, чому не оновився trending?',
-    'Happy, review https://github.com/eurusik/ratingo/pull/431',
-    'https://github.com/eurusik/ratingo/pull/431',
-    'скільки нових людей цього тижня',
-  ])('answers «%s» with the fixed commands-only reply', async (text) => {
+    ['Veronica, чому не оновився trending?', 'чому не оновився trending?'],
+    ['Вероніко, скільки черг?', 'скільки черг?'],
+    ['скільки нових людей цього тижня', 'скільки нових людей цього тижня'],
+    ['привіт', 'привіт'],
+  ])('sends «%s» to the investigation agent as «%s»', async (text, question) => {
     const chat = new Harness();
     await chat.say(text);
-    expect(chat.reply).toBe('Поки що розумію тільки команди: /help');
+    expect(chat.asked).toEqual([{ chatId: '10', question }]);
+    expect(chat.sent).toEqual([]);
+  });
+
+  it.each([
+    'Happy, review https://github.com/eurusik/ratingo/pull/431',
+    'Хеппі, глянь цей PR',
+    'https://github.com/eurusik/ratingo/pull/431',
+  ])('tells that Happy is not connected yet for «%s» and asks no model', async (text) => {
+    const chat = new Harness();
+    await chat.say(text);
+    expect(chat.reply).toContain('Хеппі');
+    expect(chat.asked).toEqual([]);
+    expect(chat.events).toEqual([{ outcome: 'handled', command: 'free_text', route: 'happy' }]);
+  });
+
+  it('records the investigation outcome with the investigation route and no extra run', async () => {
+    const chat = new Harness();
+    chat.investigationOutcome = ChatOutcome.REDACTED;
+    await expect(chat.say('що з чергами?')).resolves.toBe('redacted');
+    expect(chat.events).toEqual([
+      { outcome: 'redacted', command: 'free_text', route: 'investigation' },
+    ]);
+    expect(chat.runs).toEqual([]);
+  });
+
+  it('records a failed investigation event and rethrows so the queue can retry', async () => {
+    const chat = new Harness();
+    chat.investigationFailure = new NotificationError('down', true);
+    await expect(chat.say('що з чергами?')).rejects.toBe(chat.investigationFailure);
+    expect(chat.events).toEqual([
+      { outcome: 'failed', command: 'free_text', route: 'investigation' },
+    ]);
   });
 
   it('sends to the chat the message came from', async () => {
@@ -180,7 +225,7 @@ describe('ChatService', () => {
       costUsd: 0,
       turns: 0,
     });
-    expect(chat.events).toEqual([{ outcome: 'handled', command: 'status' }]);
+    expect(chat.events).toEqual([{ outcome: 'handled', command: 'status', route: 'command' }]);
   });
 
   it('labels events with bounded command values', async () => {
@@ -188,8 +233,8 @@ describe('ChatService', () => {
     await chat.say('/deploy');
     await chat.say('anything at all');
     expect(chat.events).toEqual([
-      { outcome: 'handled', command: 'unknown' },
-      { outcome: 'handled', command: 'free_text' },
+      { outcome: 'handled', command: 'unknown', route: 'command' },
+      { outcome: 'answered', command: 'free_text', route: 'investigation' },
     ]);
   });
 
@@ -202,7 +247,7 @@ describe('ChatService', () => {
     expect(chat.reply).toContain('Не вдалося');
     expect(chat.reply).not.toContain('secret');
     expect(chat.runs[0].status).toBe(RunStatus.FAILED);
-    expect(chat.events).toEqual([{ outcome: 'failed', command: 'status' }]);
+    expect(chat.events).toEqual([{ outcome: 'failed', command: 'status', route: 'command' }]);
   });
 
   it('rethrows a Telegram failure so the queue can retry, and records the failed run', async () => {
@@ -211,7 +256,7 @@ describe('ChatService', () => {
     await expect(chat.say('/help')).rejects.toBe(chat.sendFailure);
     expect(chat.runs[0].status).toBe(RunStatus.FAILED);
     expect(chat.runs[0].stopDetail).toBe('NotificationError');
-    expect(chat.events).toEqual([{ outcome: 'failed', command: 'help' }]);
+    expect(chat.events).toEqual([{ outcome: 'failed', command: 'help', route: 'command' }]);
   });
 
   it('keeps answering when the run cannot be saved', async () => {

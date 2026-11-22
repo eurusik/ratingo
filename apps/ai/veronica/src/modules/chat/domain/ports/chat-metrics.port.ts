@@ -1,8 +1,9 @@
-import type { ChatOutcome, CommandLabel } from '../constants/chat.constants';
+import type { ChatOutcome, ChatRoute, CommandLabel } from '../constants/chat.constants';
 
 export interface ChatEvent {
   outcome: ChatOutcome;
   command: CommandLabel;
+  route: ChatRoute;
 }
 
 export interface ChatMetricsPort {

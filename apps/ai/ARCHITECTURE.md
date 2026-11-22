@@ -452,9 +452,9 @@ The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_B
 
 ### Commands
 
-`/help`, `/digest` (builds and sends today's digest now through the digest pipeline without touching the daily `sent` claim, marked as on-demand), `/status` (one screen: block levels from the same rules engine), `/queues` and `/site` (those blocks in detail). Mentions, patterns and free text answer «Поки що розумію тільки команди: /help» until steps 2 and 3.
+`/help`, `/digest` (builds and sends today's digest now through the digest pipeline without touching the daily `sent` claim, marked as on-demand), `/status` (one screen: block levels from the same rules engine), `/queues` and `/site` (those blocks in detail). Free text and mentions of Veronica go to the investigation agent (step 2). Happy mentions and PR links answer that Happy is not connected here yet (step 3).
 
-### Investigation tools (read-only; steps 2–3)
+### Investigation tools (read-only)
 
 - `metrics_query`: only named PromQL templates with parameters, a window of at most 7 days, capped output. No free-form PromQL.
 - `product_stats`: the `reporting` views through `ai_reader`.
@@ -463,6 +463,19 @@ The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_B
 - `ask_happy`: a question to Happy.
 
 No Railway logs and no free SQL; those are left to DUM-E later.
+
+`ask_happy` arrives in step 3; the other four ship in step 2. `metrics_query` templates: `queue_throughput`, `queue_backlog_peak`, `http_client_errors`, `site_requests`, `site_latency_p95`, `site_memory_peak`, `scheduler_last_runs`, `backup_status`, `infra_health`. Their PromQL lives in `digest/domain/queries/prom-queries.ts`, shared with the digest collectors. Parameters are validated (queue and provider names, a three-digit status, a window from 1 hour to 7 days, an offset of 0 to 14 days) before they reach a query.
+
+### Investigation run (step 2)
+
+- One `AgentLoop` per message on alias `fast`, with a registry of just these four tools, prompt `agent/prompts/chat.md`, at most 8 turns and $0.05 per message; $0.30 per day for the `chat` task and the agent's day budget, both read from the `ai.runs` table.
+- «шукаю…» is posted first and then edited into the answer; if the edit fails, a new message is sent.
+- **Numbers guard.** Every number in the answer must appear in this run's tool results, the question, the last turns or the clock line. A sentence with another number is cut and a note is added; if nothing is left, the raw snapshot is sent. Links are stripped.
+- **Fallback.** When the model is down, over budget or its numbers cannot be verified, the reply is the `/status` snapshot with one line saying why.
+- **Memory.** The last 12 messages per chat in Redis (`ai-veronica:conversation:<chatId>`, 24 h TTL): the question and the checked answer as text, never tool payloads.
+- **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `redacted`, `fallback`, `failed`; route `investigation`) and a `chat` row in `ai.runs` with the cost.
+- **Env.** `GITHUB_READ_TOKEN` (optional, read-only; `recent_changes` reports itself unavailable without it) and `GITHUB_REPOSITORY` (default `eurusik/ratingo`).
+- **Eval.** `npm run eval:chat --workspace=@ratingo/ai-veronica` runs `apps/ai/veronica/eval/chat` (15 cases with fixture tool results). On the stub model it replays reference answers and checks the harness; with `AI_MODEL_FAST=anthropic:<model>` and `ANTHROPIC_API_KEY` it measures tool-selection accuracy, fact accuracy and cases where the numbers guard fired (target 0). `EVAL_DUMP=<file>` writes the answers.
 
 ### Security
 
@@ -486,7 +499,7 @@ Commands cost $0. A free-form question on Haiku costs about $0.005–0.02.
 ### Steps
 
 1. Webhook and commands (no model).
-2. Free-form Q&A with an eval set.
+2. Free-form Q&A with an eval set (done).
 3. Happy through Veronica (`ask_happy`, PR-link pattern).
 4. Confirm buttons.
 5. DUM-E.

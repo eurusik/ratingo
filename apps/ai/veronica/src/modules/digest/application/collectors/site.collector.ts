@@ -7,21 +7,17 @@ import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
 
+import {
+  siteBotRequests,
+  siteLabelledRequests,
+  siteLoopDelayP99,
+  sitePeakRss,
+  siteRenderP95,
+  siteRequests,
+  siteServerErrors,
+} from '../../domain/queries/prom-queries';
+
 import { baselineAt, guarded } from './collector-helpers';
-
-const SERVICE = 'service_name="ratingo-storefront"';
-const REQUEST_COUNT = 'app_next_request_duration_seconds_count';
-const RENDER_BUCKET = 'app_next_render_duration_seconds_bucket';
-const BOT_KINDS = 'bot|ai_crawler';
-const ALL_KINDS = `human|${BOT_KINDS}`;
-
-const REQUESTS = `sum(increase(${REQUEST_COUNT}{${SERVICE}}[24h]))`;
-const SERVER_ERRORS = `sum(increase(${REQUEST_COUNT}{${SERVICE},http_response_status_code=~"5.."}[24h]))`;
-const RENDER_P95 = `histogram_quantile(0.95, sum by (le) (increase(${RENDER_BUCKET}{${SERVICE}}[24h])))`;
-const PEAK_RSS = `max(max_over_time(app_process_memory_bytes{${SERVICE},type="rss"}[24h]))`;
-const LOOP_DELAY_P99 = `max(max_over_time(app_process_event_loop_delay_seconds{${SERVICE},percentile="p99"}[24h]))`;
-const LABELLED_REQUESTS = `sum(increase(${REQUEST_COUNT}{${SERVICE},client_kind=~"${ALL_KINDS}"}[24h]))`;
-const BOT_REQUESTS = `sum(increase(${REQUEST_COUNT}{${SERVICE},client_kind=~"${BOT_KINDS}"}[24h]))`;
 
 const NONE = 0;
 
@@ -85,13 +81,13 @@ export class SiteCollector {
     const [requests, serverErrors, renderP95, peakRss, loopDelayP99, labelled, bots] =
       await Promise.all(
         [
-          REQUESTS,
-          SERVER_ERRORS,
-          RENDER_P95,
-          PEAK_RSS,
-          LOOP_DELAY_P99,
-          LABELLED_REQUESTS,
-          BOT_REQUESTS,
+          siteRequests(),
+          siteServerErrors(),
+          siteRenderP95(),
+          sitePeakRss(),
+          siteLoopDelayP99(),
+          siteLabelledRequests(),
+          siteBotRequests(),
         ].map(async (query) => (await this.metrics.instant(query, atMs))[0]?.value ?? null),
       );
     return { requests, serverErrors, renderP95, peakRss, loopDelayP99, labelled, bots };

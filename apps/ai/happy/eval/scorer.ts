@@ -12,6 +12,7 @@ export interface CaseResult {
   selectedCheckIds: readonly string[];
   findings: readonly LocatedFinding[];
   questions: readonly LocatedFinding[];
+  reviewedFiles: readonly string[];
 }
 
 interface CheckBreakdown {
@@ -31,6 +32,8 @@ export interface CaseScore {
   unknownAsQuestion: number;
   unknownOverconfident: number;
   noiseQuestions: number;
+  coreFilesCovered: number;
+  coreFilesTotal: number;
   offTargetOnExpectedCheck: number;
   offTargetOnOtherCheck: number;
   offTargetOutsideChecks: number;
@@ -44,6 +47,7 @@ export interface EvalMetrics {
   protectedFalsePositives: number;
   unknownAsQuestionRate: number | null;
   noiseQuestions: number;
+  coreFilesCoverage: number | null;
   offTargetOnExpectedCheck: number;
   offTargetOnOtherCheck: number;
   offTargetOutsideChecks: number;
@@ -64,6 +68,8 @@ const emptyScore = (result: CaseResult): CaseScore => ({
   unknownAsQuestion: 0,
   unknownOverconfident: 0,
   noiseQuestions: 0,
+  coreFilesCovered: 0,
+  coreFilesTotal: 0,
   offTargetOnExpectedCheck: 0,
   offTargetOnOtherCheck: 0,
   offTargetOutsideChecks: 0,
@@ -147,6 +153,9 @@ export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => 
       result.selectedCheckIds.includes(finding.checkId),
   ).length;
   score.offTargetOutsideChecks = offTarget.filter((finding) => finding.checkId === null).length;
+  const coreFiles = testCase.coreFiles ?? [];
+  score.coreFilesTotal = coreFiles.length;
+  score.coreFilesCovered = coreFiles.filter((path) => result.reviewedFiles.includes(path)).length;
   score.byCheck = breakdownByCheck(result.findings, offTarget, testCase.kind);
   return score;
 };
@@ -170,6 +179,10 @@ export const summarize = (scores: readonly CaseScore[]): EvalMetrics => {
       unknownCases,
     ),
     noiseQuestions: sum((score) => score.noiseQuestions),
+    coreFilesCoverage: ratio(
+      sum((score) => score.coreFilesCovered),
+      sum((score) => score.coreFilesTotal),
+    ),
     offTargetOnExpectedCheck: sum((score) => score.offTargetOnExpectedCheck),
     offTargetOnOtherCheck: sum((score) => score.offTargetOnOtherCheck),
     offTargetOutsideChecks: sum((score) => score.offTargetOutsideChecks),

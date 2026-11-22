@@ -2,6 +2,7 @@ import { type DynamicModule, Global, Module } from '@nestjs/common';
 
 import {
   ANTHROPIC_CONFIG,
+  CHANGES_CONFIG,
   CHAT_CONFIG,
   GRAFANA_CONFIG,
   INFRA_CONFIG,
@@ -9,6 +10,7 @@ import {
   PRODUCT_STATS_CONFIG,
   TELEGRAM_CONFIG,
   type AnthropicConfig,
+  type ChangesConfig,
   type GrafanaConfig,
   type InfraConfig,
   type ProductStatsConfig,
@@ -35,10 +37,15 @@ export class ConfigModule {
     };
     const productStats: ProductStatsConfig = { readerDatabaseUrl: env.AI_READER_DATABASE_URL };
     const anthropic: AnthropicConfig = { apiKey: env.ANTHROPIC_API_KEY };
+    const changes: ChangesConfig = {
+      token: env.GITHUB_READ_TOKEN,
+      repository: env.GITHUB_REPOSITORY,
+    };
     const providers = [
       { provide: ANTHROPIC_CONFIG, useValue: anthropic },
       { provide: GRAFANA_CONFIG, useValue: grafana },
       { provide: PRODUCT_STATS_CONFIG, useValue: productStats },
+      { provide: CHANGES_CONFIG, useValue: changes },
       { provide: TELEGRAM_CONFIG, useValue: telegram },
       { provide: CHAT_CONFIG, useValue: buildChatConfig(env) },
       { provide: INFRA_CONFIG, useValue: infra },

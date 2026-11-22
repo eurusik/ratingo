@@ -28,6 +28,39 @@ describe('TelegramChatAdapter', () => {
     });
   });
 
+  it('posts a message and returns its id so it can be edited later', async () => {
+    const fetchImpl = reply(200, { ok: true, result: { message_id: 55 } });
+    await expect(
+      new TelegramChatAdapter(CONFIG, fetchImpl).postMessage('42', '<i>шукаю…</i>'),
+    ).resolves.toBe(55);
+    expect(urlOf(fetchImpl)).toContain('/sendMessage');
+  });
+
+  it('fails without retrying when Telegram sends no message id', async () => {
+    const error = await new TelegramChatAdapter(CONFIG, reply(200, { ok: true }))
+      .postMessage('42', 'x')
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(NotificationError);
+    expect((error as NotificationError).retryable).toBe(false);
+  });
+
+  it('edits a message with sanitized HTML and no link previews', async () => {
+    const fetchImpl = reply(200, { ok: true });
+    await new TelegramChatAdapter(CONFIG, fetchImpl).editMessage(
+      '42',
+      55,
+      '<b>ok</b> <a href="https://evil.example">x</a>',
+    );
+    expect(urlOf(fetchImpl)).toContain('/editMessageText');
+    expect(bodyOf(fetchImpl)).toEqual({
+      chat_id: '42',
+      message_id: 55,
+      text: '<b>ok</b> x',
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+    });
+  });
+
   it('shows the typing indicator', async () => {
     const fetchImpl = reply(200, { ok: true });
     await new TelegramChatAdapter(CONFIG, fetchImpl).sendChatAction('42', 'typing');

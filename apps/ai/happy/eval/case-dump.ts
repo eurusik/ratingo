@@ -28,6 +28,8 @@ export interface CaseDump {
   stop_reason: string | null;
   cost_usd: number;
   selected_check_ids: string[];
+  reviewed_files: string[];
+  core_files: string[];
   findings: DumpedFinding[];
   questions: DumpedFinding[];
   dropped: {
@@ -60,6 +62,7 @@ export const buildCaseDump = (
   selectedCheckIds: readonly string[],
 ): CaseDump => {
   const base = {
+    core_files: [...(testCase.coreFiles ?? [])],
     case_id: testCase.id,
     kind: testCase.kind,
     expected_check_id: testCase.checkId ?? null,
@@ -71,6 +74,7 @@ export const buildCaseDump = (
     return {
       ...base,
       stop_reason: null,
+      reviewed_files: [],
       findings: [],
       questions: [],
       dropped: [],
@@ -80,6 +84,7 @@ export const buildCaseDump = (
   return {
     ...base,
     stop_reason: outcome.stopReason,
+    reviewed_files: outcome.reviewedFiles,
     findings: outcome.findings.map(dumpFinding),
     questions: outcome.questions.map(dumpFinding),
     dropped: outcome.dropped.map(({ finding, reason, precedent }) => ({

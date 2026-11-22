@@ -6,10 +6,10 @@ import { available, unavailable } from '../../domain/entities/source-reading';
 import { UNKNOWN_LABEL } from '../../domain/constants/digest-text.constants';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
 
+import { SCHEDULER_LAST_RUNS } from '../../domain/queries/prom-queries';
+
 import { guarded, hoursSince } from './collector-helpers';
 
-const LAST_RUNS =
-  'max by (job_name, result) (last_over_time(app_scheduler_last_run_timestamp_seconds[3d]))';
 const SUCCESS = 'success';
 const FAILURE = 'failure';
 
@@ -19,7 +19,7 @@ export class SchedulerCollector {
 
   collect(nowMs: number): Promise<SourceReading<SchedulerJobStat[]>> {
     return guarded(async () => {
-      const samples = await this.metrics.instant(LAST_RUNS, nowMs);
+      const samples = await this.metrics.instant(SCHEDULER_LAST_RUNS, nowMs);
       if (samples.length === 0) {
         return unavailable('метрики планувальника ще немає');
       }

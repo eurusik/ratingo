@@ -5,9 +5,14 @@ import type {
   WebhookInfo,
   WebhookRegistration,
 } from '../../domain/ports/webhook-admin.port';
+import { NotificationError } from '../../domain/ports/notifier.port';
 import { sanitizeTelegramHtml } from '../../domain/policies/telegram-html.policy';
 
 import { TelegramApiClient } from './telegram-api.client';
+
+interface TelegramSentMessage {
+  message_id?: number;
+}
 
 interface TelegramWebhookInfo {
   url?: string;
@@ -22,15 +27,28 @@ export class TelegramChatAdapter implements ChatTransportPort, WebhookAdminPort 
   }
 
   async sendMessage(chatId: string, html: string): Promise<void> {
+    await this.deliver(chatId, html);
+  }
+
+  async postMessage(chatId: string, html: string): Promise<number> {
+    const sent = await this.deliver(chatId, html);
+    if (sent?.message_id === undefined) {
+      throw new NotificationError('Telegram не повернув номер повідомлення', false);
+    }
+    return sent.message_id;
+  }
+
+  async editMessage(chatId: string, messageId: number, html: string): Promise<void> {
     await this.api.callOrThrow(
-      'sendMessage',
+      'editMessageText',
       {
         chat_id: chatId,
+        message_id: messageId,
         text: sanitizeTelegramHtml(html),
         parse_mode: 'HTML',
         link_preview_options: { is_disabled: true },
       },
-      'Telegram відхилив відповідь',
+      'Telegram відхилив зміну відповіді',
     );
   }
 
@@ -39,6 +57,19 @@ export class TelegramChatAdapter implements ChatTransportPort, WebhookAdminPort 
       'sendChatAction',
       { chat_id: chatId, action },
       'Telegram відхилив індикатор дії',
+    );
+  }
+
+  private deliver(chatId: string, html: string): Promise<TelegramSentMessage | undefined> {
+    return this.api.callOrThrow<TelegramSentMessage>(
+      'sendMessage',
+      {
+        chat_id: chatId,
+        text: sanitizeTelegramHtml(html),
+        parse_mode: 'HTML',
+        link_preview_options: { is_disabled: true },
+      },
+      'Telegram відхилив відповідь',
     );
   }
 

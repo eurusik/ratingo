@@ -42,8 +42,19 @@ export const ChatOutcome = {
   FAILED: 'failed',
   IGNORED: 'ignored',
   REJECTED: 'rejected',
+  ANSWERED: 'answered',
+  REDACTED: 'redacted',
+  FALLBACK: 'fallback',
 } as const;
 export type ChatOutcome = (typeof ChatOutcome)[keyof typeof ChatOutcome];
+
+export const ChatRoute = {
+  NONE: 'none',
+  COMMAND: 'command',
+  INVESTIGATION: 'investigation',
+  HAPPY: 'happy',
+} as const;
+export type ChatRoute = (typeof ChatRoute)[keyof typeof ChatRoute];
 
 export const MESSAGE_TEXT_MAX_CHARS = 4096;
 
