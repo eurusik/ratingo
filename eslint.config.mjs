@@ -57,6 +57,11 @@ const veronicaTestFiles = ['apps/ai/veronica/src/**/*.spec.ts', 'apps/ai/veronic
 const veronicaDomainFiles = ['apps/ai/veronica/src/modules/*/domain/**/*.ts'];
 const veronicaModuleFiles = ['apps/ai/veronica/src/modules/**/*.ts', 'apps/ai/veronica/src/core/**/*.ts'];
 const veronicaModules = ['digest', 'notify', 'runs'];
+const happySourceFiles = ['apps/ai/happy/src/**/*.ts'];
+const happyTestFiles = ['apps/ai/happy/src/**/*.spec.ts', 'apps/ai/happy/src/**/*.testing.ts'];
+const happyDomainFiles = ['apps/ai/happy/src/modules/*/domain/**/*.ts'];
+const happyModuleFiles = ['apps/ai/happy/src/modules/**/*.ts', 'apps/ai/happy/src/core/**/*.ts'];
+const happyModules = ['review'];
 const heroUiAutoFocusRule = { 'jsx-a11y/no-autofocus': ['error', { ignoreNonDOM: true }] };
 const webCoreTestFiles = ['packages/web-core/src/**/__tests__/**'];
 const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];
@@ -1356,6 +1361,102 @@ export default [
   },
   {
     files: veronicaTestFiles,
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      'import/no-restricted-paths': 'off',
+    },
+  },
+  {
+    files: happySourceFiles,
+    plugins: { import: importPlugin },
+    languageOptions: { parserOptions: { projectService: true } },
+    settings: {
+      'import/resolver': {
+        typescript: { project: path.join(tsconfigRootDir, 'apps/ai/happy/tsconfig.json') },
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      'no-console': 'error',
+      'import/no-restricted-paths': [
+        'error',
+        {
+          basePath: tsconfigRootDir,
+          zones: [
+            {
+              target: './apps/ai/happy/src/modules/*/domain/**/*',
+              from: './apps/ai/happy/src/modules/*/{application,infrastructure,presentation}/**/*',
+              message: 'Domain must not depend on outer layers.',
+            },
+            {
+              target: './apps/ai/happy/src/modules/*/application/**/*',
+              from: './apps/ai/happy/src/modules/*/{infrastructure,presentation}/**/*',
+              message: 'Application depends on domain ports, never on adapters.',
+            },
+            {
+              target: './apps/ai/happy/src/modules/*/infrastructure/**/*',
+              from: './apps/ai/happy/src/modules/*/application/**/*',
+              message: 'Infrastructure implements domain ports and must not call application code.',
+            },
+            ...happyModules.flatMap((m) => [
+              {
+                target: `./apps/ai/happy/src/modules/!(${m})/**/*`,
+                from: `./apps/ai/happy/src/modules/${m}/!(public)/**/*`,
+                message: `Import from ${m}/public instead of internal files.`,
+              },
+              {
+                target: `./apps/ai/happy/src/modules/!(${m})/**/*`,
+                from: `./apps/ai/happy/src/modules/${m}/!(${m}.module).ts`,
+                message: `Import from ${m}/public instead of internal files.`,
+              },
+            ]),
+            {
+              target: './apps/ai/happy/src/**/*',
+              from: './apps/ai/!(happy)/**/*',
+              message: 'Agents never import each other: share through @ratingo/ai-core.',
+            },
+          ],
+        },
+      ],
+      ...typeSafetyRules,
+    },
+  },
+  {
+    files: happyDomainFiles,
+    ignores: happyTestFiles,
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        { name: 'Date', message: 'Use the injected ClockPort instead of Date.' },
+        { name: 'process', message: 'Domain code takes config as arguments, not from process.' },
+      ],
+      'no-restricted-properties': [
+        'error',
+        { object: 'Math', property: 'random', message: 'Inject randomness instead of Math.random().' },
+      ],
+    },
+  },
+  {
+    files: happyModuleFiles,
+    ignores: happyTestFiles,
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'Read env only in src/config and at the entry points.',
+        },
+      ],
+    },
+  },
+  {
+    files: happyTestFiles,
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
