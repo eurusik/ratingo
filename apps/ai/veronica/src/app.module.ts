@@ -5,6 +5,7 @@ import { AiCoreModule } from './core/ai-core.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { LandingModule } from './landing/landing.module';
+import { ChatModule } from './modules/chat/public';
 import { DigestScheduleModule } from './modules/digest/public';
 import { RunsModule } from './modules/runs/public';
 
@@ -15,6 +16,7 @@ import { RunsModule } from './modules/runs/public';
     RunsModule.postgres(),
     AiCoreModule,
     DigestScheduleModule,
+    ChatModule,
     HealthModule,
     LandingModule,
   ],
