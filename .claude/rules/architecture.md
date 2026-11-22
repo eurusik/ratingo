@@ -1,6 +1,7 @@
 ---
 paths:
   - "apps/api/src/modules/**"
+  - "apps/ai/*/src/modules/**"
 ---
 
 # Clean / Hexagonal Architecture Rules

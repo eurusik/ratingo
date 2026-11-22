@@ -1,6 +1,11 @@
 ---
 paths:
   - "apps/api/src/modules/*/domain/**"
+  - "apps/ai/*/src/modules/*/domain/**"
+  - "packages/ai-core/src/model/model*.ts"
+  - "packages/ai-core/src/loop/budget.ts"
+  - "packages/ai-core/src/runs/run.ts"
+  - "packages/ai-core/src/clock/clock.port.ts"
 ---
 
 # Domain Layer Rules
