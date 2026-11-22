@@ -1,5 +1,6 @@
 import {
   type Attributes,
+  type Context,
   type AttributeValue,
   type Histogram,
   type HrTime,
@@ -13,7 +14,11 @@ import {
   UNMATCHED_ROUTE,
 } from '@ratingo/node-telemetry';
 
+import { clientKindOf } from './client-kind-propagator';
 import {
+  CLIENT_KIND,
+  CLIENT_KIND_LABEL,
+  CLIENT_KIND_SPAN_ATTRIBUTE,
   COLD_CACHE_ENTRY_REASON,
   FAILED_FETCH_STATUS,
   FETCH_CACHE_STATUS,
@@ -51,6 +56,7 @@ function requestAttributes(span: ReadableSpan): Attributes {
     'http.request.method': normalizeMethod(span.attributes['http.method']),
     'http.route': routeOf(span),
     'next.rsc': span.attributes['next.rsc'] === true,
+    [CLIENT_KIND_LABEL]: asString(span.attributes[CLIENT_KIND_SPAN_ATTRIBUTE]) ?? CLIENT_KIND.HUMAN,
     ...statusAttribute(asNumber(span.attributes['http.status_code'])),
   };
 }
@@ -128,7 +134,11 @@ export class NextSpanMetricsProcessor implements SpanProcessor {
     ]);
   }
 
-  onStart(_span: Span): void {}
+  onStart(span: Span, parentContext: Context): void {
+    if (asString(span.attributes['next.span_type']) === NEXT_SPAN_TYPE.REQUEST) {
+      span.setAttribute(CLIENT_KIND_SPAN_ATTRIBUTE, clientKindOf(parentContext));
+    }
+  }
 
   onEnd(span: ReadableSpan): void {
     const spanType = asString(span.attributes['next.span_type']);
