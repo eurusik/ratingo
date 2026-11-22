@@ -46,6 +46,18 @@ const grewBeyond = (value: Measured | null, floor: number, ratio: number): boole
   value.current >= floor &&
   value.current > value.baseline * ratio;
 
+const growthNote = (
+  id: string,
+  advice: string,
+  fact: Fact,
+  value: Measured | null,
+  floor: number,
+  ratio: number,
+): DigestItem[] =>
+  grewBeyond(value, floor, ratio)
+    ? [itemOf(id, DigestBlock.SITE, DigestLevel.NOTE, advice, [fact])]
+    : [];
+
 const isClearlyUp = (current: number, baseline: number | null, ratio: number): boolean =>
   baseline === null || current > baseline * ratio;
 
@@ -115,51 +127,30 @@ export const evaluateSite = (site: SiteStats, thresholds: DigestThresholds): Rul
   ];
   const items = [
     ...serverErrorsAction(site, errorShare, limits, errorFact),
-    ...(grewBeyond(
+    ...growthNote(
+      'site-render-slow',
+      'Сторінки сайту відповідають помітно повільніше, ніж тиждень тому.',
+      renderFact,
       site.renderP95Seconds,
       limits.renderP95FloorSeconds,
       limits.renderP95GrowthRatioForNote,
-    )
-      ? [
-          itemOf(
-            'site-render-slow',
-            DigestBlock.SITE,
-            DigestLevel.NOTE,
-            'Сторінки сайту відповідають помітно повільніше, ніж тиждень тому.',
-            [renderFact],
-          ),
-        ]
-      : []),
-    ...(grewBeyond(
+    ),
+    ...growthNote(
+      'site-memory-growth',
+      'Сайт займає помітно більше пам’яті, ніж тиждень тому. Подивись, чи немає витоку.',
+      memoryFact,
       site.peakRssBytes,
       limits.memoryFloorMegabytes * BYTES_PER_MEGABYTE,
       limits.memoryGrowthRatioForNote,
-    )
-      ? [
-          itemOf(
-            'site-memory-growth',
-            DigestBlock.SITE,
-            DigestLevel.NOTE,
-            'Сайт займає помітно більше пам’яті, ніж тиждень тому. Подивись, чи немає витоку.',
-            [memoryFact],
-          ),
-        ]
-      : []),
-    ...(grewBeyond(
+    ),
+    ...growthNote(
+      'site-event-loop-delay',
+      'Сервер сайту частіше «підвисає», ніж тиждень тому: затримка циклу подій зросла.',
+      loopFact,
       site.eventLoopDelayP99Seconds,
       limits.eventLoopDelayFloorSeconds,
       limits.eventLoopDelayGrowthRatioForNote,
-    )
-      ? [
-          itemOf(
-            'site-event-loop-delay',
-            DigestBlock.SITE,
-            DigestLevel.NOTE,
-            'Сервер сайту частіше «підвисає», ніж тиждень тому: затримка циклу подій зросла.',
-            [loopFact],
-          ),
-        ]
-      : []),
+    ),
   ];
   return { items, facts };
 };
