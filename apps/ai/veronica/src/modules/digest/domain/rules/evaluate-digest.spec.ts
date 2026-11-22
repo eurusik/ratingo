@@ -38,6 +38,7 @@ describe('evaluateDigest', () => {
     const digest = evaluateDigest(redSnapshot(), THRESHOLDS);
     expect(digest.blocks.map((block) => block.block)).toEqual([
       'people',
+      'site',
       'jobs',
       'services',
       'storage',
@@ -261,6 +262,7 @@ describe('evaluateQueues', () => {
   it('turns a fully blind digest into an action instead of a calm note', () => {
     const blind = {
       ...greenSnapshot(),
+      site: unavailable<never>('x'),
       queues: unavailable<never>('x'),
       apiKeys: unavailable<never>('x'),
       httpErrors: unavailable<never>('x'),
@@ -326,7 +328,9 @@ describe('redis memory', () => {
         }),
       },
       THRESHOLDS,
-    ).blocks.flatMap((block) => block.facts);
+    )
+      .blocks.filter((block) => block.block === 'storage')
+      .flatMap((block) => block.facts);
 
   it('shows megabytes and no percentage when redis has no limit', () => {
     const facts = infraFacts(9.5 * 1024 * 1024, null);

@@ -11,6 +11,18 @@ export interface DigestThresholds {
     minBaseline: number;
     dropRatioForNote: number;
   };
+  site: {
+    minRequests: number;
+    serverErrorMinCount: number;
+    serverErrorShareForAction: number;
+    serverErrorGrowthRatio: number;
+    renderP95FloorSeconds: number;
+    renderP95GrowthRatioForNote: number;
+    memoryFloorMegabytes: number;
+    memoryGrowthRatioForNote: number;
+    eventLoopDelayFloorSeconds: number;
+    eventLoopDelayGrowthRatioForNote: number;
+  };
   http: {
     rateLimitCountForAction: number;
     rateLimitNoteMinCount: number;

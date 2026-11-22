@@ -20,7 +20,11 @@ import {
 import { MODEL_ALIASES } from '../../../../config/config.constants';
 import { AGENT_FOLDER, AGENT_LOOP } from '../../../../core/ai-core.constants';
 import { DIGEST_TASK_NAME, MS_PER_DAY } from '../../digest.constants';
-import { HEADLINE_MAX_CHARS, LINE_MAX_CHARS } from '../../domain/constants/digest-text.constants';
+import {
+  HEADLINE_MAX_CHARS,
+  LINE_MAX_CHARS,
+  TREND_SIGNIFICANT_RATIO,
+} from '../../domain/constants/digest-text.constants';
 import { DigestLevel } from '../../domain/constants/digest-level.constants';
 import type { Digest, DigestItem, DigestText } from '../../domain/entities/digest';
 
@@ -45,9 +49,11 @@ const NO_TEXT: DigestTextResult = { text: null, costUsd: null, runId: null };
 
 const NO_DATA_TREND = 'немає даних';
 
-const trendOf = (current: number | null, baseline: number | null): string => {
+export const trendOf = (current: number | null, baseline: number | null): string => {
   if (current === null) return NO_DATA_TREND;
-  if (baseline === null || current === baseline) return 'так само';
+  if (baseline === null || Math.abs(current - baseline) <= baseline * TREND_SIGNIFICANT_RATIO) {
+    return 'так само';
+  }
   return current > baseline ? 'більше' : 'менше';
 };
 
