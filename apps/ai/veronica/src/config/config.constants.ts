@@ -3,6 +3,7 @@ export const TELEGRAM_CONFIG = Symbol('TELEGRAM_CONFIG');
 export const INFRA_CONFIG = Symbol('INFRA_CONFIG');
 export const MODEL_ALIASES = Symbol('MODEL_ALIASES');
 export const ANTHROPIC_CONFIG = Symbol('ANTHROPIC_CONFIG');
+export const CHAT_CONFIG = Symbol('CHAT_CONFIG');
 export const PRODUCT_STATS_CONFIG = Symbol('PRODUCT_STATS_CONFIG');
 
 export interface GrafanaConfig {
@@ -27,4 +28,9 @@ export interface InfraConfig {
   databaseUrl: string;
   redisUrl: string;
   port: number;
+}
+
+export interface ChatConfig {
+  allowedUserIds: readonly string[];
+  webhookUrl?: string;
 }

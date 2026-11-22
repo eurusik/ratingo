@@ -4,6 +4,7 @@ export const AI_METRIC_NAMES = {
   RUN_TOKENS: 'app.ai.run.tokens',
   RUN_DURATION: 'app.ai.run.duration',
   TOOL_CALLS: 'app.ai.tool.calls',
+  CHAT_EVENTS: 'app.ai.chat.events',
 } as const;
 
 export const AI_METRIC_ATTRIBUTES = {
@@ -13,6 +14,7 @@ export const AI_METRIC_ATTRIBUTES = {
   OUTCOME: 'outcome',
   TOKEN_KIND: 'kind',
   TOOL: 'tool',
+  COMMAND: 'command',
 } as const;
 
 export const AI_TOKEN_KINDS = {

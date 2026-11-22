@@ -1,5 +1,7 @@
 import fc from 'fast-check';
 
+import { TELEGRAM_MESSAGE_LIMIT } from '../../../notify/public';
+import { DigestBlock } from '../../domain/constants/digest-block.constants';
 import { DigestLevel } from '../../domain/constants/digest-level.constants';
 import {
   THRESHOLDS,
@@ -14,11 +16,7 @@ import { measured } from '../../domain/entities/measured';
 import { available } from '../../domain/entities/source-reading';
 import { evaluateDigest } from '../../domain/rules/evaluate-digest';
 
-import {
-  TELEGRAM_MESSAGE_LIMIT,
-  TelegramDigestTemplate,
-  formatFact,
-} from './telegram-digest.template';
+import { TelegramDigestTemplate, formatFact } from './telegram-digest.template';
 
 const template = new TelegramDigestTemplate();
 
@@ -246,5 +244,42 @@ describe('TelegramDigestTemplate', () => {
     const html = render(digest, { headline, adviceById: {} }).html;
     expect(html).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/);
     expect(html).not.toMatch(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/);
+  });
+});
+
+describe('TelegramDigestTemplate chat views', () => {
+  const digestOf = (snapshot = redSnapshot()) => evaluateDigest(snapshot, THRESHOLDS);
+
+  it('renders a status screen with every block, the actions and the sources', () => {
+    const { html, silent } = template.renderStatus(digestOf());
+    expect(html).toContain('Потрібна дія');
+    expect(html).toContain('1.');
+    for (const title of ['Люди', 'Сайт', 'Черги', 'Сервіси', 'Дані']) {
+      expect(html).toContain(title);
+    }
+    expect(html).toContain('Джерела');
+    expect(silent).toBe(false);
+    expect(hasOnlyAllowedMarkup(html)).toBe(true);
+  });
+
+  it('renders only the asked blocks, with their facts and sources', () => {
+    const digest = digestOf();
+    const { html } = template.renderBlocks(digest, [DigestBlock.JOBS]);
+    expect(html).toContain('Черги');
+    expect(html).toContain('• ');
+    expect(html).not.toContain('Сайт');
+    expect(html).toContain('черги');
+    expect(html).not.toContain('Люди');
+    expect(hasOnlyAllowedMarkup(html)).toBe(true);
+  });
+
+  it('says a block without data has no data instead of showing zeros', () => {
+    const { html } = template.renderBlocks(digestOf(unavailableSnapshot()), [DigestBlock.JOBS]);
+    expect(html).toContain('немає даних');
+  });
+
+  it('shows a calm block as fine', () => {
+    const { html } = template.renderBlocks(digestOf(greenSnapshot()), [DigestBlock.SITE]);
+    expect(html).toContain('усе гаразд');
   });
 });

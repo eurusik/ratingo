@@ -136,6 +136,7 @@ describe('TelemetryRunRepository', () => {
       RUN_TOKENS: 'app.ai.run.tokens',
       RUN_DURATION: 'app.ai.run.duration',
       TOOL_CALLS: 'app.ai.tool.calls',
+      CHAT_EVENTS: 'app.ai.chat.events',
     });
   });
 

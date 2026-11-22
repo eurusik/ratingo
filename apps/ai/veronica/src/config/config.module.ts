@@ -2,6 +2,7 @@ import { type DynamicModule, Global, Module } from '@nestjs/common';
 
 import {
   ANTHROPIC_CONFIG,
+  CHAT_CONFIG,
   GRAFANA_CONFIG,
   INFRA_CONFIG,
   MODEL_ALIASES,
@@ -13,6 +14,7 @@ import {
   type ProductStatsConfig,
   type TelegramConfig,
 } from './config.constants';
+import { buildChatConfig } from './chat.config';
 import { previewEnvSchema, serviceEnvSchema } from './env.schema';
 import { buildModelAliases } from './models.config';
 
@@ -38,6 +40,7 @@ export class ConfigModule {
       { provide: GRAFANA_CONFIG, useValue: grafana },
       { provide: PRODUCT_STATS_CONFIG, useValue: productStats },
       { provide: TELEGRAM_CONFIG, useValue: telegram },
+      { provide: CHAT_CONFIG, useValue: buildChatConfig(env) },
       { provide: INFRA_CONFIG, useValue: infra },
       { provide: MODEL_ALIASES, useValue: buildModelAliases(env) },
     ];

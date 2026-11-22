@@ -46,4 +46,24 @@ describe('env schemas', () => {
   it('lets the preview run without any credential', () => {
     expect(previewEnvSchema.safeParse({}).success).toBe(true);
   });
+
+  it('accepts a comma separated list of user ids and rejects anything else', () => {
+    const parse = (value: string) =>
+      serviceEnvSchema.safeParse({ ...VALID, TELEGRAM_ALLOWED_USER_IDS: value }).success;
+    expect(parse('1')).toBe(true);
+    expect(parse('1, 22,333')).toBe(true);
+    expect(parse('')).toBe(false);
+    expect(parse('1,,2')).toBe(false);
+    expect(parse('abc')).toBe(false);
+    expect(parse('-5')).toBe(false);
+  });
+
+  it('accepts only an https webhook url', () => {
+    const parse = (value: string) =>
+      serviceEnvSchema.safeParse({ ...VALID, TELEGRAM_WEBHOOK_URL: value }).success;
+    expect(parse('https://veronica.example/webhooks/telegram')).toBe(true);
+    expect(parse('http://veronica.example/webhooks/telegram')).toBe(false);
+    expect(parse('')).toBe(false);
+    expect(serviceEnvSchema.parse(VALID).TELEGRAM_WEBHOOK_URL).toBeUndefined();
+  });
 });
