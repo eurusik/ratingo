@@ -1,4 +1,5 @@
 import { EvalKind, type EvalCase } from './eval-case';
+import { MIGRATION_JOURNAL_PATH, migrationJournal } from './journal';
 
 const KEY_HEALTH_REPOSITORY_PATH =
   'apps/api/src/modules/monitoring/infrastructure/repositories/drizzle-key-health.repository.ts';
@@ -306,14 +307,20 @@ export const BASE_EVAL_CASES: readonly EvalCase[] = [
     id: 'migration-plain-index',
     kind: EvalKind.POSITIVE,
     title: 'Migration adding a locale title column and its index',
-    path: 'apps/api/drizzle_v2/0050_add_title_index.sql',
+    path: 'apps/api/drizzle_v2/0040_add_title_index.sql',
     source:
       'synthetic: plain CREATE INDEX on media_items (existing table), schema in database/schema/media.ts',
     lines: [
       'ALTER TABLE "media_items" ADD COLUMN IF NOT EXISTS "title_locale" text;',
       'CREATE INDEX "media_title_locale_idx" ON "media_items" ("title_locale");',
     ],
-    changed: { from: 'ALTER TABLE', to: 'CREATE INDEX' },
+    checkId: 'migration-prod-state-safe',
+    extraFiles: {
+      [MIGRATION_JOURNAL_PATH]: migrationJournal([
+        '0038_premiere_known_date',
+        '0039_reporting_schema',
+      ]),
+    },
     expectation: {
       defectId: 'migration-index',
       markerLine: 'CREATE INDEX "media_title_locale_idx"',
@@ -508,7 +515,7 @@ export const BASE_EVAL_CASES: readonly EvalCase[] = [
     id: 'migration-guarded-index',
     kind: EvalKind.PROTECTED_NEGATIVE,
     title: 'Migration creating a slug redirects table and its index',
-    path: 'apps/api/drizzle_v2/0051_add_genre_index.sql',
+    path: 'apps/api/drizzle_v2/0041_add_slug_redirects.sql',
     source:
       'synthetic: new table created IF NOT EXISTS and indexed IF NOT EXISTS in the same migration, so no existing data to lock',
     lines: [
@@ -520,7 +527,10 @@ export const BASE_EVAL_CASES: readonly EvalCase[] = [
       ');',
       'CREATE INDEX IF NOT EXISTS "media_slug_redirects_old_slug_idx" ON "media_slug_redirects" ("old_slug");',
     ],
-    changed: { from: 'CREATE TABLE', to: 'CREATE INDEX' },
+    checkId: 'migration-prod-state-safe',
+    extraFiles: {
+      [MIGRATION_JOURNAL_PATH]: migrationJournal(['0039_reporting_schema', '0040_add_title_index']),
+    },
   },
   {
     id: 'env-read-in-config',
@@ -594,7 +604,7 @@ export const BASE_EVAL_CASES: readonly EvalCase[] = [
       '  async latestVoteCount(show: TrackedShowSummary): Promise<number | null> {',
       '    if (show.ratingsSyncedAt === null) return null;',
       '    const [latest] = await this.snapshots.findRecent(show.id, 1);',
-      '    return latest.voteCount;',
+      '    return latest?.voteCount ?? 0;',
       '  }',
       '}',
     ],
@@ -621,7 +631,7 @@ export const BASE_EVAL_CASES: readonly EvalCase[] = [
         '}',
       ],
     },
-    expectation: { defectId: 'unknown-null-check', markerLine: 'return latest.voteCount;' },
+    expectation: { defectId: 'unknown-null-check', markerLine: 'return latest?.voteCount ?? 0;' },
   },
   {
     id: 'unknown-timeout-change',

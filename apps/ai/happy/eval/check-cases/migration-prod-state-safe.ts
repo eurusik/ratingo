@@ -1,4 +1,5 @@
 import { EvalKind, type EvalCase } from '../eval-case';
+import { MIGRATION_JOURNAL_PATH, migrationJournal } from '../journal';
 
 export const MIGRATION_PROD_STATE_SAFE_CASES: readonly EvalCase[] = [
   {
@@ -28,7 +29,9 @@ export const MIGRATION_PROD_STATE_SAFE_CASES: readonly EvalCase[] = [
       '-- squawk-ignore require-concurrent-index-creation',
       'CREATE UNIQUE INDEX "catalog_policies_single_active" ON "catalog_policies" USING btree ("is_active") WHERE "catalog_policies"."is_active" = true;',
     ],
-    changed: { from: 'DO $$', to: 'single_active' },
+    extraFiles: {
+      [MIGRATION_JOURNAL_PATH]: migrationJournal(['0027_spicy_kate_bishop', '0028_tidy_havok']),
+    },
     expectation: {
       defectId: 'migration-index-not-idempotent',
       markerLine: 'CREATE UNIQUE INDEX "catalog_policies_single_active"',
@@ -64,6 +67,11 @@ export const MIGRATION_PROD_STATE_SAFE_CASES: readonly EvalCase[] = [
       '-- squawk-ignore require-concurrent-index-creation',
       'CREATE UNIQUE INDEX IF NOT EXISTS "users_username_lower_uniq" ON "users" USING btree (lower("username"));',
     ],
-    changed: { from: 'DO $$', to: 'users_username_lower_uniq' },
+    extraFiles: {
+      [MIGRATION_JOURNAL_PATH]: migrationJournal([
+        '0028_tidy_havok',
+        '0029_catalog_integrity_indexes',
+      ]),
+    },
   },
 ];

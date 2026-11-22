@@ -32,10 +32,12 @@ describe('eval cases', () => {
     }
   });
 
-  it('models every case as a modified file with a resolvable changed region', () => {
+  it('models every case as a modified file, except new migrations which are added files', () => {
     for (const testCase of EVAL_CASES) {
       const range = changedRange(testCase);
-      expect({ id: testCase.id, resolved: range !== null }).toEqual({
+      const isNewMigration =
+        testCase.changed === undefined && /drizzle[^/]*\/\d{4}_.*\.sql$/.test(testCase.path);
+      expect({ id: testCase.id, resolved: range !== null || isNewMigration }).toEqual({
         id: testCase.id,
         resolved: true,
       });
