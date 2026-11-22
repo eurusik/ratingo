@@ -64,28 +64,28 @@ describeWithDatabase('PostgresProductStatsAdapter against the reporting views', 
   });
 
   it('reads yesterday in Kyiv time against the same day a week earlier', async () => {
-    await seedUser(1, '2026-01-04 08:00:00');
-    await seedUser(2, '2026-01-11 08:00:00');
-    await seedUser(3, '2026-01-11 21:30:00');
-    await seedUser(4, '2026-01-11 22:30:00');
-    await seedAction(1, 'save_for_later', '2026-01-04 09:00:00');
-    await seedAction(2, 'save_for_later', '2026-01-11 09:00:00');
-    await seedAction(2, 'subscribe', '2026-01-11 10:00:00');
-    await seedAction(3, 'consider', '2026-01-11 11:00:00');
+    await seedUser(1, '2026-01-04T08:00:00Z');
+    await seedUser(2, '2026-01-11T08:00:00Z');
+    await seedUser(3, '2026-01-11T21:30:00Z');
+    await seedUser(4, '2026-01-11T22:30:00Z');
+    await seedAction(1, 'save_for_later', '2026-01-04T09:00:00Z');
+    await seedAction(2, 'save_for_later', '2026-01-11T09:00:00Z');
+    await seedAction(2, 'subscribe', '2026-01-11T10:00:00Z');
+    await seedAction(3, 'consider', '2026-01-11T11:00:00Z');
 
     const reading = await adapter.read(WINDOW_END_MS);
 
     expect(reading).toEqual({
       state: SourceState.OK,
       data: {
-        newUsers: { current: 3, baseline: 1 },
+        newUsers: { current: 2, baseline: 1 },
         actions: { current: 3, baseline: 1 },
       },
     });
   });
 
   it('reports zero for a quiet day when the history reaches back past the baseline day', async () => {
-    await seedUser(1, '2026-01-04 08:00:00');
+    await seedUser(1, '2026-01-04T08:00:00Z');
 
     const reading = await adapter.read(WINDOW_END_MS);
 
@@ -99,8 +99,8 @@ describeWithDatabase('PostgresProductStatsAdapter against the reporting views', 
   });
 
   it('leaves the baseline unknown when the product is younger than a week', async () => {
-    await seedUser(1, '2026-01-10 08:00:00');
-    await seedUser(2, '2026-01-11 08:00:00');
+    await seedUser(1, '2026-01-10T08:00:00Z');
+    await seedUser(2, '2026-01-11T08:00:00Z');
 
     const reading = await adapter.read(WINDOW_END_MS);
 
