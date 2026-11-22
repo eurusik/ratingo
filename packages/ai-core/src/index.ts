@@ -108,3 +108,17 @@ export type { AgentFolder, LoadAgentFolderOptions } from './manifest/agent-folde
 export { AgentFolderError, loadAgentFolder } from './manifest/agent-folder.loader';
 
 export { AI_METRIC_ATTRIBUTES, AI_METRIC_NAMES, AI_TOKEN_KINDS } from './telemetry/ai-metric-names';
+
+export type {
+  LandingPageConfig,
+  LandingReadout,
+  NeutralNotFoundResponse,
+  StaticHtmlResponse,
+} from './http/landing-page';
+export {
+  InvalidLandingPageConfigError,
+  LANDING_PAGE_HEADERS,
+  NEUTRAL_NOT_FOUND,
+  NEUTRAL_NOT_FOUND_BODY,
+  renderLandingPage,
+} from './http/landing-page';
