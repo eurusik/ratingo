@@ -20,6 +20,7 @@ import { DigestTextService } from './application/services/digest-text.service';
 import { SnapshotService } from './application/services/snapshot.service';
 import { DIGEST_RENDERER_PORT } from './domain/ports/digest-renderer.port';
 import { METRICS_PORT } from './domain/ports/metrics.port';
+import { PRODUCT_SERIES_PORT } from './domain/ports/product-series.port';
 import { PRODUCT_STATS_PORT } from './domain/ports/product-stats.port';
 import { PrometheusMetricsAdapter } from './infrastructure/adapters/prometheus.metrics-adapter';
 import { PostgresProductStatsAdapter } from './infrastructure/adapters/postgres.product-stats-adapter';
@@ -41,6 +42,7 @@ import { TelegramDigestTemplate } from './infrastructure/templates/telegram-dige
           ? new StubProductStatsAdapter()
           : PostgresProductStatsAdapter.connect(config.readerDatabaseUrl),
     },
+    { provide: PRODUCT_SERIES_PORT, useExisting: PRODUCT_STATS_PORT },
     { provide: DIGEST_RENDERER_PORT, useClass: TelegramDigestTemplate },
     ProductCollector,
     SiteCollector,
@@ -54,6 +56,6 @@ import { TelegramDigestTemplate } from './infrastructure/templates/telegram-dige
     DigestTextService,
     DigestComposeService,
   ],
-  exports: [DigestComposeService],
+  exports: [DigestComposeService, METRICS_PORT, PRODUCT_SERIES_PORT],
 })
 export class DigestModule {}

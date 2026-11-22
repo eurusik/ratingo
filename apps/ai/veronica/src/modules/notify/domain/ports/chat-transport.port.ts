@@ -5,6 +5,8 @@ export type ChatAction = (typeof ChatAction)[keyof typeof ChatAction];
 
 export interface ChatTransportPort {
   sendMessage(chatId: string, html: string): Promise<void>;
+  postMessage(chatId: string, html: string): Promise<number>;
+  editMessage(chatId: string, messageId: number, html: string): Promise<void>;
   sendChatAction(chatId: string, action: ChatAction): Promise<void>;
 }
 

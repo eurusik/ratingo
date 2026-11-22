@@ -6,7 +6,7 @@ import {
   type ChatConfig,
   type TelegramConfig,
 } from '../../../../config/config.constants';
-import { ChatOutcome, CommandLabel } from '../../domain/constants/chat.constants';
+import { ChatOutcome, ChatRoute, CommandLabel } from '../../domain/constants/chat.constants';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
 import { isAllowed, type Allowlist } from '../../domain/policies/allowlist.policy';
 import { CHAT_JOB_QUEUE, type ChatJobQueuePort } from '../../domain/ports/chat-job-queue.port';
@@ -39,11 +39,19 @@ export class ChatWebhookService {
 
   async receive(secretHeader: unknown, message: IncomingMessage | null): Promise<WebhookOutcome> {
     if (!this.secret.matches(secretHeader)) {
-      this.metrics.record({ outcome: ChatOutcome.REJECTED, command: CommandLabel.NONE });
+      this.metrics.record({
+        outcome: ChatOutcome.REJECTED,
+        command: CommandLabel.NONE,
+        route: ChatRoute.NONE,
+      });
       return WebhookOutcome.REJECTED;
     }
     if (message === null || !isAllowed(message, this.allowlist)) {
-      this.metrics.record({ outcome: ChatOutcome.IGNORED, command: CommandLabel.NONE });
+      this.metrics.record({
+        outcome: ChatOutcome.IGNORED,
+        command: CommandLabel.NONE,
+        route: ChatRoute.NONE,
+      });
       return WebhookOutcome.IGNORED;
     }
     await this.queue.enqueue(message);

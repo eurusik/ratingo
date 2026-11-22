@@ -74,7 +74,7 @@ describe('TelegramWebhookController', () => {
     const response = await post(update({}));
     expect(response.statusCode).toBe(401);
     expect(enqueued).toEqual([]);
-    expect(events).toEqual([{ outcome: 'rejected', command: 'none' }]);
+    expect(events).toEqual([{ outcome: 'rejected', command: 'none', route: 'none' }]);
   });
 
   it('answers 401 for a wrong secret', async () => {
@@ -87,7 +87,7 @@ describe('TelegramWebhookController', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ ok: true });
     expect(enqueued).toEqual([]);
-    expect(events).toEqual([{ outcome: 'ignored', command: 'none' }]);
+    expect(events).toEqual([{ outcome: 'ignored', command: 'none', route: 'none' }]);
   });
 
   it('ignores the right user in the wrong chat and in a group', async () => {

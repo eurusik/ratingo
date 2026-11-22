@@ -8,10 +8,9 @@ import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
 
-import { baselineAt, guarded, hoursSince } from './collector-helpers';
+import { BACKUP_LAST_RUNS, BACKUP_SIZE } from '../../domain/queries/prom-queries';
 
-const LAST_RUNS = 'max by (result) (last_over_time(app_backup_last_run_timestamp_seconds[3d]))';
-const SIZE = 'max(last_over_time(app_backup_size_bytes[3d]))';
+import { baselineAt, guarded, hoursSince } from './collector-helpers';
 
 const isBackupResult = (value: string | undefined): value is BackupResult =>
   value === BackupResult.SUCCESS || value === BackupResult.FAILURE;
@@ -23,9 +22,9 @@ export class BackupCollector {
   collect(nowMs: number): Promise<SourceReading<BackupStats>> {
     return guarded(async () => {
       const [runs, size, baselineSize] = await Promise.all([
-        this.metrics.instant(LAST_RUNS, nowMs),
-        this.metrics.instant(SIZE, nowMs),
-        this.metrics.instant(SIZE, baselineAt(nowMs, BASELINE_OFFSET_DAYS)),
+        this.metrics.instant(BACKUP_LAST_RUNS, nowMs),
+        this.metrics.instant(BACKUP_SIZE, nowMs),
+        this.metrics.instant(BACKUP_SIZE, baselineAt(nowMs, BASELINE_OFFSET_DAYS)),
       ]);
       const latest = [...runs].sort((a, b) => b.value - a.value)[0];
       if (latest === undefined) {

@@ -8,6 +8,11 @@ import { measured } from '../../domain/entities/measured';
 import type { ProductStats } from '../../domain/entities/snapshot';
 import type { SourceReading } from '../../domain/entities/source-reading';
 import { available } from '../../domain/entities/source-reading';
+import {
+  SeriesMetric,
+  type DailyValue,
+  type ProductSeriesPort,
+} from '../../domain/ports/product-series.port';
 import type { ProductStatsPort } from '../../domain/ports/product-stats.port';
 
 interface DayTotal {
@@ -20,7 +25,9 @@ const QUERY_TIMEOUT_SECONDS = 15;
 const totalOn = (rows: readonly DayTotal[], day: string): number =>
   rows.find((row) => row.day === day)?.total ?? 0;
 
-export class PostgresProductStatsAdapter implements ProductStatsPort, OnApplicationShutdown {
+export class PostgresProductStatsAdapter
+  implements ProductStatsPort, ProductSeriesPort, OnApplicationShutdown
+{
   static connect(readerDatabaseUrl: string): PostgresProductStatsAdapter {
     return new PostgresProductStatsAdapter(
       postgres(readerDatabaseUrl, {
@@ -56,6 +63,39 @@ export class PostgresProductStatsAdapter implements ProductStatsPort, OnApplicat
       newUsers: measured(totalOn(signups, day), hasBaseline ? totalOn(signups, baselineDay) : null),
       actions: measured(totalOn(actions, day), hasBaseline ? totalOn(actions, baselineDay) : null),
     });
+  }
+
+  async series(
+    metric: SeriesMetric,
+    firstDay: string,
+    lastDay: string,
+  ): Promise<SourceReading<DailyValue[]>> {
+    const rows = await this.seriesRows(metric, firstDay, lastDay);
+    return available(rows.map((row) => ({ day: row.day, value: row.total })));
+  }
+
+  private seriesRows(metric: SeriesMetric, firstDay: string, lastDay: string): Promise<DayTotal[]> {
+    switch (metric) {
+      case SeriesMetric.NEW_USERS:
+        return this.sql<DayTotal[]>`
+          SELECT to_char(day, 'YYYY-MM-DD') AS day, new_users AS total
+          FROM reporting.daily_new_users
+          WHERE day BETWEEN ${firstDay}::date AND ${lastDay}::date
+          ORDER BY day`;
+      case SeriesMetric.ACTIONS:
+        return this.sql<DayTotal[]>`
+          SELECT to_char(day, 'YYYY-MM-DD') AS day, sum(actions)::integer AS total
+          FROM reporting.daily_user_actions
+          WHERE day BETWEEN ${firstDay}::date AND ${lastDay}::date
+          GROUP BY day
+          ORDER BY day`;
+      case SeriesMetric.ACTIVE_USERS:
+        return this.sql<DayTotal[]>`
+          SELECT to_char(day, 'YYYY-MM-DD') AS day, active_users AS total
+          FROM reporting.daily_active_users
+          WHERE day BETWEEN ${firstDay}::date AND ${lastDay}::date
+          ORDER BY day`;
+    }
   }
 
   async onApplicationShutdown(): Promise<void> {

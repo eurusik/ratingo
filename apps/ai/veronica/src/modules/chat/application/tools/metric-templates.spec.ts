@@ -1,0 +1,202 @@
+import * as fc from 'fast-check';
+
+import { MetricTemplateName } from '../../domain/constants/investigation.constants';
+
+import { METRIC_TEMPLATES } from './metric-templates';
+
+const template = (name: MetricTemplateName) => METRIC_TEMPLATES[name];
+
+const parse = (name: MetricTemplateName, params: Record<string, unknown>) =>
+  template(name).params.safeParse(params);
+
+const sample = (name: string, value: number, labels: Record<string, string> = {}) => ({
+  name,
+  samples: [{ labels, value }],
+});
+
+describe('metric templates: parameters', () => {
+  it('has a template for every name and no free-form query', () => {
+    expect(Object.keys(METRIC_TEMPLATES).sort()).toEqual(Object.values(MetricTemplateName).sort());
+  });
+
+  it('defaults a windowed template to 24h and no offset', () => {
+    expect(parse(MetricTemplateName.SITE_REQUESTS, {}).data).toEqual({
+      window: '24h',
+      offset_days: 0,
+    });
+  });
+
+  it.each([
+    [MetricTemplateName.SCHEDULER_LAST_RUNS, { window: '24h' }],
+    [MetricTemplateName.BACKUP_STATUS, { queue: 'ingestion' }],
+    [MetricTemplateName.SITE_REQUESTS, { queue: 'ingestion' }],
+    [MetricTemplateName.QUEUE_THROUGHPUT, { provider: 'api.trakt.tv' }],
+    [MetricTemplateName.HTTP_CLIENT_ERRORS, { queue: 'ingestion' }],
+  ])('rejects a parameter the %s template does not take', (name, params) => {
+    expect(parse(name, params).success).toBe(false);
+  });
+
+  it('rejects a window longer than 7 days and an offset beyond 14', () => {
+    expect(parse(MetricTemplateName.SITE_REQUESTS, { window: '8d' }).success).toBe(false);
+    expect(parse(MetricTemplateName.SITE_REQUESTS, { offset_days: 15 }).success).toBe(false);
+    expect(parse(MetricTemplateName.SITE_REQUESTS, { offset_days: -1 }).success).toBe(false);
+    expect(parse(MetricTemplateName.SITE_REQUESTS, { offset_days: 1.5 }).success).toBe(false);
+  });
+
+  it('accepts every window from 1 hour to 7 days and every offset up to 14 days', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 168 }),
+        fc.integer({ min: 0, max: 14 }),
+        (hours, offset) => {
+          expect(
+            parse(MetricTemplateName.SITE_REQUESTS, { window: `${hours}h`, offset_days: offset })
+              .success,
+          ).toBe(true);
+        },
+      ),
+    );
+  });
+
+  it('rejects any window outside the allowed range', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 169, max: 999 }), (hours) => {
+        expect(parse(MetricTemplateName.SITE_REQUESTS, { window: `${hours}h` }).success).toBe(
+          false,
+        );
+      }),
+    );
+  });
+
+  it('never lets a string with PromQL metacharacters into a query', () => {
+    const hostile = fc
+      .tuple(fc.string(), fc.constantFrom('"', '}', '{', ')', '\\', ',', '`', '=~'), fc.string())
+      .map(([before, bad, after]) => `${before}${bad}${after}`);
+    fc.assert(
+      fc.property(hostile, (value) => {
+        expect(parse(MetricTemplateName.QUEUE_THROUGHPUT, { queue: value }).success).toBe(false);
+        expect(parse(MetricTemplateName.QUEUE_BACKLOG_PEAK, { queue: value }).success).toBe(false);
+        expect(parse(MetricTemplateName.HTTP_CLIENT_ERRORS, { provider: value }).success).toBe(
+          false,
+        );
+        expect(parse(MetricTemplateName.HTTP_CLIENT_ERRORS, { status: value }).success).toBe(false);
+        expect(parse(MetricTemplateName.SITE_REQUESTS, { window: value }).success).toBe(false);
+      }),
+    );
+  });
+
+  it('puts every accepted parameter into the query exactly once', () => {
+    fc.assert(
+      fc.property(
+        fc.stringMatching(/^[a-z][a-z0-9-]{0,20}$/),
+        fc.integer({ min: 1, max: 168 }),
+        (queue, hours) => {
+          const params = parse(MetricTemplateName.QUEUE_THROUGHPUT, {
+            queue,
+            window: `${hours}h`,
+          }).data as Record<string, unknown>;
+          const queries = template(MetricTemplateName.QUEUE_THROUGHPUT).queries(params);
+          expect(queries).toHaveLength(3);
+          for (const query of queries) {
+            expect(query.promql.split(`queue="${queue}"`)).toHaveLength(2);
+            expect(query.promql).toContain(`[${hours}h]`);
+          }
+        },
+      ),
+    );
+  });
+});
+
+describe('metric templates: presentation', () => {
+  it('shows queue throughput as whole numbers per queue', () => {
+    const reading = template(MetricTemplateName.QUEUE_THROUGHPUT).present(
+      [
+        sample('completed', 1200.4, { queue: 'ingestion' }),
+        sample('failed', 6.6, { queue: 'ingestion' }),
+        { name: 'retried', samples: [] },
+      ],
+      0,
+    );
+    expect(reading).toEqual({
+      data: [{ queue: 'ingestion', completed: 1200, failed: 7, retried: 0 }],
+    });
+  });
+
+  it('says there is no data instead of showing zero when a query returns nothing', () => {
+    for (const name of Object.values(MetricTemplateName)) {
+      expect(template(name).present([], 0)).toEqual({ unavailable: expect.any(String) });
+    }
+  });
+
+  it('keeps an unknown backlog empty rather than zero', () => {
+    const reading = template(MetricTemplateName.QUEUE_BACKLOG_PEAK).present(
+      [sample('peak', 40, { queue: 'ingestion' })],
+      0,
+    );
+    expect(reading).toEqual({
+      data: [{ queue: 'ingestion', waitingNow: null, peakInWindow: 40 }],
+    });
+  });
+
+  it('turns epoch seconds into hours ago', () => {
+    const nowMs = Date.UTC(2026, 10, 22, 12);
+    const reading = template(MetricTemplateName.SCHEDULER_LAST_RUNS).present(
+      [
+        sample('runs', (nowMs - 5 * 3_600_000) / 1000, {
+          job_name: 'sync-trending',
+          result: 'success',
+        }),
+      ],
+      nowMs,
+    );
+    expect(reading).toEqual({
+      data: [{ job: 'sync-trending', result: 'success', hoursAgo: 5 }],
+    });
+  });
+
+  it('converts bytes to megabytes and seconds to milliseconds', () => {
+    expect(
+      template(MetricTemplateName.SITE_MEMORY_PEAK).present([sample('rss', 250 * 1024 * 1024)], 0),
+    ).toEqual({ data: { peakMemoryMb: 250 } });
+    expect(template(MetricTemplateName.SITE_LATENCY_P95).present([sample('p95', 0.17)], 0)).toEqual(
+      { data: { p95Ms: 170 } },
+    );
+  });
+
+  it('lists only the provider errors that happened, with the total beside them', () => {
+    const reading = template(MetricTemplateName.HTTP_CLIENT_ERRORS).present(
+      [
+        sample('total', 5000),
+        {
+          name: 'errors',
+          samples: [
+            {
+              labels: { server_address: 'api.trakt.tv', http_response_status_code: '429' },
+              value: 12,
+            },
+            {
+              labels: { server_address: 'api.tmdb.org', http_response_status_code: '401' },
+              value: 0,
+            },
+          ],
+        },
+      ],
+      0,
+    );
+    expect(reading).toEqual({
+      data: {
+        totalOutgoingRequests: 5000,
+        errors: [{ provider: 'api.trakt.tv', status: '429', count: 12 }],
+      },
+    });
+  });
+
+  it('reports the database and Redis as up or down', () => {
+    expect(
+      template(MetricTemplateName.INFRA_HEALTH).present(
+        [sample('database', 1), sample('redis', 0), sample('redisMemory', 9.5 * 1024 * 1024)],
+        0,
+      ),
+    ).toEqual({ data: { databaseUp: true, redisUp: false, redisMemoryMb: 9.5 } });
+  });
+});

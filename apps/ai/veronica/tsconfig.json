@@ -10,5 +10,5 @@
     "noImplicitReturns": true,
     "types": ["jest", "node"]
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "eval/**/*.ts"]
 }

@@ -7,14 +7,9 @@ import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
 import { UNKNOWN_LABEL } from '../../domain/constants/digest-text.constants';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
+import { jobsByResult, queueBacklog, queueBacklogPeak } from '../../domain/queries/prom-queries';
 
 import { baselineAt, guarded, valueByLabel } from './collector-helpers';
-
-const BACKLOG_STATES = 'state=~"waiting|delayed|prioritized"';
-const BACKLOG = `sum by (queue) (app_queue_jobs{${BACKLOG_STATES}})`;
-const BACKLOG_MAX = `max_over_time(${BACKLOG}[24h:5m])`;
-const jobsByResult = (result: string, groupBy = 'queue') =>
-  `sum by (${groupBy}) (increase(app_queue_job_duration_seconds_count{result="${result}"}[24h]))`;
 
 interface QueueReadings {
   backlogNow: Map<string, number>;
@@ -89,8 +84,8 @@ export class QueuesCollector {
 
   private async readAt(atMs: number): Promise<QueueReadings> {
     const [backlogNow, backlogMax, completed, failed, retried] = await Promise.all([
-      this.metrics.instant(BACKLOG, atMs),
-      this.metrics.instant(BACKLOG_MAX, atMs),
+      this.metrics.instant(queueBacklog(), atMs),
+      this.metrics.instant(queueBacklogPeak(), atMs),
       this.metrics.instant(jobsByResult('completed'), atMs),
       this.metrics.instant(jobsByResult('failed'), atMs),
       this.metrics.instant(jobsByResult('retried'), atMs),

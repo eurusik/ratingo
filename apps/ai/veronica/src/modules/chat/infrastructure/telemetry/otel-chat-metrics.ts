@@ -16,6 +16,7 @@ export class OtelChatMetrics implements ChatMetricsPort {
     this.events.add(1, {
       [AI_METRIC_ATTRIBUTES.OUTCOME]: event.outcome,
       [AI_METRIC_ATTRIBUTES.COMMAND]: event.command,
+      [AI_METRIC_ATTRIBUTES.ROUTE]: event.route,
     });
   }
 }

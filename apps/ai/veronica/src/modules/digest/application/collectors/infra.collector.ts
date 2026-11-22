@@ -5,12 +5,14 @@ import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
 
-import { guarded } from './collector-helpers';
+import {
+  DATABASE_UP,
+  REDIS_MEMORY_MAX,
+  REDIS_MEMORY_USED,
+  REDIS_UP,
+} from '../../domain/queries/prom-queries';
 
-const DATABASE_UP = 'min(last_over_time(pg_up[15m]))';
-const REDIS_UP = 'min(last_over_time(redis_up[15m]))';
-const REDIS_MEMORY_USED = 'max(last_over_time(redis_memory_used_bytes[15m]))';
-const REDIS_MEMORY_MAX = 'max(last_over_time(redis_memory_max_bytes[15m]))';
+import { guarded } from './collector-helpers';
 
 @Injectable()
 export class InfraCollector {

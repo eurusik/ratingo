@@ -17,6 +17,16 @@ const modelEnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
 });
 
+const DEFAULT_GITHUB_REPOSITORY = 'eurusik/ratingo';
+
+const changesEnvSchema = z.object({
+  GITHUB_READ_TOKEN: z.string().min(1).optional(),
+  GITHUB_REPOSITORY: z
+    .string()
+    .regex(/^[\w.-]+\/[\w.-]+$/)
+    .default(DEFAULT_GITHUB_REPOSITORY),
+});
+
 const USER_ID_LIST = /^\d+(\s*,\s*\d+)*$/;
 
 const chatEnvSchema = z.object({
@@ -43,4 +53,5 @@ export const serviceEnvSchema = z.object({
   ...modelEnvSchema.shape,
   ...productStatsEnvSchema.shape,
   ...chatEnvSchema.shape,
+  ...changesEnvSchema.shape,
 });

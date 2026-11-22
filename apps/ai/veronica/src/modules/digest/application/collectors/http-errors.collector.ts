@@ -9,11 +9,12 @@ import { available, unavailable } from '../../domain/entities/source-reading';
 import { UNKNOWN_LABEL } from '../../domain/constants/digest-text.constants';
 import { METRICS_PORT, type MetricsPort, type MetricSample } from '../../domain/ports/metrics.port';
 
+import { clientErrors, clientRequests } from '../../domain/queries/prom-queries';
+
 import { baselineAt, guarded } from './collector-helpers';
 
-const CLIENT_REQUESTS = 'http_client_request_duration_seconds_count';
-const ANY_REQUESTS = `sum(increase(${CLIENT_REQUESTS}[24h]))`;
-const RELEVANT_ERRORS = `sum by (server_address, http_response_status_code) (increase(${CLIENT_REQUESTS}{http_response_status_code=~"401|403|429"}[24h]))`;
+const ANY_REQUESTS = clientRequests();
+const RELEVANT_ERRORS = clientErrors();
 
 const KIND_BY_STATUS: Readonly<Record<string, HttpErrorKind>> = {
   '401': HttpErrorKind.AUTH,
