@@ -69,6 +69,20 @@ describe('routeMessage', () => {
     });
   });
 
+  it("routes a review request to Happy even without Happy's name", () => {
+    expect(routeMessage('а глянь 469 пр')).toEqual({
+      kind: IntentKind.HAPPY,
+      target: { kind: 'number', number: 469 },
+    });
+  });
+
+  it.each(['що Хеппі сказав про 470?', 'скільки PR злили за тиждень?', 'що там по 470'])(
+    'keeps the question «%s» with the agent',
+    (text) => {
+      expect(routeMessage(text).kind).toBe(IntentKind.FREE_FORM);
+    },
+  );
+
   it('asks for a number when Happy is addressed without one', () => {
     expect(routeMessage('Хеппі, привіт')).toEqual({
       kind: IntentKind.HAPPY,

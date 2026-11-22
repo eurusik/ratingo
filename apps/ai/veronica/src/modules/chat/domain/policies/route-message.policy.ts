@@ -1,9 +1,9 @@
 import type { Intent } from '../entities/intent';
-import { IntentKind } from '../entities/intent';
+import { HappyTargetKind, IntentKind } from '../entities/intent';
 import { AgentName } from '../constants/chat.constants';
 
 import { parseCommand } from './command-parser.policy';
-import { parseHappyTarget } from './happy-target.policy';
+import { matchReviewRequest, parseHappyTarget } from './happy-target.policy';
 import { parseMention } from './mention-parser.policy';
 import { matchPullRequestLink } from './pattern-router.policy';
 
@@ -23,6 +23,10 @@ export const routeMessage = (text: string): Intent => {
   }
   if (matchPullRequestLink(text) !== null) {
     return { kind: IntentKind.HAPPY, target: parseHappyTarget(text) };
+  }
+  const requested = matchReviewRequest(text);
+  if (requested !== null) {
+    return { kind: IntentKind.HAPPY, target: { kind: HappyTargetKind.NUMBER, number: requested } };
   }
   return { kind: IntentKind.FREE_FORM, text: text.trim() };
 };

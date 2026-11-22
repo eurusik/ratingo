@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 
-import { parseHappyTarget, isSameRepository } from './happy-target.policy';
+import { isSameRepository, matchReviewRequest, parseHappyTarget } from './happy-target.policy';
 
 describe('parseHappyTarget', () => {
   it.each([
@@ -46,5 +46,86 @@ describe('parseHappyTarget', () => {
   it('compares repositories ignoring letter case', () => {
     expect(isSameRepository({ owner: 'Eurusik', repo: 'RATINGO' }, 'eurusik/ratingo')).toBe(true);
     expect(isSameRepository({ owner: 'eurusik', repo: 'other' }, 'eurusik/ratingo')).toBe(false);
+  });
+});
+
+describe('matchReviewRequest', () => {
+  it.each([
+    ['а глянь 469 пр', 469],
+    ['переглянь PR 470', 470],
+    ["рев'ю #470", 470],
+    ['ревʼю #471', 471],
+    ['check pr 470', 470],
+    ['review pull request 12', 12],
+    ['подивись на пул-реквест №7', 7],
+    ['перевір 33 PR будь ласка', 33],
+    ['Глянь PR#9?', 9],
+    ['ну а перевір #5', 5],
+  ])('treats «%s» as a review request for %i', (text, number) => {
+    expect(matchReviewRequest(text)).toBe(number);
+  });
+
+  it.each([
+    'що Хеппі сказав про 470?',
+    'скільки PR злили за тиждень?',
+    'глянь 469',
+    'глянь пр',
+    'перевір чи працює сайт 5 разів',
+    'перевіряв PR 470?',
+    'переглянь усі PR за тиждень 3',
+    'чому не оновився trending #12',
+    'глянь 0 пр',
+    'review the 12 files of pr',
+    '',
+  ])('leaves «%s» to the agent', (text) => {
+    expect(matchReviewRequest(text)).toBeNull();
+  });
+
+  const VERBS = ['глянь', 'переглянь', 'подивись', 'перевір', "рев'ю", 'review', 'check'];
+  const SHAPES: ((number: number) => string)[] = [
+    (n) => `PR ${n}`,
+    (n) => `пр ${n}`,
+    (n) => `#${n}`,
+    (n) => `${n} пр`,
+    (n) => `pull request ${n}`,
+  ];
+
+  it('catches every verb with every pull request shape and any number', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom(...VERBS),
+        fc.constantFrom(...SHAPES),
+        fc.constantFrom('', 'а ', 'ну '),
+        fc.integer({ min: 1, max: 999_999_999 }),
+        (verb, shape, lead, number) =>
+          matchReviewRequest(`${lead}${verb} ${shape(number)}`) === number,
+      ),
+    );
+  });
+
+  it('never fires without a verb, and a bare number is never enough', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom(...SHAPES),
+        fc.integer({ min: 1, max: 9999 }),
+        (shape, number) => matchReviewRequest(shape(number)) === null,
+      ),
+    );
+    fc.assert(
+      fc.property(
+        fc.constantFrom(...VERBS),
+        fc.integer({ min: 1, max: 9999 }),
+        (verb, number) => matchReviewRequest(`${verb} ${number}`) === null,
+      ),
+    );
+  });
+
+  it('is total and only ever returns a positive integer', () => {
+    fc.assert(
+      fc.property(fc.string({ unit: 'binary' }), (text) => {
+        const number = matchReviewRequest(text);
+        return number === null || (Number.isInteger(number) && number > 0);
+      }),
+    );
   });
 });

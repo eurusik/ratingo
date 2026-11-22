@@ -6,9 +6,9 @@ import { scoreCase, summarize, type CaseResult } from './scorer';
 const STUB = { modelRef: 'stub:digest' };
 
 describe('chat eval cases', () => {
-  it('has 12 to 16 cases with unique ids', () => {
+  it('has 12 to 17 cases with unique ids', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(12);
-    expect(EVAL_CASES.length).toBeLessThanOrEqual(16);
+    expect(EVAL_CASES.length).toBeLessThanOrEqual(17);
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
   });
 
