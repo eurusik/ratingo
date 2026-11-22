@@ -452,7 +452,7 @@ The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_B
 
 ### Commands
 
-`/help`, `/digest` (builds and sends today's digest now through the digest pipeline without touching the daily `sent` claim, marked as on-demand), `/status` (one screen: block levels from the same rules engine), `/queues` and `/site` (those blocks in detail). Free text and mentions of Veronica go to the investigation agent (step 2). A Happy mention with a PR number and a link to a PR of the configured repository go to Happy (step 3). `/help` lists them.
+`/help`, `/digest` (builds and sends today's digest now through the digest pipeline without touching the daily `sent` claim, marked as on-demand), `/status` (one screen: block levels from the same rules engine), `/queues` and `/site` (those blocks in detail), `/last` (the last three non-command exchanges of this chat: question → outcome, cost). Free text and mentions of Veronica go to the investigation agent (step 2). A Happy mention with a PR number and a link to a PR of the configured repository go to Happy (step 3). `/help` lists them.
 
 ### Investigation tools (read-only)
 
@@ -476,6 +476,13 @@ No Railway logs and no free SQL; those are left to DUM-E later.
 - **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `redacted`, `fallback`, `failed`; route `investigation`) and a `chat` row in `ai.runs` with the cost.
 - **Env.** `GITHUB_READ_TOKEN` (optional, read-only; `recent_changes` reports itself unavailable without it) and `GITHUB_REPOSITORY` (default `eurusik/ratingo`).
 - **Eval.** `npm run eval:chat --workspace=@ratingo/ai-veronica` runs `apps/ai/veronica/eval/chat` (15 cases with fixture tool results). On the stub model it replays reference answers and checks the harness; with `AI_MODEL_FAST=anthropic:<model>` and `ANTHROPIC_API_KEY` it measures tool-selection accuracy, fact accuracy and cases where the numbers guard fired (target 0). `EVAL_DUMP=<file>` writes the answers.
+
+### Answer log (`ai.chat_exchanges`)
+
+- One row per finished exchange: `run_id` (→ `ai.runs`), `chat_id`, `created_at`, `route` (`command`, `happy`, `investigation`), `question`, `answer` (the final checked text sent to Telegram), `outcome` (`answered`, `redacted`, `fallback`, `failed`), `cut_numbers` (what the numbers guard removed) and `tool_names`. Tool payloads, raw model output and secrets are never stored; text is clipped to 8000 characters.
+- Written after the run row is saved, best-effort: a failed insert is logged with its reason (`Обмін для запуску … не записано: <ErrorName>`) and never touches the reply. An exchange without a run (an empty question) is not logged.
+- Retention is 30 days. The daily BullMQ job `exchange-retention` (scheduler id and cron in `chat.constants.ts`, 03:17 Europe/Kyiv, on the `chat` queue) deletes older rows; it is idempotent because it deletes by a cutoff, so running it twice removes nothing more.
+- `npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d [--outcome=redacted,fallback]` reads `DATABASE_URL` and prints the matching exchanges as a JSON array of eval case drafts (`id`, `question`, `expectedTools`, `reference.answer`, empty `fixtures` and `mustContain`, plus an `observed` block). A person writes the fixtures and the `mustContain` groups before moving a draft into `eval/chat/cases.ts`. The script only reads.
 
 ### Happy through Veronica (step 3)
 
@@ -599,6 +606,15 @@ Model: `review` alias. A cheap first pass on `fast` can mark risky files so the 
 - Metrics: `app.ai.runs` (agent, task, trigger, outcome), `app.ai.run.cost` (USD), `app.ai.run.tokens` (kind), `app.ai.run.duration`, `app.ai.tool.calls`.
 - Logs carry run IDs and outcomes, not prompts, PR content or chat text.
 - A `Ratingo / AI` Grafana dashboard, plus the missing-digest alert.
+- Watchdog heartbeat: gauge `app.ai.watchdog.last_tick_timestamp_seconds` (Prometheus `app_ai_watchdog_last_tick_timestamp_seconds`), the Unix time of the last finished watchdog tick. It is absent until the first tick, so an alert on its absence or age catches Veronica herself being down.
+
+### Watchdog (`modules/watchdog`)
+
+- A BullMQ scheduler `watchdog-tick` (queue `watchdog`, prefix `ai-veronica`) fires every 5 minutes. A scheduler produces one job per interval bucket, so a restart or a second replica never doubles a tick.
+- Pure domain rules evaluate five alert keys: `happy_down` (`GET {HAPPY_INTERNAL_URL}/health` failed on 2 consecutive checks; skipped when the URL is unset), `digest_missing` (no `sent` row in `ai.digest_deliveries` for today's Kyiv date at or after 09:30 Europe/Kyiv, by the injected clock), `budget_agent` and `budget_chat` (spend over the rolling day window ≥ 80% of the agent's `perDayUsd` and of the chat's daily cap, read through the same `RunRepository.spentUsd` the budgets use) and `failed_runs` (≥ 3 `failed` runs of this agent in the last hour).
+- Alerts fire on change only. The active keys live in Redis (`ai-veronica:watchdog:active`, 7 days TTL, refreshed every tick); a key that was not active and fails now sends one alert, a key that was active and is healthy now sends one «✅ відновилось». A check that cannot run (database or Redis error) is logged and leaves that key's state as it was, so an outage of the probe never counts as recovery. If Telegram fails, state is not saved and the next tick retries.
+- Before 09:30 a missing digest is «not evaluated», so an alert that was raised yesterday stays active across midnight until today's digest is sent.
+- Not covered: Happy's own spend. Happy keeps its spend in its own Redis keys and has no Postgres run table, so Veronica cannot read it cheaply.
 
 ---
 

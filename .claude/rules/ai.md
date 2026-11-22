@@ -20,4 +20,5 @@ Design: `apps/ai/ARCHITECTURE.md`.
 
 ## Commands
 - `npm run digest:preview --workspace=@ratingo/ai-veronica` renders today's digest to stdout without sending
+- `npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d [--outcome=redacted,fallback]` prints logged chat exchanges as eval case drafts (needs `DATABASE_URL`)
 - `npm run review --workspace=@ratingo/ai-happy -- <owner/repo> <prNumber>` reviews a PR and prints Markdown without posting
