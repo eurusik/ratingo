@@ -16,10 +16,15 @@ import {
 import { AGENT_FOLDER } from '../../../../core/ai-core.constants';
 import { CHAT_TASK_NAME, NO_MODEL } from '../../chat.constants';
 import { ChatAction, CHAT_TRANSPORT, type ChatTransportPort } from '../../../notify/public';
-import { ChatOutcome, CommandLabel } from '../../domain/constants/chat.constants';
+import {
+  AgentName,
+  ChatOutcome,
+  ChatRoute,
+  CommandLabel,
+} from '../../domain/constants/chat.constants';
 import {
   COMMAND_FAILED_REPLY,
-  FALLBACK_REPLY,
+  HAPPY_SOON_REPLY,
   UNKNOWN_COMMAND_REPLY,
 } from '../../domain/constants/chat-replies.constants';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
@@ -27,6 +32,8 @@ import { IntentKind, type Intent } from '../../domain/entities/intent';
 import { CHAT_METRICS_PORT, type ChatMetricsPort } from '../../domain/ports/chat-metrics.port';
 import { routeMessage } from '../../domain/policies/route-message.policy';
 import { ChatCommandHandlers } from '../commands/chat-command.handlers';
+
+import { InvestigationRunner } from './investigation.runner';
 
 const commandLabelOf = (intent: Intent): CommandLabel => {
   switch (intent.kind) {
@@ -41,6 +48,23 @@ const commandLabelOf = (intent: Intent): CommandLabel => {
   }
 };
 
+const routeOf = (intent: Intent): ChatRoute => {
+  switch (intent.kind) {
+    case IntentKind.COMMAND:
+    case IntentKind.UNKNOWN_COMMAND:
+      return ChatRoute.COMMAND;
+    case IntentKind.PATTERN:
+      return ChatRoute.HAPPY;
+    case IntentKind.MENTION:
+      return intent.agent === AgentName.HAPPY ? ChatRoute.HAPPY : ChatRoute.INVESTIGATION;
+    case IntentKind.FREE_FORM:
+      return ChatRoute.INVESTIGATION;
+  }
+};
+
+const questionOf = (intent: Intent): string =>
+  intent.kind === IntentKind.MENTION || intent.kind === IntentKind.FREE_FORM ? intent.text : '';
+
 const errorName = (error: unknown): string => (error instanceof Error ? error.name : 'error');
 
 @Injectable()
@@ -49,6 +73,7 @@ export class ChatService {
 
   constructor(
     private readonly commands: ChatCommandHandlers,
+    private readonly investigation: InvestigationRunner,
     @Inject(CHAT_TRANSPORT) private readonly transport: ChatTransportPort,
     @Inject(CHAT_METRICS_PORT) private readonly metrics: ChatMetricsPort,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
@@ -58,6 +83,10 @@ export class ChatService {
 
   async handle(message: IncomingMessage): Promise<ChatOutcome> {
     const intent = routeMessage(message.text);
+    const route = routeOf(intent);
+    if (route === ChatRoute.INVESTIGATION) {
+      return this.investigate(intent, message);
+    }
     const run = Run.start(
       {
         id: randomUUID(),
@@ -75,14 +104,31 @@ export class ChatService {
       this.metrics.record({
         outcome: reply.failed ? ChatOutcome.FAILED : ChatOutcome.HANDLED,
         command: commandLabelOf(intent),
+        route,
       });
       return reply.failed ? ChatOutcome.FAILED : ChatOutcome.HANDLED;
     } catch (error) {
       run.finish(RunStopReason.UNEXPECTED_ERROR, this.clock, errorName(error));
-      this.metrics.record({ outcome: ChatOutcome.FAILED, command: commandLabelOf(intent) });
+      this.metrics.record({
+        outcome: ChatOutcome.FAILED,
+        command: commandLabelOf(intent),
+        route,
+      });
       throw error;
     } finally {
       await this.saveRun(run);
+    }
+  }
+
+  private async investigate(intent: Intent, message: IncomingMessage): Promise<ChatOutcome> {
+    const event = { command: commandLabelOf(intent), route: ChatRoute.INVESTIGATION };
+    try {
+      const { outcome } = await this.investigation.answer(message.chatId, questionOf(intent));
+      this.metrics.record({ ...event, outcome });
+      return outcome;
+    } catch (error) {
+      this.metrics.record({ ...event, outcome: ChatOutcome.FAILED });
+      throw error;
     }
   }
 
@@ -98,7 +144,7 @@ export class ChatService {
       case IntentKind.MENTION:
       case IntentKind.PATTERN:
       case IntentKind.FREE_FORM:
-        return { html: FALLBACK_REPLY, failed: false };
+        return { html: HAPPY_SOON_REPLY, failed: false };
     }
   }
 

@@ -15,6 +15,7 @@ export const AI_METRIC_ATTRIBUTES = {
   TOKEN_KIND: 'kind',
   TOOL: 'tool',
   COMMAND: 'command',
+  ROUTE: 'route',
 } as const;
 
 export const AI_TOKEN_KINDS = {

@@ -66,4 +66,14 @@ describe('env schemas', () => {
     expect(parse('')).toBe(false);
     expect(serviceEnvSchema.parse(VALID).TELEGRAM_WEBHOOK_URL).toBeUndefined();
   });
+
+  it('treats the GitHub read token as optional and defaults the repository', () => {
+    const env = serviceEnvSchema.parse(VALID);
+    expect(env.GITHUB_READ_TOKEN).toBeUndefined();
+    expect(env.GITHUB_REPOSITORY).toBe('eurusik/ratingo');
+    expect(serviceEnvSchema.safeParse({ ...VALID, GITHUB_READ_TOKEN: '' }).success).toBe(false);
+    expect(serviceEnvSchema.safeParse({ ...VALID, GITHUB_REPOSITORY: 'not a repo' }).success).toBe(
+      false,
+    );
+  });
 });

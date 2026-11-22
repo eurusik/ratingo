@@ -1,0 +1,119 @@
+import * as path from 'node:path';
+
+import {
+  AgentLoop,
+  FixedClock,
+  InMemoryRunRepository,
+  StubModelAdapter,
+  assertAliasProvidersRegistered,
+  createModelProviders,
+  loadAgentFolder,
+  type AgentFolder,
+  type ModelAliases,
+} from '@ratingo/ai-core';
+
+import { MODEL_ALIAS_NAMES, MODEL_PRICES } from '../../src/config/models.config';
+import { InvestigationRunner } from '../../src/modules/chat/application/services/investigation.runner';
+import type { InvestigationExecutors } from '../../src/modules/chat/application/tools/investigation-executors';
+import type { ChatOutcome } from '../../src/modules/chat/domain/constants/chat.constants';
+import type { ConversationTurn } from '../../src/modules/chat/domain/entities/conversation-turn';
+import {
+  answerStep,
+  callStep,
+  scriptedModel,
+} from '../../src/modules/chat/testing/scripted-model.testing';
+
+import { callKey, type EvalCase, type Fixture } from './eval-case';
+import type { CaseResult } from './scorer';
+
+const EVAL_NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
+const AGENT_PATH = path.resolve(__dirname, '../../agent');
+const CHAT_ID = 'eval';
+const SNAPSHOT_STUB_HTML = 'SNAPSHOT';
+
+const matches = (fixture: Fixture, input: unknown): boolean =>
+  Object.entries(fixture.match ?? {}).every(
+    ([key, value]) => (input as Record<string, unknown> | null)?.[key] === value,
+  );
+
+const fixtureExecutors = (testCase: EvalCase): InvestigationExecutors => {
+  const answer = (tool: string) => async (input?: unknown) => {
+    const fixture = testCase.fixtures.find((entry) => entry.tool === tool && matches(entry, input));
+    if (fixture === undefined) {
+      throw new Error(`No fixture for ${callKey(tool, input)} in case ${testCase.id}`);
+    }
+    if (fixture.error !== undefined) {
+      throw new Error(fixture.error);
+    }
+    return fixture.response;
+  };
+  return {
+    metricsQuery: answer('metrics_query'),
+    productStats: answer('product_stats'),
+    digestSnapshot: () => answer('digest_snapshot')(),
+    recentChanges: answer('recent_changes'),
+  };
+};
+
+export interface EvalRunResult {
+  result: CaseResult;
+  costUsd: number;
+}
+
+export interface EvalSetup {
+  modelRef: string;
+  anthropicApiKey?: string;
+}
+
+export const isStubModel = (modelRef: string): boolean => modelRef.startsWith('stub:');
+
+export const runCase = async (
+  testCase: EvalCase,
+  setup: EvalSetup,
+  folder?: AgentFolder,
+): Promise<EvalRunResult> => {
+  const loaded =
+    folder ?? (await loadAgentFolder(AGENT_PATH, { knownModelAliases: MODEL_ALIAS_NAMES }));
+  const reference = scriptedModel([
+    ...testCase.reference.calls.map((call) => callStep(call.tool, call.input)),
+    answerStep(testCase.reference.answer),
+  ]);
+  const providers = createModelProviders({
+    stub: new StubModelAdapter(reference),
+    anthropicApiKey: setup.anthropicApiKey,
+  });
+  const clock = new FixedClock(EVAL_NOW_MS);
+  const runs = new InMemoryRunRepository();
+  const aliases: ModelAliases = { fast: [setup.modelRef] };
+  assertAliasProvidersRegistered(aliases, providers);
+  const finalHtml: string[] = [];
+  const history: ConversationTurn[] = [...(testCase.history ?? [])];
+  const runner = new InvestigationRunner(
+    fixtureExecutors(testCase),
+    (registry) => new AgentLoop({ providers, registry, runs, clock, prices: MODEL_PRICES }),
+    loaded,
+    clock,
+    runs,
+    aliases,
+    { recent: async () => history, append: async () => undefined },
+    {
+      postMessage: async () => 1,
+      editMessage: async (_chatId, _messageId, html) => void finalHtml.push(html),
+      sendMessage: async (_chatId, html) => void finalHtml.push(html),
+      sendChatAction: async () => undefined,
+    },
+    { status: async () => ({ html: SNAPSHOT_STUB_HTML, silent: true }) } as never,
+  );
+  const outcome = await runner.answer(CHAT_ID, testCase.question);
+  return {
+    costUsd: outcome.costUsd,
+    result: {
+      caseId: testCase.id,
+      calledKeys: outcome.toolCalls.map((call) => callKey(call.tool, call.input)),
+      answer: finalHtml[finalHtml.length - 1] ?? '',
+      outcome: outcome.outcome as ChatOutcome,
+      unverifiedNumbers: outcome.unverifiedNumbers,
+      rawModelOutput: outcome.rawModelOutput,
+    },
+  };
+};

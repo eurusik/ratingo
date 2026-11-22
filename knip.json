@@ -38,8 +38,8 @@
       "project": ["src/**/*.ts", "*.cjs"]
     },
     "apps/ai/veronica": {
-      "entry": ["src/main.ts", "src/scripts/*.ts"],
-      "project": ["src/**/*.ts", "*.{js,ts}"],
+      "entry": ["src/main.ts", "src/scripts/*.ts", "eval/chat/run-eval.ts"],
+      "project": ["src/**/*.ts", "eval/**/*.ts", "*.{js,ts}"],
       "jest": {
         "config": ["jest.config.js"]
       },

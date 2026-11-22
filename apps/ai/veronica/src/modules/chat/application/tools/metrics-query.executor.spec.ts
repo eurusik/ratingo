@@ -1,0 +1,96 @@
+import { FixedClock } from '@ratingo/ai-core';
+
+import type { MetricSample } from '../../../digest/public';
+
+import { MetricsQueryExecutor } from './metrics-query.executor';
+
+const NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
+const DAY_MS = 86_400_000;
+
+class Harness {
+  readonly asked: { query: string; atMs: number }[] = [];
+  samples: (query: string) => MetricSample[] = () => [];
+  failure: Error | null = null;
+
+  readonly executor = new MetricsQueryExecutor(
+    {
+      instant: async (query, atMs) => {
+        if (this.failure !== null) throw this.failure;
+        this.asked.push({ query, atMs });
+        return this.samples(query);
+      },
+    },
+    new FixedClock(NOW_MS),
+  );
+}
+
+describe('MetricsQueryExecutor', () => {
+  it('runs the template queries at the current time with the window in the query', async () => {
+    const harness = new Harness();
+    harness.samples = (query) =>
+      query.includes('result="completed"') ? [{ labels: { queue: 'ingestion' }, value: 90 }] : [];
+    const result = await harness.executor.run({ template: 'queue_throughput', window: '6h' });
+    expect(harness.asked.every((call) => call.atMs === NOW_MS)).toBe(true);
+    expect(harness.asked.every((call) => call.query.includes('[6h]'))).toBe(true);
+    expect(result).toMatchObject({
+      template: 'queue_throughput',
+      window: '6h',
+      offsetDays: 0,
+      evaluatedAtKyiv: '2026-11-22 14:00',
+      data: [{ queue: 'ingestion', completed: 90, failed: 0, retried: 0 }],
+    });
+  });
+
+  it('evaluates in the past by the offset for a baseline comparison', async () => {
+    const harness = new Harness();
+    const result = await harness.executor.run({
+      template: 'site_requests',
+      offset_days: 7,
+    });
+    expect(harness.asked.every((call) => call.atMs === NOW_MS - 7 * DAY_MS)).toBe(true);
+    expect(result).toMatchObject({ offsetDays: 7, evaluatedAtKyiv: '2026-11-15 14:00' });
+  });
+
+  it('rejects a parameter the template does not take, naming the problem', async () => {
+    await expect(
+      new Harness().executor.run({ template: 'backup_status', queue: 'ingestion' }),
+    ).rejects.toThrow(/backup_status.*queue/);
+  });
+
+  it('rejects a window beyond 7 days without asking Prometheus', async () => {
+    const harness = new Harness();
+    await expect(
+      harness.executor.run({ template: 'site_requests', window: '30d' }),
+    ).rejects.toThrow(/window/);
+    expect(harness.asked).toEqual([]);
+  });
+
+  it('rejects a hostile label without asking Prometheus', async () => {
+    const harness = new Harness();
+    await expect(
+      harness.executor.run({ template: 'queue_throughput', queue: 'x"} or vector(1) #' }),
+    ).rejects.toThrow(/queue/);
+    expect(harness.asked).toEqual([]);
+  });
+
+  it('caps the number of series it reads', async () => {
+    const harness = new Harness();
+    harness.samples = () =>
+      Array.from({ length: 100 }, (_, index) => ({
+        labels: { queue: `queue-${index}` },
+        value: 1,
+      }));
+    const result = (await harness.executor.run({ template: 'queue_throughput' })) as {
+      data: unknown[];
+    };
+    expect(result.data.length).toBeLessThanOrEqual(30);
+  });
+
+  it('lets a Prometheus failure surface so the model sees the error', async () => {
+    const harness = new Harness();
+    harness.failure = new Error('Grafana недоступна');
+    await expect(harness.executor.run({ template: 'site_requests' })).rejects.toThrow(
+      'Grafana недоступна',
+    );
+  });
+});
