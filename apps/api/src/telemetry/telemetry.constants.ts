@@ -23,3 +23,10 @@ export const API_KEY_STATUS_METRIC = 'app.api_key.status';
 export const API_KEY_PROBE_LATENCY_METRIC = 'app.api_key.probe.latency';
 export const API_KEY_LAST_CHECKED_METRIC = 'app.api_key.last_checked';
 export const EXTERNAL_API_FAILURES_METRIC = 'app.external_api.failures';
+export const SCHEDULER_LAST_RUN_METRIC = 'app.scheduler.last_run_timestamp_seconds';
+export const SCHEDULER_RUN_RESULT = {
+  SUCCESS: 'success',
+  FAILURE: 'failure',
+} as const;
+export type SchedulerRunResult = (typeof SCHEDULER_RUN_RESULT)[keyof typeof SCHEDULER_RUN_RESULT];
+export const SCHEDULER_KEY_SEPARATOR = ':';

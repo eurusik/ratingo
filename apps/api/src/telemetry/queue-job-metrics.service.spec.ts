@@ -6,7 +6,7 @@ import { type DiscoveryService } from '@nestjs/core';
 import { metrics } from '@opentelemetry/api';
 
 import { QueueJobMetricsService } from './queue-job-metrics.service';
-import { QUEUE_JOB_DURATION_METRIC } from './telemetry.constants';
+import { QUEUE_JOB_DURATION_METRIC, SCHEDULER_LAST_RUN_METRIC } from './telemetry.constants';
 import { createTestMeterProvider } from './telemetry.testing';
 
 class FakeWorkerHost extends WorkerHost {
@@ -87,5 +87,60 @@ describe('QueueJobMetricsService', () => {
     ingestion.emit('completed', job({ processedOn: undefined }));
 
     await expect(durations()).resolves.toEqual([]);
+  });
+
+  describe('scheduler last run gauge', () => {
+    const lastRuns = async () =>
+      (await collect(SCHEDULER_LAST_RUN_METRIC)).map(({ value, attributes }) => ({
+        value,
+        attributes,
+      }));
+
+    it('records the finish time of a scheduled job as success', async () => {
+      ingestion.emit('completed', job({ repeatJobKey: 'prod:scheduled-snapshots' }));
+
+      await expect(lastRuns()).resolves.toEqual([
+        { value: 3.5, attributes: { job_name: 'scheduled-snapshots', result: 'success' } },
+      ]);
+    });
+
+    it('keeps success and failure as separate series and overwrites on a newer run', async () => {
+      ingestion.emit('completed', job({ repeatJobKey: 'prod:scheduled-snapshots' }));
+      ingestion.emit(
+        'completed',
+        job({ repeatJobKey: 'prod:scheduled-snapshots', finishedOn: 9_000 }),
+      );
+      ingestion.emit(
+        'failed',
+        job({ repeatJobKey: 'prod:scheduled-snapshots', attemptsMade: 3, finishedOn: 12_000 }),
+        new Error('boom'),
+      );
+
+      const points = (await lastRuns()).sort((a, b) =>
+        String(a.attributes.result).localeCompare(String(b.attributes.result)),
+      );
+      expect(points).toEqual([
+        { value: 12, attributes: { job_name: 'scheduled-snapshots', result: 'failure' } },
+        { value: 9, attributes: { job_name: 'scheduled-snapshots', result: 'success' } },
+      ]);
+    });
+
+    it('does not record a failure that will be retried', async () => {
+      ingestion.emit(
+        'failed',
+        job({ repeatJobKey: 'prod:scheduled-snapshots', attemptsMade: 1 }),
+        new Error('429'),
+      );
+
+      await expect(lastRuns()).resolves.toEqual([]);
+    });
+
+    it('ignores per-item jobs and unknown scheduler keys', async () => {
+      ingestion.emit('completed', job());
+      ingestion.emit('completed', job({ repeatJobKey: 'prod:scheduled-something-else' }));
+      ingestion.emit('completed', job({ repeatJobKey: 'not-namespaced' }));
+
+      await expect(lastRuns()).resolves.toEqual([]);
+    });
   });
 });

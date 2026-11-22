@@ -6,11 +6,13 @@ import { type Job, type Worker } from 'bullmq';
 
 import { findBullWorkers } from '../common/runtime/bull-workers';
 
+import { SchedulerLastRunGauge } from './scheduler-last-run.gauge';
 import {
   METER_NAME,
   QUEUE_JOB_DURATION_BUCKETS_SECONDS,
   QUEUE_JOB_DURATION_METRIC,
   QUEUE_JOB_RESULT,
+  SCHEDULER_RUN_RESULT,
   type QueueJobResult,
 } from './telemetry.constants';
 
@@ -21,6 +23,7 @@ const willRetry = (job: Job): boolean => job.attemptsMade < (job.opts.attempts ?
 @Injectable()
 export class QueueJobMetricsService implements OnApplicationBootstrap {
   private readonly meter: Meter = metrics.getMeter(METER_NAME);
+  private readonly schedulerLastRun = new SchedulerLastRunGauge();
 
   constructor(private readonly discovery: DiscoveryService) {}
 
@@ -31,15 +34,22 @@ export class QueueJobMetricsService implements OnApplicationBootstrap {
       unit: 's',
       advice: { explicitBucketBoundaries: QUEUE_JOB_DURATION_BUCKETS_SECONDS },
     });
+    this.schedulerLastRun.register(this.meter);
     findBullWorkers(this.discovery).forEach((worker) => this.instrument(worker, duration));
   }
 
   private instrument(worker: Worker, duration: Histogram): void {
-    worker.on('completed', (job) => this.record(duration, worker, job, QUEUE_JOB_RESULT.COMPLETED));
+    worker.on('completed', (job) => {
+      this.record(duration, worker, job, QUEUE_JOB_RESULT.COMPLETED);
+      this.schedulerLastRun.record(job, SCHEDULER_RUN_RESULT.SUCCESS);
+    });
     worker.on('failed', (job) => {
       if (!job) return;
       const result = willRetry(job) ? QUEUE_JOB_RESULT.RETRIED : QUEUE_JOB_RESULT.FAILED;
       this.record(duration, worker, job, result);
+      if (result === QUEUE_JOB_RESULT.FAILED) {
+        this.schedulerLastRun.record(job, SCHEDULER_RUN_RESULT.FAILURE);
+      }
     });
   }
 
