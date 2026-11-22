@@ -31,24 +31,39 @@ import { CheckOutcome } from '../src/modules/review/domain/entities/check';
 
 import { buildCaseDump, type CaseDump } from './case-dump';
 import { EVAL_CASES } from './cases';
-import { EVAL_RULES, renderPatch, type EvalCase } from './eval-case';
+import { EVAL_RULES, baseLinesOf, changedLinesOf, renderPatch, type EvalCase } from './eval-case';
 import { scoreCase, summarize, type CaseResult, type CaseScore } from './scorer';
 
 const CHECKS_PATH = path.resolve(__dirname, '../agent/checks');
 const EVAL_REPOSITORY = 'eval/cases';
 const MIN_LINES_TO_REVIEW = 25;
 const HEAD_SHA = 'evalhead';
+const BASE_SHA = 'evalbase';
 const PERCENT = 100;
 const PERCENT_DECIMALS = 0;
 const COST_DECIMALS = 4;
 const KIND_COLUMN_WIDTH = 19;
 const ID_COLUMN_WIDTH = 30;
 
+const contentsOf = (testCase: EvalCase): Record<string, string> => {
+  const base = baseLinesOf(testCase);
+  const extra = Object.entries(testCase.extraFiles ?? {}).flatMap(([filePath, lines]) => [
+    [`${HEAD_SHA}:${filePath}`, lines.join('\n')],
+    [`${BASE_SHA}:${filePath}`, lines.join('\n')],
+  ]);
+  return Object.fromEntries([
+    [`${HEAD_SHA}:${testCase.path}`, testCase.lines.join('\n')],
+    ...(base === null ? [] : [[`${BASE_SHA}:${testCase.path}`, base.join('\n')]]),
+    ...extra,
+  ]);
+};
+
 const hostFor = (testCase: EvalCase) =>
   buildFakeCodeHost({
     pr: buildPullRequest({
       ref: { owner: 'eval', repo: 'cases', number: 1 },
       headSha: HEAD_SHA,
+      baseSha: BASE_SHA,
       headRepository: EVAL_REPOSITORY,
       title: `Update ${path.basename(testCase.path)}`,
       body: '',
@@ -56,13 +71,13 @@ const hostFor = (testCase: EvalCase) =>
     files: [
       buildChangedFile({
         path: testCase.path,
-        status: FileStatus.ADDED,
-        additions: Math.max(testCase.lines.length, MIN_LINES_TO_REVIEW),
+        status: testCase.changed === undefined ? FileStatus.ADDED : FileStatus.MODIFIED,
+        additions: Math.max(changedLinesOf(testCase).length, MIN_LINES_TO_REVIEW),
         deletions: 0,
-        patch: renderPatch(testCase.lines),
+        patch: renderPatch(testCase),
       }),
     ],
-    contents: { [`${HEAD_SHA}:${testCase.path}`]: testCase.lines.join('\n') },
+    contents: contentsOf(testCase),
     rules: [...EVAL_RULES],
   });
 
@@ -139,6 +154,12 @@ async function main(): Promise<void> {
         `off target on the expected check: ${metrics.offTargetOnExpectedCheck}`,
         `off target on another selected check: ${metrics.offTargetOnOtherCheck}`,
         `off target outside any selected check: ${metrics.offTargetOutsideChecks}`,
+        ...Object.entries(metrics.byCheck)
+          .sort(([left], [right]) => left.localeCompare(right))
+          .map(
+            ([checkId, entry]) =>
+              `findings by check ${checkId}: ${entry.findings} (false positives ${entry.falsePositives})`,
+          ),
         `unknown cases answered with a question: ${percent(metrics.unknownAsQuestionRate)}`,
         `question noise on known cases: ${metrics.noiseQuestions}`,
         `cost: $${costUsd.toFixed(COST_DECIMALS)}`,

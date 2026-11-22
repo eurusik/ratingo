@@ -124,6 +124,24 @@ describe('off-target split', () => {
   });
 });
 
+describe('breakdown by check', () => {
+  it('counts every finding under its check id, with rule or general findings under none', () => {
+    const withCheck: EvalCase = { ...PROTECTED, checkId: 'mine' };
+    const score = scoreCase(withCheck, result(withCheck, [1, 2, 3], [], ['mine', null, 'other']));
+    expect(score.byCheck).toEqual({
+      mine: { findings: 1, falsePositives: 1 },
+      none: { findings: 1, falsePositives: 1 },
+      other: { findings: 1, falsePositives: 1 },
+    });
+    expect(summarize([score, score]).byCheck.none).toEqual({ findings: 2, falsePositives: 2 });
+  });
+
+  it('does not count the hit on a positive case as a false positive', () => {
+    const score = scoreCase(POSITIVE, result(POSITIVE, [3, 20], [], ['mine', 'mine']));
+    expect(score.byCheck.mine).toEqual({ findings: 2, falsePositives: 1 });
+  });
+});
+
 describe('summarize', () => {
   it('keeps precision and recall within zero and one', () => {
     fc.assert(

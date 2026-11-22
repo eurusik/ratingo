@@ -1,5 +1,5 @@
 import { FindingTopic } from '../constants/finding-classification.constants';
-import { FindingCategory } from '../constants/severity.constants';
+import { FindingCategory, Severity } from '../constants/severity.constants';
 import { DOCS_FILE_PATTERNS } from '../constants/skip-patterns.constants';
 import type { Finding } from '../entities/finding';
 
@@ -23,6 +23,7 @@ export const PrecedentId = {
   NO_DOS_ADVICE: 'no-dos-advice',
   REACT_XSS_NEEDS_RAW_HTML: 'react-xss-needs-raw-html',
   TEST_FILES_SECURITY_PERFORMANCE: 'test-files-security-performance',
+  NO_MINOR_PERFORMANCE_ADVICE: 'no-minor-performance-advice',
 } as const;
 export type PrecedentId = (typeof PrecedentId)[keyof typeof PrecedentId];
 
@@ -54,6 +55,12 @@ const PRECEDENTS: readonly Precedent[] = [
       matchesAnyGlob(TEST_FILE_PATTERNS, finding.file) &&
       (finding.category === FindingCategory.SECURITY ||
         finding.category === FindingCategory.PERFORMANCE),
+  },
+  {
+    id: PrecedentId.NO_MINOR_PERFORMANCE_ADVICE,
+    applies: (finding) =>
+      finding.category === FindingCategory.PERFORMANCE &&
+      (finding.severity === Severity.MINOR || finding.severity === Severity.NIT),
   },
 ];
 

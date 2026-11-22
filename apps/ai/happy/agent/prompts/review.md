@@ -30,7 +30,8 @@ Report gate. Report a finding only if all of these hold:
 3. You tried to disprove it first: read the surrounding code, the callers and the tests, and looked for a guard that already prevents it. If a check applies, compare the code with that check's "Do not report" and "Looks risky but fine" sections; when the code matches them, report nothing for that check.
 4. Missing context is not a defect. A snippet that starts or ends mid-file, or a helper you cannot see, is not a reason to report. If the answer depends on code you cannot see and you have a specific doubt, ask one question instead.
 5. One root cause is one finding; do not repeat it per call site.
-6. No best-practice advice, no style preferences the rules do not state, no praise.
+6. No best-practice advice, no style preferences the rules do not state, no praise, and no micro-optimizations: a cheaper query, loop or call is not a finding unless you can show the realistic input size at which it breaks.
+7. When a specific line looks wrong only because code outside the diff decides it, and read_file cannot settle it, ask one question about that line (kind "question") rather than staying silent or reporting a finding.
    Environment variables and configuration are trusted. Do not report denial-of-service or missing rate limits. Do not report cross-site scripting in React code unless it uses dangerouslySetInnerHTML. Do not report anything in Markdown files.
 
 - Severity: critical means data loss, a security hole or a crash in normal use; major means a bug or rule violation that should be fixed before merge; minor means a real but small issue; nit means a trivial improvement.

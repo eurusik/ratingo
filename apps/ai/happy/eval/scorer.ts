@@ -14,6 +14,13 @@ export interface CaseResult {
   questions: readonly LocatedFinding[];
 }
 
+interface CheckBreakdown {
+  findings: number;
+  falsePositives: number;
+}
+
+const NO_CHECK = 'none';
+
 export interface CaseScore {
   caseId: string;
   kind: EvalKind;
@@ -27,6 +34,7 @@ export interface CaseScore {
   offTargetOnExpectedCheck: number;
   offTargetOnOtherCheck: number;
   offTargetOutsideChecks: number;
+  byCheck: Record<string, CheckBreakdown>;
 }
 
 export interface EvalMetrics {
@@ -39,6 +47,7 @@ export interface EvalMetrics {
   offTargetOnExpectedCheck: number;
   offTargetOnOtherCheck: number;
   offTargetOutsideChecks: number;
+  byCheck: Record<string, CheckBreakdown>;
   cases: number;
 }
 
@@ -58,6 +67,7 @@ const emptyScore = (result: CaseResult): CaseScore => ({
   offTargetOnExpectedCheck: 0,
   offTargetOnOtherCheck: 0,
   offTargetOutsideChecks: 0,
+  byCheck: {},
 });
 
 const offTargetFindings = (
@@ -70,6 +80,36 @@ const offTargetFindings = (
         (finding) => !(finding.file === testCase.path && near(finding.line, expected)),
       )
     : [...result.findings];
+
+const breakdownByCheck = (
+  findings: readonly LocatedFinding[],
+  falsePositives: readonly LocatedFinding[],
+  kind: EvalKind,
+): Record<string, CheckBreakdown> => {
+  const result: Record<string, CheckBreakdown> = {};
+  const wrong = new Set(kind === EvalKind.POSITIVE ? falsePositives : findings);
+  for (const finding of findings) {
+    const key = finding.checkId ?? NO_CHECK;
+    const entry = result[key] ?? { findings: 0, falsePositives: 0 };
+    entry.findings += 1;
+    entry.falsePositives += wrong.has(finding) ? 1 : 0;
+    result[key] = entry;
+  }
+  return result;
+};
+
+const mergeBreakdowns = (scores: readonly CaseScore[]): Record<string, CheckBreakdown> => {
+  const merged: Record<string, CheckBreakdown> = {};
+  for (const score of scores) {
+    for (const [key, value] of Object.entries(score.byCheck)) {
+      const entry = merged[key] ?? { findings: 0, falsePositives: 0 };
+      entry.findings += value.findings;
+      entry.falsePositives += value.falsePositives;
+      merged[key] = entry;
+    }
+  }
+  return merged;
+};
 
 export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => {
   const score = emptyScore(result);
@@ -107,6 +147,7 @@ export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => 
       result.selectedCheckIds.includes(finding.checkId),
   ).length;
   score.offTargetOutsideChecks = offTarget.filter((finding) => finding.checkId === null).length;
+  score.byCheck = breakdownByCheck(result.findings, offTarget, testCase.kind);
   return score;
 };
 
@@ -132,6 +173,7 @@ export const summarize = (scores: readonly CaseScore[]): EvalMetrics => {
     offTargetOnExpectedCheck: sum((score) => score.offTargetOnExpectedCheck),
     offTargetOnOtherCheck: sum((score) => score.offTargetOnOtherCheck),
     offTargetOutsideChecks: sum((score) => score.offTargetOutsideChecks),
+    byCheck: mergeBreakdowns(scores),
     cases: scores.length,
   };
 };

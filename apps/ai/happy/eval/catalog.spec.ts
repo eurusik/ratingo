@@ -32,7 +32,7 @@ describe('check catalog', () => {
     const catalog = (await FolderCheckSourceAdapter.load(CATALOG_PATH)).list();
     for (const testCase of CHECK_EVAL_CASES) {
       const selected = selectChecks(catalog, [
-        { path: testCase.path, addedLines: addedLineTexts(renderPatch(testCase.lines)) },
+        { path: testCase.path, addedLines: addedLineTexts(renderPatch(testCase)) },
       ]).map((check) => check.id);
       expect({ id: testCase.id, selected: selected.includes(testCase.checkId ?? '') }).toEqual({
         id: testCase.id,

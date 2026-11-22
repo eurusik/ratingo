@@ -82,4 +82,16 @@ describe('findPrecedent', () => {
       findPrecedent(build({ file: 'src/a.spec.ts', category: FindingCategory.CORRECTNESS })),
     ).toBeNull();
   });
+
+  it('drops minor and nit performance advice but keeps a major performance finding', () => {
+    expect(
+      findPrecedent(build({ category: FindingCategory.PERFORMANCE, severity: Severity.MINOR })),
+    ).toBe(PrecedentId.NO_MINOR_PERFORMANCE_ADVICE);
+    expect(
+      findPrecedent(build({ category: FindingCategory.PERFORMANCE, severity: Severity.NIT })),
+    ).toBe(PrecedentId.NO_MINOR_PERFORMANCE_ADVICE);
+    expect(
+      findPrecedent(build({ category: FindingCategory.PERFORMANCE, severity: Severity.MAJOR })),
+    ).toBeNull();
+  });
 });
