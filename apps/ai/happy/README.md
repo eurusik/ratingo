@@ -23,7 +23,7 @@ An explicit command reviews a trivial pull request that would otherwise be skipp
 
 ## Internal API for Veronica
 
-Veronica (`apps/ai/veronica`) asks Happy about pull requests over the Railway private network (`http://happy.railway.internal:3005`). Happy listens on `::` for that. The public hostname must keep serving only `/`, `/health` and `POST /webhooks/github`.
+Veronica (`apps/ai/veronica`) asks Happy about pull requests over the Railway private network (`http://happy.railway.internal:8080` on Railway, where `PORT` is set by the platform). Happy listens on `::` for that. The public hostname must keep serving only `/`, `/health` and `POST /webhooks/github`.
 
 | Request                                       | Result                                                                                                                                                                                                                                                      |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

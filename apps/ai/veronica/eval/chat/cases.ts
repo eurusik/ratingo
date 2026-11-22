@@ -437,7 +437,7 @@ export const EVAL_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['ask_happy'],
-    mustContain: [['важлив'], ['2']],
+    mustContain: [['важлив', 'серйозн'], ['2']],
     reference: {
       calls: [{ tool: 'ask_happy', input: { pull_number: 470 } }],
       answer:

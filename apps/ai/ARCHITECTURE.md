@@ -502,12 +502,12 @@ Happy's internal API (`modules/webhook`, reachable only over the Railway private
 
 Env:
 
-| Service  | Variable              | Notes                                                                           |
-| -------- | --------------------- | ------------------------------------------------------------------------------- |
-| Happy    | `HAPPY_SERVICE_TOKEN` | secret, at least 24 characters; unset disables the API                          |
-| Veronica | `HAPPY_SERVICE_TOKEN` | the same secret                                                                 |
-| Veronica | `HAPPY_INTERNAL_URL`  | not secret, `http://happy.railway.internal:<PORT of Happy>` (default port 3005) |
-| Veronica | `GITHUB_REPOSITORY`   | already used by `recent_changes`; links and numbers are checked against it      |
+| Service  | Variable              | Notes                                                                      |
+| -------- | --------------------- | -------------------------------------------------------------------------- |
+| Happy    | `HAPPY_SERVICE_TOKEN` | secret, at least 24 characters; unset disables the API                     |
+| Veronica | `HAPPY_SERVICE_TOKEN` | the same secret                                                            |
+| Veronica | `HAPPY_INTERNAL_URL`  | not secret, `http://happy.railway.internal:8080` (Happy's port on Railway) |
+| Veronica | `GITHUB_REPOSITORY`   | already used by `recent_changes`; links and numbers are checked against it |
 
 Failure modes:
 
