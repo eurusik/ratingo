@@ -13,6 +13,7 @@ import { ReviewStatus } from '../entities/review-outcome';
 
 import { checkVoiceLine } from './check-voice';
 import { sanitizeModelText } from './output-sanitizer';
+import { buildResultSnapshot, renderResultMarker } from './review-result';
 
 const QUESTION_TITLE_PREFIX = 'Питання';
 
@@ -40,9 +41,17 @@ const annotationsFor = (outcome: ReviewOutcome): CheckAnnotation[] =>
       ].slice(0, MAX_CHECK_ANNOTATIONS)
     : [];
 
+const summaryWithMarker = (outcome: ReviewOutcome): string => {
+  const marker = renderResultMarker(buildResultSnapshot(outcome));
+  const body = `${checkVoiceLine(outcome)}\n\n${outcome.markdown}`;
+  return marker === ''
+    ? body.slice(0, MAX_CHECK_SUMMARY_CHARS)
+    : `${body.slice(0, MAX_CHECK_SUMMARY_CHARS - marker.length - 2)}\n\n${marker}`;
+};
+
 export const buildCheckReport = (outcome: ReviewOutcome): CheckReport => ({
   conclusion: CheckConclusion.NEUTRAL,
   title: checkVoiceLine(outcome),
-  summary: `${checkVoiceLine(outcome)}\n\n${outcome.markdown}`.slice(0, MAX_CHECK_SUMMARY_CHARS),
+  summary: summaryWithMarker(outcome),
   annotations: annotationsFor(outcome),
 });

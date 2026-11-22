@@ -7,8 +7,8 @@ import { ChatWorker } from './chat.worker';
 
 const MESSAGE = { updateId: 1, userId: '10', chatId: '10', chatType: 'private', text: '/help' };
 
-const workerWith = (handle: jest.Mock) =>
-  new ChatWorker({ handle } as unknown as ChatService, {} as never);
+const workerWith = (handle: jest.Mock, followUp: jest.Mock = jest.fn()) =>
+  new ChatWorker({ handle } as unknown as ChatService, { handle: followUp } as never, {} as never);
 
 describe('ChatWorker', () => {
   it('hands a chat job to the chat service', async () => {
@@ -52,5 +52,17 @@ describe('ChatWorker', () => {
         data: MESSAGE,
       }),
     ).rejects.toBe(failure);
+  });
+
+  it('hands a Happy follow-up job to the follow-up service', async () => {
+    const followUp = jest.fn().mockResolvedValue('wait');
+    const data = { chatId: '10', pullNumber: 470, headSha: 'abc', attempt: 2 };
+    await expect(
+      workerWith(jest.fn(), followUp).process({ name: 'happy-follow-up', data }),
+    ).resolves.toBe('wait');
+    expect(followUp).toHaveBeenCalledWith(data);
+    await expect(
+      workerWith(jest.fn(), followUp).process({ name: 'happy-follow-up', data: { chatId: 1 } }),
+    ).resolves.toBe('ignored');
   });
 });

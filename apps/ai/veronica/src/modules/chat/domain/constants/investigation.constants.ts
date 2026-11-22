@@ -27,6 +27,7 @@ export const InvestigationTool = {
   PRODUCT_STATS: 'product_stats',
   DIGEST_SNAPSHOT: 'digest_snapshot',
   RECENT_CHANGES: 'recent_changes',
+  ASK_HAPPY: 'ask_happy',
 } as const;
 export type InvestigationTool = (typeof InvestigationTool)[keyof typeof InvestigationTool];
 

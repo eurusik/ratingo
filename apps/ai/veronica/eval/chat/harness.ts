@@ -52,6 +52,7 @@ const fixtureExecutors = (testCase: EvalCase): InvestigationExecutors => {
     productStats: answer('product_stats'),
     digestSnapshot: () => answer('digest_snapshot')(),
     recentChanges: answer('recent_changes'),
+    askHappy: answer('ask_happy'),
   };
 };
 

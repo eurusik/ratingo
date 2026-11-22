@@ -6,6 +6,7 @@ export const ANTHROPIC_CONFIG = Symbol('ANTHROPIC_CONFIG');
 export const CHAT_CONFIG = Symbol('CHAT_CONFIG');
 export const PRODUCT_STATS_CONFIG = Symbol('PRODUCT_STATS_CONFIG');
 export const CHANGES_CONFIG = Symbol('CHANGES_CONFIG');
+export const HAPPY_CONFIG = Symbol('HAPPY_CONFIG');
 
 export interface GrafanaConfig {
   baseUrl?: string;
@@ -38,5 +39,11 @@ export interface ChatConfig {
 
 export interface ChangesConfig {
   token?: string;
+  repository: string;
+}
+
+export interface HappyConfig {
+  internalUrl?: string;
+  serviceToken?: string;
   repository: string;
 }

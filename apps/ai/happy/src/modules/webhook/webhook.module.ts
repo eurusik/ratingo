@@ -6,10 +6,13 @@ import IORedis from 'ioredis';
 import { REDIS_CONFIG, type RedisConfig } from '../../config/config.constants';
 import { ReviewModule } from '../review/public';
 
+import { InternalReviewService } from './application/services/internal-review.service';
 import { WebhookService } from './application/services/webhook.service';
 import { REVIEW_QUEUE_PORT } from './domain/ports/review-queue.port';
 import { BullmqReviewQueue } from './infrastructure/queue/bullmq-review-queue';
 import { ReviewWorker } from './infrastructure/queue/review.worker';
+import { InternalReviewController } from './presentation/controllers/internal-review.controller';
+import { InternalApiGuard } from './presentation/guards/internal-api.guard';
 import { GithubWebhookController } from './presentation/controllers/github-webhook.controller';
 import {
   REVIEW_QUEUE,
@@ -20,7 +23,7 @@ import {
 
 @Module({
   imports: [ReviewModule],
-  controllers: [GithubWebhookController],
+  controllers: [GithubWebhookController, InternalReviewController],
   providers: [
     {
       provide: REVIEW_REDIS,
@@ -47,6 +50,8 @@ import {
       useFactory: (queue: Queue) => new BullmqReviewQueue(queue),
     },
     WebhookService,
+    InternalReviewService,
+    InternalApiGuard,
     ReviewWorker,
   ],
 })

@@ -1,3 +1,4 @@
+import { renderResultMarker } from '../../domain/policies/review-result';
 import { CodeHostError } from '../../domain/ports/code-host.port';
 import { StaticTokenProvider } from '../auth/github-token.provider';
 import { TEST_REF } from '../testing/fake-code-host.testing';
@@ -187,5 +188,98 @@ describe('GithubCodeHostAdapter', () => {
         ],
       },
     });
+  });
+});
+
+describe('GithubCodeHostAdapter published checks', () => {
+  const marker = (title: string) =>
+    renderResultMarker({
+      status: 'reviewed',
+      title,
+      summary: 'Все гаразд',
+      skipReason: null,
+      counts: { critical: 0, major: 1, minor: 0, nit: 0 },
+      questions: [],
+      coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
+    });
+
+  const run = (overrides: Record<string, unknown> = {}) => ({
+    name: 'Happy',
+    status: 'completed',
+    html_url: 'https://github.com/acme/shop/runs/1',
+    head_sha: 'h1',
+    app: { id: 42 },
+    output: { title: 'Стоп.', summary: `Стоп.\n\n${marker('Стоп.')}` },
+    ...overrides,
+  });
+
+  const adapterFor = (runs: unknown[], appId?: string) => {
+    const calls: string[] = [];
+    const fetchFn = (async (url: string) => {
+      calls.push(url);
+      return json({ check_runs: runs });
+    }) as unknown as typeof fetch;
+    return {
+      calls,
+      adapter: new GithubCodeHostAdapter({
+        tokens: new StaticTokenProvider(TOKEN),
+        apiUrl: 'https://gh.test',
+        fetchFn,
+        ...(appId === undefined ? {} : { appId }),
+      }),
+    };
+  };
+
+  it('reads the latest Happy check run of a commit and decodes its marker', async () => {
+    const { adapter, calls } = adapterFor([run()]);
+    const check = await adapter.findForCommit(TEST_REF, 'h1');
+    expect(check).toMatchObject({
+      headSha: 'h1',
+      title: 'Стоп.',
+      url: 'https://github.com/acme/shop/runs/1',
+      snapshot: { status: 'reviewed', counts: { major: 1 } },
+    });
+    expect(calls[0]).toContain('/commits/h1/check-runs?check_name=Happy&filter=latest');
+  });
+
+  it('ignores check runs from another app, other names and unfinished runs', async () => {
+    const { adapter } = adapterFor(
+      [run({ app: { id: 7 } }), run({ name: 'Other' }), run({ status: 'in_progress' })],
+      '42',
+    );
+    expect(await adapter.findForCommit(TEST_REF, 'h1')).toBeNull();
+  });
+
+  it('keeps a check without a marker and drops a link outside github.com', async () => {
+    const { adapter } = adapterFor([
+      run({
+        html_url: 'https://evil.example/x',
+        output: { title: 'Старий', summary: 'без маркера' },
+      }),
+    ]);
+    expect(await adapter.findForCommit(TEST_REF, 'h1')).toMatchObject({
+      url: null,
+      snapshot: null,
+      title: 'Старий',
+    });
+  });
+
+  it('lists the newest commits first, reading the last page of a long pull request', async () => {
+    const calls: string[] = [];
+    const fetchFn = (async (url: string) => {
+      calls.push(url);
+      return url.endsWith('page=1')
+        ? new Response(JSON.stringify([{ sha: 'a' }]), {
+            headers: { link: '<https://gh.test/x?per_page=5&page=3>; rel="last"' },
+          })
+        : json([{ sha: 'x1' }, { sha: 'x2' }, { sha: 'x3' }]);
+    }) as unknown as typeof fetch;
+    const adapter = new GithubCodeHostAdapter({
+      tokens: new StaticTokenProvider(TOKEN),
+      apiUrl: 'https://gh.test',
+      fetchFn,
+    });
+    expect(await adapter.listRecentCommitShas(TEST_REF, 5)).toEqual(['x3', 'x2', 'x1']);
+    expect(calls[1]).toContain('per_page=5&page=3');
   });
 });

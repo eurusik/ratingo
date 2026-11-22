@@ -21,8 +21,11 @@ import type { GithubTokenProvider } from '../auth/github-token.provider';
 import {
   directoryEntriesResponse,
   mapChangedFiles,
+  mapCommitShas,
+  mapPublishedChecks,
   mapPullRequest,
 } from '../mappers/github.mapper';
+import type { PublishedCheck, PublishedCheckPort } from '../../domain/ports/published-check.port';
 
 const PAGE_SIZE = 100;
 const NOT_FOUND = 404;
@@ -31,10 +34,12 @@ const RULES_FILE = 'CLAUDE.md';
 const RULES_DIRECTORY = '.claude/rules';
 const MARKDOWN_SUFFIX = '.md';
 const DIRECTORY_ENTRY_TYPE = 'file';
+const LAST_PAGE_PATTERN = /[?&]page=(\d+)[^>]*>;\s*rel="last"/;
 
 export interface GithubCodeHostConfig {
   tokens: GithubTokenProvider;
   apiUrl: string;
+  appId?: string;
   fetchFn?: typeof fetch;
 }
 
@@ -60,7 +65,9 @@ const applyPatchBudget = (
   return file;
 };
 
-export class GithubCodeHostAdapter implements CodeHostPort, CheckRunPublisherPort {
+export class GithubCodeHostAdapter
+  implements CodeHostPort, CheckRunPublisherPort, PublishedCheckPort
+{
   private readonly fetchFn: typeof fetch;
 
   constructor(private readonly config: GithubCodeHostConfig) {
@@ -165,6 +172,31 @@ export class GithubCodeHostAdapter implements CodeHostPort, CheckRunPublisherPor
         },
       },
     });
+  }
+
+  async findForCommit(ref: PullRequestRef, sha: string): Promise<PublishedCheck | null> {
+    const response = await this.request(
+      'find check run',
+      ref,
+      `${this.repositoryPath(ref)}/commits/${encodeURIComponent(sha)}/check-runs?check_name=${encodeURIComponent(CHECK_RUN_NAME)}&filter=latest&per_page=${PAGE_SIZE}`,
+    );
+    const [latest] = mapPublishedChecks(await response.json(), CHECK_RUN_NAME, this.config.appId);
+    return latest ?? null;
+  }
+
+  async listRecentCommitShas(ref: PullRequestRef, limit: number): Promise<string[]> {
+    const path = `${this.pullPath(ref)}/commits?per_page=${limit}`;
+    const first = await this.request('list commits', ref, `${path}&page=1`);
+    const lastPage = LAST_PAGE_PATTERN.exec(first.headers.get('link') ?? '')?.[1];
+    const response =
+      lastPage === undefined
+        ? first
+        : await this.request('list commits', ref, `${path}&page=${lastPage}`);
+    return mapCommitShas(await response.json()).reverse();
+  }
+
+  private repositoryPath(ref: RepositoryRef): string {
+    return `/repos/${encodeURIComponent(ref.owner)}/${encodeURIComponent(ref.repo)}`;
   }
 
   private checkRunsPath(ref: RepositoryRef): string {

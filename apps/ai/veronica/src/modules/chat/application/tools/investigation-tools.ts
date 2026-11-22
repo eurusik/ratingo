@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { defineTool, type Tool } from '@ratingo/ai-core';
 
 import { SeriesMetric } from '../../../digest/public';
+import { ASK_HAPPY_OUTPUT_CAP } from '../../domain/constants/happy.constants';
 import {
   InvestigationTool,
   METRIC_DEFAULT_WINDOW,
@@ -27,6 +28,7 @@ const METRICS_OUTPUT_CAP = 3000;
 const PRODUCT_OUTPUT_CAP = 3000;
 const SNAPSHOT_OUTPUT_CAP = 6000;
 const CHANGES_OUTPUT_CAP = 4000;
+const MAX_PULL_NUMBER = 999_999_999;
 
 export const metricsQueryInput = z.object({
   template: z.enum(TEMPLATE_NAMES).describe('Name of a ready-made metric query'),
@@ -61,6 +63,15 @@ export const recentChangesInput = z.object({
     .string()
     .optional()
     .describe('How far back to look, such as 24h or 7d (at most 7d). Default 24h'),
+});
+
+export const askHappyInput = z.object({
+  pull_number: z
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_PULL_NUMBER)
+    .describe('Pull request number in the Ratingo repository'),
 });
 
 const noInput = z.object({});
@@ -100,5 +111,14 @@ export const buildInvestigationTools = (executors: InvestigationExecutors): Tool
     readOnly: true,
     maxOutputChars: CHANGES_OUTPUT_CAP,
     handler: (input) => executors.recentChanges(input),
+  }),
+  defineTool({
+    name: InvestigationTool.ASK_HAPPY,
+    description:
+      'What Happy, the pull request reviewer, said about one pull request: the verdict, finding counts by severity, questions to the author and what was not reviewed. Only reads a finished result and never starts a review.',
+    inputSchema: askHappyInput,
+    readOnly: true,
+    maxOutputChars: ASK_HAPPY_OUTPUT_CAP,
+    handler: (input) => executors.askHappy(input),
   }),
 ];

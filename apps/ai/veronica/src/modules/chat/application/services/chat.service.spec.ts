@@ -28,6 +28,7 @@ class Harness {
   readonly asked: { chatId: string; question: string }[] = [];
   investigationOutcome: ChatOutcome = ChatOutcome.ANSWERED;
   investigationFailure: Error | null = null;
+  readonly happyAsked: { chatId: string; target: unknown }[] = [];
 
   private readonly clock = new FixedClock(NOW_MS);
 
@@ -50,6 +51,12 @@ class Harness {
         if (this.investigationFailure !== null) throw this.investigationFailure;
         this.asked.push({ chatId, question });
         return { outcome: this.investigationOutcome, html: '', toolCalls: [], costUsd: 0 };
+      },
+    } as never,
+    {
+      reply: async (chatId: string, target: unknown) => {
+        this.happyAsked.push({ chatId, target });
+        return 'Хеппі відповів';
       },
     } as never,
     {
@@ -176,13 +183,15 @@ describe('ChatService', () => {
   });
 
   it.each([
-    'Happy, review https://github.com/eurusik/ratingo/pull/431',
-    'Хеппі, глянь цей PR',
-    'https://github.com/eurusik/ratingo/pull/431',
-  ])('tells that Happy is not connected yet for «%s» and asks no model', async (text) => {
+    ['Happy, review https://github.com/eurusik/ratingo/pull/431', 'link'],
+    ['Хеппі, глянь 470', 'number'],
+    ['Хеппі, глянь цей PR', 'unclear'],
+    ['https://github.com/eurusik/ratingo/pull/431', 'link'],
+  ])('sends «%s» to Happy (%s) and asks no model', async (text, kind) => {
     const chat = new Harness();
     await chat.say(text);
-    expect(chat.reply).toContain('Хеппі');
+    expect(chat.reply).toBe('Хеппі відповів');
+    expect(chat.happyAsked).toEqual([{ chatId: '10', target: expect.objectContaining({ kind }) }]);
     expect(chat.asked).toEqual([]);
     expect(chat.events).toEqual([{ outcome: 'handled', command: 'free_text', route: 'happy' }]);
   });

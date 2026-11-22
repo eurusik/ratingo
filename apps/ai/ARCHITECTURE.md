@@ -438,21 +438,21 @@ The Telegram bot runs in webhook mode (polling breaks with more than one replica
 1. Telegram sends `POST /webhooks/telegram` through the Cloudflare WAF, which allows only that path (plus `GET /` and `/health`).
 2. The service verifies the secret header, then the allowlist: the sender's user ID **and** the chat ID, and the chat is private.
 3. It enqueues a BullMQ `chat` job (prefix `ai-veronica`, job id from the Telegram `update_id`) and returns 200 at once. A wrong secret gets 401; an unknown user, chat or update type gets 200 and is ignored, so the webhook reveals nothing about the allowlist.
-4. The worker routes the message, cheapest first: command → mention → pattern (a GitHub PR link goes to Happy) → free-form → investigation agent.
+4. The worker routes the message, cheapest first: command → mention → pattern (a GitHub PR link goes to Happy) → free-form → investigation agent. A Happy mention or a PR link never reaches a model (see "Happy through Veronica").
 5. It replies with sanitized Telegram HTML and records an `ai.runs` row (`trigger = chat`).
 
 The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_BOT_TOKEN, "ratingo-telegram-webhook"))`. It fits Telegram's charset and length, and rotating the bot token rotates it. On boot, when `TELEGRAM_WEBHOOK_URL` is set, the service registers the webhook (`allowed_updates: ["message"]`, `drop_pending_updates: false`) unless `getWebhookInfo` already matches.
 
 ### Module layout `modules/chat`
 
-- **domain:** `Conversation`, `Intent`, `PendingAction`; policies `allowlist`, `command-parser`, `mention-parser`, `pattern-router`; ports `CHAT_TRANSPORT`, `CONVERSATION_STORE`, `PENDING_ACTION_STORE`, `HAPPY_CLIENT`. `CHAT_TRANSPORT` and the webhook admin port live in `modules/notify` next to the Telegram adapter; the chat module consumes them through `notify/public`.
+- **domain:** `Conversation`, `Intent`, `PendingAction`; policies `allowlist`, `command-parser`, `mention-parser`, `pattern-router`, `happy-target`, `happy-summary`, `happy-follow-up`; ports `CHAT_TRANSPORT`, `CONVERSATION_STORE`, `PENDING_ACTION_STORE`, `HAPPY_CLIENT`. `CHAT_TRANSPORT` and the webhook admin port live in `modules/notify` next to the Telegram adapter; the chat module consumes them through `notify/public`.
 - **application:** `chat.service`, command handlers, `investigation.runner`, the BullMQ worker.
 - **infrastructure:** Telegram adapter (extends `notify`), Redis stores with TTL, Happy HTTP client.
 - **presentation:** `telegram-webhook.controller`.
 
 ### Commands
 
-`/help`, `/digest` (builds and sends today's digest now through the digest pipeline without touching the daily `sent` claim, marked as on-demand), `/status` (one screen: block levels from the same rules engine), `/queues` and `/site` (those blocks in detail). Free text and mentions of Veronica go to the investigation agent (step 2). Happy mentions and PR links answer that Happy is not connected here yet (step 3).
+`/help`, `/digest` (builds and sends today's digest now through the digest pipeline without touching the daily `sent` claim, marked as on-demand), `/status` (one screen: block levels from the same rules engine), `/queues` and `/site` (those blocks in detail). Free text and mentions of Veronica go to the investigation agent (step 2). A Happy mention with a PR number and a link to a PR of the configured repository go to Happy (step 3). `/help` lists them.
 
 ### Investigation tools (read-only)
 
@@ -460,11 +460,11 @@ The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_B
 - `product_stats`: the `reporting` views through `ai_reader`.
 - `digest_snapshot`: today's snapshot and rule outcomes.
 - `recent_changes`: deploys and merged PRs, read-only.
-- `ask_happy`: a question to Happy.
+- `ask_happy`: reads Happy's latest finished result for one PR (verdict, counts by severity, questions, coverage). It never starts a review.
 
 No Railway logs and no free SQL; those are left to DUM-E later.
 
-`ask_happy` arrives in step 3; the other four ship in step 2. `metrics_query` templates: `queue_throughput`, `queue_backlog_peak`, `http_client_errors`, `site_requests`, `site_latency_p95`, `site_memory_peak`, `scheduler_last_runs`, `backup_status`, `infra_health`. Their PromQL lives in `digest/domain/queries/prom-queries.ts`, shared with the digest collectors. Parameters are validated (queue and provider names, a three-digit status, a window from 1 hour to 7 days, an offset of 0 to 14 days) before they reach a query.
+`ask_happy` ships in step 3; the other four shipped in step 2. `metrics_query` templates: `queue_throughput`, `queue_backlog_peak`, `http_client_errors`, `site_requests`, `site_latency_p95`, `site_memory_peak`, `scheduler_last_runs`, `backup_status`, `infra_health`. Their PromQL lives in `digest/domain/queries/prom-queries.ts`, shared with the digest collectors. Parameters are validated (queue and provider names, a three-digit status, a window from 1 hour to 7 days, an offset of 0 to 14 days) before they reach a query.
 
 ### Investigation run (step 2)
 
@@ -476,6 +476,45 @@ No Railway logs and no free SQL; those are left to DUM-E later.
 - **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `redacted`, `fallback`, `failed`; route `investigation`) and a `chat` row in `ai.runs` with the cost.
 - **Env.** `GITHUB_READ_TOKEN` (optional, read-only; `recent_changes` reports itself unavailable without it) and `GITHUB_REPOSITORY` (default `eurusik/ratingo`).
 - **Eval.** `npm run eval:chat --workspace=@ratingo/ai-veronica` runs `apps/ai/veronica/eval/chat` (15 cases with fixture tool results). On the stub model it replays reference answers and checks the harness; with `AI_MODEL_FAST=anthropic:<model>` and `ANTHROPIC_API_KEY` it measures tool-selection accuracy, fact accuracy and cases where the numbers guard fired (target 0). `EVAL_DUMP=<file>` writes the answers.
+
+### Happy through Veronica (step 3)
+
+What the owner sees:
+
+- **A PR link of the configured repository, or «Хеппі, глянь 470» / «Happy, рев'ю #470».** Plain code, no model. If Happy already has a result for the PR's current head commit, Veronica replies at once with a short summary and the report link. Otherwise she asks Happy to review, replies «Хеппі взявся…», and a delayed `happy-follow-up` job in the `chat` queue polls Happy every 30 seconds (at most 20 times) and posts the summary when it is ready. If the PR gets a new commit first, is not published or the polls run out, she says so and points to the PR.
+- **A link to another repository** is rejected politely. A Happy mention without a number asks for one.
+- **A free-form question** («що там Хеппі сказав про 470?») goes to the investigation agent, which can call `ask_happy`. That tool only reads; requesting a paid review stays on the deterministic path.
+
+Number extraction from a mention is deliberately strict: at most three words around one number (`глянь 470`, `рев'ю #470`). Longer sentences ask for the number instead of guessing.
+
+Happy's internal API (`modules/webhook`, reachable only over the Railway private network, `happy.railway.internal`):
+
+| Request                                       | Result                                                                                                                                                                                                                                                                       |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /internal/pull-requests/:number/review` | enqueues the same review job as `/happy review`, keyed by repository, PR and head commit, so a repeat is coalesced. Returns `queued`, `already_running`, `already_reviewed` (with `headSha`), `skipped` (with `reason`: `closed`, `merged`, `untrusted_fork`) or `not_found` |
+| `GET /internal/pull-requests/:number/review`  | `not_found`, or `found` with `headSha`, `reviewPending` and the latest `result` (status, voice line, summary, counts by severity, questions, coverage, the commit it was for, whether that is the current head, the check-run URL), or `null`                                |
+
+- The repository is the first entry of `HAPPY_ALLOWED_REPOS`; only a PR number comes in. Fork PRs from untrusted authors are refused, as for the webhook.
+- Happy stores no state of its own. The `Happy` check run's summary ends with a hidden `<!-- happy:result:v1 … -->` marker (URL-encoded JSON of the result), written when the check is published and read back through the Checks API. Only runs created by Happy's own GitHub App are trusted. A check without a marker (published before step 3) is returned as status `unknown` with its title only. If the PR has no result for its current head, Happy looks at its five latest earlier commits and marks that result as not current.
+- Auth: `Authorization: Bearer <HAPPY_SERVICE_TOKEN>`, compared in constant time (hashed first, so length does not leak). With no token configured, every internal route answers 404; a wrong token is 401. A request that carries a public proxy header (`X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP` and similar) is also answered 404, so a rule mistake in front of Happy does not expose the API. The Cloudflare WAF still allows only `/`, `/health` and `POST /webhooks/github` on the public hostname.
+- Happy listens on `::` so Railway's IPv6 private network can reach it.
+- Veronica calls it with a 10 second timeout and never retries; polling is the retry. Veronica has no GitHub write credentials.
+
+Env:
+
+| Service  | Variable              | Notes                                                                      |
+| -------- | --------------------- | -------------------------------------------------------------------------- |
+| Happy    | `HAPPY_SERVICE_TOKEN` | secret, at least 24 characters; unset disables the API                     |
+| Veronica | `HAPPY_SERVICE_TOKEN` | the same secret                                                            |
+| Veronica | `HAPPY_INTERNAL_URL`  | not secret, `http://happy.railway.internal:8080` (Happy's port on Railway) |
+| Veronica | `GITHUB_REPOSITORY`   | already used by `recent_changes`; links and numbers are checked against it |
+
+Failure modes:
+
+- Happy down, URL or token missing, wrong token, a non-2xx answer or a wrong response shape: chat answers that Happy is unavailable; `ask_happy` returns a tool error the agent reports honestly. The digest and commands are unaffected, and a missing or odd value never stops Veronica from booting.
+- Happy up but GitHub failing: the API answers 502 and Veronica treats it as unavailable.
+- A follow-up poll that cannot reach Happy waits for the next attempt and gives up at the limit with a link to the PR.
+- A review that fails twice stays failed in the queue; the next request for the same commit replaces it.
 
 ### Security
 
@@ -500,7 +539,7 @@ Commands cost $0. A free-form question on Haiku costs about $0.005–0.02.
 
 1. Webhook and commands (no model).
 2. Free-form Q&A with an eval set (done).
-3. Happy through Veronica (`ask_happy`, PR-link pattern).
+3. Happy through Veronica (`ask_happy`, PR-link pattern) (done).
 4. Confirm buttons.
 5. DUM-E.
 

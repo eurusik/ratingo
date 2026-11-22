@@ -9,7 +9,7 @@ import {
 
 import { ReviewJobSource, reviewJobId, type ReviewJob } from '../../../review/public';
 import { WebhookService } from '../../application/services/webhook.service';
-import type { ReviewQueuePort } from '../../domain/ports/review-queue.port';
+import { EnqueueState, type ReviewQueuePort } from '../../domain/ports/review-queue.port';
 import { signWebhookBody } from '../../infrastructure/security/webhook-signature';
 
 import { GithubWebhookController } from './github-webhook.controller';
@@ -28,9 +28,14 @@ class RecordingQueue implements ReviewQueuePort {
   readonly jobs: ReviewJob[] = [];
   failWith: Error | null = null;
 
-  async enqueue(job: ReviewJob): Promise<void> {
+  async enqueue(job: ReviewJob): Promise<EnqueueState> {
     if (this.failWith !== null) throw this.failWith;
     this.jobs.push(job);
+    return EnqueueState.QUEUED;
+  }
+
+  async isPending(): Promise<boolean> {
+    return false;
   }
 }
 
