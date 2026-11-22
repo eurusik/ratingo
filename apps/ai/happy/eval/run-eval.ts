@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import * as path from 'node:path';
 
 import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -22,10 +23,14 @@ import {
   TriageService,
 } from '../src/modules/review/public';
 
+import { FolderCheckSourceAdapter } from '../src/modules/review/infrastructure/adapters/folder.check-source-adapter';
+import { RecordingCheckMetrics } from '../src/modules/review/infrastructure/testing/recording-check-metrics.testing';
+
 import { EVAL_CASES } from './cases';
 import { EVAL_RULES, renderPatch, type EvalCase } from './eval-case';
 import { scoreCase, summarize, type CaseResult, type CaseScore } from './scorer';
 
+const CHECKS_PATH = path.resolve(__dirname, '../agent/checks');
 const EVAL_REPOSITORY = 'eval/cases';
 const MIN_LINES_TO_REVIEW = 25;
 const HEAD_SHA = 'evalhead';
@@ -72,11 +77,19 @@ async function main(): Promise<void> {
   try {
     const triage = app.get(TriageService, { strict: false });
     const deepReview = app.get(DeepReviewService, { strict: false });
+    const checkSource = await FolderCheckSourceAdapter.load(CHECKS_PATH);
     const config = app.get<ReviewConfig>(REVIEW_CONFIG, { strict: false });
     const scores: CaseScore[] = [];
     let costUsd = 0;
     for (const testCase of EVAL_CASES) {
-      const service = new ReviewService(hostFor(testCase), config, triage, deepReview);
+      const service = new ReviewService(
+        hostFor(testCase),
+        config,
+        triage,
+        deepReview,
+        checkSource,
+        new RecordingCheckMetrics(),
+      );
       const outcome = await service.review(
         { owner: 'eval', repo: 'cases', number: 1 },
         RunTrigger.MANUAL,

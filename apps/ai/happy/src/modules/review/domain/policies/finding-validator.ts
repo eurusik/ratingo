@@ -1,6 +1,7 @@
 import { MAX_FINDINGS, MAX_QUESTIONS } from '../constants/review-limits.constants';
 import { FindingKind } from '../constants/finding-classification.constants';
-import { SEVERITY_ORDER } from '../constants/severity.constants';
+import { SEVERITY_ORDER, type Severity } from '../constants/severity.constants';
+import type { Check } from '../entities/check';
 import type {
   DroppedFinding,
   Finding,
@@ -17,9 +18,14 @@ import { findPrecedent } from './precedents';
 export type DiffIndex = ReadonlyMap<string, DiffLines>;
 export type EvidenceFiles = ReadonlyMap<string, string>;
 
-export interface ValidationCaps {
+interface ValidationCaps {
   findings: number;
   questions: number;
+}
+
+export interface ValidationOptions {
+  caps?: ValidationCaps;
+  selectedChecks?: readonly Pick<Check, 'id' | 'severityCap'>[];
 }
 
 const DEFAULT_CAPS: ValidationCaps = { findings: MAX_FINDINGS, questions: MAX_QUESTIONS };
@@ -31,11 +37,28 @@ const byImportance = (left: Finding, right: Finding): number =>
   left.file.localeCompare(right.file) ||
   left.line - right.line;
 
-const dropReasonFor = (finding: Finding, index: DiffIndex): FindingDropReason | null => {
+const dropReasonFor = (
+  finding: Finding,
+  index: DiffIndex,
+  checks: ReadonlyMap<string, Pick<Check, 'id' | 'severityCap'>>,
+): FindingDropReason | null => {
   if (finding.message.trim().length === 0) return FindingDropReason.EMPTY_MESSAGE;
+  if (finding.checkId !== null && !checks.has(finding.checkId)) {
+    return FindingDropReason.UNSELECTED_CHECK;
+  }
   const lines = index.get(finding.file);
   if (lines === undefined) return FindingDropReason.FILE_NOT_IN_DIFF;
   return lines.commentable.has(finding.line) ? null : FindingDropReason.LINE_NOT_IN_DIFF;
+};
+
+const capSeverity = (
+  finding: Finding,
+  checks: ReadonlyMap<string, Pick<Check, 'severityCap'>>,
+): Severity => {
+  const cap = finding.checkId === null ? undefined : checks.get(finding.checkId)?.severityCap;
+  return cap !== undefined && SEVERITY_ORDER.indexOf(finding.severity) < SEVERITY_ORDER.indexOf(cap)
+    ? cap
+    : finding.severity;
 };
 
 const isProven = (finding: Finding, index: DiffIndex, evidenceFiles: EvidenceFiles): boolean =>
@@ -56,14 +79,16 @@ export const validateFindings = (
   findings: readonly Finding[],
   index: DiffIndex,
   evidenceFiles: EvidenceFiles,
-  caps: ValidationCaps = DEFAULT_CAPS,
+  options: ValidationOptions = {},
 ): FindingValidation => {
+  const caps = options.caps ?? DEFAULT_CAPS;
+  const checks = new Map((options.selectedChecks ?? []).map((check) => [check.id, check]));
   const kept: ValidatedFinding[] = [];
   const questions: ValidatedFinding[] = [];
   const dropped: DroppedFinding[] = [];
   const seen = new Set<string>();
   for (const finding of [...findings].sort(byImportance)) {
-    const reason = dropReasonFor(finding, index);
+    const reason = dropReasonFor(finding, index, checks);
     const precedent = reason === null ? findPrecedent(finding) : null;
     const fingerprint = fingerprintFinding(finding);
     const kind = settledKind(finding, index, evidenceFiles);
@@ -79,7 +104,12 @@ export const validateFindings = (
       dropped.push({ finding, reason: FindingDropReason.OVER_CAP });
     } else {
       seen.add(fingerprint);
-      bucket.push({ ...finding, kind, fingerprint });
+      bucket.push({
+        ...finding,
+        kind,
+        severity: capSeverity(finding, checks),
+        fingerprint,
+      });
     }
   }
   return { kept, questions, dropped };

@@ -25,7 +25,11 @@ const adapterWith = (handler: (url: string, init: RequestInit) => Response) => {
   }) as unknown as typeof fetch;
   return {
     calls,
-    adapter: new GithubCodeHostAdapter({ tokens: new StaticTokenProvider(TOKEN), apiUrl: 'https://gh.test', fetchFn }),
+    adapter: new GithubCodeHostAdapter({
+      tokens: new StaticTokenProvider(TOKEN),
+      apiUrl: 'https://gh.test',
+      fetchFn,
+    }),
   };
 };
 

@@ -7,8 +7,7 @@ export const REDIS_CONFIG = Symbol('REDIS_CONFIG');
 export const WEBHOOK_CONFIG = Symbol('WEBHOOK_CONFIG');
 
 export type GithubAuthConfig =
-  | { kind: 'token'; token: string }
-  | { kind: 'app'; appId: string; privateKey: string };
+  { kind: 'token'; token: string } | { kind: 'app'; appId: string; privateKey: string };
 
 export interface GithubConfig {
   auth: GithubAuthConfig;

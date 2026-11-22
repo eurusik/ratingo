@@ -32,7 +32,10 @@ interface Precedent {
 }
 
 const PRECEDENTS: readonly Precedent[] = [
-  { id: PrecedentId.DOCS_FILES, applies: (finding) => matchesAnyGlob(DOCS_FILE_PATTERNS, finding.file) },
+  {
+    id: PrecedentId.DOCS_FILES,
+    applies: (finding) => matchesAnyGlob(DOCS_FILE_PATTERNS, finding.file),
+  },
   { id: PrecedentId.ENV_TRUSTED, applies: (finding) => finding.topic === FindingTopic.ENV_CONFIG },
   {
     id: PrecedentId.NO_DOS_ADVICE,

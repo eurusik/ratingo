@@ -8,7 +8,7 @@ import { validateFindings } from './finding-validator';
 const PATCH = ['@@ -1,2 +1,3 @@', ' keep', '+const total = price * quantity;', ' tail'].join('\n');
 const CONTENT = ['keep', 'const total = price * quantity;', 'tail'].join('\n');
 const INDEX = new Map([['a.ts', parseDiffLines(PATCH)]]);
-const CAPS = { findings: 10, questions: 10 };
+const CAPS = { caps: { findings: 10, questions: 10 } };
 
 const finding = (overrides: Partial<Finding> = {}): Finding => ({
   file: 'a.ts',
@@ -17,6 +17,7 @@ const finding = (overrides: Partial<Finding> = {}): Finding => ({
   category: FindingCategory.CORRECTNESS,
   topic: FindingTopic.LOGIC,
   kind: FindingKind.FINDING,
+  checkId: null,
   message: 'Сума рахується без округлення',
   evidence: { path: 'a.ts', line: 2, excerpt: 'const total = price * quantity;' },
   ...overrides,
@@ -117,7 +118,9 @@ describe('validateFindings evidence', () => {
     const many = Array.from({ length: 4 }, (_, index) =>
       finding({ kind: FindingKind.QUESTION, message: `питання ${index}` }),
     );
-    const result = validateFindings(many, INDEX, new Map(), { findings: 10, questions: 2 });
+    const result = validateFindings(many, INDEX, new Map(), {
+      caps: { findings: 10, questions: 2 },
+    });
     expect(result.questions).toHaveLength(2);
     expect(result.dropped.map((entry) => entry.reason)).toEqual([
       FindingDropReason.OVER_CAP,

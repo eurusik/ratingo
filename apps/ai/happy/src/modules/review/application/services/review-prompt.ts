@@ -3,12 +3,15 @@ import {
   MAX_PROMPT_PATCH_CHARS,
   MAX_RULES_CHARS,
 } from '../../domain/constants/review-limits.constants';
+import type { Check } from '../../domain/entities/check';
 import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
 import { parseDiffLines, toLineRanges } from '../../domain/policies/diff-hunks';
 import type { RepoRule } from '../../domain/policies/rule-selector';
 import { wrapUntrusted } from '../../domain/policies/untrusted-content';
 
 const RULES_HEADING = '# Repository rules (trusted, from the base branch)';
+const CHECKS_HEADING =
+  '# Checks for this change (trusted). A finding that follows one of these checks sets checkId to its id; any other finding sets checkId to null.';
 const TRUNCATED_RULES_NOTE = '\n[rules truncated; use get_rules for the rest]';
 
 export const DiffMode = {
@@ -17,13 +20,36 @@ export const DiffMode = {
 } as const;
 export type DiffMode = (typeof DiffMode)[keyof typeof DiffMode];
 
-export const buildReviewSystem = (basePrompt: string, rules: readonly RepoRule[]): string => {
+export type RuleSections = ReadonlyMap<string, string>;
+
+const renderCheck = (check: Check, sections: RuleSections): string => {
+  const rule = sections.get(check.id);
+  const ruleBlock =
+    rule === undefined || check.rule === null
+      ? ''
+      : `\n\nRepository rule ${check.rule.file}${check.rule.heading === null ? '' : `#${check.rule.heading}`}:\n${rule}`;
+  return `## Check ${check.id} (highest severity: ${check.severityCap})\n${check.body}${ruleBlock}`;
+};
+
+export const buildReviewSystem = (
+  basePrompt: string,
+  rules: readonly RepoRule[],
+  checks: readonly Check[] = [],
+  sections: RuleSections = new Map(),
+): string => {
   const joined = rules.map((rule) => `## ${rule.path}\n${rule.body}`).join('\n\n');
   const body =
     joined.length > MAX_RULES_CHARS
       ? `${joined.slice(0, MAX_RULES_CHARS)}${TRUNCATED_RULES_NOTE}`
       : joined;
-  return `${basePrompt}\n\n${RULES_HEADING}\n${body}`;
+  const checkBlock =
+    checks.length === 0
+      ? ''
+      : `\n\n${CHECKS_HEADING}\n${[...checks]
+          .sort((left, right) => left.id.localeCompare(right.id))
+          .map((check) => renderCheck(check, sections))
+          .join('\n\n')}`;
+  return `${basePrompt}\n\n${RULES_HEADING}\n${body}${checkBlock}`;
 };
 
 const renderPatch = (file: ChangedFile): string =>

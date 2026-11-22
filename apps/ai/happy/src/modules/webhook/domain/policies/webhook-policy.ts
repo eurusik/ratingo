@@ -20,8 +20,7 @@ export interface WebhookPolicyConfig {
 }
 
 export type WebhookDecision =
-  | { action: 'enqueue'; job: ReviewJob }
-  | { action: 'ignore'; reason: IgnoreReason };
+  { action: 'enqueue'; job: ReviewJob } | { action: 'ignore'; reason: IgnoreReason };
 
 const ignore = (reason: IgnoreReason): WebhookDecision => ({ action: 'ignore', reason });
 
@@ -57,7 +56,10 @@ const decidePullRequest = (
   };
 };
 
-const decideComment = (event: CommentWebhookEvent, config: WebhookPolicyConfig): WebhookDecision => {
+const decideComment = (
+  event: CommentWebhookEvent,
+  config: WebhookPolicyConfig,
+): WebhookDecision => {
   if (event.action !== COMMENT_CREATED_ACTION || event.body.trim() !== REVIEW_COMMAND) {
     return ignore(IgnoreReason.NOT_A_COMMAND);
   }
@@ -78,10 +80,7 @@ const decideComment = (event: CommentWebhookEvent, config: WebhookPolicyConfig):
   };
 };
 
-export const decideWebhook = (
-  event: WebhookEvent,
-  config: WebhookPolicyConfig,
-): WebhookDecision =>
+export const decideWebhook = (event: WebhookEvent, config: WebhookPolicyConfig): WebhookDecision =>
   event.kind === WebhookEventKind.PULL_REQUEST
     ? decidePullRequest(event, config)
     : decideComment(event, config);

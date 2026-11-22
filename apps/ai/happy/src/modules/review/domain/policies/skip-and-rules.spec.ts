@@ -152,3 +152,19 @@ describe('rules', () => {
     expect(selectRules(rules, [], ['Frontend']).map((r) => r.name)).toContain('frontend');
   });
 });
+
+describe('globMatches braces', () => {
+  it('matches alternatives inside braces', () => {
+    expect(globMatches('src/{a,b}/**', 'src/a/x.ts')).toBe(true);
+    expect(globMatches('src/{a,b}/**', 'src/b/y/z.ts')).toBe(true);
+    expect(globMatches('src/{a,b}/**', 'src/c/x.ts')).toBe(false);
+    expect(
+      globMatches('apps/{x,y}/**/{repositories,mappers}/**', 'apps/x/m/repositories/r.ts'),
+    ).toBe(true);
+    expect(globMatches('**/*.{ts,tsx}', 'a/b.tsx')).toBe(true);
+  });
+
+  it('still escapes literal characters', () => {
+    expect(globMatches('a.b/**', 'aXb/c')).toBe(false);
+  });
+});

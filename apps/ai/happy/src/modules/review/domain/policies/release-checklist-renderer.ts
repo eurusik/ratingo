@@ -30,7 +30,9 @@ export const renderReleaseChecklist = (
     ({ path, risks }) => `\`${safe(path)}\`${risks.length > 0 ? `: ${risks.join('; ')}` : ''}`,
   );
   const dependencyItems = checklist.dependencies.flatMap(({ path, changes }) =>
-    changes.map(({ name, change }) => `\`${safe(path)}\`: ${safe(name)} (${CHANGE_LABELS[change]})`),
+    changes.map(
+      ({ name, change }) => `\`${safe(path)}\`: ${safe(name)} (${CHANGE_LABELS[change]})`,
+    ),
   );
   return [
     `## Чекліст релізу Happy: ${formatPullRequest(ref)}`,

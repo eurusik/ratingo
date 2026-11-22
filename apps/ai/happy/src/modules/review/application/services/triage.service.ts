@@ -11,24 +11,36 @@ import {
   TRIAGE_MAX_TURNS,
   TRIAGE_ROLE,
 } from '../../../../config/review.config';
-import { MAX_FOCUS_FILES } from '../../domain/constants/review-limits.constants';
+import { MAX_EXTRA_CHECKS, MAX_FOCUS_FILES } from '../../domain/constants/review-limits.constants';
+import type { Check, ExtraCheckRequest } from '../../domain/entities/check';
 import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
 import { reviewableFiles } from '../../domain/policies/skip-policy';
 import { wrapUntrusted } from '../../domain/policies/untrusted-content';
 import { TRIAGE_PROMPT_NAME, TRIAGE_TASK_NAME } from '../../review.constants';
 
 const MAX_RULE_TOPICS = 10;
+const MAX_EXTRA_CHECK_REQUESTS = 10;
+
+const renderCheckCatalog = ({ catalog, selectedIds }: TriageChecks): string =>
+  `\n\nChecks the code already selected: ${selectedIds.join(', ') || 'none'}.\nYou may add at most ${MAX_EXTRA_CHECKS} more in extraChecks, each as {id, file} where id is from this list and file is a changed file whose diff shows why it applies:\n${catalog.map((check) => `- ${check.id}: ${check.summary}`).join('\n')}`;
 const MAX_TOPIC_CHARS = 60;
 
 const triageSchema = z.object({
   risk: z.enum(['low', 'medium', 'high']),
   focusFiles: z.array(z.string()),
   ruleTopics: z.array(z.string()),
+  extraChecks: z.array(z.object({ id: z.string(), file: z.string() })).optional(),
 });
+
+export interface TriageChecks {
+  catalog: readonly Check[];
+  selectedIds: readonly string[];
+}
 
 export interface TriageResult {
   focusFiles: string[];
   ruleTopics: string[];
+  extraChecks: ExtraCheckRequest[];
   costUsd: number;
 }
 
@@ -68,6 +80,7 @@ export class TriageService {
     pr: PullRequest,
     files: readonly ChangedFile[],
     trigger: RunTrigger,
+    checks: TriageChecks,
   ): Promise<TriageResult> {
     const candidates = reviewableFiles(files);
     const fallback = largestFirst(candidates);
@@ -75,7 +88,7 @@ export class TriageService {
       task: TRIAGE_TASK_NAME,
       role: TRIAGE_ROLE,
       trigger,
-      system: this.folder.prompts[TRIAGE_PROMPT_NAME] ?? '',
+      system: `${this.folder.prompts[TRIAGE_PROMPT_NAME] ?? ''}${renderCheckCatalog(checks)}`,
       prompt: buildPrompt(pr, candidates),
       responseSchema: triageSchema,
       tools: [],
@@ -91,6 +104,7 @@ export class TriageService {
       return {
         focusFiles: fallback,
         ruleTopics: [],
+        extraChecks: [],
         costUsd,
       };
     }
@@ -102,6 +116,7 @@ export class TriageService {
       ruleTopics: reply.ruleTopics
         .slice(0, MAX_RULE_TOPICS)
         .map((topic) => topic.slice(0, MAX_TOPIC_CHARS)),
+      extraChecks: (reply.extraChecks ?? []).slice(0, MAX_EXTRA_CHECK_REQUESTS),
       costUsd,
     };
   }

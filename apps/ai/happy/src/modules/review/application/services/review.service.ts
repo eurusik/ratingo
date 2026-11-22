@@ -14,6 +14,7 @@ import {
   MIN_REVIEWABLE_CHANGED_LINES,
   type SkipReason,
 } from '../../domain/constants/skip-patterns.constants';
+import type { ValidatedFinding } from '../../domain/entities/finding';
 import type { ChangedFile, PullRequest, PullRequestRef } from '../../domain/entities/pull-request';
 import { formatPullRequest, formatRepository } from '../../domain/entities/pull-request';
 import type {
@@ -26,16 +27,26 @@ import type {
 import { CoverageGap, ReviewStatus } from '../../domain/entities/review-outcome';
 import { RepositoryNotAllowedError } from '../../domain/errors/review.errors';
 import { parseDiffLines, type DiffLines } from '../../domain/policies/diff-hunks';
+import { CheckOutcome, type Check } from '../../domain/entities/check';
 import { validateFindings } from '../../domain/policies/finding-validator';
 import {
   buildReleaseChecklist,
   isReleasePullRequest,
 } from '../../domain/policies/release-checklist';
+import {
+  addExtraChecks,
+  selectChecks,
+  type SelectableFile,
+} from '../../domain/policies/check-selector';
+import { addedLineTexts } from '../../domain/policies/diff-hunks';
+import { extractRuleSection } from '../../domain/policies/rule-section';
 import { renderReleaseChecklist } from '../../domain/policies/release-checklist-renderer';
 import { renderCompletedReview, renderSkippedReview } from '../../domain/policies/review-renderer';
-import { parseRule, selectRules } from '../../domain/policies/rule-selector';
+import { parseRule, selectRules, type RepoRule } from '../../domain/policies/rule-selector';
 import { isSafePath } from '../../domain/policies/safe-path';
 import { decideEligibility, decideSkip, reviewableFiles } from '../../domain/policies/skip-policy';
+import { CHECK_METRICS_PORT, type CheckMetricsPort } from '../../domain/ports/check-metrics.port';
+import { CHECK_SOURCE_PORT, type CheckSourcePort } from '../../domain/ports/check-source.port';
 import { CODE_HOST_PORT, type CodeHostPort } from '../../domain/ports/code-host.port';
 
 import { DeepReviewService, type DeepReviewResult } from './deep-review.service';
@@ -47,6 +58,11 @@ const buildDiffIndex = (files: readonly ChangedFile[]): Map<string, DiffLines> =
     files.flatMap((file): [string, DiffLines][] =>
       file.patch === null ? [] : [[file.path, parseDiffLines(file.patch)]],
     ),
+  );
+
+const selectableFiles = (files: readonly ChangedFile[]): SelectableFile[] =>
+  files.flatMap((file) =>
+    file.patch === null ? [] : [{ path: file.path, addedLines: addedLineTexts(file.patch) }],
   );
 
 const skippedOutcome = (pr: PullRequest, reason: SkipReason): SkippedReview => {
@@ -69,6 +85,8 @@ export class ReviewService {
     @Inject(REVIEW_CONFIG) private readonly config: ReviewConfig,
     private readonly triage: TriageService,
     private readonly deepReview: DeepReviewService,
+    @Inject(CHECK_SOURCE_PORT) private readonly checkSource: CheckSourcePort,
+    @Inject(CHECK_METRICS_PORT) private readonly checkMetrics: CheckMetricsPort,
   ) {}
 
   async review(ref: PullRequestRef, trigger: RunTrigger): Promise<ReviewOutcome> {
@@ -88,7 +106,19 @@ export class ReviewService {
     }
 
     const rules = (await this.host.readRuleFiles(ref, pr.baseSha)).map(parseRule);
-    const triaged = await this.triage.triage(pr, files, trigger);
+    const catalog = this.checkSource.list();
+    const preselected = selectChecks(catalog, selectableFiles(files));
+    const triaged = await this.triage.triage(pr, files, trigger, {
+      catalog,
+      selectedIds: preselected.map((check) => check.id),
+    });
+    const checks = addExtraChecks(
+      preselected,
+      catalog,
+      triaged.extraChecks,
+      files.map((file) => file.path),
+    );
+    checks.forEach((check) => this.checkMetrics.record(check.id, CheckOutcome.SELECTED));
     const diffMode = chooseDiffMode(files, triaged.focusFiles);
     const deep = await this.deepReview.review({
       host: this.host,
@@ -96,11 +126,13 @@ export class ReviewService {
       files,
       focusFiles: triaged.focusFiles,
       appliedRules: selectRules(rules, triaged.focusFiles, triaged.ruleTopics),
+      checks,
+      ruleSections: this.ruleSectionsFor(checks, rules),
       diffMode,
       allRules: rules,
       trigger,
     });
-    return this.completedOutcome(pr, files, truncated, triaged, deep, diffMode);
+    return this.completedOutcome(pr, files, truncated, triaged, deep, diffMode, checks);
   }
 
   private skipReasonFor(pr: PullRequest, files: readonly ChangedFile[]): SkipReason | null {
@@ -124,6 +156,37 @@ export class ReviewService {
       costUsd: 0,
       markdown: renderReleaseChecklist(pr.ref, pr.headSha, buildReleaseChecklist(files), truncated),
     };
+  }
+
+  private ruleSectionsFor(
+    checks: readonly Check[],
+    rules: readonly RepoRule[],
+  ): Map<string, string> {
+    const sections = new Map<string, string>();
+    for (const check of checks) {
+      if (check.rule === null) continue;
+      const section = extractRuleSection(rules, check.rule);
+      if (section === null) {
+        this.logger.warn(
+          `Rule ${check.rule.file}${check.rule.heading === null ? '' : `#${check.rule.heading}`} for check ${check.id} was not found; the check stands on its own text`,
+        );
+      } else {
+        sections.set(check.id, section);
+      }
+    }
+    return sections;
+  }
+
+  private recordCheckOutcomes(
+    findings: readonly ValidatedFinding[],
+    questions: readonly ValidatedFinding[],
+  ): void {
+    for (const { checkId } of findings) {
+      if (checkId !== null) this.checkMetrics.record(checkId, CheckOutcome.FINDING);
+    }
+    for (const { checkId } of questions) {
+      if (checkId !== null) this.checkMetrics.record(checkId, CheckOutcome.QUESTION);
+    }
   }
 
   private assertAllowed(ref: PullRequestRef): void {
@@ -187,12 +250,16 @@ export class ReviewService {
     triaged: TriageResult,
     deep: DeepReviewResult,
     diffMode: DiffMode,
+    checks: readonly Check[],
   ): Promise<CompletedReview> {
     const evidence = await this.readEvidenceFiles(
       pr,
       deep.findings.map((finding) => finding.evidence.path),
     );
-    const validation = validateFindings(deep.findings, buildDiffIndex(files), evidence.files);
+    const validation = validateFindings(deep.findings, buildDiffIndex(files), evidence.files, {
+      selectedChecks: checks,
+    });
+    this.recordCheckOutcomes(validation.kept, validation.questions);
     for (const { finding, reason, precedent } of validation.dropped) {
       this.logger.warn(
         `Dropped finding ${finding.file}:${finding.line}: ${reason}${precedent === undefined ? '' : ` (${precedent})`}`,

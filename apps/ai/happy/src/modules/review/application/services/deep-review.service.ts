@@ -17,6 +17,7 @@ import {
 } from '../../domain/constants/finding-classification.constants';
 import { MAX_EVIDENCE_EXCERPT_CHARS } from '../../domain/constants/review-limits.constants';
 import { FINDING_CATEGORIES, FINDING_SEVERITIES } from '../../domain/constants/severity.constants';
+import type { Check } from '../../domain/entities/check';
 import type { Finding } from '../../domain/entities/finding';
 import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
 import type { RepoRule } from '../../domain/policies/rule-selector';
@@ -24,7 +25,12 @@ import type { CodeHostPort } from '../../domain/ports/code-host.port';
 import { REVIEW_PROMPT_NAME, REVIEW_TASK_NAME } from '../../review.constants';
 import { createReviewTools } from '../tools/create-review-tools';
 
-import { buildReviewPrompt, buildReviewSystem, type DiffMode } from './review-prompt';
+import {
+  buildReviewPrompt,
+  buildReviewSystem,
+  type DiffMode,
+  type RuleSections,
+} from './review-prompt';
 
 const MAX_RAW_FINDINGS = 40;
 
@@ -38,6 +44,7 @@ const reviewSchema = z.object({
       category: z.enum(FINDING_CATEGORIES),
       topic: z.enum(FINDING_TOPICS),
       kind: z.enum(FINDING_KINDS),
+      checkId: z.string().nullable(),
       message: z.string(),
       suggestion: z.string().optional(),
       evidence: z.object({
@@ -55,6 +62,8 @@ export interface DeepReviewInput {
   files: readonly ChangedFile[];
   focusFiles: readonly string[];
   appliedRules: readonly RepoRule[];
+  checks: readonly Check[];
+  ruleSections: RuleSections;
   diffMode: DiffMode;
   allRules: readonly RepoRule[];
   trigger: RunTrigger;
@@ -97,7 +106,12 @@ export class DeepReviewService {
       task: REVIEW_TASK_NAME,
       role: REVIEW_ROLE,
       trigger: input.trigger,
-      system: buildReviewSystem(this.folder.prompts[REVIEW_PROMPT_NAME] ?? '', input.appliedRules),
+      system: buildReviewSystem(
+        this.folder.prompts[REVIEW_PROMPT_NAME] ?? '',
+        input.appliedRules,
+        input.checks,
+        input.ruleSections,
+      ),
       prompt: buildReviewPrompt(input.pr, input.files, input.focusFiles, input.diffMode),
       responseSchema: reviewSchema,
       tools: countingFailures(

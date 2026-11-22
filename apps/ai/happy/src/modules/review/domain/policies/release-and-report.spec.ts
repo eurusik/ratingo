@@ -101,6 +101,7 @@ const validated = (overrides: Partial<ValidatedFinding> = {}): ValidatedFinding 
   category: FindingCategory.CORRECTNESS,
   topic: FindingTopic.LOGIC,
   kind: FindingKind.FINDING,
+  checkId: null,
   message: 'Помилка',
   evidence: { path: 'src/a.ts', line: 4, excerpt: 'const value = 1;' },
   fingerprint: 'f',

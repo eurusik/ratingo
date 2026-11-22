@@ -8,8 +8,7 @@ import { decideWebhook } from '../../domain/policies/webhook-policy';
 import { REVIEW_QUEUE_PORT, type ReviewQueuePort } from '../../domain/ports/review-queue.port';
 
 export type WebhookResult =
-  | { status: 'queued'; jobId: string }
-  | { status: 'ignored'; reason: IgnoreReason };
+  { status: 'queued'; jobId: string } | { status: 'ignored'; reason: IgnoreReason };
 
 @Injectable()
 export class WebhookService {

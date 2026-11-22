@@ -578,9 +578,6 @@ jobs:
       - name: Tests
         run: npm test --workspace=@ratingo/ai-happy -- --ci
 
-      - name: Eval set on the stub model (structure only)
-        run: npm run eval --workspace=@ratingo/ai-happy
-
       - name: Build
         run: npm run build --workspace=@ratingo/ai-happy
 

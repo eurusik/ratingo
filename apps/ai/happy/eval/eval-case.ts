@@ -19,6 +19,8 @@ export interface EvalCase {
   path: string;
   lines: readonly string[];
   expectation?: EvalExpectation;
+  checkId?: string;
+  source?: string;
 }
 
 export const EVAL_RULES: readonly RepoRuleFile[] = [

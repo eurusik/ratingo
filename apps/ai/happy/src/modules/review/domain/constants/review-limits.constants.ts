@@ -19,3 +19,7 @@ export const MAX_CHECK_ANNOTATIONS = 50;
 export const MAX_CHECK_SUMMARY_CHARS = 60_000;
 export const MAX_ANNOTATION_MESSAGE_CHARS = 2_000;
 export const MAX_ANNOTATION_TITLE_CHARS = 120;
+export const MAX_SELECTED_CHECKS = 5;
+export const MAX_EXTRA_CHECKS = 2;
+export const MAX_CHECK_BODY_WORDS = 600;
+export const MAX_RULE_SECTION_CHARS = 3_000;

@@ -43,3 +43,9 @@ export const toLineRanges = (lines: ReadonlySet<number>): string => {
   }
   return ranges.map(([start, end]) => (start === end ? `${start}` : `${start}-${end}`)).join(',');
 };
+
+export const addedLineTexts = (patch: string): string[] =>
+  patch
+    .split('\n')
+    .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+    .map((line) => line.slice(1));

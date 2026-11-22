@@ -22,6 +22,8 @@ import {
 } from '../../../../config/models.config';
 import { AgentRunner } from '../../../../core/agent-runner.service';
 import { createReviewStubScript } from '../../../../core/stub-review.script';
+import { FolderCheckSourceAdapter } from '../../infrastructure/adapters/folder.check-source-adapter';
+import { RecordingCheckMetrics } from '../../infrastructure/testing/recording-check-metrics.testing';
 import { ReviewStatus } from '../../domain/entities/review-outcome';
 import { RepositoryNotAllowedError } from '../../domain/errors/review.errors';
 import {
@@ -36,6 +38,7 @@ import { DeepReviewService } from './deep-review.service';
 import { ReviewService } from './review.service';
 import { TriageService } from './triage.service';
 
+const CHECKS_PATH = path.resolve(__dirname, '../../../../../agent/checks');
 const AGENT_PATH = path.resolve(__dirname, '../../../../../agent');
 const USAGE = {
   inputTokens: 1000,
@@ -63,6 +66,7 @@ const FILE_BODY = 'const a = 1;\nconst b = 2;\nconst c = 3;';
 const proof = (path: string, line: number, excerpt: string) => ({
   topic: 'logic',
   kind: 'finding',
+  checkId: null,
   evidence: { path, line, excerpt },
 });
 
@@ -73,6 +77,7 @@ interface Setup {
   model: StubModelAdapter;
   runs: InMemoryRunRepository;
   host: FakeCodeHost;
+  metrics: RecordingCheckMetrics;
 }
 
 const requestsFor = (model: StubModelAdapter, name: string): ModelRequest[] =>
@@ -83,6 +88,7 @@ const setup = async (
   scripts: { triage?: StubScript; review?: StubScript } = {},
 ): Promise<Setup> => {
   const folder = await loadAgentFolder(AGENT_PATH, { knownModelAliases: MODEL_ALIAS_NAMES });
+  const checkSource = await FolderCheckSourceAdapter.load(CHECKS_PATH);
   const defaults = createReviewStubScript();
   const script: StubScript = {
     respond: (request, callIndex) =>
@@ -103,13 +109,16 @@ const setup = async (
     runs,
     new FixedClock(1_800_000_000_000),
   );
+  const metrics = new RecordingCheckMetrics();
   const service = new ReviewService(
     host,
     config,
     new TriageService(folder, runner),
     new DeepReviewService(folder, runner),
+    checkSource,
+    metrics,
   );
-  return { service, model, runs, host };
+  return { service, model, runs, host, metrics };
 };
 
 describe('ReviewService', () => {
@@ -471,5 +480,136 @@ describe('ReviewService', () => {
     expect(outcome.findings).toHaveLength(0);
     expect(outcome.questions).toHaveLength(1);
     expect(outcome.markdown).toContain('Питання до автора');
+  });
+
+  describe('checks', () => {
+    const MIGRATION = 'apps/api/drizzle_v2/0050_add_index.sql';
+    const MIGRATION_LINES = [
+      'ALTER TABLE movies ADD COLUMN slug text;',
+      'CREATE INDEX movies_title_idx ON movies (title);',
+    ];
+
+    const migrationHost = (overrides = {}) =>
+      buildFakeCodeHost({
+        files: [
+          buildChangedFile({
+            path: MIGRATION,
+            additions: 25,
+            patch: `@@ -0,0 +1,2 @@\n${MIGRATION_LINES.map((line) => `+${line}`).join('\n')}`,
+          }),
+        ],
+        contents: { [`head222:${MIGRATION}`]: MIGRATION_LINES.join('\n') },
+        ...overrides,
+      });
+
+    const reviewReply = (findings: unknown[]): StubScript => ({
+      respond: (request) => reply(request.model, text({ summary: 's', findings }), StopReason.END),
+    });
+
+    const finding = (checkId: string | null) => ({
+      file: MIGRATION,
+      line: 2,
+      severity: 'critical',
+      category: 'correctness',
+      message: 'Індекс без IF NOT EXISTS',
+      topic: 'data_integrity',
+      kind: 'finding',
+      checkId,
+      evidence: { path: MIGRATION, line: 2, excerpt: 'CREATE INDEX movies_title_idx' },
+    });
+
+    it('puts the checks chosen from the diff into the prompt and records them', async () => {
+      const { service, model, metrics } = await setup(migrationHost());
+      await service.review(TEST_REF, RunTrigger.WEBHOOK);
+      const system = requestsFor(model, STUB_REVIEW_MODEL)[0]?.system ?? '';
+      expect(system).toContain('## Check migration-prod-state-safe');
+      expect(system).not.toContain('## Check bullmq-jobid-and-payload');
+      expect(metrics.events).toContainEqual({
+        checkId: 'migration-prod-state-safe',
+        outcome: 'selected',
+      });
+    });
+
+    it('lists the code-selected checks to triage and keeps its answer inside the catalog', async () => {
+      const { service, model } = await setup(migrationHost());
+      await service.review(TEST_REF, RunTrigger.WEBHOOK);
+      const triageSystem = requestsFor(model, STUB_TRIAGE_MODEL)[0]?.system ?? '';
+      expect(triageSystem).toContain('already selected: migration-prod-state-safe');
+      expect(triageSystem).toContain('- dto-input-trust:');
+    });
+
+    it('adds an extra check that triage names for a changed file', async () => {
+      const triage: StubScript = {
+        respond: (request) =>
+          reply(
+            request.model,
+            text({
+              risk: 'low',
+              focusFiles: [MIGRATION],
+              ruleTopics: [],
+              extraChecks: [
+                { id: 'dto-input-trust', file: MIGRATION },
+                { id: 'ghost', file: MIGRATION },
+                { id: 'read-then-write-race', file: 'not-in-the-diff.ts' },
+              ],
+            }),
+            StopReason.END,
+          ),
+      };
+      const { service, model } = await setup(migrationHost(), { triage });
+      await service.review(TEST_REF, RunTrigger.WEBHOOK);
+      const system = requestsFor(model, STUB_REVIEW_MODEL)[0]?.system ?? '';
+      expect(system).toContain('## Check dto-input-trust');
+      expect(system).not.toContain('## Check read-then-write-race');
+      expect(system.indexOf('## Check dto-input-trust')).toBeLessThan(
+        system.indexOf('## Check migration-prod-state-safe'),
+      );
+    });
+
+    it('appends the referenced repository rule and tolerates a missing one', async () => {
+      const withRule = await setup(
+        migrationHost({
+          rules: [
+            { path: '.claude/rules/migrations.md', content: 'Every statement is re-runnable.' },
+          ],
+        }),
+      );
+      await withRule.service.review(TEST_REF, RunTrigger.WEBHOOK);
+      expect(requestsFor(withRule.model, STUB_REVIEW_MODEL)[0]?.system).toContain(
+        'Repository rule migrations.md:\nEvery statement is re-runnable.',
+      );
+      const without = await setup(migrationHost());
+      const outcome = await without.service.review(TEST_REF, RunTrigger.WEBHOOK);
+      expect(outcome.status).toBe(ReviewStatus.REVIEWED);
+      expect(requestsFor(without.model, STUB_REVIEW_MODEL)[0]?.system).not.toContain(
+        'Repository rule migrations.md',
+      );
+    });
+
+    it('keeps a finding of a selected check, counts it and drops one of an unselected check', async () => {
+      const { service, metrics } = await setup(migrationHost(), {
+        review: reviewReply([finding('migration-prod-state-safe'), finding('dto-input-trust')]),
+      });
+      const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+      if (outcome.status !== ReviewStatus.REVIEWED) throw new Error('unexpected outcome');
+      expect(outcome.findings.map((entry) => entry.checkId)).toEqual(['migration-prod-state-safe']);
+      expect(outcome.dropped.map((entry) => entry.reason)).toEqual(['unselected_check']);
+      expect(metrics.events).toContainEqual({
+        checkId: 'migration-prod-state-safe',
+        outcome: 'finding',
+      });
+    });
+
+    it('counts a demoted finding as a question for its check', async () => {
+      const unreadable = migrationHost({ contents: {} });
+      const { service, metrics } = await setup(unreadable, {
+        review: reviewReply([finding('migration-prod-state-safe')]),
+      });
+      await service.review(TEST_REF, RunTrigger.WEBHOOK);
+      expect(metrics.events).toContainEqual({
+        checkId: 'migration-prod-state-safe',
+        outcome: 'question',
+      });
+    });
   });
 });

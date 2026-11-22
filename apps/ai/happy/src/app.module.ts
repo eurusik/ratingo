@@ -7,6 +7,12 @@ import { ReviewModule } from './modules/review/public';
 import { WebhookModule } from './modules/webhook/public';
 
 @Module({
-  imports: [ConfigModule.forService(process.env), AiCoreModule, ReviewModule, WebhookModule, HealthModule],
+  imports: [
+    ConfigModule.forService(process.env),
+    AiCoreModule,
+    ReviewModule,
+    WebhookModule,
+    HealthModule,
+  ],
 })
 export class AppModule {}

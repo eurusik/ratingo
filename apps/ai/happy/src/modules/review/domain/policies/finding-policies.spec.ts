@@ -23,6 +23,7 @@ const caps = (limit: number) => ({ findings: limit, questions: limit });
 const withEvidence = (file: string, line: number) => ({
   topic: FindingTopic.LOGIC,
   kind: FindingKind.FINDING,
+  checkId: null,
   evidence: { path: file, line, excerpt: EVIDENCE_LINE },
 });
 
@@ -76,7 +77,7 @@ describe('validateFindings', () => {
   it('keeps only findings whose file and line are inside the diff', () => {
     fc.assert(
       fc.property(fc.array(findingArb, { maxLength: 30 }), (findings) => {
-        const { kept } = validateFindings(findings, index, EVIDENCE_FILES, caps(1000));
+        const { kept } = validateFindings(findings, index, EVIDENCE_FILES, { caps: caps(1000) });
         return kept.every(
           (finding) =>
             index.get(finding.file)?.commentable.has(finding.line) === true &&
@@ -92,12 +93,9 @@ describe('validateFindings', () => {
         fc.array(findingArb, { maxLength: 30 }),
         fc.integer({ min: 0, max: 10 }),
         (findings, cap) => {
-          const { kept, questions, dropped } = validateFindings(
-            findings,
-            index,
-            EVIDENCE_FILES,
-            caps(cap),
-          );
+          const { kept, questions, dropped } = validateFindings(findings, index, EVIDENCE_FILES, {
+            caps: caps(cap),
+          });
           return (
             kept.length + questions.length + dropped.length === findings.length &&
             kept.length <= cap
@@ -110,9 +108,9 @@ describe('validateFindings', () => {
   it('never keeps two findings with the same fingerprint', () => {
     fc.assert(
       fc.property(fc.array(findingArb, { maxLength: 30 }), (findings) => {
-        const prints = validateFindings(findings, index, EVIDENCE_FILES, caps(1000)).kept.map(
-          (f) => f.fingerprint,
-        );
+        const prints = validateFindings(findings, index, EVIDENCE_FILES, {
+          caps: caps(1000),
+        }).kept.map((f) => f.fingerprint);
         return new Set(prints).size === prints.length;
       }),
     );
@@ -122,9 +120,9 @@ describe('validateFindings', () => {
     const order = Object.values(Severity);
     fc.assert(
       fc.property(fc.array(findingArb, { maxLength: 30 }), (findings) => {
-        const ranks = validateFindings(findings, index, EVIDENCE_FILES, caps(1000)).kept.map((f) =>
-          order.indexOf(f.severity),
-        );
+        const ranks = validateFindings(findings, index, EVIDENCE_FILES, {
+          caps: caps(1000),
+        }).kept.map((f) => order.indexOf(f.severity));
         return ranks.every((rank, i) => i === 0 || (ranks[i - 1] ?? 0) <= rank);
       }),
     );

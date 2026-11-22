@@ -54,7 +54,9 @@ export class GithubWebhookController {
     try {
       return await this.webhooks.handle(event);
     } catch (error) {
-      this.logger.error(`Could not enqueue webhook: ${error instanceof Error ? error.message : 'unknown'}`);
+      this.logger.error(
+        `Could not enqueue webhook: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
       throw new ServiceUnavailableException('Review queue unavailable');
     }
   }

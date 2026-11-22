@@ -36,7 +36,10 @@ import {
       provide: REVIEW_QUEUE_INSTANCE,
       inject: [REVIEW_REDIS],
       useFactory: (connection: IORedis) =>
-        new Queue(REVIEW_QUEUE, { connection: connection.duplicate(), prefix: REVIEW_QUEUE_PREFIX }),
+        new Queue(REVIEW_QUEUE, {
+          connection: connection.duplicate(),
+          prefix: REVIEW_QUEUE_PREFIX,
+        }),
     },
     {
       provide: REVIEW_QUEUE_PORT,

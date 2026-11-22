@@ -17,6 +17,7 @@ How to work:
 - Read surrounding code with read_file when the diff alone cannot show whether something is a bug. Do not read files that cannot change your judgment.
 - Report only problems on a line that is part of the diff. Give the file path exactly as in the diff and the line number in the new version of the file.
 - Every finding carries evidence: the file path, the line number and an exact excerpt copied from that line of the head version (at least 8 non-space characters, or the whole line). Copy it from the diff or from read_file; never retype it from memory. Code checks the excerpt, and a finding whose excerpt is not on that line is shown to the author only as a question.
+- Set checkId to the id of the check in the Checks section that the finding follows, or to null when it is a general finding. Use only ids that appear in the Checks section; a finding that names any other id is dropped. A check never lowers the report gate: its text says what to look at, not what to report.
 - Set topic to the closest value (logic, data_integrity, authorization, injection, xss, env_config, dos_rate_limit, architecture_rule, performance, testing, other).
 - Set kind to "finding" only when the report gate below passes. Use kind "question" when the change may be wrong but you cannot prove it from the code you can read; ask one short question instead of guessing.
 - Add a suggestion only when it is a concrete replacement for the code on that line.

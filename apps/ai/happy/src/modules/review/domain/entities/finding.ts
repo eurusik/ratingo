@@ -14,6 +14,7 @@ export interface Finding {
   category: FindingCategory;
   topic: FindingTopic;
   kind: FindingKind;
+  checkId: string | null;
   message: string;
   suggestion?: string;
   evidence: FindingEvidence;
@@ -30,6 +31,7 @@ export const FindingDropReason = {
   OVER_CAP: 'over_cap',
   EMPTY_MESSAGE: 'empty_message',
   NOT_A_BUG: 'not_a_bug',
+  UNSELECTED_CHECK: 'unselected_check',
 } as const;
 export type FindingDropReason = (typeof FindingDropReason)[keyof typeof FindingDropReason];
 

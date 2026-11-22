@@ -20,6 +20,7 @@ Pull requests from `development` into `main` get a release checklist instead of 
 ## Precision gates
 
 - **Evidence.** Every finding carries `evidence {path, line, excerpt}`. The file is read at the head commit and the finding is kept as a finding only if that line contains the excerpt (at least 8 non-space characters, or the whole line). Otherwise it is demoted to a question.
+- **Check catalog** (`agent/checks/<area>/<id>.md`, 12 checks mined from Ratingo's own fix history). Each file has frontmatter (`id`, `paths` globs, `triggers` regexes over added diff lines, optional `rule` as `file.md#Heading`, `severity_cap`) and six short sections: what to verify, evidence required, report only when, do not report, a real bug, a looks-risky-but-fine case. Code selects checks deterministically from the changed paths and added lines (`domain/policies/check-selector.ts`, at most 5 per PR, bodies sorted by id so the prompt prefix stays cacheable); the `fast` model may add at most 2 more from the same list, each citing a changed file. A referenced repository rule section is read from the base branch and appended; if it does not exist yet the check stands on its own text and the review logs that. Findings carry `checkId`; a finding naming an unselected check is dropped and severity is lowered to the check's cap. The catalog is validated with zod at boot, so a broken check fails the deploy. The counter `app.ai.happy.check.events` has `check_id` and `outcome` (`selected`, `finding`, `question`) labels, limited to catalog ids.
 - **Report gate** in `agent/prompts/review.md`: changed-code evidence, a concrete failure scenario, try to disprove it, missing context is not a defect, one root cause is one finding.
 - **Precedents** (`domain/policies/precedents.ts`), decided on structured fields (topic, category, path, cited line), never on message text: environment variables are trusted, no denial-of-service advice, React XSS only with `dangerouslySetInnerHTML`, nothing in Markdown files, no security or performance findings in test files.
 - **Questions.** Unproven findings are shown as "Питання до автора", separate from findings and capped at 5.
@@ -82,13 +83,13 @@ The CLI keeps using a personal access token (`GITHUB_TOKEN`) and never publishes
 
 ## Eval set
 
-`eval/` holds 12 labelled cases (5 real defects, 4 protected negatives that look risky but are guarded, 3 unknown cases that should become questions) and a scorer for precision, recall, false positives on protected negatives and the share of unknown cases answered with a question.
+`eval/` holds 36 labelled cases: 12 base cases (5 real defects, 4 protected negatives that look risky but are guarded, 3 unknown cases that should become questions) and, for every check in the catalog, one real bug and one looks-risky-but-fine fixture trimmed from the commits that fixed or justified them (`eval/check-cases`, each cites its `source`). A jest spec fails CI if a check lacks either fixture, if its frontmatter is invalid or if the selector would not pick the check for its own fixtures and a scorer for precision, recall, false positives on protected negatives and the share of unknown cases answered with a question.
 
 ```bash
 npm run eval --workspace=@ratingo/ai-happy
 ```
 
-On the default stub model this only checks the structure (CI runs it). For a real run, which costs a few cents and is manual:
+On the default stub model this only checks the structure (the structure is also checked by the unit tests `eval/catalog.spec.ts` and `eval/cases.spec.ts`, which CI runs). For a real run, which costs a few cents and is manual:
 
 ```bash
 AI_MODEL_FAST=anthropic:claude-haiku-5-5 AI_MODEL_REVIEW=anthropic:claude-sonnet-5-5 ANTHROPIC_API_KEY=... npm run eval --workspace=@ratingo/ai-happy
