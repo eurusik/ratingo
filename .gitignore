@@ -60,7 +60,7 @@ yarn-error.log*
 .cache/
 next-env.d.ts
 .kiro/
-.claude/
+.claude/*
 !.claude/rules/
 .agents/
 
@@ -83,7 +83,7 @@ docs/sync-trending.md
 .yarn/
 .pnpm-store/
 .agents/
-.claude/
+.claude/*
 !.claude/rules/
 .env*.local
 

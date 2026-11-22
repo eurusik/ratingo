@@ -8,7 +8,7 @@
 - [ ] 🐛 Bug fix
 - [ ] ✨ New feature
 - [ ] ♻️ Refactoring (no behavior change)
-- [ ] �  Documentation
+- [ ] 📝 Documentation
 - [ ] 🔧 Configuration
 - [ ] 🧪 Tests
 
@@ -16,9 +16,10 @@
 
 ### Required
 
-- [ ] Code compiles without errors (`npm run build:api`)
-- [ ] Linter passed (`npm run lint:api`)
-- [ ] Tests passed (`npm run test:api`)
+- [ ] API: `npm run build:api`, `npm run lint:api`, `npm run test:api`
+- [ ] Storefront: `npm run lint:storefront`, `npm run test:storefront`
+- [ ] Web client: `npm run lint:client`, `npm run test:client`
+- [ ] AI agents: `npm run lint`, `npm test` in `apps/ai/veronica` or `apps/ai/happy`
 - [ ] Business behavior change described (if any)
 
 ### Code Style
@@ -50,7 +51,7 @@
 ### If DB Changes
 
 - [ ] Migration created (`npm run db:generate`)
-- [ ] Migration tested locally
+- [ ] Migration tested locally and `npm run lint:migrations --workspace=api` passed
 - [ ] Indexes added where needed
 
 ### If Background Jobs / Queues
