@@ -6,9 +6,8 @@ import {
   HEALTH_PATH_PREFIX,
   HTTP_REQUEST_DURATION_METRIC,
   METER_NAME,
+  MS_PER_SECOND,
 } from './telemetry.constants';
-
-const MS_PER_SECOND = 1000;
 
 export function registerHttpMetrics(
   fastify: FastifyInstance,

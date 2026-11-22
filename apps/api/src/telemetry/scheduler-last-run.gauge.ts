@@ -7,14 +7,14 @@ import { MOVIE_RELEASE_NOTIFICATIONS_SCHEDULER_ID } from '../modules/user-action
 import { LINK_PENDING_IMPORTS_SCHEDULER_ID } from '../modules/user-media/public';
 
 import {
+  MS_PER_SECOND,
   SCHEDULER_KEY_SEPARATOR,
+  SCHEDULER_RUN_KEY_SEPARATOR,
   SCHEDULER_LAST_RUN_METRIC,
   type SchedulerRunResult,
 } from './telemetry.constants';
 
-const MS_PER_SECOND = 1000;
-
-const scheduledJobNames = (): ReadonlySet<string> =>
+export const scheduledJobNames = (): ReadonlySet<string> =>
   new Set([
     ...schedulerConfig().jobs.map((job) => job.jobId),
     KEY_HEALTH_SCHEDULER_ID,
@@ -47,7 +47,7 @@ export class SchedulerLastRunGauge {
     const jobName = this.toJobName(job.repeatJobKey);
     if (!jobName) return;
     const finishedAt = job.finishedOn ?? Date.now();
-    this.lastRunSeconds.set(`${jobName}${SCHEDULER_KEY_SEPARATOR}${result}`, {
+    this.lastRunSeconds.set(`${jobName}${SCHEDULER_RUN_KEY_SEPARATOR}${result}`, {
       jobName,
       result,
       seconds: finishedAt / MS_PER_SECOND,
@@ -57,6 +57,7 @@ export class SchedulerLastRunGauge {
   private toJobName(repeatJobKey: string | undefined): string | undefined {
     if (!repeatJobKey) return undefined;
     const separatorIndex = repeatJobKey.indexOf(SCHEDULER_KEY_SEPARATOR);
+    if (separatorIndex < 0) return undefined;
     const jobName = repeatJobKey.slice(separatorIndex + 1);
     return this.allowedJobNames.has(jobName) ? jobName : undefined;
   }

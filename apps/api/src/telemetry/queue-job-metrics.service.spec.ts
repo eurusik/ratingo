@@ -6,6 +6,7 @@ import { type DiscoveryService } from '@nestjs/core';
 import { metrics } from '@opentelemetry/api';
 
 import { QueueJobMetricsService } from './queue-job-metrics.service';
+import { scheduledJobNames } from './scheduler-last-run.gauge';
 import { QUEUE_JOB_DURATION_METRIC, SCHEDULER_LAST_RUN_METRIC } from './telemetry.constants';
 import { createTestMeterProvider } from './telemetry.testing';
 
@@ -133,6 +134,44 @@ describe('QueueJobMetricsService', () => {
       );
 
       await expect(lastRuns()).resolves.toEqual([]);
+    });
+
+    it('accepts every registered scheduler id', async () => {
+      const names = [...scheduledJobNames()];
+      expect(names).toEqual(
+        expect.arrayContaining([
+          'scheduled-tracked-shows',
+          'scheduled-snapshots',
+          'scheduled-trending',
+          'scheduled-now-playing',
+          'scheduled-now-playing-flags',
+          'scheduled-new-releases',
+          'scheduled-upcoming-movies',
+          'scheduled-upcoming-movies-refresh-soon',
+          'scheduled-upcoming-movies-refresh-all',
+          'scheduled-mdblist-ratings',
+          'scheduled-key-health',
+          'movie-release-notifications',
+          'link-pending-imports',
+        ]),
+      );
+      names.forEach((name) => ingestion.emit('completed', job({ repeatJobKey: `prod:${name}` })));
+
+      await expect(lastRuns()).resolves.toHaveLength(names.length);
+    });
+
+    it('falls back to the current time when the job has no finish time', async () => {
+      jest.useFakeTimers().setSystemTime(50_000);
+      ingestion.emit(
+        'failed',
+        job({ repeatJobKey: 'prod:scheduled-snapshots', attemptsMade: 3, finishedOn: undefined }),
+        new Error('boom'),
+      );
+      jest.useRealTimers();
+
+      await expect(lastRuns()).resolves.toEqual([
+        { value: 50, attributes: { job_name: 'scheduled-snapshots', result: 'failure' } },
+      ]);
     });
 
     it('ignores per-item jobs and unknown scheduler keys', async () => {

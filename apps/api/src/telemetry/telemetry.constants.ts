@@ -30,3 +30,5 @@ export const SCHEDULER_RUN_RESULT = {
 } as const;
 export type SchedulerRunResult = (typeof SCHEDULER_RUN_RESULT)[keyof typeof SCHEDULER_RUN_RESULT];
 export const SCHEDULER_KEY_SEPARATOR = ':';
+export const SCHEDULER_RUN_KEY_SEPARATOR = '|';
+export const MS_PER_SECOND = 1000;

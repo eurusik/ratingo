@@ -9,14 +9,13 @@ import { findBullWorkers } from '../common/runtime/bull-workers';
 import { SchedulerLastRunGauge } from './scheduler-last-run.gauge';
 import {
   METER_NAME,
+  MS_PER_SECOND,
   QUEUE_JOB_DURATION_BUCKETS_SECONDS,
   QUEUE_JOB_DURATION_METRIC,
   QUEUE_JOB_RESULT,
   SCHEDULER_RUN_RESULT,
   type QueueJobResult,
 } from './telemetry.constants';
-
-const MS_PER_SECOND = 1000;
 
 const willRetry = (job: Job): boolean => job.attemptsMade < (job.opts.attempts ?? 1);
 
