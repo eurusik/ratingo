@@ -23,6 +23,17 @@ describe('env schemas', () => {
     }
   });
 
+  it('treats the reader database as optional and rejects an empty value', () => {
+    expect(serviceEnvSchema.parse(VALID).AI_READER_DATABASE_URL).toBeUndefined();
+    expect(
+      serviceEnvSchema.parse({ ...VALID, AI_READER_DATABASE_URL: 'postgres://r:p@h/db' })
+        .AI_READER_DATABASE_URL,
+    ).toBe('postgres://r:p@h/db');
+    expect(serviceEnvSchema.safeParse({ ...VALID, AI_READER_DATABASE_URL: '' }).success).toBe(
+      false,
+    );
+  });
+
   it('lets the preview run without any credential', () => {
     expect(previewEnvSchema.safeParse({}).success).toBe(true);
   });

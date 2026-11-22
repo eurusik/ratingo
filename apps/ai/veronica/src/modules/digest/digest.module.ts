@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 
-import { GRAFANA_CONFIG, type GrafanaConfig } from '../../config/config.constants';
+import {
+  GRAFANA_CONFIG,
+  PRODUCT_STATS_CONFIG,
+  type GrafanaConfig,
+  type ProductStatsConfig,
+} from '../../config/config.constants';
 
 import { ApiKeysCollector } from './application/collectors/api-keys.collector';
 import { BackupCollector } from './application/collectors/backup.collector';
@@ -16,6 +21,7 @@ import { DIGEST_RENDERER_PORT } from './domain/ports/digest-renderer.port';
 import { METRICS_PORT } from './domain/ports/metrics.port';
 import { PRODUCT_STATS_PORT } from './domain/ports/product-stats.port';
 import { PrometheusMetricsAdapter } from './infrastructure/adapters/prometheus.metrics-adapter';
+import { PostgresProductStatsAdapter } from './infrastructure/adapters/postgres.product-stats-adapter';
 import { StubProductStatsAdapter } from './infrastructure/adapters/stub.product-stats-adapter';
 import { TelegramDigestTemplate } from './infrastructure/templates/telegram-digest.template';
 
@@ -26,7 +32,14 @@ import { TelegramDigestTemplate } from './infrastructure/templates/telegram-dige
       inject: [GRAFANA_CONFIG],
       useFactory: (config: GrafanaConfig) => new PrometheusMetricsAdapter(config),
     },
-    { provide: PRODUCT_STATS_PORT, useClass: StubProductStatsAdapter },
+    {
+      provide: PRODUCT_STATS_PORT,
+      inject: [PRODUCT_STATS_CONFIG],
+      useFactory: (config: ProductStatsConfig) =>
+        config.readerDatabaseUrl === undefined
+          ? new StubProductStatsAdapter()
+          : PostgresProductStatsAdapter.connect(config.readerDatabaseUrl),
+    },
     { provide: DIGEST_RENDERER_PORT, useClass: TelegramDigestTemplate },
     ProductCollector,
     QueuesCollector,
