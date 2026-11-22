@@ -8,12 +8,14 @@ import { HttpErrorsCollector } from '../collectors/http-errors.collector';
 import { InfraCollector } from '../collectors/infra.collector';
 import { ProductCollector } from '../collectors/product.collector';
 import { QueuesCollector } from '../collectors/queues.collector';
+import { SiteCollector } from '../collectors/site.collector';
 import { SchedulerCollector } from '../collectors/scheduler.collector';
 
 @Injectable()
 export class SnapshotService {
   constructor(
     private readonly product: ProductCollector,
+    private readonly site: SiteCollector,
     private readonly queues: QueuesCollector,
     private readonly apiKeys: ApiKeysCollector,
     private readonly httpErrors: HttpErrorsCollector,
@@ -23,19 +25,22 @@ export class SnapshotService {
   ) {}
 
   async take(nowMs: number): Promise<Snapshot> {
-    const [product, queues, apiKeys, httpErrors, backup, infra, scheduler] = await Promise.all([
-      this.product.collect(nowMs),
-      this.queues.collect(nowMs),
-      this.apiKeys.collect(nowMs),
-      this.httpErrors.collect(nowMs),
-      this.backup.collect(nowMs),
-      this.infra.collect(nowMs),
-      this.scheduler.collect(nowMs),
-    ]);
+    const [product, site, queues, apiKeys, httpErrors, backup, infra, scheduler] =
+      await Promise.all([
+        this.product.collect(nowMs),
+        this.site.collect(nowMs),
+        this.queues.collect(nowMs),
+        this.apiKeys.collect(nowMs),
+        this.httpErrors.collect(nowMs),
+        this.backup.collect(nowMs),
+        this.infra.collect(nowMs),
+        this.scheduler.collect(nowMs),
+      ]);
     return {
       date: kyivDateOf(nowMs),
       generatedAtMs: nowMs,
       product,
+      site,
       queues,
       apiKeys,
       httpErrors,

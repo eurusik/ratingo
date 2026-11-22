@@ -13,6 +13,18 @@ export const DIGEST_THRESHOLDS: DigestThresholds = {
     minBaseline: 10,
     dropRatioForNote: 0.5,
   },
+  site: {
+    minRequests: 500,
+    serverErrorMinCount: 20,
+    serverErrorShareForAction: 0.02,
+    serverErrorGrowthRatio: 2,
+    renderP95FloorSeconds: 0.5,
+    renderP95GrowthRatioForNote: 1.5,
+    memoryFloorMegabytes: 400,
+    memoryGrowthRatioForNote: 1.5,
+    eventLoopDelayFloorSeconds: 0.1,
+    eventLoopDelayGrowthRatioForNote: 2,
+  },
   http: {
     rateLimitCountForAction: 500,
     rateLimitNoteMinCount: 20,

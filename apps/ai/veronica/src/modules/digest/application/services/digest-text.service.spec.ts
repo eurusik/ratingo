@@ -18,7 +18,7 @@ import { createDigestStubScript } from '../../../../core/stub-digest.script';
 import { NOW_MS, THRESHOLDS, redSnapshot } from '../../testing/digest.testing';
 import { evaluateDigest } from '../../domain/rules/evaluate-digest';
 
-import { DigestTextService } from './digest-text.service';
+import { DigestTextService, trendOf } from './digest-text.service';
 
 const textScript = (reply: unknown): StubScript => ({
   respond: (request) => ({
@@ -107,5 +107,25 @@ describe('DigestTextService', () => {
   it('returns no text when the model refuses', async () => {
     const service = await build(createStubScript(StubScenario.REFUSAL));
     expect((await service.write(digest(), RunTrigger.MANUAL)).text).toBeNull();
+  });
+});
+
+describe('trendOf', () => {
+  it('reports missing data as missing, never as a trend', () => {
+    expect(trendOf(null, 100)).toBe('немає даних');
+    expect(trendOf(null, null)).toBe('немає даних');
+  });
+
+  it('calls small and unknown-baseline changes the same', () => {
+    expect(trendOf(100, null)).toBe('так само');
+    expect(trendOf(110, 100)).toBe('так само');
+    expect(trendOf(80, 100)).toBe('так само');
+  });
+
+  it('names a trend only for a significant change', () => {
+    expect(trendOf(130, 100)).toBe('більше');
+    expect(trendOf(60, 100)).toBe('менше');
+    expect(trendOf(5, 0)).toBe('більше');
+    expect(trendOf(0, 0)).toBe('так само');
   });
 });

@@ -9,6 +9,7 @@ export const FactUnit = {
   AGE_HOURS: 'age_hours',
   PERCENT: 'percent',
   MEGABYTES: 'megabytes',
+  MILLISECONDS: 'milliseconds',
 } as const;
 export type FactUnit = (typeof FactUnit)[keyof typeof FactUnit];
 

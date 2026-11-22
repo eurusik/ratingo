@@ -4,11 +4,14 @@ import { DigestLevel } from '../../domain/constants/digest-level.constants';
 import {
   THRESHOLDS,
   greenSnapshot,
+  healthySite,
   redSnapshot,
   unavailableSnapshot,
 } from '../../testing/digest.testing';
 import type { Digest, DigestText, Fact } from '../../domain/entities/digest';
 import { FactUnit } from '../../domain/entities/digest';
+import { measured } from '../../domain/entities/measured';
+import { available } from '../../domain/entities/source-reading';
 import { evaluateDigest } from '../../domain/rules/evaluate-digest';
 
 import {
@@ -68,6 +71,58 @@ describe('TelegramDigestTemplate', () => {
 
   it('falls back to template-only text without a model', () => {
     expect(render(evaluateDigest(redSnapshot(), THRESHOLDS)).html).toContain('без моделі');
+  });
+
+  it('puts the site block right after people and before the queues', () => {
+    const html = render(evaluateDigest(greenSnapshot(), THRESHOLDS)).html;
+    expect(html.indexOf('👥 Люди')).toBeLessThan(html.indexOf('🌐 Сайт'));
+    expect(html.indexOf('🌐 Сайт')).toBeLessThan(html.indexOf('⚙️ Черги'));
+    expect(html).toContain('✅ сайт');
+  });
+
+  it('renders the site facts with units, a decimal share and the missing bot line', () => {
+    const html = render(
+      evaluateDigest(
+        {
+          ...greenSnapshot(),
+          site: available({
+            ...healthySite(),
+            serverErrors24h: measured(5, 2),
+            requests24h: measured(13500, 12800),
+          }),
+        },
+        THRESHOLDS,
+      ),
+    ).html;
+    expect(html).toContain('запитів до сайту: 13 500 (тиждень тому: 12 800)');
+    expect(html).toContain('помилок сервера (5xx): 0');
+    expect(html).toContain('p95 відповіді сервера: 170 мс (тиждень тому: 160 мс)');
+    expect(html).toContain('пік пам’яті сайту: 250 МБ');
+    expect(html).toContain('запитів від ботів: немає даних');
+    expect(html).not.toContain('запитів від ботів: 0');
+  });
+
+  it('shows small percentages with one decimal and a comma', () => {
+    const fact: Fact = { label: 'частка', unit: FactUnit.PERCENT, current: 0.04, baseline: 12.5 };
+    expect(formatFact(fact)).toBe('частка: 0% (тиждень тому: 12,5%)');
+    expect(formatFact({ ...fact, current: 0.44 })).toBe('частка: 0,4% (тиждень тому: 12,5%)');
+  });
+
+  it('formats milliseconds', () => {
+    expect(
+      formatFact({ label: 'p95', unit: FactUnit.MILLISECONDS, current: 170, baseline: null }),
+    ).toBe('p95: 170 мс');
+  });
+
+  it('stays within the Telegram limit with the site block for any text lengths', () => {
+    const digest = evaluateDigest(greenSnapshot(), THRESHOLDS);
+    fc.assert(
+      fc.property(fc.string({ maxLength: 600 }), (headline) => {
+        const html = render(digest, { headline, adviceById: {} }).html;
+        expect(html.length).toBeLessThanOrEqual(TELEGRAM_MESSAGE_LIMIT);
+        expect(hasOnlyAllowedMarkup(html)).toBe(true);
+      }),
+    );
   });
 
   it('formats facts with a baseline only when one exists', () => {

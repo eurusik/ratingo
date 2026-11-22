@@ -20,6 +20,15 @@ export interface ProductStats {
   actions: Measured;
 }
 
+export interface SiteStats {
+  requests24h: Measured;
+  serverErrors24h: Measured;
+  renderP95Seconds: Measured | null;
+  peakRssBytes: Measured | null;
+  eventLoopDelayP99Seconds: Measured | null;
+  botShare: Measured | null;
+}
+
 export interface FailedJob {
   jobName: string;
   count: number;
@@ -75,6 +84,7 @@ export interface Snapshot {
   date: string;
   generatedAtMs: number;
   product: SourceReading<ProductStats>;
+  site: SourceReading<SiteStats>;
   queues: SourceReading<QueueStats[]>;
   apiKeys: SourceReading<ApiKeyStat[]>;
   httpErrors: SourceReading<HttpErrorStat[]>;

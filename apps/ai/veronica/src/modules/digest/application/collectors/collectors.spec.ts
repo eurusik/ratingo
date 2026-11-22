@@ -7,6 +7,7 @@ import { HttpErrorsCollector } from './http-errors.collector';
 import { InfraCollector } from './infra.collector';
 import { QueuesCollector } from './queues.collector';
 import { SchedulerCollector } from './scheduler.collector';
+import { SiteCollector } from './site.collector';
 
 type Responder = (query: string, atMs: number) => MetricSample[];
 
@@ -249,5 +250,98 @@ describe('SchedulerCollector', () => {
     expect(reading.state === 'ok' && reading.data).toEqual([
       { jobName: 'sync-trending', lastSuccessAgeHours: 5, lastFailureAgeHours: 20 },
     ]);
+  });
+});
+
+describe('SiteCollector', () => {
+  const MEGABYTE = 1024 * 1024;
+
+  const siteMetrics = (options: { baseline?: boolean; labelled?: boolean; errors?: boolean }) =>
+    metricsWith((query, atMs) => {
+      const old = atMs < NOW_MS;
+      if (old && options.baseline === false) return [];
+      const pick = (current: number, before: number) => [sample({}, old ? before : current)];
+      if (query.includes('client_kind=~"human')) {
+        return options.labelled === false ? [] : pick(1000, 800);
+      }
+      if (query.includes('client_kind=~"bot')) {
+        return options.labelled === false ? [] : pick(300, 100);
+      }
+      if (query.includes('=~"5..')) return options.errors === false ? [] : pick(40.4, 2);
+      if (query.includes('app_next_request_duration_seconds_count')) return pick(13500.6, 12800);
+      if (query.includes('histogram_quantile')) return pick(0.17, 0.16);
+      if (query.includes('type="rss"')) return pick(452_833_280, 300 * MEGABYTE);
+      if (query.includes('percentile="p99"')) return pick(0.0104, 0.009);
+      return [];
+    });
+
+  it('reads requests, server errors, render p95, peak memory, loop delay and bot share', async () => {
+    const reading = await new SiteCollector(siteMetrics({})).collect(NOW_MS);
+    expect(reading.state === 'ok' && reading.data).toEqual({
+      requests24h: { current: 13501, baseline: 12800 },
+      serverErrors24h: { current: 40, baseline: 2 },
+      renderP95Seconds: { current: 0.17, baseline: 0.16 },
+      peakRssBytes: { current: 452_833_280, baseline: 300 * MEGABYTE },
+      eventLoopDelayP99Seconds: { current: 0.0104, baseline: 0.009 },
+      botShare: { current: 0.3, baseline: 0.125 },
+    });
+  });
+
+  it('queries only the storefront service and counts only 5xx as server errors', async () => {
+    const queries: string[] = [];
+    await new SiteCollector(
+      metricsWith((query) => {
+        queries.push(query);
+        return [];
+      }),
+    ).collect(NOW_MS);
+    expect(queries.every((query) => query.includes('service_name="ratingo-storefront"'))).toBe(
+      true,
+    );
+    expect(queries.some((query) => query.includes('http_response_status_code=~"5.."'))).toBe(true);
+    expect(queries.some((query) => query.includes('404'))).toBe(false);
+  });
+
+  it('counts missing 5xx series as zero errors once requests exist', async () => {
+    const reading = await new SiteCollector(siteMetrics({ errors: false })).collect(NOW_MS);
+    expect(reading.state === 'ok' && reading.data.serverErrors24h).toEqual({
+      current: 0,
+      baseline: 0,
+    });
+  });
+
+  it('marks only the bot share as missing while the client_kind label is not exported', async () => {
+    const reading = await new SiteCollector(siteMetrics({ labelled: false })).collect(NOW_MS);
+    expect(reading.state).toBe('ok');
+    expect(reading.state === 'ok' && reading.data.botShare).toBeNull();
+    expect(reading.state === 'ok' && reading.data.requests24h.current).toBe(13501);
+  });
+
+  it('leaves every baseline unknown instead of zero when last week had no metrics', async () => {
+    const reading = await new SiteCollector(siteMetrics({ baseline: false })).collect(NOW_MS);
+    expect(reading.state === 'ok' && reading.data).toMatchObject({
+      requests24h: { baseline: null },
+      serverErrors24h: { baseline: null },
+      renderP95Seconds: { baseline: null },
+      peakRssBytes: { baseline: null },
+      eventLoopDelayP99Seconds: { baseline: null },
+      botShare: { baseline: null },
+    });
+  });
+
+  it('is unavailable without request metrics, even when memory metrics exist', async () => {
+    const reading = await new SiteCollector(
+      metricsWith((query) => (query.includes('type="rss"') ? [sample({}, 1)] : [])),
+    ).collect(NOW_MS);
+    expect(reading).toEqual({ state: 'unavailable', reason: 'метрик запитів сайту немає' });
+  });
+
+  it('is unavailable with a reason when the metrics source throws', async () => {
+    const reading = await new SiteCollector({
+      instant: async () => {
+        throw new Error('Grafana відповіла HTTP 401');
+      },
+    }).collect(NOW_MS);
+    expect(JSON.stringify(reading)).toContain('HTTP 401');
   });
 });

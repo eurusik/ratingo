@@ -13,6 +13,7 @@ import { HttpErrorsCollector } from './application/collectors/http-errors.collec
 import { InfraCollector } from './application/collectors/infra.collector';
 import { ProductCollector } from './application/collectors/product.collector';
 import { QueuesCollector } from './application/collectors/queues.collector';
+import { SiteCollector } from './application/collectors/site.collector';
 import { SchedulerCollector } from './application/collectors/scheduler.collector';
 import { DigestComposeService } from './application/services/digest-compose.service';
 import { DigestTextService } from './application/services/digest-text.service';
@@ -42,6 +43,7 @@ import { TelegramDigestTemplate } from './infrastructure/templates/telegram-dige
     },
     { provide: DIGEST_RENDERER_PORT, useClass: TelegramDigestTemplate },
     ProductCollector,
+    SiteCollector,
     QueuesCollector,
     ApiKeysCollector,
     HttpErrorsCollector,
