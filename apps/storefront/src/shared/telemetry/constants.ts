@@ -29,3 +29,63 @@ export const KNOWN_HTTP_METHODS: ReadonlySet<string> = new Set([
 
 export const TRACE_ID_PREFIX_HEX_LENGTH = 8;
 export const TRACE_ID_PREFIX_RANGE = 0x1_0000_0000;
+
+export const CLIENT_KIND = {
+  HUMAN: 'human',
+  BOT: 'bot',
+  AI_CRAWLER: 'ai_crawler',
+} as const;
+
+export type ClientKind = (typeof CLIENT_KIND)[keyof typeof CLIENT_KIND];
+
+export const CLIENT_KIND_SPAN_ATTRIBUTE = 'ratingo.client_kind';
+export const CLIENT_KIND_LABEL = 'client_kind';
+export const USER_AGENT_HEADER = 'user-agent';
+export const USER_AGENT_MAX_LENGTH = 512;
+
+export const AI_CRAWLER_USER_AGENT_MARKERS: readonly string[] = [
+  'gptbot',
+  'chatgpt-user',
+  'oai-searchbot',
+  'claudebot',
+  'claude-web',
+  'claude-user',
+  'claude-searchbot',
+  'anthropic-ai',
+  'perplexitybot',
+  'perplexity-user',
+  'google-extended',
+  'ccbot',
+  'bytespider',
+  'applebot-extended',
+  'amazonbot',
+  'meta-externalagent',
+  'meta-externalfetcher',
+  'cohere-ai',
+  'diffbot',
+  'youbot',
+];
+
+export const BOT_USER_AGENT_MARKERS: readonly string[] = [
+  'googlebot',
+  'bingbot',
+  'yandexbot',
+  'duckduckbot',
+  'baiduspider',
+  'ahrefsbot',
+  'semrushbot',
+  'mj12bot',
+  'facebookexternalhit',
+  'twitterbot',
+  'telegrambot',
+  'slackbot',
+  'whatsapp',
+  'discordbot',
+  'curl/',
+  'wget/',
+  'python-requests',
+  'go-http-client',
+  'headlesschrome',
+];
+
+export const GENERIC_BOT_USER_AGENT_PATTERN = /bot|crawler|spider/;
