@@ -28,6 +28,7 @@ import { CHAT_METRICS_PORT, type ChatMetricsPort } from '../../domain/ports/chat
 import { routeMessage } from '../../domain/policies/route-message.policy';
 import { ChatCommandHandlers } from '../commands/chat-command.handlers';
 
+import { ChatExchangeRecorder } from './chat-exchange-recorder.service';
 import { HappyChatService } from './happy-chat.service';
 import { InvestigationRunner } from './investigation.runner';
 
@@ -75,6 +76,7 @@ export class ChatService {
     private readonly commands: ChatCommandHandlers,
     private readonly investigation: InvestigationRunner,
     private readonly happy: HappyChatService,
+    private readonly exchanges: ChatExchangeRecorder,
     @Inject(CHAT_TRANSPORT) private readonly transport: ChatTransportPort,
     @Inject(CHAT_METRICS_PORT) private readonly metrics: ChatMetricsPort,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
@@ -88,6 +90,8 @@ export class ChatService {
       return this.investigate(intent, message);
     }
     const route = routeOf(intent);
+    let answer = '';
+    let failed = false;
     const run = Run.start(
       {
         id: randomUUID(),
@@ -101,6 +105,8 @@ export class ChatService {
     try {
       const reply = await this.replyFor(intent, message.chatId);
       await this.transport.sendMessage(message.chatId, reply.html);
+      answer = reply.html;
+      failed = reply.failed;
       run.finish(reply.failed ? RunStopReason.UNEXPECTED_ERROR : RunStopReason.END, this.clock);
       this.metrics.record({
         outcome: reply.failed ? ChatOutcome.FAILED : ChatOutcome.HANDLED,
@@ -109,6 +115,7 @@ export class ChatService {
       });
       return reply.failed ? ChatOutcome.FAILED : ChatOutcome.HANDLED;
     } catch (error) {
+      failed = true;
       run.finish(RunStopReason.UNEXPECTED_ERROR, this.clock, errorName(error));
       this.metrics.record({
         outcome: ChatOutcome.FAILED,
@@ -117,7 +124,15 @@ export class ChatService {
       });
       throw error;
     } finally {
-      await this.saveRun(run);
+      const saved = await this.saveRun(run);
+      await this.exchanges.record({
+        runId: saved ? run.snapshot().id : null,
+        chatId: message.chatId,
+        route,
+        question: message.text,
+        answer,
+        outcome: failed ? ChatOutcome.FAILED : ChatOutcome.HANDLED,
+      });
     }
   }
 
@@ -127,9 +142,19 @@ export class ChatService {
   ): Promise<ChatOutcome> {
     const event = { command: commandLabelOf(intent), route: ChatRoute.INVESTIGATION };
     try {
-      const { outcome } = await this.investigation.answer(message.chatId, intent.text);
-      this.metrics.record({ ...event, outcome });
-      return outcome;
+      const result = await this.investigation.answer(message.chatId, intent.text);
+      this.metrics.record({ ...event, outcome: result.outcome });
+      await this.exchanges.record({
+        runId: result.runId,
+        chatId: message.chatId,
+        route: ChatRoute.INVESTIGATION,
+        question: intent.text,
+        answer: result.html,
+        outcome: result.outcome,
+        cutNumbers: result.unverifiedNumbers,
+        toolNames: result.toolCalls.map((call) => call.tool),
+      });
+      return result.outcome;
     } catch (error) {
       this.metrics.record({ ...event, outcome: ChatOutcome.FAILED });
       throw error;
@@ -165,7 +190,7 @@ export class ChatService {
   ): Promise<{ html: string; failed: boolean }> {
     await this.showTyping(chatId);
     try {
-      return { html: await this.commands.execute(intent.command), failed: false };
+      return { html: await this.commands.execute(intent.command, chatId), failed: false };
     } catch (error) {
       this.logger.error(`Команда ${intent.command} не вдалася: ${errorName(error)}`);
       return { html: COMMAND_FAILED_REPLY, failed: true };
@@ -180,11 +205,13 @@ export class ChatService {
     }
   }
 
-  private async saveRun(run: Run): Promise<void> {
+  private async saveRun(run: Run): Promise<boolean> {
     try {
       await this.runs.save(run.snapshot());
+      return true;
     } catch (error) {
       this.logger.warn(`Запуск чату не збережено: ${errorName(error)}`);
+      return false;
     }
   }
 }

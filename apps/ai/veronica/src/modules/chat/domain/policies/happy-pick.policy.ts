@@ -5,15 +5,12 @@ import {
 } from '../constants/chat-replies.constants';
 import type { HappyOpenPullRequest } from '../entities/happy';
 
-import { clip, stripLinks } from './answer-sanitizer.policy';
+import { clip, escapeHtml, stripLinks } from './answer-sanitizer.policy';
 
 const MS_PER_MINUTE = 60_000;
 const MINUTES_PER_HOUR = 60;
 const HOURS_PER_DAY = 24;
 const JUST_NOW_MINUTES = 1;
-
-const escapeHtml = (text: string): string =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 export const pullRequestTitle = (title: string): string =>
   escapeHtml(clip(stripLinks(title).replace(/\s+/g, ' ').trim(), HAPPY_PICK_TITLE_MAX_CHARS));

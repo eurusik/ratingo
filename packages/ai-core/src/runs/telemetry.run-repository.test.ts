@@ -137,6 +137,7 @@ describe('TelemetryRunRepository', () => {
       RUN_DURATION: 'app.ai.run.duration',
       TOOL_CALLS: 'app.ai.tool.calls',
       CHAT_EVENTS: 'app.ai.chat.events',
+      WATCHDOG_LAST_TICK: 'app.ai.watchdog.last_tick_timestamp_seconds',
     });
   });
 

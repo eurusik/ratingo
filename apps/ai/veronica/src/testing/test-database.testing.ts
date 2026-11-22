@@ -54,7 +54,7 @@ export const openTestDatabase = async (): Promise<TestDatabase> => {
   return {
     db: drizzle(client, { schema }),
     reset: async () => {
-      await client`TRUNCATE ai.runs, ai.digest_deliveries`;
+      await client`TRUNCATE ai.chat_exchanges, ai.runs, ai.digest_deliveries`;
     },
     close: async () => {
       await client.end();
