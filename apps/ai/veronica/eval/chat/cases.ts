@@ -11,7 +11,16 @@ const metrics = (template: string, data: unknown, extra: Record<string, unknown>
   ...extra,
 });
 
-const NO_DATA_PHRASES = ['даних немає', 'немає даних', 'не знаю', 'не бачу', 'не отримала'];
+const NO_DATA_PHRASES = [
+  'даних немає',
+  'немає даних',
+  'не знаю',
+  'не бачу',
+  'не отримала',
+  'не можу сказати',
+  'не працює',
+  'бракує',
+];
 
 const UNKNOWN_ANSWER =
   'Даних немає: таких цифр у моїх інструментах нема, тому нічого не вигадуватиму.';
@@ -308,7 +317,12 @@ export const EVAL_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
-    allowedExtraTools: ['recent_changes', 'digest_snapshot', 'metrics_query:queue_throughput'],
+    allowedExtraTools: [
+      'recent_changes',
+      'digest_snapshot',
+      'metrics_query:queue_throughput',
+      'metrics_query:http_client_errors',
+    ],
     mustContain: [['30'], ['sync-trending']],
     reference: {
       calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],

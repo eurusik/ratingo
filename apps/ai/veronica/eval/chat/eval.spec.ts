@@ -123,8 +123,9 @@ describe('chat eval scorer', () => {
     expect(summarize([cut, fallback])).toMatchObject({
       hallucinatedNumbers: 1,
       fallbacks: 1,
-      failedCases: ['queues-failed-today'],
+      failedCases: ['queues-failed-today', 'queues-failed-today'],
     });
+    expect(summarize([cut]).failedCases).toEqual(['queues-failed-today']);
     expect(scoreCase(testCase!, { ...base, outcome: 'failed' }).factsOk).toBe(false);
     expect(scoreCase(testCase!, base).fellBack).toBe(false);
   });

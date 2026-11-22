@@ -85,7 +85,10 @@ export const summarize = (scores: readonly CaseScore[]): EvalSummary => {
         ? null
         : rate(unknown.filter((score) => score.factsOk).length, unknown.length),
     failedCases: scores
-      .filter((score) => !score.toolsOk || !score.factsOk || score.fellBack)
+      .filter(
+        (score) =>
+          !score.toolsOk || !score.factsOk || score.fellBack || score.unverifiedNumbers.length > 0,
+      )
       .map((score) => score.caseId),
   };
 };
