@@ -5,7 +5,7 @@
   "scripts": {
     "build:packages": "npm run build --workspace=@ratingo/ai-core --workspace=@ratingo/node-telemetry",
     "prebuild": "npm run build:packages",
-    "build": "nest build",
+    "build": "tsc -p tsconfig.build.json",
     "predev": "npm run build:packages",
     "dev": "nest start --watch",
     "start:prod": "node dist/main.js",
