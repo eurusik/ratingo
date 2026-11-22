@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from './config/config.module';
 import { AiCoreModule } from './core/ai-core.module';
 import { HealthModule } from './health/health.module';
+import { LandingModule } from './landing/landing.module';
 import { ReviewModule } from './modules/review/public';
 import { WebhookModule } from './modules/webhook/public';
 
@@ -13,6 +14,7 @@ import { WebhookModule } from './modules/webhook/public';
     ReviewModule,
     WebhookModule,
     HealthModule,
+    LandingModule,
   ],
 })
 export class AppModule {}
