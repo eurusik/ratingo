@@ -441,7 +441,7 @@ Rules:
 
 ## Happy: code review
 
-1. **Webhook:** GitHub App events `pull_request` (`opened`, `ready_for_review`, `reopened`) and `issue_comment` with the exact command `@happy review` from an owner, member or collaborator. A new push (`synchronize`) does not start a review: Happy reviews once, when the PR is ready. The signature is checked against the raw body, and the handler returns 2xx at once after enqueueing a job.
+1. **Webhook:** GitHub App events `pull_request` (`opened`, `ready_for_review`, `reopened`) and `issue_comment` whose first non-blank text is `@happy-on-duty scan` or `@happy-on-duty review` (aliases `/happy scan`, `/happy review`; matched case-insensitively, never inside code blocks or quotes) from an owner, member or collaborator. A command forces the review of a trivial PR; `too_large` still skips. The check title and the first line of its summary carry one line of voice from `check-voice.constants.ts`; findings stay factual. A new push (`synchronize`) does not start a review: Happy reviews once, when the PR is ready. The signature is checked against the raw body, and the handler returns 2xx at once after enqueueing a job.
 2. **Idempotency:** the job id is repository, PR and head commit (a command is keyed by its comment), so a redelivery is one job. Before publishing, the worker skips a PR that is closed, merged or no longer at the reviewed commit.
 3. **Scope:** drafts are skipped. Only PRs from the same repository or from allowlisted authors are reviewed, so a fork PR cannot spend the budget.
 4. **Incremental diff:** the hidden state marker records the last reviewed commit and posted finding fingerprints; only new changes are reviewed.

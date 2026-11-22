@@ -15,7 +15,11 @@ import { signWebhookBody } from '../../infrastructure/security/webhook-signature
 import { GithubWebhookController } from './github-webhook.controller';
 
 const SECRET = 'a-long-enough-webhook-secret';
-const CONFIG = { allowedRepositories: ['eurusik/ratingo'], allowedAuthors: [] };
+const CONFIG = {
+  allowedRepositories: ['eurusik/ratingo'],
+  allowedAuthors: [],
+  mentionHandle: 'happy-on-duty',
+};
 
 const fixture = (name: string): Buffer =>
   readFileSync(path.resolve(__dirname, '../fixtures', name));

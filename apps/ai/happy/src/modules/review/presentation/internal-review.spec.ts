@@ -24,6 +24,7 @@ const guardFor = (serviceToken: string | undefined): ServiceTokenGuard =>
   new ServiceTokenGuard({
     allowedRepositories: [],
     allowedAuthors: [],
+    mentionHandle: 'happy-on-duty',
     serviceToken,
   } as ReviewConfig);
 

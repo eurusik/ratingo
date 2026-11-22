@@ -12,7 +12,9 @@ export const REVIEWABLE_PULL_REQUEST_ACTIONS: readonly string[] = [
 ];
 
 export const COMMENT_CREATED_ACTION = 'created';
-export const REVIEW_COMMAND = '@happy review';
+export const DEFAULT_MENTION_HANDLE = 'happy-on-duty';
+export const SLASH_COMMAND_PREFIX = '/happy';
+export const COMMAND_VERBS: readonly string[] = ['scan', 'review'];
 export const COLLABORATOR_ASSOCIATIONS: readonly string[] = ['OWNER', 'MEMBER', 'COLLABORATOR'];
 export const BOT_SENDER_TYPE = 'Bot';
 

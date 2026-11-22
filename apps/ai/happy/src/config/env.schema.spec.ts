@@ -16,6 +16,14 @@ describe('env schemas', () => {
     expect(env.AI_MODEL_REVIEW).toBe('stub:review');
     expect(env.HAPPY_ALLOWED_REPOS).toEqual(['acme/shop', 'acme/api']);
     expect(env.HAPPY_ALLOWED_AUTHORS).toEqual([]);
+    expect(env.HAPPY_MENTION_HANDLE).toBe('happy-on-duty');
+  });
+
+  it('takes the mention handle from the environment', () => {
+    expect(
+      serviceEnvSchema.parse({ ...SERVICE, HAPPY_MENTION_HANDLE: 'night-watch' })
+        .HAPPY_MENTION_HANDLE,
+    ).toBe('night-watch');
   });
 
   it.each(['GITHUB_APP_ID', 'GITHUB_APP_PRIVATE_KEY', 'GITHUB_WEBHOOK_SECRET', 'REDIS_URL'])(
@@ -23,6 +31,15 @@ describe('env schemas', () => {
     (name) => {
       const { [name as keyof typeof SERVICE]: _removed, ...rest } = SERVICE;
       expect(serviceEnvSchema.safeParse(rest).success).toBe(false);
+    },
+  );
+
+  it.each(['@happy-on-duty', 'happy on duty', '-happy', ''])(
+    'rejects the mention handle %p',
+    (handle) => {
+      expect(serviceEnvSchema.safeParse({ ...SERVICE, HAPPY_MENTION_HANDLE: handle }).success).toBe(
+        false,
+      );
     },
   );
 
