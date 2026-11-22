@@ -10,6 +10,7 @@ export interface CaseResult {
   calledKeys: readonly string[];
   answer: string;
   outcome: ChatOutcome;
+  unverifiedNumbers: readonly string[];
 }
 
 export interface CaseScore {
@@ -21,7 +22,8 @@ export interface CaseScore {
   factsOk: boolean;
   missingFacts: string[];
   forbiddenHits: string[];
-  guardTriggered: boolean;
+  unverifiedNumbers: string[];
+  fellBack: boolean;
 }
 
 export interface EvalSummary {
@@ -29,6 +31,7 @@ export interface EvalSummary {
   toolSelectionAccuracy: number;
   factAccuracy: number;
   hallucinatedNumbers: number;
+  fallbacks: number;
   unknownAnsweredHonestly: number | null;
   failedCases: string[];
 }
@@ -51,17 +54,18 @@ export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => 
   const forbiddenHits = (testCase.mustNotContain ?? []).filter((needle) =>
     mentions(result.answer, needle),
   );
+  const fellBack = result.outcome === ChatOutcome.FALLBACK || result.outcome === ChatOutcome.FAILED;
   return {
     caseId: testCase.id,
     kind: testCase.kind,
     toolsOk: missingTools.length === 0 && unexpectedTools.length === 0,
     missingTools,
     unexpectedTools,
-    factsOk: missingFacts.length === 0 && forbiddenHits.length === 0,
+    factsOk: missingFacts.length === 0 && forbiddenHits.length === 0 && !fellBack,
     missingFacts,
     forbiddenHits,
-    guardTriggered:
-      result.outcome === ChatOutcome.REDACTED || result.outcome === ChatOutcome.FALLBACK,
+    unverifiedNumbers: [...result.unverifiedNumbers],
+    fellBack,
   };
 };
 
@@ -73,13 +77,14 @@ export const summarize = (scores: readonly CaseScore[]): EvalSummary => {
     cases: scores.length,
     toolSelectionAccuracy: rate(scores.filter((score) => score.toolsOk).length, scores.length),
     factAccuracy: rate(scores.filter((score) => score.factsOk).length, scores.length),
-    hallucinatedNumbers: scores.filter((score) => score.guardTriggered).length,
+    hallucinatedNumbers: scores.filter((score) => score.unverifiedNumbers.length > 0).length,
+    fallbacks: scores.filter((score) => score.fellBack).length,
     unknownAnsweredHonestly:
       unknown.length === 0
         ? null
         : rate(unknown.filter((score) => score.factsOk).length, unknown.length),
     failedCases: scores
-      .filter((score) => !score.toolsOk || !score.factsOk || score.guardTriggered)
+      .filter((score) => !score.toolsOk || !score.factsOk || score.fellBack)
       .map((score) => score.caseId),
   };
 };

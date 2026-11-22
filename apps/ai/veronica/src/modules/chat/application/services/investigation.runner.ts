@@ -73,12 +73,14 @@ export interface InvestigationResult {
   html: string;
   toolCalls: RecordedCall[];
   costUsd: number;
+  unverifiedNumbers: string[];
 }
 
 interface Verdict {
   outcome: ChatOutcome;
   html: string;
   remember: string | null;
+  unverified: string[];
 }
 
 const fenceSafe = (text: string): string => text.replaceAll('<<<', '‹‹‹').replaceAll('>>>', '›››');
@@ -117,6 +119,7 @@ export class InvestigationRunner {
         html: EMPTY_QUESTION_REPLY,
         toolCalls: [],
         costUsd: 0,
+        unverifiedNumbers: [],
       };
     }
     const messageId = await this.transport.postMessage(chatId, SEARCHING_REPLY);
@@ -134,6 +137,7 @@ export class InvestigationRunner {
       html,
       toolCalls: recorder.calls,
       costUsd: run.snapshot().costUsd,
+      unverifiedNumbers: verdict.unverified,
     };
   }
 
@@ -218,31 +222,39 @@ export class InvestigationRunner {
       ...knownNumbers(sources),
       ...knownNumbers([formatKyivDateTime(this.clock.nowMs())]),
     ]);
-    if (unverifiedNumbers(text, known).length === 0) {
-      return { outcome: ChatOutcome.ANSWERED, html: text, remember: text };
+    const unverified = unverifiedNumbers(text, known);
+    if (unverified.length === 0) {
+      return { outcome: ChatOutcome.ANSWERED, html: text, remember: text, unverified };
     }
     const redacted = redactUnverified(text, known);
     if (redacted.text === '') {
-      return this.fallback('UNVERIFIED');
+      return this.fallback('UNVERIFIED', unverified);
     }
     return {
       outcome: ChatOutcome.REDACTED,
       html: `${redacted.text}\n\n${REDACTED_NOTE}`,
       remember: redacted.text,
+      unverified,
     };
   }
 
-  private async fallback(reason: FallbackReason): Promise<Verdict> {
+  private async fallback(reason: FallbackReason, unverified: string[] = []): Promise<Verdict> {
     try {
       const status = await this.digests.status();
       return {
         outcome: ChatOutcome.FALLBACK,
         html: `${FALLBACK_INTRO[reason]}\n\n${status.html}`,
         remember: null,
+        unverified,
       };
     } catch (error) {
       this.logger.error(`Знімок для запасної відповіді не зібрано: ${errorName(error)}`);
-      return { outcome: ChatOutcome.FAILED, html: FALLBACK_FAILED_REPLY, remember: null };
+      return {
+        outcome: ChatOutcome.FAILED,
+        html: FALLBACK_FAILED_REPLY,
+        remember: null,
+        unverified,
+      };
     }
   }
 

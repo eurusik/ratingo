@@ -5,6 +5,7 @@ import {
   FixedClock,
   InMemoryRunRepository,
   StubModelAdapter,
+  assertAliasProvidersRegistered,
   createModelProviders,
   loadAgentFolder,
   type AgentFolder,
@@ -84,6 +85,7 @@ export const runCase = async (
   const clock = new FixedClock(EVAL_NOW_MS);
   const runs = new InMemoryRunRepository();
   const aliases: ModelAliases = { fast: [setup.modelRef] };
+  assertAliasProvidersRegistered(aliases, providers);
   const finalHtml: string[] = [];
   const history: ConversationTurn[] = [...(testCase.history ?? [])];
   const runner = new InvestigationRunner(
@@ -110,6 +112,7 @@ export const runCase = async (
       calledKeys: outcome.toolCalls.map((call) => callKey(call.tool, call.input)),
       answer: finalHtml[finalHtml.length - 1] ?? '',
       outcome: outcome.outcome as ChatOutcome,
+      unverifiedNumbers: outcome.unverifiedNumbers,
     },
   };
 };

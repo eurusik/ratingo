@@ -63,6 +63,7 @@ describe('chat eval on the stub model', () => {
       toolSelectionAccuracy: 1,
       factAccuracy: 1,
       hallucinatedNumbers: 0,
+      fallbacks: 0,
       unknownAnsweredHonestly: 1,
       failedCases: [],
     });
@@ -76,6 +77,7 @@ describe('chat eval scorer', () => {
     calledKeys: ['metrics_query:queue_throughput'],
     answer: 'ingestion: 7 провалилось',
     outcome: 'answered',
+    unverifiedNumbers: [],
   };
 
   it('fails tool selection on a missing, a wrong and an extra tool', () => {
@@ -108,10 +110,20 @@ describe('chat eval scorer', () => {
     ).toBe(true);
   });
 
-  it('counts a redacted or fallback answer as a hallucinated-number case', () => {
-    expect(scoreCase(testCase!, { ...base, outcome: 'redacted' }).guardTriggered).toBe(true);
-    expect(scoreCase(testCase!, { ...base, outcome: 'fallback' }).guardTriggered).toBe(true);
-    expect(scoreCase(testCase!, base).guardTriggered).toBe(false);
+  it('counts cut numbers as hallucinated and a fallback as a failed case, not a hallucination', () => {
+    const cut = scoreCase(testCase!, { ...base, outcome: 'redacted', unverifiedNumbers: ['40'] });
+    expect(cut.unverifiedNumbers).toEqual(['40']);
+    const fallback = scoreCase(testCase!, { ...base, outcome: 'fallback' });
+    expect(fallback.fellBack).toBe(true);
+    expect(fallback.unverifiedNumbers).toEqual([]);
+    expect(fallback.factsOk).toBe(false);
+    expect(summarize([cut, fallback])).toMatchObject({
+      hallucinatedNumbers: 1,
+      fallbacks: 1,
+      failedCases: ['queues-failed-today'],
+    });
+    expect(scoreCase(testCase!, { ...base, outcome: 'failed' }).factsOk).toBe(false);
+    expect(scoreCase(testCase!, base).fellBack).toBe(false);
   });
 
   it('summarizes the rates and lists the failed cases', () => {

@@ -216,6 +216,7 @@ describe('InvestigationRunner', () => {
     );
     const result = await chat.ask('що з чергами?');
     expect(result.outcome).toBe(ChatOutcome.REDACTED);
+    expect(result.unverifiedNumbers).toEqual(['40']);
     expect(chat.finalHtml).toContain('Невдалих завдань: 7.');
     expect(chat.finalHtml).not.toContain('40');
     expect(chat.finalHtml).toContain('Частину відповіді прибрано');
@@ -226,6 +227,7 @@ describe('InvestigationRunner', () => {
     const chat = new Harness().script(answerStep('Було 40 помилок.'));
     const result = await chat.ask('скільки помилок?');
     expect(result.outcome).toBe(ChatOutcome.FALLBACK);
+    expect(result.unverifiedNumbers).toEqual(['40']);
     expect(chat.finalHtml).toContain('Не зміг перевірити числа');
     expect(chat.finalHtml).toContain('СУХІ ДАНІ');
     expect(chat.stored).toEqual([]);
