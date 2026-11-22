@@ -74,7 +74,7 @@ jobs:
             storefront=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|knip\.json$)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
-            migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$)')
+            migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$|test/reporting/)')
             smoke=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|e2e/smoke/|playwright\.smoke\.config\.ts$|\.dockerignore$)')
             storefront_image=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|\.dockerignore$)')
             ai_core=$(match '^(packages/(ai-core|node-telemetry)/|knip\.json$)')

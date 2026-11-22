@@ -3,7 +3,7 @@ CREATE OR REPLACE VIEW "reporting"."internal_user_events" AS
 SELECT ("created_at" AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Kyiv')::date AS "day", "user_id", 'watch_state'::text AS "kind"
 FROM "user_media_state" WHERE "state_implied" = false
 UNION ALL
-SELECT ("updated_at" AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Kyiv')::date, "user_id", 'rating'
+SELECT ("created_at" AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Kyiv')::date, "user_id", 'rating'
 FROM "user_media_state" WHERE "rating" IS NOT NULL
 UNION ALL
 SELECT ("created_at" AT TIME ZONE 'Europe/Kyiv')::date, "user_id", 'review'
