@@ -12,6 +12,7 @@ import { AIR_DATE_NULL_AND_TIME_BASIS_CASES } from './check-cases/air-date-null-
 import { SSR_CACHE_AND_MEMORY_CASES } from './check-cases/ssr-cache-and-memory';
 import { MUTATION_CACHE_COHERENCE_CASES } from './check-cases/mutation-cache-coherence';
 import type { EvalCase } from './eval-case';
+import { LARGE_PR_EVAL_CASES } from './large-pr-cases';
 
 export const CHECK_EVAL_CASES: readonly EvalCase[] = [
   ...MIGRATION_PROD_STATE_SAFE_CASES,
@@ -28,4 +29,8 @@ export const CHECK_EVAL_CASES: readonly EvalCase[] = [
   ...MUTATION_CACHE_COHERENCE_CASES,
 ];
 
-export const EVAL_CASES: readonly EvalCase[] = [...BASE_EVAL_CASES, ...CHECK_EVAL_CASES];
+export const EVAL_CASES: readonly EvalCase[] = [
+  ...BASE_EVAL_CASES,
+  ...CHECK_EVAL_CASES,
+  ...LARGE_PR_EVAL_CASES,
+];

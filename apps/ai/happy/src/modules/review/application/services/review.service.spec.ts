@@ -238,7 +238,7 @@ describe('ReviewService', () => {
     if (outcome.status !== ReviewStatus.REVIEWED && outcome.status !== ReviewStatus.INCOMPLETE) {
       throw new Error('unexpected outcome');
     }
-    expect(outcome.reviewedFiles).toEqual(['src/checkout.ts']);
+    expect(outcome.reviewedFiles).toEqual(['src/checkout.ts', 'src/other.ts']);
     expect(outcome.findings).toHaveLength(1);
     expect(outcome.dropped).toHaveLength(2);
     expect(outcome.markdown).toContain('Перевір bob значення [link removed]');
@@ -435,7 +435,7 @@ describe('ReviewService', () => {
     const host = buildFakeCodeHost({
       files: [
         buildChangedFile({ path: 'src/checkout.ts' }),
-        buildChangedFile({ path: 'src/other.ts', additions: 25 }),
+        buildChangedFile({ path: 'src/other.ts', additions: 2_000 }),
       ],
     });
     const triage: StubScript = {
@@ -450,6 +450,51 @@ describe('ReviewService', () => {
     const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
     expect(outcome.markdown).toContain('src/other.ts');
     expect(outcome.markdown).not.toContain('Зауважень немає.');
+  });
+
+  describe('file priority', () => {
+    const LARGE_ADDITIONS = 1_600;
+    const POLICY = 'src/modules/chat/domain/policies/command-parser.policy.ts';
+    const SERVICE = 'src/modules/chat/application/services/chat.service.ts';
+    const SPEC = 'src/modules/chat/application/services/chat.service.spec.ts';
+    const MANIFEST = 'package.json';
+
+    const priorityHost = () =>
+      buildFakeCodeHost({
+        files: [
+          buildChangedFile({ path: MANIFEST, additions: LARGE_ADDITIONS }),
+          buildChangedFile({ path: SPEC, additions: LARGE_ADDITIONS }),
+          buildChangedFile({ path: SERVICE, additions: LARGE_ADDITIONS }),
+          buildChangedFile({ path: POLICY, additions: 30 }),
+        ],
+      });
+
+    const triageNamingOnly = (focusFiles: string[]): StubScript => ({
+      respond: (request) =>
+        reply(request.model, text({ risk: 'low', focusFiles, ruleTopics: [] }), StopReason.END),
+    });
+
+    it('keeps a domain policy in the careful set when triage names only noise', async () => {
+      const { service } = await setup(priorityHost(), {
+        triage: triageNamingOnly([SPEC, MANIFEST]),
+      });
+      const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+      if (outcome.status !== ReviewStatus.REVIEWED && outcome.status !== ReviewStatus.INCOMPLETE) {
+        throw new Error('unexpected outcome');
+      }
+      expect(outcome.reviewedFiles[0]).toBe(POLICY);
+    });
+
+    it('lists the files not reviewed carefully by tier', async () => {
+      const { service } = await setup(priorityHost(), {
+        triage: triageNamingOnly([MANIFEST, SPEC, SERVICE]),
+      });
+      const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+      const { markdown } = outcome;
+      const positions = [SERVICE, SPEC, MANIFEST].map((path) => markdown.indexOf(path));
+      expect(positions.every((position) => position > -1)).toBe(true);
+      expect([...positions].sort((left, right) => left - right)).toEqual(positions);
+    });
   });
 
   it('reports a failed file read as a coverage gap', async () => {

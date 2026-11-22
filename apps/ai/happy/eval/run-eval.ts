@@ -31,7 +31,14 @@ import { CheckOutcome } from '../src/modules/review/domain/entities/check';
 
 import { buildCaseDump, type CaseDump } from './case-dump';
 import { EVAL_CASES } from './cases';
-import { EVAL_RULES, baseLinesOf, changedLinesOf, renderPatch, type EvalCase } from './eval-case';
+import {
+  EVAL_RULES,
+  baseLinesOf,
+  changedLinesOf,
+  renderPatch,
+  siblingChangedFiles,
+  type EvalCase,
+} from './eval-case';
 import { scoreCase, summarize, type CaseResult, type CaseScore } from './scorer';
 
 const CHECKS_PATH = path.resolve(__dirname, '../agent/checks');
@@ -51,7 +58,12 @@ const contentsOf = (testCase: EvalCase): Record<string, string> => {
     [`${HEAD_SHA}:${filePath}`, lines.join('\n')],
     [`${BASE_SHA}:${filePath}`, lines.join('\n')],
   ]);
+  const siblings = (testCase.siblingFiles ?? []).map((sibling) => [
+    `${HEAD_SHA}:${sibling.path}`,
+    sibling.lines.join('\n'),
+  ]);
   return Object.fromEntries([
+    ...siblings,
     [`${HEAD_SHA}:${testCase.path}`, testCase.lines.join('\n')],
     ...(base === null ? [] : [[`${BASE_SHA}:${testCase.path}`, base.join('\n')]]),
     ...extra,
@@ -76,6 +88,7 @@ const hostFor = (testCase: EvalCase) =>
         deletions: 0,
         patch: renderPatch(testCase),
       }),
+      ...siblingChangedFiles(testCase),
     ],
     contents: contentsOf(testCase),
     rules: [...EVAL_RULES],
@@ -129,6 +142,7 @@ async function main(): Promise<void> {
         selectedCheckIds,
         findings: completed ? outcome.findings : [],
         questions: completed ? outcome.questions : [],
+        reviewedFiles: completed ? outcome.reviewedFiles : [],
       };
       scores.push(scoreCase(testCase, result));
       dumps.push(buildCaseDump(testCase, outcome, selectedCheckIds));
@@ -160,6 +174,7 @@ async function main(): Promise<void> {
             ([checkId, entry]) =>
               `findings by check ${checkId}: ${entry.findings} (false positives ${entry.falsePositives})`,
           ),
+        `core files covered by the careful review: ${percent(metrics.coreFilesCoverage)}`,
         `unknown cases answered with a question: ${percent(metrics.unknownAsQuestionRate)}`,
         `question noise on known cases: ${metrics.noiseQuestions}`,
         `cost: $${costUsd.toFixed(COST_DECIMALS)}`,

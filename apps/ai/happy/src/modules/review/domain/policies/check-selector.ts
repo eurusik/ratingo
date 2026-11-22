@@ -19,7 +19,7 @@ const triggerRegex = (source: string): RegExp => {
   return regex;
 };
 
-const hitsInFile = (check: Check, file: SelectableFile): number => {
+export const hitsInFile = (check: Check, file: SelectableFile): number => {
   if (!matchesAnyGlob(check.paths, file.path)) return 0;
   if (check.triggers.length === 0) return 1;
   const regexes = check.triggers.map(triggerRegex);
