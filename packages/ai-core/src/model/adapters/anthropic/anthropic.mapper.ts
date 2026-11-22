@@ -15,6 +15,8 @@ export const ANTHROPIC_PROVIDER = 'anthropic';
 
 const SERVER_ERROR_MIN_STATUS = 500;
 const RATE_LIMIT_STATUS = 429;
+const UNAUTHORIZED_STATUS = 401;
+const FORBIDDEN_STATUS = 403;
 const CACHE_CONTROL: Anthropic.CacheControlEphemeral = { type: 'ephemeral' };
 const TOOL_SCHEMA_TYPE = 'object';
 const JSON_SCHEMA_FORMAT = 'json_schema';
@@ -67,11 +69,25 @@ function toAnthropicMessage(message: ChatMessage): Anthropic.MessageParam {
 }
 
 function systemParam(request: ModelRequest): Pick<Anthropic.MessageCreateParams, 'system'> {
-  return request.system === '' ? {} : { system: request.system };
+  return request.system === ''
+    ? {}
+    : {
+        system: [
+          { type: AnthropicBlockType.TEXT, text: request.system, cache_control: CACHE_CONTROL },
+        ],
+      };
 }
 
 function toolsParam(request: ModelRequest): Pick<Anthropic.MessageCreateParams, 'tools'> {
-  return request.tools.length === 0 ? {} : { tools: request.tools.map(toAnthropicTool) };
+  const tools = request.tools.map(toAnthropicTool);
+  const last = tools.length - 1;
+  return last < 0
+    ? {}
+    : { tools: tools.map((tool, index) => (index === last ? withCacheBreakpoint(tool) : tool)) };
+}
+
+function withCacheBreakpoint(tool: Anthropic.Tool): Anthropic.Tool {
+  return { ...tool, cache_control: CACHE_CONTROL };
 }
 
 function outputConfigParam(
@@ -169,6 +185,13 @@ export function fromAnthropicMessage(
   };
 }
 
+function clientErrorMessage(providerMessage: string, status: number | undefined): string {
+  if (status === UNAUTHORIZED_STATUS || status === FORBIDDEN_STATUS) {
+    return `Anthropic rejected the API key (HTTP ${status}): check ANTHROPIC_API_KEY and its spend limit`;
+  }
+  return `Anthropic rejected the request (HTTP ${String(status)}): ${providerMessage}`;
+}
+
 export function translateProviderError(error: unknown): unknown {
   if (error instanceof Anthropic.APIConnectionError) {
     return new ModelError(ModelErrorCategory.TRANSPORT, error.message);
@@ -181,7 +204,11 @@ export function translateProviderError(error: unknown): unknown {
     if (status !== undefined && status >= SERVER_ERROR_MIN_STATUS) {
       return new ModelError(ModelErrorCategory.SERVER, error.message, status);
     }
-    return new ModelError(ModelErrorCategory.CLIENT, error.message, status);
+    return new ModelError(
+      ModelErrorCategory.CLIENT,
+      clientErrorMessage(error.message, status),
+      status,
+    );
   }
   return error;
 }

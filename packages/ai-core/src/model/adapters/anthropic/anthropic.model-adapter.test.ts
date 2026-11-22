@@ -226,7 +226,9 @@ describe('AnthropicModelAdapter', () => {
       expect(bodies[0]).toMatchObject({
         model: 'claude-haiku-5-5',
         max_tokens: 512,
-        system: 'You write digests.',
+        system: [
+          { type: 'text', text: 'You write digests.', cache_control: { type: 'ephemeral' } },
+        ],
         cache_control: { type: 'ephemeral' },
       });
       expect(bodies[0]).not.toHaveProperty('temperature');
@@ -292,6 +294,7 @@ describe('AnthropicModelAdapter', () => {
         {
           name: 'queue_state',
           description: 'Queue depth',
+          cache_control: { type: 'ephemeral' },
           input_schema: {
             type: 'object',
             properties: { queue: { type: 'string' } },
@@ -340,6 +343,48 @@ describe('AnthropicModelAdapter', () => {
       await expect(adapter.generate(request())).rejects.toMatchObject({
         category: ModelErrorCategory.TRANSPORT,
       });
+    });
+
+    it('names the API key setting and keeps the key out of the 401 reason', async () => {
+      const { adapter } = adapterReturning(() =>
+        jsonResponse(errorBody('authentication_error'), 401),
+      );
+
+      const failure = (await adapter.generate(request()).catch((error: unknown) => error)) as Error;
+
+      expect(failure.message).toContain('ANTHROPIC_API_KEY');
+      expect(failure.message).not.toContain('test-key');
+      expect(failure.message).not.toContain('Summarise today.');
+    });
+
+    it('does not retry a rejected request', async () => {
+      const { adapter, fetchMock } = adapterReturning(
+        () => jsonResponse(errorBody('invalid_request_error'), 400),
+        2,
+      );
+
+      await expect(adapter.generate(request())).rejects.toMatchObject({
+        category: ModelErrorCategory.CLIENT,
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('recovers from a 429 on retry', async () => {
+      const { adapter, fetchMock } = adapterReturning(
+        (call) =>
+          call === 1
+            ? new Response(JSON.stringify(errorBody('rate_limit_error')), {
+                status: 429,
+                headers: { 'content-type': 'application/json', 'retry-after': '0' },
+              })
+            : jsonResponse(message()),
+        1,
+      );
+
+      await expect(adapter.generate(request())).resolves.toMatchObject({
+        stopReason: StopReason.END,
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
     it('retries a bounded number of times before failing', async () => {
