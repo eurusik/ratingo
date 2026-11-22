@@ -15,6 +15,8 @@ import {
   type ReviewConfig,
   type WebhookConfig,
 } from './config.constants';
+import { DEFAULT_MENTION_HANDLE } from '../modules/webhook/domain/constants/webhook.constants';
+
 import { cliEnvSchema, serviceEnvSchema } from './env.schema';
 import { buildModelAliases } from './models.config';
 
@@ -44,6 +46,7 @@ export class ConfigModule {
     const review: ReviewConfig = {
       allowedRepositories: env.HAPPY_ALLOWED_REPOS,
       allowedAuthors: env.HAPPY_ALLOWED_AUTHORS,
+      mentionHandle: env.HAPPY_MENTION_HANDLE,
       serviceToken: env.HAPPY_SERVICE_TOKEN,
     };
     return exportProviders([
@@ -67,6 +70,7 @@ export class ConfigModule {
     const review: ReviewConfig = {
       allowedRepositories: [repository],
       allowedAuthors: env.HAPPY_ALLOWED_AUTHORS,
+      mentionHandle: DEFAULT_MENTION_HANDLE,
     };
     const redis: RedisConfig = { url: env.REDIS_URL };
     return exportProviders([

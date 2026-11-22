@@ -87,6 +87,19 @@ describe('decideSkip', () => {
     ).toBeNull();
   });
 
+  it('reviews a tiny pull request on explicit request but still refuses an oversized one', () => {
+    const request = buildPullRequest();
+    const explicit = {
+      allowedAuthors: [],
+      minChangedLines: 20,
+      maxChangedLines: 6000,
+      explicitRequest: true,
+    };
+    expect(decideSkip(request, [file('src/a.ts', 3, 1)], explicit)).toBeNull();
+    expect(decideSkip(request, [file('src/a.ts', 7000)], explicit)).toBe(SkipReason.TOO_LARGE);
+    expect(decideSkip(request, [file('README.md', 3)], explicit)).toBe(SkipReason.DOCS_ONLY);
+  });
+
   it('never reviews fewer than the minimum reviewable lines', () => {
     fc.assert(
       fc.property(

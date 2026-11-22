@@ -10,7 +10,13 @@ import {
 
 import { decideWebhook } from './webhook-policy';
 
-const CONFIG = { allowedRepositories: ['eurusik/ratingo'], allowedAuthors: ['friend'] };
+const HANDLE = 'happy-on-duty';
+const RETIRED_HANDLE = 'happy';
+const CONFIG = {
+  allowedRepositories: ['eurusik/ratingo'],
+  allowedAuthors: ['friend'],
+  mentionHandle: HANDLE,
+};
 
 const pullRequest = (
   overrides: Partial<PullRequestWebhookEvent> = {},
@@ -31,7 +37,7 @@ const comment = (overrides: Partial<CommentWebhookEvent> = {}): CommentWebhookEv
   ref: { owner: 'eurusik', repo: 'ratingo', number: 5 },
   isPullRequest: true,
   commentId: 9,
-  body: '@happy review',
+  body: `@${HANDLE} scan`,
   authorAssociation: 'OWNER',
   senderType: 'User',
   ...overrides,
@@ -88,6 +94,15 @@ describe('decideWebhook pull requests', () => {
   });
 });
 
+const COMMANDS = [
+  `@${HANDLE} scan`,
+  `@${HANDLE} review`,
+  '/happy scan',
+  '/happy review',
+  '  @HAPPY-ON-DUTY Scan\n',
+  '/HAPPY REVIEW',
+];
+
 describe('decideWebhook commands', () => {
   it('accepts the exact command from owners, members and collaborators only', () => {
     fc.assert(
@@ -104,15 +119,23 @@ describe('decideWebhook commands', () => {
     }
   });
 
-  it('requires the exact text apart from surrounding whitespace', () => {
+  it('accepts every command form and nothing else as the first text', () => {
+    for (const body of COMMANDS) {
+      expect(decideWebhook(comment({ body }), CONFIG).action).toBe('enqueue');
+    }
     fc.assert(
       fc.property(fc.string({ maxLength: 30 }), (body) => {
-        fc.pre(body.trim() !== '@happy review');
+        fc.pre(!/^\s*(@happy-on-duty|\/happy)\s+(scan|review)/i.test(body));
         return decideWebhook(comment({ body }), CONFIG).action === 'ignore';
       }),
     );
-    expect(decideWebhook(comment({ body: '  @happy review\n' }), CONFIG).action).toBe('enqueue');
-    expect(decideWebhook(comment({ body: '@happy review now' }), CONFIG).action).toBe('ignore');
+  });
+
+  it('does not treat the retired short mention as a command', () => {
+    expect(decideWebhook(comment({ body: `@${RETIRED_HANDLE} review` }), CONFIG)).toMatchObject({
+      action: 'ignore',
+      reason: IgnoreReason.NOT_A_COMMAND,
+    });
   });
 
   it('ignores comments on issues, from bots and in other repositories', () => {

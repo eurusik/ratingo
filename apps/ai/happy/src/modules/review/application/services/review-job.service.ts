@@ -33,7 +33,9 @@ export class ReviewJobService {
   ) {}
 
   async process(job: ReviewJob): Promise<ReviewJobResult> {
-    const outcome = await this.reviews.review(job.ref, RunTrigger.WEBHOOK);
+    const outcome = await this.reviews.review(job.ref, RunTrigger.WEBHOOK, {
+      explicitRequest: job.source === ReviewJobSource.COMMAND,
+    });
     if (outcome.status === ReviewStatus.SKIPPED && job.source !== ReviewJobSource.COMMAND) {
       this.logger.log(`${formatPullRequest(job.ref)} skipped: ${outcome.reason}`);
       return ReviewJobResult.SKIPPED_SILENTLY;

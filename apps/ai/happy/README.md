@@ -6,14 +6,39 @@ Step 1 is the manual CLI. Step 2 (this) adds automatic triggering through a GitH
 
 ## How a review starts
 
-| Event                                                                                            | Result                                                              |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| `pull_request` `opened`, `ready_for_review`, `reopened`                                          | one review of the head commit                                       |
-| `issue_comment` with exactly `@happy review`, from an owner, member or collaborator              | a fresh review, published even if the pull request would be skipped |
-| `pull_request` `synchronize` (a new push)                                                        | ignored on purpose: review once when the PR is ready                |
-| drafts, repositories outside `HAPPY_ALLOWED_REPOS`, fork authors outside `HAPPY_ALLOWED_AUTHORS` | ignored                                                             |
+| Event                                                                                                                                                                 | Result                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `pull_request` `opened`, `ready_for_review`, `reopened`                                                                                                               | one review of the head commit                                                               |
+| `issue_comment` starting with `@happy-on-duty scan` or `@happy-on-duty review` (or the aliases `/happy scan`, `/happy review`), from an owner, member or collaborator | a fresh review, forced for a trivial pull request and published even if it would be skipped |
+| `pull_request` `synchronize` (a new push)                                                                                                                             | ignored on purpose: review once when the PR is ready                                        |
+| drafts, repositories outside `HAPPY_ALLOWED_REPOS`, fork authors outside `HAPPY_ALLOWED_AUTHORS`                                                                      | ignored                                                                                     |
 
-The webhook controller verifies `X-Hub-Signature-256` over the raw body with a constant-time compare, enqueues a BullMQ job (`REDIS_URL`) and answers `202`. The job id is repository + pull request + head commit, so a redelivery is one job. A worker (concurrency 1) runs the review and publishes the check. Before publishing it re-reads the pull request and skips if it is closed, merged, or its head is no longer the reviewed commit. A pull request that Happy skips (trivial, docs only, too large) gets no check unless a collaborator asked with `@happy review`.
+The webhook controller verifies `X-Hub-Signature-256` over the raw body with a constant-time compare, enqueues a BullMQ job (`REDIS_URL`) and answers `202`. The job id is repository + pull request + head commit, so a redelivery is one job. A worker (concurrency 1) runs the review and publishes the check. Before publishing it re-reads the pull request and skips if it is closed, merged, or its head is no longer the reviewed commit. A pull request that Happy skips (trivial, docs only, too large) gets no check unless a collaborator asked with a command.
+
+## Commands
+
+A command is the first non-blank text of a comment on a pull request, in any letter case: `@happy-on-duty scan`, `@happy-on-duty review`, `/happy scan` or `/happy review`. Text after it is allowed. A command inside a code block, inline code or a quote does not trigger anything. The mention handle is the constant `HAPPY_MENTION_HANDLE` (default `happy-on-duty`); the GitHub App `happy-for-ratingo` still does the work and publishes the check run.
+
+An explicit command reviews a trivial pull request that would otherwise be skipped. It does not lift the `too_large` skip, and docs-only pull requests stay skipped.
+
+## Check title voice
+
+Happy speaks in one line, only in the check title and the first line of the check summary. Findings, questions and coverage notes stay factual. All lines live in `src/modules/review/domain/constants/check-voice.constants.ts`.
+
+| Situation                           | Line                                                          |
+| ----------------------------------- | ------------------------------------------------------------- |
+| nothing found, coverage complete    | Периметр чистий. Проходь.                                     |
+| any critical finding                | Стоп. Так далі не поїде.                                      |
+| any major finding                   | Затримую на вході: є що виправити.                            |
+| coverage gap (no critical or major) | Оглянув не все: ось що пропустив.                             |
+| only minor or nit findings          | Пропускаю, але дещо записав.                                  |
+| only questions                      | Маю питання до водія.                                         |
+| trivial pull request, no command    | Цей сам доїде, огляд не потрібен.                             |
+| too large                           | Вантаж завеликий для одного огляду. Розбий на кілька заїздів. |
+| release checklist                   | Список вантажу на виїзд.                                      |
+| daily budget exhausted              | Зміна закінчилась. Завтра огляну.                             |
+
+Other skip reasons keep the plain title `Пропущено: <reason>`.
 
 Pull requests from `development` into `main` get a release checklist instead of a code review: migrations in the diff (with risky statements flagged), new environment variable names, changed apps and packages, dependency changes. It is plain code over the diff, with no model call and no cost.
 
@@ -50,26 +75,36 @@ Permissions (nothing else): **Contents: read, Pull requests: read, Issues: read,
 4. Install the app on the `eurusik/ratingo` repository only (Settings, Developer settings, GitHub Apps, Install App, Only select repositories).
 5. Set the Railway variables below and redeploy. In the app's Advanced tab the recent deliveries should show `202`.
 
-Test: open a non-draft pull request with a few code changes, or comment `@happy review` on one. A check named `Happy` with a neutral result appears within a minute or two.
+Test: open a non-draft pull request with a few code changes, or comment `@happy-on-duty scan` on one. A check named `Happy` with a neutral result appears within a minute or two.
+
+## Profile and avatar
+
+`github-app/avatar.png` is the badge for Happy. Upload it in two places:
+
+- the GitHub App `happy-for-ratingo`: Settings, Developer settings, GitHub Apps, Edit, Display information, Upload a logo;
+- the machine account `happy-on-duty`: Settings, Public profile, Profile picture.
+
+The machine account exists only so Happy can be tagged. It has no token in Railway and runs nothing; the App does the work.
 
 ## Railway variables
 
 Names only; values are secrets or per-environment.
 
-| Variable                                                    | Purpose                                                |
-| ----------------------------------------------------------- | ------------------------------------------------------ |
-| `PORT`                                                      | HTTP port (default 3005)                               |
-| `REDIS_URL`                                                 | BullMQ queue and the durable daily spend counter       |
-| `GITHUB_APP_ID`                                             | numeric app id                                         |
-| `GITHUB_APP_PRIVATE_KEY`                                    | the PEM private key; newlines may be written as `\n`   |
-| `GITHUB_WEBHOOK_SECRET`                                     | webhook secret, at least 16 characters                 |
-| `GITHUB_API_URL`                                            | optional, GitHub Enterprise only                       |
-| `HAPPY_ALLOWED_REPOS`                                       | comma-separated `owner/repo` list                      |
-| `HAPPY_ALLOWED_AUTHORS`                                     | optional, fork authors that may be reviewed            |
-| `HAPPY_SERVICE_TOKEN`                                       | optional, protects `/internal/review` (24+ characters) |
-| `AI_MODEL_FAST`, `AI_MODEL_REVIEW`                          | model refs; default `stub:...` runs no real model      |
-| `ANTHROPIC_API_KEY`                                         | required when a model ref is `anthropic:...`           |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | telemetry                                              |
+| Variable                                                    | Purpose                                                         |
+| ----------------------------------------------------------- | --------------------------------------------------------------- |
+| `PORT`                                                      | HTTP port (default 3005)                                        |
+| `REDIS_URL`                                                 | BullMQ queue and the durable daily spend counter                |
+| `GITHUB_APP_ID`                                             | numeric app id                                                  |
+| `GITHUB_APP_PRIVATE_KEY`                                    | the PEM private key; newlines may be written as `\n`            |
+| `GITHUB_WEBHOOK_SECRET`                                     | webhook secret, at least 16 characters                          |
+| `GITHUB_API_URL`                                            | optional, GitHub Enterprise only                                |
+| `HAPPY_ALLOWED_REPOS`                                       | comma-separated `owner/repo` list                               |
+| `HAPPY_ALLOWED_AUTHORS`                                     | optional, fork authors that may be reviewed                     |
+| `HAPPY_MENTION_HANDLE`                                      | optional, login that commands mention (default `happy-on-duty`) |
+| `HAPPY_SERVICE_TOKEN`                                       | optional, protects `/internal/review` (24+ characters)          |
+| `AI_MODEL_FAST`, `AI_MODEL_REVIEW`                          | model refs; default `stub:...` runs no real model               |
+| `ANTHROPIC_API_KEY`                                         | required when a model ref is `anthropic:...`                    |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | telemetry                                                       |
 
 Keep one replica: the worker runs one job at a time and the budgets (`$0.60` per run, `$3` per day) are counted per service.
 

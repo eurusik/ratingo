@@ -1,7 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
 
-import { RunStopReason, type AgentFolder, type RunTrigger, type Tool } from '@ratingo/ai-core';
+import {
+  BudgetLevel,
+  RunStopReason,
+  type AgentFolder,
+  type RunTrigger,
+  type Tool,
+} from '@ratingo/ai-core';
 
 import { REVIEW_ROLE } from '../../../../config/review.config';
 import { AgentRunner } from '../../../../core/agent-runner.service';
@@ -77,6 +83,7 @@ export interface DeepReviewInput {
 export interface DeepReviewResult {
   completed: boolean;
   stopReason: string;
+  budgetExhausted: boolean;
   summary: string;
   findings: Finding[];
   toolFailures: number;
@@ -131,10 +138,14 @@ export class DeepReviewService {
     });
     const stopReason = result.run.stopReason ?? result.run.status;
     const costUsd = result.run.costUsd;
+    const budgetExhausted =
+      stopReason === RunStopReason.BUDGET_EXCEEDED &&
+      result.run.stopDetail === BudgetLevel.AGENT_DAY;
     if (stopReason !== RunStopReason.END || result.value === undefined) {
       return {
         completed: false,
         stopReason,
+        budgetExhausted,
         summary: '',
         findings: [],
         toolFailures: failures.count,
@@ -145,6 +156,7 @@ export class DeepReviewService {
     return {
       completed: true,
       stopReason,
+      budgetExhausted,
       summary: clip(reply.summary, MAX_SUMMARY_CHARS),
       findings: reply.findings.slice(0, MAX_RAW_FINDINGS).map(({ suggestion, ...finding }) => ({
         ...finding,

@@ -1,5 +1,6 @@
 import type { CheckReport } from '../../domain/entities/check-report';
 import { PullRequestState } from '../../domain/entities/pull-request';
+import { CheckVoice } from '../../domain/constants/check-voice.constants';
 import { ReviewJobSource, type ReviewJob } from '../../domain/entities/review-job';
 import { ReviewStatus, type ReviewOutcome } from '../../domain/entities/review-outcome';
 import type { CheckRunPublisherPort } from '../../domain/ports/check-run-publisher.port';
@@ -30,6 +31,7 @@ const reviewed = (headSha = 'head222'): ReviewOutcome => ({
   reviewedFiles: [],
   coverage: { unreviewedFiles: [], gaps: [] },
   stopReason: 'end',
+  budgetExhausted: false,
   costUsd: 0.01,
   markdown: '## ok',
 });
@@ -52,7 +54,7 @@ const setup = (outcome: ReviewOutcome, current = buildPullRequest()) => {
   };
   const reviews = { review: jest.fn().mockResolvedValue(outcome) } as unknown as ReviewService;
   const service = new ReviewJobService(reviews, buildFakeCodeHost({ pr: current }), publisher);
-  return { service, published };
+  return { service, published, review: reviews.review as jest.Mock };
 };
 
 describe('ReviewJobService', () => {
@@ -74,6 +76,16 @@ describe('ReviewJobService', () => {
     expect(published).toHaveLength(0);
   });
 
+  it('asks the review for an explicit pass only when a collaborator commanded it', async () => {
+    const outcomes = setup(reviewed());
+    await outcomes.service.process(JOB);
+    await outcomes.service.process({ ...JOB, source: ReviewJobSource.COMMAND, commentId: 4 });
+    expect(outcomes.review.mock.calls.map((call) => call[2])).toEqual([
+      { explicitRequest: false },
+      { explicitRequest: true },
+    ]);
+  });
+
   it('stays silent about a skipped pull request unless a collaborator asked', async () => {
     const silent = setup(skipped);
     expect(await silent.service.process(JOB)).toBe(ReviewJobResult.SKIPPED_SILENTLY);
@@ -87,6 +99,7 @@ describe('ReviewJobService', () => {
       commentId: 3,
     });
     expect(result).toBe(ReviewJobResult.PUBLISHED);
-    expect(asked.published[0]?.report.title).toContain('Пропущено');
+    expect(asked.published[0]?.report.title).toBe(CheckVoice.TRIVIAL);
+    expect(asked.published[0]?.report.summary.split('\n')[0]).toBe(CheckVoice.TRIVIAL);
   });
 });

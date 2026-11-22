@@ -1,5 +1,7 @@
+import { CheckVoice } from '../constants/check-voice.constants';
 import { FindingKind, FindingTopic } from '../constants/finding-classification.constants';
 import { FindingCategory, Severity } from '../constants/severity.constants';
+import { SkipReason } from '../constants/skip-patterns.constants';
 import { CheckConclusion } from '../entities/check-report';
 import type { ValidatedFinding } from '../entities/finding';
 import { FileStatus, type ChangedFile } from '../entities/pull-request';
@@ -123,6 +125,7 @@ const review = (
   reviewedFiles: ['src/a.ts'],
   coverage: { unreviewedFiles: [], gaps: [] },
   stopReason: 'end',
+  budgetExhausted: false,
   costUsd: 0.01,
   ...overrides,
 });
@@ -160,5 +163,108 @@ describe('review rendering and check report', () => {
     expect(report.annotations[0]?.level).toBe('warning');
     expect(report.annotations[45]?.level).toBe('notice');
     expect(report.summary.length).toBeLessThanOrEqual(60_000);
+  });
+});
+
+describe('check voice', () => {
+  const titleOf = (overrides: Partial<Omit<CompletedReview, 'markdown'>> = {}): string => {
+    const base = review(overrides);
+    return buildCheckReport({ ...base, markdown: renderCompletedReview(base) }).title;
+  };
+
+  it('is clean when there is nothing to say and the coverage is complete', () => {
+    expect(titleOf()).toBe(CheckVoice.CLEAN);
+  });
+
+  it('puts the worst severity first', () => {
+    expect(
+      titleOf({
+        findings: [
+          validated({ severity: Severity.MINOR }),
+          validated({ severity: Severity.CRITICAL }),
+          validated({ severity: Severity.MAJOR }),
+        ],
+      }),
+    ).toBe(CheckVoice.CRITICAL);
+    expect(titleOf({ findings: [validated({ severity: Severity.MINOR }), validated()] })).toBe(
+      CheckVoice.MAJOR,
+    );
+  });
+
+  it.each([Severity.MINOR, Severity.NIT])(
+    'records %s findings without stopping the line',
+    (severity) => {
+      expect(titleOf({ findings: [validated({ severity })] })).toBe(CheckVoice.MINOR);
+    },
+  );
+
+  it('only asks when there are just questions', () => {
+    expect(titleOf({ questions: [validated({ kind: FindingKind.QUESTION })] })).toBe(
+      CheckVoice.QUESTIONS,
+    );
+  });
+
+  it('admits a coverage gap instead of calling the perimeter clean', () => {
+    const gap = { unreviewedFiles: ['src/b.ts'], gaps: [CoverageGap.TOOL_FAILED] };
+    expect(titleOf({ coverage: gap })).toBe(CheckVoice.COVERAGE_GAP);
+    expect(titleOf({ status: ReviewStatus.INCOMPLETE })).toBe(CheckVoice.COVERAGE_GAP);
+    expect(titleOf({ coverage: gap, findings: [validated({ severity: Severity.MINOR })] })).toBe(
+      CheckVoice.COVERAGE_GAP,
+    );
+  });
+
+  it('closes the shift when the daily budget is gone', () => {
+    expect(titleOf({ status: ReviewStatus.INCOMPLETE, budgetExhausted: true })).toBe(
+      CheckVoice.BUDGET_EXHAUSTED,
+    );
+  });
+
+  it('speaks for skipped pull requests and release checklists', () => {
+    const skipped = (reason: SkipReason) =>
+      buildCheckReport({
+        status: ReviewStatus.SKIPPED,
+        ref: { owner: 'a', repo: 'b', number: 3 },
+        headSha: 'abc',
+        reason,
+        costUsd: 0,
+        markdown: '## skipped',
+      });
+    expect(skipped(SkipReason.TRIVIAL).title).toBe(CheckVoice.TRIVIAL);
+    expect(skipped(SkipReason.TOO_LARGE).title).toBe(CheckVoice.TOO_LARGE);
+    expect(skipped(SkipReason.DOCS_ONLY).title).toBe('Пропущено: docs_only');
+    expect(
+      buildCheckReport({
+        status: ReviewStatus.CHECKLIST,
+        ref: { owner: 'a', repo: 'b', number: 3 },
+        headSha: 'abc',
+        costUsd: 0,
+        markdown: '## checklist',
+      }).title,
+    ).toBe(CheckVoice.RELEASE_CHECKLIST);
+  });
+
+  it('repeats the voice line first in the summary and keeps findings factual', () => {
+    const base = review({ findings: [validated({ severity: Severity.CRITICAL })] });
+    const report = buildCheckReport({ ...base, markdown: renderCompletedReview(base) });
+    const [first, second] = report.summary.split('\n');
+    expect(first).toBe(CheckVoice.CRITICAL);
+    expect(second).toBe('');
+    expect(renderCompletedReview(base)).not.toContain(CheckVoice.CRITICAL);
+  });
+
+  it('never states there are no findings while the coverage has a gap', () => {
+    const base = review({
+      coverage: { unreviewedFiles: ['src/b.ts'], gaps: [CoverageGap.TOOL_FAILED] },
+    });
+    const report = buildCheckReport({ ...base, markdown: renderCompletedReview(base) });
+    expect(report.summary).toContain('### Покриття неповне');
+    expect(report.summary).not.toContain('Зауважень немає.');
+  });
+
+  it('keeps every voice line to one line without emoji', () => {
+    for (const line of Object.values(CheckVoice)) {
+      expect(line).not.toContain('\n');
+      expect(line).not.toMatch(/\p{Extended_Pictographic}/u);
+    }
   });
 });
