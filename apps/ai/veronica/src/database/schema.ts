@@ -7,6 +7,9 @@ import {
   pgSchema,
   text,
   date,
+  index,
+  timestamp,
+  uuid,
 } from 'drizzle-orm/pg-core';
 
 export const aiSchema = pgSchema('ai');
@@ -36,3 +39,25 @@ export const digestDeliveries = aiSchema.table('digest_deliveries', {
   silent: boolean('silent'),
   runId: text('run_id'),
 });
+
+export const chatExchanges = aiSchema.table(
+  'chat_exchanges',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: text('run_id')
+      .notNull()
+      .references(() => runs.id),
+    chatId: text('chat_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull(),
+    route: text('route').notNull(),
+    question: text('question').notNull(),
+    answer: text('answer').notNull(),
+    outcome: text('outcome').notNull(),
+    cutNumbers: jsonb('cut_numbers').notNull(),
+    toolNames: jsonb('tool_names').notNull(),
+  },
+  (table) => [
+    index('chat_exchanges_chat_created_idx').on(table.chatId, table.createdAt),
+    index('chat_exchanges_created_idx').on(table.createdAt),
+  ],
+);

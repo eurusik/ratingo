@@ -69,6 +69,7 @@ const CHAT_PROMPT_KEY = 'chat';
 type FallbackReason = keyof typeof FALLBACK_INTRO;
 
 export interface InvestigationResult {
+  runId: string | null;
   outcome: ChatOutcome;
   html: string;
   toolCalls: RecordedCall[];
@@ -117,6 +118,7 @@ export class InvestigationRunner {
     if (question === '') {
       await this.transport.sendMessage(chatId, EMPTY_QUESTION_REPLY);
       return {
+        runId: null,
         outcome: ChatOutcome.HANDLED,
         html: EMPTY_QUESTION_REPLY,
         toolCalls: [],
@@ -136,6 +138,7 @@ export class InvestigationRunner {
       await this.remember(chatId, question, verdict.remember);
     }
     return {
+      runId: run.snapshot().id,
       outcome: verdict.outcome,
       html,
       toolCalls: recorder.calls,

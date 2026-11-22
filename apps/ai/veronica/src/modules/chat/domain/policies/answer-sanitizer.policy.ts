@@ -7,3 +7,6 @@ export const stripLinks = (text: string): string =>
 
 export const clip = (text: string, maxChars: number): string =>
   text.length <= maxChars ? text : `${text.slice(0, maxChars - 1).trimEnd()}…`;
+
+export const escapeHtml = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

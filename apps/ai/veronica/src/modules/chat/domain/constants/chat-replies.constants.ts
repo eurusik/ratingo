@@ -74,3 +74,7 @@ export const FALLBACK_INTRO = {
 
 export const FALLBACK_FAILED_REPLY =
   'Не вдалося ні розібратися з питанням, ні зібрати знімок. Спробуй ще раз трохи пізніше.';
+
+export const LAST_EXCHANGES_TITLE = '<b>Останні відповіді</b>';
+
+export const NO_EXCHANGES_REPLY = 'Ще немає відповідей, які я записала.';

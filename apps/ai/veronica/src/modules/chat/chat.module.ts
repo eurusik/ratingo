@@ -3,6 +3,8 @@ import { Module } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
 
+import { DATABASE } from '../../database/database.constants';
+import type { Database } from '../../database/database.module';
 import {
   CHANGES_CONFIG,
   HAPPY_CONFIG,
@@ -17,6 +19,9 @@ import { DigestModule } from '../digest/public';
 import { NotifyModule } from '../notify/public';
 
 import { ChatCommandHandlers } from './application/commands/chat-command.handlers';
+import { ChatExchangeRecorder } from './application/services/chat-exchange-recorder.service';
+import { ChatExchangeRetention } from './application/services/chat-exchange-retention.service';
+import { ChatExchangeRetentionScheduler } from './application/services/chat-exchange-retention.scheduler';
 import { HappyChatService } from './application/services/happy-chat.service';
 import { HappyFollowUpService } from './application/services/happy-follow-up.service';
 import { ChatService } from './application/services/chat.service';
@@ -39,12 +44,14 @@ import {
   CHAT_QUEUE_TOKEN,
   REDIS_CONNECTION,
 } from './chat.constants';
+import { CHAT_EXCHANGE_LOG } from './domain/ports/chat-exchange-log.port';
 import { CHAT_JOB_QUEUE } from './domain/ports/chat-job-queue.port';
 import { CHAT_METRICS_PORT } from './domain/ports/chat-metrics.port';
 import { CONVERSATION_STORE } from './domain/ports/conversation-store.port';
 import { HAPPY_CLIENT } from './domain/ports/happy-client.port';
 import { RECENT_CHANGES_PORT } from './domain/ports/recent-changes.port';
 import { WEBHOOK_SECRET_PORT } from './domain/ports/webhook-secret.port';
+import { PostgresChatExchangeRepository } from './infrastructure/repositories/postgres.chat-exchange-repository';
 import { GithubRecentChangesAdapter } from './infrastructure/adapters/github.recent-changes-adapter';
 import { HttpHappyClient } from './infrastructure/adapters/http.happy-client';
 import { BullmqChatJobQueue } from './infrastructure/queues/bullmq-chat-job-queue';
@@ -95,6 +102,14 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
       inject: [HAPPY_CONFIG],
       useFactory: (config: HappyConfig) => new HttpHappyClient(config),
     },
+    {
+      provide: CHAT_EXCHANGE_LOG,
+      inject: [DATABASE],
+      useFactory: (db: Database) => new PostgresChatExchangeRepository(db),
+    },
+    ChatExchangeRecorder,
+    ChatExchangeRetention,
+    ChatExchangeRetentionScheduler,
     MetricsQueryExecutor,
     ProductStatsExecutor,
     DigestSnapshotExecutor,

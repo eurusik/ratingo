@@ -19,6 +19,7 @@ import {
 } from '../../chat.constants';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
 import { HappyReviewMode, type HappyFollowUp } from '../../domain/entities/happy';
+import { ChatExchangeRetention } from '../services/chat-exchange-retention.service';
 import { ChatService } from '../services/chat.service';
 import { HappyFollowUpService } from '../services/happy-follow-up.service';
 
@@ -52,6 +53,7 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   constructor(
     private readonly chat: ChatService,
     private readonly followUps: HappyFollowUpService,
+    private readonly retention: ChatExchangeRetention,
     @Inject(REDIS_CONNECTION) private readonly connection: IORedis,
   ) {}
 
@@ -78,6 +80,9 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
       }
       if (job.name === CHAT_JOB_TYPES.HAPPY_FOLLOW_UP && isHappyFollowUp(job.data)) {
         return await this.followUps.handle(job.data);
+      }
+      if (job.name === CHAT_JOB_TYPES.EXCHANGE_RETENTION) {
+        return `deleted:${await this.retention.purge()}`;
       }
       this.logger.warn(`Невідоме завдання чату ${job.name}`);
       return 'ignored';
