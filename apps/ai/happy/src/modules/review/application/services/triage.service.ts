@@ -11,10 +11,18 @@ import {
   TRIAGE_MAX_TURNS,
   TRIAGE_ROLE,
 } from '../../../../config/review.config';
-import { MAX_EXTRA_CHECKS, MAX_FOCUS_FILES } from '../../domain/constants/review-limits.constants';
+import {
+  MAX_EXTRA_CHECKS,
+  MAX_FOCUS_FILES,
+  MAX_INLINE_DIFF_CHANGED_LINES,
+} from '../../domain/constants/review-limits.constants';
 import type { Check, ExtraCheckRequest } from '../../domain/entities/check';
-import type { ChangedFile, PullRequest } from '../../domain/entities/pull-request';
-import { reviewableFiles } from '../../domain/policies/skip-policy';
+import type { PullRequest } from '../../domain/entities/pull-request';
+import {
+  selectFocusFiles,
+  type FocusLimits,
+  type RankedFile,
+} from '../../domain/policies/file-priority';
 import { wrapUntrusted } from '../../domain/policies/untrusted-content';
 import { TRIAGE_PROMPT_NAME, TRIAGE_TASK_NAME } from '../../review.constants';
 
@@ -44,18 +52,16 @@ export interface TriageResult {
   costUsd: number;
 }
 
-const changeSize = (file: ChangedFile): number => file.additions + file.deletions;
+const FOCUS_LIMITS: FocusLimits = {
+  maxFiles: MAX_FOCUS_FILES,
+  maxInlineChangedLines: MAX_INLINE_DIFF_CHANGED_LINES,
+};
 
-const largestFirst = (files: readonly ChangedFile[]): string[] =>
-  [...files]
-    .sort((left, right) => changeSize(right) - changeSize(left))
-    .slice(0, MAX_FOCUS_FILES)
-    .map((file) => file.path);
-
-const buildPrompt = (pr: PullRequest, files: readonly ChangedFile[]): string => {
+const buildPrompt = (pr: PullRequest, ranked: readonly RankedFile[]): string => {
   const listing = JSON.stringify({
-    files: files.map(({ path, status, additions, deletions }) => ({
+    files: ranked.map(({ file: { path, status, additions, deletions }, tier }) => ({
       path,
+      tier,
       status,
       additions,
       deletions,
@@ -78,18 +84,16 @@ export class TriageService {
 
   async triage(
     pr: PullRequest,
-    files: readonly ChangedFile[],
+    ranked: readonly RankedFile[],
     trigger: RunTrigger,
     checks: TriageChecks,
   ): Promise<TriageResult> {
-    const candidates = reviewableFiles(files);
-    const fallback = largestFirst(candidates);
     const result = await this.runner.run({
       task: TRIAGE_TASK_NAME,
       role: TRIAGE_ROLE,
       trigger,
       system: `${this.folder.prompts[TRIAGE_PROMPT_NAME] ?? ''}${renderCheckCatalog(checks)}`,
-      prompt: buildPrompt(pr, candidates),
+      prompt: buildPrompt(pr, ranked),
       responseSchema: triageSchema,
       tools: [],
       budgetUsd: TRIAGE_BUDGET_USD,
@@ -99,20 +103,20 @@ export class TriageService {
     const costUsd = result.run.costUsd;
     if (result.run.stopReason !== RunStopReason.END || result.value === undefined) {
       this.logger.warn(
-        `Triage fell back to the largest files: ${result.run.stopReason ?? result.run.status}`,
+        `Triage fell back to the ranked files: ${result.run.stopReason ?? result.run.status}`,
       );
       return {
-        focusFiles: fallback,
+        focusFiles: selectFocusFiles(ranked, [], FOCUS_LIMITS),
         ruleTopics: [],
         extraChecks: [],
         costUsd,
       };
     }
     const reply = result.value as z.infer<typeof triageSchema>;
-    const known = new Set(candidates.map((file) => file.path));
-    const focusFiles = [...new Set(reply.focusFiles)].filter((path) => known.has(path));
+    const known = new Set(ranked.map(({ file }) => file.path));
+    const suggested = [...new Set(reply.focusFiles)].filter((path) => known.has(path));
     return {
-      focusFiles: focusFiles.length > 0 ? focusFiles.slice(0, MAX_FOCUS_FILES) : fallback,
+      focusFiles: selectFocusFiles(ranked, suggested, FOCUS_LIMITS),
       ruleTopics: reply.ruleTopics
         .slice(0, MAX_RULE_TOPICS)
         .map((topic) => topic.slice(0, MAX_TOPIC_CHARS)),

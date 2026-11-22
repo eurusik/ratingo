@@ -32,6 +32,7 @@ const result = (
   findings: number[] = [],
   questions: number[] = [],
   checkIds: (string | null)[] = [],
+  reviewed: string[] = [],
 ): CaseResult => ({
   caseId: testCase.id,
   kind: testCase.kind,
@@ -42,6 +43,7 @@ const result = (
     checkId: checkIds[index] ?? null,
   })),
   questions: questions.map((line) => ({ file: 'a.ts', line, checkId: null })),
+  reviewedFiles: reviewed,
 });
 
 describe('scoreCase', () => {

@@ -39,6 +39,7 @@ import {
   type SelectableFile,
 } from '../../domain/policies/check-selector';
 import { addedLineTexts } from '../../domain/policies/diff-hunks';
+import { rankFiles, type RankedFile } from '../../domain/policies/file-priority';
 import { extractRuleSection } from '../../domain/policies/rule-section';
 import { renderReleaseChecklist } from '../../domain/policies/release-checklist-renderer';
 import { renderCompletedReview, renderSkippedReview } from '../../domain/policies/review-renderer';
@@ -116,7 +117,8 @@ export class ReviewService {
     const rules = (await this.host.readRuleFiles(ref, pr.baseSha)).map(parseRule);
     const catalog = this.checkSource.list();
     const preselected = selectChecks(catalog, selectableFiles(files));
-    const triaged = await this.triage.triage(pr, files, trigger, {
+    const ranked = rankFiles(reviewableFiles(files), preselected);
+    const triaged = await this.triage.triage(pr, ranked, trigger, {
       catalog,
       selectedIds: preselected.map((check) => check.id),
     });
@@ -140,7 +142,7 @@ export class ReviewService {
       allRules: rules,
       trigger,
     });
-    return this.completedOutcome(pr, files, truncated, triaged, deep, diffMode, checks);
+    return this.completedOutcome(pr, files, ranked, truncated, triaged, deep, diffMode, checks);
   }
 
   private skipReasonFor(
@@ -235,7 +237,7 @@ export class ReviewService {
   }
 
   private coverageFor(
-    files: readonly ChangedFile[],
+    ranked: readonly RankedFile[],
     truncated: boolean,
     triaged: TriageResult,
     deep: DeepReviewResult,
@@ -250,8 +252,8 @@ export class ReviewService {
       ...(diffMode === DiffMode.FILE_LIST ? [CoverageGap.DIFFS_NOT_INLINED] : []),
       ...(evidenceFailed ? [CoverageGap.EVIDENCE_UNREADABLE] : []),
     ];
-    const unreviewedFiles = reviewableFiles(files)
-      .map((file) => file.path)
+    const unreviewedFiles = ranked
+      .map(({ file }) => file.path)
       .filter((path) => !reviewed.has(path) || !deep.completed);
     return { unreviewedFiles, gaps };
   }
@@ -259,6 +261,7 @@ export class ReviewService {
   private async completedOutcome(
     pr: PullRequest,
     files: readonly ChangedFile[],
+    ranked: readonly RankedFile[],
     truncated: boolean,
     triaged: TriageResult,
     deep: DeepReviewResult,
@@ -287,7 +290,7 @@ export class ReviewService {
       questions: validation.questions,
       dropped: validation.dropped,
       reviewedFiles: triaged.focusFiles,
-      coverage: this.coverageFor(files, truncated, triaged, deep, diffMode, evidence.failed),
+      coverage: this.coverageFor(ranked, truncated, triaged, deep, diffMode, evidence.failed),
       stopReason: deep.stopReason,
       budgetExhausted: deep.budgetExhausted,
       costUsd: triaged.costUsd + deep.costUsd,

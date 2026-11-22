@@ -1,4 +1,8 @@
-import type { RepoRuleFile } from '../src/modules/review/domain/entities/pull-request';
+import {
+  FileStatus,
+  type ChangedFile,
+  type RepoRuleFile,
+} from '../src/modules/review/domain/entities/pull-request';
 
 export const EvalKind = {
   POSITIVE: 'positive',
@@ -17,6 +21,14 @@ interface ChangedMarkers {
   to?: string;
 }
 
+export interface EvalSiblingFile {
+  path: string;
+  status: typeof FileStatus.ADDED | typeof FileStatus.MODIFIED;
+  lines: readonly string[];
+  additions?: number;
+  deletions?: number;
+}
+
 export interface EvalCase {
   id: string;
   kind: EvalKind;
@@ -25,6 +37,8 @@ export interface EvalCase {
   lines: readonly string[];
   changed?: ChangedMarkers;
   extraFiles?: Readonly<Record<string, readonly string[]>>;
+  siblingFiles?: readonly EvalSiblingFile[];
+  coreFiles?: readonly string[];
   expectation?: EvalExpectation;
   checkId?: string;
   source?: string;
@@ -102,3 +116,15 @@ export const renderPatch = (testCase: EvalCase): string => {
     ...after.map((line) => ` ${line}`),
   ].join('\n');
 };
+
+const renderWholeFilePatch = (lines: readonly string[]): string =>
+  [`@@ -0,0 +1,${lines.length} @@`, ...lines.map((line) => `+${line}`)].join('\n');
+
+export const siblingChangedFiles = (testCase: EvalCase): ChangedFile[] =>
+  (testCase.siblingFiles ?? []).map((sibling) => ({
+    path: sibling.path,
+    status: sibling.status,
+    additions: sibling.additions ?? sibling.lines.length,
+    deletions: sibling.deletions ?? 0,
+    patch: renderWholeFilePatch(sibling.lines),
+  }));
