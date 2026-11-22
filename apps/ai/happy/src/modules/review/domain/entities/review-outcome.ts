@@ -45,6 +45,7 @@ export interface CompletedReview {
   reviewedFiles: string[];
   coverage: ReviewCoverage;
   stopReason: string;
+  budgetExhausted: boolean;
   costUsd: number;
   markdown: string;
 }

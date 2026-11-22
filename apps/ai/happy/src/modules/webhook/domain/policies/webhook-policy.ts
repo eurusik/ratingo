@@ -5,7 +5,6 @@ import {
   COMMENT_CREATED_ACTION,
   IgnoreReason,
   REVIEWABLE_PULL_REQUEST_ACTIONS,
-  REVIEW_COMMAND,
 } from '../constants/webhook.constants';
 import type {
   CommentWebhookEvent,
@@ -14,9 +13,12 @@ import type {
 } from '../entities/webhook-event';
 import { WebhookEventKind } from '../entities/webhook-event';
 
+import { isReviewCommand } from './review-command';
+
 export interface WebhookPolicyConfig {
   allowedRepositories: readonly string[];
   allowedAuthors: readonly string[];
+  mentionHandle: string;
 }
 
 export type WebhookDecision =
@@ -60,7 +62,10 @@ const decideComment = (
   event: CommentWebhookEvent,
   config: WebhookPolicyConfig,
 ): WebhookDecision => {
-  if (event.action !== COMMENT_CREATED_ACTION || event.body.trim() !== REVIEW_COMMAND) {
+  if (
+    event.action !== COMMENT_CREATED_ACTION ||
+    !isReviewCommand(event.body, config.mentionHandle)
+  ) {
     return ignore(IgnoreReason.NOT_A_COMMAND);
   }
   if (!event.isPullRequest) return ignore(IgnoreReason.NOT_A_PULL_REQUEST);

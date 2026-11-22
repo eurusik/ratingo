@@ -33,5 +33,6 @@ export interface InfraConfig {
 export interface ReviewConfig {
   allowedRepositories: string[];
   allowedAuthors: string[];
+  mentionHandle: string;
   serviceToken?: string;
 }

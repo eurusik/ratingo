@@ -76,6 +76,10 @@ const skippedOutcome = (pr: PullRequest, reason: SkipReason): SkippedReview => {
   return { ...skipped, markdown: renderSkippedReview(skipped) };
 };
 
+export interface ReviewOptions {
+  explicitRequest?: boolean;
+}
+
 @Injectable()
 export class ReviewService {
   private readonly logger = new Logger(ReviewService.name);
@@ -89,14 +93,18 @@ export class ReviewService {
     @Inject(CHECK_METRICS_PORT) private readonly checkMetrics: CheckMetricsPort,
   ) {}
 
-  async review(ref: PullRequestRef, trigger: RunTrigger): Promise<ReviewOutcome> {
+  async review(
+    ref: PullRequestRef,
+    trigger: RunTrigger,
+    options: ReviewOptions = {},
+  ): Promise<ReviewOutcome> {
     this.assertAllowed(ref);
     const pr = await this.host.getPullRequest(ref);
     const { files, truncated } = await this.host.listChangedFiles(ref, {
       maxFiles: MAX_CHANGED_FILES,
       maxPatchChars: MAX_TOTAL_PATCH_CHARS,
     });
-    const skipReason = this.skipReasonFor(pr, files);
+    const skipReason = this.skipReasonFor(pr, files, options.explicitRequest === true);
     if (skipReason !== null) {
       this.logger.log(`Skipped ${formatPullRequest(ref)}: ${skipReason}`);
       return skippedOutcome(pr, skipReason);
@@ -135,11 +143,16 @@ export class ReviewService {
     return this.completedOutcome(pr, files, truncated, triaged, deep, diffMode, checks);
   }
 
-  private skipReasonFor(pr: PullRequest, files: readonly ChangedFile[]): SkipReason | null {
+  private skipReasonFor(
+    pr: PullRequest,
+    files: readonly ChangedFile[],
+    explicitRequest: boolean,
+  ): SkipReason | null {
     const limits = {
       allowedAuthors: this.config.allowedAuthors,
       minChangedLines: MIN_REVIEWABLE_CHANGED_LINES,
       maxChangedLines: MAX_REVIEWABLE_CHANGED_LINES,
+      explicitRequest,
     };
     return isReleasePullRequest(pr) ? decideEligibility(pr, limits) : decideSkip(pr, files, limits);
   }
@@ -276,6 +289,7 @@ export class ReviewService {
       reviewedFiles: triaged.focusFiles,
       coverage: this.coverageFor(files, truncated, triaged, deep, diffMode, evidence.failed),
       stopReason: deep.stopReason,
+      budgetExhausted: deep.budgetExhausted,
       costUsd: triaged.costUsd + deep.costUsd,
     } as const;
     return { ...completed, markdown: renderCompletedReview(completed) };

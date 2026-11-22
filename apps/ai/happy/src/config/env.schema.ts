@@ -1,11 +1,15 @@
 import { z } from 'zod';
 
+import { DEFAULT_MENTION_HANDLE } from '../modules/webhook/domain/constants/webhook.constants';
+
 const DEFAULT_PORT = 3005;
 const DEFAULT_GITHUB_API_URL = 'https://api.github.com';
 const DEFAULT_FAST_MODEL = 'stub:triage';
 const DEFAULT_REVIEW_MODEL = 'stub:review';
 const MIN_SERVICE_TOKEN_CHARS = 24;
 const MIN_WEBHOOK_SECRET_CHARS = 16;
+
+const GITHUB_LOGIN_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
 
 const csvList = z
   .string()
@@ -44,5 +48,6 @@ export const serviceEnvSchema = modelEnvSchema.extend(githubEnvSchema.shape).ext
     message: 'at least one repository is required',
   }),
   HAPPY_ALLOWED_AUTHORS: csvList,
+  HAPPY_MENTION_HANDLE: z.string().regex(GITHUB_LOGIN_PATTERN).default(DEFAULT_MENTION_HANDLE),
   HAPPY_SERVICE_TOKEN: z.string().min(MIN_SERVICE_TOKEN_CHARS).optional(),
 });

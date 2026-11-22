@@ -15,6 +15,7 @@ export interface SkipConfig {
   allowedAuthors: readonly string[];
   minChangedLines: number;
   maxChangedLines: number;
+  explicitRequest?: boolean;
 }
 
 const DEFAULT_SKIP_CONFIG: SkipConfig = {
@@ -61,7 +62,7 @@ export const decideSkip = (
   const code = reviewableFiles(files);
   if (code.length === 0) return SkipReason.DOCS_ONLY;
   const lines = changedLines(code);
-  if (lines < config.minChangedLines) return SkipReason.TRIVIAL;
+  if (lines < config.minChangedLines && config.explicitRequest !== true) return SkipReason.TRIVIAL;
   if (lines > config.maxChangedLines) return SkipReason.TOO_LARGE;
   return null;
 };

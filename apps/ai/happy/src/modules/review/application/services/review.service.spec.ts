@@ -48,7 +48,11 @@ const USAGE = {
   reasoningTokens: 0,
 };
 
-const config: ReviewConfig = { allowedRepositories: ['acme/shop'], allowedAuthors: [] };
+const config: ReviewConfig = {
+  allowedRepositories: ['acme/shop'],
+  allowedAuthors: [],
+  mentionHandle: 'happy-on-duty',
+};
 
 const reply = (
   model: string,
@@ -132,6 +136,14 @@ describe('ReviewService', () => {
     expect(outcome.costUsd).toBe(0);
     expect(model.requests).toHaveLength(0);
     expect(outcome.markdown).toContain('trivial');
+  });
+
+  it('reviews a trivial pull request when a collaborator asked explicitly', async () => {
+    const host = buildFakeCodeHost({ files: [buildChangedFile({ additions: 3, deletions: 1 })] });
+    const { service, model } = await setup(host);
+    const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK, { explicitRequest: true });
+    expect(outcome.status).not.toBe(ReviewStatus.SKIPPED);
+    expect(model.requests.length).toBeGreaterThan(0);
   });
 
   it('refuses a repository outside the allowlist before touching the host', async () => {
@@ -390,6 +402,17 @@ describe('ReviewService', () => {
     });
     const { service, model } = await setup(host);
     const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK);
+    expect(outcome.status).toBe(ReviewStatus.SKIPPED);
+    expect(outcome.markdown).toContain('too_large');
+    expect(model.requests).toHaveLength(0);
+  });
+
+  it('keeps the size cap even when a collaborator asked explicitly', async () => {
+    const host = buildFakeCodeHost({
+      files: [buildChangedFile({ additions: 7000, deletions: 0 })],
+    });
+    const { service, model } = await setup(host);
+    const outcome = await service.review(TEST_REF, RunTrigger.WEBHOOK, { explicitRequest: true });
     expect(outcome.status).toBe(ReviewStatus.SKIPPED);
     expect(outcome.markdown).toContain('too_large');
     expect(model.requests).toHaveLength(0);

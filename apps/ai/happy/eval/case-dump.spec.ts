@@ -53,6 +53,7 @@ const reviewed: ReviewOutcome = {
   reviewedFiles: ['a.ts'],
   coverage: { unreviewedFiles: [], gaps: [] },
   stopReason: 'end',
+  budgetExhausted: false,
   costUsd: 0.02,
   markdown: 'm',
 };
