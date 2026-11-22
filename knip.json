@@ -47,6 +47,13 @@
         "config": ["drizzle.config.js"]
       },
       "ignoreDependencies": ["fastify"]
+    },
+    "apps/ai/happy": {
+      "entry": ["src/main.ts", "src/scripts/*.ts"],
+      "project": ["src/**/*.ts", "*.{js,ts}"],
+      "jest": {
+        "config": ["jest.config.js"]
+      }
     }
   },
   "ignoreIssues": {

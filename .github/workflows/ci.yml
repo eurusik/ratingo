@@ -39,6 +39,7 @@ jobs:
       storefront_image: ${{ steps.filter.outputs.storefront_image }}
       ai_core: ${{ steps.filter.outputs.ai_core }}
       veronica: ${{ steps.filter.outputs.veronica }}
+      happy: ${{ steps.filter.outputs.happy }}
     steps:
       - id: filter
         env:
@@ -57,6 +58,7 @@ jobs:
             echo "storefront_image=true" >> "$GITHUB_OUTPUT"
             echo "ai_core=true" >> "$GITHUB_OUTPUT"
             echo "veronica=true" >> "$GITHUB_OUTPUT"
+            echo "happy=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -69,7 +71,7 @@ jobs:
           large=$(( count >= 3000 ))
 
           if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
-            api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true; storefront_image=true; ai_core=true; veronica=true
+            api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true; storefront_image=true; ai_core=true; veronica=true; happy=true
           else
             api=$(match '^(apps/api/|packages/node-telemetry/|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|knip\.json$)')
@@ -80,6 +82,7 @@ jobs:
             smoke=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|e2e/smoke/|playwright\.smoke\.config\.ts$|\.dockerignore$)')
             storefront_image=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|\.dockerignore$)')
             ai_core=$(match '^(packages/(ai-core|node-telemetry)/|knip\.json$)')
+            happy=$(match '^(apps/ai/happy/|packages/(ai-core|node-telemetry)/|knip\.json$)')
             veronica=$(match '^(apps/ai/veronica/|apps/api/drizzle_v2/|packages/(ai-core|node-telemetry)/|knip\.json$|\.dockerignore$)')
           fi
 
@@ -89,7 +92,7 @@ jobs:
             deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
           fi
 
-          echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke storefront_image=$storefront_image ai_core=$ai_core veronica=$veronica"
+          echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke storefront_image=$storefront_image ai_core=$ai_core veronica=$veronica happy=$happy"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "storefront=$storefront" >> "$GITHUB_OUTPUT"
@@ -101,6 +104,7 @@ jobs:
           echo "storefront_image=$storefront_image" >> "$GITHUB_OUTPUT"
           echo "ai_core=$ai_core" >> "$GITHUB_OUTPUT"
           echo "veronica=$veronica" >> "$GITHUB_OUTPUT"
+          echo "happy=$happy" >> "$GITHUB_OUTPUT"
 
   api:
     name: api
@@ -549,6 +553,37 @@ jobs:
       - name: Find unused files, exports and dependencies with knip
         run: npm run lint:dead-code --workspace=@ratingo/ai-veronica
 
+  happy:
+    name: happy
+    needs: changes
+    if: needs.changes.outputs.happy == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build shared packages
+        run: npm run build:packages --workspace=@ratingo/ai-happy
+
+      - name: Lint
+        run: npm run lint --workspace=@ratingo/ai-happy
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=@ratingo/ai-happy
+
+      - name: Tests
+        run: npm test --workspace=@ratingo/ai-happy -- --ci
+
+      - name: Build
+        run: npm run build --workspace=@ratingo/ai-happy
+
+      - name: Find unused files, exports and dependencies with knip
+        run: npm run lint:dead-code --workspace=@ratingo/ai-happy
+
   web-smoke:
     name: web-smoke
     needs: changes
@@ -648,7 +683,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, storefront, storefront-image, contracts, pg-backup, ai-core, veronica, web-smoke]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, storefront, storefront-image, contracts, pg-backup, ai-core, veronica, happy, web-smoke]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

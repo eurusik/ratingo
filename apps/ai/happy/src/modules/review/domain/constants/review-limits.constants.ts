@@ -1,0 +1,11 @@
+export const MAX_FINDINGS = 15;
+export const MAX_FINDING_MESSAGE_CHARS = 1_200;
+export const MAX_FINDING_SUGGESTION_CHARS = 1_500;
+export const MAX_SUMMARY_CHARS = 1_500;
+export const MAX_CHANGED_FILES = 300;
+export const MAX_TOTAL_PATCH_CHARS = 400_000;
+export const MAX_PROMPT_PATCH_CHARS = 120_000;
+export const MAX_RULES_CHARS = 30_000;
+export const MAX_READ_FILE_LINES = 300;
+export const MAX_READ_FILE_BYTES = 200_000;
+export const MAX_FOCUS_FILES = 40;
