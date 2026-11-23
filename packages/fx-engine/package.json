@@ -11,8 +11,8 @@
     "test": "jest --config ./jest.config.cjs"
   },
   "dependencies": {
-    "@pixi/sound": "^5.2.2",
-    "lucide-react": "^0.553.0",
+    "@pixi/sound": "^5.2.4",
+    "lucide-react": "^0.577.0",
     "pixi.js": "^7.4.3"
   },
   "peerDependencies": {
