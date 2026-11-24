@@ -4,6 +4,7 @@ import { CLOCK_PORT, type ClockPort } from '@ratingo/ai-core';
 
 import { ChatOutcome, type ChatRoute } from '../../domain/constants/chat.constants';
 import { EXCHANGE_TEXT_MAX_CHARS } from '../../domain/constants/exchange.constants';
+import type { LoggedToolCall } from '../../domain/entities/chat-exchange';
 import { clip } from '../../domain/policies/answer-sanitizer.policy';
 import { exchangeOutcomeOf } from '../../domain/policies/exchange-outcome.policy';
 import {
@@ -18,8 +19,9 @@ export interface ExchangeRecord {
   question: string;
   answer: string;
   outcome: ChatOutcome;
-  cutNumbers?: readonly string[];
+  flaggedNumbers?: readonly string[];
   toolNames?: readonly string[];
+  toolCalls?: readonly LoggedToolCall[];
 }
 
 const failureReason = (error: unknown): string => (error instanceof Error ? error.name : 'error');
@@ -45,8 +47,9 @@ export class ChatExchangeRecorder {
         question: clip(record.question, EXCHANGE_TEXT_MAX_CHARS),
         answer: clip(record.answer, EXCHANGE_TEXT_MAX_CHARS),
         outcome,
-        cutNumbers: record.cutNumbers ?? [],
+        flaggedNumbers: record.flaggedNumbers ?? [],
         toolNames: record.toolNames ?? [],
+        toolCalls: record.toolCalls ?? [],
       });
     } catch (error) {
       this.logger.warn(`Обмін для запуску ${record.runId} не записано: ${failureReason(error)}`);

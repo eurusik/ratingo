@@ -19,6 +19,7 @@ import { InvestigationRunner } from '../../src/modules/chat/application/services
 import type { InvestigationExecutors } from '../../src/modules/chat/application/tools/investigation-executors';
 import type { ChatOutcome } from '../../src/modules/chat/domain/constants/chat.constants';
 import type { ConversationTurn } from '../../src/modules/chat/domain/entities/conversation-turn';
+import { withoutFlaggedNote } from '../../src/modules/chat/domain/policies/flagged-numbers.policy';
 import {
   answerStep,
   callStep,
@@ -140,9 +141,9 @@ export const runCase = async (
     result: {
       caseId: testCase.id,
       calledKeys: outcome.toolCalls.map((call) => callKey(call.tool, call.input)),
-      answer: finalHtml[finalHtml.length - 1] ?? '',
+      answer: withoutFlaggedNote(finalHtml[finalHtml.length - 1] ?? ''),
       outcome: outcome.outcome as ChatOutcome,
-      unverifiedNumbers: outcome.unverifiedNumbers,
+      flaggedNumbers: outcome.unverifiedNumbers,
       rawModelOutput: outcome.rawModelOutput,
     },
   };

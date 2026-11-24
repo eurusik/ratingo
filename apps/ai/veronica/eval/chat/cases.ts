@@ -229,6 +229,49 @@ const SERVICE_CASES: readonly EvalCase[] = [
     },
   },
   {
+    id: 'rate-limits-without-codes',
+    kind: EvalKind.KNOWN,
+    question: 'Що на дашборді по зовнішніх API, були відмови?',
+    fixtures: [
+      {
+        tool: 'digest_snapshot',
+        response: {
+          date: '2026-11-22',
+          level: 'note',
+          blocks: [
+            {
+              block: 'providers',
+              items: [
+                {
+                  id: 'providers.rate_limit',
+                  level: 'note',
+                  advice: 'Trakt частіше впирається в ліміт запитів, ніж тиждень тому',
+                },
+              ],
+              facts: [
+                {
+                  label: 'відмов через ліміт запитів (Trakt)',
+                  unit: 'count',
+                  current: 12,
+                  lastWeek: 4,
+                },
+              ],
+            },
+          ],
+          sources: [{ source: 'grafana', state: 'ok' }],
+        },
+      },
+    ],
+    expectedTools: ['digest_snapshot'],
+    allowedExtraTools: ['metrics_query:http_client_errors'],
+    mustContain: [['12'], ['ліміт']],
+    mustNotContain: ['429', '4xx'],
+    reference: {
+      calls: [{ tool: 'digest_snapshot', input: {} }],
+      answer: 'Trakt відмовив через ліміт запитів 12 разів за добу, тиждень тому було 4.',
+    },
+  },
+  {
     id: 'overall-today',
     kind: EvalKind.KNOWN,
     question: 'Як справи загалом?',

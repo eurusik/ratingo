@@ -211,10 +211,10 @@ describe('ChatService', () => {
 
   it('records the investigation outcome with the investigation route and no extra run', async () => {
     const chat = new Harness();
-    chat.investigationOutcome = ChatOutcome.REDACTED;
-    await expect(chat.say('що з чергами?')).resolves.toBe('redacted');
+    chat.investigationOutcome = ChatOutcome.FLAGGED;
+    await expect(chat.say('що з чергами?')).resolves.toBe('flagged');
     expect(chat.events).toEqual([
-      { outcome: 'redacted', command: 'free_text', route: 'investigation' },
+      { outcome: 'flagged', command: 'free_text', route: 'investigation' },
     ]);
     expect(chat.runs).toEqual([]);
   });
@@ -317,14 +317,14 @@ describe('ChatService', () => {
 
     it('stores an investigation exchange with cut numbers and tool names only', async () => {
       const chat = new Harness();
-      chat.investigationOutcome = ChatOutcome.REDACTED;
+      chat.investigationOutcome = ChatOutcome.FLAGGED;
       chat.investigationNumbers = ['4521'];
       await chat.say('скільки користувачів?');
       expect(chat.exchangeLog.entries[0]).toMatchObject({
         route: 'investigation',
-        outcome: 'redacted',
+        outcome: 'flagged',
         runId: 'run-1',
-        cutNumbers: ['4521'],
+        flaggedNumbers: ['4521'],
         toolNames: ['metrics_query'],
       });
     });

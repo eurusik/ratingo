@@ -7,7 +7,8 @@ Veronica is the ops assistant: a daily 09:00 (Kyiv) Telegram digest, a Telegram 
 ```bash
 npm run digest:preview --workspace=@ratingo/ai-veronica
 npm run eval:chat --workspace=@ratingo/ai-veronica
-npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d --outcome=redacted,fallback
+npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d --outcome=flagged,fallback
+npm run chat:flags --workspace=@ratingo/ai-veronica -- --since=7d
 npm run db:generate --workspace=@ratingo/ai-veronica
 ```
 
@@ -47,13 +48,13 @@ What to watch in Grafana:
 
 ## Answer log
 
-Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the question, the final checked answer, the outcome (`answered`, `redacted`, `fallback`, `failed`), the numbers the guard cut and the tool names. Tool payloads are never stored. A failed write is logged and never affects the reply.
+Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the question, the final checked answer, the outcome (`answered`, `flagged`, `fallback`, `failed`; older rows may say `redacted`), the numbers the guard flagged, the tool names and each call's arguments (`tool_calls`, redacted and capped), so a live answer can be audited. Tool results are never stored. A failed write is logged and never affects the reply.
 
 ### Chat eval
 
 `eval/chat` replays fixed questions with fixture tool results. Google Analytics cases go through the real gateway and policy, with an in-process fake server that returns GA's real response shape. They need no GA key and no Python.
 
-- **GA simulator.** The fake GA server is a small deterministic simulator (`eval/chat/google-analytics.dataset.ts` and `google-analytics.simulator.ts`). Synthetic facts (two weeks of traffic by country, device, channel, source, campaign and new vs returning, plus pages, events and a realtime slice) are aggregated by whatever valid dimensions, metrics, date ranges, filters, order and limit a call asks for, in GA's real response shape, including `dateRange` for two ranges. Unknown or incompatible names get GA's error shape. One campaign name is an injection string. Expected numbers in the GA cases are computed from the same simulator, and a period question accepts either the total or the full per-day series.
+- **GA simulator.** The fake GA server is a small deterministic simulator (`eval/chat/google-analytics.dataset.ts` and `google-analytics.simulator.ts`). Synthetic facts (two weeks of traffic by country, device, channel, source, campaign and new vs returning, plus pages, events and a realtime slice) are aggregated by whatever valid dimensions, metrics, date ranges, filters, order and limit a call asks for, in GA's real response shape, including `dateRange` for two ranges. Metrics from different parts of the data are joined on shared dimensions (for example `date` with `activeUsers`, `screenPageViews` and `eventCount`), pages carry views, users, sessions and `engagementRate`, and only a combination the data cannot join (for example `country` with `eventCount`) gets GA's «incompatible» error. Unknown names get GA's error shape too. One campaign name is an injection string. Expected numbers in the GA cases are computed from the same simulator, and a period question accepts either the total or the full per-day series.
 - **Wording checks.** They use shared stem patterns from `eval/chat/answer-stems.ts` (honest «no data», «no code review», «minor findings») instead of lists of exact phrases.
 
 ```bash
@@ -63,18 +64,35 @@ AI_MODEL_FAST=anthropic:claude-haiku-5-5 ANTHROPIC_API_KEY=… npm run eval:chat
 
 The first command uses the stub model and checks the harness. The second uses the real model; from Railway, run it with `railway run` so the Anthropic key comes from the service. `EVAL_DUMP=path.json` writes every answer for comparison.
 
+### Weekly flags review
+
+The numbers guard never cuts an answer. A number it cannot verify is listed under the answer («Не звірено з даними: …»), and the outcome is `flagged`. To see whether flags are real errors:
+
+```bash
+DATABASE_URL=<prod url> npm run chat:flags --workspace=@ratingo/ai-veronica -- --since=7d
+```
+
+It is read-only and prints JSON:
+
+- `answers`: free-form answers in the period;
+- `flaggedAnswers`: how many of them had flags;
+- `numbers`: each flagged number with how often it was flagged;
+- up to 20 recent `examples`, each with the question, the flagged numbers and the tool calls with their arguments.
+
+The chat eval reports the same thing on its fixtures: answers with flagged numbers, flagged numbers that are wrong, and the false-flag rate (flagged numbers that are true for the case).
+
 ### Turning real cases into eval cases
 
 `chat:export` is read-only. It reads `DATABASE_URL` from the environment and prints a JSON array of eval case drafts to stdout.
 
 ```bash
-DATABASE_URL=<prod url> npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d --outcome=redacted,fallback
+DATABASE_URL=<prod url> npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d --outcome=flagged,fallback
 ```
 
 - `--since` is required: `7d` or `12h`.
-- `--outcome` is optional: a comma list of `answered`, `redacted`, `fallback`, `failed`.
+- `--outcome` is optional: a comma list of `answered`, `flagged`, `redacted` (older rows), `fallback`, `failed`.
 
-Each draft has `id`, `question`, `expectedTools`, `reference.answer`, empty `fixtures` and `mustContain`, and an `observed` block with the outcome, cut numbers, cost, time (`createdAtMs`) and run id. Fill in the fixtures and the `mustContain` groups by hand, then add the case to `eval/chat/cases.ts`.
+Each draft has `id`, `question`, `expectedTools`, `reference.answer`, empty `fixtures` and `mustContain`, and an `observed` block with the outcome, flagged numbers, tool calls, cost, time (`createdAtMs`) and run id. Fill in the fixtures and the `mustContain` groups by hand, then add the case to `eval/chat/cases.ts`.
 
 ## Watchdog
 

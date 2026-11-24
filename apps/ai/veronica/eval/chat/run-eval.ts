@@ -11,6 +11,14 @@ const ID_COLUMN_WIDTH = 28;
 
 const mark = (ok: boolean): string => (ok ? 'ok' : 'FAIL');
 
+const numbersMark = (score: CaseScore): string => {
+  if (score.flaggedNumbers.length === 0) return 'ok';
+  const wrong = score.wrongNumbers.length === 0 ? '' : ` wrong(${score.wrongNumbers.join(',')})`;
+  const falseFlags =
+    score.falseFlags.length === 0 ? '' : ` false-flag(${score.falseFlags.join(',')})`;
+  return `FLAGGED${wrong}${falseFlags}`;
+};
+
 async function main(): Promise<void> {
   const modelRef = process.env.AI_MODEL_FAST ?? DEFAULT_MODEL;
   const structureOnly = isStubModel(modelRef);
@@ -32,7 +40,7 @@ async function main(): Promise<void> {
     costUsd += run.costUsd;
     dump.push({ case: testCase.id, ...run.result, score });
     process.stdout.write(
-      `${testCase.id.padEnd(ID_COLUMN_WIDTH)} tools=${mark(score.toolsOk)} facts=${mark(score.factsOk)} numbers=${score.unverifiedNumbers.length === 0 ? 'ok' : `UNVERIFIED(${score.unverifiedNumbers.join(',')})`} outcome=${run.result.outcome}\n`,
+      `${testCase.id.padEnd(ID_COLUMN_WIDTH)} tools=${mark(score.toolsOk)} facts=${mark(score.factsOk)} numbers=${numbersMark(score)} outcome=${run.result.outcome}\n`,
     );
   }
   const summary = summarize(scores);
@@ -49,8 +57,10 @@ async function main(): Promise<void> {
       `cases: ${summary.cases}`,
       `tool selection accuracy: ${asPercent(summary.toolSelectionAccuracy)}`,
       `fact accuracy: ${asPercent(summary.factAccuracy)}`,
-      `cases with numbers not found in tool results: ${summary.hallucinatedNumbers}`,
-      `cases that fell back to the raw snapshot (failed, not hallucinated): ${summary.fallbacks}`,
+      `answers with flagged numbers: ${summary.answersWithFlags} (${summary.flaggedNumbers} numbers)`,
+      `flagged numbers that are wrong: ${summary.wrongNumbers}`,
+      `false-flag rate (flagged but true): ${asPercent(summary.falseFlagRate)}`,
+      `cases that fell back to the raw snapshot (model down or over budget): ${summary.fallbacks}`,
       `unknown questions answered honestly: ${asPercent(summary.unknownAnsweredHonestly)}`,
       `failed cases: ${summary.failedCases.join(', ') || 'none'}`,
       `cost: $${costUsd.toFixed(COST_DECIMALS)}`,

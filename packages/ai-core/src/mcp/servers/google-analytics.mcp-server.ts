@@ -12,6 +12,7 @@ export const GoogleAnalyticsMcpKey = {
 
 const PROPERTY_ID_ARGUMENT = 'property_id';
 const REPORT_LOOKBACK_DAYS = 90;
+const FUNNEL_MAX_STEPS = 5;
 const REPORT_LIMIT = { kind: McpConstraintKind.NUMBER, min: 1, max: 50, default: 20 } as const;
 const FILTER_ARGUMENTS = ['dimension_filter', 'metric_filter'] as const;
 const pinnedProperty = { [PROPERTY_ID_ARGUMENT]: GoogleAnalyticsMcpKey.PROPERTY_ID };
@@ -67,6 +68,23 @@ const runRealtimeReport: McpToolRule = {
   },
 };
 
+const runFunnelReport: McpToolRule = {
+  description:
+    'Google Analytics 4 funnel on ratingo.top: how many users went through ordered steps. funnel_steps: 2 to 5 steps, each {name, event} with a GA4 event name, for example search, open_title, save_to_library. date_ranges: exactly one {start_date, end_date}, at most 90 days back. funnel_breakdown: optional {breakdown_dimension: deviceCategory}. The result lists active users per step and completion and abandonment rates as fractions from 0 to 1.',
+  exposedArguments: ['funnel_steps', 'date_ranges', 'funnel_breakdown'],
+  pinnedFromSettings: pinnedProperty,
+  pinnedArguments: { return_property_quota: false },
+  constraints: {
+    funnel_steps: { kind: McpConstraintKind.MAX_ITEMS, max: FUNNEL_MAX_STEPS },
+    date_ranges: {
+      kind: McpConstraintKind.DATE_RANGES,
+      maxRanges: 1,
+      maxSpanDays: REPORT_LOOKBACK_DAYS + 1,
+      maxLookbackDays: REPORT_LOOKBACK_DAYS,
+    },
+  },
+};
+
 const customDefinitions: McpToolRule = {
   description:
     'Custom GA4 dimensions and metrics defined for ratingo.top, such as custom event parameters. Call it before a report that needs a custom name.',
@@ -93,6 +111,7 @@ export const GOOGLE_ANALYTICS_MCP_SERVER: McpServerDefinition = {
     tools: {
       run_report: runReport,
       run_realtime_report: runRealtimeReport,
+      run_funnel_report: runFunnelReport,
       get_custom_dimensions_and_metrics: customDefinitions,
     },
   },

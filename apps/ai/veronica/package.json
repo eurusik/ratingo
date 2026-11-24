@@ -10,6 +10,7 @@
     "dev": "nest start --watch",
     "start:prod": "node dist/main.js",
     "chat:export": "npm run build:packages && ts-node --transpile-only src/scripts/export-chat-exchanges.ts",
+    "chat:flags": "npm run build:packages && ts-node --transpile-only src/scripts/report-flagged-numbers.ts",
     "digest:preview": "npm run build:packages && ts-node --transpile-only src/scripts/render-digest.ts",
     "lint": "cd ../../.. && eslint apps/ai/veronica/src apps/ai/veronica/eval",
     "eval:chat": "npm run build:packages && ts-node --transpile-only eval/chat/run-eval.ts",

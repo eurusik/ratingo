@@ -17,8 +17,9 @@ const entryAt = (createdAtMs: number) => ({
   question: 'q',
   answer: 'a',
   outcome: ExchangeOutcome.ANSWERED,
-  cutNumbers: [],
+  flaggedNumbers: [],
   toolNames: [],
+  toolCalls: [],
 });
 
 describe('ChatExchangeRetention', () => {
