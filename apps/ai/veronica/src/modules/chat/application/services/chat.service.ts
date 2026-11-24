@@ -152,7 +152,7 @@ export class ChatService {
         question: intent.text,
         answer: result.html,
         outcome: result.outcome,
-        cutNumbers: result.unverifiedNumbers,
+        flaggedNumbers: result.unverifiedNumbers,
         toolNames: result.toolCalls.map((call) => call.tool),
         toolCalls: loggedToolCalls(result.toolCalls),
       });

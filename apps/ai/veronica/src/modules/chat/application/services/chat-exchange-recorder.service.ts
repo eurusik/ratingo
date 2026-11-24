@@ -19,7 +19,7 @@ export interface ExchangeRecord {
   question: string;
   answer: string;
   outcome: ChatOutcome;
-  cutNumbers?: readonly string[];
+  flaggedNumbers?: readonly string[];
   toolNames?: readonly string[];
   toolCalls?: readonly LoggedToolCall[];
 }
@@ -47,7 +47,7 @@ export class ChatExchangeRecorder {
         question: clip(record.question, EXCHANGE_TEXT_MAX_CHARS),
         answer: clip(record.answer, EXCHANGE_TEXT_MAX_CHARS),
         outcome,
-        cutNumbers: record.cutNumbers ?? [],
+        flaggedNumbers: record.flaggedNumbers ?? [],
         toolNames: record.toolNames ?? [],
         toolCalls: record.toolCalls ?? [],
       });

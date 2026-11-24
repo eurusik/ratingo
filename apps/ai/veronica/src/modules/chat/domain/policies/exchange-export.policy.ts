@@ -31,7 +31,7 @@ export interface EvalCaseDraft {
   observed: {
     outcome: ExchangeOutcome;
     route: string;
-    cutNumbers: readonly string[];
+    flaggedNumbers: readonly string[];
     costUsd: number;
     createdAtMs: number;
     runId: string;
@@ -78,7 +78,7 @@ export const toEvalCaseDraft = (exchange: ChatExchange): EvalCaseDraft => ({
   observed: {
     outcome: exchange.outcome,
     route: exchange.route,
-    cutNumbers: exchange.cutNumbers,
+    flaggedNumbers: exchange.flaggedNumbers,
     costUsd: exchange.costUsd,
     createdAtMs: exchange.createdAtMs,
     runId: exchange.runId,

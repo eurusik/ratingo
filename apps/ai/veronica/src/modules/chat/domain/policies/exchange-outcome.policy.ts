@@ -6,8 +6,8 @@ export const exchangeOutcomeOf = (outcome: ChatOutcome): ExchangeOutcome | null 
     case ChatOutcome.HANDLED:
     case ChatOutcome.ANSWERED:
       return ExchangeOutcome.ANSWERED;
-    case ChatOutcome.REDACTED:
-      return ExchangeOutcome.REDACTED;
+    case ChatOutcome.FLAGGED:
+      return ExchangeOutcome.FLAGGED;
     case ChatOutcome.FALLBACK:
       return ExchangeOutcome.FALLBACK;
     case ChatOutcome.FAILED:

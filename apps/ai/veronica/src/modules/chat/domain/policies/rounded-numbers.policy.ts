@@ -16,7 +16,6 @@ const roundsTo = (value: number, written: string): boolean =>
   value.toFixed(decimalsOf(written)) === Number(written).toFixed(decimalsOf(written));
 
 const isRoundedDecimal = (written: string, decimals: readonly number[]): boolean =>
-  decimalsOf(written) > 0 &&
   decimals.some(
     (value) => decimalsOf(String(value)) > decimalsOf(written) && roundsTo(value, written),
   );

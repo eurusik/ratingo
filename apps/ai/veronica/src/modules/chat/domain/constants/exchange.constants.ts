@@ -3,6 +3,7 @@ const MS_PER_DAY = 24 * MS_PER_HOUR;
 
 export const ExchangeOutcome = {
   ANSWERED: 'answered',
+  FLAGGED: 'flagged',
   REDACTED: 'redacted',
   FALLBACK: 'fallback',
   FAILED: 'failed',

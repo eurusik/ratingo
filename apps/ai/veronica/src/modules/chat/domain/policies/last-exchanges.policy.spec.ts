@@ -13,7 +13,7 @@ const exchange = (overrides: Partial<ChatExchange>): ChatExchange => ({
   question: 'питання',
   answer: 'відповідь',
   outcome: ExchangeOutcome.ANSWERED,
-  cutNumbers: [],
+  flaggedNumbers: [],
   toolNames: [],
   toolCalls: [],
   costUsd: 0.0049,

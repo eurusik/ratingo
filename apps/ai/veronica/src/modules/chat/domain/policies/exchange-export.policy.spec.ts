@@ -18,7 +18,7 @@ const exchange: ChatExchange = {
   question: 'Що з чергами?',
   answer: 'Усе гаразд.',
   outcome: ExchangeOutcome.REDACTED,
-  cutNumbers: ['42'],
+  flaggedNumbers: ['42'],
   toolNames: ['metrics_query'],
   toolCalls: [{ tool: 'metrics_query', input: '{"template":"queue_throughput"}' }],
   costUsd: 0.01,
@@ -65,7 +65,7 @@ describe('toEvalCaseDraft', () => {
       mustContain: [],
       observed: {
         outcome: 'redacted',
-        cutNumbers: ['42'],
+        flaggedNumbers: ['42'],
         runId: 'run-1',
         toolCalls: [{ tool: 'metrics_query', input: '{"template":"queue_throughput"}' }],
       },

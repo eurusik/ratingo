@@ -50,11 +50,27 @@ describe('rounded rates in answers', () => {
     );
   });
 
-  it('does not turn a rate into a percent without a percent sign or a whole count', () => {
+  it('reads a percent only next to a percent sign', () => {
     const value = 0.50308641975;
     expect(unverifiedNumbers('Сесій було 50.', known(value))).toEqual(['50']);
-    expect(unverifiedNumbers('Користувачів 1.', known(value))).toEqual(['1']);
+    expect(unverifiedNumbers('Користувачів 7.', known(value))).toEqual(['7']);
     expect(unverifiedNumbers('Залученість 50,3 %.', known(value))).toEqual([]);
+  });
+
+  it('accepts any known number rounded to the written precision, whole numbers too', () => {
+    fc.assert(
+      fc.property(
+        fc.double({ min: 1, max: 99_999, noNaN: true }).map((value) => Number(value.toFixed(3))),
+        fc.integer({ min: 0, max: 2 }),
+        (value, places) => {
+          const written = value.toFixed(places);
+          fc.pre(written !== String(value));
+          expect(unverifiedNumbers(`Було ${written}.`, knownNumbers([`{"v":${value}}`]))).toEqual(
+            [],
+          );
+        },
+      ),
+    );
   });
 
   it('accepts the rates from the live answers', () => {

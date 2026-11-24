@@ -1,4 +1,8 @@
 import { ChatOutcome } from '../../src/modules/chat/domain/constants/chat.constants';
+import {
+  knownNumbers,
+  unverifiedNumbers,
+} from '../../src/modules/chat/domain/policies/numbers-guard.policy';
 
 import { ANY_TOOL, EvalKind, type EvalCase, type Expectation } from './eval-case';
 
@@ -10,7 +14,7 @@ export interface CaseResult {
   calledKeys: readonly string[];
   answer: string;
   outcome: ChatOutcome;
-  unverifiedNumbers: readonly string[];
+  flaggedNumbers: readonly string[];
   rawModelOutput: string;
 }
 
@@ -23,7 +27,9 @@ export interface CaseScore {
   factsOk: boolean;
   missingFacts: string[];
   forbiddenHits: string[];
-  unverifiedNumbers: string[];
+  flaggedNumbers: string[];
+  wrongNumbers: string[];
+  falseFlags: string[];
   fellBack: boolean;
 }
 
@@ -31,7 +37,10 @@ export interface EvalSummary {
   cases: number;
   toolSelectionAccuracy: number;
   factAccuracy: number;
-  hallucinatedNumbers: number;
+  answersWithFlags: number;
+  flaggedNumbers: number;
+  wrongNumbers: number;
+  falseFlagRate: number | null;
   fallbacks: number;
   unknownAnsweredHonestly: number | null;
   failedCases: string[];
@@ -65,6 +74,8 @@ export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => 
     .filter((needle) => mentions(result.answer, needle))
     .map(labelOf);
   const fellBack = result.outcome === ChatOutcome.FALLBACK || result.outcome === ChatOutcome.FAILED;
+  const truth = knownNumbers([testCase.reference.answer, JSON.stringify(testCase.fixtures)]);
+  const isTrue = (number: string): boolean => unverifiedNumbers(number, truth).length === 0;
   return {
     caseId: testCase.id,
     kind: testCase.kind,
@@ -74,12 +85,24 @@ export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => 
     factsOk: missingFacts.length === 0 && forbiddenHits.length === 0 && !fellBack,
     missingFacts,
     forbiddenHits,
-    unverifiedNumbers: [...result.unverifiedNumbers],
+    flaggedNumbers: [...result.flaggedNumbers],
+    wrongNumbers: result.flaggedNumbers.filter((number) => !isTrue(number)),
+    falseFlags: result.flaggedNumbers.filter(isTrue),
     fellBack,
   };
 };
 
 const rate = (hits: number, total: number): number => (total === 0 ? 1 : hits / total);
+
+const count = (
+  scores: readonly CaseScore[],
+  pick: (score: CaseScore) => readonly string[],
+): number => scores.reduce((total, score) => total + pick(score).length, 0);
+
+const falseFlagRate = (scores: readonly CaseScore[]): number | null => {
+  const flagged = count(scores, (score) => score.flaggedNumbers);
+  return flagged === 0 ? null : count(scores, (score) => score.falseFlags) / flagged;
+};
 
 export const summarize = (scores: readonly CaseScore[]): EvalSummary => {
   const unknown = scores.filter((score) => score.kind === EvalKind.UNKNOWN);
@@ -87,7 +110,10 @@ export const summarize = (scores: readonly CaseScore[]): EvalSummary => {
     cases: scores.length,
     toolSelectionAccuracy: rate(scores.filter((score) => score.toolsOk).length, scores.length),
     factAccuracy: rate(scores.filter((score) => score.factsOk).length, scores.length),
-    hallucinatedNumbers: scores.filter((score) => score.unverifiedNumbers.length > 0).length,
+    answersWithFlags: scores.filter((score) => score.flaggedNumbers.length > 0).length,
+    flaggedNumbers: count(scores, (score) => score.flaggedNumbers),
+    wrongNumbers: count(scores, (score) => score.wrongNumbers),
+    falseFlagRate: falseFlagRate(scores),
     fallbacks: scores.filter((score) => score.fellBack).length,
     unknownAnsweredHonestly:
       unknown.length === 0
@@ -96,7 +122,7 @@ export const summarize = (scores: readonly CaseScore[]): EvalSummary => {
     failedCases: scores
       .filter(
         (score) =>
-          !score.toolsOk || !score.factsOk || score.fellBack || score.unverifiedNumbers.length > 0,
+          !score.toolsOk || !score.factsOk || score.fellBack || score.wrongNumbers.length > 0,
       )
       .map((score) => score.caseId),
   };

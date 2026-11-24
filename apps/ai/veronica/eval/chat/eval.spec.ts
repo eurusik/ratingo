@@ -94,7 +94,10 @@ describe('chat eval on the stub model', () => {
         cases: EVAL_CASES.length,
         toolSelectionAccuracy: 1,
         factAccuracy: 1,
-        hallucinatedNumbers: 0,
+        answersWithFlags: 0,
+        flaggedNumbers: 0,
+        wrongNumbers: 0,
+        falseFlagRate: null,
         fallbacks: 0,
         unknownAnsweredHonestly: 1,
         failedCases: [],
@@ -111,7 +114,7 @@ describe('chat eval scorer', () => {
     calledKeys: ['metrics_query:queue_throughput'],
     answer: 'ingestion: 7 провалилось',
     outcome: 'answered',
-    unverifiedNumbers: [],
+    flaggedNumbers: [],
     rawModelOutput: '',
   };
 
@@ -149,19 +152,28 @@ describe('chat eval scorer', () => {
     ).toBe(true);
   });
 
-  it('counts cut numbers as hallucinated and a fallback as a failed case, not a hallucination', () => {
-    const cut = scoreCase(testCase!, { ...base, outcome: 'redacted', unverifiedNumbers: ['40'] });
-    expect(cut.unverifiedNumbers).toEqual(['40']);
+  it('keeps a flagged answer as an answer and fails only on a wrong number', () => {
+    const falseFlag = scoreCase(testCase!, { ...base, outcome: 'flagged', flaggedNumbers: ['40'] });
+    const wrong = scoreCase(testCase!, { ...base, outcome: 'flagged', flaggedNumbers: ['41'] });
+    expect(falseFlag).toMatchObject({ factsOk: true, falseFlags: ['40'], wrongNumbers: [] });
+    expect(wrong).toMatchObject({ factsOk: true, falseFlags: [], wrongNumbers: ['41'] });
+    expect(summarize([falseFlag, wrong])).toMatchObject({
+      answersWithFlags: 2,
+      flaggedNumbers: 2,
+      wrongNumbers: 1,
+      falseFlagRate: 0.5,
+      failedCases: ['queues-failed-today'],
+    });
+  });
+
+  it('counts a fallback as a failed case', () => {
     const fallback = scoreCase(testCase!, { ...base, outcome: 'fallback' });
     expect(fallback.fellBack).toBe(true);
-    expect(fallback.unverifiedNumbers).toEqual([]);
     expect(fallback.factsOk).toBe(false);
-    expect(summarize([cut, fallback])).toMatchObject({
-      hallucinatedNumbers: 1,
+    expect(summarize([fallback])).toMatchObject({
       fallbacks: 1,
-      failedCases: ['queues-failed-today', 'queues-failed-today'],
+      failedCases: ['queues-failed-today'],
     });
-    expect(summarize([cut]).failedCases).toEqual(['queues-failed-today']);
     expect(scoreCase(testCase!, { ...base, outcome: 'failed' }).factsOk).toBe(false);
     expect(scoreCase(testCase!, base).fellBack).toBe(false);
   });

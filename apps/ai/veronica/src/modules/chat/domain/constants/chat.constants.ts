@@ -45,7 +45,7 @@ export const ChatOutcome = {
   IGNORED: 'ignored',
   REJECTED: 'rejected',
   ANSWERED: 'answered',
-  REDACTED: 'redacted',
+  FLAGGED: 'flagged',
   FALLBACK: 'fallback',
 } as const;
 export type ChatOutcome = (typeof ChatOutcome)[keyof typeof ChatOutcome];

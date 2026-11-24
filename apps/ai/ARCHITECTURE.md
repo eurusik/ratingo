@@ -504,19 +504,27 @@ No Railway logs and no free SQL; those are left to DUM-E later.
 
 - One `AgentLoop` per message on alias `fast`, with a registry of just these four tools, prompt `agent/prompts/chat.md`, at most 8 turns and $0.05 per message; $0.30 per day for the `chat` task and the agent's day budget, both read from the `ai.runs` table.
 - «шукаю…» is posted first and then edited into the answer; if the edit fails, a new message is sent.
-- **Numbers guard.** Every number in the answer must appear in this run's tool results, the question, the last turns or the clock line. A date counts as verified only where the answer writes it as a date or a date range («20 листопада», «з 15 по 21 листопада», «15–21.11»), and each date must be a row date from GA or an end of a date range this run requested, resolved against Kyiv's today. A bare day or month never passes as a count. A sentence with another number is cut and a note is added; if nothing is left, the raw snapshot is sent. Links are stripped. A rate written rounded counts as known when it is a known decimal rounded to the written precision (at least one decimal place), or, only next to «%» or «відсот…», a known value between 0 and 1 times 100, rounded the same way. No other arithmetic is accepted.
-- **Fallback.** When the model is down, over budget or its numbers cannot be verified, the reply is the `/status` snapshot with one line saying why.
+- **Numbers guard: flag, don't cut.**
+  - **Never shortens the answer.** The answer is sent whole. Numbers it cannot verify are listed in one trusted footer line, «<i>Не звірено з даними: 78, 0,503.</i>»: at most 5 numbers, deduped, digits only. The outcome is then `flagged`.
+  - **What counts as verified.** A written number is verified when it is:
+    - a number from this run's tool results, the question, the last turns or the clock line;
+    - such a number rounded to the precision it is written with;
+    - for a known value between 0 and 1, its percent form rounded the same way, when «%» or «відсот…» follows it.
+  - **Dates.** A date counts only where the answer writes it as a date or a date range («20 листопада», «з 15 по 21 листопада», «15–21.11»), and each date must be a GA row date or an end of a range this run requested, resolved against Kyiv's today.
+  - **Nothing else.** No sums, differences or ratios.
+  - **Measuring.** `npm run chat:flags` measures how often flags fire.
+- **Fallback.** When the model is down, over budget or the run fails, the reply is the `/status` snapshot with one line saying why. Unverified numbers never trigger it.
 - **Memory.** The last 12 messages per chat in Redis (`ai-veronica:conversation:<chatId>`, 24 h TTL): the question and the checked answer as text, never tool payloads.
-- **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `redacted`, `fallback`, `failed`; route `investigation`) and a `chat` row in `ai.runs` with the cost.
+- **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `flagged`, `fallback`, `failed`; route `investigation`; `redacted` was the outcome before flagging and may still appear in older data) and a `chat` row in `ai.runs` with the cost.
 - **Env.** `GITHUB_READ_TOKEN` (optional, read-only; `recent_changes` reports itself unavailable without it) and `GITHUB_REPOSITORY` (default `eurusik/ratingo`).
 - **Eval.** `npm run eval:chat --workspace=@ratingo/ai-veronica` runs `apps/ai/veronica/eval/chat` (15 cases with fixture tool results). On the stub model it replays reference answers and checks the harness; with `AI_MODEL_FAST=anthropic:<model>` and `ANTHROPIC_API_KEY` it measures tool-selection accuracy, fact accuracy and cases where the numbers guard fired (target 0). `EVAL_DUMP=<file>` writes the answers.
 
 ### Answer log (`ai.chat_exchanges`)
 
-- One row per finished exchange: `run_id` (→ `ai.runs`), `chat_id`, `created_at`, `route` (`command`, `happy`, `investigation`), `question`, `answer` (the final checked text sent to Telegram), `outcome` (`answered`, `redacted`, `fallback`, `failed`), `cut_numbers` (what the numbers guard removed), `tool_names` and `tool_calls` (each call's tool name and its arguments as JSON, secrets redacted, at most 12 calls of 600 characters; nullable for rows written before it existed). Tool results, raw model output and secrets are never stored; text is clipped to 8000 characters.
+- One row per finished exchange: `run_id` (→ `ai.runs`), `chat_id`, `created_at`, `route` (`command`, `happy`, `investigation`), `question`, `answer` (the final checked text sent to Telegram), `outcome` (`answered`, `flagged`, `fallback`, `failed`; older rows may say `redacted`), `cut_numbers` (the numbers the guard flagged; in older rows, the numbers it removed), `tool_names` and `tool_calls` (each call's tool name and its arguments as JSON, secrets redacted, at most 12 calls of 600 characters; nullable for rows written before it existed). Tool results, raw model output and secrets are never stored; text is clipped to 8000 characters.
 - Written after the run row is saved, best-effort: a failed insert is logged with its reason (`Обмін для запуску … не записано: <ErrorName>`) and never touches the reply. An exchange without a run (an empty question) is not logged.
 - Retention is 30 days. The daily BullMQ job `exchange-retention` (scheduler id and cron in `chat.constants.ts`, 03:17 Europe/Kyiv, on the `chat` queue) deletes older rows; it is idempotent because it deletes by a cutoff, so running it twice removes nothing more.
-- `npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d [--outcome=redacted,fallback]` reads `DATABASE_URL` and prints the matching exchanges as a JSON array of eval case drafts (`id`, `question`, `expectedTools`, `reference.answer`, empty `fixtures` and `mustContain`, plus an `observed` block). A person writes the fixtures and the `mustContain` groups before moving a draft into `eval/chat/cases.ts`. The script only reads.
+- `npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d [--outcome=flagged,fallback]` reads `DATABASE_URL` and prints the matching exchanges as a JSON array of eval case drafts (`id`, `question`, `expectedTools`, `reference.answer`, empty `fixtures` and `mustContain`, plus an `observed` block). A person writes the fixtures and the `mustContain` groups before moving a draft into `eval/chat/cases.ts`. The script only reads.
 
 ### Happy through Veronica (step 3)
 

@@ -14,7 +14,7 @@ export interface ChatExchangeEntry {
   question: string;
   answer: string;
   outcome: ExchangeOutcome;
-  cutNumbers: readonly string[];
+  flaggedNumbers: readonly string[];
   toolNames: readonly string[];
   toolCalls: readonly LoggedToolCall[];
 }

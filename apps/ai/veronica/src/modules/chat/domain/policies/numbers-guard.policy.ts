@@ -4,7 +4,6 @@ const NUMBER_TOKEN =
   /(?<![\p{L}_\d])(?:\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d+)?(?!\d)|\d[\d.,]*\d|\d)(?![xXхХ]{2})/gu;
 const SPACES = /[ \u00a0\u202f]/g;
 const LIST_MARKER = /^\s*(?:[-*•]\s+)?\d{1,2}[.)]\s+/;
-const SENTENCE_BREAK = /(?<=[.!?…])\s+/;
 const THOUSANDS_GROUP_DIGITS = 3;
 
 const THOUSANDS_GROUP_MAX_LEADING = 3;
@@ -192,30 +191,4 @@ export const unverifiedNumbers = (
   return writtenNumbers(withoutKnownDates(answer, dates))
     .filter((number) => !isVerified(number, known, decimals))
     .map((number) => number.candidates[0] ?? '');
-};
-
-export interface RedactionResult {
-  text: string;
-  removedSentences: number;
-}
-
-export const redactUnverified = (
-  answer: string,
-  known: ReadonlySet<string>,
-  dates: ReadonlySet<string> = NO_DATES,
-): RedactionResult => {
-  let removedSentences = 0;
-  const lines = answer.split('\n').map((line) => {
-    const kept = line.split(SENTENCE_BREAK).filter((sentence) => {
-      const clean = unverifiedNumbers(sentence, known, dates).length === 0;
-      if (!clean) removedSentences += 1;
-      return clean;
-    });
-    return kept.join(' ');
-  });
-  const text = lines
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  return { text, removedSentences };
 };

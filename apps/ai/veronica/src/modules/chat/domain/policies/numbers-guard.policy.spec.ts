@@ -4,7 +4,6 @@ import {
   knownDates,
   extractNumbers,
   knownNumbers,
-  redactUnverified,
   unverifiedNumbers,
 } from './numbers-guard.policy';
 
@@ -201,19 +200,6 @@ describe('numbers guard', () => {
     expect(unverifiedNumbers('Було 17.', known('{"x":170}'))).toEqual(['17']);
   });
 
-  it('cuts only the sentences with unverified numbers', () => {
-    const result = redactUnverified(
-      'Невдалих 7. Це на 40 відсотків більше. Решта гаразд.',
-      known('7'),
-    );
-    expect(result.text).toBe('Невдалих 7. Решта гаразд.');
-    expect(result.removedSentences).toBe(1);
-  });
-
-  it('returns an empty text when every sentence is unverified', () => {
-    expect(redactUnverified('Було 40.', known('7')).text).toBe('');
-  });
-
   describe('properties', () => {
     const integer = fc.integer({ min: 0, max: 5_000_000 });
 
@@ -253,21 +239,6 @@ describe('numbers guard', () => {
             expect(unverifiedNumbers(`Було ${asComma}.`, known(`{"v":${Number(value)}}`))).toEqual(
               [],
             );
-          },
-        ),
-      );
-    });
-
-    it('leaves no unverified number after redaction', () => {
-      fc.assert(
-        fc.property(
-          fc.array(fc.tuple(fc.string({ maxLength: 12 }), integer), { minLength: 1, maxLength: 6 }),
-          fc.array(integer, { maxLength: 4 }),
-          (sentences, shown) => {
-            const text = sentences.map(([word, value]) => `${word} ${value}.`).join(' ');
-            const sources = known(JSON.stringify(shown));
-            const redacted = redactUnverified(text, sources).text;
-            expect(unverifiedNumbers(redacted, sources)).toEqual([]);
           },
         ),
       );
