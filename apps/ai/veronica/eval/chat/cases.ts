@@ -527,7 +527,7 @@ export const EVAL_CASES: readonly EvalCase[] = [
     mustContain: [
       ['реліз'],
       ['чекліст'],
-      ['не робить', 'не ревʼює', 'не робить ревʼю', 'без ревʼю'],
+      ['не робить', 'не ревʼює', 'не робить ревʼю', 'без ревʼю', 'не переглядає'],
     ],
     mustNotContain: ['збій форматування', 'глюк', 'напишіть'],
     reference: {
@@ -587,7 +587,7 @@ export const EVAL_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['recent_changes', 'ask_happy'],
-    mustContain: [['473'], ['дрібн'], ['реліз']],
+    mustContain: [['473'], ['дрібн', 'несуттєв', 'minor'], ['реліз']],
     reference: {
       calls: [
         { tool: 'recent_changes', input: { window: '24h' } },
