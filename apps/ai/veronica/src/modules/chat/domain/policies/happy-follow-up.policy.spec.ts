@@ -6,6 +6,7 @@ import type { HappyLookup, HappyResult } from '../entities/happy';
 import { decideHappyFollowUp } from './happy-follow-up.policy';
 
 const result = (checkedSha: string): HappyResult => ({
+  kind: 'review',
   status: 'reviewed',
   checkedSha,
   current: true,
@@ -22,6 +23,8 @@ const result = (checkedSha: string): HappyResult => ({
 const found = (headSha: string, reviewPending: boolean, checked: string | null): HappyLookup => ({
   kind: 'found',
   headSha,
+  baseBranch: 'main',
+  headBranch: 'feature',
   reviewPending,
   result: checked === null ? null : result(checked),
 });
@@ -38,6 +41,8 @@ describe('decideHappyFollowUp', () => {
     const withScope = (mode: 'incremental' | 'full'): HappyLookup => ({
       kind: 'found',
       headSha: 'h1',
+      baseBranch: 'main',
+      headBranch: 'feature',
       reviewPending: true,
       result: {
         ...result('h1'),

@@ -32,6 +32,7 @@ const pull = (number: number, base: string, mergedAt: string | null) => ({
   title: `PR ${number}`,
   merged_at: mergedAt,
   base: { ref: base },
+  head: { ref: base === 'main' ? 'development' : 'feat/x' },
   body: 'secret body',
   user: { login: 'someone' },
 });
@@ -65,12 +66,14 @@ describe('GithubRecentChangesAdapter', () => {
         number: 464,
         title: 'PR 464',
         baseBranch: 'development',
+        headBranch: 'feat/x',
         mergedAtMs: Date.parse('2026-11-22T12:00:00Z'),
       },
       {
         number: 465,
         title: 'PR 465',
         baseBranch: 'main',
+        headBranch: 'development',
         mergedAtMs: Date.parse('2026-11-22T10:00:00Z'),
       },
     ]);

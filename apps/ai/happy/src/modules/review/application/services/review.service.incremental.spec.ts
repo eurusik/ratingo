@@ -97,6 +97,7 @@ const previousCheck = (
   overrides: { trusted?: boolean; complete?: boolean; withState?: boolean } = {},
 ): PublishedCheck => {
   const snapshot: ReviewResultSnapshot = {
+    kind: 'review',
     status: ReviewStatus.REVIEWED,
     title: 't',
     summary: 's',

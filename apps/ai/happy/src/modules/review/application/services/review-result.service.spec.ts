@@ -81,6 +81,8 @@ describe('ReviewResultService', () => {
     expect(await service.latest(TEST_REF)).toEqual({
       status: 'found',
       headSha: 'head222',
+      baseBranch: 'main',
+      headBranch: 'feature/checkout',
       result: null,
     });
   });
@@ -112,5 +114,35 @@ describe('ReviewResultService', () => {
       {} as never,
     );
     await expect(broken.latest(TEST_REF)).rejects.toBeInstanceOf(CodeHostError);
+  });
+
+  it('carries the branches and recognises a release checklist, also in an old check without a marker', async () => {
+    const release = buildFakeCodeHost({
+      pr: buildPullRequest({ headSha: 'head222', baseRef: 'main', headRef: 'development' }),
+    });
+    const withMarker = new ReviewResultService(release, {
+      findForCommit: async () => ({
+        ...check('head222'),
+        snapshot: { ...SNAPSHOT, kind: 'release_checklist', status: 'checklist' },
+      }),
+      listRecentCommitShas: async () => [],
+    });
+    expect(await withMarker.latest(TEST_REF)).toMatchObject({
+      baseBranch: 'main',
+      headBranch: 'development',
+      result: { kind: 'release_checklist' },
+    });
+    const oldCheck = new ReviewResultService(release, {
+      findForCommit: async () => check('head222', null),
+      listRecentCommitShas: async () => [],
+    });
+    expect(await oldCheck.latest(TEST_REF)).toMatchObject({
+      result: { kind: 'release_checklist', status: 'unknown' },
+    });
+    const feature = setup({ head222: check('head222', null) });
+    expect(await feature.service.latest(TEST_REF)).toMatchObject({
+      baseBranch: 'main',
+      result: { kind: 'review' },
+    });
   });
 });

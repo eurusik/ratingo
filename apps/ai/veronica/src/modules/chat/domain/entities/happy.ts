@@ -15,6 +15,12 @@ export const HappyResultStatus = {
 } as const;
 export type HappyResultStatus = (typeof HappyResultStatus)[keyof typeof HappyResultStatus];
 
+export const HappyResultKind = {
+  REVIEW: 'review',
+  RELEASE_CHECKLIST: 'release_checklist',
+} as const;
+export type HappyResultKind = (typeof HappyResultKind)[keyof typeof HappyResultKind];
+
 export const HappyReviewMode = {
   AUTO: 'auto',
   FULL: 'full',
@@ -49,6 +55,7 @@ export interface HappyQuestion {
 }
 
 export interface HappyResult {
+  kind: HappyResultKind;
   status: HappyResultStatus;
   checkedSha: string;
   current: boolean;
@@ -72,6 +79,8 @@ export type HappyLookup =
   | {
       kind: typeof HappyLookupKind.FOUND;
       headSha: string;
+      baseBranch: string | null;
+      headBranch: string | null;
       reviewPending: boolean;
       result: HappyResult | null;
     };

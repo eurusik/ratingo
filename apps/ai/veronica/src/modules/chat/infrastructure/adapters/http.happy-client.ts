@@ -5,6 +5,7 @@ import { HAPPY_REQUEST_TIMEOUT_MS } from '../../domain/constants/happy.constants
 import {
   HappyLookupKind,
   HappyRequestKind,
+  HappyResultKind,
   HappyResultStatus,
   HappyReviewMode,
   HappyScopeMode,
@@ -19,48 +20,62 @@ const INTERNAL_PATH = '/internal/pull-requests';
 
 const count = z.number().int().min(0);
 
-const resultSchema = z.object({
-  status: z.enum(Object.values(HappyResultStatus) as [HappyResultStatus, ...HappyResultStatus[]]),
-  checkedSha: z.string(),
-  current: z.boolean(),
-  title: z.string(),
-  summary: z.string(),
-  skipReason: z.string().nullable(),
-  counts: z.object({
-    [HappySeverity.CRITICAL]: count,
-    [HappySeverity.MAJOR]: count,
-    [HappySeverity.MINOR]: count,
-    [HappySeverity.NIT]: count,
-  }),
-  questions: z.array(z.object({ file: z.string(), line: z.number(), text: z.string() })),
-  coverage: z.object({
-    complete: z.boolean(),
-    unreviewedFiles: count,
-    gaps: z.array(z.string()),
-  }),
-  checkRunUrl: z.string().nullable(),
-  review: z
-    .object({
-      mode: z.enum([HappyScopeMode.INCREMENTAL, HappyScopeMode.FULL]),
-      baseSha: z.string().nullable(),
-      fullReason: z.string().nullable(),
-      files: count,
-      statusCounts: z.object({
-        new: count,
-        stillOpen: count,
-        resolved: count,
-        needsRecheck: count,
-      }),
-    })
-    .nullish()
-    .transform((review) => review ?? null),
-});
+const resultSchema = z
+  .object({
+    kind: z
+      .enum(Object.values(HappyResultKind) as [HappyResultKind, ...HappyResultKind[]])
+      .optional(),
+    status: z.enum(Object.values(HappyResultStatus) as [HappyResultStatus, ...HappyResultStatus[]]),
+    checkedSha: z.string(),
+    current: z.boolean(),
+    title: z.string(),
+    summary: z.string(),
+    skipReason: z.string().nullable(),
+    counts: z.object({
+      [HappySeverity.CRITICAL]: count,
+      [HappySeverity.MAJOR]: count,
+      [HappySeverity.MINOR]: count,
+      [HappySeverity.NIT]: count,
+    }),
+    questions: z.array(z.object({ file: z.string(), line: z.number(), text: z.string() })),
+    coverage: z.object({
+      complete: z.boolean(),
+      unreviewedFiles: count,
+      gaps: z.array(z.string()),
+    }),
+    checkRunUrl: z.string().nullable(),
+    review: z
+      .object({
+        mode: z.enum([HappyScopeMode.INCREMENTAL, HappyScopeMode.FULL]),
+        baseSha: z.string().nullable(),
+        fullReason: z.string().nullable(),
+        files: count,
+        statusCounts: z.object({
+          new: count,
+          stillOpen: count,
+          resolved: count,
+          needsRecheck: count,
+        }),
+      })
+      .nullish()
+      .transform((review) => review ?? null),
+  })
+  .transform((result) => ({
+    ...result,
+    kind:
+      result.kind ??
+      (result.status === HappyResultStatus.CHECKLIST
+        ? HappyResultKind.RELEASE_CHECKLIST
+        : HappyResultKind.REVIEW),
+  }));
 
 const lookupSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('not_found') }),
   z.object({
     status: z.literal('found'),
     headSha: z.string(),
+    baseBranch: z.string().nullish(),
+    headBranch: z.string().nullish(),
     reviewPending: z.boolean(),
     result: resultSchema.nullable(),
   }),
@@ -114,6 +129,8 @@ export class HttpHappyClient implements HappyClientPort {
       : {
           kind: HappyLookupKind.FOUND,
           headSha: parsed.data.headSha,
+          baseBranch: parsed.data.baseBranch ?? null,
+          headBranch: parsed.data.headBranch ?? null,
           reviewPending: parsed.data.reviewPending,
           result: parsed.data.result,
         };

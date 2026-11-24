@@ -24,7 +24,14 @@ export interface ResultTracking {
   findings: TrackedFinding[];
 }
 
+export const ResultKind = {
+  REVIEW: 'review',
+  RELEASE_CHECKLIST: 'release_checklist',
+} as const;
+export type ResultKind = (typeof ResultKind)[keyof typeof ResultKind];
+
 export interface ReviewResultSnapshot {
+  kind: ResultKind;
   status: ReviewStatus;
   title: string;
   summary: string;

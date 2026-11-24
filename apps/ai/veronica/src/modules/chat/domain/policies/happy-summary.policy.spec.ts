@@ -5,6 +5,7 @@ import type { HappyResult } from '../entities/happy';
 import { renderHappyResult } from './happy-summary.policy';
 
 const base: HappyResult = {
+  kind: 'review',
   status: 'reviewed',
   checkedSha: 'abcdef123456',
   current: true,
@@ -106,5 +107,26 @@ describe('renderHappyResult', () => {
         return !/[<>]/.test(withoutOurTags) && !/https?:\/\/(?!github\.com\/eurusik)/.test(html);
       }),
     );
+  });
+
+  it('explains a release checklist in plain words instead of showing review counts', () => {
+    const html = renderHappyResult(474, {
+      ...base,
+      kind: 'release_checklist',
+      status: 'checklist',
+      title: 'Список вантажу на виїзд.',
+      summary: '',
+      counts: { critical: 0, major: 0, minor: 0, nit: 0 },
+    });
+    expect(html).toContain('Хеппі про PR №474');
+    expect(html).toContain('реліз development→main');
+    expect(html).toContain('не робить ревʼю коду');
+    expect(html).toContain('чекліст');
+    expect(html).not.toContain('Зауважень немає');
+  });
+
+  it('recognises a release checklist even when its status is unknown', () => {
+    const html = renderHappyResult(474, { ...base, kind: 'release_checklist', status: 'unknown' });
+    expect(html).toContain('не робить ревʼю коду');
   });
 });

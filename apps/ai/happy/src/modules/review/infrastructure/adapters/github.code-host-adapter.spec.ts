@@ -194,6 +194,7 @@ describe('GithubCodeHostAdapter', () => {
 describe('GithubCodeHostAdapter published checks', () => {
   const marker = (title: string) =>
     renderResultMarker({
+      kind: 'review',
       status: 'reviewed',
       title,
       summary: 'Все гаразд',

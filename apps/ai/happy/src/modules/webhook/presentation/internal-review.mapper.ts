@@ -13,6 +13,7 @@ const toReviewResponse = (tracking: ResultTracking | null) =>
       };
 
 const toResultResponse = (result: PublishedReviewResult) => ({
+  kind: result.kind,
   status: result.status,
   checkedSha: result.checkedSha,
   current: result.current,
@@ -32,6 +33,8 @@ export const toLatestResponse = (state: PullReviewState) =>
     : {
         status: 'found' as const,
         headSha: state.headSha,
+        baseBranch: state.baseBranch,
+        headBranch: state.headBranch,
         reviewPending: state.reviewPending ?? false,
         result: state.result === null ? null : toResultResponse(state.result),
       };

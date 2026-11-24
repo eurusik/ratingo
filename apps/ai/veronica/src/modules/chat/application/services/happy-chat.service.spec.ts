@@ -9,6 +9,7 @@ import { HappyUnavailableError } from '../../domain/ports/happy-client.port';
 import { HappyChatService } from './happy-chat.service';
 
 const RESULT: HappyResult = {
+  kind: 'review',
   status: 'reviewed',
   checkedSha: 'h1',
   current: true,
@@ -25,6 +26,8 @@ const RESULT: HappyResult = {
 const found = (result: HappyResult | null, reviewPending = false): HappyLookup => ({
   kind: 'found',
   headSha: 'h1',
+  baseBranch: 'main',
+  headBranch: 'feature',
   reviewPending,
   result,
 });

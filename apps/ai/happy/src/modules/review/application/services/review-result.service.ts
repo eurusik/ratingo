@@ -6,8 +6,10 @@ import type {
   PullRequest,
   PullRequestRef,
 } from '../../domain/entities/pull-request';
+import { isReleasePullRequest } from '../../domain/policies/release-checklist';
 import { RequestedMode, ReviewMode } from '../../domain/entities/review-scope';
 import {
+  ResultKind,
   UNKNOWN_RESULT_STATUS,
   type PublishedReviewResult,
 } from '../../domain/entities/review-result';
@@ -26,9 +28,16 @@ const NOT_FOUND = 404;
 
 export type ReviewLookup =
   | { status: 'not_found' }
-  | { status: 'found'; headSha: string; result: PublishedReviewResult | null };
+  | {
+      status: 'found';
+      headSha: string;
+      baseBranch: string;
+      headBranch: string;
+      result: PublishedReviewResult | null;
+    };
 
-const toResult = (check: PublishedCheck, headSha: string): PublishedReviewResult => {
+const toResult = (check: PublishedCheck, pullRequest: PullRequest): PublishedReviewResult => {
+  const headSha = pullRequest.headSha;
   const snapshot = check.snapshot;
   const base = {
     checkedSha: check.headSha,
@@ -38,6 +47,7 @@ const toResult = (check: PublishedCheck, headSha: string): PublishedReviewResult
   return snapshot === null
     ? {
         ...base,
+        kind: isReleasePullRequest(pullRequest) ? ResultKind.RELEASE_CHECKLIST : ResultKind.REVIEW,
         status: UNKNOWN_RESULT_STATUS,
         title: check.title,
         summary: '',
@@ -65,7 +75,9 @@ export class ReviewResultService {
     return {
       status: 'found',
       headSha,
-      result: published === null ? null : toResult(published, headSha),
+      baseBranch: pullRequest.baseRef,
+      headBranch: pullRequest.headRef,
+      result: published === null ? null : toResult(published, pullRequest),
     };
   }
 

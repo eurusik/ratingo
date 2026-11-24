@@ -19,6 +19,7 @@ interface PullRequestPayload {
   title: string;
   merged_at: string | null;
   base: { ref: string };
+  head: { ref: string };
 }
 
 interface DeploymentPayload {
@@ -59,7 +60,15 @@ export class GithubRecentChangesAdapter implements RecentChangesPort {
     return pulls.flatMap((pull) => {
       const mergedAtMs = pull.merged_at === null ? Number.NaN : Date.parse(pull.merged_at);
       return mergedAtMs >= sinceMs
-        ? [{ number: pull.number, title: pull.title, baseBranch: pull.base.ref, mergedAtMs }]
+        ? [
+            {
+              number: pull.number,
+              title: pull.title,
+              baseBranch: pull.base.ref,
+              headBranch: pull.head.ref,
+              mergedAtMs,
+            },
+          ]
         : [];
     });
   }

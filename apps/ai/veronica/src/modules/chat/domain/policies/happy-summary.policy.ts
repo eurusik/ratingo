@@ -1,11 +1,14 @@
 import {
   GITHUB_WEB_PREFIX,
+  RELEASE_BASE_BRANCH,
+  RELEASE_HEAD_BRANCH,
   HAPPY_QUESTIONS_SHOWN,
   HAPPY_QUESTION_MAX_CHARS,
   HAPPY_SUMMARY_MAX_CHARS,
   SHORT_SHA_LENGTH,
 } from '../constants/happy.constants';
 import {
+  HappyResultKind,
   HappyResultStatus,
   HappyScopeMode,
   HappySeverity,
@@ -115,7 +118,13 @@ const linkLine = (result: HappyResult): string[] =>
     ? [`Повний звіт: ${escapeHtml(result.checkRunUrl)}`]
     : [];
 
+const releaseLines = (): string[] => [
+  `Це реліз ${RELEASE_HEAD_BRANCH}→${RELEASE_BASE_BRANCH}. На релізах Хеппі не робить ревʼю коду, а збирає чекліст без моделі: міграції БД, нові змінні середовища, змінені застосунки й залежності.`,
+  'Ревʼю коду дивись у PR, які увійшли в реліз: «Хеппі, глянь» і номер.',
+];
+
 const bodyFor = (result: HappyResult): string[] => {
+  if (result.kind === HappyResultKind.RELEASE_CHECKLIST) return releaseLines();
   switch (result.status) {
     case HappyResultStatus.REVIEWED:
     case HappyResultStatus.INCOMPLETE:

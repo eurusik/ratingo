@@ -11,11 +11,12 @@ import type { ReviewOutcome } from '../entities/review-outcome';
 import { ReviewMode, type ReviewScope } from '../entities/review-scope';
 import type { TrackedFinding } from '../entities/tracked-finding';
 import { ReviewStatus } from '../entities/review-outcome';
-import type {
-  ResultCoverage,
-  ResultScope,
-  ResultTracking,
-  ReviewResultSnapshot,
+import {
+  ResultKind,
+  type ResultCoverage,
+  type ResultScope,
+  type ResultTracking,
+  type ReviewResultSnapshot,
 } from '../entities/review-result';
 
 import { toBase64Url } from './base64url';
@@ -63,6 +64,7 @@ const trackingSnapshot = (
 const completedSnapshot = (
   outcome: Extract<ReviewOutcome, { status: 'reviewed' | 'incomplete' }>,
 ): ReviewResultSnapshot => ({
+  kind: ResultKind.REVIEW,
   status: outcome.status,
   title: clip(checkVoiceLine(outcome), MAX_RESULT_TITLE_CHARS),
   summary: clip(sanitizeModelText(outcome.summary), MAX_RESULT_SUMMARY_CHARS),
@@ -79,11 +81,15 @@ const completedSnapshot = (
   tracking: trackingSnapshot(outcome),
 });
 
+export const resultKindFor = (status: ReviewStatus): ResultKind =>
+  status === ReviewStatus.CHECKLIST ? ResultKind.RELEASE_CHECKLIST : ResultKind.REVIEW;
+
 export const buildResultSnapshot = (outcome: ReviewOutcome): ReviewResultSnapshot => {
   if (outcome.status === ReviewStatus.REVIEWED || outcome.status === ReviewStatus.INCOMPLETE) {
     return completedSnapshot(outcome);
   }
   return {
+    kind: resultKindFor(outcome.status),
     status: outcome.status,
     title: clip(checkVoiceLine(outcome), MAX_RESULT_TITLE_CHARS),
     summary: '',

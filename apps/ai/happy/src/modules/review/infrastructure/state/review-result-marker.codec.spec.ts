@@ -13,9 +13,14 @@ import {
 } from '../../domain/constants/review-limits.constants';
 import { FindingCategory, Severity } from '../../domain/constants/severity.constants';
 import { CoverageGap, ReviewStatus } from '../../domain/entities/review-outcome';
-import type { ResultTracking, ReviewResultSnapshot } from '../../domain/entities/review-result';
+import {
+  ResultKind,
+  type ResultTracking,
+  type ReviewResultSnapshot,
+} from '../../domain/entities/review-result';
 import { FullReviewReason, ReviewMode } from '../../domain/entities/review-scope';
 import { FindingStatus } from '../../domain/entities/tracked-finding';
+import { toBase64Url } from '../../domain/policies/base64url';
 import { renderResultMarker } from '../../domain/policies/review-result';
 
 import { decodeResultMarker } from './review-result-marker.codec';
@@ -55,6 +60,7 @@ const trackingArb: fc.Arbitrary<ResultTracking> = fc.record({
 });
 
 const snapshotArb: fc.Arbitrary<ReviewResultSnapshot> = fc.record({
+  kind: fc.constantFrom(...Object.values(ResultKind)),
   status: fc.constantFrom(...Object.values(ReviewStatus)),
   title: fc.string({ maxLength: MAX_RESULT_TITLE_CHARS }),
   summary: fc.string({ maxLength: MAX_RESULT_SUMMARY_CHARS }),
@@ -163,6 +169,7 @@ describe('review result marker', () => {
       findings,
     };
     const snapshot: ReviewResultSnapshot = {
+      kind: 'review',
       status: ReviewStatus.REVIEWED,
       title: 't',
       summary: 's',
@@ -204,5 +211,29 @@ describe('review result marker', () => {
 
   it('never throws on arbitrary text', () => {
     fc.assert(fc.property(fc.string(), (text) => decodeResultMarker(text) === null || true));
+  });
+
+  it('keeps the kind through a round trip, and derives it for a marker that has none', () => {
+    fc.assert(
+      fc.property(snapshotArb, (snapshot) => {
+        const marker = renderResultMarker(snapshot);
+        return marker === '' || decodeResultMarker(marker)?.kind === snapshot.kind;
+      }),
+    );
+    const { kind: _kind, ...withoutKind } = {
+      kind: ResultKind.REVIEW,
+      status: ReviewStatus.CHECKLIST,
+      title: 'Список вантажу на виїзд.',
+      summary: '',
+      skipReason: null,
+      counts: { critical: 0, major: 0, minor: 0, nit: 0 },
+      questions: [],
+      coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
+      tracking: null,
+    };
+    const encoded = toBase64Url(JSON.stringify(withoutKind));
+    expect(decodeResultMarker(`<!-- happy:result:v2 ${encoded} -->`)?.kind).toBe(
+      ResultKind.RELEASE_CHECKLIST,
+    );
   });
 });
