@@ -18,7 +18,7 @@ const pinnedProperty = { [PROPERTY_ID_ARGUMENT]: GoogleAnalyticsMcpKey.PROPERTY_
 
 const runReport: McpToolRule = {
   description:
-    'Google Analytics 4 report for ratingo.top. dimensions and metrics are GA4 API names, such as date, sessionDefaultChannelGroup, sessionSource, pagePath, deviceCategory, country, newVsReturning, eventName; activeUsers, newUsers, sessions, screenPageViews, engagementRate, eventCount. date_ranges: one or two {start_date, end_date, name} with YYYY-MM-DD, today, yesterday or NdaysAgo, at most 90 days back; two ranges compare periods. Filter on eventName with dimension_filter to count one event. Keep reports small.',
+    'Google Analytics 4 report for ratingo.top. dimensions and metrics are GA4 API names, such as date, sessionDefaultChannelGroup, sessionSource, pagePath, deviceCategory, country, newVsReturning, eventName; activeUsers, newUsers, sessions, screenPageViews, engagementRate, eventCount. date_ranges: one or two {start_date, end_date, name} with YYYY-MM-DD, today, yesterday or NdaysAgo, at most 90 days back. Two ranges compare periods in one report: always name both, and every row then gets a dateRange dimension holding the range name (date_range_0 and date_range_1 when unnamed). Filter on eventName with dimension_filter to count one event. Keep reports small.',
   exposedArguments: [
     'date_ranges',
     'dimensions',
@@ -54,6 +54,8 @@ const runRealtimeReport: McpToolRule = {
     'limit',
     'minute_ranges',
   ],
+  resultNote:
+    'Window: without minute_ranges this report covers the last 30 minutes; with minute_ranges each row names its range.',
   pinnedFromSettings: pinnedProperty,
   pinnedArguments: { return_property_quota: false },
   constraints: {

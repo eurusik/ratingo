@@ -1,7 +1,21 @@
 import { EvalKind, type EvalCase } from './eval-case';
-import { GA_UNAVAILABLE, gaRealtimeReport, gaReport } from './google-analytics.fake-server';
+import {
+  GA_UNAVAILABLE,
+  GaMatchKey,
+  gaRealtimeReport,
+  gaReport,
+} from './google-analytics.fake-server';
 
-const GA_NO_DATA_PHRASES = ['даних немає', 'немає даних', 'не знаю', 'недоступн', 'не вдалося'];
+const GA_NO_DATA_PHRASES = [
+  'даних немає',
+  'немає даних',
+  'не знаю',
+  'недоступн',
+  'не вдалося',
+  'не відповіда',
+  'тайм-аут',
+  'timeout',
+];
 
 const REPORT = 'google-analytics__run_report';
 const REALTIME = 'google-analytics__run_realtime_report';
@@ -150,6 +164,21 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
     fixtures: [
       {
         tool: REPORT,
+        match: { [GaMatchKey.RANGE_COUNT]: 2 },
+        response: gaReport(
+          ['newVsReturning', 'dateRange'],
+          ['activeUsers'],
+          [
+            [['new', 'date_range_0'], ['1320']],
+            [['returning', 'date_range_0'], ['523']],
+            [['new', 'date_range_1'], ['1104']],
+            [['returning', 'date_range_1'], ['481']],
+          ],
+        ),
+      },
+      {
+        tool: REPORT,
+        match: { [GaMatchKey.RANGE_COUNT]: 1 },
         response: gaReport(
           ['newVsReturning'],
           ['activeUsers'],
@@ -176,7 +205,7 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
     mustContain: [['17']],
     reference: {
       calls: [{ tool: REALTIME, input: { dimensions: [], metrics: ['activeUsers'] } }],
-      answer: 'За останні пів години на сайті 17 користувачів.',
+      answer: 'За останні 30 хвилин на сайті 17 користувачів.',
     },
   },
   {
@@ -186,6 +215,17 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
     fixtures: [
       {
         tool: REPORT,
+        match: { [GaMatchKey.RANGE_COUNT]: 1, [GaMatchKey.FIRST_START_DATE]: '14daysAgo' },
+        response: gaReport([], ['activeUsers'], [[[], ['1610']]]),
+      },
+      {
+        tool: REPORT,
+        match: { [GaMatchKey.RANGE_COUNT]: 1 },
+        response: gaReport([], ['activeUsers'], [[[], ['1843']]]),
+      },
+      {
+        tool: REPORT,
+        match: { [GaMatchKey.RANGE_COUNT]: 2 },
         response: gaReport(
           ['dateRange'],
           ['activeUsers'],

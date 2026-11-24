@@ -153,6 +153,12 @@ describe('google-analytics MCP server', () => {
     expect(decision.allowed).toBe(false);
   });
 
+  it('states the realtime window as a number the answer can quote', () => {
+    expect(GOOGLE_ANALYTICS_MCP_SERVER.policy.tools.run_realtime_report?.resultNote).toContain(
+      '30 minutes',
+    );
+  });
+
   it('allows two ranges for a week-over-week comparison', () => {
     const { policy, rule } = resolvedRule();
     const decision = decideMcpCall(

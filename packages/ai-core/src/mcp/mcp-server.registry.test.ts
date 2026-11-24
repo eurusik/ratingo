@@ -171,6 +171,14 @@ describe('McpServerRegistry', () => {
     );
   });
 
+  it('rejects an empty or long result note', () => {
+    const withNote = (resultNote: string) =>
+      withChanges({ policy: { tools: { echo: { description: 'Echo', resultNote } } } });
+    const issue = 'policy.tools.echo: resultNote must be 1 to 300 characters';
+    expect(issuesOf(withNote(' '))).toContain(issue);
+    expect(issuesOf(withNote('x'.repeat(301)))).toContain(issue);
+  });
+
   it('rejects an empty policy', () => {
     expect(issuesOf(withChanges({ policy: { tools: {} } }))).toContain(
       'policy must allow at least one tool',

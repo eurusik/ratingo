@@ -49,6 +49,7 @@ Each key of `policy.tools` is a remote tool name. Anything not listed is never s
 | `exposedArguments`   | the only arguments the model may see and send; any other argument of the remote tool is hidden and refused. A required argument that is neither exposed nor pinned is reported as `required_argument_hidden`                                               |
 | `constraints`        | per argument: `number` (`min`, `max` and a required `default` filled when absent, so a cap cannot be dodged by leaving the argument out), `one_of` (string or list of strings), `max_items`, `date_ranges` (`maxRanges`, `maxSpanDays`, `maxLookbackDays`) |
 | `maxOutputChars`     | output cap for this tool                                                                                                                                                                                                                                   |
+| `resultNote`         | a short trusted line (at most 300 characters) appended after the untrusted block of every successful result, for facts the agent may quote that the server does not return, such as the realtime window                                                    |
 
 An argument cannot be both pinned and constrained, or both pinned and exposed, and with `exposedArguments` every constrained argument must be exposed. `date_ranges` accepts `YYYY-MM-DD`, `today`, `yesterday` and `NdaysAgo` in `start_date`/`end_date` (other keys with `startKey`/`endKey`), measured in UTC days from the injected clock.
 

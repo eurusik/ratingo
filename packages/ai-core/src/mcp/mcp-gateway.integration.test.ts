@@ -12,6 +12,7 @@ import { McpCallOutcome, McpServerEvent } from './mcp-telemetry.port';
 import {
   FAKE_OUTPUT_CAP,
   FAKE_PINNED_PROPERTY,
+  FAKE_REPORT_NOTE,
   RecordingMcpTelemetry,
   fakeServerDefinition,
 } from './testing/fake-mcp-server.definition';
@@ -161,6 +162,7 @@ describe('McpGateway over stdio', () => {
       limit: 10,
       dimensions: ['date'],
     });
+    expect(result.content.endsWith(`</untrusted>\n${FAKE_REPORT_NOTE}`)).toBe(true);
   });
 
   it('refuses a call that breaks a constraint without reaching the server', async () => {

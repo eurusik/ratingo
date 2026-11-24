@@ -49,6 +49,7 @@ export interface McpToolRule {
   pinnedFromSettings?: Readonly<Record<string, string>>;
   constraints?: Readonly<Record<string, McpArgumentConstraint>>;
   maxOutputChars?: number;
+  resultNote?: string;
 }
 
 export interface McpToolPolicy {

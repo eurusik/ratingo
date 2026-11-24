@@ -52,6 +52,7 @@ export class InvalidMcpServerDefinitionError extends Error {
 
 const VERSION_RANGE_CHARACTERS = /[\s*^~<>|]|^latest$|\.x$/i;
 const ABSOLUTE_PATH = /^\//;
+const MAX_RESULT_NOTE_CHARS = 300;
 const ENV_KEY_PATTERN = /^[A-Z_][A-Z0-9_]*$/;
 
 const isPositive = (value: number | undefined): boolean =>
@@ -159,12 +160,22 @@ function ruleIssues(
     ...(canBridgeMcpTool({ server, tool }) ? [] : [`${label}: the tool name cannot be bridged`]),
     ...(rule.description.trim().length === 0 ? [`${label}: description must not be empty`] : []),
     ...(isPositive(rule.maxOutputChars) ? [] : [`${label}: maxOutputChars must be positive`]),
+    ...resultNoteIssues(label, rule.resultNote),
     ...settingIssues(label, rule, settings),
     ...exposureIssues(label, rule),
     ...constraints.flatMap(([argument, constraint]) =>
       constraintIssues(`${label}.constraints.${argument}`, constraint),
     ),
   ];
+}
+
+function resultNoteIssues(label: string, note: string | undefined): string[] {
+  if (note === undefined) {
+    return [];
+  }
+  return note.trim().length > 0 && note.length <= MAX_RESULT_NOTE_CHARS
+    ? []
+    : [`${label}: resultNote must be 1 to ${MAX_RESULT_NOTE_CHARS} characters`];
 }
 
 function timeoutIssues(timeouts: McpServerTimeouts): string[] {

@@ -81,8 +81,26 @@ const containsAll = (actual: unknown, expected: unknown): boolean =>
     ? Array.isArray(actual) && expected.every((item) => actual.includes(item))
     : actual === expected;
 
-const matchesArguments = (fixture: Fixture, args: Record<string, unknown>): boolean =>
-  Object.entries(fixture.match ?? {}).every(([key, value]) => containsAll(args[key], value));
+export const GaMatchKey = {
+  RANGE_COUNT: 'range_count',
+  FIRST_START_DATE: 'first_start_date',
+} as const;
+
+const rangeFacts = (args: Record<string, unknown>): Record<string, unknown> => {
+  const ranges = Array.isArray(args.date_ranges) ? (args.date_ranges as unknown[]) : [];
+  const first = ranges[0] as { start_date?: unknown } | undefined;
+  return {
+    [GaMatchKey.RANGE_COUNT]: ranges.length,
+    [GaMatchKey.FIRST_START_DATE]: first?.start_date,
+  };
+};
+
+const matchesArguments = (fixture: Fixture, args: Record<string, unknown>): boolean => {
+  const facts = { ...args, ...rangeFacts(args) };
+  return Object.entries(fixture.match ?? {}).every(([key, value]) =>
+    containsAll(facts[key], value),
+  );
+};
 
 export class FixtureGaConnection implements McpConnection {
   readonly isOpen = true;

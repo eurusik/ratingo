@@ -47,6 +47,7 @@ export class BridgedMcpTool implements Tool {
   readonly definition: ToolDefinition;
   private readonly label: string;
   private readonly outputCap: number;
+  private readonly resultNote: string | undefined;
   private readonly allowedArguments: readonly string[];
 
   constructor(
@@ -60,7 +61,9 @@ export class BridgedMcpTool implements Tool {
     this.outputCap = outputCapFor(session.definition, rule);
     this.allowedArguments = allowedArgumentsOf(rule, remote.inputSchema);
     const envelope = wrapUntrusted(this.label, TRUNCATION_MARKER).length;
-    this.maxOutputChars = (this.outputCap + envelope) * REDACTION_HEADROOM_FACTOR;
+    this.resultNote = rule.resultNote;
+    this.maxOutputChars =
+      (this.outputCap + envelope + (rule.resultNote?.length ?? 0)) * REDACTION_HEADROOM_FACTOR;
     this.definition = {
       name: this.name,
       description: rule.description,
@@ -84,7 +87,7 @@ export class BridgedMcpTool implements Tool {
     if (output.isError) {
       throw new McpToolFailedError(this.name, wrapped);
     }
-    return wrapped;
+    return this.resultNote === undefined ? wrapped : `${wrapped}\n${this.resultNote}`;
   }
 
   private async callRemote(
