@@ -1,5 +1,6 @@
 import type IORedis from 'ioredis';
 
+import { CONVERSATION_KEY_PREFIX } from '../../chat.constants';
 import {
   CONVERSATION_MAX_MESSAGES,
   CONVERSATION_MESSAGE_MAX_CHARS,
@@ -8,8 +9,6 @@ import {
 import { TurnRole, type ConversationTurn } from '../../domain/entities/conversation-turn';
 import { clip } from '../../domain/policies/answer-sanitizer.policy';
 import type { ConversationStorePort } from '../../domain/ports/conversation-store.port';
-
-const KEY_PREFIX = 'ai-veronica:conversation:';
 
 const isTurn = (value: unknown): value is ConversationTurn => {
   const candidate = value as Partial<ConversationTurn> | null;
@@ -51,6 +50,6 @@ export class RedisConversationStore implements ConversationStorePort {
   }
 
   private keyOf(chatId: string): string {
-    return `${KEY_PREFIX}${chatId}`;
+    return `${CONVERSATION_KEY_PREFIX}${chatId}`;
   }
 }
