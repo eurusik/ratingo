@@ -2,24 +2,32 @@ import { FixedClock } from '../clock/fixed.clock';
 import { McpServerUnavailableError, McpUnavailableReason } from './mcp-call.errors';
 import { McpSession } from './mcp-session';
 import { McpServerEvent } from './mcp-telemetry.port';
-import { McpConnectionClosedError } from './mcp-transport.port';
+import { McpConnectionClosedError, McpTimeoutError } from './mcp-transport.port';
 import type { McpConnection, McpTransport } from './mcp-transport.port';
 import { RecordingMcpTelemetry, fakeServerDefinition } from './testing/fake-mcp-server.definition';
 
 const COOLDOWN_MS = 30_000;
 
+type Step = 'fail' | 'crash' | 'hang' | 'truncated' | 'ok';
+
 class ScriptedConnection implements McpConnection {
   isOpen = true;
   private listeners: Array<() => void> = [];
 
-  constructor(private readonly crashOnCall: boolean) {}
+  constructor(private readonly step: Step) {}
 
   listTools() {
-    return Promise.resolve([{ name: 'echo', inputSchema: { type: 'object' } }]);
+    return Promise.resolve({
+      tools: [{ name: 'echo', inputSchema: { type: 'object' } }],
+      truncated: this.step === 'truncated',
+    });
   }
 
   callTool(name: string) {
-    if (this.crashOnCall) {
+    if (this.step === 'hang') {
+      return Promise.reject(new McpTimeoutError('fake', name, 1));
+    }
+    if (this.step === 'crash') {
       this.isOpen = false;
       this.listeners.forEach((listener) => listener());
       return Promise.reject(new McpConnectionClosedError('fake'));
@@ -40,14 +48,14 @@ class ScriptedConnection implements McpConnection {
 class ScriptedTransport implements McpTransport {
   connects = 0;
 
-  constructor(private readonly plan: Array<'fail' | 'crash' | 'ok'>) {}
+  constructor(private readonly plan: Step[]) {}
 
   connect(): Promise<McpConnection> {
     const step = this.plan[this.connects] ?? 'ok';
     this.connects += 1;
     return step === 'fail'
       ? Promise.reject(new McpConnectionClosedError('fake'))
-      : Promise.resolve(new ScriptedConnection(step === 'crash'));
+      : Promise.resolve(new ScriptedConnection(step));
   }
 }
 
@@ -79,14 +87,36 @@ describe('McpSession', () => {
     await session.close();
   });
 
-  it('caches tools/list per connection', async () => {
-    const transport = new ScriptedTransport([]);
+  it('keeps the tool listing after the connection is gone', async () => {
+    const transport = new ScriptedTransport(['crash']);
     const session = sessionWith(transport);
 
     await session.tools();
+    await session.call('echo', {});
     await session.tools();
 
-    expect(transport.connects).toBe(1);
+    expect(transport.connects).toBe(2);
+    await session.close();
+  });
+
+  it('reports a truncated tool listing', async () => {
+    const session = sessionWith(new ScriptedTransport(['truncated']));
+
+    await session.tools();
+
+    expect(telemetry.eventNames()).toContain(McpServerEvent.TOOL_LIST_TRUNCATED);
+    await session.close();
+  });
+
+  it('replaces a server that timed out with a fresh process on the next call', async () => {
+    const transport = new ScriptedTransport(['hang', 'ok']);
+    const session = sessionWith(transport);
+
+    await expect(session.call('echo', {})).rejects.toBeInstanceOf(McpTimeoutError);
+    await expect(session.call('echo', {})).resolves.toEqual({ isError: false, text: 'echo' });
+
+    expect(transport.connects).toBe(2);
+    expect(telemetry.eventNames()).toContain(McpServerEvent.RECYCLED_AFTER_TIMEOUT);
     await session.close();
   });
 

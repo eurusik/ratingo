@@ -17,7 +17,7 @@ export interface McpNumberConstraint {
   kind: typeof McpConstraintKind.NUMBER;
   min?: number;
   max: number;
-  default?: number;
+  default: number;
 }
 
 export interface McpOneOfConstraint {
@@ -56,6 +56,7 @@ export interface McpToolPolicy {
 export const McpRefusalCode = {
   TOOL_NOT_ALLOWED: 'tool_not_allowed',
   INVALID_ARGUMENTS: 'invalid_arguments',
+  UNKNOWN_ARGUMENT: 'unknown_argument',
   OUT_OF_RANGE: 'out_of_range',
   VALUE_NOT_ALLOWED: 'value_not_allowed',
   TOO_MANY_ITEMS: 'too_many_items',
@@ -67,6 +68,11 @@ export interface McpRefusal {
   code: McpRefusalCode;
   argument?: string;
   message: string;
+}
+
+export interface McpCallContext {
+  todayEpochDay: number;
+  knownArguments: readonly string[];
 }
 
 export type McpCallDecision =

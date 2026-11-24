@@ -1,4 +1,7 @@
 import { SystemClock } from '../clock/system.clock';
+import { z } from 'zod';
+import { defineTool } from '../tools/define-tool';
+import { NativeToolSource } from '../tools/sources/native.tool-source';
 import { ToolRegistry } from '../tools/tool-registry';
 import { StdioMcpTransport } from './adapters/stdio/stdio.mcp-transport';
 import { McpGateway } from './mcp-gateway';
@@ -185,6 +188,7 @@ describe('McpGateway over stdio', () => {
     expect(slow.isError).toBe(true);
     expect(JSON.parse(slow.content)).toMatchObject({ status: 'unavailable', reason: 'timeout' });
     expect(after.content).toContain('still here');
+    expect(telemetry.eventNames()).toContain(McpServerEvent.RECYCLED_AFTER_TIMEOUT);
     expect(telemetry.calls).toContainEqual(
       expect.objectContaining({ tool: 'slow', outcome: McpCallOutcome.TIMEOUT }),
     );
@@ -264,6 +268,31 @@ describe('McpGateway over stdio', () => {
     ]);
   });
 
+  it('builds a registry without the MCP tools when the server is down', async () => {
+    const gateway = gatewayFor({ ...CONFIGURED_ENV, FAKE_MCP_FAIL_START: '1' });
+    const native = defineTool({
+      name: 'product_stats',
+      description: 'Native tool',
+      inputSchema: z.object({}),
+      readOnly: true,
+      handler: () => Promise.resolve('42 titles'),
+    });
+
+    const registry = await ToolRegistry.create(
+      [new NativeToolSource([native]), gateway.toolSource()],
+      ['product_stats', 'fake__echo'],
+      { optionalTools: gateway.expectedToolNames() },
+    );
+
+    expect(registry.definitions().map((definition) => definition.name)).toEqual(['product_stats']);
+    expect(registry.unavailableTools()).toEqual(['fake__echo']);
+    await expect(call(registry, 'product_stats')).resolves.toMatchObject({ content: '42 titles' });
+  });
+
+  it('expects the bridged names of an unconfigured server too', () => {
+    expect(gatewayFor({}).expectedToolNames()).toContain('fake__report');
+  });
+
   it('offers no tools when the server fails to start, with a redacted reason', async () => {
     const gateway = gatewayFor({ ...CONFIGURED_ENV, FAKE_MCP_FAIL_START: '1' });
 
@@ -305,5 +334,31 @@ describe('McpGateway over stdio', () => {
     expect(isAlive(pid)).toBe(false);
     expect(telemetry.eventNames()).toContain(McpServerEvent.IDLE_STOPPED);
     expect(after.content).toContain('woke up');
+  });
+
+  it('bridges tools from the kept listing without starting an idle server', async () => {
+    const gateway = gatewayFor(CONFIGURED_ENV, { idleTtlMs: IDLE_TTL_MS });
+    const pid = Number(
+      (await call(await registryFor(gateway), 'fake__pid')).content.split('\n')[1],
+    );
+    await waitFor(() => !isAlive(pid), IDLE_WAIT_MS);
+
+    const registry = await registryFor(gateway);
+
+    expect(registry.definitions().length).toBeGreaterThan(0);
+    expect(telemetry.eventNames().filter((event) => event === McpServerEvent.STARTED)).toHaveLength(
+      1,
+    );
+  });
+
+  it('refuses an argument the remote tool does not declare', async () => {
+    const registry = await registryFor(gatewayFor());
+
+    const result = await call(registry, 'fake__echo', { text: 'x', debug: true });
+
+    expect(JSON.parse(result.content)).toMatchObject({
+      code: 'unknown_argument',
+      argument: 'debug',
+    });
   });
 });

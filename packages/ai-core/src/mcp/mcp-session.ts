@@ -5,8 +5,9 @@ import type { ConfiguredMcpServer } from './mcp-server.registry';
 import { McpServerEvent } from './mcp-telemetry.port';
 import type { McpTelemetry } from './mcp-telemetry.port';
 import { McpServerUnavailableError, McpUnavailableReason } from './mcp-call.errors';
-import { McpConnectionClosedError } from './mcp-transport.port';
+import { McpConnectionClosedError, McpTimeoutError } from './mcp-transport.port';
 import type {
+  McpCallOptions,
   McpConnection,
   McpRemoteTool,
   McpToolOutput,
@@ -21,7 +22,6 @@ export interface McpSessionDependencies {
 
 interface LiveConnection {
   connection: McpConnection;
-  tools?: Promise<McpRemoteTool[]>;
 }
 
 export class McpSession {
@@ -32,6 +32,7 @@ export class McpSession {
   private coolingDownUntilMs = 0;
   private crashed = false;
   private shutDown = false;
+  private listing: Promise<McpRemoteTool[]> | undefined;
 
   constructor(
     private readonly server: ConfiguredMcpServer,
@@ -46,30 +47,24 @@ export class McpSession {
     return this.server.definition;
   }
 
-  async tools(): Promise<McpRemoteTool[]> {
-    return this.withConnection(async (live) => {
-      live.tools ??= live.connection.listTools({
-        timeoutMs: this.server.definition.timeouts.callMs,
-      });
-      return live.tools.catch((error: unknown) => {
-        live.tools = undefined;
-        throw error;
-      });
+  tools(): Promise<McpRemoteTool[]> {
+    this.listing ??= this.fetchListing().catch((error: unknown) => {
+      this.listing = undefined;
+      throw error;
     });
+    return this.listing;
   }
 
   async call(tool: string, args: Record<string, unknown>): Promise<McpToolOutput> {
-    const options = { timeoutMs: this.server.definition.timeouts.callMs };
+    const attempt = () => this.withConnection((live) => this.callOn(live, tool, args));
     try {
-      return await this.withConnection((live) => live.connection.callTool(tool, args, options));
+      return await attempt();
     } catch (error) {
       if (!(error instanceof McpConnectionClosedError) || this.shutDown) {
         throw error;
       }
       this.noteCrash();
-      return this.retryAfterCrash(() =>
-        this.withConnection((live) => live.connection.callTool(tool, args, options)),
-      );
+      return this.retryAfterCrash(attempt);
     }
   }
 
@@ -79,6 +74,47 @@ export class McpSession {
     const live = this.live;
     this.live = undefined;
     await Promise.all([live?.connection.close(), this.connecting?.catch(() => undefined)]);
+  }
+
+  private async fetchListing(): Promise<McpRemoteTool[]> {
+    const listing = await this.withConnection((live) =>
+      this.recycleOnTimeout(live, (options) => live.connection.listTools(options)),
+    );
+    if (listing.truncated) {
+      this.event(McpServerEvent.TOOL_LIST_TRUNCATED);
+    }
+    return listing.tools;
+  }
+
+  private callOn(
+    live: LiveConnection,
+    tool: string,
+    args: Record<string, unknown>,
+  ): Promise<McpToolOutput> {
+    return this.recycleOnTimeout(live, (options) => live.connection.callTool(tool, args, options));
+  }
+
+  private async recycleOnTimeout<T>(
+    live: LiveConnection,
+    request: (options: McpCallOptions) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await request({ timeoutMs: this.server.definition.timeouts.callMs });
+    } catch (error) {
+      if (error instanceof McpTimeoutError) {
+        await this.recycle(live);
+      }
+      throw error;
+    }
+  }
+
+  private async recycle(live: LiveConnection): Promise<void> {
+    if (this.live !== live) {
+      return;
+    }
+    this.live = undefined;
+    this.event(McpServerEvent.RECYCLED_AFTER_TIMEOUT);
+    await live.connection.close().catch(() => undefined);
   }
 
   private async retryAfterCrash<T>(attempt: () => Promise<T>): Promise<T> {

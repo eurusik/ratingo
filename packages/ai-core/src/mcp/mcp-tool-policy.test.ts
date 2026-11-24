@@ -1,6 +1,11 @@
 import * as fc from 'fast-check';
 import { epochDayOf } from './mcp-calendar';
-import { decideMcpCall, exposedInputSchema, MAX_SCHEMA_DESCRIPTION_CHARS } from './mcp-tool-policy';
+import {
+  decideMcpCall,
+  exposedInputSchema,
+  MAX_SCHEMA_DESCRIPTION_CHARS,
+  undeclaredPolicyArguments,
+} from './mcp-tool-policy';
 import { McpConstraintKind, McpRefusalCode } from './mcp-tool-policy.types';
 import type { McpToolPolicy, McpToolRule } from './mcp-tool-policy.types';
 
@@ -25,6 +30,15 @@ const reportRule: McpToolRule = {
     },
   },
 };
+const KNOWN_ARGUMENTS = [
+  'property_id',
+  'currency_code',
+  'limit',
+  'dimensions',
+  'metrics',
+  'date_ranges',
+];
+const CONTEXT = { todayEpochDay: TODAY, knownArguments: KNOWN_ARGUMENTS };
 const policy: McpToolPolicy = { tools: { run_report: reportRule, echo: { description: 'Echo.' } } };
 
 const anyJson = fc.jsonValue();
@@ -47,7 +61,7 @@ describe('decideMcpCall', () => {
   it('never lets the model override a pinned argument', () => {
     fc.assert(
       fc.property(anyArgs, (args) => {
-        const decision = decideMcpCall(policy, 'run_report', args, TODAY);
+        const decision = decideMcpCall(policy, 'run_report', args, CONTEXT);
         if (decision.allowed) {
           expect(decision.arguments.property_id).toBe('123');
           expect(decision.arguments.currency_code).toBe('USD');
@@ -68,7 +82,7 @@ describe('decideMcpCall', () => {
           date_ranges: fc.array(dateRange, { minLength: 1, maxLength: 3 }),
         }),
         (args) => {
-          const decision = decideMcpCall(policy, 'run_report', args, TODAY);
+          const decision = decideMcpCall(policy, 'run_report', args, CONTEXT);
           if (!decision.allowed) {
             return;
           }
@@ -95,13 +109,50 @@ describe('decideMcpCall', () => {
     );
   });
 
+  it('never forwards an argument the tool does not declare', () => {
+    fc.assert(
+      fc.property(fc.dictionary(fc.string(), anyJson), (args) => {
+        const decision = decideMcpCall(policy, 'run_report', args, CONTEXT);
+        if (decision.allowed) {
+          for (const key of Object.keys(decision.arguments)) {
+            expect(KNOWN_ARGUMENTS).toContain(key);
+          }
+        }
+      }),
+    );
+  });
+
+  it('fills a default only for an argument the tool declares', () => {
+    const narrow = { todayEpochDay: TODAY, knownArguments: ['dimensions'] };
+    expect(decideMcpCall(policy, 'run_report', {}, narrow)).toEqual({
+      allowed: true,
+      arguments: { property_id: '123', currency_code: 'USD' },
+    });
+  });
+
+  it('names policy arguments the remote schema does not declare', () => {
+    expect(
+      undeclaredPolicyArguments(reportRule, { properties: { limit: {}, dimensions: {} } }).sort(),
+    ).toEqual(['currency_code', 'date_ranges', 'metrics', 'property_id']);
+  });
+
+  it('refuses an argument the tool does not declare', () => {
+    expect(decideMcpCall(policy, 'run_report', { shell: 'rm -rf /' }, CONTEXT)).toEqual({
+      allowed: false,
+      refusal: expect.objectContaining({
+        code: McpRefusalCode.UNKNOWN_ARGUMENT,
+        argument: 'shell',
+      }),
+    });
+  });
+
   it('never allows a tool outside the policy', () => {
     fc.assert(
       fc.property(
         fc.string().filter((tool) => !['run_report', 'echo'].includes(tool)),
         anyJson,
         (tool, args) => {
-          const decision = decideMcpCall(policy, tool, args, TODAY);
+          const decision = decideMcpCall(policy, tool, args, CONTEXT);
           expect(decision).toEqual({
             allowed: false,
             refusal: expect.objectContaining({ code: McpRefusalCode.TOOL_NOT_ALLOWED }),
@@ -112,12 +163,12 @@ describe('decideMcpCall', () => {
   });
 
   it('is not fooled by inherited object keys', () => {
-    expect(decideMcpCall(policy, 'toString', {}, TODAY).allowed).toBe(false);
-    expect(decideMcpCall(policy, '__proto__', {}, TODAY).allowed).toBe(false);
+    expect(decideMcpCall(policy, 'toString', {}, CONTEXT).allowed).toBe(false);
+    expect(decideMcpCall(policy, '__proto__', {}, CONTEXT).allowed).toBe(false);
   });
 
   it('fills a default when the model leaves a capped number out', () => {
-    expect(decideMcpCall(policy, 'run_report', {}, TODAY)).toEqual({
+    expect(decideMcpCall(policy, 'run_report', {}, CONTEXT)).toEqual({
       allowed: true,
       arguments: { limit: 10, property_id: '123', currency_code: 'USD' },
     });
@@ -144,14 +195,14 @@ describe('decideMcpCall', () => {
       'date_ranges',
     ],
   ])('refuses %j with %s', (args, code, argument) => {
-    expect(decideMcpCall(policy, 'run_report', args, TODAY)).toEqual({
+    expect(decideMcpCall(policy, 'run_report', args, CONTEXT)).toEqual({
       allowed: false,
       refusal: expect.objectContaining({ code, argument }),
     });
   });
 
   it('accepts an empty list for a one_of argument', () => {
-    expect(decideMcpCall(policy, 'run_report', { dimensions: [] }, TODAY).allowed).toBe(true);
+    expect(decideMcpCall(policy, 'run_report', { dimensions: [] }, CONTEXT).allowed).toBe(true);
   });
 
   it('accepts tomorrow in UTC, which is already today in a property east of UTC', () => {
@@ -159,7 +210,7 @@ describe('decideMcpCall', () => {
       policy,
       'run_report',
       { date_ranges: [{ start_date: '2026-11-25', end_date: '2026-11-25' }] },
-      TODAY,
+      CONTEXT,
     );
     expect(decision.allowed).toBe(true);
   });
@@ -169,13 +220,13 @@ describe('decideMcpCall', () => {
       policy,
       'run_report',
       { date_ranges: [{ start_date: '2026-11-01', end_date: 'yesterday' }] },
-      TODAY,
+      CONTEXT,
     );
     expect(decision.allowed).toBe(true);
   });
 
   it('refuses arguments that are not an object', () => {
-    expect(decideMcpCall(policy, 'echo', ['x'], TODAY)).toEqual({
+    expect(decideMcpCall(policy, 'echo', ['x'], CONTEXT)).toEqual({
       allowed: false,
       refusal: expect.objectContaining({ code: McpRefusalCode.INVALID_ARGUMENTS }),
     });
@@ -213,6 +264,7 @@ describe('exposedInputSchema', () => {
         title: { type: 'string' },
       },
       required: ['dimensions'],
+      additionalProperties: false,
     });
   });
 

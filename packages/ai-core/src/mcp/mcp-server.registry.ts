@@ -9,7 +9,7 @@ export interface ConfiguredMcpServer {
 }
 
 export interface UnconfiguredMcpServer {
-  name: string;
+  definition: McpServerDefinition;
   missingEnv: readonly string[];
 }
 
@@ -78,7 +78,7 @@ export class McpServerRegistry {
       }
       const missingEnv = definition.env.required.filter((key) => !hasValue(values[key]));
       if (missingEnv.length > 0) {
-        unconfigured.push({ name, missingEnv });
+        unconfigured.push({ definition, missingEnv });
       } else {
         configured.push({ definition, env: explicitEnv(definition, values) });
       }

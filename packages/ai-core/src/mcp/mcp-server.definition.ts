@@ -83,10 +83,10 @@ function constraintIssues(label: string, constraint: McpArgumentConstraint): str
     case McpConstraintKind.NUMBER: {
       const min = constraint.min ?? Number.NEGATIVE_INFINITY;
       const fallback = constraint.default;
-      const badDefault = fallback !== undefined && (fallback < min || fallback > constraint.max);
+      const badDefault = !Number.isFinite(fallback) || fallback < min || fallback > constraint.max;
       return [
         ...(min > constraint.max ? [`${label}: min is greater than max`] : []),
-        ...(badDefault ? [`${label}: default is outside min..max`] : []),
+        ...(badDefault ? [`${label}: default must be set and within min..max`] : []),
       ];
     }
     case McpConstraintKind.ONE_OF:

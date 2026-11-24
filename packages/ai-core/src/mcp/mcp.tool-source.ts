@@ -1,6 +1,8 @@
 import type { Tool } from '../tools/define-tool';
 import type { ToolSource } from '../tools/tool-source.port';
 import { BridgedMcpTool } from './mcp-tool-bridge';
+import { undeclaredPolicyArguments } from './mcp-tool-policy';
+import type { McpToolRule } from './mcp-tool-policy.types';
 import type { McpBridgeDependencies } from './mcp-tool-bridge';
 import type { McpSession } from './mcp-session';
 import { McpCallOutcome, McpServerEvent } from './mcp-telemetry.port';
@@ -12,6 +14,25 @@ const LIST_TOOLS_LABEL = 'tools/list';
 
 const isReadOnly = (remote: McpRemoteTool): boolean =>
   remote.readOnlyHint !== false && remote.destructiveHint !== true;
+
+function mismatchesOf(
+  server: string,
+  toolName: string,
+  rule: McpToolRule,
+  found: McpRemoteTool | undefined,
+): McpServerEventRecord[] {
+  if (found === undefined) {
+    return [{ server, event: McpServerEvent.TOOL_MISSING, detail: toolName }];
+  }
+  if (!isReadOnly(found)) {
+    return [{ server, event: McpServerEvent.TOOL_NOT_READ_ONLY, detail: toolName }];
+  }
+  return undeclaredPolicyArguments(rule, found.inputSchema).map((argument) => ({
+    server,
+    event: McpServerEvent.POLICY_ARGUMENT_UNDECLARED,
+    detail: `${toolName}.${argument}`,
+  }));
+}
 
 export class McpToolSource implements ToolSource {
   private readonly reportedListings = new WeakSet<readonly McpRemoteTool[]>();
@@ -35,13 +56,10 @@ export class McpToolSource implements ToolSource {
     const mismatches: McpServerEventRecord[] = [];
     const tools = Object.entries(session.definition.policy.tools).flatMap(([toolName, rule]) => {
       const found = byName.get(toolName);
-      if (found === undefined || !isReadOnly(found)) {
-        const event =
-          found === undefined ? McpServerEvent.TOOL_MISSING : McpServerEvent.TOOL_NOT_READ_ONLY;
-        mismatches.push({ server: session.name, event, detail: toolName });
-        return [];
-      }
-      return [new BridgedMcpTool(session, found, rule, this.deps)];
+      mismatches.push(...mismatchesOf(session.name, toolName, rule, found));
+      return found === undefined || !isReadOnly(found)
+        ? []
+        : [new BridgedMcpTool(session, found, rule, this.deps)];
     });
     this.reportFirstTime(remote, mismatches);
     return tools;

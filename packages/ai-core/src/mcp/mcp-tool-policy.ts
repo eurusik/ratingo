@@ -4,7 +4,9 @@ import { checkArgumentConstraint } from './mcp-argument-constraints';
 import { McpConstraintKind, McpRefusalCode } from './mcp-tool-policy.types';
 import type {
   McpArgumentConstraint,
+  McpCallContext,
   McpCallDecision,
+  McpRefusal,
   McpToolPolicy,
   McpToolRule,
 } from './mcp-tool-policy.types';
@@ -34,52 +36,87 @@ function withoutPinned(input: Json, rule: McpToolRule): Json {
   return Object.fromEntries(Object.entries(input).filter(([key]) => !Object.hasOwn(pinned, key)));
 }
 
-function withDefaults(input: Json, rule: McpToolRule): Json {
+function withDefaults(input: Json, rule: McpToolRule, known: readonly string[]): Json {
   const defaults = Object.entries(rule.constraints ?? {}).flatMap(([key, constraint]) =>
-    constraint.kind === McpConstraintKind.NUMBER &&
-    constraint.default !== undefined &&
-    input[key] === undefined
+    constraint.kind === McpConstraintKind.NUMBER && input[key] === undefined && known.includes(key)
       ? [[key, constraint.default] as const]
       : [],
   );
   return { ...input, ...Object.fromEntries(defaults) };
 }
 
+export function argumentNamesOf(schema: JsonSchema): string[] {
+  return isRecord(schema.properties) ? Object.keys(schema.properties) : [];
+}
+
+export function undeclaredPolicyArguments(rule: McpToolRule, schema: JsonSchema): string[] {
+  const known = argumentNamesOf(schema);
+  const named = [
+    ...Object.keys(rule.pinnedArguments ?? {}),
+    ...Object.keys(rule.constraints ?? {}),
+  ];
+  return named.filter((key) => !known.includes(key));
+}
+
+function firstUnknownArgument(input: Json, known: readonly string[]): string | undefined {
+  return Object.keys(input).find((key) => !known.includes(key));
+}
+
+function refused(refusal: McpRefusal): McpCallDecision {
+  return { allowed: false, refusal };
+}
+
+function firstConstraintRefusal(
+  prepared: Json,
+  rule: McpToolRule,
+  todayEpochDay: number,
+): McpRefusal | undefined {
+  for (const [argument, constraint] of Object.entries(rule.constraints ?? {})) {
+    const value = prepared[argument];
+    const refusal =
+      value === undefined
+        ? undefined
+        : checkArgumentConstraint(argument, value, constraint, todayEpochDay);
+    if (refusal !== undefined) {
+      return refusal;
+    }
+  }
+  return undefined;
+}
+
 export function decideMcpCall(
   policy: McpToolPolicy,
   tool: string,
   input: unknown,
-  todayEpochDay: number,
+  context: McpCallContext,
 ): McpCallDecision {
   const rule = ruleFor(policy, tool);
   if (rule === undefined) {
-    return {
-      allowed: false,
-      refusal: { code: McpRefusalCode.TOOL_NOT_ALLOWED, message: `Tool "${tool}" is not allowed` },
-    };
+    return refused({
+      code: McpRefusalCode.TOOL_NOT_ALLOWED,
+      message: `Tool "${tool}" is not allowed`,
+    });
   }
   if (!isRecord(input)) {
-    return {
-      allowed: false,
-      refusal: { code: McpRefusalCode.INVALID_ARGUMENTS, message: 'Arguments must be an object' },
-    };
+    return refused({
+      code: McpRefusalCode.INVALID_ARGUMENTS,
+      message: 'Arguments must be an object',
+    });
   }
-  const prepared = withDefaults(withoutPinned(input, rule), rule);
-  for (const [argument, constraint] of Object.entries(rule.constraints ?? {})) {
-    if (prepared[argument] === undefined) {
-      continue;
-    }
-    const refusal = checkArgumentConstraint(
-      argument,
-      prepared[argument],
-      constraint,
-      todayEpochDay,
-    );
-    if (refusal !== undefined) {
-      return { allowed: false, refusal };
-    }
+  const fromModel = withoutPinned(input, rule);
+  const unknown = firstUnknownArgument(fromModel, context.knownArguments);
+  if (unknown !== undefined) {
+    return refused({
+      code: McpRefusalCode.UNKNOWN_ARGUMENT,
+      argument: unknown,
+      message: `"${unknown}" is not an argument of this tool`,
+    });
   }
-  return { allowed: true, arguments: { ...prepared, ...rule.pinnedArguments } };
+  const prepared = withDefaults(fromModel, rule, context.knownArguments);
+  const refusal = firstConstraintRefusal(prepared, rule, context.todayEpochDay);
+  return refusal === undefined
+    ? { allowed: true, arguments: { ...prepared, ...rule.pinnedArguments } }
+    : refused(refusal);
 }
 
 function narrowProperty(property: unknown, constraint: McpArgumentConstraint): unknown {
@@ -117,7 +154,7 @@ function shapeForModel(remote: JsonSchema, rule: McpToolRule): JsonSchema {
   const required = Array.isArray(remote.required)
     ? remote.required.filter((key): key is string => typeof key === 'string' && !isPinned(key))
     : [];
-  return { ...remote, type: 'object', properties: visible, required };
+  return { ...remote, type: 'object', properties: visible, required, additionalProperties: false };
 }
 
 const capDescription = (keyword: string, value: unknown): unknown =>

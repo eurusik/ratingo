@@ -41,7 +41,9 @@ describe('McpServerRegistry', () => {
 
     expect(registry.resolve(['fake'], { FAKE_TOKEN: '' })).toEqual({
       configured: [],
-      unconfigured: [{ name: 'fake', missingEnv: ['FAKE_TOKEN'] }],
+      unconfigured: [
+        { definition: expect.objectContaining({ name: 'fake' }), missingEnv: ['FAKE_TOKEN'] },
+      ],
     });
   });
 
@@ -91,7 +93,7 @@ describe('McpServerRegistry', () => {
           report: {
             description: 'Report',
             pinnedArguments: { limit: 5 },
-            constraints: { limit: { kind: McpConstraintKind.NUMBER, max: 10 } },
+            constraints: { limit: { kind: McpConstraintKind.NUMBER, max: 10, default: 5 } },
           },
         },
       },
@@ -116,7 +118,7 @@ describe('McpServerRegistry', () => {
     expect(issuesOf(definition)).toEqual(
       expect.arrayContaining([
         'env key "token" is not UPPER_SNAKE_CASE',
-        'policy.tools.report.constraints.limit: default is outside min..max',
+        'policy.tools.report.constraints.limit: default must be set and within min..max',
       ]),
     );
   });

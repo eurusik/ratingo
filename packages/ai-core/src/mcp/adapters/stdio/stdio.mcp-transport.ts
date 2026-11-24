@@ -7,6 +7,7 @@ import type {
   McpConnection,
   McpLaunchSpec,
   McpRemoteTool,
+  McpToolListing,
   McpToolOutput,
   McpTransport,
 } from '../../mcp-transport.port';
@@ -51,7 +52,7 @@ class SdkMcpConnection implements McpConnection {
     return this.open;
   }
 
-  async listTools(options: McpCallOptions): Promise<McpRemoteTool[]> {
+  async listTools(options: McpCallOptions): Promise<McpToolListing> {
     const tools: McpRemoteTool[] = [];
     let cursor: string | undefined;
     for (let page = 0; page < MAX_TOOL_PAGES; page += 1) {
@@ -63,10 +64,10 @@ class SdkMcpConnection implements McpConnection {
       tools.push(...result.tools.map(remoteToolOf));
       cursor = result.nextCursor;
       if (cursor === undefined) {
-        break;
+        return { tools, truncated: false };
       }
     }
-    return tools;
+    return { tools, truncated: true };
   }
 
   async callTool(

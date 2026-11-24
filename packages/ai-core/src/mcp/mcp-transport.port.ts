@@ -15,6 +15,11 @@ export interface McpRemoteTool {
   destructiveHint?: boolean;
 }
 
+export interface McpToolListing {
+  tools: McpRemoteTool[];
+  truncated: boolean;
+}
+
 export interface McpToolOutput {
   isError: boolean;
   text: string;
@@ -26,7 +31,7 @@ export interface McpCallOptions {
 
 export interface McpConnection {
   readonly isOpen: boolean;
-  listTools(options: McpCallOptions): Promise<McpRemoteTool[]>;
+  listTools(options: McpCallOptions): Promise<McpToolListing>;
   callTool(
     name: string,
     args: Record<string, unknown>,
