@@ -35,6 +35,7 @@ const check = (sha: string, overrides: Partial<ReviewResultSnapshot> = {}): Publ
   trusted: true,
   snapshot: {
     kind: 'review',
+    checklist: null,
     status: ReviewStatus.REVIEWED,
     title: 't',
     summary: '',

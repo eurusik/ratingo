@@ -5,6 +5,7 @@ import { HappyFollowUpService } from './happy-follow-up.service';
 
 const RESULT: HappyResult = {
   kind: 'review',
+  checklist: null,
   status: 'reviewed',
   checkedSha: 'h1',
   current: true,

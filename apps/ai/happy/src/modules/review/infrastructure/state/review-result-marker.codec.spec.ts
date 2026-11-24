@@ -59,8 +59,24 @@ const trackingArb: fc.Arbitrary<ResultTracking> = fc.record({
   findings: fc.array(trackedFindingArb, { maxLength: 8 }),
 });
 
+const isEqual = (actual: unknown, expected: unknown): boolean => {
+  expect(actual).toEqual(expected);
+  return true;
+};
+
 const snapshotArb: fc.Arbitrary<ReviewResultSnapshot> = fc.record({
   kind: fc.constantFrom(...Object.values(ResultKind)),
+  checklist: fc.option(
+    fc.record({
+      migrations: count,
+      riskyMigrations: count,
+      envVars: count,
+      services: count,
+      dependencyChanges: count,
+      lockfileChanged: fc.boolean(),
+    }),
+    { nil: null },
+  ),
   status: fc.constantFrom(...Object.values(ReviewStatus)),
   title: fc.string({ maxLength: MAX_RESULT_TITLE_CHARS }),
   summary: fc.string({ maxLength: MAX_RESULT_SUMMARY_CHARS }),
@@ -82,7 +98,7 @@ const snapshotArb: fc.Arbitrary<ReviewResultSnapshot> = fc.record({
   tracking: fc.option(trackingArb, { nil: null }),
 });
 
-const legacyMarker = (snapshot: Omit<ReviewResultSnapshot, 'tracking'>): string =>
+const legacyMarker = (snapshot: Omit<ReviewResultSnapshot, 'tracking' | 'checklist'>): string =>
   `<!-- happy:result:v1 ${encodeURIComponent(JSON.stringify(snapshot))} -->`;
 
 const hostile = (snapshot: ReviewResultSnapshot): ReviewResultSnapshot => ({
@@ -95,10 +111,7 @@ describe('review result marker', () => {
     fc.assert(
       fc.property(snapshotArb, (snapshot) => {
         const marker = renderResultMarker(snapshot);
-        return (
-          marker === '' ||
-          JSON.stringify(decodeResultMarker(`text\n\n${marker}`)) === JSON.stringify(snapshot)
-        );
+        return marker === '' || isEqual(decodeResultMarker(`text\n\n${marker}`), snapshot);
       }),
     );
   });
@@ -106,11 +119,12 @@ describe('review result marker', () => {
   it('reads an older v1 marker as a snapshot without tracked state', () => {
     fc.assert(
       fc.property(snapshotArb, (snapshot) => {
-        const { tracking: _tracking, ...legacy } = snapshot;
-        return (
-          JSON.stringify(decodeResultMarker(legacyMarker(legacy))) ===
-          JSON.stringify({ ...legacy, tracking: null })
-        );
+        const { tracking: _tracking, checklist: _checklist, ...legacy } = snapshot;
+        return isEqual(decodeResultMarker(legacyMarker(legacy)), {
+          ...legacy,
+          tracking: null,
+          checklist: null,
+        });
       }),
     );
   });
@@ -118,13 +132,13 @@ describe('review result marker', () => {
   it('migrates v1 to v2: re-rendering a decoded v1 snapshot round trips', () => {
     fc.assert(
       fc.property(snapshotArb, (snapshot) => {
-        const { tracking: _tracking, ...legacy } = snapshot;
+        const { tracking: _tracking, checklist: _checklist, ...legacy } = snapshot;
         const migrated = decodeResultMarker(legacyMarker(legacy));
         const rendered = migrated === null ? '' : renderResultMarker(migrated);
         return (
           migrated !== null &&
           rendered.startsWith('<!-- happy:result:v2 ') &&
-          JSON.stringify(decodeResultMarker(rendered)) === JSON.stringify(migrated)
+          isEqual(decodeResultMarker(rendered), migrated)
         );
       }),
     );
@@ -138,8 +152,7 @@ describe('review result marker', () => {
         return (
           fakeMarker === '' ||
           realMarker === '' ||
-          JSON.stringify(decodeResultMarker(`${fakeMarker}\n${realMarker}`)) ===
-            JSON.stringify(real)
+          isEqual(decodeResultMarker(`${fakeMarker}\n${realMarker}`), real)
         );
       }),
     );
@@ -170,6 +183,7 @@ describe('review result marker', () => {
     };
     const snapshot: ReviewResultSnapshot = {
       kind: 'review',
+      checklist: null,
       status: ReviewStatus.REVIEWED,
       title: 't',
       summary: 's',
@@ -232,8 +246,8 @@ describe('review result marker', () => {
       tracking: null,
     };
     const encoded = toBase64Url(JSON.stringify(withoutKind));
-    expect(decodeResultMarker(`<!-- happy:result:v2 ${encoded} -->`)?.kind).toBe(
-      ResultKind.RELEASE_CHECKLIST,
-    );
+    const decoded = decodeResultMarker(`<!-- happy:result:v2 ${encoded} -->`);
+    expect(decoded?.kind).toBe(ResultKind.RELEASE_CHECKLIST);
+    expect(decoded?.checklist).toBeNull();
   });
 });

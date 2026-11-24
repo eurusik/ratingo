@@ -14,6 +14,7 @@ const toReviewResponse = (tracking: ResultTracking | null) =>
 
 const toResultResponse = (result: PublishedReviewResult) => ({
   kind: result.kind,
+  checklist: result.checklist,
   status: result.status,
   checkedSha: result.checkedSha,
   current: result.current,

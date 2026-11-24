@@ -6,6 +6,7 @@ import { renderHappyResult } from './happy-summary.policy';
 
 const base: HappyResult = {
   kind: 'review',
+  checklist: null,
   status: 'reviewed',
   checkedSha: 'abcdef123456',
   current: true,
@@ -84,7 +85,9 @@ describe('renderHappyResult', () => {
     expect(renderHappyResult(1, { ...base, status: 'skipped', skipReason: 'trivial' })).toContain(
       'дрібні',
     );
-    expect(renderHappyResult(1, { ...base, status: 'checklist' })).toContain('реліз-PR');
+    expect(renderHappyResult(1, { ...base, status: 'checklist' })).toContain(
+      'реліз development→main',
+    );
     expect(renderHappyResult(1, { ...base, status: 'unknown' })).toContain('старому форматі');
   });
 
@@ -125,8 +128,29 @@ describe('renderHappyResult', () => {
     expect(html).not.toContain('Зауважень немає');
   });
 
-  it('recognises a release checklist even when its status is unknown', () => {
-    const html = renderHappyResult(474, { ...base, kind: 'release_checklist', status: 'unknown' });
-    expect(html).toContain('не робить ревʼю коду');
+  it('shows one line with what the release checklist found', () => {
+    const html = renderHappyResult(474, {
+      ...base,
+      kind: 'release_checklist',
+      status: 'checklist',
+      checklist: {
+        migrations: 3,
+        riskyMigrations: 1,
+        envVars: 2,
+        services: 5,
+        dependencyChanges: 4,
+        lockfileChanged: true,
+      },
+    });
+    expect(html).toContain('міграцій БД: 3 (з ризиками: 1)');
+    expect(html).toContain('нових змінних середовища: 2');
+    expect(html).toContain('змінених застосунків і пакетів: 5');
+    expect(html).toContain('змін залежностей: 4, lockfile змінено');
+  });
+
+  it('does not claim a checklist for an unknown old result', () => {
+    const html = renderHappyResult(474, { ...base, kind: 'review', status: 'unknown' });
+    expect(html).toContain('старому форматі');
+    expect(html).not.toContain('чекліст');
   });
 });

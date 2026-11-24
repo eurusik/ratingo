@@ -44,6 +44,17 @@ const resultSchema = z
       gaps: z.array(z.string()),
     }),
     checkRunUrl: z.string().nullable(),
+    checklist: z
+      .object({
+        migrations: count,
+        riskyMigrations: count,
+        envVars: count,
+        services: count,
+        dependencyChanges: count,
+        lockfileChanged: z.boolean(),
+      })
+      .nullish()
+      .transform((digest) => digest ?? null),
     review: z
       .object({
         mode: z.enum([HappyScopeMode.INCREMENTAL, HappyScopeMode.FULL]),

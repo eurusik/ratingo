@@ -1,5 +1,6 @@
 import type { SkipReason } from '../constants/skip-patterns.constants';
 
+import type { ChecklistDigest } from './review-result';
 import type { DroppedFinding, ValidatedFinding } from './finding';
 import type { PullRequestRef } from './pull-request';
 import type { ReviewScope } from './review-scope';
@@ -65,6 +66,7 @@ export interface ReleaseChecklistReview {
   ref: PullRequestRef;
   headSha: string;
   costUsd: 0;
+  digest: ChecklistDigest;
   markdown: string;
 }
 

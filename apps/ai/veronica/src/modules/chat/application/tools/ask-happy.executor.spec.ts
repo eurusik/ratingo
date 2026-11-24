@@ -74,6 +74,7 @@ describe('AskHappyExecutor', () => {
     expect(await none.executor.run({ pull_number: 1 })).toEqual({
       pullRequest: 1,
       found: true,
+      isReleasePullRequest: false,
       reviewRunningNow: true,
       reviewed: false,
     });
@@ -133,5 +134,46 @@ describe('AskHappyExecutor', () => {
     >;
     expect(output.kind).toBe('review');
     expect(output).not.toHaveProperty('note');
+  });
+
+  it("flags a release pull request from Happy's branches even when the result is unknown", async () => {
+    const latestResult = jest.fn().mockResolvedValue({
+      kind: 'found',
+      headSha: 'h1',
+      baseBranch: 'main',
+      headBranch: 'development',
+      reviewPending: false,
+      result: { ...RESULT, kind: 'review', status: 'unknown', summary: '' },
+    });
+    const output = (await executorWith(latestResult).executor.run({ pull_number: 474 })) as Record<
+      string,
+      unknown
+    >;
+    expect(output).toMatchObject({ isReleasePullRequest: true, kind: 'review', status: 'unknown' });
+    expect(output).not.toHaveProperty('note');
+  });
+
+  it('carries the checklist digest of a release', async () => {
+    const digest = {
+      migrations: 3,
+      riskyMigrations: 1,
+      envVars: 2,
+      services: 5,
+      dependencyChanges: 4,
+      lockfileChanged: false,
+    };
+    const latestResult = jest.fn().mockResolvedValue({
+      kind: 'found',
+      headSha: 'h1',
+      baseBranch: 'main',
+      headBranch: 'development',
+      reviewPending: false,
+      result: { ...RESULT, kind: 'release_checklist', status: 'checklist', checklist: digest },
+    });
+    const output = (await executorWith(latestResult).executor.run({ pull_number: 474 })) as Record<
+      string,
+      unknown
+    >;
+    expect(output.checklist).toEqual(digest);
   });
 });

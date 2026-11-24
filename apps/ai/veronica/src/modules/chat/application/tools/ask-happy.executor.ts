@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { HappyLookupKind, HappyResultKind } from '../../domain/entities/happy';
 import { clip, stripLinks } from '../../domain/policies/answer-sanitizer.policy';
+import { isReleasePullRequest } from '../../domain/policies/release-pull-request.policy';
 import { HAPPY_CLIENT, type HappyClientPort } from '../../domain/ports/happy-client.port';
 
 import type { AskHappyInput } from './investigation-executors';
@@ -30,12 +31,18 @@ export class AskHappyExecutor {
       reviewRunningNow: lookup.reviewPending,
       baseBranch: lookup.baseBranch,
       headBranch: lookup.headBranch,
+      isReleasePullRequest:
+        lookup.baseBranch !== null &&
+        lookup.headBranch !== null &&
+        isReleasePullRequest({ baseBranch: lookup.baseBranch, headBranch: lookup.headBranch }),
       reviewed: result !== null,
       ...(result === null
         ? {}
         : {
             kind: result.kind,
-            ...(result.kind === HappyResultKind.RELEASE_CHECKLIST ? { note: RELEASE_NOTE } : {}),
+            ...(result.kind === HappyResultKind.RELEASE_CHECKLIST
+              ? { note: RELEASE_NOTE, checklist: result.checklist }
+              : {}),
             status: result.status,
             forCurrentCommit: result.current,
             verdict: clean(result.title, QUESTION_CHARS),

@@ -15,6 +15,15 @@ export const HappyResultStatus = {
 } as const;
 export type HappyResultStatus = (typeof HappyResultStatus)[keyof typeof HappyResultStatus];
 
+export interface HappyChecklistDigest {
+  migrations: number;
+  riskyMigrations: number;
+  envVars: number;
+  services: number;
+  dependencyChanges: number;
+  lockfileChanged: boolean;
+}
+
 export const HappyResultKind = {
   REVIEW: 'review',
   RELEASE_CHECKLIST: 'release_checklist',
@@ -67,6 +76,7 @@ export interface HappyResult {
   coverage: { complete: boolean; unreviewedFiles: number; gaps: string[] };
   checkRunUrl: string | null;
   review: HappyReviewInfo | null;
+  checklist: HappyChecklistDigest | null;
 }
 
 export const HappyLookupKind = {

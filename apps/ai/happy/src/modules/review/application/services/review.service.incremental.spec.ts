@@ -98,6 +98,7 @@ const previousCheck = (
 ): PublishedCheck => {
   const snapshot: ReviewResultSnapshot = {
     kind: 'review',
+    checklist: null,
     status: ReviewStatus.REVIEWED,
     title: 't',
     summary: 's',

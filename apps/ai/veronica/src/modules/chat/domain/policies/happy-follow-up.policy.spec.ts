@@ -7,6 +7,7 @@ import { decideHappyFollowUp } from './happy-follow-up.policy';
 
 const result = (checkedSha: string): HappyResult => ({
   kind: 'review',
+  checklist: null,
   status: 'reviewed',
   checkedSha,
   current: true,
@@ -96,6 +97,16 @@ describe('decideHappyFollowUp', () => {
         (attempt, pending) =>
           decideHappyFollowUp({ headSha: 'h1', attempt }, found('h1', pending, null)) !== 'wait',
       ),
+    );
+  });
+
+  it('delivers a release checklist for a full request instead of waiting until the limit', () => {
+    const lookup: HappyLookup = {
+      ...found('h1', false, 'h1'),
+      result: { ...result('h1'), kind: 'release_checklist', status: 'checklist' },
+    } as HappyLookup;
+    expect(decideHappyFollowUp({ headSha: 'h1', attempt: 1, mode: 'full' }, lookup)).toBe(
+      'deliver',
     );
   });
 });

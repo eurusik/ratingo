@@ -511,6 +511,15 @@ export const EVAL_CASES: readonly EvalCase[] = [
           reviewRunningNow: false,
           reviewed: true,
           kind: 'release_checklist',
+          isReleasePullRequest: true,
+          checklist: {
+            migrations: 3,
+            riskyMigrations: 1,
+            envVars: 2,
+            services: 5,
+            dependencyChanges: 4,
+            lockfileChanged: false,
+          },
           note: 'This is a release pull request (development into main). Happy does not review code on releases: it builds a checklist without a model (database migrations, new environment variables, changed apps, dependencies). Code reviews live on the individual pull requests merged into development; look them up with recent_changes and ask_happy for each.',
           status: 'checklist',
           forCurrentCommit: true,
@@ -533,7 +542,7 @@ export const EVAL_CASES: readonly EvalCase[] = [
     reference: {
       calls: [{ tool: 'ask_happy', input: { pull_number: 474 } }],
       answer:
-        'PR 474 це реліз development→main. Хеппі на релізах не робить ревʼю коду, а збирає чекліст без моделі: міграції, змінні середовища, змінені застосунки. Ревʼю коду дивись у PR, що увійшли в реліз.',
+        'PR 474 це реліз development→main. Хеппі на релізах не робить ревʼю коду, а збирає чекліст без моделі: міграцій 3 (одна з ризиком), нових змінних середовища 2, змінених застосунків 5. Ревʼю коду дивись у PR, що увійшли в реліз.',
     },
   },
   {

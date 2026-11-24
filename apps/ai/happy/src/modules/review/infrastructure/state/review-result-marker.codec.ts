@@ -88,21 +88,40 @@ const legacySnapshotSchema = z.object({
   }),
 });
 
-const snapshotSchema = legacySnapshotSchema.extend({ tracking: trackingSchema.nullable() });
+const checklistSchema = z.object({
+  migrations: count,
+  riskyMigrations: count,
+  envVars: count,
+  services: count,
+  dependencyChanges: count,
+  lockfileChanged: z.boolean(),
+});
 
-const withKind = (
-  snapshot: Omit<ReviewResultSnapshot, 'kind'> & { kind?: ResultKind },
-): ReviewResultSnapshot => ({ ...snapshot, kind: snapshot.kind ?? resultKindFor(snapshot.status) });
+const snapshotSchema = legacySnapshotSchema.extend({
+  tracking: trackingSchema.nullable(),
+  checklist: checklistSchema.nullish(),
+});
+
+const withDefaults = (
+  snapshot: Omit<ReviewResultSnapshot, 'kind' | 'checklist'> & {
+    kind?: ResultKind;
+    checklist?: ReviewResultSnapshot['checklist'] | undefined;
+  },
+): ReviewResultSnapshot => ({
+  ...snapshot,
+  kind: snapshot.kind ?? resultKindFor(snapshot.status),
+  checklist: snapshot.checklist ?? null,
+});
 
 const decodePayload = (version: number, encoded: string): ReviewResultSnapshot | null => {
   if (version === LEGACY_RESULT_MARKER_VERSION) {
     const parsed = legacySnapshotSchema.safeParse(JSON.parse(decodeURIComponent(encoded)));
-    return parsed.success ? withKind({ ...parsed.data, tracking: null }) : null;
+    return parsed.success ? withDefaults({ ...parsed.data, tracking: null }) : null;
   }
   if (version === RESULT_MARKER_VERSION) {
     const json = Buffer.from(encoded, 'base64url').toString('utf8');
     const parsed = snapshotSchema.safeParse(JSON.parse(json));
-    return parsed.success ? withKind(parsed.data) : null;
+    return parsed.success ? withDefaults(parsed.data) : null;
   }
   return null;
 };

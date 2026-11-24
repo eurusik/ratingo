@@ -9,7 +9,7 @@ import { FileStatus, type ChangedFile } from '../entities/pull-request';
 import { CoverageGap, ReviewStatus, type CompletedReview } from '../entities/review-outcome';
 
 import { buildCheckReport } from './check-report';
-import { buildReleaseChecklist, isReleasePullRequest } from './release-checklist';
+import { buildReleaseChecklist, checklistDigest, isReleasePullRequest } from './release-checklist';
 import { renderReleaseChecklist } from './release-checklist-renderer';
 import { renderCompletedReview } from './review-renderer';
 
@@ -246,6 +246,14 @@ describe('check voice', () => {
     expect(
       buildCheckReport({
         status: ReviewStatus.CHECKLIST,
+        digest: {
+          migrations: 0,
+          riskyMigrations: 0,
+          envVars: 0,
+          services: 0,
+          dependencyChanges: 0,
+          lockfileChanged: false,
+        },
         ref: { owner: 'a', repo: 'b', number: 3 },
         headSha: 'abc',
         costUsd: 0,
@@ -277,5 +285,46 @@ describe('check voice', () => {
       expect(line).not.toContain('\n');
       expect(line).not.toMatch(/\p{Extended_Pictographic}/u);
     }
+  });
+});
+
+describe('checklistDigest', () => {
+  it('counts what the checklist lists', () => {
+    const digest = checklistDigest({
+      services: ['apps/api', 'apps/ai/happy'],
+      migrations: [
+        { path: 'a.sql', risks: [] },
+        { path: 'b.sql', risks: ['DROP TABLE або DROP COLUMN'] },
+      ],
+      envVars: ['NEW_FLAG'],
+      dependencies: [
+        {
+          path: 'package.json',
+          changes: [
+            { name: 'a', change: 'added' },
+            { name: 'b', change: 'changed' },
+          ],
+        },
+      ],
+      lockfileChanged: true,
+      fileCount: 9,
+    });
+    expect(digest).toEqual({
+      migrations: 2,
+      riskyMigrations: 1,
+      envVars: 1,
+      services: 2,
+      dependencyChanges: 2,
+      lockfileChanged: true,
+    });
+  });
+
+  it('builds the digest from the files of a release and carries it into the result snapshot', () => {
+    const files = [
+      file('apps/api/drizzle_v2/0050_x.sql', '@@ -0,0 +1 @@\n+DROP TABLE t;', FileStatus.ADDED),
+    ];
+    const digest = checklistDigest(buildReleaseChecklist(files));
+    expect(digest.migrations).toBe(1);
+    expect(digest.riskyMigrations).toBe(1);
   });
 });

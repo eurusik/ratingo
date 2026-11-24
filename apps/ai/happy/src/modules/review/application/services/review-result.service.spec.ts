@@ -1,3 +1,4 @@
+import { RequestedMode } from '../../domain/entities/review-scope';
 import { CodeHostError } from '../../domain/ports/code-host.port';
 import type { PublishedCheck, PublishedCheckPort } from '../../domain/ports/published-check.port';
 import type { ReviewResultSnapshot } from '../../domain/entities/review-result';
@@ -116,7 +117,7 @@ describe('ReviewResultService', () => {
     await expect(broken.latest(TEST_REF)).rejects.toBeInstanceOf(CodeHostError);
   });
 
-  it('carries the branches and recognises a release checklist, also in an old check without a marker', async () => {
+  it('carries the branches and recognises a release checklist, and does not call an old check without a marker one', async () => {
     const release = buildFakeCodeHost({
       pr: buildPullRequest({ headSha: 'head222', baseRef: 'main', headRef: 'development' }),
     });
@@ -137,12 +138,36 @@ describe('ReviewResultService', () => {
       listRecentCommitShas: async () => [],
     });
     expect(await oldCheck.latest(TEST_REF)).toMatchObject({
-      result: { kind: 'release_checklist', status: 'unknown' },
+      baseBranch: 'main',
+      headBranch: 'development',
+      result: { kind: 'review', status: 'unknown', checklist: null },
     });
     const feature = setup({ head222: check('head222', null) });
     expect(await feature.service.latest(TEST_REF)).toMatchObject({
       baseBranch: 'main',
       result: { kind: 'review' },
+    });
+  });
+
+  describe('a full review that cannot get a review scope', () => {
+    const full = (snapshot: Partial<typeof SNAPSHOT>, trusted = true) =>
+      new ReviewResultService(buildFakeCodeHost(), {
+        findForCommit: async () => ({
+          ...check('head222'),
+          trusted,
+          snapshot: { ...SNAPSHOT, ...snapshot },
+        }),
+        listRecentCommitShas: async () => [],
+      }).hasResultFor(TEST_REF, 'head222', RequestedMode.FULL);
+
+    it('counts a release checklist and a skipped result as done', async () => {
+      expect(await full({ kind: 'release_checklist', status: 'checklist' })).toBe(true);
+      expect(await full({ status: 'skipped' })).toBe(true);
+    });
+
+    it('still wants a full scope from an ordinary review, and trusts only its own check runs', async () => {
+      expect(await full({ status: 'reviewed', kind: 'review', tracking: null })).toBe(false);
+      expect(await full({ kind: 'release_checklist', status: 'checklist' }, false)).toBe(false);
     });
   });
 });

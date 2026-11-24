@@ -24,6 +24,15 @@ export interface ResultTracking {
   findings: TrackedFinding[];
 }
 
+export interface ChecklistDigest {
+  migrations: number;
+  riskyMigrations: number;
+  envVars: number;
+  services: number;
+  dependencyChanges: number;
+  lockfileChanged: boolean;
+}
+
 export const ResultKind = {
   REVIEW: 'review',
   RELEASE_CHECKLIST: 'release_checklist',
@@ -40,6 +49,7 @@ export interface ReviewResultSnapshot {
   questions: { file: string; line: number; text: string }[];
   coverage: ResultCoverage;
   tracking: ResultTracking | null;
+  checklist: ChecklistDigest | null;
 }
 
 export const UNKNOWN_RESULT_STATUS = 'unknown';

@@ -85,6 +85,7 @@ const previousCheckFor = (testCase: IncrementalEvalCase): PublishedCheck => {
   const findings = testCase.previous.map(toTracked);
   const snapshot: ReviewResultSnapshot = {
     kind: 'review',
+    checklist: null,
     status: ReviewStatus.REVIEWED,
     title: 'previous',
     summary: 'previous review',

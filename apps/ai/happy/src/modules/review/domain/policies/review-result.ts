@@ -79,6 +79,7 @@ const completedSnapshot = (
     gaps: outcome.coverage.gaps,
   },
   tracking: trackingSnapshot(outcome),
+  checklist: null,
 });
 
 export const resultKindFor = (status: ReviewStatus): ResultKind =>
@@ -98,6 +99,7 @@ export const buildResultSnapshot = (outcome: ReviewOutcome): ReviewResultSnapsho
     questions: [],
     coverage: FULL_COVERAGE,
     tracking: null,
+    checklist: outcome.status === ReviewStatus.CHECKLIST ? outcome.digest : null,
   };
 };
 

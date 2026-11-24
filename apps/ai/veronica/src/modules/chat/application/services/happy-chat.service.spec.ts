@@ -10,6 +10,7 @@ import { HappyChatService } from './happy-chat.service';
 
 const RESULT: HappyResult = {
   kind: 'review',
+  checklist: null,
   status: 'reviewed',
   checkedSha: 'h1',
   current: true,

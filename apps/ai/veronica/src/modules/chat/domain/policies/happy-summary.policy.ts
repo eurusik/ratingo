@@ -8,10 +8,10 @@ import {
   SHORT_SHA_LENGTH,
 } from '../constants/happy.constants';
 import {
-  HappyResultKind,
   HappyResultStatus,
   HappyScopeMode,
   HappySeverity,
+  type HappyChecklistDigest,
   type HappyQuestion,
   type HappyResult,
   type HappyStatusCounts,
@@ -118,13 +118,21 @@ const linkLine = (result: HappyResult): string[] =>
     ? [`Повний звіт: ${escapeHtml(result.checkRunUrl)}`]
     : [];
 
-const releaseLines = (): string[] => [
-  `Це реліз ${RELEASE_HEAD_BRANCH}→${RELEASE_BASE_BRANCH}. На релізах Хеппі не робить ревʼю коду, а збирає чекліст без моделі: міграції БД, нові змінні середовища, змінені застосунки й залежності.`,
+const digestLine = (digest: HappyChecklistDigest): string =>
+  [
+    `міграцій БД: ${digest.migrations}${digest.riskyMigrations > 0 ? ` (з ризиками: ${digest.riskyMigrations})` : ''}`,
+    `нових змінних середовища: ${digest.envVars}`,
+    `змінених застосунків і пакетів: ${digest.services}`,
+    `змін залежностей: ${digest.dependencyChanges}${digest.lockfileChanged ? ', lockfile змінено' : ''}`,
+  ].join('; ');
+
+const releaseLines = (result: HappyResult): string[] => [
+  `Це реліз ${RELEASE_HEAD_BRANCH}→${RELEASE_BASE_BRANCH}. На релізах Хеппі не робить ревʼю коду, а збирає чекліст без моделі.`,
+  ...(result.checklist === null ? [] : [`У чеклісті: ${digestLine(result.checklist)}.`]),
   'Ревʼю коду дивись у PR, які увійшли в реліз: «Хеппі, глянь» і номер.',
 ];
 
 const bodyFor = (result: HappyResult): string[] => {
-  if (result.kind === HappyResultKind.RELEASE_CHECKLIST) return releaseLines();
   switch (result.status) {
     case HappyResultStatus.REVIEWED:
     case HappyResultStatus.INCOMPLETE:
@@ -140,7 +148,7 @@ const bodyFor = (result: HappyResult): string[] => {
         `Огляд пропущено: ${SKIP_REASON_TEXT[result.skipReason ?? ''] ?? 'причину не вказано'}.`,
       ];
     case HappyResultStatus.CHECKLIST:
-      return ['Це реліз-PR, тож замість огляду коду Хеппі склав список перевірок.'];
+      return releaseLines(result);
     case HappyResultStatus.UNKNOWN:
       return ['Результат є, але в старому форматі: подробиці за посиланням.'];
   }

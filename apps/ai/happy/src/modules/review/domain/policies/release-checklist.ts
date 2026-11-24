@@ -9,6 +9,7 @@ import {
   TEST_FILE_PATTERNS,
 } from '../constants/release.constants';
 import type { ChangedFile, PullRequest } from '../entities/pull-request';
+import type { ChecklistDigest } from '../entities/review-result';
 import { FileStatus } from '../entities/pull-request';
 
 import { globMatches, matchesAnyGlob } from './glob-match';
@@ -134,6 +135,18 @@ const dependencyChanges = (file: ChangedFile): DependencyChange[] => {
     return [{ name, change: added.has(name) ? 'added' : 'removed' }];
   });
 };
+
+export const checklistDigest = (checklist: ReleaseChecklist): ChecklistDigest => ({
+  migrations: checklist.migrations.length,
+  riskyMigrations: checklist.migrations.filter(({ risks }) => risks.length > 0).length,
+  envVars: checklist.envVars.length,
+  services: checklist.services.length,
+  dependencyChanges: checklist.dependencies.reduce(
+    (total, { changes }) => total + changes.length,
+    0,
+  ),
+  lockfileChanged: checklist.lockfileChanged,
+});
 
 export const buildReleaseChecklist = (files: readonly ChangedFile[]): ReleaseChecklist => ({
   services: sorted(files.map((file) => serviceOf(file.path))),
