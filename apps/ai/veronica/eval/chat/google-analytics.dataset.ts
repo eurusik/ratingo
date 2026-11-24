@@ -35,6 +35,11 @@ const DAILY_GROWTH = 0.012;
 
 const COUNTRIES = { Ukraine: 10, Poland: 1, Germany: 0.6 };
 const DEVICES = { mobile: 2, desktop: 1, tablet: 0.1 };
+const ENGAGED_SESSION_SHARE: Readonly<Record<string, number>> = {
+  mobile: 0.58,
+  desktop: 0.71,
+  tablet: 0.63,
+};
 const CHANNELS = {
   'Organic Search': { weight: 4, source: 'google', campaign: '(organic)' },
   Direct: { weight: 2, source: '(direct)', campaign: '(direct)' },
@@ -70,6 +75,8 @@ const SCREENS = { Ratingo: 3, 'Дюна: Частина друга': 1, Пошу
 const USERS_BASE = 2.1;
 const SESSIONS_PER_USER = 1.3;
 const VIEWS_BASE = 6.5;
+const VIEWS_PER_PAGE_USER = 2.4;
+const SESSIONS_PER_PAGE_USER = 1.15;
 const EVENTS_BASE = 11;
 const REALTIME_MINUTES = 30;
 const REALTIME_BASE = 0.012;
@@ -94,6 +101,7 @@ const trafficFacts = (): Fact[] =>
             );
             const injected =
               channel === 'Paid Social' && country === 'Germany' && deviceCategory === 'desktop';
+            const sessions = Math.round(users * SESSIONS_PER_USER);
             return {
               date,
               country,
@@ -104,7 +112,8 @@ const trafficFacts = (): Fact[] =>
               newVsReturning,
               activeUsers: users,
               newUsers: newVsReturning === 'new' ? users : 0,
-              sessions: Math.round(users * SESSIONS_PER_USER),
+              sessions,
+              engagedSessions: Math.round(sessions * (ENGAGED_SESSION_SHARE[deviceCategory] ?? 0)),
             };
           }),
         ),
@@ -115,13 +124,21 @@ const trafficFacts = (): Fact[] =>
 const pageFacts = (): Fact[] =>
   DAYS.flatMap((date) =>
     entries(PAGES).flatMap(([pagePath, { weight, title }]) =>
-      entries(DEVICES).map(([deviceCategory, deviceWeight]) => ({
-        date,
-        pagePath,
-        pageTitle: title,
-        deviceCategory,
-        screenPageViews: Math.round(VIEWS_BASE * dayFactor(date) * weight * deviceWeight * 10),
-      })),
+      entries(DEVICES).map(([deviceCategory, deviceWeight]) => {
+        const views = Math.round(VIEWS_BASE * dayFactor(date) * weight * deviceWeight * 10);
+        const users = Math.round(views / VIEWS_PER_PAGE_USER);
+        const sessions = Math.round(users * SESSIONS_PER_PAGE_USER);
+        return {
+          date,
+          pagePath,
+          pageTitle: title,
+          deviceCategory,
+          screenPageViews: views,
+          activeUsers: users,
+          sessions,
+          engagedSessions: Math.round(sessions * (ENGAGED_SESSION_SHARE[deviceCategory] ?? 0)),
+        };
+      }),
     ),
   );
 
@@ -133,6 +150,10 @@ const eventFacts = (): Fact[] =>
         eventName,
         deviceCategory,
         eventCount: Math.round(EVENTS_BASE * dayFactor(date) * weight * deviceWeight),
+        activeUsers: Math.round(
+          (EVENTS_BASE * dayFactor(date) * weight * deviceWeight) /
+            (GA_EVENTS_PER_USER[eventName] ?? 1),
+        ),
       })),
     ),
   );
@@ -175,22 +196,26 @@ export const GA_REPORT_TABLES: readonly FactTable[] = [
       'sessionCampaignName',
       'newVsReturning',
     ],
-    metrics: ['activeUsers', 'newUsers', 'sessions'],
+    metrics: ['activeUsers', 'newUsers', 'sessions', 'engagedSessions'],
     facts: trafficFacts(),
   },
   {
     name: 'pages',
     dimensions: ['date', 'pagePath', 'pageTitle', 'deviceCategory'],
-    metrics: ['screenPageViews'],
+    metrics: ['screenPageViews', 'activeUsers', 'sessions', 'engagedSessions'],
     facts: pageFacts(),
   },
   {
     name: 'events',
     dimensions: ['date', 'eventName', 'deviceCategory'],
-    metrics: ['eventCount'],
+    metrics: ['eventCount', 'activeUsers'],
     facts: eventFacts(),
   },
 ];
+
+export const GA_DERIVED_RATIOS: Readonly<Record<string, readonly [string, string]>> = {
+  engagementRate: ['engagedSessions', 'sessions'],
+};
 
 export const GA_REALTIME_TABLE: FactTable = {
   name: 'realtime',

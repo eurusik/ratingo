@@ -6,6 +6,7 @@ import {
   knownNumbers,
   unverifiedNumbers,
 } from './numbers-guard.policy';
+import { requestedReportDates } from './report-dates.policy';
 
 const known = (...sources: string[]) => knownNumbers(sources);
 
@@ -165,6 +166,53 @@ describe('numbers guard', () => {
             expect(unverifiedNumbers(answer, new Set(), knownDates([compact]))).toEqual([]);
           },
         ),
+      );
+    });
+  });
+
+  describe('days inside a requested range', () => {
+    const WEEK_CALL = '{"date_ranges":[{"start_date":"7daysAgo","end_date":"yesterday"}]}';
+    const weekDates = requestedReportDates([WEEK_CALL], '2026-11-22');
+
+    it('verifies the per-day series an answer lists, in day-month and ordinal forms', () => {
+      expect(
+        unverifiedNumbers(
+          'Перегляди: 15 листопада 1824, 16-го 1992, 17-го 1753, 18 листопада 2111.',
+          known('1824 1992 1753 2111'),
+          weekDates,
+        ),
+      ).toEqual([]);
+    });
+
+    it('accepts an ordinal day only inside a requested range, not from any date in a result', () => {
+      const row = '{"day":"2026-10-25","value":400}';
+      expect(unverifiedNumbers('25-го було 400.', known('400'), knownDates([row]))).toEqual(['25']);
+    });
+
+    it('verifies ISO dates a tool returned', () => {
+      const row = '{"day":"2026-11-03","value":12}';
+      expect(unverifiedNumbers('3 листопада було 12.', known('12'), knownDates([row]))).toEqual([]);
+    });
+
+    it('verifies any day inside the range as a date and no day outside it', () => {
+      fc.assert(
+        fc.property(fc.integer({ min: 1, max: 30 }), (day) => {
+          const inside = day >= 15 && day <= 21;
+          const flagged = unverifiedNumbers(`${day} листопада було 777.`, known('777'), weekDates);
+          expect(flagged).toEqual(inside ? [] : [String(day)]);
+          const ordinal = unverifiedNumbers(`${day}-го було 777.`, known('777'), weekDates);
+          expect(ordinal).toEqual(inside ? [] : [String(day)]);
+        }),
+      );
+    });
+
+    it('still checks a bare count equal to a day number', () => {
+      fc.assert(
+        fc.property(fc.integer({ min: 15, max: 21 }), (day) => {
+          expect(unverifiedNumbers(`Було ${day} користувачів.`, known('777'), weekDates)).toEqual([
+            String(day),
+          ]);
+        }),
       );
     });
   });

@@ -4,6 +4,7 @@ import {
 } from '../../src/modules/chat/domain/policies/report-dates.policy';
 
 import {
+  GA_DERIVED_RATIOS,
   GA_EVAL_TODAY,
   GA_EVENTS_PER_USER,
   GA_REALTIME_TABLE,
@@ -113,6 +114,9 @@ const validateNames = (
 ): void => {
   const knownDimensions = new Set([DATE_RANGE, ...tables.flatMap((table) => table.dimensions)]);
   const knownMetrics = new Set(tables.flatMap((table) => table.metrics));
+  for (const [ratio, parts] of Object.entries(GA_DERIVED_RATIOS)) {
+    if (parts.every((part) => knownMetrics.has(part))) knownMetrics.add(ratio);
+  }
   const badDimension = dimensions.find((name) => !knownDimensions.has(name));
   if (badDimension !== undefined) {
     throw new GaRequestError(
@@ -130,22 +134,48 @@ const validateNames = (
   }
 };
 
-const tableFor = (
+interface MetricSource {
+  table: FactTable;
+  metrics: string[];
+}
+
+const RATIO_DECIMALS = 4;
+
+const baseMetricsOf = (metrics: readonly string[]): string[] => [
+  ...new Set(metrics.flatMap((metric) => GA_DERIVED_RATIOS[metric] ?? [metric])),
+];
+
+const sourcesFor = (
   tables: readonly FactTable[],
   dimensions: string[],
   metrics: string[],
-): FactTable => {
-  const table = tables.find(
-    (candidate) =>
-      dimensions.every((name) => name === DATE_RANGE || candidate.dimensions.includes(name)) &&
-      metrics.every((name) => candidate.metrics.includes(name)),
-  );
-  if (table === undefined) {
-    throw new GaRequestError(
-      `400 Please remove ${metrics[0] ?? dimensions[0]} to make the request compatible. The request's dimensions & metrics are incompatible.`,
+): MetricSource[] => {
+  const sources = new Map<FactTable, string[]>();
+  for (const metric of metrics) {
+    const table = tables.find(
+      (candidate) =>
+        candidate.metrics.includes(metric) &&
+        dimensions.every((name) => name === DATE_RANGE || candidate.dimensions.includes(name)),
     );
+    if (table === undefined) {
+      throw new GaRequestError(
+        `400 Please remove ${metric} to make the request compatible. The request's dimensions & metrics are incompatible.`,
+      );
+    }
+    sources.set(table, [...(sources.get(table) ?? []), metric]);
   }
-  return table;
+  return [...sources].map(([table, tableMetrics]) => ({ table, metrics: tableMetrics }));
+};
+
+const metricValue = (metric: string, totals: ReadonlyMap<string, number>): number => {
+  const ratio = GA_DERIVED_RATIOS[metric];
+  if (ratio === undefined) {
+    return totals.get(metric) ?? 0;
+  }
+  const denominator = totals.get(ratio[1]) ?? 0;
+  return denominator === 0
+    ? 0
+    : Number(((totals.get(ratio[0]) ?? 0) / denominator).toFixed(RATIO_DECIMALS));
 };
 
 interface Slice {
@@ -153,13 +183,18 @@ interface Slice {
   facts: readonly Fact[];
 }
 
-const aggregate = (
+interface Group {
+  keys: string[];
+  totals: Map<string, number>;
+}
+
+const addFacts = (
+  groups: Map<string, Group>,
   slices: readonly Slice[],
   dimensions: string[],
-  metrics: string[],
+  source: MetricSource,
   withRangeName: boolean,
-) => {
-  const groups = new Map<string, { keys: string[]; sums: number[] }>();
+): void => {
   for (const slice of slices) {
     for (const fact of slice.facts) {
       const keys = dimensions.map((name) =>
@@ -168,14 +203,32 @@ const aggregate = (
       const allKeys =
         withRangeName && !dimensions.includes(DATE_RANGE) ? [...keys, slice.name] : keys;
       const id = JSON.stringify(allKeys);
-      const group = groups.get(id) ?? { keys: allKeys, sums: metrics.map(() => 0) };
-      metrics.forEach((metric, index) => {
-        group.sums[index] = (group.sums[index] ?? 0) + Number(fact[metric] ?? 0);
-      });
+      const group = groups.get(id) ?? { keys: allKeys, totals: new Map<string, number>() };
+      for (const metric of source.metrics) {
+        group.totals.set(metric, (group.totals.get(metric) ?? 0) + Number(fact[metric] ?? 0));
+      }
       groups.set(id, group);
     }
   }
-  return [...groups.values()];
+};
+
+const aggregate = (
+  sources: readonly MetricSource[],
+  slicesOf: (table: FactTable) => Slice[],
+  dimensions: string[],
+  metrics: string[],
+) => {
+  const groups = new Map<string, Group>();
+  const slicesBySource = sources.map((source) => ({ source, slices: slicesOf(source.table) }));
+  const withRangeName = (slicesBySource[0]?.slices.length ?? 0) > 1;
+  for (const { source, slices } of slicesBySource) {
+    addFacts(groups, slices, dimensions, source, withRangeName);
+  }
+  const rows = [...groups.values()].map((group) => ({
+    keys: group.keys,
+    sums: metrics.map((metric) => metricValue(metric, group.totals)),
+  }));
+  return { rows, withRangeName };
 };
 
 const ordered = (
@@ -234,7 +287,10 @@ const responseOf = ({
   const shown = limit === undefined ? rows : rows.slice(0, limit);
   return {
     dimension_headers: headers.map((name) => ({ name })),
-    metric_headers: metrics.map((name) => ({ name, type_: 'TYPE_INTEGER' })),
+    metric_headers: metrics.map((name) => ({
+      name,
+      type_: name in GA_DERIVED_RATIOS ? 'TYPE_FLOAT' : 'TYPE_INTEGER',
+    })),
     rows: shown.map((row) => ({
       dimension_values: row.keys.map((value) => ({ value })),
       metric_values: row.sums.map((value) => ({ value: String(value) })),
@@ -257,18 +313,13 @@ const runQuery = ({ kind, tables, args, slicesOf }: Query): Json => {
   const metrics = stringList(args.metrics);
   const fields = [...dimensions, ...filterFields(args.dimension_filter)];
   validateNames(tables, fields, metrics);
-  const slices = slicesOf(tableFor(tables, fields, metrics));
-  const withRangeName = slices.length > 1;
+  const sources = sourcesFor(tables, fields, baseMetricsOf(metrics));
+  const { rows, withRangeName } = aggregate(sources, slicesOf, dimensions, metrics);
   return responseOf({
     kind,
     dimensions,
     metrics,
-    rows: ordered(
-      aggregate(slices, dimensions, metrics, withRangeName),
-      dimensions,
-      metrics,
-      args.order_bys,
-    ),
+    rows: ordered(rows, dimensions, metrics, args.order_bys),
     limit: typeof args.limit === 'number' ? args.limit : undefined,
     withRangeName,
   });

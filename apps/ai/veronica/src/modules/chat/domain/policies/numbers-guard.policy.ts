@@ -8,6 +8,8 @@ const THOUSANDS_GROUP_DIGITS = 3;
 
 const THOUSANDS_GROUP_MAX_LEADING = 3;
 const COMPACT_DATE = /(?<!\d)(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(?!\d)/g;
+const ISO_DATE = /(?<!\d)(20\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])(?!\d)/g;
+const DAY_ORDINAL = /(?<![\p{L}\d.,])(\d{1,2})-(?:го|е|ого)(?![\p{L}])/giu;
 const MONTHS_GENITIVE = [
   'січня',
   'лютого',
@@ -92,6 +94,7 @@ export const knownNumbers = (sources: readonly string[]): ReadonlySet<string> =>
 
 const dayMonthKey = (day: number, month: number): string => `${day}.${month}`;
 const fullDateKey = (day: number, month: number, year: number): string => `${day}.${month}.${year}`;
+export const requestedDayKey = (day: number): string => `day:${day}`;
 
 export const dateKeysOf = (day: number, month: number, year: number): string[] => [
   dayMonthKey(day, month),
@@ -101,7 +104,7 @@ export const dateKeysOf = (day: number, month: number, year: number): string[] =
 export const knownDates = (sources: readonly string[]): ReadonlySet<string> =>
   new Set(
     sources.flatMap((source) =>
-      [...source.matchAll(COMPACT_DATE)].flatMap((match) =>
+      [...source.matchAll(COMPACT_DATE), ...source.matchAll(ISO_DATE)].flatMap((match) =>
         dateKeysOf(Number(match[3]), Number(match[2]), Number(match[1])),
       ),
     ),
@@ -169,8 +172,13 @@ const withoutKnownSingleDates = (answer: string, dates: ReadonlySet<string>): st
       maskedDate(mentionOf(text, [day], monthName, monthNumber, year), dates),
   );
 
+const withoutKnownDayOrdinals = (answer: string, dates: ReadonlySet<string>): string =>
+  answer.replace(DAY_ORDINAL, (text, day: string) =>
+    dates.has(requestedDayKey(Number(day))) ? '' : text,
+  );
+
 const withoutKnownDates = (answer: string, dates: ReadonlySet<string>): string =>
-  withoutKnownSingleDates(withoutKnownRanges(answer, dates), dates);
+  withoutKnownDayOrdinals(withoutKnownSingleDates(withoutKnownRanges(answer, dates), dates), dates);
 
 const NO_DATES: ReadonlySet<string> = new Set();
 

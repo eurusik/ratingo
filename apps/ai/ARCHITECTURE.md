@@ -510,7 +510,7 @@ No Railway logs and no free SQL; those are left to DUM-E later.
     - a number from this run's tool results, the question, the last turns or the clock line;
     - such a number rounded to the precision it is written with;
     - for a known value between 0 and 1, its percent form rounded the same way, when «%» or «відсот…» follows it.
-  - **Dates.** A date counts only where the answer writes it as a date or a date range («20 листопада», «з 15 по 21 листопада», «15–21.11»), and each date must be a GA row date or an end of a range this run requested, resolved against Kyiv's today.
+  - **Dates.** A date counts only where the answer writes it as a date, a date range or an ordinal day («20 листопада», «з 15 по 21 листопада», «15–21.11», «16-го»). Each date must be one a tool returned (GA `20261120` or ISO `2026-11-20`) or a day inside a range this run requested, resolved against Kyiv's today. A bare number equal to a day is still checked as a number.
   - **Nothing else.** No sums, differences or ratios.
   - **Measuring.** `npm run chat:flags` measures how often flags fire.
 - **Fallback.** When the model is down, over budget or the run fails, the reply is the `/status` snapshot with one line saying why. Unverified numbers never trigger it.

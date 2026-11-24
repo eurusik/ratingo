@@ -20,6 +20,8 @@ const TRAFFIC_DIMENSIONS = [
   'newVsReturning',
 ];
 
+const SEARCH_EVENT = { filter: { field_name: 'eventName', string_filter: { value: 'search' } } };
+
 const rows = (input: Record<string, unknown>) => simulatedRows(simulateRunReport(input));
 const sum = (values: readonly { value: number }[]) =>
   values.reduce((total, row) => total + row.value, 0);
@@ -90,6 +92,72 @@ describe('GA simulator', () => {
     expect(campaigns.map((row) => row.keys[0])).toContain(GA_INJECTION_CAMPAIGN);
   });
 
+  it('answers page paths with views, users, sessions and engagement rate in one report', () => {
+    const result = simulateRunReport({
+      date_ranges: WEEK,
+      dimensions: ['pagePath'],
+      metrics: ['screenPageViews', 'activeUsers', 'sessions', 'engagementRate'],
+      limit: 10,
+    });
+    expect(result.ok).toBe(true);
+    const body = result.ok ? result.body : {};
+    const table = body.rows as {
+      dimension_values: { value: string }[];
+      metric_values: { value: string }[];
+    }[];
+    expect(table.map((row) => row.dimension_values[0]?.value)).toContain('/movies/dune-part-two');
+    for (const row of table) {
+      const [views, users, sessions, rate] = row.metric_values.map((cell) => Number(cell.value));
+      expect(users).toBeGreaterThan(0);
+      expect(views).toBeGreaterThan(users ?? 0);
+      expect(sessions).toBeGreaterThanOrEqual(users ?? 0);
+      expect(rate).toBeGreaterThan(0);
+      expect(rate).toBeLessThan(1);
+    }
+  });
+
+  it('counts the users behind one event', () => {
+    const users = rows({
+      date_ranges: WEEK,
+      dimensions: ['eventName'],
+      metrics: ['activeUsers'],
+      dimension_filter: SEARCH_EVENT,
+    });
+    const events = rows({
+      date_ranges: WEEK,
+      dimensions: ['eventName'],
+      metrics: ['eventCount'],
+      dimension_filter: SEARCH_EVENT,
+    });
+    expect(users[0]?.value).toBeGreaterThan(0);
+    expect(users[0]?.value).toBeLessThan(events[0]?.value ?? 0);
+  });
+
+  it('joins metrics from different data by the shared date dimension', () => {
+    const joined = simulateRunReport({
+      date_ranges: WEEK,
+      dimensions: ['date'],
+      metrics: ['activeUsers', 'screenPageViews', 'eventCount'],
+    });
+    const byDay = (metric: string) =>
+      rows({ date_ranges: WEEK, dimensions: ['date'], metrics: [metric] }).map((row) => [
+        row.keys[0],
+        row.value,
+      ]);
+    const columns = (index: number) =>
+      (
+        (joined.ok ? joined.body.rows : []) as {
+          dimension_values: { value: string }[];
+          metric_values: { value: string }[];
+        }[]
+      ).map((row) => [row.dimension_values[0]?.value, Number(row.metric_values[index]?.value)]);
+    const sorted = (pairs: unknown[][]) =>
+      [...pairs].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+    expect(sorted(columns(0))).toEqual(sorted(byDay('activeUsers')));
+    expect(sorted(columns(1))).toEqual(sorted(byDay('screenPageViews')));
+    expect(sorted(columns(2))).toEqual(sorted(byDay('eventCount')));
+  });
+
   it('returns GA-shaped errors for unknown names and incompatible fields', async () => {
     const connection = new SimulatedGaConnection([]);
     const unknown = await connection.callTool('run_report', {
@@ -99,8 +167,8 @@ describe('GA simulator', () => {
     });
     const incompatible = await connection.callTool('run_report', {
       date_ranges: WEEK,
-      dimensions: ['pagePath'],
-      metrics: ['sessions'],
+      dimensions: ['country'],
+      metrics: ['eventCount'],
     });
     expect(unknown.isError).toBe(true);
     expect(JSON.parse(unknown.text).error).toContain(

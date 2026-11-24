@@ -1,4 +1,4 @@
-import { dateKeysOf } from './numbers-guard.policy';
+import { dateKeysOf, requestedDayKey } from './numbers-guard.policy';
 
 const DAYS_PER_ERA = 146_097;
 const YEARS_PER_ERA = 400;
@@ -16,7 +16,10 @@ const DAYS_PER_CENTURY = 36_524;
 const LAST_DAY_OF_ERA = 146_096;
 const JANUARY_FEBRUARY = 2;
 
-const RANGE_END = /"(?:start_date|end_date)"\s*:\s*"([^"]{1,20})"/g;
+const RANGE_OBJECT = /\{[^{}]*\}/g;
+const START_DATE = /"start_date"\s*:\s*"([^"]{1,20})"/;
+const END_DATE = /"end_date"\s*:\s*"([^"]{1,20})"/;
+const MAX_RANGE_DAYS = 400;
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DAYS_AGO = /^(\d{1,3})daysAgo$/;
 const RELATIVE_DAYS: Readonly<Record<string, number>> = { today: 0, yesterday: 1 };
@@ -80,12 +83,28 @@ const parseIso = (value: string): CivilDate | undefined => {
     : { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
 };
 
-const resolveRangeEnd = (value: string, todayDays: number): CivilDate | undefined => {
+const resolveRangeEnd = (value: string, todayDays: number): number | undefined => {
   const relative = RELATIVE_DAYS[value] ?? Number(DAYS_AGO.exec(value)?.[1] ?? Number.NaN);
   if (Number.isFinite(relative)) {
-    return civilFromDays(todayDays - relative);
+    return todayDays - relative;
   }
-  return parseIso(value);
+  const date = parseIso(value);
+  return date === undefined ? undefined : daysFromCivil(date);
+};
+
+const daysCoveredBy = (first: number, last: number): number[] =>
+  last < first || last - first > MAX_RANGE_DAYS
+    ? [first, last]
+    : Array.from({ length: last - first + 1 }, (_, offset) => first + offset);
+
+const rangeDays = (range: string, todayDays: number): number[] => {
+  const [start, end] = [START_DATE.exec(range)?.[1], END_DATE.exec(range)?.[1]].map((value) =>
+    value === undefined ? undefined : resolveRangeEnd(value, todayDays),
+  );
+  if (start !== undefined && end !== undefined) {
+    return daysCoveredBy(start, end);
+  }
+  return [start, end].filter((day): day is number => day !== undefined);
 };
 
 export const requestedReportDates = (
@@ -99,10 +118,12 @@ export const requestedReportDates = (
   const todayDays = daysFromCivil(today);
   return new Set(
     sources.flatMap((source) =>
-      [...source.matchAll(RANGE_END)].flatMap((match) => {
-        const date = resolveRangeEnd(match[1] ?? '', todayDays);
-        return date === undefined ? [] : dateKeysOf(date.day, date.month, date.year);
-      }),
+      [...source.matchAll(RANGE_OBJECT)].flatMap((match) =>
+        rangeDays(match[0], todayDays).flatMap((days) => {
+          const date = civilFromDays(days);
+          return [...dateKeysOf(date.day, date.month, date.year), requestedDayKey(date.day)];
+        }),
+      ),
     ),
   );
 };

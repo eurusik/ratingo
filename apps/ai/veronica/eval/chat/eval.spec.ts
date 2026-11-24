@@ -1,4 +1,10 @@
-import { GENDERED_ADDRESS, HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
+import {
+  GENDERED_ADDRESS,
+  HONEST_NO_DATA,
+  MINOR_FINDINGS,
+  NO_CODE_REVIEW,
+  NOTHING_RECORDED,
+} from './answer-stems';
 import { EVAL_CASES } from './cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
@@ -205,12 +211,30 @@ describe('answer stems', () => {
     expect(HONEST_NO_DATA.test('за тиждень на сайті було 1843 користувачі.')).toBe(false);
   });
 
-  it.each(['хеппі на ньому код не перевіряє', 'хеппі не робить ревʼю релізів', 'без ревʼю коду'])(
-    'reads «%s» as no code review',
-    (answer) => {
-      expect(NO_CODE_REVIEW.test(answer)).toBe(true);
-    },
-  );
+  it.each([
+    'хеппі на ньому код не перевіряє',
+    'хеппі не робить ревʼю релізів',
+    'без ревʼю коду',
+    'хеппі не робив ревʼю коду',
+    'вона не робила ревʼю',
+    'ревʼю коду не було',
+  ])('reads «%s» as no code review', (answer) => {
+    expect(NO_CODE_REVIEW.test(answer)).toBe(true);
+  });
+
+  it('does not read a done review as no code review', () => {
+    expect(NO_CODE_REVIEW.test('хеппі зробив ревʼю і знайшов 2 зауваження')).toBe(false);
+    expect(NO_CODE_REVIEW.test('хеппі зробив ревʼю, але не робив зауважень')).toBe(false);
+  });
+
+  it.each([
+    'жодної людини',
+    'ніхто не відкрив',
+    'подія взагалі не зафіксована',
+    'на цьому кроці 0',
+  ])('reads «%s» as nothing recorded', (answer) => {
+    expect(NOTHING_RECORDED.test(answer)).toBe(true);
+  });
 
   it.each(['2 зауваження низької важливості', 'дрібні зауваження', 'minor findings'])(
     'reads «%s» as minor findings',
