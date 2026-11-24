@@ -6,10 +6,11 @@ import {
 import {
   HappyLookupKind,
   HappyReviewMode,
-  HappyScopeMode,
   type HappyFollowUp,
   type HappyLookup,
 } from '../entities/happy';
+
+import { satisfiesReviewMode } from './happy-review-satisfaction.policy';
 
 export const decideHappyFollowUp = (
   followUp: Pick<HappyFollowUp, 'headSha' | 'attempt' | 'mode'>,
@@ -20,10 +21,9 @@ export const decideHappyFollowUp = (
     return exhausted ? HappyFollowUpAction.GIVE_UP : HappyFollowUpAction.WAIT;
   }
   if (lookup.kind === HappyLookupKind.NOT_FOUND) return HappyFollowUpAction.NOT_FOUND;
-  const fullWanted = followUp.mode === HappyReviewMode.FULL;
   const delivered =
     lookup.result?.checkedSha === followUp.headSha &&
-    (!fullWanted || lookup.result.review?.mode === HappyScopeMode.FULL);
+    satisfiesReviewMode(lookup.result, followUp.mode ?? HappyReviewMode.AUTO);
   if (delivered) return HappyFollowUpAction.DELIVER;
   if (lookup.headSha !== followUp.headSha) return HappyFollowUpAction.HEAD_MOVED;
   if (exhausted) return HappyFollowUpAction.GIVE_UP;

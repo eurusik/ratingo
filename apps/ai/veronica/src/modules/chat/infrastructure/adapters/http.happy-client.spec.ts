@@ -153,4 +153,40 @@ describe('HttpHappyClient', () => {
       clientWith(() => json({ status: 'weird' })).client.listOpenPullRequests(),
     ).rejects.toMatchObject({ name: 'HappyUnavailableError' });
   });
+
+  it('reads the result kind and branches, and derives the kind from an older Happy', async () => {
+    const release = { ...RESULT, kind: 'release_checklist', status: 'checklist' };
+    const withKind = clientWith(() =>
+      json({
+        status: 'found',
+        headSha: 'h1',
+        baseBranch: 'main',
+        headBranch: 'development',
+        reviewPending: false,
+        result: release,
+      }),
+    );
+    expect(await withKind.client.latestResult(474)).toMatchObject({
+      baseBranch: 'main',
+      headBranch: 'development',
+      result: { kind: 'release_checklist' },
+    });
+    const { kind: _kind, ...noKind } = RESULT as Record<string, unknown>;
+    const older = clientWith(() =>
+      json({
+        status: 'found',
+        headSha: 'h1',
+        reviewPending: false,
+        result: { ...noKind, status: 'checklist' },
+      }),
+    );
+    expect(await older.client.latestResult(474)).toMatchObject({
+      baseBranch: null,
+      result: { kind: 'release_checklist' },
+    });
+    const review = clientWith(() =>
+      json({ status: 'found', headSha: 'h1', reviewPending: false, result: noKind }),
+    );
+    expect(await review.client.latestResult(1)).toMatchObject({ result: { kind: 'review' } });
+  });
 });

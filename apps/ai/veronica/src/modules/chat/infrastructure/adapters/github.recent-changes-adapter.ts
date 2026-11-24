@@ -11,6 +11,7 @@ const GITHUB_API = 'https://api.github.com';
 const API_VERSION = '2022-11-28';
 const REQUEST_TIMEOUT_MS = 15_000;
 const PAGE_SIZE = 30;
+const MAX_PULL_PAGES = 4;
 const DEPLOYMENT_PAGE_SIZE = 10;
 const WATCHED_BRANCHES = ['main', 'development'] as const;
 
@@ -18,7 +19,9 @@ interface PullRequestPayload {
   number: number;
   title: string;
   merged_at: string | null;
+  updated_at: string;
   base: { ref: string };
+  head: { ref: string };
 }
 
 interface DeploymentPayload {
@@ -53,15 +56,35 @@ export class GithubRecentChangesAdapter implements RecentChangesPort {
   }
 
   private async mergedInto(branch: string, sinceMs: number): Promise<MergedPullRequest[]> {
-    const pulls = await this.get<PullRequestPayload[]>(
-      `/pulls?state=closed&base=${branch}&sort=updated&direction=desc&per_page=${PAGE_SIZE}`,
-    );
+    const pulls = await this.updatedSince(branch, sinceMs);
     return pulls.flatMap((pull) => {
       const mergedAtMs = pull.merged_at === null ? Number.NaN : Date.parse(pull.merged_at);
       return mergedAtMs >= sinceMs
-        ? [{ number: pull.number, title: pull.title, baseBranch: pull.base.ref, mergedAtMs }]
+        ? [
+            {
+              number: pull.number,
+              title: pull.title,
+              baseBranch: pull.base.ref,
+              headBranch: pull.head.ref,
+              mergedAtMs,
+            },
+          ]
         : [];
     });
+  }
+
+  private async updatedSince(branch: string, sinceMs: number): Promise<PullRequestPayload[]> {
+    const pulls: PullRequestPayload[] = [];
+    for (let page = 1; page <= MAX_PULL_PAGES; page += 1) {
+      const batch = await this.get<PullRequestPayload[]>(
+        `/pulls?state=closed&base=${branch}&sort=updated&direction=desc&per_page=${PAGE_SIZE}&page=${page}`,
+      );
+      pulls.push(...batch);
+      const oldest = batch[batch.length - 1];
+      const reachedOlder = oldest !== undefined && Date.parse(oldest.updated_at) < sinceMs;
+      if (batch.length < PAGE_SIZE || reachedOlder) break;
+    }
+    return pulls;
   }
 
   private async recentDeployments(sinceMs: number): Promise<DeploymentRecord[]> {

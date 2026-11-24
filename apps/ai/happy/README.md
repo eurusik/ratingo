@@ -37,6 +37,8 @@ Auth is `Authorization: Bearer <HAPPY_SERVICE_TOKEN>`. Without `HAPPY_SERVICE_TO
 
 Results are read back from the `Happy` check run of the commit. Its summary ends with a hidden `<!-- happy:result:v2 ... -->` marker (base64url JSON with the result, the reviewed commit, the scope and the tracked findings). The v1 marker is still read, as a result without tracked state; check runs published before any marker existed come back with status `unknown`. The last marker in the summary wins. Only check runs created by Happy's own GitHub App are read. No database is involved.
 
+The result has a `kind` (`review` or `release_checklist`) and the lookup carries `baseBranch` and `headBranch` from the live pull request. Markers written before `kind` existed are read as before; the kind is then derived from the status. A check without a marker is returned with status `unknown` and kind `review` (the branches in the lookup still show whether the PR is a release). A release checklist result also carries a `checklist` digest (counts of migrations, risky migrations, new env vars, changed apps, dependency changes, lockfile changed). A full-mode request treats a release checklist or a skipped result as already done.
+
 ## Incremental review
 
 State lives only in the hidden marker of the `Happy` check run (see below), so there is no database.

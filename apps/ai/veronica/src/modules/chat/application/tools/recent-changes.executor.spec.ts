@@ -19,6 +19,7 @@ describe('RecentChangesExecutor', () => {
                 number: 464,
                 title: 'feat(veronica): chat '.repeat(20),
                 baseBranch: 'development',
+                headBranch: 'feature',
                 mergedAtMs: Date.UTC(2026, 10, 22, 9, 30),
               },
             ],
@@ -47,6 +48,37 @@ describe('RecentChangesExecutor', () => {
     ]);
   });
 
+  it('marks the release pull request so the model can pick the last one with code', async () => {
+    const pull = (number: number, baseBranch: string, headBranch: string) => ({
+      number,
+      title: 't',
+      baseBranch,
+      headBranch,
+      mergedAtMs: NOW_MS,
+    });
+    const executor = new RecentChangesExecutor(
+      {
+        since: async () => ({
+          mergedPullRequests: [
+            pull(474, 'main', 'development'),
+            pull(473, 'development', 'feat/x'),
+            pull(472, 'main', 'hotfix/y'),
+          ],
+          deployments: [],
+        }),
+      },
+      new FixedClock(NOW_MS),
+    );
+    const result = (await executor.run({})) as {
+      pullRequests: { number: number; isRelease: boolean }[];
+    };
+    expect(result.pullRequests.map(({ number, isRelease }) => [number, isRelease])).toEqual([
+      [474, true],
+      [473, false],
+      [472, false],
+    ]);
+  });
+
   it('caps the lists', async () => {
     const executor = new RecentChangesExecutor(
       {
@@ -55,6 +87,7 @@ describe('RecentChangesExecutor', () => {
             number: index,
             title: 't',
             baseBranch: 'main',
+            headBranch: 'development',
             mergedAtMs: NOW_MS,
           })),
           deployments: [],

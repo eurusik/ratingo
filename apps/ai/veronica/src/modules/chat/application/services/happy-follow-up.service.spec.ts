@@ -4,6 +4,8 @@ import { HappyUnavailableError } from '../../domain/ports/happy-client.port';
 import { HappyFollowUpService } from './happy-follow-up.service';
 
 const RESULT: HappyResult = {
+  kind: 'review',
+  checklist: null,
   status: 'reviewed',
   checkedSha: 'h1',
   current: true,
@@ -49,6 +51,8 @@ describe('HappyFollowUpService', () => {
     const { service, sent, scheduled } = setup({
       kind: 'found',
       headSha: 'h1',
+      baseBranch: 'main',
+      headBranch: 'feature',
       reviewPending: false,
       result: RESULT,
     });
@@ -61,6 +65,8 @@ describe('HappyFollowUpService', () => {
     const { service, sent, scheduled } = setup({
       kind: 'found',
       headSha: 'h1',
+      baseBranch: 'main',
+      headBranch: 'feature',
       reviewPending: true,
       result: null,
     });
@@ -82,6 +88,8 @@ describe('HappyFollowUpService', () => {
     const { service, sent } = setup({
       kind: 'found',
       headSha: 'h2',
+      baseBranch: 'main',
+      headBranch: 'feature',
       reviewPending: false,
       result: null,
     });

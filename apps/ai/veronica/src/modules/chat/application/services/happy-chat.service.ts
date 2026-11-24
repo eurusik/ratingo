@@ -15,14 +15,9 @@ import {
   happySkippedReply,
   happyStartedReply,
 } from '../../domain/constants/chat-replies.constants';
-import {
-  HappyLookupKind,
-  HappyRequestKind,
-  HappyReviewMode,
-  HappyScopeMode,
-  type HappyResult,
-} from '../../domain/entities/happy';
+import { HappyLookupKind, HappyRequestKind, HappyReviewMode } from '../../domain/entities/happy';
 import { HappyTargetKind, type HappyTarget } from '../../domain/entities/intent';
+import { satisfiesReviewMode } from '../../domain/policies/happy-review-satisfaction.policy';
 import { renderHappyResult } from '../../domain/policies/happy-summary.policy';
 import { pullRequestTitle, renderPullRequestChoice } from '../../domain/policies/happy-pick.policy';
 import { isSameRepository } from '../../domain/policies/happy-target.policy';
@@ -32,9 +27,6 @@ import {
   HappyUnavailableError,
   type HappyClientPort,
 } from '../../domain/ports/happy-client.port';
-
-const satisfiesMode = (result: HappyResult, mode: HappyReviewMode): boolean =>
-  mode === HappyReviewMode.AUTO || result.review?.mode === HappyScopeMode.FULL;
 
 type Resolution = { pullNumber: number } | { reply: string } | { pick: true };
 
@@ -87,7 +79,7 @@ export class HappyChatService {
   private async answer(chatId: string, pullNumber: number, mode: HappyReviewMode): Promise<string> {
     const lookup = await this.happy.latestResult(pullNumber);
     if (lookup.kind === HappyLookupKind.NOT_FOUND) return happyNotFoundReply(pullNumber);
-    if (lookup.result?.current === true && satisfiesMode(lookup.result, mode)) {
+    if (lookup.result?.current === true && satisfiesReviewMode(lookup.result, mode)) {
       return renderHappyResult(pullNumber, lookup.result);
     }
     if (lookup.reviewPending) {

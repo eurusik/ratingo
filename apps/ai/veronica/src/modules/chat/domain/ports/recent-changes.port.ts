@@ -2,6 +2,7 @@ export interface MergedPullRequest {
   number: number;
   title: string;
   baseBranch: string;
+  headBranch: string;
   mergedAtMs: number;
 }
 

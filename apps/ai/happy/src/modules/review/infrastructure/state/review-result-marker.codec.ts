@@ -19,10 +19,10 @@ import {
   SEVERITY_ORDER,
 } from '../../domain/constants/severity.constants';
 import { CoverageGap, ReviewStatus } from '../../domain/entities/review-outcome';
-import type { ReviewResultSnapshot } from '../../domain/entities/review-result';
+import { ResultKind, type ReviewResultSnapshot } from '../../domain/entities/review-result';
 import { FULL_REVIEW_REASONS, ReviewMode } from '../../domain/entities/review-scope';
 import { FINDING_STATUSES } from '../../domain/entities/tracked-finding';
-import { RESULT_MARKER_PREFIX } from '../../domain/policies/review-result';
+import { RESULT_MARKER_PREFIX, resultKindFor } from '../../domain/policies/review-result';
 
 const MARKER_PATTERN = new RegExp(
   `${RESULT_MARKER_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\d+) ([^\\s>]+) -->`,
@@ -61,6 +61,7 @@ const trackingSchema = z.object({
 });
 
 const legacySnapshotSchema = z.object({
+  kind: z.enum(Object.values(ResultKind) as [ResultKind, ...ResultKind[]]).optional(),
   status: z.enum(Object.values(ReviewStatus) as [ReviewStatus, ...ReviewStatus[]]),
   title: z.string().max(MAX_RESULT_TITLE_CHARS),
   summary: z.string().max(MAX_RESULT_SUMMARY_CHARS),
@@ -87,17 +88,40 @@ const legacySnapshotSchema = z.object({
   }),
 });
 
-const snapshotSchema = legacySnapshotSchema.extend({ tracking: trackingSchema.nullable() });
+const checklistSchema = z.object({
+  migrations: count,
+  riskyMigrations: count,
+  envVars: count,
+  services: count,
+  dependencyChanges: count,
+  lockfileChanged: z.boolean(),
+});
+
+const snapshotSchema = legacySnapshotSchema.extend({
+  tracking: trackingSchema.nullable(),
+  checklist: checklistSchema.nullish(),
+});
+
+const withDefaults = (
+  snapshot: Omit<ReviewResultSnapshot, 'kind' | 'checklist'> & {
+    kind?: ResultKind;
+    checklist?: ReviewResultSnapshot['checklist'] | undefined;
+  },
+): ReviewResultSnapshot => ({
+  ...snapshot,
+  kind: snapshot.kind ?? resultKindFor(snapshot.status),
+  checklist: snapshot.checklist ?? null,
+});
 
 const decodePayload = (version: number, encoded: string): ReviewResultSnapshot | null => {
   if (version === LEGACY_RESULT_MARKER_VERSION) {
     const parsed = legacySnapshotSchema.safeParse(JSON.parse(decodeURIComponent(encoded)));
-    return parsed.success ? { ...parsed.data, tracking: null } : null;
+    return parsed.success ? withDefaults({ ...parsed.data, tracking: null }) : null;
   }
   if (version === RESULT_MARKER_VERSION) {
     const json = Buffer.from(encoded, 'base64url').toString('utf8');
     const parsed = snapshotSchema.safeParse(JSON.parse(json));
-    return parsed.success ? parsed.data : null;
+    return parsed.success ? withDefaults(parsed.data) : null;
   }
   return null;
 };

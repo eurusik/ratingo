@@ -15,6 +15,21 @@ export const HappyResultStatus = {
 } as const;
 export type HappyResultStatus = (typeof HappyResultStatus)[keyof typeof HappyResultStatus];
 
+export interface HappyChecklistDigest {
+  migrations: number;
+  riskyMigrations: number;
+  envVars: number;
+  services: number;
+  dependencyChanges: number;
+  lockfileChanged: boolean;
+}
+
+export const HappyResultKind = {
+  REVIEW: 'review',
+  RELEASE_CHECKLIST: 'release_checklist',
+} as const;
+export type HappyResultKind = (typeof HappyResultKind)[keyof typeof HappyResultKind];
+
 export const HappyReviewMode = {
   AUTO: 'auto',
   FULL: 'full',
@@ -49,6 +64,7 @@ export interface HappyQuestion {
 }
 
 export interface HappyResult {
+  kind: HappyResultKind;
   status: HappyResultStatus;
   checkedSha: string;
   current: boolean;
@@ -60,6 +76,7 @@ export interface HappyResult {
   coverage: { complete: boolean; unreviewedFiles: number; gaps: string[] };
   checkRunUrl: string | null;
   review: HappyReviewInfo | null;
+  checklist: HappyChecklistDigest | null;
 }
 
 export const HappyLookupKind = {
@@ -72,6 +89,8 @@ export type HappyLookup =
   | {
       kind: typeof HappyLookupKind.FOUND;
       headSha: string;
+      baseBranch: string | null;
+      headBranch: string | null;
       reviewPending: boolean;
       result: HappyResult | null;
     };

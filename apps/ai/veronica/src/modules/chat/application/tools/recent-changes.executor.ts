@@ -8,6 +8,7 @@ import {
 } from '../../domain/constants/investigation.constants';
 import { clip } from '../../domain/policies/answer-sanitizer.policy';
 import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
+import { isReleasePullRequest } from '../../domain/policies/release-pull-request.policy';
 import { parseWindow } from '../../domain/policies/metric-params.policy';
 import {
   RECENT_CHANGES_PORT,
@@ -38,6 +39,7 @@ export class RecentChangesExecutor {
         number: pullRequest.number,
         title: clip(pullRequest.title, CHANGE_TITLE_MAX_CHARS),
         into: pullRequest.baseBranch,
+        isRelease: isReleasePullRequest(pullRequest),
         mergedAtKyiv: formatKyivDateTime(pullRequest.mergedAtMs),
       })),
       deployments: report.deployments.slice(0, CHANGES_ITEM_CAP).map((deployment) => ({
