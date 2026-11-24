@@ -138,6 +138,9 @@ describe('TelemetryRunRepository', () => {
       TOOL_CALLS: 'app.ai.tool.calls',
       CHAT_EVENTS: 'app.ai.chat.events',
       WATCHDOG_LAST_TICK: 'app.ai.watchdog.last_tick_timestamp_seconds',
+      MCP_CALLS: 'app.ai.mcp.calls',
+      MCP_CALL_DURATION: 'app.ai.mcp.call.duration',
+      MCP_SERVER_EVENTS: 'app.ai.mcp.server.events',
     });
   });
 

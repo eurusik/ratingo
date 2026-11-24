@@ -122,3 +122,64 @@ export {
   NEUTRAL_NOT_FOUND_BODY,
   renderLandingPage,
 } from './http/landing-page';
+
+export type {
+  McpServerDefinition,
+  McpServerEnv,
+  McpServerTimeouts,
+  McpStdioLaunch,
+} from './mcp/mcp-server.definition';
+export {
+  InvalidMcpServerDefinitionError,
+  McpTransportKind,
+  validateMcpServerDefinition,
+} from './mcp/mcp-server.definition';
+export type {
+  ConfiguredMcpServer,
+  McpEnvValues,
+  ResolvedMcpServers,
+  UnconfiguredMcpServer,
+} from './mcp/mcp-server.registry';
+export {
+  DuplicateMcpServerError,
+  McpServerRegistry,
+  UnknownMcpServerError,
+} from './mcp/mcp-server.registry';
+export { PLATFORM_MCP_SERVERS, createPlatformMcpRegistry } from './mcp/platform-mcp-servers';
+export type {
+  McpArgumentConstraint,
+  McpCallDecision,
+  McpDateRangesConstraint,
+  McpJsonValue,
+  McpMaxItemsConstraint,
+  McpNumberConstraint,
+  McpOneOfConstraint,
+  McpRefusal,
+  McpToolPolicy,
+  McpToolRule,
+} from './mcp/mcp-tool-policy.types';
+export { McpConstraintKind, McpRefusalCode } from './mcp/mcp-tool-policy.types';
+export { decideMcpCall, exposedInputSchema } from './mcp/mcp-tool-policy';
+export type { McpToolAddress } from './mcp/mcp-tool-name';
+export { parseBridgedToolName, toBridgedToolName } from './mcp/mcp-tool-name';
+export type {
+  McpCallOptions,
+  McpConnection,
+  McpLaunchSpec,
+  McpRemoteTool,
+  McpToolOutput,
+  McpTransport,
+} from './mcp/mcp-transport.port';
+export {
+  MCP_TRANSPORT_PORT,
+  McpConnectionClosedError,
+  McpTimeoutError,
+} from './mcp/mcp-transport.port';
+export type { McpCallRecord, McpServerEventRecord, McpTelemetry } from './mcp/mcp-telemetry.port';
+export { MCP_TELEMETRY_PORT, McpCallOutcome, McpServerEvent } from './mcp/mcp-telemetry.port';
+export { McpServerUnavailableError, McpUnavailableReason } from './mcp/mcp-call.errors';
+export type { McpGatewayConfig } from './mcp/mcp-gateway';
+export { McpGateway } from './mcp/mcp-gateway';
+export { StdioMcpTransport } from './mcp/adapters/stdio/stdio.mcp-transport';
+export { OtelMcpTelemetry } from './mcp/adapters/otel/otel.mcp-telemetry';
+export { wrapUntrusted } from './tools/untrusted-content';

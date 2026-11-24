@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",
+    "@modelcontextprotocol/client": "2.4.0",
     "yaml": "^2.8.1",
     "zod": "^4.3.5"
   },
@@ -28,6 +29,7 @@
     "@opentelemetry/api": "^1.9.0"
   },
   "devDependencies": {
+    "@modelcontextprotocol/server": "2.4.0",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/sdk-metrics": "2.12.0",
     "@types/jest": "^29.5.14",

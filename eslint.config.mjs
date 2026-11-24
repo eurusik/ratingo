@@ -48,14 +48,27 @@ const aiCoreAnthropicAdapterFiles = [
   'packages/ai-core/src/model/adapters/anthropic/anthropic.mapper.ts',
   'packages/ai-core/src/model/adapters/anthropic/anthropic.model-adapter.ts',
 ];
-const aiCoreTelemetryRepositoryFiles = ['packages/ai-core/src/runs/telemetry.run-repository.ts'];
+const aiCoreTelemetryRepositoryFiles = [
+  'packages/ai-core/src/runs/telemetry.run-repository.ts',
+  'packages/ai-core/src/mcp/adapters/otel/*.ts',
+];
+const aiCoreMcpStdioAdapterFiles = ['packages/ai-core/src/mcp/adapters/stdio/*.ts'];
 const aiCoreLoaderFiles = ['packages/ai-core/src/manifest/agent-folder.loader.ts'];
 const aiCoreSystemClockFiles = ['packages/ai-core/src/clock/system.clock.ts'];
-const aiCoreTestFiles = ['packages/ai-core/src/**/*.test.ts'];
+const aiCoreTestFiles = [
+  'packages/ai-core/src/**/*.test.ts',
+  'packages/ai-core/src/**/testing/*.ts',
+];
 const veronicaSourceFiles = ['apps/ai/veronica/src/**/*.ts'];
-const veronicaTestFiles = ['apps/ai/veronica/src/**/*.spec.ts', 'apps/ai/veronica/src/**/*.testing.ts'];
+const veronicaTestFiles = [
+  'apps/ai/veronica/src/**/*.spec.ts',
+  'apps/ai/veronica/src/**/*.testing.ts',
+];
 const veronicaDomainFiles = ['apps/ai/veronica/src/modules/*/domain/**/*.ts'];
-const veronicaModuleFiles = ['apps/ai/veronica/src/modules/**/*.ts', 'apps/ai/veronica/src/core/**/*.ts'];
+const veronicaModuleFiles = [
+  'apps/ai/veronica/src/modules/**/*.ts',
+  'apps/ai/veronica/src/core/**/*.ts',
+];
 const veronicaModules = ['digest', 'notify', 'runs'];
 const happySourceFiles = ['apps/ai/happy/src/**/*.ts'];
 const happyTestFiles = ['apps/ai/happy/src/**/*.spec.ts', 'apps/ai/happy/src/**/*.testing.ts'];
@@ -130,7 +143,11 @@ const aiCoreGuardedImports = {
   },
   opentelemetry: {
     group: ['@opentelemetry/*'],
-    message: 'OpenTelemetry is imported only by the telemetry run repository.',
+    message: 'OpenTelemetry is imported only by the telemetry adapters.',
+  },
+  mcpSdk: {
+    group: ['@modelcontextprotocol/*'],
+    message: 'The MCP SDK is imported only inside mcp/adapters/stdio.',
   },
   node: {
     group: ['node:*'],
@@ -155,7 +172,8 @@ const aiCoreImportRule = (allowed = []) => [
 const aiCoreRestrictedSyntax = [
   {
     selector: "MemberExpression[object.name='process'][property.name='env']",
-    message: 'ai-core takes its config and API keys from the caller instead of reading process.env.',
+    message:
+      'ai-core takes its config and API keys from the caller instead of reading process.env.',
   },
   {
     selector: "ThrowStatement > NewExpression[callee.name='Error']",
@@ -953,7 +971,8 @@ export default [
         'error',
         {
           selector: "MemberExpression[object.name='process'][property.name='env']",
-          message: 'Read environment variables in src/shared/config and import them from @/shared/config.',
+          message:
+            'Read environment variables in src/shared/config and import them from @/shared/config.',
         },
       ],
       'max-lines': ['error', { max: 500, ...maxLinesOptions }],
@@ -967,7 +986,8 @@ export default [
         {
           patterns: [
             {
-              regex: '^@/(pages|widgets|features|entities|shared)/[^/]+/(?!index\\.(server|client)$)',
+              regex:
+                '^@/(pages|widgets|features|entities|shared)/[^/]+/(?!index\\.(server|client)$)',
               message:
                 'Route files import a slice or shared segment through its public API (@/pages/<slice>, @/shared/<segment>, or its index.server / index.client entry), not its internals.',
             },
@@ -1020,7 +1040,8 @@ export default [
           patterns: [
             {
               group: ['next', 'next/*', 'next-*', '@/*'],
-              message: 'web-core is shared by Next and Vite apps: no Next imports and no app aliases.',
+              message:
+                'web-core is shared by Next and Vite apps: no Next imports and no app aliases.',
             },
           ],
         },
@@ -1152,7 +1173,8 @@ export default [
         'error',
         {
           selector: "MemberExpression[object.name='process'][property.name='env']",
-          message: 'node-telemetry takes its config from the caller instead of reading process.env.',
+          message:
+            'node-telemetry takes its config from the caller instead of reading process.env.',
         },
       ],
       ...typeSafetyRules,
@@ -1184,7 +1206,11 @@ export default [
       ],
       'no-restricted-properties': [
         'error',
-        { object: 'Math', property: 'random', message: 'Inject randomness instead of Math.random().' },
+        {
+          object: 'Math',
+          property: 'random',
+          message: 'Inject randomness instead of Math.random().',
+        },
       ],
       'import/no-restricted-paths': [
         'error',
@@ -1225,6 +1251,27 @@ export default [
               message: 'Tools do not depend on the loop, the run log or manifests.',
             },
             {
+              target: './packages/ai-core/src/mcp/*.ts',
+              from: './packages/ai-core/src/mcp/adapters/**/*',
+              message: 'The MCP gateway depends on its ports; apps wire the adapters in.',
+            },
+            {
+              target: './packages/ai-core/src/mcp/adapters/stdio/**/*',
+              from: './packages/ai-core/src/mcp/adapters/otel/**/*',
+              message: 'Adapters never import each other.',
+            },
+            {
+              target: './packages/ai-core/src/mcp/adapters/otel/**/*',
+              from: './packages/ai-core/src/mcp/adapters/stdio/**/*',
+              message: 'Adapters never import each other.',
+            },
+            {
+              target: './packages/ai-core/src/{tools,loop,runs,manifest,model,telemetry}/**/*',
+              from: './packages/ai-core/src/mcp/**/*',
+              message:
+                'Only the MCP gateway knows about MCP; the rest of the core stays unaware of it.',
+            },
+            {
               target: './packages/ai-core/src/runs/{run,run.repository,run-logger.port}.ts',
               from: './packages/ai-core/src/{runs/telemetry.run-repository,runs/in-memory.run-repository,telemetry}*',
               message: 'The Run aggregate and its ports stay free of their adapters.',
@@ -1249,6 +1296,18 @@ export default [
     rules: { 'no-restricted-imports': aiCoreImportRule(['opentelemetry']) },
   },
   {
+    files: ['packages/ai-core/src/**/testing/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { require: 'readonly', process: 'readonly', setTimeout: 'readonly' },
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
+    files: aiCoreMcpStdioAdapterFiles,
+    rules: { 'no-restricted-imports': aiCoreImportRule(['node', 'mcpSdk']) },
+  },
+  {
     files: aiCoreLoaderFiles,
     rules: { 'no-restricted-imports': aiCoreImportRule(['node', 'yaml']) },
   },
@@ -1263,12 +1322,16 @@ export default [
     rules: {
       'no-restricted-globals': 'off',
       'no-restricted-properties': 'off',
-      'no-restricted-imports': aiCoreImportRule(['anthropic', 'opentelemetry', 'node', 'yaml']),
+      'no-restricted-imports': aiCoreImportRule([
+        'anthropic',
+        'opentelemetry',
+        'node',
+        'yaml',
+        'mcpSdk',
+      ]),
       'no-restricted-syntax': [
         'error',
-        ...aiCoreRestrictedSyntax.filter(
-          (rule) => !rule.selector.startsWith('ThrowStatement'),
-        ),
+        ...aiCoreRestrictedSyntax.filter((rule) => !rule.selector.startsWith('ThrowStatement')),
       ],
       'import/no-restricted-paths': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -1344,7 +1407,11 @@ export default [
       ],
       'no-restricted-properties': [
         'error',
-        { object: 'Math', property: 'random', message: 'Inject randomness instead of Math.random().' },
+        {
+          object: 'Math',
+          property: 'random',
+          message: 'Inject randomness instead of Math.random().',
+        },
       ],
     },
   },
@@ -1440,7 +1507,11 @@ export default [
       ],
       'no-restricted-properties': [
         'error',
-        { object: 'Math', property: 'random', message: 'Inject randomness instead of Math.random().' },
+        {
+          object: 'Math',
+          property: 'random',
+          message: 'Inject randomness instead of Math.random().',
+        },
       ],
     },
   },

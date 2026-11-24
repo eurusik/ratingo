@@ -35,7 +35,8 @@
       "project": ["src/**/*.ts", "*.cjs"]
     },
     "packages/ai-core": {
-      "project": ["src/**/*.ts", "*.cjs"]
+      "entry": ["src/**/testing/*.cjs"],
+      "project": ["src/**/*.{ts,cjs}", "*.cjs"]
     },
     "apps/ai/veronica": {
       "entry": ["src/main.ts", "src/scripts/*.ts", "eval/chat/run-eval.ts"],
