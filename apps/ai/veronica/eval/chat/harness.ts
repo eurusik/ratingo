@@ -1,18 +1,20 @@
-import * as path from 'node:path';
-
 import {
   AgentLoop,
   FixedClock,
   InMemoryRunRepository,
+  McpGateway,
   StubModelAdapter,
+  GoogleAnalyticsMcpKey,
   assertAliasProvidersRegistered,
   createModelProviders,
-  loadAgentFolder,
+  createPlatformMcpRegistry,
   type AgentFolder,
+  type ClockPort,
   type ModelAliases,
 } from '@ratingo/ai-core';
 
-import { MODEL_ALIAS_NAMES, MODEL_PRICES } from '../../src/config/models.config';
+import { MODEL_PRICES } from '../../src/config/models.config';
+import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
 import { InvestigationRunner } from '../../src/modules/chat/application/services/investigation.runner';
 import type { InvestigationExecutors } from '../../src/modules/chat/application/tools/investigation-executors';
 import type { ChatOutcome } from '../../src/modules/chat/domain/constants/chat.constants';
@@ -23,13 +25,35 @@ import {
   scriptedModel,
 } from '../../src/modules/chat/testing/scripted-model.testing';
 
+import type { ExternalTools } from '../../src/modules/chat/application/tools/external-tools';
+
 import { callKey, type EvalCase, type Fixture } from './eval-case';
+import { FixtureGaConnection, GA_SERVER, fixtureGaTransport } from './google-analytics.fake-server';
 import type { CaseResult } from './scorer';
 
 const EVAL_NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
-const AGENT_PATH = path.resolve(__dirname, '../../agent');
 const CHAT_ID = 'eval';
 const SNAPSHOT_STUB_HTML = 'SNAPSHOT';
+const EVAL_GA_ENV = {
+  [GoogleAnalyticsMcpKey.CREDENTIALS_FILE]: '/eval/no-key.json',
+  [GoogleAnalyticsMcpKey.PROPERTY_ID]: '515589933',
+};
+const SILENT_TELEMETRY = { callFinished: () => undefined, serverEvent: () => undefined };
+
+const fixtureGaTools = (testCase: EvalCase, clock: ClockPort): ExternalTools => {
+  const gateway = new McpGateway({
+    registry: createPlatformMcpRegistry(),
+    servers: [GA_SERVER],
+    env: EVAL_GA_ENV,
+    transport: fixtureGaTransport(new FixtureGaConnection(testCase.fixtures)),
+    clock,
+    telemetry: SILENT_TELEMETRY,
+  });
+  return {
+    listTools: () => gateway.toolSource().listTools(),
+    expectedToolNames: () => gateway.expectedToolNames(),
+  };
+};
 
 const matches = (fixture: Fixture, input: unknown): boolean =>
   Object.entries(fixture.match ?? {}).every(
@@ -73,8 +97,7 @@ export const runCase = async (
   setup: EvalSetup,
   folder?: AgentFolder,
 ): Promise<EvalRunResult> => {
-  const loaded =
-    folder ?? (await loadAgentFolder(AGENT_PATH, { knownModelAliases: MODEL_ALIAS_NAMES }));
+  const loaded = folder ?? (await loadVeronicaAgentFolder());
   const reference = scriptedModel([
     ...testCase.reference.calls.map((call) => callStep(call.tool, call.input)),
     answerStep(testCase.reference.answer),
@@ -104,6 +127,7 @@ export const runCase = async (
       sendChatAction: async () => undefined,
     },
     { status: async () => ({ html: SNAPSHOT_STUB_HTML, silent: true }) } as never,
+    fixtureGaTools(testCase, clock),
   );
   const outcome = await runner.answer(CHAT_ID, testCase.question);
   return {

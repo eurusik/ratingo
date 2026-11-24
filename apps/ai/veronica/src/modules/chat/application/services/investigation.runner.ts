@@ -16,6 +16,7 @@ import {
   type ClockPort,
   type ModelAliases,
   type RunRepository,
+  type Tool,
 } from '@ratingo/ai-core';
 
 import { MODEL_ALIASES } from '../../../../config/config.constants';
@@ -60,11 +61,13 @@ import {
   INVESTIGATION_EXECUTORS,
   type InvestigationExecutors,
 } from '../tools/investigation-executors';
+import { EXTERNAL_TOOLS, type ExternalTools } from '../tools/external-tools';
 import { buildInvestigationTools } from '../tools/investigation-tools';
 import { ToolRecorder, type RecordedCall } from '../tools/tool-recorder';
 
 const FAST_ALIAS = 'fast';
 const CHAT_PROMPT_KEY = 'chat';
+const EXTERNAL_TOOLS_PROMPT_KEY = 'chat-google-analytics';
 
 type FallbackReason = keyof typeof FALLBACK_INTRO;
 
@@ -111,6 +114,7 @@ export class InvestigationRunner {
     @Inject(CONVERSATION_STORE) private readonly conversations: ConversationStorePort,
     @Inject(CHAT_TRANSPORT) private readonly transport: ChatTransportPort,
     private readonly digests: DigestComposeService,
+    @Inject(EXTERNAL_TOOLS) private readonly externalTools: ExternalTools,
   ) {}
 
   async answer(chatId: string, rawQuestion: string): Promise<InvestigationResult> {
@@ -196,14 +200,19 @@ export class InvestigationRunner {
   ) {
     const { manifest, prompts } = this.folder;
     const nowMs = this.clock.nowMs();
-    const tools = buildInvestigationTools(this.executors).map((tool) => recorder.wrap(tool));
+    const external = await this.offeredExternalTools();
+    const tools = [...buildInvestigationTools(this.executors), ...external].map((tool) =>
+      recorder.wrap(tool),
+    );
+    const expected = this.externalTools.expectedToolNames();
     const registry = await ToolRegistry.create(
       [new NativeToolSource(tools)],
-      Object.values(InvestigationTool),
+      [...Object.values(InvestigationTool), ...expected],
+      { optionalTools: expected },
     );
     return this.loopFor(registry).run(run, {
       models: resolveModelChain(FAST_ALIAS, this.aliases),
-      system: prompts[CHAT_PROMPT_KEY] ?? '',
+      system: this.systemPrompt(prompts, external.length > 0),
       prompt: `${historyBlock(history)}Зараз: ${formatKyivDateTime(nowMs)} (Київ).\n\nПитання власника:\n<<<\n${fenceSafe(question)}\n>>>`,
       budgets: {
         perRunUsd: CHAT_BUDGET_PER_MESSAGE_USD,
@@ -213,6 +222,25 @@ export class InvestigationRunner {
       priorSpend: await this.spend(manifest.name, nowMs - CHAT_BUDGET_WINDOW_MS),
       limits: { ...manifest.limits, maxTurns: CHAT_MAX_TURNS },
     });
+  }
+
+  private async offeredExternalTools(): Promise<readonly Tool[]> {
+    try {
+      return await this.externalTools.listTools();
+    } catch (error) {
+      this.logger.warn(`Зовнішні інструменти недоступні: ${errorName(error)}`);
+      return [];
+    }
+  }
+
+  private systemPrompt(prompts: Readonly<Record<string, string>>, withExternal: boolean): string {
+    const base = prompts[CHAT_PROMPT_KEY] ?? '';
+    const external = prompts[EXTERNAL_TOOLS_PROMPT_KEY];
+    return withExternal && external !== undefined
+      ? `${base}
+
+${external}`
+      : base;
   }
 
   private async spend(agent: string, sinceMs: number) {

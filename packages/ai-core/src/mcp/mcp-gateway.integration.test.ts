@@ -264,7 +264,7 @@ describe('McpGateway over stdio', () => {
     await expect(gateway.toolSource().listTools()).resolves.toEqual([]);
     expect(gateway.configuredServers).toEqual([]);
     expect(telemetry.events).toEqual([
-      { server: 'fake', event: McpServerEvent.UNCONFIGURED, detail: 'missing env: FAKE_TOKEN' },
+      { server: 'fake', event: McpServerEvent.UNCONFIGURED, detail: 'missing: FAKE_TOKEN' },
     ]);
   });
 

@@ -1,6 +1,7 @@
 import * as fc from 'fast-check';
 
 import {
+  compactDateParts,
   extractNumbers,
   knownNumbers,
   redactUnverified,
@@ -28,6 +29,30 @@ describe('numbers guard', () => {
     ['1,234.5', '{"x":1234.5}'],
   ])('reads «%s» as the same number as in %s', (written, source) => {
     expect(unverifiedNumbers(`Значення ${written}.`, known(source))).toEqual([]);
+  });
+
+  it('knows the day, month and year of a compact GA date', () => {
+    const sources = known(
+      '{"dimension_values":[{"value":"20261120"}],"metric_values":[{"value":"153"}]}',
+    );
+    expect(unverifiedNumbers('20 листопада 2026 було 153 користувачі.', sources)).toEqual([]);
+    expect(unverifiedNumbers('21 листопада було 153.', sources)).toEqual(['21']);
+  });
+
+  it('splits only valid compact dates', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 2000, max: 2099 }),
+        fc.integer({ min: 1, max: 12 }),
+        fc.integer({ min: 1, max: 28 }),
+        (year, month, day) => {
+          const compact = `${year}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
+          expect(compactDateParts(compact)).toEqual([String(year), String(month), String(day)]);
+        },
+      ),
+    );
+    expect(compactDateParts('20261320')).toEqual([]);
+    expect(compactDateParts('12345678')).toEqual([]);
   });
 
   it('reads the parts of a date and a time as separate numbers', () => {

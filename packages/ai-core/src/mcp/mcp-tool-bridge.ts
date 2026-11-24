@@ -15,7 +15,7 @@ import type { McpSession } from './mcp-session';
 import { McpCallOutcome } from './mcp-telemetry.port';
 import type { McpTelemetry } from './mcp-telemetry.port';
 import { toBridgedToolName } from './mcp-tool-name';
-import { argumentNamesOf, decideMcpCall, exposedInputSchema } from './mcp-tool-policy';
+import { allowedArgumentsOf, decideMcpCall, exposedInputSchema } from './mcp-tool-policy';
 import type { McpToolRule } from './mcp-tool-policy.types';
 import { McpTimeoutError } from './mcp-transport.port';
 import type { McpRemoteTool, McpToolOutput } from './mcp-transport.port';
@@ -47,7 +47,7 @@ export class BridgedMcpTool implements Tool {
   readonly definition: ToolDefinition;
   private readonly label: string;
   private readonly outputCap: number;
-  private readonly knownArguments: readonly string[];
+  private readonly allowedArguments: readonly string[];
 
   constructor(
     private readonly session: McpSession,
@@ -58,7 +58,7 @@ export class BridgedMcpTool implements Tool {
     this.name = toBridgedToolName({ server: session.name, tool: remote.name });
     this.label = `${UNTRUSTED_LABEL_PREFIX} ${this.name}`;
     this.outputCap = outputCapFor(session.definition, rule);
-    this.knownArguments = argumentNamesOf(remote.inputSchema);
+    this.allowedArguments = allowedArgumentsOf(rule, remote.inputSchema);
     const envelope = wrapUntrusted(this.label, TRUNCATION_MARKER).length;
     this.maxOutputChars = (this.outputCap + envelope) * REDACTION_HEADROOM_FACTOR;
     this.definition = {
@@ -72,7 +72,7 @@ export class BridgedMcpTool implements Tool {
     const startedMs = this.deps.clock.nowMs();
     const decision = decideMcpCall(this.session.definition.policy, this.remote.name, rawInput, {
       todayEpochDay: epochDayOf(startedMs),
-      knownArguments: this.knownArguments,
+      allowedArguments: this.allowedArguments,
     });
     if (!decision.allowed) {
       this.record(McpCallOutcome.REFUSED, startedMs);

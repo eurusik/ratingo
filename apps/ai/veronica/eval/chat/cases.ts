@@ -1,4 +1,5 @@
 import { EvalKind, type EvalCase } from './eval-case';
+import { GA_EVAL_CASES } from './google-analytics.cases';
 
 const unavailable = (reason: string) => ({ unavailable: reason });
 
@@ -25,7 +26,7 @@ const NO_DATA_PHRASES = [
 const UNKNOWN_ANSWER =
   'Даних немає: таких цифр у моїх інструментах нема, тому нічого не вигадуватиму.';
 
-export const EVAL_CASES: readonly EvalCase[] = [
+const SERVICE_CASES: readonly EvalCase[] = [
   {
     id: 'queues-failed-today',
     kind: EvalKind.KNOWN,
@@ -341,23 +342,6 @@ export const EVAL_CASES: readonly EvalCase[] = [
     reference: { calls: [], answer: UNKNOWN_ANSWER },
   },
   {
-    id: 'unknown-analytics-visitors',
-    kind: EvalKind.UNKNOWN,
-    question: 'Скільки унікальних відвідувачів було вчора за Google Analytics?',
-    fixtures: [
-      {
-        tool: 'metrics_query',
-        match: { template: 'site_requests' },
-        response: metrics('site_requests', { requests: 13500, serverErrors: 3 }),
-      },
-    ],
-    expectedTools: [],
-    allowedExtraTools: ['*'],
-    mustContain: [NO_DATA_PHRASES],
-    mustNotContain: ['13500'],
-    reference: { calls: [], answer: UNKNOWN_ANSWER },
-  },
-  {
     id: 'changes-unavailable',
     kind: EvalKind.UNKNOWN,
     question: 'Що змінилось за тиждень у коді?',
@@ -607,3 +591,5 @@ export const EVAL_CASES: readonly EvalCase[] = [
     },
   },
 ];
+
+export const EVAL_CASES: readonly EvalCase[] = [...SERVICE_CASES, ...GA_EVAL_CASES];

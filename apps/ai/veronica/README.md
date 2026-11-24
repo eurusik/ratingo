@@ -13,11 +13,49 @@ npm run db:generate --workspace=@ratingo/ai-veronica
 
 ## Chat commands
 
-`/help`, `/digest`, `/status`, `/queues`, `/site`, and `/last`, which shows the last three answers to free-form and Happy requests as «question → outcome, cost». Commands themselves are not listed.
+`/help`, `/digest`, `/status`, `/queues`, `/site`, and `/last`, which shows the last three answers to free-form and Happy requests as «question → outcome, cost». Commands themselves are not listed. `/help` also says that free-form questions about site visitors are answered from Google Analytics.
+
+## Google Analytics
+
+Veronica answers questions about visitors to ratingo.top from Google Analytics 4: users, traffic sources, top pages, devices, countries, new vs returning, realtime, period comparisons and single event counts. She uses Google's `analytics-mcp` through the ai-core MCP gateway; see `packages/ai-core/README.md` for the policy.
+
+| Variable              | Secret | Value                                                             |
+| --------------------- | ------ | ----------------------------------------------------------------- |
+| `GA_CREDENTIALS_JSON` | yes    | the whole JSON key of the read-only service account, as one value |
+| `GA_PROPERTY_ID`      | no     | the numeric GA4 property id, for ratingo.top `515589933`          |
+
+What happens with these variables:
+
+- **Missing or invalid.** If either variable is missing, the key is not a service account key, or the property id is not numeric, a warning names the variable, never its value. Google Analytics stays off and the chat works as before.
+- **Valid.** The key is written to a private temp file (`0600`), the subprocess gets only its path, and the file is deleted on shutdown.
+
+The server is installed in the image at `/opt/analytics-mcp-1.1.0` from `analytics-mcp/requirements.lock` (hash-pinned, binary wheels only, nothing downloaded at runtime). To update it:
+
+1. Bump the version in `analytics-mcp/requirements.in`, `GOOGLE_ANALYTICS_MCP_VERSION` in ai-core and `ANALYTICS_MCP_HOME` in the Dockerfile.
+2. Regenerate the lock in an Alpine amd64 container with `pip-compile --generate-hashes --strip-extras --no-header --no-annotate --allow-unsafe`.
+
+A test fails if the three places disagree.
+
+What to watch in Grafana:
+
+- `app.ai.mcp.calls{server="google-analytics"}` by `outcome` (`timeout`, `unavailable` and `refused` should stay rare);
+- `app.ai.mcp.call.duration`;
+- `app.ai.mcp.server.events` for `start_failed`, `crashed`, `recycled_after_timeout`, `unconfigured`, `tool_missing` and `required_argument_hidden`.
 
 ## Answer log
 
 Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the question, the final checked answer, the outcome (`answered`, `redacted`, `fallback`, `failed`), the numbers the guard cut and the tool names. Tool payloads are never stored. A failed write is logged and never affects the reply.
+
+### Chat eval
+
+`eval/chat` replays fixed questions with fixture tool results. Google Analytics cases go through the real gateway and policy, with an in-process fake server that returns GA's real response shape. They need no GA key and no Python.
+
+```bash
+npm run eval:chat --workspace=@ratingo/ai-veronica
+AI_MODEL_FAST=anthropic:claude-haiku-5-5 ANTHROPIC_API_KEY=… npm run eval:chat --workspace=@ratingo/ai-veronica
+```
+
+The first command uses the stub model and checks the harness. The second uses the real model; from Railway, run it with `railway run` so the Anthropic key comes from the service. `EVAL_DUMP=path.json` writes every answer for comparison.
 
 ### Turning real cases into eval cases
 

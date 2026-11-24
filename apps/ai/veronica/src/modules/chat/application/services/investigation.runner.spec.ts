@@ -1,9 +1,13 @@
+import { z } from 'zod';
+
 import {
   AgentLoop,
   FixedClock,
   InMemoryRunRepository,
   StubModelAdapter,
+  defineTool,
   type AgentFolder,
+  type Tool,
   type ModelRequest,
   type RunRepository,
   type RunSnapshot,
@@ -41,8 +45,21 @@ const FOLDER = {
     budgets: { perRunUsd: 0.05, perDayUsd: 0.5 },
     limits: { maxTurns: 8, timeoutMs: 120_000, maxTokensPerCall: 4096, callTimeoutMs: 60_000 },
   },
-  prompts: { chat: 'SYSTEM PROMPT' },
+  prompts: { chat: 'SYSTEM PROMPT', 'chat-google-analytics': 'GA PROMPT' },
 } as unknown as AgentFolder;
+
+const GA_TOOL = 'google-analytics__run_report';
+const GA_REPLY =
+  '<untrusted label="mcp google-analytics__run_report">\n{"rows":[{"metric_values":[{"value":"412"}]}]}\n</untrusted>';
+
+const gaTool = (): Tool =>
+  defineTool({
+    name: GA_TOOL,
+    description: 'GA report',
+    inputSchema: z.object({ metrics: z.array(z.string()) }),
+    readOnly: true,
+    handler: async () => GA_REPLY,
+  });
 
 const QUEUE_REPLY = { template: 'queue_throughput', data: [{ queue: 'ingestion', failed: 7 }] };
 
@@ -67,6 +84,8 @@ class Harness {
   statusFailure = false;
   historyFailure = false;
   metricsFailure: Error | null = null;
+  external: Tool[] = [];
+  externalFailure = false;
   scripted = scriptedModel([]);
 
   private readonly executors: InvestigationExecutors = {
@@ -125,6 +144,13 @@ class Harness {
         return { html: 'СУХІ ДАНІ', silent: true };
       },
     } as never,
+    {
+      listTools: async () => {
+        if (this.externalFailure) throw new Error('gateway broken');
+        return this.external;
+      },
+      expectedToolNames: () => [GA_TOOL],
+    },
   );
 
   script(...steps: ScriptedStep[]): this {
@@ -335,5 +361,43 @@ describe('InvestigationRunner', () => {
       'product_stats',
       'recent_changes',
     ]);
+  });
+
+  describe('Google Analytics tools from the MCP gateway', () => {
+    it('offers the GA tool, adds its prompt and verifies numbers from its output', async () => {
+      const chat = new Harness().script(
+        callStep(GA_TOOL, { metrics: ['activeUsers'] }),
+        answerStep('За тиждень на сайті було 412 користувачів.'),
+      );
+      chat.external = [gaTool()];
+
+      const result = await chat.ask('скільки людей було на сайті за тиждень?');
+
+      expect(result.outcome).toBe(ChatOutcome.ANSWERED);
+      expect(result.toolCalls).toEqual([{ tool: GA_TOOL, input: { metrics: ['activeUsers'] } }]);
+      expect(chat.scripted.requests[0].system).toBe('SYSTEM PROMPT\n\nGA PROMPT');
+      expect(chat.scripted.requests[0].tools?.map((tool) => tool.name)).toContain(GA_TOOL);
+    });
+
+    it('runs without GA tools and without their prompt when the server is not offered', async () => {
+      const chat = new Harness().script(
+        answerStep('Даних немає: Google Analytics зараз недоступний.'),
+      );
+
+      const result = await chat.ask('скільки людей було на сайті?');
+
+      expect(result.outcome).toBe(ChatOutcome.ANSWERED);
+      expect(chat.scripted.requests[0].system).toBe('SYSTEM PROMPT');
+      expect(chat.scripted.requests[0].tools?.map((tool) => tool.name)).not.toContain(GA_TOOL);
+    });
+
+    it('keeps answering when the gateway itself throws', async () => {
+      const chat = new Harness().script(callStep('digest_snapshot'), answerStep('Усе гаразд.'));
+      chat.externalFailure = true;
+
+      await expect(chat.ask('як справи?')).resolves.toMatchObject({
+        outcome: ChatOutcome.ANSWERED,
+      });
+    });
   });
 });

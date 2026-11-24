@@ -6,6 +6,7 @@ const SENTENCE_BREAK = /(?<=[.!?…])\s+/;
 const THOUSANDS_GROUP_DIGITS = 3;
 
 const THOUSANDS_GROUP_MAX_LEADING = 3;
+const COMPACT_DATE = /^(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/;
 
 const canonical = (text: string): string | null => {
   const parsed = Number(text);
@@ -50,8 +51,17 @@ const withoutListMarkers = (text: string): string =>
 export const extractNumbers = (text: string): string[][] =>
   [...withoutListMarkers(text).matchAll(NUMBER_TOKEN)].map((match) => interpretations(match[0]));
 
+export const compactDateParts = (candidate: string): string[] => {
+  const match = COMPACT_DATE.exec(candidate);
+  return match === null ? [] : match.slice(1).map((part) => String(Number(part)));
+};
+
 export const knownNumbers = (sources: readonly string[]): ReadonlySet<string> =>
-  new Set(sources.flatMap((source) => extractNumbers(source).flat()));
+  new Set(
+    sources
+      .flatMap((source) => extractNumbers(source).flat())
+      .flatMap((candidate) => [candidate, ...compactDateParts(candidate)]),
+  );
 
 const isVerified = (candidates: readonly string[], known: ReadonlySet<string>): boolean =>
   candidates.some((candidate) => known.has(candidate));

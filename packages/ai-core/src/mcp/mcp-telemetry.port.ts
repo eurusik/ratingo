@@ -18,6 +18,7 @@ export const McpServerEvent = {
   TOOL_NOT_READ_ONLY: 'tool_not_read_only',
   TOOL_LIST_TRUNCATED: 'tool_list_truncated',
   POLICY_ARGUMENT_UNDECLARED: 'policy_argument_undeclared',
+  REQUIRED_ARGUMENT_HIDDEN: 'required_argument_hidden',
   RECYCLED_AFTER_TIMEOUT: 'recycled_after_timeout',
 } as const;
 export type McpServerEvent = (typeof McpServerEvent)[keyof typeof McpServerEvent];
