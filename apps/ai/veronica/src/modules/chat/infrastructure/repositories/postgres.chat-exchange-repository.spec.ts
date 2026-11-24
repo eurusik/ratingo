@@ -37,8 +37,9 @@ const entry = (runId: string, overrides: Partial<ChatExchangeEntry> = {}): ChatE
   question: 'питання',
   answer: 'відповідь',
   outcome: ExchangeOutcome.ANSWERED,
-  cutNumbers: [],
+  flaggedNumbers: [],
   toolNames: ['metrics_query'],
+  toolCalls: [{ tool: 'metrics_query', input: '{"template":"queue_throughput"}' }],
   ...overrides,
 });
 
@@ -57,12 +58,12 @@ describeWithDatabase('PostgresChatExchangeRepository', () => {
 
   it('stores an exchange and reads it back with the run cost', async () => {
     await runs.save(run('r1', 0.0123));
-    await repository.record(entry('r1', { cutNumbers: ['42'] }));
+    await repository.record(entry('r1', { flaggedNumbers: ['42'] }));
     const [found] = await repository.search({ sinceMs: NOW_MS - DAY_MS });
     expect(found).toMatchObject({
       runId: 'r1',
       question: 'питання',
-      cutNumbers: ['42'],
+      flaggedNumbers: ['42'],
       toolNames: ['metrics_query'],
       costUsd: 0.0123,
       createdAtMs: NOW_MS,

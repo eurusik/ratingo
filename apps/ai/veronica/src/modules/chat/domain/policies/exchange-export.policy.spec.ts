@@ -18,8 +18,9 @@ const exchange: ChatExchange = {
   question: 'Що з чергами?',
   answer: 'Усе гаразд.',
   outcome: ExchangeOutcome.REDACTED,
-  cutNumbers: ['42'],
+  flaggedNumbers: ['42'],
   toolNames: ['metrics_query'],
+  toolCalls: [{ tool: 'metrics_query', input: '{"template":"queue_throughput"}' }],
   costUsd: 0.01,
 };
 
@@ -53,7 +54,7 @@ describe('parseExportArgs', () => {
 });
 
 describe('toEvalCaseDraft', () => {
-  it('shapes an exchange as an eval case draft without raw payloads', () => {
+  it('shapes an exchange as an eval case draft with call arguments but no tool results', () => {
     const draft = toEvalCaseDraft(exchange);
     expect(draft).toMatchObject({
       id: 'draft-abcdef12',
@@ -62,8 +63,13 @@ describe('toEvalCaseDraft', () => {
       reference: { answer: 'Усе гаразд.' },
       fixtures: [],
       mustContain: [],
-      observed: { outcome: 'redacted', cutNumbers: ['42'], runId: 'run-1' },
+      observed: {
+        outcome: 'redacted',
+        flaggedNumbers: ['42'],
+        runId: 'run-1',
+        toolCalls: [{ tool: 'metrics_query', input: '{"template":"queue_throughput"}' }],
+      },
     });
-    expect(JSON.stringify(draft)).not.toContain('input');
+    expect(Object.keys(draft.observed.toolCalls[0] ?? {})).toEqual(['tool', 'input']);
   });
 });

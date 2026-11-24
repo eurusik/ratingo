@@ -159,6 +159,12 @@ describe('google-analytics MCP server', () => {
     );
   });
 
+  it('exposes the funnel with steps, one range and an optional breakdown only', () => {
+    const funnel = GOOGLE_ANALYTICS_MCP_SERVER.policy.tools.run_funnel_report;
+    expect(funnel?.exposedArguments).toEqual(['funnel_steps', 'date_ranges', 'funnel_breakdown']);
+    expect(funnel?.pinnedFromSettings).toEqual({ property_id: 'GA_PROPERTY_ID' });
+  });
+
   it('allows two ranges for a week-over-week comparison', () => {
     const { policy, rule } = resolvedRule();
     const decision = decideMcpCall(

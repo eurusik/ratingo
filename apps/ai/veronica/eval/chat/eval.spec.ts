@@ -1,4 +1,10 @@
-import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
+import {
+  GENDERED_ADDRESS,
+  HONEST_NO_DATA,
+  MINOR_FINDINGS,
+  NO_CODE_REVIEW,
+  NOTHING_RECORDED,
+} from './answer-stems';
 import { EVAL_CASES } from './cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
@@ -30,6 +36,7 @@ describe('chat eval cases', () => {
     expect([...tools].sort()).toEqual([
       'ask_happy',
       'digest_snapshot',
+      'google-analytics__run_funnel_report',
       'google-analytics__run_realtime_report',
       'google-analytics__run_report',
       'metrics_query',
@@ -57,6 +64,10 @@ describe('chat eval cases', () => {
         'ga-custom-event',
         'ga-unavailable',
         'ga-injection-in-campaign',
+        'ga-funnel',
+        'ga-funnel-unknown-event',
+        'ga-followup-dashboards',
+        'ga-realtime-nobody',
       ]),
     );
     const injection = GA_EVAL_CASES.find((testCase) => testCase.id === 'ga-injection-in-campaign');
@@ -89,7 +100,10 @@ describe('chat eval on the stub model', () => {
         cases: EVAL_CASES.length,
         toolSelectionAccuracy: 1,
         factAccuracy: 1,
-        hallucinatedNumbers: 0,
+        answersWithFlags: 0,
+        flaggedNumbers: 0,
+        wrongNumbers: 0,
+        falseFlagRate: null,
         fallbacks: 0,
         unknownAnsweredHonestly: 1,
         failedCases: [],
@@ -106,7 +120,7 @@ describe('chat eval scorer', () => {
     calledKeys: ['metrics_query:queue_throughput'],
     answer: 'ingestion: 7 провалилось',
     outcome: 'answered',
-    unverifiedNumbers: [],
+    flaggedNumbers: [],
     rawModelOutput: '',
   };
 
@@ -144,19 +158,28 @@ describe('chat eval scorer', () => {
     ).toBe(true);
   });
 
-  it('counts cut numbers as hallucinated and a fallback as a failed case, not a hallucination', () => {
-    const cut = scoreCase(testCase!, { ...base, outcome: 'redacted', unverifiedNumbers: ['40'] });
-    expect(cut.unverifiedNumbers).toEqual(['40']);
+  it('keeps a flagged answer as an answer and fails only on a wrong number', () => {
+    const falseFlag = scoreCase(testCase!, { ...base, outcome: 'flagged', flaggedNumbers: ['40'] });
+    const wrong = scoreCase(testCase!, { ...base, outcome: 'flagged', flaggedNumbers: ['41'] });
+    expect(falseFlag).toMatchObject({ factsOk: true, falseFlags: ['40'], wrongNumbers: [] });
+    expect(wrong).toMatchObject({ factsOk: true, falseFlags: [], wrongNumbers: ['41'] });
+    expect(summarize([falseFlag, wrong])).toMatchObject({
+      answersWithFlags: 2,
+      flaggedNumbers: 2,
+      wrongNumbers: 1,
+      falseFlagRate: 0.5,
+      failedCases: ['queues-failed-today'],
+    });
+  });
+
+  it('counts a fallback as a failed case', () => {
     const fallback = scoreCase(testCase!, { ...base, outcome: 'fallback' });
     expect(fallback.fellBack).toBe(true);
-    expect(fallback.unverifiedNumbers).toEqual([]);
     expect(fallback.factsOk).toBe(false);
-    expect(summarize([cut, fallback])).toMatchObject({
-      hallucinatedNumbers: 1,
+    expect(summarize([fallback])).toMatchObject({
       fallbacks: 1,
-      failedCases: ['queues-failed-today', 'queues-failed-today'],
+      failedCases: ['queues-failed-today'],
     });
-    expect(summarize([cut]).failedCases).toEqual(['queues-failed-today']);
     expect(scoreCase(testCase!, { ...base, outcome: 'failed' }).factsOk).toBe(false);
     expect(scoreCase(testCase!, base).fellBack).toBe(false);
   });
@@ -188,12 +211,30 @@ describe('answer stems', () => {
     expect(HONEST_NO_DATA.test('за тиждень на сайті було 1843 користувачі.')).toBe(false);
   });
 
-  it.each(['хеппі на ньому код не перевіряє', 'хеппі не робить ревʼю релізів', 'без ревʼю коду'])(
-    'reads «%s» as no code review',
-    (answer) => {
-      expect(NO_CODE_REVIEW.test(answer)).toBe(true);
-    },
-  );
+  it.each([
+    'хеппі на ньому код не перевіряє',
+    'хеппі не робить ревʼю релізів',
+    'без ревʼю коду',
+    'хеппі не робив ревʼю коду',
+    'вона не робила ревʼю',
+    'ревʼю коду не було',
+  ])('reads «%s» as no code review', (answer) => {
+    expect(NO_CODE_REVIEW.test(answer)).toBe(true);
+  });
+
+  it('does not read a done review as no code review', () => {
+    expect(NO_CODE_REVIEW.test('хеппі зробив ревʼю і знайшов 2 зауваження')).toBe(false);
+    expect(NO_CODE_REVIEW.test('хеппі зробив ревʼю, але не робив зауважень')).toBe(false);
+  });
+
+  it.each([
+    'жодної людини',
+    'ніхто не відкрив',
+    'подія взагалі не зафіксована',
+    'на цьому кроці 0',
+  ])('reads «%s» as nothing recorded', (answer) => {
+    expect(NOTHING_RECORDED.test(answer)).toBe(true);
+  });
 
   it.each(['2 зауваження низької важливості', 'дрібні зауваження', 'minor findings'])(
     'reads «%s» as minor findings',
@@ -201,4 +242,20 @@ describe('answer stems', () => {
       expect(MINOR_FINDINGS.test(answer)).toBe(true);
     },
   );
+});
+
+describe('language slips', () => {
+  it.each([
+    'Ти мала на увазі Google Analytics?',
+    'Здається, ти мав на увазі сайт.',
+    '(ти питала про тиждень)',
+  ])('catches the gendered address in «%s»', (answer) => {
+    expect(GENDERED_ADDRESS.test(answer.toLowerCase())).toBe(true);
+  });
+
+  it('leaves neutral address alone', () => {
+    expect(
+      GENDERED_ADDRESS.test('якщо йдеться про google analytics, ось цифри. ти про сайт?'),
+    ).toBe(false);
+  });
 });

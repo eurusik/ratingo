@@ -32,7 +32,6 @@ import {
   EMPTY_QUESTION_REPLY,
   FALLBACK_FAILED_REPLY,
   FALLBACK_INTRO,
-  REDACTED_NOTE,
   SEARCHING_REPLY,
 } from '../../domain/constants/chat-replies.constants';
 import {
@@ -46,12 +45,15 @@ import {
 } from '../../domain/constants/investigation.constants';
 import { TurnRole, type ConversationTurn } from '../../domain/entities/conversation-turn';
 import { clip, stripLinks } from '../../domain/policies/answer-sanitizer.policy';
+import {
+  FLAGGED_NOTE_MAX_CHARS,
+  withFlaggedNumbers,
+} from '../../domain/policies/flagged-numbers.policy';
 import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
 import { requestedReportDates } from '../../domain/policies/report-dates.policy';
 import {
   knownDates,
   knownNumbers,
-  redactUnverified,
   unverifiedNumbers,
 } from '../../domain/policies/numbers-guard.policy';
 import {
@@ -254,33 +256,20 @@ ${external}`
     return { taskUsd, agentDayUsd };
   }
 
-  private async checked(output: string, sources: readonly string[]): Promise<Verdict> {
-    const text = stripLinks(output);
+  private checked(output: string, sources: readonly string[]): Verdict {
+    const text = clip(stripLinks(output), ANSWER_MAX_CHARS * 2 - FLAGGED_NOTE_MAX_CHARS);
     const known = new Set([
       ...knownNumbers(sources),
       ...knownNumbers([formatKyivDateTime(this.clock.nowMs())]),
     ]);
     const kyivToday = formatKyivDateTime(this.clock.nowMs()).slice(0, ISO_DATE_LENGTH);
     const dates = new Set([...knownDates(sources), ...requestedReportDates(sources, kyivToday)]);
-    const unverified = unverifiedNumbers(text, known, dates);
-    if (unverified.length === 0) {
-      return {
-        outcome: ChatOutcome.ANSWERED,
-        html: text,
-        remember: text,
-        unverified,
-        raw: output,
-      };
-    }
-    const redacted = redactUnverified(text, known, dates);
-    if (redacted.text === '') {
-      return this.fallback('UNVERIFIED', unverified, output);
-    }
+    const flagged = unverifiedNumbers(text, known, dates);
     return {
-      outcome: ChatOutcome.REDACTED,
-      html: `${redacted.text}\n\n${REDACTED_NOTE}`,
-      remember: redacted.text,
-      unverified,
+      outcome: flagged.length === 0 ? ChatOutcome.ANSWERED : ChatOutcome.FLAGGED,
+      html: withFlaggedNumbers(text, flagged),
+      remember: text,
+      unverified: flagged,
       raw: output,
     };
   }

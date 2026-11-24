@@ -236,29 +236,25 @@ describe('InvestigationRunner', () => {
     expect(result.outcome).toBe(ChatOutcome.ANSWERED);
   });
 
-  it('cuts a sentence whose number appears in no tool result and says so', async () => {
+  it('keeps the whole answer and flags a number that appears in no tool result', async () => {
+    const answer = 'Невдалих завдань: 7. Це на 40 відсотків більше.';
     const chat = new Harness().script(
       callStep('metrics_query', { template: 'queue_throughput' }),
-      answerStep('Невдалих завдань: 7. Це на 40 відсотків більше.'),
+      answerStep(answer),
     );
     const result = await chat.ask('що з чергами?');
-    expect(result.outcome).toBe(ChatOutcome.REDACTED);
+    expect(result.outcome).toBe(ChatOutcome.FLAGGED);
     expect(result.unverifiedNumbers).toEqual(['40']);
-    expect(chat.finalHtml).toContain('Невдалих завдань: 7.');
-    expect(chat.finalHtml).not.toContain('40');
-    expect(chat.finalHtml).toContain('Частину відповіді прибрано');
-    expect(chat.stored[1].text).not.toContain('40');
+    expect(chat.finalHtml).toBe(`${answer}\n\n<i>Не звірено з даними: 40.</i>`);
+    expect(chat.stored[1].text).toBe(answer);
   });
 
-  it('falls back to the raw snapshot when nothing in the answer can be verified', async () => {
+  it('flags instead of falling back when nothing in the answer can be verified', async () => {
     const chat = new Harness().script(answerStep('Було 40 помилок.'));
     const result = await chat.ask('скільки помилок?');
-    expect(result.outcome).toBe(ChatOutcome.FALLBACK);
-    expect(result.unverifiedNumbers).toEqual(['40']);
-    expect(result.rawModelOutput).toBe('Було 40 помилок.');
-    expect(chat.finalHtml).toContain('Не зміг перевірити числа');
-    expect(chat.finalHtml).toContain('СУХІ ДАНІ');
-    expect(chat.stored).toEqual([]);
+    expect(result.outcome).toBe(ChatOutcome.FLAGGED);
+    expect(chat.finalHtml).toBe('Було 40 помилок.\n\n<i>Не звірено з даними: 40.</i>');
+    expect(chat.finalHtml).not.toContain('СУХІ ДАНІ');
   });
 
   it('removes links the bot did not build', async () => {
@@ -295,7 +291,13 @@ describe('InvestigationRunner', () => {
   });
 
   it('reports a failed fallback honestly when even the snapshot cannot be built', async () => {
-    const chat = new Harness().script(answerStep('Було 40 помилок.'));
+    const chat = new Harness();
+    chat.scripted = {
+      requests: [],
+      respond: () => {
+        throw new Error('boom');
+      },
+    };
     chat.statusFailure = true;
     const result = await chat.ask('скільки?');
     expect(result.outcome).toBe(ChatOutcome.FAILED);

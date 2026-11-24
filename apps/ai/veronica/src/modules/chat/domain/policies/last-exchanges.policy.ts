@@ -10,6 +10,7 @@ import { clip, escapeHtml } from './answer-sanitizer.policy';
 
 const OUTCOME_LABELS: Readonly<Record<ExchangeOutcome, string>> = {
   [ExchangeOutcome.ANSWERED]: 'відповіла',
+  [ExchangeOutcome.FLAGGED]: 'відповіла, позначила непідтверджені цифри',
   [ExchangeOutcome.REDACTED]: 'прибрала цифри без підтвердження',
   [ExchangeOutcome.FALLBACK]: 'дала запасну відповідь',
   [ExchangeOutcome.FAILED]: 'не вдалося',

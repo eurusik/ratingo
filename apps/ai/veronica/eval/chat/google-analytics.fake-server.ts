@@ -9,6 +9,7 @@ import {
 import type { Fixture } from './eval-case';
 import { GA_CUSTOM_DEFINITIONS } from './google-analytics.dataset';
 import {
+  simulateRunFunnelReport,
   simulateRunRealtimeReport,
   simulateRunReport,
   type GaSimulation,
@@ -66,6 +67,36 @@ const GA_TOOL_LISTING: readonly McpRemoteTool[] = [
     },
   },
   {
+    name: 'run_funnel_report',
+    readOnlyHint: true,
+    destructiveHint: false,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        property_id: propertyId,
+        funnel_steps: { items: { additionalProperties: true, type: 'object' }, type: 'array' },
+        date_ranges: {
+          default: null,
+          items: { additionalProperties: { type: 'string' }, type: 'object' },
+          type: 'array',
+        },
+        funnel_breakdown: {
+          additionalProperties: { type: 'string' },
+          default: null,
+          type: 'object',
+        },
+        funnel_next_action: {
+          additionalProperties: { type: 'string' },
+          default: null,
+          type: 'object',
+        },
+        segments: objectList,
+        return_property_quota: { default: false, type: 'boolean' },
+      },
+      required: ['property_id', 'funnel_steps'],
+    },
+  },
+  {
     name: 'get_custom_dimensions_and_metrics',
     readOnlyHint: true,
     destructiveHint: false,
@@ -95,6 +126,7 @@ const answer = (tool: string, result: GaSimulation) =>
 const SIMULATED: Readonly<Record<string, (args: Json) => { isError: boolean; text: string }>> = {
   run_report: (args) => answer('run_report', simulateRunReport(args)),
   run_realtime_report: (args) => answer('run_realtime_report', simulateRunRealtimeReport(args)),
+  run_funnel_report: (args) => answer('run_funnel_report', simulateRunFunnelReport(args)),
   get_custom_dimensions_and_metrics: () => ({
     isError: false,
     text: JSON.stringify(GA_CUSTOM_DEFINITIONS),

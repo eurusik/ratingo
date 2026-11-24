@@ -4,7 +4,9 @@ import {
 } from '../../src/modules/chat/domain/policies/report-dates.policy';
 
 import {
+  GA_DERIVED_RATIOS,
   GA_EVAL_TODAY,
+  GA_EVENTS_PER_USER,
   GA_REALTIME_TABLE,
   GA_REPORT_TABLES,
   type Fact,
@@ -18,6 +20,7 @@ export type GaSimulation = { ok: true; body: Json } | { ok: false; error: string
 class GaRequestError extends Error {}
 
 const DATE_RANGE = 'dateRange';
+const DEFAULT_FUNNEL_RANGE = [{ start_date: '28daysAgo', end_date: 'yesterday' }];
 const API_SCHEMA_URL =
   'https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema';
 const DAYS_AGO = /^(\d{1,3})daysAgo$/;
@@ -111,6 +114,9 @@ const validateNames = (
 ): void => {
   const knownDimensions = new Set([DATE_RANGE, ...tables.flatMap((table) => table.dimensions)]);
   const knownMetrics = new Set(tables.flatMap((table) => table.metrics));
+  for (const [ratio, parts] of Object.entries(GA_DERIVED_RATIOS)) {
+    if (parts.every((part) => knownMetrics.has(part))) knownMetrics.add(ratio);
+  }
   const badDimension = dimensions.find((name) => !knownDimensions.has(name));
   if (badDimension !== undefined) {
     throw new GaRequestError(
@@ -128,22 +134,48 @@ const validateNames = (
   }
 };
 
-const tableFor = (
+interface MetricSource {
+  table: FactTable;
+  metrics: string[];
+}
+
+const RATIO_DECIMALS = 4;
+
+const baseMetricsOf = (metrics: readonly string[]): string[] => [
+  ...new Set(metrics.flatMap((metric) => GA_DERIVED_RATIOS[metric] ?? [metric])),
+];
+
+const sourcesFor = (
   tables: readonly FactTable[],
   dimensions: string[],
   metrics: string[],
-): FactTable => {
-  const table = tables.find(
-    (candidate) =>
-      dimensions.every((name) => name === DATE_RANGE || candidate.dimensions.includes(name)) &&
-      metrics.every((name) => candidate.metrics.includes(name)),
-  );
-  if (table === undefined) {
-    throw new GaRequestError(
-      `400 Please remove ${metrics[0] ?? dimensions[0]} to make the request compatible. The request's dimensions & metrics are incompatible.`,
+): MetricSource[] => {
+  const sources = new Map<FactTable, string[]>();
+  for (const metric of metrics) {
+    const table = tables.find(
+      (candidate) =>
+        candidate.metrics.includes(metric) &&
+        dimensions.every((name) => name === DATE_RANGE || candidate.dimensions.includes(name)),
     );
+    if (table === undefined) {
+      throw new GaRequestError(
+        `400 Please remove ${metric} to make the request compatible. The request's dimensions & metrics are incompatible.`,
+      );
+    }
+    sources.set(table, [...(sources.get(table) ?? []), metric]);
   }
-  return table;
+  return [...sources].map(([table, tableMetrics]) => ({ table, metrics: tableMetrics }));
+};
+
+const metricValue = (metric: string, totals: ReadonlyMap<string, number>): number => {
+  const ratio = GA_DERIVED_RATIOS[metric];
+  if (ratio === undefined) {
+    return totals.get(metric) ?? 0;
+  }
+  const denominator = totals.get(ratio[1]) ?? 0;
+  return denominator === 0
+    ? 0
+    : Number(((totals.get(ratio[0]) ?? 0) / denominator).toFixed(RATIO_DECIMALS));
 };
 
 interface Slice {
@@ -151,13 +183,18 @@ interface Slice {
   facts: readonly Fact[];
 }
 
-const aggregate = (
+interface Group {
+  keys: string[];
+  totals: Map<string, number>;
+}
+
+const addFacts = (
+  groups: Map<string, Group>,
   slices: readonly Slice[],
   dimensions: string[],
-  metrics: string[],
+  source: MetricSource,
   withRangeName: boolean,
-) => {
-  const groups = new Map<string, { keys: string[]; sums: number[] }>();
+): void => {
   for (const slice of slices) {
     for (const fact of slice.facts) {
       const keys = dimensions.map((name) =>
@@ -166,14 +203,32 @@ const aggregate = (
       const allKeys =
         withRangeName && !dimensions.includes(DATE_RANGE) ? [...keys, slice.name] : keys;
       const id = JSON.stringify(allKeys);
-      const group = groups.get(id) ?? { keys: allKeys, sums: metrics.map(() => 0) };
-      metrics.forEach((metric, index) => {
-        group.sums[index] = (group.sums[index] ?? 0) + Number(fact[metric] ?? 0);
-      });
+      const group = groups.get(id) ?? { keys: allKeys, totals: new Map<string, number>() };
+      for (const metric of source.metrics) {
+        group.totals.set(metric, (group.totals.get(metric) ?? 0) + Number(fact[metric] ?? 0));
+      }
       groups.set(id, group);
     }
   }
-  return [...groups.values()];
+};
+
+const aggregate = (
+  sources: readonly MetricSource[],
+  slicesOf: (table: FactTable) => Slice[],
+  dimensions: string[],
+  metrics: string[],
+) => {
+  const groups = new Map<string, Group>();
+  const slicesBySource = sources.map((source) => ({ source, slices: slicesOf(source.table) }));
+  const withRangeName = (slicesBySource[0]?.slices.length ?? 0) > 1;
+  for (const { source, slices } of slicesBySource) {
+    addFacts(groups, slices, dimensions, source, withRangeName);
+  }
+  const rows = [...groups.values()].map((group) => ({
+    keys: group.keys,
+    sums: metrics.map((metric) => metricValue(metric, group.totals)),
+  }));
+  return { rows, withRangeName };
 };
 
 const ordered = (
@@ -232,7 +287,10 @@ const responseOf = ({
   const shown = limit === undefined ? rows : rows.slice(0, limit);
   return {
     dimension_headers: headers.map((name) => ({ name })),
-    metric_headers: metrics.map((name) => ({ name, type_: 'TYPE_INTEGER' })),
+    metric_headers: metrics.map((name) => ({
+      name,
+      type_: name in GA_DERIVED_RATIOS ? 'TYPE_FLOAT' : 'TYPE_INTEGER',
+    })),
     rows: shown.map((row) => ({
       dimension_values: row.keys.map((value) => ({ value })),
       metric_values: row.sums.map((value) => ({ value: String(value) })),
@@ -255,18 +313,13 @@ const runQuery = ({ kind, tables, args, slicesOf }: Query): Json => {
   const metrics = stringList(args.metrics);
   const fields = [...dimensions, ...filterFields(args.dimension_filter)];
   validateNames(tables, fields, metrics);
-  const slices = slicesOf(tableFor(tables, fields, metrics));
-  const withRangeName = slices.length > 1;
+  const sources = sourcesFor(tables, fields, baseMetricsOf(metrics));
+  const { rows, withRangeName } = aggregate(sources, slicesOf, dimensions, metrics);
   return responseOf({
     kind,
     dimensions,
     metrics,
-    rows: ordered(
-      aggregate(slices, dimensions, metrics, withRangeName),
-      dimensions,
-      metrics,
-      args.order_bys,
-    ),
+    rows: ordered(rows, dimensions, metrics, args.order_bys),
     limit: typeof args.limit === 'number' ? args.limit : undefined,
     withRangeName,
   });
@@ -349,6 +402,136 @@ export const simulateRunRealtimeReport = (args: Json): GaSimulation =>
     });
     return realtime;
   });
+
+const FUNNEL_STEP_NAME = 'funnelStepName';
+const FUNNEL_BREAKDOWNS: ReadonlySet<string> = new Set(['deviceCategory']);
+const STEP_CARRY_OVER = 0.8;
+const FUNNEL_METRICS = [
+  'activeUsers',
+  'funnelStepCompletionRate',
+  'funnelStepAbandonments',
+  'funnelStepAbandonmentRate',
+];
+
+const stepEvent = (step: Json): string => {
+  if (typeof step.event === 'string') return step.event;
+  const expression = isRecord(step.filter_expression) ? step.filter_expression : {};
+  const eventFilter = isRecord(expression.funnel_event_filter)
+    ? expression.funnel_event_filter
+    : {};
+  return String(eventFilter.event_name ?? '');
+};
+
+const usersByEvent = (facts: readonly Fact[], event: string): number =>
+  Math.round(
+    facts
+      .filter((fact) => fact.eventName === event)
+      .reduce((sum, fact) => sum + Number(fact.eventCount), 0) / (GA_EVENTS_PER_USER[event] ?? 1),
+  );
+
+const funnelUsers = (facts: readonly Fact[], events: readonly string[]): number[] =>
+  events.reduce<number[]>((users, event, index) => {
+    const reached = usersByEvent(facts, event);
+    const previous = users[index - 1];
+    return [
+      ...users,
+      previous === undefined ? reached : Math.min(previous, Math.round(reached * STEP_CARRY_OVER)),
+    ];
+  }, []);
+
+const stepMetrics = (count: number, next: number | undefined): number[] => {
+  if (next === undefined || count === 0) {
+    return [count, 0, 0, 0];
+  }
+  const completion = next / count;
+  return [count, completion, count - next, 1 - completion];
+};
+
+const funnelRows = (
+  names: readonly string[],
+  users: readonly number[],
+  prefix: readonly string[],
+) =>
+  users.map((count, index) => ({
+    dimension_values: [...prefix, `${index + 1}. ${names[index]}`].map((value) => ({ value })),
+    metric_values: stepMetrics(count, users[index + 1]).map((value) => ({ value: String(value) })),
+  }));
+
+const funnelBreakdownOf = (args: Json): string | undefined => {
+  const requested = isRecord(args.funnel_breakdown)
+    ? args.funnel_breakdown.breakdown_dimension
+    : undefined;
+  if (typeof requested !== 'string') {
+    return undefined;
+  }
+  if (!FUNNEL_BREAKDOWNS.has(requested)) {
+    throw new GaRequestError(
+      `400 Field ${requested} is not available as a funnel breakdown in the eval data.`,
+    );
+  }
+  return requested;
+};
+
+const breakdownGroups = (facts: readonly Fact[], breakdown: string | undefined) =>
+  breakdown === undefined
+    ? [{ prefix: [] as string[], facts }]
+    : [...new Set(facts.map((fact) => String(fact[breakdown])))].map((value) => ({
+        prefix: [value],
+        facts: facts.filter((fact) => String(fact[breakdown]) === value),
+      }));
+
+const funnelFacts = (args: Json): readonly Fact[] => {
+  const table = GA_REPORT_TABLES.find((candidate) => candidate.name === 'events') as FactTable;
+  return (
+    dateSlices(table, { ...args, date_ranges: args.date_ranges ?? DEFAULT_FUNNEL_RANGE })[0]
+      ?.facts ?? []
+  );
+};
+
+export const simulateRunFunnelReport = (args: Json): GaSimulation =>
+  simulate(() => {
+    const steps = Array.isArray(args.funnel_steps) ? args.funnel_steps.filter(isRecord) : [];
+    if (steps.length === 0) {
+      throw new GaRequestError('400 funnel_steps must contain at least one step');
+    }
+    const breakdown = funnelBreakdownOf(args);
+    const events = steps.map(stepEvent);
+    const names = steps.map((step, index) => String(step.name ?? `Step ${index + 1}`));
+    const facts = funnelFacts(args);
+    const tableRows = breakdownGroups(facts, breakdown).flatMap((group) =>
+      funnelRows(names, funnelUsers(group.facts, events), group.prefix),
+    );
+    return {
+      funnel_table: {
+        dimension_headers: [...(breakdown === undefined ? [] : [breakdown]), FUNNEL_STEP_NAME].map(
+          (name) => ({ name }),
+        ),
+        metric_headers: FUNNEL_METRICS.map((name) => ({ name, type_: 'TYPE_INTEGER' })),
+        rows: tableRows,
+        metadata: {},
+      },
+      funnel_visualization: {
+        dimension_headers: [{ name: FUNNEL_STEP_NAME }],
+        metric_headers: [{ name: 'activeUsers', type_: 'TYPE_INTEGER' }],
+        rows: funnelRows(names, funnelUsers(facts, events), []).map((row) => ({
+          dimension_values: row.dimension_values,
+          metric_values: row.metric_values.slice(0, 1),
+        })),
+      },
+      kind: 'analyticsData#runFunnelReport',
+    };
+  });
+
+export const simulatedFunnelUsers = (args: Json): number[] => {
+  const result = simulateRunFunnelReport(args);
+  if (!result.ok) {
+    throw new GaRequestError(result.error);
+  }
+  const rows = ((result.body.funnel_visualization as Json).rows ?? []) as {
+    metric_values: { value: string }[];
+  }[];
+  return rows.map((row) => Number(row.metric_values[0]?.value ?? 0));
+};
 
 export interface SimulatedRow {
   keys: string[];

@@ -66,13 +66,9 @@ export const HAPPY_HELP_LINES: readonly string[] = [
 
 export const EMPTY_QUESTION_REPLY = 'Що саме цікавить? Напиши питання одним повідомленням.';
 
-export const REDACTED_NOTE =
-  '<i>Частину відповіді прибрано: у ній були числа, яких немає в отриманих даних.</i>';
-
 export const FALLBACK_INTRO = {
   MODEL_DOWN: '<b>Модель зараз недоступна</b>, тому відповідаю сухими даними зі знімка.',
   BUDGET: '<b>Ліміт витрат на модель вичерпано</b>, тому відповідаю сухими даними зі знімка.',
-  UNVERIFIED: '<b>Не зміг перевірити числа у відповіді</b>, тому показую сухі дані зі знімка.',
 } as const;
 
 export const FALLBACK_FAILED_REPLY =

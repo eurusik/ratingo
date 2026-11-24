@@ -4,7 +4,11 @@ import type { Database } from '../../../../database/database.module';
 import { chatExchanges, runs } from '../../../../database/schema';
 import { ChatRoute } from '../../domain/constants/chat.constants';
 import type { ExchangeOutcome } from '../../domain/constants/exchange.constants';
-import type { ChatExchange, ChatExchangeEntry } from '../../domain/entities/chat-exchange';
+import type {
+  ChatExchange,
+  ChatExchangeEntry,
+  LoggedToolCall,
+} from '../../domain/entities/chat-exchange';
 import type {
   ChatExchangeLogPort,
   ExchangeSearch,
@@ -19,8 +23,9 @@ const selection = {
   question: chatExchanges.question,
   answer: chatExchanges.answer,
   outcome: chatExchanges.outcome,
-  cutNumbers: chatExchanges.cutNumbers,
+  flaggedNumbers: chatExchanges.flaggedNumbers,
   toolNames: chatExchanges.toolNames,
+  toolCalls: chatExchanges.toolCalls,
   costUsd: runs.costUsd,
 };
 
@@ -37,8 +42,9 @@ const fromRow = (row: ExchangeRow): ChatExchange => ({
   question: row.question,
   answer: row.answer,
   outcome: row.outcome as ExchangeOutcome,
-  cutNumbers: row.cutNumbers as string[],
+  flaggedNumbers: row.flaggedNumbers as string[],
   toolNames: row.toolNames as string[],
+  toolCalls: (row.toolCalls ?? []) as LoggedToolCall[],
   costUsd: row.costUsd,
 });
 
@@ -54,8 +60,9 @@ export class PostgresChatExchangeRepository implements ChatExchangeLogPort {
       question: entry.question,
       answer: entry.answer,
       outcome: entry.outcome,
-      cutNumbers: [...entry.cutNumbers],
+      flaggedNumbers: [...entry.flaggedNumbers],
       toolNames: [...entry.toolNames],
+      toolCalls: entry.toolCalls.map((call) => ({ ...call })),
     });
   }
 

@@ -9,7 +9,7 @@ describe('exchangeOutcomeOf', () => {
   it.each([
     [ChatOutcome.HANDLED, ExchangeOutcome.ANSWERED],
     [ChatOutcome.ANSWERED, ExchangeOutcome.ANSWERED],
-    [ChatOutcome.REDACTED, ExchangeOutcome.REDACTED],
+    [ChatOutcome.FLAGGED, ExchangeOutcome.FLAGGED],
     [ChatOutcome.FALLBACK, ExchangeOutcome.FALLBACK],
     [ChatOutcome.FAILED, ExchangeOutcome.FAILED],
     [ChatOutcome.IGNORED, null],
