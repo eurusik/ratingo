@@ -7,6 +7,12 @@ import {
 } from '@ratingo/ai-core';
 
 import type { Fixture } from './eval-case';
+import { GA_CUSTOM_DEFINITIONS } from './google-analytics.dataset';
+import {
+  simulateRunRealtimeReport,
+  simulateRunReport,
+  type GaSimulation,
+} from './google-analytics.simulator';
 
 export const GA_SERVER = 'google-analytics';
 const GA_TOOL_PREFIX = `${GA_SERVER}__`;
@@ -76,59 +82,28 @@ const GA_TOOL_LISTING: readonly McpRemoteTool[] = [
   },
 ];
 
-const containsAll = (actual: unknown, expected: unknown): boolean =>
-  Array.isArray(expected)
-    ? Array.isArray(actual) && expected.every((item) => actual.includes(item))
-    : actual === expected;
+type Json = Record<string, unknown>;
 
-export const GaMatchKey = {
-  RANGE_COUNT: 'range_count',
-  FIRST_START_DATE: 'first_start_date',
-} as const;
+const toolError = (tool: string, message: string) => ({
+  isError: true,
+  text: JSON.stringify({ error: `Failed to execute tool '${tool}': ${message}` }),
+});
 
-const rangeFacts = (args: Record<string, unknown>): Record<string, unknown> => {
-  const ranges = Array.isArray(args.date_ranges) ? (args.date_ranges as unknown[]) : [];
-  const first = ranges[0] as { start_date?: unknown } | undefined;
-  return {
-    [GaMatchKey.RANGE_COUNT]: ranges.length,
-    [GaMatchKey.FIRST_START_DATE]: first?.start_date,
-  };
+const answer = (tool: string, result: GaSimulation) =>
+  result.ok ? { isError: false, text: JSON.stringify(result.body) } : toolError(tool, result.error);
+
+const SIMULATED: Readonly<Record<string, (args: Json) => { isError: boolean; text: string }>> = {
+  run_report: (args) => answer('run_report', simulateRunReport(args)),
+  run_realtime_report: (args) => answer('run_realtime_report', simulateRunRealtimeReport(args)),
+  get_custom_dimensions_and_metrics: () => ({
+    isError: false,
+    text: JSON.stringify(GA_CUSTOM_DEFINITIONS),
+  }),
 };
 
-const AUTO_DIMENSIONS: ReadonlySet<string> = new Set(['dateRange']);
-
-const headerNames = (response: unknown): string[] | undefined => {
-  const headers = (response as { dimension_headers?: { name: string }[] } | null)
-    ?.dimension_headers;
-  return headers?.map((header) => header.name);
-};
-
-const sameDimensions = (fixture: Fixture, args: Record<string, unknown>): boolean => {
-  const provided = headerNames(fixture.response);
-  if (provided === undefined) {
-    return true;
-  }
-  const requested = Array.isArray(args.dimensions) ? (args.dimensions as unknown[]) : [];
-  const answered = provided.filter((name) => !AUTO_DIMENSIONS.has(name));
-  return (
-    requested.length === answered.length &&
-    requested.every((name) => answered.includes(name as string))
-  );
-};
-
-const matchesArguments = (fixture: Fixture, args: Record<string, unknown>): boolean => {
-  if (!sameDimensions(fixture, args)) {
-    return false;
-  }
-  const facts = { ...args, ...rangeFacts(args) };
-  return Object.entries(fixture.match ?? {}).every(([key, value]) =>
-    containsAll(facts[key], value),
-  );
-};
-
-export class FixtureGaConnection implements McpConnection {
+export class SimulatedGaConnection implements McpConnection {
   readonly isOpen = true;
-  readonly received: { tool: string; args: Record<string, unknown> }[] = [];
+  readonly received: { tool: string; args: Json }[] = [];
 
   constructor(private readonly fixtures: readonly Fixture[]) {}
 
@@ -136,23 +111,14 @@ export class FixtureGaConnection implements McpConnection {
     return { tools: [...GA_TOOL_LISTING], truncated: false };
   }
 
-  async callTool(name: string, args: Record<string, unknown>) {
+  async callTool(name: string, args: Json) {
     this.received.push({ tool: name, args });
-    const fixture = this.fixtures.find(
-      (entry) => entry.tool === `${GA_TOOL_PREFIX}${name}` && matchesArguments(entry, args),
-    );
-    if (fixture?.error === GA_UNAVAILABLE) {
+    const outage = this.fixtures.find((entry) => entry.tool === `${GA_TOOL_PREFIX}${name}`);
+    if (outage?.error === GA_UNAVAILABLE) {
       throw new McpTimeoutError(GA_SERVER, name, 1);
     }
-    if (fixture === undefined || fixture.error !== undefined) {
-      return {
-        isError: true,
-        text:
-          fixture?.error ??
-          `No eval data for ${name} with dimensions ${JSON.stringify(args.dimensions ?? [])}`,
-      };
-    }
-    return { isError: false, text: JSON.stringify(fixture.response) };
+    const run = SIMULATED[name];
+    return run === undefined ? toolError(name, '404 Unknown tool') : run(args);
   }
 
   onClose(): void {}
@@ -160,39 +126,6 @@ export class FixtureGaConnection implements McpConnection {
   async close(): Promise<void> {}
 }
 
-export const fixtureGaTransport = (connection: FixtureGaConnection): McpTransport => ({
+export const simulatedGaTransport = (connection: SimulatedGaConnection): McpTransport => ({
   connect: async () => connection,
-});
-
-type Row = readonly [readonly string[], readonly string[]];
-
-const rowsOf = (rows: readonly Row[]) =>
-  rows.map(([dimensions, metrics]) => ({
-    dimension_values: dimensions.map((value) => ({ value })),
-    metric_values: metrics.map((value) => ({ value })),
-  }));
-
-export const gaReport = (
-  dimensions: readonly string[],
-  metrics: readonly string[],
-  rows: readonly Row[],
-) => ({
-  dimension_headers: dimensions.map((name) => ({ name })),
-  metric_headers: metrics.map((name) => ({ name, type_: 'TYPE_INTEGER' })),
-  rows: rowsOf(rows),
-  row_count: rows.length,
-  metadata: { currency_code: 'USD', time_zone: 'Europe/Kiev' },
-  kind: 'analyticsData#runReport',
-});
-
-export const gaRealtimeReport = (
-  dimensions: readonly string[],
-  metrics: readonly string[],
-  rows: readonly Row[],
-) => ({
-  dimension_headers: dimensions.map((name) => ({ name })),
-  metric_headers: metrics.map((name) => ({ name, type_: 'TYPE_INTEGER' })),
-  rows: rowsOf(rows),
-  row_count: rows.length,
-  kind: 'analyticsData#runRealtimeReport',
 });

@@ -53,7 +53,7 @@ Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the questi
 
 `eval/chat` replays fixed questions with fixture tool results. Google Analytics cases go through the real gateway and policy, with an in-process fake server that returns GA's real response shape. They need no GA key and no Python.
 
-- **Fake GA server.** It answers only with a fixture whose dimensions are exactly the ones requested, apart from the automatic `dateRange`. A request it has no data for gets an error, never another report.
+- **GA simulator.** The fake GA server is a small deterministic simulator (`eval/chat/google-analytics.dataset.ts` and `google-analytics.simulator.ts`). Synthetic facts (two weeks of traffic by country, device, channel, source, campaign and new vs returning, plus pages, events and a realtime slice) are aggregated by whatever valid dimensions, metrics, date ranges, filters, order and limit a call asks for, in GA's real response shape, including `dateRange` for two ranges. Unknown or incompatible names get GA's error shape. One campaign name is an injection string. Expected numbers in the GA cases are computed from the same simulator, and a period question accepts either the total or the full per-day series.
 - **Wording checks.** They use shared stem patterns from `eval/chat/answer-stems.ts` (honest «no data», «no code review», «minor findings») instead of lists of exact phrases.
 
 ```bash

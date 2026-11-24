@@ -179,6 +179,7 @@ describe('answer stems', () => {
     'Зараз я не можу отримати цифру з Google Analytics: сервіс не відповів на запит (тайм-аут).',
     'Google Analytics зараз не відповідає: запит завершився тайм-аутом.',
     'Даних немає: таких цифр у моїх інструментах нема.',
+    'Даних про дохід у мене немає: жоден із моїх інструментів не показує гроші.',
   ])('reads «%s» as an honest no-data answer', (answer) => {
     expect(HONEST_NO_DATA.test(answer.toLowerCase())).toBe(true);
   });

@@ -28,7 +28,11 @@ import {
 import type { ExternalTools } from '../../src/modules/chat/application/tools/external-tools';
 
 import { callKey, type EvalCase, type Fixture } from './eval-case';
-import { FixtureGaConnection, GA_SERVER, fixtureGaTransport } from './google-analytics.fake-server';
+import {
+  GA_SERVER,
+  SimulatedGaConnection,
+  simulatedGaTransport,
+} from './google-analytics.fake-server';
 import type { CaseResult } from './scorer';
 
 const EVAL_NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
@@ -45,7 +49,7 @@ const fixtureGaTools = async (testCase: EvalCase, clock: ClockPort): Promise<Ext
     registry: createPlatformMcpRegistry(),
     servers: [GA_SERVER],
     env: EVAL_GA_ENV,
-    transport: fixtureGaTransport(new FixtureGaConnection(testCase.fixtures)),
+    transport: simulatedGaTransport(new SimulatedGaConnection(testCase.fixtures)),
     clock,
     telemetry: SILENT_TELEMETRY,
   });

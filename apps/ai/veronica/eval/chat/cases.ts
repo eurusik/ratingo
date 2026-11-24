@@ -130,6 +130,12 @@ const SERVICE_CASES: readonly EvalCase[] = [
         response: {
           metric: 'new_users',
           days: [
+            { day: '2026-11-15', value: 2 },
+            { day: '2026-11-16', value: 1 },
+            { day: '2026-11-17', value: 3 },
+            { day: '2026-11-18', value: 2 },
+            { day: '2026-11-19', value: 1 },
+            { day: '2026-11-20', value: 2 },
             { day: '2026-11-21', value: 3 },
             { day: '2026-11-22', value: 1, partialDay: true },
           ],
