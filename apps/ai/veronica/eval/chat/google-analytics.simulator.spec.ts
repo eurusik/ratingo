@@ -3,8 +3,10 @@ import * as fc from 'fast-check';
 import { GA_INJECTION_CAMPAIGN } from './google-analytics.dataset';
 import { SimulatedGaConnection } from './google-analytics.fake-server';
 import {
+  simulateRunFunnelReport,
   simulateRunRealtimeReport,
   simulateRunReport,
+  simulatedFunnelUsers,
   simulatedRows,
 } from './google-analytics.simulator';
 
@@ -123,5 +125,53 @@ describe('GA simulator', () => {
     );
     expect(all[0]?.value).toBeGreaterThan(0);
     expect(split.find((row) => row.keys[0] === 'last30')?.value).toBe(all[0]?.value);
+  });
+
+  describe('funnels', () => {
+    const steps = [
+      { name: 'Search', event: 'search' },
+      { name: 'Open', event: 'open_title' },
+      { name: 'Save', event: 'save_to_library' },
+    ];
+
+    it('never has more users at a later step and reports fractions for the rates', () => {
+      const result = simulateRunFunnelReport({ date_ranges: WEEK, funnel_steps: steps });
+      const users = simulatedFunnelUsers({ date_ranges: WEEK, funnel_steps: steps });
+      const table = result.ok
+        ? (result.body.funnel_table as { rows: { metric_values: { value: string }[] }[] })
+        : undefined;
+
+      expect(users[0]).toBeGreaterThan(0);
+      expect(users.every((count, index) => index === 0 || count <= (users[index - 1] ?? 0))).toBe(
+        true,
+      );
+      const completion = Number(table?.rows[0]?.metric_values[1]?.value);
+      expect(completion).toBeGreaterThan(0);
+      expect(completion).toBeLessThan(1);
+    });
+
+    it('gives zero users from an unknown event onwards', () => {
+      expect(
+        simulatedFunnelUsers({
+          date_ranges: WEEK,
+          funnel_steps: [steps[0], { name: 'Share', event: 'share_title' }, steps[2]],
+        }).slice(1),
+      ).toEqual([0, 0]);
+    });
+
+    it('breaks down by device and refuses other breakdowns', () => {
+      const byDevice = simulateRunFunnelReport({
+        date_ranges: WEEK,
+        funnel_steps: steps,
+        funnel_breakdown: { breakdown_dimension: 'deviceCategory' },
+      });
+      const byCountry = simulateRunFunnelReport({
+        date_ranges: WEEK,
+        funnel_steps: steps,
+        funnel_breakdown: { breakdown_dimension: 'country' },
+      });
+      expect(byDevice.ok).toBe(true);
+      expect(byCountry.ok).toBe(false);
+    });
   });
 });

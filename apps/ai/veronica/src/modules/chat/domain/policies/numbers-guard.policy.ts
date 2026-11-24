@@ -1,3 +1,5 @@
+import { isRoundingOfKnown, knownDecimals, type WrittenNumber } from './rounded-numbers.policy';
+
 const NUMBER_TOKEN =
   /(?<![\p{L}_\d])(?:\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d+)?(?!\d)|\d[\d.,]*\d|\d)(?![xXхХ]{2})/gu;
 const SPACES = /[ \u00a0\u202f]/g;
@@ -75,6 +77,16 @@ const withoutListMarkers = (text: string): string =>
 
 export const extractNumbers = (text: string): string[][] =>
   [...withoutListMarkers(text).matchAll(NUMBER_TOKEN)].map((match) => interpretations(match[0]));
+
+const PERCENT_AFTER = /^\s?(?:%|відсот)/iu;
+
+const writtenNumbers = (text: string): WrittenNumber[] => {
+  const prepared = withoutListMarkers(text);
+  return [...prepared.matchAll(NUMBER_TOKEN)].map((match) => ({
+    candidates: interpretations(match[0]),
+    percent: PERCENT_AFTER.test(prepared.slice((match.index ?? 0) + match[0].length)),
+  }));
+};
 
 export const knownNumbers = (sources: readonly string[]): ReadonlySet<string> =>
   new Set(sources.flatMap((source) => extractNumbers(source).flat()));
@@ -163,17 +175,24 @@ const withoutKnownDates = (answer: string, dates: ReadonlySet<string>): string =
 
 const NO_DATES: ReadonlySet<string> = new Set();
 
-const isVerified = (candidates: readonly string[], known: ReadonlySet<string>): boolean =>
-  candidates.some((candidate) => known.has(candidate));
+const isVerified = (
+  number: WrittenNumber,
+  known: ReadonlySet<string>,
+  decimals: readonly number[],
+): boolean =>
+  number.candidates.some((candidate) => known.has(candidate)) ||
+  isRoundingOfKnown(number, decimals);
 
 export const unverifiedNumbers = (
   answer: string,
   known: ReadonlySet<string>,
   dates: ReadonlySet<string> = NO_DATES,
-): string[] =>
-  extractNumbers(withoutKnownDates(answer, dates))
-    .filter((candidates) => !isVerified(candidates, known))
-    .map((candidates) => candidates[0] ?? '');
+): string[] => {
+  const decimals = knownDecimals(known);
+  return writtenNumbers(withoutKnownDates(answer, dates))
+    .filter((number) => !isVerified(number, known, decimals))
+    .map((number) => number.candidates[0] ?? '');
+};
 
 export interface RedactionResult {
   text: string;

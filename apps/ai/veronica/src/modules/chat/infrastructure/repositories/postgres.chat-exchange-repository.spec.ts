@@ -39,6 +39,7 @@ const entry = (runId: string, overrides: Partial<ChatExchangeEntry> = {}): ChatE
   outcome: ExchangeOutcome.ANSWERED,
   cutNumbers: [],
   toolNames: ['metrics_query'],
+  toolCalls: [{ tool: 'metrics_query', input: '{"template":"queue_throughput"}' }],
   ...overrides,
 });
 

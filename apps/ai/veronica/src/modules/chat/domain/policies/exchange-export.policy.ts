@@ -4,7 +4,7 @@ import {
   EXPORT_WINDOW_UNIT_MS,
   ExchangeOutcome,
 } from '../constants/exchange.constants';
-import type { ChatExchange } from '../entities/chat-exchange';
+import type { ChatExchange, LoggedToolCall } from '../entities/chat-exchange';
 
 const WINDOW_PATTERN = /^(\d+)([hd])$/;
 const OUTCOMES: readonly string[] = Object.values(ExchangeOutcome);
@@ -35,6 +35,7 @@ export interface EvalCaseDraft {
     costUsd: number;
     createdAtMs: number;
     runId: string;
+    toolCalls: readonly LoggedToolCall[];
   };
 }
 
@@ -81,5 +82,6 @@ export const toEvalCaseDraft = (exchange: ChatExchange): EvalCaseDraft => ({
     costUsd: exchange.costUsd,
     createdAtMs: exchange.createdAtMs,
     runId: exchange.runId,
+    toolCalls: exchange.toolCalls,
   },
 });

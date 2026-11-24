@@ -100,9 +100,9 @@ A call that times out closes that process (`recycled_after_timeout`), so a hung 
 
 - **Transport and credentials.** It speaks stdio by default. `--transport http` exists too, but needs a per-request OAuth bearer token, so it doesn't fit a service account. In stdio mode it authenticates with Application Default Credentials, so it gets `GOOGLE_APPLICATION_CREDENTIALS`, the path of a service account key file. It asks only for the `analytics.readonly` scope; `--allow-write` is never passed.
 - **Property id.** The GA4 property comes from the `GA_PROPERTY_ID` setting and is pinned into every call. The subprocess never sees the setting itself.
-- **Exposed tools.** `run_report`, `run_realtime_report` and `get_custom_dimensions_and_metrics`. Each has a short description of our own and a list of exposed arguments: the paging, quota and currency arguments are hidden.
+- **Exposed tools.** `run_report`, `run_realtime_report`, `run_funnel_report` (steps as `{name, event}`, one date range, optional `deviceCategory` breakdown; `funnel_next_action` and `segments` hidden) and `get_custom_dimensions_and_metrics`. Each has a short description of our own and a list of exposed arguments: the paging, quota and currency arguments are hidden.
 - **Limits.** Date ranges reach at most 90 days back, with two ranges at most, which is enough for this week against last week. `limit` defaults to 20 with a maximum of 50. A report takes at most 4 dimensions and 5 metrics (3 and 4 for realtime) and at most 3 `order_bys`.
-- **Left out on purpose.** `run_funnel_report` and `run_conversions_report` need nested funnel and conversion specs that a small model gets wrong, and Ratingo runs no ads. `list_key_events`: an event count is a `run_report` on `eventName`. `get_account_summaries`: the property is pinned, so the model never needs to see which accounts the service account can reach. The admin and write tools are also left out.
+- **Left out on purpose.** `run_conversions_report` needs nested conversion specs, and Ratingo runs no ads. `list_key_events`: an event count is a `run_report` on `eventName`. `get_account_summaries`: the property is pinned, so the model never needs to see which accounts the service account can reach. The admin and write tools are also left out.
 
 The GA property id is the numeric property id, not the `G-…` measurement id.
 

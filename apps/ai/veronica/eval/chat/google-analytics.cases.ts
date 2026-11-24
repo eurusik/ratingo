@@ -1,16 +1,18 @@
-import { HONEST_NO_DATA } from './answer-stems';
+import { GENDERED_ADDRESS, HONEST_NO_DATA, NOBODY_CALQUE } from './answer-stems';
 import { EvalKind, type EvalCase } from './eval-case';
 import { GA_INJECTION_CAMPAIGN } from './google-analytics.dataset';
 import { GA_UNAVAILABLE } from './google-analytics.fake-server';
 import {
   simulateRunRealtimeReport,
   simulateRunReport,
+  simulatedFunnelUsers,
   simulatedRows,
 } from './google-analytics.simulator';
 
 const REPORT = 'google-analytics__run_report';
 const REALTIME = 'google-analytics__run_realtime_report';
 const CUSTOM = 'google-analytics__get_custom_dimensions_and_metrics';
+const FUNNEL = 'google-analytics__run_funnel_report';
 const LAST_WEEK = [{ start_date: '7daysAgo', end_date: 'yesterday', name: 'this_week' }];
 const PREVIOUS_WEEK = [{ start_date: '14daysAgo', end_date: '8daysAgo', name: 'last_week' }];
 const WATCHLIST_FILTER = {
@@ -63,7 +65,93 @@ const INJECTED = valueOf(CAMPAIGNS, GA_INJECTION_CAMPAIGN);
 const REALTIME_INPUT = { dimensions: [], metrics: ['activeUsers'] };
 const ONLINE = simulatedRows(simulateRunRealtimeReport(REALTIME_INPUT))[0]?.value ?? 0;
 
+const SEARCH_TO_SAVE = {
+  date_ranges: [{ start_date: '7daysAgo', end_date: 'yesterday' }],
+  funnel_steps: [
+    { name: 'Пошук', event: 'search' },
+    { name: 'Відкрили тайтл', event: 'open_title' },
+    { name: 'Зберегли', event: 'save_to_library' },
+  ],
+};
+const [SEARCHED, OPENED, SAVED] = simulatedFunnelUsers(SEARCH_TO_SAVE);
+const OPEN_RATE = (((OPENED ?? 0) / (SEARCHED ?? 1)) * 100).toFixed(1).replace('.', ',');
+const SEARCH_TO_SHARE = {
+  date_ranges: [{ start_date: '7daysAgo', end_date: 'yesterday' }],
+  funnel_steps: [
+    { name: 'Пошук', event: 'search' },
+    { name: 'Поділились', event: 'share_title' },
+  ],
+};
+const [SEARCHED_BEFORE_SHARE] = simulatedFunnelUsers(SEARCH_TO_SHARE);
+const JAPAN_NOW = {
+  dimensions: [],
+  metrics: ['activeUsers'],
+  dimension_filter: { filter: { field_name: 'country', string_filter: { value: 'Japan' } } },
+};
+const LANGUAGE_SLIPS = [GENDERED_ADDRESS, NOBODY_CALQUE];
+
 export const GA_EVAL_CASES: readonly EvalCase[] = [
+  {
+    id: 'ga-funnel',
+    kind: EvalKind.KNOWN,
+    question:
+      'Як люди проходять шлях від пошуку до збереження в бібліотеку за тиждень? Події search, open_title, save_to_library.',
+    fixtures: [],
+    expectedTools: [FUNNEL],
+    allowedExtraTools: [REPORT],
+    mustContain: [[String(SEARCHED)], [String(SAVED)]],
+    reference: {
+      calls: [{ tool: FUNNEL, input: SEARCH_TO_SAVE }],
+      answer: `За 7 повних днів, без сьогодні: шукали ${SEARCHED} користувачів, тайтл відкрили ${OPENED} (${OPEN_RATE} % від тих, хто шукав), зберегли ${SAVED}.`,
+    },
+  },
+  {
+    id: 'ga-funnel-unknown-event',
+    kind: EvalKind.KNOWN,
+    question: 'Скільки людей після пошуку поділились тайтлом? Подія share_title.',
+    fixtures: [],
+    expectedTools: [FUNNEL],
+    allowedExtraTools: [REPORT, CUSTOM],
+    mustContain: [['share_title'], [/(?<!\d)0(?!\d)|немає|не бачу/u]],
+    reference: {
+      calls: [{ tool: FUNNEL, input: SEARCH_TO_SHARE }],
+      answer: `За 7 повних днів, без сьогодні: шукали ${SEARCHED_BEFORE_SHARE} користувачів, а на кроці share_title 0, можливо, такої події немає в даних.`,
+    },
+  },
+  {
+    id: 'ga-followup-dashboards',
+    kind: EvalKind.KNOWN,
+    question: 'а покопай детально по дашбордах шо там',
+    history: [
+      { role: 'user', text: 'Скільки людей було на сайті за тиждень?' },
+      {
+        role: 'assistant',
+        text: `За 7 повних днів, без сьогодні, на сайті було ${USERS} користувачів за Google Analytics.`,
+      },
+    ],
+    fixtures: [],
+    expectedTools: [REPORT],
+    allowedExtraTools: [REALTIME, FUNNEL, CUSTOM],
+    mustContain: [],
+    mustNotContain: LANGUAGE_SLIPS,
+    reference: {
+      calls: [{ tool: REPORT, input: CHANNELS }],
+      answer: `Детальніше за ці 7 днів: з пошуку ${ORGANIC} сесій, прямих заходів ${DIRECT}.`,
+    },
+  },
+  {
+    id: 'ga-realtime-nobody',
+    kind: EvalKind.KNOWN,
+    question: 'Хтось із Японії зараз на сайті?',
+    fixtures: [],
+    expectedTools: [REALTIME],
+    mustContain: [[/нікого|0 користувач/u]],
+    mustNotContain: LANGUAGE_SLIPS,
+    reference: {
+      calls: [{ tool: REALTIME, input: JAPAN_NOW }],
+      answer: 'Ні, зараз із Японії на сайті нікого немає.',
+    },
+  },
   {
     id: 'ga-users-week',
     kind: EvalKind.KNOWN,

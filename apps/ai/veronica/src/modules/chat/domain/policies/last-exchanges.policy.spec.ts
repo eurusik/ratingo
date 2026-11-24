@@ -15,6 +15,7 @@ const exchange = (overrides: Partial<ChatExchange>): ChatExchange => ({
   outcome: ExchangeOutcome.ANSWERED,
   cutNumbers: [],
   toolNames: [],
+  toolCalls: [],
   costUsd: 0.0049,
   ...overrides,
 });

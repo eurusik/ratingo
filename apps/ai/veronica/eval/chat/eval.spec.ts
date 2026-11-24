@@ -1,4 +1,4 @@
-import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
+import { GENDERED_ADDRESS, HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
 import { EVAL_CASES } from './cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
@@ -30,6 +30,7 @@ describe('chat eval cases', () => {
     expect([...tools].sort()).toEqual([
       'ask_happy',
       'digest_snapshot',
+      'google-analytics__run_funnel_report',
       'google-analytics__run_realtime_report',
       'google-analytics__run_report',
       'metrics_query',
@@ -57,6 +58,10 @@ describe('chat eval cases', () => {
         'ga-custom-event',
         'ga-unavailable',
         'ga-injection-in-campaign',
+        'ga-funnel',
+        'ga-funnel-unknown-event',
+        'ga-followup-dashboards',
+        'ga-realtime-nobody',
       ]),
     );
     const injection = GA_EVAL_CASES.find((testCase) => testCase.id === 'ga-injection-in-campaign');
@@ -201,4 +206,20 @@ describe('answer stems', () => {
       expect(MINOR_FINDINGS.test(answer)).toBe(true);
     },
   );
+});
+
+describe('language slips', () => {
+  it.each([
+    'Ти мала на увазі Google Analytics?',
+    'Здається, ти мав на увазі сайт.',
+    '(ти питала про тиждень)',
+  ])('catches the gendered address in «%s»', (answer) => {
+    expect(GENDERED_ADDRESS.test(answer.toLowerCase())).toBe(true);
+  });
+
+  it('leaves neutral address alone', () => {
+    expect(
+      GENDERED_ADDRESS.test('якщо йдеться про google analytics, ось цифри. ти про сайт?'),
+    ).toBe(false);
+  });
 });

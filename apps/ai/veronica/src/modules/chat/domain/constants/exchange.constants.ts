@@ -23,3 +23,6 @@ export const EXPORT_WINDOW_UNIT_MS = {
   h: MS_PER_HOUR,
   d: MS_PER_DAY,
 } as const;
+
+export const TOOL_CALL_LOG_MAX_CALLS = 12;
+export const TOOL_CALL_LOG_INPUT_MAX_CHARS = 600;

@@ -55,6 +55,7 @@ export const chatExchanges = aiSchema.table(
     outcome: text('outcome').notNull(),
     cutNumbers: jsonb('cut_numbers').notNull(),
     toolNames: jsonb('tool_names').notNull(),
+    toolCalls: jsonb('tool_calls'),
   },
   (table) => [
     index('chat_exchanges_chat_created_idx').on(table.chatId, table.createdAt),

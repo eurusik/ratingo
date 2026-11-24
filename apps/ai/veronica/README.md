@@ -47,7 +47,7 @@ What to watch in Grafana:
 
 ## Answer log
 
-Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the question, the final checked answer, the outcome (`answered`, `redacted`, `fallback`, `failed`), the numbers the guard cut and the tool names. Tool payloads are never stored. A failed write is logged and never affects the reply.
+Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the question, the final checked answer, the outcome (`answered`, `redacted`, `fallback`, `failed`), the numbers the guard cut, the tool names and each call's arguments (`tool_calls`, redacted and capped), so a live answer can be audited. Tool results are never stored. A failed write is logged and never affects the reply.
 
 ### Chat eval
 

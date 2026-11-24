@@ -5,6 +5,7 @@ import {
 
 import {
   GA_EVAL_TODAY,
+  GA_EVENTS_PER_USER,
   GA_REALTIME_TABLE,
   GA_REPORT_TABLES,
   type Fact,
@@ -18,6 +19,7 @@ export type GaSimulation = { ok: true; body: Json } | { ok: false; error: string
 class GaRequestError extends Error {}
 
 const DATE_RANGE = 'dateRange';
+const DEFAULT_FUNNEL_RANGE = [{ start_date: '28daysAgo', end_date: 'yesterday' }];
 const API_SCHEMA_URL =
   'https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema';
 const DAYS_AGO = /^(\d{1,3})daysAgo$/;
@@ -349,6 +351,136 @@ export const simulateRunRealtimeReport = (args: Json): GaSimulation =>
     });
     return realtime;
   });
+
+const FUNNEL_STEP_NAME = 'funnelStepName';
+const FUNNEL_BREAKDOWNS: ReadonlySet<string> = new Set(['deviceCategory']);
+const STEP_CARRY_OVER = 0.8;
+const FUNNEL_METRICS = [
+  'activeUsers',
+  'funnelStepCompletionRate',
+  'funnelStepAbandonments',
+  'funnelStepAbandonmentRate',
+];
+
+const stepEvent = (step: Json): string => {
+  if (typeof step.event === 'string') return step.event;
+  const expression = isRecord(step.filter_expression) ? step.filter_expression : {};
+  const eventFilter = isRecord(expression.funnel_event_filter)
+    ? expression.funnel_event_filter
+    : {};
+  return String(eventFilter.event_name ?? '');
+};
+
+const usersByEvent = (facts: readonly Fact[], event: string): number =>
+  Math.round(
+    facts
+      .filter((fact) => fact.eventName === event)
+      .reduce((sum, fact) => sum + Number(fact.eventCount), 0) / (GA_EVENTS_PER_USER[event] ?? 1),
+  );
+
+const funnelUsers = (facts: readonly Fact[], events: readonly string[]): number[] =>
+  events.reduce<number[]>((users, event, index) => {
+    const reached = usersByEvent(facts, event);
+    const previous = users[index - 1];
+    return [
+      ...users,
+      previous === undefined ? reached : Math.min(previous, Math.round(reached * STEP_CARRY_OVER)),
+    ];
+  }, []);
+
+const stepMetrics = (count: number, next: number | undefined): number[] => {
+  if (next === undefined || count === 0) {
+    return [count, 0, 0, 0];
+  }
+  const completion = next / count;
+  return [count, completion, count - next, 1 - completion];
+};
+
+const funnelRows = (
+  names: readonly string[],
+  users: readonly number[],
+  prefix: readonly string[],
+) =>
+  users.map((count, index) => ({
+    dimension_values: [...prefix, `${index + 1}. ${names[index]}`].map((value) => ({ value })),
+    metric_values: stepMetrics(count, users[index + 1]).map((value) => ({ value: String(value) })),
+  }));
+
+const funnelBreakdownOf = (args: Json): string | undefined => {
+  const requested = isRecord(args.funnel_breakdown)
+    ? args.funnel_breakdown.breakdown_dimension
+    : undefined;
+  if (typeof requested !== 'string') {
+    return undefined;
+  }
+  if (!FUNNEL_BREAKDOWNS.has(requested)) {
+    throw new GaRequestError(
+      `400 Field ${requested} is not available as a funnel breakdown in the eval data.`,
+    );
+  }
+  return requested;
+};
+
+const breakdownGroups = (facts: readonly Fact[], breakdown: string | undefined) =>
+  breakdown === undefined
+    ? [{ prefix: [] as string[], facts }]
+    : [...new Set(facts.map((fact) => String(fact[breakdown])))].map((value) => ({
+        prefix: [value],
+        facts: facts.filter((fact) => String(fact[breakdown]) === value),
+      }));
+
+const funnelFacts = (args: Json): readonly Fact[] => {
+  const table = GA_REPORT_TABLES.find((candidate) => candidate.name === 'events') as FactTable;
+  return (
+    dateSlices(table, { ...args, date_ranges: args.date_ranges ?? DEFAULT_FUNNEL_RANGE })[0]
+      ?.facts ?? []
+  );
+};
+
+export const simulateRunFunnelReport = (args: Json): GaSimulation =>
+  simulate(() => {
+    const steps = Array.isArray(args.funnel_steps) ? args.funnel_steps.filter(isRecord) : [];
+    if (steps.length === 0) {
+      throw new GaRequestError('400 funnel_steps must contain at least one step');
+    }
+    const breakdown = funnelBreakdownOf(args);
+    const events = steps.map(stepEvent);
+    const names = steps.map((step, index) => String(step.name ?? `Step ${index + 1}`));
+    const facts = funnelFacts(args);
+    const tableRows = breakdownGroups(facts, breakdown).flatMap((group) =>
+      funnelRows(names, funnelUsers(group.facts, events), group.prefix),
+    );
+    return {
+      funnel_table: {
+        dimension_headers: [...(breakdown === undefined ? [] : [breakdown]), FUNNEL_STEP_NAME].map(
+          (name) => ({ name }),
+        ),
+        metric_headers: FUNNEL_METRICS.map((name) => ({ name, type_: 'TYPE_INTEGER' })),
+        rows: tableRows,
+        metadata: {},
+      },
+      funnel_visualization: {
+        dimension_headers: [{ name: FUNNEL_STEP_NAME }],
+        metric_headers: [{ name: 'activeUsers', type_: 'TYPE_INTEGER' }],
+        rows: funnelRows(names, funnelUsers(facts, events), []).map((row) => ({
+          dimension_values: row.dimension_values,
+          metric_values: row.metric_values.slice(0, 1),
+        })),
+      },
+      kind: 'analyticsData#runFunnelReport',
+    };
+  });
+
+export const simulatedFunnelUsers = (args: Json): number[] => {
+  const result = simulateRunFunnelReport(args);
+  if (!result.ok) {
+    throw new GaRequestError(result.error);
+  }
+  const rows = ((result.body.funnel_visualization as Json).rows ?? []) as {
+    metric_values: { value: string }[];
+  }[];
+  return rows.map((row) => Number(row.metric_values[0]?.value ?? 0));
+};
 
 export interface SimulatedRow {
   keys: string[];

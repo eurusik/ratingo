@@ -48,7 +48,23 @@ const PAGES = {
   '/shows/severance': { weight: 0.85, title: 'Розділення' },
   '/search': { weight: 0.5, title: 'Пошук' },
 };
-const EVENTS = { page_view: 30, add_to_watchlist: 1, search: 2.2, rate_title: 0.6 };
+const EVENTS = {
+  page_view: 30,
+  add_to_watchlist: 1,
+  search: 2.2,
+  open_title: 1.7,
+  save_to_library: 0.55,
+  rate_title: 0.6,
+};
+
+export const GA_EVENTS_PER_USER: Readonly<Record<string, number>> = {
+  page_view: 6,
+  add_to_watchlist: 1.2,
+  search: 1.8,
+  open_title: 1.6,
+  save_to_library: 1.1,
+  rate_title: 1.3,
+};
 const SCREENS = { Ratingo: 3, 'Дюна: Частина друга': 1, Пошук: 0.5 };
 
 const USERS_BASE = 2.1;
