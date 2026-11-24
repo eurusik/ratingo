@@ -146,6 +146,12 @@ export {
   UnknownMcpServerError,
 } from './mcp/mcp-server.registry';
 export { PLATFORM_MCP_SERVERS, createPlatformMcpRegistry } from './mcp/platform-mcp-servers';
+export {
+  GOOGLE_ANALYTICS_MCP_HOME,
+  GOOGLE_ANALYTICS_MCP_SERVER,
+  GOOGLE_ANALYTICS_MCP_VERSION,
+  GoogleAnalyticsMcpKey,
+} from './mcp/servers/google-analytics.mcp-server';
 export type {
   McpArgumentConstraint,
   McpCallDecision,

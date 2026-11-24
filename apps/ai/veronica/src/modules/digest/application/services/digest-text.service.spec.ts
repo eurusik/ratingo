@@ -1,5 +1,3 @@
-import * as path from 'node:path';
-
 import {
   AgentLoop,
   FixedClock,
@@ -8,10 +6,11 @@ import {
   RunTrigger,
   StubModelAdapter,
   ToolRegistry,
-  loadAgentFolder,
   type StubScript,
 } from '@ratingo/ai-core';
 import { ContentPartType, StopReason, createStubScript, StubScenario } from '@ratingo/ai-core';
+
+import { loadVeronicaAgentFolder } from '../../../../core/agent-folder';
 
 import { buildModelAliases, MODEL_PRICES } from '../../../../config/models.config';
 import { createDigestStubScript } from '../../../../core/stub-digest.script';
@@ -36,9 +35,7 @@ const textScript = (reply: unknown): StubScript => ({
 });
 
 const build = async (script: StubScript) => {
-  const folder = await loadAgentFolder(path.resolve(__dirname, '../../../../../agent'), {
-    knownModelAliases: ['fast', 'review', 'smart'],
-  });
+  const folder = await loadVeronicaAgentFolder();
   const clock = new FixedClock(NOW_MS);
   const runs = new InMemoryRunRepository();
   const loop = new AgentLoop({

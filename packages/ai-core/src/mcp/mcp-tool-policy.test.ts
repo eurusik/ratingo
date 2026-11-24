@@ -1,7 +1,9 @@
 import * as fc from 'fast-check';
 import { epochDayOf } from './mcp-calendar';
 import {
+  allowedArgumentsOf,
   decideMcpCall,
+  hiddenRequiredArguments,
   exposedInputSchema,
   MAX_SCHEMA_DESCRIPTION_CHARS,
   undeclaredPolicyArguments,
@@ -38,7 +40,7 @@ const KNOWN_ARGUMENTS = [
   'metrics',
   'date_ranges',
 ];
-const CONTEXT = { todayEpochDay: TODAY, knownArguments: KNOWN_ARGUMENTS };
+const CONTEXT = { todayEpochDay: TODAY, allowedArguments: KNOWN_ARGUMENTS };
 const policy: McpToolPolicy = { tools: { run_report: reportRule, echo: { description: 'Echo.' } } };
 
 const anyJson = fc.jsonValue();
@@ -123,7 +125,7 @@ describe('decideMcpCall', () => {
   });
 
   it('fills a default only for an argument the tool declares', () => {
-    const narrow = { todayEpochDay: TODAY, knownArguments: ['dimensions'] };
+    const narrow = { todayEpochDay: TODAY, allowedArguments: ['dimensions'] };
     expect(decideMcpCall(policy, 'run_report', {}, narrow)).toEqual({
       allowed: true,
       arguments: { property_id: '123', currency_code: 'USD' },
@@ -230,6 +232,69 @@ describe('decideMcpCall', () => {
       allowed: false,
       refusal: expect.objectContaining({ code: McpRefusalCode.INVALID_ARGUMENTS }),
     });
+  });
+});
+
+describe('exposed arguments', () => {
+  const narrowRule: McpToolRule = {
+    description: 'Report',
+    exposedArguments: ['dimensions', 'limit'],
+    pinnedArguments: { property_id: '123' },
+    constraints: { limit: { kind: McpConstraintKind.NUMBER, min: 1, max: 50, default: 10 } },
+  };
+  const schema = {
+    type: 'object',
+    properties: { property_id: {}, dimensions: {}, limit: {}, offset: {}, currency_code: {} },
+    required: ['property_id', 'dimensions', 'currency_code'],
+  };
+
+  it('shows only exposed arguments and refuses the hidden ones', () => {
+    const allowed = allowedArgumentsOf(narrowRule, schema);
+    const narrowPolicy = { tools: { run_report: narrowRule } };
+    const context = { todayEpochDay: TODAY, allowedArguments: allowed };
+
+    expect(Object.keys(exposedInputSchema(schema, narrowRule).properties as object)).toEqual([
+      'dimensions',
+      'limit',
+    ]);
+    expect(decideMcpCall(narrowPolicy, 'run_report', { offset: 5 }, context)).toEqual({
+      allowed: false,
+      refusal: expect.objectContaining({
+        code: McpRefusalCode.UNKNOWN_ARGUMENT,
+        argument: 'offset',
+      }),
+    });
+    expect(decideMcpCall(narrowPolicy, 'run_report', { dimensions: ['date'] }, context)).toEqual({
+      allowed: true,
+      arguments: { dimensions: ['date'], limit: 10, property_id: '123' },
+    });
+  });
+
+  it('never forwards a hidden argument', () => {
+    const allowed = allowedArgumentsOf(narrowRule, schema);
+    const narrowPolicy = { tools: { run_report: narrowRule } };
+    fc.assert(
+      fc.property(
+        fc.dictionary(fc.constantFrom(...Object.keys(schema.properties)), fc.jsonValue()),
+        (args) => {
+          const decision = decideMcpCall(narrowPolicy, 'run_report', args, {
+            todayEpochDay: TODAY,
+            allowedArguments: allowed,
+          });
+          if (decision.allowed) {
+            expect(
+              Object.keys(decision.arguments).every((key) =>
+                ['dimensions', 'limit', 'property_id'].includes(key),
+              ),
+            ).toBe(true);
+          }
+        },
+      ),
+    );
+  });
+
+  it('names a required argument the model cannot see and nobody pins', () => {
+    expect(hiddenRequiredArguments(narrowRule, schema)).toEqual(['currency_code']);
   });
 });
 

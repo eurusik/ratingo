@@ -1,5 +1,6 @@
 import { validateMcpServerDefinition } from './mcp-server.definition';
 import type { McpServerDefinition } from './mcp-server.definition';
+import type { McpToolRule } from './mcp-tool-policy.types';
 
 export type McpEnvValues = Readonly<Record<string, string | undefined>>;
 
@@ -10,7 +11,7 @@ export interface ConfiguredMcpServer {
 
 export interface UnconfiguredMcpServer {
   definition: McpServerDefinition;
-  missingEnv: readonly string[];
+  missingKeys: readonly string[];
 }
 
 export interface ResolvedMcpServers {
@@ -50,6 +51,30 @@ function explicitEnv(
   return { ...definition.env.constants, ...Object.fromEntries(fromConfig) };
 }
 
+function pinnedFromSettings(rule: McpToolRule, values: McpEnvValues): McpToolRule {
+  const resolved = Object.entries(rule.pinnedFromSettings ?? {}).map(
+    ([argument, setting]) => [argument, values[setting] ?? ''] as const,
+  );
+  return {
+    ...rule,
+    pinnedArguments: { ...rule.pinnedArguments, ...Object.fromEntries(resolved) },
+    pinnedFromSettings: undefined,
+  };
+}
+
+function withSettingsPinned(
+  definition: McpServerDefinition,
+  values: McpEnvValues,
+): McpServerDefinition {
+  const tools = Object.fromEntries(
+    Object.entries(definition.policy.tools).map(([tool, rule]) => [
+      tool,
+      pinnedFromSettings(rule, values),
+    ]),
+  );
+  return { ...definition, policy: { tools } };
+}
+
 export class McpServerRegistry {
   private readonly definitions: ReadonlyMap<string, McpServerDefinition>;
 
@@ -76,11 +101,16 @@ export class McpServerRegistry {
       if (definition === undefined) {
         throw new UnknownMcpServerError(name, this.names());
       }
-      const missingEnv = definition.env.required.filter((key) => !hasValue(values[key]));
-      if (missingEnv.length > 0) {
-        unconfigured.push({ definition, missingEnv });
+      const missingKeys = [...definition.env.required, ...(definition.settings ?? [])].filter(
+        (key) => !hasValue(values[key]),
+      );
+      if (missingKeys.length > 0) {
+        unconfigured.push({ definition, missingKeys });
       } else {
-        configured.push({ definition, env: explicitEnv(definition, values) });
+        configured.push({
+          definition: withSettingsPinned(definition, values),
+          env: explicitEnv(definition, values),
+        });
       }
     }
     return { configured, unconfigured };

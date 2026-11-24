@@ -1,7 +1,7 @@
 import type { Tool } from '../tools/define-tool';
 import type { ToolSource } from '../tools/tool-source.port';
 import { BridgedMcpTool } from './mcp-tool-bridge';
-import { undeclaredPolicyArguments } from './mcp-tool-policy';
+import { hiddenRequiredArguments, undeclaredPolicyArguments } from './mcp-tool-policy';
 import type { McpToolRule } from './mcp-tool-policy.types';
 import type { McpBridgeDependencies } from './mcp-tool-bridge';
 import type { McpSession } from './mcp-session';
@@ -27,11 +27,19 @@ function mismatchesOf(
   if (!isReadOnly(found)) {
     return [{ server, event: McpServerEvent.TOOL_NOT_READ_ONLY, detail: toolName }];
   }
-  return undeclaredPolicyArguments(rule, found.inputSchema).map((argument) => ({
+  const record = (event: McpServerEvent) => (argument: string) => ({
     server,
-    event: McpServerEvent.POLICY_ARGUMENT_UNDECLARED,
+    event,
     detail: `${toolName}.${argument}`,
-  }));
+  });
+  return [
+    ...undeclaredPolicyArguments(rule, found.inputSchema).map(
+      record(McpServerEvent.POLICY_ARGUMENT_UNDECLARED),
+    ),
+    ...hiddenRequiredArguments(rule, found.inputSchema).map(
+      record(McpServerEvent.REQUIRED_ARGUMENT_HIDDEN),
+    ),
+  ];
 }
 
 export class McpToolSource implements ToolSource {

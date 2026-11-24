@@ -45,8 +45,14 @@ function withDefaults(input: Json, rule: McpToolRule, known: readonly string[]):
   return { ...input, ...Object.fromEntries(defaults) };
 }
 
-export function argumentNamesOf(schema: JsonSchema): string[] {
+function argumentNamesOf(schema: JsonSchema): string[] {
   return isRecord(schema.properties) ? Object.keys(schema.properties) : [];
+}
+
+export function allowedArgumentsOf(rule: McpToolRule, schema: JsonSchema): string[] {
+  const known = argumentNamesOf(schema);
+  const exposed = rule.exposedArguments;
+  return exposed === undefined ? known : known.filter((key) => exposed.includes(key));
 }
 
 export function undeclaredPolicyArguments(rule: McpToolRule, schema: JsonSchema): string[] {
@@ -54,8 +60,9 @@ export function undeclaredPolicyArguments(rule: McpToolRule, schema: JsonSchema)
   const named = [
     ...Object.keys(rule.pinnedArguments ?? {}),
     ...Object.keys(rule.constraints ?? {}),
+    ...(rule.exposedArguments ?? []),
   ];
-  return named.filter((key) => !known.includes(key));
+  return [...new Set(named)].filter((key) => !known.includes(key));
 }
 
 function firstUnknownArgument(input: Json, known: readonly string[]): string | undefined {
@@ -104,7 +111,7 @@ export function decideMcpCall(
     });
   }
   const fromModel = withoutPinned(input, rule);
-  const unknown = firstUnknownArgument(fromModel, context.knownArguments);
+  const unknown = firstUnknownArgument(fromModel, context.allowedArguments);
   if (unknown !== undefined) {
     return refused({
       code: McpRefusalCode.UNKNOWN_ARGUMENT,
@@ -112,7 +119,7 @@ export function decideMcpCall(
       message: `"${unknown}" is not an argument of this tool`,
     });
   }
-  const prepared = withDefaults(fromModel, rule, context.knownArguments);
+  const prepared = withDefaults(fromModel, rule, context.allowedArguments);
   const refusal = firstConstraintRefusal(prepared, rule, context.todayEpochDay);
   return refusal === undefined
     ? { allowed: true, arguments: { ...prepared, ...rule.pinnedArguments } }
@@ -139,21 +146,37 @@ function narrowProperty(property: unknown, constraint: McpArgumentConstraint): u
   }
 }
 
-function shapeForModel(remote: JsonSchema, rule: McpToolRule): JsonSchema {
+function isShownToModel(rule: McpToolRule, key: string): boolean {
+  const pinned = Object.hasOwn(rule.pinnedArguments ?? {}, key);
+  const exposed = rule.exposedArguments?.includes(key) ?? true;
+  return exposed && !pinned;
+}
+
+function requiredOf(schema: JsonSchema): string[] {
+  return Array.isArray(schema.required)
+    ? schema.required.filter((key): key is string => typeof key === 'string')
+    : [];
+}
+
+export function hiddenRequiredArguments(rule: McpToolRule, schema: JsonSchema): string[] {
   const pinned = rule.pinnedArguments ?? {};
-  const isPinned = (key: string) => Object.hasOwn(pinned, key);
+  return requiredOf(schema).filter(
+    (key) => !isShownToModel(rule, key) && !Object.hasOwn(pinned, key),
+  );
+}
+
+function shapeForModel(remote: JsonSchema, rule: McpToolRule): JsonSchema {
+  const isShown = (key: string) => isShownToModel(rule, key);
   const properties = isRecord(remote.properties) ? remote.properties : {};
   const visible = Object.fromEntries(
     Object.entries(properties)
-      .filter(([key]) => !isPinned(key))
+      .filter(([key]) => isShown(key))
       .map(([key, property]) => {
         const constraint = rule.constraints?.[key];
         return [key, constraint === undefined ? property : narrowProperty(property, constraint)];
       }),
   );
-  const required = Array.isArray(remote.required)
-    ? remote.required.filter((key): key is string => typeof key === 'string' && !isPinned(key))
-    : [];
+  const required = requiredOf(remote).filter(isShown);
   return { ...remote, type: 'object', properties: visible, required, additionalProperties: false };
 }
 

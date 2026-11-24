@@ -28,7 +28,7 @@ export class McpGateway {
       config.telemetry.serverEvent({
         server: server.definition.name,
         event: McpServerEvent.UNCONFIGURED,
-        detail: `missing env: ${server.missingEnv.join(', ')}`,
+        detail: `missing: ${server.missingKeys.join(', ')}`,
       });
     }
     const deps = { transport: config.transport, clock: config.clock, telemetry: config.telemetry };

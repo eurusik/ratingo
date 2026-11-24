@@ -1,5 +1,3 @@
-import * as path from 'node:path';
-
 import { Global, Module } from '@nestjs/common';
 
 import {
@@ -12,7 +10,6 @@ import {
   ToolRegistry,
   assertAliasProvidersRegistered,
   createModelProviders,
-  loadAgentFolder,
   type AgentFolder,
   type ModelProviders,
   type ModelAliases,
@@ -21,7 +18,9 @@ import {
 } from '@ratingo/ai-core';
 
 import { ANTHROPIC_CONFIG, MODEL_ALIASES, type AnthropicConfig } from '../config/config.constants';
-import { MODEL_ALIAS_NAMES, MODEL_PRICES } from '../config/models.config';
+import { MODEL_PRICES } from '../config/models.config';
+
+import { loadVeronicaAgentFolder } from './agent-folder';
 
 import {
   AGENT_FOLDER,
@@ -33,8 +32,6 @@ import {
 import { InterruptedRunsRecovery } from './interrupted-runs.recovery';
 import { createStubScript } from './stub.script';
 
-const AGENT_FOLDER_PATH = path.resolve(__dirname, '../../agent');
-
 @Global()
 @Module({
   providers: [
@@ -42,8 +39,7 @@ const AGENT_FOLDER_PATH = path.resolve(__dirname, '../../agent');
     { provide: CLOCK_PORT, useFactory: (): ClockPort => new SystemClock() },
     {
       provide: AGENT_FOLDER,
-      useFactory: (): Promise<AgentFolder> =>
-        loadAgentFolder(AGENT_FOLDER_PATH, { knownModelAliases: MODEL_ALIAS_NAMES }),
+      useFactory: (): Promise<AgentFolder> => loadVeronicaAgentFolder(),
     },
     {
       provide: MODEL_PROVIDERS,

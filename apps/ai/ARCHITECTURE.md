@@ -362,7 +362,9 @@ MCP servers are reached only through the gateway. The rules:
 - **Telemetry.** `app.ai.mcp.calls` and `app.ai.mcp.call.duration` by `server`, `tool`, `outcome` (`ok`, `tool_error`, `refused`, `timeout`, `unavailable`), and `app.ai.mcp.server.events` by `server`, `event` (`started`, `start_failed`, `crashed`, `restarted`, `idle_stopped`, `unconfigured`, `tool_missing`, `tool_not_read_only`, `tool_list_truncated`, `policy_argument_undeclared`, `recycled_after_timeout`), plus an `ai.mcp.server_event` log line with a redacted detail.
 - **Transports.** Only stdio today, behind `MCP_TRANSPORT_PORT`; streamable HTTP is a second adapter when a server needs it.
 
-How to add a server and its policy, with a worked GA4 example: `packages/ai-core/README.md`.
+How to add a server and its policy: `packages/ai-core/README.md`. Registered servers: `google-analytics` (Google's `analytics-mcp` 1.1.0, used by Veronica's chat).
+
+**Credentials for a file-based server.** `analytics-mcp` reads its service account key from a file path. Railway gives env values, so Veronica takes the key JSON from `GA_CREDENTIALS_JSON` and checks that it parses as a service account key, without logging it. At boot it writes the key to a private temp directory (`0700`, file `0600`, never in the repo or the image), passes only the path, and deletes the directory on shutdown.
 
 ---
 
@@ -492,6 +494,7 @@ The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_B
 - `digest_snapshot`: today's snapshot and rule outcomes.
 - `recent_changes`: deploys and merged PRs, read-only.
 - `ask_happy`: reads Happy's latest finished result for one PR (verdict, counts by severity, questions, coverage). It never starts a review.
+- `google-analytics__run_report`, `google-analytics__run_realtime_report`, `google-analytics__get_custom_dimensions_and_metrics`: Google Analytics 4 for ratingo.top through the MCP gateway (`mcp: [google-analytics]`). The property is pinned from `GA_PROPERTY_ID`, reports go at most 90 days back with at most 50 rows, and paging and quota arguments are hidden. They are optional tools, and a run never waits for them: Veronica lists them in the background at boot (`McpGatewayHost.onApplicationBootstrap`), and a run offers them only once that listing is ready, so the first questions after a deploy are answered without them. If listing fails, the next run starts another listing in the background, and the session's cooldown keeps this from spawning the server on every message. when the key or the property id is missing or invalid, or the server is down, they are simply not offered and the chat works as before. Their prompt (`agent/prompts/chat-google-analytics.md`) is added only when they are offered.
 
 No Railway logs and no free SQL; those are left to DUM-E later.
 
@@ -501,7 +504,7 @@ No Railway logs and no free SQL; those are left to DUM-E later.
 
 - One `AgentLoop` per message on alias `fast`, with a registry of just these four tools, prompt `agent/prompts/chat.md`, at most 8 turns and $0.05 per message; $0.30 per day for the `chat` task and the agent's day budget, both read from the `ai.runs` table.
 - «шукаю…» is posted first and then edited into the answer; if the edit fails, a new message is sent.
-- **Numbers guard.** Every number in the answer must appear in this run's tool results, the question, the last turns or the clock line. A sentence with another number is cut and a note is added; if nothing is left, the raw snapshot is sent. Links are stripped.
+- **Numbers guard.** Every number in the answer must appear in this run's tool results, the question, the last turns or the clock line. A date counts as verified only where the answer writes it as a date or a date range («20 листопада», «з 15 по 21 листопада», «15–21.11»), and each date must be a row date from GA or an end of a date range this run requested, resolved against Kyiv's today. A bare day or month never passes as a count. A sentence with another number is cut and a note is added; if nothing is left, the raw snapshot is sent. Links are stripped.
 - **Fallback.** When the model is down, over budget or its numbers cannot be verified, the reply is the `/status` snapshot with one line saying why.
 - **Memory.** The last 12 messages per chat in Redis (`ai-veronica:conversation:<chatId>`, 24 h TTL): the question and the checked answer as text, never tool payloads.
 - **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `redacted`, `fallback`, `failed`; route `investigation`) and a `chat` row in `ai.runs` with the cost.

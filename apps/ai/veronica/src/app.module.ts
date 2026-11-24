@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { ConfigModule } from './config/config.module';
 import { AiCoreModule } from './core/ai-core.module';
+import { McpModule } from './core/mcp/mcp.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { LandingModule } from './landing/landing.module';
@@ -16,6 +17,7 @@ import { WatchdogModule } from './modules/watchdog/public';
     DatabaseModule,
     RunsModule.postgres(),
     AiCoreModule,
+    McpModule,
     DigestScheduleModule,
     ChatModule,
     WatchdogModule,

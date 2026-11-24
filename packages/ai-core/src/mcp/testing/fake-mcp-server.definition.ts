@@ -7,6 +7,7 @@ import type { McpCallRecord, McpServerEventRecord, McpTelemetry } from '../mcp-t
 const FAKE_SERVER_SCRIPT = path.join(__dirname, 'fake-mcp-server.cjs');
 export const FAKE_PINNED_PROPERTY = '123';
 export const FAKE_OUTPUT_CAP = 100;
+export const FAKE_REPORT_NOTE = 'Window: the last 30 minutes.';
 
 const FAST_TIMEOUTS: McpServerTimeouts = {
   startMs: 15_000,
@@ -37,6 +38,7 @@ export function fakeServerDefinition(
         echo: { description: 'Echo text back.' },
         report: {
           description: 'Run a report.',
+          resultNote: FAKE_REPORT_NOTE,
           pinnedArguments: { property_id: FAKE_PINNED_PROPERTY },
           constraints: {
             limit: { kind: McpConstraintKind.NUMBER, min: 1, max: 50, default: 10 },

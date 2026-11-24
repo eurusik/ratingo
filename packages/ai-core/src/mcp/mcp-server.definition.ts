@@ -32,6 +32,7 @@ export interface McpServerDefinition {
   pinnedVersion: string;
   launch: McpStdioLaunch;
   env: McpServerEnv;
+  settings?: readonly string[];
   timeouts: McpServerTimeouts;
   maxOutputChars?: number;
   policy: McpToolPolicy;
@@ -51,6 +52,7 @@ export class InvalidMcpServerDefinitionError extends Error {
 
 const VERSION_RANGE_CHARACTERS = /[\s*^~<>|]|^latest$|\.x$/i;
 const ABSOLUTE_PATH = /^\//;
+const MAX_RESULT_NOTE_CHARS = 300;
 const ENV_KEY_PATTERN = /^[A-Z_][A-Z0-9_]*$/;
 
 const isPositive = (value: number | undefined): boolean =>
@@ -67,8 +69,13 @@ function versionIssues(definition: McpServerDefinition): string[] {
     : [`launch must name pinnedVersion "${pinnedVersion}" in its command or args`];
 }
 
-function envIssues(env: McpServerEnv): string[] {
-  const keys = [...Object.keys(env.constants ?? {}), ...env.required, ...(env.optional ?? [])];
+function envIssues(env: McpServerEnv, settings: readonly string[]): string[] {
+  const keys = [
+    ...Object.keys(env.constants ?? {}),
+    ...env.required,
+    ...(env.optional ?? []),
+    ...settings,
+  ];
   const invalid = keys
     .filter((key) => !ENV_KEY_PATTERN.test(key))
     .map((key) => `env key "${key}" is not UPPER_SNAKE_CASE`);
@@ -102,21 +109,73 @@ function constraintIssues(label: string, constraint: McpArgumentConstraint): str
   }
 }
 
-function ruleIssues(server: string, tool: string, rule: McpToolRule): string[] {
+const pinnedNames = (rule: McpToolRule): string[] => [
+  ...Object.keys(rule.pinnedArguments ?? {}),
+  ...Object.keys(rule.pinnedFromSettings ?? {}),
+];
+
+function settingIssues(label: string, rule: McpToolRule, settings: readonly string[]): string[] {
+  const fromSettings = Object.entries(rule.pinnedFromSettings ?? {});
+  return [
+    ...fromSettings
+      .filter(([, setting]) => !settings.includes(setting))
+      .map(
+        ([argument, setting]) =>
+          `${label}: "${argument}" is pinned from undeclared setting "${setting}"`,
+      ),
+    ...fromSettings
+      .filter(([argument]) => Object.hasOwn(rule.pinnedArguments ?? {}, argument))
+      .map(([argument]) => `${label}: "${argument}" is pinned twice`),
+  ];
+}
+
+function exposureIssues(label: string, rule: McpToolRule): string[] {
+  const pinned = pinnedNames(rule);
+  const constrained = Object.keys(rule.constraints ?? {});
+  const exposed = rule.exposedArguments;
+  const hiddenConstrained =
+    exposed === undefined ? [] : constrained.filter((argument) => !exposed.includes(argument));
+  return [
+    ...constrained
+      .filter((argument) => pinned.includes(argument))
+      .map((argument) => `${label}: "${argument}" is both pinned and constrained`),
+    ...(exposed ?? [])
+      .filter((argument) => pinned.includes(argument))
+      .map((argument) => `${label}: "${argument}" is both pinned and exposed`),
+    ...hiddenConstrained.map(
+      (argument) => `${label}: "${argument}" is constrained but not exposed`,
+    ),
+  ];
+}
+
+function ruleIssues(
+  server: string,
+  tool: string,
+  rule: McpToolRule,
+  settings: readonly string[],
+): string[] {
   const label = `policy.tools.${tool}`;
-  const pinned = Object.keys(rule.pinnedArguments ?? {});
   const constraints = Object.entries(rule.constraints ?? {});
   return [
     ...(canBridgeMcpTool({ server, tool }) ? [] : [`${label}: the tool name cannot be bridged`]),
     ...(rule.description.trim().length === 0 ? [`${label}: description must not be empty`] : []),
     ...(isPositive(rule.maxOutputChars) ? [] : [`${label}: maxOutputChars must be positive`]),
-    ...constraints
-      .filter(([argument]) => pinned.includes(argument))
-      .map(([argument]) => `${label}: "${argument}" is both pinned and constrained`),
+    ...resultNoteIssues(label, rule.resultNote),
+    ...settingIssues(label, rule, settings),
+    ...exposureIssues(label, rule),
     ...constraints.flatMap(([argument, constraint]) =>
       constraintIssues(`${label}.constraints.${argument}`, constraint),
     ),
   ];
+}
+
+function resultNoteIssues(label: string, note: string | undefined): string[] {
+  if (note === undefined) {
+    return [];
+  }
+  return note.trim().length > 0 && note.length <= MAX_RESULT_NOTE_CHARS
+    ? []
+    : [`${label}: resultNote must be 1 to ${MAX_RESULT_NOTE_CHARS} characters`];
 }
 
 function timeoutIssues(timeouts: McpServerTimeouts): string[] {
@@ -134,14 +193,14 @@ export function validateMcpServerDefinition(definition: McpServerDefinition): Mc
     ...(ABSOLUTE_PATH.test(definition.launch.command)
       ? []
       : ['launch.command must be an absolute path: the server gets no PATH']),
-    ...envIssues(definition.env),
+    ...envIssues(definition.env, definition.settings ?? []),
     ...timeoutIssues(definition.timeouts),
     ...(isPositive(definition.maxOutputChars) ? [] : ['maxOutputChars must be positive']),
     ...(Object.keys(definition.policy.tools).length === 0
       ? ['policy must allow at least one tool']
       : []),
     ...Object.entries(definition.policy.tools).flatMap(([tool, rule]) =>
-      ruleIssues(definition.name, tool, rule),
+      ruleIssues(definition.name, tool, rule, definition.settings ?? []),
     ),
   ];
   if (issues.length > 0) {

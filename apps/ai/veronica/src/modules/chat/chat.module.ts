@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
 
+import { MCP_GATEWAY_HOST } from '../../core/mcp/mcp.constants';
 import { DATABASE } from '../../database/database.constants';
 import type { Database } from '../../database/database.module';
 import {
@@ -31,6 +32,7 @@ import { WebhookRegistrationService } from './application/services/webhook-regis
 import { ChatWorker } from './application/workers/chat.worker';
 import { AskHappyExecutor } from './application/tools/ask-happy.executor';
 import { DigestSnapshotExecutor } from './application/tools/digest-snapshot.executor';
+import { EXTERNAL_TOOLS } from './application/tools/external-tools';
 import {
   INVESTIGATION_EXECUTORS,
   type InvestigationExecutors,
@@ -107,6 +109,7 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
       inject: [DATABASE],
       useFactory: (db: Database) => new PostgresChatExchangeRepository(db),
     },
+    { provide: EXTERNAL_TOOLS, useExisting: MCP_GATEWAY_HOST },
     ChatExchangeRecorder,
     ChatExchangeRetention,
     ChatExchangeRetentionScheduler,

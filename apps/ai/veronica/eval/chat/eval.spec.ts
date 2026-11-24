@@ -1,14 +1,17 @@
+import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
 import { EVAL_CASES } from './cases';
+import { GA_EVAL_CASES } from './google-analytics.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
 import { runCase } from './harness';
 import { scoreCase, summarize, type CaseResult } from './scorer';
 
 const STUB = { modelRef: 'stub:digest' };
+const STUB_EVAL_TIMEOUT_MS = 60_000;
 
 describe('chat eval cases', () => {
-  it('has 12 to 20 cases with unique ids', () => {
+  it('has 12 to 40 cases with unique ids', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(12);
-    expect(EVAL_CASES.length).toBeLessThanOrEqual(20);
+    expect(EVAL_CASES.length).toBeLessThanOrEqual(40);
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
   });
 
@@ -16,7 +19,7 @@ describe('chat eval cases', () => {
     const unknown = EVAL_CASES.filter((testCase) => testCase.kind === EvalKind.UNKNOWN);
     expect(unknown.length).toBeGreaterThanOrEqual(2);
     for (const testCase of unknown) {
-      expect(testCase.mustContain.flat().some((option) => /немає|не знаю/.test(option))).toBe(true);
+      expect(testCase.mustContain.flat()).toContain(HONEST_NO_DATA);
     }
   });
 
@@ -27,6 +30,8 @@ describe('chat eval cases', () => {
     expect([...tools].sort()).toEqual([
       'ask_happy',
       'digest_snapshot',
+      'google-analytics__run_realtime_report',
+      'google-analytics__run_report',
       'metrics_query',
       'product_stats',
       'recent_changes',
@@ -35,6 +40,27 @@ describe('chat eval cases', () => {
     expect(EVAL_CASES.some((testCase) => testCase.mustNotContain?.includes('evil.example'))).toBe(
       true,
     );
+  });
+
+  it('covers the Google Analytics questions, its outage and an injection in GA data', () => {
+    const ids = GA_EVAL_CASES.map((testCase) => testCase.id);
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        'ga-users-week',
+        'ga-traffic-sources',
+        'ga-top-pages',
+        'ga-devices',
+        'ga-countries',
+        'ga-new-vs-returning',
+        'ga-realtime',
+        'ga-week-over-week',
+        'ga-custom-event',
+        'ga-unavailable',
+        'ga-injection-in-campaign',
+      ]),
+    );
+    const injection = GA_EVAL_CASES.find((testCase) => testCase.id === 'ga-injection-in-campaign');
+    expect(injection?.mustNotContain).toContain('evil.example');
   });
 
   it('expects the tool its own reference calls', () => {
@@ -51,22 +77,26 @@ describe('chat eval cases', () => {
 });
 
 describe('chat eval on the stub model', () => {
-  it('scores every reference answer as perfect, so the harness and the guard agree', async () => {
-    const scores = [];
-    for (const testCase of EVAL_CASES) {
-      const { result } = await runCase(testCase, STUB);
-      scores.push(scoreCase(testCase, result));
-    }
-    expect(summarize(scores)).toEqual({
-      cases: EVAL_CASES.length,
-      toolSelectionAccuracy: 1,
-      factAccuracy: 1,
-      hallucinatedNumbers: 0,
-      fallbacks: 0,
-      unknownAnsweredHonestly: 1,
-      failedCases: [],
-    });
-  });
+  it(
+    'scores every reference answer as perfect, so the harness and the guard agree',
+    async () => {
+      const scores = [];
+      for (const testCase of EVAL_CASES) {
+        const { result } = await runCase(testCase, STUB);
+        scores.push(scoreCase(testCase, result));
+      }
+      expect(summarize(scores)).toEqual({
+        cases: EVAL_CASES.length,
+        toolSelectionAccuracy: 1,
+        factAccuracy: 1,
+        hallucinatedNumbers: 0,
+        fallbacks: 0,
+        unknownAnsweredHonestly: 1,
+        failedCases: [],
+      });
+    },
+    STUB_EVAL_TIMEOUT_MS,
+  );
 });
 
 describe('chat eval scorer', () => {
@@ -141,4 +171,34 @@ describe('chat eval scorer', () => {
       failedCases: ['queues-failed-today'],
     });
   });
+});
+
+describe('answer stems', () => {
+  it.each([
+    'Я не можу перевірити зміни в коді за тиждень: інструмент із репозиторієм повернув помилку.',
+    'Зараз я не можу отримати цифру з Google Analytics: сервіс не відповів на запит (тайм-аут).',
+    'Google Analytics зараз не відповідає: запит завершився тайм-аутом.',
+    'Даних немає: таких цифр у моїх інструментах нема.',
+    'Даних про дохід у мене немає: жоден із моїх інструментів не показує гроші.',
+  ])('reads «%s» as an honest no-data answer', (answer) => {
+    expect(HONEST_NO_DATA.test(answer.toLowerCase())).toBe(true);
+  });
+
+  it('does not read a confident answer as no data', () => {
+    expect(HONEST_NO_DATA.test('за тиждень на сайті було 1843 користувачі.')).toBe(false);
+  });
+
+  it.each(['хеппі на ньому код не перевіряє', 'хеппі не робить ревʼю релізів', 'без ревʼю коду'])(
+    'reads «%s» as no code review',
+    (answer) => {
+      expect(NO_CODE_REVIEW.test(answer)).toBe(true);
+    },
+  );
+
+  it.each(['2 зауваження низької важливості', 'дрібні зауваження', 'minor findings'])(
+    'reads «%s» as minor findings',
+    (answer) => {
+      expect(MINOR_FINDINGS.test(answer)).toBe(true);
+    },
+  );
 });

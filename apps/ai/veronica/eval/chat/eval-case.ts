@@ -8,6 +8,8 @@ export type EvalKind = (typeof EvalKind)[keyof typeof EvalKind];
 
 export const ANY_TOOL = '*';
 
+export type Expectation = string | RegExp;
+
 export interface Fixture {
   tool: string;
   match?: Readonly<Record<string, unknown>>;
@@ -28,8 +30,8 @@ export interface EvalCase {
   fixtures: readonly Fixture[];
   expectedTools: readonly string[];
   allowedExtraTools?: readonly string[];
-  mustContain: readonly (readonly string[])[];
-  mustNotContain?: readonly string[];
+  mustContain: readonly (readonly Expectation[])[];
+  mustNotContain?: readonly Expectation[];
   reference: { calls: readonly ReferenceCall[]; answer: string };
 }
 

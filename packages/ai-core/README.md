@@ -24,30 +24,34 @@ The gateway lets an agent use tools from an MCP server as ordinary ai-core tools
 
 Add a definition to `PLATFORM_MCP_SERVERS`. The registry validates it when it is built, so a bad definition stops the service at boot.
 
-| Field            | Rule                                                                                                                                                            |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`           | `^[a-z][a-z0-9-]*$`, no underscore: it becomes the tool prefix `name__`                                                                                         |
-| `pinnedVersion`  | one exact version (no `^`, `~`, `*`, `x`, `latest`), and it must appear in `launch.command` or `launch.args`                                                    |
-| `launch`         | `{ kind: 'stdio', command, args }`; use an absolute command, since there is no inherited `PATH`. Never `npx`/`uvx` at runtime: install the version in the image |
-| `env.constants`  | non-secret values the server always gets, e.g. `HOME`                                                                                                           |
-| `env.required`   | keys taken from the agent's config; if one is missing the server is `unconfigured` and none of its tools are registered                                         |
-| `env.optional`   | keys passed through only when set                                                                                                                               |
-| `timeouts`       | `startMs` (spawn and initialize), `callMs` (each request), `idleTtlMs` (stop when unused), `restartCooldownMs` (after a failed start or restart)                |
-| `maxOutputChars` | default cap for every tool of this server (8 000 if unset)                                                                                                      |
-| `policy.tools`   | the tool allowlist, see below; at least one tool                                                                                                                |
+| Field            | Rule                                                                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`           | `^[a-z][a-z0-9-]*$`, no underscore: it becomes the tool prefix `name__`                                                                                          |
+| `pinnedVersion`  | one exact version (no `^`, `~`, `*`, `x`, `latest`), and it must appear in `launch.command` or `launch.args`                                                     |
+| `launch`         | `{ kind: 'stdio', command, args }`; use an absolute command, since there is no inherited `PATH`. Never `npx`/`uvx` at runtime: install the version in the image  |
+| `env.constants`  | non-secret values the server always gets, e.g. `HOME`                                                                                                            |
+| `env.required`   | keys taken from the agent's config; if one is missing the server is `unconfigured` and none of its tools are registered                                          |
+| `env.optional`   | keys passed through only when set                                                                                                                                |
+| `settings`       | config keys the code needs but the subprocess never gets, used only by `pinnedFromSettings`; a missing one makes the server unconfigured, like a missing env key |
+| `timeouts`       | `startMs` (spawn and initialize), `callMs` (each request), `idleTtlMs` (stop when unused), `restartCooldownMs` (after a failed start or restart)                 |
+| `maxOutputChars` | default cap for every tool of this server (8 000 if unset)                                                                                                       |
+| `policy.tools`   | the tool allowlist, see below; at least one tool                                                                                                                 |
 
 ### 2. Write the policy
 
 Each key of `policy.tools` is a remote tool name. Anything not listed is never shown and never callable.
 
-| Rule field        | What it does                                                                                                                                                                                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `description`     | required; the only description the model sees. The server's own text is untrusted and dropped                                                                                                                                                              |
-| `pinnedArguments` | values the code sets; removed from the schema the model sees and always overwrite what the model sends                                                                                                                                                     |
-| `constraints`     | per argument: `number` (`min`, `max` and a required `default` filled when absent, so a cap cannot be dodged by leaving the argument out), `one_of` (string or list of strings), `max_items`, `date_ranges` (`maxRanges`, `maxSpanDays`, `maxLookbackDays`) |
-| `maxOutputChars`  | output cap for this tool                                                                                                                                                                                                                                   |
+| Rule field           | What it does                                                                                                                                                                                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `description`        | required; the only description the model sees. The server's own text is untrusted and dropped                                                                                                                                                              |
+| `pinnedArguments`    | values the code sets; removed from the schema the model sees and always overwrite what the model sends                                                                                                                                                     |
+| `pinnedFromSettings` | argument → setting name; the setting's value is pinned like `pinnedArguments` when the registry resolves the server                                                                                                                                        |
+| `exposedArguments`   | the only arguments the model may see and send; any other argument of the remote tool is hidden and refused. A required argument that is neither exposed nor pinned is reported as `required_argument_hidden`                                               |
+| `constraints`        | per argument: `number` (`min`, `max` and a required `default` filled when absent, so a cap cannot be dodged by leaving the argument out), `one_of` (string or list of strings), `max_items`, `date_ranges` (`maxRanges`, `maxSpanDays`, `maxLookbackDays`) |
+| `maxOutputChars`     | output cap for this tool                                                                                                                                                                                                                                   |
+| `resultNote`         | a short trusted line (at most 300 characters) appended after the untrusted block of every successful result, for facts the agent may quote that the server does not return, such as the realtime window                                                    |
 
-An argument cannot be both pinned and constrained. `date_ranges` accepts `YYYY-MM-DD`, `today`, `yesterday` and `NdaysAgo` in `start_date`/`end_date` (other keys with `startKey`/`endKey`), measured in UTC days from the injected clock.
+An argument cannot be both pinned and constrained, or both pinned and exposed, and with `exposedArguments` every constrained argument must be exposed. `date_ranges` accepts `YYYY-MM-DD`, `today`, `yesterday` and `NdaysAgo` in `start_date`/`end_date` (other keys with `startKey`/`endKey`), measured in UTC days from the injected clock.
 
 A pinned or constrained argument the remote schema does not declare is reported as `policy_argument_undeclared` (usually a typo in the policy), and its default is not sent. The gateway also drops a listed tool if the server annotates it `readOnlyHint: false` or `destructiveHint: true`, and reports `tool_missing` if the server does not have it.
 
@@ -90,75 +94,17 @@ When the server starts:
 
 A call that times out closes that process (`recycled_after_timeout`), so a hung server is replaced by a fresh one on the next call instead of making every call wait for the timeout.
 
-### Worked example: a GA-like server (documentation only)
+### Registered server: `google-analytics`
 
-Not registered yet; this is how Google's official `analytics-mcp` (PyPI, Apache-2.0, checked at 1.1.0 on 2026-11-24) would look. It speaks stdio by default (`--transport http` is the alternative and needs a per-request OAuth bearer token). In stdio mode it authenticates with Application Default Credentials (`google.auth.default`), so a service account JSON file path in `GOOGLE_APPLICATION_CREDENTIALS` is enough; it asks only for the `analytics.readonly` scope unless started with `--allow-write`. Its read tools are `get_account_summaries`, `get_property_details`, `list_google_ads_links`, `list_property_annotations`, `list_key_events`, `get_custom_dimensions_and_metrics`, `run_report`, `run_realtime_report`, `run_funnel_report` and `run_conversions_report`; with `--allow-write` it also exposes `create_property_annotation`, `create_custom_dimension` and `create_key_event`, which carry `readOnlyHint: false` and would be dropped by the gateway anyway.
+`src/mcp/servers/google-analytics.mcp-server.ts` registers Google's official `analytics-mcp` (PyPI, Apache-2.0), pinned at **1.1.0** and installed in Veronica's image at `/opt/analytics-mcp-1.1.0`.
 
-```ts
-const GA_PROPERTY_ID = '000000000';
-const GA_DIMENSIONS = [
-  'date',
-  'pagePath',
-  'sessionDefaultChannelGroup',
-  'country',
-  'deviceCategory',
-];
-const GA_METRICS = ['activeUsers', 'newUsers', 'sessions', 'screenPageViews', 'engagementRate'];
+- **Transport and credentials.** It speaks stdio by default. `--transport http` exists too, but needs a per-request OAuth bearer token, so it doesn't fit a service account. In stdio mode it authenticates with Application Default Credentials, so it gets `GOOGLE_APPLICATION_CREDENTIALS`, the path of a service account key file. It asks only for the `analytics.readonly` scope; `--allow-write` is never passed.
+- **Property id.** The GA4 property comes from the `GA_PROPERTY_ID` setting and is pinned into every call. The subprocess never sees the setting itself.
+- **Exposed tools.** `run_report`, `run_realtime_report` and `get_custom_dimensions_and_metrics`. Each has a short description of our own and a list of exposed arguments: the paging, quota and currency arguments are hidden.
+- **Limits.** Date ranges reach at most 90 days back, with two ranges at most, which is enough for this week against last week. `limit` defaults to 20 with a maximum of 50. A report takes at most 4 dimensions and 5 metrics (3 and 4 for realtime) and at most 3 `order_bys`.
+- **Left out on purpose.** `run_funnel_report` and `run_conversions_report` need nested funnel and conversion specs that a small model gets wrong, and Ratingo runs no ads. `list_key_events`: an event count is a `run_report` on `eventName`. `get_account_summaries`: the property is pinned, so the model never needs to see which accounts the service account can reach. The admin and write tools are also left out.
 
-export const GA_MCP_SERVER: McpServerDefinition = {
-  name: 'ga',
-  pinnedVersion: '1.1.0',
-  launch: {
-    kind: McpTransportKind.STDIO,
-    command: '/opt/analytics-mcp-1.1.0/bin/analytics-mcp',
-    args: [],
-  },
-  env: {
-    constants: { HOME: '/tmp/analytics-mcp' },
-    required: ['GOOGLE_APPLICATION_CREDENTIALS'],
-  },
-  timeouts: { startMs: 20_000, callMs: 15_000, idleTtlMs: 600_000, restartCooldownMs: 60_000 },
-  maxOutputChars: 6_000,
-  policy: {
-    tools: {
-      run_report: {
-        description:
-          'Ratingo GA4 report. dimensions and metrics are GA4 API names; date_ranges is a list of {start_date, end_date} with YYYY-MM-DD, today, yesterday or NdaysAgo.',
-        pinnedArguments: { property_id: GA_PROPERTY_ID, return_property_quota: false },
-        constraints: {
-          dimensions: { kind: McpConstraintKind.ONE_OF, values: GA_DIMENSIONS },
-          metrics: { kind: McpConstraintKind.ONE_OF, values: GA_METRICS },
-          limit: { kind: McpConstraintKind.NUMBER, min: 1, max: 100, default: 50 },
-          date_ranges: {
-            kind: McpConstraintKind.DATE_RANGES,
-            maxRanges: 2,
-            maxSpanDays: 92,
-            maxLookbackDays: 400,
-          },
-        },
-      },
-      run_realtime_report: {
-        description: 'Ratingo GA4 users in the last 30 minutes.',
-        pinnedArguments: { property_id: GA_PROPERTY_ID, return_property_quota: false },
-        constraints: {
-          dimensions: {
-            kind: McpConstraintKind.ONE_OF,
-            values: ['country', 'deviceCategory', 'unifiedScreenName'],
-          },
-          metrics: { kind: McpConstraintKind.ONE_OF, values: ['activeUsers', 'screenPageViews'] },
-          limit: { kind: McpConstraintKind.NUMBER, min: 1, max: 50, default: 20 },
-        },
-      },
-      get_custom_dimensions_and_metrics: {
-        description: 'Custom GA4 dimensions and metrics defined for Ratingo.',
-        pinnedArguments: { property_id: GA_PROPERTY_ID },
-      },
-    },
-  },
-};
-```
-
-`get_account_summaries` is left out on purpose: the property is pinned, so the model never needs to see which accounts the service account can reach. The GA property id is the numeric property id, not the `G-…` measurement id.
+The GA property id is the numeric property id, not the `G-…` measurement id.
 
 ### Tests
 

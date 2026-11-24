@@ -76,4 +76,13 @@ describe('env schemas', () => {
       false,
     );
   });
+
+  it('leaves Google Analytics off for an empty value instead of failing', () => {
+    const env = serviceEnvSchema.parse({ ...VALID, GA_CREDENTIALS_JSON: '', GA_PROPERTY_ID: ' ' });
+    expect(env.GA_CREDENTIALS_JSON).toBeUndefined();
+    expect(env.GA_PROPERTY_ID).toBeUndefined();
+    expect(serviceEnvSchema.parse({ ...VALID, GA_PROPERTY_ID: '515589933' }).GA_PROPERTY_ID).toBe(
+      '515589933',
+    );
+  });
 });

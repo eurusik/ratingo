@@ -3,7 +3,7 @@ models:
   default: fast
 tools: []
 skills: []
-mcp: []
+mcp: [google-analytics]
 budgets:
   perRunUsd: 0.05
   perDayUsd: 0.5

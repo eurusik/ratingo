@@ -42,9 +42,57 @@ describe('McpServerRegistry', () => {
     expect(registry.resolve(['fake'], { FAKE_TOKEN: '' })).toEqual({
       configured: [],
       unconfigured: [
-        { definition: expect.objectContaining({ name: 'fake' }), missingEnv: ['FAKE_TOKEN'] },
+        { definition: expect.objectContaining({ name: 'fake' }), missingKeys: ['FAKE_TOKEN'] },
       ],
     });
+  });
+
+  it('pins arguments from settings and treats a missing setting as unconfigured', () => {
+    const definition = withChanges({
+      settings: ['FAKE_PROPERTY_ID'],
+      policy: {
+        tools: {
+          report: {
+            description: 'Report',
+            pinnedFromSettings: { property_id: 'FAKE_PROPERTY_ID' },
+          },
+        },
+      },
+    });
+    const registry = new McpServerRegistry([definition]);
+
+    const resolved = registry.resolve(['fake'], { FAKE_TOKEN: 'x', FAKE_PROPERTY_ID: '42' });
+    const missing = registry.resolve(['fake'], { FAKE_TOKEN: 'x' });
+
+    expect(resolved.configured[0]?.definition.policy.tools.report?.pinnedArguments).toEqual({
+      property_id: '42',
+    });
+    expect(resolved.configured[0]?.env).not.toHaveProperty('FAKE_PROPERTY_ID');
+    expect(missing.unconfigured[0]?.missingKeys).toEqual(['FAKE_PROPERTY_ID']);
+  });
+
+  it('rejects inconsistent exposed, pinned and setting arguments', () => {
+    const definition = withChanges({
+      policy: {
+        tools: {
+          report: {
+            description: 'Report',
+            exposedArguments: ['property_id', 'dimensions'],
+            pinnedArguments: { property_id: '1' },
+            pinnedFromSettings: { property_id: 'NOT_DECLARED' },
+            constraints: { limit: { kind: McpConstraintKind.NUMBER, max: 10, default: 5 } },
+          },
+        },
+      },
+    });
+    expect(issuesOf(definition)).toEqual(
+      expect.arrayContaining([
+        'policy.tools.report: "property_id" is pinned from undeclared setting "NOT_DECLARED"',
+        'policy.tools.report: "property_id" is pinned twice',
+        'policy.tools.report: "property_id" is both pinned and exposed',
+        'policy.tools.report: "limit" is constrained but not exposed',
+      ]),
+    );
   });
 
   it('fails clearly on a server that is not on the allowlist', () => {
@@ -121,6 +169,14 @@ describe('McpServerRegistry', () => {
         'policy.tools.report.constraints.limit: default must be set and within min..max',
       ]),
     );
+  });
+
+  it('rejects an empty or long result note', () => {
+    const withNote = (resultNote: string) =>
+      withChanges({ policy: { tools: { echo: { description: 'Echo', resultNote } } } });
+    const issue = 'policy.tools.echo: resultNote must be 1 to 300 characters';
+    expect(issuesOf(withNote(' '))).toContain(issue);
+    expect(issuesOf(withNote('x'.repeat(301)))).toContain(issue);
   });
 
   it('rejects an empty policy', () => {

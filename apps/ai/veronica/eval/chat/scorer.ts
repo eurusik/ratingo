@@ -1,6 +1,6 @@
 import { ChatOutcome } from '../../src/modules/chat/domain/constants/chat.constants';
 
-import { ANY_TOOL, EvalKind, type EvalCase } from './eval-case';
+import { ANY_TOOL, EvalKind, type EvalCase, type Expectation } from './eval-case';
 
 const GROUPED_DIGITS = /(?<=\d)[\s\u00a0\u202f](?=\d{3}(?!\d))/g;
 const PERCENT = 100;
@@ -37,10 +37,19 @@ export interface EvalSummary {
   failedCases: string[];
 }
 
-const normalize = (text: string): string => text.toLowerCase().replace(GROUPED_DIGITS, '');
+const APOSTROPHES = /['’`]/g;
+const MODIFIER_APOSTROPHE = 'ʼ';
 
-const mentions = (answer: string, needle: string): boolean =>
-  normalize(answer).includes(normalize(needle));
+const normalize = (text: string): string =>
+  text.toLowerCase().replace(GROUPED_DIGITS, '').replace(APOSTROPHES, MODIFIER_APOSTROPHE);
+
+const mentions = (answer: string, needle: Expectation): boolean =>
+  typeof needle === 'string'
+    ? normalize(answer).includes(normalize(needle))
+    : needle.test(normalize(answer));
+
+const labelOf = (needle: Expectation): string =>
+  typeof needle === 'string' ? needle : `/${needle.source}/`;
 
 export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => {
   const allowed = new Set([...testCase.expectedTools, ...(testCase.allowedExtraTools ?? [])]);
@@ -51,10 +60,10 @@ export const scoreCase = (testCase: EvalCase, result: CaseResult): CaseScore => 
     : [...new Set(result.calledKeys)].filter((key) => !allowed.has(key));
   const missingFacts = testCase.mustContain
     .filter((alternatives) => !alternatives.some((option) => mentions(result.answer, option)))
-    .map((alternatives) => alternatives.join(' | '));
-  const forbiddenHits = (testCase.mustNotContain ?? []).filter((needle) =>
-    mentions(result.answer, needle),
-  );
+    .map((alternatives) => alternatives.map(labelOf).join(' | '));
+  const forbiddenHits = (testCase.mustNotContain ?? [])
+    .filter((needle) => mentions(result.answer, needle))
+    .map(labelOf);
   const fellBack = result.outcome === ChatOutcome.FALLBACK || result.outcome === ChatOutcome.FAILED;
   return {
     caseId: testCase.id,

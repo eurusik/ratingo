@@ -7,6 +7,7 @@ export const CHAT_CONFIG = Symbol('CHAT_CONFIG');
 export const PRODUCT_STATS_CONFIG = Symbol('PRODUCT_STATS_CONFIG');
 export const CHANGES_CONFIG = Symbol('CHANGES_CONFIG');
 export const HAPPY_CONFIG = Symbol('HAPPY_CONFIG');
+export const ANALYTICS_MCP_CONFIG = Symbol('ANALYTICS_MCP_CONFIG');
 
 export interface GrafanaConfig {
   baseUrl?: string;
@@ -46,4 +47,9 @@ export interface HappyConfig {
   internalUrl?: string;
   serviceToken?: string;
   repository: string;
+}
+
+export interface AnalyticsMcpConfig {
+  credentialsJson?: string;
+  propertyId?: string;
 }

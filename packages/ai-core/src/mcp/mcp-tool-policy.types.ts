@@ -44,9 +44,12 @@ export type McpArgumentConstraint =
 
 export interface McpToolRule {
   description: string;
+  exposedArguments?: readonly string[];
   pinnedArguments?: Readonly<Record<string, McpJsonValue>>;
+  pinnedFromSettings?: Readonly<Record<string, string>>;
   constraints?: Readonly<Record<string, McpArgumentConstraint>>;
   maxOutputChars?: number;
+  resultNote?: string;
 }
 
 export interface McpToolPolicy {
@@ -72,7 +75,7 @@ export interface McpRefusal {
 
 export interface McpCallContext {
   todayEpochDay: number;
-  knownArguments: readonly string[];
+  allowedArguments: readonly string[];
 }
 
 export type McpCallDecision =
