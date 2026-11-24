@@ -20,6 +20,7 @@ import { TraktModule } from '../trakt/trakt.module';
 import { UserActionsModule } from '../user-actions/user-actions.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 
+import { AnticipatedShowsPipeline } from './application/pipelines/anticipated-shows.pipeline';
 import { BackfillAltTitlesPipeline } from './application/pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from './application/pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from './application/pipelines/backfill-mdblist-ratings.pipeline';
@@ -46,6 +47,7 @@ import { INGESTION_JOB_STATUS_PORT } from './domain/ports/ingestion-job-status.p
 import { ROTTEN_TOMATOES_RATINGS_PORT } from './domain/ports/rotten-tomatoes-ratings.port';
 import { WEB_PAGE_CACHE_PORT } from './domain/ports/web-page-cache.port';
 import { ALT_TITLES_BACKFILL_REPOSITORY } from './domain/repositories/alt-titles-backfill.repository.interface';
+import { ANTICIPATED_SHOWS_REPOSITORY } from './domain/repositories/anticipated-shows.repository.interface';
 import { IMDB_BACKFILL_REPOSITORY } from './domain/repositories/imdb-backfill.repository.interface';
 import { ROTTEN_TOMATOES_BACKFILL_REPOSITORY } from './domain/repositories/rotten-tomatoes-backfill.repository.interface';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
@@ -56,7 +58,9 @@ import { MdblistAdapter } from './infrastructure/adapters/mdblist/mdblist.adapte
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { NextRevalidateAdapter } from './infrastructure/adapters/web-page-cache/next-revalidate.adapter';
+import { AnticipatedShowsGaugeObserver } from './infrastructure/metrics/anticipated-shows-gauge.observer';
 import { AltTitlesBackfillRepository } from './infrastructure/repositories/alt-titles-backfill.repository';
+import { AnticipatedShowsRepository } from './infrastructure/repositories/anticipated-shows.repository';
 import { ImdbBackfillRepository } from './infrastructure/repositories/imdb-backfill.repository';
 import { RottenTomatoesBackfillRepository } from './infrastructure/repositories/rotten-tomatoes-backfill.repository';
 import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
@@ -125,6 +129,10 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       useClass: UpcomingMoviesRepository,
     },
     {
+      provide: ANTICIPATED_SHOWS_REPOSITORY,
+      useClass: AnticipatedShowsRepository,
+    },
+    {
       provide: ALT_TITLES_BACKFILL_REPOSITORY,
       useClass: AltTitlesBackfillRepository,
     },
@@ -163,7 +171,13 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     IngestionJobStatusService,
     TrackedSyncService,
     SnapshotsService,
-    ...workerOnly(SyncWorker, BackfillWorker, RatingsBackfillWorker, IngestionSchedulerService),
+    ...workerOnly(
+      SyncWorker,
+      BackfillWorker,
+      RatingsBackfillWorker,
+      IngestionSchedulerService,
+      AnticipatedShowsGaugeObserver,
+    ),
     // Pipeline classes
     SnapshotsPipeline,
     TrendingPipeline,
@@ -171,6 +185,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     NowPlayingPipeline,
     NewReleasesPipeline,
     UpcomingMoviesPipeline,
+    AnticipatedShowsPipeline,
     BackfillImdbPipeline,
     BackfillAltTitlesPipeline,
     BackfillMdblistRatingsPipeline,

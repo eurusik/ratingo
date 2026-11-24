@@ -110,6 +110,13 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     data: { scope: 'all' },
   },
   {
+    name: 'anticipatedShows',
+    jobType: 'sync-anticipated-shows',
+    pattern: '30 5 * * *',
+    jobId: 'scheduled-anticipated-shows',
+    data: {},
+  },
+  {
     name: 'mdblistRatings',
     jobType: 'backfill-mdblist-ratings-dispatcher',
     // 02:00 UTC daily — safely after MDBList's 00:00 UTC quota reset.

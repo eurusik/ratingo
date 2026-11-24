@@ -7,6 +7,7 @@ import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
+import { AnticipatedShowsQuery } from '../queries/anticipated-shows.query';
 import { NewEpisodesQuery } from '../queries/new-episodes.query';
 
 // Chainable thenable mock
@@ -48,6 +49,7 @@ describe('DrizzleShowRepository', () => {
   let detailsQuery: any;
   let calendarQuery: any;
   let newEpisodesQuery: any;
+  let anticipatedShowsQuery: { execute: jest.Mock };
   let insertChain: any;
   let updateChain: any;
   let selectChain: any;
@@ -68,6 +70,7 @@ describe('DrizzleShowRepository', () => {
     detailsQuery = { execute: jest.fn().mockResolvedValue('details') };
     calendarQuery = { execute: jest.fn().mockResolvedValue(['calendar']) };
     newEpisodesQuery = { execute: jest.fn().mockResolvedValue([]) };
+    anticipatedShowsQuery = { execute: jest.fn() };
 
     return Test.createTestingModule({
       providers: [
@@ -78,6 +81,7 @@ describe('DrizzleShowRepository', () => {
         { provide: ShowDetailsQuery, useValue: detailsQuery },
         { provide: CalendarEpisodesQuery, useValue: calendarQuery },
         { provide: NewEpisodesQuery, useValue: newEpisodesQuery },
+        { provide: AnticipatedShowsQuery, useValue: anticipatedShowsQuery },
       ],
     }).compile();
   };
@@ -413,6 +417,19 @@ describe('DrizzleShowRepository', () => {
       const res = await repository.findTrending({} as any);
       expect(res).toEqual(['trending']);
       expect(trendingQuery.execute).toHaveBeenCalled();
+    });
+
+    it('findAnticipated delegates to anticipatedShowsQuery', async () => {
+      anticipatedShowsQuery.execute.mockResolvedValue([]);
+      const options = {
+        from: new Date(),
+        toExclusive: new Date(),
+        minListCount: 1000,
+        limit: 20,
+      };
+
+      await expect(repository.findAnticipated(options)).resolves.toEqual([]);
+      expect(anticipatedShowsQuery.execute).toHaveBeenCalledWith(options);
     });
 
     it('findPopular delegates to popularShowsQuery', async () => {

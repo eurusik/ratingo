@@ -10,6 +10,8 @@ import {
   WithTotal,
 } from '../../src/modules/catalog/domain/repositories/movie.repository.interface';
 import {
+  AnticipatedShow,
+  AnticipatedShowsQueryOptions,
   IShowRepository,
   TrendingShowsOptions,
   CalendarEpisode,
@@ -284,6 +286,14 @@ export class FakeShowRepository implements IShowRepository {
 
   async findNewEpisodes(_days: number, _limit: number): Promise<NewEpisodeItem[]> {
     return [];
+  }
+
+  lastAnticipatedOptions?: AnticipatedShowsQueryOptions;
+  anticipated: AnticipatedShow[] = [];
+
+  async findAnticipated(options: AnticipatedShowsQueryOptions): Promise<AnticipatedShow[]> {
+    this.lastAnticipatedOptions = options;
+    return this.anticipated.slice(0, options.limit);
   }
 
   lastCalendarOptions?: CalendarEpisodesOptions;

@@ -43,6 +43,14 @@ export function buildUpcomingRefreshJobId(tmdbId: number): string {
   return `upr_movie_${tmdbId}_${formatUtcDayId()}`;
 }
 
+export function buildAnticipatedShowJobId(tmdbId: number): string {
+  return `ant_show_${tmdbId}_${formatUtcDayId()}`;
+}
+
+export function buildAnticipatedRefreshJobId(tmdbId: number): string {
+  return `antr_show_${tmdbId}_${formatUtcDayId()}`;
+}
+
 export function buildMdblistRatingsJobId(mediaItemId: string, day: string): string {
   return `backfill-mdblist-ratings_${mediaItemId}_${day}`;
 }

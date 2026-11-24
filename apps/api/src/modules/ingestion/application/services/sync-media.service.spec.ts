@@ -1123,11 +1123,28 @@ describe('SyncMediaService', () => {
       });
     });
 
-    it('should not evaluate the upcoming context for a show with a future date', async () => {
+    it('should evaluate the upcoming context for a show awaiting its premiere', async () => {
       tmdbAdapter.getShow.mockResolvedValue({
         ...mockMedia,
         type: MediaType.SHOW,
         releaseDate: new Date('2999-01-01'),
+      });
+      aggregatedRatings.getAggregatedRatings.mockResolvedValue(NO_AGGREGATED_RATINGS);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncShow(550);
+
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.UPCOMING,
+      });
+    });
+
+    it('should not evaluate the upcoming context for a show that already premiered', async () => {
+      tmdbAdapter.getShow.mockResolvedValue({
+        ...mockMedia,
+        type: MediaType.SHOW,
+        releaseDate: new Date('2001-01-01'),
       });
       traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
       aggregatedRatings.getAggregatedRatings.mockResolvedValue(NO_AGGREGATED_RATINGS);

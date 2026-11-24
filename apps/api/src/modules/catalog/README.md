@@ -318,6 +318,7 @@ import {
 | `GET`  | `/catalog/shows/trending`     | Trending shows                               |
 | `GET`  | `/catalog/shows/popular`      | Popular shows (classics)                     |
 | `GET`  | `/catalog/shows/new-episodes` | Shows with recent episodes (`days`, `limit`) |
+| `GET`  | `/catalog/shows/anticipated`  | Trakt-anticipated premieres ahead, by date   |
 | `GET`  | `/catalog/shows/calendar`     | Episode calendar (`startDate`, `days`)       |
 | `GET`  | `/catalog/shows/:slug`        | Full show details with seasons               |
 

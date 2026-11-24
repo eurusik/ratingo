@@ -7,6 +7,7 @@ export {
 export { configureStorefrontApi } from './configure';
 export {
   catalogApi,
+  type AnticipatedShow,
   type CatalogCache,
   type CatalogListQuery,
   type CatalogPage,

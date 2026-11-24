@@ -278,8 +278,8 @@ describe('ReEvaluateAllHandler', () => {
       });
     });
 
-    describe('unreleased movie contexts', () => {
-      it('dispatches the upcoming context only for movies releasing today or later', async () => {
+    describe('upcoming context', () => {
+      it('dispatches the upcoming context only for movies releasing today or later and shows awaiting their premiere', async () => {
         mockRunRepository.findById.mockResolvedValue(mockRun);
         mockPolicyInputRepository.fetchBatchIds
           .mockResolvedValueOnce(['movie-1'])
@@ -292,7 +292,10 @@ describe('ReEvaluateAllHandler', () => {
           batchSize: 100,
           cursor: undefined,
           updatedAtWindow: { updatedAtOrBefore: mockRun.snapshotCutoff },
-          moviesReleasingFrom: new Date('2026-11-17T00:00:00Z'),
+          upcoming: {
+            moviesReleasingFrom: new Date('2026-11-17T00:00:00Z'),
+            showsAwaitingPremiereAsOf: NOW,
+          },
         });
         expect(mockQueue.addBulk).toHaveBeenCalledWith([
           expect.objectContaining({
@@ -311,9 +314,7 @@ describe('ReEvaluateAllHandler', () => {
 
         await handler.handle(validPayload);
 
-        expect(mockPolicyInputRepository.fetchBatchIds.mock.calls[0][0].moviesReleasingFrom).toBe(
-          undefined,
-        );
+        expect(mockPolicyInputRepository.fetchBatchIds.mock.calls[0][0].upcoming).toBe(undefined);
       });
     });
 
