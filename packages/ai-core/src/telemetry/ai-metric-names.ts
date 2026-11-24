@@ -6,6 +6,9 @@ export const AI_METRIC_NAMES = {
   TOOL_CALLS: 'app.ai.tool.calls',
   CHAT_EVENTS: 'app.ai.chat.events',
   WATCHDOG_LAST_TICK: 'app.ai.watchdog.last_tick_timestamp_seconds',
+  MCP_CALLS: 'app.ai.mcp.calls',
+  MCP_CALL_DURATION: 'app.ai.mcp.call.duration',
+  MCP_SERVER_EVENTS: 'app.ai.mcp.server.events',
 } as const;
 
 export const AI_METRIC_ATTRIBUTES = {
@@ -17,6 +20,8 @@ export const AI_METRIC_ATTRIBUTES = {
   TOOL: 'tool',
   COMMAND: 'command',
   ROUTE: 'route',
+  SERVER: 'server',
+  EVENT: 'event',
 } as const;
 
 export const AI_TOKEN_KINDS = {

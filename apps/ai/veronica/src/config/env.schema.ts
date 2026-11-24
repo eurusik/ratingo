@@ -32,6 +32,16 @@ const happyEnvSchema = z.object({
   HAPPY_SERVICE_TOKEN: z.string().min(1).optional(),
 });
 
+const unsetWhenEmpty = z
+  .string()
+  .optional()
+  .transform((value) => (value === undefined || value.trim() === '' ? undefined : value));
+
+const analyticsEnvSchema = z.object({
+  GA_CREDENTIALS_JSON: unsetWhenEmpty,
+  GA_PROPERTY_ID: unsetWhenEmpty,
+});
+
 const USER_ID_LIST = /^\d+(\s*,\s*\d+)*$/;
 
 const chatEnvSchema = z.object({
@@ -60,4 +70,5 @@ export const serviceEnvSchema = z.object({
   ...chatEnvSchema.shape,
   ...changesEnvSchema.shape,
   ...happyEnvSchema.shape,
+  ...analyticsEnvSchema.shape,
 });

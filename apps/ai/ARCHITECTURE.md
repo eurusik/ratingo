@@ -75,7 +75,8 @@ apps/ai/
 | Neutral model types       | `ChatMessage`, `ToolDefinition`, `ToolCall`, `ToolResult`, `StopReason`, `ModelUsage`, `ResponseSchema`, `ModelCapabilities` |
 | `MODEL_PORT` and adapters | Stub and Anthropic first; OpenAI-compatible and Ollama when needed                                                           |
 | Model config              | Aliases (`fast`, `review`, `smart`) mapped to `provider:model`, price table, fallback lists                                  |
-| Tools                     | `defineTool` (zod schema, handler, `readOnly`, output cap), tool registry, MCP client source, skills loader                  |
+| Tools                     | `defineTool` (zod schema, handler, `readOnly`, output cap), tool registry, untrusted-data wrapper, skills loader             |
+| MCP gateway               | Platform allowlist of MCP servers, per-tool policy, stdio transport, sessions, bridge into the tool registry                 |
 | Agent loop                | Turns, budgets, stop reasons, structured output                                                                              |
 | Run log                   | `Run` aggregate and `RUN_REPOSITORY` port                                                                                    |
 | Manifests                 | zod schemas for `agent.yaml` and task frontmatter, validated at boot                                                         |
@@ -116,10 +117,24 @@ packages/ai-core/
     │   ├── tool-registry.ts            # manifest allowlist, output caps
     │   ├── tool-source.port.ts
     │   ├── redact.ts
+    │   ├── untrusted-content.ts        # <untrusted> wrapper that cannot be closed from inside
     │   └── sources/
     │       ├── native.tool-source.ts
-    │       ├── mcp.tool-source.ts      # allowlisted servers, minimal env
     │       └── skill.tool-source.ts    # names in context, body on demand
+    ├── mcp/
+    │   ├── mcp-server.definition.ts    # server definition, validation (pinned version, env keys, policy)
+    │   ├── mcp-server.registry.ts      # platform allowlist, explicit env per server
+    │   ├── platform-mcp-servers.ts     # the allowlist itself
+    │   ├── mcp-tool-policy.ts          # pure: allow, pin, constrain, shape the schema
+    │   ├── mcp-transport.port.ts       # McpTransport, MCP_TRANSPORT_PORT
+    │   ├── mcp-telemetry.port.ts       # McpTelemetry, MCP_TELEMETRY_PORT
+    │   ├── mcp-session.ts              # lazy start, idle stop, one restart, cooldown
+    │   ├── mcp-tool-bridge.ts          # MCP tool → ai-core Tool
+    │   ├── mcp.tool-source.ts
+    │   ├── mcp-gateway.ts              # what an agent wires
+    │   └── adapters/
+    │       ├── stdio/                  # official SDK client over our explicit-env stdio transport
+    │       └── otel/                   # app.ai.mcp.* metrics
     ├── loop/
     │   ├── agent-loop.ts
     │   ├── budget.ts                   # worst-case pre-check, strictest level wins
@@ -285,7 +300,9 @@ They reference each other only by id. Happy keeps its review state on GitHub and
 | Port                      | Owner             | First adapter                                       |
 | ------------------------- | ----------------- | --------------------------------------------------- |
 | `MODEL_PORT`              | core              | Stub, Anthropic                                     |
-| `TOOL_SOURCE_PORT`        | core              | Native tools, MCP client, skills                    |
+| `TOOL_SOURCE_PORT`        | core              | Native tools, MCP gateway, skills                   |
+| `MCP_TRANSPORT_PORT`      | core              | stdio (official SDK client, explicit env)           |
+| `MCP_TELEMETRY_PORT`      | core              | OpenTelemetry `app.ai.mcp.*`                        |
 | `RUN_REPOSITORY`          | core              | Postgres (`ai` schema); telemetry-only for Happy    |
 | `CLOCK_PORT`              | core              | System clock; fixed clock in tests                  |
 | `METRICS_PORT`            | Veronica `digest` | Grafana Cloud Prometheus                            |
@@ -329,9 +346,25 @@ The core never imports a provider SDK outside its adapters.
 - A tool is defined once with `defineTool`; adapters translate it to each provider's format.
 - An agent sees only the tools its manifest lists. Anything not listed is denied.
 - **Skills** are a prompt plus the tools they bring. The system prompt lists names and one-line descriptions; the model loads a skill's body on demand.
-- **MCP servers** must be on a platform-level allowlist with pinned versions. MCP subprocesses get an explicit, minimal environment, never the parent's `process.env`. Their output is untrusted data.
 - Tool output is capped, and secrets and personal data are redacted before it reaches a model or Telegram.
 - No shell tool. Nothing runs code from a PR or from model output.
+
+### MCP gateway (`packages/ai-core/src/mcp`)
+
+MCP servers are reached only through the gateway. The rules:
+
+- **Platform allowlist.** A server exists only if it is in `PLATFORM_MCP_SERVERS` in ai-core, reviewed like code. Each definition names the server, its launch command and args with one **pinned version** (validated: no ranges or tags, and the version must appear in the command or args), the env keys it may receive, timeouts (`startMs`, `callMs`, `idleTtlMs`, `restartCooldownMs`) and a tool policy. An agent's `agent.yaml` `mcp: [...]` may only name registered servers; `loadAgentFolder(..., { knownMcpServers })` fails boot on any other name.
+- **Explicit environment.** The subprocess env is built only from the definition: `constants` plus the `required`/`optional` keys taken from the config the agent passes in. Nothing is inherited from `process.env`, not even `PATH` or `HOME` (the SDK's own stdio transport always copies those, so ai-core uses its own stdio transport with the SDK client). If a required key is missing, the server is `unconfigured`: its tools are not registered and a telemetry event says which keys are missing.
+- **Tool policy (pure domain).** Per server: an allowlist of remote tools, each with a code-written description (server descriptions are untrusted and never shown to the model), pinned arguments that are removed from the schema the model sees and always overwrite whatever the model sends, argument constraints (`number` with min/max/default, `one_of` for strings or string lists, `max_items`, `date_ranges` with a lookback and span window) and an output cap. A `number` constraint must have a default, so a cap cannot be bypassed by leaving the argument out. An argument the remote tool does not declare is refused, and the schema shown to the model has `additionalProperties: false`. A call that breaks a rule gets a JSON refusal (`status: "refused"`, `code`, `argument`, `message`) and never reaches the server.
+- **Bridge.** Each allowed tool becomes an ordinary ai-core `Tool` named `<server>__<tool>` (server names have no underscore, so the name splits back unambiguously), `readOnly: true`. A tool the server annotates as not read-only or destructive is never bridged, even if the policy lists it. Its output is capped, wrapped in `<untrusted label="mcp <name>">`, then redacted and capped again by the tool registry.
+- **Sessions.** The first run that builds a registry lists the tools, which starts the server once; there is no boot-time warm-up. The listing is kept for the life of the process, since it belongs to the pinned version, so later runs bridge the tools without a live process and only a real call starts the server again. Every call has a timeout, and a call that times out closes that process so the next call gets a fresh one. An idle server is stopped after `idleTtlMs`, a crash mid-call gets one restart and one retry, a failed start or failed restart cools down for `restartCooldownMs`, and `McpGateway.close()` stops every subprocess (the stdio transport also kills its child if the parent exits).
+- **Failure is an answer, not an exception.** A server that is down, slow or crashed yields `status: "unavailable"` for that call and the run continues. A server that cannot list its tools offers none for that run. The agent passes `gateway.expectedToolNames()` as `optionalTools` to `ToolRegistry.create`, so a missing MCP tool is left out and reported by `unavailableTools()` instead of failing the registry. Every case is counted in telemetry.
+- **Telemetry.** `app.ai.mcp.calls` and `app.ai.mcp.call.duration` by `server`, `tool`, `outcome` (`ok`, `tool_error`, `refused`, `timeout`, `unavailable`), and `app.ai.mcp.server.events` by `server`, `event` (`started`, `start_failed`, `crashed`, `restarted`, `idle_stopped`, `unconfigured`, `tool_missing`, `tool_not_read_only`, `tool_list_truncated`, `policy_argument_undeclared`, `recycled_after_timeout`), plus an `ai.mcp.server_event` log line with a redacted detail.
+- **Transports.** Only stdio today, behind `MCP_TRANSPORT_PORT`; streamable HTTP is a second adapter when a server needs it.
+
+How to add a server and its policy: `packages/ai-core/README.md`. Registered servers: `google-analytics` (Google's `analytics-mcp` 1.1.0, used by Veronica's chat).
+
+**Credentials for a file-based server.** `analytics-mcp` reads its service account key from a file path. Railway gives env values, so Veronica takes the key JSON from `GA_CREDENTIALS_JSON` and checks that it parses as a service account key, without logging it. At boot it writes the key to a private temp directory (`0700`, file `0600`, never in the repo or the image), passes only the path, and deletes the directory on shutdown.
 
 ---
 
@@ -461,6 +494,7 @@ The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_B
 - `digest_snapshot`: today's snapshot and rule outcomes.
 - `recent_changes`: deploys and merged PRs, read-only.
 - `ask_happy`: reads Happy's latest finished result for one PR (verdict, counts by severity, questions, coverage). It never starts a review.
+- `google-analytics__run_report`, `google-analytics__run_realtime_report`, `google-analytics__get_custom_dimensions_and_metrics`: Google Analytics 4 for ratingo.top through the MCP gateway (`mcp: [google-analytics]`). The property is pinned from `GA_PROPERTY_ID`, reports go at most 90 days back with at most 50 rows, and paging and quota arguments are hidden. They are optional tools, and a run never waits for them: Veronica lists them in the background at boot (`McpGatewayHost.onApplicationBootstrap`), and a run offers them only once that listing is ready, so the first questions after a deploy are answered without them. If listing fails, the next run starts another listing in the background, and the session's cooldown keeps this from spawning the server on every message. when the key or the property id is missing or invalid, or the server is down, they are simply not offered and the chat works as before. Their prompt (`agent/prompts/chat-google-analytics.md`) is added only when they are offered.
 
 No Railway logs and no free SQL; those are left to DUM-E later.
 
@@ -470,7 +504,7 @@ No Railway logs and no free SQL; those are left to DUM-E later.
 
 - One `AgentLoop` per message on alias `fast`, with a registry of just these four tools, prompt `agent/prompts/chat.md`, at most 8 turns and $0.05 per message; $0.30 per day for the `chat` task and the agent's day budget, both read from the `ai.runs` table.
 - «шукаю…» is posted first and then edited into the answer; if the edit fails, a new message is sent.
-- **Numbers guard.** Every number in the answer must appear in this run's tool results, the question, the last turns or the clock line. A sentence with another number is cut and a note is added; if nothing is left, the raw snapshot is sent. Links are stripped.
+- **Numbers guard.** Every number in the answer must appear in this run's tool results, the question, the last turns or the clock line. A date counts as verified only where the answer writes it as a date or a date range («20 листопада», «з 15 по 21 листопада», «15–21.11»), and each date must be a row date from GA or an end of a date range this run requested, resolved against Kyiv's today. A bare day or month never passes as a count. A sentence with another number is cut and a note is added; if nothing is left, the raw snapshot is sent. Links are stripped.
 - **Fallback.** When the model is down, over budget or its numbers cannot be verified, the reply is the `/status` snapshot with one line saying why.
 - **Memory.** The last 12 messages per chat in Redis (`ai-veronica:conversation:<chatId>`, 24 h TTL): the question and the checked answer as text, never tool payloads.
 - **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `redacted`, `fallback`, `failed`; route `investigation`) and a `chat` row in `ai.runs` with the cost.
@@ -609,7 +643,7 @@ Model: `review` alias. A cheap first pass on `fast` can mark risky files so the 
 ## Observability
 
 - Each service bootstraps its own OpenTelemetry SDK the way `apps/api/src/telemetry` does and uses `@ratingo/node-telemetry` conventions.
-- Metrics: `app.ai.runs` (agent, task, trigger, outcome), `app.ai.run.cost` (USD), `app.ai.run.tokens` (kind), `app.ai.run.duration`, `app.ai.tool.calls`.
+- Metrics: `app.ai.runs` (agent, task, trigger, outcome), `app.ai.run.cost` (USD), `app.ai.run.tokens` (kind), `app.ai.run.duration`, `app.ai.tool.calls`, `app.ai.mcp.calls` and `app.ai.mcp.call.duration` (server, tool, outcome), `app.ai.mcp.server.events` (server, event).
 - Logs carry run IDs and outcomes, not prompts, PR content or chat text.
 - A `Ratingo / AI` Grafana dashboard, plus the missing-digest alert.
 - Watchdog heartbeat: gauge `app.ai.watchdog.last_tick_timestamp_seconds` (Prometheus `app_ai_watchdog_last_tick_timestamp_seconds`), the Unix time of the last finished watchdog tick. It is absent until the first tick, so an alert on its absence or age catches Veronica herself being down.

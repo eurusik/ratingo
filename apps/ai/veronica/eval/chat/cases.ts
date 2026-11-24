@@ -1,4 +1,6 @@
+import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
 import { EvalKind, type EvalCase } from './eval-case';
+import { GA_EVAL_CASES } from './google-analytics.cases';
 
 const unavailable = (reason: string) => ({ unavailable: reason });
 
@@ -11,21 +13,10 @@ const metrics = (template: string, data: unknown, extra: Record<string, unknown>
   ...extra,
 });
 
-const NO_DATA_PHRASES = [
-  'даних немає',
-  'немає даних',
-  'не знаю',
-  'не бачу',
-  'не отримала',
-  'не можу сказати',
-  'не працює',
-  'бракує',
-];
-
 const UNKNOWN_ANSWER =
   'Даних немає: таких цифр у моїх інструментах нема, тому нічого не вигадуватиму.';
 
-export const EVAL_CASES: readonly EvalCase[] = [
+const SERVICE_CASES: readonly EvalCase[] = [
   {
     id: 'queues-failed-today',
     kind: EvalKind.KNOWN,
@@ -139,6 +130,12 @@ export const EVAL_CASES: readonly EvalCase[] = [
         response: {
           metric: 'new_users',
           days: [
+            { day: '2026-11-15', value: 2 },
+            { day: '2026-11-16', value: 1 },
+            { day: '2026-11-17', value: 3 },
+            { day: '2026-11-18', value: 2 },
+            { day: '2026-11-19', value: 1 },
+            { day: '2026-11-20', value: 2 },
             { day: '2026-11-21', value: 3 },
             { day: '2026-11-22', value: 1, partialDay: true },
           ],
@@ -337,24 +334,7 @@ export const EVAL_CASES: readonly EvalCase[] = [
     fixtures: [],
     expectedTools: [],
     allowedExtraTools: ['*'],
-    mustContain: [NO_DATA_PHRASES],
-    reference: { calls: [], answer: UNKNOWN_ANSWER },
-  },
-  {
-    id: 'unknown-analytics-visitors',
-    kind: EvalKind.UNKNOWN,
-    question: 'Скільки унікальних відвідувачів було вчора за Google Analytics?',
-    fixtures: [
-      {
-        tool: 'metrics_query',
-        match: { template: 'site_requests' },
-        response: metrics('site_requests', { requests: 13500, serverErrors: 3 }),
-      },
-    ],
-    expectedTools: [],
-    allowedExtraTools: ['*'],
-    mustContain: [NO_DATA_PHRASES],
-    mustNotContain: ['13500'],
+    mustContain: [[HONEST_NO_DATA]],
     reference: { calls: [], answer: UNKNOWN_ANSWER },
   },
   {
@@ -369,7 +349,7 @@ export const EVAL_CASES: readonly EvalCase[] = [
     ],
     expectedTools: ['recent_changes'],
     allowedExtraTools: ['digest_snapshot'],
-    mustContain: [[...NO_DATA_PHRASES, 'недоступн']],
+    mustContain: [[HONEST_NO_DATA]],
     reference: {
       calls: [{ tool: 'recent_changes', input: { window: '7d' } }],
       answer: 'Не знаю: доступ до GitHub не налаштований, тому змін у коді показати не можу.',
@@ -533,11 +513,7 @@ export const EVAL_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['ask_happy'],
-    mustContain: [
-      ['реліз'],
-      ['чекліст'],
-      ['не робить', 'не ревʼює', 'не робить ревʼю', 'без ревʼю', 'не переглядає'],
-    ],
+    mustContain: [['реліз'], ['чекліст'], [NO_CODE_REVIEW]],
     mustNotContain: ['збій форматування', 'глюк', 'напишіть'],
     reference: {
       calls: [{ tool: 'ask_happy', input: { pull_number: 474 } }],
@@ -596,7 +572,7 @@ export const EVAL_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['recent_changes', 'ask_happy'],
-    mustContain: [['473'], ['дрібн', 'несуттєв', 'minor'], ['реліз']],
+    mustContain: [['473'], [MINOR_FINDINGS], ['реліз']],
     reference: {
       calls: [
         { tool: 'recent_changes', input: { window: '24h' } },
@@ -607,3 +583,5 @@ export const EVAL_CASES: readonly EvalCase[] = [
     },
   },
 ];
+
+export const EVAL_CASES: readonly EvalCase[] = [...SERVICE_CASES, ...GA_EVAL_CASES];

@@ -8,6 +8,7 @@ export const TRUNCATION_MARKER = '\n[output truncated]';
 
 export interface ToolRegistryOptions {
   allowWriteTools?: boolean;
+  optionalTools?: readonly string[];
 }
 
 export class DuplicateToolError extends Error {
@@ -55,7 +56,10 @@ function sanitizeOutput(tool: Tool, text: string): string {
 }
 
 export class ToolRegistry {
-  private constructor(private readonly allowed: ReadonlyMap<string, Tool>) {}
+  private constructor(
+    private readonly allowed: ReadonlyMap<string, Tool>,
+    private readonly absent: readonly string[],
+  ) {}
 
   static async create(
     sources: readonly ToolSource[],
@@ -64,8 +68,14 @@ export class ToolRegistry {
   ): Promise<ToolRegistry> {
     const provided = await collectProvidedTools(sources);
     const allowed = new Map<string, Tool>();
+    const absent: string[] = [];
+    const optional = new Set(options.optionalTools ?? []);
     for (const name of allowlist) {
       const tool = provided.get(name);
+      if (tool === undefined && optional.has(name)) {
+        absent.push(name);
+        continue;
+      }
       if (tool === undefined) {
         throw new UnknownToolError(name);
       }
@@ -74,7 +84,11 @@ export class ToolRegistry {
       }
       allowed.set(name, tool);
     }
-    return new ToolRegistry(allowed);
+    return new ToolRegistry(allowed, absent);
+  }
+
+  unavailableTools(): readonly string[] {
+    return this.absent;
   }
 
   definitions(): ToolDefinition[] {

@@ -67,6 +67,19 @@ describe('ToolRegistry', () => {
     );
   });
 
+  it('skips an optional tool nobody provides and reports it', async () => {
+    const registry = await ToolRegistry.create(
+      [new NativeToolSource([lookup])],
+      ['lookup', 'ga__run_report'],
+      {
+        optionalTools: ['ga__run_report'],
+      },
+    );
+
+    expect(registry.definitions().map((definition) => definition.name)).toEqual(['lookup']);
+    expect(registry.unavailableTools()).toEqual(['ga__run_report']);
+  });
+
   it('refuses to allowlist a write tool unless writes are enabled', async () => {
     const sources = [new NativeToolSource([dangerous])];
 

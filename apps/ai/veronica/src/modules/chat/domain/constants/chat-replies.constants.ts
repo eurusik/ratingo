@@ -54,6 +54,9 @@ export const happyNotPublishedReply = (pullNumber: number): string =>
 export const happyGaveUpReply = (pullNumber: number, pullRequestUrl: string): string =>
   `Хеппі досі не закінчив PR №${pullNumber}. Результат з'явиться в перевірці Happy на сторінці PR:\n${pullRequestUrl}`;
 
+export const ANALYTICS_HELP_LINE =
+  'Питай про відвідувачів сайту з Google Analytics: «скільки людей було на сайті за тиждень», «звідки приходять», «хто зараз на сайті»';
+
 export const HAPPY_HELP_LINES: readonly string[] = [
   '«Хеппі, глянь 470»: огляд PR від Хеппі; після нових комітів він дивиться лише їх',
   '«Хеппі, глянь 470 повністю» або «повне рев’ю 470»: повний огляд усього PR',

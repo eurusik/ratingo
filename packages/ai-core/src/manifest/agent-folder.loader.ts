@@ -27,6 +27,7 @@ export interface AgentFolder {
 
 export interface LoadAgentFolderOptions {
   knownModelAliases?: readonly string[];
+  knownMcpServers?: readonly string[];
 }
 
 export class AgentFolderError extends Error {
@@ -200,6 +201,15 @@ function findUnknownModelAliases(
   return [...manifestIssues, ...taskIssues];
 }
 
+function findUnknownMcpServers(manifest: AgentManifest, known: readonly string[]): string[] {
+  return manifest.mcp
+    .filter((server) => !known.includes(server))
+    .map(
+      (server) =>
+        `${MANIFEST_FILE}: mcp server "${server}" is not on the platform allowlist (known: ${known.join(', ') || 'none'})`,
+    );
+}
+
 export async function loadAgentFolder(
   folder: string,
   options: LoadAgentFolderOptions = {},
@@ -215,6 +225,7 @@ export async function loadAgentFolder(
         ...findUnknownModelAliases(manifest.value, tasks.value ?? [], options.knownModelAliases),
       );
     }
+    issues.push(...findUnknownMcpServers(manifest.value, options.knownMcpServers ?? []));
   }
   if (issues.length > 0 || manifest.value === undefined) {
     throw new AgentFolderError(folder, issues);

@@ -1,6 +1,7 @@
 import { type DynamicModule, Global, Module } from '@nestjs/common';
 
 import {
+  ANALYTICS_MCP_CONFIG,
   ANTHROPIC_CONFIG,
   CHANGES_CONFIG,
   CHAT_CONFIG,
@@ -10,6 +11,7 @@ import {
   MODEL_ALIASES,
   PRODUCT_STATS_CONFIG,
   TELEGRAM_CONFIG,
+  type AnalyticsMcpConfig,
   type AnthropicConfig,
   type ChangesConfig,
   type GrafanaConfig,
@@ -48,10 +50,15 @@ export class ConfigModule {
       serviceToken: env.HAPPY_SERVICE_TOKEN,
       repository: env.GITHUB_REPOSITORY,
     };
+    const analytics: AnalyticsMcpConfig = {
+      credentialsJson: env.GA_CREDENTIALS_JSON,
+      propertyId: env.GA_PROPERTY_ID,
+    };
     const providers = [
       { provide: ANTHROPIC_CONFIG, useValue: anthropic },
       { provide: GRAFANA_CONFIG, useValue: grafana },
       { provide: PRODUCT_STATS_CONFIG, useValue: productStats },
+      { provide: ANALYTICS_MCP_CONFIG, useValue: analytics },
       { provide: CHANGES_CONFIG, useValue: changes },
       { provide: HAPPY_CONFIG, useValue: happy },
       { provide: TELEGRAM_CONFIG, useValue: telegram },
