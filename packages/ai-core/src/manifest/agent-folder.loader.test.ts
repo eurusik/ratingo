@@ -152,6 +152,33 @@ describe('loadAgentFolder', () => {
     expect((await issuesOf())[0]).toContain('invalid YAML');
   });
 
+  it('fails on an MCP server that is not on the platform allowlist', async () => {
+    await writeValidFolder();
+    await write('agent.yaml', VALID_MANIFEST.replace('mcp: []', 'mcp: [ga, github]'));
+
+    const failure = await loadAgentFolder(folder, {
+      knownModelAliases: ['fast'],
+      knownMcpServers: ['ga'],
+    }).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(AgentFolderError);
+    expect((failure as AgentFolderError).issues).toEqual([
+      'agent.yaml: mcp server "github" is not on the platform allowlist (known: ga)',
+    ]);
+  });
+
+  it('accepts MCP servers the platform registers', async () => {
+    await writeValidFolder();
+    await write('agent.yaml', VALID_MANIFEST.replace('mcp: []', 'mcp: [ga]'));
+
+    const loaded = await loadAgentFolder(folder, {
+      knownModelAliases: ['fast'],
+      knownMcpServers: ['ga'],
+    });
+
+    expect(loaded.manifest.mcp).toEqual(['ga']);
+  });
+
   it('accepts a direct provider:model reference without alias config', async () => {
     await write(
       'agent.yaml',
