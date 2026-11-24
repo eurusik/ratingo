@@ -31,6 +31,85 @@ describe('numbers guard', () => {
     expect(unverifiedNumbers(`Значення ${written}.`, known(source))).toEqual([]);
   });
 
+  describe('date ranges', () => {
+    const MONTHS = [
+      'січня',
+      'лютого',
+      'березня',
+      'квітня',
+      'травня',
+      'червня',
+      'липня',
+      'серпня',
+      'вересня',
+      'жовтня',
+      'листопада',
+      'грудня',
+    ];
+    const forms = (first: number, last: number, month: number, year?: number): string[] => {
+      const name = MONTHS[month - 1];
+      const tail = year === undefined ? '' : ` ${year}`;
+      const dotTail = year === undefined ? '' : `.${year}`;
+      return [
+        `з ${first} по ${last} ${name}${tail}`,
+        `${first}–${last} ${name}${tail}`,
+        `${first}-${last}.${month}${dotTail}`,
+        `від ${first} до ${last} ${name}${tail}`,
+      ];
+    };
+    const datesOf = (first: number, last: number, month: number, year: number) =>
+      new Set([
+        `${first}.${month}`,
+        `${first}.${month}.${year}`,
+        `${last}.${month}`,
+        `${last}.${month}.${year}`,
+      ]);
+
+    it('accepts every written form of a range whose two ends are known', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 1, max: 14 }),
+          fc.integer({ min: 15, max: 28 }),
+          fc.integer({ min: 1, max: 12 }),
+          fc.integer({ min: 2000, max: 2099 }),
+          fc.boolean(),
+          (first, last, month, year, withYear) => {
+            const dates = datesOf(first, last, month, year);
+            for (const form of forms(first, last, month, withYear ? year : undefined)) {
+              expect(
+                unverifiedNumbers(`За тиждень (${form}) було 268 подій.`, known('268'), dates),
+              ).toEqual([]);
+            }
+          },
+        ),
+      );
+    });
+
+    it('cuts a range when one end is not known', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 1, max: 14 }),
+          fc.integer({ min: 15, max: 28 }),
+          fc.integer({ min: 1, max: 12 }),
+          (first, last, month) => {
+            const dates = new Set([`${first}.${month}`]);
+            for (const form of forms(first, last, month)) {
+              expect(unverifiedNumbers(`(${form}) 268 подій.`, known('268'), dates)).not.toEqual(
+                [],
+              );
+            }
+          },
+        ),
+      );
+    });
+
+    it('keeps checking a count that only looks like a range', () => {
+      expect(
+        unverifiedNumbers('Було 15-21 сесій.', known('100'), new Set(['15.11', '21.11'])),
+      ).toEqual(['15', '21']);
+    });
+  });
+
   describe('compact GA dates', () => {
     const GA_ROW = '{"dimension_values":[{"value":"20261120"}],"metric_values":[{"value":"153"}]}';
     const verify = (answer: string) =>

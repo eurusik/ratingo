@@ -95,7 +95,31 @@ const rangeFacts = (args: Record<string, unknown>): Record<string, unknown> => {
   };
 };
 
+const AUTO_DIMENSIONS: ReadonlySet<string> = new Set(['dateRange']);
+
+const headerNames = (response: unknown): string[] | undefined => {
+  const headers = (response as { dimension_headers?: { name: string }[] } | null)
+    ?.dimension_headers;
+  return headers?.map((header) => header.name);
+};
+
+const sameDimensions = (fixture: Fixture, args: Record<string, unknown>): boolean => {
+  const provided = headerNames(fixture.response);
+  if (provided === undefined) {
+    return true;
+  }
+  const requested = Array.isArray(args.dimensions) ? (args.dimensions as unknown[]) : [];
+  const answered = provided.filter((name) => !AUTO_DIMENSIONS.has(name));
+  return (
+    requested.length === answered.length &&
+    requested.every((name) => answered.includes(name as string))
+  );
+};
+
 const matchesArguments = (fixture: Fixture, args: Record<string, unknown>): boolean => {
+  if (!sameDimensions(fixture, args)) {
+    return false;
+  }
   const facts = { ...args, ...rangeFacts(args) };
   return Object.entries(fixture.match ?? {}).every(([key, value]) =>
     containsAll(facts[key], value),
@@ -121,7 +145,12 @@ export class FixtureGaConnection implements McpConnection {
       throw new McpTimeoutError(GA_SERVER, name, 1);
     }
     if (fixture === undefined || fixture.error !== undefined) {
-      return { isError: true, text: fixture?.error ?? `No GA fixture for ${name}` };
+      return {
+        isError: true,
+        text:
+          fixture?.error ??
+          `No eval data for ${name} with dimensions ${JSON.stringify(args.dimensions ?? [])}`,
+      };
     }
     return { isError: false, text: JSON.stringify(fixture.response) };
   }

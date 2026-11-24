@@ -1,3 +1,4 @@
+import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
 import { EvalKind, type EvalCase } from './eval-case';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 
@@ -11,17 +12,6 @@ const metrics = (template: string, data: unknown, extra: Record<string, unknown>
   data,
   ...extra,
 });
-
-const NO_DATA_PHRASES = [
-  'даних немає',
-  'немає даних',
-  'не знаю',
-  'не бачу',
-  'не отримала',
-  'не можу сказати',
-  'не працює',
-  'бракує',
-];
 
 const UNKNOWN_ANSWER =
   'Даних немає: таких цифр у моїх інструментах нема, тому нічого не вигадуватиму.';
@@ -338,7 +328,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
     fixtures: [],
     expectedTools: [],
     allowedExtraTools: ['*'],
-    mustContain: [NO_DATA_PHRASES],
+    mustContain: [[HONEST_NO_DATA]],
     reference: { calls: [], answer: UNKNOWN_ANSWER },
   },
   {
@@ -353,7 +343,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
     ],
     expectedTools: ['recent_changes'],
     allowedExtraTools: ['digest_snapshot'],
-    mustContain: [[...NO_DATA_PHRASES, 'недоступн']],
+    mustContain: [[HONEST_NO_DATA]],
     reference: {
       calls: [{ tool: 'recent_changes', input: { window: '7d' } }],
       answer: 'Не знаю: доступ до GitHub не налаштований, тому змін у коді показати не можу.',
@@ -517,11 +507,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['ask_happy'],
-    mustContain: [
-      ['реліз'],
-      ['чекліст'],
-      ['не робить', 'не ревʼює', 'не робить ревʼю', 'без ревʼю', 'не переглядає'],
-    ],
+    mustContain: [['реліз'], ['чекліст'], [NO_CODE_REVIEW]],
     mustNotContain: ['збій форматування', 'глюк', 'напишіть'],
     reference: {
       calls: [{ tool: 'ask_happy', input: { pull_number: 474 } }],
@@ -580,7 +566,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['recent_changes', 'ask_happy'],
-    mustContain: [['473'], ['дрібн', 'несуттєв', 'minor'], ['реліз']],
+    mustContain: [['473'], [MINOR_FINDINGS], ['реліз']],
     reference: {
       calls: [
         { tool: 'recent_changes', input: { window: '24h' } },

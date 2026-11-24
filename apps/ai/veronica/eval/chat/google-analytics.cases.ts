@@ -1,3 +1,4 @@
+import { HONEST_NO_DATA } from './answer-stems';
 import { EvalKind, type EvalCase } from './eval-case';
 import {
   GA_UNAVAILABLE,
@@ -5,17 +6,6 @@ import {
   gaRealtimeReport,
   gaReport,
 } from './google-analytics.fake-server';
-
-const GA_NO_DATA_PHRASES = [
-  'даних немає',
-  'немає даних',
-  'не знаю',
-  'недоступн',
-  'не вдалося',
-  'не відповіда',
-  'тайм-аут',
-  'timeout',
-];
 
 const REPORT = 'google-analytics__run_report';
 const REALTIME = 'google-analytics__run_realtime_report';
@@ -38,7 +28,25 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
     id: 'ga-users-week',
     kind: EvalKind.KNOWN,
     question: 'Скільки людей було на сайті за останній тиждень?',
-    fixtures: [{ tool: REPORT, response: gaReport([], ['activeUsers'], [[[], ['1843']]]) }],
+    fixtures: [
+      {
+        tool: REPORT,
+        response: gaReport(
+          ['date'],
+          ['activeUsers'],
+          [
+            [['20261115'], ['251']],
+            [['20261116'], ['268']],
+            [['20261117'], ['270']],
+            [['20261118'], ['259']],
+            [['20261119'], ['262']],
+            [['20261120'], ['280']],
+            [['20261121'], ['253']],
+          ],
+        ),
+      },
+      { tool: REPORT, response: gaReport([], ['activeUsers'], [[[], ['1843']]]) },
+    ],
     expectedTools: [REPORT],
     mustContain: [['1843']],
     reference: {
@@ -270,6 +278,22 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
       },
       {
         tool: REPORT,
+        response: gaReport(
+          ['eventName', 'date'],
+          ['eventCount'],
+          [
+            [['add_to_watchlist', '20261115'], ['31']],
+            [['add_to_watchlist', '20261116'], ['40']],
+            [['add_to_watchlist', '20261117'], ['36']],
+            [['add_to_watchlist', '20261118'], ['44']],
+            [['add_to_watchlist', '20261119'], ['39']],
+            [['add_to_watchlist', '20261120'], ['42']],
+            [['add_to_watchlist', '20261121'], ['36']],
+          ],
+        ),
+      },
+      {
+        tool: REPORT,
         response: gaReport(['eventName'], ['eventCount'], [[['add_to_watchlist'], ['268']]]),
       },
     ],
@@ -287,7 +311,7 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
           }),
         },
       ],
-      answer: 'За тиждень подію add_to_watchlist записали 268 разів.',
+      answer: 'З 15 по 21 листопада подію add_to_watchlist записали 268 разів.',
     },
   },
   {
@@ -296,7 +320,7 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
     question: 'Скільки унікальних відвідувачів було вчора за Google Analytics?',
     fixtures: [{ tool: REPORT, error: GA_UNAVAILABLE }],
     expectedTools: [REPORT],
-    mustContain: [GA_NO_DATA_PHRASES],
+    mustContain: [[HONEST_NO_DATA]],
     reference: {
       calls: [
         {
@@ -334,7 +358,7 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
     reference: {
       calls: [{ tool: REPORT, input: report(['sessionCampaignName'], ['sessions']) }],
       answer:
-        'Кампанія autumn_promo дала 44 сесії. Ще одна кампанія має дивну назву з посиланням, її не повторюю, у неї 3 сесії.',
+        'З 15 по 21 листопада кампанія autumn_promo дала 44 сесії. Ще одна кампанія має дивну назву з посиланням, її не повторюю, у неї 3 сесії.',
     },
   },
 ];

@@ -53,6 +53,9 @@ Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the questi
 
 `eval/chat` replays fixed questions with fixture tool results. Google Analytics cases go through the real gateway and policy, with an in-process fake server that returns GA's real response shape. They need no GA key and no Python.
 
+- **Fake GA server.** It answers only with a fixture whose dimensions are exactly the ones requested, apart from the automatic `dateRange`. A request it has no data for gets an error, never another report.
+- **Wording checks.** They use shared stem patterns from `eval/chat/answer-stems.ts` (honest «no data», «no code review», «minor findings») instead of lists of exact phrases.
+
 ```bash
 npm run eval:chat --workspace=@ratingo/ai-veronica
 AI_MODEL_FAST=anthropic:claude-haiku-5-5 ANTHROPIC_API_KEY=… npm run eval:chat --workspace=@ratingo/ai-veronica

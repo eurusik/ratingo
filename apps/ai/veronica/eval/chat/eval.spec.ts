@@ -1,3 +1,4 @@
+import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
 import { EVAL_CASES } from './cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
@@ -18,7 +19,7 @@ describe('chat eval cases', () => {
     const unknown = EVAL_CASES.filter((testCase) => testCase.kind === EvalKind.UNKNOWN);
     expect(unknown.length).toBeGreaterThanOrEqual(2);
     for (const testCase of unknown) {
-      expect(testCase.mustContain.flat().some((option) => /немає|не знаю/.test(option))).toBe(true);
+      expect(testCase.mustContain.flat()).toContain(HONEST_NO_DATA);
     }
   });
 
@@ -170,4 +171,33 @@ describe('chat eval scorer', () => {
       failedCases: ['queues-failed-today'],
     });
   });
+});
+
+describe('answer stems', () => {
+  it.each([
+    'Я не можу перевірити зміни в коді за тиждень: інструмент із репозиторієм повернув помилку.',
+    'Зараз я не можу отримати цифру з Google Analytics: сервіс не відповів на запит (тайм-аут).',
+    'Google Analytics зараз не відповідає: запит завершився тайм-аутом.',
+    'Даних немає: таких цифр у моїх інструментах нема.',
+  ])('reads «%s» as an honest no-data answer', (answer) => {
+    expect(HONEST_NO_DATA.test(answer.toLowerCase())).toBe(true);
+  });
+
+  it('does not read a confident answer as no data', () => {
+    expect(HONEST_NO_DATA.test('за тиждень на сайті було 1843 користувачі.')).toBe(false);
+  });
+
+  it.each(['хеппі на ньому код не перевіряє', 'хеппі не робить ревʼю релізів', 'без ревʼю коду'])(
+    'reads «%s» as no code review',
+    (answer) => {
+      expect(NO_CODE_REVIEW.test(answer)).toBe(true);
+    },
+  );
+
+  it.each(['2 зауваження низької важливості', 'дрібні зауваження', 'minor findings'])(
+    'reads «%s» as minor findings',
+    (answer) => {
+      expect(MINOR_FINDINGS.test(answer)).toBe(true);
+    },
+  );
 });

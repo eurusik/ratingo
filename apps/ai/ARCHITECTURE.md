@@ -504,7 +504,7 @@ No Railway logs and no free SQL; those are left to DUM-E later.
 
 - One `AgentLoop` per message on alias `fast`, with a registry of just these four tools, prompt `agent/prompts/chat.md`, at most 8 turns and $0.05 per message; $0.30 per day for the `chat` task and the agent's day budget, both read from the `ai.runs` table.
 - «шукаю…» is posted first and then edited into the answer; if the edit fails, a new message is sent.
-- **Numbers guard.** Every number in the answer must appear in this run's tool results, the question, the last turns or the clock line. A sentence with another number is cut and a note is added; if nothing is left, the raw snapshot is sent. Links are stripped.
+- **Numbers guard.** Every number in the answer must appear in this run's tool results, the question, the last turns or the clock line. A date counts as verified only where the answer writes it as a date or a date range («20 листопада», «з 15 по 21 листопада», «15–21.11»), and each date must be a row date from GA or an end of a date range this run requested, resolved against Kyiv's today. A bare day or month never passes as a count. A sentence with another number is cut and a note is added; if nothing is left, the raw snapshot is sent. Links are stripped.
 - **Fallback.** When the model is down, over budget or its numbers cannot be verified, the reply is the `/status` snapshot with one line saying why.
 - **Memory.** The last 12 messages per chat in Redis (`ai-veronica:conversation:<chatId>`, 24 h TTL): the question and the checked answer as text, never tool payloads.
 - **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `redacted`, `fallback`, `failed`; route `investigation`) and a `chat` row in `ai.runs` with the cost.

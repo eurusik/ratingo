@@ -21,8 +21,15 @@ const MONTHS_GENITIVE = [
   'листопада',
   'грудня',
 ];
+const MONTH_PART = `(?:\\s+(${MONTHS_GENITIVE.join('|')})|\\.(\\d{1,2}))`;
+const YEAR_PART = '(?:[\\s.]+(20\\d{2}))?';
+const DATE_END = '(?![\\d.,]\\d)';
+const RANGE_MENTION = new RegExp(
+  `(?<![\\p{L}\\d.,])(?:(?:з|від)\\s+)?(\\d{1,2})\\s*(?:[–—-]|\\s(?:по|до)\\s)\\s*(\\d{1,2})${MONTH_PART}${YEAR_PART}${DATE_END}`,
+  'giu',
+);
 const DATE_MENTION = new RegExp(
-  `(?<![\\p{L}\\d.,])(\\d{1,2})(?:\\s+(${MONTHS_GENITIVE.join('|')})|\\.(\\d{1,2}))(?:[\\s.]+(20\\d{2}))?(?![\\d.,]\\d)`,
+  `(?<![\\p{L}\\d.,])(\\d{1,2})${MONTH_PART}${YEAR_PART}${DATE_END}`,
   'giu',
 );
 
@@ -75,13 +82,17 @@ export const knownNumbers = (sources: readonly string[]): ReadonlySet<string> =>
 const dayMonthKey = (day: number, month: number): string => `${day}.${month}`;
 const fullDateKey = (day: number, month: number, year: number): string => `${day}.${month}.${year}`;
 
+export const dateKeysOf = (day: number, month: number, year: number): string[] => [
+  dayMonthKey(day, month),
+  fullDateKey(day, month, year),
+];
+
 export const knownDates = (sources: readonly string[]): ReadonlySet<string> =>
   new Set(
     sources.flatMap((source) =>
-      [...source.matchAll(COMPACT_DATE)].flatMap((match) => {
-        const [day, month, year] = [Number(match[3]), Number(match[2]), Number(match[1])];
-        return [dayMonthKey(day, month), fullDateKey(day, month, year)];
-      }),
+      [...source.matchAll(COMPACT_DATE)].flatMap((match) =>
+        dateKeysOf(Number(match[3]), Number(match[2]), Number(match[1])),
+      ),
     ),
   );
 
@@ -90,47 +101,65 @@ const monthOf = (name: string | undefined, number: string | undefined): number =
 
 interface DateMention {
   text: string;
-  day: number;
+  days: readonly number[];
   month: number;
   monthName?: string;
   year?: number;
 }
 
+const knownWithYear = (mention: DateMention, dates: ReadonlySet<string>, year: number): boolean =>
+  mention.days.every((day) => dates.has(fullDateKey(day, mention.month, year)));
+
+const knownWithoutYear = (mention: DateMention, dates: ReadonlySet<string>): boolean =>
+  mention.days.every((day) => dates.has(dayMonthKey(day, mention.month)));
+
 const maskedDate = (mention: DateMention, dates: ReadonlySet<string>): string => {
   const words = mention.monthName ?? '';
-  if (
-    mention.year !== undefined &&
-    dates.has(fullDateKey(mention.day, mention.month, mention.year))
-  ) {
+  if (mention.year !== undefined && knownWithYear(mention, dates, mention.year)) {
     return words;
   }
-  if (!dates.has(dayMonthKey(mention.day, mention.month))) {
+  if (!knownWithoutYear(mention, dates)) {
     return mention.text;
   }
   return mention.year === undefined ? words : `${words} ${mention.year}`;
 };
 
-const withoutKnownDates = (answer: string, dates: ReadonlySet<string>): string =>
+const mentionOf = (
+  text: string,
+  days: readonly string[],
+  monthName: string | undefined,
+  monthNumber: string | undefined,
+  year: string | undefined,
+): DateMention => ({
+  text,
+  days: days.map(Number),
+  month: monthOf(monthName, monthNumber),
+  monthName,
+  year: year === undefined ? undefined : Number(year),
+});
+
+const withoutKnownRanges = (answer: string, dates: ReadonlySet<string>): string =>
   answer.replace(
-    DATE_MENTION,
+    RANGE_MENTION,
     (
       text,
-      day: string,
-      monthName: string | undefined,
-      monthNumber: string | undefined,
-      year: string | undefined,
-    ) =>
-      maskedDate(
-        {
-          text,
-          day: Number(day),
-          month: monthOf(monthName, monthNumber),
-          monthName,
-          year: year === undefined ? undefined : Number(year),
-        },
-        dates,
-      ),
+      firstDay: string,
+      lastDay: string,
+      monthName?: string,
+      monthNumber?: string,
+      year?: string,
+    ) => maskedDate(mentionOf(text, [firstDay, lastDay], monthName, monthNumber, year), dates),
   );
+
+const withoutKnownSingleDates = (answer: string, dates: ReadonlySet<string>): string =>
+  answer.replace(
+    DATE_MENTION,
+    (text, day: string, monthName?: string, monthNumber?: string, year?: string) =>
+      maskedDate(mentionOf(text, [day], monthName, monthNumber, year), dates),
+  );
+
+const withoutKnownDates = (answer: string, dates: ReadonlySet<string>): string =>
+  withoutKnownSingleDates(withoutKnownRanges(answer, dates), dates);
 
 const NO_DATES: ReadonlySet<string> = new Set();
 

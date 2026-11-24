@@ -47,6 +47,7 @@ import {
 import { TurnRole, type ConversationTurn } from '../../domain/entities/conversation-turn';
 import { clip, stripLinks } from '../../domain/policies/answer-sanitizer.policy';
 import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
+import { requestedReportDates } from '../../domain/policies/report-dates.policy';
 import {
   knownDates,
   knownNumbers,
@@ -68,6 +69,7 @@ import { ToolRecorder, type RecordedCall } from '../tools/tool-recorder';
 
 const FAST_ALIAS = 'fast';
 const CHAT_PROMPT_KEY = 'chat';
+const ISO_DATE_LENGTH = 10;
 const EXTERNAL_TOOLS_PROMPT_KEY = 'chat-google-analytics';
 
 type FallbackReason = keyof typeof FALLBACK_INTRO;
@@ -258,7 +260,8 @@ ${external}`
       ...knownNumbers(sources),
       ...knownNumbers([formatKyivDateTime(this.clock.nowMs())]),
     ]);
-    const dates = knownDates(sources);
+    const kyivToday = formatKyivDateTime(this.clock.nowMs()).slice(0, ISO_DATE_LENGTH);
+    const dates = new Set([...knownDates(sources), ...requestedReportDates(sources, kyivToday)]);
     const unverified = unverifiedNumbers(text, known, dates);
     if (unverified.length === 0) {
       return {
