@@ -143,7 +143,7 @@ export function toUpcomingRelease(movie: UpcomingMovie): UpcomingRelease {
   };
 }
 
-export type PremiereKind = 'newShow';
+type PremiereKind = 'newShow';
 
 export interface PremiereRelease {
   mediaItemId: string;
