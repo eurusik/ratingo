@@ -26,6 +26,8 @@ export const EXCHANGE_RETENTION_SCHEDULE = {
   failedKeepSeconds: 7 * SECONDS_PER_DAY,
 } as const;
 
+export const CONVERSATION_KEY_PREFIX = 'ai-veronica:conversation:';
+
 export const CHAT_TASK_NAME = 'chat';
 export const NO_MODEL = 'none';
 

@@ -21,8 +21,8 @@ export const WATCHDOG_JOB_OPTIONS = {
 } as const;
 
 export const WATCHDOG_STATE_KEYS = {
-  ACTIVE: 'ai-veronica:watchdog:active',
-  HAPPY_FAILURES: 'ai-veronica:watchdog:happy-failures',
+  ACTIVE: 'ai-veronica:watchdog-state:active',
+  HAPPY_FAILURES: 'ai-veronica:watchdog-state:happy-failures',
 } as const;
 export const WATCHDOG_ACTIVE_TTL_SECONDS = 7 * SECONDS_PER_DAY;
 export const WATCHDOG_HAPPY_FAILURES_TTL_SECONDS = SECONDS_PER_HOUR;
