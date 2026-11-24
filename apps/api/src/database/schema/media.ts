@@ -456,3 +456,10 @@ export const mediaWatchersSnapshotsRelations = relations(mediaWatchersSnapshots,
     references: [mediaItems.id],
   }),
 }));
+
+export const traktAnticipatedShows = pgTable('trakt_anticipated_shows', {
+  tmdbId: integer('tmdb_id').primaryKey(),
+  listCount: integer('list_count').notNull(),
+  rank: integer('rank').notNull(),
+  fetchedAt: timestamp('fetched_at').notNull(),
+});

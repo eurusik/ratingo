@@ -204,6 +204,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/shows/anticipated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Most anticipated show premieres
+         * @description Returns shows from the latest Trakt anticipated snapshot on at least 1000 lists that premiere within the next 90 days, have a poster and are eligible for the upcoming surface, ordered by premiere date.
+         */
+        get: operations["CatalogShowsController_getAnticipated"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/shows/new-episodes": {
         parameters: {
             query?: never;
@@ -3275,6 +3295,28 @@ export interface components {
         TrendingShowsResponseDto: {
             data: components["schemas"]["ShowTrendingItemDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        AnticipatedShowDto: {
+            /** Format: uuid */
+            mediaItemId: string;
+            /** @example harry-potter */
+            slug: string;
+            /** @example Гаррі Поттер */
+            title: string;
+            poster: components["schemas"]["ImageDto"];
+            /**
+             * Format: date-time
+             * @description First air date of the show.
+             */
+            premiereDate: string;
+            /**
+             * @description Number of Trakt lists the show is on.
+             * @example 60000
+             */
+            listCount: number;
+        };
+        AnticipatedShowsResponseDto: {
+            data: components["schemas"]["AnticipatedShowDto"][];
         };
         NewEpisodeDto: {
             /**
@@ -7097,6 +7139,49 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["TrendingShowsResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogShowsController_getAnticipated: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AnticipatedShowsResponseDto"];
                     };
                 };
             };

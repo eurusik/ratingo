@@ -281,6 +281,13 @@
       "when": 1795327101976,
       "tag": "0039_reporting_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1795533704668,
+      "tag": "0040_trakt_anticipated_shows",
+      "breakpoints": true
     }
   ]
 }

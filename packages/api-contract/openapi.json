@@ -1725,6 +1725,76 @@
         ]
       }
     },
+    "/api/catalog/shows/anticipated": {
+      "get": {
+        "description": "Returns shows from the latest Trakt anticipated snapshot on at least 1000 lists that premiere within the next 90 days, have a poster and are eligible for the upcoming surface, ordered by premiere date.",
+        "operationId": "CatalogShowsController_getAnticipated",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AnticipatedShowsResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Most anticipated show premieres",
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
     "/api/catalog/shows/new-episodes": {
       "get": {
         "description": "Returns shows that have aired new episodes recently. One entry per show with the latest episode.",
@@ -15512,6 +15582,58 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "AnticipatedShowDto": {
+        "type": "object",
+        "properties": {
+          "mediaItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string",
+            "example": "harry-potter"
+          },
+          "title": {
+            "type": "string",
+            "example": "Гаррі Поттер"
+          },
+          "poster": {
+            "$ref": "#/components/schemas/ImageDto"
+          },
+          "premiereDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "First air date of the show."
+          },
+          "listCount": {
+            "type": "number",
+            "example": 60000,
+            "description": "Number of Trakt lists the show is on."
+          }
+        },
+        "required": [
+          "mediaItemId",
+          "slug",
+          "title",
+          "poster",
+          "premiereDate",
+          "listCount"
+        ]
+      },
+      "AnticipatedShowsResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnticipatedShowDto"
+            }
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "NewEpisodeDto": {

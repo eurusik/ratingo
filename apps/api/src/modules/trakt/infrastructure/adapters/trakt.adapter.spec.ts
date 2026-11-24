@@ -168,6 +168,43 @@ describe('Trakt adapters', () => {
     });
   });
 
+  describe('lists adapter: anticipated shows', () => {
+    it('maps list counts and Trakt ranks, skipping shows without a TMDB id and repeats', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { list_count: 60000, show: { ids: { tmdb: 1 } } },
+            { list_count: 25000, show: { ids: {} } },
+            { list_count: 900, show: { ids: { tmdb: 3 } } },
+            { list_count: 800, show: { ids: { tmdb: 1 } } },
+          ]),
+      });
+
+      const result = await listsAdapter.getAnticipatedShows(100);
+
+      expect(result).toEqual([
+        { tmdbId: 1, listCount: 60000, rank: 1 },
+        { tmdbId: 3, listCount: 900, rank: 3 },
+      ]);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.trakt.tv/shows/anticipated?limit=100',
+        expect.any(Object),
+      );
+    });
+
+    it('returns null when Trakt fails, so the caller keeps the previous snapshot', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests',
+        headers: new Headers(),
+      });
+
+      await expect(listsAdapter.getAnticipatedShows(100)).resolves.toBeNull();
+    });
+  });
+
   describe('ratings adapter: getMovieRatingsByTmdbId', () => {
     it('should lookup movie and return ratings', async () => {
       mockFetch.mockImplementation((url: string) => {

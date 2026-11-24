@@ -38,6 +38,8 @@ export const UPCOMING_MOVIES_DIGITAL_LOOKAHEAD_DAYS = 60;
 export const UPCOMING_MOVIES_MIN_POPULARITY = 5;
 export const UPCOMING_MOVIES_MAX_PRIMARY_RELEASE_AGE_DAYS = 365;
 export const UPCOMING_MOVIES_SOON_DAYS = 14;
+export const ANTICIPATED_SHOWS_MIN_LIST_COUNT = 1_000;
+export const ANTICIPATED_SHOWS_WINDOW_DAYS = 90;
 
 // Digital Release Freshness — only show movies originally released within this window
 // Excludes re-releases of old classics (e.g., Harry Potter re-released on Max)

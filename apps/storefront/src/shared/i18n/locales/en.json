@@ -36,6 +36,12 @@
       "movie": "Movie calendar"
     },
     "upcomingDate": "Out {date}",
+    "premieres": "Most anticipated premieres",
+    "premieresCaption": "New shows people are waiting for most",
+    "premiereDate": "Premieres {date}",
+    "premiereKind": {
+      "newShow": "New series"
+    },
     "releaseFilter": {
       "label": "Where to watch",
       "nowPlaying": "In cinemas",

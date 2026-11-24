@@ -15,6 +15,7 @@ export type HomeItem = components['schemas']['HeroItemDto'];
 export type NewEpisode = components['schemas']['NewEpisodeDto'];
 export type UpcomingMovie = components['schemas']['UpcomingMovieDto'];
 export type ReleaseKind = UpcomingMovie['releaseDateKind'];
+export type AnticipatedShow = components['schemas']['AnticipatedShowDto'];
 export type MovieDetails = components['schemas']['MovieResponseDto'];
 export type ShowDetails = components['schemas']['ShowResponseDto'];
 export type ShowSeason = components['schemas']['SeasonDto'];
@@ -114,6 +115,14 @@ export const catalogApi = {
       searchParams: { limit },
       ...cacheOptions(cache),
     });
+    return page.data;
+  },
+
+  async getAnticipatedShows(limit: number, cache?: CatalogCache): Promise<AnticipatedShow[]> {
+    const page = await apiGet<GetData<'/api/catalog/shows/anticipated'>>(
+      'catalog/shows/anticipated',
+      { searchParams: { limit }, ...cacheOptions(cache) },
+    );
     return page.data;
   },
 

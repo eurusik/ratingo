@@ -127,7 +127,7 @@ module/
 - Metadata import from TMDB
 - Enrichment: TVMaze (episodes), Trakt/OMDb (ratings)
 - Ratingo Score calculation
-- **Pipelines**: TrendingPipeline, SnapshotsPipeline, TrackedShowsPipeline, NowPlayingPipeline, NewReleasesPipeline, UpcomingMoviesPipeline
+- **Pipelines**: TrendingPipeline, SnapshotsPipeline, TrackedShowsPipeline, NowPlayingPipeline, NewReleasesPipeline, UpcomingMoviesPipeline, AnticipatedShowsPipeline
 - BullMQ worker for background jobs
 
 ### Stats

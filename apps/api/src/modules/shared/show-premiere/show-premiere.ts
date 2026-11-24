@@ -1,7 +1,7 @@
 import { ShowStatus } from '@/common/enums/show-status.enum';
 import { type NormalizedMedia, type NormalizedSeason } from '@/modules/shared/contracts';
 
-const SPECIALS_SEASON_NUMBER = 0;
+export const SPECIALS_SEASON_NUMBER = 0;
 
 export interface ShowPremiereFacts {
   firstAirDate: Date | null;
@@ -9,11 +9,13 @@ export interface ShowPremiereFacts {
   hasAiredEpisode: boolean;
 }
 
-const UNDATED_UNRELEASED_STATUSES: ReadonlySet<string> = new Set([
+export const UNDATED_UNRELEASED_SHOW_STATUSES: readonly string[] = [
   ShowStatus.PLANNED,
   ShowStatus.IN_PRODUCTION,
   ShowStatus.PILOT,
-]);
+];
+
+const UNDATED_UNRELEASED_STATUSES: ReadonlySet<string> = new Set(UNDATED_UNRELEASED_SHOW_STATUSES);
 
 function isPremiereAhead(facts: ShowPremiereFacts, now: Date): boolean {
   if (facts.firstAirDate) return facts.firstAirDate.getTime() > now.getTime();

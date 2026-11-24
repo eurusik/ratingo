@@ -12,6 +12,7 @@ import {
   type UpcomingMoviesRefreshScopeType,
 } from '@/modules/shared/contracts';
 
+import { AnticipatedShowsPipeline } from '../pipelines/anticipated-shows.pipeline';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
@@ -52,6 +53,7 @@ export class SyncWorker extends WorkerHost {
     private readonly nowPlayingPipeline: NowPlayingPipeline,
     private readonly newReleasesPipeline: NewReleasesPipeline,
     private readonly upcomingMoviesPipeline: UpcomingMoviesPipeline,
+    private readonly anticipatedShowsPipeline: AnticipatedShowsPipeline,
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
     private readonly backfillMdblistRatingsPipeline: BackfillMdblistRatingsPipeline,
@@ -166,6 +168,9 @@ export class SyncWorker extends WorkerHost {
           break;
         case IngestionJob.REFRESH_UPCOMING_MOVIES:
           await this.upcomingMoviesPipeline.refresh(job.data.scope);
+          break;
+        case IngestionJob.SYNC_ANTICIPATED_SHOWS:
+          await this.anticipatedShowsPipeline.sync();
           break;
 
         // IMDb backfill pipeline

@@ -5,6 +5,7 @@
 export {
   POLICY_INPUT_REPOSITORY,
   type IPolicyInputRepository,
+  type UpcomingReleaseWindow,
   type UpdatedAtWindow,
 } from './policy-input.repository.interface';
 
