@@ -11,6 +11,7 @@ export const GoogleAnalyticsMcpKey = {
 } as const;
 
 const PROPERTY_ID_ARGUMENT = 'property_id';
+const REPORT_LOOKBACK_DAYS = 90;
 const REPORT_LIMIT = { kind: McpConstraintKind.NUMBER, min: 1, max: 50, default: 20 } as const;
 const FILTER_ARGUMENTS = ['dimension_filter', 'metric_filter'] as const;
 const pinnedProperty = { [PROPERTY_ID_ARGUMENT]: GoogleAnalyticsMcpKey.PROPERTY_ID };
@@ -32,8 +33,8 @@ const runReport: McpToolRule = {
     date_ranges: {
       kind: McpConstraintKind.DATE_RANGES,
       maxRanges: 2,
-      maxSpanDays: 90,
-      maxLookbackDays: 90,
+      maxSpanDays: REPORT_LOOKBACK_DAYS + 1,
+      maxLookbackDays: REPORT_LOOKBACK_DAYS,
     },
     dimensions: { kind: McpConstraintKind.MAX_ITEMS, max: 4 },
     metrics: { kind: McpConstraintKind.MAX_ITEMS, max: 5 },

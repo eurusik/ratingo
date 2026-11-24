@@ -123,6 +123,36 @@ describe('google-analytics MCP server', () => {
     expect(decision).toEqual({ allowed: false, refusal: expect.objectContaining({ code }) });
   });
 
+  it.each([
+    [{ start_date: '90daysAgo', end_date: 'today' }],
+    [{ start_date: '90daysAgo', end_date: 'yesterday' }],
+    [{ start_date: '2026-08-26', end_date: '2026-11-24' }],
+  ])('allows the last 90 days written as %j', (range) => {
+    const { policy, rule } = resolvedRule();
+    const decision = decideMcpCall(
+      policy,
+      'run_report',
+      { date_ranges: [range], dimensions: [], metrics: ['activeUsers'] },
+      { todayEpochDay: TODAY, allowedArguments: allowedArgumentsOf(rule, RUN_REPORT_SCHEMA) },
+    );
+    expect(decision.allowed).toBe(true);
+  });
+
+  it('refuses a range that starts 91 days ago', () => {
+    const { policy, rule } = resolvedRule();
+    const decision = decideMcpCall(
+      policy,
+      'run_report',
+      {
+        date_ranges: [{ start_date: '91daysAgo', end_date: 'today' }],
+        dimensions: [],
+        metrics: ['activeUsers'],
+      },
+      { todayEpochDay: TODAY, allowedArguments: allowedArgumentsOf(rule, RUN_REPORT_SCHEMA) },
+    );
+    expect(decision.allowed).toBe(false);
+  });
+
   it('allows two ranges for a week-over-week comparison', () => {
     const { policy, rule } = resolvedRule();
     const decision = decideMcpCall(

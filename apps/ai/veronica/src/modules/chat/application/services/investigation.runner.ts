@@ -48,6 +48,7 @@ import { TurnRole, type ConversationTurn } from '../../domain/entities/conversat
 import { clip, stripLinks } from '../../domain/policies/answer-sanitizer.policy';
 import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
 import {
+  knownDates,
   knownNumbers,
   redactUnverified,
   unverifiedNumbers,
@@ -200,7 +201,7 @@ export class InvestigationRunner {
   ) {
     const { manifest, prompts } = this.folder;
     const nowMs = this.clock.nowMs();
-    const external = await this.offeredExternalTools();
+    const external = this.offeredExternalTools();
     const tools = [...buildInvestigationTools(this.executors), ...external].map((tool) =>
       recorder.wrap(tool),
     );
@@ -224,9 +225,9 @@ export class InvestigationRunner {
     });
   }
 
-  private async offeredExternalTools(): Promise<readonly Tool[]> {
+  private offeredExternalTools(): readonly Tool[] {
     try {
-      return await this.externalTools.listTools();
+      return this.externalTools.availableTools();
     } catch (error) {
       this.logger.warn(`Зовнішні інструменти недоступні: ${errorName(error)}`);
       return [];
@@ -257,7 +258,8 @@ ${external}`
       ...knownNumbers(sources),
       ...knownNumbers([formatKyivDateTime(this.clock.nowMs())]),
     ]);
-    const unverified = unverifiedNumbers(text, known);
+    const dates = knownDates(sources);
+    const unverified = unverifiedNumbers(text, known, dates);
     if (unverified.length === 0) {
       return {
         outcome: ChatOutcome.ANSWERED,
@@ -267,7 +269,7 @@ ${external}`
         raw: output,
       };
     }
-    const redacted = redactUnverified(text, known);
+    const redacted = redactUnverified(text, known, dates);
     if (redacted.text === '') {
       return this.fallback('UNVERIFIED', unverified, output);
     }

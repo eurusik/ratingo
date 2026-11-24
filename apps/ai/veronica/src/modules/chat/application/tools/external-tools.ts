@@ -1,7 +1,7 @@
 import type { Tool } from '@ratingo/ai-core';
 
 export interface ExternalTools {
-  listTools(): Promise<readonly Tool[]>;
+  availableTools(): readonly Tool[];
   expectedToolNames(): readonly string[];
 }
 

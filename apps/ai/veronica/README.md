@@ -24,6 +24,8 @@ Veronica answers questions about visitors to ratingo.top from Google Analytics 4
 | `GA_CREDENTIALS_JSON` | yes    | the whole JSON key of the read-only service account, as one value |
 | `GA_PROPERTY_ID`      | no     | the numeric GA4 property id, for ratingo.top `515589933`          |
 
+A chat message never waits for the Python server. Veronica starts it and lists its tools in the background at boot, and the GA tools are offered once that listing is ready. Until then, usually a few seconds after a deploy, GA questions get the honest «даних немає».
+
 What happens with these variables:
 
 - **Missing or invalid.** If either variable is missing, the key is not a service account key, or the property id is not numeric, a warning names the variable, never its value. Google Analytics stays off and the chat works as before.
@@ -32,6 +34,7 @@ What happens with these variables:
 The server is installed in the image at `/opt/analytics-mcp-1.1.0` from `analytics-mcp/requirements.lock` (hash-pinned, binary wheels only, nothing downloaded at runtime). To update it:
 
 1. Bump the version in `analytics-mcp/requirements.in`, `GOOGLE_ANALYTICS_MCP_VERSION` in ai-core and `ANALYTICS_MCP_HOME` in the Dockerfile.
+   Every stage builds from one `NODE_IMAGE` pinned by digest, so Alpine's `python3` stays the version the lock was resolved for. To update Node or Python, bump the digest, rebuild and run the image's smoke test.
 2. Regenerate the lock in an Alpine amd64 container with `pip-compile --generate-hashes --strip-extras --no-header --no-annotate --allow-unsafe`.
 
 A test fails if the three places disagree.

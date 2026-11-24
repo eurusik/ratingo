@@ -19,6 +19,14 @@ describe('analytics-mcp in the Veronica image', () => {
     expect(dockerfile).toContain('--require-hashes');
   });
 
+  it('builds every stage from one digest-pinned base, so Python matches the locked wheels', async () => {
+    const dockerfile = await readFile(path.join(APP_DIR, 'Dockerfile'), 'utf8');
+    const stages = [...dockerfile.matchAll(/^FROM (\S+)/gm)].map((match) => match[1]);
+
+    expect(dockerfile).toMatch(/^ARG NODE_IMAGE=node:22-alpine@sha256:[0-9a-f]{64}$/m);
+    expect(new Set(stages)).toEqual(new Set(['${NODE_IMAGE}']));
+  });
+
   it('hashes every locked package', async () => {
     const lock = await readFile(path.join(APP_DIR, 'analytics-mcp/requirements.lock'), 'utf8');
     const pins = lock.split('\n').filter((line) => /^[a-z0-9][a-z0-9._-]*==/i.test(line));

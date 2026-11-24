@@ -22,14 +22,20 @@ const wiring = (anthropicApiKey: string | undefined, fast: string) => {
   return Test.createTestingModule({ imports: [TestConfigModule, AiCoreModule] }).compile();
 };
 
+const FIRST_LOAD_TIMEOUT_MS = 30_000;
+
 describe('AiCoreModule model providers', () => {
-  it('registers anthropic for the fast alias when the key is set, for the digest and the chat alike', async () => {
-    const app = await wiring('sk-test', 'anthropic:claude-haiku-5-5');
-    const providers = app.get<ModelProviders>(MODEL_PROVIDERS);
-    expect(Object.keys(providers).sort()).toEqual(['anthropic', 'stub']);
-    expect(app.get(AGENT_LOOP)).toBeDefined();
-    expect(app.get(AGENT_LOOP_FACTORY)).toBeInstanceOf(Function);
-  });
+  it(
+    'registers anthropic for the fast alias when the key is set, for the digest and the chat alike',
+    async () => {
+      const app = await wiring('sk-test', 'anthropic:claude-haiku-5-5');
+      const providers = app.get<ModelProviders>(MODEL_PROVIDERS);
+      expect(Object.keys(providers).sort()).toEqual(['anthropic', 'stub']);
+      expect(app.get(AGENT_LOOP)).toBeDefined();
+      expect(app.get(AGENT_LOOP_FACTORY)).toBeInstanceOf(Function);
+    },
+    FIRST_LOAD_TIMEOUT_MS,
+  );
 
   it('refuses to boot when the fast alias needs anthropic and no key is set', async () => {
     await expect(wiring(undefined, 'anthropic:claude-haiku-5-5')).rejects.toThrow(

@@ -145,7 +145,7 @@ class Harness {
       },
     } as never,
     {
-      listTools: async () => {
+      availableTools: () => {
         if (this.externalFailure) throw new Error('gateway broken');
         return this.external;
       },

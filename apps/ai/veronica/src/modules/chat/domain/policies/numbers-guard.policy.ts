@@ -6,7 +6,25 @@ const SENTENCE_BREAK = /(?<=[.!?…])\s+/;
 const THOUSANDS_GROUP_DIGITS = 3;
 
 const THOUSANDS_GROUP_MAX_LEADING = 3;
-const COMPACT_DATE = /^(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/;
+const COMPACT_DATE = /(?<!\d)(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(?!\d)/g;
+const MONTHS_GENITIVE = [
+  'січня',
+  'лютого',
+  'березня',
+  'квітня',
+  'травня',
+  'червня',
+  'липня',
+  'серпня',
+  'вересня',
+  'жовтня',
+  'листопада',
+  'грудня',
+];
+const DATE_MENTION = new RegExp(
+  `(?<![\\p{L}\\d.,])(\\d{1,2})(?:\\s+(${MONTHS_GENITIVE.join('|')})|\\.(\\d{1,2}))(?:[\\s.]+(20\\d{2}))?(?![\\d.,]\\d)`,
+  'giu',
+);
 
 const canonical = (text: string): string | null => {
   const parsed = Number(text);
@@ -51,23 +69,80 @@ const withoutListMarkers = (text: string): string =>
 export const extractNumbers = (text: string): string[][] =>
   [...withoutListMarkers(text).matchAll(NUMBER_TOKEN)].map((match) => interpretations(match[0]));
 
-export const compactDateParts = (candidate: string): string[] => {
-  const match = COMPACT_DATE.exec(candidate);
-  return match === null ? [] : match.slice(1).map((part) => String(Number(part)));
+export const knownNumbers = (sources: readonly string[]): ReadonlySet<string> =>
+  new Set(sources.flatMap((source) => extractNumbers(source).flat()));
+
+const dayMonthKey = (day: number, month: number): string => `${day}.${month}`;
+const fullDateKey = (day: number, month: number, year: number): string => `${day}.${month}.${year}`;
+
+export const knownDates = (sources: readonly string[]): ReadonlySet<string> =>
+  new Set(
+    sources.flatMap((source) =>
+      [...source.matchAll(COMPACT_DATE)].flatMap((match) => {
+        const [day, month, year] = [Number(match[3]), Number(match[2]), Number(match[1])];
+        return [dayMonthKey(day, month), fullDateKey(day, month, year)];
+      }),
+    ),
+  );
+
+const monthOf = (name: string | undefined, number: string | undefined): number =>
+  name === undefined ? Number(number) : MONTHS_GENITIVE.indexOf(name.toLowerCase()) + 1;
+
+interface DateMention {
+  text: string;
+  day: number;
+  month: number;
+  monthName?: string;
+  year?: number;
+}
+
+const maskedDate = (mention: DateMention, dates: ReadonlySet<string>): string => {
+  const words = mention.monthName ?? '';
+  if (
+    mention.year !== undefined &&
+    dates.has(fullDateKey(mention.day, mention.month, mention.year))
+  ) {
+    return words;
+  }
+  if (!dates.has(dayMonthKey(mention.day, mention.month))) {
+    return mention.text;
+  }
+  return mention.year === undefined ? words : `${words} ${mention.year}`;
 };
 
-export const knownNumbers = (sources: readonly string[]): ReadonlySet<string> =>
-  new Set(
-    sources
-      .flatMap((source) => extractNumbers(source).flat())
-      .flatMap((candidate) => [candidate, ...compactDateParts(candidate)]),
+const withoutKnownDates = (answer: string, dates: ReadonlySet<string>): string =>
+  answer.replace(
+    DATE_MENTION,
+    (
+      text,
+      day: string,
+      monthName: string | undefined,
+      monthNumber: string | undefined,
+      year: string | undefined,
+    ) =>
+      maskedDate(
+        {
+          text,
+          day: Number(day),
+          month: monthOf(monthName, monthNumber),
+          monthName,
+          year: year === undefined ? undefined : Number(year),
+        },
+        dates,
+      ),
   );
+
+const NO_DATES: ReadonlySet<string> = new Set();
 
 const isVerified = (candidates: readonly string[], known: ReadonlySet<string>): boolean =>
   candidates.some((candidate) => known.has(candidate));
 
-export const unverifiedNumbers = (answer: string, known: ReadonlySet<string>): string[] =>
-  extractNumbers(answer)
+export const unverifiedNumbers = (
+  answer: string,
+  known: ReadonlySet<string>,
+  dates: ReadonlySet<string> = NO_DATES,
+): string[] =>
+  extractNumbers(withoutKnownDates(answer, dates))
     .filter((candidates) => !isVerified(candidates, known))
     .map((candidates) => candidates[0] ?? '');
 
@@ -76,11 +151,15 @@ export interface RedactionResult {
   removedSentences: number;
 }
 
-export const redactUnverified = (answer: string, known: ReadonlySet<string>): RedactionResult => {
+export const redactUnverified = (
+  answer: string,
+  known: ReadonlySet<string>,
+  dates: ReadonlySet<string> = NO_DATES,
+): RedactionResult => {
   let removedSentences = 0;
   const lines = answer.split('\n').map((line) => {
     const kept = line.split(SENTENCE_BREAK).filter((sentence) => {
-      const clean = unverifiedNumbers(sentence, known).length === 0;
+      const clean = unverifiedNumbers(sentence, known, dates).length === 0;
       if (!clean) removedSentences += 1;
       return clean;
     });

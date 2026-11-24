@@ -40,7 +40,7 @@ const EVAL_GA_ENV = {
 };
 const SILENT_TELEMETRY = { callFinished: () => undefined, serverEvent: () => undefined };
 
-const fixtureGaTools = (testCase: EvalCase, clock: ClockPort): ExternalTools => {
+const fixtureGaTools = async (testCase: EvalCase, clock: ClockPort): Promise<ExternalTools> => {
   const gateway = new McpGateway({
     registry: createPlatformMcpRegistry(),
     servers: [GA_SERVER],
@@ -49,8 +49,9 @@ const fixtureGaTools = (testCase: EvalCase, clock: ClockPort): ExternalTools => 
     clock,
     telemetry: SILENT_TELEMETRY,
   });
+  const tools = await gateway.toolSource().listTools();
   return {
-    listTools: () => gateway.toolSource().listTools(),
+    availableTools: () => tools,
     expectedToolNames: () => gateway.expectedToolNames(),
   };
 };
@@ -127,7 +128,7 @@ export const runCase = async (
       sendChatAction: async () => undefined,
     },
     { status: async () => ({ html: SNAPSHOT_STUB_HTML, silent: true }) } as never,
-    fixtureGaTools(testCase, clock),
+    await fixtureGaTools(testCase, clock),
   );
   const outcome = await runner.answer(CHAT_ID, testCase.question);
   return {
