@@ -36,6 +36,7 @@ import { mergeTracked } from '../../domain/policies/finding-tracking';
 import { validateFindings } from '../../domain/policies/finding-validator';
 import {
   buildReleaseChecklist,
+  checklistDigest,
   isReleasePullRequest,
 } from '../../domain/policies/release-checklist';
 import {
@@ -225,12 +226,14 @@ export class ReviewService {
     files: readonly ChangedFile[],
     truncated: boolean,
   ): ReleaseChecklistReview {
+    const checklist = buildReleaseChecklist(files);
     return {
       status: ReviewStatus.CHECKLIST,
       ref: pr.ref,
       headSha: pr.headSha,
       costUsd: 0,
-      markdown: renderReleaseChecklist(pr.ref, pr.headSha, buildReleaseChecklist(files), truncated),
+      digest: checklistDigest(checklist),
+      markdown: renderReleaseChecklist(pr.ref, pr.headSha, checklist, truncated),
     };
   }
 

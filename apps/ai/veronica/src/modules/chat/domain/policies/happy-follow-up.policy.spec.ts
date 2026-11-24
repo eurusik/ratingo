@@ -6,6 +6,8 @@ import type { HappyLookup, HappyResult } from '../entities/happy';
 import { decideHappyFollowUp } from './happy-follow-up.policy';
 
 const result = (checkedSha: string): HappyResult => ({
+  kind: 'review',
+  checklist: null,
   status: 'reviewed',
   checkedSha,
   current: true,
@@ -22,6 +24,8 @@ const result = (checkedSha: string): HappyResult => ({
 const found = (headSha: string, reviewPending: boolean, checked: string | null): HappyLookup => ({
   kind: 'found',
   headSha,
+  baseBranch: 'main',
+  headBranch: 'feature',
   reviewPending,
   result: checked === null ? null : result(checked),
 });
@@ -38,6 +42,8 @@ describe('decideHappyFollowUp', () => {
     const withScope = (mode: 'incremental' | 'full'): HappyLookup => ({
       kind: 'found',
       headSha: 'h1',
+      baseBranch: 'main',
+      headBranch: 'feature',
       reviewPending: true,
       result: {
         ...result('h1'),
@@ -91,6 +97,16 @@ describe('decideHappyFollowUp', () => {
         (attempt, pending) =>
           decideHappyFollowUp({ headSha: 'h1', attempt }, found('h1', pending, null)) !== 'wait',
       ),
+    );
+  });
+
+  it('delivers a release checklist for a full request instead of waiting until the limit', () => {
+    const lookup: HappyLookup = {
+      ...found('h1', false, 'h1'),
+      result: { ...result('h1'), kind: 'release_checklist', status: 'checklist' },
+    } as HappyLookup;
+    expect(decideHappyFollowUp({ headSha: 'h1', attempt: 1, mode: 'full' }, lookup)).toBe(
+      'deliver',
     );
   });
 });

@@ -31,7 +31,9 @@ const pull = (number: number, base: string, mergedAt: string | null) => ({
   number,
   title: `PR ${number}`,
   merged_at: mergedAt,
+  updated_at: mergedAt ?? '2026-11-22T00:00:00Z',
   base: { ref: base },
+  head: { ref: base === 'main' ? 'development' : 'feat/x' },
   body: 'secret body',
   user: { login: 'someone' },
 });
@@ -65,17 +67,59 @@ describe('GithubRecentChangesAdapter', () => {
         number: 464,
         title: 'PR 464',
         baseBranch: 'development',
+        headBranch: 'feat/x',
         mergedAtMs: Date.parse('2026-11-22T12:00:00Z'),
       },
       {
         number: 465,
         title: 'PR 465',
         baseBranch: 'main',
+        headBranch: 'development',
         mergedAtMs: Date.parse('2026-11-22T10:00:00Z'),
       },
     ]);
     expect(JSON.stringify(report)).not.toContain('secret body');
     expect(JSON.stringify(report)).not.toContain('someone');
+  });
+
+  it('finds a pull request that was pushed to page two by later updates of older ones', async () => {
+    const updatedAfterMerge = (number: number) => ({
+      ...pull(number, 'development', null),
+      updated_at: '2026-11-22T15:00:00Z',
+    });
+    const { adapter, urls } = adapterWith((url) => {
+      if (!url.includes('base=development')) return json([]);
+      return url.endsWith('page=1')
+        ? json(Array.from({ length: 30 }, (_, index) => updatedAfterMerge(100 + index)))
+        : json([pull(473, 'development', '2026-11-22T11:00:00Z')]);
+    });
+    const report = await adapter.since(SINCE_MS);
+    expect(report.mergedPullRequests.map((merged) => merged.number)).toEqual([473]);
+    expect(urls.filter((url) => url.includes('base=development'))).toHaveLength(2);
+  });
+
+  it('stops paging once the page reaches pull requests older than the window', async () => {
+    const stale = (number: number) => ({
+      ...pull(number, 'development', null),
+      updated_at: '2026-10-01T00:00:00Z',
+    });
+    const { adapter, urls } = adapterWith(() =>
+      json(Array.from({ length: 30 }, (_, index) => stale(index))),
+    );
+    await adapter.since(SINCE_MS);
+    expect(urls.filter((url) => url.includes('/pulls?'))).toHaveLength(2);
+  });
+
+  it('never pages without a bound', async () => {
+    const fresh = (number: number) => ({
+      ...pull(number, 'development', null),
+      updated_at: '2026-11-23T00:00:00Z',
+    });
+    const { adapter, urls } = adapterWith(() =>
+      json(Array.from({ length: 30 }, (_, index) => fresh(index))),
+    );
+    await adapter.since(SINCE_MS);
+    expect(urls.filter((url) => url.includes('base=main')).length).toBeLessThanOrEqual(4);
   });
 
   it('lists recent deployments with their latest state', async () => {

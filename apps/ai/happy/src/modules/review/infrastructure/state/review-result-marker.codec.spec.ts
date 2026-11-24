@@ -13,9 +13,14 @@ import {
 } from '../../domain/constants/review-limits.constants';
 import { FindingCategory, Severity } from '../../domain/constants/severity.constants';
 import { CoverageGap, ReviewStatus } from '../../domain/entities/review-outcome';
-import type { ResultTracking, ReviewResultSnapshot } from '../../domain/entities/review-result';
+import {
+  ResultKind,
+  type ResultTracking,
+  type ReviewResultSnapshot,
+} from '../../domain/entities/review-result';
 import { FullReviewReason, ReviewMode } from '../../domain/entities/review-scope';
 import { FindingStatus } from '../../domain/entities/tracked-finding';
+import { toBase64Url } from '../../domain/policies/base64url';
 import { renderResultMarker } from '../../domain/policies/review-result';
 
 import { decodeResultMarker } from './review-result-marker.codec';
@@ -54,7 +59,24 @@ const trackingArb: fc.Arbitrary<ResultTracking> = fc.record({
   findings: fc.array(trackedFindingArb, { maxLength: 8 }),
 });
 
+const isEqual = (actual: unknown, expected: unknown): boolean => {
+  expect(actual).toEqual(expected);
+  return true;
+};
+
 const snapshotArb: fc.Arbitrary<ReviewResultSnapshot> = fc.record({
+  kind: fc.constantFrom(...Object.values(ResultKind)),
+  checklist: fc.option(
+    fc.record({
+      migrations: count,
+      riskyMigrations: count,
+      envVars: count,
+      services: count,
+      dependencyChanges: count,
+      lockfileChanged: fc.boolean(),
+    }),
+    { nil: null },
+  ),
   status: fc.constantFrom(...Object.values(ReviewStatus)),
   title: fc.string({ maxLength: MAX_RESULT_TITLE_CHARS }),
   summary: fc.string({ maxLength: MAX_RESULT_SUMMARY_CHARS }),
@@ -76,7 +98,7 @@ const snapshotArb: fc.Arbitrary<ReviewResultSnapshot> = fc.record({
   tracking: fc.option(trackingArb, { nil: null }),
 });
 
-const legacyMarker = (snapshot: Omit<ReviewResultSnapshot, 'tracking'>): string =>
+const legacyMarker = (snapshot: Omit<ReviewResultSnapshot, 'tracking' | 'checklist'>): string =>
   `<!-- happy:result:v1 ${encodeURIComponent(JSON.stringify(snapshot))} -->`;
 
 const hostile = (snapshot: ReviewResultSnapshot): ReviewResultSnapshot => ({
@@ -89,10 +111,7 @@ describe('review result marker', () => {
     fc.assert(
       fc.property(snapshotArb, (snapshot) => {
         const marker = renderResultMarker(snapshot);
-        return (
-          marker === '' ||
-          JSON.stringify(decodeResultMarker(`text\n\n${marker}`)) === JSON.stringify(snapshot)
-        );
+        return marker === '' || isEqual(decodeResultMarker(`text\n\n${marker}`), snapshot);
       }),
     );
   });
@@ -100,11 +119,12 @@ describe('review result marker', () => {
   it('reads an older v1 marker as a snapshot without tracked state', () => {
     fc.assert(
       fc.property(snapshotArb, (snapshot) => {
-        const { tracking: _tracking, ...legacy } = snapshot;
-        return (
-          JSON.stringify(decodeResultMarker(legacyMarker(legacy))) ===
-          JSON.stringify({ ...legacy, tracking: null })
-        );
+        const { tracking: _tracking, checklist: _checklist, ...legacy } = snapshot;
+        return isEqual(decodeResultMarker(legacyMarker(legacy)), {
+          ...legacy,
+          tracking: null,
+          checklist: null,
+        });
       }),
     );
   });
@@ -112,13 +132,13 @@ describe('review result marker', () => {
   it('migrates v1 to v2: re-rendering a decoded v1 snapshot round trips', () => {
     fc.assert(
       fc.property(snapshotArb, (snapshot) => {
-        const { tracking: _tracking, ...legacy } = snapshot;
+        const { tracking: _tracking, checklist: _checklist, ...legacy } = snapshot;
         const migrated = decodeResultMarker(legacyMarker(legacy));
         const rendered = migrated === null ? '' : renderResultMarker(migrated);
         return (
           migrated !== null &&
           rendered.startsWith('<!-- happy:result:v2 ') &&
-          JSON.stringify(decodeResultMarker(rendered)) === JSON.stringify(migrated)
+          isEqual(decodeResultMarker(rendered), migrated)
         );
       }),
     );
@@ -132,8 +152,7 @@ describe('review result marker', () => {
         return (
           fakeMarker === '' ||
           realMarker === '' ||
-          JSON.stringify(decodeResultMarker(`${fakeMarker}\n${realMarker}`)) ===
-            JSON.stringify(real)
+          isEqual(decodeResultMarker(`${fakeMarker}\n${realMarker}`), real)
         );
       }),
     );
@@ -163,6 +182,8 @@ describe('review result marker', () => {
       findings,
     };
     const snapshot: ReviewResultSnapshot = {
+      kind: 'review',
+      checklist: null,
       status: ReviewStatus.REVIEWED,
       title: 't',
       summary: 's',
@@ -204,5 +225,29 @@ describe('review result marker', () => {
 
   it('never throws on arbitrary text', () => {
     fc.assert(fc.property(fc.string(), (text) => decodeResultMarker(text) === null || true));
+  });
+
+  it('keeps the kind through a round trip, and derives it for a marker that has none', () => {
+    fc.assert(
+      fc.property(snapshotArb, (snapshot) => {
+        const marker = renderResultMarker(snapshot);
+        return marker === '' || decodeResultMarker(marker)?.kind === snapshot.kind;
+      }),
+    );
+    const { kind: _kind, ...withoutKind } = {
+      kind: ResultKind.REVIEW,
+      status: ReviewStatus.CHECKLIST,
+      title: 'Список вантажу на виїзд.',
+      summary: '',
+      skipReason: null,
+      counts: { critical: 0, major: 0, minor: 0, nit: 0 },
+      questions: [],
+      coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
+      tracking: null,
+    };
+    const encoded = toBase64Url(JSON.stringify(withoutKind));
+    const decoded = decodeResultMarker(`<!-- happy:result:v2 ${encoded} -->`);
+    expect(decoded?.kind).toBe(ResultKind.RELEASE_CHECKLIST);
+    expect(decoded?.checklist).toBeNull();
   });
 });

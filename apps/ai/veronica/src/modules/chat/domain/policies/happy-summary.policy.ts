@@ -1,5 +1,7 @@
 import {
   GITHUB_WEB_PREFIX,
+  RELEASE_BASE_BRANCH,
+  RELEASE_HEAD_BRANCH,
   HAPPY_QUESTIONS_SHOWN,
   HAPPY_QUESTION_MAX_CHARS,
   HAPPY_SUMMARY_MAX_CHARS,
@@ -9,6 +11,7 @@ import {
   HappyResultStatus,
   HappyScopeMode,
   HappySeverity,
+  type HappyChecklistDigest,
   type HappyQuestion,
   type HappyResult,
   type HappyStatusCounts,
@@ -115,6 +118,20 @@ const linkLine = (result: HappyResult): string[] =>
     ? [`Повний звіт: ${escapeHtml(result.checkRunUrl)}`]
     : [];
 
+const digestLine = (digest: HappyChecklistDigest): string =>
+  [
+    `міграцій БД: ${digest.migrations}${digest.riskyMigrations > 0 ? ` (з ризиками: ${digest.riskyMigrations})` : ''}`,
+    `нових змінних середовища: ${digest.envVars}`,
+    `змінених застосунків і пакетів: ${digest.services}`,
+    `змін залежностей: ${digest.dependencyChanges}${digest.lockfileChanged ? ', lockfile змінено' : ''}`,
+  ].join('; ');
+
+const releaseLines = (result: HappyResult): string[] => [
+  `Це реліз ${RELEASE_HEAD_BRANCH}→${RELEASE_BASE_BRANCH}. На релізах Хеппі не робить ревʼю коду, а збирає чекліст без моделі.`,
+  ...(result.checklist === null ? [] : [`У чеклісті: ${digestLine(result.checklist)}.`]),
+  'Ревʼю коду дивись у PR, які увійшли в реліз: «Хеппі, глянь» і номер.',
+];
+
 const bodyFor = (result: HappyResult): string[] => {
   switch (result.status) {
     case HappyResultStatus.REVIEWED:
@@ -131,7 +148,7 @@ const bodyFor = (result: HappyResult): string[] => {
         `Огляд пропущено: ${SKIP_REASON_TEXT[result.skipReason ?? ''] ?? 'причину не вказано'}.`,
       ];
     case HappyResultStatus.CHECKLIST:
-      return ['Це реліз-PR, тож замість огляду коду Хеппі склав список перевірок.'];
+      return releaseLines(result);
     case HappyResultStatus.UNKNOWN:
       return ['Результат є, але в старому форматі: подробиці за посиланням.'];
   }

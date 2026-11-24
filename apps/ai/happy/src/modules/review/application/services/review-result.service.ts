@@ -6,8 +6,10 @@ import type {
   PullRequest,
   PullRequestRef,
 } from '../../domain/entities/pull-request';
+import { ReviewStatus } from '../../domain/entities/review-outcome';
 import { RequestedMode, ReviewMode } from '../../domain/entities/review-scope';
 import {
+  ResultKind,
   UNKNOWN_RESULT_STATUS,
   type PublishedReviewResult,
 } from '../../domain/entities/review-result';
@@ -26,9 +28,22 @@ const NOT_FOUND = 404;
 
 export type ReviewLookup =
   | { status: 'not_found' }
-  | { status: 'found'; headSha: string; result: PublishedReviewResult | null };
+  | {
+      status: 'found';
+      headSha: string;
+      baseBranch: string;
+      headBranch: string;
+      result: PublishedReviewResult | null;
+    };
 
-const toResult = (check: PublishedCheck, headSha: string): PublishedReviewResult => {
+const isFullyReviewed = (snapshot: PublishedCheck['snapshot']): boolean =>
+  snapshot !== null &&
+  (snapshot.tracking?.scope.mode === ReviewMode.FULL ||
+    snapshot.kind === ResultKind.RELEASE_CHECKLIST ||
+    snapshot.status === ReviewStatus.SKIPPED);
+
+const toResult = (check: PublishedCheck, pullRequest: PullRequest): PublishedReviewResult => {
+  const headSha = pullRequest.headSha;
   const snapshot = check.snapshot;
   const base = {
     checkedSha: check.headSha,
@@ -38,6 +53,7 @@ const toResult = (check: PublishedCheck, headSha: string): PublishedReviewResult
   return snapshot === null
     ? {
         ...base,
+        kind: ResultKind.REVIEW,
         status: UNKNOWN_RESULT_STATUS,
         title: check.title,
         summary: '',
@@ -46,6 +62,7 @@ const toResult = (check: PublishedCheck, headSha: string): PublishedReviewResult
         questions: [],
         coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
         tracking: null,
+        checklist: null,
       }
     : { ...base, ...snapshot };
 };
@@ -65,7 +82,9 @@ export class ReviewResultService {
     return {
       status: 'found',
       headSha,
-      result: published === null ? null : toResult(published, headSha),
+      baseBranch: pullRequest.baseRef,
+      headBranch: pullRequest.headRef,
+      result: published === null ? null : toResult(published, pullRequest),
     };
   }
 
@@ -80,7 +99,7 @@ export class ReviewResultService {
     const check = await this.checks.findForCommit(ref, sha);
     if (check === null) return false;
     if (mode === RequestedMode.AUTO) return true;
-    return check.trusted && check.snapshot?.tracking?.scope.mode === ReviewMode.FULL;
+    return check.trusted && isFullyReviewed(check.snapshot);
   }
 
   async findPullRequest(ref: PullRequestRef): Promise<PullRequest | null> {
