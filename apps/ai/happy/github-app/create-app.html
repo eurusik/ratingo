@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create the Happy GitHub App</title>
+  </head>
+  <body>
+    <h1>Create the Happy GitHub App</h1>
+    <form id="form" method="post" action="https://github.com/settings/apps/new">
+      <label>
+        Public URL of the Happy service
+        <input id="domain" type="url" required placeholder="https://happy.example.com" size="50" />
+      </label>
+      <input id="manifest" type="hidden" name="manifest" />
+      <button type="submit">Create the app on GitHub</button>
+    </form>
+    <script>
+      const form = document.getElementById('form');
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const manifest = await (await fetch('./github-app-manifest.json', { cache: 'no-store' })).json();
+        const base = document.getElementById('domain').value.replace(/\/+$/, '');
+        manifest.hook_attributes.url = base + '/webhooks/github';
+        document.getElementById('manifest').value = JSON.stringify(manifest);
+        form.submit();
+      });
+    </script>
+  </body>
+</html>

@@ -160,6 +160,12 @@ describe('EpisodeProgressService', () => {
           SAVED_ITEM_LIST.FOR_LATER,
           UNSAVE_CONTEXT.AUTO_STARTED_WATCHING,
         );
+        expect(mockSavedItemsService.unsaveItem).toHaveBeenCalledWith(
+          'user-1',
+          'media-1',
+          SAVED_ITEM_LIST.CONSIDERING,
+          UNSAVE_CONTEXT.AUTO_STARTED_WATCHING,
+        );
       });
 
       it('should set state to "watching" when marking episode and current state is "planned"', async () => {
@@ -464,6 +470,43 @@ describe('EpisodeProgressService', () => {
         });
         expect(mockShowStatusPort.isOngoing).toHaveBeenCalledWith('show-1');
       });
+
+      it.each([
+        ['caught_up', true, USER_MEDIA_STATE.CAUGHT_UP],
+        ['completed', false, USER_MEDIA_STATE.COMPLETED],
+      ])(
+        'should remove the show from both plan lists when the first marks finish it (%s)',
+        async (_label, isOngoing, targetState) => {
+          mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+          mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+            { seasonNumber: 1, watchedCount: 6, totalCount: 6, watchedEpisodeIds: [] },
+          ]);
+          mockUserMediaService.getState.mockResolvedValue(null);
+          mockShowStatusPort.isOngoing.mockResolvedValue(isOngoing);
+
+          await service.markWatched('user-1', 'ep-1');
+
+          expect(mockUserMediaService.setState).toHaveBeenCalledWith(
+            expect.objectContaining({ state: targetState }),
+          );
+          expect(mockSavedItemsService.unsaveItem).toHaveBeenCalledTimes(2);
+          expect(mockSavedItemsService.unsaveItem).toHaveBeenCalledWith(
+            'user-1',
+            'media-1',
+            SAVED_ITEM_LIST.FOR_LATER,
+            UNSAVE_CONTEXT.AUTO_FINISHED_AIRED,
+          );
+          expect(mockSavedItemsService.unsaveItem).toHaveBeenCalledWith(
+            'user-1',
+            'media-1',
+            SAVED_ITEM_LIST.CONSIDERING,
+            UNSAVE_CONTEXT.AUTO_FINISHED_AIRED,
+          );
+          expect(
+            mockSubscriptionsService.autoSubscribeForShow.mock.invocationCallOrder[0],
+          ).toBeLessThan(mockSavedItemsService.unsaveItem.mock.invocationCallOrder[0]);
+        },
+      );
     });
   });
 

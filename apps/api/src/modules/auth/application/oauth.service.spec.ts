@@ -201,6 +201,7 @@ describe('OAuthService - Account Resolution (loginWithOAuth)', () => {
     );
     expect(mocks.usersService.getByEmail).not.toHaveBeenCalled();
     expect(result.user).toEqual(existingUser);
+    expect(result.isNewUser).toBe(false);
     expect(result.tokens).toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
   });
 
@@ -239,6 +240,7 @@ describe('OAuthService - Account Resolution (loginWithOAuth)', () => {
       avatarUrl: 'https://example.com/photo.jpg',
     });
     expect(result.user).toEqual(updatedUser);
+    expect(result.isNewUser).toBe(false);
   });
 
   it('should refuse to auto-link when the email belongs to a password account', async () => {
@@ -328,6 +330,7 @@ describe('OAuthService - Account Resolution (loginWithOAuth)', () => {
       passwordHash: null,
       avatarUrl: 'https://example.com/photo.jpg',
     });
+    expect(result.isNewUser).toBe(true);
     expect(mocks.oauthAccountsRepository.create).toHaveBeenCalledWith({
       userId: 'u-new',
       provider: 'google',

@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795326165700,
+      "tag": "0000_init_ai_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795373867707,
+      "tag": "0001_chat_exchanges",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795528897552,
+      "tag": "0002_chat_exchange_tool_calls",
+      "breakpoints": true
+    }
+  ]
+}

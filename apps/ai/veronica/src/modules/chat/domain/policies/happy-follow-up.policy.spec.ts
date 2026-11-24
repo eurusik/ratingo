@@ -1,0 +1,112 @@
+import fc from 'fast-check';
+
+import { HAPPY_FOLLOW_UP_MAX_ATTEMPTS } from '../constants/happy.constants';
+import type { HappyLookup, HappyResult } from '../entities/happy';
+
+import { decideHappyFollowUp } from './happy-follow-up.policy';
+
+const result = (checkedSha: string): HappyResult => ({
+  kind: 'review',
+  checklist: null,
+  status: 'reviewed',
+  checkedSha,
+  current: true,
+  title: '',
+  summary: '',
+  skipReason: null,
+  counts: { critical: 0, major: 0, minor: 0, nit: 0 },
+  questions: [],
+  coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
+  checkRunUrl: null,
+  review: null,
+});
+
+const found = (headSha: string, reviewPending: boolean, checked: string | null): HappyLookup => ({
+  kind: 'found',
+  headSha,
+  baseBranch: 'main',
+  headBranch: 'feature',
+  reviewPending,
+  result: checked === null ? null : result(checked),
+});
+
+describe('decideHappyFollowUp', () => {
+  const at = (attempt: number) => ({ headSha: 'h1', attempt });
+
+  it('delivers the result for the requested commit', () => {
+    expect(decideHappyFollowUp(at(1), found('h1', false, 'h1'))).toBe('deliver');
+  });
+
+  it('waits for a full review until the result says it was full', () => {
+    const full = { headSha: 'h1', attempt: 1, mode: 'full' } as const;
+    const withScope = (mode: 'incremental' | 'full'): HappyLookup => ({
+      kind: 'found',
+      headSha: 'h1',
+      baseBranch: 'main',
+      headBranch: 'feature',
+      reviewPending: true,
+      result: {
+        ...result('h1'),
+        review: {
+          mode,
+          baseSha: null,
+          fullReason: null,
+          files: 1,
+          statusCounts: { new: 0, stillOpen: 0, resolved: 0, needsRecheck: 0 },
+        },
+      },
+    });
+    expect(decideHappyFollowUp(full, withScope('incremental'))).toBe('wait');
+    expect(decideHappyFollowUp(full, withScope('full'))).toBe('deliver');
+    expect(decideHappyFollowUp({ headSha: 'h1', attempt: 1 }, withScope('incremental'))).toBe(
+      'deliver',
+    );
+  });
+
+  it('waits while the review is pending', () => {
+    expect(decideHappyFollowUp(at(1), found('h1', true, null))).toBe('wait');
+    expect(decideHappyFollowUp(at(1), found('h1', true, 'old'))).toBe('wait');
+  });
+
+  it('stops when the head moved on and nothing was published for the requested one', () => {
+    expect(decideHappyFollowUp(at(1), found('h2', true, null))).toBe('head_moved');
+  });
+
+  it('reports a finished job without a result only after a grace attempt', () => {
+    expect(decideHappyFollowUp(at(1), found('h1', false, null))).toBe('wait');
+    expect(decideHappyFollowUp(at(3), found('h1', false, null))).toBe('not_published');
+  });
+
+  it('waits through Happy outages and gives up at the limit', () => {
+    expect(decideHappyFollowUp(at(2), null)).toBe('wait');
+    expect(decideHappyFollowUp(at(HAPPY_FOLLOW_UP_MAX_ATTEMPTS), null)).toBe('give_up');
+    expect(decideHappyFollowUp(at(HAPPY_FOLLOW_UP_MAX_ATTEMPTS), found('h1', true, null))).toBe(
+      'give_up',
+    );
+  });
+
+  it('reports a vanished pull request', () => {
+    expect(decideHappyFollowUp(at(1), { kind: 'not_found' })).toBe('not_found');
+  });
+
+  it('never waits past the attempt limit', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: HAPPY_FOLLOW_UP_MAX_ATTEMPTS, max: 1000 }),
+        fc.boolean(),
+        (attempt, pending) =>
+          decideHappyFollowUp({ headSha: 'h1', attempt }, found('h1', pending, null)) !== 'wait',
+      ),
+    );
+  });
+
+  it('delivers a release checklist for a full request instead of waiting until the limit', () => {
+    const lookup: HappyLookup = {
+      ...found('h1', false, 'h1'),
+      result: { ...result('h1'), kind: 'release_checklist', status: 'checklist' },
+    } as HappyLookup;
+    expect(decideHappyFollowUp({ headSha: 'h1', attempt: 1, mode: 'full' }, lookup)).toBe(
+      'deliver',
+    );
+  });
+});

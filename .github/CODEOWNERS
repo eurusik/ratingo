@@ -26,7 +26,7 @@ apps/api/src/modules/user-media/        @eurusik
 apps/api/src/modules/users/             @eurusik
 
 # Database migrations - require extra attention
-apps/api/drizzle/                       @eurusik
+apps/api/drizzle_v2/                    @eurusik
 
 # =============================================================================
 # Frontend (Web Client)
@@ -46,7 +46,7 @@ packages/api-contract/                  @eurusik
 
 .github/                                @eurusik
 docker-compose.yml                      @eurusik
-Dockerfile.*                            @eurusik
+**/Dockerfile                           @eurusik
 turbo.json                              @eurusik
 
 # =============================================================================
@@ -57,12 +57,9 @@ turbo.json                              @eurusik
 eslint.config.mjs                       @eurusik
 .prettierrc.json                        @eurusik
 tsconfig.json                           @eurusik
-.kiro/steering/                         @eurusik
 
 # =============================================================================
 # Documentation
 # =============================================================================
 
 *.md                                    @eurusik
-DOCS_STANDARD.md                        @eurusik
-SYSTEM_MAP.md                           @eurusik

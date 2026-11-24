@@ -218,13 +218,10 @@ export interface IUserMediaStateRepository {
     state: UserMediaState['state'],
   ): Promise<Array<{ userId: string }>>;
 
-  /**
-   * Atomically transitions all caught_up rows for a media item to watching.
-   * Single UPDATE ... WHERE state = 'caught_up' RETURNING * — no N+1 queries.
-   *
-   * @returns Array of updated states (userId + full state)
-   */
-  bulkTransitionCaughtUpToWatching(mediaItemId: string): Promise<UserMediaState[]>;
+  bulkTransitionCaughtUpWithUnwatchedAiredEpisode(
+    mediaItemId: string,
+    asOf: Date,
+  ): Promise<UserMediaState[]>;
 
   /** Lists highly-rated shows with recent or upcoming episodes. */
   listFavoriteUpdates(

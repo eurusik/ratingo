@@ -1,0 +1,18 @@
+{
+  "name": "Happy for Ratingo",
+  "url": "https://github.com/eurusik/ratingo",
+  "hook_attributes": {
+    "url": "https://REPLACE-WITH-HAPPY-DOMAIN/webhooks/github",
+    "active": true
+  },
+  "redirect_url": "https://github.com/eurusik/ratingo",
+  "public": false,
+  "default_events": ["pull_request", "issue_comment"],
+  "default_permissions": {
+    "contents": "read",
+    "pull_requests": "read",
+    "issues": "read",
+    "checks": "write",
+    "metadata": "read"
+  }
+}

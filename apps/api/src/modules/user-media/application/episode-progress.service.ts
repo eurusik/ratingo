@@ -17,6 +17,7 @@ import { SAVED_ITEM_LIST } from '@/modules/user-actions/public';
 import {
   EPISODE_PROGRESS_ERRORS,
   UNSAVE_CONTEXT,
+  type UnsaveContext,
 } from '../domain/constants/episode-progress.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
 import { hasEpisodeAired } from '../domain/policies/episode-airing.policy';
@@ -30,6 +31,8 @@ import {
 } from '../domain/repositories/episode-progress.repository.interface';
 
 import { UserMediaService } from './user-media.service';
+
+const PLAN_LISTS = [SAVED_ITEM_LIST.FOR_LATER, SAVED_ITEM_LIST.CONSIDERING] as const;
 
 @Injectable()
 export class EpisodeProgressService {
@@ -191,6 +194,7 @@ export class EpisodeProgressService {
         );
       }
       await this.tryAutoSubscribe(userId, mediaItemId, currentState);
+      await this.removeFromPlanLists(userId, mediaItemId, UNSAVE_CONTEXT.AUTO_FINISHED_AIRED);
       return;
     }
 
@@ -212,16 +216,21 @@ export class EpisodeProgressService {
         stateImplied: true,
       });
 
-      await this.savedItemsService.unsaveItem(
-        userId,
-        mediaItemId,
-        SAVED_ITEM_LIST.FOR_LATER,
-        UNSAVE_CONTEXT.AUTO_STARTED_WATCHING,
-      );
+      await this.removeFromPlanLists(userId, mediaItemId, UNSAVE_CONTEXT.AUTO_STARTED_WATCHING);
 
       this.logger.log(
         `Auto-set user_media_state to 'watching' for user=${userId}, media=${mediaItemId}`,
       );
+    }
+  }
+
+  private async removeFromPlanLists(
+    userId: string,
+    mediaItemId: string,
+    context: UnsaveContext,
+  ): Promise<void> {
+    for (const list of PLAN_LISTS) {
+      await this.savedItemsService.unsaveItem(userId, mediaItemId, list, context);
     }
   }
 

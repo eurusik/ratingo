@@ -1,3 +1,5 @@
+export const SPECIALS_SEASON_NUMBER = 0;
+
 /** Maximum number of episode IDs allowed in a single batch operation. */
 export const MAX_BATCH_EPISODE_IDS = 200;
 
@@ -19,4 +21,7 @@ export const EPISODE_PROGRESS_ERRORS = {
  */
 export const UNSAVE_CONTEXT = {
   AUTO_STARTED_WATCHING: 'auto_started_watching',
+  AUTO_FINISHED_AIRED: 'auto_finished_aired',
 } as const;
+
+export type UnsaveContext = (typeof UNSAVE_CONTEXT)[keyof typeof UNSAVE_CONTEXT];

@@ -1,12 +1,17 @@
 ---
 paths:
   - "apps/api/src/modules/*/domain/**"
+  - "apps/ai/*/src/modules/*/domain/**"
+  - "packages/ai-core/src/model/model*.ts"
+  - "packages/ai-core/src/loop/budget.ts"
+  - "packages/ai-core/src/runs/run.ts"
+  - "packages/ai-core/src/clock/clock.port.ts"
 ---
 
 # Domain Layer Rules
 
 ## Purity
-- Use injected `ClockService` (`CLOCK_PORT`) for time — never `new Date()` or `Date.now()`
+- Inject `CLOCK_PORT` for time (`IClockPort.now()` from `modules/shared/clock` in the API, `ClockPort.nowMs()` in ai-core) — never `new Date()` or `Date.now()`
 - Use domain constants for all decisions — never magic strings or numbers
 - Define entities as interfaces, not classes
 - Throw domain-specific errors (extend `Error`), not `HttpException` or `AppException`

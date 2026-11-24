@@ -1,12 +1,16 @@
 import {
   type Attributes,
+  ROOT_CONTEXT,
+  defaultTextMapGetter,
   type Histogram,
   type HrTime,
   type Meter,
   SpanStatusCode,
 } from '@opentelemetry/api';
-import type { ReadableSpan } from '@opentelemetry/sdk-trace-node';
+import { CompositePropagator, W3CTraceContextPropagator } from '@opentelemetry/core';
+import { NodeTracerProvider, type ReadableSpan, type Span } from '@opentelemetry/sdk-trace-node';
 
+import { ClientKindPropagator } from './client-kind-propagator';
 import {
   FETCH_DURATION_METRIC,
   RENDER_DURATION_METRIC,
@@ -63,6 +67,7 @@ describe('NextSpanMetricsProcessor', () => {
       'http.route': '/movie/[slug]',
       'http.response.status_code': 200,
       'next.rsc': true,
+      client_kind: 'human',
     });
   });
 
@@ -76,7 +81,98 @@ describe('NextSpanMetricsProcessor', () => {
       'http.request.method': '_OTHER',
       'http.route': 'unmatched',
       'next.rsc': false,
+      client_kind: 'human',
     });
+  });
+
+  it('labels a request with the client kind recorded on its span', () => {
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(
+      span({
+        'next.span_type': 'BaseServer.handleRequest',
+        'http.method': 'GET',
+        'ratingo.client_kind': 'ai_crawler',
+      }),
+    );
+
+    expect(histograms.get(REQUEST_DURATION_METRIC)).toHaveBeenCalledWith(
+      0.25,
+      expect.objectContaining({ client_kind: 'ai_crawler' }),
+    );
+  });
+
+  it('stamps request spans with the client kind found in the propagated context', () => {
+    const { processor } = fakeMeter();
+    const context = new ClientKindPropagator().extract(
+      ROOT_CONTEXT,
+      { 'user-agent': 'Mozilla/5.0 (compatible; GPTBot/1.2)' },
+      defaultTextMapGetter,
+    );
+    const setAttribute = jest.fn();
+
+    processor.onStart(
+      {
+        attributes: { 'next.span_type': 'BaseServer.handleRequest' },
+        setAttribute,
+      } as unknown as Span,
+      context,
+    );
+
+    expect(setAttribute).toHaveBeenCalledWith('ratingo.client_kind', 'ai_crawler');
+  });
+
+  it('leaves spans other than requests unstamped', () => {
+    const { processor } = fakeMeter();
+    const setAttribute = jest.fn();
+
+    processor.onStart(
+      { attributes: { 'next.span_type': 'AppRender.fetch' }, setAttribute } as unknown as Span,
+      ROOT_CONTEXT,
+    );
+
+    expect(setAttribute).not.toHaveBeenCalled();
+  });
+
+  it('ignores a client kind on the span that is not one of the known kinds', () => {
+    const { processor, histograms } = fakeMeter();
+    processor.onEnd(
+      span({
+        'next.span_type': 'BaseServer.handleRequest',
+        'ratingo.client_kind': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
+      }),
+    );
+
+    expect(histograms.get(REQUEST_DURATION_METRIC)).toHaveBeenCalledWith(
+      0.25,
+      expect.objectContaining({ client_kind: 'human' }),
+    );
+  });
+
+  it('labels the metric end to end from the user agent through a real tracer provider', () => {
+    const { processor, histograms } = fakeMeter();
+    const provider = new NodeTracerProvider({ spanProcessors: [processor] });
+    const propagator = new CompositePropagator({
+      propagators: [new W3CTraceContextPropagator(), new ClientKindPropagator()],
+    });
+    const context = propagator.extract(
+      ROOT_CONTEXT,
+      { 'user-agent': 'Mozilla/5.0 (compatible; Bytespider)' },
+      defaultTextMapGetter,
+    );
+
+    provider
+      .getTracer('test')
+      .startSpan(
+        'GET',
+        { attributes: { 'next.span_type': 'BaseServer.handleRequest', 'http.method': 'GET' } },
+        context,
+      )
+      .end();
+
+    expect(histograms.get(REQUEST_DURATION_METRIC)).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.objectContaining({ client_kind: 'ai_crawler' }),
+    );
   });
 
   it('records render duration by route', () => {

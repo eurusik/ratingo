@@ -1,0 +1,58 @@
+import type { z, ZodObject, ZodRawShape } from 'zod';
+import type { ToolDefinition } from '../model/model.types';
+import { formatZodIssues } from '../schema/format-zod-issues';
+import { zodToJsonSchema } from '../schema/zod-json-schema';
+
+export const DEFAULT_TOOL_OUTPUT_CAP_CHARS = 8_000;
+
+export interface ToolContext {
+  runId: string;
+}
+
+export interface ToolSpec<TShape extends ZodRawShape> {
+  name: string;
+  description: string;
+  inputSchema: ZodObject<TShape>;
+  readOnly: boolean;
+  maxOutputChars?: number;
+  handler(input: z.infer<ZodObject<TShape>>, context: ToolContext): Promise<unknown>;
+}
+
+export interface Tool {
+  readonly name: string;
+  readonly readOnly: boolean;
+  readonly maxOutputChars: number;
+  readonly definition: ToolDefinition;
+  run(rawInput: unknown, context: ToolContext): Promise<string>;
+}
+
+export class ToolInputError extends Error {
+  constructor(toolName: string, issues: string) {
+    super(`Invalid input for tool "${toolName}": ${issues}`);
+    this.name = 'ToolInputError';
+  }
+}
+
+function stringifyOutput(output: unknown): string {
+  return typeof output === 'string' ? output : (JSON.stringify(output) ?? '');
+}
+
+export function defineTool<TShape extends ZodRawShape>(spec: ToolSpec<TShape>): Tool {
+  return {
+    name: spec.name,
+    readOnly: spec.readOnly,
+    maxOutputChars: spec.maxOutputChars ?? DEFAULT_TOOL_OUTPUT_CAP_CHARS,
+    definition: {
+      name: spec.name,
+      description: spec.description,
+      inputSchema: zodToJsonSchema(spec.inputSchema),
+    },
+    async run(rawInput, context) {
+      const parsed = spec.inputSchema.safeParse(rawInput);
+      if (!parsed.success) {
+        throw new ToolInputError(spec.name, formatZodIssues(parsed.error).join('; '));
+      }
+      return stringifyOutput(await spec.handler(parsed.data, context));
+    },
+  };
+}

@@ -1,4 +1,9 @@
 import { type Meter, metrics } from '@opentelemetry/api';
+import {
+  CompositePropagator,
+  W3CBaggagePropagator,
+  W3CTraceContextPropagator,
+} from '@opentelemetry/core';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { type Resource, resourceFromAttributes } from '@opentelemetry/resources';
@@ -12,6 +17,7 @@ import { METRICS_EXPORT_INTERVAL_MS, registerRuntimeMetrics } from '@ratingo/nod
 
 import { type TelemetryEnv, readTelemetryEnv } from '@/shared/config/index.server';
 
+import { ClientKindPropagator } from './client-kind-propagator';
 import { METER_NAME } from './constants';
 import { NextSpanMetricsProcessor } from './next-span-metrics';
 import { SampledExportProcessor } from './sampled-export-processor';
@@ -47,7 +53,15 @@ function startTracing(resource: Resource, meter: Meter, tracesExportRatio: numbe
       ),
     );
   }
-  new NodeTracerProvider({ resource, spanProcessors }).register();
+  new NodeTracerProvider({ resource, spanProcessors }).register({
+    propagator: new CompositePropagator({
+      propagators: [
+        new W3CTraceContextPropagator(),
+        new W3CBaggagePropagator(),
+        new ClientKindPropagator(),
+      ],
+    }),
+  });
 }
 
 export function startTelemetry(config: TelemetryEnv = readTelemetryEnv()): void {

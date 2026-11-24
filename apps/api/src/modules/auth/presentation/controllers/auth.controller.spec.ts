@@ -829,6 +829,24 @@ describe('AuthController.handleOAuthCallback - return origin', () => {
     );
   });
 
+  it('marks the callback redirect when the login created a new user', async () => {
+    const { controller, oauthService } = await buildTestModule();
+    oauthService.loginWithOAuth.mockResolvedValue({ user: { id: 'u1' }, isNewUser: true });
+    oauthService.generateExchangeCode.mockResolvedValue('one-time');
+    const res = createMockReply();
+
+    await callback(
+      controller,
+      { mode: 'login', provider: 'google', returnTo: '/', returnOrigin: storefrontDev },
+      res,
+    );
+
+    expect(res.redirect).toHaveBeenCalledWith(
+      `${storefrontDev}/auth/callback/google?code=one-time&returnTo=%2F&new=1`,
+      302,
+    );
+  });
+
   it('redirects a link to the return origin from the verified state', async () => {
     const { controller, oauthService } = await buildTestModule();
     oauthService.linkOAuthAccount.mockResolvedValue(undefined);

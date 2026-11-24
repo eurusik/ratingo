@@ -1,0 +1,348 @@
+import { renderResultMarker } from '../../domain/policies/review-result';
+import { CodeHostError } from '../../domain/ports/code-host.port';
+import { StaticTokenProvider } from '../auth/github-token.provider';
+import { TEST_REF } from '../testing/fake-code-host.testing';
+
+import { GithubCodeHostAdapter } from './github.code-host-adapter';
+
+const TOKEN = 'ghp_secrettokenvalue1234567890';
+
+const json = (body: unknown, status = 200): Response =>
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+
+const filePayload = (index: number, patch: string | undefined = '@@ -1 +1 @@\n+x') => ({
+  filename: `src/f${index}.ts`,
+  status: 'modified',
+  additions: 1,
+  deletions: 0,
+  patch,
+});
+
+const adapterWith = (handler: (url: string, init: RequestInit) => Response) => {
+  const calls: { url: string; init: RequestInit }[] = [];
+  const fetchFn = (async (url: string, init: RequestInit) => {
+    calls.push({ url, init });
+    return handler(url, init);
+  }) as unknown as typeof fetch;
+  return {
+    calls,
+    adapter: new GithubCodeHostAdapter({
+      tokens: new StaticTokenProvider(TOKEN),
+      apiUrl: 'https://gh.test',
+      fetchFn,
+    }),
+  };
+};
+
+describe('GithubCodeHostAdapter', () => {
+  it('maps pull request metadata and sends a read-only bearer request', async () => {
+    const { adapter, calls } = adapterWith(() =>
+      json({
+        title: 'T',
+        state: 'open',
+        merged: false,
+        body: null,
+        draft: true,
+        user: { login: 'alice' },
+        base: { ref: 'main', sha: 'b1' },
+        head: { ref: 'feat', sha: 'h1', repo: { full_name: 'acme/shop' } },
+      }),
+    );
+    const pr = await adapter.getPullRequest(TEST_REF);
+    expect(pr).toMatchObject({
+      body: '',
+      isDraft: true,
+      baseSha: 'b1',
+      headRepository: 'acme/shop',
+    });
+    expect(calls[0]?.url).toBe('https://gh.test/repos/acme/shop/pulls/7');
+    expect(calls[0]?.init.method).toBe('GET');
+    expect((calls[0]?.init.headers as Record<string, string>).Authorization).toBe(
+      `Bearer ${TOKEN}`,
+    );
+  });
+
+  it('paginates changed files and stops at a short page', async () => {
+    const { adapter, calls } = adapterWith((url) =>
+      json(
+        url.endsWith('&page=1')
+          ? Array.from({ length: 100 }, (_, i) => filePayload(i))
+          : [filePayload(100)],
+      ),
+    );
+    const result = await adapter.listChangedFiles(TEST_REF, { maxFiles: 500, maxPatchChars: 1e6 });
+    expect(result.files).toHaveLength(101);
+    expect(result.truncated).toBe(false);
+    expect(calls).toHaveLength(2);
+  });
+
+  it('caps the file count and drops patches over the size budget', async () => {
+    const big = 'x'.repeat(50);
+    const { adapter } = adapterWith(() =>
+      json(Array.from({ length: 10 }, (_, i) => filePayload(i, big))),
+    );
+    const result = await adapter.listChangedFiles(TEST_REF, { maxFiles: 5, maxPatchChars: 120 });
+    expect(result.files).toHaveLength(5);
+    expect(result.files.filter((file) => file.patch !== null)).toHaveLength(2);
+    expect(result.truncated).toBe(true);
+  });
+
+  it('does not spend the patch budget on lockfiles and generated files', async () => {
+    const lock = { ...filePayload(0, 'x'.repeat(500)), filename: 'package-lock.json' };
+    const { adapter } = adapterWith(() => json([lock, filePayload(1)]));
+    const result = await adapter.listChangedFiles(TEST_REF, { maxFiles: 10, maxPatchChars: 100 });
+    expect(result.files[0]?.patch).toBeNull();
+    expect(result.files[1]?.patch).not.toBeNull();
+    expect(result.truncated).toBe(false);
+  });
+
+  it('reports truncation when the file cap lands exactly on a full page', async () => {
+    const { adapter } = adapterWith(() =>
+      json(Array.from({ length: 100 }, (_, i) => filePayload(i))),
+    );
+    const result = await adapter.listChangedFiles(TEST_REF, { maxFiles: 100, maxPatchChars: 1e6 });
+    expect(result.files).toHaveLength(100);
+    expect(result.truncated).toBe(true);
+  });
+
+  it('returns null for a missing file and truncates large contents', async () => {
+    const { adapter } = adapterWith((url) =>
+      url.includes('missing') ? new Response('nope', { status: 404 }) : new Response('abcdefghij'),
+    );
+    expect(await adapter.readFile(TEST_REF, 'missing.ts', 'sha', { maxBytes: 5 })).toBeNull();
+    expect(await adapter.readFile(TEST_REF, 'a.ts', 'sha', { maxBytes: 5 })).toBe('abcde');
+  });
+
+  it('reads CLAUDE.md and every markdown rule from the base commit', async () => {
+    const { adapter, calls } = adapterWith((url) => {
+      if (url.includes('/contents/.claude/rules?')) {
+        return json([
+          { name: 'b.md', path: '.claude/rules/b.md', type: 'file' },
+          { name: 'a.md', path: '.claude/rules/a.md', type: 'file' },
+          { name: 'x.json', path: '.claude/rules/x.json', type: 'file' },
+          { name: 'sub', path: '.claude/rules/sub', type: 'dir' },
+        ]);
+      }
+      return new Response(`content of ${decodeURIComponent(url)}`);
+    });
+    const files = await adapter.readRuleFiles(TEST_REF, 'base111');
+    expect(files.map((file) => file.path)).toEqual([
+      'CLAUDE.md',
+      '.claude/rules/a.md',
+      '.claude/rules/b.md',
+    ]);
+    expect(calls.every((call) => call.url.includes('base111'))).toBe(true);
+  });
+
+  it('treats a missing rules directory as no rules', async () => {
+    const { adapter } = adapterWith((url) =>
+      url.includes('CLAUDE.md') ? new Response('# rules') : new Response('', { status: 404 }),
+    );
+    expect(await adapter.readRuleFiles(TEST_REF, 'b')).toEqual([
+      { path: 'CLAUDE.md', content: '# rules' },
+    ]);
+  });
+
+  it('throws a code host error without leaking the token', async () => {
+    const { adapter } = adapterWith(
+      () => new Response('', { status: 403, statusText: 'Forbidden' }),
+    );
+    const failure = await adapter.getPullRequest(TEST_REF).catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(CodeHostError);
+    expect((failure as Error).message).toContain('403');
+    expect((failure as Error).message).not.toContain(TOKEN);
+  });
+
+  it('turns a network failure into a code host error', async () => {
+    const adapter = new GithubCodeHostAdapter({
+      tokens: new StaticTokenProvider(TOKEN),
+      apiUrl: 'https://gh.test',
+      fetchFn: (async () => {
+        throw new Error(`connect failed with ${TOKEN}`);
+      }) as unknown as typeof fetch,
+    });
+    const failure = await adapter.getPullRequest(TEST_REF).catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(CodeHostError);
+    expect((failure as Error).message).not.toContain(TOKEN);
+  });
+
+  it('publishes a completed neutral check run with annotations', async () => {
+    const { adapter, calls } = adapterWith(() => json({ id: 1 }, 201));
+    await adapter.publish(TEST_REF, 'head222', {
+      conclusion: 'neutral',
+      title: 'Т',
+      summary: 'підсумок',
+      annotations: [{ path: 'src/a.ts', line: 3, level: 'warning', title: 'major', message: 'м' }],
+    });
+    expect(calls[0]?.url).toBe('https://gh.test/repos/acme/shop/check-runs');
+    expect(calls[0]?.init.method).toBe('POST');
+    const body = JSON.parse(String(calls[0]?.init.body)) as Record<string, unknown>;
+    expect(body).toMatchObject({
+      name: 'Happy',
+      head_sha: 'head222',
+      status: 'completed',
+      conclusion: 'neutral',
+      output: {
+        annotations: [
+          { path: 'src/a.ts', start_line: 3, end_line: 3, annotation_level: 'warning' },
+        ],
+      },
+    });
+  });
+});
+
+describe('GithubCodeHostAdapter published checks', () => {
+  const marker = (title: string) =>
+    renderResultMarker({
+      kind: 'review',
+      checklist: null,
+      status: 'reviewed',
+      title,
+      summary: 'Все гаразд',
+      skipReason: null,
+      counts: { critical: 0, major: 1, minor: 0, nit: 0 },
+      questions: [],
+      coverage: { complete: true, unreviewedFiles: 0, gaps: [] },
+      tracking: null,
+    });
+
+  const run = (overrides: Record<string, unknown> = {}) => ({
+    name: 'Happy',
+    status: 'completed',
+    html_url: 'https://github.com/acme/shop/runs/1',
+    head_sha: 'h1',
+    app: { id: 42 },
+    output: { title: 'Стоп.', summary: `Стоп.\n\n${marker('Стоп.')}` },
+    ...overrides,
+  });
+
+  const adapterFor = (runs: unknown[], appId?: string) => {
+    const calls: string[] = [];
+    const fetchFn = (async (url: string) => {
+      calls.push(url);
+      return json({ check_runs: runs });
+    }) as unknown as typeof fetch;
+    return {
+      calls,
+      adapter: new GithubCodeHostAdapter({
+        tokens: new StaticTokenProvider(TOKEN),
+        apiUrl: 'https://gh.test',
+        fetchFn,
+        ...(appId === undefined ? {} : { appId }),
+      }),
+    };
+  };
+
+  it('reads the latest Happy check run of a commit and decodes its marker', async () => {
+    const { adapter, calls } = adapterFor([run()]);
+    const check = await adapter.findForCommit(TEST_REF, 'h1');
+    expect(check).toMatchObject({
+      headSha: 'h1',
+      title: 'Стоп.',
+      url: 'https://github.com/acme/shop/runs/1',
+      snapshot: { status: 'reviewed', counts: { major: 1 } },
+    });
+    expect(calls[0]).toContain('/commits/h1/check-runs?check_name=Happy&filter=latest');
+  });
+
+  it('ignores check runs from another app, other names and unfinished runs', async () => {
+    const { adapter } = adapterFor(
+      [run({ app: { id: 7 } }), run({ name: 'Other' }), run({ status: 'in_progress' })],
+      '42',
+    );
+    expect(await adapter.findForCommit(TEST_REF, 'h1')).toBeNull();
+  });
+
+  it('trusts a marker only when the check run is known to come from Happy’s own app', async () => {
+    const own = await adapterFor([run()], '42').adapter.findForCommit(TEST_REF, 'h1');
+    const unknown = await adapterFor([run()]).adapter.findForCommit(TEST_REF, 'h1');
+    expect(own?.trusted).toBe(true);
+    expect(unknown?.trusted).toBe(false);
+  });
+
+  it('keeps a check without a marker and drops a link outside github.com', async () => {
+    const { adapter } = adapterFor([
+      run({
+        html_url: 'https://evil.example/x',
+        output: { title: 'Старий', summary: 'без маркера' },
+      }),
+    ]);
+    expect(await adapter.findForCommit(TEST_REF, 'h1')).toMatchObject({
+      url: null,
+      snapshot: null,
+      title: 'Старий',
+    });
+  });
+
+  it('lists the newest commits first, reading the last page of a long pull request', async () => {
+    const calls: string[] = [];
+    const fetchFn = (async (url: string) => {
+      calls.push(url);
+      return url.endsWith('page=1')
+        ? new Response(JSON.stringify([{ sha: 'a' }]), {
+            headers: { link: '<https://gh.test/x?per_page=5&page=3>; rel="last"' },
+          })
+        : json([{ sha: 'x1' }, { sha: 'x2' }, { sha: 'x3' }]);
+    }) as unknown as typeof fetch;
+    const adapter = new GithubCodeHostAdapter({
+      tokens: new StaticTokenProvider(TOKEN),
+      apiUrl: 'https://gh.test',
+      fetchFn,
+    });
+    expect(await adapter.listRecentCommitShas(TEST_REF, 5)).toEqual(['x3', 'x2', 'x1']);
+    expect(calls[1]).toContain('per_page=5&page=3');
+  });
+});
+
+describe('GithubCodeHostAdapter open pull requests', () => {
+  it('lists the most recently updated open pull requests', async () => {
+    const { adapter, calls } = adapterWith(() =>
+      json([
+        { number: 5, title: 'Fix', user: { login: 'alice' }, updated_at: '2026-11-22T10:00:00Z' },
+      ]),
+    );
+    expect(await adapter.listOpenPullRequests(TEST_REF, 6)).toEqual([
+      { number: 5, title: 'Fix', author: 'alice', updatedAt: '2026-11-22T10:00:00Z' },
+    ]);
+    expect(calls[0]?.url).toContain('/pulls?state=open&sort=updated&direction=desc&per_page=6');
+  });
+});
+
+describe('GithubCodeHostAdapter compare', () => {
+  it.each([
+    ['ahead', 'ahead'],
+    ['identical', 'identical'],
+    ['behind', 'behind'],
+    ['diverged', 'diverged'],
+    ['something-new', 'diverged'],
+  ])('maps the GitHub status %s to %s', async (status, relation) => {
+    const { adapter, calls } = adapterWith(() => json({ status, files: [filePayload(1)] }));
+    const comparison = await adapter.compareCommits(TEST_REF, 'base1', 'head1', {
+      maxFiles: 300,
+      maxPatchChars: 10_000,
+    });
+    expect(comparison.relation).toBe(relation);
+    expect(comparison.files.map((file) => file.path)).toEqual(['src/f1.ts']);
+    expect(calls[0]?.url).toBe('https://gh.test/repos/acme/shop/compare/base1...head1');
+  });
+
+  it('drops patches beyond the budget and reports the listing as truncated', async () => {
+    const big = '@@ -1 +1 @@\n+' + 'x'.repeat(50);
+    const { adapter } = adapterWith(() =>
+      json({ status: 'ahead', files: [filePayload(1, big), filePayload(2, big)] }),
+    );
+    const comparison = await adapter.compareCommits(TEST_REF, 'b', 'h', {
+      maxFiles: 300,
+      maxPatchChars: 100,
+    });
+    expect(comparison.files.map((file) => file.patch === null)).toEqual([false, true]);
+    expect(comparison.truncated).toBe(true);
+  });
+
+  it('throws a code host error when the base commit is gone', async () => {
+    const { adapter } = adapterWith(() => json({ message: 'Not Found' }, 404));
+    await expect(
+      adapter.compareCommits(TEST_REF, 'b', 'h', { maxFiles: 300, maxPatchChars: 100 }),
+    ).rejects.toBeInstanceOf(CodeHostError);
+  });
+});

@@ -710,6 +710,7 @@
   "details": {
     "back": "Back",
     "share": "Share",
+    "more": "More actions: {title}",
     "breadcrumb": {
       "label": "Breadcrumb",
       "browse": "Browse",

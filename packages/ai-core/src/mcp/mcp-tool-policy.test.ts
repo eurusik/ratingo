@@ -1,0 +1,354 @@
+import * as fc from 'fast-check';
+import { epochDayOf } from './mcp-calendar';
+import {
+  allowedArgumentsOf,
+  decideMcpCall,
+  hiddenRequiredArguments,
+  exposedInputSchema,
+  MAX_SCHEMA_DESCRIPTION_CHARS,
+  undeclaredPolicyArguments,
+} from './mcp-tool-policy';
+import { McpConstraintKind, McpRefusalCode } from './mcp-tool-policy.types';
+import type { McpToolPolicy, McpToolRule } from './mcp-tool-policy.types';
+
+const TODAY = epochDayOf(Date.UTC(2026, 10, 24));
+const MAX_LIMIT = 50;
+const MAX_SPAN_DAYS = 31;
+const MAX_LOOKBACK_DAYS = 90;
+const ALLOWED_DIMENSIONS = ['date', 'country', 'pagePath'];
+
+const reportRule: McpToolRule = {
+  description: 'Run a report.',
+  pinnedArguments: { property_id: '123', currency_code: 'USD' },
+  constraints: {
+    limit: { kind: McpConstraintKind.NUMBER, min: 1, max: MAX_LIMIT, default: 10 },
+    dimensions: { kind: McpConstraintKind.ONE_OF, values: ALLOWED_DIMENSIONS },
+    metrics: { kind: McpConstraintKind.MAX_ITEMS, max: 3 },
+    date_ranges: {
+      kind: McpConstraintKind.DATE_RANGES,
+      maxRanges: 2,
+      maxSpanDays: MAX_SPAN_DAYS,
+      maxLookbackDays: MAX_LOOKBACK_DAYS,
+    },
+  },
+};
+const KNOWN_ARGUMENTS = [
+  'property_id',
+  'currency_code',
+  'limit',
+  'dimensions',
+  'metrics',
+  'date_ranges',
+];
+const CONTEXT = { todayEpochDay: TODAY, allowedArguments: KNOWN_ARGUMENTS };
+const policy: McpToolPolicy = { tools: { run_report: reportRule, echo: { description: 'Echo.' } } };
+
+const anyJson = fc.jsonValue();
+const anyArgs = fc.dictionary(
+  fc.constantFrom(
+    'property_id',
+    'currency_code',
+    'limit',
+    'dimensions',
+    'metrics',
+    'date_ranges',
+    'other',
+  ),
+  anyJson,
+);
+const daysAgoText = fc.integer({ min: 0, max: 400 }).map((days) => `${days}daysAgo`);
+const dateRange = fc.record({ start_date: daysAgoText, end_date: daysAgoText });
+
+describe('decideMcpCall', () => {
+  it('never lets the model override a pinned argument', () => {
+    fc.assert(
+      fc.property(anyArgs, (args) => {
+        const decision = decideMcpCall(policy, 'run_report', args, CONTEXT);
+        if (decision.allowed) {
+          expect(decision.arguments.property_id).toBe('123');
+          expect(decision.arguments.currency_code).toBe('USD');
+        }
+      }),
+    );
+  });
+
+  it('only allows calls whose constrained arguments hold', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          limit: fc.option(fc.integer({ min: -100, max: 500 }), { nil: undefined }),
+          dimensions: fc.array(fc.constantFrom(...ALLOWED_DIMENSIONS, 'userEmail'), {
+            maxLength: 4,
+          }),
+          metrics: fc.array(fc.string(), { maxLength: 5 }),
+          date_ranges: fc.array(dateRange, { minLength: 1, maxLength: 3 }),
+        }),
+        (args) => {
+          const decision = decideMcpCall(policy, 'run_report', args, CONTEXT);
+          if (!decision.allowed) {
+            return;
+          }
+          const allowed = decision.arguments as {
+            limit: number;
+            dimensions: string[];
+            metrics: string[];
+            date_ranges: Array<{ start_date: string; end_date: string }>;
+          };
+          expect(allowed.limit).toBeGreaterThanOrEqual(1);
+          expect(allowed.limit).toBeLessThanOrEqual(MAX_LIMIT);
+          expect(allowed.dimensions.every((d) => ALLOWED_DIMENSIONS.includes(d))).toBe(true);
+          expect(allowed.metrics.length).toBeLessThanOrEqual(3);
+          expect(allowed.date_ranges.length).toBeLessThanOrEqual(2);
+          for (const range of allowed.date_ranges) {
+            const start = Number.parseInt(range.start_date, 10);
+            const end = Number.parseInt(range.end_date, 10);
+            expect(start).toBeLessThanOrEqual(MAX_LOOKBACK_DAYS);
+            expect(start - end + 1).toBeLessThanOrEqual(MAX_SPAN_DAYS);
+            expect(end).toBeLessThanOrEqual(start);
+          }
+        },
+      ),
+    );
+  });
+
+  it('never forwards an argument the tool does not declare', () => {
+    fc.assert(
+      fc.property(fc.dictionary(fc.string(), anyJson), (args) => {
+        const decision = decideMcpCall(policy, 'run_report', args, CONTEXT);
+        if (decision.allowed) {
+          for (const key of Object.keys(decision.arguments)) {
+            expect(KNOWN_ARGUMENTS).toContain(key);
+          }
+        }
+      }),
+    );
+  });
+
+  it('fills a default only for an argument the tool declares', () => {
+    const narrow = { todayEpochDay: TODAY, allowedArguments: ['dimensions'] };
+    expect(decideMcpCall(policy, 'run_report', {}, narrow)).toEqual({
+      allowed: true,
+      arguments: { property_id: '123', currency_code: 'USD' },
+    });
+  });
+
+  it('names policy arguments the remote schema does not declare', () => {
+    expect(
+      undeclaredPolicyArguments(reportRule, { properties: { limit: {}, dimensions: {} } }).sort(),
+    ).toEqual(['currency_code', 'date_ranges', 'metrics', 'property_id']);
+  });
+
+  it('refuses an argument the tool does not declare', () => {
+    expect(decideMcpCall(policy, 'run_report', { shell: 'rm -rf /' }, CONTEXT)).toEqual({
+      allowed: false,
+      refusal: expect.objectContaining({
+        code: McpRefusalCode.UNKNOWN_ARGUMENT,
+        argument: 'shell',
+      }),
+    });
+  });
+
+  it('never allows a tool outside the policy', () => {
+    fc.assert(
+      fc.property(
+        fc.string().filter((tool) => !['run_report', 'echo'].includes(tool)),
+        anyJson,
+        (tool, args) => {
+          const decision = decideMcpCall(policy, tool, args, CONTEXT);
+          expect(decision).toEqual({
+            allowed: false,
+            refusal: expect.objectContaining({ code: McpRefusalCode.TOOL_NOT_ALLOWED }),
+          });
+        },
+      ),
+    );
+  });
+
+  it('is not fooled by inherited object keys', () => {
+    expect(decideMcpCall(policy, 'toString', {}, CONTEXT).allowed).toBe(false);
+    expect(decideMcpCall(policy, '__proto__', {}, CONTEXT).allowed).toBe(false);
+  });
+
+  it('fills a default when the model leaves a capped number out', () => {
+    expect(decideMcpCall(policy, 'run_report', {}, CONTEXT)).toEqual({
+      allowed: true,
+      arguments: { limit: 10, property_id: '123', currency_code: 'USD' },
+    });
+  });
+
+  it.each([
+    [{ limit: 51 }, McpRefusalCode.OUT_OF_RANGE, 'limit'],
+    [{ limit: '5' }, McpRefusalCode.INVALID_ARGUMENTS, 'limit'],
+    [{ dimensions: ['userEmail'] }, McpRefusalCode.VALUE_NOT_ALLOWED, 'dimensions'],
+    [{ metrics: ['a', 'b', 'c', 'd'] }, McpRefusalCode.TOO_MANY_ITEMS, 'metrics'],
+    [
+      { date_ranges: [{ start_date: '120daysAgo', end_date: 'today' }] },
+      McpRefusalCode.DATE_RANGE_NOT_ALLOWED,
+      'date_ranges',
+    ],
+    [
+      { date_ranges: [{ start_date: '2026-11-26', end_date: '2026-11-26' }] },
+      McpRefusalCode.DATE_RANGE_NOT_ALLOWED,
+      'date_ranges',
+    ],
+    [
+      { date_ranges: [{ start_date: 'last week', end_date: 'today' }] },
+      McpRefusalCode.DATE_RANGE_NOT_ALLOWED,
+      'date_ranges',
+    ],
+  ])('refuses %j with %s', (args, code, argument) => {
+    expect(decideMcpCall(policy, 'run_report', args, CONTEXT)).toEqual({
+      allowed: false,
+      refusal: expect.objectContaining({ code, argument }),
+    });
+  });
+
+  it('accepts an empty list for a one_of argument', () => {
+    expect(decideMcpCall(policy, 'run_report', { dimensions: [] }, CONTEXT).allowed).toBe(true);
+  });
+
+  it('accepts tomorrow in UTC, which is already today in a property east of UTC', () => {
+    const decision = decideMcpCall(
+      policy,
+      'run_report',
+      { date_ranges: [{ start_date: '2026-11-25', end_date: '2026-11-25' }] },
+      CONTEXT,
+    );
+    expect(decision.allowed).toBe(true);
+  });
+
+  it('accepts absolute dates inside the window', () => {
+    const decision = decideMcpCall(
+      policy,
+      'run_report',
+      { date_ranges: [{ start_date: '2026-11-01', end_date: 'yesterday' }] },
+      CONTEXT,
+    );
+    expect(decision.allowed).toBe(true);
+  });
+
+  it('refuses arguments that are not an object', () => {
+    expect(decideMcpCall(policy, 'echo', ['x'], CONTEXT)).toEqual({
+      allowed: false,
+      refusal: expect.objectContaining({ code: McpRefusalCode.INVALID_ARGUMENTS }),
+    });
+  });
+});
+
+describe('exposed arguments', () => {
+  const narrowRule: McpToolRule = {
+    description: 'Report',
+    exposedArguments: ['dimensions', 'limit'],
+    pinnedArguments: { property_id: '123' },
+    constraints: { limit: { kind: McpConstraintKind.NUMBER, min: 1, max: 50, default: 10 } },
+  };
+  const schema = {
+    type: 'object',
+    properties: { property_id: {}, dimensions: {}, limit: {}, offset: {}, currency_code: {} },
+    required: ['property_id', 'dimensions', 'currency_code'],
+  };
+
+  it('shows only exposed arguments and refuses the hidden ones', () => {
+    const allowed = allowedArgumentsOf(narrowRule, schema);
+    const narrowPolicy = { tools: { run_report: narrowRule } };
+    const context = { todayEpochDay: TODAY, allowedArguments: allowed };
+
+    expect(Object.keys(exposedInputSchema(schema, narrowRule).properties as object)).toEqual([
+      'dimensions',
+      'limit',
+    ]);
+    expect(decideMcpCall(narrowPolicy, 'run_report', { offset: 5 }, context)).toEqual({
+      allowed: false,
+      refusal: expect.objectContaining({
+        code: McpRefusalCode.UNKNOWN_ARGUMENT,
+        argument: 'offset',
+      }),
+    });
+    expect(decideMcpCall(narrowPolicy, 'run_report', { dimensions: ['date'] }, context)).toEqual({
+      allowed: true,
+      arguments: { dimensions: ['date'], limit: 10, property_id: '123' },
+    });
+  });
+
+  it('never forwards a hidden argument', () => {
+    const allowed = allowedArgumentsOf(narrowRule, schema);
+    const narrowPolicy = { tools: { run_report: narrowRule } };
+    fc.assert(
+      fc.property(
+        fc.dictionary(fc.constantFrom(...Object.keys(schema.properties)), fc.jsonValue()),
+        (args) => {
+          const decision = decideMcpCall(narrowPolicy, 'run_report', args, {
+            todayEpochDay: TODAY,
+            allowedArguments: allowed,
+          });
+          if (decision.allowed) {
+            expect(
+              Object.keys(decision.arguments).every((key) =>
+                ['dimensions', 'limit', 'property_id'].includes(key),
+              ),
+            ).toBe(true);
+          }
+        },
+      ),
+    );
+  });
+
+  it('names a required argument the model cannot see and nobody pins', () => {
+    expect(hiddenRequiredArguments(narrowRule, schema)).toEqual(['currency_code']);
+  });
+});
+
+describe('exposedInputSchema', () => {
+  const remote = {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    title: 'run_reportParams',
+    type: 'object',
+    properties: {
+      property_id: { anyOf: [{ type: 'integer' }, { type: 'string' }], title: 'Property Id' },
+      currency_code: { type: 'string', default: null },
+      limit: { type: 'integer', default: null, description: 'd'.repeat(2_000) },
+      dimensions: { type: 'array', items: { type: 'string' } },
+      title: { type: 'string' },
+    },
+    required: ['property_id', 'dimensions'],
+  };
+
+  it('removes pinned arguments and narrows constrained ones', () => {
+    const schema = exposedInputSchema(remote, reportRule);
+
+    expect(schema).toEqual({
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'integer',
+          description: 'd'.repeat(MAX_SCHEMA_DESCRIPTION_CHARS),
+          maximum: 50,
+          minimum: 1,
+        },
+        dimensions: { type: 'array', items: { type: 'string', enum: ALLOWED_DIMENSIONS } },
+        title: { type: 'string' },
+      },
+      required: ['dimensions'],
+      additionalProperties: false,
+    });
+  });
+
+  it('never shows a pinned argument for any rule', () => {
+    fc.assert(
+      fc.property(
+        fc.uniqueArray(fc.constantFrom(...Object.keys(remote.properties)), { minLength: 1 }),
+        (pinned) => {
+          const rule: McpToolRule = {
+            description: 'x',
+            pinnedArguments: Object.fromEntries(pinned.map((key) => [key, 1])),
+          };
+          const schema = exposedInputSchema(remote, rule);
+          for (const key of pinned) {
+            expect(schema.properties).not.toHaveProperty(key);
+            expect(schema.required).not.toContain(key);
+          }
+        },
+      ),
+    );
+  });
+});

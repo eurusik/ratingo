@@ -20,27 +20,35 @@ const makeState = (userId: string, mediaItemId = 'media-1') => ({
 
 describe('CaughtUpTransitionListener', () => {
   let listener: CaughtUpTransitionListener;
-  let repo: jest.Mocked<Pick<IUserMediaStateRepository, 'bulkTransitionCaughtUpToWatching'>>;
+  let repo: jest.Mocked<
+    Pick<IUserMediaStateRepository, 'bulkTransitionCaughtUpWithUnwatchedAiredEpisode'>
+  >;
   let eventEmitter: jest.Mocked<Pick<EventEmitter2, 'emit'>>;
+  const NOW = new Date('2026-11-20T08:00:00Z');
 
   beforeEach(() => {
     repo = {
-      bulkTransitionCaughtUpToWatching: jest.fn().mockResolvedValue([]),
+      bulkTransitionCaughtUpWithUnwatchedAiredEpisode: jest.fn().mockResolvedValue([]),
     };
     eventEmitter = {
       emit: jest.fn(),
     };
-    listener = new CaughtUpTransitionListener(repo as any, eventEmitter as any);
+    listener = new CaughtUpTransitionListener(repo as any, eventEmitter as any, {
+      now: () => NOW,
+    });
   });
 
-  it('should call bulkTransitionCaughtUpToWatching with mediaItemId', async () => {
+  it('should call bulkTransitionCaughtUpWithUnwatchedAiredEpisode with mediaItemId as of the injected clock', async () => {
     await listener.handle({ mediaItemId: 'media-1' });
 
-    expect(repo.bulkTransitionCaughtUpToWatching).toHaveBeenCalledWith('media-1');
+    expect(repo.bulkTransitionCaughtUpWithUnwatchedAiredEpisode).toHaveBeenCalledWith(
+      'media-1',
+      NOW,
+    );
   });
 
   it('should emit state-changed events for each transitioned user', async () => {
-    repo.bulkTransitionCaughtUpToWatching.mockResolvedValue([
+    repo.bulkTransitionCaughtUpWithUnwatchedAiredEpisode.mockResolvedValue([
       makeState('user-1'),
       makeState('user-2'),
       makeState('user-3'),
@@ -76,7 +84,7 @@ describe('CaughtUpTransitionListener', () => {
   });
 
   it('should do nothing when no caught_up users are transitioned', async () => {
-    repo.bulkTransitionCaughtUpToWatching.mockResolvedValue([]);
+    repo.bulkTransitionCaughtUpWithUnwatchedAiredEpisode.mockResolvedValue([]);
 
     await listener.handle({ mediaItemId: 'media-1' });
 
@@ -84,7 +92,7 @@ describe('CaughtUpTransitionListener', () => {
   });
 
   it('should not emit events when bulk transition fails', async () => {
-    repo.bulkTransitionCaughtUpToWatching.mockRejectedValue(new Error('DB error'));
+    repo.bulkTransitionCaughtUpWithUnwatchedAiredEpisode.mockRejectedValue(new Error('DB error'));
 
     await listener.handle({ mediaItemId: 'media-1' });
 
@@ -92,7 +100,7 @@ describe('CaughtUpTransitionListener', () => {
   });
 
   it('should handle a single transitioned user', async () => {
-    repo.bulkTransitionCaughtUpToWatching.mockResolvedValue([makeState('user-1')]);
+    repo.bulkTransitionCaughtUpWithUnwatchedAiredEpisode.mockResolvedValue([makeState('user-1')]);
 
     await listener.handle({ mediaItemId: 'media-1' });
 
