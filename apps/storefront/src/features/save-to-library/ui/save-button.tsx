@@ -8,6 +8,7 @@ import {
   saveButtonClass,
   saveButtonLabel,
   type SaveButtonProps,
+  type SaveButtonTone,
 } from './save-button-parts';
 import type { SaveMenuButtonProps } from './save-menu-button';
 import { useMenuIntent, type MenuIntent } from './use-menu-intent';
@@ -32,7 +33,7 @@ type MenuButtonComponent = LoadedMenuButton['MenuButton'];
 export const preloadSaveMenuButton = () =>
   import('./save-menu-button').then((module) => module.SaveMenuButton);
 
-export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
+export function SaveButton({ media, tone = 'surface', origin }: SaveButtonProps) {
   const [loaded, setLoaded] = useState<LoadedMenuButton | null>(null);
   const instantButtonRef = useRef<HTMLButtonElement>(null);
   const pointerGestureRef = useRef(false);
@@ -42,7 +43,7 @@ export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
 
   if (loaded) {
     const { MenuButton, handoff } = loaded;
-    return <MenuButton media={media} tone={tone} {...handoff} />;
+    return <MenuButton media={media} tone={tone} origin={origin} {...handoff} />;
   }
 
   const showMenuButton = (MenuButton: MenuButtonComponent) => {
@@ -83,6 +84,7 @@ export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
       buttonRef={instantButtonRef}
       media={media}
       tone={tone}
+      origin={origin}
       pointerGestureRef={pointerGestureRef}
       onMenuIntent={swapToMenuButton}
       onGestureEnd={showDeferredMenuButton}
@@ -90,7 +92,8 @@ export function SaveButton({ media, tone = 'surface' }: SaveButtonProps) {
   );
 }
 
-interface InstantSaveButtonProps extends Required<SaveButtonProps> {
+interface InstantSaveButtonProps extends SaveButtonProps {
+  tone: SaveButtonTone;
   buttonRef: RefObject<HTMLButtonElement | null>;
   pointerGestureRef: RefObject<boolean>;
   onMenuIntent: (intent: MenuIntent) => void;
@@ -101,13 +104,14 @@ function InstantSaveButton({
   buttonRef,
   media,
   tone,
+  origin,
   pointerGestureRef,
   onMenuIntent,
   onGestureEnd,
 }: InstantSaveButtonProps) {
   const { dict } = useTranslation();
   const hintId = useId();
-  const { saved, toggle } = useSaveToggle(media);
+  const { saved, toggle } = useSaveToggle(media, origin);
   const intentHandlers = useMenuIntent({
     onIntent: onMenuIntent,
     onActivate: toggle,

@@ -218,6 +218,19 @@ describe('NewEpisodes', () => {
     expect(link).toHaveTextContent('Сезон 26, серія 6');
     expect(within(link).getByText(/13 лист/)).toHaveAttribute('dateTime', release.airedAt);
   });
+
+  it('links to the episode schedule and reports opening it', () => {
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    renderIn(<NewEpisodes releases={[release]} />);
+
+    const schedule = screen.getByRole('link', { name: uk.home.episodeSchedule.full });
+    expect(schedule).toHaveAttribute('href', '/calendar');
+    fireEvent.click(schedule, { metaKey: true });
+
+    expect(gtag).toHaveBeenCalledWith('event', 'calendar_open', { origin: 'home_episodes' });
+    delete window.gtag;
+  });
 });
 
 describe('below-the-fold sections', () => {
@@ -316,7 +329,7 @@ describe('AnticipatedPremieres', () => {
     kind: 'newShow',
   };
 
-  it('shows the premiere day, a new show note and links to the show and the show calendar', () => {
+  it('shows the premiere day, a new show note and links only to the show', () => {
     renderIn(<AnticipatedPremieres premieres={[premiere]} />);
 
     expect(screen.getByRole('heading', { name: uk.home.premieres })).toBeInTheDocument();
@@ -326,21 +339,15 @@ describe('AnticipatedPremieres', () => {
       'href',
       '/shows/harry-potter',
     );
-    expect(screen.getByRole('link', { name: uk.home.calendarLabel.show })).toHaveAttribute(
-      'href',
-      '/calendar',
-    );
+    expect(screen.getAllByRole('link')).toHaveLength(1);
   });
 
-  it('reports opening a show and the show calendar', () => {
+  it('reports opening a show', () => {
     const gtag = jest.fn();
     window.gtag = gtag;
     renderIn(<AnticipatedPremieres premieres={[premiere]} />);
 
     fireEvent.click(screen.getByRole('link', { name: /Гаррі Поттер/ }), { metaKey: true });
-    fireEvent.click(screen.getByRole('link', { name: uk.home.calendarLabel.show }), {
-      metaKey: true,
-    });
 
     expect(gtag).toHaveBeenCalledWith('event', 'open_title', {
       origin: 'home_premieres',
@@ -348,7 +355,6 @@ describe('AnticipatedPremieres', () => {
       in_catalog: 'true',
       position: 1,
     });
-    expect(gtag).toHaveBeenCalledWith('event', 'calendar_open', { origin: 'home_premieres' });
     delete window.gtag;
   });
 
@@ -368,13 +374,23 @@ describe('UpcomingMovies', () => {
     kind: 'theatrical',
   };
 
-  it('shows the release day, the kind and a link to the movie calendar', () => {
+  it('shows the release day and the kind', () => {
     renderIn(<UpcomingMovies releases={[release]} />);
 
-    expect(screen.getByRole('heading', { name: 'Скоро в прокаті' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Фільми, яких чекають' })).toBeInTheDocument();
     expect(screen.getByText('18 груд')).toBeInTheDocument();
     expect(screen.getByText('в кіно')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Календар фільмів' })).toHaveAttribute(
+  });
+
+  it('ends the rail with a tile into the movie calendar', () => {
+    renderIn(<UpcomingMovies releases={[release]} />);
+
+    const items = within(screen.getByRole('list', { name: uk.home.upcoming })).getAllByRole(
+      'listitem',
+    );
+    const lastItem = items[items.length - 1];
+    expect(items).toHaveLength(2);
+    expect(within(lastItem).getByRole('link', { name: 'Що ще виходить' })).toHaveAttribute(
       'href',
       '/calendar?type=movie',
     );
@@ -386,7 +402,7 @@ describe('UpcomingMovies', () => {
     renderIn(<UpcomingMovies releases={[release]} />);
 
     fireEvent.click(screen.getByRole('link', { name: /Месники/ }), { metaKey: true });
-    fireEvent.click(screen.getByRole('link', { name: 'Календар фільмів' }), { metaKey: true });
+    fireEvent.click(screen.getByRole('link', { name: 'Що ще виходить' }), { metaKey: true });
 
     expect(gtag).toHaveBeenCalledWith('event', 'open_title', {
       origin: 'home_upcoming',
