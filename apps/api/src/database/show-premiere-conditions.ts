@@ -29,6 +29,23 @@ function premiereAhead(asOf: Date): SQL {
   );
 }
 
+function firstRegularEpisodeAirDate(): SQL {
+  return sql`(select min(${schema.episodes.airDate}) from ${schema.episodes} inner join ${
+    schema.seasons
+  } on ${eq(schema.seasons.id, schema.episodes.seasonId)} inner join ${schema.shows} on ${eq(
+    schema.shows.id,
+    schema.seasons.showId,
+  )} where ${and(
+    eq(schema.shows.mediaItemId, schema.mediaItems.id),
+    gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
+  )})`;
+}
+
+export function showPremiereInstant(): SQL<Date | null> {
+  const premiere = sql<Date | null>`coalesce(${firstRegularEpisodeAirDate()}, ${schema.mediaItems.releaseDate})`;
+  return premiere.mapWith(schema.mediaItems.releaseDate);
+}
+
 export function onlyShowsAwaitingPremiere(asOf: Date): SQL {
   return sql`exists (select 1 from ${schema.shows} where ${and(
     eq(schema.shows.mediaItemId, schema.mediaItems.id),

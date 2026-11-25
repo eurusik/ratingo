@@ -1102,11 +1102,12 @@
     },
     "modes": {
       "mine": "Mine",
+      "premieres": "Premieres",
       "all": "All"
     },
-    "modesInfoLabel": "What “Mine” includes",
+    "modesInfoLabel": "What these views show",
     "modesInfo": {
-      "show": "“Mine” is the shows you watch plus premieres from “Want to watch”.",
+      "show": "“Mine” is the shows you watch plus premieres from “Want to watch”. “Premieres” is the first episodes of new shows and new seasons.",
       "movie": "“Mine” is the movies in “Want to watch” plus the ones you asked us to remind you about."
     },
     "weekNames": {
@@ -1129,11 +1130,17 @@
         "one": "{day}, {count} movie",
         "few": "{day}, {count} movies",
         "many": "{day}, {count} movies"
+      },
+      "premiere": {
+        "one": "{day}, {count} premiere",
+        "few": "{day}, {count} premieres",
+        "many": "{day}, {count} premieres"
       }
     },
     "dayTileEmpty": {
       "show": "{day}, no episodes",
-      "movie": "{day}, no movies"
+      "movie": "{day}, no movies",
+      "premiere": "{day}, no premieres"
     },
     "episodesCount": {
       "one": "{count} episode",
@@ -1145,12 +1152,18 @@
       "few": "{count} movies",
       "many": "{count} movies"
     },
+    "premieresCount": {
+      "one": "{count} premiere",
+      "few": "{count} premieres",
+      "many": "{count} premieres"
+    },
     "morning": "morning",
     "minutes": "{minutes} min",
     "quotedTitle": "“{title}”",
     "savedNote": "in “Want to watch”",
     "reminderNote": "we'll remind you when it's out",
-    "premiere": "Premiere",
+    "newSeries": "New series",
+    "newSeason": "Season {season}",
     "finale": "Season finale",
     "moreShows": {
       "one": "{count} more show by popularity",
@@ -1177,6 +1190,11 @@
         "one": "Earlier this week · {count} movie",
         "few": "Earlier this week · {count} movies",
         "many": "Earlier this week · {count} movies"
+      },
+      "premieres": {
+        "one": "Earlier this week · {count} premiere",
+        "few": "Earlier this week · {count} premieres",
+        "many": "Earlier this week · {count} premieres"
       },
       "allWatched": "Earlier this week · all watched"
     },
@@ -1219,6 +1237,11 @@
     "emptyWeek": {
       "show": "No new episodes this week",
       "movie": "No movie premieres this week"
+    },
+    "noPremieres": {
+      "title": "No premieres this week",
+      "next": "Next premiere — “{title}”, {date}",
+      "jump": "Go to the premiere"
     },
     "loadError": "Couldn’t load the calendar",
     "lessShows": "Show less",

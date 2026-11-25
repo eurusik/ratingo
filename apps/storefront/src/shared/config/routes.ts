@@ -41,6 +41,8 @@ export function myListRoute(list: string, defaultList: string): string {
 export const BROWSE_ROUTE = '/browse';
 export const CALENDAR_ROUTE = '/calendar';
 export const CALENDAR_TYPE_PARAM = 'type';
+export const CALENDAR_MODE_PARAM = 'mode';
+export const CALENDAR_PREMIERES_ROUTE = `${CALENDAR_ROUTE}?${CALENDAR_MODE_PARAM}=premieres`;
 export const OFFLINE_ROUTE = '/~offline';
 export const SETTINGS_ROUTE = '/settings';
 export const PROFILE_SETTINGS_ROUTE = '/settings/profile';

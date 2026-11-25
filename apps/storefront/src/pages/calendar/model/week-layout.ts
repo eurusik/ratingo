@@ -1,5 +1,7 @@
-import type { CalendarEpisode, CalendarMovie, CalendarRange } from '@/shared/api';
+import type { CalendarEpisode, CalendarMediaType, CalendarMovie, CalendarRange } from '@/shared/api';
 import { kyivDateKey, weekDays, weekStartOf, type DateKey } from './calendar-dates';
+import type { CalendarMode } from './calendar-query';
+import { planDay } from './day-plan';
 
 export interface CalendarDay {
   key: DateKey;
@@ -66,8 +68,18 @@ export function emptyCalendarDays(weekStart: DateKey): CalendarDay[] {
   return weekDays(weekStart).map(emptyDay);
 }
 
+export type CountKind = CalendarMediaType | 'premiere';
+
+export function countKindFor(type: CalendarMediaType, mode: CalendarMode | undefined): CountKind {
+  return mode === 'premieres' ? 'premiere' : type;
+}
+
 export function movieCount(day: CalendarDay): number {
   return day.movies.length + day.moreMovies;
+}
+
+export function premiereCount(day: CalendarDay): number {
+  return planDay(day.episodes, 'premieres').visible.length;
 }
 
 function hasReleases(day: CalendarDay): boolean {

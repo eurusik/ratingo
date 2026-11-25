@@ -79,6 +79,18 @@ describe('Catalog E2E - Release calendar and upcoming movies', () => {
       }
     });
 
+    it('asks the show repository for premieres only when premieres=true', async () => {
+      await ctx.get('/api/catalog/calendar?type=show&days=90&premieres=true').expect(200);
+
+      expect(ctx.showsRepo.lastCalendarOptions).toEqual({ premieresOnly: true });
+    });
+
+    it('keeps the full episode list without the premieres flag', async () => {
+      await ctx.get('/api/catalog/calendar?type=show').expect(200);
+
+      expect(ctx.showsRepo.lastCalendarOptions).toEqual({});
+    });
+
     it('requires a viewer for the personalized calendar', async () => {
       await ctx.get('/api/catalog/calendar?personalized=true').expect(401);
     });
@@ -98,7 +110,7 @@ describe('Catalog E2E - Release calendar and upcoming movies', () => {
       expect(movieDay.moreMoviesCount).toBeUndefined();
     });
 
-    it.each(['days=91', 'type=anime', 'personalized=yes', 'startDate=not-a-date'])(
+    it.each(['days=91', 'type=anime', 'personalized=yes', 'premieres=1', 'startDate=not-a-date'])(
       'rejects %s',
       async (param) => {
         await ctx.get(`/api/catalog/calendar?${param}`).expect(400);

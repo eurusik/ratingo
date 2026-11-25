@@ -31,7 +31,7 @@ export class CatalogCalendarController {
   })
   @ApiOkResponse({ type: CatalogCalendarResponseDto })
   @ApiBadRequestResponse({
-    description: `Invalid query parameters (days must be <= ${CATALOG_MAX_CALENDAR_DAYS}; personalized must be 'true' or 'false'; type must be 'show' or 'movie')`,
+    description: `Invalid query parameters (days must be <= ${CATALOG_MAX_CALENDAR_DAYS}; personalized and premieres must be 'true' or 'false'; type must be 'show' or 'movie')`,
   })
   @ApiUnauthorizedResponse({ description: 'Authentication required for personalized calendar' })
   async getCalendar(
@@ -52,6 +52,7 @@ export class CatalogCalendarController {
       days: query.days,
       viewerId: user?.id,
       personalized,
+      premieresOnly: query.premieres === 'true',
       type: query.type,
     });
 

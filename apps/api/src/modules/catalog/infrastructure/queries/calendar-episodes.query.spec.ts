@@ -123,6 +123,42 @@ describe('CalendarEpisodesQuery', () => {
     expect(whereSql().sql).not.toContain('user_media_state');
   });
 
+  it('keeps shows eligible under the active policy in the catalog or upcoming context', async () => {
+    setup([]);
+
+    await query.execute(new Date(), new Date());
+
+    const { sql, params } = whereSql();
+    expect(sql).toContain('exists (select 1 from "media_catalog_evaluations"');
+    expect(sql).toContain('"catalog_policies"."is_active" = $');
+    expect(sql).toMatch(/"media_catalog_evaluations"."context" in \(\$\d+, \$\d+\)/);
+    expect(params).toEqual(expect.arrayContaining(['catalog', 'upcoming', 'eligible']));
+    expect(builder().innerJoin).not.toHaveBeenCalledWith(
+      schema.mediaCatalogEvaluations,
+      expect.anything(),
+    );
+  });
+
+  it('lists every episode when premieres are not requested', async () => {
+    setup([]);
+
+    await query.execute(new Date(), new Date());
+
+    expect(whereSql().sql).not.toContain('"episodes"."number" = $');
+  });
+
+  it('limits premieres to the first episode of regular seasons', async () => {
+    setup([]);
+
+    await query.execute(new Date(), new Date(), { premieresOnly: true });
+
+    const { sql, params } = whereSql();
+    expect(sql).toContain('"episodes"."number" = $');
+    expect(sql).toContain('"seasons"."number" > $');
+    expect(sql).not.toContain('user_saved_items');
+    expect(params).toEqual(expect.arrayContaining([1, 0]));
+  });
+
   it('orders by air time, popularity and id for a stable order', async () => {
     setup([]);
 

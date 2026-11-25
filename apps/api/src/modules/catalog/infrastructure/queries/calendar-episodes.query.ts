@@ -11,12 +11,15 @@ import {
   type CalendarEpisode,
   type CalendarEpisodesOptions,
 } from '@/modules/catalog/domain/repositories/show.repository.interface';
-import { EligibilityStatus, EvaluationContext } from '@/modules/catalog-policy/public';
+import { EvaluationContext } from '@/modules/catalog-policy/public';
 import { SAVED_ITEM_LIST } from '@/modules/user-actions/public';
 import { USER_MEDIA_STATE } from '@/modules/user-media/public';
 
+import { eligibleUnderActivePolicy } from './shared/movie-release-conditions';
+
 const PREMIERE_EPISODE_NUMBER = 1;
 const SPECIALS_SEASON_NUMBER = 0;
+const CALENDAR_ELIGIBILITY_CONTEXTS = [EvaluationContext.CATALOG, EvaluationContext.UPCOMING];
 
 const {
   episodes,
@@ -37,11 +40,28 @@ function ownedByViewer(column: PgColumn, viewerId: string | undefined): SQL {
   return viewerId ? eq(column, viewerId) : sql`false`;
 }
 
-function isSavedPremiere(): SQL | undefined {
+function isSeasonPremiere(): SQL | undefined {
   return and(
-    isSaved,
     eq(episodes.number, PREMIERE_EPISODE_NUMBER),
     gt(seasons.number, SPECIALS_SEASON_NUMBER),
+  );
+}
+
+function isSavedPremiere(): SQL | undefined {
+  return and(isSaved, isSeasonPremiere());
+}
+
+function episodeFilter(
+  startDate: Date,
+  endDate: Date,
+  options: CalendarEpisodesOptions,
+): SQL | undefined {
+  return and(
+    gte(episodes.airDate, startDate),
+    lte(episodes.airDate, endDate),
+    eligibleUnderActivePolicy(CALENDAR_ELIGIBILITY_CONTEXTS),
+    options.personalized ? or(isTracked, isSavedPremiere()) : undefined,
+    options.premieresOnly ? isSeasonPremiere() : undefined,
   );
 }
 
@@ -69,9 +89,9 @@ function toCalendarEpisode(row: CalendarEpisodeRow): CalendarEpisode {
 /**
  * Fetches episodes airing within a date range for calendar view.
  *
- * Only includes shows that are ELIGIBLE under the active catalog policy,
- * filtering out content irrelevant to the target audience (e.g. CJK-only,
- * blocked languages/countries).
+ * Only includes shows that are ELIGIBLE under the active policy in the catalog
+ * or upcoming context, filtering out content irrelevant to the target audience
+ * (e.g. CJK-only, blocked languages/countries).
  *
  * @throws {DatabaseException} When database query fails
  */
@@ -89,7 +109,7 @@ export class CalendarEpisodesQuery {
    *
    * @param {Date} startDate - Start of date range (inclusive)
    * @param {Date} endDate - End of date range (inclusive)
-   * @param {CalendarEpisodesOptions} [options] - Viewer state and personalized filtering
+   * @param {CalendarEpisodesOptions} [options] - Viewer state, personalized and premieres filtering
    * @returns {Promise<CalendarEpisode[]>} Episodes airing in the date range
    * @throws {DatabaseException} When database query fails
    */
@@ -99,8 +119,6 @@ export class CalendarEpisodesQuery {
     options: CalendarEpisodesOptions = {},
   ): Promise<CalendarEpisode[]> {
     const { viewerId } = options;
-    const inRange = and(gte(episodes.airDate, startDate), lte(episodes.airDate, endDate));
-    const where = options.personalized ? and(inRange, or(isTracked, isSavedPremiere())) : inRange;
 
     return withDbError('fetch calendar episodes', this.logger, async () => {
       const rows = await this.db
@@ -128,16 +146,6 @@ export class CalendarEpisodesQuery {
         .innerJoin(seasons, eq(episodes.seasonId, seasons.id))
         .innerJoin(shows, eq(episodes.showId, shows.id))
         .innerJoin(mediaItems, eq(shows.mediaItemId, mediaItems.id))
-        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-        .innerJoin(
-          schema.mediaCatalogEvaluations,
-          and(
-            eq(schema.mediaCatalogEvaluations.mediaItemId, mediaItems.id),
-            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
-            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-          ),
-        )
         .leftJoin(
           userMediaState,
           and(
@@ -160,7 +168,7 @@ export class CalendarEpisodesQuery {
             ownedByViewer(userEpisodeProgress.userId, viewerId),
           ),
         )
-        .where(where)
+        .where(episodeFilter(startDate, endDate, options))
         .orderBy(asc(episodes.airDate), byPopularityDescNullsLast, asc(episodes.id));
 
       return rows.map(toCalendarEpisode);

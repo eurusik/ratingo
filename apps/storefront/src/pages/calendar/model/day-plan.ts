@@ -12,7 +12,7 @@ export interface DayPlan {
   hiddenShows: number;
 }
 
-export type EpisodeMark = 'premiere' | 'finale';
+export type EpisodeMark = 'newSeries' | 'newSeason' | 'finale';
 
 export type EpisodeAction = 'watch' | 'remind' | 'start' | 'save' | 'none';
 
@@ -34,8 +34,38 @@ function isViewersShow(show: readonly CalendarEpisode[]): boolean {
   return show.some((episode) => episode.isTracked || episode.isSaved);
 }
 
+function isSeasonPremiere(episode: CalendarEpisode): boolean {
+  return (
+    episode.seasonNumber > SPECIALS_SEASON_NUMBER &&
+    episode.episodeNumber === PREMIERE_EPISODE_NUMBER
+  );
+}
+
+function isSeriesPremiere(episode: CalendarEpisode): boolean {
+  return isSeasonPremiere(episode) && episode.seasonNumber === FIRST_SEASON_NUMBER;
+}
+
+function firstPerShow(episodes: readonly CalendarEpisode[]): CalendarEpisode[] {
+  const seen = new Set<string>();
+  return episodes.filter((episode) => {
+    if (seen.has(episode.showId)) return false;
+    seen.add(episode.showId);
+    return true;
+  });
+}
+
+function newSeriesFirst(left: CalendarEpisode, right: CalendarEpisode): number {
+  return Number(isSeriesPremiere(right)) - Number(isSeriesPremiere(left));
+}
+
+function planPremieres(episodes: readonly CalendarEpisode[]): DayPlan {
+  const premieres = firstPerShow(episodes.filter(isSeasonPremiere)).sort(newSeriesFirst);
+  return { visible: premieres, hidden: [], hiddenShows: 0 };
+}
+
 export function planDay(episodes: readonly CalendarEpisode[], mode: CalendarMode): DayPlan {
   if (mode === 'mine') return { visible: [...episodes], hidden: [], hiddenShows: 0 };
+  if (mode === 'premieres') return planPremieres(episodes);
   const shows = groupByShow(episodes);
   const isVisible = (show: CalendarEpisode[], rank: number) =>
     rank < VISIBLE_SHOWS_PER_DAY || isViewersShow(show);
@@ -49,20 +79,14 @@ export function planDay(episodes: readonly CalendarEpisode[], mode: CalendarMode
 
 export function episodeMark(episode: CalendarEpisode): EpisodeMark | undefined {
   if (episode.seasonNumber === SPECIALS_SEASON_NUMBER) return undefined;
-  if (episode.episodeNumber === PREMIERE_EPISODE_NUMBER) return 'premiere';
+  if (isSeriesPremiere(episode)) return 'newSeries';
+  if (isSeasonPremiere(episode)) return 'newSeason';
   if (episode.seasonEpisodeCount === episode.episodeNumber) return 'finale';
   return undefined;
 }
 
 function hasAired(episode: CalendarEpisode, now: number): boolean {
   return Date.parse(episode.airDate) <= now;
-}
-
-function isSeriesPremiere(episode: CalendarEpisode): boolean {
-  return (
-    episode.seasonNumber === FIRST_SEASON_NUMBER &&
-    episode.episodeNumber === PREMIERE_EPISODE_NUMBER
-  );
 }
 
 interface ActionContext {
@@ -80,5 +104,5 @@ export function episodeAction(
     return hasAired(episode, now) ? 'watch' : 'remind';
   }
   if (isSeriesPremiere(episode) && !hasAired(episode, now)) return 'save';
-  return mode === 'all' || episode.isSaved ? 'start' : 'none';
+  return mode !== 'mine' || episode.isSaved ? 'start' : 'none';
 }

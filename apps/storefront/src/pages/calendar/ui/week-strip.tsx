@@ -1,12 +1,11 @@
 'use client';
 
 import type { RefObject } from 'react';
-import type { CalendarMediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
 import { EdgeFade } from '@/shared/ui';
 import { WEEK_PANES, type WeekStep } from '../lib/use-week-carousel';
 import type { DateKey } from '../model/calendar-dates';
-import type { StripWeek } from '../model/week-layout';
+import type { CountKind, StripWeek } from '../model/week-layout';
 import { DAY_STRIP, WEEK_STRIP_PANE, WEEK_STRIP_SCROLLER } from './calendar-layout';
 import { WeekStripSkeleton } from './calendar-skeleton';
 import { DayTile } from './day-tile';
@@ -14,7 +13,7 @@ import { DayTile } from './day-tile';
 interface StripPaneProps {
   week?: StripWeek;
   step: WeekStep | 0;
-  type: CalendarMediaType;
+  kind: CountKind;
   today: DateKey;
   activeDay?: DateKey;
   isCompact: boolean;
@@ -25,7 +24,7 @@ interface StripPaneProps {
 function StripPane({
   week,
   step,
-  type,
+  kind,
   today,
   activeDay,
   isCompact,
@@ -42,7 +41,7 @@ function StripPane({
             <DayTile
               key={day.key}
               day={day}
-              type={type}
+              kind={kind}
               today={today}
               isPickable={week.pickable.has(day.key)}
               isActive={isCurrent && day.key === activeDay}
@@ -76,7 +75,7 @@ const PANE_STEPS: Record<(typeof WEEK_PANES)[number], WeekStep | 0> = {
 interface WeekStripProps {
   scroller: RefObject<HTMLDivElement | null>;
   stripWeeks?: StripWeek[];
-  type: CalendarMediaType;
+  kind: CountKind;
   today: DateKey;
   activeDay?: DateKey;
   isCompact: boolean;

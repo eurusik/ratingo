@@ -8,7 +8,7 @@ import { useVisibleDay } from '../lib/use-visible-day';
 import { useLatestCallback } from '../lib/use-latest-callback';
 import { CURRENT_PANE, useWeekCarousel, type WeekStep } from '../lib/use-week-carousel';
 import { addDays, weeksFromToday, WEEK_LENGTH, type DateKey } from '../model/calendar-dates';
-import type { StripWeek } from '../model/week-layout';
+import { countKindFor, type StripWeek } from '../model/week-layout';
 import { WEEK_BAR_FRAME, WEEK_BAR_STICKY, WEEK_BAR_STUCK_GAP } from './calendar-layout';
 import type { ModePillsProps } from './mode-pills';
 import { WeekHeader } from './week-header';
@@ -80,7 +80,7 @@ export function WeekBar({
         <WeekStrip
           scroller={scroller}
           stripWeeks={stripWeeks}
-          type={type}
+          kind={countKindFor(type, mode)}
           today={today}
           activeDay={pinnedDay ?? visibleDay}
           isCompact={isStuck}

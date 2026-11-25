@@ -33,6 +33,7 @@ export interface CatalogCalendarRequest {
   days: number;
   viewerId?: string;
   personalized: boolean;
+  premieresOnly?: boolean;
   type?: CalendarMediaTypeValue;
 }
 
@@ -88,9 +89,10 @@ export class CatalogCalendarService {
     range: ReleaseDateRange,
     request: CatalogCalendarRequest,
   ): Promise<CalendarEpisode[]> {
-    const options: CalendarEpisodesOptions = request.viewerId
+    const viewer: CalendarEpisodesOptions = request.viewerId
       ? { viewerId: request.viewerId, personalized: request.personalized }
       : {};
+    const options = request.premieresOnly ? { ...viewer, premieresOnly: true } : viewer;
     return this.showRepository.findEpisodesByDateRange(
       range.from,
       lastInstantBefore(range.toExclusive),

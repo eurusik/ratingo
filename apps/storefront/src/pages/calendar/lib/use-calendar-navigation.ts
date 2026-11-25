@@ -55,6 +55,12 @@ export function useCalendarNavigation({
     goToNextWeek: () => {
       tryStep(1);
     },
+    goToWeekOf: (day: DateKey) => {
+      const weekStart = weekStartOf(day);
+      if (!isSupportedWeek(weekStart)) return;
+      track('calendar_change', { action: 'next_premiere' });
+      goTo({ ...location, weekStart });
+    },
     goToThisWeek: () => {
       track('calendar_change', { action: 'this_week' });
       goTo({ ...location, weekStart: weekStartOf(today) });

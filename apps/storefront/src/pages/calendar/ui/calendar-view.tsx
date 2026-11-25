@@ -25,6 +25,7 @@ import {
   EmptyWeekNote,
   GuestPrompt,
   NoOwnReleasesPrompt,
+  PremiereFreeWeekNote,
   RestWeekNote,
 } from './calendar-notices';
 import { CalendarListSkeleton } from './calendar-skeleton';
@@ -35,9 +36,13 @@ import './calendar-page.css';
 interface NoticeActions {
   onShowAll: () => void;
   onNextWeek: () => void;
+  onWeekOf: (day: DateKey) => void;
 }
 
-function weekNotice(week: CalendarWeek, { onShowAll, onNextWeek }: NoticeActions): ReactNode {
+function weekNotice(
+  week: CalendarWeek,
+  { onShowAll, onNextWeek, onWeekOf }: NoticeActions,
+): ReactNode {
   if (week.isGuestInMine) return <GuestPrompt type={week.type} onShowAll={onShowAll} />;
   if (!week.layout && week.active.isError) {
     return (
@@ -49,6 +54,9 @@ function weekNotice(week: CalendarWeek, { onShowAll, onNextWeek }: NoticeActions
   }
   if (!week.layout) return null;
   if (week.isResting) return <RestWeekNote upcoming={week.nextEpisode} onNextWeek={onNextWeek} />;
+  if (week.isPremiereFree) {
+    return <PremiereFreeWeekNote upcoming={week.nextPremiere} onJump={onWeekOf} />;
+  }
   if (!week.isEmptyWeek) return null;
   return week.mode === 'mine' ? (
     <NoOwnReleasesPrompt type={week.type} onShowAll={onShowAll} />
@@ -64,6 +72,7 @@ interface CalendarBodyProps {
   onPastOpenChange: (isOpen: boolean) => void;
   onShowAll: () => void;
   onNextWeek: () => void;
+  onWeekOf: (day: DateKey) => void;
   onStarted: () => void;
 }
 
@@ -74,6 +83,7 @@ function CalendarBody({
   onPastOpenChange,
   onShowAll,
   onNextWeek,
+  onWeekOf,
   onStarted,
 }: CalendarBodyProps) {
   const { dict } = useTranslation();
@@ -85,7 +95,7 @@ function CalendarBody({
     [mode, now, viewer, start, pendingShowId],
   );
 
-  const notice = weekNotice(week, { onShowAll, onNextWeek });
+  const notice = weekNotice(week, { onShowAll, onNextWeek, onWeekOf });
   if (notice) return <div className={NOTICE_AREA}>{notice}</div>;
   if (!layout || !context) {
     return <CalendarListSkeleton label={dict.common.loading} type={week.type} />;
@@ -176,6 +186,7 @@ export function CalendarView({ today: serverToday }: { today: DateKey }) {
             onPastOpenChange={setPastOpen}
             onShowAll={() => navigation.changeMode('all')}
             onNextWeek={navigation.goToNextWeek}
+            onWeekOf={navigation.goToWeekOf}
             onStarted={navigation.keepResolvedMode}
           />
         </div>

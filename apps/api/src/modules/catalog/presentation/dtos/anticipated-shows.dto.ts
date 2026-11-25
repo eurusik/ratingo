@@ -31,7 +31,11 @@ export class AnticipatedShowDto {
   @ApiProperty({ type: ImageDto })
   poster: ImageDto;
 
-  @ApiProperty({ type: Date, description: 'First air date of the show.' })
+  @ApiProperty({
+    type: Date,
+    description:
+      'When the first regular episode airs, the same instant the release calendar lists; the show first air date when no episode is dated yet.',
+  })
   premiereDate: Date;
 
   @ApiProperty({

@@ -6,7 +6,7 @@ import { openAuth } from '@/shared/auth';
 import type { CalendarEpisode, CalendarMediaType } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { SectionError } from '@/shared/ui';
-import { kyivDateKey } from '../model/calendar-dates';
+import { kyivDateKey, type DateKey } from '../model/calendar-dates';
 import { formatDay } from '../model/calendar-format';
 import { calendarEpisodeCode } from '../model/episode-line';
 import { DASHED_NOTE, PROMPT_BUTTON, PROMPT_CARD } from './calendar-layout';
@@ -96,6 +96,40 @@ export function RestWeekNote({ upcoming, onNextWeek }: RestWeekProps) {
       <Button variant="outline" onPress={onNextWeek} className="mt-1 h-11 rounded-full px-4">
         {copy.nextWeek}
       </Button>
+    </div>
+  );
+}
+
+interface PremiereFreeWeekProps {
+  upcoming?: CalendarEpisode;
+  onJump: (day: DateKey) => void;
+}
+
+export function PremiereFreeWeekNote({ upcoming, onJump }: PremiereFreeWeekProps) {
+  const { dict, locale } = useTranslation();
+  const copy = dict.calendar.noPremieres;
+  const premiereDay = upcoming && kyivDateKey(upcoming.airDate);
+
+  return (
+    <div className={DASHED_NOTE}>
+      <p className="text-base font-bold">{copy.title}</p>
+      {upcoming && premiereDay ? (
+        <>
+          <p className="text-sm text-muted">
+            {interpolate(copy.next, {
+              title: upcoming.showTitle,
+              date: formatDay(locale, premiereDay, 'dayMonth'),
+            })}
+          </p>
+          <Button
+            variant="outline"
+            onPress={() => onJump(premiereDay)}
+            className="mt-1 h-11 rounded-full px-4"
+          >
+            {copy.jump}
+          </Button>
+        </>
+      ) : null}
     </div>
   );
 }

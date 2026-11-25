@@ -1253,6 +1253,19 @@
             }
           },
           {
+            "name": "premieres",
+            "required": false,
+            "in": "query",
+            "description": "When true, lists only series and season premieres: the first episode of each regular season. Movies are not affected.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
             "name": "type",
             "required": false,
             "in": "query",
@@ -1293,7 +1306,7 @@
             }
           },
           "400": {
-            "description": "Invalid query parameters (days must be <= 90; personalized must be 'true' or 'false'; type must be 'show' or 'movie')"
+            "description": "Invalid query parameters (days must be <= 90; personalized and premieres must be 'true' or 'false'; type must be 'show' or 'movie')"
           },
           "401": {
             "description": "Authentication required for personalized calendar"
@@ -15605,7 +15618,7 @@
           "premiereDate": {
             "format": "date-time",
             "type": "string",
-            "description": "First air date of the show."
+            "description": "When the first regular episode airs, the same instant the release calendar lists; the show first air date when no episode is dated yet."
           },
           "listCount": {
             "type": "number",

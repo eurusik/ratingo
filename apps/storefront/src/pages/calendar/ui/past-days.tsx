@@ -7,15 +7,25 @@ import { cn, pluralize } from '@ratingo/web-core/lib';
 import { interpolate, useTranslation, type Dictionary, type Locale } from '@/shared/i18n';
 import { capitalizeFirst } from '@/shared/lib';
 import { dayHeadingId, daySectionProps } from '../lib/day-anchor';
+import type { CalendarMode } from '../model/calendar-query';
 import { formatDay } from '../model/calendar-format';
 import { summarizePast, type CalendarDay, type PastSummary } from '../model/week-layout';
+import { useCalendarContext } from './calendar-context';
 import { DayReleases } from './day-releases';
 
 const PAST_ROW = 'flex h-13 items-center gap-2 px-3.5 text-[15px] font-semibold';
 
-function pastLabel(summary: PastSummary, dict: Dictionary, locale: Locale): string {
+function countedKind(summary: Exclude<PastSummary, { kind: 'allWatched' }>, mode: CalendarMode) {
+  return summary.kind === 'episodes' && mode === 'premieres' ? 'premieres' : summary.kind;
+}
+
+function pastLabel(
+  summary: PastSummary,
+  mode: CalendarMode,
+  { dict, locale }: { dict: Dictionary; locale: Locale },
+): string {
   if (summary.kind === 'allWatched') return dict.calendar.past.allWatched;
-  const forms = dict.calendar.past[summary.kind];
+  const forms = dict.calendar.past[countedKind(summary, mode)];
   return interpolate(pluralize(summary.count, forms, locale), { count: summary.count });
 }
 
@@ -92,9 +102,10 @@ function PastDaysAccordion({ days, isOpen, onOpenChange, label }: PastDaysAccord
 }
 
 export function PastDays(props: PastDaysProps) {
-  const { dict, locale } = useTranslation();
+  const translation = useTranslation();
+  const { mode } = useCalendarContext();
   const summary = summarizePast(props.days);
-  const label = pastLabel(summary, dict, locale);
+  const label = pastLabel(summary, mode, translation);
 
   return (
     <section className={PAST_FRAME}>

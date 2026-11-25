@@ -2,10 +2,11 @@
 
 import { useMemo } from 'react';
 import { useAuth } from '@ratingo/web-core/auth';
-import type { CalendarMediaType, CalendarRange } from '@/shared/api';
+import type { CalendarMediaType, CalendarRange, CalendarRangeQuery } from '@/shared/api';
 import { addDays, WEEK_LENGTH, type DateKey } from './calendar-dates';
 import { hasTrackedShows } from './calendar-range';
 import {
+  rangeFiltersFor,
   upcomingRequest,
   weekRequest,
   type CalendarLocation,
@@ -36,18 +37,30 @@ function useViewerStatus(): ViewerStatus {
   return user ? 'signedIn' : 'guest';
 }
 
-function useActiveRange(location: CalendarLocation) {
-  const request = { ...weekRequest(location.weekStart), type: location.type };
+function weekQuery(
+  weekStart: DateKey,
+  mode: CalendarMode,
+  type: CalendarMediaType,
+): CalendarRangeQuery {
+  return { ...weekRequest(weekStart), ...rangeFiltersFor(mode), type };
+}
+
+function useActiveRange({ weekStart, type, mode: requested }: CalendarLocation) {
   const personalized = useCalendarRange({
-    query: { ...request, personalized: true },
-    isEnabled: location.type === 'show' || location.mode === 'mine',
+    query: weekQuery(weekStart, 'mine', type),
+    isEnabled: type === 'show' || requested === 'mine',
   });
-  const mode = useCalendarMode({ requested: location.mode, personalized, type: location.type });
+  const mode = useCalendarMode({ requested, personalized, type });
   const everyone = useCalendarRange({
-    query: { ...request, personalized: false },
+    query: weekQuery(weekStart, 'all', type),
     isEnabled: mode !== undefined,
   });
-  return { mode, active: mode === 'mine' ? personalized : everyone };
+  const premieres = useCalendarRange({
+    query: weekQuery(weekStart, 'premieres', type),
+    isEnabled: mode === 'premieres',
+  });
+  const byMode = { mine: personalized, premieres, all: everyone };
+  return { mode, active: mode ? byMode[mode] : everyone };
 }
 
 function likelyMode(mode: CalendarMode | undefined, viewer: ViewerStatus) {
@@ -71,6 +84,7 @@ export function useCalendarWeek({ location, today }: CalendarWeekInputs) {
   );
   const isEmptyWeek = layout ? layout.past.length + layout.upcoming.length === 0 : false;
   const isResting = mode === 'mine' && isEmptyWeek && hasTrackedShows(active.data);
+  const isPremiereFree = mode === 'premieres' && isEmptyWeek;
 
   const currentStripWeek = useMemo(() => {
     const stripDays = days ?? (active.isError ? emptyCalendarDays(weekStart) : undefined);
@@ -84,7 +98,11 @@ export function useCalendarWeek({ location, today }: CalendarWeekInputs) {
     type,
     isEnabled: viewer !== 'resolving',
   });
-  const nextEpisode = useRestingWeekNextEpisode(weekStart, isResting);
+  const nextEpisode = useFirstEpisodeAfter(weekStart, { mode: 'mine', isEnabled: isResting });
+  const nextPremiere = useFirstEpisodeAfter(weekStart, {
+    mode: 'premieres',
+    isEnabled: isPremiereFree,
+  });
 
   return {
     mode,
@@ -96,17 +114,24 @@ export function useCalendarWeek({ location, today }: CalendarWeekInputs) {
     isGuestInMine,
     isEmptyWeek,
     isResting,
+    isPremiereFree,
     nextEpisode,
+    nextPremiere,
   };
 }
 
-function useRestingWeekNextEpisode(weekStart: DateKey, isResting: boolean) {
+interface LookaheadInputs {
+  mode: CalendarMode;
+  isEnabled: boolean;
+}
+
+function useFirstEpisodeAfter(weekStart: DateKey, { mode, isEnabled }: LookaheadInputs) {
   const nextWeekStart = addDays(weekStart, WEEK_LENGTH);
   const upcoming = useCalendarRange({
-    query: { ...upcomingRequest(nextWeekStart), personalized: true, type: 'show' },
-    isEnabled: isResting,
+    query: { ...upcomingRequest(nextWeekStart), ...rangeFiltersFor(mode), type: 'show' },
+    isEnabled,
   });
-  return isResting ? firstEpisodeFrom(upcoming.data, nextWeekStart) : undefined;
+  return isEnabled ? firstEpisodeFrom(upcoming.data, nextWeekStart) : undefined;
 }
 
 interface NeighbourInputs {
@@ -121,7 +146,7 @@ interface StripWeeksInputs extends NeighbourInputs {
   current: StripWeek | undefined;
 }
 
-const OTHER_MODE = { mine: 'all', all: 'mine' } as const satisfies Record<
+const OTHER_MODE = { mine: 'all', premieres: 'all', all: 'mine' } as const satisfies Record<
   CalendarMode,
   CalendarMode
 >;
@@ -130,7 +155,7 @@ type WarmNeighbourInputs = Omit<NeighbourInputs, 'today'>;
 
 function useWarmNeighbour(weekStart: DateKey, { mode, type, isEnabled }: WarmNeighbourInputs) {
   useCalendarRange({
-    query: { ...weekRequest(weekStart), personalized: mode === 'mine', type },
+    query: weekQuery(weekStart, mode ?? 'all', type),
     isEnabled: isEnabled && mode !== undefined,
   });
 }
@@ -156,7 +181,7 @@ function useNeighbourWeek(
   { today, mode, type, isEnabled }: NeighbourInputs,
 ): StripWeek {
   const { data } = useCalendarRange({
-    query: { ...weekRequest(weekStart), personalized: mode === 'mine', type },
+    query: weekQuery(weekStart, mode ?? 'all', type),
     isEnabled: isEnabled && mode !== undefined,
   });
   return useMemo(() => neighbourWeek(data, weekStart, today), [data, weekStart, today]);
