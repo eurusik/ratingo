@@ -1,15 +1,14 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { SectionHeader } from './section-header';
 
 describe('SectionHeader', () => {
-  it('renders the heading, caption and action link', () => {
+  it('renders the heading, caption and trailing controls', () => {
     render(
       <SectionHeader
         id="trending"
         title="Зараз у тренді"
         caption="Оновлено сьогодні"
-        actionHref="/browse"
-        actionLabel="Увесь топ"
+        trailing={<button type="button">Далі</button>}
       />,
     );
 
@@ -18,33 +17,14 @@ describe('SectionHeader', () => {
       'trending',
     );
     expect(screen.getByText('Оновлено сьогодні')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Увесь топ' })).toHaveAttribute('href', '/browse');
+    expect(screen.getByRole('button', { name: 'Далі' })).toBeInTheDocument();
   });
 
-  it('names the action link more precisely and reports its clicks', () => {
-    const onActionClick = jest.fn();
-    render(
-      <SectionHeader
-        id="upcoming"
-        title="Скоро в прокаті"
-        actionHref="/calendar?type=movie"
-        actionLabel="Календар →"
-        actionAriaLabel="Календар фільмів"
-        onActionClick={onActionClick}
-      />,
-    );
-    fireEvent.click(screen.getByRole('link', { name: 'Календар фільмів' }), { metaKey: true });
-    expect(onActionClick).toHaveBeenCalledTimes(1);
+  it('renders only the heading without a caption or trailing controls', () => {
+    const { container } = render(<SectionHeader id="mine" title="Твої серіали" />);
 
-    expect(screen.getByRole('link', { name: 'Календар фільмів' })).toHaveAttribute(
-      'href',
-      '/calendar?type=movie',
-    );
-  });
-
-  it('omits the action without a link', () => {
-    render(<SectionHeader id="mine" title="Твої серіали" />);
-
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Твої серіали' })).toBeInTheDocument();
+    expect(container.querySelector('p')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });

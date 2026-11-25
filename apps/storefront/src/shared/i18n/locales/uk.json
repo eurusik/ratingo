@@ -28,16 +28,16 @@
     "episodeLabel": "Сезон {season}, серія {episode}",
     "newReleases": "Новинки",
     "newReleasesCaption": "Щойно в кіно та на стрімінгах",
-    "upcoming": "Скоро в прокаті",
-    "upcomingCaption": "Найочікуваніші фільми найближчих місяців",
-    "calendarAction": "Календар →",
-    "calendarLabel": {
-      "show": "Календар серій",
-      "movie": "Календар фільмів"
+    "upcoming": "Фільми, яких чекають",
+    "upcomingCaption": "Прем’єри найближчих місяців",
+    "upcomingMore": "Що ще виходить",
+    "episodeSchedule": {
+      "short": "Розклад",
+      "full": "Розклад серій"
     },
     "upcomingDate": "Виходить {date}",
-    "premieres": "Найочікуваніші прем’єри",
-    "premieresCaption": "Нові серіали, яких чекають найбільше",
+    "premieres": "Нові серіали, яких чекають",
+    "premieresCaption": "Прем’єри найближчих місяців",
     "premiereDate": "Прем’єра {date}",
     "premiereKind": {
       "newShow": "Новий серіал"

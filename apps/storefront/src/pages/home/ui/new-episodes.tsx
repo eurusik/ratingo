@@ -1,6 +1,9 @@
 'use client';
 
 import { useRef } from 'react';
+import Link from 'next/link';
+import { buttonVariants } from '@heroui/react';
+import { CalendarDays } from 'lucide-react';
 import { episodeCode } from '@/entities/episode';
 import { MediaPoster } from '@/entities/media';
 import { SERVICE_TIME_ZONE, calendarRouteFor, mediaRoute } from '@/shared/config';
@@ -56,6 +59,23 @@ function EpisodeTile({ release, position }: { release: EpisodeRelease; position:
   );
 }
 
+function EpisodeScheduleLink() {
+  const { dict } = useTranslation();
+
+  return (
+    <Link
+      href={calendarRouteFor('show')}
+      aria-label={dict.home.episodeSchedule.full}
+      onClick={() => track('calendar_open', { origin: 'home_episodes' })}
+      className={`${buttonVariants({ variant: 'tertiary', size: 'sm' })} min-h-tap rounded-full no-underline md:me-2 md:min-h-0`}
+    >
+      <CalendarDays aria-hidden className="size-4" />
+      <span className="md:hidden">{dict.home.episodeSchedule.short}</span>
+      <span className="hidden md:inline">{dict.home.episodeSchedule.full}</span>
+    </Link>
+  );
+}
+
 export function NewEpisodes({ releases }: { releases: EpisodeRelease[] }) {
   const { dict } = useTranslation();
   const scroller = useRef<HTMLDivElement>(null);
@@ -71,11 +91,12 @@ export function NewEpisodes({ releases }: { releases: EpisodeRelease[] }) {
         id="new-episodes"
         title={dict.home.newEpisodes}
         caption={dict.home.newEpisodesCaption}
-        actionHref={calendarRouteFor('show')}
-        actionLabel={dict.home.calendarAction}
-        actionAriaLabel={dict.home.calendarLabel.show}
-        onActionClick={() => track('calendar_open', { origin: 'home_episodes' })}
-        trailing={<RailPager scrollerRef={scroller} />}
+        trailing={
+          <>
+            <EpisodeScheduleLink />
+            <RailPager scrollerRef={scroller} />
+          </>
+        }
       />
       <Rail label={dict.home.newEpisodes} itemSize="tile" scrollerRef={scroller}>
         {releases.map((release, index) => (

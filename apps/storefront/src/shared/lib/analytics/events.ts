@@ -33,6 +33,7 @@ export interface AnalyticsEvents {
     action: 'save' | 'remove' | 'restore';
     list: string;
     media_type?: AnalyticsMediaType;
+    origin?: HomeBlock;
   };
   rate_title: { rating: number | null; media_type?: AnalyticsMediaType };
   review_publish: {
