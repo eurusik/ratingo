@@ -1,9 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
-import { calendarRouteFor } from '@/shared/config';
-import { track } from '@/shared/lib';
-import { useTranslation } from '@/shared/i18n';
+import { useRef, type ReactNode } from 'react';
 import { Rail, RailItem, RailPager, SectionHeader } from '@/shared/ui';
 import { trackHomeOpen } from '../model/track-home-open';
 import { ReleaseTile, type ReleaseNote, type ReleaseTileMedia } from './release-tile';
@@ -20,9 +17,9 @@ interface ReleaseRailProps {
   title: string;
   caption: string;
   dateLabel: string;
-  calendarType: 'show' | 'movie';
   origin: 'home_upcoming' | 'home_premieres';
   items: ReleaseRailItem[];
+  endItem?: ReactNode;
 }
 
 export function ReleaseRail({
@@ -30,11 +27,10 @@ export function ReleaseRail({
   title,
   caption,
   dateLabel,
-  calendarType,
   origin,
   items,
+  endItem,
 }: ReleaseRailProps) {
-  const { dict } = useTranslation();
   const scroller = useRef<HTMLDivElement>(null);
 
   return (
@@ -46,10 +42,6 @@ export function ReleaseRail({
         id={sectionId}
         title={title}
         caption={caption}
-        actionHref={calendarRouteFor(calendarType)}
-        actionLabel={dict.home.calendarAction}
-        actionAriaLabel={dict.home.calendarLabel[calendarType]}
-        onActionClick={() => track('calendar_open', { origin })}
         trailing={<RailPager scrollerRef={scroller} />}
       />
       <Rail label={title} itemSize="tile" scrollerRef={scroller}>
@@ -58,12 +50,14 @@ export function ReleaseRail({
             <ReleaseTile
               {...item}
               dateLabel={dateLabel}
+              origin={origin}
               onOpen={() =>
                 trackHomeOpen({ origin, mediaType: item.media.type, position: index + 1 })
               }
             />
           </RailItem>
         ))}
+        {endItem ? <RailItem>{endItem}</RailItem> : null}
       </Rail>
     </section>
   );

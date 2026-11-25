@@ -11,19 +11,27 @@ import {
   saveButtonClass,
   saveButtonLabel,
   type SaveButtonProps,
+  type SaveButtonTone,
 } from './save-button-parts';
 
 const MENU_KEYS = { toggle: 'toggle', open: 'open', share: 'share' } as const;
 
-export interface SaveMenuButtonProps extends Required<SaveButtonProps> {
+export interface SaveMenuButtonProps extends SaveButtonProps {
+  tone: SaveButtonTone;
   autoFocus: boolean;
   defaultOpen: boolean;
 }
 
-export function SaveMenuButton({ media, tone, autoFocus, defaultOpen }: SaveMenuButtonProps) {
+export function SaveMenuButton({
+  media,
+  tone,
+  origin,
+  autoFocus,
+  defaultOpen,
+}: SaveMenuButtonProps) {
   const { dict } = useTranslation();
   const share = useShareLink();
-  const { saved, toggle } = useSaveToggle(media);
+  const { saved, toggle } = useSaveToggle(media, origin);
   const href = mediaRoute(media.type, media.slug);
   const toggleLabel = saved ? dict.saveToLibrary.menu.unsave : dict.saveToLibrary.menu.save;
 

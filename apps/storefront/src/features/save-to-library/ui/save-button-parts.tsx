@@ -1,12 +1,14 @@
 import { Check, Plus } from 'lucide-react';
 import type { MediaSummary } from '@/entities/media';
 import { interpolate, type Dictionary } from '@/shared/i18n';
+import type { HomeBlock } from '@/shared/lib';
 
 export type SaveButtonTone = 'surface' | 'overlay';
 
 export interface SaveButtonProps {
   media: Pick<MediaSummary, 'mediaItemId' | 'title' | 'type' | 'slug'>;
   tone?: SaveButtonTone;
+  origin?: HomeBlock;
 }
 
 const TONE_CLASSES: Record<SaveButtonTone, string> = {

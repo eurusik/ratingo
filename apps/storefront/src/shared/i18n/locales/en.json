@@ -28,16 +28,16 @@
     "episodeLabel": "Season {season}, episode {episode}",
     "newReleases": "New releases",
     "newReleasesCaption": "Just out in cinemas and on streaming",
-    "upcoming": "Coming soon",
-    "upcomingCaption": "The most anticipated movies of the coming months",
-    "calendarAction": "Calendar →",
-    "calendarLabel": {
-      "show": "Episode calendar",
-      "movie": "Movie calendar"
+    "upcoming": "Movies people are waiting for",
+    "upcomingCaption": "Premiering in the coming months",
+    "upcomingMore": "What else is coming",
+    "episodeSchedule": {
+      "short": "Schedule",
+      "full": "Episode schedule"
     },
     "upcomingDate": "Out {date}",
-    "premieres": "Most anticipated premieres",
-    "premieresCaption": "New shows people are waiting for most",
+    "premieres": "New shows people are waiting for",
+    "premieresCaption": "Premiering in the coming months",
     "premiereDate": "Premieres {date}",
     "premiereKind": {
       "newShow": "New series"

@@ -6,6 +6,7 @@ import { useAuth } from '@ratingo/web-core/auth';
 import { libraryApi } from '@/shared/api';
 import { closeAuth, useAuthRequest } from '@/shared/auth';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
+import type { HomeBlock } from '@/shared/lib';
 import { SaveButton } from './save-button';
 
 jest.mock('@ratingo/web-core/auth', () => ({ useAuth: jest.fn() }));
@@ -36,7 +37,7 @@ function signIn(isAuthenticated: boolean) {
   jest.mocked(useAuth).mockReturnValue({ isAuthenticated } as ReturnType<typeof useAuth>);
 }
 
-function renderButton() {
+function renderButton(origin?: HomeBlock) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 60_000 }, mutations: { retry: false } },
   });
@@ -44,7 +45,7 @@ function renderButton() {
     <QueryClientProvider client={queryClient}>
       <AriaI18nProvider locale="uk">
         <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
-          <SaveButton media={ANDOR} />
+          <SaveButton media={ANDOR} origin={origin} />
           <ToastProvider />
         </I18nProvider>
       </AriaI18nProvider>
@@ -94,6 +95,25 @@ describe('SaveButton', () => {
     await waitFor(() => expect(libraryApi.unsave).toHaveBeenCalledWith('andor-id', 'for_later'));
     await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'false'));
     expect(server).toEqual(NOT_SAVED);
+  });
+
+  it('reports which home rail the title was saved from', async () => {
+    signIn(true);
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    const button = renderButton('home_upcoming');
+    await waitFor(() => expect(libraryApi.getSaveStatuses).toHaveBeenCalled());
+
+    fireEvent.click(button);
+
+    await waitFor(() =>
+      expect(gtag).toHaveBeenCalledWith('event', 'save_to_library', {
+        action: 'save',
+        list: 'for_later',
+        origin: 'home_upcoming',
+      }),
+    );
+    delete window.gtag;
   });
 
   it('undo keeps a list the title was already in before a guest saved it', async () => {

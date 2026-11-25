@@ -4,7 +4,7 @@ import { formatReleaseBadge, formatReleaseDate, MediaPoster } from '@/entities/m
 import { SaveButton } from '@/features/save-to-library';
 import type { MediaType } from '@/shared/api';
 import { mediaRoute } from '@/shared/config';
-import { SHARED_ART_SOURCE } from '@/shared/lib';
+import { SHARED_ART_SOURCE, type HomeBlock } from '@/shared/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
 import { ForwardLink } from '@/shared/ui';
 
@@ -31,10 +31,19 @@ interface ReleaseTileProps {
   date: string;
   dateLabel: string;
   note?: ReleaseNote;
+  origin: HomeBlock;
   onOpen: () => void;
 }
 
-export function ReleaseTile({ media, posterUrl, date, dateLabel, note, onOpen }: ReleaseTileProps) {
+export function ReleaseTile({
+  media,
+  posterUrl,
+  date,
+  dateLabel,
+  note,
+  origin,
+  onOpen,
+}: ReleaseTileProps) {
   const { locale } = useTranslation();
 
   return (
@@ -65,7 +74,7 @@ export function ReleaseTile({ media, posterUrl, date, dateLabel, note, onOpen }:
         ) : null}
       </ForwardLink>
       <div className="absolute end-1 top-1 z-10">
-        <SaveButton media={media} tone="overlay" />
+        <SaveButton media={media} tone="overlay" origin={origin} />
       </div>
     </div>
   );

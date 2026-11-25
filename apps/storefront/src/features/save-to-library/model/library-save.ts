@@ -8,12 +8,13 @@ import { LIBRARY_QUERY_KEY, NOT_SAVED, isSaved, useLibraryStore } from '@/entiti
 import { SUBSCRIPTIONS_KEY } from '@/entities/subscription';
 import { libraryApi, type MediaSaveStatus, type SaveList } from '@/shared/api';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import { closeUndoToast, showUndoToast, track } from '@/shared/lib';
+import { closeUndoToast, showUndoToast, track, type HomeBlock } from '@/shared/lib';
 import { ensureSaved, planListChanges } from './save-plan';
 
 export interface SavableMedia {
   mediaItemId: string;
   title: string;
+  origin?: HomeBlock;
 }
 
 type SaveIntent =
@@ -88,6 +89,7 @@ export function useLibrarySave() {
       track('save_to_library', {
         action: intent.kind,
         list: activeList(isSaved(after) ? after : before),
+        origin: media.origin,
       });
       if (isLatestChange(media.mediaItemId)) store.write(media.mediaItemId, after);
       if (changedForLater({ before, after })) {

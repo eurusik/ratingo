@@ -15,7 +15,6 @@ export function AnticipatedPremieres({ premieres }: { premieres: PremiereRelease
       title={dict.home.premieres}
       caption={dict.home.premieresCaption}
       dateLabel={dict.home.premiereDate}
-      calendarType="show"
       origin="home_premieres"
       items={premieres.map((premiere) => ({
         media: {
