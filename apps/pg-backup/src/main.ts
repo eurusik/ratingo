@@ -1,16 +1,24 @@
 import { tmpdir } from 'node:os';
 
 import { RunBackupUseCase } from './application/run-backup.use-case';
-import { loadBackupConfig } from './config/backup.config';
+import { type BackupConfig, loadBackupConfig } from './config/backup.config';
 import { BACKUP_RESULT } from './domain';
 import { NoopBackupMetrics, OtlpBackupMetrics } from './infrastructure/otlp.backup-metrics';
+import {
+  StructuredConsole,
+  type StructuredConsoleSettings,
+} from './infrastructure/structured-console';
 import { PgDumpDumper } from './infrastructure/pg-dump.dumper';
 import { S3BackupStorage } from './infrastructure/s3.backup-storage';
 import { systemClock, timerSleeper } from './infrastructure/system';
 
-async function main(): Promise<number> {
-  const config = loadBackupConfig();
-  const logger = console;
+const readLoggerSettings = (env: NodeJS.ProcessEnv): StructuredConsoleSettings => ({
+  service: env.OTEL_SERVICE_NAME || 'ratingo-backup',
+  environment: env.RAILWAY_ENVIRONMENT_NAME || 'development',
+  otlpEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT || undefined,
+});
+
+async function main(logger: StructuredConsole, config: BackupConfig): Promise<number> {
   const { otlpEndpoint, serviceName, environmentName } = config.metrics;
 
   const useCase = new RunBackupUseCase(
@@ -31,12 +39,16 @@ async function main(): Promise<number> {
   return outcome.result === BACKUP_RESULT.SUCCESS ? 0 : 1;
 }
 
-main().then(
-  (exitCode) => {
-    process.exitCode = exitCode;
-  },
-  (error: unknown) => {
-    console.error(error);
+async function run(): Promise<void> {
+  const logger = new StructuredConsole(readLoggerSettings(process.env));
+  try {
+    process.exitCode = await main(logger, loadBackupConfig());
+  } catch (error) {
+    logger.error('Backup could not start', error);
     process.exitCode = 1;
-  },
-);
+  } finally {
+    await logger.flush();
+  }
+}
+
+void run();
