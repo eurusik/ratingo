@@ -4,6 +4,7 @@ import { CHANGES_OUTPUT_CAP } from '../../domain/constants/investigation.constan
 
 import { ChangesUnavailableError } from '../../domain/ports/recent-changes.port';
 
+import type { RecentChangesInput } from './investigation-executors';
 import { RecentChangesExecutor } from './recent-changes.executor';
 
 const NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
@@ -84,8 +85,8 @@ describe('RecentChangesExecutor', () => {
     ]);
   });
 
-  it('keeps whole pull requests within the output cap and says how many were left out', async () => {
-    const executor = new RecentChangesExecutor(
+  const manyChanges = () =>
+    new RecentChangesExecutor(
       {
         since: async () => ({
           mergedPullRequests: Array.from({ length: 50 }, (_, index) => ({
@@ -104,19 +105,35 @@ describe('RecentChangesExecutor', () => {
       },
       new FixedClock(NOW_MS),
     );
-    const output = fitRowList((await executor.run({})) as RowList, CHANGES_OUTPUT_CAP);
-    const parsed = JSON.parse(output) as {
-      pullRequests: { number: number }[];
-      omitted: number;
-      hint: string;
-      deployments: unknown[];
-      deploymentsOmitted: number;
-    };
+
+  interface FittedChanges {
+    pullRequests: { number: number }[];
+    pullRequestsOmitted: number;
+    pullRequestsHint: string;
+    deployments: unknown[];
+    deploymentsOmitted: number;
+  }
+
+  const fitted = async (input: RecentChangesInput): Promise<FittedChanges> => {
+    const output = fitRowList((await manyChanges().run(input)) as RowList, CHANGES_OUTPUT_CAP);
     expect(output.length).toBeLessThanOrEqual(CHANGES_OUTPUT_CAP);
-    expect(parsed.pullRequests.length + parsed.omitted).toBe(50);
-    expect(parsed.hint).toContain('into=');
+    return JSON.parse(output) as FittedChanges;
+  };
+
+  it('keeps whole pull requests within the output cap and says how many were left out', async () => {
+    const parsed = await fitted({});
+    expect(parsed).not.toHaveProperty('omitted');
+    expect(parsed).not.toHaveProperty('hint');
+    expect(parsed.pullRequests.length + parsed.pullRequestsOmitted).toBe(50);
+    expect(parsed.pullRequestsHint).toBe('pass a shorter window or into=development or into=main');
     expect(parsed.deployments).toHaveLength(20);
     expect(parsed.deploymentsOmitted).toBe(10);
+  });
+
+  it('suggests only a shorter window when the branch is already chosen', async () => {
+    const parsed = await fitted({ into: 'development' });
+    expect(parsed.pullRequestsOmitted).toBeGreaterThan(0);
+    expect(parsed.pullRequestsHint).toBe('pass a shorter window');
   });
 
   it('keeps only the pull requests merged into the asked branch', async () => {

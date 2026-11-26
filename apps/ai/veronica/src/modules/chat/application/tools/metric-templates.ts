@@ -305,7 +305,7 @@ const collectJobRows = (
 const schedulerLastRuns: MetricTemplate = {
   name: MetricTemplateName.SCHEDULER_LAST_RUNS,
   description:
-    'For each scheduled job: how often it runs, when it last succeeded and last failed (Kyiv time and hours ago) and its next planned run. A missing last success means no run was seen in the last eight days, not that the job never worked. scheduled=false means the job is not in the schedule at all. Optional job keeps only jobs whose name contains that text.',
+    'For each scheduled job: how often it runs, when it last succeeded and last failed (Kyiv time and hours ago) and its next planned run. A missing last success means no run was seen in the last eight days, not that the job never worked. A missing last failure means no failed run was seen in the last eight days. scheduled=false means the job is not in the schedule at all. Optional job keeps only jobs whose name contains that text.',
   params: z.strictObject({ job: jobField }),
   queries: () => [
     { name: 'runs', promql: PromQueries.SCHEDULER_LAST_RUNS },
