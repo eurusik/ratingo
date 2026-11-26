@@ -13,6 +13,20 @@ const metrics = (template: string, data: unknown, extra: Record<string, unknown>
   ...extra,
 });
 
+const schedulerJob = (job: string, overrides: Record<string, unknown> = {}) => ({
+  job,
+  lastSuccessHoursAgo: null,
+  lastSuccessAtKyiv: null,
+  lastFailureHoursAgo: null,
+  lastFailureAtKyiv: null,
+  scheduled: true,
+  schedule: '0 */6 * * *',
+  timezone: 'UTC',
+  nextRunAtKyiv: '2026-11-22 16:00',
+  nextRunInHours: 2,
+  ...overrides,
+});
+
 const UNKNOWN_ANSWER =
   'Даних немає: таких цифр у моїх інструментах нема, тому нічого не вигадуватиму.';
 
@@ -211,11 +225,20 @@ const SERVICE_CASES: readonly EvalCase[] = [
         match: { template: 'scheduler_last_runs' },
         response: metrics(
           'scheduler_last_runs',
-          [
-            { job: 'sync-show', result: 'failure', hoursAgo: 2 },
-            { job: 'sync-show', result: 'success', hoursAgo: 30 },
-            { job: 'sync-trending', result: 'success', hoursAgo: 5 },
-          ],
+          {
+            jobs: [
+              schedulerJob('sync-show', {
+                lastSuccessHoursAgo: 30,
+                lastSuccessAtKyiv: '2026-11-21 08:00',
+                lastFailureHoursAgo: 2,
+                lastFailureAtKyiv: '2026-11-22 12:00',
+              }),
+              schedulerJob('sync-trending', {
+                lastSuccessHoursAgo: 5,
+                lastSuccessAtKyiv: '2026-11-22 09:00',
+              }),
+            ],
+          },
           { window: null },
         ),
       },
@@ -344,10 +367,16 @@ const SERVICE_CASES: readonly EvalCase[] = [
         match: { template: 'scheduler_last_runs' },
         response: metrics(
           'scheduler_last_runs',
-          [
-            { job: 'sync-trending', result: 'failure', hoursAgo: 2 },
-            { job: 'sync-trending', result: 'success', hoursAgo: 30 },
-          ],
+          {
+            jobs: [
+              schedulerJob('sync-trending', {
+                lastSuccessHoursAgo: 30,
+                lastSuccessAtKyiv: '2026-11-21 08:00',
+                lastFailureHoursAgo: 2,
+                lastFailureAtKyiv: '2026-11-22 12:00',
+              }),
+            ],
+          },
           { window: null },
         ),
       },
@@ -368,6 +397,48 @@ const SERVICE_CASES: readonly EvalCase[] = [
       calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
       answer:
         'Задача sync-trending востаннє вдалася 30 годин тому, а 2 години тому впала. Причини в даних немає.',
+    },
+  },
+  {
+    id: 'weekly-job-looks-stale',
+    kind: EvalKind.KNOWN,
+    question:
+      'Нічне завдання scheduled-upcoming-movies-refresh-all давно не запускалось успішно. Знайди проблему',
+    fixtures: [
+      {
+        tool: 'metrics_query',
+        match: { template: 'scheduler_last_runs' },
+        response: metrics(
+          'scheduler_last_runs',
+          {
+            jobs: [
+              schedulerJob('scheduled-upcoming-movies-refresh-all', {
+                lastSuccessHoursAgo: 77.22,
+                lastSuccessAtKyiv: '2026-11-23 09:00',
+                schedule: '0 7 * * 1',
+                nextRunAtKyiv: '2026-11-30 09:00',
+                nextRunInHours: 90.78,
+              }),
+              schedulerJob('scheduled-upcoming-movies-refresh-soon', {
+                lastSuccessHoursAgo: 5.22,
+                lastSuccessAtKyiv: '2026-11-26 09:00',
+                schedule: '0 7 * * 0,2-6',
+                nextRunAtKyiv: '2026-11-27 09:00',
+                nextRunInHours: 18.78,
+              }),
+            ],
+          },
+          { window: null, evaluatedAtKyiv: '2026-11-26 14:13' },
+        ),
+      },
+    ],
+    expectedTools: ['metrics_query:scheduler_last_runs'],
+    allowedExtraTools: ['digest_snapshot', 'recent_changes'],
+    mustContain: [['тиж', 'понеділ'], ['2026-11-30 09:00']],
+    reference: {
+      calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
+      answer:
+        'Проблеми немає: ця задача за розкладом запускається раз на тиждень, у понеділок. Востаннє вона вдалася 2026-11-23 09:00, наступний запуск 2026-11-30 09:00.',
     },
   },
   {

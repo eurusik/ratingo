@@ -21,7 +21,10 @@ const isTurn = (value: unknown): value is ConversationTurn => {
 const parseTurn = (raw: string): ConversationTurn[] => {
   try {
     const parsed: unknown = JSON.parse(raw);
-    return isTurn(parsed) ? [{ role: parsed.role, text: parsed.text }] : [];
+    if (!isTurn(parsed)) return [];
+    const turn: ConversationTurn = { role: parsed.role, text: parsed.text };
+    if (typeof parsed.atMs === 'number' && Number.isFinite(parsed.atMs)) turn.atMs = parsed.atMs;
+    return [turn];
   } catch {
     return [];
   }
@@ -39,7 +42,11 @@ export class RedisConversationStore implements ConversationStorePort {
     if (turns.length === 0) return;
     const key = this.keyOf(chatId);
     const serialized = turns.map((turn) =>
-      JSON.stringify({ role: turn.role, text: clip(turn.text, CONVERSATION_MESSAGE_MAX_CHARS) }),
+      JSON.stringify({
+        role: turn.role,
+        text: clip(turn.text, CONVERSATION_MESSAGE_MAX_CHARS),
+        ...(turn.atMs === undefined ? {} : { atMs: turn.atMs }),
+      }),
     );
     await this.redis
       .multi()

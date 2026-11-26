@@ -12,6 +12,7 @@ import {
   isQueueName,
   parseWindow,
 } from '../../domain/policies/metric-params.policy';
+import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
 
 const MS_PER_HOUR = 3_600_000;
 const BYTES_PER_MEGABYTE = 1024 * 1024;
@@ -217,22 +218,77 @@ const siteMemoryPeak: MetricTemplate = {
   },
 };
 
+interface SchedulerJobRow {
+  job: string;
+  lastSuccessHoursAgo: number | null;
+  lastSuccessAtKyiv: string | null;
+  lastFailureHoursAgo: number | null;
+  lastFailureAtKyiv: string | null;
+  scheduled?: boolean;
+  schedule?: string;
+  timezone?: string;
+  nextRunAtKyiv?: string;
+  nextRunInHours?: number;
+}
+
+const emptyJobRow = (job: string): SchedulerJobRow => ({
+  job,
+  lastSuccessHoursAgo: null,
+  lastSuccessAtKyiv: null,
+  lastFailureHoursAgo: null,
+  lastFailureAtKyiv: null,
+});
+
+const hoursUntil = (epochSeconds: number, nowMs: number): number =>
+  round(Math.max(0, (epochSeconds * MS_PER_SECOND - nowMs) / MS_PER_HOUR));
+
 const schedulerLastRuns: MetricTemplate = {
   name: MetricTemplateName.SCHEDULER_LAST_RUNS,
-  description: 'Hours since each scheduled job last succeeded or failed.',
+  description:
+    'For each scheduled job: when it last succeeded and last failed (hours ago and Kyiv time), its schedule as a cron pattern with timezone, and its next planned run. scheduled=false means the job is not in the schedule at all.',
   params: z.strictObject({}),
-  queries: () => [{ name: 'runs', promql: PromQueries.SCHEDULER_LAST_RUNS }],
+  queries: () => [
+    { name: 'runs', promql: PromQueries.SCHEDULER_LAST_RUNS },
+    { name: 'next', promql: PromQueries.SCHEDULER_NEXT_RUNS },
+  ],
   present: (results, nowMs) => {
     const runs = results.find((result) => result.name === 'runs')?.samples ?? [];
-    if (runs.length === 0) return { unavailable: NO_DATA };
+    const next = results.find((result) => result.name === 'next')?.samples ?? [];
+    if (runs.length === 0 && next.length === 0) return { unavailable: NO_DATA };
+    const jobs = new Map<string, SchedulerJobRow>();
+    const rowOf = (job: string): SchedulerJobRow => {
+      const row = jobs.get(job) ?? emptyJobRow(job);
+      jobs.set(job, row);
+      return row;
+    };
+    for (const sample of runs) {
+      const row = rowOf(sample.labels.job_name ?? 'невідоме');
+      const atKyiv = formatKyivDateTime(sample.value * MS_PER_SECOND);
+      if (sample.labels.result === 'success') {
+        row.lastSuccessHoursAgo = hoursAgo(sample.value, nowMs);
+        row.lastSuccessAtKyiv = atKyiv;
+      } else if (sample.labels.result === 'failure') {
+        row.lastFailureHoursAgo = hoursAgo(sample.value, nowMs);
+        row.lastFailureAtKyiv = atKyiv;
+      }
+    }
+    for (const sample of next) {
+      const row = rowOf(sample.labels.job_name ?? 'невідоме');
+      row.scheduled = true;
+      row.schedule = sample.labels.schedule ?? 'невідомий';
+      row.timezone = sample.labels.tz ?? 'UTC';
+      row.nextRunAtKyiv = formatKyivDateTime(sample.value * MS_PER_SECOND);
+      row.nextRunInHours = hoursUntil(sample.value, nowMs);
+    }
+    const schedulesKnown = next.length > 0;
+    if (schedulesKnown) {
+      for (const row of jobs.values()) row.scheduled ??= false;
+    }
     return {
-      data: runs
-        .map((sample) => ({
-          job: sample.labels.job_name ?? 'невідоме',
-          result: sample.labels.result ?? 'невідомий',
-          hoursAgo: hoursAgo(sample.value, nowMs),
-        }))
-        .sort((a, b) => a.job.localeCompare(b.job) || a.result.localeCompare(b.result)),
+      data: {
+        jobs: [...jobs.values()].sort((a, b) => a.job.localeCompare(b.job)),
+        ...(schedulesKnown ? {} : { schedules: NO_DATA }),
+      },
     };
   },
 };

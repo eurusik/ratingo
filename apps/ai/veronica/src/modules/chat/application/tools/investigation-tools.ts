@@ -20,8 +20,14 @@ const TEMPLATE_NAMES = Object.values(MetricTemplateName) as [
 ];
 const SERIES_METRICS = Object.values(SeriesMetric) as [SeriesMetric, ...SeriesMetric[]];
 
+const takesNoParameters = (name: MetricTemplateName): boolean => {
+  const { params } = METRIC_TEMPLATES[name];
+  return params instanceof z.ZodObject && Object.keys(params.shape).length === 0;
+};
+
 const templateCatalog = TEMPLATE_NAMES.map(
-  (name) => `${name}: ${METRIC_TEMPLATES[name].description}`,
+  (name) =>
+    `${name}: ${METRIC_TEMPLATES[name].description}${takesNoParameters(name) ? ' Takes no parameters, not even window.' : ''}`,
 ).join(' ');
 
 const METRICS_OUTPUT_CAP = 3000;

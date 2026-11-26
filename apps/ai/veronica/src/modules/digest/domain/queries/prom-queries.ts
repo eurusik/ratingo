@@ -72,6 +72,9 @@ export const siteBotRequests = (window: string = DEFAULT_WINDOW): string =>
 export const SCHEDULER_LAST_RUNS =
   'max by (job_name, result) (last_over_time(app_scheduler_last_run_timestamp_seconds[3d]))';
 
+export const SCHEDULER_NEXT_RUNS =
+  'max by (job_name, schedule, tz) (last_over_time(app_scheduler_next_run_timestamp_seconds[1h]))';
+
 export const BACKUP_LAST_RUNS =
   'max by (result) (last_over_time(app_backup_last_run_timestamp_seconds[3d]))';
 export const BACKUP_SIZE = 'max(last_over_time(app_backup_size_bytes[3d]))';

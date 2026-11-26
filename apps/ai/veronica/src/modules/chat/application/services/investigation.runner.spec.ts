@@ -215,6 +215,25 @@ describe('InvestigationRunner', () => {
     expect(chat.scripted.requests[0].system).toBe('SYSTEM PROMPT');
   });
 
+  it('shows each earlier turn with its Kyiv time, so a day-old answer is not read as today', async () => {
+    const chat = new Harness();
+    chat.history = [
+      {
+        role: 'user',
+        text: 'скільки сьогодні користувачів?',
+        atMs: Date.UTC(2026, 10, 21, 18, 56),
+      },
+      { role: 'assistant', text: 'Сьогодні 12.', atMs: Date.UTC(2026, 10, 21, 18, 56) },
+      { role: 'assistant', text: 'Без часу.' },
+    ];
+    chat.script(answerStep('Учора о 20:56 було 12.'));
+    const result = await chat.ask('а вчора?');
+    expect(chat.promptSeen).toContain('Власник (2026-11-21 20:56): скільки сьогодні користувачів?');
+    expect(chat.promptSeen).toContain('Вероніка (2026-11-21 20:56): Сьогодні 12.');
+    expect(chat.promptSeen).toContain('Вероніка: Без часу.');
+    expect(result.outcome).toBe(ChatOutcome.ANSWERED);
+  });
+
   it('remembers only the question and the checked answer, never tool payloads', async () => {
     const chat = new Harness().script(
       callStep('metrics_query', { template: 'queue_throughput' }),
@@ -222,8 +241,8 @@ describe('InvestigationRunner', () => {
     );
     await chat.ask('що з чергами?');
     expect(chat.stored).toEqual([
-      { role: 'user', text: 'що з чергами?' },
-      { role: 'assistant', text: 'Невдалих: 7.' },
+      { role: 'user', text: 'що з чергами?', atMs: NOW_MS },
+      { role: 'assistant', text: 'Невдалих: 7.', atMs: NOW_MS },
     ]);
     expect(JSON.stringify(chat.stored)).not.toContain('queue_throughput');
   });
