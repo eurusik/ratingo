@@ -54,7 +54,7 @@ function weekNotice(
   }
   if (!week.layout) return null;
   if (week.isResting) return <RestWeekNote upcoming={week.nextEpisode} onNextWeek={onNextWeek} />;
-  if (week.isPremiereFree) {
+  if (week.isPremiereFree && week.isEmptyWeek) {
     return <PremiereFreeWeekNote upcoming={week.nextPremiere} onJump={onWeekOf} />;
   }
   if (!week.isEmptyWeek) return null;
@@ -109,6 +109,11 @@ function CalendarBody({
       {layout.upcoming.map((day) => (
         <CalendarDaySection key={day.key} day={day} today={today} />
       ))}
+      {week.isPremiereFree ? (
+        <div className={NOTICE_AREA}>
+          <PremiereFreeWeekNote upcoming={week.nextPremiere} isRestOfWeek onJump={onWeekOf} />
+        </div>
+      ) : null}
     </CalendarProvider>
   );
 }

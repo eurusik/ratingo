@@ -139,6 +139,17 @@ describe('CalendarEpisodesQuery', () => {
     );
   });
 
+  it('skips deleted shows and shows that are not ready', async () => {
+    setup([]);
+
+    await query.execute(new Date(), new Date());
+
+    const { sql, params } = whereSql();
+    expect(sql).toContain('"media_items"."ingestion_status" = $');
+    expect(sql).toContain('"media_items"."deleted_at" is null');
+    expect(params).toContain('ready');
+  });
+
   it('lists every episode when premieres are not requested', async () => {
     setup([]);
 

@@ -1,3 +1,5 @@
+import type { CalendarMediaType } from '@/shared/api';
+
 export const CALENDAR_ROOT = 'flex flex-1 flex-col pt-(--safe-top) md:pt-0';
 
 export const STATUS_BAR_BACKDROP =
@@ -10,7 +12,14 @@ export const PHONE_TYPE_ROW = 'pt-1 pb-2 md:hidden';
 
 export const MODE_PILL = 'min-h-tap shrink-0 rounded-full px-4 transition-none md:min-h-10';
 
-export const MODE_PILLS_SKELETON = 'h-11 w-32 shrink-0 rounded-full md:h-10';
+const MODE_PILLS_SKELETON_WIDTH = {
+  show: 'w-56',
+  movie: 'w-32',
+} as const satisfies Record<CalendarMediaType, string>;
+
+export function modePillsSkeleton(type: CalendarMediaType): string {
+  return `h-11 ${MODE_PILLS_SKELETON_WIDTH[type]} shrink-0 rounded-full md:h-10`;
+}
 
 export const INFO_BUTTON_SIZE = '-ms-3 size-11 shrink-0 rounded-full';
 

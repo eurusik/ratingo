@@ -1240,6 +1240,7 @@
     },
     "noPremieres": {
       "title": "No premieres this week",
+      "restOfWeek": "No more premieres this week",
       "next": "Next premiere — “{title}”, {date}",
       "jump": "Go to the premiere"
     },

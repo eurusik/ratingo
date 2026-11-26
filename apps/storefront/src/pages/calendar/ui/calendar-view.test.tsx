@@ -379,11 +379,37 @@ describe('CalendarView', () => {
       renderCalendar();
 
       expect(await screen.findByText('Цього тижня прем’єр немає')).toBeInTheDocument();
-      expect(await screen.findByText('Найближча прем’єра — «Трініті», 1 грудня')).toBeInTheDocument();
+      expect(
+        await screen.findByText('Найближча прем’єра — «Трініті», 1 грудня'),
+      ).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: 'Перейти до прем’єри' }));
 
       await waitFor(() => expect(window.location.search).toBe('?week=2026-11-30&mode=premieres'));
+    });
+
+    it('points to the nearest premiere once this week’s premieres are over', async () => {
+      signIn(null);
+      window.history.replaceState(null, '', '/calendar?mode=premieres');
+      const aired = {
+        ...newShow,
+        episodeId: 'aired',
+        airDate: '2026-11-10T19:00:00.000Z',
+        isTracked: true,
+      };
+      const later = { ...newShow, airDate: '2026-12-01T19:00:00.000Z' };
+      jest.mocked(calendarApi.getRange).mockImplementation(async ({ startDate, premieres }) => {
+        if (!premieres) return range([]);
+        if (startDate === '2026-11-08') return range([aired]);
+        return startDate === '2026-11-15' ? range([later]) : range([]);
+      });
+      renderCalendar();
+
+      expect(await screen.findByText('До кінця тижня прем’єр більше немає')).toBeInTheDocument();
+      expect(screen.getByText(/Раніше цього тижня · 1 прем’єра/)).toBeInTheDocument();
+      expect(
+        await screen.findByText('Найближча прем’єра — «Трініті», 1 грудня'),
+      ).toBeInTheDocument();
     });
 
     it('keeps a saved new show in “Mine” before its premiere', async () => {

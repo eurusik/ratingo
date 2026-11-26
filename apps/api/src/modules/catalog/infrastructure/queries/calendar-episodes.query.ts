@@ -1,9 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, asc, eq, gt, gte, lte, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, isNull, lte, or, sql, type SQL } from 'drizzle-orm';
 import { type PgColumn } from 'drizzle-orm/pg-core';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
@@ -59,6 +60,8 @@ function episodeFilter(
   return and(
     gte(episodes.airDate, startDate),
     lte(episodes.airDate, endDate),
+    eq(mediaItems.ingestionStatus, IngestionStatus.READY),
+    isNull(mediaItems.deletedAt),
     eligibleUnderActivePolicy(CALENDAR_ELIGIBILITY_CONTEXTS),
     options.personalized ? or(isTracked, isSavedPremiere()) : undefined,
     options.premieresOnly ? isSeasonPremiere() : undefined,

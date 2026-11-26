@@ -84,12 +84,13 @@ export function useCalendarWeek({ location, today }: CalendarWeekInputs) {
   );
   const isEmptyWeek = layout ? layout.past.length + layout.upcoming.length === 0 : false;
   const isResting = mode === 'mine' && isEmptyWeek && hasTrackedShows(active.data);
-  const isPremiereFree = mode === 'premieres' && isEmptyWeek;
+  const isPremiereFree =
+    mode === 'premieres' && layout !== undefined && layout.upcoming.length === 0;
 
   const currentStripWeek = useMemo(() => {
     const stripDays = days ?? (active.isError ? emptyCalendarDays(weekStart) : undefined);
-    return stripDays && buildStripWeek(stripDays, weekStart, today);
-  }, [days, active.isError, weekStart, today]);
+    return stripDays && buildStripWeek(stripDays, weekStart, today, mode);
+  }, [days, active.isError, weekStart, today, mode]);
   const stripWeeks = useStripWeeks({
     weekStart,
     today,
@@ -184,16 +185,19 @@ function useNeighbourWeek(
     query: weekQuery(weekStart, mode ?? 'all', type),
     isEnabled: isEnabled && mode !== undefined,
   });
-  return useMemo(() => neighbourWeek(data, weekStart, today), [data, weekStart, today]);
+  return useMemo(
+    () => neighbourWeek(data, weekStart, { today, mode }),
+    [data, weekStart, today, mode],
+  );
 }
 
 function neighbourWeek(
   data: CalendarRange | undefined,
   weekStart: DateKey,
-  today: DateKey,
+  { today, mode }: Pick<NeighbourInputs, 'today' | 'mode'>,
 ): StripWeek {
   return data
-    ? buildStripWeek(groupByDay(data, weekStart), weekStart, today)
+    ? buildStripWeek(groupByDay(data, weekStart), weekStart, today, mode)
     : { days: emptyCalendarDays(weekStart), pickable: NO_PICKABLE_DAYS };
 }
 
