@@ -2,6 +2,7 @@ import type { z, ZodObject, ZodRawShape } from 'zod';
 import type { ToolDefinition } from '../model/model.types';
 import { formatZodIssues } from '../schema/format-zod-issues';
 import { zodToJsonSchema } from '../schema/zod-json-schema';
+import { RowList, fitRowList } from './row-list';
 
 export const DEFAULT_TOOL_OUTPUT_CAP_CHARS = 8_000;
 
@@ -33,15 +34,17 @@ export class ToolInputError extends Error {
   }
 }
 
-function stringifyOutput(output: unknown): string {
+function stringifyOutput(output: unknown, maxChars: number): string {
+  if (output instanceof RowList) return fitRowList(output, maxChars);
   return typeof output === 'string' ? output : (JSON.stringify(output) ?? '');
 }
 
 export function defineTool<TShape extends ZodRawShape>(spec: ToolSpec<TShape>): Tool {
+  const maxOutputChars = spec.maxOutputChars ?? DEFAULT_TOOL_OUTPUT_CAP_CHARS;
   return {
     name: spec.name,
     readOnly: spec.readOnly,
-    maxOutputChars: spec.maxOutputChars ?? DEFAULT_TOOL_OUTPUT_CAP_CHARS,
+    maxOutputChars,
     definition: {
       name: spec.name,
       description: spec.description,
@@ -52,7 +55,7 @@ export function defineTool<TShape extends ZodRawShape>(spec: ToolSpec<TShape>): 
       if (!parsed.success) {
         throw new ToolInputError(spec.name, formatZodIssues(parsed.error).join('; '));
       }
-      return stringifyOutput(await spec.handler(parsed.data, context));
+      return stringifyOutput(await spec.handler(parsed.data, context), maxOutputChars);
     },
   };
 }
