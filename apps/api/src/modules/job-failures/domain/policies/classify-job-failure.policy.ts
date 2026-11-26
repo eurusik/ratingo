@@ -1,5 +1,5 @@
 import { JobFailureClass } from '../constants/job-failure-class.constants';
-import { UpstreamStatus } from '../constants/job-failure.constants';
+import { UpstreamStatus } from '../constants/upstream-status.constants';
 import { type FailureSignal } from '../entities/failure-signal.entity';
 
 const CLASS_BY_ERROR_NAME: ReadonlyMap<string, JobFailureClass> = new Map([

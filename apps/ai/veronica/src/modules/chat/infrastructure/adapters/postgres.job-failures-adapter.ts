@@ -60,13 +60,6 @@ export class PostgresJobFailuresAdapter implements JobFailuresPort, OnApplicatio
   }
 
   private query(filter: JobFailureFilter): Promise<JobFailureRow[]> {
-    const jobFilter =
-      filter.job === undefined
-        ? this.sql``
-        : this
-            .sql`AND (strpos(job_type, ${filter.job}) > 0 OR strpos(coalesce(scheduler_job_id, ''), ${filter.job}) > 0)`;
-    const queueFilter =
-      filter.queue === undefined ? this.sql`` : this.sql`AND queue = ${filter.queue}`;
     return this.sql<JobFailureRow[]>`
       SELECT
         coalesce(scheduler_job_id, job_type) AS job,
@@ -80,11 +73,22 @@ export class PostgresJobFailuresAdapter implements JobFailuresPort, OnApplicatio
         (array_agg(last_message ORDER BY last_failed_at DESC))[1] AS last_message
       FROM reporting.daily_job_failures
       WHERE last_failed_at >= to_timestamp(${filter.sinceMs / MS_PER_SECOND})
-        ${jobFilter}
-        ${queueFilter}
+        ${this.jobNameFilter(filter.job)}
+        ${this.queueFilter(filter.queue)}
       GROUP BY 1, 2, 3, 4
       ORDER BY failures DESC, last_failed_ms DESC, job
       LIMIT ${JOB_FAILURES_ROW_LIMIT}`;
+  }
+
+  private jobNameFilter(job: string | undefined): postgres.PendingQuery<postgres.Row[]> {
+    if (job === undefined) return this.sql``;
+    const inJobType = this.sql`strpos(job_type, ${job}) > 0`;
+    const inSchedulerId = this.sql`strpos(coalesce(scheduler_job_id, ''), ${job}) > 0`;
+    return this.sql`AND (${inJobType} OR ${inSchedulerId})`;
+  }
+
+  private queueFilter(queue: string | undefined): postgres.PendingQuery<postgres.Row[]> {
+    return queue === undefined ? this.sql`` : this.sql`AND queue = ${queue}`;
   }
 
   async onApplicationShutdown(): Promise<void> {

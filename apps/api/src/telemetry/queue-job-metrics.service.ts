@@ -53,14 +53,18 @@ export class QueueJobMetricsService implements OnApplicationBootstrap {
       if (result === QUEUE_JOB_RESULT.FAILED) {
         this.schedulerLastRun.record(job, SCHEDULER_RUN_RESULT.FAILURE);
       }
-      void this.jobFailures.record({
-        queue: worker.name,
-        jobType: job.name,
-        schedulerJobId: scheduledJobNameOf(job.repeatJobKey) ?? null,
-        attemptsExhausted: result === QUEUE_JOB_RESULT.FAILED,
-        failedAtMs: job.finishedOn,
-        error,
-      });
+      this.reportFailure(worker, job, error, result === QUEUE_JOB_RESULT.FAILED);
+    });
+  }
+
+  private reportFailure(worker: Worker, job: Job, error: Error, attemptsExhausted: boolean): void {
+    void this.jobFailures.record({
+      queue: worker.name,
+      jobType: job.name,
+      schedulerJobId: scheduledJobNameOf(job.repeatJobKey) ?? null,
+      attemptsExhausted,
+      failedAtMs: job.finishedOn,
+      error,
     });
   }
 
