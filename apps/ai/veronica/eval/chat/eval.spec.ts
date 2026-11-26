@@ -8,12 +8,18 @@ import {
   NO_CODE_REVIEW,
   NOTHING_RECORDED,
   WHOLE_DAYS_COUNTED,
+  smallCountMentioned,
 } from './answer-stems';
 import { EVAL_CASES } from './cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 import { LOKI_EVAL_CASES } from './loki.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
-import { kyivDayFromEvalNow, kyivTimeFromEvalNow, sameKyivTime } from './eval-clock';
+import {
+  kyivDayFromEvalNow,
+  kyivTimeFromEvalNow,
+  sameKyivTime,
+  sameKyivTimeOrClockOnEvalDay,
+} from './eval-clock';
 import { fixtureExecutors, runCase } from './harness';
 import { scoreCase, summarize, type CaseResult } from './scorer';
 
@@ -382,5 +388,53 @@ describe('language slips', () => {
     expect(
       GENDERED_ADDRESS.test('якщо йдеться про google analytics, ось цифри. ти про сайт?'),
     ).toBe(false);
+  });
+});
+
+describe('same Kyiv time on the eval day', () => {
+  const today = kyivTimeFromEvalNow(-1);
+  const clock = today.slice(-5);
+
+  it.each([`${today}`, `о ${clock} (Київ)`, `${clock}`])(
+    'reads «%s» as the time today',
+    (answer) => {
+      expect(sameKyivTimeOrClockOnEvalDay(today).test(answer)).toBe(true);
+    },
+  );
+
+  it('does not read another minute or hour as the time today', () => {
+    expect(sameKyivTimeOrClockOnEvalDay(today).test('о 03:17')).toBe(false);
+    expect(sameKyivTimeOrClockOnEvalDay(today).test(`1${clock}`)).toBe(false);
+  });
+
+  it('keeps asking for the date when the time is not on the eval day', () => {
+    const other = kyivTimeFromEvalNow(-48);
+    expect(sameKyivTimeOrClockOnEvalDay(other).test(`о ${other.slice(-5)}`)).toBe(false);
+    expect(sameKyivTimeOrClockOnEvalDay(other).test(other)).toBe(true);
+  });
+});
+
+describe('small counts as digits or words', () => {
+  it.each([
+    [2, 'була лише дві помилки'],
+    [2, '2 помилки'],
+    [3, 'тричі'],
+    [1, 'одна помилка'],
+    [10, 'десять разів'],
+  ])('reads %i in «%s»', (value, answer) => {
+    expect(smallCountMentioned(value).test(answer)).toBe(true);
+  });
+
+  it.each([
+    [2, 'було 12 помилок'],
+    [2, 'двадцять помилок'],
+    [3, 'їх було 30'],
+    [2, 'без помилок'],
+  ])('does not read %i in «%s»', (value, answer) => {
+    expect(smallCountMentioned(value).test(answer)).toBe(false);
+  });
+
+  it('has no words for a count it does not know', () => {
+    expect(() => smallCountMentioned(11)).toThrow('no number words');
   });
 });

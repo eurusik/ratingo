@@ -20,6 +20,7 @@ import {
 } from './eval-clock';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 import { LOKI_EVAL_CASES } from './loki.cases';
+import { LOKI_FIXTURE, TRENDING_STALE_LOGS } from './loki.dataset';
 
 const unavailable = (reason: string) => ({ unavailable: reason });
 
@@ -455,12 +456,14 @@ const SERVICE_CASES: readonly EvalCase[] = [
         tool: 'job_failures',
         error: 'job_failures is unavailable: AI_READER_DATABASE_URL is not set',
       },
+      { tool: LOKI_FIXTURE, response: TRENDING_STALE_LOGS },
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
     allowedExtraTools: [
       'recent_changes',
       'digest_snapshot',
       'job_failures',
+      'logs_search',
       'metrics_query:queue_throughput',
       'metrics_query:http_client_errors',
     ],
@@ -469,9 +472,12 @@ const SERVICE_CASES: readonly EvalCase[] = [
       ['trending', 'тренд'],
     ],
     reference: {
-      calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
+      calls: [
+        { tool: 'metrics_query', input: { template: 'scheduler_last_runs' } },
+        { tool: 'logs_search', input: { service: 'ratingo-worker', text: 'trending' } },
+      ],
       answer:
-        'Задача sync-trending востаннє вдалася 30 годин тому, а 2 години тому впала. Причини в даних немає.',
+        'Задача sync-trending востаннє вдалася 30 годин тому, а 2 години тому впала. У логах причина: ліміт запитів до Trakt.',
     },
   },
   {

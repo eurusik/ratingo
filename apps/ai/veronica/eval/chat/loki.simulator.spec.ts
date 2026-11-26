@@ -70,7 +70,7 @@ describe('simulated Loki', () => {
     for (const word of ['environment', 'level', 'queue', 'ratingo-worker', 'production']) {
       expect((await ask(stages(word))).streams).toEqual([]);
     }
-    expect(linesOf((await ask(stages('TMDB request timed out'))).streams)).toHaveLength(14);
+    expect(linesOf((await ask(stages('TMDB API: Request timeout'))).streams)).toHaveLength(14);
   });
 
   it('keeps to the time range and the limit', async () => {

@@ -48,8 +48,8 @@ const timeoutRecords = (): SimulatedLogRecord[] =>
       context: 'SyncShowProcessor',
       message: `Sync of show ${3100 + index} failed after 3 attempts`,
       error_name: 'TimeoutError',
-      error_message: 'TMDB request timed out after 15000 ms',
-      error_stack: `TimeoutError: TMDB request timed out after 15000 ms\n    at TmdbClient.get (tmdb.client.ts:88:11)\n    at SyncShowProcessor.process (sync-show.processor.ts:41:7)`,
+      error_message: 'TMDB API: Request timeout',
+      error_stack: `TimeoutError: TMDB API: Request timeout\n    at TmdbClient.get (tmdb.client.ts:88:11)\n    at SyncShowProcessor.process (sync-show.processor.ts:41:7)`,
       job_id: isFollowUp ? FOLLOW_UP_JOB_ID : `sync-show:${4000 + index}`,
       queue: 'ingestion',
     });
@@ -72,7 +72,7 @@ const followUpRetry = (): SimulatedLogRecord =>
     context: 'SyncShowProcessor',
     message: 'Sync of show 3100 will be retried',
     error_name: 'TimeoutError',
-    error_message: 'TMDB request timed out after 15000 ms',
+    error_message: 'TMDB API: Request timeout',
     job_id: FOLLOW_UP_JOB_ID,
     queue: 'ingestion',
   });
@@ -108,11 +108,24 @@ const stormRecords = (): SimulatedLogRecord[] =>
       context: 'SyncShowProcessor',
       message: `Sync of show ${5000 + index} failed after 3 attempts`,
       error_name: 'TimeoutError',
-      error_message: 'TMDB request timed out after 15000 ms',
+      error_message: 'TMDB API: Request timeout',
       job_id: `sync-show:${6000 + index}`,
       queue: 'ingestion',
     }),
   );
+
+export const TRENDING_STALE_LOGS: LokiScenario = {
+  records: [
+    logRecord(SERVICE_WORKER, 120, 'error', {
+      context: 'TrendingProcessor',
+      message: 'Trending sync gave up',
+      error_name: 'RateLimitError',
+      error_message: 'Trakt API: 429 Too Many Requests',
+      job_id: 'scheduled-trending:699',
+      queue: 'ingestion',
+    }),
+  ],
+};
 
 export const WORKER_STORM: LokiScenario = { records: stormRecords() };
 
