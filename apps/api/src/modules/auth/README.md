@@ -133,12 +133,12 @@ in `OAUTH_RETURN_ORIGINS` (and in `CORS_ORIGIN` for its API calls), and previews
 
 Every frontend on the allow-list must serve these routes (`<origin>` is the validated return origin):
 
-| Flow                | Redirect                                                                       | Frontend action                                                                                                                                |
-| ------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Login success       | `<origin>/auth/callback/<provider>?code=<code>&returnTo=<path>`                | `POST /auth/oauth/exchange { code }` within 60 s, then navigate to `returnTo`                                                                  |
-| Login or flow error | `<origin>/auth/callback/<provider>?error=<OAUTH_*>`                            | Show the error (`OAUTH_CANCELLED`, `OAUTH_STATE_INVALID`, `OAUTH_PROVIDER_ERROR`, `OAUTH_EMAIL_NOT_VERIFIED`, `OAUTH_ACCOUNT_EXISTS_PASSWORD`) |
-| Link success        | `<origin><returnTo>?linked=<provider>` (`returnTo` defaults to `/settings`)    | Refresh linked providers                                                                                                                       |
-| Link failure        | `<origin><returnTo>?linkError=ALREADY_LINKED\|LINK_FAILED&provider=<provider>` | Show the error                                                                                                                                 |
+| Flow | Redirect | Frontend action |
+|------|----------|-----------------|
+| Login success | `<origin>/auth/callback/<provider>?code=<code>&returnTo=<path>` | `POST /auth/oauth/exchange { code }` within 60 s, then navigate to `returnTo` |
+| Login or flow error | `<origin>/auth/callback/<provider>?error=<OAUTH_*>` | Show the error (`OAUTH_CANCELLED`, `OAUTH_STATE_INVALID`, `OAUTH_PROVIDER_ERROR`, `OAUTH_EMAIL_NOT_VERIFIED`, `OAUTH_ACCOUNT_EXISTS_PASSWORD`) |
+| Link success | `<origin><returnTo>?linked=<provider>` (`returnTo` defaults to `/settings`) | Refresh linked providers |
+| Link failure | `<origin><returnTo>?linkError=ALREADY_LINKED\|LINK_FAILED&provider=<provider>` | Show the error |
 
 `<provider>` is `google` or `facebook`. A static SPA (admin) needs a rewrite so `/auth/callback/*` serves
 `index.html`. An error that happens before the state is verified (`OAUTH_STATE_INVALID`) always goes to
@@ -185,7 +185,6 @@ Settings page → GET /auth/link/google?token=<jwt>&returnTo=/settings[&returnOr
 ```
 
 **Safety rules:**
-
 - Cannot link provider already linked to another user (`ConflictException`)
 - Cannot link provider already linked to this user (`ConflictException`)
 - Cannot unlink last auth method if no password set (`ForbiddenException`)
@@ -333,34 +332,34 @@ Error case: last auth method
 
 ### Authentication
 
-| Method  | Path             | Auth           | Description                  |
-| ------- | ---------------- | -------------- | ---------------------------- |
-| `POST`  | `/auth/register` | -              | Register (rate limited)      |
-| `POST`  | `/auth/login`    | LocalAuthGuard | Login with email/password    |
-| `POST`  | `/auth/refresh`  | -              | Rotate refresh token         |
-| `POST`  | `/auth/logout`   | JwtAuthGuard   | Revoke all refresh tokens    |
-| `PATCH` | `/auth/password` | JwtAuthGuard   | Change password              |
-| `GET`   | `/auth/me`       | JwtAuthGuard   | Current user profile + stats |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/auth/register` | - | Register (rate limited) |
+| `POST` | `/auth/login` | LocalAuthGuard | Login with email/password |
+| `POST` | `/auth/refresh` | - | Rotate refresh token |
+| `POST` | `/auth/logout` | JwtAuthGuard | Revoke all refresh tokens |
+| `PATCH` | `/auth/password` | JwtAuthGuard | Change password |
+| `GET` | `/auth/me` | JwtAuthGuard | Current user profile + stats |
 
 ### OAuth
 
-| Method | Path                      | Auth              | Description                       |
-| ------ | ------------------------- | ----------------- | --------------------------------- |
-| `GET`  | `/auth/google`            | GoogleAuthGuard   | Initiate Google OAuth             |
-| `GET`  | `/auth/google/callback`   | GoogleAuthGuard   | Google callback                   |
-| `GET`  | `/auth/facebook`          | FacebookAuthGuard | Initiate Facebook OAuth           |
-| `GET`  | `/auth/facebook/callback` | FacebookAuthGuard | Facebook callback                 |
-| `POST` | `/auth/oauth/exchange`    | -                 | Exchange one-time code for tokens |
-| `GET`  | `/auth/config`            | -                 | Enabled OAuth providers           |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/auth/google` | GoogleAuthGuard | Initiate Google OAuth |
+| `GET` | `/auth/google/callback` | GoogleAuthGuard | Google callback |
+| `GET` | `/auth/facebook` | FacebookAuthGuard | Initiate Facebook OAuth |
+| `GET` | `/auth/facebook/callback` | FacebookAuthGuard | Facebook callback |
+| `POST` | `/auth/oauth/exchange` | - | Exchange one-time code for tokens |
+| `GET` | `/auth/config` | - | Enabled OAuth providers |
 
 ### Account Linking
 
-| Method   | Path                        | Auth           | Description                       |
-| -------- | --------------------------- | -------------- | --------------------------------- |
-| `GET`    | `/auth/link/google`         | Token in query | Link Google to existing account   |
-| `GET`    | `/auth/link/facebook`       | Token in query | Link Facebook to existing account |
-| `GET`    | `/auth/providers`           | JwtAuthGuard   | List linked OAuth accounts        |
-| `DELETE` | `/auth/providers/:provider` | JwtAuthGuard   | Unlink provider (204)             |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/auth/link/google` | Token in query | Link Google to existing account |
+| `GET` | `/auth/link/facebook` | Token in query | Link Facebook to existing account |
+| `GET` | `/auth/providers` | JwtAuthGuard | List linked OAuth accounts |
+| `DELETE` | `/auth/providers/:provider` | JwtAuthGuard | Unlink provider (204) |
 
 ## Testing
 
@@ -377,11 +376,11 @@ npm test -- src/modules/auth/presentation
 
 ### Test Coverage
 
-| Layer          | Test Files                                                                          | Focus                                                                   |
-| -------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Application    | `auth.service.spec.ts` + 3 property specs                                           | Service orchestration, OAuth flows, token rotation, username generation |
-| Infrastructure | `*-repository.spec.ts`, `*-guard.spec.ts`, `*-strategy.spec.ts`, `*-hasher.spec.ts` | DB operations, CSRF validation, Passport integration, bcrypt            |
-| Presentation   | `auth.controller.spec.ts`, `*-filter.spec.ts`, `*-mapper.spec.ts`, `*-dto.spec.ts`  | Endpoints, error redirects, DTO mapping, password validation            |
+| Layer | Test Files | Focus |
+|-------|-----------|-------|
+| Application | `auth.service.spec.ts` + 3 property specs | Service orchestration, OAuth flows, token rotation, username generation |
+| Infrastructure | `*-repository.spec.ts`, `*-guard.spec.ts`, `*-strategy.spec.ts`, `*-hasher.spec.ts` | DB operations, CSRF validation, Passport integration, bcrypt |
+| Presentation | `auth.controller.spec.ts`, `*-filter.spec.ts`, `*-mapper.spec.ts`, `*-dto.spec.ts` | Endpoints, error redirects, DTO mapping, password validation |
 
 ### Key Test Patterns
 
@@ -395,32 +394,32 @@ npm test -- src/modules/auth/presentation
 
 ### With Other Modules
 
-| Module       | Direction         | Integration                                       |
-| ------------ | ----------------- | ------------------------------------------------- |
-| `users`      | auth → users      | User CRUD (find by email, create, update profile) |
-| `user-media` | auth → user-media | Stats for MeDto (movies rated, watchlist count)   |
-| `catalog`    | catalog → auth    | `OptionalJwtAuthGuard` for enriched responses     |
-| `home`       | home → auth       | `OptionalJwtAuthGuard` for personalized homepage  |
+| Module | Direction | Integration |
+|--------|-----------|-------------|
+| `users` | auth → users | User CRUD (find by email, create, update profile) |
+| `user-media` | auth → user-media | Stats for MeDto (movies rated, watchlist count) |
+| `catalog` | catalog → auth | `OptionalJwtAuthGuard` for enriched responses |
+| `home` | home → auth | `OptionalJwtAuthGuard` for personalized homepage |
 
 ### Exported Providers
 
 Other modules import from `AuthModule`:
 
-| Export                      | Consumer                           |
-| --------------------------- | ---------------------------------- |
-| `AuthService`               | -                                  |
-| `PASSWORD_HASHER`           | Users module (password validation) |
-| `REFRESH_TOKENS_REPOSITORY` | -                                  |
-| `EXCHANGE_CODES_REPOSITORY` | -                                  |
+| Export | Consumer |
+|--------|----------|
+| `AuthService` | - |
+| `PASSWORD_HASHER` | Users module (password validation) |
+| `REFRESH_TOKENS_REPOSITORY` | - |
+| `EXCHANGE_CODES_REPOSITORY` | - |
 
 ### Guards (Available globally via `AuthModule` import)
 
-| Guard                  | Usage                               |
-| ---------------------- | ----------------------------------- |
-| `JwtAuthGuard`         | Protected endpoints                 |
+| Guard | Usage |
+|-------|-------|
+| `JwtAuthGuard` | Protected endpoints |
 | `OptionalJwtAuthGuard` | Optional enrichment (catalog, home) |
-| `AdminJwtGuard`        | Admin-only endpoints                |
-| `LocalAuthGuard`       | Login endpoint                      |
+| `AdminJwtGuard` | Admin-only endpoints |
+| `LocalAuthGuard` | Login endpoint |
 
 ## Constraints
 
