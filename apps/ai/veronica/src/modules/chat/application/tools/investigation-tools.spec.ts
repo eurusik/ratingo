@@ -30,4 +30,10 @@ describe('metrics_query description', () => {
     expect(entryOf(description, 'scheduler_last_runs')).not.toContain(NO_PARAMETERS);
     expect(entryOf(description, 'queue_throughput')).not.toContain(NO_PARAMETERS);
   });
+
+  it('tells the model that a missing last failure means no failure within the lookback', () => {
+    expect(entryOf(metricsQueryDescription(), 'scheduler_last_runs')).toContain(
+      'A missing last failure means no failed run was seen in the last eight days.',
+    );
+  });
 });
