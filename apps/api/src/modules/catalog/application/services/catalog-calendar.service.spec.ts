@@ -143,6 +143,32 @@ describe('CatalogCalendarService', () => {
     expect(calendar.watchingShowsCount).toBe(3);
   });
 
+  it('passes the premieres filter to the episode lookup', async () => {
+    await service.getCalendar({ days: 90, personalized: false, premieresOnly: true, type: 'show' });
+
+    expect(showRepository.findEpisodesByDateRange).toHaveBeenCalledWith(
+      expect.any(Date),
+      expect.any(Date),
+      { premieresOnly: true },
+    );
+  });
+
+  it('keeps the viewer when filtering premieres', async () => {
+    await service.getCalendar({
+      days: 90,
+      personalized: false,
+      premieresOnly: true,
+      viewerId: 'user-1',
+      type: 'show',
+    });
+
+    expect(showRepository.findEpisodesByDateRange).toHaveBeenCalledWith(
+      expect.any(Date),
+      expect.any(Date),
+      { viewerId: 'user-1', personalized: false, premieresOnly: true },
+    );
+  });
+
   it('skips movies for the show calendar', async () => {
     await service.getCalendar({ days: 7, personalized: false, type: 'show' });
 

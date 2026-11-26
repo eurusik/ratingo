@@ -1,5 +1,12 @@
-import type { CalendarEpisode, CalendarMovie, CalendarRange } from '@/shared/api';
+import type {
+  CalendarEpisode,
+  CalendarMediaType,
+  CalendarMovie,
+  CalendarRange,
+} from '@/shared/api';
 import { kyivDateKey, weekDays, weekStartOf, type DateKey } from './calendar-dates';
+import type { CalendarMode } from './calendar-query';
+import { planDay } from './day-plan';
 
 export interface CalendarDay {
   key: DateKey;
@@ -22,7 +29,8 @@ export type PastSummary =
   | { kind: 'unwatched'; count: number }
   | { kind: 'allWatched' }
   | { kind: 'episodes'; count: number }
-  | { kind: 'movies'; count: number };
+  | { kind: 'movies'; count: number }
+  | { kind: 'premieres'; count: number };
 
 function byAirTimeThenPopularity(left: CalendarEpisode, right: CalendarEpisode): number {
   return (
@@ -66,15 +74,28 @@ export function emptyCalendarDays(weekStart: DateKey): CalendarDay[] {
   return weekDays(weekStart).map(emptyDay);
 }
 
+export type CountKind = CalendarMediaType | 'premiere';
+
+export function countKindFor(type: CalendarMediaType, mode: CalendarMode | undefined): CountKind {
+  return mode === 'premieres' ? 'premiere' : type;
+}
+
 export function movieCount(day: CalendarDay): number {
   return day.movies.length + day.moreMovies;
+}
+
+export function premiereCount(day: CalendarDay): number {
+  return planDay(day.episodes, 'premieres').visible.length;
 }
 
 function hasReleases(day: CalendarDay): boolean {
   return day.episodes.length > 0 || movieCount(day) > 0;
 }
 
-export function summarizePast(days: readonly CalendarDay[]): PastSummary {
+export function summarizePast(days: readonly CalendarDay[], mode?: CalendarMode): PastSummary {
+  if (mode === 'premieres') {
+    return { kind: 'premieres', count: days.reduce((sum, day) => sum + premiereCount(day), 0) };
+  }
   const episodes = days.flatMap((day) => day.episodes);
   const movies = days.reduce((sum, day) => sum + movieCount(day), 0);
   if (episodes.length === 0 && movies > 0) return { kind: 'movies', count: movies };
@@ -97,8 +118,8 @@ export function splitWeek(
   };
 }
 
-export function pickableDays({ past, upcoming }: WeekLayout): Set<DateKey> {
-  const openablePast = summarizePast(past).kind === 'allWatched' ? [] : past;
+export function pickableDays({ past, upcoming }: WeekLayout, mode?: CalendarMode): Set<DateKey> {
+  const openablePast = summarizePast(past, mode).kind === 'allWatched' ? [] : past;
   return new Set([...openablePast, ...upcoming].map((day) => day.key));
 }
 
@@ -128,6 +149,7 @@ export function buildStripWeek(
   days: readonly CalendarDay[],
   weekStart: DateKey,
   today: DateKey,
+  mode?: CalendarMode,
 ): StripWeek {
-  return { days, pickable: pickableDays(weekLayoutFor(days, weekStart, today)) };
+  return { days, pickable: pickableDays(weekLayoutFor(days, weekStart, today), mode) };
 }

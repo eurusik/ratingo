@@ -3306,7 +3306,7 @@ export interface components {
             poster: components["schemas"]["ImageDto"];
             /**
              * Format: date-time
-             * @description First air date of the show.
+             * @description When the first regular episode airs, the same instant the release calendar lists; the show first air date when no episode is dated yet.
              */
             premiereDate: string;
             /**
@@ -6986,6 +6986,8 @@ export interface operations {
                 days?: number;
                 /** @description When true, returns only the viewer's releases: episodes of shows they watch, premieres of shows they saved, and movies they saved or set a release reminder for. Requires authentication. */
                 personalized?: "true" | "false";
+                /** @description When true, lists only series and season premieres: the first episode of each regular season. Movies are not affected. */
+                premieres?: "true" | "false";
                 /** @description Limits the calendar to shows or movies. */
                 type?: "show" | "movie";
             };
@@ -7007,7 +7009,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description Invalid query parameters (days must be <= 90; personalized must be 'true' or 'false'; type must be 'show' or 'movie') */
+            /** @description Invalid query parameters (days must be <= 90; personalized and premieres must be 'true' or 'false'; type must be 'show' or 'movie') */
             400: {
                 headers: {
                     [name: string]: unknown;

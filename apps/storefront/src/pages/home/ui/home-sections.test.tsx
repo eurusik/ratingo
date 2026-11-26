@@ -329,7 +329,7 @@ describe('AnticipatedPremieres', () => {
     kind: 'newShow',
   };
 
-  it('shows the premiere day, a new show note and links only to the show', () => {
+  it('shows the premiere day and a new show note, linking the poster to the show', () => {
     renderIn(<AnticipatedPremieres premieres={[premiere]} />);
 
     expect(screen.getByRole('heading', { name: uk.home.premieres })).toBeInTheDocument();
@@ -339,15 +339,27 @@ describe('AnticipatedPremieres', () => {
       'href',
       '/shows/harry-potter',
     );
-    expect(screen.getAllByRole('link')).toHaveLength(1);
   });
 
-  it('reports opening a show', () => {
+  it('ends the rail with a tile into the premieres of the show calendar', () => {
+    renderIn(<AnticipatedPremieres premieres={[premiere]} />);
+
+    const items = within(screen.getByRole('list', { name: uk.home.premieres })).getAllByRole(
+      'listitem',
+    );
+    expect(items).toHaveLength(2);
+    expect(
+      within(items[items.length - 1]).getByRole('link', { name: uk.home.upcomingMore }),
+    ).toHaveAttribute('href', '/calendar?mode=premieres');
+  });
+
+  it('reports opening a show and the premieres calendar', () => {
     const gtag = jest.fn();
     window.gtag = gtag;
     renderIn(<AnticipatedPremieres premieres={[premiere]} />);
 
     fireEvent.click(screen.getByRole('link', { name: /Гаррі Поттер/ }), { metaKey: true });
+    fireEvent.click(screen.getByRole('link', { name: uk.home.upcomingMore }), { metaKey: true });
 
     expect(gtag).toHaveBeenCalledWith('event', 'open_title', {
       origin: 'home_premieres',
@@ -355,6 +367,7 @@ describe('AnticipatedPremieres', () => {
       in_catalog: 'true',
       position: 1,
     });
+    expect(gtag).toHaveBeenCalledWith('event', 'calendar_open', { origin: 'home_premieres' });
     delete window.gtag;
   });
 

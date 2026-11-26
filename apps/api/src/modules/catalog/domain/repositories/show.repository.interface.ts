@@ -140,8 +140,10 @@ export interface CalendarEpisode {
   isWatched: boolean;
 }
 
-export type CalendarEpisodesOptions =
+type CalendarViewerOptions =
   { viewerId?: undefined; personalized?: false } | { viewerId: string; personalized: boolean };
+
+export type CalendarEpisodesOptions = CalendarViewerOptions & { premieresOnly?: boolean };
 
 /**
  * Episode info for show details.

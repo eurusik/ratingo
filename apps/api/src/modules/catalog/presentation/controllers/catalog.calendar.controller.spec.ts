@@ -30,6 +30,7 @@ describe('CatalogCalendarController', () => {
       days: 7,
       viewerId: 'user-1',
       personalized: true,
+      premieresOnly: false,
       type: 'movie',
     });
     expect(result).toEqual({
@@ -48,8 +49,17 @@ describe('CatalogCalendarController', () => {
       days: 7,
       viewerId: undefined,
       personalized: false,
+      premieresOnly: false,
       type: undefined,
     });
+  });
+
+  it('asks for premieres only when the premieres flag is true', async () => {
+    await controller.getCalendar({ days: 90, premieres: 'true', type: 'show' }, null);
+
+    expect(calendarService.getCalendar).toHaveBeenCalledWith(
+      expect.objectContaining({ premieresOnly: true, personalized: false, type: 'show' }),
+    );
   });
 
   it('requires a viewer for the personalized calendar', async () => {

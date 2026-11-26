@@ -51,7 +51,7 @@ export interface AnalyticsEvents {
   library_action: { action: string };
   browse_change: { category: string; change: 'filter' | 'sort' | 'pool' };
   calendar_change: {
-    action: 'step' | 'this_week' | 'mode' | 'type' | 'swipe';
+    action: 'step' | 'this_week' | 'next_premiere' | 'mode' | 'type' | 'swipe';
     mode?: string;
     media_type?: AnalyticsMediaType;
   };

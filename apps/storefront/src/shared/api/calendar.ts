@@ -11,16 +11,27 @@ export interface CalendarRangeQuery {
   startDate: string;
   days: number;
   personalized: boolean;
+  premieres?: boolean;
   type: CalendarMediaType;
+}
+
+function premieresParam(premieres: boolean | undefined) {
+  return premieres ? { premieres: 'true' } : {};
 }
 
 export const calendarApi = {
   getRange(
-    { startDate, days, personalized, type }: CalendarRangeQuery,
+    { startDate, days, personalized, premieres, type }: CalendarRangeQuery,
     cache?: CatalogCache,
   ): Promise<CalendarRange> {
     return apiGet<CalendarRange>('catalog/calendar', {
-      searchParams: { startDate, days, personalized: String(personalized), type },
+      searchParams: {
+        startDate,
+        days,
+        personalized: String(personalized),
+        type,
+        ...premieresParam(premieres),
+      },
       ...cacheOptions(cache),
     });
   },

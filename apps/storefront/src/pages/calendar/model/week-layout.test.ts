@@ -94,6 +94,20 @@ describe('summarizePast', () => {
     expect(summarizePast(day([episode(), episode()]))).toEqual({ kind: 'episodes', count: 2 });
   });
 
+  it('counts one premiere per show in premieres mode, whatever the watch state', () => {
+    const premiere = (showId: string, overrides = {}) =>
+      episode({ showId, seasonNumber: 1, episodeNumber: 1, ...overrides });
+    const days = [
+      calendarDay('2026-11-10', [
+        premiere('a', { isTracked: true, isWatched: true }),
+        premiere('a', { episodeId: 'a-2' }),
+      ]),
+      calendarDay('2026-11-11', [premiere('b', { isTracked: true })]),
+    ];
+
+    expect(summarizePast(days, 'premieres')).toEqual({ kind: 'premieres', count: 2 });
+  });
+
   it('counts listed and hidden movies on movie days', () => {
     const days = [
       calendarDay('2026-11-10', [], [movie(), movie()], 3),
@@ -132,6 +146,16 @@ describe('pickableDays', () => {
       '2026-11-15',
     ]);
     expect([...pickableDays({ past: [unwatchedPast], upcoming: [] })]).toEqual(['2026-11-11']);
+  });
+
+  it('keeps watched past premieres openable in premieres mode', () => {
+    const watchedPremiere = calendarDay('2026-11-10', [
+      episode({ seasonNumber: 1, episodeNumber: 1, isTracked: true, isWatched: true }),
+    ]);
+
+    expect([...pickableDays({ past: [watchedPremiere], upcoming: [] }, 'premieres')]).toEqual([
+      '2026-11-10',
+    ]);
   });
 });
 

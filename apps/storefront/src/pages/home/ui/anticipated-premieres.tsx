@@ -1,7 +1,10 @@
 'use client';
 
+import { CALENDAR_PREMIERES_ROUTE } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
+import { track } from '@/shared/lib';
 import type { PremiereRelease } from '../model/home-feed';
+import { CalendarTile } from './calendar-tile';
 import { ReleaseRail } from './release-rail';
 
 export function AnticipatedPremieres({ premieres }: { premieres: PremiereRelease[] }) {
@@ -27,6 +30,13 @@ export function AnticipatedPremieres({ premieres }: { premieres: PremiereRelease
         date: premiere.premiereDate,
         note: { text: dict.home.premiereKind[premiere.kind], tone: 'accent' },
       }))}
+      endItem={
+        <CalendarTile
+          href={CALENDAR_PREMIERES_ROUTE}
+          label={dict.home.upcomingMore}
+          onOpen={() => track('calendar_open', { origin: 'home_premieres' })}
+        />
+      }
     />
   );
 }
