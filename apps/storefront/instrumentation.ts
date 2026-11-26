@@ -2,7 +2,8 @@ import type { Instrumentation } from 'next';
 
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { startTelemetry } = await import('@/shared/telemetry');
+    const { startServerLogging, startTelemetry } = await import('@/shared/telemetry');
+    startServerLogging();
     startTelemetry();
   }
 }
