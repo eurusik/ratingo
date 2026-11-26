@@ -15,6 +15,8 @@ import {
 } from '@ratingo/ai-core';
 
 import { ChatOutcome } from '../../domain/constants/chat.constants';
+import { SYSTEM_CARD } from '../../domain/constants/system-card.constants';
+import { renderSystemCard } from '../../domain/policies/system-card.policy';
 import type { ConversationTurn } from '../../domain/entities/conversation-turn';
 import {
   EXPENSIVE_USAGE,
@@ -26,6 +28,8 @@ import {
 import type { InvestigationExecutors } from '../tools/investigation-executors';
 
 import { InvestigationRunner } from './investigation.runner';
+
+const CARD = renderSystemCard(SYSTEM_CARD);
 
 const PRICES = {
   'stub:digest': {
@@ -212,7 +216,7 @@ describe('InvestigationRunner', () => {
     expect(chat.promptSeen).toContain('Невдалих завдань: 7.');
     expect(chat.promptSeen).toContain('а вчора?');
     expect(chat.promptSeen).toContain('2026-11-22 14:00');
-    expect(chat.scripted.requests[0].system).toBe('SYSTEM PROMPT');
+    expect(chat.scripted.requests[0].system).toBe(`SYSTEM PROMPT\n\n${CARD}`);
   });
 
   it('shows each earlier turn with its Kyiv time, so a day-old answer is not read as today', async () => {
@@ -266,6 +270,14 @@ describe('InvestigationRunner', () => {
     expect(result.unverifiedNumbers).toEqual(['40']);
     expect(chat.finalHtml).toBe(`${answer}\n\n<i>Не звірено з даними: 40.</i>`);
     expect(chat.stored[1].text).toBe(answer);
+  });
+
+  it('accepts a number that comes from the system card', async () => {
+    const chat = new Harness().script(
+      answerStep('Задача scheduled-trending запускається кожні 4 години.'),
+    );
+    const result = await chat.ask('як часто оновлюється trending?');
+    expect(result.outcome).toBe(ChatOutcome.ANSWERED);
   });
 
   it('flags instead of falling back when nothing in the answer can be verified', async () => {
@@ -396,7 +408,7 @@ describe('InvestigationRunner', () => {
 
       expect(result.outcome).toBe(ChatOutcome.ANSWERED);
       expect(result.toolCalls).toEqual([{ tool: GA_TOOL, input: { metrics: ['activeUsers'] } }]);
-      expect(chat.scripted.requests[0].system).toBe('SYSTEM PROMPT\n\nGA PROMPT');
+      expect(chat.scripted.requests[0].system).toBe(`SYSTEM PROMPT\n\n${CARD}\n\nGA PROMPT`);
       expect(chat.scripted.requests[0].tools?.map((tool) => tool.name)).toContain(GA_TOOL);
     });
 
@@ -408,7 +420,7 @@ describe('InvestigationRunner', () => {
       const result = await chat.ask('скільки людей було на сайті?');
 
       expect(result.outcome).toBe(ChatOutcome.ANSWERED);
-      expect(chat.scripted.requests[0].system).toBe('SYSTEM PROMPT');
+      expect(chat.scripted.requests[0].system).toBe(`SYSTEM PROMPT\n\n${CARD}`);
       expect(chat.scripted.requests[0].tools?.map((tool) => tool.name)).not.toContain(GA_TOOL);
     });
 
