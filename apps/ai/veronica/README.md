@@ -12,6 +12,10 @@ npm run chat:flags --workspace=@ratingo/ai-veronica -- --since=7d
 npm run db:generate --workspace=@ratingo/ai-veronica
 ```
 
+## System card
+
+The chat system prompt ends with a card that says which scheduled jobs, queues and external APIs Ratingo has, what each does and how often each job runs, in words. It is rendered from `src/modules/chat/domain/constants/system-card.json`, which is generated from `apps/api` code (`SCHEDULED_JOBS`, `MONITORED_QUEUES`, `EXTERNAL_PROVIDERS`, each job's `description`). After changing a scheduled job, a queue or a provider in the API, run `npm run system-card:update`; an API test fails while the checked-in card is stale. The cadence words come from the cron pattern (`schedule-cadence.policy.ts`), and the rendered card must stay under `SYSTEM_CARD_MAX_CHARS`. The card holds no digits (numbers are spelled out) and is not a source for the numbers guard, so it cannot vouch for a number in an answer.
+
 ## Chat commands
 
 `/help`, `/digest`, `/status`, `/queues`, `/site`, and `/last`, which shows the last three answers to free-form and Happy requests as «question → outcome, cost». Commands themselves are not listed. `/help` also says that free-form questions about site visitors are answered from Google Analytics.

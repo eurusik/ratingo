@@ -50,6 +50,8 @@ import {
   withFlaggedNumbers,
 } from '../../domain/policies/flagged-numbers.policy';
 import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
+import { renderSystemCard } from '../../domain/policies/system-card.policy';
+import { SYSTEM_CARD } from '../../domain/constants/system-card.constants';
 import { requestedReportDates } from '../../domain/policies/report-dates.policy';
 import {
   knownDates,
@@ -75,6 +77,8 @@ const ISO_DATE_LENGTH = 10;
 const EXTERNAL_TOOLS_PROMPT_KEY = 'chat-google-analytics';
 
 type FallbackReason = keyof typeof FALLBACK_INTRO;
+
+const SYSTEM_CARD_TEXT = renderSystemCard(SYSTEM_CARD);
 
 export interface InvestigationResult {
   runId: string | null;
@@ -244,13 +248,9 @@ export class InvestigationRunner {
   }
 
   private systemPrompt(prompts: Readonly<Record<string, string>>, withExternal: boolean): string {
-    const base = prompts[CHAT_PROMPT_KEY] ?? '';
+    const base = `${prompts[CHAT_PROMPT_KEY] ?? ''}\n\n${SYSTEM_CARD_TEXT}`;
     const external = prompts[EXTERNAL_TOOLS_PROMPT_KEY];
-    return withExternal && external !== undefined
-      ? `${base}
-
-${external}`
-      : base;
+    return withExternal && external !== undefined ? `${base}\n\n${external}` : base;
   }
 
   private async spend(agent: string, sinceMs: number) {

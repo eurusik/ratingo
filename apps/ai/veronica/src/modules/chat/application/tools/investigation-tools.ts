@@ -3,12 +3,20 @@ import { z } from 'zod';
 import { defineTool, type Tool } from '@ratingo/ai-core';
 
 import { SeriesMetric } from '../../../digest/public';
-import { ASK_HAPPY_OUTPUT_CAP } from '../../domain/constants/happy.constants';
 import {
+  ASK_HAPPY_OUTPUT_CAP,
+  RELEASE_BASE_BRANCH,
+  RELEASE_HEAD_BRANCH,
+} from '../../domain/constants/happy.constants';
+import {
+  CHANGES_OUTPUT_CAP,
   InvestigationTool,
+  METRICS_OUTPUT_CAP,
   METRIC_DEFAULT_WINDOW,
   METRIC_OFFSET_MAX_DAYS,
   MetricTemplateName,
+  PRODUCT_OUTPUT_CAP,
+  SNAPSHOT_OUTPUT_CAP,
 } from '../../domain/constants/investigation.constants';
 
 import type { InvestigationExecutors } from './investigation-executors';
@@ -30,15 +38,15 @@ const templateCatalog = TEMPLATE_NAMES.map(
     `${name}: ${METRIC_TEMPLATES[name].description}${takesNoParameters(name) ? ' Takes no parameters, not even window.' : ''}`,
 ).join(' ');
 
-const METRICS_OUTPUT_CAP = 3000;
-const PRODUCT_OUTPUT_CAP = 3000;
-const SNAPSHOT_OUTPUT_CAP = 6000;
-const CHANGES_OUTPUT_CAP = 4000;
 const MAX_PULL_NUMBER = 999_999_999;
 
 export const metricsQueryInput = z.object({
   template: z.enum(TEMPLATE_NAMES).describe('Name of a ready-made metric query'),
   queue: z.string().optional().describe('Queue name, for the queue_* templates'),
+  job: z
+    .string()
+    .optional()
+    .describe('Part of a job name such as refresh-all, for scheduler_last_runs'),
   provider: z.string().optional().describe('Provider host name, for http_client_errors'),
   status: z.string().optional().describe('HTTP status such as 429, for http_client_errors'),
   window: z
@@ -69,6 +77,10 @@ export const recentChangesInput = z.object({
     .string()
     .optional()
     .describe('How far back to look, such as 24h or 7d (at most 7d). Default 24h'),
+  into: z
+    .enum([RELEASE_HEAD_BRANCH, RELEASE_BASE_BRANCH])
+    .optional()
+    .describe('Only pull requests merged into this branch'),
 });
 
 export const askHappyInput = z.object({

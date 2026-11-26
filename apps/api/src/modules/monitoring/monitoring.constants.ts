@@ -8,6 +8,8 @@ export const KEY_HEALTH_SCHEDULER_ID = 'scheduled-key-health';
 
 export const KEY_HEALTH_CHECK_PATTERN = '*/20 * * * *';
 
+export const KEY_HEALTH_DESCRIPTION = 'Checks that every external provider API key still works.';
+
 export const KEY_HEALTH_HISTORY_LIMIT = 50;
 
 export const MONITORING_REDIS_MAX_RETRIES_PER_REQUEST = 1;

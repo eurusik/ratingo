@@ -32,6 +32,8 @@ export const USER_BATCHES_LIMIT = 10;
 
 export const LINK_PENDING_IMPORTS_SCHEDULER_ID = 'link-pending-imports';
 export const LINK_PENDING_IMPORTS_INTERVAL_MS = 120_000;
+export const LINK_PENDING_IMPORTS_DESCRIPTION =
+  'Links imported watch history items to catalog titles once those titles are ingested.';
 export const LINK_PENDING_IMPORTS_MIN_AGE_MS = 120_000;
 export const LINK_PENDING_IMPORTS_STALE_LINKING_MS = 600_000;
 export const LINK_PENDING_IMPORTS_INGEST_TIMEOUT_MS = 86_400_000;

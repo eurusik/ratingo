@@ -1,0 +1,168 @@
+{
+  "scheduledJobs": [
+    {
+      "job": "link-pending-imports",
+      "queue": "backfill",
+      "schedule": {
+        "everyMs": 120000
+      },
+      "description": "Links imported watch history items to catalog titles once those titles are ingested."
+    },
+    {
+      "job": "movie-release-notifications",
+      "queue": "user-notifications",
+      "schedule": {
+        "cron": "0 6 * * *"
+      },
+      "description": "Notifies users that a movie they want to watch has been released."
+    },
+    {
+      "job": "scheduled-anticipated-shows",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "30 5 * * *"
+      },
+      "description": "Pulls the most anticipated new shows."
+    },
+    {
+      "job": "scheduled-key-health",
+      "queue": "monitoring-queue",
+      "schedule": {
+        "cron": "*/20 * * * *"
+      },
+      "description": "Checks that every external provider API key still works."
+    },
+    {
+      "job": "scheduled-mdblist-ratings",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "0 2 * * *"
+      },
+      "description": "Queues titles missing Rotten Tomatoes ratings; the ratings-backfill queue then drains them slowly through the day because of the daily quota."
+    },
+    {
+      "job": "scheduled-new-releases",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "0 4 * * *"
+      },
+      "description": "Adds movies released in the region over the last weeks."
+    },
+    {
+      "job": "scheduled-now-playing",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "0 6 * * *"
+      },
+      "description": "Fetches the movies now playing in cinemas in the region."
+    },
+    {
+      "job": "scheduled-now-playing-flags",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "30 6 * * *"
+      },
+      "description": "Marks which catalog movies are in cinemas now; runs right after the now-playing sync."
+    },
+    {
+      "job": "scheduled-snapshots",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "30 3 * * *"
+      },
+      "description": "Records the daily watcher and rating snapshot of catalog titles that trend charts are built from."
+    },
+    {
+      "job": "scheduled-tracked-shows",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "0 8,20 * * *"
+      },
+      "description": "Refreshes the shows users track, so new episodes and seasons show up."
+    },
+    {
+      "job": "scheduled-trending",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "0 */4 * * *"
+      },
+      "description": "Pulls trending movies and shows with their stats and rebuilds the trending lists."
+    },
+    {
+      "job": "scheduled-upcoming-movies",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "0 5 * * *"
+      },
+      "description": "Adds upcoming movie premieres to the catalog."
+    },
+    {
+      "job": "scheduled-upcoming-movies-refresh-all",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "0 7 * * 1"
+      },
+      "description": "Refreshes release dates of all upcoming movies; on the other days only the ones premiering soon are refreshed."
+    },
+    {
+      "job": "scheduled-upcoming-movies-refresh-soon",
+      "queue": "ingestion",
+      "schedule": {
+        "cron": "0 7 * * 0,2-6"
+      },
+      "description": "Refreshes release dates of upcoming movies premiering soon; skips Monday, when the full refresh runs."
+    }
+  ],
+  "queues": [
+    {
+      "name": "ingestion",
+      "description": "Imports and refreshes titles from rate-limited providers; scheduled syncs land here, so backlog spikes after them are normal."
+    },
+    {
+      "name": "backfill",
+      "description": "Fast TMDB-only fill-ins (missing IDs, alternative titles) and watch history imports."
+    },
+    {
+      "name": "ratings-backfill",
+      "description": "External ratings under a small daily quota; drains slowly all day by design, so a long backlog is normal."
+    },
+    {
+      "name": "catalog-policy-queue",
+      "description": "Decides which titles are eligible for the public catalog."
+    },
+    {
+      "name": "stats-queue",
+      "description": "Recomputes title stats and the homepage blocks."
+    },
+    {
+      "name": "monitoring-queue",
+      "description": "Health probes such as the API key check."
+    },
+    {
+      "name": "user-notifications",
+      "description": "Notifications sent to users."
+    }
+  ],
+  "providers": [
+    {
+      "host": "api.themoviedb.org",
+      "description": "Main catalog source: titles, images, release dates, cinemas."
+    },
+    {
+      "host": "api.trakt.tv",
+      "description": "Trending, anticipated and watcher stats; strict rate limit."
+    },
+    {
+      "host": "www.omdbapi.com",
+      "description": "IMDb ratings; daily request limit."
+    },
+    {
+      "host": "api.tvmaze.com",
+      "description": "Episode air dates for shows."
+    },
+    {
+      "host": "api.mdblist.com",
+      "description": "Rotten Tomatoes ratings; small daily quota."
+    }
+  ]
+}

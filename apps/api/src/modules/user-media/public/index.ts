@@ -40,4 +40,8 @@ export type { ILinkPendingImportsSweep } from '../domain/ports/link-pending-impo
 export { UserMediaService } from '../application/user-media.service';
 export { ResolveImportDispatcherPipeline } from '../application/pipelines/resolve-import-dispatcher.pipeline';
 export { ResolveImportItemPipeline } from '../application/pipelines/resolve-import-item.pipeline';
-export { LINK_PENDING_IMPORTS_SCHEDULER_ID } from '../domain/constants/import-pending.constants';
+export {
+  LINK_PENDING_IMPORTS_DESCRIPTION,
+  LINK_PENDING_IMPORTS_INTERVAL_MS,
+  LINK_PENDING_IMPORTS_SCHEDULER_ID,
+} from '../domain/constants/import-pending.constants';

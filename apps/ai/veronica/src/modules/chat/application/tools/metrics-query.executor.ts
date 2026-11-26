@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { CLOCK_PORT, type ClockPort } from '@ratingo/ai-core';
+import { CLOCK_PORT, RowList, type ClockPort } from '@ratingo/ai-core';
 
 import { METRICS_PORT, type MetricsPort } from '../../../digest/public';
 import { METRIC_SERIES_CAP } from '../../domain/constants/investigation.constants';
@@ -11,7 +11,7 @@ import { METRIC_TEMPLATES, type QueryResult } from './metric-templates';
 
 const MS_PER_DAY = 86_400_000;
 
-const PARAMETER_KEYS = ['queue', 'provider', 'status', 'window', 'offset_days'] as const;
+const PARAMETER_KEYS = ['queue', 'job', 'provider', 'status', 'window', 'offset_days'] as const;
 
 const providedParameters = (input: MetricsQueryInput): Record<string, unknown> =>
   Object.fromEntries(
@@ -37,18 +37,39 @@ export class MetricsQueryExecutor {
     const params = parsed.data;
     const offsetDays = Number(params.offset_days ?? 0);
     const atMs = this.clock.nowMs() - offsetDays * MS_PER_DAY;
-    const results: QueryResult[] = await Promise.all(
-      template.queries(params).map(async (query) => ({
-        name: query.name,
-        samples: (await this.metrics.instant(query.promql, atMs)).slice(0, METRIC_SERIES_CAP),
-      })),
-    );
-    return {
+    const { results, seriesOmitted } = await this.fetch(template.queries(params), atMs);
+    const envelope = {
       template: template.name,
       window: params.window ?? null,
       offsetDays,
       evaluatedAtKyiv: formatKyivDateTime(atMs),
-      ...template.present(results, atMs),
+      ...(seriesOmitted > 0 ? { seriesOmitted } : {}),
+    };
+    const reading = template.present(results, atMs, params);
+    return 'data' in reading && reading.data instanceof RowList
+      ? reading.data.around((data) => ({ ...envelope, data }))
+      : { ...envelope, ...reading };
+  }
+
+  private async fetch(
+    queries: readonly { name: string; promql: string }[],
+    atMs: number,
+  ): Promise<{ results: QueryResult[]; seriesOmitted: number }> {
+    const fetched = await Promise.all(
+      queries.map(async (query) => ({
+        name: query.name,
+        samples: await this.metrics.instant(query.promql, atMs),
+      })),
+    );
+    return {
+      results: fetched.map((result) => ({
+        name: result.name,
+        samples: result.samples.slice(0, METRIC_SERIES_CAP),
+      })),
+      seriesOmitted: fetched.reduce(
+        (sum, result) => sum + Math.max(0, result.samples.length - METRIC_SERIES_CAP),
+        0,
+      ),
     };
   }
 }

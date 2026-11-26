@@ -2,6 +2,7 @@ import { METRIC_WINDOW_MAX_HOURS } from '../constants/investigation.constants';
 
 const WINDOW_PATTERN = /^(\d{1,3})([hd])$/;
 const QUEUE_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+const JOB_NAME_FILTER_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const PROVIDER_NAME_PATTERN = /^[a-z0-9][a-z0-9.-]{0,99}$/;
 const HTTP_STATUS_PATTERN = /^[1-5]\d{2}$/;
 const HOURS_PER_DAY = 24;
@@ -21,6 +22,8 @@ export const parseWindow = (raw: string): MetricWindow | null => {
 };
 
 export const isQueueName = (value: string): boolean => QUEUE_NAME_PATTERN.test(value);
+
+export const isJobNameFilter = (value: string): boolean => JOB_NAME_FILTER_PATTERN.test(value);
 
 export const isProviderName = (value: string): boolean => PROVIDER_NAME_PATTERN.test(value);
 

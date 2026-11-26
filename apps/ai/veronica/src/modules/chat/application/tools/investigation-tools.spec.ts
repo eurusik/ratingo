@@ -25,8 +25,9 @@ const entryOf = (description: string, template: string): string => {
 describe('metrics_query description', () => {
   it('tells the model which templates take no parameters', () => {
     const description = metricsQueryDescription();
-    expect(entryOf(description, 'scheduler_last_runs')).toContain(NO_PARAMETERS);
+    expect(entryOf(description, 'infra_health')).toContain(NO_PARAMETERS);
     expect(entryOf(description, 'backup_status')).toContain(NO_PARAMETERS);
+    expect(entryOf(description, 'scheduler_last_runs')).not.toContain(NO_PARAMETERS);
     expect(entryOf(description, 'queue_throughput')).not.toContain(NO_PARAMETERS);
   });
 });

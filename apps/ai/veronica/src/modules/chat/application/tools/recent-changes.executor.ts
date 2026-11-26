@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { CLOCK_PORT, type ClockPort } from '@ratingo/ai-core';
+import { CLOCK_PORT, RowList, type ClockPort } from '@ratingo/ai-core';
 
+import { RELEASE_BASE_BRANCH, RELEASE_HEAD_BRANCH } from '../../domain/constants/happy.constants';
 import {
   CHANGES_ITEM_CAP,
   CHANGE_TITLE_MAX_CHARS,
@@ -19,6 +20,7 @@ import type { RecentChangesInput } from './investigation-executors';
 
 const MS_PER_HOUR = 3_600_000;
 const DEFAULT_CHANGES_WINDOW = '24h';
+const PULL_REQUESTS_HINT = `pass a shorter window or into=${RELEASE_HEAD_BRANCH} or into=${RELEASE_BASE_BRANCH}`;
 
 @Injectable()
 export class RecentChangesExecutor {
@@ -33,20 +35,27 @@ export class RecentChangesExecutor {
       throw new Error('window must look like 24h or 7d and be at most 7 days');
     }
     const report = await this.changes.since(this.clock.nowMs() - window.hours * MS_PER_HOUR);
-    return {
-      window: window.promql,
-      pullRequests: report.mergedPullRequests.slice(0, CHANGES_ITEM_CAP).map((pullRequest) => ({
+    const pullRequests = report.mergedPullRequests
+      .filter((pullRequest) => input.into === undefined || pullRequest.baseBranch === input.into)
+      .map((pullRequest) => ({
         number: pullRequest.number,
         title: clip(pullRequest.title, CHANGE_TITLE_MAX_CHARS),
         into: pullRequest.baseBranch,
         isRelease: isReleasePullRequest(pullRequest),
         mergedAtKyiv: formatKyivDateTime(pullRequest.mergedAtMs),
-      })),
-      deployments: report.deployments.slice(0, CHANGES_ITEM_CAP).map((deployment) => ({
-        environment: deployment.environment,
-        state: deployment.state,
-        atKyiv: formatKyivDateTime(deployment.atMs),
-      })),
-    };
+      }));
+    const deployments = report.deployments.slice(0, CHANGES_ITEM_CAP).map((deployment) => ({
+      environment: deployment.environment,
+      state: deployment.state,
+      atKyiv: formatKyivDateTime(deployment.atMs),
+    }));
+    const deploymentsOmitted = report.deployments.length - deployments.length;
+    return RowList.of(pullRequests, PULL_REQUESTS_HINT, (kept, omission) => ({
+      window: window.promql,
+      pullRequests: kept,
+      ...omission,
+      deployments,
+      ...(deploymentsOmitted > 0 ? { deploymentsOmitted } : {}),
+    }));
   }
 }
