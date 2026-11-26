@@ -17,7 +17,12 @@ const METRIC_WINDOW_MAX_DAYS = 7;
 export const METRIC_WINDOW_MAX_HOURS = METRIC_WINDOW_MAX_DAYS * HOURS_PER_DAY;
 export const METRIC_OFFSET_MAX_DAYS = 14;
 export const METRIC_DEFAULT_WINDOW = '24h';
-export const METRIC_SERIES_CAP = 30;
+export const METRIC_SERIES_CAP = 200;
+
+export const METRICS_OUTPUT_CAP = 4500;
+export const PRODUCT_OUTPUT_CAP = 3000;
+export const SNAPSHOT_OUTPUT_CAP = 6000;
+export const CHANGES_OUTPUT_CAP = 4000;
 
 export const CHANGES_ITEM_CAP = 20;
 export const CHANGE_TITLE_MAX_CHARS = 120;

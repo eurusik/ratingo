@@ -347,6 +347,7 @@ The core never imports a provider SDK outside its adapters.
 - An agent sees only the tools its manifest lists. Anything not listed is denied.
 - **Skills** are a prompt plus the tools they bring. The system prompt lists names and one-line descriptions; the model loads a skill's body on demand.
 - Tool output is capped, and secrets and personal data are redacted before it reaches a model or Telegram.
+- **Lists are cut by whole rows, never mid-row.** A handler that returns a list returns a `RowList` (rows, a hint naming the filter that narrows them, and a frame for the rest of the answer). `defineTool` keeps as many complete rows as fit the tool's `maxOutputChars` and adds `omitted` (how many rows were left out) and `hint`. The registry's character cut stays only as a last-resort safety net.
 - No shell tool. Nothing runs code from a PR or from model output.
 
 ### MCP gateway (`packages/ai-core/src/mcp`)

@@ -1,6 +1,12 @@
 import * as fc from 'fast-check';
 
-import { isHttpStatus, isProviderName, isQueueName, parseWindow } from './metric-params.policy';
+import {
+  isHttpStatus,
+  isJobNameFilter,
+  isProviderName,
+  isQueueName,
+  parseWindow,
+} from './metric-params.policy';
 
 describe('parseWindow', () => {
   it.each([
@@ -90,4 +96,36 @@ describe('label validators', () => {
       );
     },
   );
+});
+
+describe('isJobNameFilter', () => {
+  it.each(['refresh-all', 'scheduled-upcoming-movies-refresh-soon', 'trending', 'key-health'])(
+    'accepts the job name part %s',
+    (value) => {
+      expect(isJobNameFilter(value)).toBe(true);
+    },
+  );
+
+  it('accepts any lowercase fragment of a job name', () => {
+    fc.assert(
+      fc.property(fc.stringMatching(/^[a-z0-9][a-z0-9-]{0,63}$/), (value) => {
+        expect(isJobNameFilter(value)).toBe(true);
+      }),
+    );
+  });
+
+  it('rejects anything with characters outside a job name', () => {
+    const hostile = fc
+      .tuple(
+        fc.string(),
+        fc.constantFrom('"', '}', '{', '*', ' ', '\\', '.', '_', 'A', '«'),
+        fc.string(),
+      )
+      .map(([before, bad, after]) => `${before}${bad}${after}`);
+    fc.assert(
+      fc.property(hostile, (value) => {
+        expect(isJobNameFilter(value)).toBe(false);
+      }),
+    );
+  });
 });
