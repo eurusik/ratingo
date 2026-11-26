@@ -85,4 +85,28 @@ describe('env schemas', () => {
       '515589933',
     );
   });
+
+  it('leaves logs off when the Loki variables are missing or empty, and reads them when set', () => {
+    const off = serviceEnvSchema.parse({ ...VALID, GRAFANA_LOKI_URL: '', GRAFANA_LOKI_USER: ' ' });
+    expect(off.GRAFANA_LOKI_URL).toBeUndefined();
+    expect(off.GRAFANA_LOKI_USER).toBeUndefined();
+    expect(off.GRAFANA_LOKI_TOKEN).toBeUndefined();
+    const on = serviceEnvSchema.parse({
+      ...VALID,
+      GRAFANA_LOKI_URL: 'https://logs.example.invalid',
+      GRAFANA_LOKI_USER: '12345',
+      GRAFANA_LOKI_TOKEN: 'glc_fake',
+    });
+    expect([on.GRAFANA_LOKI_URL, on.GRAFANA_LOKI_USER, on.GRAFANA_LOKI_TOKEN]).toEqual([
+      'https://logs.example.invalid',
+      '12345',
+      'glc_fake',
+    ]);
+  });
+
+  it('rejects a Loki URL that is not a URL', () => {
+    expect(serviceEnvSchema.safeParse({ ...VALID, GRAFANA_LOKI_URL: 'logs-prod' }).success).toBe(
+      false,
+    );
+  });
 });

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
@@ -10,11 +10,13 @@ import {
   CHANGES_CONFIG,
   HAPPY_CONFIG,
   INFRA_CONFIG,
+  LOKI_CONFIG,
   PRODUCT_STATS_CONFIG,
   TELEGRAM_CONFIG,
   type ChangesConfig,
   type HappyConfig,
   type InfraConfig,
+  type LokiConfig,
   type ProductStatsConfig,
   type TelegramConfig,
 } from '../../config/config.constants';
@@ -40,6 +42,7 @@ import {
   type InvestigationExecutors,
 } from './application/tools/investigation-executors';
 import { JobFailuresExecutor } from './application/tools/job-failures.executor';
+import { LogsSearchExecutor } from './application/tools/logs-search.executor';
 import { MetricsQueryExecutor } from './application/tools/metrics-query.executor';
 import { ProductStatsExecutor } from './application/tools/product-stats.executor';
 import { RecentChangesExecutor } from './application/tools/recent-changes.executor';
@@ -55,13 +58,16 @@ import { CHAT_METRICS_PORT } from './domain/ports/chat-metrics.port';
 import { CONVERSATION_STORE } from './domain/ports/conversation-store.port';
 import { HAPPY_CLIENT } from './domain/ports/happy-client.port';
 import { JOB_FAILURES_PORT } from './domain/ports/job-failures.port';
+import { LOGS_PORT } from './domain/ports/logs.port';
 import { RECENT_CHANGES_PORT } from './domain/ports/recent-changes.port';
 import { WEBHOOK_SECRET_PORT } from './domain/ports/webhook-secret.port';
 import { PostgresChatExchangeRepository } from './infrastructure/repositories/postgres.chat-exchange-repository';
 import { GithubRecentChangesAdapter } from './infrastructure/adapters/github.recent-changes-adapter';
+import { GrafanaLokiLogsAdapter } from './infrastructure/adapters/grafana-loki.logs-adapter';
 import { HttpHappyClient } from './infrastructure/adapters/http.happy-client';
 import { PostgresJobFailuresAdapter } from './infrastructure/adapters/postgres.job-failures-adapter';
 import { UnconfiguredJobFailuresAdapter } from './infrastructure/adapters/unconfigured.job-failures-adapter';
+import { UnconfiguredLogsAdapter } from './infrastructure/adapters/unconfigured.logs-adapter';
 import { BullmqChatJobQueue } from './infrastructure/queues/bullmq-chat-job-queue';
 import { HmacWebhookSecret } from './infrastructure/security/hmac-webhook-secret';
 import { RedisConversationStore } from './infrastructure/stores/redis.conversation-store';
@@ -119,6 +125,24 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
           : PostgresJobFailuresAdapter.connect(config.readerDatabaseUrl),
     },
     {
+      provide: LOGS_PORT,
+      inject: [LOKI_CONFIG],
+      useFactory: ({ baseUrl, user, token }: LokiConfig) => {
+        if (baseUrl !== undefined && user !== undefined && token !== undefined) {
+          return new GrafanaLokiLogsAdapter({ baseUrl, user, token });
+        }
+        const missing = [
+          ['GRAFANA_LOKI_URL', baseUrl],
+          ['GRAFANA_LOKI_USER', user],
+          ['GRAFANA_LOKI_TOKEN', token],
+        ].flatMap(([name, value]) => (value === undefined ? [name] : []));
+        if (missing.length < 3) {
+          new Logger('LogsPort').warn(`logs_search is off, missing: ${missing.join(', ')}`);
+        }
+        return new UnconfiguredLogsAdapter();
+      },
+    },
+    {
       provide: CHAT_EXCHANGE_LOG,
       inject: [DATABASE],
       useFactory: (db: Database) => new PostgresChatExchangeRepository(db),
@@ -133,6 +157,7 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
     RecentChangesExecutor,
     AskHappyExecutor,
     JobFailuresExecutor,
+    LogsSearchExecutor,
     {
       provide: INVESTIGATION_EXECUTORS,
       inject: [
@@ -142,6 +167,7 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
         RecentChangesExecutor,
         AskHappyExecutor,
         JobFailuresExecutor,
+        LogsSearchExecutor,
       ],
       useFactory: (
         metrics: MetricsQueryExecutor,
@@ -150,6 +176,7 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
         changes: RecentChangesExecutor,
         happy: AskHappyExecutor,
         failures: JobFailuresExecutor,
+        logs: LogsSearchExecutor,
       ): InvestigationExecutors => ({
         metricsQuery: (input) => metrics.run(input),
         productStats: (input) => product.run(input),
@@ -157,6 +184,7 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
         recentChanges: (input) => changes.run(input),
         askHappy: (input) => happy.run(input),
         jobFailures: (input) => failures.run(input),
+        logsSearch: (input) => logs.run(input),
       }),
     },
     InvestigationRunner,

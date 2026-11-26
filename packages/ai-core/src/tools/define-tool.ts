@@ -3,6 +3,7 @@ import type { ToolDefinition } from '../model/model.types';
 import { formatZodIssues } from '../schema/format-zod-issues';
 import { zodToJsonSchema } from '../schema/zod-json-schema';
 import { RowList, fitRowList } from './row-list';
+import { wrapUntrusted } from './untrusted-content';
 
 export const DEFAULT_TOOL_OUTPUT_CAP_CHARS = 8_000;
 
@@ -16,6 +17,7 @@ export interface ToolSpec<TShape extends ZodRawShape> {
   inputSchema: ZodObject<TShape>;
   readOnly: boolean;
   maxOutputChars?: number;
+  untrustedLabel?: string;
   handler(input: z.infer<ZodObject<TShape>>, context: ToolContext): Promise<unknown>;
 }
 
@@ -39,8 +41,17 @@ function stringifyOutput(output: unknown, maxChars: number): string {
   return typeof output === 'string' ? output : (JSON.stringify(output) ?? '');
 }
 
+function untrustedOverhead(label: string): number {
+  return wrapUntrusted(label, '').length;
+}
+
 export function defineTool<TShape extends ZodRawShape>(spec: ToolSpec<TShape>): Tool {
   const maxOutputChars = spec.maxOutputChars ?? DEFAULT_TOOL_OUTPUT_CAP_CHARS;
+  const { untrustedLabel } = spec;
+  const contentBudget =
+    untrustedLabel === undefined
+      ? maxOutputChars
+      : maxOutputChars - untrustedOverhead(untrustedLabel);
   return {
     name: spec.name,
     readOnly: spec.readOnly,
@@ -55,7 +66,8 @@ export function defineTool<TShape extends ZodRawShape>(spec: ToolSpec<TShape>): 
       if (!parsed.success) {
         throw new ToolInputError(spec.name, formatZodIssues(parsed.error).join('; '));
       }
-      return stringifyOutput(await spec.handler(parsed.data, context), maxOutputChars);
+      const content = stringifyOutput(await spec.handler(parsed.data, context), contentBudget);
+      return untrustedLabel === undefined ? content : wrapUntrusted(untrustedLabel, content);
     },
   };
 }
