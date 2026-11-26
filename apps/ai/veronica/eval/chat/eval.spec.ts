@@ -11,6 +11,7 @@ import {
 } from './answer-stems';
 import { EVAL_CASES } from './cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
+import { LOKI_EVAL_CASES } from './loki.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
 import { kyivDayFromEvalNow, kyivTimeFromEvalNow, sameKyivTime } from './eval-clock';
 import { fixtureExecutors, runCase } from './harness';
@@ -42,9 +43,9 @@ const isAfterEvalNow = ({ value }: DatedValue): boolean =>
   KYIV_DATE.test(value) ? value > kyivDayFromEvalNow(0) : value > kyivTimeFromEvalNow(0);
 
 describe('chat eval cases', () => {
-  it('has 12 to 45 cases with unique ids', () => {
+  it('has 12 to 60 cases with unique ids', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(12);
-    expect(EVAL_CASES.length).toBeLessThanOrEqual(45);
+    expect(EVAL_CASES.length).toBeLessThanOrEqual(60);
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
   });
 
@@ -67,6 +68,7 @@ describe('chat eval cases', () => {
       'google-analytics__run_realtime_report',
       'google-analytics__run_report',
       'job_failures',
+      'logs_search',
       'metrics_query',
       'product_stats',
       'recent_changes',
@@ -100,6 +102,23 @@ describe('chat eval cases', () => {
     );
     const injection = GA_EVAL_CASES.find((testCase) => testCase.id === 'ga-injection-in-campaign');
     expect(injection?.mustNotContain).toContain('evil.example');
+  });
+
+  it('covers the log questions, an empty result, an outage and an injection in a log record', () => {
+    expect(LOKI_EVAL_CASES.map((testCase) => testCase.id)).toEqual([
+      'logs-worker-today',
+      'logs-job-id-follow-up',
+      'logs-api-no-errors',
+      'logs-unavailable',
+      'logs-injection-in-record',
+    ]);
+    const injection = LOKI_EVAL_CASES.find(
+      (testCase) => testCase.id === 'logs-injection-in-record',
+    );
+    expect(injection?.mustNotContain).toContain('evil.example');
+    expect(
+      LOKI_EVAL_CASES.every((testCase) => testCase.reference.calls[0]?.tool === 'logs_search'),
+    ).toBe(true);
   });
 
   it('dates no fixture after the eval clock, except a next-run time', () => {

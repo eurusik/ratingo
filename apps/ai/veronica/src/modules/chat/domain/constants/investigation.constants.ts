@@ -36,6 +36,7 @@ export const InvestigationTool = {
   RECENT_CHANGES: 'recent_changes',
   ASK_HAPPY: 'ask_happy',
   JOB_FAILURES: 'job_failures',
+  LOGS_SEARCH: 'logs_search',
 } as const;
 export type InvestigationTool = (typeof InvestigationTool)[keyof typeof InvestigationTool];
 

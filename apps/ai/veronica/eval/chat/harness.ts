@@ -18,8 +18,10 @@ import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
 import { InvestigationRunner } from '../../src/modules/chat/application/services/investigation.runner';
 import type { InvestigationExecutors } from '../../src/modules/chat/application/tools/investigation-executors';
 import { JobFailuresExecutor } from '../../src/modules/chat/application/tools/job-failures.executor';
+import { LogsSearchExecutor } from '../../src/modules/chat/application/tools/logs-search.executor';
 import type { ChatOutcome } from '../../src/modules/chat/domain/constants/chat.constants';
 import type { ConversationTurn } from '../../src/modules/chat/domain/entities/conversation-turn';
+import { GrafanaLokiLogsAdapter } from '../../src/modules/chat/infrastructure/adapters/grafana-loki.logs-adapter';
 import { withoutFlaggedNote } from '../../src/modules/chat/domain/policies/flagged-numbers.policy';
 import {
   answerStep,
@@ -36,6 +38,8 @@ import {
   SimulatedGaConnection,
   simulatedGaTransport,
 } from './google-analytics.fake-server';
+import { LOKI_FIXTURE, NO_LOG_RECORDS, type LokiScenario } from './loki.dataset';
+import { simulatedLokiFetch } from './loki.simulator';
 import type { CaseResult } from './scorer';
 
 const CHAT_ID = 'eval';
@@ -67,6 +71,19 @@ const NO_RECORDED_FAILURES = new JobFailuresExecutor(
   new FixedClock(EVAL_NOW_MS),
 );
 
+const SIMULATED_LOKI = { baseUrl: 'https://loki.eval.invalid', user: '1', token: 'eval' };
+
+const lokiExecutor = (testCase: EvalCase): LogsSearchExecutor => {
+  const scenario = testCase.fixtures.find((entry) => entry.tool === LOKI_FIXTURE)?.response;
+  return new LogsSearchExecutor(
+    new GrafanaLokiLogsAdapter(
+      SIMULATED_LOKI,
+      simulatedLokiFetch((scenario as LokiScenario | undefined) ?? NO_LOG_RECORDS),
+    ),
+    new FixedClock(EVAL_NOW_MS),
+  );
+};
+
 const matches = (fixture: Fixture, input: unknown): boolean =>
   Object.entries(fixture.match ?? {}).every(
     ([key, value]) => (input as Record<string, unknown> | null)?.[key] === value,
@@ -92,6 +109,7 @@ export const fixtureExecutors = (testCase: EvalCase): InvestigationExecutors => 
     jobFailures: testCase.fixtures.some((entry) => entry.tool === 'job_failures')
       ? answer('job_failures')
       : (input) => NO_RECORDED_FAILURES.run(input),
+    logsSearch: (input) => lokiExecutor(testCase).run(input),
   };
 };
 

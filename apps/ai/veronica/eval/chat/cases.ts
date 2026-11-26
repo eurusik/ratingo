@@ -19,6 +19,7 @@ import {
   spokenKyivDayFromEvalNow,
 } from './eval-clock';
 import { GA_EVAL_CASES } from './google-analytics.cases';
+import { LOKI_EVAL_CASES } from './loki.cases';
 
 const unavailable = (reason: string) => ({ unavailable: reason });
 
@@ -998,4 +999,8 @@ const SERVICE_CASES: readonly EvalCase[] = [
   },
 ];
 
-export const EVAL_CASES: readonly EvalCase[] = [...SERVICE_CASES, ...GA_EVAL_CASES];
+export const EVAL_CASES: readonly EvalCase[] = [
+  ...SERVICE_CASES,
+  ...GA_EVAL_CASES,
+  ...LOKI_EVAL_CASES,
+];
