@@ -1,18 +1,45 @@
+import type { RowList } from '@ratingo/ai-core';
+
 import {
+  FORMAL_ADDRESS,
   GENDERED_ADDRESS,
   HONEST_NO_DATA,
   MINOR_FINDINGS,
   NO_CODE_REVIEW,
   NOTHING_RECORDED,
+  WHOLE_DAYS_COUNTED,
 } from './answer-stems';
 import { EVAL_CASES } from './cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
-import { runCase } from './harness';
+import { kyivDayFromEvalNow, kyivTimeFromEvalNow } from './eval-clock';
+import { fixtureExecutors, runCase } from './harness';
 import { scoreCase, summarize, type CaseResult } from './scorer';
 
 const STUB = { modelRef: 'stub:digest' };
 const STUB_EVAL_TIMEOUT_MS = 60_000;
+const KYIV_DATE = /^\d{4}-\d{2}-\d{2}$/u;
+const KYIV_DATE_TIME = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/u;
+const FUTURE_TIME_KEY = /^next/u;
+
+interface DatedValue {
+  key: string;
+  value: string;
+}
+
+const datedValuesIn = (value: unknown, key = ''): DatedValue[] => {
+  if (typeof value === 'string') {
+    return KYIV_DATE.test(value) || KYIV_DATE_TIME.test(value) ? [{ key, value }] : [];
+  }
+  if (Array.isArray(value)) return value.flatMap((item) => datedValuesIn(item, key));
+  if (value !== null && typeof value === 'object') {
+    return Object.entries(value).flatMap(([childKey, child]) => datedValuesIn(child, childKey));
+  }
+  return [];
+};
+
+const isAfterEvalNow = ({ value }: DatedValue): boolean =>
+  KYIV_DATE.test(value) ? value > kyivDayFromEvalNow(0) : value > kyivTimeFromEvalNow(0);
 
 describe('chat eval cases', () => {
   it('has 12 to 45 cases with unique ids', () => {
@@ -73,6 +100,38 @@ describe('chat eval cases', () => {
     );
     const injection = GA_EVAL_CASES.find((testCase) => testCase.id === 'ga-injection-in-campaign');
     expect(injection?.mustNotContain).toContain('evil.example');
+  });
+
+  it('dates no fixture after the eval clock, except a next-run time', () => {
+    const futureDates = EVAL_CASES.flatMap((testCase) =>
+      datedValuesIn(testCase.fixtures)
+        .filter((dated) => !FUTURE_TIME_KEY.test(dated.key))
+        .filter(isAfterEvalNow)
+        .map((dated) => `${testCase.id}: ${dated.key}=${dated.value}`),
+    );
+    expect(futureDates).toEqual([]);
+  });
+
+  it('notices a fixture dated after the eval clock', () => {
+    const tomorrow = { lastSuccessAtKyiv: kyivTimeFromEvalNow(24), day: kyivDayFromEvalNow(1) };
+    expect(datedValuesIn(tomorrow).filter(isAfterEvalNow)).toHaveLength(2);
+    expect(datedValuesIn({ nextRunAtKyiv: kyivTimeFromEvalNow(24) })[0]?.key).toBe('nextRunAtKyiv');
+  });
+
+  it('answers job_failures in every case, with no failures unless the case says otherwise', async () => {
+    for (const testCase of EVAL_CASES) {
+      const answer = fixtureExecutors(testCase)
+        .jobFailures({})
+        .catch((error: Error) => error.message);
+      await expect(answer).resolves.not.toEqual(expect.stringMatching(/^No fixture/u));
+    }
+    const quiet = EVAL_CASES.find((testCase) => testCase.id === 'backup-last')!;
+    const week = (await fixtureExecutors(quiet).jobFailures({ window: '7d' })) as RowList;
+    expect(week.withAllRows()).toMatchObject({
+      window: '7d',
+      countedKyivDays: { from: kyivDayFromEvalNow(-7), to: kyivDayFromEvalNow(0) },
+      failures: [],
+    });
   });
 
   it('expects the tool its own reference calls', () => {
@@ -237,6 +296,19 @@ describe('answer stems', () => {
     expect(NOTHING_RECORDED.test(answer)).toBe(true);
   });
 
+  it.each([
+    'лічильник у даних рахує весь день 22 листопада',
+    'сьогодні з початку дня 40 відмов',
+    'це число за цілу добу, не за шість годин',
+    'дані рахують повні дні',
+  ])('reads «%s» as counting whole days', (answer) => {
+    expect(WHOLE_DAYS_COUNTED.test(answer)).toBe(true);
+  });
+
+  it('does not read a six-hour count as whole days', () => {
+    expect(WHOLE_DAYS_COUNTED.test('за останні шість годин було 40 відмов')).toBe(false);
+  });
+
   it.each(['2 зауваження низької важливості', 'дрібні зауваження', 'minor findings'])(
     'reads «%s» as minor findings',
     (answer) => {
@@ -253,6 +325,20 @@ describe('language slips', () => {
   ])('catches the gendered address in «%s»', (answer) => {
     expect(GENDERED_ADDRESS.test(answer.toLowerCase())).toBe(true);
   });
+
+  it.each(['ви можете написати', 'ваш pr', 'напишу вам', 'для вас'])(
+    'catches the formal address in «%s»',
+    (answer) => {
+      expect(FORMAL_ADDRESS.test(answer)).toBe(true);
+    },
+  );
+
+  it.each(['назви файлів', 'з голови', 'на мові', 'важливо', 'напиши мені'])(
+    'leaves «%s» alone as no formal address',
+    (answer) => {
+      expect(FORMAL_ADDRESS.test(answer)).toBe(false);
+    },
+  );
 
   it('leaves neutral address alone', () => {
     expect(

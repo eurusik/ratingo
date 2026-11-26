@@ -17,6 +17,7 @@ import { MODEL_PRICES } from '../../src/config/models.config';
 import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
 import { InvestigationRunner } from '../../src/modules/chat/application/services/investigation.runner';
 import type { InvestigationExecutors } from '../../src/modules/chat/application/tools/investigation-executors';
+import { JobFailuresExecutor } from '../../src/modules/chat/application/tools/job-failures.executor';
 import type { ChatOutcome } from '../../src/modules/chat/domain/constants/chat.constants';
 import type { ConversationTurn } from '../../src/modules/chat/domain/entities/conversation-turn';
 import { withoutFlaggedNote } from '../../src/modules/chat/domain/policies/flagged-numbers.policy';
@@ -29,6 +30,7 @@ import {
 import type { ExternalTools } from '../../src/modules/chat/application/tools/external-tools';
 
 import { callKey, type EvalCase, type Fixture } from './eval-case';
+import { EVAL_NOW_MS } from './eval-clock';
 import {
   GA_SERVER,
   SimulatedGaConnection,
@@ -36,7 +38,6 @@ import {
 } from './google-analytics.fake-server';
 import type { CaseResult } from './scorer';
 
-const EVAL_NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
 const CHAT_ID = 'eval';
 const SNAPSHOT_STUB_HTML = 'SNAPSHOT';
 const EVAL_GA_ENV = {
@@ -61,12 +62,17 @@ const fixtureGaTools = async (testCase: EvalCase, clock: ClockPort): Promise<Ext
   };
 };
 
+const NO_RECORDED_FAILURES = new JobFailuresExecutor(
+  { since: async () => [] },
+  new FixedClock(EVAL_NOW_MS),
+);
+
 const matches = (fixture: Fixture, input: unknown): boolean =>
   Object.entries(fixture.match ?? {}).every(
     ([key, value]) => (input as Record<string, unknown> | null)?.[key] === value,
   );
 
-const fixtureExecutors = (testCase: EvalCase): InvestigationExecutors => {
+export const fixtureExecutors = (testCase: EvalCase): InvestigationExecutors => {
   const answer = (tool: string) => async (input?: unknown) => {
     const fixture = testCase.fixtures.find((entry) => entry.tool === tool && matches(entry, input));
     if (fixture === undefined) {
@@ -83,7 +89,9 @@ const fixtureExecutors = (testCase: EvalCase): InvestigationExecutors => {
     digestSnapshot: () => answer('digest_snapshot')(),
     recentChanges: answer('recent_changes'),
     askHappy: answer('ask_happy'),
-    jobFailures: answer('job_failures'),
+    jobFailures: testCase.fixtures.some((entry) => entry.tool === 'job_failures')
+      ? answer('job_failures')
+      : (input) => NO_RECORDED_FAILURES.run(input),
   };
 };
 

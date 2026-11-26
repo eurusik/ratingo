@@ -1,8 +1,22 @@
 import { SYSTEM_CARD } from '../../src/modules/chat/domain/constants/system-card.constants';
 import { describeCadence } from '../../src/modules/chat/domain/policies/schedule-cadence.policy';
 
-import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW, NOTHING_RECORDED } from './answer-stems';
+import {
+  FORMAL_ADDRESS,
+  HONEST_NO_DATA,
+  MINOR_FINDINGS,
+  NO_CODE_REVIEW,
+  NOTHING_RECORDED,
+  WHOLE_DAYS_COUNTED,
+} from './answer-stems';
+import { jobFailures } from './job-failure-fixtures';
 import { EvalKind, type EvalCase } from './eval-case';
+import {
+  clockTimeOf,
+  kyivDayFromEvalNow,
+  kyivTimeFromEvalNow,
+  spokenKyivDayFromEvalNow,
+} from './eval-clock';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 
 const unavailable = (reason: string) => ({ unavailable: reason });
@@ -11,7 +25,7 @@ const metrics = (template: string, data: unknown, extra: Record<string, unknown>
   template,
   window: '24h',
   offsetDays: 0,
-  evaluatedAtKyiv: '2026-11-22 14:00',
+  evaluatedAtKyiv: kyivTimeFromEvalNow(0),
   data,
   ...extra,
 });
@@ -19,28 +33,52 @@ const metrics = (template: string, data: unknown, extra: Record<string, unknown>
 const schedulerJob = (job: string, overrides: Record<string, unknown> = {}) => ({
   job,
   cadence: 'every six hours',
-  nextRunAtKyiv: '2026-11-22 16:00',
+  nextRunAtKyiv: kyivTimeFromEvalNow(2),
   ...overrides,
 });
 
-const jobFailures = (
-  failures: readonly Record<string, unknown>[],
-  extra: Record<string, unknown> = {},
-) => ({
-  window: '24h',
-  countedKyivDays: { from: '2026-11-21', to: '2026-11-22' },
-  ...extra,
-  failures,
-});
+const SYNC_SHOW_TIMEOUTS = jobFailures([
+  {
+    job: 'sync-show',
+    queue: 'ingestion',
+    errorClass: 'timeout',
+    failuresOnThoseDays: 9,
+    attemptsExhaustedOnThoseDays: 7,
+    firstFailedAtKyiv: kyivTimeFromEvalNow(-11),
+    lastFailedAtKyiv: kyivTimeFromEvalNow(-2),
+    lastMessage: 'TMDB API: Request timeout',
+  },
+]);
+
+const PR_464_MERGED_AT = kyivTimeFromEvalNow(-3);
+const TRENDING_LAST_FAILURE = kyivTimeFromEvalNow(-1, -45);
+const SYNC_SHOW_LAST_TIMEOUT = kyivTimeFromEvalNow(0, -20);
 
 const LATE_ALPHABET_JOB = 'scheduled-upcoming-movies-refresh-soon';
+const WEEKLY_JOB = 'scheduled-upcoming-movies-refresh-all';
+const DAILY_EXCEPT_MONDAY_LAST_HOURS_AGO = 5;
+const DAILY_EXCEPT_MONDAY_LAST_SUCCESS = kyivTimeFromEvalNow(-DAILY_EXCEPT_MONDAY_LAST_HOURS_AGO);
+const DAILY_EXCEPT_MONDAY_NEXT_RUN = kyivTimeFromEvalNow(43);
+const WEEKLY_LAST_HOURS_AGO = 149;
+const WEEKLY_LAST_SUCCESS = kyivTimeFromEvalNow(-WEEKLY_LAST_HOURS_AGO);
+const WEEKLY_NEXT_RUN = kyivTimeFromEvalNow(19);
+const OTHER_JOBS_LAST_HOURS_AGO = 6;
+const OTHER_JOBS_NEXT_RUN_IN_HOURS = 6;
 
 const everyScheduledJob = SYSTEM_CARD.scheduledJobs.map((entry) =>
   schedulerJob(entry.job, {
     cadence: describeCadence(entry.schedule),
-    lastSuccessAtKyiv: entry.job === LATE_ALPHABET_JOB ? '2026-11-26 09:00' : '2026-11-26 08:00',
-    lastSuccessHoursAgo: entry.job === LATE_ALPHABET_JOB ? 5.22 : 6.22,
-    nextRunAtKyiv: entry.job === LATE_ALPHABET_JOB ? '2026-11-27 09:00' : '2026-11-26 20:00',
+    ...(entry.job === LATE_ALPHABET_JOB
+      ? {
+          lastSuccessAtKyiv: DAILY_EXCEPT_MONDAY_LAST_SUCCESS,
+          lastSuccessHoursAgo: DAILY_EXCEPT_MONDAY_LAST_HOURS_AGO,
+          nextRunAtKyiv: DAILY_EXCEPT_MONDAY_NEXT_RUN,
+        }
+      : {
+          lastSuccessAtKyiv: kyivTimeFromEvalNow(-OTHER_JOBS_LAST_HOURS_AGO),
+          lastSuccessHoursAgo: OTHER_JOBS_LAST_HOURS_AGO,
+          nextRunAtKyiv: kyivTimeFromEvalNow(OTHER_JOBS_NEXT_RUN_IN_HOURS),
+        }),
   }),
 );
 
@@ -73,9 +111,10 @@ const SERVICE_CASES: readonly EvalCase[] = [
           ],
         }),
       },
+      { tool: 'job_failures', response: SYNC_SHOW_TIMEOUTS },
     ],
     expectedTools: ['metrics_query:queue_throughput'],
-    allowedExtraTools: ['metrics_query:queue_backlog_peak'],
+    allowedExtraTools: ['metrics_query:queue_backlog_peak', 'job_failures'],
     mustContain: [['ingestion'], ['7']],
     reference: {
       calls: [{ tool: 'metrics_query', input: { template: 'queue_throughput' } }],
@@ -125,6 +164,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['metrics_query:http_client_errors'],
+    allowedExtraTools: ['job_failures'],
     mustContain: [['31'], ['trakt']],
     reference: {
       calls: [
@@ -165,14 +205,14 @@ const SERVICE_CASES: readonly EvalCase[] = [
         response: {
           metric: 'new_users',
           days: [
-            { day: '2026-11-15', value: 2 },
-            { day: '2026-11-16', value: 1 },
-            { day: '2026-11-17', value: 3 },
-            { day: '2026-11-18', value: 2 },
-            { day: '2026-11-19', value: 1 },
-            { day: '2026-11-20', value: 2 },
-            { day: '2026-11-21', value: 3 },
-            { day: '2026-11-22', value: 1, partialDay: true },
+            { day: kyivDayFromEvalNow(-7), value: 2 },
+            { day: kyivDayFromEvalNow(-6), value: 1 },
+            { day: kyivDayFromEvalNow(-5), value: 3 },
+            { day: kyivDayFromEvalNow(-4), value: 2 },
+            { day: kyivDayFromEvalNow(-3), value: 1 },
+            { day: kyivDayFromEvalNow(-2), value: 2 },
+            { day: kyivDayFromEvalNow(-1), value: 3 },
+            { day: kyivDayFromEvalNow(0), value: 1, partialDay: true },
           ],
           totalOfCompleteDays: 14,
         },
@@ -200,8 +240,8 @@ const SERVICE_CASES: readonly EvalCase[] = [
         response: {
           metric: 'new_users',
           days: [
-            { day: '2026-11-21', value: 3 },
-            { day: '2026-11-22', value: 1, partialDay: true },
+            { day: kyivDayFromEvalNow(-1), value: 3 },
+            { day: kyivDayFromEvalNow(0), value: 1, partialDay: true },
           ],
           totalOfCompleteDays: 3,
         },
@@ -250,21 +290,23 @@ const SERVICE_CASES: readonly EvalCase[] = [
             jobs: [
               schedulerJob('sync-show', {
                 lastSuccessHoursAgo: 30,
-                lastSuccessAtKyiv: '2026-11-21 08:00',
+                lastSuccessAtKyiv: kyivTimeFromEvalNow(-30),
                 lastFailureHoursAgo: 2,
-                lastFailureAtKyiv: '2026-11-22 12:00',
+                lastFailureAtKyiv: kyivTimeFromEvalNow(-2),
               }),
               schedulerJob('sync-trending', {
                 lastSuccessHoursAgo: 5,
-                lastSuccessAtKyiv: '2026-11-22 09:00',
+                lastSuccessAtKyiv: kyivTimeFromEvalNow(-5),
               }),
             ],
           },
           { window: null },
         ),
       },
+      { tool: 'job_failures', response: SYNC_SHOW_TIMEOUTS },
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
+    allowedExtraTools: ['job_failures'],
     mustContain: [['sync-show']],
     reference: {
       calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
@@ -280,7 +322,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       {
         tool: 'digest_snapshot',
         response: {
-          date: '2026-11-22',
+          date: kyivDayFromEvalNow(0),
           level: 'note',
           blocks: [
             {
@@ -307,7 +349,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['digest_snapshot'],
-    allowedExtraTools: ['metrics_query:http_client_errors'],
+    allowedExtraTools: ['metrics_query:http_client_errors', 'job_failures'],
     mustContain: [['12'], ['ліміт']],
     mustNotContain: ['429', '4xx'],
     reference: {
@@ -323,7 +365,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       {
         tool: 'digest_snapshot',
         response: {
-          date: '2026-11-22',
+          date: kyivDayFromEvalNow(0),
           level: 'note',
           blocks: [
             {
@@ -341,9 +383,10 @@ const SERVICE_CASES: readonly EvalCase[] = [
           sources: [{ source: 'grafana', state: 'ok' }],
         },
       },
+      { tool: 'job_failures', response: SYNC_SHOW_TIMEOUTS },
     ],
     expectedTools: ['digest_snapshot'],
-    allowedExtraTools: ['metrics_query:queue_throughput'],
+    allowedExtraTools: ['metrics_query:queue_throughput', 'job_failures'],
     mustContain: [['ingestion', 'черг']],
     reference: {
       calls: [{ tool: 'digest_snapshot', input: {} }],
@@ -364,7 +407,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
               number: 464,
               title: 'feat(veronica): add a Telegram chat bot',
               into: 'development',
-              mergedAtKyiv: '2026-11-22 11:00',
+              mergedAtKyiv: PR_464_MERGED_AT,
             },
           ],
           deployments: [],
@@ -375,7 +418,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
     mustContain: [['464']],
     reference: {
       calls: [{ tool: 'recent_changes', input: { window: '24h' } }],
-      answer: 'У development змерджено pull request 464 про чат-бота Вероніки о 11:00.',
+      answer: `У development змерджено pull request 464 про чат-бота Вероніки о ${clockTimeOf(PR_464_MERGED_AT)}.`,
     },
   },
   {
@@ -392,9 +435,9 @@ const SERVICE_CASES: readonly EvalCase[] = [
             jobs: [
               schedulerJob('sync-trending', {
                 lastSuccessHoursAgo: 30,
-                lastSuccessAtKyiv: '2026-11-21 08:00',
+                lastSuccessAtKyiv: kyivTimeFromEvalNow(-30),
                 lastFailureHoursAgo: 2,
-                lastFailureAtKyiv: '2026-11-22 12:00',
+                lastFailureAtKyiv: kyivTimeFromEvalNow(-2),
               }),
             ],
           },
@@ -405,7 +448,10 @@ const SERVICE_CASES: readonly EvalCase[] = [
         tool: 'recent_changes',
         response: { window: '24h', pullRequests: [], deployments: [] },
       },
-      { tool: 'job_failures', response: jobFailures([]) },
+      {
+        tool: 'job_failures',
+        error: 'job_failures is unavailable: AI_READER_DATABASE_URL is not set',
+      },
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
     allowedExtraTools: [
@@ -415,7 +461,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       'metrics_query:queue_throughput',
       'metrics_query:http_client_errors',
     ],
-    mustContain: [['30'], ['sync-trending']],
+    mustContain: [['30', kyivTimeFromEvalNow(-30)], ['sync-trending']],
     reference: {
       calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
       answer:
@@ -438,8 +484,8 @@ const SERVICE_CASES: readonly EvalCase[] = [
               errorClass: 'rate_limit',
               failuresOnThoseDays: 12,
               attemptsExhaustedOnThoseDays: 3,
-              firstFailedAtKyiv: '2026-11-22 08:00',
-              lastFailedAtKyiv: '2026-11-22 12:15',
+              firstFailedAtKyiv: kyivTimeFromEvalNow(-6),
+              lastFailedAtKyiv: TRENDING_LAST_FAILURE,
               lastMessage: 'Trakt API: 429 Too Many Requests',
             },
           ],
@@ -455,9 +501,9 @@ const SERVICE_CASES: readonly EvalCase[] = [
             jobs: [
               schedulerJob('scheduled-trending', {
                 lastSuccessHoursAgo: 30,
-                lastSuccessAtKyiv: '2026-11-21 08:00',
+                lastSuccessAtKyiv: kyivTimeFromEvalNow(-30),
                 lastFailureHoursAgo: 2,
-                lastFailureAtKyiv: '2026-11-22 12:15',
+                lastFailureAtKyiv: TRENDING_LAST_FAILURE,
               }),
             ],
           },
@@ -479,8 +525,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
     mustNotContain: [/лог[иа]? сервера|server log/u],
     reference: {
       calls: [{ tool: 'job_failures', input: { job: 'trending' } }],
-      answer:
-        'Задача scheduled-trending за вчора й сьогодні впала 12 разів, з них 3 спроби були останніми: Trakt відповідає 429, тобто ми вперлися в ліміт запитів. Остання відмова о 12:15.',
+      answer: `Задача scheduled-trending за вчора й сьогодні впала 12 разів, з них 3 спроби були останніми: Trakt відповідає 429, тобто ми вперлися в ліміт запитів. Остання відмова о ${clockTimeOf(TRENDING_LAST_FAILURE)}.`,
     },
   },
   {
@@ -521,30 +566,35 @@ const SERVICE_CASES: readonly EvalCase[] = [
               errorClass: 'timeout',
               failuresOnThoseDays: 40,
               attemptsExhaustedOnThoseDays: 4,
-              firstFailedAtKyiv: '2026-11-22 01:10',
-              lastFailedAtKyiv: '2026-11-22 13:40',
+              firstFailedAtKyiv: kyivTimeFromEvalNow(-12, -50),
+              lastFailedAtKyiv: SYNC_SHOW_LAST_TIMEOUT,
               lastMessage: 'TMDB API: Request timeout',
             },
           ],
-          { window: '6h', countedKyivDays: { from: '2026-11-22', to: '2026-11-22' } },
+          {
+            window: '6h',
+            countedKyivDays: { from: kyivDayFromEvalNow(0), to: kyivDayFromEvalNow(0) },
+          },
         ),
       },
     ],
     expectedTools: ['job_failures'],
     allowedExtraTools: ['metrics_query:queue_throughput'],
-    mustContain: [['sync-show'], ['40'], [/сьогодні|за день|за добу|з початку дня/u]],
+    mustContain: [
+      ['sync-show'],
+      ['40'],
+      [WHOLE_DAYS_COUNTED, kyivDayFromEvalNow(0), spokenKyivDayFromEvalNow(0)],
+    ],
     mustNotContain: [/за (?:останні )?(?:6|шість) годин[^.]*40/u],
     reference: {
       calls: [{ tool: 'job_failures', input: { window: '6h' } }],
-      answer:
-        'Падає sync-show через тайм-аути TMDB: сьогодні з початку дня 40 відмов, 4 з них остаточні. Остання о 13:40, тож проблема свіжа, але скільки саме з них за останні шість годин, дані не кажуть.',
+      answer: `Падає sync-show через тайм-аути TMDB: сьогодні з початку дня 40 відмов, 4 з них остаточні. Остання о ${clockTimeOf(SYNC_SHOW_LAST_TIMEOUT)}, тож проблема свіжа, але скільки саме з них за останні шість годин, дані не кажуть.`,
     },
   },
   {
     id: 'weekly-job-looks-stale',
     kind: EvalKind.KNOWN,
-    question:
-      'Нічне завдання scheduled-upcoming-movies-refresh-all давно не запускалось успішно. Знайди проблему',
+    question: `Нічне завдання ${WEEKLY_JOB} давно не запускалось успішно. Знайди проблему`,
     fixtures: [
       {
         tool: 'metrics_query',
@@ -553,38 +603,36 @@ const SERVICE_CASES: readonly EvalCase[] = [
           'scheduler_last_runs',
           {
             jobs: [
-              schedulerJob('scheduled-upcoming-movies-refresh-all', {
-                lastSuccessAtKyiv: '2026-11-23 09:00',
-                lastSuccessHoursAgo: 77.22,
+              schedulerJob(WEEKLY_JOB, {
+                lastSuccessAtKyiv: WEEKLY_LAST_SUCCESS,
+                lastSuccessHoursAgo: WEEKLY_LAST_HOURS_AGO,
                 cadence: 'weekly on Monday',
-                nextRunAtKyiv: '2026-11-30 09:00',
+                nextRunAtKyiv: WEEKLY_NEXT_RUN,
               }),
-              schedulerJob('scheduled-upcoming-movies-refresh-soon', {
-                lastSuccessAtKyiv: '2026-11-26 09:00',
-                lastSuccessHoursAgo: 5.22,
+              schedulerJob(LATE_ALPHABET_JOB, {
+                lastSuccessAtKyiv: DAILY_EXCEPT_MONDAY_LAST_SUCCESS,
+                lastSuccessHoursAgo: DAILY_EXCEPT_MONDAY_LAST_HOURS_AGO,
                 cadence: 'daily except Monday',
-                nextRunAtKyiv: '2026-11-27 09:00',
+                nextRunAtKyiv: DAILY_EXCEPT_MONDAY_NEXT_RUN,
               }),
             ],
           },
-          { window: null, evaluatedAtKyiv: '2026-11-26 14:13' },
+          { window: null },
         ),
       },
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
-    allowedExtraTools: ['digest_snapshot', 'recent_changes'],
-    mustContain: [['тиж', 'понеділ'], ['2026-11-30 09:00']],
+    allowedExtraTools: ['digest_snapshot', 'recent_changes', 'job_failures'],
+    mustContain: [['тиж', 'понеділ'], [WEEKLY_NEXT_RUN]],
     reference: {
       calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
-      answer:
-        'Проблеми немає: ця задача за розкладом запускається раз на тиждень, у понеділок. Востаннє вона вдалася 2026-11-23 09:00, наступний запуск 2026-11-30 09:00.',
+      answer: `Проблеми немає: ця задача за розкладом запускається раз на тиждень, у понеділок. Востаннє вона вдалася ${WEEKLY_LAST_SUCCESS}, наступний запуск ${WEEKLY_NEXT_RUN}.`,
     },
   },
   {
     id: 'weekly-job-is-it-broken',
     kind: EvalKind.KNOWN,
-    question:
-      'scheduled-upcoming-movies-refresh-all уже понад півтори доби без успішного запуску. Вона зламалась?',
+    question: `${WEEKLY_JOB} уже кілька днів без успішного запуску. Вона зламалась?`,
     fixtures: [
       {
         tool: 'metrics_query',
@@ -593,25 +641,25 @@ const SERVICE_CASES: readonly EvalCase[] = [
           'scheduler_last_runs',
           {
             jobs: [
-              schedulerJob('scheduled-upcoming-movies-refresh-all', {
-                lastSuccessAtKyiv: '2026-11-23 09:00',
-                lastSuccessHoursAgo: 77.22,
+              schedulerJob(WEEKLY_JOB, {
+                lastSuccessAtKyiv: WEEKLY_LAST_SUCCESS,
+                lastSuccessHoursAgo: WEEKLY_LAST_HOURS_AGO,
                 cadence: 'weekly on Monday',
-                nextRunAtKyiv: '2026-11-30 09:00',
+                nextRunAtKyiv: WEEKLY_NEXT_RUN,
               }),
             ],
           },
-          { window: null, evaluatedAtKyiv: '2026-11-26 14:13' },
+          { window: null },
         ),
       },
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
-    allowedExtraTools: ['digest_snapshot', 'recent_changes'],
+    allowedExtraTools: ['digest_snapshot', 'recent_changes', 'job_failures'],
     mustContain: [
       ['не зламал', 'не збій', 'проблеми немає', 'все гаразд', 'усе гаразд'],
       ['тиж', 'понеділ'],
-      ['2026-11-23'],
-      ['2026-11-30'],
+      [WEEKLY_LAST_SUCCESS],
+      [WEEKLY_NEXT_RUN],
     ],
     mustNotContain: ['0 7 * * 1', 'cron'],
     reference: {
@@ -621,8 +669,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
           input: { template: 'scheduler_last_runs', job: 'refresh-all' },
         },
       ],
-      answer:
-        'Ні, не зламалась: вона запускається раз на тиждень, у понеділок. Останній успіх 2026-11-23 09:00, наступний запуск 2026-11-30 09:00.',
+      answer: `Ні, не зламалась: вона запускається раз на тиждень, у понеділок. Останній успіх ${WEEKLY_LAST_SUCCESS}, наступний запуск ${WEEKLY_NEXT_RUN}.`,
     },
   },
   {
@@ -657,7 +704,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
-    mustContain: [['2026-11-26 09:00'], ['2026-11-27 09:00']],
+    mustContain: [[DAILY_EXCEPT_MONDAY_LAST_SUCCESS], [DAILY_EXCEPT_MONDAY_NEXT_RUN]],
     reference: {
       calls: [
         {
@@ -665,7 +712,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
           input: { template: 'scheduler_last_runs', job: 'refresh-soon' },
         },
       ],
-      answer: `Задача ${LATE_ALPHABET_JOB} востаннє вдалася 2026-11-26 09:00, наступний запуск 2026-11-27 09:00.`,
+      answer: `Задача ${LATE_ALPHABET_JOB} востаннє вдалася ${DAILY_EXCEPT_MONDAY_LAST_SUCCESS}, наступний запуск ${DAILY_EXCEPT_MONDAY_NEXT_RUN}.`,
     },
   },
   {
@@ -705,7 +752,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       {
         tool: 'digest_snapshot',
         response: {
-          date: '2026-11-22',
+          date: kyivDayFromEvalNow(0),
           level: 'action',
           blocks: [
             {
@@ -791,7 +838,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
     ],
     expectedTools: ['ask_happy'],
     mustContain: [['хеппі, глянь'], ['469']],
-    mustNotContain: ['напишіть', 'попросіть', 'ваш'],
+    mustNotContain: ['напишіть', 'попросіть', FORMAL_ADDRESS],
     reference: {
       calls: [{ tool: 'ask_happy', input: { pull_number: 469 } }],
       answer:
@@ -809,7 +856,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       ['код'],
       ['хеппі, глянь'],
     ],
-    mustNotContain: ['напишіть', 'ваш', 'ви '],
+    mustNotContain: ['напишіть', FORMAL_ADDRESS],
     reference: {
       calls: [],
       answer:
@@ -877,14 +924,14 @@ const SERVICE_CASES: readonly EvalCase[] = [
               title: 'release: development into main',
               into: 'main',
               isRelease: true,
-              mergedAtKyiv: '2026-11-22 13:00',
+              mergedAtKyiv: kyivTimeFromEvalNow(-1),
             },
             {
               number: 473,
               title: 'feat(veronica): pick the pull request',
               into: 'development',
               isRelease: false,
-              mergedAtKyiv: '2026-11-22 11:30',
+              mergedAtKyiv: kyivTimeFromEvalNow(-2, -30),
             },
           ],
           deployments: [],

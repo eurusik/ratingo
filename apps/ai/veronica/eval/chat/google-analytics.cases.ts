@@ -33,11 +33,17 @@ const valueOf = (input: Record<string, unknown>, key: string): number =>
 const allOf = (values: readonly number[]): RegExp =>
   new RegExp(values.map((value) => `(?=[\\s\\S]*(?<!\\d)${value}(?!\\d))`).join(''), 'u');
 
+const dailyRowsOf = (input: Record<string, unknown>) =>
+  rowsOf({ ...input, dimensions: ['date', ...(input.dimensions as string[])] });
+
 const perDay = (input: Record<string, unknown>): RegExp =>
+  allOf(dailyRowsOf(input).map((row) => row.value));
+
+const perDayOf = (input: Record<string, unknown>, key: string): RegExp =>
   allOf(
-    rowsOf({ ...input, dimensions: ['date', ...(input.dimensions as string[])] }).map(
-      (row) => row.value,
-    ),
+    dailyRowsOf(input)
+      .filter((row) => row.keys.includes(key))
+      .map((row) => row.value),
   );
 
 const USERS_WEEK = report([], ['activeUsers']);
@@ -171,7 +177,10 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
     question: 'Звідки до нас приходять відвідувачі цього тижня?',
     fixtures: [],
     expectedTools: [REPORT],
-    mustContain: [['Organic Search', 'пошук'], [String(ORGANIC)]],
+    mustContain: [
+      ['Organic Search', 'пошук'],
+      [String(ORGANIC), perDayOf(CHANNELS, 'Organic Search')],
+    ],
     reference: {
       calls: [{ tool: REPORT, input: CHANNELS }],
       answer: `Найбільше сесій з пошуку (Organic Search): ${ORGANIC}. Прямих заходів ${DIRECT}.`,
