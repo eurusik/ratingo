@@ -25,6 +25,7 @@ export const API_KEY_LAST_CHECKED_METRIC = 'app.api_key.last_checked';
 export const EXTERNAL_API_FAILURES_METRIC = 'app.external_api.failures';
 export const TRAKT_ANTICIPATED_FETCHED_METRIC = 'app.trakt.anticipated.fetched';
 export const SCHEDULER_LAST_RUN_METRIC = 'app.scheduler.last_run_timestamp_seconds';
+export const SCHEDULER_NEXT_RUN_METRIC = 'app.scheduler.next_run_timestamp_seconds';
 export const SCHEDULER_RUN_RESULT = {
   SUCCESS: 'success',
   FAILURE: 'failure',

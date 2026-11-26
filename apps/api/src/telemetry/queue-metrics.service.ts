@@ -7,10 +7,11 @@ import {
   metrics,
   type ObservableGauge,
 } from '@opentelemetry/api';
-import { Queue } from 'bullmq';
+import { type JobSchedulerJson, Queue } from 'bullmq';
 
 import { errorMessage } from '@/common/utils/error.utils';
 
+import schedulerConfig from '../config/scheduler.config';
 import { CATALOG_POLICY_QUEUE } from '../modules/catalog-policy/public';
 import {
   BACKFILL_QUEUE,
@@ -21,14 +22,28 @@ import { MONITORING_QUEUE } from '../modules/monitoring/public';
 import { STATS_QUEUE } from '../modules/stats/public';
 import { USER_NOTIFICATIONS_QUEUE } from '../modules/user-actions/public';
 
-import { METER_NAME, QUEUE_JOB_STATES, QUEUE_JOBS_METRIC } from './telemetry.constants';
+import { scheduledJobNames } from './scheduler-last-run.gauge';
+import {
+  METER_NAME,
+  MS_PER_SECOND,
+  QUEUE_JOB_STATES,
+  QUEUE_JOBS_METRIC,
+  SCHEDULER_KEY_SEPARATOR,
+  SCHEDULER_NEXT_RUN_METRIC,
+} from './telemetry.constants';
+
+const scheduleOf = (scheduler: JobSchedulerJson): string | undefined =>
+  scheduler.pattern ?? (scheduler.every ? `every ${scheduler.every / MS_PER_SECOND}s` : undefined);
 
 @Injectable()
 export class QueueMetricsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(QueueMetricsService.name);
   private readonly queues: Queue[];
   private readonly meter: Meter = metrics.getMeter(METER_NAME);
+  private readonly allowedJobNames = scheduledJobNames();
+  private readonly schedulerKeyPrefix = `${schedulerConfig().envPrefix}${SCHEDULER_KEY_SEPARATOR}`;
   private gauge?: ObservableGauge;
+  private nextRunGauge?: ObservableGauge;
 
   constructor(
     @InjectQueue(INGESTION_QUEUE) ingestion: Queue,
@@ -54,22 +69,27 @@ export class QueueMetricsService implements OnModuleInit, OnModuleDestroy {
     this.gauge = this.meter.createObservableGauge(QUEUE_JOBS_METRIC, {
       description: 'BullMQ jobs per queue and state',
     });
-    this.meter.addBatchObservableCallback(this.observe, [this.gauge]);
+    this.nextRunGauge = this.meter.createObservableGauge(SCHEDULER_NEXT_RUN_METRIC, {
+      description:
+        'Unix time of the next planned run of each scheduled job, read from its BullMQ job scheduler, with its cron pattern and timezone; absent when the job is not scheduled',
+      unit: 's',
+    });
+    this.meter.addBatchObservableCallback(this.observe, [this.gauge, this.nextRunGauge]);
   }
 
   onModuleDestroy(): void {
-    if (this.gauge) {
-      this.meter.removeBatchObservableCallback(this.observe, [this.gauge]);
+    if (this.gauge && this.nextRunGauge) {
+      this.meter.removeBatchObservableCallback(this.observe, [this.gauge, this.nextRunGauge]);
     }
   }
 
   private readonly observe: BatchObservableCallback = async (result) => {
-    const { gauge } = this;
-    if (!gauge) {
+    const { gauge, nextRunGauge } = this;
+    if (!gauge || !nextRunGauge) {
       return;
     }
-    await Promise.all(
-      this.queues.map(async (queue) => {
+    await Promise.all([
+      ...this.queues.map(async (queue) => {
         try {
           const counts = await queue.getJobCounts(...QUEUE_JOB_STATES);
           QUEUE_JOB_STATES.forEach((state) =>
@@ -81,6 +101,31 @@ export class QueueMetricsService implements OnModuleInit, OnModuleDestroy {
           );
         }
       }),
-    );
+      ...this.queues.map(async (queue) => {
+        try {
+          const schedulers = await queue.getJobSchedulers();
+          for (const scheduler of schedulers) {
+            const jobName = this.toJobName(scheduler.key);
+            const schedule = scheduleOf(scheduler);
+            if (!jobName || !scheduler.next || !schedule) continue;
+            result.observe(nextRunGauge, scheduler.next / MS_PER_SECOND, {
+              job_name: jobName,
+              schedule,
+              tz: scheduler.tz ?? 'UTC',
+            });
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Failed to read job schedulers for queue ${queue.name}: ${errorMessage(error)}`,
+          );
+        }
+      }),
+    ]);
   };
+
+  private toJobName(key: string): string | undefined {
+    if (!key.startsWith(this.schedulerKeyPrefix)) return undefined;
+    const jobName = key.slice(this.schedulerKeyPrefix.length);
+    return this.allowedJobNames.has(jobName) ? jobName : undefined;
+  }
 }

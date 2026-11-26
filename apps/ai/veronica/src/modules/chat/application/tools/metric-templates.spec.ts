@@ -138,19 +138,132 @@ describe('metric templates: presentation', () => {
     });
   });
 
-  it('turns epoch seconds into hours ago', () => {
-    const nowMs = Date.UTC(2026, 10, 22, 12);
-    const reading = template(MetricTemplateName.SCHEDULER_LAST_RUNS).present(
-      [
-        sample('runs', (nowMs - 5 * 3_600_000) / 1000, {
-          job_name: 'sync-trending',
-          result: 'success',
-        }),
-      ],
-      nowMs,
-    );
-    expect(reading).toEqual({
-      data: [{ job: 'sync-trending', result: 'success', hoursAgo: 5 }],
+  describe('scheduler_last_runs', () => {
+    const nowMs = Date.UTC(2026, 10, 26, 12, 13);
+    const secondsAt = (ms: number) => ms / 1000;
+
+    it('joins last runs with the schedule and next run of each job', () => {
+      const reading = template(MetricTemplateName.SCHEDULER_LAST_RUNS).present(
+        [
+          {
+            name: 'runs',
+            samples: [
+              {
+                labels: { job_name: 'scheduled-upcoming-movies-refresh-all', result: 'success' },
+                value: secondsAt(Date.UTC(2026, 10, 23, 7, 0)),
+              },
+            ],
+          },
+          {
+            name: 'next',
+            samples: [
+              {
+                labels: {
+                  job_name: 'scheduled-upcoming-movies-refresh-all',
+                  schedule: '0 7 * * 1',
+                  tz: 'UTC',
+                },
+                value: secondsAt(Date.UTC(2026, 10, 30, 7, 0)),
+              },
+              {
+                labels: { job_name: 'scheduled-key-health', schedule: '0 * * * *', tz: 'UTC' },
+                value: secondsAt(Date.UTC(2026, 10, 26, 13, 0)),
+              },
+            ],
+          },
+        ],
+        nowMs,
+      );
+      expect(reading).toEqual({
+        data: {
+          jobs: [
+            {
+              job: 'scheduled-key-health',
+              lastSuccessHoursAgo: null,
+              lastSuccessAtKyiv: null,
+              lastFailureHoursAgo: null,
+              lastFailureAtKyiv: null,
+              scheduled: true,
+              schedule: '0 * * * *',
+              timezone: 'UTC',
+              nextRunAtKyiv: '2026-11-26 15:00',
+              nextRunInHours: 0.78,
+            },
+            {
+              job: 'scheduled-upcoming-movies-refresh-all',
+              lastSuccessHoursAgo: 77.22,
+              lastSuccessAtKyiv: '2026-11-23 09:00',
+              lastFailureHoursAgo: null,
+              lastFailureAtKyiv: null,
+              scheduled: true,
+              schedule: '0 7 * * 1',
+              timezone: 'UTC',
+              nextRunAtKyiv: '2026-11-30 09:00',
+              nextRunInHours: 90.78,
+            },
+          ],
+        },
+      });
+    });
+
+    it('marks a job that ran but has no scheduler as not scheduled', () => {
+      const reading = template(MetricTemplateName.SCHEDULER_LAST_RUNS).present(
+        [
+          {
+            name: 'runs',
+            samples: [
+              {
+                labels: { job_name: 'sync-trending', result: 'failure' },
+                value: secondsAt(nowMs - 5 * 3_600_000),
+              },
+            ],
+          },
+          {
+            name: 'next',
+            samples: [
+              {
+                labels: { job_name: 'sync-show', schedule: '0 3 * * *', tz: 'UTC' },
+                value: secondsAt(nowMs + 3_600_000),
+              },
+            ],
+          },
+        ],
+        nowMs,
+      );
+      expect(reading).toMatchObject({
+        data: {
+          jobs: [
+            { job: 'sync-show', scheduled: true },
+            { job: 'sync-trending', scheduled: false, lastFailureHoursAgo: 5 },
+          ],
+        },
+      });
+    });
+
+    it('says the schedules are unknown instead of calling every job unscheduled', () => {
+      const reading = template(MetricTemplateName.SCHEDULER_LAST_RUNS).present(
+        [
+          sample('runs', secondsAt(nowMs - 5 * 3_600_000), {
+            job_name: 'sync-trending',
+            result: 'success',
+          }),
+        ],
+        nowMs,
+      );
+      expect(reading).toEqual({
+        data: {
+          jobs: [
+            {
+              job: 'sync-trending',
+              lastSuccessHoursAgo: 5,
+              lastSuccessAtKyiv: '2026-11-26 09:13',
+              lastFailureHoursAgo: null,
+              lastFailureAtKyiv: null,
+            },
+          ],
+          schedules: 'метрик за цей запит немає',
+        },
+      });
     });
   });
 

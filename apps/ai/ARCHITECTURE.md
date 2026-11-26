@@ -444,7 +444,7 @@ Digest rules: verdict first; actions instead of observations; plain words; every
 
 ### Prerequisite in `apps/api`
 
-Per-job counters reset on every deploy, so a job that runs once a day looks like it never ran. Before the digest reports on schedules, `apps/api` exports `app.scheduler.last_run_timestamp_seconds` per job with a `result` attribute, matching `app.backup.last_run_timestamp_seconds` from `apps/pg-backup`. Until then, the digest says nothing about nightly jobs.
+Per-job counters reset on every deploy, so a job that runs once a day looks like it never ran. Before the digest reports on schedules, `apps/api` exports `app.scheduler.last_run_timestamp_seconds` per job with a `result` attribute, matching `app.backup.last_run_timestamp_seconds` from `apps/pg-backup`. Until then, the digest says nothing about nightly jobs. `QueueMetricsService` in `apps/api` also exports `app.scheduler.next_run_timestamp_seconds` per job, read from the BullMQ job schedulers of this environment's prefix, with `schedule` (the cron pattern, or `every <n>s`) and `tz` attributes. A job missing from it is not scheduled.
 
 ---
 
@@ -498,7 +498,7 @@ The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_B
 
 No Railway logs and no free SQL; those are left to DUM-E later.
 
-`ask_happy` ships in step 3; the other four shipped in step 2. `metrics_query` templates: `queue_throughput`, `queue_backlog_peak`, `http_client_errors`, `site_requests`, `site_latency_p95`, `site_memory_peak`, `scheduler_last_runs`, `backup_status`, `infra_health`. Their PromQL lives in `digest/domain/queries/prom-queries.ts`, shared with the digest collectors. Parameters are validated (queue and provider names, a three-digit status, a window from 1 hour to 7 days, an offset of 0 to 14 days) before they reach a query.
+`ask_happy` ships in step 3; the other four shipped in step 2. `metrics_query` templates: `queue_throughput`, `queue_backlog_peak`, `http_client_errors`, `site_requests`, `site_latency_p95`, `site_memory_peak`, `scheduler_last_runs`, `backup_status`, `infra_health`. `scheduler_last_runs` gives one row per job: last success and last failure (hours ago and Kyiv time), and, when the next-run metric answers, `scheduled`, `schedule`, `timezone`, `nextRunAtKyiv` and `nextRunInHours`; when it does not, the rows have no schedule fields and `schedules` says the data is missing. Their PromQL lives in `digest/domain/queries/prom-queries.ts`, shared with the digest collectors. Parameters are validated (queue and provider names, a three-digit status, a window from 1 hour to 7 days, an offset of 0 to 14 days) before they reach a query.
 
 ### Investigation run (step 2)
 

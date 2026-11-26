@@ -52,6 +52,18 @@ describe('RedisConversationStore', () => {
     ]);
   });
 
+  it('keeps the time of a turn and drops a time that is not a number', async () => {
+    const redis = new FakeRedis();
+    const store = storeOn(redis);
+    await store.append('10', [{ role: 'user', text: 'a', atMs: 1_700_000_000_000 }]);
+    const [key] = [...redis.lists.keys()];
+    redis.lists.get(key)?.push(JSON.stringify({ role: 'assistant', text: 'b', atMs: 'вчора' }));
+    await expect(store.recent('10')).resolves.toEqual([
+      { role: 'user', text: 'a', atMs: 1_700_000_000_000 },
+      { role: 'assistant', text: 'b' },
+    ]);
+  });
+
   it('keeps only the last 12 messages and expires them after 24 hours', async () => {
     const redis = new FakeRedis();
     const store = storeOn(redis);
