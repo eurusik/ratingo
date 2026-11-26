@@ -123,3 +123,44 @@ describe('StructuredLogger resilience', () => {
     expect(() => logger.info('hello')).not.toThrow();
   });
 });
+
+describe('StructuredLogger delivery', () => {
+  const identity = { service: 'api', environment: 'production' };
+
+  it('writes the line once when the shipper throws after the sink was written', () => {
+    const lines: string[] = [];
+    const logger = new StructuredLogger({
+      identity,
+      minLevel: 'info',
+      sink: { write: (line) => void lines.push(line) },
+      shipper: {
+        enqueue: () => {
+          throw new Error('queue broke');
+        },
+        flush: () => Promise.resolve(),
+      },
+    });
+
+    expect(() => logger.info('only once')).not.toThrow();
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0])).toMatchObject({ message: 'only once' });
+  });
+
+  it('still ships the record when the sink fails', () => {
+    const shipped: unknown[] = [];
+    const logger = new StructuredLogger({
+      identity,
+      minLevel: 'info',
+      sink: {
+        write: () => {
+          throw new Error('EPIPE');
+        },
+      },
+      shipper: { enqueue: (record) => void shipped.push(record), flush: () => Promise.resolve() },
+    });
+
+    logger.error('still shipped');
+
+    expect(shipped).toHaveLength(1);
+  });
+});

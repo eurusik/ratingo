@@ -92,12 +92,12 @@ Ratingo aggregates content from TMDB, JustWatch, and other providers. Not all co
 
 ### SOFT vs HARD Filters
 
-| Filter Type | Example                | Breakout Override? |
-| ----------- | ---------------------- | ------------------ |
-| **SOFT**    | Anime excluded         | Yes                |
-| **SOFT**    | Neutral country        | Yes                |
-| **HARD**    | Blocked country (RU)   | No                 |
-| **HARD**    | Blocked language       | No                 |
+| Filter Type | Example              | Breakout Override? |
+| ----------- | -------------------- | ------------------ |
+| **SOFT**    | Anime excluded       | Yes                |
+| **SOFT**    | Neutral country      | Yes                |
+| **HARD**    | Blocked country (RU) | No                 |
+| **HARD**    | Blocked language     | No                 |
 
 ### Breakout Rules
 
@@ -132,19 +132,19 @@ Different surfaces have different requirements:
 
 Titles must be readable for Ukrainian audience (Latin or Cyrillic characters):
 
-| Title                              | Readable | Reason              |
-| ---------------------------------- | -------- | ------------------- |
-| `The Matrix`                       | Yes      | Latin characters    |
-| `Матриця`                          | Yes      | Cyrillic            |
-| `ファイナルファンタジー`           | No       | Japanese only       |
-| `千と千尋の神隠し (Spirited Away)` | Yes      | Has Latin suffix    |
+| Title                              | Readable | Reason           |
+| ---------------------------------- | -------- | ---------------- |
+| `The Matrix`                       | Yes      | Latin characters |
+| `Матриця`                          | Yes      | Cyrillic         |
+| `ファイナルファンタジー`           | No       | Japanese only    |
+| `千と千尋の神隠し (Spirited Away)` | Yes      | Has Latin suffix |
 
 ### Evaluation Status
 
 ```typescript
-ELIGIBLE    // Content shown to users
-INELIGIBLE  // Content hidden
-REVIEW      // Manual review required (reserved)
+ELIGIBLE; // Content shown to users
+INELIGIBLE; // Content hidden
+REVIEW; // Manual review required (reserved)
 ```
 
 ### Evaluation Reasons
@@ -153,25 +153,25 @@ Every decision includes an explicit reason for audit:
 
 ```typescript
 // Missing data
-MISSING_REQUIRED_METADATA
-MISSING_ORIGIN_COUNTRY
-MISSING_ORIGINAL_LANGUAGE
-MISSING_TITLE
-MISSING_TRANSLATED_TITLE
-MISSING_OVERVIEW
+MISSING_REQUIRED_METADATA;
+MISSING_ORIGIN_COUNTRY;
+MISSING_ORIGINAL_LANGUAGE;
+MISSING_TITLE;
+MISSING_TRANSLATED_TITLE;
+MISSING_OVERVIEW;
 
 // Filtered
-BLOCKED_COUNTRY
-BLOCKED_LANGUAGE
-NEUTRAL_COUNTRY
-NEUTRAL_LANGUAGE
-EXCLUDED_CONTENT_CLASS
-MISSING_GLOBAL_SIGNALS
+BLOCKED_COUNTRY;
+BLOCKED_LANGUAGE;
+NEUTRAL_COUNTRY;
+NEUTRAL_LANGUAGE;
+EXCLUDED_CONTENT_CLASS;
+MISSING_GLOBAL_SIGNALS;
 
 // Success
-ALLOWED_COUNTRY
-ALLOWED_LANGUAGE
-BREAKOUT_ALLOWED
+ALLOWED_COUNTRY;
+ALLOWED_LANGUAGE;
+BREAKOUT_ALLOWED;
 ```
 
 ## Module Structure
@@ -298,10 +298,7 @@ export class IngestionService {
   ) {}
 
   async processMedia(media: MediaInput) {
-    const result = await this.policyEvaluator.evaluate(
-      media,
-      EvaluationContext.CATALOG,
-    );
+    const result = await this.policyEvaluator.evaluate(media, EvaluationContext.CATALOG);
 
     if (result.status === EligibilityStatus.ELIGIBLE) {
       // Add to catalog
@@ -314,11 +311,11 @@ export class IngestionService {
 
 Queue: `catalog-policy-queue` (single-threaded to avoid race conditions)
 
-| Job Type              | Handler                | Description                          |
-| --------------------- | ---------------------- | ------------------------------------ |
-| `RE_EVALUATE_ALL`     | ReEvaluateAllHandler   | Re-evaluate entire catalog           |
-| `EVALUATE_CATALOG_ITEM` | EvaluateItemHandler  | Evaluate single media item           |
-| `WATCHDOG`            | WatchdogHandler        | Monitor and finalize stale runs      |
+| Job Type                | Handler              | Description                     |
+| ----------------------- | -------------------- | ------------------------------- |
+| `RE_EVALUATE_ALL`       | ReEvaluateAllHandler | Re-evaluate entire catalog      |
+| `EVALUATE_CATALOG_ITEM` | EvaluateItemHandler  | Evaluate single media item      |
+| `WATCHDOG`              | WatchdogHandler      | Monitor and finalize stale runs |
 
 All jobs are **idempotent** and can be safely retried.
 
@@ -346,23 +343,23 @@ npm test -- --coverage src/modules/catalog-policy
 
 ### Key Test Files
 
-| File                                        | Coverage                    |
-| ------------------------------------------- | --------------------------- |
-| `domain/policy-engine.spec.ts`              | Core evaluation logic       |
-| `domain/gates/*.spec.ts`                    | Individual gate validation  |
-| `domain/evaluators/*.spec.ts`               | Breakout rule matching      |
-| `application/services/*.spec.ts`            | Service orchestration       |
+| File                             | Coverage                   |
+| -------------------------------- | -------------------------- |
+| `domain/policy-engine.spec.ts`   | Core evaluation logic      |
+| `domain/gates/*.spec.ts`         | Individual gate validation |
+| `domain/evaluators/*.spec.ts`    | Breakout rule matching     |
+| `application/services/*.spec.ts` | Service orchestration      |
 
 ## Integration Points
 
 ### With Other Modules
 
-| Module      | Integration                                      |
-| ----------- | ------------------------------------------------ |
-| Ingestion   | Uses `CATALOG_POLICY_EVALUATOR` port             |
-| Provider    | Resolves streaming offers to canonical IDs       |
-| Public API  | Queries evaluated media by context               |
-| Auth        | `AdminJwtGuard` protects policy endpoints        |
+| Module     | Integration                                |
+| ---------- | ------------------------------------------ |
+| Ingestion  | Uses `CATALOG_POLICY_EVALUATOR` port       |
+| Provider   | Resolves streaming offers to canonical IDs |
+| Public API | Queries evaluated media by context         |
+| Auth       | `AdminJwtGuard` protects policy endpoints  |
 
 ### Run Lifecycle
 

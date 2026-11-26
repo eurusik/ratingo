@@ -5,6 +5,7 @@
 The Policy Engine is the brain of Ratingo's content catalog. It decides which movies and TV shows appear in the catalog and which don't.
 
 **The problem it solves:** Ratingo aggregates content from many sources (TMDB, JustWatch, etc.), but not everything should be shown to Ukrainian users. We need to filter out:
+
 - Content from sanctioned countries (Russia, Belarus)
 - Content without proper metadata (missing title, country, language)
 - Low-quality content without ratings or reviews
@@ -14,14 +15,14 @@ The Policy Engine is the brain of Ratingo's content catalog. It decides which mo
 
 ## Glossary
 
-| Term | Meaning |
-|------|---------|
-| **Gate** | A validation checkpoint. Content must pass all gates to be eligible. Like airport security — fail any check, you don't get through. |
+| Term              | Meaning                                                                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Gate**          | A validation checkpoint. Content must pass all gates to be eligible. Like airport security — fail any check, you don't get through.                                       |
 | **Breakout Rule** | An escape hatch. Allows exceptional content to bypass certain restrictions. Example: "Squid Game" is Korean (normally blocked), but has 1M+ IMDb votes, so it breaks out. |
-| **SOFT Filter** | A restriction that breakout rules CAN override. Example: anime content class exclusion. |
-| **HARD Filter** | A restriction that breakout rules CANNOT override. Example: Russian origin country block. |
-| **Context** | Where the content will be displayed. Different surfaces have different requirements. Homepage needs overview text, "Now Playing" doesn't. |
-| **Eligibility** | The final verdict: ELIGIBLE (show it) or INELIGIBLE (hide it). |
+| **SOFT Filter**   | A restriction that breakout rules CAN override. Example: anime content class exclusion.                                                                                   |
+| **HARD Filter**   | A restriction that breakout rules CANNOT override. Example: Russian origin country block.                                                                                 |
+| **Context**       | Where the content will be displayed. Different surfaces have different requirements. Homepage needs overview text, "Now Playing" doesn't.                                 |
+| **Eligibility**   | The final verdict: ELIGIBLE (show it) or INELIGIBLE (hide it).                                                                                                            |
 
 ## Real-World Example
 
@@ -146,12 +147,14 @@ The engine processes media items through 6 sequential steps:
 ## Why SOFT vs HARD Filters?
 
 **SOFT filters** exist for content we generally don't want, but exceptions are okay:
+
 - Anime is excluded by default (niche audience)
 - But "Attack on Titan" with 1M+ votes? Let it through via breakout.
 - Neutral countries (Korea, Japan) are not in allowed list
 - But "Squid Game" with 1.2M votes? Global hit, let it through.
 
 **HARD filters** exist for content we NEVER want, regardless of popularity:
+
 - Russian propaganda film with 10M views? Still blocked.
 - This is a business/ethical decision, not a quality decision.
 
@@ -170,21 +173,21 @@ HARD filter (blocked country):
 
 Different display surfaces have different requirements:
 
-| Context | Global Gate | Overview Required | Use Case |
-|---------|-------------|-------------------|----------|
-| `catalog` | Yes | No | Main catalog listing |
-| `homepage` | Yes | Yes (60+ chars) | Featured on homepage |
-| `trending` | Yes | Yes (60+ chars) | Trending section |
-| `search` | Yes | No | Search results |
-| `now_playing` | No | No | Currently in theaters |
-| `new_digital` | No | No | New digital releases |
-| `upcoming` | No | No | Movies not released yet and shows awaiting their premiere (evaluated on sync while the release is ahead) |
+| Context       | Global Gate | Overview Required | Use Case                                                                                                 |
+| ------------- | ----------- | ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `catalog`     | Yes         | No                | Main catalog listing                                                                                     |
+| `homepage`    | Yes         | Yes (60+ chars)   | Featured on homepage                                                                                     |
+| `trending`    | Yes         | Yes (60+ chars)   | Trending section                                                                                         |
+| `search`      | Yes         | No                | Search results                                                                                           |
+| `now_playing` | No          | No                | Currently in theaters                                                                                    |
+| `new_digital` | No          | No                | New digital releases                                                                                     |
+| `upcoming`    | No          | No                | Movies not released yet and shows awaiting their premiere (evaluated on sync while the release is ahead) |
 
 **Why?** New releases (`now_playing`, `new_digital`) may not have enough votes/ratings yet, and unreleased movies (`upcoming`) have none, so we skip the global quality gate for them. Blocked countries/languages and title readability still apply.
 
 ```typescript
 // Same content, different results based on context
-evaluateEligibility(input, policy, { context: 'catalog' });     // May fail global gate
+evaluateEligibility(input, policy, { context: 'catalog' }); // May fail global gate
 evaluateEligibility(input, policy, { context: 'now_playing' }); // Skips global gate
 ```
 
@@ -192,14 +195,14 @@ evaluateEligibility(input, policy, { context: 'now_playing' }); // Skips global 
 
 Ukrainian users need to be able to read titles. Pure CJK titles are not readable:
 
-| Title | Readable? | Why |
-|-------|-----------|-----|
-| `The Matrix` | ✓ Yes | Latin characters |
-| `Матриця` | ✓ Yes | Cyrillic characters |
-| `ファイナルファンタジー` | ✗ No | Japanese only, no translation |
-| `千と千尋の神隠し (Spirited Away)` | ✓ Yes | Has Latin suffix |
-| `功夫` | ✗ No | CJK-only, no Latin/Cyrillic hint |
-| `2001` | ✓ Yes | Numbers only, no CJK |
+| Title                              | Readable? | Why                              |
+| ---------------------------------- | --------- | -------------------------------- |
+| `The Matrix`                       | ✓ Yes     | Latin characters                 |
+| `Матриця`                          | ✓ Yes     | Cyrillic characters              |
+| `ファイナルファンタジー`           | ✗ No      | Japanese only, no translation    |
+| `千と千尋の神隠し (Spirited Away)` | ✓ Yes     | Has Latin suffix                 |
+| `功夫`                             | ✗ No      | CJK-only, no Latin/Cyrillic hint |
+| `2001`                             | ✓ Yes     | Numbers only, no CJK             |
 
 The rule: **2+ Latin/Cyrillic characters → readable. Any CJK without Latin/Cyrillic → not readable.**
 
@@ -215,20 +218,20 @@ Breakout rules are evaluated by priority (lowest number = highest priority):
 breakoutRules: [
   {
     id: 'global-phenomenon',
-    priority: 0,  // Checked first
-    requirements: { minImdbVotes: 500000 }
+    priority: 0, // Checked first
+    requirements: { minImdbVotes: 500000 },
   },
   {
     id: 'quality-hit',
-    priority: 1,  // Checked second
-    requirements: { minImdbVotes: 100000, minQualityScoreNormalized: 0.7 }
+    priority: 1, // Checked second
+    requirements: { minImdbVotes: 100000, minQualityScoreNormalized: 0.7 },
   },
   {
     id: 'ukrainian-content',
-    priority: 2,  // Checked last
-    requirements: { originCountries: ['UA'], minImdbVotes: 1000 }
+    priority: 2, // Checked last
+    requirements: { originCountries: ['UA'], minImdbVotes: 1000 },
   },
-]
+];
 ```
 
 **Important:** Global quality gate must pass BEFORE breakout rules are evaluated. This prevents low-quality content from breaking out just because it meets vote thresholds.

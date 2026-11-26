@@ -1,7 +1,7 @@
 import { clearTimeout, setTimeout } from 'node:timers';
 
 import { formatterFor, type LogFormatter } from './log-format';
-import { buildLogRecord, type LogIdentity, type LogInput } from './log-record';
+import { buildLogRecord, type LogIdentity, type LogInput, type LogRecord } from './log-record';
 import { isLevelEnabled, type LogLevel } from './log-level';
 import type { LogShipper } from './log-shipper';
 
@@ -37,17 +37,28 @@ export class StructuredLogger {
     if (!isLevelEnabled(this.options.minLevel, input.level)) {
       return;
     }
+    const record = this.build(input);
+    if (record === undefined) {
+      return;
+    }
+    this.attempt(() => this.options.sink.write(this.formatter(record)));
+    this.attempt(() => this.options.shipper?.enqueue(record));
+  }
+
+  private build(input: LogInput): LogRecord | undefined {
     try {
-      const record = buildLogRecord(
-        this.options.identity,
-        input,
-        this.now(),
-        this.options.maxRecordBytes,
-      );
-      this.options.sink.write(this.formatter(record));
-      this.options.shipper?.enqueue(record);
+      return buildLogRecord(this.options.identity, input, this.now(), this.options.maxRecordBytes);
     } catch (error) {
       this.writeFallback(input, error);
+      return undefined;
+    }
+  }
+
+  private attempt(action: () => void): void {
+    try {
+      action();
+    } catch {
+      return;
     }
   }
 
