@@ -5,8 +5,8 @@ import { Button, Skeleton } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import type { CalendarMediaType } from '@/shared/api';
 import { useTranslation } from '@/shared/i18n';
-import { CALENDAR_MODES, type CalendarMode } from '../model/calendar-query';
-import { MODE_PILL, MODE_PILLS_SKELETON } from './calendar-layout';
+import { calendarModesFor, type CalendarMode } from '../model/calendar-query';
+import { MODE_PILL, modePillsSkeleton } from './calendar-layout';
 
 export interface ModePillsProps {
   type: CalendarMediaType;
@@ -27,11 +27,11 @@ export const ModePills = memo(function ModePills({
   const { dict } = useTranslation();
   const label = dict.calendar.modesLabel[type];
 
-  if (!mode) return <Skeleton className={cn(MODE_PILLS_SKELETON, className)} />;
+  if (!mode) return <Skeleton className={cn(modePillsSkeleton(type), className)} />;
 
   return (
     <div role="group" aria-label={label} className={cn('flex gap-2', className)}>
-      {CALENDAR_MODES.map((option) => {
+      {calendarModesFor(type).map((option) => {
         const isSelected = option === mode;
         return (
           <Button

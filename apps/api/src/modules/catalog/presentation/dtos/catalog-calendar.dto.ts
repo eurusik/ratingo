@@ -46,6 +46,15 @@ export class CatalogCalendarQueryDto {
   personalized?: string;
 
   @ApiPropertyOptional({
+    enum: BOOLEAN_FLAG_VALUES,
+    description:
+      'When true, lists only series and season premieres: the first episode of each regular season. Movies are not affected.',
+  })
+  @IsOptional()
+  @IsIn(BOOLEAN_FLAG_VALUES)
+  premieres?: string;
+
+  @ApiPropertyOptional({
     enum: CALENDAR_MEDIA_TYPE_VALUES,
     description: 'Limits the calendar to shows or movies.',
   })

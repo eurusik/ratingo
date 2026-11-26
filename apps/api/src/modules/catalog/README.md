@@ -324,9 +324,11 @@ import {
 
 ### Release calendar
 
-| Method | Path                | Description                                                              |
-| ------ | ------------------- | ------------------------------------------------------------------------ |
-| `GET`  | `/catalog/calendar` | Episodes and movies by day (`startDate`, `days`, `personalized`, `type`) |
+| Method | Path                | Description                                                                           |
+| ------ | ------------------- | ------------------------------------------------------------------------------------- |
+| `GET`  | `/catalog/calendar` | Episodes and movies by day (`startDate`, `days`, `personalized`, `premieres`, `type`) |
+
+Both episode calendars list shows that are eligible under the active policy in the `catalog` or the `upcoming` context, so a new show stays in the calendar from its premiere until it collects enough votes for `catalog`. `premieres=true` keeps only the first episode of each regular season.
 
 ### Search & Import
 

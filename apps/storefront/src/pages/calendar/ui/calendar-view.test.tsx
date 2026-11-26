@@ -305,4 +305,123 @@ describe('CalendarView', () => {
 
     expect(await screen.findByRole('heading', { name: 'Наступний тиждень' })).toBeInTheDocument();
   });
+
+  describe('premieres', () => {
+    const newShow = episode({
+      episodeId: 'trinity',
+      showId: 'trinity',
+      showTitle: 'Трініті',
+      seasonNumber: 1,
+      episodeNumber: 1,
+      showPopularity: 1,
+      airDate: '2026-11-14T19:00:00.000Z',
+    });
+    const returning = ['a', 'b', 'c', 'd'].map((showId, index) =>
+      episode({
+        episodeId: `return-${showId}`,
+        showId,
+        showTitle: `Повернення ${showId}`,
+        seasonNumber: 3,
+        episodeNumber: 1,
+        showPopularity: 100 - index,
+        airDate: '2026-11-14T19:00:00.000Z',
+      }),
+    );
+
+    it('switches to premieres and asks the API only for them', async () => {
+      signIn(null);
+      renderCalendar(range([OTHER_SHOW]));
+
+      fireEvent.click((await screen.findAllByRole('button', { name: 'Прем’єри' }))[0]);
+
+      await waitFor(() => expect(window.location.search).toBe('?mode=premieres'));
+      expect(calendarApi.getRange).toHaveBeenCalledWith({
+        startDate: '2026-11-08',
+        days: 8,
+        personalized: false,
+        premieres: true,
+        type: 'show',
+      });
+    });
+
+    it('lists every premiere of a day, new shows first, with their badges', async () => {
+      signIn(null);
+      window.history.replaceState(null, '', '/calendar?mode=premieres');
+      renderCalendar(range([...returning, newShow]));
+
+      const titles = await screen.findAllByText(/^(Трініті|Повернення \w)$/);
+      expect(titles.map((title) => title.textContent)).toEqual([
+        'Трініті',
+        'Повернення a',
+        'Повернення b',
+        'Повернення c',
+        'Повернення d',
+      ]);
+      expect(screen.getByText('Новий серіал')).toBeInTheDocument();
+      expect(screen.getAllByText('Сезон 3')).toHaveLength(4);
+      expect(screen.queryByRole('button', { name: /за популярністю/ })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Зберегти «Трініті»' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Почати дивитись: Повернення a' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /14 листопада, 5 прем’єр$/ })).toBeInTheDocument();
+    });
+
+    it('points an empty week to the nearest premiere and jumps there', async () => {
+      signIn(null);
+      window.history.replaceState(null, '', '/calendar?mode=premieres');
+      const later = { ...newShow, airDate: '2026-12-01T19:00:00.000Z' };
+      jest
+        .mocked(calendarApi.getRange)
+        .mockImplementation(async ({ startDate, premieres }) =>
+          premieres && startDate === '2026-11-15' ? range([later]) : range([]),
+        );
+      renderCalendar();
+
+      expect(await screen.findByText('Цього тижня прем’єр немає')).toBeInTheDocument();
+      expect(
+        await screen.findByText('Найближча прем’єра — «Трініті», 1 грудня'),
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Перейти до прем’єри' }));
+
+      await waitFor(() => expect(window.location.search).toBe('?week=2026-11-30&mode=premieres'));
+    });
+
+    it('points to the nearest premiere once this week’s premieres are over', async () => {
+      signIn(null);
+      window.history.replaceState(null, '', '/calendar?mode=premieres');
+      const aired = {
+        ...newShow,
+        episodeId: 'aired',
+        airDate: '2026-11-10T19:00:00.000Z',
+        isTracked: true,
+      };
+      const later = { ...newShow, airDate: '2026-12-01T19:00:00.000Z' };
+      jest.mocked(calendarApi.getRange).mockImplementation(async ({ startDate, premieres }) => {
+        if (!premieres) return range([]);
+        if (startDate === '2026-11-08') return range([aired]);
+        return startDate === '2026-11-15' ? range([later]) : range([]);
+      });
+      renderCalendar();
+
+      expect(await screen.findByText('До кінця тижня прем’єр більше немає')).toBeInTheDocument();
+      expect(screen.getByText(/Раніше цього тижня · 1 прем’єра/)).toBeInTheDocument();
+      expect(
+        await screen.findByText('Найближча прем’єра — «Трініті», 1 грудня'),
+      ).toBeInTheDocument();
+    });
+
+    it('keeps a saved new show in “Mine” before its premiere', async () => {
+      signIn({ id: 'user' });
+      jest
+        .mocked(calendarApi.getRange)
+        .mockResolvedValue(range([{ ...newShow, isSaved: true }], 0));
+      window.history.replaceState(null, '', '/calendar?mode=mine');
+      renderCalendar();
+
+      expect(await screen.findByText('Трініті')).toBeInTheDocument();
+      expect(screen.getByText(/у «Хочу подивитись»/)).toBeInTheDocument();
+    });
+  });
 });

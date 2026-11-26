@@ -9,11 +9,15 @@ import { capitalizeFirst } from '@/shared/lib';
 import { dayHeadingId, daySectionProps } from '../lib/day-anchor';
 import { formatDay } from '../model/calendar-format';
 import { summarizePast, type CalendarDay, type PastSummary } from '../model/week-layout';
+import { useCalendarContext } from './calendar-context';
 import { DayReleases } from './day-releases';
 
 const PAST_ROW = 'flex h-13 items-center gap-2 px-3.5 text-[15px] font-semibold';
 
-function pastLabel(summary: PastSummary, dict: Dictionary, locale: Locale): string {
+function pastLabel(
+  summary: PastSummary,
+  { dict, locale }: { dict: Dictionary; locale: Locale },
+): string {
   if (summary.kind === 'allWatched') return dict.calendar.past.allWatched;
   const forms = dict.calendar.past[summary.kind];
   return interpolate(pluralize(summary.count, forms, locale), { count: summary.count });
@@ -92,9 +96,10 @@ function PastDaysAccordion({ days, isOpen, onOpenChange, label }: PastDaysAccord
 }
 
 export function PastDays(props: PastDaysProps) {
-  const { dict, locale } = useTranslation();
-  const summary = summarizePast(props.days);
-  const label = pastLabel(summary, dict, locale);
+  const translation = useTranslation();
+  const { mode } = useCalendarContext();
+  const summary = summarizePast(props.days, mode);
+  const label = pastLabel(summary, translation);
 
   return (
     <section className={PAST_FRAME}>

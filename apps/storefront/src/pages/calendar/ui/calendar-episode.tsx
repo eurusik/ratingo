@@ -9,7 +9,7 @@ import { ReminderToggle } from '@/features/media-reminder';
 import { SaveButton } from '@/features/save-to-library';
 import type { CalendarEpisode } from '@/shared/api';
 import { showSeasonRoute } from '@/shared/config';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
 import { ForwardLink } from '@/shared/ui';
 import { episodeAction, episodeMark, type EpisodeMark } from '../model/day-plan';
 import { calendarEpisodeCode, episodeLine } from '../model/episode-line';
@@ -18,11 +18,19 @@ import { useCalendarContext } from './calendar-context';
 import { RELEASE_ROW } from './calendar-layout';
 
 const MARK_CLASS: Record<EpisodeMark, string> = {
-  premiere: 'bg-foreground text-background',
+  newSeries: 'bg-accent text-accent-foreground',
+  newSeason: 'bg-foreground text-background',
   finale: 'bg-warning text-warning-foreground',
 };
 
-function EpisodeMarkBadge({ mark }: { mark: EpisodeMark }) {
+function markLabel(mark: EpisodeMark, episode: CalendarEpisode, dict: Dictionary): string {
+  if (mark === 'newSeason') {
+    return interpolate(dict.calendar.newSeason, { season: episode.seasonNumber });
+  }
+  return dict.calendar[mark];
+}
+
+function EpisodeMarkBadge({ mark, episode }: { mark: EpisodeMark; episode: CalendarEpisode }) {
   const { dict } = useTranslation();
 
   return (
@@ -32,7 +40,7 @@ function EpisodeMarkBadge({ mark }: { mark: EpisodeMark }) {
         MARK_CLASS[mark],
       )}
     >
-      {dict.calendar[mark]}
+      {markLabel(mark, episode, dict)}
     </span>
   );
 }
@@ -113,7 +121,7 @@ export const CalendarEpisodeItem = memo(function CalendarEpisodeItem({
             isDimmed={episode.isWatched}
             fallbackPosterPath={episode.posterPath ?? undefined}
           />
-          {mark ? <EpisodeMarkBadge mark={mark} /> : null}
+          {mark ? <EpisodeMarkBadge mark={mark} episode={episode} /> : null}
         </span>
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className={cn('truncate text-[15px] font-bold', episode.isWatched && 'text-muted')}>

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, asc, desc, eq, gte, isNotNull, isNull, lt } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
@@ -9,6 +9,7 @@ import { ImageMapper } from '@/common/mappers/image.mapper';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
+import { showPremiereInstant } from '@/database/show-premiere-conditions';
 import type {
   AnticipatedShow,
   AnticipatedShowsQueryOptions,
@@ -26,6 +27,13 @@ interface AnticipatedShowRow {
   listCount: number;
 }
 
+function premieresWithin(
+  premiereDate: SQL<Date | null>,
+  { from, toExclusive }: AnticipatedShowsQueryOptions,
+): SQL {
+  return sql`${premiereDate} >= ${from.toISOString()} and ${premiereDate} < ${toExclusive.toISOString()}`;
+}
+
 @Injectable()
 export class AnticipatedShowsQuery {
   private readonly logger = new Logger(AnticipatedShowsQuery.name);
@@ -36,6 +44,7 @@ export class AnticipatedShowsQuery {
   ) {}
 
   execute(options: AnticipatedShowsQueryOptions): Promise<AnticipatedShow[]> {
+    const premiereDate = showPremiereInstant();
     return withDbError(
       'fetch anticipated shows',
       this.logger,
@@ -46,7 +55,7 @@ export class AnticipatedShowsQuery {
             slug: schema.mediaItems.slug,
             title: schema.mediaItems.title,
             posterPath: schema.mediaItems.posterPath,
-            premiereDate: schema.mediaItems.releaseDate,
+            premiereDate,
             listCount: schema.traktAnticipatedShows.listCount,
           })
           .from(schema.traktAnticipatedShows)
@@ -63,13 +72,12 @@ export class AnticipatedShowsQuery {
               eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
               isNull(schema.mediaItems.deletedAt),
               isNotNull(schema.mediaItems.posterPath),
-              gte(schema.mediaItems.releaseDate, options.from),
-              lt(schema.mediaItems.releaseDate, options.toExclusive),
+              premieresWithin(premiereDate, options),
               eligibleUnderActivePolicy([EvaluationContext.UPCOMING]),
             ),
           )
           .orderBy(
-            asc(schema.mediaItems.releaseDate),
+            asc(premiereDate),
             desc(schema.traktAnticipatedShows.listCount),
             asc(schema.mediaItems.id),
           )

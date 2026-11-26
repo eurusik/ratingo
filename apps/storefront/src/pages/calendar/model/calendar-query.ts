@@ -1,5 +1,5 @@
 import type { CalendarMediaType, CalendarRangeQuery } from '@/shared/api';
-import { CALENDAR_ROUTE, CALENDAR_TYPE_PARAM } from '@/shared/config';
+import { CALENDAR_MODE_PARAM, CALENDAR_ROUTE, CALENDAR_TYPE_PARAM } from '@/shared/config';
 import {
   addDays,
   isDateKey,
@@ -9,7 +9,7 @@ import {
   type DateKey,
 } from './calendar-dates';
 
-export const CALENDAR_MODES = ['mine', 'all'] as const;
+const CALENDAR_MODES = ['mine', 'premieres', 'all'] as const;
 
 export const CALENDAR_TYPES = ['show', 'movie'] as const satisfies readonly CalendarMediaType[];
 
@@ -19,6 +19,15 @@ const RANGE_LEAD_DAYS = 1;
 const UPCOMING_LOOKAHEAD_DAYS = 90;
 
 export type CalendarMode = (typeof CALENDAR_MODES)[number];
+
+const MODES_BY_TYPE = {
+  show: CALENDAR_MODES,
+  movie: ['mine', 'all'],
+} as const satisfies Record<CalendarMediaType, readonly CalendarMode[]>;
+
+export function calendarModesFor(type: CalendarMediaType): readonly CalendarMode[] {
+  return MODES_BY_TYPE[type];
+}
 
 export interface CalendarSearchParams {
   week?: string | string[];
@@ -36,8 +45,8 @@ function single(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function isCalendarMode(value: string | undefined): value is CalendarMode {
-  return CALENDAR_MODES.some((mode) => mode === value);
+function modeFor(type: CalendarMediaType, value: string | undefined): CalendarMode | undefined {
+  return calendarModesFor(type).find((mode) => mode === value);
 }
 
 function isCalendarType(value: string | undefined): value is CalendarMediaType {
@@ -54,15 +63,15 @@ export function parseCalendarLocation(
   today: DateKey,
 ): CalendarLocation {
   const week = single(params.week);
-  const mode = single(params.mode);
+  const type = parseCalendarType(params.type);
   const requestedWeekStart = week && isDateKey(week) ? weekStartOf(week) : undefined;
   return {
     weekStart:
       requestedWeekStart && isSupportedWeek(requestedWeekStart)
         ? requestedWeekStart
         : weekStartOf(today),
-    mode: isCalendarMode(mode) ? mode : undefined,
-    type: parseCalendarType(params.type),
+    mode: modeFor(type, single(params.mode)),
+    type,
   };
 }
 
@@ -70,12 +79,20 @@ export function calendarHref({ weekStart, mode, type }: CalendarLocation, today:
   const params = new URLSearchParams();
   if (type !== DEFAULT_CALENDAR_TYPE) params.set(CALENDAR_TYPE_PARAM, type);
   if (weekStart !== weekStartOf(today)) params.set('week', weekStart);
-  if (mode) params.set('mode', mode);
+  if (mode) params.set(CALENDAR_MODE_PARAM, mode);
   const query = params.toString();
   return query ? `${CALENDAR_ROUTE}?${query}` : CALENDAR_ROUTE;
 }
 
 type RangeWindow = Pick<CalendarRangeQuery, 'startDate' | 'days'>;
+
+type RangeFilters = Pick<CalendarRangeQuery, 'personalized' | 'premieres'>;
+
+export function rangeFiltersFor(mode: CalendarMode): RangeFilters {
+  return mode === 'premieres'
+    ? { personalized: false, premieres: true }
+    : { personalized: mode === 'mine' };
+}
 
 export function weekRequest(weekStart: DateKey): RangeWindow {
   return {

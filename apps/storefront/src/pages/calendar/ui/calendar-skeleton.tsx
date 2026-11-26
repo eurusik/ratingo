@@ -12,7 +12,7 @@ import {
   RELEASE_LIST,
   RELEASE_ROW,
   HEADER_ROW,
-  MODE_PILLS_SKELETON,
+  modePillsSkeleton,
   PHONE_TYPE_ROW,
   WEEK_ARROW_SIZE,
   WEEK_STRIP_PANE,
@@ -118,11 +118,11 @@ export function CalendarPageSkeleton({ label }: { label: string }) {
           <Skeleton className="h-10 w-32 rounded-xl" />
         </div>
         <span className="h-7 w-px shrink-0 bg-separator max-md:hidden" />
-        <Skeleton className={cn(MODE_PILLS_SKELETON, 'max-md:hidden')} />
+        <Skeleton className={cn(modePillsSkeleton('show'), 'max-md:hidden')} />
       </div>
       <div aria-hidden className={WEEK_BAR_FRAME}>
         <div className="flex min-h-11 items-center gap-1.5">
-          <Skeleton className={cn(MODE_PILLS_SKELETON, 'md:hidden')} />
+          <Skeleton className={cn(modePillsSkeleton('show'), 'md:hidden')} />
           <span className="flex-1 md:hidden" />
           <Skeleton className="me-1 size-7.5 shrink-0 rounded-[9px] md:hidden" />
           <div className="flex flex-1 flex-col gap-1.5 max-md:hidden">

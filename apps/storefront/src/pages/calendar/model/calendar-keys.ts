@@ -28,6 +28,7 @@ export function isSameRangeAfterSignIn(
     previous.viewerId === null &&
     typeof next.viewerId === 'string' &&
     previous.personalized === next.personalized &&
+    previous.premieres === next.premieres &&
     previous.type === next.type &&
     previous.startDate === next.startDate &&
     previous.days === next.days

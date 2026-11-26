@@ -52,12 +52,82 @@ describe('planDay', () => {
   });
 });
 
+describe('planDay in “Premieres”', () => {
+  const premiere = (showId: string, seasonNumber: number, showPopularity = 10) =>
+    episode({ showId, seasonNumber, episodeNumber: 1, showPopularity });
+
+  it('lists every premiere of the day without folding unpopular shows', () => {
+    const premieres = ['a', 'b', 'c', 'd', 'e'].map((showId, index) =>
+      premiere(showId, 2, 100 - index),
+    );
+    const plan = planDay(premieres, 'premieres');
+
+    expect(plan.visible).toEqual(premieres);
+    expect(plan.hiddenShows).toBe(0);
+  });
+
+  it('puts new shows before returning ones and keeps the order within each group', () => {
+    const plan = planDay(
+      [premiere('back', 3, 90), premiere('new', 1, 5), premiere('back-too', 2, 50)],
+      'premieres',
+    );
+
+    expect(plan.visible.map((item) => item.showId)).toEqual(['new', 'back', 'back-too']);
+  });
+
+  it('shows one card per show when a whole season drops at once', () => {
+    const binge = [1, 2, 3].map((episodeNumber) =>
+      episode({ showId: 'binge', seasonNumber: 1, episodeNumber }),
+    );
+    const plan = planDay(binge, 'premieres');
+
+    expect(plan.visible).toEqual([binge[0]]);
+  });
+
+  it('leaves out regular episodes and specials', () => {
+    const plan = planDay(
+      [
+        episode({ seasonNumber: 2, episodeNumber: 4 }),
+        episode({ showId: 'special', seasonNumber: 0, episodeNumber: 1 }),
+      ],
+      'premieres',
+    );
+
+    expect(plan.visible).toEqual([]);
+  });
+
+  it('keeps only season premieres, each show once, new shows first', () => {
+    const arbitraryEpisode = fc
+      .record({
+        showId: fc.constantFrom('a', 'b', 'c', 'd'),
+        seasonNumber: fc.nat(4),
+        episodeNumber: fc.integer({ min: 1, max: 3 }),
+      })
+      .map((fields) => episode(fields));
+    fc.assert(
+      fc.property(fc.array(arbitraryEpisode, { maxLength: 30 }), (episodes) => {
+        const { visible } = planDay(episodes, 'premieres');
+        const showIds = visible.map((item) => item.showId);
+        const isNewShow = visible.map((item) => item.seasonNumber === 1);
+        expect(new Set(showIds).size).toBe(showIds.length);
+        expect(visible.every((item) => item.episodeNumber === 1 && item.seasonNumber > 0)).toBe(
+          true,
+        );
+        expect(isNewShow).toEqual(
+          [...isNewShow].sort((left, right) => Number(right) - Number(left)),
+        );
+      }),
+    );
+  });
+});
+
 describe('episodeMark', () => {
-  it('marks premieres and known finales', () => {
-    expect(episodeMark(episode({ episodeNumber: 1 }))).toBe('premiere');
+  it('tells new shows from new seasons and marks known finales', () => {
+    expect(episodeMark(episode({ seasonNumber: 1, episodeNumber: 1 }))).toBe('newSeries');
+    expect(episodeMark(episode({ seasonNumber: 3, episodeNumber: 1 }))).toBe('newSeason');
     expect(episodeMark(episode({ episodeNumber: 8, seasonEpisodeCount: 8 }))).toBe('finale');
     expect(episodeMark(episode({ episodeNumber: 8, seasonEpisodeCount: null }))).toBeUndefined();
-    expect(episodeMark(episode({ episodeNumber: 1, seasonEpisodeCount: 1 }))).toBe('premiere');
+    expect(episodeMark(episode({ episodeNumber: 1, seasonEpisodeCount: 1 }))).toBe('newSeries');
     expect(episodeMark(episode({ seasonNumber: 0, episodeNumber: 1 }))).toBeUndefined();
   });
 });
@@ -85,14 +155,24 @@ describe('episodeAction', () => {
     );
   });
 
-  it('offers to start once the series premiere has aired, or for a season premiere', () => {
-    const allMode = { ...context, mode: 'all' as const };
-    expect(
-      episodeAction(episode({ seasonNumber: 1, episodeNumber: 1, airDate: AIRED }), allMode),
-    ).toBe('start');
-    expect(
-      episodeAction(episode({ seasonNumber: 3, episodeNumber: 1, airDate: FUTURE }), allMode),
-    ).toBe('start');
+  it.each(['all', 'premieres'] as const)(
+    'offers to start in “%s” once the series premiere has aired, or for a season premiere',
+    (mode) => {
+      const broadMode = { ...context, mode };
+      expect(
+        episodeAction(episode({ seasonNumber: 1, episodeNumber: 1, airDate: AIRED }), broadMode),
+      ).toBe('start');
+      expect(
+        episodeAction(episode({ seasonNumber: 3, episodeNumber: 1, airDate: FUTURE }), broadMode),
+      ).toBe('start');
+    },
+  );
+
+  it('offers to save an unreleased new show in “Premieres”', () => {
+    const premiere = episode({ seasonNumber: 1, episodeNumber: 1, airDate: FUTURE });
+    expect(episodeAction(premiere, { ...context, mode: 'premieres', viewer: 'guest' })).toBe(
+      'save',
+    );
   });
 
   it('hides actions while the viewer is unknown', () => {
