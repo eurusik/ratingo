@@ -60,7 +60,7 @@ class TimingSession {
       .map(([k, v]) => `${k}=${v ?? 'null'}`)
       .join(' ');
 
-    logger.log(`[TIMING] ${this.operation} ${contextStr} ${parts.join(' ')}`);
+    logger.debug(`[TIMING] ${this.operation} ${contextStr} ${parts.join(' ')}`);
   }
 
   elapsed(): number {

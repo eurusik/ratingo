@@ -92,9 +92,12 @@ export class SubscriptionTriggerService {
       await this.persistNotifications(events);
     }
 
-    this.logger.log(
-      `Processed diff for show ${diff.tmdbId}: ${events.length} notifications generated`,
-    );
+    const summary = `Processed diff for show ${diff.tmdbId}: ${events.length} notifications generated`;
+    if (events.length > 0) {
+      this.logger.log(summary);
+    } else {
+      this.logger.debug(summary);
+    }
 
     return events;
   }

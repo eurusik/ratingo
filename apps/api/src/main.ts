@@ -18,6 +18,9 @@ import {
 } from './swagger.config';
 import { registerHttpMetrics } from './telemetry/http-metrics';
 
+const appLogger = createAppLogger();
+Logger.overrideLogger(appLogger);
+
 const logger = new Logger('Bootstrap');
 
 /**
@@ -36,9 +39,14 @@ async function bootstrap(): Promise<void> {
 
   const { AppModule } = await import('./app.module');
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, createHttpAdapter(), {
-    logger: createAppLogger(),
+    logger: appLogger,
   });
 
+  app.enableShutdownHooks();
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .addHook('onClose', () => appLogger.flush());
   registerHttpMetrics(app.getHttpAdapter().getInstance());
 
   await configureHttpApp(app);
@@ -62,16 +70,17 @@ async function bootstrap(): Promise<void> {
   // Start server
   const port = process.env.PORT || 3001;
   await app.listen(port, '::');
-  console.log(`Application is running on: ${await app.getUrl()}`);
+  logger.log(`Application is running on: ${await app.getUrl()}`);
 
   // Start event loop lag monitor (controlled by DevTiming)
   DevTiming.startEventLoopMonitor();
 }
 
-bootstrap().catch((error: unknown) => {
+bootstrap().catch(async (error: unknown) => {
   logger.error(
     `Application failed to start: ${errorMessage(error)}`,
     error instanceof Error ? error.stack : undefined,
   );
+  await appLogger.flush();
   process.exit(1);
 });

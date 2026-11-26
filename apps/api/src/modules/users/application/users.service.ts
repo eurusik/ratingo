@@ -137,7 +137,7 @@ export class UsersService {
     },
   ): Promise<User> {
     const email = normalizeEmail(data.email);
-    this.logger.debug(`Creating user ${email}`);
+    this.logger.debug('Creating user');
     return this.usersRepository.create({
       email,
       username: data.username,

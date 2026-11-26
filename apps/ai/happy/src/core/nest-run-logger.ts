@@ -14,6 +14,6 @@ export class NestRunLogger implements RunLogger {
   private readonly logger = new Logger('Run');
 
   info(event: string, fields: Record<string, unknown>): void {
-    this.logger.log(`${event} ${JSON.stringify(fields)}`);
+    this.logger.log({ ...fields, message: event });
   }
 }

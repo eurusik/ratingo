@@ -32,18 +32,23 @@ export const shutdownWorker = (
     `Worker shutdown exceeded ${timeoutMs}ms; unfinished jobs are retried after the BullMQ stall check`,
   );
 
-const exitAfter = (shutdown: Promise<void>): Promise<void> =>
+const exitAfter = (shutdown: Promise<void>, flushLogs: () => Promise<void>): Promise<void> =>
   shutdown
+    .then(() => flushLogs())
     .then(() => process.exit(0))
-    .catch((error: unknown) => {
+    .catch(async (error: unknown) => {
       logger.error(
         `Worker shutdown failed: ${errorMessage(error)}`,
         error instanceof Error ? error.stack : undefined,
       );
+      await flushLogs();
       process.exit(1);
     });
 
-export function closeWorkerOnSignals(app: INestApplicationContext): void {
+export function closeWorkerOnSignals(
+  app: INestApplicationContext,
+  flushLogs: () => Promise<void> = () => Promise.resolve(),
+): void {
   let shutdown: Promise<void> | undefined;
 
   const onSignal = (signal: NodeJS.Signals) => {
@@ -52,7 +57,7 @@ export function closeWorkerOnSignals(app: INestApplicationContext): void {
       return;
     }
     logger.log(`Received ${signal}, draining workers`);
-    shutdown = exitAfter(shutdownWorker(app));
+    shutdown = exitAfter(shutdownWorker(app), flushLogs);
   };
 
   SHUTDOWN_SIGNALS.forEach((signal) => process.on(signal, onSignal));

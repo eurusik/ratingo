@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
+import { WithJobLogContext } from '@/common/logging/with-job-log-context.decorator';
 import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
@@ -82,6 +83,7 @@ export class SyncWorker extends WorkerHost {
    * Routes jobs to appropriate pipeline handlers.
    * BullMQ handles concurrency and retries automatically.
    */
+  @WithJobLogContext(INGESTION_QUEUE)
   async process(
     job: Job<
       Partial<SyncMediaJobData> & {

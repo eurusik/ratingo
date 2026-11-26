@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 
 import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '@/common/constants';
+import { WithJobLogContext } from '@/common/logging/with-job-log-context.decorator';
 import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 import { STATS_QUEUE, STATS_JOBS } from '@/modules/stats/stats.constants';
@@ -40,6 +41,7 @@ export class StatsWorker extends WorkerHost {
    * @param {Job} job - BullMQ job containing type and data
    * @returns {Promise<void>} Nothing
    */
+  @WithJobLogContext(STATS_QUEUE)
   async process(job: Job<StatsJobData>): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
 
