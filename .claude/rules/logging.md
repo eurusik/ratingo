@@ -46,4 +46,5 @@ Logs must stay cheap in Railway memory, CPU and network, and in Grafana Cloud. T
 
 ## Process
 - Production processes start with `node`, not `npm run`, so there are no `npm notice` or `npm error` lines and SIGTERM is a normal stop
+- The api closes on SIGTERM in this order: HTTP server (in-flight requests finish), then Nest providers (`onModuleDestroy`, e.g. Redis), then the log flush; do not use `enableShutdownHooks()` there, because Nest destroys providers before it closes the server
 - A service that ends the process itself calls `await logger.flush()` first; the shipper batches for one second, and stdout stays the source of truth if a batch is lost

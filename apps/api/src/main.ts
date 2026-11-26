@@ -11,6 +11,7 @@ import { getAppRole, runsHttp } from './common/runtime/app-role';
 import { DevTiming } from './common/utils/dev-timing';
 import { errorMessage } from './common/utils/error.utils';
 import { configureHttpApp, createHttpAdapter } from './http-app.setup';
+import { closeHttpOnSignals } from './http-shutdown';
 import {
   applyStandardErrorResponses,
   buildSwaggerConfig,
@@ -42,11 +43,6 @@ async function bootstrap(): Promise<void> {
     logger: appLogger,
   });
 
-  app.enableShutdownHooks();
-  app
-    .getHttpAdapter()
-    .getInstance()
-    .addHook('onClose', () => appLogger.flush());
   registerHttpMetrics(app.getHttpAdapter().getInstance());
 
   await configureHttpApp(app);
@@ -71,6 +67,7 @@ async function bootstrap(): Promise<void> {
   const port = process.env.PORT || 3001;
   await app.listen(port, '::');
   logger.log(`Application is running on: ${await app.getUrl()}`);
+  closeHttpOnSignals(app, () => appLogger.flush());
 
   // Start event loop lag monitor (controlled by DevTiming)
   DevTiming.startEventLoopMonitor();
