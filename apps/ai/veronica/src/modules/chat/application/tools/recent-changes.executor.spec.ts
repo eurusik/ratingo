@@ -1,10 +1,15 @@
-import { FixedClock } from '@ratingo/ai-core';
+import { FixedClock, RowList, fitRowList } from '@ratingo/ai-core';
+
+import { CHANGES_OUTPUT_CAP } from '../../domain/constants/investigation.constants';
 
 import { ChangesUnavailableError } from '../../domain/ports/recent-changes.port';
 
 import { RecentChangesExecutor } from './recent-changes.executor';
 
 const NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
+
+const materialized = (result: unknown): unknown =>
+  result instanceof RowList ? result.withAllRows() : result;
 
 describe('RecentChangesExecutor', () => {
   it('returns titles, numbers and Kyiv times only', async () => {
@@ -31,7 +36,7 @@ describe('RecentChangesExecutor', () => {
       },
       new FixedClock(NOW_MS),
     );
-    const result = (await executor.run({ window: '48h' })) as {
+    const result = materialized(await executor.run({ window: '48h' })) as {
       window: string;
       pullRequests: { number: number; title: string; into: string; mergedAtKyiv: string }[];
       deployments: unknown[];
@@ -69,7 +74,7 @@ describe('RecentChangesExecutor', () => {
       },
       new FixedClock(NOW_MS),
     );
-    const result = (await executor.run({})) as {
+    const result = materialized(await executor.run({})) as {
       pullRequests: { number: number; isRelease: boolean }[];
     };
     expect(result.pullRequests.map(({ number, isRelease }) => [number, isRelease])).toEqual([
@@ -79,24 +84,62 @@ describe('RecentChangesExecutor', () => {
     ]);
   });
 
-  it('caps the lists', async () => {
+  it('keeps whole pull requests within the output cap and says how many were left out', async () => {
     const executor = new RecentChangesExecutor(
       {
         since: async () => ({
           mergedPullRequests: Array.from({ length: 50 }, (_, index) => ({
             number: index,
-            title: 't',
-            baseBranch: 'main',
-            headBranch: 'development',
+            title: `feat: change number ${index} `.repeat(5),
+            baseBranch: 'development',
+            headBranch: `feat/${index}`,
             mergedAtMs: NOW_MS,
           })),
+          deployments: Array.from({ length: 30 }, () => ({
+            environment: 'production',
+            state: 'success',
+            atMs: NOW_MS,
+          })),
+        }),
+      },
+      new FixedClock(NOW_MS),
+    );
+    const output = fitRowList((await executor.run({})) as RowList, CHANGES_OUTPUT_CAP);
+    const parsed = JSON.parse(output) as {
+      pullRequests: { number: number }[];
+      omitted: number;
+      hint: string;
+      deployments: unknown[];
+      deploymentsOmitted: number;
+    };
+    expect(output.length).toBeLessThanOrEqual(CHANGES_OUTPUT_CAP);
+    expect(parsed.pullRequests.length + parsed.omitted).toBe(50);
+    expect(parsed.hint).toContain('into=');
+    expect(parsed.deployments).toHaveLength(20);
+    expect(parsed.deploymentsOmitted).toBe(10);
+  });
+
+  it('keeps only the pull requests merged into the asked branch', async () => {
+    const pull = (number: number, baseBranch: string) => ({
+      number,
+      title: 't',
+      baseBranch,
+      headBranch: 'x',
+      mergedAtMs: NOW_MS,
+    });
+    const executor = new RecentChangesExecutor(
+      {
+        since: async () => ({
+          mergedPullRequests: [pull(1, 'main'), pull(2, 'development')],
           deployments: [],
         }),
       },
       new FixedClock(NOW_MS),
     );
-    const result = (await executor.run({})) as { pullRequests: unknown[] };
-    expect(result.pullRequests).toHaveLength(20);
+    const result = materialized(await executor.run({ into: 'main' })) as {
+      pullRequests: { number: number }[];
+    };
+    expect(result.pullRequests.map((pullRequest) => pullRequest.number)).toEqual([1]);
   });
 
   it('rejects a window beyond 7 days', async () => {

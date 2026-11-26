@@ -6,7 +6,7 @@ Ratingo — Ukrainian-language streaming content discovery service. NPM workspac
 - Keep domain layer pure: only interfaces, entities, constants — use `CLOCK_PORT` instead of `Date`, constants instead of `process.env`
 - Import across modules through `module/public/` barrel exports only
 - Use `import type { components } from '@ratingo/api-contract'` for all API types on frontend
-- Run `npm run contracts:update` after any DTO or controller change
+- Run `npm run contracts:update` after any DTO or controller change, and `npm run system-card:update` after changing a scheduled job, queue or external provider
 - Don't write comments in code or config (no inline, JSDoc, or YAML comments) — make names and structure explain the code instead. Leave existing comments alone unless you're rewriting that code
 - Use conventional commits (`feat:`, `fix:`, `refactor:`, `docs:`)
 
@@ -44,6 +44,7 @@ npm run lint:fsd --workspace=storefront
 BASE_URL=http://localhost:3002 npm run test:smoke   # read-only Playwright smoke suite
 npm run lint:migrations --workspace=api
 npm run contracts:update              # after DTO/controller changes
+npm run system-card:update            # after changing scheduled jobs, queues or providers (Veronica's system card)
 
 npm test -- path/to/file.spec.ts      # single test, from the workspace
 npm run db:generate | db:migrate      # from apps/api/

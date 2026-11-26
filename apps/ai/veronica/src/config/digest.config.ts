@@ -45,5 +45,6 @@ export const DIGEST_THRESHOLDS: DigestThresholds = {
   },
   scheduler: {
     staleHours: 36,
+    runGraceHours: 6,
   },
 };

@@ -1,3 +1,6 @@
+import { SYSTEM_CARD } from '../../src/modules/chat/domain/constants/system-card.constants';
+import { describeCadence } from '../../src/modules/chat/domain/policies/schedule-cadence.policy';
+
 import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
 import { EvalKind, type EvalCase } from './eval-case';
 import { GA_EVAL_CASES } from './google-analytics.cases';
@@ -15,17 +18,21 @@ const metrics = (template: string, data: unknown, extra: Record<string, unknown>
 
 const schedulerJob = (job: string, overrides: Record<string, unknown> = {}) => ({
   job,
-  lastSuccessHoursAgo: null,
-  lastSuccessAtKyiv: null,
-  lastFailureHoursAgo: null,
-  lastFailureAtKyiv: null,
-  scheduled: true,
-  schedule: '0 */6 * * *',
-  timezone: 'UTC',
+  cadence: 'every six hours',
   nextRunAtKyiv: '2026-11-22 16:00',
-  nextRunInHours: 2,
   ...overrides,
 });
+
+const LATE_ALPHABET_JOB = 'scheduled-upcoming-movies-refresh-soon';
+
+const everyScheduledJob = SYSTEM_CARD.scheduledJobs.map((entry) =>
+  schedulerJob(entry.job, {
+    cadence: describeCadence(entry.schedule),
+    lastSuccessAtKyiv: entry.job === LATE_ALPHABET_JOB ? '2026-11-26 09:00' : '2026-11-26 08:00',
+    lastSuccessHoursAgo: entry.job === LATE_ALPHABET_JOB ? 5.22 : 6.22,
+    nextRunAtKyiv: entry.job === LATE_ALPHABET_JOB ? '2026-11-27 09:00' : '2026-11-26 20:00',
+  }),
+);
 
 const UNKNOWN_ANSWER =
   'Даних немає: таких цифр у моїх інструментах нема, тому нічого не вигадуватиму.';
@@ -39,18 +46,22 @@ const SERVICE_CASES: readonly EvalCase[] = [
       {
         tool: 'metrics_query',
         match: { template: 'queue_throughput' },
-        response: metrics('queue_throughput', [
-          { queue: 'ingestion', completed: 1200, failed: 7, retried: 2 },
-          { queue: 'stats-queue', completed: 300, failed: 0, retried: 0 },
-        ]),
+        response: metrics('queue_throughput', {
+          queues: [
+            { queue: 'ingestion', completed: 1200, failed: 7, retried: 2 },
+            { queue: 'stats-queue', completed: 300, failed: 0, retried: 0 },
+          ],
+        }),
       },
       {
         tool: 'metrics_query',
         match: { template: 'queue_backlog_peak' },
-        response: metrics('queue_backlog_peak', [
-          { queue: 'ingestion', waitingNow: 3, peakInWindow: 40 },
-          { queue: 'stats-queue', waitingNow: 0, peakInWindow: 2 },
-        ]),
+        response: metrics('queue_backlog_peak', {
+          queues: [
+            { queue: 'ingestion', waitingNow: 3, peakInWindow: 40 },
+            { queue: 'stats-queue', waitingNow: 0, peakInWindow: 2 },
+          ],
+        }),
       },
     ],
     expectedTools: ['metrics_query:queue_throughput'],
@@ -72,7 +83,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
         match: { template: 'queue_backlog_peak' },
         response: metrics(
           'queue_backlog_peak',
-          [{ queue: 'ingestion', waitingNow: 3, peakInWindow: 412 }],
+          { queues: [{ queue: 'ingestion', waitingNow: 3, peakInWindow: 412 }] },
           { window: '7d' },
         ),
       },
@@ -413,18 +424,16 @@ const SERVICE_CASES: readonly EvalCase[] = [
           {
             jobs: [
               schedulerJob('scheduled-upcoming-movies-refresh-all', {
-                lastSuccessHoursAgo: 77.22,
                 lastSuccessAtKyiv: '2026-11-23 09:00',
-                schedule: '0 7 * * 1',
+                lastSuccessHoursAgo: 77.22,
+                cadence: 'weekly on Monday',
                 nextRunAtKyiv: '2026-11-30 09:00',
-                nextRunInHours: 90.78,
               }),
               schedulerJob('scheduled-upcoming-movies-refresh-soon', {
-                lastSuccessHoursAgo: 5.22,
                 lastSuccessAtKyiv: '2026-11-26 09:00',
-                schedule: '0 7 * * 0,2-6',
+                lastSuccessHoursAgo: 5.22,
+                cadence: 'daily except Monday',
                 nextRunAtKyiv: '2026-11-27 09:00',
-                nextRunInHours: 18.78,
               }),
             ],
           },
@@ -439,6 +448,94 @@ const SERVICE_CASES: readonly EvalCase[] = [
       calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
       answer:
         'Проблеми немає: ця задача за розкладом запускається раз на тиждень, у понеділок. Востаннє вона вдалася 2026-11-23 09:00, наступний запуск 2026-11-30 09:00.',
+    },
+  },
+  {
+    id: 'weekly-job-is-it-broken',
+    kind: EvalKind.KNOWN,
+    question:
+      'scheduled-upcoming-movies-refresh-all уже понад півтори доби без успішного запуску. Вона зламалась?',
+    fixtures: [
+      {
+        tool: 'metrics_query',
+        match: { template: 'scheduler_last_runs' },
+        response: metrics(
+          'scheduler_last_runs',
+          {
+            jobs: [
+              schedulerJob('scheduled-upcoming-movies-refresh-all', {
+                lastSuccessAtKyiv: '2026-11-23 09:00',
+                lastSuccessHoursAgo: 77.22,
+                cadence: 'weekly on Monday',
+                nextRunAtKyiv: '2026-11-30 09:00',
+              }),
+            ],
+          },
+          { window: null, evaluatedAtKyiv: '2026-11-26 14:13' },
+        ),
+      },
+    ],
+    expectedTools: ['metrics_query:scheduler_last_runs'],
+    allowedExtraTools: ['digest_snapshot', 'recent_changes'],
+    mustContain: [
+      ['не зламал', 'не збій', 'проблеми немає', 'все гаразд', 'усе гаразд'],
+      ['тиж', 'понеділ'],
+      ['2026-11-23'],
+      ['2026-11-30'],
+    ],
+    mustNotContain: ['0 7 * * 1', 'cron'],
+    reference: {
+      calls: [
+        {
+          tool: 'metrics_query',
+          input: { template: 'scheduler_last_runs', job: 'refresh-all' },
+        },
+      ],
+      answer:
+        'Ні, не зламалась: вона запускається раз на тиждень, у понеділок. Останній успіх 2026-11-23 09:00, наступний запуск 2026-11-30 09:00.',
+    },
+  },
+  {
+    id: 'what-does-a-job-do',
+    kind: EvalKind.KNOWN,
+    question: 'Що робить задача scheduled-mdblist-ratings?',
+    fixtures: [
+      {
+        tool: 'metrics_query',
+        match: { template: 'scheduler_last_runs' },
+        response: metrics('scheduler_last_runs', { jobs: everyScheduledJob }, { window: null }),
+      },
+    ],
+    expectedTools: [],
+    allowedExtraTools: ['metrics_query:scheduler_last_runs'],
+    mustContain: [['Rotten Tomatoes'], ['ratings-backfill', 'квот', 'повільно']],
+    reference: {
+      calls: [],
+      answer:
+        'Вона раз на добу ставить у чергу фільми й серіали без рейтингів Rotten Tomatoes, а черга ratings-backfill потім повільно дотягує їх протягом дня через денну квоту.',
+    },
+  },
+  {
+    id: 'late-alphabet-job',
+    kind: EvalKind.KNOWN,
+    question: `Коли востаннє успішно відпрацювала ${LATE_ALPHABET_JOB} і коли її наступний запуск?`,
+    fixtures: [
+      {
+        tool: 'metrics_query',
+        match: { template: 'scheduler_last_runs' },
+        response: metrics('scheduler_last_runs', { jobs: everyScheduledJob }, { window: null }),
+      },
+    ],
+    expectedTools: ['metrics_query:scheduler_last_runs'],
+    mustContain: [['2026-11-26 09:00'], ['2026-11-27 09:00']],
+    reference: {
+      calls: [
+        {
+          tool: 'metrics_query',
+          input: { template: 'scheduler_last_runs', job: 'refresh-soon' },
+        },
+      ],
+      answer: `Задача ${LATE_ALPHABET_JOB} востаннє вдалася 2026-11-26 09:00, наступний запуск 2026-11-27 09:00.`,
     },
   },
   {

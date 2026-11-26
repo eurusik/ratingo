@@ -242,14 +242,69 @@ describe('SchedulerCollector', () => {
 
   it('groups last success and failure per job', async () => {
     const reading = await new SchedulerCollector(
-      metricsWith(() => [
-        sample({ job_name: 'sync-trending', result: 'success' }, SEC(NOW_MS - 5 * HOUR_MS)),
-        sample({ job_name: 'sync-trending', result: 'failure' }, SEC(NOW_MS - 20 * HOUR_MS)),
-      ]),
+      metricsWith((query) =>
+        query.includes('last_run')
+          ? [
+              sample({ job_name: 'sync-trending', result: 'success' }, SEC(NOW_MS - 5 * HOUR_MS)),
+              sample({ job_name: 'sync-trending', result: 'failure' }, SEC(NOW_MS - 20 * HOUR_MS)),
+            ]
+          : [],
+      ),
     ).collect(NOW_MS);
     expect(reading.state === 'ok' && reading.data).toEqual([
-      { jobName: 'sync-trending', lastSuccessAgeHours: 5, lastFailureAgeHours: 20 },
+      {
+        jobName: 'sync-trending',
+        lastSuccessAgeHours: 5,
+        lastFailureAgeHours: 20,
+        lastPlannedRunAgeHours: null,
+        previousPlannedRunAgeHours: null,
+      },
     ]);
+  });
+
+  it('adds the last two planned runs from each job schedule', async () => {
+    const monday = Date.UTC(2026, 10, 23, 7, 0);
+    const thursday = Date.UTC(2026, 10, 26, 12, 13);
+    const reading = await new SchedulerCollector(
+      metricsWith((query) =>
+        query.includes('next_run')
+          ? [
+              sample(
+                { job_name: 'refresh-all', schedule: '0 7 * * 1', tz: 'UTC' },
+                SEC(Date.UTC(2026, 10, 30, 7, 0)),
+              ),
+              sample(
+                { job_name: 'imports', schedule: 'every 120s', tz: 'UTC' },
+                SEC(thursday + 60_000),
+              ),
+              sample({ job_name: 'broken', schedule: 'not a cron', tz: 'UTC' }, SEC(thursday)),
+            ]
+          : [sample({ job_name: 'refresh-all', result: 'success' }, SEC(monday + 60_000))],
+      ),
+    ).collect(thursday);
+    const byJob = Object.fromEntries(
+      (reading.state === 'ok' ? reading.data : []).map((job) => [job.jobName, job]),
+    );
+    expect(byJob['refresh-all']).toMatchObject({
+      lastPlannedRunAgeHours: (thursday - monday) / HOUR_MS,
+      previousPlannedRunAgeHours: (thursday - monday) / HOUR_MS + 7 * 24,
+    });
+    expect(byJob.imports?.lastPlannedRunAgeHours).toBeCloseTo(1 / 60, 6);
+    expect(byJob.imports?.previousPlannedRunAgeHours).toBeCloseTo(3 / 60, 6);
+    expect(byJob.broken).toBeUndefined();
+  });
+
+  it('keeps last runs when the schedule query fails', async () => {
+    const reading = await new SchedulerCollector(
+      metricsWith((query) => {
+        if (query.includes('next_run')) throw new Error('timeout');
+        return [sample({ job_name: 'sync-trending', result: 'success' }, SEC(NOW_MS - HOUR_MS))];
+      }),
+    ).collect(NOW_MS);
+    expect(reading).toMatchObject({
+      state: 'ok',
+      data: [{ jobName: 'sync-trending', lastSuccessAgeHours: 1, lastPlannedRunAgeHours: null }],
+    });
   });
 });
 

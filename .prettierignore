@@ -17,3 +17,4 @@ pnpm-lock.yaml
 yarn.lock
 packages/api-contract/src/api-types.ts
 packages/api-contract/openapi.json
+apps/ai/veronica/src/modules/chat/domain/constants/system-card.json

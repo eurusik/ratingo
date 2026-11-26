@@ -1,11 +1,7 @@
 import { type Meter } from '@opentelemetry/api';
 import { type Job } from 'bullmq';
 
-import schedulerConfig from '../config/scheduler.config';
-import { KEY_HEALTH_SCHEDULER_ID } from '../modules/monitoring/public';
-import { MOVIE_RELEASE_NOTIFICATIONS_SCHEDULER_ID } from '../modules/user-actions/public';
-import { LINK_PENDING_IMPORTS_SCHEDULER_ID } from '../modules/user-media/public';
-
+import { SCHEDULED_JOBS } from './scheduled-jobs.catalog';
 import {
   MS_PER_SECOND,
   SCHEDULER_KEY_SEPARATOR,
@@ -15,12 +11,7 @@ import {
 } from './telemetry.constants';
 
 export const scheduledJobNames = (): ReadonlySet<string> =>
-  new Set([
-    ...schedulerConfig().jobs.map((job) => job.jobId),
-    KEY_HEALTH_SCHEDULER_ID,
-    MOVIE_RELEASE_NOTIFICATIONS_SCHEDULER_ID,
-    LINK_PENDING_IMPORTS_SCHEDULER_ID,
-  ]);
+  new Set(SCHEDULED_JOBS.map((job) => job.jobId));
 
 export class SchedulerLastRunGauge {
   private readonly lastRunSeconds = new Map<

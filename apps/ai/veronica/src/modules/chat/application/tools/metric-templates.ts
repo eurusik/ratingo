@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { RowList } from '@ratingo/ai-core';
+
 import { PromQueries } from '../../../digest/public';
 import {
   METRIC_DEFAULT_WINDOW,
@@ -8,11 +10,13 @@ import {
 } from '../../domain/constants/investigation.constants';
 import {
   isHttpStatus,
+  isJobNameFilter,
   isProviderName,
   isQueueName,
   parseWindow,
 } from '../../domain/policies/metric-params.policy';
 import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
+import { describeCadence, scheduleFromLabel } from '../../domain/policies/schedule-cadence.policy';
 
 const MS_PER_HOUR = 3_600_000;
 const BYTES_PER_MEGABYTE = 1024 * 1024;
@@ -36,7 +40,11 @@ export interface MetricTemplate {
   description: string;
   params: z.ZodType<Record<string, unknown>>;
   queries(params: Record<string, unknown>): NamedQuery[];
-  present(results: readonly QueryResult[], nowMs: number): TemplateReading;
+  present(
+    results: readonly QueryResult[],
+    nowMs: number,
+    params: Record<string, unknown>,
+  ): TemplateReading;
 }
 
 const windowField = z
@@ -50,6 +58,10 @@ const queueField = z.string().refine(isQueueName, { message: 'invalid queue name
 const providerField = z
   .string()
   .refine(isProviderName, { message: 'invalid provider host name' })
+  .optional();
+const jobField = z
+  .string()
+  .refine(isJobNameFilter, { message: 'job must be part of a job name such as refresh-all' })
   .optional();
 const statusField = z
   .string()
@@ -81,6 +93,12 @@ const byLabel = (
   );
 
 const NO_DATA = 'метрик за цей запит немає';
+const QUEUE_HINT = 'pass queue=<name> to see one queue';
+const ERRORS_HINT = 'pass provider=<host> or status=<code> to see fewer errors';
+const JOBS_HINT = 'pass job=<part of the job name> to see only matching jobs';
+
+const queueRows = <T>(rows: readonly T[]): RowList<T> =>
+  RowList.of(rows, QUEUE_HINT, (kept, omission) => ({ queues: kept, ...omission }));
 
 const queueThroughput: MetricTemplate = {
   name: MetricTemplateName.QUEUE_THROUGHPUT,
@@ -100,12 +118,14 @@ const queueThroughput: MetricTemplate = {
     const failed = byLabel(results, 'failed', 'queue');
     const retried = byLabel(results, 'retried', 'queue');
     return {
-      data: [...completed.keys()].sort().map((queue) => ({
-        queue,
-        completed: Math.round(completed.get(queue) ?? 0),
-        failed: Math.round(failed.get(queue) ?? 0),
-        retried: Math.round(retried.get(queue) ?? 0),
-      })),
+      data: queueRows(
+        [...completed.keys()].sort().map((queue) => ({
+          queue,
+          completed: Math.round(completed.get(queue) ?? 0),
+          failed: Math.round(failed.get(queue) ?? 0),
+          retried: Math.round(retried.get(queue) ?? 0),
+        })),
+      ),
     };
   },
 };
@@ -126,11 +146,13 @@ const queueBacklogPeak: MetricTemplate = {
     if (peak.size === 0) return { unavailable: NO_DATA };
     const now = byLabel(results, 'now', 'queue');
     return {
-      data: [...peak.keys()].sort().map((queue) => ({
-        queue,
-        waitingNow: now.has(queue) ? Math.round(now.get(queue) ?? 0) : null,
-        peakInWindow: Math.round(peak.get(queue) ?? 0),
-      })),
+      data: queueRows(
+        [...peak.keys()].sort().map((queue) => ({
+          queue,
+          waitingNow: now.has(queue) ? Math.round(now.get(queue) ?? 0) : null,
+          peakInWindow: Math.round(peak.get(queue) ?? 0),
+        })),
+      ),
     };
   },
 };
@@ -157,17 +179,20 @@ const httpClientErrors: MetricTemplate = {
     const total = firstValue(results, 'total');
     if (total === null) return { unavailable: NO_DATA };
     const errors = results.find((result) => result.name === 'errors')?.samples ?? [];
+    const rows = errors
+      .filter((sample) => sample.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .map((sample) => ({
+        provider: sample.labels.server_address ?? 'невідомий',
+        status: sample.labels.http_response_status_code ?? 'невідомий',
+        count: Math.round(sample.value),
+      }));
     return {
-      data: {
+      data: RowList.of(rows, ERRORS_HINT, (kept, omission) => ({
         totalOutgoingRequests: Math.round(total),
-        errors: errors
-          .filter((sample) => sample.value > 0)
-          .map((sample) => ({
-            provider: sample.labels.server_address ?? 'невідомий',
-            status: sample.labels.http_response_status_code ?? 'невідомий',
-            count: Math.round(sample.value),
-          })),
-      },
+        errors: kept,
+        ...omission,
+      })),
     };
   },
 };
@@ -220,75 +245,86 @@ const siteMemoryPeak: MetricTemplate = {
 
 interface SchedulerJobRow {
   job: string;
-  lastSuccessHoursAgo: number | null;
-  lastSuccessAtKyiv: string | null;
-  lastFailureHoursAgo: number | null;
-  lastFailureAtKyiv: string | null;
-  scheduled?: boolean;
-  schedule?: string;
-  timezone?: string;
+  cadence?: string;
+  lastSuccessAtKyiv?: string;
+  lastSuccessHoursAgo?: number;
+  lastFailureAtKyiv?: string;
+  lastFailureHoursAgo?: number;
   nextRunAtKyiv?: string;
-  nextRunInHours?: number;
+  scheduled?: false;
 }
 
-const emptyJobRow = (job: string): SchedulerJobRow => ({
-  job,
-  lastSuccessHoursAgo: null,
-  lastSuccessAtKyiv: null,
-  lastFailureHoursAgo: null,
-  lastFailureAtKyiv: null,
-});
+const jobsMatching = (
+  rows: readonly SchedulerJobRow[],
+  filter: string | undefined,
+): SchedulerJobRow[] => rows.filter((row) => filter === undefined || row.job.includes(filter));
 
-const hoursUntil = (epochSeconds: number, nowMs: number): number =>
-  round(Math.max(0, (epochSeconds * MS_PER_SECOND - nowMs) / MS_PER_HOUR));
+type JobRows = Map<string, SchedulerJobRow>;
+
+const rowOf = (jobs: JobRows, job: string): SchedulerJobRow => {
+  const row = jobs.get(job) ?? { job };
+  jobs.set(job, row);
+  return row;
+};
+
+const addLastRuns = (jobs: JobRows, runs: QueryResult['samples'], nowMs: number): void => {
+  for (const sample of runs) {
+    const row = rowOf(jobs, sample.labels.job_name ?? 'невідоме');
+    const atKyiv = formatKyivDateTime(sample.value * MS_PER_SECOND);
+    if (sample.labels.result === 'success') {
+      row.lastSuccessAtKyiv = atKyiv;
+      row.lastSuccessHoursAgo = hoursAgo(sample.value, nowMs);
+    } else if (sample.labels.result === 'failure') {
+      row.lastFailureAtKyiv = atKyiv;
+      row.lastFailureHoursAgo = hoursAgo(sample.value, nowMs);
+    }
+  }
+};
+
+const addNextRuns = (jobs: JobRows, next: QueryResult['samples']): void => {
+  for (const sample of next) {
+    const row = rowOf(jobs, sample.labels.job_name ?? 'невідоме');
+    row.cadence = describeCadence(scheduleFromLabel(sample.labels.schedule ?? ''));
+    row.nextRunAtKyiv = formatKyivDateTime(sample.value * MS_PER_SECOND);
+  }
+  if (next.length === 0) return;
+  for (const row of jobs.values()) if (row.nextRunAtKyiv === undefined) row.scheduled = false;
+};
+
+const collectJobRows = (
+  runs: QueryResult['samples'],
+  next: QueryResult['samples'],
+  nowMs: number,
+): SchedulerJobRow[] => {
+  const jobs: JobRows = new Map();
+  addLastRuns(jobs, runs, nowMs);
+  addNextRuns(jobs, next);
+  return [...jobs.values()].sort((a, b) => a.job.localeCompare(b.job));
+};
 
 const schedulerLastRuns: MetricTemplate = {
   name: MetricTemplateName.SCHEDULER_LAST_RUNS,
   description:
-    'For each scheduled job: when it last succeeded and last failed (hours ago and Kyiv time), its schedule as a cron pattern with timezone, and its next planned run. scheduled=false means the job is not in the schedule at all.',
-  params: z.strictObject({}),
+    'For each scheduled job: how often it runs, when it last succeeded and last failed (Kyiv time and hours ago) and its next planned run. A missing last success means no run was seen in the last eight days, not that the job never worked. scheduled=false means the job is not in the schedule at all. Optional job keeps only jobs whose name contains that text.',
+  params: z.strictObject({ job: jobField }),
   queries: () => [
     { name: 'runs', promql: PromQueries.SCHEDULER_LAST_RUNS },
     { name: 'next', promql: PromQueries.SCHEDULER_NEXT_RUNS },
   ],
-  present: (results, nowMs) => {
+  present: (results, nowMs, params) => {
     const runs = results.find((result) => result.name === 'runs')?.samples ?? [];
     const next = results.find((result) => result.name === 'next')?.samples ?? [];
     if (runs.length === 0 && next.length === 0) return { unavailable: NO_DATA };
-    const jobs = new Map<string, SchedulerJobRow>();
-    const rowOf = (job: string): SchedulerJobRow => {
-      const row = jobs.get(job) ?? emptyJobRow(job);
-      jobs.set(job, row);
-      return row;
-    };
-    for (const sample of runs) {
-      const row = rowOf(sample.labels.job_name ?? 'невідоме');
-      const atKyiv = formatKyivDateTime(sample.value * MS_PER_SECOND);
-      if (sample.labels.result === 'success') {
-        row.lastSuccessHoursAgo = hoursAgo(sample.value, nowMs);
-        row.lastSuccessAtKyiv = atKyiv;
-      } else if (sample.labels.result === 'failure') {
-        row.lastFailureHoursAgo = hoursAgo(sample.value, nowMs);
-        row.lastFailureAtKyiv = atKyiv;
-      }
-    }
-    for (const sample of next) {
-      const row = rowOf(sample.labels.job_name ?? 'невідоме');
-      row.scheduled = true;
-      row.schedule = sample.labels.schedule ?? 'невідомий';
-      row.timezone = sample.labels.tz ?? 'UTC';
-      row.nextRunAtKyiv = formatKyivDateTime(sample.value * MS_PER_SECOND);
-      row.nextRunInHours = hoursUntil(sample.value, nowMs);
-    }
-    const schedulesKnown = next.length > 0;
-    if (schedulesKnown) {
-      for (const row of jobs.values()) row.scheduled ??= false;
-    }
+    const filter = params.job as string | undefined;
+    const rows = jobsMatching(collectJobRows(runs, next, nowMs), filter);
+    if (rows.length === 0) return { unavailable: `жодна задача не має «${filter}» у назві` };
+    const schedulesNote = next.length > 0 ? {} : { schedules: NO_DATA };
     return {
-      data: {
-        jobs: [...jobs.values()].sort((a, b) => a.job.localeCompare(b.job)),
-        ...(schedulesKnown ? {} : { schedules: NO_DATA }),
-      },
+      data: RowList.of(rows, JOBS_HINT, (kept, omission) => ({
+        jobs: kept,
+        ...schedulesNote,
+        ...omission,
+      })),
     };
   },
 };

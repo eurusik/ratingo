@@ -1,6 +1,7 @@
-import { FixedClock } from '@ratingo/ai-core';
+import { FixedClock, RowList } from '@ratingo/ai-core';
 
 import type { MetricSample } from '../../../digest/public';
+import { METRIC_SERIES_CAP } from '../../domain/constants/investigation.constants';
 
 import { MetricsQueryExecutor } from './metrics-query.executor';
 
@@ -24,12 +25,17 @@ class Harness {
   );
 }
 
+const materialized = (result: unknown): unknown =>
+  result instanceof RowList ? result.withAllRows() : result;
+
 describe('MetricsQueryExecutor', () => {
   it('runs the template queries at the current time with the window in the query', async () => {
     const harness = new Harness();
     harness.samples = (query) =>
       query.includes('result="completed"') ? [{ labels: { queue: 'ingestion' }, value: 90 }] : [];
-    const result = await harness.executor.run({ template: 'queue_throughput', window: '6h' });
+    const result = materialized(
+      await harness.executor.run({ template: 'queue_throughput', window: '6h' }),
+    );
     expect(harness.asked.every((call) => call.atMs === NOW_MS)).toBe(true);
     expect(harness.asked.every((call) => call.query.includes('[6h]'))).toBe(true);
     expect(result).toMatchObject({
@@ -37,7 +43,7 @@ describe('MetricsQueryExecutor', () => {
       window: '6h',
       offsetDays: 0,
       evaluatedAtKyiv: '2026-11-22 14:00',
-      data: [{ queue: 'ingestion', completed: 90, failed: 0, retried: 0 }],
+      data: { queues: [{ queue: 'ingestion', completed: 90, failed: 0, retried: 0 }] },
     });
   });
 
@@ -73,17 +79,41 @@ describe('MetricsQueryExecutor', () => {
     expect(harness.asked).toEqual([]);
   });
 
-  it('caps the number of series it reads', async () => {
+  it('caps the number of series it reads and says how many it left out', async () => {
     const harness = new Harness();
-    harness.samples = () =>
-      Array.from({ length: 100 }, (_, index) => ({
-        labels: { queue: `queue-${index}` },
-        value: 1,
-      }));
-    const result = (await harness.executor.run({ template: 'queue_throughput' })) as {
-      data: unknown[];
+    harness.samples = (query) =>
+      query.includes('result="completed"')
+        ? Array.from({ length: METRIC_SERIES_CAP + 5 }, (_, index) => ({
+            labels: { queue: `queue-${index}` },
+            value: 1,
+          }))
+        : [];
+    const result = materialized(await harness.executor.run({ template: 'queue_throughput' })) as {
+      seriesOmitted: number;
+      data: { queues: unknown[] };
     };
-    expect(result.data.length).toBeLessThanOrEqual(30);
+    expect(result.data.queues).toHaveLength(METRIC_SERIES_CAP);
+    expect(result.seriesOmitted).toBe(5);
+  });
+
+  it('passes the job filter to the scheduler template', async () => {
+    const harness = new Harness();
+    harness.samples = (query) =>
+      query.includes('next_run')
+        ? [
+            { labels: { job_name: 'scheduled-trending', schedule: '0 */4 * * *' }, value: 1 },
+            {
+              labels: { job_name: 'scheduled-upcoming-movies-refresh-all', schedule: '0 7 * * 1' },
+              value: 1,
+            },
+          ]
+        : [];
+    const result = materialized(
+      await harness.executor.run({ template: 'scheduler_last_runs', job: 'refresh-all' }),
+    ) as { data: { jobs: { job: string }[] } };
+    expect(result.data.jobs.map((row) => row.job)).toEqual([
+      'scheduled-upcoming-movies-refresh-all',
+    ]);
   });
 
   it('lets a Prometheus failure surface so the model sees the error', async () => {

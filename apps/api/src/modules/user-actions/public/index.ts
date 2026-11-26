@@ -30,4 +30,8 @@ export {
 export { SAVED_ITEM_LIST } from '../domain/entities';
 export { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 export { ACTION_CONTEXT } from '../domain/entities/user-media-action.entity';
-export { MOVIE_RELEASE_NOTIFICATIONS_SCHEDULER_ID } from '../user-actions.constants';
+export {
+  MOVIE_RELEASE_NOTIFICATIONS_DESCRIPTION,
+  MOVIE_RELEASE_NOTIFICATIONS_PATTERN,
+  MOVIE_RELEASE_NOTIFICATIONS_SCHEDULER_ID,
+} from '../user-actions.constants';

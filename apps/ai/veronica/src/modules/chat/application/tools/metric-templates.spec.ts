@@ -1,13 +1,27 @@
 import * as fc from 'fast-check';
 
+import { RowList } from '@ratingo/ai-core';
+
 import { MetricTemplateName } from '../../domain/constants/investigation.constants';
 
-import { METRIC_TEMPLATES } from './metric-templates';
+import { METRIC_TEMPLATES, type QueryResult } from './metric-templates';
 
 const template = (name: MetricTemplateName) => METRIC_TEMPLATES[name];
 
 const parse = (name: MetricTemplateName, params: Record<string, unknown>) =>
   template(name).params.safeParse(params);
+
+const present = (
+  name: MetricTemplateName,
+  results: readonly QueryResult[],
+  nowMs: number,
+  params: Record<string, unknown> = {},
+) => {
+  const reading = template(name).present(results, nowMs, params);
+  return 'data' in reading && reading.data instanceof RowList
+    ? { data: reading.data.withAllRows() }
+    : reading;
+};
 
 const sample = (name: string, value: number, labels: Record<string, string> = {}) => ({
   name,
@@ -109,7 +123,8 @@ describe('metric templates: parameters', () => {
 
 describe('metric templates: presentation', () => {
   it('shows queue throughput as whole numbers per queue', () => {
-    const reading = template(MetricTemplateName.QUEUE_THROUGHPUT).present(
+    const reading = present(
+      MetricTemplateName.QUEUE_THROUGHPUT,
       [
         sample('completed', 1200.4, { queue: 'ingestion' }),
         sample('failed', 6.6, { queue: 'ingestion' }),
@@ -118,23 +133,24 @@ describe('metric templates: presentation', () => {
       0,
     );
     expect(reading).toEqual({
-      data: [{ queue: 'ingestion', completed: 1200, failed: 7, retried: 0 }],
+      data: { queues: [{ queue: 'ingestion', completed: 1200, failed: 7, retried: 0 }] },
     });
   });
 
   it('says there is no data instead of showing zero when a query returns nothing', () => {
     for (const name of Object.values(MetricTemplateName)) {
-      expect(template(name).present([], 0)).toEqual({ unavailable: expect.any(String) });
+      expect(present(name, [], 0)).toEqual({ unavailable: expect.any(String) });
     }
   });
 
   it('keeps an unknown backlog empty rather than zero', () => {
-    const reading = template(MetricTemplateName.QUEUE_BACKLOG_PEAK).present(
+    const reading = present(
+      MetricTemplateName.QUEUE_BACKLOG_PEAK,
       [sample('peak', 40, { queue: 'ingestion' })],
       0,
     );
     expect(reading).toEqual({
-      data: [{ queue: 'ingestion', waitingNow: null, peakInWindow: 40 }],
+      data: { queues: [{ queue: 'ingestion', waitingNow: null, peakInWindow: 40 }] },
     });
   });
 
@@ -143,7 +159,8 @@ describe('metric templates: presentation', () => {
     const secondsAt = (ms: number) => ms / 1000;
 
     it('joins last runs with the schedule and next run of each job', () => {
-      const reading = template(MetricTemplateName.SCHEDULER_LAST_RUNS).present(
+      const reading = present(
+        MetricTemplateName.SCHEDULER_LAST_RUNS,
         [
           {
             name: 'runs',
@@ -179,27 +196,15 @@ describe('metric templates: presentation', () => {
           jobs: [
             {
               job: 'scheduled-key-health',
-              lastSuccessHoursAgo: null,
-              lastSuccessAtKyiv: null,
-              lastFailureHoursAgo: null,
-              lastFailureAtKyiv: null,
-              scheduled: true,
-              schedule: '0 * * * *',
-              timezone: 'UTC',
+              cadence: 'every hour',
               nextRunAtKyiv: '2026-11-26 15:00',
-              nextRunInHours: 0.78,
             },
             {
               job: 'scheduled-upcoming-movies-refresh-all',
-              lastSuccessHoursAgo: 77.22,
+              cadence: 'weekly on Monday',
               lastSuccessAtKyiv: '2026-11-23 09:00',
-              lastFailureHoursAgo: null,
-              lastFailureAtKyiv: null,
-              scheduled: true,
-              schedule: '0 7 * * 1',
-              timezone: 'UTC',
+              lastSuccessHoursAgo: 77.22,
               nextRunAtKyiv: '2026-11-30 09:00',
-              nextRunInHours: 90.78,
             },
           ],
         },
@@ -207,7 +212,8 @@ describe('metric templates: presentation', () => {
     });
 
     it('marks a job that ran but has no scheduler as not scheduled', () => {
-      const reading = template(MetricTemplateName.SCHEDULER_LAST_RUNS).present(
+      const reading = present(
+        MetricTemplateName.SCHEDULER_LAST_RUNS,
         [
           {
             name: 'runs',
@@ -233,7 +239,7 @@ describe('metric templates: presentation', () => {
       expect(reading).toMatchObject({
         data: {
           jobs: [
-            { job: 'sync-show', scheduled: true },
+            { job: 'sync-show', cadence: 'daily' },
             { job: 'sync-trending', scheduled: false, lastFailureHoursAgo: 5 },
           ],
         },
@@ -241,7 +247,8 @@ describe('metric templates: presentation', () => {
     });
 
     it('says the schedules are unknown instead of calling every job unscheduled', () => {
-      const reading = template(MetricTemplateName.SCHEDULER_LAST_RUNS).present(
+      const reading = present(
+        MetricTemplateName.SCHEDULER_LAST_RUNS,
         [
           sample('runs', secondsAt(nowMs - 5 * 3_600_000), {
             job_name: 'sync-trending',
@@ -255,10 +262,8 @@ describe('metric templates: presentation', () => {
           jobs: [
             {
               job: 'sync-trending',
-              lastSuccessHoursAgo: 5,
               lastSuccessAtKyiv: '2026-11-26 09:13',
-              lastFailureHoursAgo: null,
-              lastFailureAtKyiv: null,
+              lastSuccessHoursAgo: 5,
             },
           ],
           schedules: 'метрик за цей запит немає',
@@ -269,15 +274,16 @@ describe('metric templates: presentation', () => {
 
   it('converts bytes to megabytes and seconds to milliseconds', () => {
     expect(
-      template(MetricTemplateName.SITE_MEMORY_PEAK).present([sample('rss', 250 * 1024 * 1024)], 0),
+      present(MetricTemplateName.SITE_MEMORY_PEAK, [sample('rss', 250 * 1024 * 1024)], 0),
     ).toEqual({ data: { peakMemoryMb: 250 } });
-    expect(template(MetricTemplateName.SITE_LATENCY_P95).present([sample('p95', 0.17)], 0)).toEqual(
-      { data: { p95Ms: 170 } },
-    );
+    expect(present(MetricTemplateName.SITE_LATENCY_P95, [sample('p95', 0.17)], 0)).toEqual({
+      data: { p95Ms: 170 },
+    });
   });
 
   it('lists only the provider errors that happened, with the total beside them', () => {
-    const reading = template(MetricTemplateName.HTTP_CLIENT_ERRORS).present(
+    const reading = present(
+      MetricTemplateName.HTTP_CLIENT_ERRORS,
       [
         sample('total', 5000),
         {
@@ -306,7 +312,8 @@ describe('metric templates: presentation', () => {
 
   it('reports the database and Redis as up or down', () => {
     expect(
-      template(MetricTemplateName.INFRA_HEALTH).present(
+      present(
+        MetricTemplateName.INFRA_HEALTH,
         [sample('database', 1), sample('redis', 0), sample('redisMemory', 9.5 * 1024 * 1024)],
         0,
       ),

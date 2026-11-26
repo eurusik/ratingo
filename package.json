@@ -49,6 +49,7 @@
     "contracts:openapi": "npm run openapi:generate --workspace=api",
     "contracts:types": "npm run generate:types --workspace=@ratingo/api-contract",
     "contracts:update": "npm run contracts:openapi && npm run contracts:types",
+    "system-card:update": "npm run system-card:generate --workspace=api",
     "ratingo": "node packages/cli/dist/index.js"
   },
   "dependencies": {

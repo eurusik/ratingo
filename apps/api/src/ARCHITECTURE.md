@@ -461,6 +461,16 @@ Uses `ThrottlerRealIpGuard` for Cloudflare/proxy support.
 3. Add producer (controller/service) with `@InjectQueue()`
 4. Add handler in worker or create a pipeline class
 
+### System catalogs (Veronica's system card)
+
+Three catalogs describe what the API runs, one line of plain language per entry:
+
+- `telemetry/scheduled-jobs.catalog.ts` — `SCHEDULED_JOBS`: every scheduled job (the ingestion jobs from `scheduler.config.ts`, each with a required `description`, plus the key-health, movie-release-notification and link-pending-imports schedulers); the scheduler metrics take their job names from it
+- `telemetry/monitored-queues.catalog.ts` — `MONITORED_QUEUES`: the queues the queue metrics report
+- `config/external-providers.catalog.ts` — `EXTERNAL_PROVIDERS`: the external APIs, by their default base URL
+
+`npm run system-card:update` writes them to `apps/ai/veronica/src/modules/chat/domain/constants/system-card.json`; `scripts/system-card/system-card.builder.spec.ts` fails while that file is stale. A new scheduled job, queue or provider gets its catalog entry and a fresh card in the same change.
+
 ### Add a New External API
 
 1. Create config in `src/config/`

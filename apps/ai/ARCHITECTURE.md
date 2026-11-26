@@ -347,6 +347,7 @@ The core never imports a provider SDK outside its adapters.
 - An agent sees only the tools its manifest lists. Anything not listed is denied.
 - **Skills** are a prompt plus the tools they bring. The system prompt lists names and one-line descriptions; the model loads a skill's body on demand.
 - Tool output is capped, and secrets and personal data are redacted before it reaches a model or Telegram.
+- **Lists are cut by whole rows, never mid-row.** A handler that returns a list returns a `RowList` (rows, a hint naming the filter that narrows them, and a frame for the rest of the answer). `defineTool` keeps as many complete rows as fit the tool's `maxOutputChars` and adds `omitted` (how many rows were left out) and `hint`. The registry's character cut stays only as a last-resort safety net.
 - No shell tool. Nothing runs code from a PR or from model output.
 
 ### MCP gateway (`packages/ai-core/src/mcp`)
@@ -444,7 +445,7 @@ Digest rules: verdict first; actions instead of observations; plain words; every
 
 ### Prerequisite in `apps/api`
 
-Per-job counters reset on every deploy, so a job that runs once a day looks like it never ran. Before the digest reports on schedules, `apps/api` exports `app.scheduler.last_run_timestamp_seconds` per job with a `result` attribute, matching `app.backup.last_run_timestamp_seconds` from `apps/pg-backup`. Until then, the digest says nothing about nightly jobs. `QueueMetricsService` in `apps/api` also exports `app.scheduler.next_run_timestamp_seconds` per job, read from the BullMQ job schedulers of this environment's prefix, with `schedule` (the cron pattern, or `every <n>s`) and `tz` attributes. A job missing from it is not scheduled.
+Per-job counters reset on every deploy, so a job that runs once a day looks like it never ran. Before the digest reports on schedules, `apps/api` exports `app.scheduler.last_run_timestamp_seconds` per job with a `result` attribute, matching `app.backup.last_run_timestamp_seconds` from `apps/pg-backup`. Until then, the digest says nothing about nightly jobs. `QueueMetricsService` in `apps/api` also exports `app.scheduler.next_run_timestamp_seconds` per job, read from the BullMQ job schedulers of this environment's prefix, with `schedule` (the cron pattern, or `every <n>s`) and `tz` attributes. A job missing from it is not scheduled. The digest's scheduler rule reads both: the collector turns each schedule into the job's last two planned runs (`cron-parser`, or `next − every`), and a job is stale only when its last success is older than the latest planned run that is at least `scheduler.runGraceHours` (6) old, so a weekly job is not flagged between its runs. A job without a schedule falls back to `scheduler.staleHours` (36). Last runs are read over 8 days so a weekly job stays visible.
 
 ---
 
