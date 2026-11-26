@@ -1,0 +1,28 @@
+services:
+  loki:
+    image: grafana/loki:3.5.0
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - '3100:3100'
+
+  alloy:
+    image: grafana/alloy:v1.11.0
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    environment:
+      DATABASE_URL: postgresql://ratingo:ratingo_dev_password@host.docker.internal:5434/ratingo_v2?sslmode=disable
+      REDIS_ADDR: host.docker.internal:6379
+      REDIS_PASSWORD: ''
+      RAILWAY_ENVIRONMENT_NAME: local
+      GRAFANA_INSTANCE_ID: local
+      GRAFANA_API_TOKEN: local
+      GRAFANA_OTLP_ENDPOINT: http://loki:3100/otlp
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+    ports:
+      - '4318:4318'
+      - '12345:12345'
+    depends_on:
+      - loki

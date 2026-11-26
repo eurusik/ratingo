@@ -1,0 +1,109 @@
+prometheus.exporter.postgres "db" {
+  data_source_names = [sys.env("DATABASE_URL")]
+}
+
+prometheus.exporter.redis "cache" {
+  redis_addr     = sys.env("REDIS_ADDR")
+  redis_password = sys.env("REDIS_PASSWORD")
+}
+
+prometheus.scrape "db" {
+  targets         = prometheus.exporter.postgres.db.targets
+  job_name        = "postgres"
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.env.receiver]
+}
+
+prometheus.scrape "cache" {
+  targets         = prometheus.exporter.redis.cache.targets
+  job_name        = "redis"
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.env.receiver]
+}
+
+prometheus.relabel "env" {
+  forward_to = [otelcol.receiver.prometheus.default.receiver]
+  rule {
+    target_label = "environment"
+    replacement  = sys.env("RAILWAY_ENVIRONMENT_NAME")
+  }
+  rule {
+    source_labels = ["instance"]
+    regex         = "(.*://)?([^:@/]*:[^@/]*@)?(.*)"
+    target_label  = "instance"
+    replacement   = "$3"
+  }
+}
+
+otelcol.receiver.prometheus "default" {
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "[::]:4317"
+  }
+  http {
+    endpoint = "[::]:4318"
+  }
+  output {
+    metrics = [otelcol.processor.transform.drop_version.input]
+    logs    = [otelcol.processor.transform.scrub_logs.input]
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.processor.transform "drop_version" {
+  error_mode = "ignore"
+  metric_statements {
+    context    = "resource"
+    statements = ["delete_key(resource.attributes, \"service.version\")"]
+  }
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.processor.transform "scrub_logs" {
+  error_mode = "ignore"
+  log_statements {
+    context = "resource"
+    statements = [
+      "delete_key(resource.attributes, \"service.instance.id\")",
+      "delete_key(resource.attributes, \"service.version\")",
+    ]
+  }
+  log_statements {
+    context = "log"
+    statements = [
+      "replace_pattern(body.string, \"(?i)(bearer|basic)\\\\s+[a-z0-9._~+/=-]{12,}\", \"[REDACTED]\")",
+      "replace_pattern(body.string, \"[a-z][a-z0-9+.-]{1,20}://[^\\\\s/:@\\\\\\\"]{1,128}:[^\\\\s/@\\\\\\\"]{1,256}@\", \"[REDACTED]@\")",
+      "replace_pattern(body.string, \"[a-z0-9._%+-]{1,64}@[a-z0-9.-]{1,255}\\\\.[a-z]{2,24}\", \"[REDACTED]\")",
+    ]
+  }
+  output {
+    logs = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.processor.batch "default" {
+  output {
+    metrics = [otelcol.exporter.otlphttp.grafana.input]
+    logs    = [otelcol.exporter.otlphttp.grafana.input]
+    traces  = [otelcol.exporter.otlphttp.grafana.input]
+  }
+}
+
+otelcol.auth.basic "grafana" {
+  username = sys.env("GRAFANA_INSTANCE_ID")
+  password = sys.env("GRAFANA_API_TOKEN")
+}
+
+otelcol.exporter.otlphttp "grafana" {
+  client {
+    endpoint = sys.env("GRAFANA_OTLP_ENDPOINT")
+    auth     = otelcol.auth.basic.grafana.handler
+  }
+}
