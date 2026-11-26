@@ -65,8 +65,8 @@ describe('AnticipatedShowsQuery', () => {
     );
     expect(sql).toContain('"trakt_anticipated_shows"."list_count" >= $');
     expect(sql).toContain('"media_items"."poster_path" is not null');
-    expect(sql).toMatch(/coalesce\(\(select min\("episodes"."air_date"\).*\) >= \$/);
-    expect(sql).toMatch(/coalesce\(\(select min\("episodes"."air_date"\).*\) < \$/);
+    expect(sql).toMatch(/coalesce\(\(select "episodes"."air_date" .*\) >= \$/);
+    expect(sql).toMatch(/coalesce\(\(select "episodes"."air_date" .*\) < \$/);
     expect(sql).toContain('"catalog_policies"."is_active" = $');
     expect(params).toEqual(
       expect.arrayContaining([
@@ -84,8 +84,10 @@ describe('AnticipatedShowsQuery', () => {
 
     const [byDate] = (builder.orderBy as jest.Mock).mock.calls[0] as SQL[];
     const { sql, params } = dialect.sqlToQuery(byDate);
-    expect(sql).toContain('select min("episodes"."air_date") from "episodes"');
+    expect(sql).toContain('select "episodes"."air_date" from "episodes"');
     expect(sql).toContain('"seasons"."number" > $');
+    expect(sql).toContain('order by "seasons"."number" asc, "episodes"."number" asc limit 1)');
+    expect(sql).not.toContain('min(');
     expect(sql).toContain('"shows"."media_item_id" = "media_items"."id"');
     expect(sql).toMatch(/, "media_items"."release_date"\) asc$/);
     expect(params).toEqual([0]);
