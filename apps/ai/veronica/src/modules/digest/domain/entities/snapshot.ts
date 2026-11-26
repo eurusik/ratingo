@@ -78,6 +78,8 @@ export interface SchedulerJobStat {
   jobName: string;
   lastSuccessAgeHours: number | null;
   lastFailureAgeHours: number | null;
+  lastPlannedRunAgeHours: number | null;
+  previousPlannedRunAgeHours: number | null;
 }
 
 export interface Snapshot {

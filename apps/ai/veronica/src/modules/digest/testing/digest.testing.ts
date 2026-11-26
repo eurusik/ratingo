@@ -50,7 +50,13 @@ export const greenSnapshot = (): Snapshot => ({
     redisMemoryMaxBytes: null,
   }),
   scheduler: available([
-    { jobName: 'sync-trending', lastSuccessAgeHours: 5, lastFailureAgeHours: null },
+    {
+      jobName: 'sync-trending',
+      lastSuccessAgeHours: 5,
+      lastFailureAgeHours: null,
+      lastPlannedRunAgeHours: 5.1,
+      previousPlannedRunAgeHours: 9.1,
+    },
   ]),
 });
 
