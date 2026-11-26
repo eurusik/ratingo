@@ -8,6 +8,9 @@ export const MOVIE_RELEASE_NOTIFICATIONS_SCHEDULER_ID = 'movie-release-notificat
 
 export const MOVIE_RELEASE_NOTIFICATIONS_PATTERN = '0 6 * * *';
 
+export const MOVIE_RELEASE_NOTIFICATIONS_DESCRIPTION =
+  'Notifies users that a movie they want to watch has been released.';
+
 export const USER_NOTIFICATIONS_JOB_OPTIONS = {
   attempts: 3,
   backoff: { type: 'exponential' as const, delay: 60_000 },

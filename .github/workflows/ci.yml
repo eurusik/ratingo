@@ -73,7 +73,7 @@ jobs:
           if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
             api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true; storefront_image=true; ai_core=true; veronica=true; happy=true
           else
-            api=$(match '^(apps/api/|packages/node-telemetry/|knip\.json$)')
+            api=$(match '^(apps/api/|packages/node-telemetry/|apps/ai/veronica/src/modules/chat/domain/constants/system-card\.json$|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|knip\.json$)')
             storefront=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|knip\.json$)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')

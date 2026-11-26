@@ -18,6 +18,7 @@ export interface ScheduledJobConfig {
   jobId: string;
   /** Optional job payload data */
   data?: Record<string, unknown>;
+  description: string;
 }
 
 /**
@@ -45,12 +46,13 @@ interface SchedulerConfig {
  *   "0 6 * * *"     → 6:00 daily
  *   "0 4 * * 1"     → Monday 4:00
  */
-const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
+export const INGESTION_SCHEDULED_JOBS: readonly Omit<ScheduledJobConfig, 'enabled'>[] = [
   {
     name: 'trackedShows',
     jobType: 'sync-tracked-shows',
     pattern: '0 8,20 * * *', // 8:00 and 20:00 UTC daily
     jobId: 'scheduled-tracked-shows',
+    description: 'Refreshes the shows users track, so new episodes and seasons show up.',
     data: {},
   },
   {
@@ -58,6 +60,8 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'sync-snapshots',
     pattern: '30 3 * * *', // Once daily at 3:30 UTC (off-peak)
     jobId: 'scheduled-snapshots',
+    description:
+      'Records the daily watcher and rating snapshot of catalog titles that trend charts are built from.',
     data: {},
   },
   {
@@ -65,6 +69,8 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'sync-trending-dispatcher',
     pattern: '0 */4 * * *', // Every 4 hours
     jobId: 'scheduled-trending',
+    description:
+      'Pulls trending movies and shows with their stats and rebuilds the trending lists.',
     data: { pages: 10, syncStats: true }, // ~200 items before Policy Engine → ~100 eligible
   },
   {
@@ -72,6 +78,7 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'sync-now-playing',
     pattern: '0 6 * * *', // 6:00 UTC daily
     jobId: 'scheduled-now-playing',
+    description: 'Fetches the movies now playing in cinemas in the region.',
     data: { region: 'UA' },
   },
   {
@@ -79,6 +86,8 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'update-now-playing-flags',
     pattern: '30 6 * * *', // 6:30 UTC daily (30 min after now-playing)
     jobId: 'scheduled-now-playing-flags',
+    description:
+      'Marks which catalog movies are in cinemas now; runs right after the now-playing sync.',
     data: { region: 'UA' },
   },
   {
@@ -86,6 +95,7 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'sync-new-releases',
     pattern: '0 4 * * *', // Daily 4:00 UTC
     jobId: 'scheduled-new-releases',
+    description: 'Adds movies released in the region over the last weeks.',
     data: { region: NEW_RELEASES_REGION, daysBack: CATALOG_DEFAULT_NEW_RELEASE_DAYS },
   },
   {
@@ -93,6 +103,7 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'sync-upcoming-movies',
     pattern: '0 5 * * *',
     jobId: 'scheduled-upcoming-movies',
+    description: 'Adds upcoming movie premieres to the catalog.',
     data: {},
   },
   {
@@ -100,6 +111,8 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'refresh-upcoming-movies',
     pattern: '0 7 * * 0,2-6',
     jobId: 'scheduled-upcoming-movies-refresh-soon',
+    description:
+      'Refreshes release dates of upcoming movies premiering soon; skips Monday, when the full refresh runs.',
     data: { scope: 'soon' },
   },
   {
@@ -107,6 +120,8 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'refresh-upcoming-movies',
     pattern: '0 7 * * 1',
     jobId: 'scheduled-upcoming-movies-refresh-all',
+    description:
+      'Refreshes release dates of all upcoming movies; on the other days only the ones premiering soon are refreshed.',
     data: { scope: 'all' },
   },
   {
@@ -114,6 +129,7 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'sync-anticipated-shows',
     pattern: '30 5 * * *',
     jobId: 'scheduled-anticipated-shows',
+    description: 'Pulls the most anticipated new shows.',
     data: {},
   },
   {
@@ -124,6 +140,8 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     // (~23h), leaving headroom before next fire.
     pattern: '0 2 * * *',
     jobId: 'scheduled-mdblist-ratings',
+    description:
+      'Queues titles missing Rotten Tomatoes ratings; the ratings-backfill queue then drains them slowly through the day because of the daily quota.',
     data: {},
   },
 ];
@@ -156,7 +174,7 @@ export default registerAs('scheduler', (): SchedulerConfig => ({
   enabled: process.env.SCHEDULER_ENABLED !== 'false', // Enabled by default
   timezone: process.env.SCHEDULER_TIMEZONE || 'UTC',
   envPrefix: process.env.APP_ENV || process.env.NODE_ENV || 'dev',
-  jobs: DEFAULT_JOBS.map(buildJobConfig),
+  jobs: INGESTION_SCHEDULED_JOBS.map(buildJobConfig),
 }));
 
 export interface MonitoringKeyHealthOverride {

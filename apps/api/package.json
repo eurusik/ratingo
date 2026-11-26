@@ -19,6 +19,7 @@
     "start:worker:prod": "node dist/src/worker.js",
     "preopenapi:generate": "npm run build:packages",
     "openapi:generate": "ts-node -r tsconfig-paths/register src/scripts/generate-openapi.ts",
+    "system-card:generate": "ts-node --transpile-only -r tsconfig-paths/register src/scripts/system-card/generate-system-card.ts",
     "lint": "cd ../.. && npx eslint \"apps/api/src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "jest",
