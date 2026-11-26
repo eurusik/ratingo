@@ -37,6 +37,12 @@ const unsetWhenEmpty = z
   .optional()
   .transform((value) => (value === undefined || value.trim() === '' ? undefined : value));
 
+const lokiEnvSchema = z.object({
+  GRAFANA_LOKI_URL: unsetWhenEmpty.pipe(z.url().optional()),
+  GRAFANA_LOKI_USER: unsetWhenEmpty,
+  GRAFANA_LOKI_TOKEN: unsetWhenEmpty,
+});
+
 const analyticsEnvSchema = z.object({
   GA_CREDENTIALS_JSON: unsetWhenEmpty,
   GA_PROPERTY_ID: unsetWhenEmpty,
@@ -71,4 +77,5 @@ export const serviceEnvSchema = z.object({
   ...changesEnvSchema.shape,
   ...happyEnvSchema.shape,
   ...analyticsEnvSchema.shape,
+  ...lokiEnvSchema.shape,
 });

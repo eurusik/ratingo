@@ -38,3 +38,11 @@ export const sameKyivTime = (kyivDateTime: string): RegExp => {
   const clock = time.replace(LEADING_ZERO, '0?');
   return new RegExp(`${date} ${clock}|(?:${date}|${spokenDay}),? о ${clock}`, 'u');
 };
+
+export const sameKyivTimeOrClockOnEvalDay = (kyivDateTime: string): RegExp => {
+  const withDate = sameKyivTime(kyivDateTime);
+  const [date, time] = kyivDateTime.split(' ');
+  if (date !== kyivDayFromEvalNow(0)) return withDate;
+  const clock = time.replace(LEADING_ZERO, '0?');
+  return new RegExp(`${withDate.source}|(?<![\\d:])${clock}(?![\\d:])`, 'u');
+};

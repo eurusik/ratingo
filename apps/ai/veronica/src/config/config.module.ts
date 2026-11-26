@@ -8,6 +8,7 @@ import {
   GRAFANA_CONFIG,
   HAPPY_CONFIG,
   INFRA_CONFIG,
+  LOKI_CONFIG,
   MODEL_ALIASES,
   PRODUCT_STATS_CONFIG,
   TELEGRAM_CONFIG,
@@ -17,6 +18,7 @@ import {
   type GrafanaConfig,
   type HappyConfig,
   type InfraConfig,
+  type LokiConfig,
   type ProductStatsConfig,
   type TelegramConfig,
 } from './config.constants';
@@ -54,9 +56,15 @@ export class ConfigModule {
       credentialsJson: env.GA_CREDENTIALS_JSON,
       propertyId: env.GA_PROPERTY_ID,
     };
+    const loki: LokiConfig = {
+      baseUrl: env.GRAFANA_LOKI_URL,
+      user: env.GRAFANA_LOKI_USER,
+      token: env.GRAFANA_LOKI_TOKEN,
+    };
     const providers = [
       { provide: ANTHROPIC_CONFIG, useValue: anthropic },
       { provide: GRAFANA_CONFIG, useValue: grafana },
+      { provide: LOKI_CONFIG, useValue: loki },
       { provide: PRODUCT_STATS_CONFIG, useValue: productStats },
       { provide: ANALYTICS_MCP_CONFIG, useValue: analytics },
       { provide: CHANGES_CONFIG, useValue: changes },

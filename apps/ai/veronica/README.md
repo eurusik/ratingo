@@ -50,6 +50,26 @@ What to watch in Grafana:
 - `app.ai.mcp.call.duration`;
 - `app.ai.mcp.server.events` for `start_failed`, `crashed`, `recycled_after_timeout`, `unconfigured`, `tool_missing` and `required_argument_hidden`.
 
+## Logs
+
+Veronica reads production errors and warnings from Grafana Cloud Loki with the `logs_search` tool; the design is in `apps/ai/ARCHITECTURE.md` and the log format in `.claude/rules/logging.md`. Without the three variables below the tool reports itself unavailable and everything else works.
+
+| Variable             | Secret | Value                                                               |
+| -------------------- | ------ | ------------------------------------------------------------------- |
+| `GRAFANA_LOKI_URL`   | no     | the stack's Loki URL from the stack Details page, without any path  |
+| `GRAFANA_LOKI_USER`  | no     | the numeric Loki user (instance id) from the same Details page      |
+| `GRAFANA_LOKI_TOKEN` | yes    | a Cloud access policy token with the `logs:read` scope on the stack |
+
+`GRAFANA_PROM_TOKEN` is a Grafana service account token with the Viewer role, sent as a bearer token to the metrics API. Cloud Loki does not take it: its query endpoint wants basic auth with the Loki user and an access policy token that carries `logs:read`, so the logs token is a new one.
+
+Creating the token (Grafana Cloud, as a stack admin):
+
+1. Open the stack in Grafana, then Administration, Users and access, Cloud access policies, Create access policy. In the Cloud portal the same page is Security, Access Policies.
+2. Name it `veronica-logs-read`, pick the stack as the realm, and under Scopes tick only `logs:read`. Leave every `write` and `delete` scope off.
+3. Create, then on the policy choose Add token, name it, set an expiration date (for example one year, and note it in the calendar) and copy the token once; it is shown only once.
+4. In the Cloud portal open the stack, then Details, and in the Loki block copy the URL and the User.
+5. In Railway, on the Veronica service, set `GRAFANA_LOKI_URL`, `GRAFANA_LOKI_USER` and `GRAFANA_LOKI_TOKEN`, then redeploy. Ask Veronica for the errors of a service to check it; `access_denied` in her answer means the scope or the user is wrong.
+
 ## Answer log
 
 Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the question, the final checked answer, the outcome (`answered`, `flagged`, `fallback`, `failed`; older rows may say `redacted`), the numbers the guard flagged, the tool names and each call's arguments (`tool_calls`, redacted and capped), so a live answer can be audited. Tool results are never stored. A failed write is logged and never affects the reply.

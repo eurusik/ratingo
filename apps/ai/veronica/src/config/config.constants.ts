@@ -7,10 +7,17 @@ export const CHAT_CONFIG = Symbol('CHAT_CONFIG');
 export const PRODUCT_STATS_CONFIG = Symbol('PRODUCT_STATS_CONFIG');
 export const CHANGES_CONFIG = Symbol('CHANGES_CONFIG');
 export const HAPPY_CONFIG = Symbol('HAPPY_CONFIG');
+export const LOKI_CONFIG = Symbol('LOKI_CONFIG');
 export const ANALYTICS_MCP_CONFIG = Symbol('ANALYTICS_MCP_CONFIG');
 
 export interface GrafanaConfig {
   baseUrl?: string;
+  token?: string;
+}
+
+export interface LokiConfig {
+  baseUrl?: string;
+  user?: string;
   token?: string;
 }
 

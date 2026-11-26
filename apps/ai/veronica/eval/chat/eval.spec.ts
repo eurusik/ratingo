@@ -8,11 +8,18 @@ import {
   NO_CODE_REVIEW,
   NOTHING_RECORDED,
   WHOLE_DAYS_COUNTED,
+  smallCountMentioned,
 } from './answer-stems';
 import { EVAL_CASES } from './cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
+import { LOKI_EVAL_CASES } from './loki.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
-import { kyivDayFromEvalNow, kyivTimeFromEvalNow, sameKyivTime } from './eval-clock';
+import {
+  kyivDayFromEvalNow,
+  kyivTimeFromEvalNow,
+  sameKyivTime,
+  sameKyivTimeOrClockOnEvalDay,
+} from './eval-clock';
 import { fixtureExecutors, runCase } from './harness';
 import { scoreCase, summarize, type CaseResult } from './scorer';
 
@@ -42,9 +49,9 @@ const isAfterEvalNow = ({ value }: DatedValue): boolean =>
   KYIV_DATE.test(value) ? value > kyivDayFromEvalNow(0) : value > kyivTimeFromEvalNow(0);
 
 describe('chat eval cases', () => {
-  it('has 12 to 45 cases with unique ids', () => {
+  it('has 12 to 60 cases with unique ids', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(12);
-    expect(EVAL_CASES.length).toBeLessThanOrEqual(45);
+    expect(EVAL_CASES.length).toBeLessThanOrEqual(60);
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
   });
 
@@ -67,6 +74,7 @@ describe('chat eval cases', () => {
       'google-analytics__run_realtime_report',
       'google-analytics__run_report',
       'job_failures',
+      'logs_search',
       'metrics_query',
       'product_stats',
       'recent_changes',
@@ -100,6 +108,24 @@ describe('chat eval cases', () => {
     );
     const injection = GA_EVAL_CASES.find((testCase) => testCase.id === 'ga-injection-in-campaign');
     expect(injection?.mustNotContain).toContain('evil.example');
+  });
+
+  it('covers the log questions, an empty result, an outage and an injection in a log record', () => {
+    expect(LOKI_EVAL_CASES.map((testCase) => testCase.id)).toEqual([
+      'logs-worker-today',
+      'logs-storm-limit-reached',
+      'logs-job-id-follow-up',
+      'logs-api-no-errors',
+      'logs-unavailable',
+      'logs-injection-in-record',
+    ]);
+    const injection = LOKI_EVAL_CASES.find(
+      (testCase) => testCase.id === 'logs-injection-in-record',
+    );
+    expect(injection?.mustNotContain).toContain('evil.example');
+    expect(
+      LOKI_EVAL_CASES.every((testCase) => testCase.reference.calls[0]?.tool === 'logs_search'),
+    ).toBe(true);
   });
 
   it('dates no fixture after the eval clock, except a next-run time', () => {
@@ -362,5 +388,57 @@ describe('language slips', () => {
     expect(
       GENDERED_ADDRESS.test('якщо йдеться про google analytics, ось цифри. ти про сайт?'),
     ).toBe(false);
+  });
+});
+
+describe('same Kyiv time on the eval day', () => {
+  const today = kyivTimeFromEvalNow(-1);
+  const clock = today.slice(-5);
+
+  it.each([`${today}`, `о ${clock} (Київ)`, `${clock}`])(
+    'reads «%s» as the time today',
+    (answer) => {
+      expect(sameKyivTimeOrClockOnEvalDay(today).test(answer)).toBe(true);
+    },
+  );
+
+  it('does not read another minute or hour as the time today', () => {
+    expect(sameKyivTimeOrClockOnEvalDay(today).test('о 03:17')).toBe(false);
+    expect(sameKyivTimeOrClockOnEvalDay(today).test(`1${clock}`)).toBe(false);
+  });
+
+  it('keeps asking for the date when the time is not on the eval day', () => {
+    const other = kyivTimeFromEvalNow(-48);
+    expect(sameKyivTimeOrClockOnEvalDay(other).test(`о ${other.slice(-5)}`)).toBe(false);
+    expect(sameKyivTimeOrClockOnEvalDay(other).test(other)).toBe(true);
+  });
+});
+
+describe('small counts as digits or words', () => {
+  it.each([
+    [2, 'була лише дві помилки'],
+    [2, '2 помилки'],
+    [3, 'тричі'],
+    [1, 'одна помилка'],
+    [10, 'десять разів'],
+    [0, 'нуль помилок'],
+  ])('reads %i in «%s»', (value, answer) => {
+    expect(smallCountMentioned(value).test(answer)).toBe(true);
+  });
+
+  it.each([
+    [2, 'було 12 помилок'],
+    [2, 'двадцять помилок'],
+    [3, 'їх було 30'],
+    [2, 'без помилок'],
+    [7, 'у сімʼї проблема'],
+    [7, "сім'я"],
+    [0, 'їх немає'],
+  ])('does not read %i in «%s»', (value, answer) => {
+    expect(smallCountMentioned(value).test(answer)).toBe(false);
+  });
+
+  it('has no words for a count it does not know', () => {
+    expect(() => smallCountMentioned(11)).toThrow('no number words');
   });
 });
