@@ -20,7 +20,7 @@ import { McpGatewayHost } from './mcp-gateway.host';
 const logger = new Logger('McpGateway');
 
 const mcpLogger: RunLogger = {
-  info: (event, fields) => logger.log(`${event} ${JSON.stringify(fields)}`),
+  info: (event, fields) => logger.log({ ...fields, message: event }),
 };
 
 export async function createMcpGatewayHost(

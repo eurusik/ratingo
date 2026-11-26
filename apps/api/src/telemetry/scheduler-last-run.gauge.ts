@@ -13,12 +13,21 @@ import {
 export const scheduledJobNames = (): ReadonlySet<string> =>
   new Set(SCHEDULED_JOBS.map((job) => job.jobId));
 
+const SCHEDULED_JOB_NAMES = scheduledJobNames();
+
+export const scheduledJobNameOf = (repeatJobKey: string | undefined): string | undefined => {
+  if (!repeatJobKey) return undefined;
+  const separatorIndex = repeatJobKey.indexOf(SCHEDULER_KEY_SEPARATOR);
+  if (separatorIndex < 0) return undefined;
+  const jobName = repeatJobKey.slice(separatorIndex + 1);
+  return SCHEDULED_JOB_NAMES.has(jobName) ? jobName : undefined;
+};
+
 export class SchedulerLastRunGauge {
   private readonly lastRunSeconds = new Map<
     string,
     { jobName: string; result: SchedulerRunResult; seconds: number }
   >();
-  private readonly allowedJobNames = scheduledJobNames();
 
   register(meter: Meter): void {
     meter
@@ -35,7 +44,7 @@ export class SchedulerLastRunGauge {
   }
 
   record(job: Job, result: SchedulerRunResult): void {
-    const jobName = this.toJobName(job.repeatJobKey);
+    const jobName = scheduledJobNameOf(job.repeatJobKey);
     if (!jobName) return;
     const finishedAt = job.finishedOn ?? Date.now();
     this.lastRunSeconds.set(`${jobName}${SCHEDULER_RUN_KEY_SEPARATOR}${result}`, {
@@ -43,13 +52,5 @@ export class SchedulerLastRunGauge {
       result,
       seconds: finishedAt / MS_PER_SECOND,
     });
-  }
-
-  private toJobName(repeatJobKey: string | undefined): string | undefined {
-    if (!repeatJobKey) return undefined;
-    const separatorIndex = repeatJobKey.indexOf(SCHEDULER_KEY_SEPARATOR);
-    if (separatorIndex < 0) return undefined;
-    const jobName = repeatJobKey.slice(separatorIndex + 1);
-    return this.allowedJobNames.has(jobName) ? jobName : undefined;
   }
 }

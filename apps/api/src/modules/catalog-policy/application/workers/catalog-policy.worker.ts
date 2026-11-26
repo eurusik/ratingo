@@ -10,6 +10,7 @@ import { Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
+import { WithJobLogContext } from '@/common/logging/with-job-log-context.decorator';
 import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 import {
@@ -38,6 +39,7 @@ export class CatalogPolicyWorker extends WorkerHost {
   /**
    * Routes jobs to appropriate handlers.
    */
+  @WithJobLogContext(CATALOG_POLICY_QUEUE)
   async process(job: Job): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
 

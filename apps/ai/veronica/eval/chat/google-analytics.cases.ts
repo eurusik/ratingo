@@ -46,6 +46,10 @@ const USERS_LAST_WEEK = total({ ...USERS_WEEK, date_ranges: PREVIOUS_WEEK });
 const CHANNELS = report(['sessionDefaultChannelGroup'], ['sessions']);
 const ORGANIC = valueOf(CHANNELS, 'Organic Search');
 const DIRECT = valueOf(CHANNELS, 'Direct');
+const ORGANIC_USERS = valueOf(
+  report(['sessionDefaultChannelGroup'], ['activeUsers']),
+  'Organic Search',
+);
 const PAGES = report(['pagePath'], ['screenPageViews'], { limit: 10 });
 const HOME_VIEWS = valueOf(PAGES, '/');
 const DUNE_VIEWS = valueOf(PAGES, '/movies/dune-part-two');
@@ -171,7 +175,10 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
     question: 'Звідки до нас приходять відвідувачі цього тижня?',
     fixtures: [],
     expectedTools: [REPORT],
-    mustContain: [['Organic Search', 'пошук'], [String(ORGANIC)]],
+    mustContain: [
+      ['Organic Search', 'пошук'],
+      [String(ORGANIC), String(ORGANIC_USERS)],
+    ],
     reference: {
       calls: [{ tool: REPORT, input: CHANNELS }],
       answer: `Найбільше сесій з пошуку (Organic Search): ${ORGANIC}. Прямих заходів ${DIRECT}.`,

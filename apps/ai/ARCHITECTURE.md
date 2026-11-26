@@ -495,6 +495,7 @@ The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_B
 - `digest_snapshot`: today's snapshot and rule outcomes.
 - `recent_changes`: deploys and merged PRs, read-only.
 - `ask_happy`: reads Happy's latest finished result for one PR (verdict, counts by severity, questions, coverage). It never starts a review.
+- `job_failures`: why background jobs failed, from `reporting.daily_job_failures` through `ai_reader` (the same `AI_READER_DATABASE_URL` as `product_stats`). The API records every failed BullMQ attempt into a daily summary per Kyiv day, queue, job type, scheduler and error class (`rate_limit`, `access_denied`, `not_found`, `timeout`, `network`, `database`, `other`) and keeps 14 days. Parameters: `job` (part of a job or scheduler name), `queue`, `window` (at most 7 days, default 24h). The data is per whole Kyiv day, so the window only picks the days: `countedKyivDays` names the days that are summed (from the day the window starts to today), and `failuresOnThoseDays` and `attemptsExhaustedOnThoseDays` cover those whole days, even when the window is a few hours. Rows are grouped by job, queue and class and sorted by failures. Each row also has the exact first and last failure in Kyiv time and the last message with secrets removed. An empty list means no failure was recorded on those days. Without `AI_READER_DATABASE_URL`, or when the query fails, the tool reports itself unavailable.
 - `google-analytics__run_report`, `google-analytics__run_realtime_report`, `google-analytics__run_funnel_report`, `google-analytics__get_custom_dimensions_and_metrics`: Google Analytics 4 for ratingo.top through the MCP gateway (`mcp: [google-analytics]`). The property is pinned from `GA_PROPERTY_ID`, reports go at most 90 days back with at most 50 rows, and paging and quota arguments are hidden. They are optional tools, and a run never waits for them: Veronica lists them in the background at boot (`McpGatewayHost.onApplicationBootstrap`), and a run offers them only once that listing is ready, so the first questions after a deploy are answered without them. If listing fails, the next run starts another listing in the background, and the session's cooldown keeps this from spawning the server on every message. when the key or the property id is missing or invalid, or the server is down, they are simply not offered and the chat works as before. Their prompt (`agent/prompts/chat-google-analytics.md`) is added only when they are offered.
 
 No Railway logs and no free SQL; those are left to DUM-E later.
@@ -503,7 +504,7 @@ No Railway logs and no free SQL; those are left to DUM-E later.
 
 ### Investigation run (step 2)
 
-- One `AgentLoop` per message on alias `fast`, with a registry of just these four tools, prompt `agent/prompts/chat.md`, at most 8 turns and $0.05 per message; $0.30 per day for the `chat` task and the agent's day budget, both read from the `ai.runs` table.
+- One `AgentLoop` per message on alias `fast`, with a registry of just these read-only tools, prompt `agent/prompts/chat.md`, at most 8 turns and $0.05 per message; $0.30 per day for the `chat` task and the agent's day budget, both read from the `ai.runs` table.
 - «шукаю…» is posted first and then edited into the answer; if the edit fails, a new message is sent.
 - **Numbers guard: flag, don't cut.**
   - **Never shortens the answer.** The answer is sent whole. Numbers it cannot verify are listed in one trusted footer line, «<i>Не звірено з даними: 78, 0,503.</i>»: at most 5 numbers, deduped, digits only. The outcome is then `flagged`.
@@ -518,7 +519,7 @@ No Railway logs and no free SQL; those are left to DUM-E later.
 - **Memory.** The last 12 messages per chat in Redis (`ai-veronica:conversation:<chatId>`, 24 h TTL): the question and the checked answer as text, never tool payloads.
 - **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `flagged`, `fallback`, `failed`; route `investigation`; `redacted` was the outcome before flagging and may still appear in older data) and a `chat` row in `ai.runs` with the cost.
 - **Env.** `GITHUB_READ_TOKEN` (optional, read-only; `recent_changes` reports itself unavailable without it) and `GITHUB_REPOSITORY` (default `eurusik/ratingo`).
-- **Eval.** `npm run eval:chat --workspace=@ratingo/ai-veronica` runs `apps/ai/veronica/eval/chat` (15 cases with fixture tool results). On the stub model it replays reference answers and checks the harness; with `AI_MODEL_FAST=anthropic:<model>` and `ANTHROPIC_API_KEY` it measures tool-selection accuracy, fact accuracy and cases where the numbers guard fired (target 0). `EVAL_DUMP=<file>` writes the answers.
+- **Eval.** `npm run eval:chat --workspace=@ratingo/ai-veronica` runs `apps/ai/veronica/eval/chat` (the service cases plus the Google Analytics cases, with fixture tool results). On the stub model it replays reference answers and checks the harness; with `AI_MODEL_FAST=anthropic:<model>` and `ANTHROPIC_API_KEY` it measures tool-selection accuracy, fact accuracy and cases where the numbers guard fired (target 0). `EVAL_DUMP=<file>` writes the answers.
 
 ### Answer log (`ai.chat_exchanges`)
 

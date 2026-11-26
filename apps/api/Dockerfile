@@ -47,6 +47,8 @@ FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15
 WORKDIR /app
 ENV NODE_ENV=production
 
+RUN apk add --no-cache tini
+
 COPY --from=prod-deps /app ./
 
 # Copy compiled API bundle
@@ -59,4 +61,6 @@ COPY apps/api/drizzle_v2 ./apps/api/drizzle_v2
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "if [ \"$APP_ROLE\" = worker ]; then exec npm run start:worker:prod --workspace=api; else exec npm run start:prod --workspace=api; fi"]
+ENTRYPOINT ["/sbin/tini", "--"]
+
+CMD ["sh", "-c", "cd apps/api && if [ \"$APP_ROLE\" = worker ]; then exec node dist/src/worker.js; else exec node dist/src/main.js; fi"]

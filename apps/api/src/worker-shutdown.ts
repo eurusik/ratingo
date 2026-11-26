@@ -4,7 +4,7 @@ import { DiscoveryService } from '@nestjs/core';
 import type * as postgres from 'postgres';
 
 import { findBullWorkers } from './common/runtime/bull-workers';
-import { errorMessage } from './common/utils/error.utils';
+import { exitAfter } from './common/runtime/exit-after';
 import { withTimeout } from './common/utils/with-timeout.util';
 import { POSTGRES_CLIENT } from './database/database.module';
 
@@ -32,18 +32,10 @@ export const shutdownWorker = (
     `Worker shutdown exceeded ${timeoutMs}ms; unfinished jobs are retried after the BullMQ stall check`,
   );
 
-const exitAfter = (shutdown: Promise<void>): Promise<void> =>
-  shutdown
-    .then(() => process.exit(0))
-    .catch((error: unknown) => {
-      logger.error(
-        `Worker shutdown failed: ${errorMessage(error)}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-      process.exit(1);
-    });
-
-export function closeWorkerOnSignals(app: INestApplicationContext): void {
+export function closeWorkerOnSignals(
+  app: INestApplicationContext,
+  flushLogs: () => Promise<void> = () => Promise.resolve(),
+): void {
   let shutdown: Promise<void> | undefined;
 
   const onSignal = (signal: NodeJS.Signals) => {
@@ -52,7 +44,7 @@ export function closeWorkerOnSignals(app: INestApplicationContext): void {
       return;
     }
     logger.log(`Received ${signal}, draining workers`);
-    shutdown = exitAfter(shutdownWorker(app));
+    shutdown = exitAfter(shutdownWorker(app), flushLogs, logger, 'Worker shutdown failed');
   };
 
   SHUTDOWN_SIGNALS.forEach((signal) => process.on(signal, onSignal));

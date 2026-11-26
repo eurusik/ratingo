@@ -260,6 +260,7 @@ const apiModules = [
   'home',
   'ingestion',
   'insights',
+  'job-failures',
   'journal',
   'monitoring',
   'provider',

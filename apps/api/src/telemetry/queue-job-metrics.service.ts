@@ -5,8 +5,9 @@ import { type Histogram, type Meter, metrics } from '@opentelemetry/api';
 import { type Job, type Worker } from 'bullmq';
 
 import { findBullWorkers } from '../common/runtime/bull-workers';
+import { JobFailureRecorder } from '../modules/job-failures/public';
 
-import { SchedulerLastRunGauge } from './scheduler-last-run.gauge';
+import { SchedulerLastRunGauge, scheduledJobNameOf } from './scheduler-last-run.gauge';
 import {
   METER_NAME,
   MS_PER_SECOND,
@@ -24,7 +25,10 @@ export class QueueJobMetricsService implements OnApplicationBootstrap {
   private readonly meter: Meter = metrics.getMeter(METER_NAME);
   private readonly schedulerLastRun = new SchedulerLastRunGauge();
 
-  constructor(private readonly discovery: DiscoveryService) {}
+  constructor(
+    private readonly discovery: DiscoveryService,
+    private readonly jobFailures: JobFailureRecorder,
+  ) {}
 
   onApplicationBootstrap(): void {
     const duration = this.meter.createHistogram(QUEUE_JOB_DURATION_METRIC, {
@@ -42,13 +46,25 @@ export class QueueJobMetricsService implements OnApplicationBootstrap {
       this.record(duration, worker, job, QUEUE_JOB_RESULT.COMPLETED);
       this.schedulerLastRun.record(job, SCHEDULER_RUN_RESULT.SUCCESS);
     });
-    worker.on('failed', (job) => {
+    worker.on('failed', (job, error) => {
       if (!job) return;
       const result = willRetry(job) ? QUEUE_JOB_RESULT.RETRIED : QUEUE_JOB_RESULT.FAILED;
       this.record(duration, worker, job, result);
       if (result === QUEUE_JOB_RESULT.FAILED) {
         this.schedulerLastRun.record(job, SCHEDULER_RUN_RESULT.FAILURE);
       }
+      this.reportFailure(worker, job, error, result === QUEUE_JOB_RESULT.FAILED);
+    });
+  }
+
+  private reportFailure(worker: Worker, job: Job, error: Error, attemptsExhausted: boolean): void {
+    this.jobFailures.record({
+      queue: worker.name,
+      jobType: job.name,
+      schedulerJobId: scheduledJobNameOf(job.repeatJobKey) ?? null,
+      attemptsExhausted,
+      failedAtMs: job.finishedOn,
+      error,
     });
   }
 

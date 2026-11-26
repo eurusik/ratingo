@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
+import { WithJobLogContext } from '@/common/logging/with-job-log-context.decorator';
 import {
   USER_NOTIFICATIONS_JOB,
   USER_NOTIFICATIONS_QUEUE,
@@ -18,6 +19,7 @@ export class UserNotificationsWorker extends WorkerHost {
     super();
   }
 
+  @WithJobLogContext(USER_NOTIFICATIONS_QUEUE)
   async process(job: Job): Promise<void> {
     switch (job.name) {
       case USER_NOTIFICATIONS_JOB.NOTIFY_MOVIE_RELEASES:
