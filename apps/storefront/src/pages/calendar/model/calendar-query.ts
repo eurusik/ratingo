@@ -9,7 +9,7 @@ import {
   type DateKey,
 } from './calendar-dates';
 
-export const CALENDAR_MODES = ['mine', 'premieres', 'all'] as const;
+const CALENDAR_MODES = ['mine', 'premieres', 'all'] as const;
 
 export const CALENDAR_TYPES = ['show', 'movie'] as const satisfies readonly CalendarMediaType[];
 
