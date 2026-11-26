@@ -264,7 +264,7 @@ export class InvestigationRunner {
   private checked(output: string, sources: readonly string[]): Verdict {
     const text = clip(stripLinks(output), ANSWER_MAX_CHARS * 2 - FLAGGED_NOTE_MAX_CHARS);
     const known = new Set([
-      ...knownNumbers([...sources, SYSTEM_CARD_TEXT]),
+      ...knownNumbers(sources),
       ...knownNumbers([formatKyivDateTime(this.clock.nowMs())]),
     ]);
     const kyivToday = formatKyivDateTime(this.clock.nowMs()).slice(0, ISO_DATE_LENGTH);

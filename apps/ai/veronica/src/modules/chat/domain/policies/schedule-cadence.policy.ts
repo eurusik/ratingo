@@ -1,5 +1,7 @@
 import type { JobSchedule } from '../entities/system-card';
 
+import { spellNumber } from './number-words.policy';
+
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAYS_PER_WEEK = WEEKDAYS.length;
 const SUNDAY_ALIAS = 7;
@@ -59,14 +61,14 @@ const weekdaysOf = (field: string): number[] | null => {
 };
 
 const plural = (count: number, unit: string): string =>
-  count === 1 ? `every ${unit}` : `every ${count} ${unit}s`;
+  count === 1 ? `every ${unit}` : `every ${spellNumber(count) ?? count} ${unit}s`;
 
 const frequencyWords = (frequency: Frequency): string => {
   if ('everyMinutes' in frequency) return plural(frequency.everyMinutes, 'minute');
   if ('everyHours' in frequency) return plural(frequency.everyHours, 'hour');
   if (frequency.timesPerDay === 1) return 'once a day';
   if (frequency.timesPerDay === 2) return 'twice a day';
-  return `${frequency.timesPerDay} times a day`;
+  return `${spellNumber(frequency.timesPerDay) ?? frequency.timesPerDay} times a day`;
 };
 
 const joinDays = (days: readonly number[]): string => {

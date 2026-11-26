@@ -272,12 +272,11 @@ describe('InvestigationRunner', () => {
     expect(chat.stored[1].text).toBe(answer);
   });
 
-  it('accepts a number that comes from the system card', async () => {
-    const chat = new Harness().script(
-      answerStep('Задача scheduled-trending запускається кожні 4 години.'),
-    );
-    const result = await chat.ask('як часто оновлюється trending?');
-    expect(result.outcome).toBe(ChatOutcome.ANSWERED);
+  it('still flags a small number that no tool returned, though the card is in the prompt', async () => {
+    const chat = new Harness().script(answerStep('Сьогодні впало 4 завдання.'));
+    const result = await chat.ask('що з чергами?');
+    expect(result.outcome).toBe(ChatOutcome.FLAGGED);
+    expect(result.unverifiedNumbers).toEqual(['4']);
   });
 
   it('flags instead of falling back when nothing in the answer can be verified', async () => {

@@ -18,7 +18,7 @@ const metrics = (template: string, data: unknown, extra: Record<string, unknown>
 
 const schedulerJob = (job: string, overrides: Record<string, unknown> = {}) => ({
   job,
-  cadence: 'every 6 hours',
+  cadence: 'every six hours',
   nextRunAtKyiv: '2026-11-22 16:00',
   ...overrides,
 });

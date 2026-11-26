@@ -28,6 +28,10 @@ describe('renderSystemCard', () => {
     expect(card).not.toMatch(/\*|\d+ \d+ \*/);
   });
 
+  it('holds no digits, so the numbers guard never has to trust it', () => {
+    expect(card).not.toMatch(/\d/);
+  });
+
   it('describes the weekly job the digest once took for broken', () => {
     expect(card).toContain('- scheduled-upcoming-movies-refresh-all: weekly on Monday; ');
     expect(card).toContain('- scheduled-upcoming-movies-refresh-soon: daily except Monday; ');

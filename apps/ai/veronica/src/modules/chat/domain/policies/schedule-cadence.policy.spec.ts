@@ -1,5 +1,6 @@
 import * as fc from 'fast-check';
 
+import { spellNumber } from './number-words.policy';
 import { CUSTOM_CADENCE, describeCadence, scheduleFromLabel } from './schedule-cadence.policy';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -14,10 +15,11 @@ describe('describeCadence', () => {
   it.each([
     ['0 8,20 * * *', 'twice a day'],
     ['30 3 * * *', 'daily'],
-    ['0 */4 * * *', 'every 4 hours'],
+    ['0 */4 * * *', 'every four hours'],
     ['0 7 * * 1', 'weekly on Monday'],
     ['0 7 * * 0,2-6', 'daily except Monday'],
-    ['*/20 * * * *', 'every 20 minutes'],
+    ['*/20 * * * *', 'every twenty minutes'],
+    ['0 1,5,9,13,17,21 * * *', 'six times a day'],
     ['0 9 * * 1,3,5', 'on Monday, Wednesday and Friday'],
     ['0 9,21 * * 6', 'twice a day on Saturday'],
     ['0 9 1 * *', CUSTOM_CADENCE],
@@ -27,9 +29,10 @@ describe('describeCadence', () => {
   });
 
   it.each([
-    [120_000, 'every 2 minutes'],
+    [120_000, 'every two minutes'],
     [3_600_000, 'every hour'],
-    [21_600_000, 'every 6 hours'],
+    [21_600_000, 'every six hours'],
+    [9_000_000, 'every 150 minutes'],
     [1500, CUSTOM_CADENCE],
   ])('describes an interval of %d ms as %s', (everyMs, words) => {
     expect(describeCadence({ everyMs })).toBe(words);
@@ -52,7 +55,7 @@ describe('describeCadence', () => {
             ? 'daily'
             : hours.length === 2
               ? 'twice a day'
-              : `${hours.length} times a day`;
+              : `${spellNumber(hours.length)} times a day`;
         expect(words).toBe(expected);
       }),
     );
@@ -61,7 +64,7 @@ describe('describeCadence', () => {
   it('reads an hour step as every N hours whatever the minute', () => {
     fc.assert(
       fc.property(minute, fc.integer({ min: 2, max: 23 }), (m, step) => {
-        expect(cron(`${m} */${step} * * *`)).toBe(`every ${step} hours`);
+        expect(cron(`${m} */${step} * * *`)).toBe(`every ${spellNumber(step)} hours`);
       }),
     );
   });
@@ -83,17 +86,20 @@ describe('describeCadence', () => {
     );
   });
 
-  it('never leaks cron syntax or hours into the words', () => {
+  it('never leaks cron syntax or a digit into the words', () => {
     fc.assert(
       fc.property(fc.string(), (pattern) => {
-        expect(cron(pattern)).not.toMatch(/[*/]/);
+        expect(cron(pattern)).not.toMatch(/[*/\d]/);
       }),
     );
     fc.assert(
       fc.property(minute, hourSet, fc.uniqueArray(weekday, { minLength: 1 }), (m, hours, days) => {
-        const words = cron(`${m} ${hours.join(',')} * * ${days.join(',')}`);
-        expect(words).not.toMatch(/[*/:]/);
-        expect(words).not.toMatch(new RegExp(`\\b${m}\\b(?! times)`));
+        expect(cron(`${m} ${hours.join(',')} * * ${days.join(',')}`)).not.toMatch(/[*/:\d]/);
+      }),
+    );
+    fc.assert(
+      fc.property(fc.integer({ min: 1, max: 99 }), (minutes) => {
+        expect(describeCadence({ everyMs: minutes * 60_000 })).not.toMatch(/\d/);
       }),
     );
   });
