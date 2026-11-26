@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { CLOCK_PORT, RowList, type ClockPort } from '@ratingo/ai-core';
+import { CLOCK_PORT, RowList, type ClockPort, type RowOmission } from '@ratingo/ai-core';
 
 import { RELEASE_BASE_BRANCH, RELEASE_HEAD_BRANCH } from '../../domain/constants/happy.constants';
 import {
@@ -20,7 +20,16 @@ import type { RecentChangesInput } from './investigation-executors';
 
 const MS_PER_HOUR = 3_600_000;
 const DEFAULT_CHANGES_WINDOW = '24h';
-const PULL_REQUESTS_HINT = `pass a shorter window or into=${RELEASE_HEAD_BRANCH} or into=${RELEASE_BASE_BRANCH}`;
+const SHORTER_WINDOW_HINT = 'pass a shorter window';
+const SHORTER_WINDOW_OR_BRANCH_HINT = `${SHORTER_WINDOW_HINT} or into=${RELEASE_HEAD_BRANCH} or into=${RELEASE_BASE_BRANCH}`;
+
+const pullRequestsHintFor = (into: string | undefined): string =>
+  into === undefined ? SHORTER_WINDOW_OR_BRANCH_HINT : SHORTER_WINDOW_HINT;
+
+const pullRequestsOmission = (omission: RowOmission | undefined) =>
+  omission === undefined
+    ? {}
+    : { pullRequestsOmitted: omission.omitted, pullRequestsHint: omission.hint };
 
 @Injectable()
 export class RecentChangesExecutor {
@@ -50,10 +59,10 @@ export class RecentChangesExecutor {
       atKyiv: formatKyivDateTime(deployment.atMs),
     }));
     const deploymentsOmitted = report.deployments.length - deployments.length;
-    return RowList.of(pullRequests, PULL_REQUESTS_HINT, (kept, omission) => ({
+    return RowList.of(pullRequests, pullRequestsHintFor(input.into), (kept, omission) => ({
       window: window.promql,
       pullRequests: kept,
-      ...omission,
+      ...pullRequestsOmission(omission),
       deployments,
       ...(deploymentsOmitted > 0 ? { deploymentsOmitted } : {}),
     }));
