@@ -1,11 +1,7 @@
-import {
-  LOG_FETCH_LIMIT_GROUPED,
-  LOG_RESPONSE_MAX_BYTES,
-  LogsFailureClass,
-} from '../../domain/constants/logs.constants';
+import { LOG_FETCH_LIMIT_GROUPED, LogsFailureClass } from '../../domain/constants/logs.constants';
 import { LogsUnavailableError, type LogQuery } from '../../domain/ports/logs.port';
 
-import { GrafanaLokiLogsAdapter } from './grafana-loki.logs-adapter';
+import { GrafanaLokiLogsAdapter, LOG_RESPONSE_MAX_BYTES } from './grafana-loki.logs-adapter';
 
 const CONNECTION = {
   baseUrl: 'https://logs.example.invalid/',

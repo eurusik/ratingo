@@ -36,7 +36,7 @@ export const WHOLE_DAYS_COUNTED =
 export const FORMAL_ADDRESS = /(?<!\p{L})(?:ви|вас|вам|ваш\p{L}*)(?!\p{L})/u;
 
 const SMALL_COUNT_WORDS: readonly (readonly string[])[] = [
-  ['жодн', 'нуль', 'немає'],
+  ['нуль'],
   ['один', 'одна', 'одне', 'одну', 'одного'],
   ['два', 'дві', 'двоє', 'двох', 'двічі'],
   ['три', 'трьох', 'тричі', 'трійка'],
@@ -49,12 +49,14 @@ const SMALL_COUNT_WORDS: readonly (readonly string[])[] = [
   ['десять', 'десяти'],
 ];
 
+const WORD_CHARACTER = "\\p{L}'’ʼ";
+
 export const smallCountMentioned = (value: number): RegExp => {
   const words = SMALL_COUNT_WORDS[value];
   if (words === undefined) throw new Error(`no number words for ${value}`);
   const alternatives = [
     `(?<![\\p{L}\\d])${value}(?![\\d])`,
-    ...words.map((word) => `(?<![\\p{L}])${word}(?![\\p{L}])`),
+    ...words.map((word) => `(?<![${WORD_CHARACTER}])${word}(?![${WORD_CHARACTER}])`),
   ];
   return new RegExp(alternatives.join('|'), 'u');
 };

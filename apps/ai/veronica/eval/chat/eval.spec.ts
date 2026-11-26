@@ -421,6 +421,7 @@ describe('small counts as digits or words', () => {
     [3, 'тричі'],
     [1, 'одна помилка'],
     [10, 'десять разів'],
+    [0, 'нуль помилок'],
   ])('reads %i in «%s»', (value, answer) => {
     expect(smallCountMentioned(value).test(answer)).toBe(true);
   });
@@ -430,6 +431,9 @@ describe('small counts as digits or words', () => {
     [2, 'двадцять помилок'],
     [3, 'їх було 30'],
     [2, 'без помилок'],
+    [7, 'у сімʼї проблема'],
+    [7, "сім'я"],
+    [0, 'їх немає'],
   ])('does not read %i in «%s»', (value, answer) => {
     expect(smallCountMentioned(value).test(answer)).toBe(false);
   });

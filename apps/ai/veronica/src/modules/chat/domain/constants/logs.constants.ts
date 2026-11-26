@@ -44,9 +44,6 @@ export const LOG_ID_MAX_CHARS = 128;
 
 export const LOG_FETCH_LIMIT_GROUPED = 300;
 export const LOG_FETCH_LIMIT_LINES = 60;
-export const LOG_RESPONSE_MAX_BYTES = 4_000_000;
-export const LOG_TOO_LARGE_RETRY_DIVISOR = 4;
-export const LOG_REQUEST_TIMEOUT_MS = 15_000;
 
 export const LOG_SEARCH_OUTPUT_CAP = 4500;
 export const LOG_MESSAGE_MAX_CHARS = 160;

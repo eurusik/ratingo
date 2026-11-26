@@ -1,11 +1,6 @@
 import { z } from 'zod';
 
-import {
-  LOG_REQUEST_TIMEOUT_MS,
-  LOG_RESPONSE_MAX_BYTES,
-  LOG_TOO_LARGE_RETRY_DIVISOR,
-  LogsFailureClass,
-} from '../../domain/constants/logs.constants';
+import { LogsFailureClass } from '../../domain/constants/logs.constants';
 import {
   LogsUnavailableError,
   type LogQuery,
@@ -14,6 +9,9 @@ import {
   type RawLogLine,
 } from '../../domain/ports/logs.port';
 
+export const LOG_RESPONSE_MAX_BYTES = 4_000_000;
+const LOG_REQUEST_TIMEOUT_MS = 15_000;
+const LOG_TOO_LARGE_RETRY_DIVISOR = 4;
 const QUERY_RANGE_PATH = '/loki/api/v1/query_range';
 const NANOS_PER_MS = 1_000_000n;
 const HTTP_UNAUTHORIZED = 401;

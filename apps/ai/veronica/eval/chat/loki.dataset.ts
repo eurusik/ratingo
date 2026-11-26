@@ -30,6 +30,8 @@ const logRecord = (
 export const SERVICE_WORKER = 'ratingo-worker';
 export const SERVICE_API = 'ratingo-api';
 
+const TMDB_TIMEOUT_MESSAGE = 'TMDB API: Request timeout';
+
 export const TMDB_TIMEOUTS = 14;
 export const TRAKT_LIMITS = 3;
 const TMDB_TIMEOUT_FIRST_MINUTES_AGO = 560;
@@ -48,8 +50,8 @@ const timeoutRecords = (): SimulatedLogRecord[] =>
       context: 'SyncShowProcessor',
       message: `Sync of show ${3100 + index} failed after 3 attempts`,
       error_name: 'TimeoutError',
-      error_message: 'TMDB API: Request timeout',
-      error_stack: `TimeoutError: TMDB API: Request timeout\n    at TmdbClient.get (tmdb.client.ts:88:11)\n    at SyncShowProcessor.process (sync-show.processor.ts:41:7)`,
+      error_message: TMDB_TIMEOUT_MESSAGE,
+      error_stack: `TimeoutError: ${TMDB_TIMEOUT_MESSAGE}\n    at TmdbClient.get (tmdb.client.ts:88:11)\n    at SyncShowProcessor.process (sync-show.processor.ts:41:7)`,
       job_id: isFollowUp ? FOLLOW_UP_JOB_ID : `sync-show:${4000 + index}`,
       queue: 'ingestion',
     });
@@ -72,7 +74,7 @@ const followUpRetry = (): SimulatedLogRecord =>
     context: 'SyncShowProcessor',
     message: 'Sync of show 3100 will be retried',
     error_name: 'TimeoutError',
-    error_message: 'TMDB API: Request timeout',
+    error_message: TMDB_TIMEOUT_MESSAGE,
     job_id: FOLLOW_UP_JOB_ID,
     queue: 'ingestion',
   });
@@ -108,7 +110,7 @@ const stormRecords = (): SimulatedLogRecord[] =>
       context: 'SyncShowProcessor',
       message: `Sync of show ${5000 + index} failed after 3 attempts`,
       error_name: 'TimeoutError',
-      error_message: 'TMDB API: Request timeout',
+      error_message: TMDB_TIMEOUT_MESSAGE,
       job_id: `sync-show:${6000 + index}`,
       queue: 'ingestion',
     }),
