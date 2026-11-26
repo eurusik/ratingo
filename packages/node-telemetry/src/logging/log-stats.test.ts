@@ -47,3 +47,21 @@ describe('createLogMetrics', () => {
     expect(value(LOG_BYTES_METRIC, { outcome: 'dropped_daily_cap' })).toBe(100);
   });
 });
+
+describe('createLogMetrics before telemetry starts', () => {
+  it('counts records once a meter provider is registered after the logger was created', async () => {
+    metrics.disable();
+    const stats = createLogMetrics();
+    stats.record('shipped', 'info', 10);
+
+    const reader = new CollectingReader();
+    metrics.setGlobalMeterProvider(new MeterProvider({ readers: [reader] }));
+    stats.record('shipped', 'info', 20);
+
+    const { resourceMetrics } = await reader.collect();
+    const bytes = resourceMetrics.scopeMetrics
+      .flatMap((scope) => scope.metrics)
+      .find((metric) => metric.descriptor.name === LOG_BYTES_METRIC);
+    expect(bytes?.dataPoints.map((point) => point.value)).toEqual([20]);
+  });
+});

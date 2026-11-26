@@ -1,4 +1,10 @@
-import { createStructuredLogger, DEFAULT_LOG_LIMITS } from '@ratingo/node-telemetry';
+import { metrics } from '@opentelemetry/api';
+import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
+import {
+  createStructuredLogger,
+  DEFAULT_LOG_LIMITS,
+  LOG_RECORDS_METRIC,
+} from '@ratingo/node-telemetry';
 
 import { captureConsole, startServerLogging } from './server-logging';
 
@@ -79,5 +85,51 @@ describe('startServerLogging', () => {
 
     expect(startServerLogging({ ...SETTINGS, format: 'pretty' })).toBeUndefined();
     expect(console.error).toBe(before);
+  });
+});
+
+class CollectingReader extends MetricReader {
+  protected onShutdown(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  protected onForceFlush(): Promise<void> {
+    return Promise.resolve();
+  }
+}
+
+describe('startServerLogging counters', () => {
+  const originalConsole = { ...console };
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    AbortSignal.timeout ??= () => new AbortController().signal;
+  });
+
+  afterEach(() => {
+    Object.assign(console, originalConsole);
+    global.fetch = originalFetch;
+  });
+
+  it('counts shipped records even though logging starts before the meter provider', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, body: null });
+    metrics.disable();
+    const logger = startServerLogging({
+      ...SETTINGS,
+      otlpEndpoint: 'http://alloy.railway.internal:4318',
+    });
+
+    const reader = new CollectingReader();
+    metrics.setGlobalMeterProvider(new MeterProvider({ readers: [reader] }));
+    console.error('server render failed');
+    await logger?.flush();
+
+    const { resourceMetrics } = await reader.collect();
+    const records = resourceMetrics.scopeMetrics
+      .flatMap((scope) => scope.metrics)
+      .find((metric) => metric.descriptor.name === LOG_RECORDS_METRIC);
+    expect(records?.dataPoints.map((point) => point.attributes)).toEqual([
+      { outcome: 'shipped', level: 'error' },
+    ]);
   });
 });

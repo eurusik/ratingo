@@ -16,7 +16,8 @@ export {
   type LogFormat,
   type LoggerSettings,
 } from './logger-settings';
-export { buildOtlpLogsPayload, OtlpLogShipper } from './otlp-log-shipper';
+export { buildOtlpLogsPayload } from './otlp-log-payload';
+export { OtlpLogShipper } from './otlp-log-shipper';
 export { isSensitiveKey, REDACTED, redactText, redactValue } from './redaction';
 export { StructuredLogger, type LogDetails, type LogSink } from './structured-logger';
 export {

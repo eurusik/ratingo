@@ -18,14 +18,12 @@ const MAX_REQUEST_ID_LENGTH = 128;
 
 const CORS_ALLOWED_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
 
-const REQUEST_ID_HEADERS = ['x-request-id', 'x-railway-request-id'] as const;
+const EDGE_REQUEST_ID_HEADER = 'x-railway-request-id';
 
 const requestIdOf = (headers: Record<string, string | string[] | undefined>): string => {
-  for (const name of REQUEST_ID_HEADERS) {
-    const value = headers[name];
-    if (typeof value === 'string' && value.length > 0) {
-      return value.slice(0, MAX_REQUEST_ID_LENGTH);
-    }
+  const edgeId = headers[EDGE_REQUEST_ID_HEADER];
+  if (typeof edgeId === 'string' && edgeId.length > 0) {
+    return edgeId.slice(0, MAX_REQUEST_ID_LENGTH);
   }
   return randomUUID();
 };

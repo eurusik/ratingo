@@ -11,7 +11,7 @@
 
 ## Limits
 
-- `otelcol.processor.memory_limiter` in front of the batcher: soft limit 256 MiB with a 64 MiB spike allowance. Above it Alloy refuses new data instead of growing. Set the Railway variable `GOMEMLIMIT=288MiB` on the service so the Go runtime collects before the limiter trips
+- `otelcol.processor.memory_limiter` in front of the batcher: 512 MiB limit with a 128 MiB spike allowance, so it starts refusing data at 384 MiB of Go heap. The limiter looks at the Go heap, which in a local run with this config was about 40 MB in use (`go_memstats_heap_alloc_bytes` on `:12345/metrics`), while Railway shows the container at about 235 MB on average and 320 MB at peak; the limit sits above both so metrics are never refused in normal operation
 - Batches of up to 1024 records or 5 seconds, sent gzip-compressed with a bounded queue (100 batches) and 60 seconds of retries
 - Alloy has no per-second log rate limiter for OTLP; per-service caps live in the services' shipper (`LOG_SHIP_MAX_*`, see `.claude/rules/logging.md`)
 

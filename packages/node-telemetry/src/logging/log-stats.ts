@@ -1,4 +1,4 @@
-import { type Counter, metrics } from '@opentelemetry/api';
+import { type Counter, type MeterProvider, metrics } from '@opentelemetry/api';
 
 import { LOG_BYTES_METRIC, LOG_RECORDS_METRIC } from '../metric-names';
 
@@ -18,19 +18,36 @@ export interface LogStats {
   record(outcome: LogOutcome, level: LogLevel, bytes: number): void;
 }
 
+interface Counters {
+  readonly provider: MeterProvider;
+  readonly records: Counter;
+  readonly bytes: Counter;
+}
+
+function createCounters(provider: MeterProvider): Counters {
+  const meter = provider.getMeter(METER_NAME);
+  return {
+    provider,
+    records: meter.createCounter(LOG_RECORDS_METRIC, {
+      description: 'Log records by what happened to them on the way to Loki',
+    }),
+    bytes: meter.createCounter(LOG_BYTES_METRIC, {
+      unit: 'By',
+      description: 'Uncompressed JSON bytes of log records by outcome',
+    }),
+  };
+}
+
 export function createLogMetrics(): LogStats {
-  const meter = metrics.getMeter(METER_NAME);
-  const records: Counter = meter.createCounter(LOG_RECORDS_METRIC, {
-    description: 'Log records by what happened to them on the way to Loki',
-  });
-  const bytes: Counter = meter.createCounter(LOG_BYTES_METRIC, {
-    unit: 'By',
-    description: 'Uncompressed JSON bytes of log records by outcome',
-  });
+  let counters: Counters | undefined;
   return {
     record: (outcome, level, size) => {
-      records.add(1, { outcome, level });
-      bytes.add(size, { outcome });
+      const provider = metrics.getMeterProvider();
+      if (counters?.provider !== provider) {
+        counters = createCounters(provider);
+      }
+      counters.records.add(1, { outcome, level });
+      counters.bytes.add(size, { outcome });
     },
   };
 }

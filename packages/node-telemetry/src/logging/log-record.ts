@@ -14,6 +14,8 @@ const DEFAULT_MAX_RECORD_BYTES = 4_096;
 
 const TRUNCATION_MARKER_RESERVE = 40;
 
+const SHRINK_STEPS_PER_KEY = 12;
+
 const RESERVED_KEYS = new Set([
   'time',
   'level',
@@ -48,8 +50,6 @@ export type LogRecord = Readonly<Record<string, unknown>> & {
   readonly environment: string;
   readonly message: string;
 };
-
-const byteSize = (record: object): number => Buffer.byteLength(JSON.stringify(record));
 
 const truncate = (text: string, maxLength: number): string =>
   text.length > maxLength
@@ -87,25 +87,71 @@ const normalizeFields = (fields: Readonly<Record<string, unknown>>): Record<stri
   return Object.fromEntries(entries.filter(([key]) => !RESERVED_KEYS.has(key)));
 };
 
-function trimField(record: Record<string, unknown>, key: string, overflow: number): number {
-  const value = record[key];
-  if (typeof value !== 'string' || value.length <= MIN_TRIMMED_LENGTH) {
-    return overflow;
+const PROTECTED_KEYS = new Set([
+  'time',
+  'level',
+  'service',
+  'environment',
+  'context',
+  'message',
+  'error_name',
+  ...CORRELATION_KEYS,
+]);
+
+const SHRINK_DIVISOR = 2;
+
+const byteLengthOf = (value: unknown): number => Buffer.byteLength(JSON.stringify(value));
+
+function largestEntry(
+  record: Record<string, unknown>,
+  accepts: (key: string, value: unknown) => boolean,
+): string | undefined {
+  let largest: { key: string; size: number } | undefined;
+  for (const [key, value] of Object.entries(record)) {
+    if (!accepts(key, value)) {
+      continue;
+    }
+    const size = byteLengthOf(value);
+    if (largest === undefined || size > largest.size) {
+      largest = { key, size };
+    }
   }
-  const keep = Math.max(MIN_TRIMMED_LENGTH, value.length - overflow - TRUNCATION_MARKER_RESERVE);
-  record[key] = truncate(value, keep);
-  return overflow - (value.length - keep);
+  return largest?.key;
+}
+
+function shrinkOnce(record: Record<string, unknown>, overflow: number): boolean {
+  const longString = largestEntry(
+    record,
+    (key, value) =>
+      typeof value === 'string' && value.length > MIN_TRIMMED_LENGTH && key !== 'time',
+  );
+  if (longString !== undefined) {
+    const value = record[longString] as string;
+    const target = Math.max(
+      MIN_TRIMMED_LENGTH,
+      value.length - overflow - TRUNCATION_MARKER_RESERVE,
+    );
+    record[longString] = truncate(
+      value,
+      Math.max(target, Math.floor(value.length / SHRINK_DIVISOR)),
+    );
+    return true;
+  }
+  const removable = largestEntry(record, (key) => !PROTECTED_KEYS.has(key));
+  if (removable === undefined) {
+    return false;
+  }
+  delete record[removable];
+  return true;
 }
 
 function fitToBudget(record: LogRecord, maxBytes: number): LogRecord {
-  const size = byteSize(record);
-  if (size <= maxBytes) {
-    return record;
-  }
   const trimmed: Record<string, unknown> = { ...record };
-  const afterStack = trimField(trimmed, 'error_stack', size - maxBytes);
-  if (afterStack > 0) {
-    trimField(trimmed, 'message', afterStack);
+  const maxSteps = Object.keys(trimmed).length * SHRINK_STEPS_PER_KEY;
+  for (let step = 0; step < maxSteps && byteLengthOf(trimmed) > maxBytes; step += 1) {
+    if (!shrinkOnce(trimmed, byteLengthOf(trimmed) - maxBytes)) {
+      break;
+    }
   }
   return trimmed as LogRecord;
 }

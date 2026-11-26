@@ -42,6 +42,11 @@ async function bootstrap(): Promise<void> {
     logger: appLogger,
   });
 
+  app.enableShutdownHooks();
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .addHook('onClose', () => appLogger.flush());
   registerHttpMetrics(app.getHttpAdapter().getInstance());
 
   await configureHttpApp(app);

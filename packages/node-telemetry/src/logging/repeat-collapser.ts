@@ -36,6 +36,17 @@ export class RepeatCollapser {
     return true;
   }
 
+  nextSummaryDueMs(): number | undefined {
+    let due: number | undefined;
+    for (const entry of this.tracked.values()) {
+      if (entry.suppressed > 0) {
+        const entryDue = entry.windowStartMs + this.windowMs;
+        due = due === undefined ? entryDue : Math.min(due, entryDue);
+      }
+    }
+    return due;
+  }
+
   drainSummaries(nowMs: number, includeOpenWindows = false): LogRecord[] {
     const summaries: LogRecord[] = [];
     for (const [key, entry] of this.tracked) {

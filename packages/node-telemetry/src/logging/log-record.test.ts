@@ -104,6 +104,35 @@ describe('buildLogRecord', () => {
     expect((record.note as string).length).toBeLessThan(600);
   });
 
+  it('keeps a record with many long fields under the budget and keeps its ids', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.string({ minLength: 0, maxLength: 3_000 }), { minLength: 0, maxLength: 40 }),
+        fc.integer({ min: 0, max: 5_000 }),
+        (values, messageLength) => {
+          const fields = Object.fromEntries(
+            values.map((value, index) => [`field_${index}`, value]),
+          );
+          const record = buildLogRecord(
+            IDENTITY,
+            {
+              level: 'warn',
+              message: 'm'.repeat(messageLength),
+              fields: { ...fields, jobId: 'job-1', queue: 'ingestion', nested: { list: values } },
+            },
+            TIME,
+            4_096,
+          );
+          return (
+            Buffer.byteLength(serializeLogRecord(record)) <= 4_096 &&
+            record.job_id === 'job-1' &&
+            record.queue === 'ingestion'
+          );
+        },
+      ),
+    );
+  });
+
   it('honours a smaller budget from the configuration', () => {
     const record = buildLogRecord(
       IDENTITY,

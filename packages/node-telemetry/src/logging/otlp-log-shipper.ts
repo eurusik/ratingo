@@ -1,17 +1,17 @@
+import { clearTimeout, setTimeout } from 'node:timers';
 import { promisify } from 'node:util';
 import { gzip } from 'node:zlib';
 
-import { type LogLevel, SEVERITY_NUMBER_BY_LEVEL } from './log-level';
+import type { LogLevel } from './log-level';
 import type { LogLimits } from './log-limits';
-import { CORRELATION_KEYS, type LogIdentity, type LogRecord } from './log-record';
+import type { LogIdentity, LogRecord } from './log-record';
+import { buildOtlpLogsPayload } from './otlp-log-payload';
 import type { LogShipper } from './log-shipper';
 import type { LogOutcome, LogStats } from './log-stats';
 import { RepeatCollapser } from './repeat-collapser';
 import { ShipBudget } from './ship-budget';
 
 const gzipAsync = promisify(gzip);
-
-const NANOS_SUFFIX_PER_MILLI = '000000';
 
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 
@@ -20,10 +20,6 @@ const DROP_REASONS: Readonly<Partial<Record<LogOutcome, string>>> = {
   dropped_daily_cap: 'daily cap',
   dropped_overflow: 'queue overflow',
 };
-
-const SCOPE_NAME = 'ratingo.logger';
-
-const ATTRIBUTE_KEYS = ['context', 'error_name', ...CORRELATION_KEYS] as const;
 
 const DEFAULT_FLUSH_INTERVAL_MS = 1_000;
 const DEFAULT_MAX_BATCH_SIZE = 200;
@@ -56,32 +52,6 @@ export interface OtlpLogShipperOptions {
   readonly retryDelaysMs?: readonly number[];
 }
 
-const stringAttribute = (key: string, value: string) => ({ key, value: { stringValue: value } });
-
-const toLogRecordPayload = (record: LogRecord) => ({
-  timeUnixNano: `${Date.parse(record.time)}${NANOS_SUFFIX_PER_MILLI}`,
-  severityNumber: SEVERITY_NUMBER_BY_LEVEL[record.level],
-  severityText: record.level,
-  body: { stringValue: JSON.stringify(record) },
-  attributes: ATTRIBUTE_KEYS.filter((key) => record[key] !== undefined).map((key) =>
-    stringAttribute(key, String(record[key])),
-  ),
-});
-
-export const buildOtlpLogsPayload = (identity: LogIdentity, records: readonly LogRecord[]) => ({
-  resourceLogs: [
-    {
-      resource: {
-        attributes: [
-          stringAttribute('service.name', identity.service),
-          stringAttribute('deployment.environment.name', identity.environment),
-        ],
-      },
-      scopeLogs: [{ scope: { name: SCOPE_NAME }, logRecords: records.map(toLogRecordPayload) }],
-    },
-  ],
-});
-
 const defaultSleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -100,6 +70,7 @@ export class OtlpLogShipper implements LogShipper {
   private queue: QueuedRecord[] = [];
   private queuedBytes = 0;
   private timer: NodeJS.Timeout | undefined;
+  private summaryTimer: NodeJS.Timeout | undefined;
   private pending: Promise<void> = Promise.resolve();
   private readonly droppedSinceReport = new Map<string, number>();
 
@@ -124,6 +95,7 @@ export class OtlpLogShipper implements LogShipper {
       this.admit(record, nowMs);
     } else {
       this.countOutcome('collapsed', record, 0);
+      this.armSummaryTimer(nowMs);
     }
     this.schedule(this.queue.length >= this.maxBatchSize ? 0 : this.flushIntervalMs);
   }
@@ -133,6 +105,24 @@ export class OtlpLogShipper implements LogShipper {
     const nowMs = this.now();
     this.admitAll(this.collapser.drainSummaries(nowMs, true), nowMs);
     return this.drain();
+  }
+
+  private armSummaryTimer(nowMs: number): void {
+    const due = this.collapser.nextSummaryDueMs();
+    if (this.summaryTimer !== undefined || due === undefined) {
+      return;
+    }
+    this.summaryTimer = setTimeout(
+      () => {
+        this.summaryTimer = undefined;
+        const tickMs = this.now();
+        this.admitAll(this.collapser.drainSummaries(tickMs), tickMs);
+        this.armSummaryTimer(tickMs);
+        void this.drain();
+      },
+      Math.max(due - nowMs, 0) + 1,
+    );
+    this.summaryTimer.unref();
   }
 
   private admitAll(records: readonly LogRecord[], nowMs: number): void {
@@ -243,6 +233,7 @@ export class OtlpLogShipper implements LogShipper {
         body: await gzipAsync(JSON.stringify(payload)),
         signal: AbortSignal.timeout(this.requestTimeoutMs),
       });
+      await response.body?.cancel().catch(() => undefined);
       if (response.ok) {
         return { kind: 'sent' };
       }

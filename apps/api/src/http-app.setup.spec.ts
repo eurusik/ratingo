@@ -29,11 +29,11 @@ describe('request id in logs', () => {
     await app.close();
   });
 
-  it('uses the incoming x-request-id for the log context and echoes it back', async () => {
+  it('uses the Railway edge request id for the log context and echoes it back', async () => {
     const response = await app.inject({
       method: 'GET',
       url: '/probe',
-      headers: { 'x-request-id': 'edge-123' },
+      headers: { 'x-railway-request-id': 'edge-123' },
     });
 
     expect(JSON.parse(response.body)).toEqual({
@@ -44,14 +44,15 @@ describe('request id in logs', () => {
     expect(response.headers['x-request-id']).toBe('edge-123');
   });
 
-  it('falls back to the Railway edge request id', async () => {
+  it('ignores a client-supplied x-request-id, which anyone could forge', async () => {
     const response = await app.inject({
       method: 'GET',
       url: '/probe',
-      headers: { 'x-railway-request-id': 'rw-9' },
+      headers: { 'x-request-id': 'forged-by-client' },
     });
 
-    expect(JSON.parse(response.body)).toMatchObject({ request_id: 'rw-9' });
+    expect(JSON.parse(response.body)).not.toMatchObject({ request_id: 'forged-by-client' });
+    expect(response.headers['x-request-id']).not.toBe('forged-by-client');
   });
 
   it('generates an id when the request has none and gives each request its own', async () => {
@@ -81,7 +82,7 @@ describe('request id in logs', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/probe',
-      headers: { 'x-request-id': 'a'.repeat(500) },
+      headers: { 'x-railway-request-id': 'a'.repeat(500) },
     });
 
     expect(JSON.parse(response.body).request_id).toHaveLength(128);

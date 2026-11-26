@@ -90,8 +90,8 @@ otelcol.processor.transform "scrub_logs" {
 
 otelcol.processor.memory_limiter "default" {
   check_interval = "1s"
-  limit          = "256MiB"
-  spike_limit    = "64MiB"
+  limit          = "512MiB"
+  spike_limit    = "128MiB"
   output {
     metrics = [otelcol.processor.batch.default.input]
     logs    = [otelcol.processor.batch.default.input]

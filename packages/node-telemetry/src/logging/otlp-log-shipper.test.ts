@@ -2,7 +2,8 @@ import { gunzipSync } from 'node:zlib';
 
 import { buildLogRecord, type LogRecord } from './log-record';
 import type { LogOutcome, LogStats } from './log-stats';
-import { buildOtlpLogsPayload, OtlpLogShipper } from './otlp-log-shipper';
+import { buildOtlpLogsPayload } from './otlp-log-payload';
+import { OtlpLogShipper } from './otlp-log-shipper';
 
 const IDENTITY = { service: 'worker', environment: 'production' };
 const LIMITS = { dedupeWindowMs: 60_000, maxRecordsPerMinute: 1_000, maxBytesPerDay: 10_000_000 };
@@ -206,6 +207,54 @@ function statsRecorder() {
 }
 
 describe('OtlpLogShipper cost controls', () => {
+  it('reports a repeat count on its own when the window ends, without new traffic', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    const { shipper } = setup(fetchImpl, {
+      limits: { ...LIMITS, dedupeWindowMs: 60 },
+      flushIntervalMs: 10,
+    });
+
+    shipper.enqueue(record('Provider timed out for item 1'));
+    shipper.enqueue(record('Provider timed out for item 2'));
+    shipper.enqueue(record('Provider timed out for item 3'));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    const lines = sentBodies(fetchImpl).flatMap((body) =>
+      body.resourceLogs[0].scopeLogs[0].logRecords.map(
+        (item) => JSON.parse(item.body.stringValue) as { repeats?: number },
+      ),
+    );
+    expect(lines.map((line) => line.repeats)).toEqual([undefined, 2]);
+  });
+
+  it('does not resend a delivered batch when releasing the response body fails', async () => {
+    const cancel = jest.fn().mockRejectedValue(new Error('stream locked'));
+    const fetchImpl = jest.fn().mockResolvedValue({ ok: true, status: 200, body: { cancel } });
+    const { shipper, failures } = setup(fetchImpl);
+
+    shipper.enqueue(record('delivered once'));
+    await shipper.flush();
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(failures).toEqual([]);
+  });
+
+  it('releases the response body on success and on failure so connections can be reused', async () => {
+    const cancel = jest.fn().mockResolvedValue(undefined);
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 400, body: { cancel } })
+      .mockResolvedValueOnce({ ok: true, status: 200, body: { cancel } });
+    const { shipper } = setup(fetchImpl);
+
+    shipper.enqueue(record('first'));
+    await shipper.flush();
+    shipper.enqueue(record('second'));
+    await shipper.flush();
+
+    expect(cancel).toHaveBeenCalledTimes(2);
+  });
+
   it('collapses identical warnings inside the window and ships one summary with the count', async () => {
     const fetchImpl = jest.fn().mockResolvedValue(response(200));
     const { stats, counts } = statsRecorder();

@@ -11,6 +11,7 @@ import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import {
   isTelemetryEnabled,
+  isTelemetryRequest,
   METRICS_EXPORT_INTERVAL_MS,
   toServiceVersion,
 } from '@ratingo/node-telemetry';
@@ -49,7 +50,10 @@ export function startTelemetry(env: NodeJS.ProcessEnv = process.env): NodeSDK | 
         ignoreIncomingRequestHook: isHealthCheck,
         requireParentforOutgoingSpans: true,
       }),
-      new UndiciInstrumentation({ requireParentforSpans: true }),
+      new UndiciInstrumentation({
+        requireParentforSpans: true,
+        ignoreRequestHook: isTelemetryRequest(env.OTEL_EXPORTER_OTLP_ENDPOINT),
+      }),
       new IORedisInstrumentation({ requireParentSpan: true }),
       new NestInstrumentation(),
     ],

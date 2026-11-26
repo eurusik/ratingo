@@ -1,3 +1,5 @@
+import { clearTimeout, setTimeout } from 'node:timers';
+
 import { formatterFor, type LogFormatter } from './log-format';
 import { buildLogRecord, type LogIdentity, type LogInput } from './log-record';
 import { isLevelEnabled, type LogLevel } from './log-level';

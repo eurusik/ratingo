@@ -128,6 +128,7 @@ export class StructuredConsole implements Pick<Console, 'log' | 'warn' | 'error'
         body: gzipSync(JSON.stringify(this.payload(batch))),
         signal: AbortSignal.timeout(EXPORT_TIMEOUT_MS),
       });
+      await response.body?.cancel().catch(() => undefined);
       return response.ok ? undefined : `HTTP ${response.status}`;
     } catch (error) {
       return error instanceof Error ? error.message : String(error);
