@@ -1,19 +1,13 @@
 import { clearTimeout, setTimeout } from 'node:timers';
-import { promisify } from 'node:util';
-import { gzip } from 'node:zlib';
 
 import type { LogLevel } from './log-level';
 import type { LogLimits } from './log-limits';
 import type { LogIdentity, LogRecord } from './log-record';
-import { buildOtlpLogsPayload } from './otlp-log-payload';
+import { OtlpLogSender } from './otlp-log-sender';
 import type { LogShipper } from './log-shipper';
 import type { LogOutcome, LogStats } from './log-stats';
 import { RepeatCollapser } from './repeat-collapser';
 import { ShipBudget } from './ship-budget';
-
-const gzipAsync = promisify(gzip);
-
-const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 
 const DROP_REASONS: Readonly<Partial<Record<LogOutcome, string>>> = {
   dropped_rate_limit: 'rate limit',
@@ -34,8 +28,6 @@ interface QueuedRecord {
   readonly bytes: number;
 }
 
-type SendOutcome = { kind: 'sent' } | { kind: 'failed'; reason: string; retryable: boolean };
-
 export interface OtlpLogShipperOptions {
   readonly endpoint: string;
   readonly identity: LogIdentity;
@@ -52,19 +44,12 @@ export interface OtlpLogShipperOptions {
   readonly retryDelaysMs?: readonly number[];
 }
 
-const defaultSleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
 export class OtlpLogShipper implements LogShipper {
-  private readonly url: string;
-  private readonly fetchImpl: typeof fetch;
   private readonly now: () => number;
-  private readonly sleep: (ms: number) => Promise<void>;
+  private readonly sender: OtlpLogSender;
   private readonly flushIntervalMs: number;
   private readonly maxBatchSize: number;
   private readonly maxQueueBytes: number;
-  private readonly requestTimeoutMs: number;
-  private readonly retryDelaysMs: readonly number[];
   private readonly collapser: RepeatCollapser;
   private readonly budget: ShipBudget;
   private queue: QueuedRecord[] = [];
@@ -72,18 +57,21 @@ export class OtlpLogShipper implements LogShipper {
   private timer: NodeJS.Timeout | undefined;
   private summaryTimer: NodeJS.Timeout | undefined;
   private pending: Promise<void> = Promise.resolve();
-  private readonly droppedSinceReport = new Map<string, number>();
+  private readonly droppedSinceReport = new Map<LogOutcome, number>();
 
   constructor(private readonly options: OtlpLogShipperOptions) {
-    this.url = `${options.endpoint.replace(/\/+$/, '')}/v1/logs`;
-    this.fetchImpl = options.fetchImpl ?? fetch;
     this.now = options.now ?? Date.now;
-    this.sleep = options.sleep ?? defaultSleep;
     this.flushIntervalMs = options.flushIntervalMs ?? DEFAULT_FLUSH_INTERVAL_MS;
     this.maxBatchSize = options.maxBatchSize ?? DEFAULT_MAX_BATCH_SIZE;
     this.maxQueueBytes = options.maxQueueBytes ?? DEFAULT_MAX_QUEUE_BYTES;
-    this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
-    this.retryDelaysMs = options.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS;
+    this.sender = new OtlpLogSender({
+      url: `${options.endpoint.replace(/\/+$/, '')}/v1/logs`,
+      identity: options.identity,
+      fetchImpl: options.fetchImpl ?? fetch,
+      requestTimeoutMs: options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
+      retryDelaysMs: options.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS,
+      sleep: options.sleep,
+    });
     this.collapser = new RepeatCollapser(options.limits.dedupeWindowMs);
     this.budget = new ShipBudget(options.limits);
   }
@@ -198,56 +186,17 @@ export class OtlpLogShipper implements LogShipper {
 
   private reportDrops(): void {
     for (const [outcome, count] of this.droppedSinceReport) {
-      this.options.onFailure(DROP_REASONS[outcome as LogOutcome] ?? outcome, count);
+      this.options.onFailure(DROP_REASONS[outcome] ?? outcome, count);
     }
     this.droppedSinceReport.clear();
   }
 
   private async sendWithRetries(batch: readonly QueuedRecord[]): Promise<void> {
-    let reason = 'unknown';
-    for (let attempt = 0; attempt <= this.retryDelaysMs.length; attempt += 1) {
-      const outcome = await this.send(batch);
-      if (outcome.kind === 'sent') {
-        batch.forEach(({ record, bytes }) => this.countOutcome('shipped', record, bytes));
-        return;
-      }
-      reason = outcome.reason;
-      if (!outcome.retryable || attempt === this.retryDelaysMs.length) {
-        break;
-      }
-      await this.sleep(this.retryDelaysMs[attempt]);
-    }
-    batch.forEach(({ record, bytes }) => this.countOutcome('dropped_export_failed', record, bytes));
-    this.options.onFailure(reason, batch.length);
-  }
-
-  private async send(batch: readonly QueuedRecord[]): Promise<SendOutcome> {
-    try {
-      const payload = buildOtlpLogsPayload(
-        this.options.identity,
-        batch.map((item) => item.record),
-      );
-      const response = await this.fetchImpl(this.url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'content-encoding': 'gzip' },
-        body: await gzipAsync(JSON.stringify(payload)),
-        signal: AbortSignal.timeout(this.requestTimeoutMs),
-      });
-      await response.body?.cancel().catch(() => undefined);
-      if (response.ok) {
-        return { kind: 'sent' };
-      }
-      return {
-        kind: 'failed',
-        reason: `HTTP ${response.status}`,
-        retryable: RETRYABLE_STATUSES.has(response.status),
-      };
-    } catch (error) {
-      return {
-        kind: 'failed',
-        reason: error instanceof Error ? error.message : String(error),
-        retryable: true,
-      };
+    const delivery = await this.sender.deliver(batch.map((item) => item.record));
+    const outcome = delivery.delivered ? 'shipped' : 'dropped_export_failed';
+    batch.forEach(({ record, bytes }) => this.countOutcome(outcome, record, bytes));
+    if (!delivery.delivered) {
+      this.options.onFailure(delivery.reason, batch.length);
     }
   }
 }

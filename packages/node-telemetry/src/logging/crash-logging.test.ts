@@ -5,8 +5,6 @@ import { DEFAULT_LOG_LIMITS } from './log-limits';
 describe('installCrashLogging', () => {
   afterEach(() => {
     jest.restoreAllMocks();
-    process.removeAllListeners('uncaughtException');
-    process.removeAllListeners('unhandledRejection');
   });
 
   it('logs the error with its stack, flushes and exits with code 1', async () => {

@@ -98,6 +98,26 @@ class CollectingReader extends MetricReader {
   }
 }
 
+describe('startServerLogging', () => {
+  const originalConsole = { ...console };
+
+  afterEach(() => {
+    Object.assign(console, originalConsole);
+  });
+
+  it('starts only once, so a repeated register call does not wrap the console again', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { startServerLogging: start } = await import('./server-logging');
+
+      const first = start(SETTINGS);
+      const wrapped = console.error;
+
+      expect(start(SETTINGS)).toBe(first);
+      expect(console.error).toBe(wrapped);
+    });
+  });
+});
+
 describe('startServerLogging counters', () => {
   const originalConsole = { ...console };
   const originalFetch = global.fetch;

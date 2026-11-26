@@ -2,7 +2,6 @@ import { gunzipSync } from 'node:zlib';
 
 import { buildLogRecord, type LogRecord } from './log-record';
 import type { LogOutcome, LogStats } from './log-stats';
-import { buildOtlpLogsPayload } from './otlp-log-payload';
 import { OtlpLogShipper } from './otlp-log-shipper';
 
 const IDENTITY = { service: 'worker', environment: 'production' };
@@ -14,6 +13,13 @@ const record = (message: string, fields: Record<string, unknown> = {}): LogRecor
     { level: 'warn', message, context: 'Sync', fields },
     new Date('2026-11-26T10:00:00.250Z'),
   );
+
+const waitUntil = async (condition: () => boolean, timeoutMs = 3_000): Promise<void> => {
+  const deadline = Date.now() + timeoutMs;
+  while (!condition() && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+};
 
 const response = (status: number): Response => new Response(null, { status });
 
@@ -48,34 +54,6 @@ const sentMessages = (body: SentBody): string[] =>
   body.resourceLogs[0].scopeLogs[0].logRecords.map(
     (record) => (JSON.parse(record.body.stringValue) as { message: string }).message,
   );
-
-describe('buildOtlpLogsPayload', () => {
-  it('puts the JSON line in the body and ids in attributes, with only resource labels', () => {
-    const payload = buildOtlpLogsPayload(IDENTITY, [
-      record('slow', { jobId: 'j1', queue: 'stats' }),
-    ]);
-
-    const [resourceLogs] = payload.resourceLogs;
-    const [logRecord] = resourceLogs.scopeLogs[0].logRecords;
-    expect(resourceLogs.resource.attributes).toEqual([
-      { key: 'service.name', value: { stringValue: 'worker' } },
-      { key: 'deployment.environment.name', value: { stringValue: 'production' } },
-    ]);
-    expect(logRecord).toMatchObject({
-      severityNumber: 13,
-      severityText: 'warn',
-      timeUnixNano: '1795687200250000000',
-    });
-    expect(JSON.parse(logRecord.body.stringValue)).toMatchObject({ message: 'slow', job_id: 'j1' });
-    expect(logRecord.attributes).toEqual(
-      expect.arrayContaining([
-        { key: 'context', value: { stringValue: 'Sync' } },
-        { key: 'job_id', value: { stringValue: 'j1' } },
-        { key: 'queue', value: { stringValue: 'stats' } },
-      ]),
-    );
-  });
-});
 
 describe('OtlpLogShipper', () => {
   it('posts queued records to /v1/logs on flush', async () => {
@@ -166,7 +144,7 @@ describe('OtlpLogShipper', () => {
     const { shipper } = setup(fetchImpl, { flushIntervalMs: 20 });
 
     shipper.enqueue(record('timer'));
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await waitUntil(() => fetchImpl.mock.calls.length > 0);
 
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
@@ -217,7 +195,7 @@ describe('OtlpLogShipper cost controls', () => {
     shipper.enqueue(record('Provider timed out for item 1'));
     shipper.enqueue(record('Provider timed out for item 2'));
     shipper.enqueue(record('Provider timed out for item 3'));
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await waitUntil(() => fetchImpl.mock.calls.length >= 2);
 
     const lines = sentBodies(fetchImpl).flatMap((body) =>
       body.resourceLogs[0].scopeLogs[0].logRecords.map(

@@ -168,7 +168,10 @@ export class TvMazeEnrichmentService {
     const merged: NormalizedSeason[] = [];
     const usedSeasonNumbers = new Set<number>();
     const acceptedEpisodes: NormalizedEpisode[] = [];
-    const skipped: SkippedSeasons = { not_in_tmdb: [], year_mismatch: [] };
+    const skipped: SkippedSeasons = {
+      [SEASON_SKIP_REASON.NOT_IN_TMDB]: [],
+      [SEASON_SKIP_REASON.YEAR_MISMATCH]: [],
+    };
 
     // Merge TVMaze with TMDB metadata
     for (const [seasonNum, episodes] of seasonMap.entries()) {
@@ -228,15 +231,17 @@ export class TvMazeEnrichmentService {
   }
 
   private logSkippedSeasons(media: NormalizedMedia, skipped: SkippedSeasons): void {
-    const skippedCount = skipped.not_in_tmdb.length + skipped.year_mismatch.length;
+    const notInTmdb = skipped[SEASON_SKIP_REASON.NOT_IN_TMDB];
+    const yearMismatch = skipped[SEASON_SKIP_REASON.YEAR_MISMATCH];
+    const skippedCount = notInTmdb.length + yearMismatch.length;
     if (skippedCount === 0) return;
 
     this.logger.log({
       message: `TVMaze seasons skipped for ${media.externalIds.imdbId ?? media.title}`,
       skippedSeasons: skippedCount,
-      notInTmdb: skipped.not_in_tmdb.length,
-      yearMismatch: skipped.year_mismatch.length,
-      skippedSeasonNumbers: [...skipped.not_in_tmdb, ...skipped.year_mismatch].join(','),
+      notInTmdb: notInTmdb.length,
+      yearMismatch: yearMismatch.length,
+      skippedSeasonNumbers: [...notInTmdb, ...yearMismatch].join(','),
     });
   }
 

@@ -115,6 +115,22 @@ describe('redactValue', () => {
     expect(redactValue({ note: 'token=abcd1234efgh' })).toEqual({ note: REDACTED });
   });
 
+  it('keeps a value that is referenced twice and only masks real cycles', () => {
+    const shared = { status: 'ok' };
+
+    expect(redactValue({ first: shared, second: shared })).toEqual({
+      first: { status: 'ok' },
+      second: { status: 'ok' },
+    });
+  });
+
+  it('turns bigint, symbol and function values into text so serialization cannot fail', () => {
+    const redacted = redactValue({ count: 12n, tag: Symbol('x'), run: () => 1 });
+
+    expect(() => JSON.stringify(redacted)).not.toThrow();
+    expect((redacted as { count: string }).count).toBe('12');
+  });
+
   it('survives circular structures', () => {
     const loop: Record<string, unknown> = { name: 'loop' };
     loop.self = loop;

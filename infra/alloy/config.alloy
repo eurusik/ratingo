@@ -79,8 +79,8 @@ otelcol.processor.transform "scrub_logs" {
     context = "log"
     statements = [
       "replace_pattern(body.string, \"(?i)(bearer|basic)\\\\s+[a-z0-9._~+/=-]{12,}\", \"[REDACTED]\")",
-      "replace_pattern(body.string, \"[a-z][a-z0-9+.-]{1,20}://[^\\\\s/:@\\\\\\\"]{1,128}:[^\\\\s/@\\\\\\\"]{1,256}@\", \"[REDACTED]@\")",
-      "replace_pattern(body.string, \"[a-z0-9._%+-]{1,64}@[a-z0-9.-]{1,255}\\\\.[a-z]{2,24}\", \"[REDACTED]\")",
+      "replace_pattern(body.string, \"(?i)[a-z][a-z0-9+.-]{1,20}://[^\\\\s/:@\\\\\\\"]{1,128}:[^\\\\s/@\\\\\\\"]{1,256}@\", \"[REDACTED]@\")",
+      "replace_pattern(body.string, \"(?i)[a-z0-9._%+-]{1,64}@[a-z0-9.-]{1,255}\\\\.[a-z]{2,24}\", \"[REDACTED]\")",
     ]
   }
   output {
@@ -122,7 +122,7 @@ otelcol.exporter.otlphttp "grafana" {
     compression = "gzip"
   }
   sending_queue {
-    enabled   = true
+    enabled    = true
     queue_size = 100
   }
   retry_on_failure {

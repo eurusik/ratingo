@@ -49,7 +49,7 @@ export const redactSecrets = (text: string): string =>
     text.replace(URL_CREDENTIALS, `$1${REDACTED}@`),
   );
 
-const describe = (args: unknown[]): string =>
+const formatArguments = (args: unknown[]): string =>
   args.map((arg) => (arg instanceof Error ? (arg.stack ?? arg.message) : String(arg))).join(' ');
 
 export class StructuredConsole implements Pick<Console, 'log' | 'warn' | 'error'> {
@@ -90,7 +90,7 @@ export class StructuredConsole implements Pick<Console, 'log' | 'warn' | 'error'
   }
 
   private record(level: Level, args: unknown[]): void {
-    const line = this.line(level, describe(args));
+    const line = this.line(level, formatArguments(args));
     this.lines.push(line);
     this.write(`${JSON.stringify(line)}\n`);
   }

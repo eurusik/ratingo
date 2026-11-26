@@ -37,14 +37,36 @@ export class StructuredLogger {
     if (!isLevelEnabled(this.options.minLevel, input.level)) {
       return;
     }
-    const record = buildLogRecord(
-      this.options.identity,
-      input,
-      this.now(),
-      this.options.maxRecordBytes,
-    );
-    this.options.sink.write(this.formatter(record));
-    this.options.shipper?.enqueue(record);
+    try {
+      const record = buildLogRecord(
+        this.options.identity,
+        input,
+        this.now(),
+        this.options.maxRecordBytes,
+      );
+      this.options.sink.write(this.formatter(record));
+      this.options.shipper?.enqueue(record);
+    } catch (error) {
+      this.writeFallback(input, error);
+    }
+  }
+
+  private writeFallback(input: LogInput, failure: unknown): void {
+    try {
+      const reason = failure instanceof Error ? failure.message : String(failure);
+      const record = buildLogRecord(
+        this.options.identity,
+        {
+          level: input.level,
+          message: `${input.message} (log fields dropped: ${reason})`,
+          context: input.context,
+        },
+        this.now(),
+      );
+      this.options.sink.write(this.formatter(record));
+    } catch {
+      return;
+    }
   }
 
   debug(message: string, details?: LogDetails): void {

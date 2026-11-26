@@ -86,3 +86,40 @@ describe('StructuredLogger flush', () => {
     await expect(logger.flush()).resolves.toBeUndefined();
   });
 });
+
+describe('StructuredLogger resilience', () => {
+  it('still writes a line when a field cannot be serialized', () => {
+    const lines: string[] = [];
+    const logger = new StructuredLogger({
+      identity: { service: 'api', environment: 'production' },
+      minLevel: 'info',
+      sink: { write: (line) => void lines.push(line) },
+    });
+    const hostile = {
+      get explode(): never {
+        throw new Error('getter failed');
+      },
+    };
+
+    expect(() =>
+      logger.write({ level: 'warn', message: 'with a bad field', fields: { hostile } }),
+    ).not.toThrow();
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0])).toMatchObject({ level: 'warn' });
+    expect(lines[0]).toContain('with a bad field');
+  });
+
+  it('never throws even when the sink fails', () => {
+    const logger = new StructuredLogger({
+      identity: { service: 'api', environment: 'production' },
+      minLevel: 'info',
+      sink: {
+        write: () => {
+          throw new Error('EPIPE');
+        },
+      },
+    });
+
+    expect(() => logger.info('hello')).not.toThrow();
+  });
+});

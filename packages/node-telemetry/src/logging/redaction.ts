@@ -58,19 +58,11 @@ const isPlainObject = (value: object): value is Record<string, unknown> => {
   return prototype === Object.prototype || prototype === null;
 };
 
-export function redactValue(value: unknown, depth = 0, seen = new WeakSet<object>()): unknown {
-  if (typeof value === 'string') {
-    return redactText(value);
-  }
-  if (value === null || typeof value !== 'object') {
-    return value;
-  }
-  if (depth >= MAX_REDACTION_DEPTH || seen.has(value)) {
-    return REDACTED;
-  }
-  seen.add(value);
+function redactObject(value: object, depth: number, ancestors: Set<object>): unknown {
   if (Array.isArray(value)) {
-    return value.slice(0, MAX_ARRAY_ITEMS).map((item) => redactValue(item, depth + 1, seen));
+    return value
+      .slice(0, MAX_ARRAY_ITEMS)
+      .map((item: unknown) => redactValue(item, depth + 1, ancestors));
   }
   if (value instanceof Error) {
     return redactText(value.message);
@@ -81,7 +73,28 @@ export function redactValue(value: unknown, depth = 0, seen = new WeakSet<object
   return Object.fromEntries(
     Object.entries(value).map(([key, entry]) => [
       key,
-      isSensitiveKey(key) ? REDACTED : redactValue(entry, depth + 1, seen),
+      isSensitiveKey(key) ? REDACTED : redactValue(entry, depth + 1, ancestors),
     ]),
   );
+}
+
+export function redactValue(value: unknown, depth = 0, ancestors = new Set<object>()): unknown {
+  if (typeof value === 'string') {
+    return redactText(value);
+  }
+  if (typeof value === 'bigint' || typeof value === 'symbol' || typeof value === 'function') {
+    return redactText(String(value));
+  }
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+  if (depth >= MAX_REDACTION_DEPTH || ancestors.has(value)) {
+    return REDACTED;
+  }
+  ancestors.add(value);
+  try {
+    return redactObject(value, depth, ancestors);
+  } finally {
+    ancestors.delete(value);
+  }
 }

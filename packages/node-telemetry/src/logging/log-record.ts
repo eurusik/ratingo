@@ -16,19 +16,16 @@ const TRUNCATION_MARKER_RESERVE = 40;
 
 const SHRINK_STEPS_PER_KEY = 12;
 
-const RESERVED_KEYS = new Set([
-  'time',
-  'level',
-  'service',
-  'environment',
-  'context',
-  'message',
+export const CORRELATION_KEYS = ['job_id', 'queue', 'request_id', 'run_id'] as const;
+
+const IDENTITY_KEYS = ['time', 'level', 'service', 'environment', 'context', 'message'] as const;
+
+const RESERVED_KEYS = new Set<string>([
+  ...IDENTITY_KEYS,
   'error_name',
   'error_message',
   'error_stack',
 ]);
-
-export const CORRELATION_KEYS = ['job_id', 'queue', 'request_id', 'run_id'] as const;
 
 export interface LogIdentity {
   readonly service: string;
@@ -87,16 +84,7 @@ const normalizeFields = (fields: Readonly<Record<string, unknown>>): Record<stri
   return Object.fromEntries(entries.filter(([key]) => !RESERVED_KEYS.has(key)));
 };
 
-const PROTECTED_KEYS = new Set([
-  'time',
-  'level',
-  'service',
-  'environment',
-  'context',
-  'message',
-  'error_name',
-  ...CORRELATION_KEYS,
-]);
+const PROTECTED_KEYS = new Set<string>([...IDENTITY_KEYS, 'error_name', ...CORRELATION_KEYS]);
 
 const SHRINK_DIVISOR = 2;
 
