@@ -30,7 +30,7 @@ function premiereAhead(asOf: Date): SQL {
 }
 
 function firstRegularEpisodeAirDate(): SQL {
-  return sql`(select min(${schema.episodes.airDate}) from ${schema.episodes} inner join ${
+  return sql`(select ${schema.episodes.airDate} from ${schema.episodes} inner join ${
     schema.seasons
   } on ${eq(schema.seasons.id, schema.episodes.seasonId)} inner join ${schema.shows} on ${eq(
     schema.shows.id,
@@ -38,7 +38,7 @@ function firstRegularEpisodeAirDate(): SQL {
   )} where ${and(
     eq(schema.shows.mediaItemId, schema.mediaItems.id),
     gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
-  )})`;
+  )} order by ${schema.seasons.number} asc, ${schema.episodes.number} asc limit 1)`;
 }
 
 export function showPremiereInstant(): SQL<Date | null> {
