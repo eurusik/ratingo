@@ -9,3 +9,4 @@ export {
 export { registerRuntimeMetrics } from './runtime-metrics';
 export { toServiceVersion } from './service-version';
 export { NS_PER_SECOND } from './units';
+export * from './logging';
