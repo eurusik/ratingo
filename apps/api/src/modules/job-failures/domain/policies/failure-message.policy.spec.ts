@@ -51,6 +51,42 @@ describe('redactFailureMessage', () => {
     );
   });
 
+  it('keeps UUIDs, IMDb ids, slugs and numeric ids so the failed item stays known', () => {
+    const itemIdArb = fc.oneof(
+      fc.uuid(),
+      fc.integer({ min: 1_000_000, max: 99_999_999 }).map((n) => `tt${n}`),
+      fc.integer({ min: 1, max: 9_999_999 }).map(String),
+      fc
+        .array(fc.stringMatching(/^[a-z0-9]{1,10}$/), { minLength: 3, maxLength: 8 })
+        .map((words) => words.join('-')),
+    );
+    fc.assert(
+      fc.property(textArb, itemIdArb, (before, itemId) => {
+        expect(redactFailureMessage(`${before} ${itemId} failed`)).toContain(itemId);
+      }),
+    );
+  });
+
+  it('still removes long hex keys and mixed-case tokens next to an item id', () => {
+    const secretArb = fc.oneof(
+      fc.stringMatching(/^[a-f0-9]{32,64}$/),
+      fc
+        .tuple(
+          fc.stringMatching(/^[a-z]{8,20}$/),
+          fc.stringMatching(/^[A-Z]{8,20}$/),
+          fc.stringMatching(/^\d{8,20}$/),
+        )
+        .map(([lower, upper, digits]) => `${lower}${upper}${digits}`),
+    );
+    fc.assert(
+      fc.property(fc.uuid(), secretArb, (itemId, secret) => {
+        const output = redactFailureMessage(`item ${itemId} sent ${secret}`);
+        expect(output).toContain(itemId);
+        expect(output).not.toContain(secret);
+      }),
+    );
+  });
+
   it('keeps plain words and job names', () => {
     expect(redactFailureMessage('Job scheduled-upcoming-movies-refresh-soon stalled')).toBe(
       'Job scheduled-upcoming-movies-refresh-soon stalled',

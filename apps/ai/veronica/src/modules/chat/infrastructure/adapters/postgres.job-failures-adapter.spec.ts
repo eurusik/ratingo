@@ -1,5 +1,7 @@
 import postgres from 'postgres';
 
+import { kyivDateOf } from '../../../digest/public';
+
 import { describeWithDatabase, TEST_DATABASE_URL } from '../../../../testing/test-database.testing';
 import { JobFailuresUnavailableError } from '../../domain/ports/job-failures.port';
 
@@ -23,6 +25,10 @@ describeWithDatabase('PostgresJobFailuresAdapter against reporting.daily_job_fai
   let nowMs: number;
 
   const iso = (ms: number): string => new Date(ms).toISOString();
+  const kyivDays = (fromHoursAgo: number) => ({
+    firstKyivDay: kyivDateOf(nowMs - fromHoursAgo * HOUR_MS),
+    lastKyivDay: kyivDateOf(nowMs),
+  });
 
   const seed = (row: {
     hoursAgo: number;
@@ -97,7 +103,7 @@ describeWithDatabase('PostgresJobFailuresAdapter against reporting.daily_job_fai
       message: 'TMDB API: Resource not found',
     });
 
-    const rows = await adapter.since({ sinceMs: nowMs - 72 * HOUR_MS, queue: SEED_QUEUE });
+    const rows = await adapter.since({ ...kyivDays(72), queue: SEED_QUEUE });
 
     expect(rows).toEqual([
       {
@@ -115,7 +121,7 @@ describeWithDatabase('PostgresJobFailuresAdapter against reporting.daily_job_fai
     ]);
   });
 
-  it('filters by part of a job name and by the window', async () => {
+  it('filters by part of a job name and by Kyiv days', async () => {
     await seed({
       hoursAgo: 1,
       jobType: 'sync-show',
@@ -136,10 +142,10 @@ describeWithDatabase('PostgresJobFailuresAdapter against reporting.daily_job_fai
     });
 
     await expect(
-      adapter.since({ sinceMs: nowMs - 24 * HOUR_MS, queue: SEED_QUEUE, job: 'movie' }),
+      adapter.since({ ...kyivDays(1), queue: SEED_QUEUE, job: 'movie' }),
     ).resolves.toEqual([]);
     await expect(
-      adapter.since({ sinceMs: nowMs - 72 * HOUR_MS, queue: SEED_QUEUE, job: 'movie' }),
+      adapter.since({ ...kyivDays(72), queue: SEED_QUEUE, job: 'movie' }),
     ).resolves.toEqual([expect.objectContaining({ job: 'sync-movie', failures: 3 })]);
   });
 
@@ -148,9 +154,7 @@ describeWithDatabase('PostgresJobFailuresAdapter against reporting.daily_job_fai
       postgres('postgres://nobody:wrong@127.0.0.1:1/none', { connect_timeout: 1 }),
     );
 
-    await expect(broken.since({ sinceMs: nowMs })).rejects.toBeInstanceOf(
-      JobFailuresUnavailableError,
-    );
+    await expect(broken.since(kyivDays(1))).rejects.toBeInstanceOf(JobFailuresUnavailableError);
     await broken.onApplicationShutdown();
   });
 });

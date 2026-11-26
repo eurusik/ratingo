@@ -52,7 +52,7 @@ describe('QueueJobMetricsService', () => {
         { instance: { notAWorker: true } },
       ],
     } as unknown as DiscoveryService;
-    recordFailure = jest.fn().mockResolvedValue(undefined);
+    recordFailure = jest.fn();
     const jobFailures = { record: recordFailure } as unknown as JobFailureRecorder;
     new QueueJobMetricsService(discovery, jobFailures).onApplicationBootstrap();
   });

@@ -72,7 +72,7 @@ export class PostgresJobFailuresAdapter implements JobFailuresPort, OnApplicatio
         (extract(epoch FROM max(last_failed_at)) * ${MS_PER_SECOND})::float8 AS last_failed_ms,
         (array_agg(last_message ORDER BY last_failed_at DESC))[1] AS last_message
       FROM reporting.daily_job_failures
-      WHERE last_failed_at >= to_timestamp(${filter.sinceMs / MS_PER_SECOND})
+      WHERE day BETWEEN ${filter.firstKyivDay}::date AND ${filter.lastKyivDay}::date
         ${this.jobNameFilter(filter.job)}
         ${this.queueFilter(filter.queue)}
       GROUP BY 1, 2, 3, 4

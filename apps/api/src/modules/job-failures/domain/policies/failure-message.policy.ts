@@ -14,7 +14,8 @@ const BEARER_TOKEN = /\b(bearer)\s+[\w.~+/=-]+/gi;
 const SECRET_ASSIGNMENT =
   /\b(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|token|secret|password|passwd|pwd|authorization|auth)(["']?\s*[=:]\s*["']?)[^\s"'&,;)]+/gi;
 const EMAIL = /[\w.%+-]+@[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}/gi;
-const OPAQUE_TOKEN = /\b(?=[\w-]*\d)(?=[\w-]*[a-z])[\w-]{32,}\b/gi;
+const HEX_SECRET = /\b[a-f0-9]{32,}\b/gi;
+const MIXED_CASE_SECRET = /\b(?=[\w-]*[a-z])(?=[\w-]*[A-Z])(?=[\w-]*\d)[\w-]{24,}\b/g;
 const WHITESPACE = /\s+/g;
 
 const clip = (text: string): string =>
@@ -32,7 +33,8 @@ export const redactFailureMessage = (message: string): string => {
     .replace(BEARER_TOKEN, `$1 ${REDACTED}`)
     .replace(SECRET_ASSIGNMENT, `$1$2${REDACTED}`)
     .replace(EMAIL, EMAIL_PLACEHOLDER)
-    .replace(OPAQUE_TOKEN, REDACTED)
+    .replace(HEX_SECRET, REDACTED)
+    .replace(MIXED_CASE_SECRET, REDACTED)
     .replace(WHITESPACE, ' ')
     .trim();
   return clip(redacted);

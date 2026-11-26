@@ -1,5 +1,6 @@
 export interface JobFailureFilter {
-  sinceMs: number;
+  firstKyivDay: string;
+  lastKyivDay: string;
   job?: string;
   queue?: string;
 }

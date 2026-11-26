@@ -48,9 +48,12 @@ describe('JobFailuresExecutor', () => {
 
     const result = materialized(await executor.run({ queue: 'ingestion', window: '48h' }));
 
-    expect(asked).toEqual([{ sinceMs: NOW_MS - 48 * HOUR_MS, job: undefined, queue: 'ingestion' }]);
+    expect(asked).toEqual([
+      { firstKyivDay: '2026-11-20', lastKyivDay: '2026-11-22', job: undefined, queue: 'ingestion' },
+    ]);
     expect(result).toEqual({
       window: '48h',
+      countedKyivDays: { from: '2026-11-20', to: '2026-11-22' },
       queue: 'ingestion',
       failures: [
         {
@@ -58,8 +61,8 @@ describe('JobFailuresExecutor', () => {
           jobType: 'sync-trending-dispatcher',
           queue: 'ingestion',
           errorClass: 'rate_limit',
-          failures: 12,
-          attemptsExhausted: 3,
+          failuresOnThoseDays: 12,
+          attemptsExhaustedOnThoseDays: 3,
           firstFailedAtKyiv: '2026-11-22 08:00',
           lastFailedAtKyiv: '2026-11-22 12:15',
           lastMessage: 'Trakt API: 429 Too Many Requests',
@@ -68,8 +71,8 @@ describe('JobFailuresExecutor', () => {
           job: 'sync-show',
           queue: 'ingestion',
           errorClass: 'not_found',
-          failures: 2,
-          attemptsExhausted: 3,
+          failuresOnThoseDays: 2,
+          attemptsExhaustedOnThoseDays: 3,
           firstFailedAtKyiv: '2026-11-22 08:00',
           lastFailedAtKyiv: '2026-11-22 12:15',
           lastMessage: 'Trakt API: 429 Too Many Requests',
@@ -81,7 +84,19 @@ describe('JobFailuresExecutor', () => {
   it('returns an empty list when nothing failed in the window', async () => {
     const result = materialized(await executorReturning([]).run({}));
 
-    expect(result).toEqual({ window: '24h', failures: [] });
+    expect(result).toEqual({
+      window: '24h',
+      countedKyivDays: { from: '2026-11-21', to: '2026-11-22' },
+      failures: [],
+    });
+  });
+
+  it('counts whole Kyiv days for a window of a few hours', async () => {
+    const asked: JobFailureFilter[] = [];
+    const result = materialized(await executorReturning([], asked).run({ window: '6h' }));
+
+    expect(asked[0]).toMatchObject({ firstKyivDay: '2026-11-22', lastKyivDay: '2026-11-22' });
+    expect(result).toMatchObject({ countedKyivDays: { from: '2026-11-22', to: '2026-11-22' } });
   });
 
   it('keeps whole rows within the output cap and names the filters in the hint', async () => {

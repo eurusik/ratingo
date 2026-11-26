@@ -2,6 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { CLOCK_PORT, RowList, type ClockPort } from '@ratingo/ai-core';
 
+import { kyivDateOf } from '../../../digest/public';
+
 import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
 import {
   isJobNameFilter,
@@ -27,8 +29,8 @@ const toRow = (summary: JobFailureSummary) => ({
   ...(summary.jobType !== summary.job ? { jobType: summary.jobType } : {}),
   queue: summary.queue,
   errorClass: summary.errorClass,
-  failures: summary.failures,
-  attemptsExhausted: summary.attemptsExhausted,
+  failuresOnThoseDays: summary.failures,
+  attemptsExhaustedOnThoseDays: summary.attemptsExhausted,
   firstFailedAtKyiv: formatKyivDateTime(summary.firstFailedAtMs),
   lastFailedAtKyiv: formatKyivDateTime(summary.lastFailedAtMs),
   lastMessage: summary.lastMessage,
@@ -57,14 +59,21 @@ export class JobFailuresExecutor {
     if (input.queue !== undefined && !isQueueName(input.queue)) {
       throw new Error('invalid queue name');
     }
+    const nowMs = this.clock.nowMs();
+    const countedKyivDays = {
+      from: kyivDateOf(nowMs - window.hours * MS_PER_HOUR),
+      to: kyivDateOf(nowMs),
+    };
     const summaries = await this.failures.since({
-      sinceMs: this.clock.nowMs() - window.hours * MS_PER_HOUR,
+      firstKyivDay: countedKyivDays.from,
+      lastKyivDay: countedKyivDays.to,
       job: input.job,
       queue: input.queue,
     });
     const rows = [...summaries].sort(byFailuresThenRecency).map(toRow);
     return RowList.of(rows, hintFor(input), (kept, omission) => ({
       window: window.promql,
+      countedKyivDays,
       ...(input.job !== undefined ? { job: input.job } : {}),
       ...(input.queue !== undefined ? { queue: input.queue } : {}),
       failures: kept,

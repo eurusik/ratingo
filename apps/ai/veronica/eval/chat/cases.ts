@@ -28,6 +28,7 @@ const jobFailures = (
   extra: Record<string, unknown> = {},
 ) => ({
   window: '24h',
+  countedKyivDays: { from: '2026-11-21', to: '2026-11-22' },
   ...extra,
   failures,
 });
@@ -435,8 +436,8 @@ const SERVICE_CASES: readonly EvalCase[] = [
               jobType: 'sync-trending-dispatcher',
               queue: 'ingestion',
               errorClass: 'rate_limit',
-              failures: 12,
-              attemptsExhausted: 3,
+              failuresOnThoseDays: 12,
+              attemptsExhaustedOnThoseDays: 3,
               firstFailedAtKyiv: '2026-11-22 08:00',
               lastFailedAtKyiv: '2026-11-22 12:15',
               lastMessage: 'Trakt API: 429 Too Many Requests',
@@ -479,7 +480,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
     reference: {
       calls: [{ tool: 'job_failures', input: { job: 'trending' } }],
       answer:
-        'Задача scheduled-trending за добу впала 12 разів, з них 3 спроби були останніми: Trakt відповідає 429, тобто ми вперлися в ліміт запитів. Остання відмова о 12:15.',
+        'Задача scheduled-trending за вчора й сьогодні впала 12 разів, з них 3 спроби були останніми: Trakt відповідає 429, тобто ми вперлися в ліміт запитів. Остання відмова о 12:15.',
     },
   },
   {
@@ -503,6 +504,40 @@ const SERVICE_CASES: readonly EvalCase[] = [
     reference: {
       calls: [{ tool: 'job_failures', input: {} }],
       answer: 'Ні, за добу жодного збою фонових задач не зафіксовано.',
+    },
+  },
+  {
+    id: 'job-failures-short-window',
+    kind: EvalKind.KNOWN,
+    question: 'Що падало за останні 6 годин?',
+    fixtures: [
+      {
+        tool: 'job_failures',
+        response: jobFailures(
+          [
+            {
+              job: 'sync-show',
+              queue: 'ingestion',
+              errorClass: 'timeout',
+              failuresOnThoseDays: 40,
+              attemptsExhaustedOnThoseDays: 4,
+              firstFailedAtKyiv: '2026-11-22 01:10',
+              lastFailedAtKyiv: '2026-11-22 13:40',
+              lastMessage: 'TMDB API: Request timeout',
+            },
+          ],
+          { window: '6h', countedKyivDays: { from: '2026-11-22', to: '2026-11-22' } },
+        ),
+      },
+    ],
+    expectedTools: ['job_failures'],
+    allowedExtraTools: ['metrics_query:queue_throughput'],
+    mustContain: [['sync-show'], ['40'], [/сьогодні|за день|за добу|з початку дня/u]],
+    mustNotContain: [/за (?:останні )?(?:6|шість) годин[^.]*40/u],
+    reference: {
+      calls: [{ tool: 'job_failures', input: { window: '6h' } }],
+      answer:
+        'Падає sync-show через тайм-аути TMDB: сьогодні з початку дня 40 відмов, 4 з них остаточні. Остання о 13:40, тож проблема свіжа, але скільки саме з них за останні шість годин, дані не кажуть.',
     },
   },
   {

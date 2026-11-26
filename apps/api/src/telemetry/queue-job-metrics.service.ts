@@ -58,7 +58,7 @@ export class QueueJobMetricsService implements OnApplicationBootstrap {
   }
 
   private reportFailure(worker: Worker, job: Job, error: Error, attemptsExhausted: boolean): void {
-    void this.jobFailures.record({
+    this.jobFailures.record({
       queue: worker.name,
       jobType: job.name,
       schedulerJobId: scheduledJobNameOf(job.repeatJobKey) ?? null,
