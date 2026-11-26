@@ -28,3 +28,13 @@ export const clockTimeOf = (kyivDateTime: string): string =>
 
 export const spokenKyivDayFromEvalNow = (days: number): string =>
   spokenDayFormatter.format(shiftedMs(minutesIn(days)));
+
+const NOON_UTC = 'T12:00:00Z';
+const LEADING_ZERO = /^0/u;
+
+export const sameKyivTime = (kyivDateTime: string): RegExp => {
+  const [date, time] = kyivDateTime.split(' ');
+  const spokenDay = spokenDayFormatter.format(Date.parse(`${date}${NOON_UTC}`));
+  const clock = time.replace(LEADING_ZERO, '0?');
+  return new RegExp(`${date} ${clock}|(?:${date}|${spokenDay}),? о ${clock}`, 'u');
+};

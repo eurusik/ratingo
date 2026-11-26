@@ -33,17 +33,11 @@ const valueOf = (input: Record<string, unknown>, key: string): number =>
 const allOf = (values: readonly number[]): RegExp =>
   new RegExp(values.map((value) => `(?=[\\s\\S]*(?<!\\d)${value}(?!\\d))`).join(''), 'u');
 
-const dailyRowsOf = (input: Record<string, unknown>) =>
-  rowsOf({ ...input, dimensions: ['date', ...(input.dimensions as string[])] });
-
 const perDay = (input: Record<string, unknown>): RegExp =>
-  allOf(dailyRowsOf(input).map((row) => row.value));
-
-const perDayOf = (input: Record<string, unknown>, key: string): RegExp =>
   allOf(
-    dailyRowsOf(input)
-      .filter((row) => row.keys.includes(key))
-      .map((row) => row.value),
+    rowsOf({ ...input, dimensions: ['date', ...(input.dimensions as string[])] }).map(
+      (row) => row.value,
+    ),
   );
 
 const USERS_WEEK = report([], ['activeUsers']);
@@ -52,6 +46,10 @@ const USERS_LAST_WEEK = total({ ...USERS_WEEK, date_ranges: PREVIOUS_WEEK });
 const CHANNELS = report(['sessionDefaultChannelGroup'], ['sessions']);
 const ORGANIC = valueOf(CHANNELS, 'Organic Search');
 const DIRECT = valueOf(CHANNELS, 'Direct');
+const ORGANIC_USERS = valueOf(
+  report(['sessionDefaultChannelGroup'], ['activeUsers']),
+  'Organic Search',
+);
 const PAGES = report(['pagePath'], ['screenPageViews'], { limit: 10 });
 const HOME_VIEWS = valueOf(PAGES, '/');
 const DUNE_VIEWS = valueOf(PAGES, '/movies/dune-part-two');
@@ -179,7 +177,7 @@ export const GA_EVAL_CASES: readonly EvalCase[] = [
     expectedTools: [REPORT],
     mustContain: [
       ['Organic Search', 'пошук'],
-      [String(ORGANIC), perDayOf(CHANNELS, 'Organic Search')],
+      [String(ORGANIC), String(ORGANIC_USERS)],
     ],
     reference: {
       calls: [{ tool: REPORT, input: CHANNELS }],

@@ -12,7 +12,7 @@ import {
 import { EVAL_CASES } from './cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 import { ANY_TOOL, EvalKind } from './eval-case';
-import { kyivDayFromEvalNow, kyivTimeFromEvalNow } from './eval-clock';
+import { kyivDayFromEvalNow, kyivTimeFromEvalNow, sameKyivTime } from './eval-clock';
 import { fixtureExecutors, runCase } from './harness';
 import { scoreCase, summarize, type CaseResult } from './scorer';
 
@@ -313,6 +313,24 @@ describe('answer stems', () => {
     'reads «%s» as minor findings',
     (answer) => {
       expect(MINOR_FINDINGS.test(answer)).toBe(true);
+    },
+  );
+});
+
+describe('same Kyiv time', () => {
+  it.each([
+    'востаннє 2026-11-23 09:00',
+    'відпрацював 2026-11-23 о 09:00 (київ)',
+    'у понеділок 23 листопада о 09:00',
+    '<b>23 листопада о 9:00</b>',
+  ])('reads «%s» as 2026-11-23 09:00', (answer) => {
+    expect(sameKyivTime('2026-11-23 09:00').test(answer)).toBe(true);
+  });
+
+  it.each(['2026-11-23 о 19:00', '24 листопада о 09:00', '2026-11-30 09:00'])(
+    'does not read «%s» as 2026-11-23 09:00',
+    (answer) => {
+      expect(sameKyivTime('2026-11-23 09:00').test(answer)).toBe(false);
     },
   );
 });

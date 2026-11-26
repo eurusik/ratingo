@@ -15,6 +15,7 @@ import {
   clockTimeOf,
   kyivDayFromEvalNow,
   kyivTimeFromEvalNow,
+  sameKyivTime,
   spokenKyivDayFromEvalNow,
 } from './eval-clock';
 import { GA_EVAL_CASES } from './google-analytics.cases';
@@ -51,6 +52,7 @@ const SYNC_SHOW_TIMEOUTS = jobFailures([
 ]);
 
 const PR_464_MERGED_AT = kyivTimeFromEvalNow(-3);
+const TRENDING_LAST_SUCCESS = kyivTimeFromEvalNow(-30);
 const TRENDING_LAST_FAILURE = kyivTimeFromEvalNow(-1, -45);
 const SYNC_SHOW_LAST_TIMEOUT = kyivTimeFromEvalNow(0, -20);
 
@@ -461,7 +463,10 @@ const SERVICE_CASES: readonly EvalCase[] = [
       'metrics_query:queue_throughput',
       'metrics_query:http_client_errors',
     ],
-    mustContain: [['30', kyivTimeFromEvalNow(-30)], ['sync-trending']],
+    mustContain: [
+      ['30', sameKyivTime(TRENDING_LAST_SUCCESS)],
+      ['trending', 'тренд'],
+    ],
     reference: {
       calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
       answer:
@@ -623,7 +628,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
     allowedExtraTools: ['digest_snapshot', 'recent_changes', 'job_failures'],
-    mustContain: [['тиж', 'понеділ'], [WEEKLY_NEXT_RUN]],
+    mustContain: [['тиж', 'понеділ'], [sameKyivTime(WEEKLY_NEXT_RUN)]],
     reference: {
       calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
       answer: `Проблеми немає: ця задача за розкладом запускається раз на тиждень, у понеділок. Востаннє вона вдалася ${WEEKLY_LAST_SUCCESS}, наступний запуск ${WEEKLY_NEXT_RUN}.`,
@@ -658,8 +663,8 @@ const SERVICE_CASES: readonly EvalCase[] = [
     mustContain: [
       ['не зламал', 'не збій', 'проблеми немає', 'все гаразд', 'усе гаразд'],
       ['тиж', 'понеділ'],
-      [WEEKLY_LAST_SUCCESS],
-      [WEEKLY_NEXT_RUN],
+      [sameKyivTime(WEEKLY_LAST_SUCCESS)],
+      [sameKyivTime(WEEKLY_NEXT_RUN)],
     ],
     mustNotContain: ['0 7 * * 1', 'cron'],
     reference: {
@@ -704,7 +709,10 @@ const SERVICE_CASES: readonly EvalCase[] = [
       },
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
-    mustContain: [[DAILY_EXCEPT_MONDAY_LAST_SUCCESS], [DAILY_EXCEPT_MONDAY_NEXT_RUN]],
+    mustContain: [
+      [sameKyivTime(DAILY_EXCEPT_MONDAY_LAST_SUCCESS)],
+      [sameKyivTime(DAILY_EXCEPT_MONDAY_NEXT_RUN)],
+    ],
     reference: {
       calls: [
         {
@@ -849,8 +857,26 @@ const SERVICE_CASES: readonly EvalCase[] = [
     id: 'code-question-honest',
     kind: EvalKind.KNOWN,
     question: 'Глянь по коду, де може бути проблема з трендами',
-    fixtures: [],
+    fixtures: [
+      {
+        tool: 'metrics_query',
+        match: { template: 'scheduler_last_runs' },
+        response: metrics(
+          'scheduler_last_runs',
+          {
+            jobs: [
+              schedulerJob('sync-trending', {
+                lastSuccessHoursAgo: 2,
+                lastSuccessAtKyiv: kyivTimeFromEvalNow(-2),
+              }),
+            ],
+          },
+          { window: null },
+        ),
+      },
+    ],
     expectedTools: [],
+    allowedExtraTools: ['metrics_query:scheduler_last_runs', 'job_failures'],
     mustContain: [
       ['не вмію', 'не можу', 'поки не', 'не читаю', 'не бачу коду'],
       ['код'],
