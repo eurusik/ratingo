@@ -1,3 +1,5 @@
+import { redactSecrets } from './redact';
+
 export interface RowOmission {
   omitted: number;
   hint: string;
@@ -41,14 +43,17 @@ export class RowList<T = unknown> {
 const serializedWithFirst = <T>(list: RowList<T>, count: number): string =>
   JSON.stringify(list.withFirst(count)) ?? '';
 
+const fitsAfterRedaction = (text: string, maxChars: number): boolean =>
+  redactSecrets(text).length <= maxChars;
+
 export const fitRowList = <T>(list: RowList<T>, maxChars: number): string => {
   const whole = serializedWithFirst(list, list.rows.length);
-  if (whole.length <= maxChars) return whole;
+  if (fitsAfterRedaction(whole, maxChars)) return whole;
   let fitting = 0;
   let tooMany = list.rows.length;
   while (tooMany - fitting > 1) {
     const middle = Math.floor((fitting + tooMany) / 2);
-    if (serializedWithFirst(list, middle).length <= maxChars) fitting = middle;
+    if (fitsAfterRedaction(serializedWithFirst(list, middle), maxChars)) fitting = middle;
     else tooMany = middle;
   }
   return serializedWithFirst(list, fitting);

@@ -2,6 +2,9 @@ import * as fc from 'fast-check';
 import { z } from 'zod';
 
 import { defineTool } from './define-tool';
+import { redactSecrets } from './redact';
+import { NativeToolSource } from './sources/native.tool-source';
+import { TRUNCATION_MARKER, ToolRegistry } from './tool-registry';
 import { RowList, fitRowList } from './row-list';
 
 const HINT = 'pass name=<part of the name> to see fewer rows';
@@ -79,6 +82,48 @@ describe('fitRowList', () => {
         },
       ),
     );
+  });
+});
+
+describe('fitRowList with secrets in the rows', () => {
+  const shortEmail = fc
+    .tuple(fc.stringMatching(/^[a-z]$/), fc.stringMatching(/^[a-z]$/))
+    .map(([user, domain]) => `${user}@${domain}.co`);
+  const rowWithEmail = fc.record({ title: shortEmail, number: fc.integer({ min: 1, max: 999 }) });
+
+  it('stays within the cap after the registry redacts what it keeps', () => {
+    fc.assert(
+      fc.property(
+        fc.array(rowWithEmail, { maxLength: 60 }),
+        fc.integer({ min: 120, max: 3000 }),
+        (rows, cap) => {
+          expect(redactSecrets(fitRowList(RowList.of(rows, HINT), cap)).length).toBeLessThanOrEqual(
+            cap,
+          );
+        },
+      ),
+    );
+  });
+
+  it('reaches the model whole through the registry, not cut by characters', async () => {
+    const rows = Array.from({ length: 80 }, (_, index) => ({ title: `x@y.co ${index}` }));
+    const tool = defineTool({
+      name: 'changes',
+      description: 'Changes',
+      inputSchema: z.object({}),
+      readOnly: true,
+      maxOutputChars: 1000,
+      handler: () => Promise.resolve(RowList.of(rows, HINT)),
+    });
+    const registry = await ToolRegistry.create([new NativeToolSource([tool])], ['changes']);
+
+    const result = await registry.execute(
+      { id: 'call-1', name: 'changes', input: {} },
+      { runId: 'run-1' },
+    );
+
+    expect(result.content).not.toContain(TRUNCATION_MARKER);
+    expect(JSON.parse(result.content).omitted).toBeGreaterThan(0);
   });
 });
 
