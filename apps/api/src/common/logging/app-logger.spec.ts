@@ -1,77 +1,46 @@
-import { ConsoleLogger } from '@nestjs/common';
+import { createAppLogger } from './app-logger';
 
-import { createAppLogger, getLogFormat, getLogLevels } from './app-logger';
-import { JsonConsoleLogger } from './json-console.logger';
+describe('createAppLogger', () => {
+  let stdout: jest.SpyInstance;
 
-describe('app-logger', () => {
-  describe('getLogFormat', () => {
-    it('defaults to pretty locally and json when deployed', () => {
-      expect(getLogFormat({})).toBe('pretty');
-      expect(getLogFormat({ NODE_ENV: 'development' })).toBe('pretty');
-      expect(getLogFormat({ NODE_ENV: 'production' })).toBe('json');
-      expect(getLogFormat({ RAILWAY_ENVIRONMENT_NAME: 'dev' })).toBe('json');
-    });
+  beforeEach(() => {
+    stdout = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    jest.spyOn(process, 'on').mockImplementation(() => process);
+  });
 
-    it('honours an explicit LOG_FORMAT', () => {
-      expect(getLogFormat({ LOG_FORMAT: 'json' })).toBe('json');
-      expect(getLogFormat({ NODE_ENV: 'production', LOG_FORMAT: 'pretty' })).toBe('pretty');
-    });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
-    it('rejects an unknown LOG_FORMAT', () => {
-      expect(() => getLogFormat({ LOG_FORMAT: 'xml' })).toThrow('Invalid LOG_FORMAT "xml"');
+  const lines = () => stdout.mock.calls.map(([line]) => String(line));
+
+  it('writes json with the role service name and the Railway environment when deployed', () => {
+    createAppLogger({ RAILWAY_ENVIRONMENT_NAME: 'production', APP_ROLE: 'worker' }).log(
+      '[job:sync_1] Processing sync',
+      'SyncWorker',
+    );
+
+    expect(JSON.parse(lines()[0])).toMatchObject({
+      level: 'info',
+      service: 'ratingo-worker',
+      environment: 'production',
+      context: 'SyncWorker',
+      message: 'Processing sync',
+      job_id: 'sync_1',
     });
   });
 
-  describe('getLogLevels', () => {
-    it('enables every level locally', () => {
-      expect(getLogLevels({})).toEqual(['verbose', 'debug', 'log', 'warn', 'error', 'fatal']);
-    });
+  it('drops debug output when deployed and keeps it locally', () => {
+    createAppLogger({ RAILWAY_ENVIRONMENT_NAME: 'production' }).debug('hidden', 'Ctx');
+    expect(lines()).toHaveLength(0);
 
-    it('drops debug and verbose when deployed', () => {
-      expect(getLogLevels({ NODE_ENV: 'production' })).toEqual(['log', 'warn', 'error', 'fatal']);
-      expect(getLogLevels({ RAILWAY_ENVIRONMENT_NAME: 'production' })).toEqual([
-        'log',
-        'warn',
-        'error',
-        'fatal',
-      ]);
-    });
-
-    it('treats LOG_LEVEL as the minimum level', () => {
-      expect(getLogLevels({ NODE_ENV: 'production', LOG_LEVEL: 'debug' })).toEqual([
-        'debug',
-        'log',
-        'warn',
-        'error',
-        'fatal',
-      ]);
-      expect(getLogLevels({ LOG_LEVEL: 'warn' })).toEqual(['warn', 'error', 'fatal']);
-    });
-
-    it('falls back to the default when LOG_LEVEL or LOG_FORMAT is blank', () => {
-      expect(getLogLevels({ NODE_ENV: 'production', LOG_LEVEL: '' })).toEqual([
-        'log',
-        'warn',
-        'error',
-        'fatal',
-      ]);
-      expect(getLogFormat({ NODE_ENV: 'production', LOG_FORMAT: '' })).toBe('json');
-    });
-
-    it('rejects an unknown LOG_LEVEL', () => {
-      expect(() => getLogLevels({ LOG_LEVEL: 'trace' })).toThrow('Invalid LOG_LEVEL "trace"');
-    });
+    createAppLogger({}).debug('shown', 'Ctx');
+    expect(lines()).toHaveLength(1);
   });
 
-  describe('createAppLogger', () => {
-    it('builds a JSON logger when deployed', () => {
-      expect(createAppLogger({ NODE_ENV: 'production' })).toBeInstanceOf(JsonConsoleLogger);
-    });
+  it('writes readable text without colour codes locally', () => {
+    createAppLogger({}).warn('slow query', 'Db');
 
-    it('builds the default pretty logger locally', () => {
-      const logger = createAppLogger({});
-      expect(logger).toBeInstanceOf(ConsoleLogger);
-      expect(logger).not.toBeInstanceOf(JsonConsoleLogger);
-    });
+    expect(lines()[0]).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3} WARN {2}\[Db\] slow query\n$/);
   });
 });

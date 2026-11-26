@@ -14,6 +14,15 @@ import {
 /** Maximum year difference allowed when matching shows by name search. */
 const MAX_YEAR_TOLERANCE = 1;
 
+const SEASON_SKIP_REASON = {
+  NOT_IN_TMDB: 'not_in_tmdb',
+  YEAR_MISMATCH: 'year_mismatch',
+} as const;
+
+type SeasonSkipReason = (typeof SEASON_SKIP_REASON)[keyof typeof SEASON_SKIP_REASON];
+
+type SkippedSeasons = Record<SeasonSkipReason, number[]>;
+
 /**
  * Enriches show metadata with TVMaze episode data.
  *
@@ -42,10 +51,12 @@ export class TvMazeEnrichmentService {
       const episodes = await this.fetchEpisodes(media);
       if (episodes.length === 0) return media;
 
-      const { seasons: mergedSeasons, acceptedEpisodes } = this.mergeSeasons(
-        episodes,
-        media.details?.seasons,
-      );
+      const {
+        seasons: mergedSeasons,
+        acceptedEpisodes,
+        skipped,
+      } = this.mergeSeasons(episodes, media.details?.seasons);
+      this.logSkippedSeasons(media, skipped);
       if (acceptedEpisodes.length === 0) return media;
 
       const nextAirDate = this.findNextAirDate(acceptedEpisodes);
@@ -118,7 +129,7 @@ export class TvMazeEnrichmentService {
     const rejectionReason = this.nameMatchRejectionReason(tmdbYear, tvmazeYear);
     if (!rejectionReason) return true;
 
-    this.logger.warn(
+    this.logger.log(
       `TVMaze name match rejected: ${rejectionReason} tmdb=${tmdbYear ?? 'none'} tvmaze=${tvmazeYear ?? 'none'} for "${name}" (imdbId=${media.externalIds.imdbId ?? 'none'})`,
     );
     return false;
@@ -134,7 +145,11 @@ export class TvMazeEnrichmentService {
   private mergeSeasons(
     scheduledEpisodes: ScheduledEpisode[],
     tmdbSeasons?: NormalizedSeason[],
-  ): { seasons: NormalizedSeason[]; acceptedEpisodes: NormalizedEpisode[] } {
+  ): {
+    seasons: NormalizedSeason[];
+    acceptedEpisodes: NormalizedEpisode[];
+    skipped: SkippedSeasons;
+  } {
     // Group episodes by season
     const seasonMap = new Map<number, ScheduledEpisode[]>();
     for (const ep of scheduledEpisodes) {
@@ -153,10 +168,15 @@ export class TvMazeEnrichmentService {
     const merged: NormalizedSeason[] = [];
     const usedSeasonNumbers = new Set<number>();
     const acceptedEpisodes: NormalizedEpisode[] = [];
+    const skipped: SkippedSeasons = { not_in_tmdb: [], year_mismatch: [] };
 
     // Merge TVMaze with TMDB metadata
     for (const [seasonNum, episodes] of seasonMap.entries()) {
-      if (!this.shouldUseTvMazeSeason(seasonNum, episodes, tmdbSeasonMap)) continue;
+      const skipReason = this.seasonSkipReason(seasonNum, episodes, tmdbSeasonMap);
+      if (skipReason) {
+        skipped[skipReason].push(seasonNum);
+        continue;
+      }
       const tmdbSeason = tmdbSeasonMap.get(seasonNum);
 
       const cleanEpisodes: NormalizedEpisode[] = episodes.map((e) => {
@@ -185,34 +205,39 @@ export class TvMazeEnrichmentService {
       }
     }
 
-    return { seasons: merged.sort((a, b) => a.number - b.number), acceptedEpisodes };
+    return { seasons: merged.sort((a, b) => a.number - b.number), acceptedEpisodes, skipped };
   }
 
-  private shouldUseTvMazeSeason(
+  private seasonSkipReason(
     seasonNum: number,
     episodes: ScheduledEpisode[],
     tmdbSeasonMap: Map<number, NormalizedSeason>,
-  ): boolean {
-    if (tmdbSeasonMap.size === 0) return true;
+  ): SeasonSkipReason | null {
+    if (tmdbSeasonMap.size === 0) return null;
 
     const tmdbSeason = tmdbSeasonMap.get(seasonNum);
-    if (!tmdbSeason) {
-      this.logger.warn(
-        `TVMaze season ${seasonNum} skipped: not present in TMDB (${episodes.length} episodes)`,
-      );
-      return false;
-    }
+    if (!tmdbSeason) return SEASON_SKIP_REASON.NOT_IN_TMDB;
 
     const tmdbYear = tmdbSeason.airDate?.getFullYear();
     const tvmazeYear = this.earliestAirDate(episodes)?.getFullYear();
     if (tmdbYear && tvmazeYear && this.isYearMismatch(tmdbYear, tvmazeYear)) {
-      this.logger.warn(
-        `TVMaze season ${seasonNum} skipped: year mismatch tmdb=${tmdbYear} tvmaze=${tvmazeYear}`,
-      );
-      return false;
+      return SEASON_SKIP_REASON.YEAR_MISMATCH;
     }
 
-    return true;
+    return null;
+  }
+
+  private logSkippedSeasons(media: NormalizedMedia, skipped: SkippedSeasons): void {
+    const skippedCount = skipped.not_in_tmdb.length + skipped.year_mismatch.length;
+    if (skippedCount === 0) return;
+
+    this.logger.log({
+      message: `TVMaze seasons skipped for ${media.externalIds.imdbId ?? media.title}`,
+      skippedSeasons: skippedCount,
+      notInTmdb: skipped.not_in_tmdb.length,
+      yearMismatch: skipped.year_mismatch.length,
+      skippedSeasonNumbers: [...skipped.not_in_tmdb, ...skipped.year_mismatch].join(','),
+    });
   }
 
   private isYearMismatch(tmdbYear: number, tvmazeYear: number): boolean {

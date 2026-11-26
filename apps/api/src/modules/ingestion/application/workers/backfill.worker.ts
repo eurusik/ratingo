@@ -4,6 +4,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 
 import { type MediaType } from '@/common/enums/media-type.enum';
+import { WithJobLogContext } from '@/common/logging/with-job-log-context.decorator';
 import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 import { BACKFILL_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
@@ -46,6 +47,7 @@ export class BackfillWorker extends WorkerHost {
     super();
   }
 
+  @WithJobLogContext(BACKFILL_QUEUE)
   async process(
     job: Job<{
       tmdbId?: number;

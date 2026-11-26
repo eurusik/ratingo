@@ -8,7 +8,7 @@ const SLOW_REQUEST_THRESHOLD_MS = 500;
 
 /**
  * Logs requests that exceed the slow threshold.
- * Includes method, URL, duration, status, and requestId for correlation.
+ * Includes method, path without the query string, duration and status; the request id comes from the log context.
  */
 @Injectable()
 export class SlowRequestInterceptor implements NestInterceptor {
@@ -25,12 +25,10 @@ export class SlowRequestInterceptor implements NestInterceptor {
         const duration = Date.now() - start;
 
         if (duration > SLOW_REQUEST_THRESHOLD_MS) {
-          const requestId = req.id || 'unknown';
           const ua = req.headers['user-agent'] || '-';
+          const path = req.url.split('?')[0];
 
-          this.logger.warn(
-            `${req.method} ${req.url} ${duration}ms status=${res.statusCode} requestId=${requestId} ua=${ua}`,
-          );
+          this.logger.warn(`${req.method} ${path} ${duration}ms status=${res.statusCode} ua=${ua}`);
         }
       }),
     );

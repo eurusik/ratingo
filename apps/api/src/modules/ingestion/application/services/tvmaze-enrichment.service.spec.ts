@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import {
@@ -46,6 +47,79 @@ describe('TvMazeEnrichmentService', () => {
   });
 
   describe('enrich', () => {
+    describe('skipped seasons', () => {
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      const episode = (seasonNumber: number, airDate: string) => ({
+        seasonNumber,
+        number: 1,
+        title: `S${seasonNumber}E1`,
+        airDate: new Date(airDate),
+        runtime: 45,
+        overview: '',
+      });
+
+      it('writes one summary line per show instead of a warning per season', async () => {
+        const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+        const log = jest.spyOn(Logger.prototype, 'log').mockImplementation();
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
+          episode(1, '2020-01-01'),
+          episode(2, '2021-01-01'),
+          episode(3, '2022-01-01'),
+        ]);
+
+        await service.enrich(mockShow);
+
+        expect(warn).not.toHaveBeenCalled();
+        expect(log).toHaveBeenCalledTimes(1);
+        expect(log).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'TVMaze seasons skipped for tt1234567',
+            skippedSeasons: 2,
+            notInTmdb: 2,
+            yearMismatch: 0,
+            skippedSeasonNumbers: '2,3',
+          }),
+        );
+      });
+
+      it('stays silent when every season is used', async () => {
+        const log = jest.spyOn(Logger.prototype, 'log').mockImplementation();
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue([episode(1, '2020-01-01')]);
+
+        await service.enrich(mockShow);
+
+        expect(log).not.toHaveBeenCalled();
+      });
+
+      it('counts year mismatches separately', async () => {
+        const log = jest.spyOn(Logger.prototype, 'log').mockImplementation();
+        const dated = {
+          ...mockShow,
+          details: {
+            seasons: [
+              {
+                number: 1,
+                tmdbId: 101,
+                episodeCount: 0,
+                episodes: [],
+                airDate: new Date('2010-01-01'),
+              },
+            ],
+          },
+        };
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue([episode(1, '2020-01-01')]);
+
+        await service.enrich(dated);
+
+        expect(log).toHaveBeenCalledWith(
+          expect.objectContaining({ notInTmdb: 0, yearMismatch: 1, skippedSeasonNumbers: '1' }),
+        );
+      });
+    });
+
     it('should skip IMDb lookup and try name search when no imdbId', async () => {
       const mediaWithoutImdb = {
         ...mockShow,

@@ -5,6 +5,7 @@ import { type Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { MdblistApiException } from '@/common/exceptions';
+import { WithJobLogContext } from '@/common/logging/with-job-log-context.decorator';
 import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 import { IngestionJob, RATINGS_BACKFILL_QUEUE } from '@/modules/ingestion/ingestion.constants';
@@ -62,6 +63,7 @@ export class RatingsBackfillWorker extends WorkerHost {
     super();
   }
 
+  @WithJobLogContext(RATINGS_BACKFILL_QUEUE)
   async process(job: Job<unknown>): Promise<void> {
     this.logger.debug(`[job:${job.id}] Processing ${job.name}`);
     try {
