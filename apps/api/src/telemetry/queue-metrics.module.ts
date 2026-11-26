@@ -8,6 +8,7 @@ import {
   INGESTION_QUEUE,
   RATINGS_BACKFILL_QUEUE,
 } from '../modules/ingestion/public';
+import { JobFailuresModule } from '../modules/job-failures/job-failures.module';
 import { MONITORING_QUEUE } from '../modules/monitoring/public';
 import { STATS_QUEUE } from '../modules/stats/public';
 import { USER_NOTIFICATIONS_QUEUE } from '../modules/user-actions/public';
@@ -18,6 +19,7 @@ import { QueueMetricsService } from './queue-metrics.service';
 @Module({
   imports: [
     DiscoveryModule,
+    JobFailuresModule,
     BullModule.registerQueue(
       { name: INGESTION_QUEUE },
       { name: BACKFILL_QUEUE },
