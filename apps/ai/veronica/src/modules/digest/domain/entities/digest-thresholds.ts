@@ -38,5 +38,6 @@ export interface DigestThresholds {
   };
   scheduler: {
     staleHours: number;
+    runGraceHours: number;
   };
 }

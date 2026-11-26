@@ -155,24 +155,56 @@ describe('evaluateDigest', () => {
     );
   });
 
-  it('flags a failing nightly job as an action and a stale one as a note', () => {
-    const snapshot = {
-      ...greenSnapshot(),
-      scheduler: available([
-        { jobName: 'a', lastSuccessAgeHours: 30, lastFailureAgeHours: 2 },
-        { jobName: 'b', lastSuccessAgeHours: 80, lastFailureAgeHours: null },
-        { jobName: 'c', lastSuccessAgeHours: null, lastFailureAgeHours: 1 },
-      ]),
-    };
-    const byId = Object.fromEntries(
-      evaluateDigest(snapshot, THRESHOLDS)
+  const job = (
+    jobName: string,
+    lastSuccessAgeHours: number | null,
+    lastFailureAgeHours: number | null,
+    planned: [number, number] | null = null,
+  ) => ({
+    jobName,
+    lastSuccessAgeHours,
+    lastFailureAgeHours,
+    lastPlannedRunAgeHours: planned?.[0] ?? null,
+    previousPlannedRunAgeHours: planned?.[1] ?? null,
+  });
+
+  const schedulerLevels = (jobs: ReturnType<typeof job>[]) =>
+    Object.fromEntries(
+      evaluateDigest({ ...greenSnapshot(), scheduler: available(jobs) }, THRESHOLDS)
         .blocks.flatMap((block) => block.items)
         .map((item) => [item.id, item.level]),
     );
-    expect(byId).toEqual({
+
+  it('flags a failing scheduled job as an action and, without a schedule, a stale one as a note', () => {
+    expect(schedulerLevels([job('a', 30, 2), job('b', 80, null), job('c', null, 1)])).toEqual({
       'scheduler-failing:a': DigestLevel.ACTION,
       'scheduler-stale:b': DigestLevel.NOTE,
       'scheduler-failing:c': DigestLevel.ACTION,
+    });
+  });
+
+  it('does not flag a weekly job that succeeded after its last planned run', () => {
+    expect(
+      schedulerLevels([job('scheduled-upcoming-movies-refresh-all', 77.2, null, [77.22, 245.22])]),
+    ).toEqual({});
+  });
+
+  it('flags a job whose last success is older than its last planned run', () => {
+    expect(
+      schedulerLevels([
+        job('sync-trending', 30, null, [6.5, 30.5]),
+        job('daily', 49, null, [25, 49]),
+      ]),
+    ).toEqual({
+      'scheduler-stale:sync-trending': DigestLevel.NOTE,
+      'scheduler-stale:daily': DigestLevel.NOTE,
+    });
+  });
+
+  it('gives a run that has just started time to finish before calling the job stale', () => {
+    expect(schedulerLevels([job('daily', 24.9, null, [1, 25])])).toEqual({});
+    expect(schedulerLevels([job('daily', 26, null, [1, 25])])).toEqual({
+      'scheduler-stale:daily': DigestLevel.NOTE,
     });
   });
 

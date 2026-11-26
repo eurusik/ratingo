@@ -70,7 +70,7 @@ export const siteBotRequests = (window: string = DEFAULT_WINDOW): string =>
   `sum(increase(${REQUEST_COUNT}{${SERVICE},client_kind=~"${BOT_KINDS}"}[${window}]))`;
 
 export const SCHEDULER_LAST_RUNS =
-  'max by (job_name, result) (last_over_time(app_scheduler_last_run_timestamp_seconds[3d]))';
+  'max by (job_name, result) (last_over_time(app_scheduler_last_run_timestamp_seconds[8d]))';
 
 export const SCHEDULER_NEXT_RUNS =
   'max by (job_name, schedule, tz) (last_over_time(app_scheduler_next_run_timestamp_seconds[1h]))';
