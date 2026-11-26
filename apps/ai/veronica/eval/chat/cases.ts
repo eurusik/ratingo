@@ -15,10 +15,6 @@ const metrics = (template: string, data: unknown, extra: Record<string, unknown>
 
 const schedulerJob = (job: string, overrides: Record<string, unknown> = {}) => ({
   job,
-  lastSuccessHoursAgo: null,
-  lastSuccessAtKyiv: null,
-  lastFailureHoursAgo: null,
-  lastFailureAtKyiv: null,
   scheduled: true,
   schedule: '0 */6 * * *',
   timezone: 'UTC',

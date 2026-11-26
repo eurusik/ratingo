@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import type { SchedulerJobStat } from '../../domain/entities/snapshot';
 import type { SourceReading } from '../../domain/entities/source-reading';
@@ -22,6 +22,8 @@ const ageHours = (epochMs: number, nowMs: number): number =>
 
 @Injectable()
 export class SchedulerCollector {
+  private readonly logger = new Logger(SchedulerCollector.name);
+
   constructor(@Inject(METRICS_PORT) private readonly metrics: MetricsPort) {}
 
   collect(nowMs: number): Promise<SourceReading<SchedulerJobStat[]>> {
@@ -58,7 +60,12 @@ export class SchedulerCollector {
           sample.value * MS_PER_SECOND,
           nowMs,
         );
-        if (!planned) continue;
+        if (!planned) {
+          this.logger.warn(
+            `Розклад «${sample.labels.schedule ?? ''}» задачі ${sample.labels.job_name ?? UNKNOWN_LABEL} не розібрано; для неї діє поріг без розкладу`,
+          );
+          continue;
+        }
         const job = jobOf(sample.labels.job_name ?? UNKNOWN_LABEL);
         job.lastPlannedRunAgeHours = ageHours(planned.lastMs, nowMs);
         job.previousPlannedRunAgeHours = ageHours(planned.previousMs, nowMs);
@@ -70,7 +77,9 @@ export class SchedulerCollector {
   private async nextRuns(nowMs: number): Promise<readonly MetricSample[]> {
     try {
       return await this.metrics.instant(SCHEDULER_NEXT_RUNS, nowMs);
-    } catch {
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'невідома помилка';
+      this.logger.warn(`Розклад задач не прочитано (${reason}); діє поріг без розкладу`);
       return [];
     }
   }

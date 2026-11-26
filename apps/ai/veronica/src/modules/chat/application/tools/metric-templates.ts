@@ -220,10 +220,10 @@ const siteMemoryPeak: MetricTemplate = {
 
 interface SchedulerJobRow {
   job: string;
-  lastSuccessHoursAgo: number | null;
-  lastSuccessAtKyiv: string | null;
-  lastFailureHoursAgo: number | null;
-  lastFailureAtKyiv: string | null;
+  lastSuccessHoursAgo?: number;
+  lastSuccessAtKyiv?: string;
+  lastFailureHoursAgo?: number;
+  lastFailureAtKyiv?: string;
   scheduled?: boolean;
   schedule?: string;
   timezone?: string;
@@ -231,21 +231,13 @@ interface SchedulerJobRow {
   nextRunInHours?: number;
 }
 
-const emptyJobRow = (job: string): SchedulerJobRow => ({
-  job,
-  lastSuccessHoursAgo: null,
-  lastSuccessAtKyiv: null,
-  lastFailureHoursAgo: null,
-  lastFailureAtKyiv: null,
-});
-
 const hoursUntil = (epochSeconds: number, nowMs: number): number =>
   round(Math.max(0, (epochSeconds * MS_PER_SECOND - nowMs) / MS_PER_HOUR));
 
 const schedulerLastRuns: MetricTemplate = {
   name: MetricTemplateName.SCHEDULER_LAST_RUNS,
   description:
-    'For each scheduled job: when it last succeeded and last failed (hours ago and Kyiv time), its schedule as a cron pattern with timezone, and its next planned run. scheduled=false means the job is not in the schedule at all.',
+    'For each scheduled job: when it last succeeded and last failed (hours ago and Kyiv time, left out when not seen in the last week), its schedule as a cron pattern with timezone, and its next planned run. scheduled=false means the job is not in the schedule at all.',
   params: z.strictObject({}),
   queries: () => [
     { name: 'runs', promql: PromQueries.SCHEDULER_LAST_RUNS },
@@ -257,7 +249,7 @@ const schedulerLastRuns: MetricTemplate = {
     if (runs.length === 0 && next.length === 0) return { unavailable: NO_DATA };
     const jobs = new Map<string, SchedulerJobRow>();
     const rowOf = (job: string): SchedulerJobRow => {
-      const row = jobs.get(job) ?? emptyJobRow(job);
+      const row = jobs.get(job) ?? { job };
       jobs.set(job, row);
       return row;
     };

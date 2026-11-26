@@ -1,6 +1,9 @@
 import * as fc from 'fast-check';
 
-import { MetricTemplateName } from '../../domain/constants/investigation.constants';
+import {
+  METRICS_OUTPUT_CAP,
+  MetricTemplateName,
+} from '../../domain/constants/investigation.constants';
 
 import { METRIC_TEMPLATES } from './metric-templates';
 
@@ -179,10 +182,6 @@ describe('metric templates: presentation', () => {
           jobs: [
             {
               job: 'scheduled-key-health',
-              lastSuccessHoursAgo: null,
-              lastSuccessAtKyiv: null,
-              lastFailureHoursAgo: null,
-              lastFailureAtKyiv: null,
               scheduled: true,
               schedule: '0 * * * *',
               timezone: 'UTC',
@@ -193,8 +192,6 @@ describe('metric templates: presentation', () => {
               job: 'scheduled-upcoming-movies-refresh-all',
               lastSuccessHoursAgo: 77.22,
               lastSuccessAtKyiv: '2026-11-23 09:00',
-              lastFailureHoursAgo: null,
-              lastFailureAtKyiv: null,
               scheduled: true,
               schedule: '0 7 * * 1',
               timezone: 'UTC',
@@ -257,8 +254,6 @@ describe('metric templates: presentation', () => {
               job: 'sync-trending',
               lastSuccessHoursAgo: 5,
               lastSuccessAtKyiv: '2026-11-26 09:13',
-              lastFailureHoursAgo: null,
-              lastFailureAtKyiv: null,
             },
           ],
           schedules: 'метрик за цей запит немає',
@@ -311,5 +306,35 @@ describe('metric templates: presentation', () => {
         0,
       ),
     ).toEqual({ data: { databaseUp: true, redisUp: false, redisMemoryMb: 9.5 } });
+  });
+});
+
+describe('scheduler_last_runs output size', () => {
+  it('fits twenty long-named jobs under the metrics_query output cap', () => {
+    const nowMs = Date.UTC(2026, 10, 26, 12, 0);
+    const names = Array.from(
+      { length: 20 },
+      (_, i) => `scheduled-upcoming-movies-refresh-soon-${i}`,
+    );
+    const reading = METRIC_TEMPLATES[MetricTemplateName.SCHEDULER_LAST_RUNS].present(
+      [
+        {
+          name: 'runs',
+          samples: names.map((job_name) => ({
+            labels: { job_name, result: 'success' },
+            value: (nowMs - 3_600_000) / 1000,
+          })),
+        },
+        {
+          name: 'next',
+          samples: names.map((job_name) => ({
+            labels: { job_name, schedule: '0 7 * * 0,2-6', tz: 'UTC' },
+            value: (nowMs + 3_600_000) / 1000,
+          })),
+        },
+      ],
+      nowMs,
+    );
+    expect(JSON.stringify(reading).length).toBeLessThan(METRICS_OUTPUT_CAP);
   });
 });

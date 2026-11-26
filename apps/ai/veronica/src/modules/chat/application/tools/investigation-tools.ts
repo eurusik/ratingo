@@ -8,6 +8,7 @@ import {
   InvestigationTool,
   METRIC_DEFAULT_WINDOW,
   METRIC_OFFSET_MAX_DAYS,
+  METRICS_OUTPUT_CAP,
   MetricTemplateName,
 } from '../../domain/constants/investigation.constants';
 
@@ -30,7 +31,6 @@ const templateCatalog = TEMPLATE_NAMES.map(
     `${name}: ${METRIC_TEMPLATES[name].description}${takesNoParameters(name) ? ' Takes no parameters, not even window.' : ''}`,
 ).join(' ');
 
-const METRICS_OUTPUT_CAP = 3000;
 const PRODUCT_OUTPUT_CAP = 3000;
 const SNAPSHOT_OUTPUT_CAP = 6000;
 const CHANGES_OUTPUT_CAP = 4000;
