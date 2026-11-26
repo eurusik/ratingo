@@ -107,6 +107,7 @@ describe('chat eval cases', () => {
   it('covers the log questions, an empty result, an outage and an injection in a log record', () => {
     expect(LOKI_EVAL_CASES.map((testCase) => testCase.id)).toEqual([
       'logs-worker-today',
+      'logs-storm-limit-reached',
       'logs-job-id-follow-up',
       'logs-api-no-errors',
       'logs-unavailable',

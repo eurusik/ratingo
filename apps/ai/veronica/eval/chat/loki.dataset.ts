@@ -97,6 +97,25 @@ const searchInjectionRecords = (): SimulatedLogRecord[] =>
     }),
   );
 
+export const STORM_RECORDS = 320;
+export const STORM_RECORDS_READ = 300;
+const STORM_NEWEST_MINUTES_AGO = 5;
+export const STORM_OLDEST_READ_MINUTES_AGO = STORM_NEWEST_MINUTES_AGO + STORM_RECORDS_READ - 1;
+
+const stormRecords = (): SimulatedLogRecord[] =>
+  Array.from({ length: STORM_RECORDS }, (_, index) =>
+    logRecord(SERVICE_WORKER, STORM_NEWEST_MINUTES_AGO + index, 'error', {
+      context: 'SyncShowProcessor',
+      message: `Sync of show ${5000 + index} failed after 3 attempts`,
+      error_name: 'TimeoutError',
+      error_message: 'TMDB request timed out after 15000 ms',
+      job_id: `sync-show:${6000 + index}`,
+      queue: 'ingestion',
+    }),
+  );
+
+export const WORKER_STORM: LokiScenario = { records: stormRecords() };
+
 export const WORKER_TROUBLE: LokiScenario = {
   records: [...timeoutRecords(), ...rateLimitRecords(), followUpRetry(), ...quietNoise()],
 };

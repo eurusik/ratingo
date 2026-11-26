@@ -1,4 +1,8 @@
-import { LogsFailureClass } from '../../domain/constants/logs.constants';
+import {
+  LOG_FETCH_LIMIT_GROUPED,
+  LOG_RESPONSE_MAX_BYTES,
+  LogsFailureClass,
+} from '../../domain/constants/logs.constants';
 import { LogsUnavailableError, type LogQuery } from '../../domain/ports/logs.port';
 
 import { GrafanaLokiLogsAdapter } from './grafana-loki.logs-adapter';
@@ -167,16 +171,96 @@ describe('GrafanaLokiLogsAdapter', () => {
   it('stops reading a body that grows past the byte cap without declaring it', async () => {
     const chunk = new Uint8Array(1_000_000);
     let sent = 0;
-    const body = new ReadableStream<Uint8Array>({
-      pull(controller) {
-        sent += 1;
-        controller.enqueue(chunk);
-        if (sent > 50) controller.close();
-      },
-    });
-    const { adapter } = adapterWith(() => new Response(body, { status: 200 }));
+    const { adapter } = adapterWith(
+      () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            pull(controller) {
+              sent += 1;
+              controller.enqueue(chunk);
+              if (sent > 50) controller.close();
+            },
+          }),
+          { status: 200 },
+        ),
+    );
 
     expect((await failureOf(adapter.search(QUERY))).reason).toBe(LogsFailureClass.TOO_LARGE);
-    expect(sent).toBeLessThan(10);
+    expect(sent).toBeLessThan(20);
+  });
+
+  describe('the worst case for size', () => {
+    const RECORD_CAP_BYTES = 4096;
+
+    const recordAtTheCap = (index: number): string => {
+      const frame = JSON.stringify({ level: 'error', message: '' });
+      const quotes = '"'.repeat(Math.floor((RECORD_CAP_BYTES - frame.length) / 2));
+      const line = JSON.stringify({ level: 'error', message: quotes });
+      expect(Buffer.byteLength(line)).toBeLessThanOrEqual(RECORD_CAP_BYTES);
+      return `${line}${' '.repeat(RECORD_CAP_BYTES - Buffer.byteLength(line))}${index % 10}`.slice(
+        0,
+        RECORD_CAP_BYTES,
+      );
+    };
+
+    const stormReply = (count: number) => ({
+      status: 'success',
+      data: {
+        resultType: 'streams',
+        result: Array.from({ length: count }, (_, index) => ({
+          stream: {
+            context: 'SyncShowProcessor',
+            deployment_environment_name: 'production',
+            detected_level: 'error',
+            error_name: 'TimeoutError',
+            job_id: `repeat:0123456789abcdef0123456789abcdef:${1795716146143 + index}`,
+            queue: 'ingestion',
+            scope_name: 'ratingo.logger',
+            service_name: 'ratingo-worker',
+            severity_number: '17',
+            severity_text: 'error',
+          },
+          values: [[nanos(START_MS + index), recordAtTheCap(index)]],
+        })),
+      },
+    });
+
+    it('fits a full grouped fetch of records at the record cap, each in its own stream and escaped', async () => {
+      const body = JSON.stringify(stormReply(LOG_FETCH_LIMIT_GROUPED));
+      expect(Buffer.byteLength(body)).toBeLessThan(LOG_RESPONSE_MAX_BYTES);
+      expect(Buffer.byteLength(body)).toBeGreaterThan(LOG_RESPONSE_MAX_BYTES / 2);
+      const { adapter, calls } = adapterWith(() => new Response(body, { status: 200 }));
+
+      const result = await adapter.search({ ...QUERY, limit: LOG_FETCH_LIMIT_GROUPED });
+
+      expect(calls).toHaveLength(1);
+      expect(result.lines).toHaveLength(LOG_FETCH_LIMIT_GROUPED);
+      expect(result.limitReached).toBe(true);
+    });
+
+    it('returns the newest records read with limitReached, not a failure, when a reply is still too large', async () => {
+      const oversized = JSON.stringify(stormReply(LOG_FETCH_LIMIT_GROUPED));
+      const small = JSON.stringify(stormReply(10));
+      const asked: number[] = [];
+      const { adapter } = adapterWith((url) => {
+        asked.push(Number(url.searchParams.get('limit')));
+        return asked.length === 1
+          ? new Response(oversized, { status: 200, headers: { 'content-length': '9999999' } })
+          : new Response(small, { status: 200 });
+      });
+
+      const result = await adapter.search({ ...QUERY, limit: LOG_FETCH_LIMIT_GROUPED });
+
+      expect(asked).toEqual([LOG_FETCH_LIMIT_GROUPED, Math.ceil(LOG_FETCH_LIMIT_GROUPED / 4)]);
+      expect(result.lines).toHaveLength(10);
+      expect(result.limitReached).toBe(true);
+    });
+
+    it('still fails with too_large when even the smaller reply is too large', async () => {
+      const { adapter } = adapterWith(
+        () => new Response('{}', { status: 200, headers: { 'content-length': '9999999' } }),
+      );
+      expect((await failureOf(adapter.search(QUERY))).reason).toBe(LogsFailureClass.TOO_LARGE);
+    });
   });
 });

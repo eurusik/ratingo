@@ -54,7 +54,7 @@ describe('simulated Loki', () => {
     expect(linesOf(warn.streams).map((record) => record.level)).toEqual(['error', 'warn']);
 
     const text = await ask(
-      `${SELECTOR('ratingo-worker')} | detected_level=\`error\` |~ \`(?i)TRAKT api: 429\``,
+      `${SELECTOR('ratingo-worker')} | detected_level=\`error\` | json message="message", error_message="error_message" | message=~\`(?is).*TRAKT api: 429.*\` or error_message=~\`(?is).*TRAKT api: 429.*\` | drop message, error_message`,
     );
     expect(linesOf(text.streams)).toHaveLength(3);
 
@@ -62,6 +62,15 @@ describe('simulated Loki', () => {
       `${SELECTOR('ratingo-worker')} | detected_level=\`error\` | queue=\`stats-queue\``,
     );
     expect(queue.streams).toEqual([]);
+  });
+
+  it('does not match a word that is only a field name or a value outside the message', async () => {
+    const stages = (text: string) =>
+      `${SELECTOR('ratingo-worker')} | detected_level=\`error\` | json message="message", error_message="error_message" | message=~\`(?is).*${text}.*\` or error_message=~\`(?is).*${text}.*\` | drop message, error_message`;
+    for (const word of ['environment', 'level', 'queue', 'ratingo-worker', 'production']) {
+      expect((await ask(stages(word))).streams).toEqual([]);
+    }
+    expect(linesOf((await ask(stages('TMDB request timed out'))).streams)).toHaveLength(14);
   });
 
   it('keeps to the time range and the limit', async () => {
@@ -94,6 +103,7 @@ describe('simulated Loki', () => {
     `${SELECTOR('ratingo-worker')} | json | detected_level=\`error\``,
     `${SELECTOR('ratingo-worker')} | detected_level=\`error\` | line_format \`x\``,
     `${SELECTOR('ratingo-worker')} | detected_level=\`error\` |~ \`a|b\``,
+    `${SELECTOR('ratingo-worker')} | detected_level=\`error\` |~ \`(?i)timed out\``,
     '',
   ])('refuses the query «%s» that is outside the shapes Veronica builds', async (logql) => {
     expect((await ask(logql)).status).toBe(400);

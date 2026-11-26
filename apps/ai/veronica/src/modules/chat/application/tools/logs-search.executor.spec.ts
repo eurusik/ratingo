@@ -79,7 +79,10 @@ describe('LogsSearchExecutor', () => {
     expect(asked[0]).toMatchObject({
       logql:
         '{service_name=`ratingo-api`,deployment_environment_name=`production`} | detected_level=~`warn|error`' +
-        ' | queue=`ingestion` | job_id=`sync-show:1` |~ `(?i)timed out`',
+        ' | queue=`ingestion` | job_id=`sync-show:1`' +
+        ' | json message="message", error_message="error_message"' +
+        ' | message=~`(?is).*timed out.*` or error_message=~`(?is).*timed out.*`' +
+        ' | drop message, error_message',
       startMs: NOW_MS - 7 * 24 * 60 * MINUTE_MS,
       limit: LOG_FETCH_LIMIT_LINES,
     });
@@ -115,10 +118,10 @@ describe('LogsSearchExecutor', () => {
       recordsRead: 3,
       groups: [
         {
-          count: 2,
+          countInRecordsRead: 2,
           level: 'error',
           context: 'SyncShow',
-          firstSeenAtKyiv: '2026-11-26 12:50',
+          firstSeenInRecordsReadKyiv: '2026-11-26 12:50',
           lastSeenAtKyiv: '2026-11-26 13:50',
           sample: {
             errorName: 'TimeoutError',
@@ -130,10 +133,10 @@ describe('LogsSearchExecutor', () => {
           },
         },
         {
-          count: 1,
+          countInRecordsRead: 1,
           level: 'error',
           context: 'Other',
-          firstSeenAtKyiv: '2026-11-26 13:30',
+          firstSeenInRecordsReadKyiv: '2026-11-26 13:30',
           lastSeenAtKyiv: '2026-11-26 13:30',
           sample: { message: 'Different problem' },
         },
@@ -180,7 +183,11 @@ describe('LogsSearchExecutor', () => {
         service: 'ratingo-worker',
       }),
     );
-    expect(result).toMatchObject({ limitReached: true, recordsRead: 1 });
+    expect(result).toMatchObject({
+      limitReached: true,
+      recordsRead: 1,
+      oldestRecordReadKyiv: '2026-11-26 13:59',
+    });
   });
 
   it('echoes the filters it used', async () => {

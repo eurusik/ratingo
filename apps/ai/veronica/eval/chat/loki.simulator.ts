@@ -7,8 +7,50 @@ const HTTP_OK = 200;
 const EXACT_LABELS = ['queue', 'job_id', 'request_id', 'run_id'] as const;
 const METADATA_KEYS = ['context', 'error_name', 'job_id', 'queue', 'request_id', 'run_id'] as const;
 
-const QUERY_SHAPE =
-  /^\{service_name=`(ratingo-[a-z]+)`,deployment_environment_name=`production`\} \| detected_level(=`error`|=~`warn\|error`)((?: \| (?:queue|job_id|request_id|run_id)=`[A-Za-z0-9_.:-]+`)*)(?: \|~ `\(\?i\)((?:\\[\\.+*?()|[\]{}^$]|[^\\`|.+*?()[\]{}^$\n])+)`)?$/u;
+const Q = '`';
+const ESCAPED_OR_PLAIN =
+  String.raw`(?:\\[\\.+*?()|[\]{}^$]|[^\\` + Q + String.raw`|.+*?()[\]{}^$\n])+`;
+const PATTERN_PREFIX = String.raw`\(\?is\)\.\*`;
+const PATTERN_SUFFIX = String.raw`\.\*`;
+const TEXT_STAGES =
+  String.raw` \| json message="message", error_message="error_message"` +
+  String.raw` \| message=~` +
+  Q +
+  PATTERN_PREFIX +
+  `(${ESCAPED_OR_PLAIN})` +
+  PATTERN_SUFFIX +
+  Q +
+  String.raw` or error_message=~` +
+  Q +
+  PATTERN_PREFIX +
+  String.raw`\4` +
+  PATTERN_SUFFIX +
+  Q +
+  String.raw` \| drop message, error_message`;
+const EXACT_STAGE =
+  String.raw` \| (?:queue|job_id|request_id|run_id)=` + Q + '[A-Za-z0-9_.:-]+' + Q;
+const QUERY_SHAPE = new RegExp(
+  String.raw`^\{service_name=` +
+    Q +
+    '(ratingo-[a-z]+)' +
+    Q +
+    String.raw`,deployment_environment_name=` +
+    Q +
+    'production' +
+    Q +
+    String.raw`\}` +
+    String.raw` \| detected_level(=` +
+    Q +
+    'error' +
+    Q +
+    String.raw`|=~` +
+    Q +
+    String.raw`warn\|error` +
+    Q +
+    ')' +
+    `((?:${EXACT_STAGE})*)(?:${TEXT_STAGES})?$`,
+  'u',
+);
 const EXACT_FILTER = /\| (queue|job_id|request_id|run_id)=`([^`]+)`/gu;
 
 interface ParsedQuery {
@@ -28,7 +70,7 @@ const parseQuery = (logql: string): ParsedQuery | null => {
     exact: Object.fromEntries(
       [...exactFilters.matchAll(EXACT_FILTER)].map(([, label, value]) => [label, value]),
     ),
-    text: text === undefined ? null : new RegExp(text, 'iu'),
+    text: text === undefined ? null : new RegExp(text, 'isu'),
   };
 };
 
@@ -40,14 +82,17 @@ const bodyOf = (record: SimulatedLogRecord): Record<string, string | number> => 
   ...record.fields,
 });
 
-const matches = (record: SimulatedLogRecord, query: ParsedQuery, line: string): boolean =>
+const textOf = (record: SimulatedLogRecord): string[] =>
+  [record.fields.message, record.fields.error_message].map((value) => String(value ?? ''));
+
+const matches = (record: SimulatedLogRecord, query: ParsedQuery): boolean =>
   record.service === query.service &&
   query.levels.includes(record.level) &&
   EXACT_LABELS.every(
     (label) =>
       query.exact[label] === undefined || String(record.fields[label]) === query.exact[label],
   ) &&
-  (query.text === null || query.text.test(line));
+  (query.text === null || textOf(record).some((field) => query.text?.test(field) === true));
 
 const streamOf = (record: SimulatedLogRecord, line: string) => ({
   stream: {
@@ -89,7 +134,7 @@ export const simulatedLokiFetch =
     const streams = scenario.records
       .map((record) => ({ record, line: JSON.stringify(bodyOf(record)) }))
       .filter(({ record }) => record.atMs >= startMs && record.atMs < endMs + 1)
-      .filter(({ record, line }) => matches(record, query, line))
+      .filter(({ record }) => matches(record, query))
       .sort((left, right) => right.record.atMs - left.record.atMs)
       .slice(0, limit)
       .map(({ record, line }) => streamOf(record, line));

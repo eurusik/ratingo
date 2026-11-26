@@ -11,9 +11,13 @@ import {
   SEARCH_ERRORS,
   SERVICE_API,
   SERVICE_WORKER,
+  STORM_OLDEST_READ_MINUTES_AGO,
+  STORM_RECORDS,
+  STORM_RECORDS_READ,
   TMDB_TIMEOUTS,
   TMDB_TIMEOUT_LAST_MINUTES_AGO,
   TRAKT_LIMITS,
+  WORKER_STORM,
   WORKER_TROUBLE,
 } from './loki.dataset';
 
@@ -26,6 +30,7 @@ const kyivMinutesAgo = (minutes: number): string => kyivTimeFromEvalNow(0, -minu
 
 const LAST_TIMEOUT = kyivMinutesAgo(TMDB_TIMEOUT_LAST_MINUTES_AGO);
 const LAST_FOLLOW_UP_ERROR = kyivMinutesAgo(FOLLOW_UP_ERROR_MINUTES_AGO);
+const OLDEST_READ_IN_STORM = kyivMinutesAgo(STORM_OLDEST_READ_MINUTES_AGO);
 const LAST_SEARCH_ERROR = kyivMinutesAgo(50);
 
 export const LOKI_EVAL_CASES: readonly EvalCase[] = [
@@ -40,6 +45,20 @@ export const LOKI_EVAL_CASES: readonly EvalCase[] = [
     reference: {
       calls: [{ tool: LOGS, input: { service: SERVICE_WORKER } }],
       answer: `У worker найчастіша помилка: ${TMDB_TIMEOUTS} разів оновлення серіалу впало через тайм-аут запиту до TMDB, востаннє ${LAST_TIMEOUT}. Ще ${TRAKT_LIMITS} помилки через ліміт запитів до Trakt.`,
+    },
+  },
+  {
+    id: 'logs-storm-limit-reached',
+    kind: EvalKind.KNOWN,
+    question: 'скільки разів сьогодні впало оновлення серіалів у worker?',
+    fixtures: [{ tool: LOKI_FIXTURE, response: WORKER_STORM }],
+    expectedTools: [LOGS],
+    allowedExtraTools: OTHER_SOURCES,
+    mustContain: [[wholeNumber(STORM_RECORDS_READ)], [/щонайменше|не менше|принаймні|більше/u]],
+    mustNotContain: [String(STORM_RECORDS)],
+    reference: {
+      calls: [{ tool: LOGS, input: { service: SERVICE_WORKER, text: 'sync of show' } }],
+      answer: `Щонайменше ${STORM_RECORDS_READ} разів: стільки записів я прочитала, найстаріший із них ${OLDEST_READ_IN_STORM}. Загальну кількість за добу з логів назвати не можу, їх більше, ніж я читаю за один запит.`,
     },
   },
   {

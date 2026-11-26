@@ -57,8 +57,6 @@ export const isLogText = (value: string): boolean =>
   !value.includes(BACKTICK) &&
   !hasControlCharacter(value);
 
-const inJsonString = (text: string): string => JSON.stringify(text).slice(1, -1);
-
 const escapedForRegex = (text: string): string => text.replace(REGEX_METACHARACTERS, '\\$&');
 
 const rawString = (value: string): string => `${BACKTICK}${value}${BACKTICK}`;
@@ -85,7 +83,12 @@ const textFilter = (text: string | undefined): string[] => {
   if (!isLogText(text)) {
     throw new InvalidLogSearchError('text must be plain words without backticks or line breaks');
   }
-  return [`|~ ${rawString(`(?i)${escapedForRegex(inJsonString(text.trim()))}`)}`];
+  const pattern = rawString(`(?is).*${escapedForRegex(text.trim())}.*`);
+  return [
+    '| json message="message", error_message="error_message"',
+    `| message=~${pattern} or error_message=~${pattern}`,
+    '| drop message, error_message',
+  ];
 };
 
 export const buildLogQuery = (

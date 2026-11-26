@@ -63,10 +63,10 @@ const sampleOf = (entry: LogEntry) => ({
 });
 
 const groupRow = (group: LogGroup) => ({
-  count: group.count,
+  countInRecordsRead: group.count,
   level: group.level,
   context: safeText(group.context, LOG_CONTEXT_MAX_CHARS),
-  firstSeenAtKyiv: formatKyivDateTime(group.firstAtMs),
+  firstSeenInRecordsReadKyiv: formatKyivDateTime(group.firstAtMs),
   lastSeenAtKyiv: formatKyivDateTime(group.lastAtMs),
   sample: sampleOf(group.sample),
 });
@@ -86,6 +86,11 @@ const echoedFilters = (input: LogsSearchInput) => ({
   ...(input.run_id === undefined ? {} : { run_id: input.run_id }),
   ...(input.text === undefined ? {} : { text: safeText(input.text, LOG_FIELD_MAX_CHARS) }),
 });
+
+const oldestRead = (entries: readonly LogEntry[]) =>
+  entries.length === 0
+    ? {}
+    : { oldestRecordReadKyiv: formatKyivDateTime(Math.min(...entries.map((entry) => entry.atMs))) };
 
 const criteriaOf = (input: LogsSearchInput, level: string, windowHours: number) => ({
   service: input.service,
@@ -142,7 +147,7 @@ export class LogsSearchExecutor {
       mode,
       ...echoedFilters(input),
       recordsRead: fetched.lines.length,
-      ...(fetched.limitReached ? { limitReached: true } : {}),
+      ...(fetched.limitReached ? { limitReached: true, ...oldestRead(entries) } : {}),
     };
     return mode === LogSearchMode.GROUPED
       ? groupedList(entries, envelope)

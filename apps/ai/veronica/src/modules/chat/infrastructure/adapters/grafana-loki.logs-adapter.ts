@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   LOG_REQUEST_TIMEOUT_MS,
   LOG_RESPONSE_MAX_BYTES,
+  LOG_TOO_LARGE_RETRY_DIVISOR,
   LogsFailureClass,
 } from '../../domain/constants/logs.constants';
 import {
@@ -102,6 +103,19 @@ export class GrafanaLokiLogsAdapter implements LogsPort {
   ) {}
 
   async search(query: LogQuery): Promise<LogsFetch> {
+    try {
+      return await this.fetchLines(query);
+    } catch (error) {
+      if (!(error instanceof LogsUnavailableError) || error.reason !== LogsFailureClass.TOO_LARGE) {
+        throw error;
+      }
+      const smaller = { ...query, limit: Math.ceil(query.limit / LOG_TOO_LARGE_RETRY_DIVISOR) };
+      const retried = await this.fetchLines(smaller);
+      return { ...retried, limitReached: true };
+    }
+  }
+
+  private async fetchLines(query: LogQuery): Promise<LogsFetch> {
     const response = await this.fetchImpl(this.urlFor(query), {
       headers: { authorization: basicAuthorization(this.connection) },
       signal: AbortSignal.timeout(LOG_REQUEST_TIMEOUT_MS),

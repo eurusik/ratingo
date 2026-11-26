@@ -18,14 +18,20 @@ const QUEUE = '[a-z0-9][a-z0-9_-]{0,63}';
 const PLAIN_TEXT_CHAR = '[^\\\\`|.+*?()\\[\\]{}^$\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]';
 const ESCAPED_OR_PLAIN = `(?:\\\\[\\\\.+*?()|\\[\\]{}^$]|${PLAIN_TEXT_CHAR})+`;
 
+const TEXT_PATTERN = `\\(\\?is\\)\\.\\*(${ESCAPED_OR_PLAIN})\\.\\*`;
+const TEXT_STAGES =
+  ' \\| json message="message", error_message="error_message"' +
+  ` \\| message=~\`${TEXT_PATTERN}\` or error_message=~\`\\(\\?is\\)\\.\\*\\2\\.\\*\`` +
+  ' \\| drop message, error_message';
+
 const GRAMMAR = new RegExp(
-  `^\\{service_name=\`(?:${SERVICES})\`,deployment_environment_name=\`production\`\\}` +
+  `^\\{service_name=\`(${SERVICES})\`,deployment_environment_name=\`production\`\\}` +
     ` \\| detected_level(?:=\`error\`|=~\`warn\\|error\`)` +
     `(?: \\| queue=\`${QUEUE}\`)?` +
     `(?: \\| job_id=\`${ID}\`)?` +
     `(?: \\| request_id=\`${ID}\`)?` +
     `(?: \\| run_id=\`${ID}\`)?` +
-    `(?: \\|~ \`\\(\\?i\\)${ESCAPED_OR_PLAIN}\`)?$`,
+    `(?:${TEXT_STAGES})?$`,
   'u',
 );
 
@@ -85,9 +91,8 @@ const queryOf = (overrides: Partial<LogSearchCriteria> = {}) =>
 
 const unescaped = (pattern: string): string => pattern.replace(/\\(.)/gu, '$1');
 
-const jsonEscaped = (text: string): string => JSON.stringify(text).slice(1, -1);
-
-const patternOf = (logql: string): string | undefined => /\|~ `\(\?i\)(.*)`$/u.exec(logql)?.[1];
+const patternOf = (logql: string): string | undefined =>
+  /\| message=~`\(\?is\)\.\*(.*)\.\*` or error_message/u.exec(logql)?.[1];
 
 const builds = (overrides: Partial<LogSearchCriteria>): boolean => {
   try {
@@ -124,7 +129,10 @@ describe('buildLogQuery', () => {
     expect(logql).toBe(
       '{service_name=`ratingo-worker`,deployment_environment_name=`production`}' +
         ' | detected_level=`error` | queue=`ingestion` | job_id=`repeat:abc123:1795`' +
-        ' | request_id=`req-1` | run_id=`run_9` |~ `(?i)rate limit \\(429\\)`',
+        ' | request_id=`req-1` | run_id=`run_9`' +
+        ' | json message="message", error_message="error_message"' +
+        ' | message=~`(?is).*rate limit \\(429\\).*` or error_message=~`(?is).*rate limit \\(429\\).*`' +
+        ' | drop message, error_message',
     );
   });
 
@@ -143,16 +151,18 @@ describe('buildLogQuery', () => {
     expect(() => queryOf(overrides)).toThrow(InvalidLogSearchError);
   });
 
-  it('looks for a quote or a backslash the way the JSON log line stores it', () => {
-    const pattern = patternOf(queryOf({ text: 'DTO "A" path C:\\x' }).logql) as string;
-    const line = JSON.stringify({ message: 'Duplicate DTO "A" path C:\\x is bad' });
-    expect(new RegExp(pattern, 'iu').test(line)).toBe(true);
+  it('looks for text only in the message and the error message, never in other fields', () => {
+    const { logql } = queryOf({ text: 'queue' });
+    expect(logql).not.toContain('|~');
+    expect(logql).toContain('| json message="message", error_message="error_message"');
+    expect(logql).toContain('| message=~`(?is).*queue.*` or error_message=~`(?is).*queue.*`');
+    expect(logql.endsWith('| drop message, error_message')).toBe(true);
   });
 
   it('treats query syntax in a text as plain characters and refuses it in an id', () => {
     expect(isLogText('| json')).toBe(true);
     expect(isLogId('a|b')).toBe(false);
-    expect(queryOf({ text: '| json | drop' }).logql).toContain('`(?i)\\| json \\| drop`');
+    expect(queryOf({ text: '| json | drop' }).logql).toContain('.*\\| json \\| drop.*');
   });
 
   describe('properties', () => {
@@ -185,13 +195,19 @@ describe('buildLogQuery', () => {
             expect(error).toBeInstanceOf(InvalidLogSearchError);
             return;
           }
-          const withoutText = logql.replace(/ \|~ `\(\?i\).*`$/u, '');
-          expect(withoutText).not.toMatch(/[\n\r]/u);
-          expect(withoutText.match(/\{/gu)?.length).toBe(1);
-          expect(withoutText.match(/ \| /gu)?.length).toBe(withoutText.split(' | ').length - 1);
-          expect(withoutText.split(' | ').slice(1)).toEqual(
-            expect.arrayContaining([expect.stringMatching(/^detected_level=/u)]),
-          );
+          const stages = logql.split(/ (?=\| )/u);
+          expect(logql).not.toMatch(/[\n\r]/u);
+          expect(stages[0].match(/\{/gu)?.length).toBe(1);
+          expect(stages[0]).toMatch(/^\{service_name=/u);
+          expect(
+            stages
+              .slice(1)
+              .every((stage) =>
+                /^\| (detected_level|queue=|job_id=|request_id=|run_id=|json message=|message=~|drop message)/u.test(
+                  stage,
+                ),
+              ),
+          ).toBe(true);
         }),
         { numRuns: 2000 },
       );
@@ -205,10 +221,8 @@ describe('buildLogQuery', () => {
           fc.string({ maxLength: 20 }),
           (text, before, after) => {
             const pattern = patternOf(queryOf({ text }).logql) as string;
-            expect(unescaped(pattern)).toBe(jsonEscaped(text.trim()));
-            expect(
-              new RegExp(pattern, 'iu').test(`${before}${jsonEscaped(text.trim())}${after}`),
-            ).toBe(true);
+            expect(unescaped(pattern)).toBe(text.trim());
+            expect(new RegExp(pattern, 'iu').test(`${before}${text.trim()}${after}`)).toBe(true);
           },
         ),
         { numRuns: 1000 },
@@ -221,7 +235,7 @@ describe('buildLogQuery', () => {
           fc.string({ unit: 'binary', minLength: 1, maxLength: 30 }).filter(isLogText),
           (text) => {
             const pattern = patternOf(queryOf({ text }).logql) as string;
-            const literal = jsonEscaped(text.trim());
+            const literal = text.trim();
             expect(new RegExp(pattern, 'iu').exec(literal)?.[0]).toBe(literal);
           },
         ),
