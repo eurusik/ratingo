@@ -1,7 +1,7 @@
 import { SYSTEM_CARD } from '../../src/modules/chat/domain/constants/system-card.constants';
 import { describeCadence } from '../../src/modules/chat/domain/policies/schedule-cadence.policy';
 
-import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW } from './answer-stems';
+import { HONEST_NO_DATA, MINOR_FINDINGS, NO_CODE_REVIEW, NOTHING_RECORDED } from './answer-stems';
 import { EvalKind, type EvalCase } from './eval-case';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 
@@ -21,6 +21,15 @@ const schedulerJob = (job: string, overrides: Record<string, unknown> = {}) => (
   cadence: 'every six hours',
   nextRunAtKyiv: '2026-11-22 16:00',
   ...overrides,
+});
+
+const jobFailures = (
+  failures: readonly Record<string, unknown>[],
+  extra: Record<string, unknown> = {},
+) => ({
+  window: '24h',
+  ...extra,
+  failures,
 });
 
 const LATE_ALPHABET_JOB = 'scheduled-upcoming-movies-refresh-soon';
@@ -395,11 +404,13 @@ const SERVICE_CASES: readonly EvalCase[] = [
         tool: 'recent_changes',
         response: { window: '24h', pullRequests: [], deployments: [] },
       },
+      { tool: 'job_failures', response: jobFailures([]) },
     ],
     expectedTools: ['metrics_query:scheduler_last_runs'],
     allowedExtraTools: [
       'recent_changes',
       'digest_snapshot',
+      'job_failures',
       'metrics_query:queue_throughput',
       'metrics_query:http_client_errors',
     ],
@@ -408,6 +419,90 @@ const SERVICE_CASES: readonly EvalCase[] = [
       calls: [{ tool: 'metrics_query', input: { template: 'scheduler_last_runs' } }],
       answer:
         'Задача sync-trending востаннє вдалася 30 годин тому, а 2 години тому впала. Причини в даних немає.',
+    },
+  },
+  {
+    id: 'why-job-failed-rate-limit',
+    kind: EvalKind.KNOWN,
+    question: 'Чому падає задача trending?',
+    fixtures: [
+      {
+        tool: 'job_failures',
+        response: jobFailures(
+          [
+            {
+              job: 'scheduled-trending',
+              jobType: 'sync-trending-dispatcher',
+              queue: 'ingestion',
+              errorClass: 'rate_limit',
+              failures: 12,
+              attemptsExhausted: 3,
+              firstFailedAtKyiv: '2026-11-22 08:00',
+              lastFailedAtKyiv: '2026-11-22 12:15',
+              lastMessage: 'Trakt API: 429 Too Many Requests',
+            },
+          ],
+          { job: 'trending' },
+        ),
+      },
+      {
+        tool: 'metrics_query',
+        match: { template: 'scheduler_last_runs' },
+        response: metrics(
+          'scheduler_last_runs',
+          {
+            jobs: [
+              schedulerJob('scheduled-trending', {
+                lastSuccessHoursAgo: 30,
+                lastSuccessAtKyiv: '2026-11-21 08:00',
+                lastFailureHoursAgo: 2,
+                lastFailureAtKyiv: '2026-11-22 12:15',
+              }),
+            ],
+          },
+          { window: null },
+        ),
+      },
+      {
+        tool: 'recent_changes',
+        response: { window: '24h', pullRequests: [], deployments: [] },
+      },
+    ],
+    expectedTools: ['job_failures'],
+    allowedExtraTools: [
+      'metrics_query:scheduler_last_runs',
+      'metrics_query:http_client_errors',
+      'recent_changes',
+    ],
+    mustContain: [['trending'], ['429', /ліміт|rate.?limit/u], ['12']],
+    mustNotContain: [/лог[иа]? сервера|server log/u],
+    reference: {
+      calls: [{ tool: 'job_failures', input: { job: 'trending' } }],
+      answer:
+        'Задача scheduled-trending за добу впала 12 разів, з них 3 спроби були останніми: Trakt відповідає 429, тобто ми вперлися в ліміт запитів. Остання відмова о 12:15.',
+    },
+  },
+  {
+    id: 'job-failures-none',
+    kind: EvalKind.KNOWN,
+    question: 'Були сьогодні збої у фонових задачах?',
+    fixtures: [
+      { tool: 'job_failures', response: jobFailures([]) },
+      {
+        tool: 'metrics_query',
+        match: { template: 'queue_throughput' },
+        response: metrics('queue_throughput', {
+          queues: [{ queue: 'ingestion', completed: 800, failed: 0, retried: 0 }],
+        }),
+      },
+    ],
+    expectedTools: ['job_failures'],
+    allowedExtraTools: ['metrics_query:queue_throughput', 'digest_snapshot'],
+    mustContain: [[NOTHING_RECORDED]],
+    mustNotContain: [/лог[иа]? сервера|server log/u],
+    reference: {
+      calls: [{ tool: 'job_failures', input: {} }],
+      answer: 'Ні, за добу жодного збою фонових задач не зафіксовано.',
     },
   },
   {

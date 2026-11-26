@@ -15,9 +15,9 @@ const STUB = { modelRef: 'stub:digest' };
 const STUB_EVAL_TIMEOUT_MS = 60_000;
 
 describe('chat eval cases', () => {
-  it('has 12 to 40 cases with unique ids', () => {
+  it('has 12 to 45 cases with unique ids', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(12);
-    expect(EVAL_CASES.length).toBeLessThanOrEqual(40);
+    expect(EVAL_CASES.length).toBeLessThanOrEqual(45);
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
   });
 
@@ -39,6 +39,7 @@ describe('chat eval cases', () => {
       'google-analytics__run_funnel_report',
       'google-analytics__run_realtime_report',
       'google-analytics__run_report',
+      'job_failures',
       'metrics_query',
       'product_stats',
       'recent_changes',

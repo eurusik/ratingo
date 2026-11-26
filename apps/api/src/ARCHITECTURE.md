@@ -51,6 +51,7 @@ apps/api/src/
     ├── ingestion/          # Data import from external APIs
     ├── stats/              # Statistics & ratings sync
     ├── insights/           # Trend analytics (risers/fallers)
+    ├── job-failures/       # Daily summary of failed BullMQ jobs with a classified reason
     ├── home/               # Homepage (hero block)
     ├── tmdb/               # TMDB adapter
     └── shared/             # Shared services
@@ -187,6 +188,19 @@ module/
 | Table                      | Purpose                    |
 | -------------------------- | -------------------------- |
 | `media_watchers_snapshots` | Daily watchers time-series |
+
+### Operations Tables
+
+| Table              | Purpose                                                            |
+| ------------------ | ------------------------------------------------------------------ |
+| `job_failure_days` | Failed BullMQ jobs per Kyiv day, queue, job type, scheduler, class |
+
+`job_failure_days` (module `job-failures`) has one row per Kyiv day, queue, job type, scheduler job id (null for jobs not started by a scheduler; the unique key is `NULLS NOT DISTINCT`) and error class. It holds `failure_count` (every failed attempt), `exhausted_count` (attempts that will not be retried), `first_failed_at`, `last_failed_at` and `last_message` (the newest message, at most 300 characters, with URL query strings, credentials, tokens, e-mails and query parameters removed).
+
+- **Write path.** `QueueJobMetricsService` (worker processes only, `APP_ROLE` `worker` or `all`) hands every `failed` event to `JobFailureRecorder`, which classifies the error, redacts the message and upserts the row with `failure_count = failure_count + 1` in SQL. A database error while recording is logged with its reason and never reaches the worker.
+- **Classes.** `rate_limit`, `access_denied`, `not_found`, `timeout`, `network`, `database`, `other` (`classifyJobFailure`): the error type decides first (database and abort errors), then the upstream HTTP status (`ExternalApiException.upstreamStatus`, `HttpError.status`), then a Node or SQLSTATE error code, and only then the message. Stored as text with a `CHECK` constraint, not a Postgres enum.
+- **Retention.** The recorder deletes days older than 14 days, at most once a day per process, on the first failure it records; with no failures the table does not grow.
+- **Reporting.** `reporting.daily_job_failures` returns the last 14 Kyiv days to `ai_reader`; Veronica's `job_failures` tool reads it.
 
 ---
 

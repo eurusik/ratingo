@@ -11,6 +11,7 @@ import {
 import {
   CHANGES_OUTPUT_CAP,
   InvestigationTool,
+  JOB_FAILURES_OUTPUT_CAP,
   METRICS_OUTPUT_CAP,
   METRIC_DEFAULT_WINDOW,
   METRIC_OFFSET_MAX_DAYS,
@@ -92,6 +93,18 @@ export const askHappyInput = z.object({
     .describe('Pull request number in the Ratingo repository'),
 });
 
+export const jobFailuresInput = z.object({
+  job: z
+    .string()
+    .optional()
+    .describe('Part of a job or scheduler name such as sync-show or trending'),
+  queue: z.string().optional().describe('Queue name such as ingestion or stats-queue'),
+  window: z
+    .string()
+    .optional()
+    .describe('How far back to look, such as 6h, 24h or 7d (at most 7d). Default 24h'),
+});
+
 const noInput = z.object({});
 
 export const buildInvestigationTools = (executors: InvestigationExecutors): Tool[] => [
@@ -138,5 +151,14 @@ export const buildInvestigationTools = (executors: InvestigationExecutors): Tool
     readOnly: true,
     maxOutputChars: ASK_HAPPY_OUTPUT_CAP,
     handler: (input) => executors.askHappy(input),
+  }),
+  defineTool({
+    name: InvestigationTool.JOB_FAILURES,
+    description:
+      'Why background jobs failed: failed attempts of BullMQ jobs grouped by job (the scheduler name, or the job type for jobs not started by a scheduler), queue and error class. errorClass is one of rate_limit (the provider answered 429 or throttled us), access_denied (401 or 403, usually a bad or missing API key), not_found, timeout, network (connection errors, 502, 503), database or other. Each row has failures (every failed attempt, retries included), attemptsExhausted (attempts with no retry left), the first and last failure in Kyiv time and lastMessage, the newest error text with secrets removed. Counts cover whole Kyiv days that had a failure inside the window. An empty failures list means no job failure was recorded in the window. Data is kept for 14 days.',
+    inputSchema: jobFailuresInput,
+    readOnly: true,
+    maxOutputChars: JOB_FAILURES_OUTPUT_CAP,
+    handler: (input) => executors.jobFailures(input),
   }),
 ];

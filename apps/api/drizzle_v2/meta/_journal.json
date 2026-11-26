@@ -288,6 +288,13 @@
       "when": 1795533704668,
       "tag": "0040_trakt_anticipated_shows",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1795703090023,
+      "tag": "0041_job_failure_days",
+      "breakpoints": true
     }
   ]
 }

@@ -10,10 +10,12 @@ import {
   CHANGES_CONFIG,
   HAPPY_CONFIG,
   INFRA_CONFIG,
+  PRODUCT_STATS_CONFIG,
   TELEGRAM_CONFIG,
   type ChangesConfig,
   type HappyConfig,
   type InfraConfig,
+  type ProductStatsConfig,
   type TelegramConfig,
 } from '../../config/config.constants';
 import { DigestModule } from '../digest/public';
@@ -37,6 +39,7 @@ import {
   INVESTIGATION_EXECUTORS,
   type InvestigationExecutors,
 } from './application/tools/investigation-executors';
+import { JobFailuresExecutor } from './application/tools/job-failures.executor';
 import { MetricsQueryExecutor } from './application/tools/metrics-query.executor';
 import { ProductStatsExecutor } from './application/tools/product-stats.executor';
 import { RecentChangesExecutor } from './application/tools/recent-changes.executor';
@@ -51,11 +54,14 @@ import { CHAT_JOB_QUEUE } from './domain/ports/chat-job-queue.port';
 import { CHAT_METRICS_PORT } from './domain/ports/chat-metrics.port';
 import { CONVERSATION_STORE } from './domain/ports/conversation-store.port';
 import { HAPPY_CLIENT } from './domain/ports/happy-client.port';
+import { JOB_FAILURES_PORT } from './domain/ports/job-failures.port';
 import { RECENT_CHANGES_PORT } from './domain/ports/recent-changes.port';
 import { WEBHOOK_SECRET_PORT } from './domain/ports/webhook-secret.port';
 import { PostgresChatExchangeRepository } from './infrastructure/repositories/postgres.chat-exchange-repository';
 import { GithubRecentChangesAdapter } from './infrastructure/adapters/github.recent-changes-adapter';
 import { HttpHappyClient } from './infrastructure/adapters/http.happy-client';
+import { PostgresJobFailuresAdapter } from './infrastructure/adapters/postgres.job-failures-adapter';
+import { UnconfiguredJobFailuresAdapter } from './infrastructure/adapters/unconfigured.job-failures-adapter';
 import { BullmqChatJobQueue } from './infrastructure/queues/bullmq-chat-job-queue';
 import { HmacWebhookSecret } from './infrastructure/security/hmac-webhook-secret';
 import { RedisConversationStore } from './infrastructure/stores/redis.conversation-store';
@@ -105,6 +111,14 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
       useFactory: (config: HappyConfig) => new HttpHappyClient(config),
     },
     {
+      provide: JOB_FAILURES_PORT,
+      inject: [PRODUCT_STATS_CONFIG],
+      useFactory: (config: ProductStatsConfig) =>
+        config.readerDatabaseUrl === undefined
+          ? new UnconfiguredJobFailuresAdapter()
+          : PostgresJobFailuresAdapter.connect(config.readerDatabaseUrl),
+    },
+    {
       provide: CHAT_EXCHANGE_LOG,
       inject: [DATABASE],
       useFactory: (db: Database) => new PostgresChatExchangeRepository(db),
@@ -118,6 +132,7 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
     DigestSnapshotExecutor,
     RecentChangesExecutor,
     AskHappyExecutor,
+    JobFailuresExecutor,
     {
       provide: INVESTIGATION_EXECUTORS,
       inject: [
@@ -126,6 +141,7 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
         DigestSnapshotExecutor,
         RecentChangesExecutor,
         AskHappyExecutor,
+        JobFailuresExecutor,
       ],
       useFactory: (
         metrics: MetricsQueryExecutor,
@@ -133,12 +149,14 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
         snapshot: DigestSnapshotExecutor,
         changes: RecentChangesExecutor,
         happy: AskHappyExecutor,
+        failures: JobFailuresExecutor,
       ): InvestigationExecutors => ({
         metricsQuery: (input) => metrics.run(input),
         productStats: (input) => product.run(input),
         digestSnapshot: () => snapshot.run(),
         recentChanges: (input) => changes.run(input),
         askHappy: (input) => happy.run(input),
+        jobFailures: (input) => failures.run(input),
       }),
     },
     InvestigationRunner,

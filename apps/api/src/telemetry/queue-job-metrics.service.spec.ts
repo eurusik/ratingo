@@ -5,6 +5,8 @@ import { type DiscoveryService } from '@nestjs/core';
 
 import { metrics } from '@opentelemetry/api';
 
+import { type JobFailureRecorder } from '../modules/job-failures/public';
+
 import { QueueJobMetricsService } from './queue-job-metrics.service';
 import { scheduledJobNames } from './scheduler-last-run.gauge';
 import { QUEUE_JOB_DURATION_METRIC, SCHEDULER_LAST_RUN_METRIC } from './telemetry.constants';
@@ -36,6 +38,7 @@ const job = (overrides: Record<string, unknown> = {}) => ({
 describe('QueueJobMetricsService', () => {
   let collect: ReturnType<typeof createTestMeterProvider>['collect'];
   let ingestion: ReturnType<typeof fakeWorker>;
+  let recordFailure: jest.Mock;
 
   beforeEach(() => {
     const testProvider = createTestMeterProvider();
@@ -49,7 +52,9 @@ describe('QueueJobMetricsService', () => {
         { instance: { notAWorker: true } },
       ],
     } as unknown as DiscoveryService;
-    new QueueJobMetricsService(discovery).onApplicationBootstrap();
+    recordFailure = jest.fn().mockResolvedValue(undefined);
+    const jobFailures = { record: recordFailure } as unknown as JobFailureRecorder;
+    new QueueJobMetricsService(discovery, jobFailures).onApplicationBootstrap();
   });
 
   afterEach(() => {
@@ -88,6 +93,41 @@ describe('QueueJobMetricsService', () => {
     ingestion.emit('completed', job({ processedOn: undefined }));
 
     await expect(durations()).resolves.toEqual([]);
+    expect(recordFailure).not.toHaveBeenCalled();
+  });
+
+  it('reports every failed attempt to the job failure summary', () => {
+    const retried = new Error('429');
+    const exhausted = new Error('403');
+    ingestion.emit('failed', job({ attemptsMade: 1, finishedOn: undefined }), retried);
+    ingestion.emit(
+      'failed',
+      job({ attemptsMade: 3, repeatJobKey: 'prod:scheduled-snapshots' }),
+      exhausted,
+    );
+
+    expect(recordFailure.mock.calls).toEqual([
+      [
+        {
+          queue: 'ingestion',
+          jobType: 'sync-movie',
+          schedulerJobId: null,
+          attemptsExhausted: false,
+          failedAtMs: undefined,
+          error: retried,
+        },
+      ],
+      [
+        {
+          queue: 'ingestion',
+          jobType: 'sync-movie',
+          schedulerJobId: 'scheduled-snapshots',
+          attemptsExhausted: true,
+          failedAtMs: 3_500,
+          error: exhausted,
+        },
+      ],
+    ]);
   });
 
   describe('scheduler last run gauge', () => {

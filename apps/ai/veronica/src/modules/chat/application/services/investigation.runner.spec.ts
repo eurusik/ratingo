@@ -101,6 +101,7 @@ class Harness {
     digestSnapshot: async () => ({ level: 'ok' }),
     recentChanges: async () => ({ pullRequests: [{ number: 464 }] }),
     askHappy: async () => ({ found: false }),
+    jobFailures: async () => ({ window: '24h', failures: [] }),
   };
 
   private readonly clock = new FixedClock(NOW_MS);
@@ -383,12 +384,13 @@ describe('InvestigationRunner', () => {
     expect(chat.scripted.requests).toEqual([]);
   });
 
-  it('only exposes the five read-only tools', async () => {
+  it('only exposes the six read-only tools', async () => {
     const chat = new Harness().script(answerStep('Усе гаразд.'));
     await chat.ask('як справи?');
     expect(chat.scripted.requests[0].tools.map((tool) => tool.name).sort()).toEqual([
       'ask_happy',
       'digest_snapshot',
+      'job_failures',
       'metrics_query',
       'product_stats',
       'recent_changes',

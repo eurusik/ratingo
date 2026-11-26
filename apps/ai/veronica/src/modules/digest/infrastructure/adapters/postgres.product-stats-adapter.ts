@@ -1,7 +1,8 @@
 import type { OnApplicationShutdown } from '@nestjs/common';
 
-import postgres from 'postgres';
+import type postgres from 'postgres';
 
+import { connectReportingDatabase } from '../../../../database/reporting-connection';
 import { BASELINE_OFFSET_DAYS, MS_PER_DAY } from '../../digest.constants';
 import { kyivDateOf } from '../../domain/kyiv-day';
 import { measured } from '../../domain/entities/measured';
@@ -20,7 +21,7 @@ interface DayTotal {
   total: number;
 }
 
-const QUERY_TIMEOUT_SECONDS = 15;
+const READER_CONNECTIONS = 2;
 
 const totalOn = (rows: readonly DayTotal[], day: string): number =>
   rows.find((row) => row.day === day)?.total ?? 0;
@@ -30,11 +31,7 @@ export class PostgresProductStatsAdapter
 {
   static connect(readerDatabaseUrl: string): PostgresProductStatsAdapter {
     return new PostgresProductStatsAdapter(
-      postgres(readerDatabaseUrl, {
-        max: 2,
-        connect_timeout: QUERY_TIMEOUT_SECONDS,
-        connection: { statement_timeout: QUERY_TIMEOUT_SECONDS * 1000 },
-      }),
+      connectReportingDatabase(readerDatabaseUrl, READER_CONNECTIONS),
     );
   }
 

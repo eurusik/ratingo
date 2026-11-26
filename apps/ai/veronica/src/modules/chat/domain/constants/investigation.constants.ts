@@ -23,6 +23,8 @@ export const METRICS_OUTPUT_CAP = 4500;
 export const PRODUCT_OUTPUT_CAP = 3000;
 export const SNAPSHOT_OUTPUT_CAP = 6000;
 export const CHANGES_OUTPUT_CAP = 4000;
+export const JOB_FAILURES_OUTPUT_CAP = 4500;
+export const JOB_FAILURES_ROW_LIMIT = 100;
 
 export const CHANGES_ITEM_CAP = 20;
 export const CHANGE_TITLE_MAX_CHARS = 120;
@@ -33,6 +35,7 @@ export const InvestigationTool = {
   DIGEST_SNAPSHOT: 'digest_snapshot',
   RECENT_CHANGES: 'recent_changes',
   ASK_HAPPY: 'ask_happy',
+  JOB_FAILURES: 'job_failures',
 } as const;
 export type InvestigationTool = (typeof InvestigationTool)[keyof typeof InvestigationTool];
 
