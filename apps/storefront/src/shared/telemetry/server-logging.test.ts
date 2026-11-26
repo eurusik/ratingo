@@ -1,4 +1,4 @@
-import { createStructuredLogger } from '@ratingo/node-telemetry';
+import { createStructuredLogger, DEFAULT_LOG_LIMITS } from '@ratingo/node-telemetry';
 
 import { captureConsole, startServerLogging } from './server-logging';
 
@@ -6,6 +6,7 @@ const SETTINGS = {
   identity: { service: 'ratingo-storefront', environment: 'production' },
   format: 'json',
   minLevel: 'info',
+  limits: DEFAULT_LOG_LIMITS,
 } as const;
 
 function setup() {

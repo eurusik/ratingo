@@ -37,7 +37,7 @@ prometheus.relabel "env" {
 
 otelcol.receiver.prometheus "default" {
   output {
-    metrics = [otelcol.processor.batch.default.input]
+    metrics = [otelcol.processor.memory_limiter.default.input]
   }
 }
 
@@ -51,7 +51,7 @@ otelcol.receiver.otlp "default" {
   output {
     metrics = [otelcol.processor.transform.drop_version.input]
     logs    = [otelcol.processor.transform.scrub_logs.input]
-    traces  = [otelcol.processor.batch.default.input]
+    traces  = [otelcol.processor.memory_limiter.default.input]
   }
 }
 
@@ -62,7 +62,7 @@ otelcol.processor.transform "drop_version" {
     statements = ["delete_key(resource.attributes, \"service.version\")"]
   }
   output {
-    metrics = [otelcol.processor.batch.default.input]
+    metrics = [otelcol.processor.memory_limiter.default.input]
   }
 }
 
@@ -84,11 +84,25 @@ otelcol.processor.transform "scrub_logs" {
     ]
   }
   output {
-    logs = [otelcol.processor.batch.default.input]
+    logs = [otelcol.processor.memory_limiter.default.input]
+  }
+}
+
+otelcol.processor.memory_limiter "default" {
+  check_interval = "1s"
+  limit          = "256MiB"
+  spike_limit    = "64MiB"
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.default.input]
+    traces  = [otelcol.processor.batch.default.input]
   }
 }
 
 otelcol.processor.batch "default" {
+  send_batch_size     = 512
+  send_batch_max_size = 1024
+  timeout             = "5s"
   output {
     metrics = [otelcol.exporter.otlphttp.grafana.input]
     logs    = [otelcol.exporter.otlphttp.grafana.input]
@@ -103,7 +117,16 @@ otelcol.auth.basic "grafana" {
 
 otelcol.exporter.otlphttp "grafana" {
   client {
-    endpoint = sys.env("GRAFANA_OTLP_ENDPOINT")
-    auth     = otelcol.auth.basic.grafana.handler
+    endpoint    = sys.env("GRAFANA_OTLP_ENDPOINT")
+    auth        = otelcol.auth.basic.grafana.handler
+    compression = "gzip"
+  }
+  sending_queue {
+    enabled   = true
+    queue_size = 100
+  }
+  retry_on_failure {
+    enabled          = true
+    max_elapsed_time = "60s"
   }
 }

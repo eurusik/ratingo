@@ -1,6 +1,7 @@
 export { installCrashLogging } from './crash-logging';
 export { createStructuredLogger } from './create-structured-logger';
 export { getLogContext, runWithLogContext, type LogContextFields } from './log-context';
+export { DEFAULT_LOG_LIMITS, type LogLimits } from './log-limits';
 export { isLevelEnabled, LOG_LEVELS, toLogLevel, type LogLevel } from './log-level';
 export {
   buildLogRecord,

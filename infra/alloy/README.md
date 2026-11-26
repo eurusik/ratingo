@@ -9,6 +9,12 @@
 - Forwards metrics, logs and traces to Grafana Cloud's OTLP gateway
 - Logs pass through `scrub_logs` first: it removes `service.instance.id` and `service.version` (both would multiply Loki streams or add per-line metadata) and masks bearer headers, URL credentials and email addresses in the log line. The services already redact before sending; this is the second line
 
+## Limits
+
+- `otelcol.processor.memory_limiter` in front of the batcher: soft limit 256 MiB with a 64 MiB spike allowance. Above it Alloy refuses new data instead of growing. Set the Railway variable `GOMEMLIMIT=288MiB` on the service so the Go runtime collects before the limiter trips
+- Batches of up to 1024 records or 5 seconds, sent gzip-compressed with a bounded queue (100 batches) and 60 seconds of retries
+- Alloy has no per-second log rate limiter for OTLP; per-service caps live in the services' shipper (`LOG_SHIP_MAX_*`, see `.claude/rules/logging.md`)
+
 ## Variables the config reads
 
 `DATABASE_URL`, `REDIS_ADDR`, `REDIS_PASSWORD`, `RAILWAY_ENVIRONMENT_NAME`, `GRAFANA_INSTANCE_ID`, `GRAFANA_API_TOKEN`, `GRAFANA_OTLP_ENDPOINT`. No new variable is needed for logs: the same OTLP gateway and token carry them.

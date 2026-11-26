@@ -1,5 +1,6 @@
 import { installCrashLogging } from './crash-logging';
 import { createStructuredLogger } from './create-structured-logger';
+import { DEFAULT_LOG_LIMITS } from './log-limits';
 
 describe('installCrashLogging', () => {
   afterEach(() => {
@@ -20,7 +21,12 @@ describe('installCrashLogging', () => {
     const exit = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
     const lines: string[] = [];
     const logger = createStructuredLogger(
-      { identity: { service: 'api', environment: 'production' }, format: 'json', minLevel: 'info' },
+      {
+        identity: { service: 'api', environment: 'production' },
+        format: 'json',
+        minLevel: 'info',
+        limits: DEFAULT_LOG_LIMITS,
+      },
       { write: (line) => void lines.push(line) },
     );
 
@@ -50,6 +56,7 @@ describe('installCrashLogging', () => {
           identity: { service: 'api', environment: 'production' },
           format: 'json',
           minLevel: 'info',
+          limits: DEFAULT_LOG_LIMITS,
         },
         { write: () => undefined },
       ),

@@ -2,9 +2,17 @@ import { getLogContext } from './log-context';
 import type { LogLevel } from './log-level';
 import { redactText, redactValue } from './redaction';
 
-const MAX_MESSAGE_LENGTH = 8_000;
+const MAX_MESSAGE_LENGTH = 2_000;
 
-const MAX_STACK_LENGTH = 16_000;
+const MAX_STACK_LENGTH = 2_500;
+
+const MAX_FIELD_LENGTH = 500;
+
+const MIN_TRIMMED_LENGTH = 200;
+
+const DEFAULT_MAX_RECORD_BYTES = 4_096;
+
+const TRUNCATION_MARKER_RESERVE = 40;
 
 const RESERVED_KEYS = new Set([
   'time',
@@ -41,6 +49,8 @@ export type LogRecord = Readonly<Record<string, unknown>> & {
   readonly message: string;
 };
 
+const byteSize = (record: object): number => Buffer.byteLength(JSON.stringify(record));
+
 const truncate = (text: string, maxLength: number): string =>
   text.length > maxLength
     ? `${text.slice(0, maxLength)}…[truncated ${text.length - maxLength}]`
@@ -70,12 +80,43 @@ const normalizeFields = (fields: Readonly<Record<string, unknown>>): Record<stri
   const redacted = redactValue(fields) as Record<string, unknown>;
   const entries: [string, unknown][] = Object.entries(redacted)
     .filter(([, value]) => value !== undefined)
-    .map(([key, value]) => [toSnakeCase(key), value]);
+    .map(([key, value]) => [
+      toSnakeCase(key),
+      typeof value === 'string' ? truncate(value, MAX_FIELD_LENGTH) : value,
+    ]);
   return Object.fromEntries(entries.filter(([key]) => !RESERVED_KEYS.has(key)));
 };
 
-export function buildLogRecord(identity: LogIdentity, input: LogInput, time: Date): LogRecord {
-  return {
+function trimField(record: Record<string, unknown>, key: string, overflow: number): number {
+  const value = record[key];
+  if (typeof value !== 'string' || value.length <= MIN_TRIMMED_LENGTH) {
+    return overflow;
+  }
+  const keep = Math.max(MIN_TRIMMED_LENGTH, value.length - overflow - TRUNCATION_MARKER_RESERVE);
+  record[key] = truncate(value, keep);
+  return overflow - (value.length - keep);
+}
+
+function fitToBudget(record: LogRecord, maxBytes: number): LogRecord {
+  const size = byteSize(record);
+  if (size <= maxBytes) {
+    return record;
+  }
+  const trimmed: Record<string, unknown> = { ...record };
+  const afterStack = trimField(trimmed, 'error_stack', size - maxBytes);
+  if (afterStack > 0) {
+    trimField(trimmed, 'message', afterStack);
+  }
+  return trimmed as LogRecord;
+}
+
+export function buildLogRecord(
+  identity: LogIdentity,
+  input: LogInput,
+  time: Date,
+  maxRecordBytes = DEFAULT_MAX_RECORD_BYTES,
+): LogRecord {
+  const record: LogRecord = {
     time: time.toISOString(),
     level: input.level,
     service: identity.service,
@@ -86,6 +127,7 @@ export function buildLogRecord(identity: LogIdentity, input: LogInput, time: Dat
     ...normalizeFields(input.fields ?? {}),
     ...describeError(input.error),
   };
+  return fitToBudget(record, maxRecordBytes);
 }
 
 export const serializeLogRecord = (record: LogRecord): string => JSON.stringify(record);

@@ -1,3 +1,5 @@
+import fc from 'fast-check';
+
 import { runWithLogContext } from './log-context';
 import { buildLogRecord, serializeLogRecord } from './log-record';
 
@@ -86,17 +88,53 @@ describe('buildLogRecord', () => {
     expect(record).toMatchObject({ status: 401 });
   });
 
-  it('truncates oversized messages and stacks', () => {
+  it('keeps a whole record under the byte budget by trimming the stack first', () => {
     const error = new Error('x');
     error.stack = `Error: x\n${'    at frame (file.js:1:1)\n'.repeat(2_000)}`;
 
     const record = buildLogRecord(
       IDENTITY,
-      { level: 'error', message: 'm'.repeat(50_000), error },
+      { level: 'error', message: 'm'.repeat(50_000), error, fields: { note: 'n'.repeat(5_000) } },
       TIME,
+      4_096,
     );
 
-    expect((record.message as string).length).toBeLessThan(8_100);
-    expect((record.error_stack as string).length).toBeLessThan(16_100);
+    expect(Buffer.byteLength(serializeLogRecord(record))).toBeLessThanOrEqual(4_096);
+    expect(record.message.startsWith('mmmm')).toBe(true);
+    expect((record.note as string).length).toBeLessThan(600);
+  });
+
+  it('honours a smaller budget from the configuration', () => {
+    const record = buildLogRecord(
+      IDENTITY,
+      { level: 'warn', message: 'm'.repeat(5_000) },
+      TIME,
+      1_024,
+    );
+
+    expect(Buffer.byteLength(serializeLogRecord(record))).toBeLessThanOrEqual(1_024);
+  });
+
+  it('never exceeds the budget for any message and field sizes', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: 20_000 }),
+        fc.integer({ min: 0, max: 4_000 }),
+        (messageLength, noteLength) => {
+          const record = buildLogRecord(
+            IDENTITY,
+            {
+              level: 'error',
+              message: 'é'.repeat(messageLength),
+              fields: { note: 'ж'.repeat(noteLength) },
+              error: Object.assign(new Error('e'), { stack: 's'.repeat(messageLength) }),
+            },
+            TIME,
+            4_096,
+          );
+          return Buffer.byteLength(serializeLogRecord(record)) <= 4_096;
+        },
+      ),
+    );
   });
 });

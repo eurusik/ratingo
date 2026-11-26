@@ -2,6 +2,7 @@ import { isTelemetryEnabled } from '../export-config';
 
 import type { LogIdentity } from './log-record';
 import { toLogLevel, type LogLevel } from './log-level';
+import { type LogLimits, resolveLogLimits } from './log-limits';
 
 export const LOG_FORMATS = ['json', 'pretty'] as const;
 
@@ -19,6 +20,7 @@ export interface LoggerSettings {
   readonly identity: LogIdentity;
   readonly format: LogFormat;
   readonly minLevel: LogLevel;
+  readonly limits: LogLimits;
   readonly otlpEndpoint?: string;
 }
 
@@ -66,6 +68,7 @@ export function resolveLoggerSettings(
     },
     format: resolveFormat(env),
     minLevel: resolveMinLevel(env),
+    limits: resolveLogLimits(env),
     otlpEndpoint: isTelemetryEnabled(env) ? env.OTEL_EXPORTER_OTLP_ENDPOINT : undefined,
   };
 }

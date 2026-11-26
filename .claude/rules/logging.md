@@ -29,6 +29,16 @@ Every service writes one JSON object per line to stdout and ships the same recor
 - A loop over items never logs per item above `debug`: count in the loop and write one summary line after it (see `TvMazeEnrichmentService`)
 - A failure that is retried is `warn`; log `error` once, when the last attempt fails
 
+## Cost controls
+Logs must stay cheap in Railway memory, CPU and network, and in Grafana Cloud. The shared shipper enforces this; every limit is an environment variable on the service:
+- `LOG_LEVEL`: `info` in production; `debug` is for a short investigation, then unset
+- `LOG_MAX_RECORD_BYTES` (4096): one record, stack trimmed first, then the message; string fields are capped at 500 characters
+- `LOG_DEDUPE_WINDOW_SECONDS` (60): identical `warn` and `error` records (numbers and ids ignored) ship once per window, followed by one record with `repeats`; stdout keeps every line
+- `LOG_SHIP_MAX_RECORDS_PER_MINUTE` (300) and `LOG_SHIP_MAX_BYTES_PER_DAY` (12 MB): `info` and `warn` stop at the minute rate and at 80 percent of the daily bytes; errors and repeat summaries may use twice the rate and the whole daily budget
+- The export queue is capped at 2 MB; when Alloy is unreachable the oldest records are dropped and counted, never buffered without bound
+- Counters `app.logs.records` (labels `outcome`, `level`) and `app.logs.bytes` (label `outcome`) show what was shipped, collapsed or dropped (`dropped_rate_limit`, `dropped_daily_cap`, `dropped_overflow`, `dropped_export_failed`); a growing `dropped_*` means a service is too chatty or a limit is too tight
+- No per-request access lines: HTTP logs are 5xx (`error`), slow requests (`warn`) and 4xx other than 401 and 404 (`warn`)
+
 ## Secrets and personal data
 - The logger redacts tokens, bearer and basic headers, JWTs, URL credentials, `key=value` secrets and email addresses in messages, fields and stacks, and replaces the value of keys such as `authorization`, `cookie`, `password`, `token`, `apiKey`, `secret`, `email`
 - Redaction is the last line of defence: do not log request bodies, headers, cookies, tokens, emails, full prompts or webhook payloads

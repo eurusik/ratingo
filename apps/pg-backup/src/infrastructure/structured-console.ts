@@ -1,3 +1,5 @@
+import { gzipSync } from 'node:zlib';
+
 const EXPORT_TIMEOUT_MS = 10_000;
 const EXPORT_RETRY_DELAY_MS = 2_000;
 const EXPORT_ATTEMPTS = 3;
@@ -122,8 +124,8 @@ export class StructuredConsole implements Pick<Console, 'log' | 'warn' | 'error'
     try {
       const response = await this.fetchImpl(`${endpoint.replace(/\/+$/, '')}/v1/logs`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(this.payload(batch)),
+        headers: { 'content-type': 'application/json', 'content-encoding': 'gzip' },
+        body: gzipSync(JSON.stringify(this.payload(batch))),
         signal: AbortSignal.timeout(EXPORT_TIMEOUT_MS),
       });
       return response.ok ? undefined : `HTTP ${response.status}`;

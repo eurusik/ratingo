@@ -1,7 +1,11 @@
+import { gunzipSync } from 'node:zlib';
+
 import { buildLogRecord, type LogRecord } from './log-record';
+import type { LogOutcome, LogStats } from './log-stats';
 import { buildOtlpLogsPayload, OtlpLogShipper } from './otlp-log-shipper';
 
 const IDENTITY = { service: 'worker', environment: 'production' };
+const LIMITS = { dedupeWindowMs: 60_000, maxRecordsPerMinute: 1_000, maxBytesPerDay: 10_000_000 };
 
 const record = (message: string, fields: Record<string, unknown> = {}): LogRecord =>
   buildLogRecord(
@@ -20,6 +24,7 @@ function setup(
   const shipper = new OtlpLogShipper({
     endpoint: 'http://alloy.railway.internal:4318/',
     identity: IDENTITY,
+    limits: LIMITS,
     fetchImpl,
     sleep: () => Promise.resolve(),
     retryDelaysMs: [1, 1],
@@ -34,8 +39,8 @@ interface SentBody {
 }
 
 const sentBodies = (fetchImpl: jest.Mock): SentBody[] =>
-  (fetchImpl.mock.calls as [string, { body: string }][]).map(
-    ([, init]) => JSON.parse(init.body) as SentBody,
+  (fetchImpl.mock.calls as [string, { body: Buffer }][]).map(
+    ([, init]) => JSON.parse(gunzipSync(init.body).toString('utf8')) as SentBody,
   );
 
 const sentMessages = (body: SentBody): string[] =>
@@ -140,7 +145,10 @@ describe('OtlpLogShipper', () => {
 
   it('drops the oldest records when the queue overflows and says so', async () => {
     const fetchImpl = jest.fn().mockResolvedValue(response(200));
-    const { shipper, failures } = setup(fetchImpl, { maxQueueSize: 2, maxBatchSize: 10 });
+    const { shipper, failures } = setup(fetchImpl, {
+      maxQueueBytes: 2 * Buffer.byteLength(JSON.stringify(record('old'))) + 10,
+      maxBatchSize: 10,
+    });
 
     for (const name of ['old', 'mid', 'new']) {
       shipper.enqueue(record(name));
@@ -149,22 +157,32 @@ describe('OtlpLogShipper', () => {
 
     const messages = sentMessages(sentBodies(fetchImpl)[0]);
     expect(messages).toEqual(['mid', 'new']);
-    expect(failures).toEqual([['export queue overflow', 1]]);
+    expect(failures).toEqual([['queue overflow', 1]]);
   });
 
   it('sends on its own after the flush interval', async () => {
-    jest.useFakeTimers();
-    try {
-      const fetchImpl = jest.fn().mockResolvedValue(response(200));
-      const { shipper } = setup(fetchImpl, { flushIntervalMs: 500 });
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    const { shipper } = setup(fetchImpl, { flushIntervalMs: 20 });
 
-      shipper.enqueue(record('timer'));
-      await jest.advanceTimersByTimeAsync(600);
+    shipper.enqueue(record('timer'));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
-      expect(fetchImpl).toHaveBeenCalledTimes(1);
-    } finally {
-      jest.useRealTimers();
-    }
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('compresses every request with gzip', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    const { shipper } = setup(fetchImpl);
+
+    shipper.enqueue(record('squeeze me'));
+    await shipper.flush();
+
+    const [, init] = fetchImpl.mock.calls[0] as [
+      string,
+      { headers: Record<string, string>; body: Buffer },
+    ];
+    expect(init.headers['content-encoding']).toBe('gzip');
+    expect(init.body.subarray(0, 2)).toEqual(Buffer.from([0x1f, 0x8b]));
   });
 
   it('flush with nothing queued sends nothing', async () => {
@@ -174,5 +192,173 @@ describe('OtlpLogShipper', () => {
     await shipper.flush();
 
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+function statsRecorder() {
+  const counts: Record<string, number> = {};
+  const stats: LogStats = {
+    record: (outcome: LogOutcome) => {
+      counts[outcome] = (counts[outcome] ?? 0) + 1;
+    },
+  };
+  return { stats, counts };
+}
+
+describe('OtlpLogShipper cost controls', () => {
+  it('collapses identical warnings inside the window and ships one summary with the count', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    const { stats, counts } = statsRecorder();
+    let nowMs = Date.parse('2026-11-26T10:00:00.000Z');
+    const { shipper } = setup(fetchImpl, { stats, now: () => nowMs });
+
+    for (let id = 1; id <= 50; id += 1) {
+      shipper.enqueue(record(`Failed to get Trakt data for TMDB ${id}: timeout`));
+    }
+    nowMs += 61_000;
+    shipper.enqueue(record('something else'));
+    await shipper.flush();
+
+    const messages = sentBodies(fetchImpl).flatMap((body) => sentMessages(body));
+    expect(messages).toHaveLength(3);
+    expect(messages[0]).toBe('Failed to get Trakt data for TMDB 1: timeout');
+    expect(counts.collapsed).toBe(49);
+    const summary = JSON.parse(
+      sentBodies(fetchImpl)[0].resourceLogs[0].scopeLogs[0].logRecords[1].body.stringValue,
+    ) as { repeats: number };
+    expect(summary.repeats).toBe(49);
+  });
+
+  it('ships the repeat summary even when the minute is already full', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    const { shipper } = setup(fetchImpl, {
+      limits: { ...LIMITS, maxRecordsPerMinute: 2 },
+      now: () => Date.parse('2026-11-26T10:00:00.000Z'),
+    });
+
+    shipper.enqueue(record('Trakt data failed for TMDB 1'));
+    shipper.enqueue(record('Trakt data failed for TMDB 2'));
+    shipper.enqueue(record('Trakt data failed for TMDB 3'));
+    await shipper.flush();
+
+    const lines = sentBodies(fetchImpl)[0].resourceLogs[0].scopeLogs[0].logRecords.map(
+      (item) => JSON.parse(item.body.stringValue) as { repeats?: number },
+    );
+    expect(lines.map((line) => line.repeats)).toEqual([undefined, 2]);
+  });
+
+  it('never collapses info records', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    const { shipper } = setup(fetchImpl);
+    const info = (message: string) => ({ ...record(message), level: 'info' as const });
+
+    shipper.enqueue(info('same'));
+    shipper.enqueue(info('same'));
+    await shipper.flush();
+
+    expect(sentMessages(sentBodies(fetchImpl)[0])).toEqual(['same', 'same']);
+  });
+
+  it('stops shipping past the per-minute rate and keeps room for errors', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    const { stats, counts } = statsRecorder();
+    const { shipper, failures } = setup(fetchImpl, {
+      stats,
+      limits: { ...LIMITS, maxRecordsPerMinute: 3 },
+      now: () => Date.parse('2026-11-26T10:00:00.000Z'),
+    });
+    const info = (n: number) => ({ ...record(`info ${n}`), level: 'info' as const });
+    const error = (n: number) => ({ ...record(`error ${n}`), level: 'error' as const });
+
+    for (let n = 1; n <= 6; n += 1) {
+      shipper.enqueue(info(n));
+    }
+    shipper.enqueue(error(1));
+    await shipper.flush();
+
+    const messages = sentMessages(sentBodies(fetchImpl)[0]);
+    expect(messages).toEqual(['info 1', 'info 2', 'info 3', 'error 1']);
+    expect(counts.dropped_rate_limit).toBe(3);
+    expect(failures).toEqual([['rate limit', 3]]);
+  });
+
+  it('keeps shipping errors after the daily budget for other levels is used up', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    const { shipper } = setup(fetchImpl, {
+      limits: { ...LIMITS, maxBytesPerDay: 2_000 },
+      now: () => Date.parse('2026-11-26T10:00:00.000Z'),
+    });
+    const sample = record('x'.repeat(100));
+
+    for (let n = 0; n < 20; n += 1) {
+      shipper.enqueue({ ...sample, level: 'info' });
+    }
+    shipper.enqueue({ ...sample, level: 'error', message: 'still ships' });
+    await shipper.flush();
+
+    const messages = sentBodies(fetchImpl).flatMap((body) => sentMessages(body));
+    expect(messages.filter((message) => message === 'still ships')).toHaveLength(1);
+    expect(messages.length).toBeLessThan(21);
+  });
+
+  it('starts a new day with a fresh budget', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    let nowMs = Date.parse('2026-11-26T23:59:00.000Z');
+    const { shipper } = setup(fetchImpl, {
+      limits: { ...LIMITS, maxBytesPerDay: 500 },
+      now: () => nowMs,
+    });
+    const info = (message: string) => ({ ...record(message), level: 'info' as const });
+
+    for (let n = 0; n < 5; n += 1) {
+      shipper.enqueue(info(`late ${n}`));
+    }
+    nowMs = Date.parse('2026-11-27T00:01:00.000Z');
+    shipper.enqueue(info('next day'));
+    await shipper.flush();
+
+    const messages = sentBodies(fetchImpl).flatMap((body) => sentMessages(body));
+    expect(messages).toContain('next day');
+  });
+
+  it('counts shipped records and bytes per level through the stats port', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(200));
+    const { stats, counts } = statsRecorder();
+    const { shipper } = setup(fetchImpl, { stats });
+
+    shipper.enqueue(record('one'));
+    shipper.enqueue(record('two'));
+    await shipper.flush();
+
+    expect(counts.shipped).toBe(2);
+  });
+
+  it('counts records lost to a failing export', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(response(500));
+    const { stats, counts } = statsRecorder();
+    const { shipper } = setup(fetchImpl, { stats });
+
+    shipper.enqueue(record('lost'));
+    await shipper.flush();
+
+    expect(counts.dropped_export_failed).toBe(1);
+  });
+
+  it('keeps the queue under its byte bound while the endpoint is unreachable', async () => {
+    const fetchImpl = jest.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+    const { shipper } = setup(fetchImpl, {
+      maxQueueBytes: 5_000,
+      maxBatchSize: 1_000,
+      retryDelaysMs: [],
+    });
+
+    for (let n = 0; n < 2_000; n += 1) {
+      shipper.enqueue({ ...record(`entry ${n} ${'p'.repeat(100)}`), level: 'info' });
+    }
+    await shipper.flush();
+
+    const sent = sentBodies(jest.fn());
+    expect(sent).toEqual([]);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });

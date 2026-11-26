@@ -1,10 +1,12 @@
 import { createStructuredLogger } from './create-structured-logger';
+import { DEFAULT_LOG_LIMITS } from './log-limits';
 import type { LoggerSettings } from './logger-settings';
 
 const SETTINGS: LoggerSettings = {
   identity: { service: 'worker', environment: 'production' },
   format: 'json',
   minLevel: 'info',
+  limits: DEFAULT_LOG_LIMITS,
   otlpEndpoint: 'http://alloy.railway.internal:4318',
 };
 
@@ -33,12 +35,12 @@ describe('createStructuredLogger', () => {
     logger.info('third');
     await logger.flush();
 
-    const failures = lines.filter((line) => line.includes('Log export failed'));
+    const failures = lines.filter((line) => line.includes('Log records dropped'));
     expect(failures).toHaveLength(2);
     expect(JSON.parse(failures[0])).toMatchObject({
       level: 'warn',
       context: 'LogShipper',
-      message: 'Log export failed: HTTP 400',
+      message: 'Log records dropped: HTTP 400',
       lost_records: 1,
     });
   });

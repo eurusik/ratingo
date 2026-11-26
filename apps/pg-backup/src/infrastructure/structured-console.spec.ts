@@ -1,3 +1,5 @@
+import { gunzipSync } from 'node:zlib';
+
 import { redactSecrets, StructuredConsole } from './structured-console';
 
 const SETTINGS = { service: 'ratingo-backup', environment: 'production' };
@@ -76,7 +78,12 @@ describe('StructuredConsole', () => {
 
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(fetchImpl.mock.calls[0][0]).toBe('http://alloy.railway.internal:4318/v1/logs');
-    const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    const [, init] = fetchImpl.mock.calls[0] as [
+      string,
+      { headers: Record<string, string>; body: Buffer },
+    ];
+    expect(init.headers['content-encoding']).toBe('gzip');
+    const body = JSON.parse(gunzipSync(init.body).toString('utf8'));
     const records = body.resourceLogs[0].scopeLogs[0].logRecords;
     expect(records.map((record: { severityText: string }) => record.severityText)).toEqual([
       'info',

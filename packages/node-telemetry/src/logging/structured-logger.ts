@@ -15,6 +15,7 @@ export interface StructuredLoggerOptions {
   readonly shipper?: LogShipper;
   readonly now?: () => Date;
   readonly flushTimeoutMs?: number;
+  readonly maxRecordBytes?: number;
 }
 
 const DEFAULT_FLUSH_TIMEOUT_MS = 3_000;
@@ -34,7 +35,12 @@ export class StructuredLogger {
     if (!isLevelEnabled(this.options.minLevel, input.level)) {
       return;
     }
-    const record = buildLogRecord(this.options.identity, input, this.now());
+    const record = buildLogRecord(
+      this.options.identity,
+      input,
+      this.now(),
+      this.options.maxRecordBytes,
+    );
     this.options.sink.write(this.formatter(record));
     this.options.shipper?.enqueue(record);
   }
