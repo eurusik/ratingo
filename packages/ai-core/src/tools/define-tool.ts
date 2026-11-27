@@ -17,6 +17,7 @@ export interface ToolSpec<TShape extends ZodRawShape> {
   description: string;
   inputSchema: ZodObject<TShape>;
   readOnly: boolean;
+  startsPaidWork?: boolean;
   maxOutputChars?: number;
   untrustedLabel?: string;
   isEmpty?(output: unknown): boolean;
@@ -26,6 +27,7 @@ export interface ToolSpec<TShape extends ZodRawShape> {
 export interface Tool {
   readonly name: string;
   readonly readOnly: boolean;
+  readonly startsPaidWork: boolean;
   readonly maxOutputChars: number;
   readonly definition: ToolDefinition;
   run(rawInput: unknown, context: ToolContext): Promise<string>;
@@ -63,6 +65,7 @@ export function defineTool<TShape extends ZodRawShape>(spec: ToolSpec<TShape>): 
   return {
     name: spec.name,
     readOnly: spec.readOnly,
+    startsPaidWork: spec.startsPaidWork ?? false,
     maxOutputChars,
     definition: {
       name: spec.name,

@@ -13,15 +13,26 @@ const HIGH_SURROGATE_AT_END = /[\uD800-\uDBFF]$/;
 const escapeText = (text: string): string =>
   text.replace(LONE_AMPERSAND, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-const isAllowedOpening = (name: string, attributes: string): boolean => {
+const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
+
+const codeLinkPattern = (repository: string): RegExp =>
+  new RegExp(
+    `^href="https://github\\.com/${repository.replace(REGEX_SPECIALS, '\\$&')}/blob/[0-9a-f]{40}/[A-Za-z0-9._~%@+/-]+#L\\d+(?:-L\\d+)?"$`,
+  );
+
+const isAllowedOpening = (name: string, attributes: string, codeLink: RegExp | null): boolean => {
   const trimmed = attributes.trim();
-  return trimmed === '' || (name === 'blockquote' && trimmed === TELEGRAM_BLOCKQUOTE_EXPANDABLE);
+  return (
+    trimmed === '' ||
+    (name === 'blockquote' && trimmed === TELEGRAM_BLOCKQUOTE_EXPANDABLE) ||
+    (name === 'a' && codeLink !== null && codeLink.test(trimmed))
+  );
 };
 
 const openingTag = (name: string, attributes: string): string =>
   attributes.trim() === '' ? `<${name}>` : `<${name} ${attributes.trim()}>`;
 
-const balance = (html: string): string => {
+const balance = (html: string, codeLink: RegExp | null): string => {
   const open: string[] = [];
   let output = '';
   let cursor = 0;
@@ -32,7 +43,7 @@ const balance = (html: string): string => {
     cursor = match.index + raw.length;
     if (!TELEGRAM_ALLOWED_TAGS.includes(name)) continue;
     if (slash === '') {
-      if (!isAllowedOpening(name, attributes)) continue;
+      if (!isAllowedOpening(name, attributes, codeLink)) continue;
       open.push(name);
       output += openingTag(name, attributes);
     } else if (open[open.length - 1] === name) {
@@ -61,10 +72,15 @@ const truncatePlain = (text: string, limit: number): string => {
   return `${clipped}${TRUNCATION_MARK}`;
 };
 
-export const sanitizeTelegramHtml = (
-  html: string,
-  limit: number = TELEGRAM_MESSAGE_LIMIT,
-): string => {
-  const balanced = balance(html);
+export interface SanitizeOptions {
+  limit?: number;
+  codeRepository?: string;
+}
+
+export const sanitizeTelegramHtml = (html: string, options: SanitizeOptions = {}): string => {
+  const limit = options.limit ?? TELEGRAM_MESSAGE_LIMIT;
+  const codeLink =
+    options.codeRepository === undefined ? null : codeLinkPattern(options.codeRepository);
+  const balanced = balance(html, codeLink);
   return balanced.length <= limit ? balanced : truncatePlain(stripTags(balanced), limit);
 };

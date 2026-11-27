@@ -20,6 +20,7 @@ import {
 } from '../../digest.constants';
 import { NotificationError } from '../../../notify/public';
 import { DigestDeliveryService } from '../services/digest-delivery.service';
+import { withRedisErrorLog } from '../../../../redis/redis-error-log';
 
 @Injectable()
 export class DigestWorker implements OnModuleInit, OnApplicationShutdown {
@@ -34,7 +35,7 @@ export class DigestWorker implements OnModuleInit, OnApplicationShutdown {
 
   onModuleInit(): void {
     this.worker = new Worker(DIGEST_QUEUE, (job) => this.process(job), {
-      connection: this.connection.duplicate(),
+      connection: withRedisErrorLog(this.connection.duplicate(), 'digest-worker'),
       prefix: DIGEST_QUEUE_PREFIX,
       concurrency: 1,
     });

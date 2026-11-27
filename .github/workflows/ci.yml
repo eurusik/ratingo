@@ -650,6 +650,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Railway watch paths cover the Dockerfile
+        run: |
+          node --test .github/scripts/check-railway-watch-paths.test.cjs
+          node .github/scripts/check-railway-watch-paths.cjs
+
       - name: Build shared packages
         run: npm run build:packages --workspace=@ratingo/ai-dume
 
@@ -780,14 +785,48 @@ jobs:
         timeout-minutes: 10
         run: docker build -f apps/ai/dume/Dockerfile -t ratingo-dume:ci .
 
-      - name: Start it under tini and see the question check answer
+      - name: The command line still asks for a question
         run: |
           status=0
-          output=$(docker run --rm ratingo-dume:ci 2>&1) || status=$?
+          output=$(docker run --rm --entrypoint node ratingo-dume:ci apps/ai/dume/dist/main.js 2>&1) || status=$?
           echo "$output"
           test "$status" -eq 1
           grep -q "A question is required" <<< "$output"
-          docker run --rm --entrypoint /sbin/tini ratingo-dume:ci -- sh -c 'cat /proc/1/comm' | grep -qx tini
+
+      - name: Start the service under tini, check the token wall, a request and a graceful stop
+        run: |
+          docker network create ci-net
+          docker run -d --name ci-redis --network ci-net redis:7-alpine
+          docker run -d --name ci-dume --network ci-net -p 3006:3006 \
+            -e NODE_ENV=production -e REDIS_URL=redis://ci-redis:6379 \
+            -e ANTHROPIC_API_KEY=ci-key -e AI_MODEL_REVIEW=anthropic:claude-sonnet-5-5 \
+            -e GITHUB_API_URL=http://127.0.0.1:9 \
+            -e DUME_SERVICE_TOKEN=ci-service-token-of-24-chars \
+            ratingo-dume:ci
+          for attempt in $(seq 1 30); do
+            curl -fsS http://localhost:3006/health && break
+            sleep 1
+          done
+          curl -fsS http://localhost:3006/health | grep -q '"status":"ok"'
+          internal=http://localhost:3006/internal/investigations
+          auth='Authorization: Bearer ci-service-token-of-24-chars'
+          json='content-type: application/json'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal -H 'Authorization: Bearer ')" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal -H "$auth" -H "$json" -d '{}')" = 400
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal -H 'x-forwarded-for: 1.2.3.4' -H "$auth")" = 404
+          head -c 9000 /dev/zero | tr '\0' 'x' > big.txt
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal -H "$auth" -H "$json" --data-binary @big.txt)" = 413
+          curl -fsS -X POST $internal -H "$auth" -H "$json" \
+            -d '{"requestId":"ci-smoke-0001","question":"Where is the retry policy defined?"}' | grep -q '"status":"accepted"'
+          curl -fsS $internal/ci-smoke-0001 -H "$auth" | grep -q '"status":"found"'
+          docker exec ci-dume cat /proc/1/comm | grep -qx tini
+          docker stop --time 60 ci-dume
+          test "$(docker inspect -f '{{.State.ExitCode}}' ci-dume)" = 0
+          docker logs ci-dume 2>&1 | grep -q 'shutdown.started'
+
+      - if: failure()
+        run: docker logs ci-dume || true
 
   ci:
     name: ci

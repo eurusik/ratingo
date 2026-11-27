@@ -4,6 +4,7 @@ import { REDACTION_PLACEHOLDER } from './redact';
 import { NativeToolSource } from './sources/native.tool-source';
 import {
   DuplicateToolError,
+  PaidWorkToolNotAllowedError,
   TRUNCATION_MARKER,
   ToolRegistry,
   UnknownToolError,
@@ -89,6 +90,26 @@ describe('ToolRegistry', () => {
     );
     await expect(
       ToolRegistry.create(sources, ['delete_everything'], { allowWriteTools: true }),
+    ).resolves.toBeDefined();
+  });
+
+  it('refuses to allowlist a tool that starts paid work unless the registry says it may', async () => {
+    const queuesWork = defineTool({
+      name: 'queue_expensive_work',
+      description: 'Queues paid background work',
+      inputSchema: z.object({}),
+      readOnly: true,
+      startsPaidWork: true,
+      handler: () => Promise.resolve('queued'),
+    });
+    const sources = [new NativeToolSource([queuesWork, lookup])];
+
+    await expect(ToolRegistry.create(sources, ['queue_expensive_work'])).rejects.toBeInstanceOf(
+      PaidWorkToolNotAllowedError,
+    );
+    await expect(ToolRegistry.create(sources, ['lookup'])).resolves.toBeDefined();
+    await expect(
+      ToolRegistry.create(sources, ['queue_expensive_work'], { allowPaidWorkTools: true }),
     ).resolves.toBeDefined();
   });
 

@@ -16,7 +16,12 @@ import {
 import { AGENT_FOLDER } from '../../../../core/ai-core.constants';
 import { CHAT_TASK_NAME, NO_MODEL } from '../../chat.constants';
 import { ChatAction, CHAT_TRANSPORT, type ChatTransportPort } from '../../../notify/public';
-import { ChatOutcome, ChatRoute, CommandLabel } from '../../domain/constants/chat.constants';
+import {
+  ChatCommand,
+  ChatOutcome,
+  ChatRoute,
+  CommandLabel,
+} from '../../domain/constants/chat.constants';
 import {
   COMMAND_FAILED_REPLY,
   UNKNOWN_COMMAND_REPLY,
@@ -29,6 +34,7 @@ import { routeMessage } from '../../domain/policies/route-message.policy';
 import { ChatCommandHandlers } from '../commands/chat-command.handlers';
 
 import { ChatExchangeRecorder } from './chat-exchange-recorder.service';
+import { DumeChatService } from './dume-chat.service';
 import { HappyChatService } from './happy-chat.service';
 import { InvestigationRunner } from './investigation.runner';
 import { loggedToolCalls } from './logged-tool-calls';
@@ -77,6 +83,7 @@ export class ChatService {
     private readonly commands: ChatCommandHandlers,
     private readonly investigation: InvestigationRunner,
     private readonly happy: HappyChatService,
+    private readonly dume: DumeChatService,
     private readonly exchanges: ChatExchangeRecorder,
     @Inject(CHAT_TRANSPORT) private readonly transport: ChatTransportPort,
     @Inject(CHAT_METRICS_PORT) private readonly metrics: ChatMetricsPort,
@@ -104,7 +111,7 @@ export class ChatService {
       this.clock,
     );
     try {
-      const reply = await this.replyFor(intent, message.chatId);
+      const reply = await this.replyFor(intent, message);
       await this.transport.sendMessage(message.chatId, reply.html);
       answer = reply.html;
       failed = reply.failed;
@@ -143,7 +150,7 @@ export class ChatService {
   ): Promise<ChatOutcome> {
     const event = { command: commandLabelOf(intent), route: ChatRoute.INVESTIGATION };
     try {
-      const result = await this.investigation.answer(message.chatId, intent.text);
+      const result = await this.investigation.answer(message.chatId, message.updateId, intent.text);
       this.metrics.record({ ...event, outcome: result.outcome });
       await this.exchanges.record({
         runId: result.runId,
@@ -165,15 +172,15 @@ export class ChatService {
 
   private async replyFor(
     intent: Exclude<Intent, InvestigationIntent>,
-    chatId: string,
+    message: IncomingMessage,
   ): Promise<{ html: string; failed: boolean }> {
     switch (intent.kind) {
       case IntentKind.COMMAND:
-        return this.runCommand(intent, chatId);
+        return this.runCommand(intent, message);
       case IntentKind.UNKNOWN_COMMAND:
         return { html: UNKNOWN_COMMAND_REPLY, failed: false };
       case IntentKind.HAPPY:
-        return this.askHappy(intent.target, chatId, intent.mode ?? HappyReviewMode.AUTO);
+        return this.askHappy(intent.target, message.chatId, intent.mode ?? HappyReviewMode.AUTO);
     }
   }
 
@@ -188,11 +195,16 @@ export class ChatService {
 
   private async runCommand(
     intent: Extract<Intent, { kind: typeof IntentKind.COMMAND }>,
-    chatId: string,
+    message: IncomingMessage,
   ): Promise<{ html: string; failed: boolean }> {
+    const { chatId } = message;
     await this.showTyping(chatId);
     try {
-      return { html: await this.commands.execute(intent.command, chatId), failed: false };
+      const html =
+        intent.command === ChatCommand.WHY
+          ? await this.dume.reply(chatId, message.updateId, intent.args)
+          : await this.commands.execute(intent.command, chatId);
+      return { html, failed: false };
     } catch (error) {
       this.logger.error(`Команда ${intent.command} не вдалася: ${errorName(error)}`);
       return { html: COMMAND_FAILED_REPLY, failed: true };

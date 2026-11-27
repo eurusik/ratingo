@@ -6,6 +6,7 @@ import {
   CHANGES_CONFIG,
   CHAT_CONFIG,
   GRAFANA_CONFIG,
+  DUME_CONFIG,
   HAPPY_CONFIG,
   INFRA_CONFIG,
   LOKI_CONFIG,
@@ -16,6 +17,7 @@ import {
   type AnthropicConfig,
   type ChangesConfig,
   type GrafanaConfig,
+  type DumeConfig,
   type HappyConfig,
   type InfraConfig,
   type LokiConfig,
@@ -52,6 +54,11 @@ export class ConfigModule {
       serviceToken: env.HAPPY_SERVICE_TOKEN,
       repository: env.GITHUB_REPOSITORY,
     };
+    const dume: DumeConfig = {
+      internalUrl: env.DUME_INTERNAL_URL,
+      serviceToken: env.DUME_SERVICE_TOKEN,
+      repository: env.GITHUB_REPOSITORY,
+    };
     const analytics: AnalyticsMcpConfig = {
       credentialsJson: env.GA_CREDENTIALS_JSON,
       propertyId: env.GA_PROPERTY_ID,
@@ -69,6 +76,7 @@ export class ConfigModule {
       { provide: ANALYTICS_MCP_CONFIG, useValue: analytics },
       { provide: CHANGES_CONFIG, useValue: changes },
       { provide: HAPPY_CONFIG, useValue: happy },
+      { provide: DUME_CONFIG, useValue: dume },
       { provide: TELEGRAM_CONFIG, useValue: telegram },
       { provide: CHAT_CONFIG, useValue: buildChatConfig(env) },
       { provide: INFRA_CONFIG, useValue: infra },

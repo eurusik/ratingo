@@ -17,6 +17,7 @@ import {
   WATCHDOG_QUEUE_TOKEN,
 } from '../../watchdog.constants';
 import { WatchdogService } from '../services/watchdog.service';
+import { withRedisErrorLog } from '../../../../redis/redis-error-log';
 
 @Injectable()
 export class WatchdogWorker implements OnModuleInit, OnApplicationShutdown {
@@ -31,7 +32,7 @@ export class WatchdogWorker implements OnModuleInit, OnApplicationShutdown {
 
   onModuleInit(): void {
     this.worker = new Worker(WATCHDOG_QUEUE, (job) => this.process(job), {
-      connection: this.connection.duplicate(),
+      connection: withRedisErrorLog(this.connection.duplicate(), 'watchdog-worker'),
       prefix: WATCHDOG_QUEUE_PREFIX,
       concurrency: 1,
     });

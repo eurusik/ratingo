@@ -14,6 +14,8 @@ import { ON_DEMAND_DIGEST_NOTE } from '../../domain/constants/chat-replies.const
 
 import { renderHelp } from './help.reply';
 
+export type StatelessCommand = Exclude<ChatCommand, typeof ChatCommand.WHY>;
+
 @Injectable()
 export class ChatCommandHandlers {
   constructor(
@@ -21,7 +23,7 @@ export class ChatCommandHandlers {
     @Inject(CHAT_EXCHANGE_LOG) private readonly exchanges: ChatExchangeLogPort,
   ) {}
 
-  async execute(command: ChatCommand, chatId: string): Promise<string> {
+  async execute(command: StatelessCommand, chatId: string): Promise<string> {
     switch (command) {
       case ChatCommand.HELP:
         return renderHelp();

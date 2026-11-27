@@ -104,6 +104,8 @@ export class EmptyModelChainError extends Error {
   }
 }
 
+const UNKNOWN_TOOL_NAME = 'unknown_tool';
+
 export class AgentLoop {
   constructor(private readonly deps: AgentLoopDependencies) {}
 
@@ -385,7 +387,7 @@ export class AgentLoop {
     deadlineMs: number,
   ): Promise<ToolResult[]> {
     for (const call of calls) {
-      run.recordToolCall(call.name);
+      run.recordToolCall(this.deps.registry.has(call.name) ? call.name : UNKNOWN_TOOL_NAME);
     }
     const remainingMs = Math.max(MIN_CALL_TIMEOUT_MS, deadlineMs - this.deps.clock.nowMs());
     return Promise.all(

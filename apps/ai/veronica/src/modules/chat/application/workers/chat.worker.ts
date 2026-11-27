@@ -18,10 +18,13 @@ import {
   REDIS_CONNECTION,
 } from '../../chat.constants';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
+import type { DumeFollowUp } from '../../domain/entities/dume';
 import { HappyReviewMode, type HappyFollowUp } from '../../domain/entities/happy';
 import { ChatExchangeRetention } from '../services/chat-exchange-retention.service';
 import { ChatService } from '../services/chat.service';
+import { DumeFollowUpService } from '../services/dume-follow-up.service';
 import { HappyFollowUpService } from '../services/happy-follow-up.service';
+import { withRedisErrorLog } from '../../../../redis/redis-error-log';
 
 const isIncomingMessage = (value: unknown): value is IncomingMessage => {
   const candidate = value as Partial<IncomingMessage> | null;
@@ -45,6 +48,17 @@ const isHappyFollowUp = (value: unknown): value is HappyFollowUp => {
   );
 };
 
+const isDumeFollowUp = (value: unknown): value is DumeFollowUp => {
+  const candidate = value as Partial<DumeFollowUp> | null;
+  return (
+    typeof candidate?.chatId === 'string' &&
+    typeof candidate.requestId === 'string' &&
+    typeof candidate.createdAtMs === 'number' &&
+    typeof candidate.attempt === 'number' &&
+    (candidate.deliveryAttempts === undefined || typeof candidate.deliveryAttempts === 'number')
+  );
+};
+
 @Injectable()
 export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(ChatWorker.name);
@@ -53,19 +67,30 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   constructor(
     private readonly chat: ChatService,
     private readonly followUps: HappyFollowUpService,
+    private readonly dumeFollowUps: DumeFollowUpService,
     private readonly retention: ChatExchangeRetention,
     @Inject(REDIS_CONNECTION) private readonly connection: IORedis,
   ) {}
 
   onModuleInit(): void {
     this.worker = new Worker(CHAT_QUEUE, (job) => this.process(job), {
-      connection: this.connection.duplicate(),
+      connection: withRedisErrorLog(this.connection.duplicate(), 'chat-worker'),
       prefix: CHAT_QUEUE_PREFIX,
       concurrency: CHAT_WORKER_CONCURRENCY,
     });
-    this.worker.on('failed', (job, error) =>
-      this.logger.error(`Повідомлення ${job?.id ?? '?'} не оброблено: ${error.message}`),
-    );
+    this.worker.on('failed', (job, error) => this.onFailed(job, error));
+  }
+
+  onFailed(job: Job | undefined, error: Error): void {
+    this.logger.error(`Повідомлення ${job?.id ?? '?'} не оброблено: ${error.message}`);
+    if (job !== undefined && this.isFinalDumeFailure(job, error)) {
+      void this.dumeFollowUps.abandon(job.data as DumeFollowUp);
+    }
+  }
+
+  private isFinalDumeFailure(job: Job, error: Error): boolean {
+    if (job.name !== CHAT_JOB_TYPES.DUME_FOLLOW_UP || !isDumeFollowUp(job.data)) return false;
+    return error instanceof UnrecoverableError || job.attemptsMade >= (job.opts.attempts ?? 1);
   }
 
   async onApplicationShutdown(): Promise<void> {
@@ -80,6 +105,9 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
       }
       if (job.name === CHAT_JOB_TYPES.HAPPY_FOLLOW_UP && isHappyFollowUp(job.data)) {
         return await this.followUps.handle(job.data);
+      }
+      if (job.name === CHAT_JOB_TYPES.DUME_FOLLOW_UP && isDumeFollowUp(job.data)) {
+        return await this.dumeFollowUps.handle(job.data);
       }
       if (job.name === CHAT_JOB_TYPES.EXCHANGE_RETENTION) {
         return `deleted:${await this.retention.purge()}`;

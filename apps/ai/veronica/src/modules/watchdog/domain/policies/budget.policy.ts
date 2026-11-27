@@ -1,6 +1,7 @@
 import {
   AlertKey,
   BUDGET_ALERT_RATIO,
+  BUDGET_COMPARISON_EPSILON,
   MONEY_DECIMALS,
   PERCENT,
   budgetAgentText,
@@ -14,7 +15,7 @@ export interface BudgetReading {
 }
 
 export const isBudgetNearlyExhausted = ({ spentUsd, limitUsd }: BudgetReading): boolean =>
-  limitUsd > 0 && spentUsd >= limitUsd * BUDGET_ALERT_RATIO;
+  limitUsd > 0 && spentUsd + BUDGET_COMPARISON_EPSILON >= limitUsd * BUDGET_ALERT_RATIO;
 
 const evaluate = (
   key: AlertKey,

@@ -1,6 +1,8 @@
 import { metrics } from '@opentelemetry/api';
 
 import {
+  AI_METRIC_ATTRIBUTES,
+  AI_METRIC_NAMES,
   EMPTY_USAGE,
   FixedClock,
   Run,
@@ -9,6 +11,7 @@ import {
   type RedisSpendClient,
 } from '@ratingo/ai-core';
 
+import { createMetricProbe } from './metric-probe.testing';
 import { PROCESS_LOCAL_BUDGET_WARNING, createRunRepository } from './run-repository.factory';
 
 const NOON = Date.UTC(2026, 10, 22, 12, 0, 0);
@@ -76,5 +79,25 @@ describe('createRunRepository', () => {
     build(sharedRedis(), warn);
 
     expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('records every finished run as app.ai.runs, the way every agent must', async () => {
+    const probe = createMetricProbe();
+    const repository = createRunRepository({
+      meter: probe.meter,
+      clock: new FixedClock(NOON),
+      runLogger: { info: jest.fn() },
+      spendLogger: { warn: jest.fn() },
+      redis: sharedRedis(),
+    });
+
+    await repository.save(finishedRun(0.1));
+
+    expect(await probe.points(AI_METRIC_NAMES.RUNS)).toEqual([
+      {
+        value: 1,
+        attributes: expect.objectContaining({ [AI_METRIC_ATTRIBUTES.AGENT]: 'happy' }),
+      },
+    ]);
   });
 });

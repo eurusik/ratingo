@@ -103,6 +103,8 @@ export { RUN_REPOSITORY } from './runs/run.repository';
 export { InMemoryRunRepository } from './runs/in-memory.run-repository';
 export type { RunLogger } from './runs/run-logger.port';
 export { TelemetryRunRepository } from './runs/telemetry.run-repository';
+export type { DurableSpendOptions, RunRepositoryOptions } from './runs/create-run-repository';
+export { createRunRepository } from './runs/create-run-repository';
 export { markInterruptedRuns } from './runs/interrupted-runs';
 export type { SpendLogger, SpendStore } from './runs/spend-store.port';
 export type { RedisSpendClient } from './runs/redis.spend-store';
@@ -118,6 +120,15 @@ export type { AgentFolder, LoadAgentFolderOptions } from './manifest/agent-folde
 export { AgentFolderError, loadAgentFolder } from './manifest/agent-folder.loader';
 
 export { AI_METRIC_ATTRIBUTES, AI_METRIC_NAMES, AI_TOKEN_KINDS } from './telemetry/ai-metric-names';
+export type { AgentBudget } from './telemetry/agent-budget-gauge';
+export { registerAgentBudgetGauge } from './telemetry/agent-budget-gauge';
+
+export type { InternalAccessRequest } from './http/internal-access';
+export {
+  INTERNAL_PROXY_HEADERS,
+  InternalAccess,
+  decideInternalAccess,
+} from './http/internal-access';
 
 export type {
   LandingPageConfig,

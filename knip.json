@@ -59,7 +59,7 @@
       }
     },
     "apps/ai/dume": {
-      "entry": ["src/main.ts", "eval/run-eval.ts"],
+      "entry": ["src/main.ts", "src/server.ts", "eval/run-eval.ts"],
       "project": ["src/**/*.ts", "eval/**/*.ts", "*.{js,ts}"],
       "jest": {
         "config": ["jest.config.js"]

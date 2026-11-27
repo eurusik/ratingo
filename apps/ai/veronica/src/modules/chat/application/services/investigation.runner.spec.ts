@@ -105,6 +105,8 @@ class Harness {
     logsSearch: async () => ({ service: 'ratingo-worker', groups: [] }),
   };
 
+  readonly delegated: unknown[] = [];
+
   private readonly clock = new FixedClock(NOW_MS);
 
   private readonly runner = new InvestigationRunner(
@@ -157,6 +159,16 @@ class Harness {
       },
       expectedToolNames: () => [GA_TOOL],
     },
+    {
+      delegate: async (request: unknown) => {
+        this.delegated.push(request);
+        return {
+          status: 'started',
+          requestId: 'tg1',
+          ownerNotice: 'DUM-E розбирає це в коді й даних.',
+        };
+      },
+    } as never,
   );
 
   script(...steps: ScriptedStep[]): this {
@@ -165,7 +177,7 @@ class Harness {
   }
 
   ask(question: string) {
-    return this.runner.answer('10', question);
+    return this.runner.answer('10', UPDATE_ID, question);
   }
 
   get promptSeen(): string {
@@ -177,6 +189,8 @@ class Harness {
     return this.edits[this.edits.length - 1]?.html ?? '';
   }
 }
+
+const UPDATE_ID = 4711;
 
 describe('InvestigationRunner', () => {
   it('shows «шукаю…» first, then edits that same message with the verified answer', async () => {
@@ -385,10 +399,11 @@ describe('InvestigationRunner', () => {
     expect(chat.scripted.requests).toEqual([]);
   });
 
-  it('only exposes the seven read-only tools', async () => {
+  it('only exposes the eight tools', async () => {
     const chat = new Harness().script(answerStep('Усе гаразд.'));
     await chat.ask('як справи?');
     expect(chat.scripted.requests[0].tools.map((tool) => tool.name).sort()).toEqual([
+      'ask_dume',
       'ask_happy',
       'digest_snapshot',
       'job_failures',
@@ -435,5 +450,20 @@ describe('InvestigationRunner', () => {
         outcome: ChatOutcome.ANSWERED,
       });
     });
+  });
+
+  it('hands a deep why-question to DUM-E with this chat and this message, and relays its notice', async () => {
+    const chat = new Harness().script(
+      callStep('ask_dume', { question: 'Чому sync-show падає з тайм-аутом TMDB?' }),
+      answerStep('DUM-E розбирає це в коді й даних.'),
+    );
+
+    const result = await chat.ask('чому sync-show падає?');
+
+    expect(chat.delegated).toEqual([
+      { chatId: '10', updateId: UPDATE_ID, question: 'Чому sync-show падає з тайм-аутом TMDB?' },
+    ]);
+    expect(result.toolCalls.map((call) => call.tool)).toEqual(['ask_dume']);
+    expect(chat.finalHtml).toContain('DUM-E розбирає');
   });
 });

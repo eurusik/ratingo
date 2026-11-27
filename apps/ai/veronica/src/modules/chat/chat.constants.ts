@@ -9,6 +9,7 @@ export const CHAT_WORKER_CONCURRENCY = 2;
 export const CHAT_JOB_TYPES = {
   MESSAGE: 'chat-message',
   HAPPY_FOLLOW_UP: 'happy-follow-up',
+  DUME_FOLLOW_UP: 'dume-follow-up',
   EXCHANGE_RETENTION: 'exchange-retention',
 } as const;
 

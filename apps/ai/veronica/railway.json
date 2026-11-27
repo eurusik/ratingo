@@ -8,6 +8,8 @@
       "/packages/ai-core/**",
       "/packages/ai-ops-tools/**",
       "/packages/node-telemetry/**",
+      "/package.json",
+      "/tsconfig.json",
       "/package-lock.json"
     ]
   },

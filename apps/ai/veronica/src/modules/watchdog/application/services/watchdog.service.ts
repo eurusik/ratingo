@@ -19,13 +19,22 @@ import { NOTIFIER_PORT, type NotifierPort } from '../../../notify/public';
 import {
   FAILED_RUNS_WINDOW_MS,
   RECOVERY_TEXT,
+  WATCHED_AGENTS,
 } from '../../domain/constants/watchdog-rules.constants';
 import type { CheckResult } from '../../domain/entities/check-result';
 import { reconcileAlerts } from '../../domain/policies/alert-reconcile.policy';
+import {
+  evaluateAgentFailedRuns,
+  evaluateAgentSpend,
+} from '../../domain/policies/agent-runs.policy';
 import { evaluateAgentBudget, evaluateChatBudget } from '../../domain/policies/budget.policy';
 import { evaluateDigest } from '../../domain/policies/digest-deadline.policy';
 import { evaluateFailedRuns } from '../../domain/policies/failed-runs.policy';
 import { evaluateHappy, nextHappyFailures } from '../../domain/policies/happy-health.policy';
+import {
+  AGENT_RUN_STATS_PORT,
+  type AgentRunStatsPort,
+} from '../../domain/ports/agent-run-stats.port';
 import {
   DIGEST_DELIVERY_PROBE_PORT,
   FAILED_RUNS_PORT,
@@ -41,6 +50,11 @@ import {
 
 const errorName = (error: unknown): string => (error instanceof Error ? error.name : 'error');
 
+const failureText = (error: unknown): string =>
+  error instanceof Error && error.name.startsWith('Metrics')
+    ? `${error.name}: ${error.message}`
+    : errorName(error);
+
 @Injectable()
 export class WatchdogService {
   private readonly logger = new Logger(WatchdogService.name);
@@ -49,6 +63,7 @@ export class WatchdogService {
     @Inject(HAPPY_HEALTH_PORT) private readonly happy: HappyHealthPort,
     @Inject(DIGEST_DELIVERY_PROBE_PORT) private readonly digests: DigestDeliveryProbePort,
     @Inject(FAILED_RUNS_PORT) private readonly failedRuns: FailedRunsPort,
+    @Inject(AGENT_RUN_STATS_PORT) private readonly agentRuns: AgentRunStatsPort,
     @Inject(WATCHDOG_STATE_PORT) private readonly state: WatchdogStatePort,
     @Inject(WATCHDOG_HEARTBEAT_PORT) private readonly heartbeat: WatchdogHeartbeatPort,
     @Inject(NOTIFIER_PORT) private readonly notifier: NotifierPort,
@@ -66,6 +81,7 @@ export class WatchdogService {
         this.checked('digest', () => this.checkDigest(nowMs)),
         this.checked('budget', () => this.checkBudgets(nowMs)),
         this.checked('failed-runs', () => this.checkFailedRuns(nowMs)),
+        this.checked('agents', () => this.checkWatchedAgents(nowMs)),
       ])
     ).flat();
     this.heartbeat.beat(nowMs);
@@ -84,7 +100,7 @@ export class WatchdogService {
     try {
       return await check();
     } catch (error) {
-      this.logger.warn(`Перевірка «${name}» не вдалася: ${errorName(error)}`);
+      this.logger.warn(`Перевірка «${name}» не вдалася: ${failureText(error)}`);
       return [];
     }
   }
@@ -125,5 +141,25 @@ export class WatchdogService {
       nowMs - FAILED_RUNS_WINDOW_MS,
     );
     return [evaluateFailedRuns(count)];
+  }
+
+  private async checkWatchedAgents(nowMs: number): Promise<CheckResult[]> {
+    const stats = await this.agentRuns.read(
+      WATCHED_AGENTS.map((watched) => watched.agent),
+      nowMs,
+    );
+    return WATCHED_AGENTS.flatMap((watched) => {
+      const reading = stats.get(watched.agent);
+      if (reading === undefined) return [];
+      const spend = evaluateAgentSpend(watched, reading);
+      if (spend === null) {
+        this.logger.warn({
+          message: 'watchdog.agent_budget_unknown',
+          agent: watched.agent,
+          reason: 'budget_gauge_missing',
+        });
+      }
+      return [...(spend === null ? [] : [spend]), evaluateAgentFailedRuns(watched, reading)];
+    });
   }
 }

@@ -59,10 +59,13 @@ const aiCoreAnthropicAdapterFiles = [
 ];
 const aiCoreTelemetryRepositoryFiles = [
   'packages/ai-core/src/runs/telemetry.run-repository.ts',
+  'packages/ai-core/src/runs/create-run-repository.ts',
+  'packages/ai-core/src/telemetry/agent-budget-gauge.ts',
   'packages/ai-core/src/mcp/adapters/otel/*.ts',
 ];
 const aiCoreMcpStdioAdapterFiles = ['packages/ai-core/src/mcp/adapters/stdio/*.ts'];
 const aiCoreLoaderFiles = ['packages/ai-core/src/manifest/agent-folder.loader.ts'];
+const aiCoreInternalAccessFiles = ['packages/ai-core/src/http/internal-access.ts'];
 const aiCoreSystemClockFiles = ['packages/ai-core/src/clock/system.clock.ts'];
 const aiCoreTestFiles = [
   'packages/ai-core/src/**/*.test.ts',
@@ -1329,6 +1332,10 @@ export default [
     rules: { 'no-restricted-imports': aiCoreImportRule(['node', 'yaml']) },
   },
   {
+    files: aiCoreInternalAccessFiles,
+    rules: { 'no-restricted-imports': aiCoreImportRule(['node']) },
+  },
+  {
     files: aiCoreSystemClockFiles,
     rules: {
       'no-restricted-globals': 'off',
@@ -1523,7 +1530,8 @@ export default [
             {
               target: './apps/ai/veronica/src/**/*',
               from: './apps/ai/!(veronica)/**/*',
-              message: 'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
+              message:
+                'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
             },
           ],
         },
@@ -1623,7 +1631,8 @@ export default [
             {
               target: './apps/ai/happy/src/**/*',
               from: './apps/ai/!(happy)/**/*',
-              message: 'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
+              message:
+                'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
             },
           ],
         },
@@ -1737,7 +1746,8 @@ export default [
             {
               target: './apps/ai/dume/src/**/*',
               from: './apps/ai/!(dume)/**/*',
-              message: 'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
+              message:
+                'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
             },
           ],
         },
@@ -1818,7 +1828,8 @@ export default [
             {
               target: './apps/ai/dume/eval/**/*',
               from: './apps/ai/!(dume)/**/*',
-              message: 'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
+              message:
+                'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
             },
           ],
         },

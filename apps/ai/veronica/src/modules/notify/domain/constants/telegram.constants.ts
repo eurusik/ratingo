@@ -1,6 +1,7 @@
 export const TELEGRAM_MESSAGE_LIMIT = 4096;
 
 export const TELEGRAM_ALLOWED_TAGS: readonly string[] = [
+  'a',
   'b',
   'i',
   'u',
