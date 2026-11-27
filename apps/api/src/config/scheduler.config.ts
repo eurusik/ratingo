@@ -144,6 +144,15 @@ export const INGESTION_SCHEDULED_JOBS: readonly Omit<ScheduledJobConfig, 'enable
       'Queues titles missing Rotten Tomatoes ratings; the ratings-backfill queue then drains them slowly through the day because of the daily quota.',
     data: {},
   },
+  {
+    name: 'episodeTexts',
+    jobType: 'backfill-episode-texts-dispatcher',
+    pattern: '0 1 * * 0',
+    jobId: 'scheduled-episode-texts',
+    description:
+      'Picks up Ukrainian episode titles and overviews that TMDB gained since the last run, for shows the regular syncs no longer touch.',
+    data: {},
+  },
 ];
 
 /**

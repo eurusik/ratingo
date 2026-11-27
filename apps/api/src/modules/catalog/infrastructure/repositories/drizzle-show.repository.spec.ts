@@ -169,7 +169,7 @@ describe('DrizzleShowRepository', () => {
         /^CASE\s+WHEN [\s\S]*"episodes"."title"[\s\S]* AND NOT [\s\S]*excluded\.title/,
       );
       expect(title.sql).toMatch(/THEN "episodes"."title"/);
-      expect(title.params).toEqual(expect.arrayContaining(['[^А-Яа-яІіЇїЄєҐґ]']));
+      expect(title.params).toEqual(expect.arrayContaining(['[ЁёЪъЫыЭэ]']));
       expect(overview.sql).toMatch(/THEN "episodes"."overview"/);
     });
 
