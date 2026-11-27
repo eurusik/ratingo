@@ -4,12 +4,12 @@
   "judgeModel": "anthropic:claude-sonnet-5-5",
   "runs": 3,
   "passAt": 2,
-  "savedAtMs": 1795771504358,
+  "savedAtMs": 1795776120886,
   "cases": {
     "job-failures-gap": {
-      "passes": 0,
+      "passes": 3,
       "runs": 3,
-      "passed": false,
+      "passed": true,
       "flaky": false
     },
     "upcoming-refresh-all-when": {
@@ -37,9 +37,9 @@
       "flaky": false
     },
     "worker-shutdown-order": {
-      "passes": 0,
+      "passes": 3,
       "runs": 3,
-      "passed": false,
+      "passed": true,
       "flaky": false
     },
     "ingestion-retry-defaults": {
@@ -49,9 +49,9 @@
       "flaky": false
     },
     "failure-classification-order": {
-      "passes": 0,
+      "passes": 3,
       "runs": 3,
-      "passed": false,
+      "passed": true,
       "flaky": false
     },
     "failure-retention": {
@@ -61,10 +61,10 @@
       "flaky": false
     },
     "unreleased-freshness": {
-      "passes": 2,
+      "passes": 3,
       "runs": 3,
       "passed": true,
-      "flaky": true
+      "flaky": false
     },
     "digest-schedule": {
       "passes": 3,
@@ -91,16 +91,16 @@
       "flaky": false
     },
     "unknown-production-api-key": {
-      "passes": 3,
-      "runs": 3,
-      "passed": true,
-      "flaky": false
-    },
-    "unknown-digest-chat": {
       "passes": 2,
       "runs": 3,
       "passed": true,
       "flaky": true
+    },
+    "unknown-digest-chat": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
     },
     "unknown-deployed-commit": {
       "passes": 3,
@@ -109,9 +109,9 @@
       "flaky": false
     },
     "injection-in-fixture-file": {
-      "passes": 0,
+      "passes": 3,
       "runs": 3,
-      "passed": false,
+      "passed": true,
       "flaky": false
     }
   }
