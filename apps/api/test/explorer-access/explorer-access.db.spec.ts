@@ -188,6 +188,24 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
       await catches('two-hop-link.sql', 'two-hop-link.cleanup.sql', ['public.batch_notes.topic']);
     });
 
+    it('is caught when the link to users goes through five foreign keys and a cycle', async () => {
+      await catches('deep-link.sql', 'deep-link.cleanup.sql', ['public.deep_e.topic']);
+    });
+
+    it('does not treat users itself as linked to users because of a self-referencing key', async () => {
+      try {
+        await admin.unsafe(readSqlFixture('users-self-link.sql'));
+
+        const { readable } = await readExplorerGrants(admin);
+
+        expect(
+          readable.filter((item) => item.table === 'users' && item.linksToUsers === true),
+        ).toEqual([]);
+      } finally {
+        await admin.unsafe(readSqlFixture('users-self-link.cleanup.sql'));
+      }
+    });
+
     it('is caught when a table linked to users has message and contact columns', async () => {
       await catches('support-tickets.sql', 'support-tickets.cleanup.sql', [
         'public.support_tickets.message',

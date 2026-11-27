@@ -1,10 +1,10 @@
-WITH RECURSIVE user_linked (table_oid, depth) AS (
-  SELECT 'public.users'::regclass::oid, 0
+WITH RECURSIVE user_linked (table_oid) AS (
+  SELECT 'public.users'::regclass::oid
   UNION
-  SELECT k.conrelid, linked.depth + 1
+  SELECT k.conrelid
   FROM pg_constraint k
   JOIN user_linked linked ON k.confrelid = linked.table_oid
-  WHERE k.contype = 'f' AND linked.depth < 4
+  WHERE k.contype = 'f'
 )
 SELECT
   n.nspname AS schema_name,
@@ -13,7 +13,7 @@ SELECT
   coalesce(c.reloptions::text, '') AS options,
   a.attname AS column_name,
   a.atttypid::int AS type_oid,
-  c.oid IN (SELECT table_oid FROM user_linked WHERE depth > 0) AS links_to_users
+  c.oid <> 'public.users'::regclass AND c.oid IN (SELECT table_oid FROM user_linked) AS links_to_users
 FROM pg_attribute a
 JOIN pg_class c ON c.oid = a.attrelid
 JOIN pg_namespace n ON n.oid = c.relnamespace
