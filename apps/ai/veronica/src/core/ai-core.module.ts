@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { metrics } from '@opentelemetry/api';
 
 import {
   AgentLoop,
@@ -10,6 +11,7 @@ import {
   ToolRegistry,
   assertAliasProvidersRegistered,
   createModelProviders,
+  registerAgentBudgetGauge,
   type AgentFolder,
   type ModelProviders,
   type ModelAliases,
@@ -19,6 +21,7 @@ import {
 
 import { ANTHROPIC_CONFIG, MODEL_ALIASES, type AnthropicConfig } from '../config/config.constants';
 import { MODEL_PRICES } from '../config/models.config';
+import { SERVICE_NAME } from '../telemetry/telemetry.constants';
 
 import { loadVeronicaAgentFolder } from './agent-folder';
 
@@ -39,7 +42,14 @@ import { createStubScript } from './stub.script';
     { provide: CLOCK_PORT, useFactory: (): ClockPort => new SystemClock() },
     {
       provide: AGENT_FOLDER,
-      useFactory: (): Promise<AgentFolder> => loadVeronicaAgentFolder(),
+      useFactory: async (): Promise<AgentFolder> => {
+        const folder = await loadVeronicaAgentFolder();
+        registerAgentBudgetGauge(metrics.getMeter(SERVICE_NAME), {
+          agent: folder.manifest.name,
+          perDayUsd: folder.manifest.budgets.perDayUsd,
+        });
+        return folder;
+      },
     },
     {
       provide: MODEL_PROVIDERS,
