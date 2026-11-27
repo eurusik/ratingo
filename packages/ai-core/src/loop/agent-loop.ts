@@ -34,6 +34,8 @@ import { buildRepairPrompt, toResponseSchema, validateStructuredOutput } from '.
 const RESPONSE_SCHEMA_NAME = 'response';
 const MIN_CALL_TIMEOUT_MS = 1;
 const TOOL_TIMEOUT_MESSAGE = 'Tool did not finish before the run deadline';
+const SINGLE_CALL = 1;
+const TURN_AND_FINAL_CALLS = 2;
 const TOOL_USE_WITHOUT_CALLS_DETAIL = 'tool_use stop without tool calls';
 
 export interface LoopLimits {
@@ -41,6 +43,10 @@ export interface LoopLimits {
   timeoutMs: number;
   maxTokensPerCall: number;
   callTimeoutMs: number;
+}
+
+export interface FinalAnswerPolicy {
+  prompt: string;
 }
 
 export type ModelProviders = Readonly<Record<string, ModelPort>>;
@@ -61,6 +67,7 @@ export interface AgentLoopRequest {
   budgets: BudgetLimits;
   priorSpend: PriorSpend;
   limits: LoopLimits;
+  finalAnswer?: FinalAnswerPolicy;
 }
 
 export interface AgentLoopResult {
@@ -73,6 +80,7 @@ interface LoopState {
   model: ModelPort;
   messages: ChatMessage[];
   repairUsed: boolean;
+  finalizing: boolean;
   output: string;
   value?: unknown;
 }
@@ -107,6 +115,7 @@ export class AgentLoop {
       model: this.buildModel(request.models),
       messages: [textMessage(MessageRole.USER, request.prompt)],
       repairUsed: false,
+      finalizing: false,
       output: '',
     };
     request.models.forEach((ref) => priceFor(this.deps.prices, ref));
@@ -160,8 +169,9 @@ export class AgentLoop {
     deadlineMs: number,
   ): Promise<LoopStop> {
     for (;;) {
+      this.finalizeBeforeLastTurn(run, request, state);
       const blocked =
-        this.checkLimits(run, request, deadlineMs) ?? this.checkBudget(run, request, state);
+        this.checkLimits(run, request, deadlineMs) ?? this.checkBudgetOrFinalize(run, request, state);
       if (blocked !== undefined) {
         return blocked;
       }
@@ -173,6 +183,30 @@ export class AgentLoop {
         return stop;
       }
     }
+  }
+
+  private finalizeBeforeLastTurn(run: Run, request: AgentLoopRequest, state: LoopState): void {
+    if (run.turns === request.limits.maxTurns - 1) this.startFinalizing(request, state);
+  }
+
+  private startFinalizing(request: AgentLoopRequest, state: LoopState): void {
+    if (request.finalAnswer === undefined || state.finalizing) return;
+    state.finalizing = true;
+    const last = state.messages[state.messages.length - 1];
+    const note = { type: ContentPartType.TEXT, text: request.finalAnswer.prompt } as const;
+    if (last !== undefined && last.role === MessageRole.USER) last.content.push(note);
+    else state.messages.push({ role: MessageRole.USER, content: [note] });
+  }
+
+  private checkBudgetOrFinalize(
+    run: Run,
+    request: AgentLoopRequest,
+    state: LoopState,
+  ): LoopStop | undefined {
+    const canAffordAnotherTurnAndTheFinalOne =
+      this.checkBudget(run, request, state, TURN_AND_FINAL_CALLS) === undefined;
+    if (!canAffordAnotherTurnAndTheFinalOne) this.startFinalizing(request, state);
+    return this.checkBudget(run, request, state, SINGLE_CALL);
   }
 
   private checkLimits(
@@ -189,11 +223,18 @@ export class AgentLoop {
     return undefined;
   }
 
-  private checkBudget(run: Run, request: AgentLoopRequest, state: LoopState): LoopStop | undefined {
-    const worstCaseUsd = this.worstCaseUsd(
-      request,
-      this.buildModelRequest(request, state, request.limits.callTimeoutMs),
-    );
+  private checkBudget(
+    run: Run,
+    request: AgentLoopRequest,
+    state: LoopState,
+    calls: number,
+  ): LoopStop | undefined {
+    const worstCaseUsd =
+      calls *
+      this.worstCaseUsd(
+        request,
+        this.buildModelRequest(request, state, request.limits.callTimeoutMs),
+      );
     const levels = buildBudgetLevels(request.budgets, request.priorSpend, run.costUsd);
     const decision = evaluateBudget(levels, worstCaseUsd);
     return decision.allowed
@@ -223,7 +264,7 @@ export class AgentLoop {
       model: (request.models[0] as ModelRef).model,
       system: request.system,
       messages: [...state.messages],
-      tools: this.deps.registry.definitions(),
+      tools: state.finalizing ? [] : this.deps.registry.definitions(),
       maxTokens: request.limits.maxTokensPerCall,
       timeoutMs,
       ...(request.responseSchema === undefined

@@ -453,6 +453,83 @@ describe('AgentLoop', () => {
     expect(result.run.turns).toBe(2);
   });
 
+  describe('final answer turn', () => {
+    const schema = z.object({ headline: z.string() });
+    const FINAL_PROMPT = 'No tool turns are left: answer now.';
+
+    const answersOnlyWithoutTools: StubScript = {
+      respond: (request, callIndex) => {
+        const model = formatModelRef({ provider: 'stub', model: request.model });
+        if (request.tools.length > 0) return createStubScript(StubScenario.RUNAWAY).respond(request, callIndex);
+        return {
+          model,
+          content: [{ type: ContentPartType.TEXT, text: '{"headline":"partial"}' }],
+          stopReason: StopReason.END,
+          usage: DEFAULT_STUB_USAGE,
+        };
+      },
+    };
+
+    it('takes the tools away on the last allowed turn and accepts the answer', async () => {
+      const model = scripted(answersOnlyWithoutTools);
+      const { loop, run } = await harness(model);
+
+      const result = await loop.run(
+        run,
+        baseRequest({ responseSchema: schema, limits: { ...LIMITS, maxTurns: 3 }, finalAnswer: { prompt: FINAL_PROMPT } }),
+      );
+
+      expect(result.value).toEqual({ headline: 'partial' });
+      expect(result.run).toMatchObject({ stopReason: RunStopReason.END, turns: 3 });
+      expect(model.requests.map((request) => request.tools.length > 0)).toEqual([true, true, false]);
+    });
+
+    it('puts the instruction after the tool results in the same user message', async () => {
+      const model = scripted(answersOnlyWithoutTools);
+      const { loop, run } = await harness(model);
+
+      await loop.run(
+        run,
+        baseRequest({ responseSchema: schema, limits: { ...LIMITS, maxTurns: 2 }, finalAnswer: { prompt: FINAL_PROMPT } }),
+      );
+
+      const last = model.requests[1]?.messages.at(-1);
+      expect(last?.role).toBe(MessageRole.USER);
+      expect(last?.content.map((part) => part.type)).toEqual([ContentPartType.TOOL_RESULT, ContentPartType.TEXT]);
+    });
+
+    it('keeps the old behaviour when the option is not set', async () => {
+      const { loop, run } = await harness(scripted(answersOnlyWithoutTools));
+
+      const result = await loop.run(run, baseRequest({ responseSchema: schema, limits: { ...LIMITS, maxTurns: 3 } }));
+
+      expect(result.run.stopReason).toBe(RunStopReason.MAX_TURNS);
+      expect(result.value).toBeUndefined();
+    });
+
+    it('asks for the final answer while the budget can still pay for it', async () => {
+      const model = scripted(answersOnlyWithoutTools);
+      const { loop, run } = await harness(model);
+
+      const result = await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          budgets: { perRunUsd: 0.0026 },
+          limits: { ...LIMITS, maxTurns: 10 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      expect(result.value).toEqual({ headline: 'partial' });
+      expect(result.run.stopReason).toBe(RunStopReason.END);
+      const withTools = model.requests.map((request) => request.tools.length > 0);
+      expect(withTools.at(-1)).toBe(false);
+      expect(withTools.slice(0, -1).every(Boolean)).toBe(true);
+      expect(withTools.length).toBeLessThan(10);
+    });
+  });
+
   describe('structured output', () => {
     const schema = z.object({ headline: z.string() });
 

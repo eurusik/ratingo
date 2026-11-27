@@ -74,6 +74,7 @@ export type {
   ModelProviders,
   AgentLoopRequest,
   AgentLoopResult,
+  FinalAnswerPolicy,
   LoopLimits,
 } from './loop/agent-loop';
 export { AgentLoop, EmptyModelChainError, UnknownProviderError } from './loop/agent-loop';
