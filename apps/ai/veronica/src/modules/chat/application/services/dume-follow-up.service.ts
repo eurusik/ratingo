@@ -61,9 +61,6 @@ const errorName = (error: unknown): string => (error instanceof Error ? error.na
 const isRejectedForGood = (error: unknown): boolean =>
   error instanceof NotificationError && !error.retryable && !error.deliveryUnknown;
 
-const isDeliveryUnknown = (error: unknown): boolean =>
-  error instanceof NotificationError && (!error.retryable || error.deliveryUnknown);
-
 @Injectable()
 export class DumeFollowUpService {
   private readonly logger = new Logger(DumeFollowUpService.name);
@@ -146,16 +143,20 @@ export class DumeFollowUpService {
     }
     const request = lookup?.kind === 'found' ? lookup.request : null;
     const plan = this.deliveryPlan(claim.partsSent, action, request);
+    let partsSent = claim.partsSent;
     try {
       for (let index = plan.from; index < plan.parts.length; index += 1) {
         await this.sendPart(followUp.chatId, plan.parts[index] ?? '');
-        await this.store.recordPartSent(followUp.requestId, index + 1);
+        if (plan.recordsParts) {
+          await this.store.recordPartSent(followUp.requestId, index + 1);
+          partsSent = index + 1;
+        }
       }
     } catch (error) {
       if (error instanceof NotificationError && error.deliveryUnknown) {
-        return this.retryAfterUnknownDelivery(followUp);
+        return this.retryAfterUnknownDelivery(followUp, partsSent);
       }
-      await this.releaseDeliveryUnlessUnknown(followUp.requestId, error);
+      await this.releaseDelivery(followUp.requestId);
       throw error;
     }
     await this.confirmDelivery(followUp.requestId);
@@ -175,15 +176,22 @@ export class DumeFollowUpService {
     partsSent: number,
     action: DumeFollowUpAction,
     request: DumeRequestView | null,
-  ): { parts: string[]; from: number } {
+  ): { parts: string[]; from: number; recordsParts: boolean } {
     const answered = request?.state === DumeState.ANSWERED && request.result !== undefined;
     if (partsSent > 0 && !answered) {
-      return { parts: [renderDumeNotice(DUME_REST_NOT_DELIVERED_LINE)], from: 0 };
+      return {
+        parts: [renderDumeNotice(DUME_REST_NOT_DELIVERED_LINE)],
+        from: 0,
+        recordsParts: false,
+      };
     }
-    return { parts: this.messagesFor(action, request), from: partsSent };
+    return { parts: this.messagesFor(action, request), from: partsSent, recordsParts: true };
   }
 
-  private async retryAfterUnknownDelivery(followUp: DumeFollowUp): Promise<DumeFollowUpOutcome> {
+  private async retryAfterUnknownDelivery(
+    followUp: DumeFollowUp,
+    partsSent: number,
+  ): Promise<DumeFollowUpOutcome> {
     const deliveryAttempts = (followUp.deliveryAttempts ?? 0) + 1;
     if (deliveryAttempts >= DUME_MAX_DELIVERY_ATTEMPTS) {
       this.logger.error({
@@ -191,6 +199,7 @@ export class DumeFollowUpService {
         requestId: followUp.requestId,
         deliveryAttempts,
       });
+      await this.sayDeliveryFailed(followUp, partsSent);
       await this.releaseInFlight(followUp);
       return DumeFollowUpOutcome.UNDELIVERED;
     }
@@ -204,6 +213,20 @@ export class DumeFollowUpService {
       DUME_SENDING_RETRY_DELAY_MS,
     );
     return DumeFollowUpOutcome.WAITING;
+  }
+
+  private async sayDeliveryFailed(followUp: DumeFollowUp, partsSent: number): Promise<void> {
+    const line = partsSent > 0 ? DUME_REST_NOT_DELIVERED_LINE : DUME_DELIVERY_FAILED_LINE;
+    try {
+      await this.transport.sendMessage(followUp.chatId, renderDumeNotice(line));
+      await this.store.confirmDelivery(followUp.requestId);
+    } catch (error) {
+      this.logger.error({
+        message: 'dume_follow_up.failure_notice_failed',
+        requestId: followUp.requestId,
+        reason: errorName(error),
+      });
+    }
   }
 
   private async sendPart(chatId: string, html: string): Promise<void> {
@@ -247,8 +270,7 @@ export class DumeFollowUpService {
     }
   }
 
-  private async releaseDeliveryUnlessUnknown(requestId: string, error: unknown): Promise<void> {
-    if (isDeliveryUnknown(error)) return;
+  private async releaseDelivery(requestId: string): Promise<void> {
     try {
       await this.store.releaseDelivery(requestId);
     } catch (releaseError) {
