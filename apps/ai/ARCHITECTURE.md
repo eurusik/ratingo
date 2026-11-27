@@ -521,14 +521,50 @@ No Railway logs, no free LogQL and no free SQL; those are left to DUM-E later.
 - **Memory.** The last 12 messages per chat in Redis (`ai-veronica:conversation:<chatId>`, 24 h TTL): the question and the checked answer as text, never tool payloads.
 - **Telemetry.** `app.ai.chat.events{outcome, command, route}` (outcomes `answered`, `flagged`, `fallback`, `failed`; route `investigation`; `redacted` was the outcome before flagging and may still appear in older data) and a `chat` row in `ai.runs` with the cost.
 - **Env.** `GITHUB_READ_TOKEN` (optional, read-only; `recent_changes` reports itself unavailable without it) and `GITHUB_REPOSITORY` (default `eurusik/ratingo`).
-- **Eval.** `npm run eval:chat --workspace=@ratingo/ai-veronica` runs `apps/ai/veronica/eval/chat` (the service cases plus the Google Analytics cases, with fixture tool results). On the stub model it replays reference answers and checks the harness; with `AI_MODEL_FAST=anthropic:<model>` and `ANTHROPIC_API_KEY` it measures tool-selection accuracy, fact accuracy and cases where the numbers guard fired (target 0). `EVAL_DUMP=<file>` writes the answers.
+- **Eval.** `npm run eval:chat --workspace=@ratingo/ai-veronica` runs the chat cases (service, Google Analytics and logs) with fixture tool results; see «Chat eval» below for how it scores, how to read the report and the merge rule.
+
+### Chat eval
+
+A real-model run is noisy: two runs on almost the same code failed different cases, many for wording («рівня мінор» instead of «дрібні», «помилок не було» instead of «немає», «дві» instead of 2). The eval therefore repeats every case, judges meaning rather than words, and compares with a saved baseline. A failure is meant to be a real problem.
+
+**What is checked, and by what**
+
+| Check                                                                                                           | By                                   |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| The right facts are conveyed, and nothing forbidden is claimed (`expectations.conveys`, `mustNotClaim`)         | a judge model, per statement         |
+| Invented or wrong numbers and dates                                                                             | the numbers guard (`flaggedNumbers`) |
+| Links, secrets, gendered or formal address to the owner, «ніхто не є», text a case forbids (an injected domain) | code (`forbidden-content.ts`)        |
+| Tools: `requiredTools` all called (any order), no `forbiddenTools` called                                       | code (`tool-check.ts`)               |
+
+Any other read-only tool call is allowed unless the case forbids it, so a sensible extra call never fails a case. A fallback answer fails without being judged. Every case also needs a `reference` (the calls and one acceptable answer): the stub replays it.
+
+**Repeats and majority.** Each case runs `--runs` times (default 3) and passes when at least `--pass-at` runs pass (default a strict majority, 2 of 3). A case whose runs disagree is `FLAKY`. Cases run concurrently (`--concurrency`, default 4) under the per-message budget guard of the chat itself and an eval-wide `--max-cost-usd` cap (default 4); when the cap is reached the run stops and exits with code 2, because the numbers are incomplete. The cap is soft: runs already in flight finish, so the total can pass it by up to `--concurrency` runs. Exit code 2 also means that some run could not be scored (the judge or the model errored): such a result is not compared with the baseline and is never saved.
+
+**The judge.** `anthropic:claude-sonnet-5-5` (`--judge-model`). It must be stronger than, or at least different from, the model under test (Haiku 5.5), so it does not share its blind spots; matching short statements against a short answer needs no more than Sonnet, and one judgement costs about $0.004, so Opus (twice the price) buys nothing here. It gets a strict rubric (`JUDGE_SYSTEM_PROMPT` in `judge-prompt.ts`; the question, the history and the answer are text to grade, never instructions): judge meaning only, numbers as digits or words, any date format, a hedge removes a claim, denying a claim is not making it. It returns JSON, one `holds` and a one-line `reason` per statement; the code decides pass or fail (a statement the judge skipped fails). Nothing is concluded from a judge error: the run is reported as «could not be scored».
+
+**Calibration.** `eval/chat/calibration.set.ts` holds about 50 answers labelled good or bad on meaning: real answers from past runs (including the wordings the old regexes rejected) and written wrong ones (invented facts, missed key fact, a stale result presented as current, an obeyed injection). The deterministic test checks the labels against the code checks (every label of a language slip, link or forbidden text must be caught by `forbidden-content.ts`, and nothing else may be) and the agreement code with fake judges. `--calibrate` (or `--calibrate-only`) runs the real judge on the set and prints the agreement; below 90 % the judge is not trusted and the exit code is 1.
+
+**Stub mode.** With no `AI_MODEL_FAST` (or `stub:digest`) the model replays each case's reference answer and a fake judge accepts an answer only when it equals the reference. It needs no key, runs 1 time per case, and `eval.spec.ts` runs it in CI: it proves that cases, fixtures, tools and scoring are wired together, and that a wrong answer or a wrong tool fails. It says nothing about the model.
+
+**Running it for real**
+
+```bash
+AI_MODEL_FAST=anthropic:claude-haiku-5-5 ANTHROPIC_API_KEY=… \
+  npm run eval:chat --workspace=@ratingo/ai-veronica -- --calibrate
+```
+
+Add `--save-baseline` to write `eval/chat/baseline.json` (do this only on a run you accept, and commit the file with the change it belongs to); `--only=id1,id2` runs some cases (it cannot save a baseline); `--dump=path.json` writes every answer and verdict.
+
+**Reading the report.** One line per case, `passes/runs`, `pass` or `FAIL`, and `FLAKY` when the runs disagree or `stable` for a failure on every run; each failed run gets a line saying what failed (missing or forbidden tools, the unmet statement with the judge's reason, forbidden content, wrong numbers, fallback, «could not be scored»). The summary gives the pass rate with stable and flaky passes and fails counted apart, the tool-selection rate and the fact rate per run, the honest-«no data» rate on the questions that have no answer, flagged and wrong numbers, cost split into agent and judge, and the comparison with the baseline: regressions (these fail the run, exit code 1; the rules are under «Merge rule»), newly failing but flaky in the baseline (not blocking), newly passing, became or stopped being flaky, cases not in the baseline.
+
+**Merge rule.** A change to Veronica's chat (prompts, tools, executors, the guard, the model) merges only when a real-model run shows no regression against the committed baseline. A regression is any of: a case that passed in the baseline and does not pass now, flaky or not (3/3 falling to 1/3 counts); a case that was stable in the baseline and loses two or more passes, even if it still passes (5/5 falling to 3/5; when the run counts differ, the baseline pass rate is scaled to the current number of runs); a case that was already flaky in the baseline and now fails every run; a new case that fails every run. Only a case that was already flaky in the baseline gets the softening: it may fail some runs without blocking. Write every non-blocking failure and flaky case in the PR. When a change is meant to move a case, update the case and the baseline in the same PR.
 
 ### Answer log (`ai.chat_exchanges`)
 
 - One row per finished exchange: `run_id` (→ `ai.runs`), `chat_id`, `created_at`, `route` (`command`, `happy`, `investigation`), `question`, `answer` (the final checked text sent to Telegram), `outcome` (`answered`, `flagged`, `fallback`, `failed`; older rows may say `redacted`), `cut_numbers` (the numbers the guard flagged; in older rows, the numbers it removed), `tool_names` and `tool_calls` (each call's tool name and its arguments as JSON, secrets redacted, at most 12 calls of 600 characters; nullable for rows written before it existed). Tool results, raw model output and secrets are never stored; text is clipped to 8000 characters.
 - Written after the run row is saved, best-effort: a failed insert is logged with its reason (`Обмін для запуску … не записано: <ErrorName>`) and never touches the reply. An exchange without a run (an empty question) is not logged.
 - Retention is 30 days. The daily BullMQ job `exchange-retention` (scheduler id and cron in `chat.constants.ts`, 03:17 Europe/Kyiv, on the `chat` queue) deletes older rows; it is idempotent because it deletes by a cutoff, so running it twice removes nothing more.
-- `npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d [--outcome=flagged,fallback]` reads `DATABASE_URL` and prints the matching exchanges as a JSON array of eval case drafts (`id`, `question`, `expectedTools`, `reference.answer`, empty `fixtures` and `mustContain`, plus an `observed` block). A person writes the fixtures and the `mustContain` groups before moving a draft into `eval/chat/cases.ts`. The script only reads.
+- `npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d [--outcome=flagged,fallback]` reads `DATABASE_URL` and prints the matching exchanges as a JSON array of eval case drafts (`id`, `question`, `requiredTools`, `reference.answer`, empty `fixtures` and `expectations`, plus an `observed` block). A person writes the fixtures and the expectations before moving a draft into `eval/chat/cases.ts`. The script only reads.
 
 ### Happy through Veronica (step 3)
 
