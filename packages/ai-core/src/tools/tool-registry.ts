@@ -2,6 +2,7 @@ import type { ToolCall, ToolDefinition, ToolResult } from '../model/model.types'
 import { describeError } from '../shared/describe-error';
 import type { Tool, ToolContext } from './define-tool';
 import { redactSecrets } from './redact';
+import { RepeatGuard, RepeatReason, callKey, repeatNote } from './repeat-guard';
 import type { ToolSource } from './tool-source.port';
 
 export const TRUNCATION_MARKER = '\n[output truncated]';
@@ -9,6 +10,7 @@ export const TRUNCATION_MARKER = '\n[output truncated]';
 export interface ToolRegistryOptions {
   allowWriteTools?: boolean;
   optionalTools?: readonly string[];
+  guardRepeatedCalls?: boolean;
 }
 
 export class DuplicateToolError extends Error {
@@ -59,6 +61,7 @@ export class ToolRegistry {
   private constructor(
     private readonly allowed: ReadonlyMap<string, Tool>,
     private readonly absent: readonly string[],
+    private readonly repeatGuard: RepeatGuard | undefined,
   ) {}
 
   static async create(
@@ -84,7 +87,11 @@ export class ToolRegistry {
       }
       allowed.set(name, tool);
     }
-    return new ToolRegistry(allowed, absent);
+    return new ToolRegistry(
+      allowed,
+      absent,
+      options.guardRepeatedCalls === true ? new RepeatGuard() : undefined,
+    );
   }
 
   unavailableTools(): readonly string[] {
@@ -100,6 +107,32 @@ export class ToolRegistry {
     if (tool === undefined) {
       return { callId: call.id, content: `Tool "${call.name}" is not allowed`, isError: true };
     }
+    const key = callKey(call.name, call.input);
+    const earlier = this.repeatGuard?.recall(context.runId, key);
+    if (earlier !== undefined) {
+      return {
+        callId: call.id,
+        content: `${repeatNote(earlier.reason)}\n${earlier.content}`,
+        isError: earlier.reason === RepeatReason.FAILED,
+      };
+    }
+    let empty = false;
+    const result = await this.runTool(tool, call, {
+      ...context,
+      markEmpty: () => {
+        empty = true;
+      },
+    });
+    if (result.isError || empty) {
+      this.repeatGuard?.remember(context.runId, key, {
+        reason: result.isError ? RepeatReason.FAILED : RepeatReason.EMPTY,
+        content: result.content,
+      });
+    }
+    return result;
+  }
+
+  private async runTool(tool: Tool, call: ToolCall, context: ToolContext): Promise<ToolResult> {
     try {
       const output = await tool.run(call.input, context);
       return { callId: call.id, content: sanitizeOutput(tool, output), isError: false };

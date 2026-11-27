@@ -95,3 +95,41 @@ describe('defineTool', () => {
     });
   });
 });
+
+describe('defineTool empty results', () => {
+  const emptyCalls = async (handler: () => Promise<unknown>, isEmpty?: (output: unknown) => boolean): Promise<number> => {
+    const markEmpty = jest.fn();
+    const tool = defineTool({
+      name: 'probe',
+      description: 'Probe',
+      inputSchema: z.object({}),
+      readOnly: true,
+      handler,
+      ...(isEmpty === undefined ? {} : { isEmpty }),
+    });
+
+    await tool.run({}, { runId: 'run-1', markEmpty });
+
+    return markEmpty.mock.calls.length;
+  };
+
+  it('marks an empty row list and a missing result as empty by default', async () => {
+    expect(await emptyCalls(() => Promise.resolve(RowList.of([], 'hint')))).toBe(1);
+    expect(await emptyCalls(() => Promise.resolve(undefined))).toBe(1);
+  });
+
+  it('does not mark a row list with rows or any other output', async () => {
+    expect(await emptyCalls(() => Promise.resolve(RowList.of([{ id: 1 }], 'hint')))).toBe(0);
+    expect(await emptyCalls(() => Promise.resolve({ items: [] }))).toBe(0);
+  });
+
+  it('lets a tool decide what empty means', async () => {
+    expect(await emptyCalls(() => Promise.resolve({ items: [] }), (output) => (output as { items: unknown[] }).items.length === 0)).toBe(1);
+    expect(await emptyCalls(() => Promise.resolve(RowList.of([], 'hint')), () => false)).toBe(0);
+  });
+
+  it('works without a context that listens', async () => {
+    await expect(echo.run({ text: 'a' }, { runId: 'run-1' })).resolves.toBe('a');
+  });
+});
+

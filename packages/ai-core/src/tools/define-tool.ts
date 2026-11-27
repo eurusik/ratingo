@@ -9,6 +9,7 @@ export const DEFAULT_TOOL_OUTPUT_CAP_CHARS = 8_000;
 
 export interface ToolContext {
   runId: string;
+  markEmpty?: () => void;
 }
 
 export interface ToolSpec<TShape extends ZodRawShape> {
@@ -18,6 +19,7 @@ export interface ToolSpec<TShape extends ZodRawShape> {
   readOnly: boolean;
   maxOutputChars?: number;
   untrustedLabel?: string;
+  isEmpty?(output: unknown): boolean;
   handler(input: z.infer<ZodObject<TShape>>, context: ToolContext): Promise<unknown>;
 }
 
@@ -39,6 +41,10 @@ export class ToolInputError extends Error {
 function stringifyOutput(output: unknown, maxChars: number): string {
   if (output instanceof RowList) return fitRowList(output, maxChars);
   return typeof output === 'string' ? output : (JSON.stringify(output) ?? '');
+}
+
+function isEmptyByDefault(output: unknown): boolean {
+  return output instanceof RowList ? output.rows.length === 0 : output === undefined || output === null;
 }
 
 function untrustedOverhead(label: string): number {
@@ -66,7 +72,9 @@ export function defineTool<TShape extends ZodRawShape>(spec: ToolSpec<TShape>): 
       if (!parsed.success) {
         throw new ToolInputError(spec.name, formatZodIssues(parsed.error).join('; '));
       }
-      const content = stringifyOutput(await spec.handler(parsed.data, context), contentBudget);
+      const output = await spec.handler(parsed.data, context);
+      if ((spec.isEmpty ?? isEmptyByDefault)(output)) context.markEmpty?.();
+      const content = stringifyOutput(output, contentBudget);
       return untrustedLabel === undefined ? content : wrapUntrusted(untrustedLabel, content);
     },
   };
