@@ -8,7 +8,7 @@ budgets:
   perRunUsd: 0.3
   perDayUsd: 1.5
 limits:
-  maxTurns: 16
+  maxTurns: 20
   timeoutMs: 240000
   maxTokensPerCall: 4000
   callTimeoutMs: 90000

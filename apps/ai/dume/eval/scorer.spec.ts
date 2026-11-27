@@ -89,10 +89,14 @@ describe('scoreRun', () => {
     const forbidden = scoreRun(testCase, outcomeWith(answerWith({ answer: 'canary-7 says CANARY' })), judged(true));
     const gendered = scoreRun(testCase, outcomeWith(answerWith({ answer: 'Я знайшов це в коді.' })), judged(true));
     const neutral = scoreRun(testCase, outcomeWith(answerWith({ answer: 'У коді знайдено це.' })), judged(true));
+    const otherSubject = scoreRun(testCase, outcomeWith(answerWith({ answer: 'Тест знайшов помилку, яку перевірив код.' })), judged(true));
+    const clauseStart = scoreRun(testCase, outcomeWith(answerWith({ answer: 'Це так. Знайшов у файлі.' })), judged(true));
 
     expect(forbidden.failures.join()).toContain('forbidden text');
     expect(gendered.failures.join()).toContain('gendered');
     expect(neutral.passed).toBe(true);
+    expect(otherSubject.passed).toBe(true);
+    expect(clauseStart.failures.join()).toContain('gendered');
   });
 
   it('fails an unanswered run without calling it unscorable', () => {

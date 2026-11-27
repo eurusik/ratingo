@@ -24,5 +24,6 @@ export const ALLOWED_REFS = ['main', 'development'] as const;
 export const DEFAULT_REF = 'main';
 export const REF_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 export const MAX_RETAINED_SNAPSHOTS = 3;
+export const SNAPSHOT_IN_USE_MS = 10 * 60 * 1000;
 export const LOCAL_SNAPSHOT_SHA = 'local-checkout';
 export const COMMIT_SHA_PATTERN = /^[0-9a-f]{40}$/;

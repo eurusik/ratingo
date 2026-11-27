@@ -11,6 +11,7 @@ import {
   ALLOWED_REFS,
   COMMIT_SHA_PATTERN,
   MAX_RETAINED_SNAPSHOTS,
+  SNAPSHOT_IN_USE_MS,
   REF_CHECK_INTERVAL_MS,
   SkipReason,
   SnapshotLimits,
@@ -20,7 +21,8 @@ import { SnapshotFailure, SnapshotUnavailableError } from '../../domain/errors/i
 import type { CodeSnapshotPort } from '../../domain/ports/code-snapshot.port';
 import { inspectFileBody } from '../../domain/policies/file-inspection';
 import { normalizeFilePath } from '../../domain/policies/repo-path';
-import { InvalidTarError, readTarStream, type TarEntry } from '../archive/tar-reader';
+import { ArchiveCollector } from '../archive/archive-collector';
+import { InvalidTarError, readTarStream } from '../archive/tar-reader';
 import { DirectorySnapshot } from './directory-snapshot';
 
 const API_VERSION = '2022-11-28';
@@ -30,8 +32,6 @@ const ARCHIVE_MEDIA_TYPE = 'application/vnd.github+json';
 const SHA_TIMEOUT_MS = 15_000;
 const DOWNLOAD_TIMEOUT_MS = 120_000;
 const TEMP_DIRECTORY_PREFIX = 'dume-snapshots-';
-const PRIVATE_DIRECTORY_MODE = 0o700;
-const PRIVATE_FILE_MODE = 0o600;
 const RATE_LIMIT_STATUSES = new Set([403, 429]);
 
 export interface GithubSnapshotConfig {
@@ -50,64 +50,6 @@ interface RetainedSnapshot {
   directory: string;
   lastUsedMs: number;
 }
-
-class ArchiveCollector {
-  readonly files: SnapshotFile[] = [];
-  readonly skipped = new Map<string, SkipReason>();
-  private unpackedBytes = 0;
-  private fileCount = 0;
-
-  constructor(private readonly directory: string) {}
-
-  decide(entry: TarEntry): 'read' | 'skip' {
-    const relative = stripArchiveRoot(entry.path);
-    if (relative === undefined) return 'skip';
-    if (this.fileCount >= SnapshotLimits.MAX_FILES || this.unpackedBytes + entry.size > SnapshotLimits.MAX_UNPACKED_BYTES) {
-      this.skipped.set(relative, SkipReason.LIMIT_REACHED);
-      return 'skip';
-    }
-    if (entry.size > SnapshotLimits.MAX_FILE_BYTES) {
-      this.skipped.set(relative, SkipReason.TOO_LARGE);
-      return 'skip';
-    }
-    return 'read';
-  }
-
-  async receive(entry: TarEntry, body: Buffer): Promise<void> {
-    const relative = stripArchiveRoot(entry.path);
-    if (relative === undefined) return;
-    const normalized = normalizeFilePath(relative);
-    if (!normalized.ok) {
-      this.skipped.set(relative, SkipReason.UNSAFE_PATH);
-      return;
-    }
-    const inspection = inspectFileBody(body);
-    if (inspection.kind === 'skipped') {
-      this.skipped.set(normalized.path, inspection.reason);
-      return;
-    }
-    const target = path.resolve(this.directory, normalized.path);
-    if (!target.startsWith(`${this.directory}${path.sep}`)) {
-      this.skipped.set(normalized.path, SkipReason.UNSAFE_PATH);
-      return;
-    }
-    try {
-      await mkdir(path.dirname(target), { recursive: true, mode: PRIVATE_DIRECTORY_MODE });
-      await writeFile(target, body, { flag: 'wx', mode: PRIVATE_FILE_MODE });
-    } catch {
-      this.skipped.set(normalized.path, SkipReason.UNSAFE_PATH);
-      return;
-    }
-    this.fileCount += 1;
-    this.unpackedBytes += body.byteLength;
-    this.files.push({ path: normalized.path, bytes: body.byteLength, lineCount: inspection.lines.length });
-  }
-}
-
-const stripArchiveRoot = (entryPath: string): string | undefined => {
-  const slash = entryPath.indexOf('/');
-  return slash === -1 || slash === entryPath.length - 1 ? undefined : entryPath.slice(slash + 1);
-};
 
 @Injectable()
 export class GithubCodeSnapshotAdapter implements CodeSnapshotPort {
@@ -254,8 +196,11 @@ export class GithubCodeSnapshotAdapter implements CodeSnapshotPort {
   }
 
   private async evictOldest(): Promise<void> {
+    const idleBefore = this.clock.nowMs() - SNAPSHOT_IN_USE_MS;
     while (this.retained.size > MAX_RETAINED_SNAPSHOTS) {
-      const oldest = [...this.retained.entries()].sort(([, left], [, right]) => left.lastUsedMs - right.lastUsedMs)[0];
+      const oldest = [...this.retained.entries()]
+        .filter(([, entry]) => entry.lastUsedMs <= idleBefore)
+        .sort(([, left], [, right]) => left.lastUsedMs - right.lastUsedMs)[0];
       if (oldest === undefined) return;
       this.retained.delete(oldest[0]);
       await rm(oldest[1].directory, { recursive: true, force: true });

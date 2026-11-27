@@ -2,25 +2,29 @@ import type { VerifiedAnswer } from '../src/modules/investigation/domain/entitie
 import { AssumptionOrigin, CitationFailure } from '../src/modules/investigation/domain/entities/investigation-answer';
 import { allTextOf } from './answer-text';
 
+const GENDERED_VERBS = [
+  'знайшов',
+  'знайшла',
+  'перевірив',
+  'перевірила',
+  'прочитав',
+  'прочитала',
+  'переглянув',
+  'переглянула',
+  'дослідив',
+  'дослідила',
+  'зрозумів',
+  'зрозуміла',
+  'шукав',
+  'шукала',
+  'побачив',
+  'побачила',
+];
+
+const FIRST_PERSON_POSITION = '(?:^|[.!?:;]\\s*|(?<![\\p{L}])я\\s+)';
+
 const GENDERED_SELF_REFERENCE = new RegExp(
-  `(?:^|[^\\p{L}])(?:я\\s+)?(?:${[
-    'знайшов',
-    'знайшла',
-    'перевірив',
-    'перевірила',
-    'прочитав',
-    'прочитала',
-    'переглянув',
-    'переглянула',
-    'дослідив',
-    'дослідила',
-    'зрозумів',
-    'зрозуміла',
-    'шукав',
-    'шукала',
-    'побачив',
-    'побачила',
-  ].join('|')})(?![\\p{L}])`,
+  `${FIRST_PERSON_POSITION}(?:${GENDERED_VERBS.join('|')})(?![\\p{L}])`,
   'iu',
 );
 

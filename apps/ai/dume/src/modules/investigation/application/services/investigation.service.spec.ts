@@ -168,12 +168,37 @@ describe('InvestigationService', () => {
     expect(outcome).toMatchObject({ status: InvestigationStatus.UNANSWERED, answer: null, stopReason: RunStopReason.INVALID_OUTPUT });
   });
 
-  it('stops at the turn limit when the model keeps calling tools', async () => {
+  it('still ends unanswered when the model keeps calling tools even on the final turn', async () => {
     const { service } = await build([{ tool: 'code_list', input: { path: '' } }]);
 
     const outcome = await ask(service);
 
     expect(outcome).toMatchObject({ status: InvestigationStatus.UNANSWERED, stopReason: RunStopReason.MAX_TURNS });
+  });
+
+  it('gets a partial answer instead of nothing when the model keeps using tools until the last turn', async () => {
+    const folder = await loadAgentFolder(AGENT_FOLDER_PATH, { knownModelAliases: ['review'] });
+    const model = new StubModelAdapter({
+      respond: (request, callIndex) =>
+        request.tools.length > 0
+          ? scripted([{ tool: 'code_list', input: { path: `apps/${callIndex}` } }]).respond(request, callIndex)
+          : scripted([
+              { answer: { answer: 'Частково.', claims: [], assumptions: [], unknowns: ['не встигнуто перевірити решту'] } },
+            ]).respond(request, callIndex),
+    });
+    const service = createInvestigator({
+      snapshots: { resolve: () => Promise.resolve(inMemorySnapshot(FILES)) },
+      folder,
+      providers: { stub: model },
+      aliases: { review: ['stub:review'] },
+      clock: new FixedClock(1_000),
+    });
+
+    const outcome = await ask(service);
+
+    expect(outcome).toMatchObject({ status: InvestigationStatus.ANSWERED, stopReason: RunStopReason.END, turns: folder.manifest.limits.maxTurns });
+    expect(outcome.answer?.unknowns).toEqual(['не встигнуто перевірити решту']);
+    expect(model.requests.at(-1)?.tools).toEqual([]);
   });
 
   it('reports an unavailable snapshot with its reason and never calls the model', async () => {

@@ -6,7 +6,7 @@ import { gzipSync } from 'node:zlib';
 import { Logger } from '@nestjs/common';
 import { FixedClock } from '@ratingo/ai-core';
 
-import { REF_CHECK_INTERVAL_MS, SkipReason, SnapshotLimits } from '../../domain/constants/snapshot.constants';
+import { MAX_RETAINED_SNAPSHOTS, REF_CHECK_INTERVAL_MS, SNAPSHOT_IN_USE_MS, SkipReason, SnapshotLimits } from '../../domain/constants/snapshot.constants';
 import { SnapshotFailure, SnapshotUnavailableError } from '../../domain/errors/investigation.errors';
 import { buildTar, tarEntry } from '../testing/tar-builder.testing';
 import { GithubCodeSnapshotAdapter } from './github.code-snapshot-adapter';
@@ -170,6 +170,27 @@ describe('GithubCodeSnapshotAdapter', () => {
     github.state.archive = gzipSync(Buffer.from('this is not a tar archive at all, just text'.repeat(40)));
 
     await expect(adapter.resolve('main')).rejects.toMatchObject({ failure: SnapshotFailure.ARCHIVE_INVALID });
+  });
+
+  it('does not delete a snapshot that a run may still be reading, and trims once it has been idle', async () => {
+    const [sha1, sha2, sha3, sha4, sha5] = ['1', '2', '3', '4', '5'].map((digit) => digit.repeat(40)) as [string, string, string, string, string];
+    const resolveAt = async (ref: string, sha: string) => {
+      github.state.sha = sha;
+      return adapter.resolve(ref);
+    };
+    const first = await resolveAt('main', sha1);
+    await resolveAt('development', sha2);
+    clock.advance(REF_CHECK_INTERVAL_MS);
+    await resolveAt('main', sha3);
+    await resolveAt('development', sha4);
+
+    expect(MAX_RETAINED_SNAPSHOTS).toBeLessThan(4);
+    await expect(first.readLines('readme.md')).resolves.toEqual(['hello', 'world']);
+
+    clock.advance(SNAPSHOT_IN_USE_MS - REF_CHECK_INTERVAL_MS);
+    await resolveAt('main', sha5);
+
+    await expect(first.readLines('readme.md')).resolves.toBeUndefined();
   });
 
   it('removes its files on dispose', async () => {

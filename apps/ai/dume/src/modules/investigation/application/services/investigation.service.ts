@@ -20,6 +20,7 @@ import { createCodeTools } from '../tools/create-code-tools';
 import { CodeBrowser } from './code-browser.service';
 
 const PROMPT_NAME = 'investigate';
+const FINAL_ANSWER_PROMPT_NAME = 'final-answer';
 
 export interface InvestigationRequest {
   question: string;
@@ -64,7 +65,10 @@ export class InvestigationService {
       throw new InvalidQuestionError(`the question is longer than ${MAX_QUESTION_CHARS} characters`);
     }
     const system = this.folder.prompts[PROMPT_NAME];
-    if (system === undefined) throw new Error(`The agent folder has no ${PROMPT_NAME} prompt`);
+    const finalAnswerPrompt = this.folder.prompts[FINAL_ANSWER_PROMPT_NAME];
+    if (system === undefined || finalAnswerPrompt === undefined) {
+      throw new Error(`The agent folder needs the ${PROMPT_NAME} and ${FINAL_ANSWER_PROMPT_NAME} prompts`);
+    }
     let snapshot;
     try {
       snapshot = await this.snapshots.resolve(request.ref);
@@ -79,6 +83,7 @@ export class InvestigationService {
     const result = await this.runner.run({
       trigger: request.trigger,
       system,
+      finalAnswerPrompt,
       prompt: `Commit ${snapshot.sha} (${snapshot.ref}).\n\nQuestion from the owner:\n${question}`,
       responseSchema: investigationDraftSchema,
       tools: createCodeTools({ browser: this.browser, snapshot, ledger }),
