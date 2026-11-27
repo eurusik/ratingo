@@ -1,5 +1,6 @@
 import { EvalKind, type EvalCase } from './eval-case';
 import { kyivTimeFromEvalNow } from './eval-clock';
+import { jobFailures } from './job-failure-fixtures';
 import {
   API_QUIET,
   API_SEARCH_INJECTION,
@@ -14,7 +15,9 @@ import {
   STORM_RECORDS,
   STORM_RECORDS_READ,
   TMDB_TIMEOUTS,
+  TMDB_TIMEOUT_FIRST_MINUTES_AGO,
   TMDB_TIMEOUT_LAST_MINUTES_AGO,
+  TRAKT_LIMIT_LAST_MINUTES_AGO,
   TRAKT_LIMITS,
   WORKER_STORM,
   WORKER_TROUBLE,
@@ -29,18 +32,45 @@ const LAST_FOLLOW_UP_ERROR = kyivMinutesAgo(FOLLOW_UP_ERROR_MINUTES_AGO);
 const OLDEST_READ_IN_STORM = kyivMinutesAgo(STORM_OLDEST_READ_MINUTES_AGO);
 const LAST_SEARCH_ERROR = kyivMinutesAgo(50);
 
+const WORKER_FAILED_ATTEMPTS = jobFailures([
+  {
+    job: 'sync-show',
+    queue: 'ingestion',
+    errorClass: 'timeout',
+    failuresOnThoseDays: TMDB_TIMEOUTS,
+    attemptsExhaustedOnThoseDays: TMDB_TIMEOUTS,
+    firstFailedAtKyiv: kyivMinutesAgo(TMDB_TIMEOUT_FIRST_MINUTES_AGO),
+    lastFailedAtKyiv: LAST_TIMEOUT,
+    lastMessage: 'TMDB API: Request timeout',
+  },
+  {
+    job: 'sync-trending-page',
+    queue: 'ingestion',
+    errorClass: 'rate_limit',
+    failuresOnThoseDays: TRAKT_LIMITS,
+    attemptsExhaustedOnThoseDays: TRAKT_LIMITS,
+    firstFailedAtKyiv: kyivMinutesAgo(TRAKT_LIMIT_LAST_MINUTES_AGO + (TRAKT_LIMITS - 1) * 40),
+    lastFailedAtKyiv: kyivMinutesAgo(TRAKT_LIMIT_LAST_MINUTES_AGO),
+    lastMessage: 'Trakt API: 429 Too Many Requests',
+  },
+]);
+
 export const LOKI_EVAL_CASES: readonly EvalCase[] = [
   {
     id: 'logs-worker-today',
     kind: EvalKind.KNOWN,
     question: 'в чому проблема з worker сьогодні?',
-    fixtures: [{ tool: LOKI_FIXTURE, response: WORKER_TROUBLE }],
+    fixtures: [
+      { tool: LOKI_FIXTURE, response: WORKER_TROUBLE },
+      { tool: 'job_failures', response: WORKER_FAILED_ATTEMPTS },
+    ],
     requiredTools: [LOGS],
     expectations: {
       conveys: [
         `Says the most frequent worker error is a TMDB request timeout, ${TMDB_TIMEOUTS} times.`,
         `Mentions ${TRAKT_LIMITS} errors caused by the Trakt request limit.`,
       ],
+      mustNotClaim: ['Says the TMDB timeouts were caught and logged without the job failing.'],
     },
     reference: {
       calls: [{ tool: LOGS, input: { service: SERVICE_WORKER } }],
@@ -76,7 +106,10 @@ export const LOKI_EVAL_CASES: readonly EvalCase[] = [
         text: `У worker найчастіше падає оновлення серіалів через тайм-аут TMDB. Приклад: завдання ${FOLLOW_UP_JOB_ID} у черзі ingestion.`,
       },
     ],
-    fixtures: [{ tool: LOKI_FIXTURE, response: WORKER_TROUBLE }],
+    fixtures: [
+      { tool: LOKI_FIXTURE, response: WORKER_TROUBLE },
+      { tool: 'job_failures', response: WORKER_FAILED_ATTEMPTS },
+    ],
     requiredTools: [LOGS],
     expectations: {
       conveys: [

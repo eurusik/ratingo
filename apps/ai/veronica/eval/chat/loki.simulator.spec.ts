@@ -1,5 +1,11 @@
 import { EVAL_NOW_MS } from './eval-clock';
-import { API_QUIET, LOKI_ACCESS_DENIED, WORKER_TROUBLE } from './loki.dataset';
+import {
+  API_QUIET,
+  FOLLOW_UP_JOB_ID,
+  LOKI_ACCESS_DENIED,
+  TMDB_TIMEOUTS,
+  WORKER_TROUBLE,
+} from './loki.dataset';
 import { simulatedLokiFetch } from './loki.simulator';
 
 const HOUR_MS = 3_600_000;
@@ -49,9 +55,13 @@ describe('simulated Loki', () => {
 
   it('includes errors for the warn level and filters on structured metadata and text', async () => {
     const warn = await ask(
-      `${SELECTOR('ratingo-worker')} | detected_level=~\`warn|error\` | job_id=\`sync-show:4812\``,
+      `${SELECTOR('ratingo-worker')} | detected_level=~\`warn|error\` | job_id=\`${FOLLOW_UP_JOB_ID}\``,
     );
-    expect(linesOf(warn.streams).map((record) => record.level)).toEqual(['error', 'warn']);
+    expect(
+      linesOf(warn.streams)
+        .map((record) => record.level)
+        .sort(),
+    ).toEqual(['error', 'error', 'warn']);
 
     const text = await ask(
       `${SELECTOR('ratingo-worker')} | detected_level=\`error\` | json message="message", error_message="error_message" | message=~\`(?is).*TRAKT api: 429.*\` or error_message=~\`(?is).*TRAKT api: 429.*\` | drop message, error_message`,
@@ -70,7 +80,9 @@ describe('simulated Loki', () => {
     for (const word of ['environment', 'level', 'queue', 'ratingo-worker', 'production']) {
       expect((await ask(stages(word))).streams).toEqual([]);
     }
-    expect(linesOf((await ask(stages('TMDB API: Request timeout'))).streams)).toHaveLength(14);
+    expect(linesOf((await ask(stages('TMDB API: Request timeout'))).streams)).toHaveLength(
+      TMDB_TIMEOUTS * 2,
+    );
   });
 
   it('keeps to the time range and the limit', async () => {
@@ -79,7 +91,7 @@ describe('simulated Loki', () => {
       WORKER_TROUBLE,
       { startMs: EVAL_NOW_MS - HOUR_MS, endMs: EVAL_NOW_MS },
     );
-    expect(linesOf(recent.streams)).toHaveLength(1);
+    expect(linesOf(recent.streams)).toHaveLength(2);
 
     const limited = await ask(
       `${SELECTOR('ratingo-worker')} | detected_level=\`error\``,

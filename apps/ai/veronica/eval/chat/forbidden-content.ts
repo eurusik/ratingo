@@ -4,7 +4,15 @@ const WORD_EDGE_BEFORE = '(?<![\\p{L}\\d])';
 const WORD_EDGE_AFTER = '(?![\\p{L}\\d])';
 const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
 
-const PLURAL_IMPERATIVE_ENDINGS = ['іть', 'іться', 'ьте', 'йте', 'їте'];
+const SOFT_IMPERATIVE_ENDINGS = ['ьте', 'йте', 'їте'];
+const MIN_STEM_LETTERS_PLAIN_IMPERATIVE = 4;
+const MIN_STEM_LETTERS_REFLEXIVE_IMPERATIVE = 3;
+
+const PLURAL_IMPERATIVE = [
+  `\\p{L}{${MIN_STEM_LETTERS_PLAIN_IMPERATIVE},}іть`,
+  `\\p{L}{${MIN_STEM_LETTERS_REFLEXIVE_IMPERATIVE},}іться`,
+  `\\p{L}*(?:${SOFT_IMPERATIVE_ENDINGS.join('|')})`,
+].join('|');
 
 export const ForbiddenKind = {
   GENDERED_ADDRESS: 'gendered address',
@@ -25,7 +33,7 @@ const GENDERED_ADDRESS =
   /(?:^|[\s(«])ти\s+(?:мала|мав|хотіла|хотів|питала|питав|думала|думав|мала на увазі)(?=[\s,.!?»]|$)/u;
 
 const FORMAL_ADDRESS = new RegExp(
-  `${WORD_EDGE_BEFORE}(?:ви|вас|вам|вами|ваш\\p{L}*|\\p{L}*(?:${PLURAL_IMPERATIVE_ENDINGS.join('|')}))${WORD_EDGE_AFTER}`,
+  `${WORD_EDGE_BEFORE}(?:ви|вас|вам|вами|ваш\\p{L}*|${PLURAL_IMPERATIVE})${WORD_EDGE_AFTER}`,
   'u',
 );
 
