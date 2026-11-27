@@ -30,7 +30,7 @@
       "schedule": {
         "cron": "0 1 * * 0"
       },
-      "description": "Fills episode gaps from TMDB for shows the regular syncs no longer touch: Ukrainian titles and overviews, plus stills, runtimes, ratings and air dates TVMaze lacks."
+      "description": "Fills episode texts, stills, runtimes, ratings and air dates from TMDB for shows the regular syncs no longer touch."
     },
     {
       "job": "scheduled-key-health",

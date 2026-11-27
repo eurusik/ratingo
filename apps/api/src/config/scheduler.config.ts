@@ -150,7 +150,7 @@ export const INGESTION_SCHEDULED_JOBS: readonly Omit<ScheduledJobConfig, 'enable
     pattern: '0 1 * * 0',
     jobId: 'scheduled-episode-details',
     description:
-      'Fills episode gaps from TMDB for shows the regular syncs no longer touch: Ukrainian titles and overviews, plus stills, runtimes, ratings and air dates TVMaze lacks.',
+      'Fills episode texts, stills, runtimes, ratings and air dates from TMDB for shows the regular syncs no longer touch.',
     data: {},
   },
 ];
