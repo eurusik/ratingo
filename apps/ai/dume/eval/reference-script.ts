@@ -114,7 +114,7 @@ export const buildReferenceScript = async (
     answer: testCase.reference.answer,
     claims: testCase.reference.claims.map((claim) => ({
       text: claim.text,
-      citations: claim.evidence.map((index) => (located[index] as LocatedEvidence).citation),
+      citations: claim.codeEvidence.map((index) => (located[index] as LocatedEvidence).citation),
       evidence: (claim.runtime ?? []).map((index) =>
         refOf(sources[index] as RuntimeSource, index, request),
       ),

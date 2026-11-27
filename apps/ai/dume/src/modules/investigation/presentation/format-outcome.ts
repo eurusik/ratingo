@@ -1,6 +1,7 @@
 import {
   AssumptionOrigin,
   type Assumption,
+  type CitationProblem,
   type Citation,
   type ShownEvidence,
   type VerifiedClaim,
@@ -41,9 +42,14 @@ const factLines = (fact: VerifiedClaim, index: number): string[] => [
 const section = (title: string, lines: readonly string[]): string[] =>
   lines.length === 0 ? [] : ['', `${title}:`, ...lines];
 
+const problemText = (problem: CitationProblem): string =>
+  problem.evidenceRef === undefined
+    ? problem.failure
+    : `${problem.failure}: ${plainLine(problem.evidenceRef)}`;
+
 const assumptionLine = (assumption: Assumption, index: number): string =>
   assumption.origin === AssumptionOrigin.UNVERIFIED_CLAIM
-    ? `  ${index + 1}. [unverified claim: ${assumption.problems.map((problem) => problem.failure).join(', ')}] ${plainLine(assumption.text)}`
+    ? `  ${index + 1}. [unverified claim: ${assumption.problems.map(problemText).join(', ')}] ${plainLine(assumption.text)}`
     : `  ${index + 1}. ${plainLine(assumption.text)}`;
 
 export const formatOutcome = (outcome: InvestigationOutcome): string => {

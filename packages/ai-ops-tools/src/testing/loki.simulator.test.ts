@@ -4,6 +4,7 @@ import { GrafanaLokiLogsAdapter } from '../logs/grafana-loki.logs-adapter';
 import { LogsSearchExecutor } from '../logs/logs-search.executor';
 
 import { createLokiSimulator, type LokiScenario } from './loki.simulator';
+import { recordingLogger } from './recording-logger';
 
 const NOW_MS = Date.UTC(2026, 10, 26, 12, 0, 0);
 const MINUTE_MS = 60_000;
@@ -20,6 +21,7 @@ const executorFor = (scenario: LokiScenario) =>
   new LogsSearchExecutor(
     new GrafanaLokiLogsAdapter(CONNECTION, createLokiSimulator(NOW_MS)(scenario)),
     new FixedClock(NOW_MS),
+    recordingLogger(),
   );
 
 const groupsOf = (result: unknown): { sample: { message: string } }[] => {

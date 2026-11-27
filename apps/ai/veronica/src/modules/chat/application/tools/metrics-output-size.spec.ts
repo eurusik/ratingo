@@ -75,6 +75,7 @@ const metricsTool = async (): Promise<ToolRegistry> => {
   const executor = new MetricsQueryExecutor(
     { instant: async (query) => byQuery.get(query) ?? [] },
     new FixedClock(NOW_MS),
+    { warn: () => undefined },
   );
   const tools = buildInvestigationTools({
     metricsQuery: (input) => executor.run(input),

@@ -32,8 +32,6 @@ import {
 import { buildLogQuery } from './log-query.policy';
 import { LogsUnavailableError, type LogQuery, type LogsFetch, type LogsPort } from './logs.port';
 
-const SILENT_LOGGER: OpsLogger = { warn: () => undefined };
-
 const safeText = (text: string, maxChars: number): string =>
   shortened(redactSecrets(text), maxChars);
 
@@ -117,7 +115,7 @@ export class LogsSearchExecutor {
   constructor(
     private readonly logs: LogsPort,
     private readonly clock: ClockPort,
-    private readonly logger: OpsLogger = SILENT_LOGGER,
+    private readonly logger: OpsLogger,
   ) {}
 
   async run(input: LogsSearchInput): Promise<unknown> {
@@ -156,7 +154,9 @@ export class LogsSearchExecutor {
         error instanceof LogsUnavailableError
           ? error
           : new LogsUnavailableError(LogsFailureClass.OTHER);
-      this.logger.warn(`logs_search failed: ${unavailable.reason}`);
+      if (unavailable.reason !== LogsFailureClass.NOT_CONFIGURED) {
+        this.logger.warn(`logs_search failed: ${unavailable.reason}`);
+      }
       throw unavailable;
     }
   }

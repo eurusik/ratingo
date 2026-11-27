@@ -15,6 +15,13 @@ export class MetricsQueryError extends Error {
   }
 }
 
+export class MetricsNotConfiguredError extends MetricsQueryError {
+  constructor() {
+    super('Grafana не налаштована');
+    this.name = 'MetricsNotConfiguredError';
+  }
+}
+
 interface PrometheusReply {
   status: string;
   error?: string;
@@ -30,7 +37,7 @@ export class PrometheusMetricsAdapter implements MetricsPort {
   async instant(query: string, atMs: number): Promise<MetricSample[]> {
     const { baseUrl, token } = this.config;
     if (baseUrl === undefined || token === undefined) {
-      throw new MetricsQueryError('Grafana не налаштована');
+      throw new MetricsNotConfiguredError();
     }
     const url = new URL(`${baseUrl.replace(/\/+$/, '')}/api/v1/query`);
     url.searchParams.set('query', query);

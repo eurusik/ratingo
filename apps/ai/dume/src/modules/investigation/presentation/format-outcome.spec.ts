@@ -94,4 +94,38 @@ describe('formatOutcome', () => {
       }),
     ).toContain('rate_limited');
   });
+
+  it('prints the runtime rows a fact cites and names the ref of a claim whose row was never shown', () => {
+    const runtime: VerifiedAnswer = {
+      ...answer,
+      facts: [
+        {
+          text: 'timeouts today',
+          citations: [],
+          evidence: [
+            { ref: 'logs_search#1.2', tool: 'logs_search', summary: 'TMDB \u001b[2Jtimeout' },
+          ],
+        },
+      ],
+      assumptions: [
+        {
+          text: 'invented',
+          origin: AssumptionOrigin.UNVERIFIED_CLAIM,
+          problems: [
+            {
+              citation: null,
+              evidenceRef: 'logs_search#9.1',
+              failure: CitationFailure.EVIDENCE_NOT_SHOWN,
+            },
+          ],
+        },
+      ],
+    };
+
+    const text = formatOutcome(outcomeWith(runtime));
+
+    expect(text).toContain('runtime logs_search#1.2: TMDB [2Jtimeout');
+    expect(text).toContain('[unverified claim: evidence_not_shown: logs_search#9.1] invented');
+    expect(text).not.toContain('\u001b');
+  });
 });

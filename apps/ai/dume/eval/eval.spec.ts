@@ -38,7 +38,9 @@ describe('the investigation eval on the stub model', () => {
       expect(testCase.conveys.length).toBeGreaterThan(0);
       expect(testCase.reference.answer.length).toBeGreaterThan(0);
       for (const claim of testCase.reference.claims) {
-        expect(claim.evidence.every((index) => testCase.evidence[index] !== undefined)).toBe(true);
+        expect(claim.codeEvidence.every((index) => testCase.evidence[index] !== undefined)).toBe(
+          true,
+        );
         expect(
           (claim.runtime ?? []).every((index) => testCase.runtimeSources?.[index] !== undefined),
         ).toBe(true);

@@ -6,7 +6,9 @@ import { EVAL_NOW_MS } from './eval-clock';
 import { jobFailures } from './job-failure-fixtures';
 
 const emptyExecutor = () =>
-  new JobFailuresExecutor({ since: async () => [] }, new FixedClock(EVAL_NOW_MS));
+  new JobFailuresExecutor({ since: async () => [] }, new FixedClock(EVAL_NOW_MS), {
+    warn: () => undefined,
+  });
 
 describe('jobFailures fixture helper', () => {
   it('returns for an empty list exactly what the executor returns', async () => {

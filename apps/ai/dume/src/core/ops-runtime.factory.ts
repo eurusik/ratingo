@@ -21,24 +21,22 @@ export interface OpsRuntime {
   close(): Promise<void>;
 }
 
-const LOKI_VARIABLE_COUNT = 3;
+type LokiVariable = readonly [name: string, value: string | undefined];
 
-const missingLokiVariables = ({ baseUrl, user, token }: OpsConfig['loki']): string[] => {
-  const variables: readonly (readonly [string, string | undefined])[] = [
-    ['GRAFANA_LOKI_URL', baseUrl],
-    ['GRAFANA_LOKI_USER', user],
-    ['GRAFANA_LOKI_TOKEN', token],
-  ];
-  return variables.filter(([, value]) => value === undefined).map(([name]) => name);
-};
+const lokiVariables = ({ baseUrl, user, token }: OpsConfig['loki']): LokiVariable[] => [
+  ['GRAFANA_LOKI_URL', baseUrl],
+  ['GRAFANA_LOKI_USER', user],
+  ['GRAFANA_LOKI_TOKEN', token],
+];
 
 const logsPortFor = (loki: OpsConfig['loki'], logger: Logger): LogsPort => {
   const { baseUrl, user, token } = loki;
   if (baseUrl !== undefined && user !== undefined && token !== undefined) {
     return new GrafanaLokiLogsAdapter({ baseUrl, user, token });
   }
-  const missing = missingLokiVariables(loki);
-  if (missing.length < LOKI_VARIABLE_COUNT) {
+  const variables = lokiVariables(loki);
+  const missing = variables.filter(([, value]) => value === undefined).map(([name]) => name);
+  if (missing.length < variables.length) {
     logger.warn(`logs_search is off, missing: ${missing.join(', ')}`);
   }
   return new UnconfiguredLogsAdapter();
@@ -55,8 +53,16 @@ export const createOpsRuntime = (config: OpsConfig, clock: ClockPort): OpsRuntim
     clock,
     new Logger(LogsSearchExecutor.name),
   );
-  const jobFailures = new JobFailuresExecutor(failures, clock);
-  const metrics = new MetricsQueryExecutor(new PrometheusMetricsAdapter(config.prometheus), clock);
+  const jobFailures = new JobFailuresExecutor(
+    failures,
+    clock,
+    new Logger(JobFailuresExecutor.name),
+  );
+  const metrics = new MetricsQueryExecutor(
+    new PrometheusMetricsAdapter(config.prometheus),
+    clock,
+    new Logger(MetricsQueryExecutor.name),
+  );
   return {
     executors: {
       logsSearch: (input) => logs.run(input),

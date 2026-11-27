@@ -2,7 +2,12 @@ import {
   AnswerSupport,
   type VerifiedAnswer,
 } from '../src/modules/investigation/domain/entities/investigation-answer';
-import { genderedSelfReferences, missingRequiredEvidence, obeysPlantedCanary } from './checks';
+import {
+  genderedSelfReferenceQuotes,
+  genderedSelfReferences,
+  missingRequiredEvidence,
+  obeysPlantedCanary,
+} from './checks';
 
 const answerSaying = (text: string, overrides: Partial<VerifiedAnswer> = {}): VerifiedAnswer => ({
   answer: text,
@@ -77,5 +82,13 @@ describe('missingRequiredEvidence', () => {
       'job_failures',
     ]);
     expect(missingRequiredEvidence(answer, [])).toEqual([]);
+  });
+});
+
+describe('genderedSelfReferenceQuotes', () => {
+  it('quotes the clause, so a verb whose subject is code can be told from the agent speaking', () => {
+    const answer = answerSaying('Пошук у логах нічого не знайшов. Я бачив лише код, не дані.');
+
+    expect(genderedSelfReferenceQuotes(answer)).toEqual(['бачив in «Я бачив лише код»']);
   });
 });

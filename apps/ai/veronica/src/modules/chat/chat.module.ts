@@ -184,8 +184,16 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
         changes: RecentChangesExecutor,
         happy: AskHappyExecutor,
       ): InvestigationExecutors => {
-        const metrics = new MetricsQueryExecutor(metricsPort, clock);
-        const failures = new JobFailuresExecutor(failuresPort, clock);
+        const metrics = new MetricsQueryExecutor(
+          metricsPort,
+          clock,
+          new Logger(MetricsQueryExecutor.name),
+        );
+        const failures = new JobFailuresExecutor(
+          failuresPort,
+          clock,
+          new Logger(JobFailuresExecutor.name),
+        );
         const logs = new LogsSearchExecutor(logsPort, clock, new Logger(LogsSearchExecutor.name));
         return {
           metricsQuery: (input) => metrics.run(input),

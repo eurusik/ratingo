@@ -2,12 +2,19 @@ import { RowList, type ClockPort } from '@ratingo/ai-core';
 
 import { isJobNameFilter, isQueueName, parseWindow } from '../shared/metric-params.policy';
 import { InvalidOpsInputError } from '../shared/invalid-ops-input.error';
+import type { OpsLogger } from '../shared/ops-logger.port';
 import { kyivDateOf } from '../time/kyiv-day';
 import { formatKyivDateTime } from '../time/kyiv-time';
 
 import { JOB_FAILURES_DEFAULT_WINDOW } from './job-failures.constants';
 import type { JobFailuresInput } from './job-failures.input';
-import type { JobFailureSummary, JobFailuresPort } from './job-failures.port';
+import {
+  JobFailuresNotConfiguredError,
+  JobFailuresUnavailableError,
+  type JobFailureFilter,
+  type JobFailureSummary,
+  type JobFailuresPort,
+} from './job-failures.port';
 
 const MS_PER_HOUR = 3_600_000;
 
@@ -37,6 +44,11 @@ export const nothingRecordedNote = (filter: { job?: string; queue?: string }): s
   return `${subject} on those days. ${HANDLED_ERRORS_SENTENCE}`;
 };
 
+const failureOf = (error: unknown): string => {
+  if (error instanceof JobFailuresUnavailableError) return error.reason;
+  return error instanceof Error ? error.name : 'error';
+};
+
 const hintFor = (input: JobFailuresInput): string =>
   input.job === undefined && input.queue === undefined
     ? 'pass job=<part of a job name> or queue=<queue name> or a shorter window'
@@ -46,6 +58,7 @@ export class JobFailuresExecutor {
   constructor(
     private readonly failures: JobFailuresPort,
     private readonly clock: ClockPort,
+    private readonly logger: OpsLogger,
   ) {}
 
   async run(input: JobFailuresInput): Promise<unknown> {
@@ -64,7 +77,7 @@ export class JobFailuresExecutor {
       from: kyivDateOf(nowMs - window.hours * MS_PER_HOUR),
       to: kyivDateOf(nowMs),
     };
-    const summaries = await this.failures.since({
+    const summaries = await this.fetch({
       firstKyivDay: countedKyivDays.from,
       lastKyivDay: countedKyivDays.to,
       job: input.job,
@@ -80,5 +93,16 @@ export class JobFailuresExecutor {
       ...(rows.length === 0 ? { note: nothingRecordedNote(input) } : {}),
       ...omission,
     }));
+  }
+
+  private async fetch(filter: JobFailureFilter): Promise<JobFailureSummary[]> {
+    try {
+      return await this.failures.since(filter);
+    } catch (error) {
+      if (!(error instanceof JobFailuresNotConfiguredError)) {
+        this.logger.warn(`job_failures failed: ${failureOf(error)}`);
+      }
+      throw error;
+    }
   }
 }

@@ -22,8 +22,15 @@ export interface JobFailuresPort {
 }
 
 export class JobFailuresUnavailableError extends Error {
-  constructor(reason: string) {
+  constructor(readonly reason: string) {
     super(`job_failures is unavailable: ${reason}`);
     this.name = 'JobFailuresUnavailableError';
+  }
+}
+
+export class JobFailuresNotConfiguredError extends JobFailuresUnavailableError {
+  constructor() {
+    super('AI_READER_DATABASE_URL is not set');
+    this.name = 'JobFailuresNotConfiguredError';
   }
 }

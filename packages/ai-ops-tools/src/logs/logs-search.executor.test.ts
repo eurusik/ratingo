@@ -1,6 +1,9 @@
 import { FixedClock, RowList, defineTool, fitRowList } from '@ratingo/ai-core';
 import { z } from 'zod';
 
+import type { OpsLogger } from '../shared/ops-logger.port';
+import { recordingLogger } from '../testing/recording-logger';
+
 import { LOG_FETCH_LIMIT_GROUPED, LOG_FETCH_LIMIT_LINES, LogsFailureClass } from './logs.constants';
 import { InvalidLogSearchError } from './log-query.policy';
 import { LogsUnavailableError, type LogQuery, type LogsFetch, type RawLogLine } from './logs.port';
@@ -20,7 +23,11 @@ const record = (minutesAgo: number, fields: Record<string, unknown> = {}): RawLo
   }),
 });
 
-const executorReturning = (fetch: LogsFetch | Error, asked: LogQuery[] = []) =>
+const executorReturning = (
+  fetch: LogsFetch | Error,
+  asked: LogQuery[] = [],
+  logger: OpsLogger = recordingLogger(),
+) =>
   new LogsSearchExecutor(
     {
       search: async (query) => {
@@ -30,6 +37,7 @@ const executorReturning = (fetch: LogsFetch | Error, asked: LogQuery[] = []) =>
       },
     },
     new FixedClock(NOW_MS),
+    logger,
   );
 
 const found = (...lines: RawLogLine[]): LogsFetch => ({ lines, limitReached: false });
@@ -280,5 +288,45 @@ describe('LogsSearchExecutor', () => {
         service: 'ratingo-api',
       }),
     ).rejects.toMatchObject({ message: 'logs_search is unavailable: other' });
+  });
+
+  describe('failures of the port', () => {
+    it('logs the class of a failed search and lets the failure through', async () => {
+      const logger = recordingLogger();
+
+      await expect(
+        executorReturning(new LogsUnavailableError(LogsFailureClass.TIMEOUT), [], logger).run({
+          service: 'ratingo-api',
+        }),
+      ).rejects.toThrow('logs_search is unavailable: timeout');
+
+      expect(logger.warnings).toEqual(['logs_search failed: timeout']);
+    });
+
+    it('reports an error it does not know as the class other', async () => {
+      const logger = recordingLogger();
+
+      await expect(
+        executorReturning(new TypeError('boom'), [], logger).run({ service: 'ratingo-api' }),
+      ).rejects.toThrow('logs_search is unavailable: other');
+
+      expect(logger.warnings).toEqual(['logs_search failed: other']);
+    });
+
+    it('does not warn that a tool is off when it was never configured', async () => {
+      const logger = recordingLogger();
+
+      await expect(
+        executorReturning(
+          new LogsUnavailableError(LogsFailureClass.NOT_CONFIGURED),
+          [],
+          logger,
+        ).run({
+          service: 'ratingo-api',
+        }),
+      ).rejects.toThrow('not_configured');
+
+      expect(logger.warnings).toEqual([]);
+    });
   });
 });

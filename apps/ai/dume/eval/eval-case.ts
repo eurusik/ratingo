@@ -8,7 +8,7 @@ export type CaseKind = (typeof CaseKind)[keyof typeof CaseKind];
 import type {
   LokiScenario,
   OpsTool,
-  PrometheusAnswer,
+  PrometheusSeries,
   SimulatedJobFailureDay,
 } from '@ratingo/ai-ops-tools';
 
@@ -20,7 +20,7 @@ interface Evidence {
 
 interface ReferenceClaim {
   text: string;
-  evidence: readonly number[];
+  codeEvidence: readonly number[];
   runtime?: readonly number[];
 }
 
@@ -33,7 +33,7 @@ export interface RuntimeSource {
 export interface RuntimeFixture {
   logs?: LokiScenario;
   failures?: readonly SimulatedJobFailureDay[];
-  metrics?: readonly PrometheusAnswer[];
+  metrics?: readonly PrometheusSeries[];
   unavailable?: readonly OpsTool[];
 }
 

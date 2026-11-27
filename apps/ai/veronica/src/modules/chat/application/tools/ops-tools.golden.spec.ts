@@ -23,6 +23,7 @@ import { renderSystemCard } from '../../domain/policies/system-card.policy';
 import type { InvestigationExecutors } from './investigation-executors';
 import { buildInvestigationTools } from './investigation-tools';
 
+const QUIET = { warn: () => undefined };
 const NOW_MS = Date.UTC(2026, 10, 26, 12, 0, 0);
 const MINUTE_MS = 60_000;
 const HOUR_SECONDS = 3600;
@@ -74,6 +75,7 @@ const logsFor = (fetch: LogsFetch | Error) =>
       },
     },
     new FixedClock(NOW_MS),
+    QUIET,
   );
 
 const summary = (overrides: Partial<JobFailureSummary> = {}): JobFailureSummary => ({
@@ -119,6 +121,7 @@ const failuresFor = (rows: JobFailureSummary[] | Error) =>
       },
     },
     new FixedClock(NOW_MS),
+    QUIET,
   );
 
 const FIXTURE_CARD: SystemCard = {
@@ -260,6 +263,7 @@ const metricsFor = (answer: 'full' | 'none' | Error) => {
       },
     },
     new FixedClock(NOW_MS),
+    QUIET,
   );
 };
 
@@ -365,7 +369,7 @@ describe('Veronica ops tools, golden outputs', () => {
     it('reports itself unavailable, with the reason, when it is not configured', async () => {
       const executors = {
         ...healthy(),
-        logs: new LogsSearchExecutor(new UnconfiguredLogsAdapter(), new FixedClock(NOW_MS)),
+        logs: new LogsSearchExecutor(new UnconfiguredLogsAdapter(), new FixedClock(NOW_MS), QUIET),
       };
 
       expect(await call(executors, 'logs_search', { service: 'ratingo-api' })).toMatchSnapshot();
@@ -374,7 +378,7 @@ describe('Veronica ops tools, golden outputs', () => {
     it.each([400, 401, 429, 500, 404])('names the reason when Loki answers %s', async (status) => {
       const executors = {
         ...healthy(),
-        logs: new LogsSearchExecutor(lokiAdapterAnswering(status), new FixedClock(NOW_MS)),
+        logs: new LogsSearchExecutor(lokiAdapterAnswering(status), new FixedClock(NOW_MS), QUIET),
       };
 
       expect(await call(executors, 'logs_search', { service: 'ratingo-api' })).toMatchSnapshot();
@@ -426,6 +430,7 @@ describe('Veronica ops tools, golden outputs', () => {
         failures: new JobFailuresExecutor(
           new UnconfiguredJobFailuresAdapter(),
           new FixedClock(NOW_MS),
+          QUIET,
         ),
       };
 
@@ -462,7 +467,8 @@ describe('Veronica ops tools, golden outputs', () => {
           window: '7d',
         },
       ],
-      ['one job', { template: 'scheduler_last_runs', job: 'refresh-all' }],
+      ['one job', { template: 'scheduler_last_runs', job: 'job-weekly' }],
+      ['a job the schedule does not have', { template: 'scheduler_last_runs', job: 'refresh-all' }],
     ])('answers %s', async (_name, input) => {
       expect(await call(healthy(), 'metrics_query', input)).toMatchSnapshot();
     });
@@ -510,6 +516,7 @@ describe('Veronica ops tools, golden outputs', () => {
         metrics: new MetricsQueryExecutor(
           new PrometheusMetricsAdapter({ baseUrl: undefined, token: undefined }),
           new FixedClock(NOW_MS),
+          QUIET,
         ),
       };
 
@@ -527,6 +534,7 @@ describe('Veronica ops tools, golden outputs', () => {
             async () => new Response('{}', { status }),
           ),
           new FixedClock(NOW_MS),
+          QUIET,
         ),
       };
 

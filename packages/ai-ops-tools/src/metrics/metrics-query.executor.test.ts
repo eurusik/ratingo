@@ -1,9 +1,12 @@
 import { FixedClock, RowList } from '@ratingo/ai-core';
 
+import { recordingLogger } from '../testing/recording-logger';
+
 import type { MetricSample } from './metrics.port';
 import { METRIC_SERIES_CAP } from './metrics.constants';
 
 import { MetricsQueryExecutor } from './metrics-query.executor';
+import { MetricsNotConfiguredError, MetricsQueryError } from './prometheus.metrics-adapter';
 
 const NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
 const DAY_MS = 86_400_000;
@@ -12,6 +15,7 @@ class Harness {
   readonly asked: { query: string; atMs: number }[] = [];
   samples: (query: string) => MetricSample[] = () => [];
   failure: Error | null = null;
+  readonly logger = recordingLogger();
 
   readonly executor = new MetricsQueryExecutor(
     {
@@ -22,6 +26,7 @@ class Harness {
       },
     },
     new FixedClock(NOW_MS),
+    this.logger,
   );
 }
 
@@ -122,5 +127,42 @@ describe('MetricsQueryExecutor', () => {
     await expect(harness.executor.run({ template: 'site_requests' })).rejects.toThrow(
       'Grafana недоступна',
     );
+  });
+
+  describe('failures of the port', () => {
+    it('logs the message of a failed query and lets the failure through', async () => {
+      const harness = new Harness();
+      harness.failure = new MetricsQueryError('Grafana відповіла HTTP 502');
+
+      await expect(harness.executor.run({ template: 'infra_health' })).rejects.toBe(
+        harness.failure,
+      );
+
+      expect(new Set(harness.logger.warnings)).toEqual(
+        new Set(['metrics_query failed: Grafana відповіла HTTP 502']),
+      );
+    });
+
+    it('logs the name of an error it does not know', async () => {
+      const harness = new Harness();
+      harness.failure = new TypeError('boom');
+
+      await expect(harness.executor.run({ template: 'infra_health' })).rejects.toThrow('boom');
+
+      expect(new Set(harness.logger.warnings)).toEqual(
+        new Set(['metrics_query failed: TypeError']),
+      );
+    });
+
+    it('does not warn that a tool is off when Grafana was never configured', async () => {
+      const harness = new Harness();
+      harness.failure = new MetricsNotConfiguredError();
+
+      await expect(harness.executor.run({ template: 'infra_health' })).rejects.toThrow(
+        'Grafana не налаштована',
+      );
+
+      expect(harness.logger.warnings).toEqual([]);
+    });
   });
 });

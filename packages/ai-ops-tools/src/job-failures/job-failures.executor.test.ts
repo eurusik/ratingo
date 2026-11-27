@@ -1,7 +1,15 @@
 import { FixedClock, RowList, fitRowList } from '@ratingo/ai-core';
 
+import type { OpsLogger } from '../shared/ops-logger.port';
+import { recordingLogger } from '../testing/recording-logger';
+
 import { JOB_FAILURES_OUTPUT_CAP } from './job-failures.constants';
-import type { JobFailureFilter, JobFailureSummary } from './job-failures.port';
+import {
+  JobFailuresNotConfiguredError,
+  JobFailuresUnavailableError,
+  type JobFailureFilter,
+  type JobFailureSummary,
+} from './job-failures.port';
 
 import { JobFailuresExecutor } from './job-failures.executor';
 
@@ -21,7 +29,11 @@ const summary = (overrides: Partial<JobFailureSummary> = {}): JobFailureSummary 
   ...overrides,
 });
 
-const executorReturning = (rows: JobFailureSummary[], asked: JobFailureFilter[] = []) =>
+const executorReturning = (
+  rows: JobFailureSummary[],
+  asked: JobFailureFilter[] = [],
+  logger: OpsLogger = recordingLogger(),
+) =>
   new JobFailuresExecutor(
     {
       since: async (filter) => {
@@ -30,6 +42,7 @@ const executorReturning = (rows: JobFailureSummary[], asked: JobFailureFilter[] 
       },
     },
     new FixedClock(NOW_MS),
+    logger,
   );
 
 const materialized = (result: unknown): unknown =>
@@ -139,5 +152,45 @@ describe('JobFailuresExecutor', () => {
     const asked: JobFailureFilter[] = [];
     await expect(executorReturning([], asked).run(input)).rejects.toThrow(message);
     expect(asked).toEqual([]);
+  });
+
+  describe('failures of the port', () => {
+    const logger = recordingLogger();
+
+    const failing = (error: Error) =>
+      new JobFailuresExecutor(
+        {
+          since: async () => {
+            throw error;
+          },
+        },
+        new FixedClock(NOW_MS),
+        logger,
+      );
+    afterEach(() => {
+      logger.warnings.length = 0;
+    });
+
+    it('logs the reason of a failed query and lets the failure through', async () => {
+      const error = new JobFailuresUnavailableError('query failed (Error)');
+
+      await expect(failing(error).run({})).rejects.toBe(error);
+
+      expect(logger.warnings).toEqual(['job_failures failed: query failed (Error)']);
+    });
+
+    it('logs the name of an error it does not know', async () => {
+      await expect(failing(new TypeError('boom')).run({})).rejects.toThrow('boom');
+
+      expect(logger.warnings).toEqual(['job_failures failed: TypeError']);
+    });
+
+    it('does not warn that a tool is off when it was never configured', async () => {
+      await expect(failing(new JobFailuresNotConfiguredError()).run({})).rejects.toThrow(
+        'job_failures is unavailable: AI_READER_DATABASE_URL is not set',
+      );
+
+      expect(logger.warnings).toEqual([]);
+    });
   });
 });

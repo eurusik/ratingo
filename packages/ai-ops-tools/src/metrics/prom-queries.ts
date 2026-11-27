@@ -1,8 +1,10 @@
+export const QUEUE_JOBS_METRIC = 'app_queue_jobs';
 const BACKLOG_STATES = 'state=~"waiting|delayed|prioritized"';
 const SERVICE = 'service_name="ratingo-storefront"';
 const REQUEST_COUNT = 'app_next_request_duration_seconds_count';
 const RENDER_BUCKET = 'app_next_render_duration_seconds_bucket';
-const CLIENT_REQUESTS = 'http_client_request_duration_seconds_count';
+export const CLIENT_REQUESTS_METRIC = 'http_client_request_duration_seconds_count';
+const CLIENT_REQUESTS = CLIENT_REQUESTS_METRIC;
 const BOT_KINDS = 'bot|ai_crawler';
 const ALL_KINDS = `human|${BOT_KINDS}`;
 const ERROR_STATUSES = '401|403|429';
@@ -16,7 +18,7 @@ const labelEquals = (name: string, value: string | undefined): string | null =>
   value === undefined ? null : `${name}="${value}"`;
 
 export const queueBacklog = (queue?: string): string =>
-  `sum by (queue) (app_queue_jobs{${withLabels([BACKLOG_STATES, labelEquals('queue', queue)])}})`;
+  `sum by (queue) (${QUEUE_JOBS_METRIC}{${withLabels([BACKLOG_STATES, labelEquals('queue', queue)])}})`;
 
 export const queueBacklogPeak = (window: string = DEFAULT_WINDOW, queue?: string): string =>
   `max_over_time(${queueBacklog(queue)}[${window}:5m])`;

@@ -1,12 +1,19 @@
 import { RowList, type ClockPort } from '@ratingo/ai-core';
 
 import { InvalidOpsInputError } from '../shared/invalid-ops-input.error';
+import type { OpsLogger } from '../shared/ops-logger.port';
 import { formatKyivDateTime } from '../time/kyiv-time';
 
 import { METRIC_TEMPLATES, type QueryResult } from './metric-templates';
 import type { MetricsQueryInput } from './metrics-query.input';
 import { METRIC_SERIES_CAP } from './metrics.constants';
-import type { MetricsPort } from './metrics.port';
+import type { MetricSample, MetricsPort } from './metrics.port';
+import { MetricsNotConfiguredError, MetricsQueryError } from './prometheus.metrics-adapter';
+
+const failureOf = (error: unknown): string => {
+  if (error instanceof MetricsQueryError) return error.message;
+  return error instanceof Error ? error.name : 'error';
+};
 
 const MS_PER_DAY = 86_400_000;
 
@@ -21,6 +28,7 @@ export class MetricsQueryExecutor {
   constructor(
     private readonly metrics: MetricsPort,
     private readonly clock: ClockPort,
+    private readonly logger: OpsLogger,
   ) {}
 
   async run(input: MetricsQueryInput): Promise<unknown> {
@@ -56,7 +64,7 @@ export class MetricsQueryExecutor {
     const fetched = await Promise.all(
       queries.map(async (query) => ({
         name: query.name,
-        samples: await this.metrics.instant(query.promql, atMs),
+        samples: await this.instant(query.promql, atMs),
       })),
     );
     return {
@@ -69,5 +77,16 @@ export class MetricsQueryExecutor {
         0,
       ),
     };
+  }
+
+  private async instant(promql: string, atMs: number): Promise<MetricSample[]> {
+    try {
+      return await this.metrics.instant(promql, atMs);
+    } catch (error) {
+      if (!(error instanceof MetricsNotConfiguredError)) {
+        this.logger.warn(`metrics_query failed: ${failureOf(error)}`);
+      }
+      throw error;
+    }
   }
 }

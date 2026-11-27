@@ -107,7 +107,9 @@ export class AiCoreModule implements OnModuleDestroy {
   ) {}
 
   async onModuleDestroy(): Promise<void> {
-    await this.ops.close();
-    await this.redis?.quit().catch(() => this.redis?.disconnect());
+    await Promise.allSettled([
+      this.ops.close(),
+      this.redis?.quit().catch(() => this.redis?.disconnect()),
+    ]);
   }
 }

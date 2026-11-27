@@ -240,6 +240,13 @@ exports[`Veronica ops tools, golden outputs logs_search says when the read stopp
 }
 `;
 
+exports[`Veronica ops tools, golden outputs metrics_query answers a job the schedule does not have 1`] = `
+{
+  "content": "{"template":"scheduler_last_runs","window":null,"offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","unavailable":"жодна задача не має «refresh-all» у назві"}",
+  "isError": false,
+}
+`;
+
 exports[`Veronica ops tools, golden outputs metrics_query answers a provider and a status 1`] = `
 {
   "content": "{"template":"http_client_errors","window":"7d","offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","unavailable":"метрик за цей запит немає"}",
@@ -263,7 +270,7 @@ exports[`Veronica ops tools, golden outputs metrics_query answers a shifted day 
 
 exports[`Veronica ops tools, golden outputs metrics_query answers one job 1`] = `
 {
-  "content": "{"template":"scheduler_last_runs","window":null,"offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","unavailable":"жодна задача не має «refresh-all» у назві"}",
+  "content": "{"template":"scheduler_last_runs","window":null,"offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"jobs":[{"job":"job-weekly","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"weekly on Monday","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-weekly-on-sunday","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"weekly on Sunday","nextRunAtKyiv":"2026-11-30 08:46"}]}}",
   "isError": false,
 }
 `;

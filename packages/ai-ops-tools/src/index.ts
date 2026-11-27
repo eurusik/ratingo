@@ -31,6 +31,7 @@ export {
 } from './job-failures/job-failures.constants';
 export { JobFailuresExecutor, nothingRecordedNote } from './job-failures/job-failures.executor';
 export {
+  JobFailuresNotConfiguredError,
   JobFailuresUnavailableError,
   type JobFailureFilter,
   type JobFailureSummary,
@@ -53,6 +54,7 @@ export { MetricsQueryExecutor } from './metrics/metrics-query.executor';
 export type { MetricSample, MetricsPort } from './metrics/metrics.port';
 export * from './metrics/prom-queries';
 export {
+  MetricsNotConfiguredError,
   MetricsQueryError,
   PrometheusMetricsAdapter,
   type PrometheusConnection,
@@ -71,7 +73,6 @@ export { metricsQueryInput, type MetricsQueryInput } from './metrics/metrics-que
 export { OpsTool } from './tools/ops-tool-names';
 export {
   createOpsTools,
-  opsContentBudget,
   type OpsExecutors,
   type OpsOutputDecorator,
   type OpsTools,
@@ -87,4 +88,4 @@ export {
   createJobFailuresSimulator,
   type SimulatedJobFailureDay,
 } from './testing/job-failures.simulator';
-export { createPrometheusSimulator, type PrometheusAnswer } from './testing/prometheus.simulator';
+export { createPrometheusSimulator, type PrometheusSeries } from './testing/prometheus.simulator';

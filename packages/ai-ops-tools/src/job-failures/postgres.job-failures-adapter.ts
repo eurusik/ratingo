@@ -11,6 +11,7 @@ import { connectReportingDatabase } from './reporting-connection';
 
 const READER_CONNECTIONS = 1;
 const MS_PER_SECOND = 1000;
+const SHUTDOWN_GRACE_SECONDS = 5;
 
 interface JobFailureRow {
   job: string;
@@ -91,6 +92,6 @@ export class PostgresJobFailuresAdapter implements JobFailuresPort {
   }
 
   async close(): Promise<void> {
-    await this.sql.end();
+    await this.sql.end({ timeout: SHUTDOWN_GRACE_SECONDS });
   }
 }

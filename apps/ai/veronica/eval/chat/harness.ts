@@ -73,6 +73,7 @@ const fixtureGaTools = async (testCase: EvalCase, clock: ClockPort): Promise<Ext
 const NO_RECORDED_FAILURES = new JobFailuresExecutor(
   { since: async () => [] },
   new FixedClock(EVAL_NOW_MS),
+  new Logger(JobFailuresExecutor.name),
 );
 
 const SIMULATED_LOKI = { baseUrl: 'https://loki.eval.invalid', user: '1', token: 'eval' };
