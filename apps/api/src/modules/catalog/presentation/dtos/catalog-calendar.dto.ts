@@ -79,6 +79,9 @@ export class CalendarMovieDto {
   @ApiProperty({ type: ImageDto, nullable: true })
   poster: ImageDto | null;
 
+  @ApiProperty({ type: ImageDto, nullable: true })
+  backdrop: ImageDto | null;
+
   @ApiProperty({
     type: Date,
     description: 'Release date the movie is listed under: theatrical, then digital, then primary.',

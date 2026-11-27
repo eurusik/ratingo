@@ -117,6 +117,7 @@ export interface CalendarMovie extends MovieReleaseLabel {
   slug: string;
   title: string;
   poster: ImageData | null;
+  backdrop: ImageData | null;
   releaseDate: Date;
   popularity: number;
   isSavedForLater: boolean;

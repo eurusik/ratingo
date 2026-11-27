@@ -3214,6 +3214,7 @@ export interface components {
             /** @example Dune: Part Two */
             title: string;
             poster: components["schemas"]["ImageDto"] | null;
+            backdrop: components["schemas"]["ImageDto"] | null;
             /**
              * Format: date-time
              * @description Release date the movie is listed under: theatrical, then digital, then primary.
