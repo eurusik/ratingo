@@ -93,48 +93,70 @@ const executeRun = async (testCase: EvalCase, ports: EvalPorts): Promise<Finishe
   };
 };
 
+class EvalRunState {
+  agentCostUsd = 0;
+  judgeCostUsd = 0;
+  stoppedForCost = false;
+  private readonly verdicts: (RunVerdict | undefined)[][];
+  private readonly outcomes: (CaseOutcome | undefined)[];
+
+  constructor(
+    private readonly cases: readonly EvalCase[],
+    private readonly policy: RepeatPolicy,
+  ) {
+    this.verdicts = cases.map(() => new Array<RunVerdict | undefined>(policy.runs).fill(undefined));
+    this.outcomes = new Array<CaseOutcome | undefined>(cases.length).fill(undefined);
+  }
+
+  costReached(maxCostUsd: number): boolean {
+    return this.agentCostUsd + this.judgeCostUsd >= maxCostUsd;
+  }
+
+  record({ caseIndex, runIndex }: Task, finished: FinishedRun): CaseOutcome | undefined {
+    this.agentCostUsd += finished.agentCostUsd;
+    this.judgeCostUsd += finished.judgeCostUsd;
+    this.verdicts[caseIndex][runIndex] = finished.verdict;
+    const runs = this.verdicts[caseIndex].filter((verdict): verdict is RunVerdict => !!verdict);
+    if (runs.length !== this.policy.runs) return undefined;
+    const testCase = this.cases[caseIndex];
+    const outcome = aggregateCase(testCase.id, testCase.kind, runs, this.policy);
+    this.outcomes[caseIndex] = outcome;
+    return outcome;
+  }
+
+  finishedOutcomes(): CaseOutcome[] {
+    return this.outcomes.filter((outcome): outcome is CaseOutcome => outcome !== undefined);
+  }
+}
+
+const tasksOf = (caseCount: number, runs: number): Task[] =>
+  Array.from({ length: caseCount }, (_, caseIndex) =>
+    Array.from({ length: runs }, (__, runIndex) => ({ caseIndex, runIndex })),
+  ).flat();
+
 export const runEval = async (
   cases: readonly EvalCase[],
   ports: EvalPorts,
   config: EvalRunnerConfig,
 ): Promise<EvalRun> => {
   assertRepeatPolicy(config.repeat);
-  const tasks: Task[] = cases.flatMap((_, caseIndex) =>
-    Array.from({ length: config.repeat.runs }, (__, runIndex) => ({ caseIndex, runIndex })),
+  const state = new EvalRunState(cases, config.repeat);
+  await mapWithLimit(
+    tasksOf(cases.length, config.repeat.runs),
+    config.concurrency,
+    async (task) => {
+      if (state.costReached(config.maxCostUsd)) {
+        state.stoppedForCost = true;
+        return;
+      }
+      const outcome = state.record(task, await executeRun(cases[task.caseIndex], ports));
+      if (outcome !== undefined) config.onCaseFinished?.(outcome);
+    },
   );
-  const verdicts: (RunVerdict | undefined)[][] = cases.map(() =>
-    new Array<RunVerdict | undefined>(config.repeat.runs).fill(undefined),
-  );
-  const outcomes = new Array<CaseOutcome | undefined>(cases.length).fill(undefined);
-  let agentCostUsd = 0;
-  let judgeCostUsd = 0;
-  let stoppedForCost = false;
-
-  const finishCase = (caseIndex: number): void => {
-    const finished = verdicts[caseIndex].filter((verdict): verdict is RunVerdict => !!verdict);
-    if (finished.length !== config.repeat.runs) return;
-    const testCase = cases[caseIndex];
-    const outcome = aggregateCase(testCase.id, testCase.kind, finished, config.repeat);
-    outcomes[caseIndex] = outcome;
-    config.onCaseFinished?.(outcome);
-  };
-
-  await mapWithLimit(tasks, config.concurrency, async ({ caseIndex, runIndex }) => {
-    if (agentCostUsd + judgeCostUsd >= config.maxCostUsd) {
-      stoppedForCost = true;
-      return;
-    }
-    const finished = await executeRun(cases[caseIndex], ports);
-    agentCostUsd += finished.agentCostUsd;
-    judgeCostUsd += finished.judgeCostUsd;
-    verdicts[caseIndex][runIndex] = finished.verdict;
-    finishCase(caseIndex);
-  });
-
   return {
-    outcomes: outcomes.filter((outcome): outcome is CaseOutcome => outcome !== undefined),
-    agentCostUsd,
-    judgeCostUsd,
-    stoppedForCost,
+    outcomes: state.finishedOutcomes(),
+    agentCostUsd: state.agentCostUsd,
+    judgeCostUsd: state.judgeCostUsd,
+    stoppedForCost: state.stoppedForCost,
   };
 };

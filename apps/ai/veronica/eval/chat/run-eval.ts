@@ -15,15 +15,16 @@ import {
 import { MODEL_PRICES } from '../../src/config/models.config';
 import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
 
-import { summarize, type CaseOutcome } from './aggregate';
-import { buildBaseline, diffBaseline, type BaselineDiff } from './baseline';
+import { summarize, type CaseOutcome, type EvalSummary } from './aggregate';
+import { buildBaseline, diffBaseline, type Baseline } from './baseline';
 import { readBaselineFile, writeBaselineFile } from './baseline-file';
-import { measureJudgeAgreement, type CalibrationReport } from './calibration';
+import type { CalibrationReport } from './calibration';
+import { measureJudgeAgreement } from './calibration-runner';
 import { CALIBRATION_ITEMS } from './calibration.set';
 import { EVAL_CASES } from './cases';
-import { parseEvalOptions, type EvalOptions } from './eval-options';
-import { runEval, type EvalPorts, type EvalRun } from './eval-runner';
 import type { EvalCase } from './eval-case';
+import { parseEvalOptions, type EvalOptions } from './eval-options';
+import { runEval, type EvalRun } from './eval-runner';
 import { isStubModel, runCase } from './harness';
 import type { JudgePort } from './judge';
 import { ModelJudge } from './model-judge';
@@ -37,6 +38,12 @@ const JSON_INDENT = 2;
 const EXIT_REGRESSION = 1;
 const EXIT_INCOMPLETE = 2;
 
+interface RunIdentity {
+  modelRef: string;
+  structureOnly: boolean;
+  apiKey: string | undefined;
+}
+
 const write = (text: string): void => {
   process.stdout.write(`${text}\n`);
 };
@@ -48,7 +55,7 @@ const selectCases = (only: readonly string[] | null): readonly EvalCase[] => {
   return EVAL_CASES.filter((testCase) => only.includes(testCase.id));
 };
 
-const buildJudge = (options: EvalOptions, apiKey: string | undefined): JudgePort => {
+const buildModelJudge = (options: EvalOptions, apiKey: string | undefined): JudgePort => {
   const ref = parseModelRef(options.judgeModel);
   if (ref.provider !== ANTHROPIC_PROVIDER) {
     throw new Error(`The judge must be an Anthropic model, got "${options.judgeModel}"`);
@@ -65,74 +72,101 @@ const buildJudge = (options: EvalOptions, apiKey: string | undefined): JudgePort
 
 const printCase = (outcome: CaseOutcome): void => write(renderCase(outcome));
 
-const runCases = async (
-  cases: readonly EvalCase[],
+const executeCases = async (
+  identity: RunIdentity,
   options: EvalOptions,
-  ports: EvalPorts,
-): Promise<EvalRun> =>
-  runEval(cases, ports, {
-    repeat: { runs: options.runs, passAt: options.passAt },
-    concurrency: options.concurrency,
-    maxCostUsd: options.maxCostUsd,
-    onCaseFinished: printCase,
-  });
-
-const compareWithBaseline = async (
-  options: EvalOptions,
-  run: EvalRun,
-): Promise<BaselineDiff | null> => {
-  const baseline = await readBaselineFile(options.baselinePath);
-  if (baseline === null) {
-    write(`no baseline at ${options.baselinePath}: nothing to compare with`);
-    return null;
-  }
-  const diff = diffBaseline(baseline, run.outcomes);
-  write(`\ncompared with the baseline at ${options.baselinePath}:\n${renderDiff(diff)}`);
-  return diff;
+  judge: JudgePort,
+): Promise<EvalRun> => {
+  const folder = await loadVeronicaAgentFolder();
+  const setup = {
+    modelRef: identity.modelRef,
+    anthropicApiKey: identity.apiKey,
+    anthropicMaxRetries: ANTHROPIC_MAX_RETRIES,
+  };
+  return runEval(
+    selectCases(options.only),
+    { runAgent: (testCase) => runCase(testCase, setup, folder), judge },
+    {
+      repeat: { runs: options.runs, passAt: options.passAt },
+      concurrency: options.concurrency,
+      maxCostUsd: options.maxCostUsd,
+      onCaseFinished: printCase,
+    },
+  );
 };
 
-const reportRun = async (
+const printSummary = (
+  identity: RunIdentity,
   options: EvalOptions,
-  modelRef: string,
-  structureOnly: boolean,
   run: EvalRun,
-): Promise<number> => {
-  const summary = summarize(run.outcomes);
+  summary: EvalSummary,
+): void =>
   write(
     `\n${renderSummary(summary, {
-      model: modelRef,
-      judgeModel: structureOnly ? 'reference comparison (no model)' : options.judgeModel,
+      model: identity.modelRef,
+      judgeModel: identity.structureOnly ? 'reference comparison (no model)' : options.judgeModel,
       runs: options.runs,
       passAt: options.passAt,
       agentCostUsd: run.agentCostUsd,
       judgeCostUsd: run.judgeCostUsd,
-      structureOnly,
+      structureOnly: identity.structureOnly,
       stoppedForCost: run.stoppedForCost,
     })}`,
   );
-  if (options.dumpPath !== null) {
-    await writeFile(
-      options.dumpPath,
-      `${JSON.stringify({ summary, cases: run.outcomes }, null, JSON_INDENT)}\n`,
-    );
+
+const dumpRun = async (path: string, summary: EvalSummary, run: EvalRun): Promise<void> => {
+  await writeFile(path, `${JSON.stringify({ summary, cases: run.outcomes }, null, JSON_INDENT)}\n`);
+};
+
+const saveBaseline = async (
+  identity: RunIdentity,
+  options: EvalOptions,
+  run: EvalRun,
+): Promise<void> => {
+  await writeBaselineFile(
+    options.baselinePath,
+    buildBaseline(run.outcomes, {
+      model: identity.modelRef,
+      judgeModel: options.judgeModel,
+      runs: options.runs,
+      passAt: options.passAt,
+      savedAtMs: new SystemClock().nowMs(),
+    }),
+  );
+  write(`baseline saved to ${options.baselinePath}`);
+};
+
+const exitCodeAgainstBaseline = (
+  baseline: Baseline | null,
+  options: EvalOptions,
+  run: EvalRun,
+): number => {
+  if (baseline === null) {
+    write(`no baseline at ${options.baselinePath}: nothing to compare with`);
+    return 0;
   }
-  if (run.stoppedForCost) return EXIT_INCOMPLETE;
-  if (structureOnly) return summary.failedCases.length > 0 ? EXIT_REGRESSION : 0;
-  const diff = await compareWithBaseline(options, run);
-  if (options.saveBaseline) {
-    await writeBaselineFile(
-      options.baselinePath,
-      buildBaseline(run.outcomes, {
-        model: modelRef,
-        judgeModel: options.judgeModel,
-        runs: options.runs,
-        passAt: options.passAt,
-        savedAtMs: new SystemClock().nowMs(),
-      }),
-    );
-    write(`baseline saved to ${options.baselinePath}`);
+  const diff = diffBaseline(baseline, run.outcomes, { fullRun: options.only === null });
+  write(`\ncompared with the baseline at ${options.baselinePath}:\n${renderDiff(diff)}`);
+  return diff.regressions.length > 0 ? EXIT_REGRESSION : 0;
+};
+
+const reportRun = async (
+  identity: RunIdentity,
+  options: EvalOptions,
+  baseline: Baseline | null,
+  run: EvalRun,
+): Promise<number> => {
+  const summary = summarize(run.outcomes);
+  printSummary(identity, options, run, summary);
+  if (options.dumpPath !== null) await dumpRun(options.dumpPath, summary, run);
+  if (identity.structureOnly) return summary.failedCases.length > 0 ? EXIT_REGRESSION : 0;
+  if (run.stoppedForCost || summary.unscorableRuns > 0) {
+    write('the results are incomplete: not compared with the baseline and not saved');
+    return EXIT_INCOMPLETE;
   }
-  return diff !== null && diff.regressions.length > 0 ? EXIT_REGRESSION : 0;
+  const exitCode = exitCodeAgainstBaseline(baseline, options, run);
+  if (options.saveBaseline) await saveBaseline(identity, options, run);
+  return exitCode;
 };
 
 const calibrate = async (options: EvalOptions, judge: JudgePort): Promise<CalibrationReport> => {
@@ -146,33 +180,42 @@ const calibrate = async (options: EvalOptions, judge: JudgePort): Promise<Calibr
   return report;
 };
 
-async function main(): Promise<number> {
+const identityFromEnvironment = (): RunIdentity => {
   const modelRef = process.env.AI_MODEL_FAST ?? DEFAULT_MODEL;
   const structureOnly = isStubModel(modelRef);
-  const options = parseEvalOptions(process.argv.slice(2), structureOnly);
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!structureOnly && (apiKey ?? '').trim() === '') {
     throw new Error(
       `AI_MODEL_FAST=${modelRef} needs ANTHROPIC_API_KEY in this process environment`,
     );
   }
-  if (structureOnly && options.calibrate) {
+  return { modelRef, structureOnly, apiKey };
+};
+
+async function main(): Promise<number> {
+  const identity = identityFromEnvironment();
+  const options = parseEvalOptions(process.argv.slice(2), identity.structureOnly);
+  if (identity.structureOnly && options.calibrate) {
     throw new Error('Calibration needs a real judge: set AI_MODEL_FAST to an Anthropic model');
   }
-  const judge: JudgePort = structureOnly ? new ReferenceJudge() : buildJudge(options, apiKey);
+  const judge = identity.structureOnly
+    ? new ReferenceJudge()
+    : buildModelJudge(options, identity.apiKey);
+  const baseline =
+    identity.structureOnly || options.calibrateOnly
+      ? null
+      : await readBaselineFile(options.baselinePath);
   let exitCode = 0;
   if (!options.calibrateOnly) {
-    const folder = await loadVeronicaAgentFolder();
-    const setup = { modelRef, anthropicApiKey: apiKey, anthropicMaxRetries: ANTHROPIC_MAX_RETRIES };
-    const run = await runCases(selectCases(options.only), options, {
-      runAgent: (testCase) => runCase(testCase, setup, folder),
-      judge,
-    });
-    exitCode = await reportRun(options, modelRef, structureOnly, run);
+    exitCode = await reportRun(
+      identity,
+      options,
+      baseline,
+      await executeCases(identity, options, judge),
+    );
   }
-  if (options.calibrate) {
-    const report = await calibrate(options, judge);
-    if (!report.trustworthy) exitCode = Math.max(exitCode, EXIT_REGRESSION);
+  if (options.calibrate && !(await calibrate(options, judge)).trustworthy) {
+    exitCode = Math.max(exitCode, EXIT_REGRESSION);
   }
   return exitCode;
 }

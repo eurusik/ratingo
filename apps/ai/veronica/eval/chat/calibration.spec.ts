@@ -1,6 +1,6 @@
+import { measureJudgeAgreement } from './calibration-runner';
 import {
   CalibrationSource,
-  measureJudgeAgreement,
   summarizeCalibration,
   type CalibrationItem,
   type CalibrationVerdict,

@@ -1,34 +1,22 @@
-import { z } from 'zod';
-
 import type { CaseOutcome } from './aggregate';
 
-export const BASELINE_VERSION = 1;
+export const BASELINE_VERSION = 1 as const;
 
-const baselineEntrySchema = z.object({
-  passes: z.number().int().min(0),
-  runs: z.number().int().min(1),
-  passed: z.boolean(),
-  flaky: z.boolean(),
-});
+export interface BaselineEntry {
+  passes: number;
+  runs: number;
+  passed: boolean;
+  flaky: boolean;
+}
 
-const baselineSchema = z.object({
-  version: z.literal(BASELINE_VERSION),
-  savedAtMs: z.number().int(),
-  model: z.string(),
-  judgeModel: z.string(),
-  runs: z.number().int().min(1),
-  passAt: z.number().int().min(1),
-  cases: z.record(z.string(), baselineEntrySchema),
-});
-
-export type BaselineEntry = z.infer<typeof baselineEntrySchema>;
-export type Baseline = z.infer<typeof baselineSchema>;
-
-export class InvalidBaselineError extends Error {
-  constructor(reason: string) {
-    super(`The baseline file is not usable: ${reason}`);
-    this.name = 'InvalidBaselineError';
-  }
+export interface Baseline {
+  version: typeof BASELINE_VERSION;
+  savedAtMs: number;
+  model: string;
+  judgeModel: string;
+  runs: number;
+  passAt: number;
+  cases: Record<string, BaselineEntry>;
 }
 
 export interface BaselineContext {
@@ -54,20 +42,6 @@ export const buildBaseline = (
   ...context,
   cases: Object.fromEntries(outcomes.map((outcome) => [outcome.caseId, entryOf(outcome)])),
 });
-
-export const parseBaseline = (json: string): Baseline => {
-  let raw: unknown;
-  try {
-    raw = JSON.parse(json);
-  } catch {
-    throw new InvalidBaselineError('it is not valid JSON');
-  }
-  const parsed = baselineSchema.safeParse(raw);
-  if (!parsed.success) {
-    throw new InvalidBaselineError(parsed.error.issues.map((issue) => issue.message).join('; '));
-  }
-  return parsed.data;
-};
 
 export interface CaseChange {
   caseId: string;
@@ -97,6 +71,7 @@ const isKnown = (change: CaseChange): change is CaseChange & { before: BaselineE
 export const diffBaseline = (
   baseline: Baseline,
   outcomes: readonly CaseOutcome[],
+  options: { fullRun: boolean } = { fullRun: true },
 ): BaselineDiff => {
   const changes = outcomes.map((outcome) => changeOf(baseline, outcome));
   const known = changes.filter(isKnown);
@@ -109,7 +84,9 @@ export const diffBaseline = (
     becameFlaky: known.filter((change) => !change.before.flaky && change.after.flaky),
     stoppedBeingFlaky: known.filter((change) => change.before.flaky && !change.after.flaky),
     newCases,
-    removedCases: Object.keys(baseline.cases).filter((caseId) => !present.has(caseId)),
+    removedCases: options.fullRun
+      ? Object.keys(baseline.cases).filter((caseId) => !present.has(caseId))
+      : [],
     regressions: [...newlyFailing, ...newCases].filter(
       (change) => !change.after.passed && !change.after.flaky,
     ),

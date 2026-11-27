@@ -1,13 +1,7 @@
 import fc from 'fast-check';
 
 import { aggregateCase, type CaseOutcome } from './aggregate';
-import {
-  BASELINE_VERSION,
-  InvalidBaselineError,
-  buildBaseline,
-  diffBaseline,
-  parseBaseline,
-} from './baseline';
+import { buildBaseline, diffBaseline } from './baseline';
 import { EvalKind } from './eval-case';
 import { runsWithPasses } from './verdict.testing';
 
@@ -27,6 +21,14 @@ const ids = (changes: readonly { caseId: string }[]): string[] =>
   changes.map((change) => change.caseId);
 
 describe('diffBaseline', () => {
+  it('leaves out the cases that were not run on a partial run', () => {
+    const baseline = baselineOf({ run: 3, skipped: 3 });
+    expect(diffBaseline(baseline, [outcome('run', 3)], { fullRun: false }).removedCases).toEqual(
+      [],
+    );
+    expect(diffBaseline(baseline, [outcome('run', 3)]).removedCases).toEqual(['skipped']);
+  });
+
   it('finds newly failing, newly passing and flaky changes', () => {
     const baseline = baselineOf({ steady: 3, broke: 3, fixed: 0, wobbles: 3, calmed: 2 });
     const diff = diffBaseline(baseline, [
@@ -131,22 +133,5 @@ describe('diffBaseline', () => {
         expect(ids(forward.newlyPassing)).toEqual(ids(backward.newlyFailing));
       }),
     );
-  });
-});
-
-describe('baseline file', () => {
-  it('survives a round trip through JSON', () => {
-    const baseline = baselineOf({ a: 3, b: 1, c: 0 });
-    expect(parseBaseline(JSON.stringify(baseline))).toEqual(baseline);
-    expect(baseline.version).toBe(BASELINE_VERSION);
-    expect(baseline.cases.b).toEqual({ passes: 1, runs: 3, passed: false, flaky: true });
-  });
-
-  it.each([
-    ['not json', 'not valid JSON'],
-    [JSON.stringify({ version: 2, cases: {} }), ''],
-    [JSON.stringify({ ...baselineOf({ a: 3 }), cases: { a: { passes: -1 } } }), ''],
-  ])('rejects %s', (content) => {
-    expect(() => parseBaseline(content)).toThrow(InvalidBaselineError);
   });
 });

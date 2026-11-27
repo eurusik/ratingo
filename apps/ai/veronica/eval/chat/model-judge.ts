@@ -14,23 +14,32 @@ import {
 } from '@ratingo/ai-core';
 
 import {
-  JUDGE_RESPONSE_NAME,
-  JUDGE_SYSTEM_PROMPT,
   JudgeUnavailableError,
-  buildJudgePrompt,
-  judgeResponseSchema,
-  verdictsFromResponse,
+  verdictsFromRaw,
   type JudgeInput,
   type JudgePort,
-  type JudgeResponse,
   type Judgement,
 } from './judge';
+import { JUDGE_SYSTEM_PROMPT, buildJudgePrompt } from './judge-prompt';
 
+const JUDGE_RESPONSE_NAME = 'expectation_verdicts';
 const JUDGE_MAX_TOKENS = 1500;
 const JUDGE_TIMEOUT_MS = 60_000;
 const JSON_FENCE = /^```(?:json)?\s*([\s\S]*?)\s*```$/;
 const REPAIR_PROMPT =
   'Your previous reply was not valid JSON for the required schema. Reply again with only the JSON object.';
+
+const judgeResponseSchema = z.object({
+  verdicts: z.array(
+    z.object({
+      id: z.string(),
+      holds: z.boolean(),
+      reason: z.string(),
+    }),
+  ),
+});
+
+type JudgeResponse = z.infer<typeof judgeResponseSchema>;
 
 const RESPONSE_JSON_SCHEMA = (() => {
   const { $schema: _schemaUri, ...schema } = z.toJSONSchema(judgeResponseSchema) as Record<
@@ -78,7 +87,7 @@ export class ModelJudge implements JudgePort {
 
   private judgement(input: JudgeInput, response: JudgeResponse, usage: ModelUsage): Judgement {
     return {
-      verdicts: verdictsFromResponse(input.expectations, response),
+      verdicts: verdictsFromRaw(input.expectations, response.verdicts),
       costUsd: calculateCostUsd(usage, this.price),
     };
   }

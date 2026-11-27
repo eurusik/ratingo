@@ -1,7 +1,3 @@
-import type { EvalCase } from './eval-case';
-import { judgeInputOf, judgementPassed, type JudgePort } from './judge';
-import { mapWithLimit } from './concurrency';
-
 const MIN_JUDGE_AGREEMENT = 0.9;
 
 export const CalibrationSource = {
@@ -57,40 +53,4 @@ export const summarizeCalibration = (
     costUsd: verdicts.reduce((total, verdict) => total + verdict.costUsd, 0),
     trustworthy: agreement >= MIN_JUDGE_AGREEMENT,
   };
-};
-
-const judgeItem = async (
-  item: CalibrationItem,
-  testCase: EvalCase,
-  judge: JudgePort,
-): Promise<CalibrationVerdict> => {
-  try {
-    const judgement = await judge.judge(judgeInputOf(testCase, item.answer));
-    return {
-      item,
-      judgedGood: judgementPassed(judgement),
-      reasons: judgement.verdicts.filter((v) => !v.satisfied).map((v) => `${v.id}: ${v.reason}`),
-      costUsd: judgement.costUsd,
-    };
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : 'unknown error';
-    return { item, judgedGood: null, reasons: [reason], costUsd: 0 };
-  }
-};
-
-export const measureJudgeAgreement = async (
-  items: readonly CalibrationItem[],
-  cases: readonly EvalCase[],
-  judge: JudgePort,
-  concurrency: number,
-): Promise<CalibrationReport> => {
-  const byId = new Map(cases.map((testCase) => [testCase.id, testCase]));
-  const verdicts = await mapWithLimit(items, concurrency, async (item) => {
-    const testCase = byId.get(item.caseId);
-    if (testCase === undefined) {
-      return { item, judgedGood: null, reasons: [`unknown case ${item.caseId}`], costUsd: 0 };
-    }
-    return judgeItem(item, testCase, judge);
-  });
-  return summarizeCalibration(verdicts);
 };

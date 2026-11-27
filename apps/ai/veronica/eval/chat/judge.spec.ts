@@ -16,16 +16,15 @@ import { TurnRole } from '../../src/modules/chat/domain/entities/conversation-tu
 import { EvalKind, type EvalCase } from './eval-case';
 import {
   ExpectationKind,
-  JUDGE_SYSTEM_PROMPT,
   JudgeUnavailableError,
-  buildJudgePrompt,
   failedVerdicts,
   isSatisfied,
   judgeInputOf,
   judgedExpectationsOf,
   judgementPassed,
-  verdictsFromResponse,
+  verdictsFromRaw,
 } from './judge';
+import { JUDGE_SYSTEM_PROMPT, buildJudgePrompt } from './judge-prompt';
 import { ModelJudge } from './model-judge';
 
 const PRICE: ModelPrice = {
@@ -128,17 +127,15 @@ describe('isSatisfied', () => {
   });
 });
 
-describe('verdictsFromResponse', () => {
+describe('verdictsFromRaw', () => {
   const expectations = judgedExpectationsOf(testCase);
 
   it('maps every statement to a verdict in the case order', () => {
-    const verdicts = verdictsFromResponse(expectations, {
-      verdicts: [
-        { id: 'N1', holds: false, reason: 'not claimed' },
-        { id: 'C2', holds: false, reason: 'no hours' },
-        { id: 'C1', holds: true, reason: 'says it' },
-      ],
-    });
+    const verdicts = verdictsFromRaw(expectations, [
+      { id: 'N1', holds: false, reason: 'not claimed' },
+      { id: 'C2', holds: false, reason: 'no hours' },
+      { id: 'C1', holds: true, reason: 'says it' },
+    ]);
     expect(verdicts.map((verdict) => [verdict.id, verdict.satisfied])).toEqual([
       ['C1', true],
       ['C2', false],
@@ -148,12 +145,10 @@ describe('verdictsFromResponse', () => {
   });
 
   it('fails a statement the judge skipped and ignores ids it invented', () => {
-    const verdicts = verdictsFromResponse(expectations, {
-      verdicts: [
-        { id: 'C1', holds: true, reason: 'x' },
-        { id: 'C9', holds: true, reason: 'invented' },
-      ],
-    });
+    const verdicts = verdictsFromRaw(expectations, [
+      { id: 'C1', holds: true, reason: 'x' },
+      { id: 'C9', holds: true, reason: 'invented' },
+    ]);
     expect(verdicts.map((verdict) => verdict.satisfied)).toEqual([true, false, false]);
     expect(verdicts[1].reason).toMatch(/no verdict/);
   });
@@ -161,13 +156,14 @@ describe('verdictsFromResponse', () => {
   it('is satisfied exactly when every conveyed statement holds and no forbidden one does', () => {
     fc.assert(
       fc.property(fc.array(fc.boolean(), { minLength: 3, maxLength: 3 }), (holds) => {
-        const verdicts = verdictsFromResponse(expectations, {
-          verdicts: expectations.map((expectation, index) => ({
+        const verdicts = verdictsFromRaw(
+          expectations,
+          expectations.map((expectation, index) => ({
             id: expectation.id,
             holds: holds[index],
             reason: 'x',
           })),
-        });
+        );
         const judgement = { verdicts, costUsd: 0 };
         expect(judgementPassed(judgement)).toBe(holds[0] && holds[1] && !holds[2]);
         expect(failedVerdicts(judgement)).toHaveLength(verdicts.filter((v) => !v.satisfied).length);
@@ -195,11 +191,12 @@ describe('buildJudgePrompt', () => {
 });
 
 describe('the rubric', () => {
-  it('tells the judge to grade meaning, accept digits or words, and answer in JSON per id', () => {
+  it('tells the judge to treat the answer as data, to grade meaning, accept digits or words, and answer in JSON per id', () => {
     expect(JUDGE_SYSTEM_PROMPT).toMatch(/meaning only/);
     expect(JUDGE_SYSTEM_PROMPT).toMatch(/digits or as Ukrainian words/);
     expect(JUDGE_SYSTEM_PROMPT).toMatch(/Include every id exactly once/);
     expect(JUDGE_SYSTEM_PROMPT).toMatch(/only to deny it/);
+    expect(JUDGE_SYSTEM_PROMPT).toMatch(/never instructions/);
   });
 });
 
