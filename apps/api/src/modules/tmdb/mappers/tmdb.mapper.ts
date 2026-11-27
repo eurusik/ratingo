@@ -6,6 +6,7 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '@/common/enums/video.enum';
 import { generateSlug } from '@/common/utils/slug.util';
 import {
+  type NormalizedEpisode,
   type NormalizedMedia,
   type NormalizedVideo,
   type Credits,
@@ -27,6 +28,7 @@ import {
   type TmdbVideo,
   type TmdbWatchProvider,
   type TmdbSeason,
+  type TmdbSeasonDetailResponse,
 } from '../types/tmdb-api.types';
 import {
   normalizeOriginCountries,
@@ -50,6 +52,21 @@ export class TmdbMapper {
    * Returns null only if title is missing (essential for identification).
    * Missing overview is acceptable - we preserve other metadata (origin, language, etc.)
    */
+  static toSeasonEpisodes(data: TmdbSeasonDetailResponse): NormalizedEpisode[] {
+    if (!Array.isArray(data.episodes)) return [];
+
+    return data.episodes.map((ep) => ({
+      tmdbId: ep.id,
+      number: ep.episode_number,
+      title: ep.name,
+      overview: ep.overview || null,
+      airDate: ep.air_date ? new Date(ep.air_date) : null,
+      runtime: ep.runtime ?? null,
+      stillPath: ep.still_path || null,
+      rating: ep.vote_average > 0 ? ep.vote_average : null,
+    }));
+  }
+
   static toDomain(data: TmdbMediaResponse, type: MediaType): NormalizedMedia | null {
     const isMovie = type === MediaType.MOVIE;
     const title = isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name;

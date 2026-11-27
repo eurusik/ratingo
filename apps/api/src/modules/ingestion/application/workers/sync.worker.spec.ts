@@ -13,6 +13,7 @@ import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { AnticipatedShowsPipeline } from '../pipelines/anticipated-shows.pipeline';
 import { UpcomingMoviesPipeline } from '../pipelines/upcoming-movies.pipeline';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
+import { BackfillEpisodeTextsPipeline } from '../pipelines/backfill-episode-texts.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 import { destroyTraktRateLimiter } from '@/modules/trakt/infrastructure/adapters/base-trakt-http';
@@ -33,6 +34,7 @@ describe('SyncWorker', () => {
   let anticipatedShowsPipeline: { sync: jest.Mock };
   let backfillImdbPipeline: any;
   let backfillAltTitlesPipeline: any;
+  let backfillEpisodeTextsPipeline: any;
   let backfillMdblistRatingsPipeline: any;
   let mediaPageCache: any;
 
@@ -91,6 +93,10 @@ describe('SyncWorker', () => {
       processItem: jest.fn().mockResolvedValue(undefined),
     };
 
+    backfillEpisodeTextsPipeline = {
+      dispatch: jest.fn().mockResolvedValue(undefined),
+    };
+
     backfillMdblistRatingsPipeline = {
       dispatch: jest.fn().mockResolvedValue(undefined),
       processItem: jest.fn().mockResolvedValue(undefined),
@@ -109,6 +115,7 @@ describe('SyncWorker', () => {
         { provide: AnticipatedShowsPipeline, useValue: anticipatedShowsPipeline },
         { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
+        { provide: BackfillEpisodeTextsPipeline, useValue: backfillEpisodeTextsPipeline },
         { provide: BackfillMdblistRatingsPipeline, useValue: backfillMdblistRatingsPipeline },
         { provide: MediaPageCacheService, useValue: mediaPageCache },
       ],
@@ -189,6 +196,18 @@ describe('SyncWorker', () => {
       } as Job;
       await worker.process(job);
       expect(snapshotsPipeline.dispatch).toHaveBeenCalledWith('UA');
+    });
+  });
+
+  describe('process - episode texts backfill', () => {
+    it('should delegate BACKFILL_EPISODE_TEXTS_DISPATCHER to the episode texts pipeline', async () => {
+      const job = {
+        name: IngestionJob.BACKFILL_EPISODE_TEXTS_DISPATCHER,
+        data: {},
+        id: 'episode-texts',
+      } as Job;
+      await worker.process(job);
+      expect(backfillEpisodeTextsPipeline.dispatch).toHaveBeenCalled();
     });
   });
 

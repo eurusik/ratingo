@@ -5,6 +5,8 @@
  * These are partial types - only fields we actually use are defined.
  */
 
+import { type NormalizedEpisode } from '@/modules/shared/contracts';
+
 /**
  * Production country object from TMDB API
  */
@@ -235,3 +237,8 @@ export interface TmdbSeasonDetailResponse {
  * Union type for TMDB API responses
  */
 export type TmdbMediaResponse = TmdbMovieResponse | TmdbShowResponse;
+
+export interface SeasonsEpisodesResult {
+  episodesBySeason: Map<number, NormalizedEpisode[]>;
+  failedSeasons: number[];
+}

@@ -22,6 +22,7 @@ import { UserMediaModule } from '../user-media/user-media.module';
 
 import { AnticipatedShowsPipeline } from './application/pipelines/anticipated-shows.pipeline';
 import { BackfillAltTitlesPipeline } from './application/pipelines/backfill-alt-titles.pipeline';
+import { BackfillEpisodeTextsPipeline } from './application/pipelines/backfill-episode-texts.pipeline';
 import { BackfillImdbPipeline } from './application/pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from './application/pipelines/backfill-mdblist-ratings.pipeline';
 import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
@@ -31,6 +32,7 @@ import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipe
 import { TrendingPipeline } from './application/pipelines/trending.pipeline';
 import { UpcomingMoviesPipeline } from './application/pipelines/upcoming-movies.pipeline';
 import { BulkJobService } from './application/services/bulk-job.service';
+import { EpisodeLocalizationService } from './application/services/episode-localization.service';
 import { IngestionJobStatusService } from './application/services/ingestion-job-status.service';
 import { IngestionSchedulerService } from './application/services/ingestion-scheduler.service';
 import { MediaPageCacheService } from './application/services/media-page-cache.service';
@@ -48,6 +50,7 @@ import { ROTTEN_TOMATOES_RATINGS_PORT } from './domain/ports/rotten-tomatoes-rat
 import { WEB_PAGE_CACHE_PORT } from './domain/ports/web-page-cache.port';
 import { ALT_TITLES_BACKFILL_REPOSITORY } from './domain/repositories/alt-titles-backfill.repository.interface';
 import { ANTICIPATED_SHOWS_REPOSITORY } from './domain/repositories/anticipated-shows.repository.interface';
+import { EPISODE_TEXTS_BACKFILL_REPOSITORY } from './domain/repositories/episode-texts-backfill.repository.interface';
 import { IMDB_BACKFILL_REPOSITORY } from './domain/repositories/imdb-backfill.repository.interface';
 import { ROTTEN_TOMATOES_BACKFILL_REPOSITORY } from './domain/repositories/rotten-tomatoes-backfill.repository.interface';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
@@ -61,6 +64,7 @@ import { NextRevalidateAdapter } from './infrastructure/adapters/web-page-cache/
 import { AnticipatedShowsGaugeObserver } from './infrastructure/metrics/anticipated-shows-gauge.observer';
 import { AltTitlesBackfillRepository } from './infrastructure/repositories/alt-titles-backfill.repository';
 import { AnticipatedShowsRepository } from './infrastructure/repositories/anticipated-shows.repository';
+import { EpisodeTextsBackfillRepository } from './infrastructure/repositories/episode-texts-backfill.repository';
 import { ImdbBackfillRepository } from './infrastructure/repositories/imdb-backfill.repository';
 import { RottenTomatoesBackfillRepository } from './infrastructure/repositories/rotten-tomatoes-backfill.repository';
 import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
@@ -137,6 +141,10 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       useClass: AltTitlesBackfillRepository,
     },
     {
+      provide: EPISODE_TEXTS_BACKFILL_REPOSITORY,
+      useClass: EpisodeTextsBackfillRepository,
+    },
+    {
       provide: IMDB_BACKFILL_REPOSITORY,
       useClass: ImdbBackfillRepository,
     },
@@ -166,6 +174,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       useClass: TvMazeAdapter,
     },
     TvMazeEnrichmentService,
+    EpisodeLocalizationService,
     BulkJobService,
     SyncMediaService,
     IngestionJobStatusService,
@@ -188,6 +197,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     AnticipatedShowsPipeline,
     BackfillImdbPipeline,
     BackfillAltTitlesPipeline,
+    BackfillEpisodeTextsPipeline,
     BackfillMdblistRatingsPipeline,
   ],
   exports: [SyncMediaService, SnapshotsService],

@@ -42,6 +42,7 @@ import type {
   TmdbMediaResponse,
   TmdbMovieResponse,
   TmdbSeasonDetailResponse,
+  SeasonsEpisodesResult,
 } from './types/tmdb-api.types';
 
 /**
@@ -57,6 +58,7 @@ const TMDB_RETRY_CONFIG: Partial<RetryConfig> = {
 
 /** Safety limit to prevent infinite loops when paginating */
 const MAX_PAGES = 10;
+const TMDB_MAX_APPENDED_RESPONSES = 20;
 const TMDB_THEATRICAL_RELEASE_TYPE = '3';
 const TMDB_THEATRICAL_OR_LIMITED_RELEASE_TYPES = '3|2';
 const TMDB_DIGITAL_RELEASE_TYPE = '4';
@@ -500,32 +502,55 @@ export class TmdbAdapter implements MetadataProviderPort {
     tmdbId: number,
     seasonNumber: number,
   ): Promise<NormalizedEpisode[]> {
-    try {
-      const data = await this.fetch<TmdbSeasonDetailResponse>(
-        `/tv/${tmdbId}/season/${seasonNumber}`,
-      );
+    const { episodesBySeason } = await this.getSeasonsEpisodes(tmdbId, [seasonNumber]);
+    return episodesBySeason.get(seasonNumber) ?? [];
+  }
 
-      if (!Array.isArray(data.episodes)) return [];
+  public async getSeasonsEpisodes(
+    tmdbId: number,
+    seasonNumbers: readonly number[],
+  ): Promise<SeasonsEpisodesResult> {
+    const result: SeasonsEpisodesResult = { episodesBySeason: new Map(), failedSeasons: [] };
 
-      return data.episodes.map((ep) => ({
-        tmdbId: ep.id,
-        number: ep.episode_number,
-        title: ep.name,
-        overview: ep.overview || null,
-        airDate: ep.air_date ? new Date(ep.air_date) : null,
-        runtime: ep.runtime ?? null,
-        stillPath: ep.still_path || null,
-        rating: ep.vote_average > 0 ? ep.vote_average : null,
-      }));
-    } catch (error) {
-      if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
-        return [];
+    for (let start = 0; start < seasonNumbers.length; start += TMDB_MAX_APPENDED_RESPONSES) {
+      const batch = seasonNumbers.slice(start, start + TMDB_MAX_APPENDED_RESPONSES);
+      try {
+        const seasons = await this.fetchSeasonsBatch(tmdbId, batch);
+        seasons.forEach((episodes, season) => result.episodesBySeason.set(season, episodes));
+      } catch (error) {
+        result.failedSeasons.push(...batch);
+        const { message } = error as Error;
+        this.logger.warn({
+          message: 'TMDB seasons failed',
+          tmdbId,
+          seasons: batch,
+          error: message,
+        });
       }
-      this.logger.warn(
-        `TMDB getSeasonEpisodes error for show ${tmdbId} S${seasonNumber}: ${(error as Error).message}`,
-      );
-      return [];
     }
+
+    return result;
+  }
+
+  private async fetchSeasonsBatch(
+    tmdbId: number,
+    batch: readonly number[],
+  ): Promise<Map<number, NormalizedEpisode[]>> {
+    const seasons = new Map<number, NormalizedEpisode[]>();
+    const data = await this.fetch<Record<string, TmdbSeasonDetailResponse | undefined>>(
+      `/tv/${tmdbId}`,
+      { append_to_response: batch.map((season) => `season/${season}`).join(',') },
+    ).catch((error: unknown) => {
+      if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
+        return {} as Record<string, TmdbSeasonDetailResponse | undefined>;
+      }
+      throw error;
+    });
+    for (const season of batch) {
+      const seasonData = data[`season/${season}`];
+      if (seasonData) seasons.set(season, TmdbMapper.toSeasonEpisodes(seasonData));
+    }
+    return seasons;
   }
 
   /**

@@ -142,9 +142,35 @@ describe('DrizzleShowRepository', () => {
       );
       expect(rendered.tmdbId).toBe('COALESCE(excluded.tmdb_id, "episodes"."tmdb_id")');
       expect(rendered.stillPath).toBe('COALESCE(excluded.still_path, "episodes"."still_path")');
-      for (const sqlText of Object.values(rendered)) {
+      const { title, overview, ...plainColumns } = rendered;
+      for (const sqlText of Object.values(plainColumns)) {
         expect(sqlText).toMatch(/^COALESCE\(excluded\./);
       }
+      expect(title).toContain('ELSE COALESCE(excluded.title, "episodes"."title")');
+      expect(overview).toContain('ELSE COALESCE(excluded.overview, "episodes"."overview")');
+    });
+
+    it('keeps a stored Ukrainian episode title and overview over untranslated incoming text', async () => {
+      const module: TestingModule = await setup();
+      repository = module.get(DrizzleShowRepository);
+      const tx = createPruneTx();
+
+      await repository.upsertDetails(tx, 'media-1', {
+        seasons: [{ number: 1, episodes: [{ number: 1, title: 'Pilot' }] }],
+      });
+
+      const calls = insertChain.onConflictDoUpdate.mock.calls;
+      const { set } = calls[calls.length - 1][0];
+      const dialect = new PgDialect();
+      const title = dialect.sqlToQuery(set.title);
+      const overview = dialect.sqlToQuery(set.overview);
+
+      expect(title.sql).toMatch(
+        /^CASE\s+WHEN [\s\S]*"episodes"."title"[\s\S]* AND NOT [\s\S]*excluded\.title/,
+      );
+      expect(title.sql).toMatch(/THEN "episodes"."title"/);
+      expect(title.params).toEqual(expect.arrayContaining(['[^А-Яа-яІіЇїЄєҐґ]']));
+      expect(overview.sql).toMatch(/THEN "episodes"."overview"/);
     });
 
     describe('pruning stale rows', () => {
