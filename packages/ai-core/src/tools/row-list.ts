@@ -46,9 +46,10 @@ const serializedWithFirst = <T>(list: RowList<T>, count: number): string =>
 const fitsAfterRedaction = (text: string, maxChars: number): boolean =>
   redactSecrets(text).length <= maxChars;
 
-export const fitRowList = <T>(list: RowList<T>, maxChars: number): string => {
-  const whole = serializedWithFirst(list, list.rows.length);
-  if (fitsAfterRedaction(whole, maxChars)) return whole;
+export const countRowsThatFit = <T>(list: RowList<T>, maxChars: number): number => {
+  if (fitsAfterRedaction(serializedWithFirst(list, list.rows.length), maxChars)) {
+    return list.rows.length;
+  }
   let fitting = 0;
   let tooMany = list.rows.length;
   while (tooMany - fitting > 1) {
@@ -56,5 +57,8 @@ export const fitRowList = <T>(list: RowList<T>, maxChars: number): string => {
     if (fitsAfterRedaction(serializedWithFirst(list, middle), maxChars)) fitting = middle;
     else tooMany = middle;
   }
-  return serializedWithFirst(list, fitting);
+  return fitting;
 };
+
+export const fitRowList = <T>(list: RowList<T>, maxChars: number): string =>
+  serializedWithFirst(list, countRowsThatFit(list, maxChars));

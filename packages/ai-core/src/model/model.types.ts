@@ -72,6 +72,12 @@ export interface ModelCapabilities {
   structuredOutput: boolean;
 }
 
+export const ToolChoice = {
+  AUTO: 'auto',
+  NONE: 'none',
+} as const;
+export type ToolChoice = (typeof ToolChoice)[keyof typeof ToolChoice];
+
 export interface ModelRequest {
   model: string;
   system: string;
@@ -79,6 +85,7 @@ export interface ModelRequest {
   tools: ToolDefinition[];
   maxTokens: number;
   timeoutMs: number;
+  toolChoice?: ToolChoice;
   responseSchema?: ResponseSchema;
 }
 

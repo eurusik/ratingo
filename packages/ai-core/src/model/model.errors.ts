@@ -12,6 +12,7 @@ export class ModelError extends Error {
     readonly category: ModelErrorCategory,
     message: string,
     readonly status?: number,
+    readonly providerType?: string,
   ) {
     super(message);
     this.name = 'ModelError';

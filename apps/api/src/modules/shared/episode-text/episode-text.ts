@@ -1,11 +1,14 @@
-export const UKRAINIAN_LETTERS = 'А-Яа-яІіЇїЄєҐґ';
+export const UKRAINIAN_LETTERS = 'А-ЩЬЮЯа-щьюяІіЇїЄєҐґ';
+export const RUSSIAN_ONLY_LETTERS = 'ЁёЪъЫыЭэ';
 export const PLACEHOLDER_EPISODE_TITLE_PATTERN = '^\\s*([Сс]ерія|[Ее]пізод)\\s*[0-9]+\\s*$';
 
 const NON_UKRAINIAN_LETTER = new RegExp(`[^${UKRAINIAN_LETTERS}]`, 'g');
+const RUSSIAN_ONLY_LETTER = new RegExp(`[${RUSSIAN_ONLY_LETTERS}]`);
 const NON_LETTER = /[^\p{L}]/gu;
 const PLACEHOLDER_EPISODE_TITLE = new RegExp(PLACEHOLDER_EPISODE_TITLE_PATTERN);
 
 function isMostlyUkrainian(text: string): boolean {
+  if (RUSSIAN_ONLY_LETTER.test(text)) return false;
   const ukrainian = text.replace(NON_UKRAINIAN_LETTER, '').length;
   return ukrainian > 0 && ukrainian * 2 >= text.replace(NON_LETTER, '').length;
 }

@@ -19,6 +19,7 @@ export type {
 export {
   ContentPartType,
   EMPTY_USAGE,
+  ToolChoice,
   MessageRole,
   StopReason,
   addUsage,
@@ -62,7 +63,7 @@ export { ANTHROPIC_DEFAULT_PRICES } from './model/adapters/anthropic/anthropic.p
 export type { Tool, ToolContext, ToolSpec } from './tools/define-tool';
 export { ToolInputError, defineTool } from './tools/define-tool';
 export type { RowFrame, RowOmission } from './tools/row-list';
-export { RowList, fitRowList } from './tools/row-list';
+export { RowList, countRowsThatFit, fitRowList } from './tools/row-list';
 export type { ToolSource } from './tools/tool-source.port';
 export { TOOL_SOURCE_PORT } from './tools/tool-source.port';
 export { NativeToolSource } from './tools/sources/native.tool-source';
@@ -74,6 +75,7 @@ export type {
   ModelProviders,
   AgentLoopRequest,
   AgentLoopResult,
+  FinalAnswerPolicy,
   LoopLimits,
 } from './loop/agent-loop';
 export { AgentLoop, EmptyModelChainError, UnknownProviderError } from './loop/agent-loop';
