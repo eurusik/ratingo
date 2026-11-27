@@ -11,6 +11,7 @@ import {
   type EpisodeSchedulePort,
   type ScheduledEpisode,
 } from '@/modules/ingestion/domain/ports/episode-schedule.port';
+import { uniqueScheduledEpisodes } from '@/modules/ingestion/domain/unique-scheduled-episodes';
 
 /** Maximum year difference allowed when matching shows by name search. */
 const MAX_YEAR_TOLERANCE = 1;
@@ -48,8 +49,15 @@ export class TvMazeEnrichmentService {
    * @returns Enriched media with merged seasons and nextAirDate
    */
   async enrich(media: NormalizedMedia): Promise<NormalizedMedia> {
-    const episodes = await this.fetchEpisodes(media);
+    const { episodes, duplicates } = uniqueScheduledEpisodes(await this.fetchEpisodes(media));
     if (episodes.length === 0) return media;
+    if (duplicates.length > 0) {
+      this.logger.warn({
+        message: 'TVMaze returned duplicate episodes',
+        tmdbId: media.externalIds.tmdbId,
+        duplicates,
+      });
+    }
 
     const {
       seasons: mergedSeasons,
