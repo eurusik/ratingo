@@ -97,7 +97,10 @@ describe('defineTool', () => {
 });
 
 describe('defineTool empty results', () => {
-  const emptyCalls = async (handler: () => Promise<unknown>, isEmpty?: (output: unknown) => boolean): Promise<number> => {
+  const emptyCalls = async (
+    handler: () => Promise<unknown>,
+    isEmpty?: (output: unknown) => boolean,
+  ): Promise<number> => {
     const markEmpty = jest.fn();
     const tool = defineTool({
       name: 'probe',
@@ -124,12 +127,21 @@ describe('defineTool empty results', () => {
   });
 
   it('lets a tool decide what empty means', async () => {
-    expect(await emptyCalls(() => Promise.resolve({ items: [] }), (output) => (output as { items: unknown[] }).items.length === 0)).toBe(1);
-    expect(await emptyCalls(() => Promise.resolve(RowList.of([], 'hint')), () => false)).toBe(0);
+    expect(
+      await emptyCalls(
+        () => Promise.resolve({ items: [] }),
+        (output) => (output as { items: unknown[] }).items.length === 0,
+      ),
+    ).toBe(1);
+    expect(
+      await emptyCalls(
+        () => Promise.resolve(RowList.of([], 'hint')),
+        () => false,
+      ),
+    ).toBe(0);
   });
 
   it('works without a context that listens', async () => {
     await expect(echo.run({ text: 'a' }, { runId: 'run-1' })).resolves.toBe('a');
   });
 });
-

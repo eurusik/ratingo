@@ -16,7 +16,7 @@ import type { ModelPrice } from '../model/model-pricing';
 import { MissingModelPriceError } from '../model/model-pricing';
 import { formatModelRef } from '../model/model-ref';
 import type { ModelRequest, ModelResponse } from '../model/model.types';
-import { ContentPartType, MessageRole, StopReason } from '../model/model.types';
+import { ContentPartType, MessageRole, StopReason, ToolChoice } from '../model/model.types';
 import { InMemoryRunRepository } from '../runs/in-memory.run-repository';
 import { Run, RunStatus, RunStopReason, RunTrigger } from '../runs/run';
 import { defineTool } from '../tools/define-tool';
@@ -460,7 +460,7 @@ describe('AgentLoop', () => {
     const answersOnlyWithoutTools: StubScript = {
       respond: (request, callIndex) => {
         const model = formatModelRef({ provider: 'stub', model: request.model });
-        if (request.tools.length > 0) return createStubScript(StubScenario.RUNAWAY).respond(request, callIndex);
+        if (request.toolChoice !== ToolChoice.NONE) return createStubScript(StubScenario.RUNAWAY).respond(request, callIndex);
         return {
           model,
           content: [{ type: ContentPartType.TEXT, text: '{"headline":"partial"}' }],
@@ -481,7 +481,8 @@ describe('AgentLoop', () => {
 
       expect(result.value).toEqual({ headline: 'partial' });
       expect(result.run).toMatchObject({ stopReason: RunStopReason.END, turns: 3 });
-      expect(model.requests.map((request) => request.tools.length > 0)).toEqual([true, true, false]);
+      expect(model.requests.map((request) => request.toolChoice === ToolChoice.NONE)).toEqual([false, false, true]);
+      expect(model.requests.every((request) => request.tools.length > 0)).toBe(true);
     });
 
     it('puts the instruction after the tool results in the same user message', async () => {
@@ -496,6 +497,50 @@ describe('AgentLoop', () => {
       const last = model.requests[1]?.messages.at(-1);
       expect(last?.role).toBe(MessageRole.USER);
       expect(last?.content.map((part) => part.type)).toEqual([ContentPartType.TOOL_RESULT, ContentPartType.TEXT]);
+    });
+
+    it('keeps the tool definitions on the final turn so earlier tool blocks stay valid', async () => {
+      const model = scripted(answersOnlyWithoutTools);
+      const { loop, run } = await harness(model);
+
+      await loop.run(run, baseRequest({ responseSchema: schema, limits: { ...LIMITS, maxTurns: 3 }, finalAnswer: { prompt: FINAL_PROMPT } }));
+
+      expect(model.requests.at(-1)?.tools.map((tool) => tool.name)).toEqual(['lookup']);
+    });
+
+    it('treats a tool call on the final turn as no answer and does not run it', async () => {
+      const stubborn: StubScript = {
+        respond: (request, callIndex) => ({
+          model: formatModelRef({ provider: 'stub', model: request.model }),
+          content: [{ type: ContentPartType.TOOL_CALL, call: { id: `call-${callIndex}`, name: 'lookup', input: { query: String(callIndex) } } }],
+          stopReason: StopReason.TOOL_USE,
+          usage: DEFAULT_STUB_USAGE,
+        }),
+      };
+      const { loop, run } = await harness(scripted(stubborn));
+
+      const result = await loop.run(run, baseRequest({ limits: { ...LIMITS, maxTurns: 3 }, finalAnswer: { prompt: FINAL_PROMPT } }));
+
+      expect(result.run).toMatchObject({ stopReason: RunStopReason.MAX_TURNS, stopDetail: 'tool use requested on the final answer turn', turns: 3 });
+      expect(result.run.toolCalls).toEqual({ lookup: 2 });
+    });
+
+    it('asks for the final answer before the deadline leaves time for only one more call', async () => {
+      const clock = new FixedClock(1_000);
+      const slow: StubScript = {
+        respond: (request, callIndex) => {
+          clock.advance(25_000);
+          return answersOnlyWithoutTools.respond(request, callIndex);
+        },
+      };
+      const model = scripted(slow);
+      const { loop, run } = await harness(model, { clock });
+
+      const result = await loop.run(run, baseRequest({ responseSchema: schema, finalAnswer: { prompt: FINAL_PROMPT } }));
+
+      expect(result.value).toEqual({ headline: 'partial' });
+      expect(result.run.stopReason).toBe(RunStopReason.END);
+      expect(model.requests.at(-1)?.toolChoice).toBe(ToolChoice.NONE);
     });
 
     it('keeps the old behaviour when the option is not set', async () => {
@@ -523,10 +568,10 @@ describe('AgentLoop', () => {
 
       expect(result.value).toEqual({ headline: 'partial' });
       expect(result.run.stopReason).toBe(RunStopReason.END);
-      const withTools = model.requests.map((request) => request.tools.length > 0);
-      expect(withTools.at(-1)).toBe(false);
-      expect(withTools.slice(0, -1).every(Boolean)).toBe(true);
-      expect(withTools.length).toBeLessThan(10);
+      const forbidden = model.requests.map((request) => request.toolChoice === ToolChoice.NONE);
+      expect(forbidden.at(-1)).toBe(true);
+      expect(forbidden.slice(0, -1).some(Boolean)).toBe(false);
+      expect(forbidden.length).toBeLessThan(10);
     });
   });
 

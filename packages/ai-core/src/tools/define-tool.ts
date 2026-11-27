@@ -44,7 +44,9 @@ function stringifyOutput(output: unknown, maxChars: number): string {
 }
 
 function isEmptyByDefault(output: unknown): boolean {
-  return output instanceof RowList ? output.rows.length === 0 : output === undefined || output === null;
+  return output instanceof RowList
+    ? output.rows.length === 0
+    : output === undefined || output === null;
 }
 
 function untrustedOverhead(label: string): number {

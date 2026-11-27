@@ -1,7 +1,7 @@
 import { ModelError, ModelErrorCategory } from '../../model.errors';
 import { formatModelRef } from '../../model-ref';
 import type { ModelRequest, ModelResponse, ModelUsage } from '../../model.types';
-import { ContentPartType, MessageRole, StopReason } from '../../model.types';
+import { ContentPartType, MessageRole, StopReason, ToolChoice } from '../../model.types';
 
 export const StubScenario = {
   NORMAL: 'normal',
@@ -153,6 +153,18 @@ export function createStubScript(
     usage: options.usage ?? defaultUsage,
   };
 
+  const inner = scriptFor(scenario, resolved);
+  return {
+    respond: (request, callIndex) =>
+      request.toolChoice === ToolChoice.NONE &&
+      scenario !== StubScenario.REFUSAL &&
+      scenario !== StubScenario.TRANSPORT_FAILURE
+        ? textResponse(request, resolved.finalText, resolved.usage)
+        : inner.respond(request, callIndex),
+  };
+}
+
+function scriptFor(scenario: StubScenario, resolved: ResolvedOptions): StubScript {
   switch (scenario) {
     case StubScenario.NORMAL:
       return normalScript(resolved);

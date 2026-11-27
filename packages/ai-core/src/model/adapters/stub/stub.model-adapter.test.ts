@@ -1,6 +1,12 @@
 import { ModelError } from '../../model.errors';
 import type { ModelRequest } from '../../model.types';
-import { ContentPartType, MessageRole, StopReason, textMessage } from '../../model.types';
+import {
+  ContentPartType,
+  MessageRole,
+  StopReason,
+  ToolChoice,
+  textMessage,
+} from '../../model.types';
 import { StubModelAdapter } from './stub.model-adapter';
 import { EXPENSIVE_STUB_USAGE, StubScenario, createStubScript } from './stub.scenarios';
 
@@ -68,5 +74,17 @@ describe('StubModelAdapter', () => {
     await stub.generate(request);
 
     expect(stub.requests).toHaveLength(1);
+  });
+});
+
+describe('StubModelAdapter with tool use forbidden', () => {
+  it('answers with the final text instead of a tool call', async () => {
+    const adapter = new StubModelAdapter(
+      createStubScript(StubScenario.RUNAWAY, { finalText: 'done' }),
+    );
+    const response = await adapter.generate({ ...request, toolChoice: ToolChoice.NONE });
+
+    expect(response.stopReason).toBe(StopReason.END);
+    expect(response.content).toEqual([{ type: ContentPartType.TEXT, text: 'done' }]);
   });
 });

@@ -154,14 +154,18 @@ describe('defineTool with a row list', () => {
 describe('countRowsThatFit', () => {
   it('matches the number of rows fitRowList keeps, for any rows and any cap', () => {
     fc.assert(
-      fc.property(fc.array(row, { maxLength: 40 }), fc.integer({ min: 50, max: 3000 }), (rows, cap) => {
-        const list = RowList.of(rows, HINT);
-        const kept = countRowsThatFit(list, cap);
-        const parsed = JSON.parse(fitRowList(list, cap)) as { rows: unknown[] };
+      fc.property(
+        fc.array(row, { maxLength: 40 }),
+        fc.integer({ min: 50, max: 3000 }),
+        (rows, cap) => {
+          const list = RowList.of(rows, HINT);
+          const kept = countRowsThatFit(list, cap);
+          const parsed = JSON.parse(fitRowList(list, cap)) as { rows: unknown[] };
 
-        expect(parsed.rows).toHaveLength(kept);
-        expect(kept).toBeLessThanOrEqual(rows.length);
-      }),
+          expect(parsed.rows).toHaveLength(kept);
+          expect(kept).toBeLessThanOrEqual(rows.length);
+        },
+      ),
     );
   });
 

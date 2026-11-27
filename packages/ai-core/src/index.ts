@@ -19,6 +19,7 @@ export type {
 export {
   ContentPartType,
   EMPTY_USAGE,
+  ToolChoice,
   MessageRole,
   StopReason,
   addUsage,

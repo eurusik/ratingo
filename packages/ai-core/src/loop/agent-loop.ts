@@ -1,6 +1,6 @@
 import type { ZodType } from 'zod';
 import type { ClockPort } from '../clock/clock.port';
-import { ModelError } from '../model/model.errors';
+import { ModelError, ModelErrorCategory } from '../model/model.errors';
 import type { ModelPort } from '../model/model.port';
 import { FallbackModelPort } from '../model/model-fallback';
 import type { ModelRef } from '../model/model-ref';
@@ -17,6 +17,7 @@ import {
   ContentPartType,
   MessageRole,
   StopReason,
+  ToolChoice,
   textMessage,
   textOf,
   toolCallsOf,
@@ -34,6 +35,7 @@ import { buildRepairPrompt, toResponseSchema, validateStructuredOutput } from '.
 const RESPONSE_SCHEMA_NAME = 'response';
 const MIN_CALL_TIMEOUT_MS = 1;
 const TOOL_TIMEOUT_MESSAGE = 'Tool did not finish before the run deadline';
+const TOOL_USE_ON_FINAL_TURN_DETAIL = 'tool use requested on the final answer turn';
 const SINGLE_CALL = 1;
 const TURN_AND_FINAL_CALLS = 2;
 const TOOL_USE_WITHOUT_CALLS_DETAIL = 'tool_use stop without tool calls';
@@ -159,7 +161,7 @@ export class AgentLoop {
     }
     const reason =
       error instanceof ModelError ? RunStopReason.MODEL_ERROR : RunStopReason.UNEXPECTED_ERROR;
-    run.finish(reason, this.deps.clock, redactSecrets(describeError(error)));
+    run.finish(reason, this.deps.clock, stopDetailOf(error));
   }
 
   private async drive(
@@ -169,9 +171,10 @@ export class AgentLoop {
     deadlineMs: number,
   ): Promise<LoopStop> {
     for (;;) {
-      this.finalizeBeforeLastTurn(run, request, state);
+      this.finalizeBeforeLastChance(run, request, state, deadlineMs);
       const blocked =
-        this.checkLimits(run, request, deadlineMs) ?? this.checkBudgetOrFinalize(run, request, state);
+        this.checkLimits(run, request, deadlineMs) ??
+        this.checkBudgetOrFinalize(run, request, state);
       if (blocked !== undefined) {
         return blocked;
       }
@@ -185,8 +188,16 @@ export class AgentLoop {
     }
   }
 
-  private finalizeBeforeLastTurn(run: Run, request: AgentLoopRequest, state: LoopState): void {
-    if (run.turns === request.limits.maxTurns - 1) this.startFinalizing(request, state);
+  private finalizeBeforeLastChance(
+    run: Run,
+    request: AgentLoopRequest,
+    state: LoopState,
+    deadlineMs: number,
+  ): void {
+    const onLastTurn = run.turns === request.limits.maxTurns - 1;
+    const timeLeftForOneCallOnly =
+      run.turns > 0 && deadlineMs - this.deps.clock.nowMs() <= request.limits.callTimeoutMs;
+    if (onLastTurn || timeLeftForOneCallOnly) this.startFinalizing(request, state);
   }
 
   private startFinalizing(request: AgentLoopRequest, state: LoopState): void {
@@ -264,7 +275,8 @@ export class AgentLoop {
       model: (request.models[0] as ModelRef).model,
       system: request.system,
       messages: [...state.messages],
-      tools: state.finalizing ? [] : this.deps.registry.definitions(),
+      tools: this.deps.registry.definitions(),
+      ...(state.finalizing ? { toolChoice: ToolChoice.NONE } : {}),
       maxTokens: request.limits.maxTokensPerCall,
       timeoutMs,
       ...(request.responseSchema === undefined
@@ -300,7 +312,9 @@ export class AgentLoop {
       case StopReason.END:
         return this.handleEnd(request, state, response);
       case StopReason.TOOL_USE:
-        return this.handleToolUse(run, state, response, deadlineMs);
+        return state.finalizing
+          ? { reason: RunStopReason.MAX_TURNS, detail: TOOL_USE_ON_FINAL_TURN_DETAIL }
+          : this.handleToolUse(run, state, response, deadlineMs);
       case StopReason.PAUSED:
         return undefined;
       case StopReason.MAX_TOKENS:
@@ -370,6 +384,17 @@ export class AgentLoop {
       ),
     );
   }
+}
+
+function stopDetailOf(error: unknown): string {
+  if (error instanceof ModelError) {
+    return [
+      error.category === ModelErrorCategory.CLIENT ? error.category : error.message,
+      ...(error.status === undefined ? [] : [`HTTP ${error.status}`]),
+      ...(error.providerType === undefined ? [] : [error.providerType]),
+    ].join(', ');
+  }
+  return redactSecrets(describeError(error));
 }
 
 function withTimeout<T>(work: Promise<T>, timeoutMs: number, onTimeout: T): Promise<T> {
