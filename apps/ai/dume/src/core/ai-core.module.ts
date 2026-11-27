@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 
-import { Global, Inject, Module, type OnModuleDestroy } from '@nestjs/common';
+import { Global, Inject, Logger, Module, type OnModuleDestroy } from '@nestjs/common';
 import { metrics, type Meter } from '@opentelemetry/api';
 import Redis from 'ioredis';
 import {
@@ -111,15 +111,23 @@ const spendLogger = new NestSpendLogger();
   exports: [CLOCK_PORT, AGENT_FOLDER, AI_METER, OPS_EXECUTORS, RUN_REPOSITORY, AgentRunner],
 })
 export class AiCoreModule implements OnModuleDestroy {
+  private readonly logger = new Logger(AiCoreModule.name);
+
   constructor(
     @Inject(SPEND_REDIS) private readonly redis: Redis | null,
     @Inject(OPS_RUNTIME) private readonly ops: OpsRuntime,
   ) {}
 
   async onModuleDestroy(): Promise<void> {
-    await Promise.allSettled([
+    const [ops] = await Promise.allSettled([
       this.ops.close(),
       this.redis?.quit().catch(() => this.redis?.disconnect()),
     ]);
+    if (ops.status === 'rejected') {
+      const reason: unknown = ops.reason;
+      this.logger.error(
+        `Failed to close the ops connections: ${reason instanceof Error ? reason.message : String(reason)}`,
+      );
+    }
   }
 }

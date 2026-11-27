@@ -18,17 +18,25 @@ import {
   type QueryRows,
   type SchemaListing,
 } from './database.port';
+import type { OpsLogger } from '../shared/ops-logger.port';
+
 import { ExplorerSession } from './explorer-session';
 import { failureOfQuery, failureOfSchema } from './query-failure.policy';
 import { SCHEMA_SQL, toSchemaListing, type SchemaRow } from './schema-listing.mapper';
 import { TypeOid } from './type-oid';
+
+const shuttingDown = (): ExplorerQueryRefusedError =>
+  new ExplorerQueryRefusedError(QueryRefusal.BUSY, 'the database explorer is shutting down');
 
 const SHUTDOWN_GRACE_SECONDS = 5;
 const IDLE_CONNECTION_SECONDS = 30;
 
 export interface ExplorerConnectionOptions {
   statementTimeoutMs?: number;
+  logger?: OpsLogger;
 }
+
+const SILENT_LOGGER: OpsLogger = { warn: () => undefined };
 
 const rawText = { serialize: (value: unknown) => String(value), parse: (value: string) => value };
 
@@ -58,6 +66,7 @@ export class PostgresExplorerAdapter implements ExplorerPort {
     return new PostgresExplorerAdapter(
       createSql,
       options.statementTimeoutMs ?? DB_STATEMENT_TIMEOUT_MS,
+      options.logger ?? SILENT_LOGGER,
     );
   }
 
@@ -69,6 +78,7 @@ export class PostgresExplorerAdapter implements ExplorerPort {
   constructor(
     private readonly createSql: () => postgres.Sql,
     private readonly statementTimeoutMs: number = DB_STATEMENT_TIMEOUT_MS,
+    private readonly logger: OpsLogger = SILENT_LOGGER,
   ) {
     this.sql = createSql();
   }
@@ -115,13 +125,10 @@ export class PostgresExplorerAdapter implements ExplorerPort {
     return boundedSelect(columns, request.sql, request.rowLimit);
   }
 
-  private inRolledBackTransaction<T>(work: (session: ExplorerSession) => Promise<T>): Promise<T> {
-    if (this.closed) {
-      throw new ExplorerQueryRefusedError(
-        QueryRefusal.BUSY,
-        'the database explorer is shutting down',
-      );
-    }
+  private async inRolledBackTransaction<T>(
+    work: (session: ExplorerSession) => Promise<T>,
+  ): Promise<T> {
+    if (this.closed) throw shuttingDown();
     if (this.pendingCalls >= DB_MAX_PENDING_CALLS) {
       throw new ExplorerQueryRefusedError(
         QueryRefusal.BUSY,
@@ -130,14 +137,19 @@ export class PostgresExplorerAdapter implements ExplorerPort {
     }
     this.pendingCalls += 1;
     const turn = this.queue.then(
-      () => this.withSession(work),
-      () => this.withSession(work),
+      () => this.startTurn(work),
+      () => this.startTurn(work),
     );
     this.queue = turn.then(
       () => this.leaveQueue(),
       () => this.leaveQueue(),
     );
     return turn;
+  }
+
+  private startTurn<T>(work: (session: ExplorerSession) => Promise<T>): Promise<T> {
+    if (this.closed) throw shuttingDown();
+    return this.withSession(work);
   }
 
   private leaveQueue(): void {
@@ -148,6 +160,7 @@ export class PostgresExplorerAdapter implements ExplorerPort {
     const session = new ExplorerSession(
       await this.sql.reserve(),
       this.statementTimeoutMs + DB_CLIENT_DEADLINE_SLACK_MS,
+      this.logger,
     );
     try {
       await session.control('BEGIN READ ONLY');
@@ -159,8 +172,7 @@ export class PostgresExplorerAdapter implements ExplorerPort {
   }
 
   private async finish(session: ExplorerSession): Promise<void> {
-    if (session.reusable) await session.reset();
-    if (session.reusable) session.release();
+    if (session.reusable && (await session.reset())) session.release();
     else await this.replaceConnection();
   }
 
@@ -176,6 +188,7 @@ export class PostgresExplorerAdapter implements ExplorerPort {
       SET LOCAL idle_in_transaction_session_timeout = ${DB_IDLE_IN_TRANSACTION_TIMEOUT_MS};
       SET LOCAL work_mem = '16MB';
       SET LOCAL search_path = public, pg_catalog;
+      SET LOCAL standard_conforming_strings = on;
       SET LOCAL TimeZone = 'UTC'`;
   }
 }

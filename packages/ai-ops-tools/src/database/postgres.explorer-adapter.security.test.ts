@@ -218,11 +218,12 @@ describeWithDatabase('the explorer adapter against hostile statements', () => {
   it('keeps the limits it sets inside the transaction', async () => {
     const state = await run(
       `select current_setting('statement_timeout') as timeout, current_setting('lock_timeout') as lock_timeout,
-              current_setting('transaction_read_only') as read_only, current_setting('TimeZone') as zone`,
+              current_setting('transaction_read_only') as read_only, current_setting('TimeZone') as zone,
+              current_setting('standard_conforming_strings') as strings`,
     );
 
     expect(state.rows).toEqual([
-      { timeout: '5s', lock_timeout: '2s', read_only: 'on', zone: 'UTC' },
+      { timeout: '5s', lock_timeout: '2s', read_only: 'on', zone: 'UTC', strings: 'on' },
     ]);
   });
 
@@ -276,12 +277,30 @@ describeWithDatabase('the explorer adapter against hostile statements', () => {
     expect(await outcomeOf('select 1 as ok')).toBe('rows');
   });
 
+  it('rejects the calls that have not started when it closes, and waits only for the running one', async () => {
+    const closing = PostgresExplorerAdapter.connect(database.explorerUrl);
+    const request = (sql: string) =>
+      closing
+        .query({ sql, explain: false, rowLimit: 10 })
+        .then(() => 'rows')
+        .catch((error: unknown) => (error as ExplorerQueryRefusedError).refusal ?? 'failed');
+    const running = request('select pg_sleep(0.5) as slept');
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
+    const waiting = request('select 1 as waited');
+
+    await closing.close();
+
+    expect(await running).toBe('rows');
+    expect(await waiting).toBe(QueryRefusal.BUSY);
+  });
+
   it('finishes the calls in flight on close and refuses new ones', async () => {
     const closing = PostgresExplorerAdapter.connect(database.explorerUrl);
     const inFlight = closing
       .query({ sql: 'select pg_sleep(0.3) as slept', explain: false, rowLimit: 10 })
       .then(() => 'rows')
       .catch(() => 'failed');
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
 
     const closed = closing.close();
     const late = await closing

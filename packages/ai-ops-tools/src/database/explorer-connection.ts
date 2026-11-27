@@ -32,5 +32,5 @@ export const connectExplorer = (
     logger.warn(`db_schema and db_query are off: ${EXPLORER_URL_INVALID} (${problem})`);
     return new UnconfiguredExplorerAdapter(EXPLORER_URL_INVALID);
   }
-  return PostgresExplorerAdapter.connect(explorerDatabaseUrl);
+  return PostgresExplorerAdapter.connect(explorerDatabaseUrl, { logger });
 };

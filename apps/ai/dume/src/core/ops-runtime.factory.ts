@@ -83,7 +83,10 @@ export const createOpsRuntime = (config: OpsConfig, clock: ClockPort): OpsRuntim
       const firstFailure = results.find(
         (result): result is PromiseRejectedResult => result.status === 'rejected',
       );
-      if (firstFailure !== undefined) throw firstFailure.reason as Error;
+      if (firstFailure !== undefined) {
+        const { reason } = firstFailure as { reason: unknown };
+        throw reason instanceof Error ? reason : new Error(String(reason));
+      }
     },
   };
 };

@@ -1,7 +1,9 @@
 import type postgres from 'postgres';
 
+import type { OpsLogger } from '../shared/ops-logger.port';
+
 import { QueryRefusal } from './database.constants';
-import { ExplorerQueryRefusedError } from './database.port';
+import { ExplorerFailureError, ExplorerQueryRefusedError } from './database.port';
 import { failureOfQuery, isConnectionLoss } from './query-failure.policy';
 
 class ClientDeadlineError extends ExplorerQueryRefusedError {
@@ -10,6 +12,11 @@ class ClientDeadlineError extends ExplorerQueryRefusedError {
     this.name = 'ClientDeadlineError';
   }
 }
+
+const reasonOf = (error: unknown): string => {
+  const failure = failureOfQuery(error);
+  return failure instanceof ExplorerFailureError ? failure.reason : failure.refusal;
+};
 
 type StatementOptions = postgres.UnsafeQueryOptions & { simple: boolean };
 
@@ -26,6 +33,7 @@ export class ExplorerSession {
   constructor(
     private readonly connection: postgres.ReservedSql,
     private readonly deadlineMs: number,
+    private readonly logger: OpsLogger,
   ) {}
 
   get reusable(): boolean {
@@ -36,13 +44,19 @@ export class ExplorerSession {
     this.connection.release();
   }
 
-  async reset(): Promise<void> {
-    try {
-      await this.control('ROLLBACK');
-      await this.control('DISCARD ALL');
-    } catch {
-      this.broken = true;
+  async reset(): Promise<boolean> {
+    for (const step of ['ROLLBACK', 'DISCARD ALL']) {
+      try {
+        await this.control(step);
+      } catch (error) {
+        this.broken = true;
+        this.logger.warn(
+          `the database explorer connection is replaced: ${step} failed (${reasonOf(error)})`,
+        );
+        return false;
+      }
     }
+    return true;
   }
 
   async control(statement: string): Promise<void> {

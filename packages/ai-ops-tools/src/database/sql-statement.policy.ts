@@ -65,11 +65,20 @@ interface Scanned {
   semicolons: number[];
 }
 
-const isWordStart = (char: string): boolean => /[A-Za-z_\u0080-\uffff]/.test(char);
-const isWordPart = (char: string): boolean => /[A-Za-z0-9_$\u0080-\uffff]/.test(char);
+const FIRST_NON_ASCII_CODE_UNIT = 0x80;
+const LAST_CODE_UNIT = 0xffff;
+const NON_ASCII_CHARS = `${String.fromCharCode(FIRST_NON_ASCII_CODE_UNIT)}-${String.fromCharCode(LAST_CODE_UNIT)}`;
 
-const DOLLAR_TAG = /^\$([A-Za-z_\u0080-￿][A-Za-z0-9_\u0080-￿]*)?\$/;
-const NON_ASCII_LETTER = /[\u0080-￿]/;
+const WORD_START = new RegExp(`[A-Za-z_${NON_ASCII_CHARS}]`);
+const WORD_PART = new RegExp(`[A-Za-z0-9_$${NON_ASCII_CHARS}]`);
+const DOLLAR_TAG = new RegExp(
+  `^\\$([A-Za-z_${NON_ASCII_CHARS}][A-Za-z0-9_${NON_ASCII_CHARS}]*)?\\$`,
+);
+const NON_ASCII_CHAR = new RegExp(`[${NON_ASCII_CHARS}]`);
+
+const isWordStart = (char: string): boolean => WORD_START.test(char);
+const isWordPart = (char: string): boolean => WORD_PART.test(char);
+
 const UNICODE_ESCAPE = /^[Uu]&["']/;
 
 const refusal = (message: string): InvalidOpsInputError => new InvalidOpsInputError(message);
@@ -133,11 +142,13 @@ const scan = (sql: string): Scanned => {
   const semicolons: number[] = [];
   let code = '';
   let index = 0;
+  let tokenEnd = 0;
   while (index < sql.length) {
     const char = sql.charAt(index);
+    const startsToken = index === tokenEnd || !isWordPart(sql.charAt(index - 1));
     let next = index + 1;
     let kept = char;
-    if (UNICODE_ESCAPE.test(sql.slice(index, index + 3)) && !isWordPart(sql.charAt(index - 1))) {
+    if (UNICODE_ESCAPE.test(sql.slice(index, index + 3)) && startsToken) {
       throw refusal(
         'Unicode escapes such as U&"..." are not supported: write the characters directly',
       );
@@ -157,14 +168,14 @@ const scan = (sql: string): Scanned => {
       kept = sql.slice(index, next);
       if (kept.includes('\\')) throw refusal('a quoted name must not contain a backslash');
       quotedNames.push(kept.slice(1, -1).replace(/""/g, '"').toLowerCase());
-    } else if (char === '$' && !isWordPart(sql.charAt(index - 1))) {
+    } else if (char === '$' && startsToken) {
       if (/[0-9]/.test(sql.charAt(index + 1))) {
         throw refusal(
           'parameters such as $1 are not supported: write the value into the statement',
         );
       }
       const tag = dollarTagAt(sql, index);
-      if (tag === null && NON_ASCII_LETTER.test(sql.charAt(index + 1))) {
+      if (tag === null && NON_ASCII_CHAR.test(sql.charAt(index + 1))) {
         throw refusal(
           'a $ followed by a non-ASCII letter is not supported: write the text without dollar quotes',
         );
@@ -175,13 +186,14 @@ const scan = (sql: string): Scanned => {
       }
     } else if (char === ';') {
       semicolons.push(code.length);
-    } else if (isWordStart(char) && !isWordPart(sql.charAt(index - 1))) {
+    } else if (isWordStart(char) && startsToken) {
       next = index;
       while (next < sql.length && isWordPart(sql.charAt(next))) next += 1;
       kept = sql.slice(index, next);
       words.push(kept.toLowerCase());
     }
     code += kept;
+    if (next - index > 1 && !isWordStart(char)) tokenEnd = next;
     index = next;
   }
   return { code, words, quotedNames, semicolons };

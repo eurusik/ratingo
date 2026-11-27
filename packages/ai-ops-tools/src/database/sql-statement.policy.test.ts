@@ -200,6 +200,26 @@ describe('readOnlyStatement', () => {
       'set_config is not allowed: this tool only reads data',
     ],
     [
+      'into right after a dollar-quoted string',
+      'select $a$x$a$into zz',
+      'INTO is not allowed: this tool only reads data (use explain=true for a plan)',
+    ],
+    [
+      'a row lock right after a dollar-quoted string',
+      'select 1 from genres where name=$a$x$a$for share',
+      'FOR UPDATE and FOR SHARE are not allowed: this tool only reads data',
+    ],
+    [
+      'a function call right after a quoted name',
+      "select 1 as \"x\"where set_config('work_mem', '1GB', true) is not null",
+      'set_config is not allowed: this tool only reads data',
+    ],
+    [
+      'set_config hidden between two back-to-back dollar quotes',
+      "select $a$x$a$$b$ ' $b$, set_config('work_mem', '1GB', true) as w, $c$ ' $c$ as y",
+      'set_config is not allowed: this tool only reads data',
+    ],
+    [
       'a dollar followed by a non-ASCII letter that is not a tag',
       'select $é as x',
       'a $ followed by a non-ASCII letter is not supported: write the text without dollar quotes',

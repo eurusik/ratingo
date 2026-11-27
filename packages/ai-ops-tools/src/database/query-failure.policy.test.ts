@@ -54,6 +54,18 @@ describe('failureOfQuery', () => {
 });
 
 describe('failureOfSchema', () => {
+  it.each([
+    ['57014', QueryRefusal.TIMEOUT],
+    ['55P03', QueryRefusal.BUSY],
+    ['53300', QueryRefusal.BUSY],
+    ['42501', QueryRefusal.PRIVATE],
+  ])(
+    'names the refusal of a server error %s instead of calling it a failed query',
+    (code, refusal) => {
+      expect(failureOfSchema(errorWith(code)).reason).toBe(refusal);
+    },
+  );
+
   it('names the refusal when the call was turned away instead of calling it a failed query', () => {
     const failure = failureOfSchema(new ExplorerQueryRefusedError(QueryRefusal.BUSY, 'queue full'));
 
