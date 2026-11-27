@@ -9,6 +9,7 @@ export const TRUNCATION_MARKER = '\n[output truncated]';
 
 export interface ToolRegistryOptions {
   allowWriteTools?: boolean;
+  allowPaidWorkTools?: boolean;
   optionalTools?: readonly string[];
   guardRepeatedCalls?: boolean;
 }
@@ -24,6 +25,13 @@ export class UnknownToolError extends Error {
   constructor(name: string) {
     super(`Allowlisted tool "${name}" is not provided by any source`);
     this.name = 'UnknownToolError';
+  }
+}
+
+export class PaidWorkToolNotAllowedError extends Error {
+  constructor(name: string) {
+    super(`Allowlisted tool "${name}" starts paid work and this registry does not allow that`);
+    this.name = 'PaidWorkToolNotAllowedError';
   }
 }
 
@@ -84,6 +92,9 @@ export class ToolRegistry {
       }
       if (!tool.readOnly && options.allowWriteTools !== true) {
         throw new WriteToolNotAllowedError(name);
+      }
+      if (tool.startsPaidWork && options.allowPaidWorkTools !== true) {
+        throw new PaidWorkToolNotAllowedError(name);
       }
       allowed.set(name, tool);
     }
