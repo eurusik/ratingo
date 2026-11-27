@@ -17,9 +17,15 @@ export interface ReadableColumn {
   column: string;
 }
 
+export interface TableGrant {
+  schema: string;
+  table: string;
+}
+
 export interface ExplorerGrants {
   readable: readonly ReadableColumn[];
   direct: readonly ReadableColumn[];
+  tableGrants?: readonly TableGrant[];
 }
 
 export const ViolationKind = {
@@ -28,6 +34,7 @@ export const ViolationKind = {
   SENSITIVE_COLUMN_READABLE: 'sensitive_column_readable',
   SENSITIVE_TABLE_READABLE: 'sensitive_table_readable',
   READABLE_WITHOUT_DIRECT_GRANT: 'readable_without_direct_grant',
+  TABLE_GRANT_ON_PROTECTED_TABLE: 'table_grant_on_protected_table',
   STALE_ALLOW_LIST_ENTRY: 'stale_allow_list_entry',
 } as const;
 export type ViolationKind = (typeof ViolationKind)[keyof typeof ViolationKind];
@@ -114,6 +121,17 @@ const withoutDirectGrantViolations = (grants: ExplorerGrants): Violation[] =>
       detail: 'readable through PUBLIC or another role, not through a grant to ai_explorer',
     }));
 
+const protectedTables = new Set([...PRIVATE_TABLES, ...CLOSED_COLUMNS.map(({ table }) => table)]);
+
+const tableGrantViolations = (grants: ExplorerGrants): Violation[] =>
+  (grants.tableGrants ?? [])
+    .filter((grant) => protectedTables.has(grant.table))
+    .map((grant) => ({
+      kind: ViolationKind.TABLE_GRANT_ON_PROTECTED_TABLE,
+      target: `${grant.schema}.${grant.table}`,
+      detail: 'a table-wide SELECT grant opens every column; grant the safe columns instead',
+    }));
+
 const staleAllowListViolations = (readable: readonly ReadableColumn[]): Violation[] =>
   ALLOWED_SENSITIVE_NAMES.filter(
     (entry) =>
@@ -134,11 +152,17 @@ export const findViolations = (grants: ExplorerGrants): Violation[] => [
   ...sensitiveTableViolations(grants.readable),
   ...sensitiveColumnViolations(grants.readable),
   ...withoutDirectGrantViolations(grants),
+  ...tableGrantViolations(grants),
   ...staleAllowListViolations(grants.readable),
 ];
 
 export const describeViolations = (violations: readonly Violation[]): string =>
   violations.map((item) => `${item.kind}: ${item.target} (${item.detail})`).join('\n');
+
+interface TableGrantRow {
+  schema_name: string;
+  table_name: string;
+}
 
 interface ColumnRow {
   schema_name: string;
@@ -155,9 +179,14 @@ const toColumn = (row: ColumnRow): ReadableColumn => ({
 export const readExplorerGrants = async (admin: postgres.Sql): Promise<ExplorerGrants> => {
   const readable = await admin.file(join(SQL_DIR, 'readable-columns.sql'));
   const direct = await admin.file(join(SQL_DIR, 'direct-grants.sql'));
+  const tableGrants = await admin.file(join(SQL_DIR, 'table-grants.sql'));
   return {
     readable: readable.map((row) => toColumn(row as unknown as ColumnRow)),
     direct: direct.map((row) => toColumn(row as unknown as ColumnRow)),
+    tableGrants: tableGrants.map((row) => ({
+      schema: (row as unknown as TableGrantRow).schema_name,
+      table: (row as unknown as TableGrantRow).table_name,
+    })),
   };
 };
 

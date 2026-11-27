@@ -53,6 +53,20 @@ describe('findViolations', () => {
     expect(kinds).toEqual([ViolationKind.READABLE_WITHOUT_DIRECT_GRANT]);
   });
 
+  it('flags a table-wide grant on a table that has closed columns', () => {
+    const readable = [column('genres', 'name'), ...ALLOWED_PRESENT];
+    const kinds = findViolations({
+      readable,
+      direct: readable,
+      tableGrants: [
+        { schema: 'public', table: 'genres' },
+        { schema: 'public', table: 'users' },
+      ],
+    }).map((item) => item.kind);
+
+    expect(kinds).toEqual([ViolationKind.TABLE_GRANT_ON_PROTECTED_TABLE]);
+  });
+
   it('flags allow-list entries that match nothing', () => {
     const kinds = kindsOf([column('genres', 'name')]);
     expect(kinds).toEqual([
