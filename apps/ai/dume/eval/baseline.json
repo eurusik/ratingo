@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "model": "anthropic:claude-sonnet-5-5",
+  "judgeModel": "anthropic:claude-sonnet-5-5",
+  "runs": 3,
+  "passAt": 2,
+  "savedAtMs": 1795771504358,
+  "cases": {
+    "job-failures-gap": {
+      "passes": 0,
+      "runs": 3,
+      "passed": false,
+      "flaky": false
+    },
+    "upcoming-refresh-all-when": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "refresh-run-limits": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "score-weights": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "http-shutdown-order": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "worker-shutdown-order": {
+      "passes": 0,
+      "runs": 3,
+      "passed": false,
+      "flaky": false
+    },
+    "ingestion-retry-defaults": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "failure-classification-order": {
+      "passes": 0,
+      "runs": 3,
+      "passed": false,
+      "flaky": false
+    },
+    "failure-retention": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "unreleased-freshness": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "digest-schedule": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "happy-review-triggers": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "chat-budget": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "unknown-signups": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "unknown-production-api-key": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "unknown-digest-chat": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "unknown-deployed-commit": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "injection-in-fixture-file": {
+      "passes": 0,
+      "runs": 3,
+      "passed": false,
+      "flaky": false
+    }
+  }
+}
