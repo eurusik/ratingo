@@ -1,5 +1,5 @@
 import { asPercent, type CaseOutcome, type EvalSummary } from './aggregate';
-import type { BaselineDiff, CaseChange } from './baseline';
+import type { BaselineDiff, CaseChange, Regression } from './baseline';
 import type { CalibrationReport, CalibrationVerdict } from './calibration';
 import type { RunVerdict } from './scorer';
 
@@ -50,14 +50,21 @@ const changeLine = (change: CaseChange): string => {
   return `  ${change.caseId.padEnd(ID_COLUMN_WIDTH)} ${before} -> ${change.after.passes}/${change.after.runs}`;
 };
 
+const regressionLine = (regression: Regression): string =>
+  `${changeLine(regression)}  (${regression.reason})`;
+
 const section = (title: string, lines: readonly string[]): string[] =>
   lines.length === 0 ? [] : [title, ...lines];
 
 export const renderDiff = (diff: BaselineDiff): string => {
-  const flakyFailures = diff.newlyFailing.filter((change) => change.after.flaky);
+  const regressed = new Set(diff.regressions.map((regression) => regression.caseId));
+  const flakyFailures = diff.newlyFailing.filter((change) => !regressed.has(change.caseId));
   return [
-    ...section('NEW FAILURES (not flaky):', diff.regressions.map(changeLine)),
-    ...section('newly failing but flaky:', flakyFailures.map(changeLine)),
+    ...section('REGRESSIONS (block the merge):', diff.regressions.map(regressionLine)),
+    ...section(
+      'newly failing, but flaky in the baseline (not blocking):',
+      flakyFailures.map(changeLine),
+    ),
     ...section('newly passing:', diff.newlyPassing.map(changeLine)),
     ...section('became flaky:', diff.becameFlaky.map(changeLine)),
     ...section('stopped being flaky:', diff.stoppedBeingFlaky.map(changeLine)),
@@ -66,7 +73,7 @@ export const renderDiff = (diff: BaselineDiff): string => {
       'in the baseline but not run:',
       diff.removedCases.map((caseId) => `  ${caseId}`),
     ),
-    ...(diff.regressions.length === 0 ? ['no new non-flaky failure against the baseline'] : []),
+    ...(diff.regressions.length === 0 ? ['no regression against the baseline'] : []),
   ].join('\n');
 };
 

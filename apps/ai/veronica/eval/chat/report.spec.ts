@@ -10,6 +10,12 @@ const POLICY = { runs: 3, passAt: 2 };
 const outcome = (id: string, passes: number) =>
   aggregateCase(id, EvalKind.KNOWN, runsWithPasses(passes, 3), POLICY);
 
+const outcomeOf = (id: string, passes: number, runs: number) =>
+  aggregateCase(id, EvalKind.KNOWN, runsWithPasses(passes, runs), {
+    runs,
+    passAt: Math.floor(runs / 2) + 1,
+  });
+
 describe('renderCase', () => {
   it('shows passes out of runs and marks a flaky case', () => {
     expect(renderCase(outcome('steady', 3))).toBe('steady                         3/3 pass');
@@ -69,7 +75,52 @@ describe('renderSummary', () => {
 });
 
 describe('renderDiff', () => {
-  const baseline = buildBaseline([outcome('solid', 3), outcome('wobbly', 3), outcome('fixed', 0)], {
+  const baseline = buildBaseline(
+    [outcome('solid', 3), outcome('wobbly', 3), outcome('shaky', 2), outcome('fixed', 0)],
+    {
+      model: 'm',
+      judgeModel: 'j',
+      runs: 3,
+      passAt: 2,
+      savedAtMs: 0,
+    },
+  );
+
+  it('lists regressions first and names the softened ones apart', () => {
+    const text = renderDiff(
+      diffBaseline(baseline, [
+        outcome('solid', 0),
+        outcome('wobbly', 2),
+        outcome('shaky', 1),
+        outcome('fixed', 3),
+        outcome('fresh', 3),
+      ]),
+    );
+    expect(text).toMatch(
+      /REGRESSIONS \(block the merge\):\n {2}solid\s+3\/3 -> 0\/3 {2}\(stopped passing\)/,
+    );
+    expect(text).toMatch(/not blocking\):\n {2}shaky\s+2\/3 -> 1\/3/);
+    expect(text).toMatch(/newly passing:\n {2}fixed\s+0\/3 -> 3\/3/);
+    expect(text).toMatch(/not in the baseline:\n {2}fresh\s+new -> 3\/3/);
+    expect(text).not.toContain('no regression');
+  });
+
+  it('says so when there is no regression', () => {
+    expect(
+      renderDiff(
+        diffBaseline(baseline, [
+          outcome('solid', 3),
+          outcome('wobbly', 3),
+          outcome('shaky', 2),
+          outcome('fixed', 0),
+        ]),
+      ),
+    ).toBe('no regression against the baseline');
+  });
+});
+
+describe('renderDiff reasons', () => {
+  const baseline = buildBaseline([outcomeOf('five', 5, 5), outcome('solid', 3)], {
     model: 'm',
     judgeModel: 'j',
     runs: 3,
@@ -77,28 +128,13 @@ describe('renderDiff', () => {
     savedAtMs: 0,
   });
 
-  it('lists new failures first and names the flaky ones apart', () => {
+  it('names why each case blocks the merge', () => {
     const text = renderDiff(
-      diffBaseline(baseline, [
-        outcome('solid', 0),
-        outcome('wobbly', 1),
-        outcome('fixed', 3),
-        outcome('fresh', 3),
-      ]),
+      diffBaseline(baseline, [outcomeOf('five', 3, 5), outcome('solid', 0), outcome('fresh', 0)]),
     );
-    expect(text).toMatch(/NEW FAILURES \(not flaky\):\n {2}solid\s+3\/3 -> 0\/3/);
-    expect(text).toMatch(/newly failing but flaky:\n {2}wobbly\s+3\/3 -> 1\/3/);
-    expect(text).toMatch(/newly passing:\n {2}fixed\s+0\/3 -> 3\/3/);
-    expect(text).toMatch(/not in the baseline:\n {2}fresh\s+new -> 3\/3/);
-    expect(text).not.toContain('no new non-flaky failure');
-  });
-
-  it('says so when there is no new non-flaky failure', () => {
-    expect(
-      renderDiff(
-        diffBaseline(baseline, [outcome('solid', 3), outcome('wobbly', 3), outcome('fixed', 0)]),
-      ),
-    ).toBe('no new non-flaky failure against the baseline');
+    expect(text).toMatch(/five\s+5\/5 -> 3\/5 {2}\(lost passes\)/);
+    expect(text).toMatch(/solid\s+3\/3 -> 0\/3 {2}\(stopped passing\)/);
+    expect(text).toMatch(/fresh\s+new -> 0\/3 {2}\(new case fails\)/);
   });
 });
 
