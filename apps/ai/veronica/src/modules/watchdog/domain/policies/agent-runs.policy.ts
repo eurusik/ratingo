@@ -37,5 +37,8 @@ export const evaluateAgentFailedRuns = (
   reading: AgentRunReading,
 ): CheckResult =>
   reading.failedRuns >= FAILED_RUNS_TO_ALERT
-    ? failing(watched.failedRunsKey, watchedAgentFailedRunsText(watched.label, reading.failedRuns))
+    ? failing(
+        watched.failedRunsKey,
+        watchedAgentFailedRunsText(watched.label, watched.agent, reading.failedRuns),
+      )
     : healthy(watched.failedRunsKey);

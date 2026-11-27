@@ -76,9 +76,19 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
       prefix: CHAT_QUEUE_PREFIX,
       concurrency: CHAT_WORKER_CONCURRENCY,
     });
-    this.worker.on('failed', (job, error) =>
-      this.logger.error(`Повідомлення ${job?.id ?? '?'} не оброблено: ${error.message}`),
-    );
+    this.worker.on('failed', (job, error) => this.onFailed(job, error));
+  }
+
+  onFailed(job: Job | undefined, error: Error): void {
+    this.logger.error(`Повідомлення ${job?.id ?? '?'} не оброблено: ${error.message}`);
+    if (job !== undefined && this.isFinalDumeFailure(job, error)) {
+      void this.dumeFollowUps.abandon(job.data as DumeFollowUp);
+    }
+  }
+
+  private isFinalDumeFailure(job: Job, error: Error): boolean {
+    if (job.name !== CHAT_JOB_TYPES.DUME_FOLLOW_UP || !isDumeFollowUp(job.data)) return false;
+    return error instanceof UnrecoverableError || job.attemptsMade >= (job.opts.attempts ?? 1);
   }
 
   async onApplicationShutdown(): Promise<void> {

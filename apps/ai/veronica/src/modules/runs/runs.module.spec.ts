@@ -76,7 +76,9 @@ describe('the run repository Veronica runs on', () => {
       exports: [DATABASE],
       global: true,
     };
-    const testing = await Test.createTestingModule({ imports: [databaseModule, build()] }).compile();
+    const testing = await Test.createTestingModule({
+      imports: [databaseModule, build()],
+    }).compile();
     const repository = testing.get<RunRepository>(RUN_REPOSITORY);
 
     await repository.save(finishedChatRun());

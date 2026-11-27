@@ -70,8 +70,8 @@ export const watchedAgentBudgetText = (
   limitUsd: string,
 ): string => `🟠 Бюджет ${label} за добу: ${percent}% ($${spentUsd} із $${limitUsd})`;
 
-export const watchedAgentFailedRunsText = (label: string, count: number): string =>
-  `🔴 ${label}: невдалих запусків за останню годину: ${count}. Перевір Railway → ${label} → Logs`;
+export const watchedAgentFailedRunsText = (label: string, service: string, count: number): string =>
+  `🔴 ${label}: невдалих запусків за останню годину: ${count}. Перевір Railway → ${service} → Logs`;
 
 export const RECOVERY_TEXT: Readonly<Record<AlertKey, string>> = {
   [AlertKey.HAPPY_DOWN]: '✅ відновилось: Хеппі знову відповідає',

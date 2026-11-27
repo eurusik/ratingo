@@ -7,8 +7,17 @@ export interface DumeClientPort {
   find(requestId: string): Promise<DumeLookup>;
 }
 
+export const StartCertainty = {
+  NEVER_STARTED: 'never_started',
+  MAYBE_STARTED: 'maybe_started',
+} as const;
+export type StartCertainty = (typeof StartCertainty)[keyof typeof StartCertainty];
+
 export class DumeUnavailableError extends Error {
-  constructor(readonly reason: string) {
+  constructor(
+    readonly reason: string,
+    readonly certainty: StartCertainty = StartCertainty.NEVER_STARTED,
+  ) {
     super(`DUM-E is unavailable: ${reason}`);
     this.name = 'DumeUnavailableError';
   }

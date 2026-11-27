@@ -83,7 +83,7 @@ describe('evaluateAgentFailedRuns', () => {
     expect(
       evaluateAgentFailedRuns(happy, { spentUsd: 0, failedRuns: 4, dayBudgetUsd: 0.5 }).finding
         ?.text,
-    ).toContain('Хеппі: невдалих запусків за останню годину: 4');
+    ).toContain('Хеппі: невдалих запусків за останню годину: 4. Перевір Railway → happy → Logs');
   });
 });
 

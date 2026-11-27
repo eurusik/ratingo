@@ -15,7 +15,7 @@ const urlOf = (fetchImpl: jest.Mock): string => (fetchImpl.mock.calls[0] as [str
 describe('TelegramChatAdapter', () => {
   it('sends sanitized HTML without link previews', async () => {
     const fetchImpl = reply(200, { ok: true });
-    await new TelegramChatAdapter(CONFIG, fetchImpl).sendMessage(
+    await new TelegramChatAdapter(CONFIG, undefined, fetchImpl).sendMessage(
       '42',
       '<b>hi</b> <a href="https://evil.example">x</a>',
     );
@@ -31,13 +31,13 @@ describe('TelegramChatAdapter', () => {
   it('posts a message and returns its id so it can be edited later', async () => {
     const fetchImpl = reply(200, { ok: true, result: { message_id: 55 } });
     await expect(
-      new TelegramChatAdapter(CONFIG, fetchImpl).postMessage('42', '<i>шукаю…</i>'),
+      new TelegramChatAdapter(CONFIG, undefined, fetchImpl).postMessage('42', '<i>шукаю…</i>'),
     ).resolves.toBe(55);
     expect(urlOf(fetchImpl)).toContain('/sendMessage');
   });
 
   it('fails without retrying when Telegram sends no message id', async () => {
-    const error = await new TelegramChatAdapter(CONFIG, reply(200, { ok: true }))
+    const error = await new TelegramChatAdapter(CONFIG, undefined, reply(200, { ok: true }))
       .postMessage('42', 'x')
       .catch((e: unknown) => e);
     expect(error).toBeInstanceOf(NotificationError);
@@ -46,7 +46,7 @@ describe('TelegramChatAdapter', () => {
 
   it('edits a message with sanitized HTML and no link previews', async () => {
     const fetchImpl = reply(200, { ok: true });
-    await new TelegramChatAdapter(CONFIG, fetchImpl).editMessage(
+    await new TelegramChatAdapter(CONFIG, undefined, fetchImpl).editMessage(
       '42',
       55,
       '<b>ok</b> <a href="https://evil.example">x</a>',
@@ -63,7 +63,7 @@ describe('TelegramChatAdapter', () => {
 
   it('shows the typing indicator', async () => {
     const fetchImpl = reply(200, { ok: true });
-    await new TelegramChatAdapter(CONFIG, fetchImpl).sendChatAction('42', 'typing');
+    await new TelegramChatAdapter(CONFIG, undefined, fetchImpl).sendChatAction('42', 'typing');
     expect(urlOf(fetchImpl)).toContain('/sendChatAction');
     expect(bodyOf(fetchImpl)).toEqual({ chat_id: '42', action: 'typing' });
   });
@@ -73,7 +73,9 @@ describe('TelegramChatAdapter', () => {
       ok: true,
       result: { url: 'https://v.example/hook', allowed_updates: ['message'] },
     });
-    await expect(new TelegramChatAdapter(CONFIG, fetchImpl).getWebhookInfo()).resolves.toEqual({
+    await expect(
+      new TelegramChatAdapter(CONFIG, undefined, fetchImpl).getWebhookInfo(),
+    ).resolves.toEqual({
       url: 'https://v.example/hook',
       allowedUpdates: ['message'],
     });
@@ -81,7 +83,9 @@ describe('TelegramChatAdapter', () => {
 
   it('reports no webhook as an empty url and default updates', async () => {
     const fetchImpl = reply(200, { ok: true, result: { url: '' } });
-    await expect(new TelegramChatAdapter(CONFIG, fetchImpl).getWebhookInfo()).resolves.toEqual({
+    await expect(
+      new TelegramChatAdapter(CONFIG, undefined, fetchImpl).getWebhookInfo(),
+    ).resolves.toEqual({
       url: '',
       allowedUpdates: null,
     });
@@ -89,7 +93,7 @@ describe('TelegramChatAdapter', () => {
 
   it('registers a webhook with the secret and without dropping updates', async () => {
     const fetchImpl = reply(200, { ok: true });
-    await new TelegramChatAdapter(CONFIG, fetchImpl).setWebhook({
+    await new TelegramChatAdapter(CONFIG, undefined, fetchImpl).setWebhook({
       url: 'https://v.example/hook',
       secretToken: 'derived',
       allowedUpdates: ['message'],
@@ -107,6 +111,7 @@ describe('TelegramChatAdapter', () => {
   it('throws without leaking the token or the secret when Telegram rejects the call', async () => {
     const adapter = new TelegramChatAdapter(
       CONFIG,
+      undefined,
       reply(400, { ok: false, description: 'bad webhook' }),
     );
     const error = await adapter
@@ -126,10 +131,23 @@ describe('TelegramChatAdapter', () => {
   it('marks a network failure as delivery-unknown without the token', async () => {
     const adapter = new TelegramChatAdapter(
       CONFIG,
+      undefined,
       jest.fn().mockRejectedValue(new TypeError('fetch failed secret-token')),
     );
     const error = await adapter.sendMessage('42', 'x').catch((e: unknown) => e);
     expect((error as NotificationError).deliveryUnknown).toBe(true);
     expect((error as Error).message).not.toContain('secret-token');
+  });
+
+  it('keeps code links of the configured repository and drops all others', async () => {
+    const sha = 'a'.repeat(40);
+    const good = `https://github.com/eurusik/ratingo/blob/${sha}/a.ts#L1`;
+    const bad = `https://github.com/other/repo/blob/${sha}/a.ts#L1`;
+    const fetchImpl = reply(200, { ok: true, result: { message_id: 1 } });
+    const adapter = new TelegramChatAdapter(CONFIG, 'eurusik/ratingo', fetchImpl);
+
+    await adapter.sendMessage('42', `<a href="${good}">ok</a> <a href="${bad}">no</a>`);
+
+    expect(bodyOf(fetchImpl).text).toBe(`<a href="${good}">ok</a> no`);
   });
 });

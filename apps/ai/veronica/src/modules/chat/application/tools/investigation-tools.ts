@@ -63,7 +63,7 @@ export const askDumeInput = z.object({
 });
 
 const ASK_DUME_DESCRIPTION =
-  'Hands one question to DUM-E, the code investigator, to run in the background. DUM-E reads the code of the main branch together with production logs, failed jobs and metrics, and answers why something behaves as it does; every claim is checked against the code lines and data rows it actually read. It takes several minutes and costs real money, and its answer arrives later as a separate message sent by the system, not by you. Use it only for a "why" or "how does this work" question that cannot be settled from the numbers, logs, job failures, changes and pull request results your other tools return, because the code has to be read as well. Do not use it for the current state, counts, lists, schedules, recent errors, what Happy said, or anything another tool answers directly. Call it at most once per message. It returns at once with a status and an ownerNotice: tell the owner that notice in one short line, and do not guess the cause yourself.';
+  'Hands one question to DUM-E, the code investigator, to run in the background. DUM-E reads the code of the main branch together with production logs, failed jobs and metrics, and answers why something behaves as it does; every claim is checked against the code lines and data rows it actually read. It takes several minutes and costs real money, and its answer arrives later as a separate message sent by the system, not by you. Use it only for a "why" or "how does this work" question that cannot be settled from the numbers, logs, job failures, changes and pull request results your other tools return, because the code has to be read as well. Do not use it for the current state, counts, lists, schedules, recent errors, what Happy said, or anything another tool answers directly. When the question fits, start it yourself and do not ask the owner whether to start it; call it even if you suspect DUM-E may be unavailable, because the tool reports that itself. Call it at most once per message. It returns at once with a status and an ownerNotice: tell the owner that notice in full, in a line or two, and do not guess the cause yourself.';
 
 const noInput = z.object({});
 
@@ -117,6 +117,7 @@ export const buildInvestigationTools = (
       description: ASK_DUME_DESCRIPTION,
       inputSchema: askDumeInput,
       readOnly: true,
+      startsPaidWork: true,
       maxOutputChars: ASK_DUME_OUTPUT_CAP,
       handler: (input) => askDume(input),
     }),

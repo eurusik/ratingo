@@ -32,8 +32,20 @@ const BLOCK_SEPARATOR = '\n\n';
 const HEADER = '🔎 <b>DUM-E</b>';
 const WHITESPACE_RUN = /\s+/g;
 
+const fitEscaped = (raw: string, limit: number): string => {
+  const whole = escapeHtml(raw);
+  if (whole.length <= limit) return whole;
+  let fitted = '';
+  for (const character of raw) {
+    const escaped = escapeHtml(character);
+    if (fitted.length + escaped.length > limit - 1) break;
+    fitted += escaped;
+  }
+  return `${fitted.trimEnd()}…`;
+};
+
 const plain = (text: string, limit: number): string =>
-  escapeHtml(clip(stripLinks(text).replace(WHITESPACE_RUN, ' ').trim(), limit));
+  fitEscaped(stripLinks(text).replace(WHITESPACE_RUN, ' ').trim(), limit);
 
 const citationLabel = ({ path, startLine, endLine }: DumeCitation): string =>
   endLine === startLine ? `${path}:${startLine}` : `${path}:${startLine}-${endLine}`;
@@ -114,7 +126,18 @@ const pack = (blocks: readonly string[]): string[] => {
 
 const FACTS_TITLE = '<b>Перевірені факти</b>';
 
-const omittedNote = (count: number): string => `Ще ${count} фактів не вмістилося в повідомлення.`;
+const TEENS_FROM = 11;
+const TEENS_TO = 14;
+
+const omittedNote = (count: number): string => {
+  const lastDigit = count % 10;
+  const teen = count % 100 >= TEENS_FROM && count % 100 <= TEENS_TO;
+  if (lastDigit === 1 && !teen) return `Ще ${count} факт не вмістився в повідомлення.`;
+  if (lastDigit >= 2 && lastDigit <= 4 && !teen) {
+    return `Ще ${count} факти не вмістилися в повідомлення.`;
+  }
+  return `Ще ${count} фактів не вмістилося в повідомлення.`;
+};
 
 const withTitle = (blocks: readonly string[]): string[] =>
   blocks.length === 0 ? [] : [`${FACTS_TITLE}\n${blocks[0]}`, ...blocks.slice(1)];

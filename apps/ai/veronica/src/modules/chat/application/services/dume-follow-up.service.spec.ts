@@ -3,6 +3,7 @@ import { FixedClock } from '@ratingo/ai-core';
 import { NotificationError } from '../../../notify/public';
 import { DUME_DEADLINE_MS } from '../../domain/constants/dume.constants';
 import {
+  DUME_DELIVERY_FAILED_LINE,
   DUME_FAILURE_LINE,
   DUME_GAVE_UP_LINE,
   DUME_NOT_FOUND_LINE,
@@ -19,12 +20,9 @@ import { NOW_MS, answeredView, failedView, queuedView } from '../../testing/dume
 
 import { DumeFollowUpOutcome, DumeFollowUpService } from './dume-follow-up.service';
 
-const FOLLOW_UP = {
-  chatId: '10',
-  requestId: 'tg1000001',
-  createdAtMs: NOW_MS - 60_000,
-  attempt: 1,
-};
+const REQUEST_ID = 'tg00001000';
+const FOLLOW_UP = { chatId: '10', requestId: REQUEST_ID, createdAtMs: NOW_MS - 60_000, attempt: 1 };
+const ANSWERED = { kind: 'found', request: answeredView({ requestId: REQUEST_ID }) } as const;
 
 const setup = (nowMs = NOW_MS) => {
   const client = new FakeDumeClient();
@@ -32,13 +30,14 @@ const setup = (nowMs = NOW_MS) => {
   const queue = new RecordingQueue();
   const sent: string[] = [];
   const remembered: { chatId: string; turns: unknown[] }[] = [];
-  const state = { sendFailure: null as Error | null };
+  const sending = { failures: [] as (Error | null)[] };
   const service = new DumeFollowUpService(
     client,
     queue,
     {
       sendMessage: async (_chatId: string, html: string) => {
-        if (state.sendFailure !== null) throw state.sendFailure;
+        const failure = sending.failures.shift();
+        if (failure) throw failure;
         sent.push(html);
       },
     } as never,
@@ -51,20 +50,23 @@ const setup = (nowMs = NOW_MS) => {
     { repository: 'eurusik/ratingo' },
     new FixedClock(nowMs),
   );
-  store.inFlight.set('10', 'tg1000001');
-  return { client, store, queue, sent, remembered, state, service };
+  store.inFlight.set('10', REQUEST_ID);
+  return { client, store, queue, sent, remembered, sending, service };
 };
+
+const rejectedForGood = () => new NotificationError('telegram 400', false);
 
 describe('DumeFollowUpService', () => {
   it('delivers the answer as its own message, frees the chat and remembers a short form', async () => {
     const { service, client, sent, store, remembered } = setup();
-    client.lookups = [{ kind: 'found', request: answeredView() }];
+    client.lookups = [ANSWERED];
 
     expect(await service.handle(FOLLOW_UP)).toBe(DumeFollowUpOutcome.DELIVERED);
 
     expect(sent).toHaveLength(1);
     expect(sent[0]).toContain('🔎 <b>DUM-E</b>');
     expect(store.inFlight.size).toBe(0);
+    expect(store.delivery.get(REQUEST_ID)).toBe('sent');
     expect(remembered).toEqual([
       {
         chatId: '10',
@@ -122,56 +124,156 @@ describe('DumeFollowUpService', () => {
     expect(sent).toEqual([expect.stringContaining(DUME_NOT_FOUND_LINE)]);
   });
 
-  it('sends nothing the second time, so a repeated job never duplicates the message', async () => {
-    const { service, client, sent } = setup();
-    client.lookups = [{ kind: 'found', request: answeredView() }];
+  describe('sending only once', () => {
+    it('sends nothing the second time and still frees the chat', async () => {
+      const { service, client, sent, store } = setup();
+      client.lookups = [ANSWERED];
+      await service.handle(FOLLOW_UP);
+      store.inFlight.set('10', REQUEST_ID);
 
-    await service.handle(FOLLOW_UP);
-    const second = await service.handle(FOLLOW_UP);
+      expect(await service.handle(FOLLOW_UP)).toBe(DumeFollowUpOutcome.DUPLICATE);
 
-    expect(second).toBe(DumeFollowUpOutcome.DUPLICATE);
-    expect(sent).toHaveLength(1);
+      expect(sent).toHaveLength(1);
+      expect(store.inFlight.size).toBe(0);
+    });
+
+    it('does not read a send that is still in progress as a delivery, and tries again after the claim expires', async () => {
+      const { service, client, sent, store, queue } = setup();
+      client.lookups = [ANSWERED];
+      store.delivery.set(REQUEST_ID, 'sending');
+
+      expect(await service.handle(FOLLOW_UP)).toBe(DumeFollowUpOutcome.WAITING);
+
+      expect(sent).toEqual([]);
+      expect(queue.dumeFollowUps).toEqual([
+        { followUp: { ...FOLLOW_UP, attempt: 2 }, delayMs: 125_000 },
+      ]);
+      expect(store.inFlight.get('10')).toBe(REQUEST_ID);
+
+      store.expireSending(REQUEST_ID);
+      expect(await service.handle({ ...FOLLOW_UP, attempt: 2 })).toBe(
+        DumeFollowUpOutcome.DELIVERED,
+      );
+      expect(sent).toHaveLength(1);
+    });
   });
 
-  it('confirms the delivery only after every message was sent', async () => {
-    const { service, client, store } = setup();
-    client.lookups = [{ kind: 'found', request: answeredView() }];
+  describe('when sending fails', () => {
+    it('lets the job retry by giving the delivery claim back', async () => {
+      const { service, client, sending, store, sent } = setup();
+      client.lookups = [ANSWERED];
+      const failure = new NotificationError('telegram 502', true);
+      sending.failures = [failure];
 
-    await service.handle(FOLLOW_UP);
+      await expect(service.handle(FOLLOW_UP)).rejects.toBe(failure);
 
-    expect(store.confirmed.has('tg1000001')).toBe(true);
+      expect(store.delivery.has(REQUEST_ID)).toBe(false);
+      expect(await service.handle(FOLLOW_UP)).toBe(DumeFollowUpOutcome.DELIVERED);
+      expect(sent).toHaveLength(1);
+    });
+
+    it('keeps the claim when Telegram may already have delivered the message', async () => {
+      const { service, client, sending, store } = setup();
+      client.lookups = [ANSWERED];
+      const failure = new NotificationError('timeout', true, true);
+      sending.failures = [failure];
+
+      await expect(service.handle(FOLLOW_UP)).rejects.toBe(failure);
+
+      expect(store.delivery.get(REQUEST_ID)).toBe('sending');
+    });
+
+    it('resumes after the part that was already sent, so a retry never repeats message one', async () => {
+      const { service, client, sending, store, sent } = setup();
+      const long = 'x'.repeat(300);
+      client.lookups = [
+        {
+          kind: 'found',
+          request: answeredView({
+            requestId: REQUEST_ID,
+            result: {
+              ...(answeredView().result as NonNullable<ReturnType<typeof answeredView>['result']>),
+              answer: {
+                ...(answeredView().result as NonNullable<ReturnType<typeof answeredView>['result']>)
+                  .answer,
+                facts: Array.from({ length: 12 }, (_, index) => ({
+                  text: `fact ${index} ${long}`,
+                  citations: [{ path: 'apps/api/src/a.ts', startLine: 1, endLine: 2 }],
+                  evidence: [
+                    { ref: `logs_search#${index}.1`, tool: 'logs_search', summary: long },
+                    { ref: `logs_search#${index}.2`, tool: 'logs_search', summary: long },
+                  ],
+                })),
+              },
+            },
+          }),
+        },
+      ];
+      sending.failures = [null, new NotificationError('telegram 502', true)];
+
+      await expect(service.handle(FOLLOW_UP)).rejects.toBeInstanceOf(NotificationError);
+      const firstPart = sent[0];
+      expect(store.parts.get(REQUEST_ID)).toBe(1);
+
+      await service.handle(FOLLOW_UP);
+
+      expect(sent[0]).toBe(firstPart);
+      expect(sent.filter((message) => message === firstPart)).toHaveLength(1);
+      expect(sent.length).toBeGreaterThan(1);
+    });
+
+    it('sends plain text when Telegram rejects the formatted message for good', async () => {
+      const { service, client, sending, sent } = setup();
+      client.lookups = [ANSWERED];
+      sending.failures = [rejectedForGood()];
+
+      await service.handle(FOLLOW_UP);
+
+      expect(sent).toHaveLength(1);
+      expect(sent[0]).not.toMatch(/<(b|i|a|code)\b/);
+      expect(sent[0]).toContain('DUM-E');
+    });
+
+    it('sends one short honest line when the plain text is rejected too', async () => {
+      const { service, client, sending, sent } = setup();
+      client.lookups = [ANSWERED];
+      sending.failures = [rejectedForGood(), rejectedForGood()];
+
+      await service.handle(FOLLOW_UP);
+
+      expect(sent).toEqual([expect.stringContaining(DUME_DELIVERY_FAILED_LINE)]);
+    });
   });
 
-  it('does not confirm a delivery that failed', async () => {
-    const { service, client, state, store } = setup();
-    client.lookups = [{ kind: 'found', request: answeredView() }];
-    state.sendFailure = new NotificationError('telegram 502', true);
+  describe('abandoning a follow-up that will not be retried', () => {
+    it('tells the owner once, frees the chat and confirms the delivery', async () => {
+      const { service, sent, store } = setup();
 
-    await expect(service.handle(FOLLOW_UP)).rejects.toBe(state.sendFailure);
+      await service.abandon(FOLLOW_UP);
+      await service.abandon(FOLLOW_UP);
 
-    expect(store.confirmed.size).toBe(0);
-  });
+      expect(sent).toEqual([expect.stringContaining(DUME_DELIVERY_FAILED_LINE)]);
+      expect(store.inFlight.size).toBe(0);
+      expect(store.delivery.get(REQUEST_ID)).toBe('sent');
+    });
 
-  it('lets the job retry when sending fails, by giving the delivery claim back', async () => {
-    const { service, client, state, store, sent } = setup();
-    client.lookups = [{ kind: 'found', request: answeredView() }];
-    state.sendFailure = new NotificationError('telegram 502', true);
+    it('stays quiet when the answer was already delivered, but still frees the chat', async () => {
+      const { service, sent, store } = setup();
+      store.delivery.set(REQUEST_ID, 'sent');
 
-    await expect(service.handle(FOLLOW_UP)).rejects.toBe(state.sendFailure);
-    state.sendFailure = null;
+      await service.abandon(FOLLOW_UP);
 
-    expect(store.delivered.size).toBe(0);
-    expect(await service.handle(FOLLOW_UP)).toBe(DumeFollowUpOutcome.DELIVERED);
-    expect(sent).toHaveLength(1);
-  });
+      expect(sent).toEqual([]);
+      expect(store.inFlight.size).toBe(0);
+    });
 
-  it('keeps the claim when Telegram may already have delivered the message', async () => {
-    const { service, client, state, store } = setup();
-    client.lookups = [{ kind: 'found', request: answeredView() }];
-    state.sendFailure = new NotificationError('timeout', true, true);
+    it('frees the chat even when the last line cannot be sent', async () => {
+      const { service, sending, store } = setup();
+      sending.failures = [new NotificationError('telegram down', true)];
 
-    await expect(service.handle(FOLLOW_UP)).rejects.toBe(state.sendFailure);
+      await service.abandon(FOLLOW_UP);
 
-    expect(store.delivered.has('tg1000001')).toBe(true);
+      expect(store.inFlight.size).toBe(0);
+    });
   });
 });

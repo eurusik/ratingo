@@ -1,6 +1,6 @@
 import type { DumeConfig } from '../../../../config/config.constants';
 import { DumeRejectionReason } from '../../domain/entities/dume';
-import { DumeUnavailableError } from '../../domain/ports/dume-client.port';
+import { DumeUnavailableError, StartCertainty } from '../../domain/ports/dume-client.port';
 import { COMMIT, answeredView, queuedView } from '../../testing/dume.testing';
 
 import { HttpDumeClient } from './http.dume-client';
@@ -82,21 +82,43 @@ describe('HttpDumeClient', () => {
   });
 
   it.each([
-    ['a missing URL', { ...CONFIG, internalUrl: undefined }, () => json({}), 'not_configured'],
-    ['a missing token', { ...CONFIG, serviceToken: undefined }, () => json({}), 'not_configured'],
-    ['a server error', CONFIG, () => json({ message: 'boom' }, 502), 'HTTP 502'],
-    ['an unauthorized answer', CONFIG, () => json({}, 401), 'HTTP 401'],
+    [
+      'a missing URL',
+      { ...CONFIG, internalUrl: undefined },
+      () => json({}),
+      'not_configured',
+      'never_started',
+    ],
+    [
+      'a missing token',
+      { ...CONFIG, serviceToken: undefined },
+      () => json({}),
+      'not_configured',
+      'never_started',
+    ],
+    ['an unauthorized answer', CONFIG, () => json({}, 401), 'HTTP 401', 'never_started'],
+    ['a bad request answer', CONFIG, () => json({}, 400), 'HTTP 400', 'never_started'],
+    ['a server error', CONFIG, () => json({ message: 'boom' }, 502), 'HTTP 502', 'maybe_started'],
     [
       'a body that is not JSON',
       CONFIG,
       () => new Response('<html>', { status: 200 }),
       'HTTP 200 without JSON',
+      'maybe_started',
     ],
-    ['a wrong shape', CONFIG, () => json({ status: 'accepted' }), 'unexpected response shape'],
-  ])('reports DUM-E as unavailable for %s', async (_name, config, handler, reason) => {
+    [
+      'a wrong shape',
+      CONFIG,
+      () => json({ status: 'accepted' }),
+      'unexpected response shape',
+      'maybe_started',
+    ],
+  ])('reports DUM-E as unavailable for %s', async (_name, config, handler, reason, certainty) => {
     const { client } = clientWith(handler, config);
 
-    await expect(client.submit(SUBMISSION)).rejects.toEqual(new DumeUnavailableError(reason));
+    await expect(client.submit(SUBMISSION)).rejects.toEqual(
+      new DumeUnavailableError(reason, certainty as StartCertainty),
+    );
   });
 
   it('reports a network failure by its name and never retries', async () => {
@@ -104,7 +126,50 @@ describe('HttpDumeClient', () => {
       throw new TypeError('fetch failed');
     });
 
-    await expect(client.find('tg1000001')).rejects.toEqual(new DumeUnavailableError('TypeError'));
+    await expect(client.find('tg1000001')).rejects.toEqual(
+      new DumeUnavailableError('TypeError', StartCertainty.MAYBE_STARTED),
+    );
     expect(calls).toHaveLength(1);
+  });
+
+  it('reads values it does not know as safe ones, so a newer DUM-E cannot break polling', async () => {
+    const future = {
+      status: 'found',
+      request: {
+        ...answeredView(),
+        state: 'cancelled',
+        reason: 'quota_exceeded',
+        result: {
+          ...answeredView().result,
+          answer: { ...answeredView().result?.answer, support: 'mostly' },
+        },
+      },
+    };
+    const { client } = clientWith(() => json(future));
+
+    const lookup = await client.find('tg1000001');
+
+    expect(lookup).toMatchObject({
+      kind: 'found',
+      request: {
+        state: 'running',
+        reason: 'internal_error',
+        result: { answer: { support: 'unsupported' } },
+      },
+    });
+  });
+
+  it('reads a rejection reason it does not know as a general one', async () => {
+    const { client } = clientWith(() => json({ status: 'rejected', reason: 'maintenance' }, 429));
+
+    expect(await client.submit(SUBMISSION)).toEqual({ kind: 'rejected', reason: 'other' });
+  });
+
+  it('does not take a refused or a conflicting request for a start that may have happened', async () => {
+    const refused = clientWith(() => json({ message: 'bad' }, 400));
+
+    await expect(refused.client.submit(SUBMISSION)).rejects.toMatchObject({
+      certainty: StartCertainty.NEVER_STARTED,
+    });
   });
 });

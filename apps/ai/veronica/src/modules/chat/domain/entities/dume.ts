@@ -22,6 +22,7 @@ export const DumeRejectionReason = {
   DAY_BUDGET: 'day_budget',
   DAILY_COUNT_CAP: 'daily_count_cap',
   QUEUE_FULL: 'queue_full',
+  OTHER: 'other',
 } as const;
 export type DumeRejectionReason = (typeof DumeRejectionReason)[keyof typeof DumeRejectionReason];
 

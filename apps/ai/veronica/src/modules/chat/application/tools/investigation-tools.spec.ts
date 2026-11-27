@@ -131,6 +131,21 @@ describe('logs_search tool', () => {
       expect(description).toContain('ownerNotice');
     });
 
+    it('is the only tool that starts paid work, and says so', () => {
+      const flagged = buildInvestigationTools({} as InvestigationExecutors, NO_DELEGATION)
+        .filter((tool) => tool.startsPaidWork)
+        .map((tool) => tool.name);
+
+      expect(flagged).toEqual([InvestigationTool.ASK_DUME]);
+    });
+
+    it('tells the model to start the investigation itself and not to ask first', () => {
+      const description = toolWith(async () => ({}))?.definition.description ?? '';
+
+      expect(description).toContain('start it yourself');
+      expect(description).toContain('do not ask the owner whether to start it');
+    });
+
     it('hands the question to the delegation and returns what it answered', async () => {
       const delegate = jest.fn().mockResolvedValue({ status: 'started', ownerNotice: 'ok' });
 

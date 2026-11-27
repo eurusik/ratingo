@@ -9,15 +9,26 @@ import {
   DumeSubmitKind,
   DumeSupport,
   type DumeLookup,
+  type DumeRequestView,
   type DumeSubmission,
   type DumeSubmitResult,
 } from '../../domain/entities/dume';
-import { DumeUnavailableError, type DumeClientPort } from '../../domain/ports/dume-client.port';
+import {
+  DumeUnavailableError,
+  StartCertainty,
+  type DumeClientPort,
+} from '../../domain/ports/dume-client.port';
 
 const INTERNAL_PATH = '/internal/investigations';
+const HTTP_CONFLICT = 409;
+const HTTP_TOO_MANY_REQUESTS = 429;
+const HTTP_SERVER_ERROR = 500;
 
-const enumOf = <T extends Record<string, string>>(values: T) =>
-  z.enum(Object.values(values) as [T[keyof T], ...T[keyof T][]]);
+const knownOr = <T extends Record<string, string>>(
+  values: T,
+  value: string,
+  fallback: T[keyof T],
+): T[keyof T] => (Object.values(values).includes(value) ? (value as T[keyof T]) : fallback);
 
 const citationSchema = z.object({
   path: z.string(),
@@ -48,14 +59,14 @@ const resultSchema = z.object({
       }),
     ),
     unknowns: z.array(z.string()),
-    support: enumOf(DumeSupport),
+    support: z.string(),
   }),
 });
 
 const requestSchema = z.object({
   requestId: z.string(),
-  state: enumOf(DumeState),
-  reason: enumOf(DumeFailureReason).optional(),
+  state: z.string(),
+  reason: z.string().optional(),
   createdAtMs: z.number(),
   startedAtMs: z.number().optional(),
   finishedAtMs: z.number().optional(),
@@ -68,20 +79,39 @@ const acceptedSchema = z.object({
   request: requestSchema,
 });
 
-const rejectedSchema = z.object({
-  status: z.literal('rejected'),
-  reason: enumOf(DumeRejectionReason),
-});
+const rejectedSchema = z.object({ status: z.literal('rejected'), reason: z.string() });
 
 const lookupSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('not_found') }),
   z.object({ status: z.literal('found'), request: requestSchema }),
 ]);
 
+const toView = (raw: z.infer<typeof requestSchema>): DumeRequestView => ({
+  ...raw,
+  state: knownOr(DumeState, raw.state, DumeState.RUNNING),
+  reason:
+    raw.reason === undefined
+      ? undefined
+      : knownOr(DumeFailureReason, raw.reason, DumeFailureReason.INTERNAL_ERROR),
+  result:
+    raw.result === undefined
+      ? undefined
+      : {
+          ...raw.result,
+          answer: {
+            ...raw.result.answer,
+            support: knownOr(DumeSupport, raw.result.answer.support, DumeSupport.UNSUPPORTED),
+          },
+        },
+});
+
 interface RawResponse {
   status: number;
   body: unknown;
 }
+
+const maybeStarted = (reason: string): DumeUnavailableError =>
+  new DumeUnavailableError(reason, StartCertainty.MAYBE_STARTED);
 
 export class HttpDumeClient implements DumeClientPort {
   constructor(
@@ -91,19 +121,23 @@ export class HttpDumeClient implements DumeClientPort {
 
   async submit(submission: DumeSubmission): Promise<DumeSubmitResult> {
     const { status, body } = await this.call('POST', INTERNAL_PATH, submission);
-    if (status === 409) return { kind: DumeSubmitKind.CONFLICT };
-    if (status === 429) {
+    if (status === HTTP_CONFLICT) return { kind: DumeSubmitKind.CONFLICT };
+    if (status === HTTP_TOO_MANY_REQUESTS) {
       const rejected = rejectedSchema.safeParse(body);
-      if (!rejected.success) throw new DumeUnavailableError('unexpected response shape');
-      return { kind: DumeSubmitKind.REJECTED, reason: rejected.data.reason };
+      if (!rejected.success) throw maybeStarted('unexpected response shape');
+      return {
+        kind: DumeSubmitKind.REJECTED,
+        reason: knownOr(DumeRejectionReason, rejected.data.reason, DumeRejectionReason.OTHER),
+      };
     }
+    if (status >= HTTP_SERVER_ERROR) throw maybeStarted(`HTTP ${status}`);
     if (status < 200 || status >= 300) throw new DumeUnavailableError(`HTTP ${status}`);
     const accepted = acceptedSchema.safeParse(body);
-    if (!accepted.success) throw new DumeUnavailableError('unexpected response shape');
+    if (!accepted.success) throw maybeStarted('unexpected response shape');
     return {
       kind: DumeSubmitKind.ACCEPTED,
       created: accepted.data.created,
-      request: accepted.data.request,
+      request: toView(accepted.data.request),
     };
   }
 
@@ -114,7 +148,7 @@ export class HttpDumeClient implements DumeClientPort {
     if (!parsed.success) throw new DumeUnavailableError('unexpected response shape');
     return parsed.data.status === 'not_found'
       ? { kind: 'not_found' }
-      : { kind: 'found', request: parsed.data.request };
+      : { kind: 'found', request: toView(parsed.data.request) };
   }
 
   private async call(
@@ -140,11 +174,14 @@ export class HttpDumeClient implements DumeClientPort {
         signal: AbortSignal.timeout(DUME_REQUEST_TIMEOUT_MS),
       });
     } catch (error) {
-      throw new DumeUnavailableError(error instanceof Error ? error.name : 'network_error');
+      throw maybeStarted(error instanceof Error ? error.name : 'network_error');
     }
     try {
       return { status: response.status, body: await response.json() };
     } catch {
+      if (response.status >= HTTP_SERVER_ERROR || response.ok) {
+        throw maybeStarted(`HTTP ${response.status} without JSON`);
+      }
       throw new DumeUnavailableError(`HTTP ${response.status} without JSON`);
     }
   }

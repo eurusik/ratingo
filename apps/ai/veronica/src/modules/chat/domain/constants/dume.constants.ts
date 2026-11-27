@@ -9,7 +9,11 @@ export const DUME_REQUEST_TIMEOUT_MS = 10 * SECONDS;
 
 export const DUME_INFLIGHT_TTL_SECONDS = (DUME_DEADLINE_MS + 5 * MINUTES) / SECONDS;
 export const DUME_DELIVERED_TTL_SECONDS = 3 * DAYS_IN_SECONDS;
-export const DUME_SENDING_TTL_SECONDS = 45;
+export const DUME_SENDING_TTL_SECONDS = 120;
+export const DUME_SENDING_RETRY_DELAY_MS = (DUME_SENDING_TTL_SECONDS + 5) * 1000;
+export const DUME_SCHEDULE_ATTEMPTS = 3;
+export const DUME_REQUEST_ID_MIN_DIGITS = 8;
+export const PLAIN_TEXT_FALLBACK_MAX_CHARS = 3800;
 
 export const DUME_REQUEST_ID_PREFIX = 'tg';
 export const DUME_DEFAULT_REF = 'main';
@@ -42,5 +46,7 @@ export const DelegationStatus = {
   ALREADY_RUNNING: 'already_running',
   REJECTED: 'rejected',
   UNAVAILABLE: 'unavailable',
+  UNCONFIRMED: 'unconfirmed',
+  UNTRACKED: 'untracked',
 } as const;
 export type DelegationStatus = (typeof DelegationStatus)[keyof typeof DelegationStatus];

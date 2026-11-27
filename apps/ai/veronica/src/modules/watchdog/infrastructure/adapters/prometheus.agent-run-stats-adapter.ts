@@ -7,7 +7,7 @@ import type { AgentRunStatsPort } from '../../domain/ports/agent-run-stats.port'
 export const SPEND_QUERY = 'sum by (agent) (increase(app_ai_run_cost_USD_sum[24h]))';
 export const FAILED_RUNS_QUERY = `sum by (agent) (increase(app_ai_runs_total{outcome=~"${FAILED_RUN_OUTCOMES}"}[1h]))`;
 export const BUDGET_QUERY =
-  'max by (agent) (max_over_time({__name__=~"app_ai_agent_budget_day(_USD)?"}[1h]))';
+  'max by (agent) (last_over_time({__name__=~"app_ai_agent_budget_day(_USD)?"}[1d]))';
 
 const AGENT_LABEL = 'agent';
 

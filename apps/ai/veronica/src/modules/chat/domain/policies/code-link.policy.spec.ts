@@ -18,15 +18,34 @@ describe('codeLink', () => {
   });
 
   it.each([
+    ['brackets', 'app/[id]/page.tsx', 'app/%5Bid%5D/page.tsx'],
+    ['parentheses', 'app/(shop)/page.tsx', 'app/%28shop%29/page.tsx'],
+    ['a space', 'docs/my file.md', 'docs/my%20file.md'],
+    ['a hash and a quote', 'a/b#c".ts', 'a/b%23c%22.ts'],
+    ['an apostrophe and an asterisk', "a/it's*.ts", 'a/it%27s%2A.ts'],
+    ['non-ASCII letters', 'docs/звіт.md', 'docs/%D0%B7%D0%B2%D1%96%D1%82.md'],
+  ])('encodes %s in the path so the link still works', (_name, path, encoded) => {
+    expect(codeLink('eurusik/ratingo', COMMIT, { ...citation, path })).toBe(
+      `https://github.com/eurusik/ratingo/blob/${COMMIT}/${encoded}#L10-L14`,
+    );
+  });
+
+  it.each([
     ['a branch name instead of a commit', 'eurusik/ratingo', 'main', citation],
     ['a short commit', 'eurusik/ratingo', 'abc1234', citation],
     ['a local checkout label', 'eurusik/ratingo', 'local-checkout', citation],
     ['a repository with a space', 'eurusik/rat ingo', COMMIT, citation],
     ['a repository with a query', 'eurusik/ratingo?x=1', COMMIT, citation],
     ['a parent segment in the path', 'eurusik/ratingo', COMMIT, { ...citation, path: 'a/../b.ts' }],
-    ['a path with a hash', 'eurusik/ratingo', COMMIT, { ...citation, path: 'a/b#c.ts' }],
-    ['a path with a quote', 'eurusik/ratingo', COMMIT, { ...citation, path: 'a/b".ts' }],
     ['an absolute path', 'eurusik/ratingo', COMMIT, { ...citation, path: '/etc/passwd' }],
+    ['a backslash in the path', 'eurusik/ratingo', COMMIT, { ...citation, path: 'a\\b.ts' }],
+    [
+      'a control character in the path',
+      'eurusik/ratingo',
+      COMMIT,
+      { ...citation, path: 'a/b\u0007.ts' },
+    ],
+    ['a path of 301 characters', 'eurusik/ratingo', COMMIT, { ...citation, path: 'a'.repeat(301) }],
     ['an empty segment', 'eurusik/ratingo', COMMIT, { ...citation, path: 'a//b.ts' }],
     ['line zero', 'eurusik/ratingo', COMMIT, { ...citation, startLine: 0 }],
     ['an end line before the start', 'eurusik/ratingo', COMMIT, { ...citation, endLine: 9 }],

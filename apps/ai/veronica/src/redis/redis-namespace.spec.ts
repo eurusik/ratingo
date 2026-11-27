@@ -29,6 +29,10 @@ const recordKeysUsedByStores = async (): Promise<string[]> => {
     get: async (key: string) => (keys.push(key), null),
     set: async (key: string) => (keys.push(key), 'OK'),
     del: async (key: string) => (keys.push(key), 1),
+    eval: async (_script: string, numKeys: number, ...args: string[]) => (
+      keys.push(...args.slice(0, numKeys)),
+      [1, 'tg1']
+    ),
     lrange: async (key: string) => (keys.push(key), []),
     multi: () => chain,
   };
@@ -39,6 +43,8 @@ const recordKeysUsedByStores = async (): Promise<string[]> => {
   await delegation.claimInFlight('10', 'tg1');
   await delegation.releaseInFlight('10', 'tg1');
   await delegation.claimDelivery('tg1');
+  await delegation.recordPartSent('tg1', 1);
+  await delegation.confirmDelivery('tg1');
   await delegation.releaseDelivery('tg1');
   const watchdog = new RedisWatchdogStateStore(redis as never);
   await watchdog.loadActive();

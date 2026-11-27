@@ -125,7 +125,8 @@ const fixtureDelegation = (testCase: EvalCase): DumeDelegationService => {
           ? { claimed: false, heldBy: 'tg900000' }
           : { claimed: true },
       releaseInFlight: async () => undefined,
-      claimDelivery: async () => true,
+      claimDelivery: async () => ({ kind: 'claimed', partsSent: 0 }),
+      recordPartSent: async () => undefined,
       confirmDelivery: async () => undefined,
       releaseDelivery: async () => undefined,
     },
@@ -134,6 +135,7 @@ const fixtureDelegation = (testCase: EvalCase): DumeDelegationService => {
       scheduleHappyFollowUp: async () => undefined,
       scheduleDumeFollowUp: async () => undefined,
     },
+    new FixedClock(EVAL_NOW_MS),
   );
 };
 

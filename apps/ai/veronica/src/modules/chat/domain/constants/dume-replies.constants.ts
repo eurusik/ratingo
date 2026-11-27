@@ -9,6 +9,14 @@ export const DUME_ALREADY_STARTED_NOTICE =
 export const DUME_ALREADY_RUNNING_NOTICE =
   'DUM-E ще розбирає попереднє питання з цього чату. Нове можна запускати, коли воно завершиться.';
 
+export const DUME_UNCONFIRMED_NOTICE =
+  'Не вдалося підтвердити, чи розпочато розслідування в DUM-E. Якщо відповіді не буде, спитай ще раз.';
+
+export const DUME_UNTRACKED_NOTICE =
+  'Питання передано DUM-E, але стежити за відповіддю не вдалося через збій черги. Спитай ще раз пізніше.';
+
+export const DUME_DELIVERY_FAILED_LINE = 'Відповідь DUM-E не вдалося доставити. Спитай ще раз.';
+
 export const DUME_UNAVAILABLE_NOTICE =
   'DUM-E зараз недоступний, глибоке розслідування не запущено.';
 
@@ -22,6 +30,8 @@ export const DUME_REJECTION_NOTICE: Readonly<Record<DumeRejectionReason, string>
     'Денний ліміт розслідувань DUM-E вичерпано, нове не запущено. Спробуй завтра.',
   [DumeRejectionReason.QUEUE_FULL]:
     'У DUM-E зараз повна черга, розслідування не запущено. Спробуй трохи пізніше.',
+  [DumeRejectionReason.OTHER]:
+    'DUM-E зараз не приймає нових розслідувань, нове не запущено. Спробуй трохи пізніше.',
 };
 
 export const DUME_FAILURE_LINE: Readonly<Record<DumeFailureReason, string>> = {

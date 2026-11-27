@@ -1,6 +1,10 @@
 import fc from 'fast-check';
 
-import { DUME_MAX_MESSAGES, DUME_MESSAGE_BUDGET_CHARS } from '../constants/dume.constants';
+import {
+  DUME_ANSWER_MAX_CHARS,
+  DUME_MAX_MESSAGES,
+  DUME_MESSAGE_BUDGET_CHARS,
+} from '../constants/dume.constants';
 import { DumeFailureReason, DumeSupport, type DumeFact } from '../entities/dume';
 import { COMMIT, dumeResult } from '../../testing/dume.testing';
 
@@ -97,7 +101,7 @@ describe('renderDumeAnswer', () => {
     const all = messages.join('\n');
     expect(all).toContain('assumption 0');
     expect(all).toContain('unknown 0');
-    expect(all).toMatch(/Ще \d+ фактів не вмістилося/);
+    expect(all).toMatch(/Ще \d+ факт/);
     expect(all).toContain('Підтримка:');
   });
 
@@ -128,6 +132,54 @@ describe('renderDumeAnswer', () => {
       ),
       { numRuns: 60 },
     );
+  });
+});
+
+describe('what is shown of a long or markup-heavy text', () => {
+  it('measures a text after it is escaped, so many ampersands cannot overflow the block', () => {
+    const text = renderDumeAnswer(
+      dumeResult({ answer: '&'.repeat(2000), unknowns: ['<'.repeat(2000)] }),
+      REPOSITORY,
+    );
+
+    for (const message of text)
+      expect(message.length).toBeLessThanOrEqual(DUME_MESSAGE_BUDGET_CHARS);
+    const head = text[0] as string;
+    expect(head.split('\n')[1]?.length).toBeLessThanOrEqual(DUME_ANSWER_MAX_CHARS);
+    expect(head).toContain('&amp;');
+    expect(head).not.toMatch(/&(?!amp;|lt;|gt;)/);
+  });
+
+  it.each([
+    [1, 'Ще 1 факт не вмістився'],
+    [2, 'Ще 2 факти не вмістилися'],
+    [5, 'Ще 5 фактів не вмістилося'],
+    [11, 'Ще 11 фактів не вмістилося'],
+    [21, 'Ще 21 факт не вмістився'],
+    [24, 'Ще 24 факти не вмістилися'],
+  ])('writes the number of dropped facts in correct Ukrainian (%s)', (count, expected) => {
+    const facts: DumeFact[] = Array.from({ length: 40 }, (_, index) => ({
+      text: `fact ${index} ${'z'.repeat(290)}`,
+      citations: [1, 2, 3].map((line) => ({
+        path: 'apps/api/src/a.ts',
+        startLine: line,
+        endLine: line + 1,
+      })),
+      evidence: [1, 2].map((row) => ({
+        ref: `logs_search#${index}.${row}`,
+        tool: 'logs_search',
+        summary: 'y'.repeat(160),
+      })),
+    }));
+    const shown = renderDumeAnswer(dumeResult({ facts }), REPOSITORY).join('\n');
+    const omitted = Number(/Ще (\d+) факт/.exec(shown)?.[1]);
+    expect(omitted).toBeGreaterThan(0);
+
+    const counted = renderDumeAnswer(
+      dumeResult({ facts: facts.slice(0, 40 - omitted + count) }),
+      REPOSITORY,
+    ).join('\n');
+    expect(counted).toContain(expected);
   });
 });
 

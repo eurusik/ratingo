@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 
-import { TELEGRAM_CONFIG, type TelegramConfig } from '../../config/config.constants';
+import {
+  CHANGES_CONFIG,
+  TELEGRAM_CONFIG,
+  type ChangesConfig,
+  type TelegramConfig,
+} from '../../config/config.constants';
 
 import { CHAT_TRANSPORT } from './domain/ports/chat-transport.port';
 import { NOTIFIER_PORT } from './domain/ports/notifier.port';
@@ -9,8 +14,9 @@ import { TelegramChatAdapter } from './infrastructure/adapters/telegram.chat-ada
 import { TelegramNotifierAdapter } from './infrastructure/adapters/telegram.notifier-adapter';
 
 const chatAdapter = {
-  inject: [TELEGRAM_CONFIG],
-  useFactory: (config: TelegramConfig) => new TelegramChatAdapter(config),
+  inject: [TELEGRAM_CONFIG, CHANGES_CONFIG],
+  useFactory: (config: TelegramConfig, changes: ChangesConfig) =>
+    new TelegramChatAdapter(config, changes.repository),
 };
 
 @Module({

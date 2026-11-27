@@ -111,17 +111,15 @@ export const DUME_EVAL_CASES: readonly EvalCase[] = [
       { role: TurnRole.USER, text: TIMEOUT_QUESTION },
       { role: TurnRole.ASSISTANT, text: STARTED_NOTICE },
     ],
-    fixtures: scenario(DumeScenario.ALREADY_STARTED),
+    fixtures: scenario(DumeScenario.ALREADY_RUNNING),
     requiredTools: [],
     expectations: {
-      conveys: [
-        'Says DUM-E is already investigating this question and the answer will arrive as a separate message.',
-      ],
+      conveys: ['Says DUM-E is still working on the previous question from this chat.'],
       mustNotClaim: ['Names a specific cause of the timeout or a specific place in the code.'],
     },
     reference: {
       calls: [],
-      answer: 'DUM-E уже розбирає це питання, відповідь прийде окремим повідомленням.',
+      answer: 'DUM-E ще розбирає це питання з цього чату, відповідь прийде окремим повідомленням.',
     },
   },
 ];
