@@ -1,0 +1,14 @@
+name: dume
+models:
+  default: review
+tools: [code_search, code_read, code_list]
+skills: []
+mcp: []
+budgets:
+  perRunUsd: 0.3
+  perDayUsd: 1.5
+limits:
+  maxTurns: 16
+  timeoutMs: 240000
+  maxTokensPerCall: 4000
+  callTimeoutMs: 90000
