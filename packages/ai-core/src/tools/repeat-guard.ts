@@ -44,6 +44,10 @@ export class RepeatGuard {
     if (calls.size < MAX_CALLS_PER_RUN) calls.set(key, call);
   }
 
+  forget(runId: string): void {
+    this.runs.delete(runId);
+  }
+
   private callsOf(runId: string): Map<string, RememberedCall> {
     const existing = this.runs.get(runId);
     if (existing !== undefined) return existing;

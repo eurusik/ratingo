@@ -1,6 +1,6 @@
 import type { ToolCall, ToolDefinition, ToolResult } from '../model/model.types';
 import { describeError } from '../shared/describe-error';
-import type { Tool, ToolContext } from './define-tool';
+import { ToolInputError, type Tool, type ToolContext } from './define-tool';
 import { redactSecrets } from './redact';
 import { RepeatGuard, RepeatReason, callKey, repeatNote } from './repeat-guard';
 import type { ToolSource } from './tool-source.port';
@@ -102,13 +102,18 @@ export class ToolRegistry {
     return [...this.allowed.values()].map((tool) => tool.definition);
   }
 
+  forget(runId: string): void {
+    this.repeatGuard?.forget(runId);
+  }
+
   async execute(call: ToolCall, context: ToolContext): Promise<ToolResult> {
     const tool = this.allowed.get(call.name);
     if (tool === undefined) {
       return { callId: call.id, content: `Tool "${call.name}" is not allowed`, isError: true };
     }
+    const guard = tool.readOnly ? this.repeatGuard : undefined;
     const key = callKey(call.name, call.input);
-    const earlier = this.repeatGuard?.recall(context.runId, key);
+    const earlier = guard?.recall(context.runId, key);
     if (earlier !== undefined) {
       return {
         callId: call.id,
@@ -117,31 +122,37 @@ export class ToolRegistry {
       };
     }
     let empty = false;
-    const result = await this.runTool(tool, call, {
+    const attempt = await this.runTool(tool, call, {
       ...context,
       markEmpty: () => {
         empty = true;
       },
     });
-    if (result.isError || empty) {
-      this.repeatGuard?.remember(context.runId, key, {
-        reason: result.isError ? RepeatReason.FAILED : RepeatReason.EMPTY,
-        content: result.content,
+    if (attempt.deterministicFailure || (!attempt.result.isError && empty)) {
+      guard?.remember(context.runId, key, {
+        reason: attempt.result.isError ? RepeatReason.FAILED : RepeatReason.EMPTY,
+        content: attempt.result.content,
       });
     }
-    return result;
+    return attempt.result;
   }
 
-  private async runTool(tool: Tool, call: ToolCall, context: ToolContext): Promise<ToolResult> {
+  private async runTool(
+    tool: Tool,
+    call: ToolCall,
+    context: ToolContext,
+  ): Promise<{ result: ToolResult; deterministicFailure: boolean }> {
     try {
       const output = await tool.run(call.input, context);
-      return { callId: call.id, content: sanitizeOutput(tool, output), isError: false };
+      const result = { callId: call.id, content: sanitizeOutput(tool, output), isError: false };
+      return { result, deterministicFailure: false };
     } catch (error) {
-      return {
+      const result = {
         callId: call.id,
         content: sanitizeOutput(tool, describeError(error)),
         isError: true,
       };
+      return { result, deterministicFailure: error instanceof ToolInputError };
     }
   }
 }

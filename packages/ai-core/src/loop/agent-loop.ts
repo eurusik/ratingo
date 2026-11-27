@@ -29,15 +29,13 @@ import { describeError } from '../shared/describe-error';
 import { redactSecrets } from '../tools/redact';
 import type { ToolRegistry } from '../tools/tool-registry';
 import type { BudgetLimits, PriorSpend } from './budget';
-import { buildBudgetLevels, estimateInputTokens, evaluateBudget } from './budget';
+import { BudgetLevel, buildBudgetLevels, estimateInputTokens, evaluateBudget } from './budget';
 import { buildRepairPrompt, toResponseSchema, validateStructuredOutput } from './structured-output';
 
 const RESPONSE_SCHEMA_NAME = 'response';
 const MIN_CALL_TIMEOUT_MS = 1;
 const TOOL_TIMEOUT_MESSAGE = 'Tool did not finish before the run deadline';
 const TOOL_USE_ON_FINAL_TURN_DETAIL = 'tool use requested on the final answer turn';
-const SINGLE_CALL = 1;
-const TURN_AND_FINAL_CALLS = 2;
 const TOOL_USE_WITHOUT_CALLS_DETAIL = 'tool_use stop without tool calls';
 
 export interface LoopLimits {
@@ -131,6 +129,7 @@ export class AgentLoop {
       failure = { error };
       this.markFailed(run, error);
     }
+    this.deps.registry.forget(run.id);
     const snapshot = run.snapshot();
     await this.deps.runs.save(snapshot);
     if (failure !== undefined && !(failure.error instanceof ModelError)) {
@@ -214,10 +213,28 @@ export class AgentLoop {
     request: AgentLoopRequest,
     state: LoopState,
   ): LoopStop | undefined {
-    const canAffordAnotherTurnAndTheFinalOne =
-      this.checkBudget(run, request, state, TURN_AND_FINAL_CALLS) === undefined;
-    if (!canAffordAnotherTurnAndTheFinalOne) this.startFinalizing(request, state);
-    return this.checkBudget(run, request, state, SINGLE_CALL);
+    if (
+      request.finalAnswer !== undefined &&
+      !state.finalizing &&
+      !this.canAffordAnotherTurnAndTheFinalOne(run, request, state)
+    ) {
+      this.startFinalizing(request, state);
+    }
+    return this.checkBudget(run, request, state);
+  }
+
+  private canAffordAnotherTurnAndTheFinalOne(
+    run: Run,
+    request: AgentLoopRequest,
+    state: LoopState,
+  ): boolean {
+    const modelRequest = this.buildModelRequest(request, state, request.limits.callTimeoutMs);
+    const nextTurn = this.worstCaseUsd(request, modelRequest);
+    const finalCall = this.worstCaseUsd(request, modelRequest, request.limits.maxTokensPerCall);
+    const cumulative = buildBudgetLevels(request.budgets, request.priorSpend, run.costUsd).filter(
+      (level) => level.level !== BudgetLevel.CALL,
+    );
+    return evaluateBudget(cumulative, nextTurn + finalCall).allowed;
   }
 
   private checkLimits(
@@ -234,18 +251,11 @@ export class AgentLoop {
     return undefined;
   }
 
-  private checkBudget(
-    run: Run,
-    request: AgentLoopRequest,
-    state: LoopState,
-    calls: number,
-  ): LoopStop | undefined {
-    const worstCaseUsd =
-      calls *
-      this.worstCaseUsd(
-        request,
-        this.buildModelRequest(request, state, request.limits.callTimeoutMs),
-      );
+  private checkBudget(run: Run, request: AgentLoopRequest, state: LoopState): LoopStop | undefined {
+    const worstCaseUsd = this.worstCaseUsd(
+      request,
+      this.buildModelRequest(request, state, request.limits.callTimeoutMs),
+    );
     const levels = buildBudgetLevels(request.budgets, request.priorSpend, run.costUsd);
     const decision = evaluateBudget(levels, worstCaseUsd);
     return decision.allowed
@@ -253,8 +263,12 @@ export class AgentLoop {
       : { reason: RunStopReason.BUDGET_EXCEEDED, detail: decision.level };
   }
 
-  private worstCaseUsd(request: AgentLoopRequest, modelRequest: ModelRequest): number {
-    const inputTokens = estimateInputTokens(modelRequest);
+  private worstCaseUsd(
+    request: AgentLoopRequest,
+    modelRequest: ModelRequest,
+    extraInputTokens = 0,
+  ): number {
+    const inputTokens = estimateInputTokens(modelRequest) + extraInputTokens;
     return Math.max(
       ...request.models.map((ref) =>
         worstCaseCostUsd(

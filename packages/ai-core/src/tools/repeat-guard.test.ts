@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { z } from 'zod';
-import { defineTool } from './define-tool';
+import { ToolInputError, defineTool } from './define-tool';
 import { RowList } from './row-list';
 import { NativeToolSource } from './sources/native.tool-source';
 import { ToolRegistry } from './tool-registry';
@@ -32,7 +32,10 @@ const registryOf = (tool: ReturnType<typeof countingTool>['tool'], guard: boolea
 
 describe('ToolRegistry repeated-call guard', () => {
   it('does not run a call again after it failed and returns the earlier error with a note', async () => {
-    const { tool, calls } = countingTool('read', () => new Error('file is missing'));
+    const { tool, calls } = countingTool(
+      'read',
+      () => new ToolInputError('read', 'file is missing'),
+    );
     const registry = await registryOf(tool, true);
 
     const first = await registry.execute(call('read', { query: 'a' }), context);
@@ -68,7 +71,7 @@ describe('ToolRegistry repeated-call guard', () => {
   });
 
   it('runs a different input and the same input in another run', async () => {
-    const { tool, calls } = countingTool('read', () => new Error('nope'));
+    const { tool, calls } = countingTool('read', () => new ToolInputError('read', 'nope'));
     const registry = await registryOf(tool, true);
 
     await registry.execute(call('read', { query: 'a' }), context);
@@ -78,8 +81,52 @@ describe('ToolRegistry repeated-call guard', () => {
     expect(calls).toEqual(['a', 'b', 'a']);
   });
 
+  it('does not remember a failure that may be temporary', async () => {
+    const { tool, calls } = countingTool('read', () => new Error('upstream timed out'));
+    const registry = await registryOf(tool, true);
+
+    await registry.execute(call('read', { query: 'a' }), context);
+    await registry.execute(call('read', { query: 'a' }), context);
+
+    expect(calls).toEqual(['a', 'a']);
+  });
+
+  it('never guards a tool that can write', async () => {
+    const calls: string[] = [];
+    const writer = defineTool({
+      name: 'write',
+      description: 'writes',
+      inputSchema: z.object({ query: z.string() }),
+      readOnly: false,
+      handler: ({ query }) => {
+        calls.push(query);
+        return Promise.resolve(RowList.of([], 'hint'));
+      },
+    });
+    const registry = await ToolRegistry.create([new NativeToolSource([writer])], ['write'], {
+      guardRepeatedCalls: true,
+      allowWriteTools: true,
+    });
+
+    await registry.execute(call('write', { query: 'a' }), context);
+    await registry.execute(call('write', { query: 'a' }), context);
+
+    expect(calls).toEqual(['a', 'a']);
+  });
+
+  it('forgets a run when it is told the run is over', async () => {
+    const { tool, calls } = countingTool('search', () => RowList.of([], 'hint'));
+    const registry = await registryOf(tool, true);
+
+    await registry.execute(call('search', { query: 'a' }), context);
+    registry.forget(context.runId);
+    await registry.execute(call('search', { query: 'a' }), context);
+
+    expect(calls).toEqual(['a', 'a']);
+  });
+
   it('leaves every call alone when the guard is not enabled', async () => {
-    const { tool, calls } = countingTool('read', () => new Error('nope'));
+    const { tool, calls } = countingTool('read', () => new ToolInputError('read', 'nope'));
     const registry = await registryOf(tool, false);
 
     await registry.execute(call('read', { query: 'a' }), context);
