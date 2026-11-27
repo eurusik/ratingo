@@ -58,3 +58,7 @@ export function buildMdblistRatingsJobId(mediaItemId: string, day: string): stri
 export function buildAltTitlesBackfillJobId(mediaItemId: string, day: string): string {
   return `backfill-alt_${mediaItemId}_${day}`;
 }
+
+export function buildEpisodeTextsBackfillJobId(showId: string, day: string): string {
+  return `backfill-episode-texts_${showId}_${day}`;
+}

@@ -17,8 +17,10 @@ Design: `apps/ai/ARCHITECTURE.md`.
 - Never log secrets, tokens or full prompts that contain them
 - Veronica: numbers come from collectors and rules, templates render them, the model writes only the words
 - Happy: tools are read-only; rules come from the PR's base branch; findings are validated against the diff hunks
+- Veronica chat eval (`apps/ai/veronica/eval/chat`): a case states what a correct answer conveys and must not claim in short sentences, never regexes on wording; invented numbers, links, address slips and tools are checked in code. A change to her chat merges only when a real-model run shows no regression against `eval/chat/baseline.json` (a case that passed and no longer passes, flaky or not; a stable case losing two or more passes; a new case failing every run); details in `apps/ai/ARCHITECTURE.md` (Chat eval)
 
 ## Commands
 - `npm run digest:preview --workspace=@ratingo/ai-veronica` renders today's digest to stdout without sending
+- `npm run eval:chat --workspace=@ratingo/ai-veronica` runs the chat eval on the stub model and a fake judge (no key); add `AI_MODEL_FAST=anthropic:<model>` and `ANTHROPIC_API_KEY` for a real run, `-- --calibrate` to check the judge, `-- --save-baseline` to accept a result. Read the report as in `apps/ai/ARCHITECTURE.md` (Chat eval)
 - `npm run chat:export --workspace=@ratingo/ai-veronica -- --since=7d [--outcome=flagged,fallback]` prints logged chat exchanges as eval case drafts (needs `DATABASE_URL`)
 - `npm run review --workspace=@ratingo/ai-happy -- <owner/repo> <prNumber>` reviews a PR and prints Markdown without posting

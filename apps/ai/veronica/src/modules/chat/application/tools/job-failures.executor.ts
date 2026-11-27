@@ -36,6 +36,17 @@ const toRow = (summary: JobFailureSummary) => ({
   lastMessage: summary.lastMessage,
 });
 
+const HANDLED_ERRORS_SENTENCE =
+  'Errors that a job catches, logs and continues past, such as one show failing inside a batch, are never recorded here; they appear only in logs_search.';
+
+export const nothingRecordedNote = (filter: { job?: string; queue?: string }): string => {
+  const subject =
+    filter.job === undefined && filter.queue === undefined
+      ? 'No failed job attempt was recorded'
+      : 'No failed job attempt matching this filter was recorded';
+  return `${subject} on those days. ${HANDLED_ERRORS_SENTENCE}`;
+};
+
 const hintFor = (input: JobFailuresInput): string =>
   input.job === undefined && input.queue === undefined
     ? 'pass job=<part of a job name> or queue=<queue name> or a shorter window'
@@ -77,6 +88,7 @@ export class JobFailuresExecutor {
       ...(input.job !== undefined ? { job: input.job } : {}),
       ...(input.queue !== undefined ? { queue: input.queue } : {}),
       failures: kept,
+      ...(rows.length === 0 ? { note: nothingRecordedNote(input) } : {}),
       ...omission,
     }));
   }

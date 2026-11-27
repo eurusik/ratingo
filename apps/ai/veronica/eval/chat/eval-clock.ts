@@ -9,12 +9,6 @@ const HOURS_PER_DAY = 24;
 const KYIV_DATE_LENGTH = 'YYYY-MM-DD'.length;
 const DATE_TIME_SEPARATOR_LENGTH = 1;
 
-const spokenDayFormatter = new Intl.DateTimeFormat('uk-UA', {
-  timeZone: 'Europe/Kyiv',
-  day: 'numeric',
-  month: 'long',
-});
-
 const shiftedMs = (minutesFromNow: number): number => EVAL_NOW_MS + minutesFromNow * MS_PER_MINUTE;
 const minutesIn = (days: number): number => days * HOURS_PER_DAY * MINUTES_PER_HOUR;
 
@@ -25,24 +19,3 @@ export const kyivDayFromEvalNow = (days: number): string => kyivDateOf(shiftedMs
 
 export const clockTimeOf = (kyivDateTime: string): string =>
   kyivDateTime.slice(KYIV_DATE_LENGTH + DATE_TIME_SEPARATOR_LENGTH);
-
-export const spokenKyivDayFromEvalNow = (days: number): string =>
-  spokenDayFormatter.format(shiftedMs(minutesIn(days)));
-
-const NOON_UTC = 'T12:00:00Z';
-const LEADING_ZERO = /^0/u;
-
-export const sameKyivTime = (kyivDateTime: string): RegExp => {
-  const [date, time] = kyivDateTime.split(' ');
-  const spokenDay = spokenDayFormatter.format(Date.parse(`${date}${NOON_UTC}`));
-  const clock = time.replace(LEADING_ZERO, '0?');
-  return new RegExp(`${date} ${clock}|(?:${date}|${spokenDay}),? о ${clock}`, 'u');
-};
-
-export const sameKyivTimeOrClockOnEvalDay = (kyivDateTime: string): RegExp => {
-  const withDate = sameKyivTime(kyivDateTime);
-  const [date, time] = kyivDateTime.split(' ');
-  if (date !== kyivDayFromEvalNow(0)) return withDate;
-  const clock = time.replace(LEADING_ZERO, '0?');
-  return new RegExp(`${withDate.source}|(?<![\\d:])${clock}(?![\\d:])`, 'u');
-};

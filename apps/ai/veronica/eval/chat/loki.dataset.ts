@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { EVAL_NOW_MS } from './eval-clock';
 
 const MS_PER_MINUTE = 60_000;
@@ -34,49 +36,76 @@ const TMDB_TIMEOUT_MESSAGE = 'TMDB API: Request timeout';
 
 export const TMDB_TIMEOUTS = 14;
 export const TRAKT_LIMITS = 3;
-const TMDB_TIMEOUT_FIRST_MINUTES_AGO = 560;
+export const TMDB_TIMEOUT_FIRST_MINUTES_AGO = 560;
 export const TMDB_TIMEOUT_LAST_MINUTES_AGO = 25;
-const TRAKT_LIMIT_LAST_MINUTES_AGO = 95;
-export const FOLLOW_UP_JOB_ID = 'sync-show:4812';
+export const TRAKT_LIMIT_LAST_MINUTES_AGO = 95;
+const ISO_HOUR_WINDOW_LENGTH = 13;
+const SHORT_JOB_ID_MIN_LENGTH = 12;
+const SHORT_JOB_ID_LENGTH = 8;
+const FOLLOW_UP_SHOW_TMDB_ID = 3100;
+
+const hourWindowOf = (atMs: number): string =>
+  new Date(atMs).toISOString().slice(0, ISO_HOUR_WINDOW_LENGTH).replace(/[-T]/gu, '');
+
+const showJobId = (tmdbId: number, atMs: number): string => `show_${tmdbId}_${hourWindowOf(atMs)}`;
+
+const shortJobId = (jobId: string): string =>
+  jobId.length > SHORT_JOB_ID_MIN_LENGTH ? jobId.slice(-SHORT_JOB_ID_LENGTH) : jobId;
+
+export const FOLLOW_UP_JOB_ID = showJobId(
+  FOLLOW_UP_SHOW_TMDB_ID,
+  minutesAgoMs(TMDB_TIMEOUT_LAST_MINUTES_AGO),
+);
 export const FOLLOW_UP_ERROR_MINUTES_AGO = 25;
 export const SEARCH_ERRORS = 2;
 
+const TIMEOUT_STACK = `Error: ${TMDB_TIMEOUT_MESSAGE}\n    at TmdbClient.get (tmdb.client.ts:88:11)\n    at SyncMediaService.syncShow (sync-media.service.ts:156:7)`;
+
+const timeoutAttempt = (index: number): SimulatedLogRecord[] => {
+  const span = TMDB_TIMEOUT_FIRST_MINUTES_AGO - TMDB_TIMEOUT_LAST_MINUTES_AGO;
+  const minutesAgo = Math.round(
+    TMDB_TIMEOUT_LAST_MINUTES_AGO + (span * index) / (TMDB_TIMEOUTS - 1),
+  );
+  const tmdbId = FOLLOW_UP_SHOW_TMDB_ID + index;
+  const jobId = showJobId(tmdbId, minutesAgoMs(minutesAgo));
+  const short = shortJobId(jobId);
+  const correlation = { job_id: jobId, queue: 'ingestion' };
+  return [
+    logRecord(SERVICE_WORKER, minutesAgo, 'error', {
+      context: 'SyncMediaService',
+      message: `[show:${tmdbId} job:${short}] Failed: ${TMDB_TIMEOUT_MESSAGE}`,
+      error_stack: TIMEOUT_STACK,
+      ...correlation,
+    }),
+    logRecord(SERVICE_WORKER, minutesAgo, 'warn', {
+      context: 'SyncMediaService',
+      message: `[show:${tmdbId} job:${short}] Sync failed (reason: ${TMDB_TIMEOUT_MESSAGE}); item marked FAILED unless it was already READY`,
+      ...correlation,
+    }),
+    logRecord(SERVICE_WORKER, minutesAgo, 'error', {
+      context: 'SyncWorker',
+      message: `[job:${short}] Failed: ${TMDB_TIMEOUT_MESSAGE}`,
+      error_stack: TIMEOUT_STACK,
+      ...correlation,
+    }),
+  ];
+};
+
 const timeoutRecords = (): SimulatedLogRecord[] =>
-  Array.from({ length: TMDB_TIMEOUTS }, (_, index) => {
-    const span = TMDB_TIMEOUT_FIRST_MINUTES_AGO - TMDB_TIMEOUT_LAST_MINUTES_AGO;
-    const minutesAgo = TMDB_TIMEOUT_LAST_MINUTES_AGO + (span * index) / (TMDB_TIMEOUTS - 1);
-    const isFollowUp = index === 0;
-    return logRecord(SERVICE_WORKER, Math.round(minutesAgo), 'error', {
-      context: 'SyncShowProcessor',
-      message: `Sync of show ${3100 + index} failed after 3 attempts`,
-      error_name: 'TimeoutError',
-      error_message: TMDB_TIMEOUT_MESSAGE,
-      error_stack: `TimeoutError: ${TMDB_TIMEOUT_MESSAGE}\n    at TmdbClient.get (tmdb.client.ts:88:11)\n    at SyncShowProcessor.process (sync-show.processor.ts:41:7)`,
-      job_id: isFollowUp ? FOLLOW_UP_JOB_ID : `sync-show:${4000 + index}`,
-      queue: 'ingestion',
-    });
-  });
+  Array.from({ length: TMDB_TIMEOUTS }, (_, index) => timeoutAttempt(index)).flat();
 
 const rateLimitRecords = (): SimulatedLogRecord[] =>
-  Array.from({ length: TRAKT_LIMITS }, (_, index) =>
-    logRecord(SERVICE_WORKER, TRAKT_LIMIT_LAST_MINUTES_AGO + index * 40, 'error', {
-      context: 'TrendingProcessor',
-      message: 'Trending sync gave up',
-      error_name: 'RateLimitError',
-      error_message: 'Trakt API: 429 Too Many Requests',
-      job_id: `scheduled-trending:${700 + index}`,
+  Array.from({ length: TRAKT_LIMITS }, (_, index) => {
+    const minutesAgo = TRAKT_LIMIT_LAST_MINUTES_AGO + index * 40;
+    const jobId = `trending_show_${index + 1}_${hourWindowOf(minutesAgoMs(minutesAgo))}`;
+    return logRecord(SERVICE_WORKER, minutesAgo, 'error', {
+      context: 'SyncWorker',
+      message: `[job:${shortJobId(jobId)}] Failed: Trakt API: 429 Too Many Requests`,
+      error_stack:
+        'Error: Trakt API: 429 Too Many Requests\n    at BaseTraktHttp.request (base-trakt-http.ts:298:13)',
+      job_id: jobId,
       queue: 'ingestion',
-    }),
-  );
-
-const followUpRetry = (): SimulatedLogRecord =>
-  logRecord(SERVICE_WORKER, FOLLOW_UP_ERROR_MINUTES_AGO + 35, 'warn', {
-    context: 'SyncShowProcessor',
-    message: 'Sync of show 3100 will be retried',
-    error_name: 'TimeoutError',
-    error_message: TMDB_TIMEOUT_MESSAGE,
-    job_id: FOLLOW_UP_JOB_ID,
-    queue: 'ingestion',
+    });
   });
 
 const quietNoise = (): SimulatedLogRecord[] => [
@@ -104,17 +133,30 @@ export const STORM_RECORDS_READ = 300;
 const STORM_NEWEST_MINUTES_AGO = 5;
 export const STORM_OLDEST_READ_MINUTES_AGO = STORM_NEWEST_MINUTES_AGO + STORM_RECORDS_READ - 1;
 
+const STORM_SHOWS_PER_BATCH = 20;
+const BATCH_HASH_LENGTH = 12;
+
+const trackedBatchJobId = (index: number): string => {
+  const batch = Math.floor(index / STORM_SHOWS_PER_BATCH);
+  const batchStartedAtMs = minutesAgoMs(STORM_NEWEST_MINUTES_AGO + batch * STORM_SHOWS_PER_BATCH);
+  const window = hourWindowOf(batchStartedAtMs);
+  const hash = createHash('sha1')
+    .update(`batch-${batch}`)
+    .digest('hex')
+    .slice(0, BATCH_HASH_LENGTH);
+  return `tracked_batch_${window}_${hash}`;
+};
+
 const stormRecords = (): SimulatedLogRecord[] =>
-  Array.from({ length: STORM_RECORDS }, (_, index) =>
-    logRecord(SERVICE_WORKER, STORM_NEWEST_MINUTES_AGO + index, 'error', {
-      context: 'SyncShowProcessor',
-      message: `Sync of show ${5000 + index} failed after 3 attempts`,
-      error_name: 'TimeoutError',
-      error_message: TMDB_TIMEOUT_MESSAGE,
-      job_id: `sync-show:${6000 + index}`,
+  Array.from({ length: STORM_RECORDS }, (_, index) => {
+    const minutesAgo = STORM_NEWEST_MINUTES_AGO + index;
+    return logRecord(SERVICE_WORKER, minutesAgo, 'error', {
+      context: 'TrackedShowsPipeline',
+      message: `Failed to sync tracked show ${5000 + index}: ${TMDB_TIMEOUT_MESSAGE}`,
+      job_id: trackedBatchJobId(index),
       queue: 'ingestion',
-    }),
-  );
+    });
+  });
 
 export const TRENDING_STALE_LOGS: LokiScenario = {
   records: [
@@ -132,7 +174,7 @@ export const TRENDING_STALE_LOGS: LokiScenario = {
 export const WORKER_STORM: LokiScenario = { records: stormRecords() };
 
 export const WORKER_TROUBLE: LokiScenario = {
-  records: [...timeoutRecords(), ...rateLimitRecords(), followUpRetry(), ...quietNoise()],
+  records: [...timeoutRecords(), ...rateLimitRecords(), ...quietNoise()],
 };
 
 export const API_QUIET: LokiScenario = {

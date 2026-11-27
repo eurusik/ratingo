@@ -6,10 +6,6 @@ export const EvalKind = {
 } as const;
 export type EvalKind = (typeof EvalKind)[keyof typeof EvalKind];
 
-export const ANY_TOOL = '*';
-
-export type Expectation = string | RegExp;
-
 export interface Fixture {
   tool: string;
   match?: Readonly<Record<string, unknown>>;
@@ -22,16 +18,21 @@ interface ReferenceCall {
   input: Readonly<Record<string, unknown>>;
 }
 
+interface Expectations {
+  conveys: readonly string[];
+  mustNotClaim?: readonly string[];
+}
+
 export interface EvalCase {
   id: string;
   kind: EvalKind;
   question: string;
   history?: readonly ConversationTurn[];
   fixtures: readonly Fixture[];
-  expectedTools: readonly string[];
-  allowedExtraTools?: readonly string[];
-  mustContain: readonly (readonly Expectation[])[];
-  mustNotContain?: readonly Expectation[];
+  requiredTools: readonly string[];
+  forbiddenTools?: readonly string[];
+  expectations: Expectations;
+  forbiddenText?: readonly string[];
   reference: { calls: readonly ReferenceCall[]; answer: string };
 }
 

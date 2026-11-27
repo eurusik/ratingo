@@ -6,6 +6,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
+import { hasUkrainianEpisodeTitle, hasUkrainianText } from '@/database/episode-text-conditions';
 import * as schema from '@/database/schema';
 import {
   type AnticipatedShow,
@@ -259,8 +260,18 @@ export class DrizzleShowRepository implements IShowRepository {
         // sparser provider (e.g. TVMaze) sends null for the column.
         set: {
           tmdbId: sql`COALESCE(excluded.tmdb_id, ${schema.episodes.tmdbId})`,
-          title: sql`COALESCE(excluded.title, ${schema.episodes.title})`,
-          overview: sql`COALESCE(excluded.overview, ${schema.episodes.overview})`,
+          title: sql`CASE
+            WHEN ${hasUkrainianEpisodeTitle(sql`${schema.episodes.title}`)}
+              AND NOT ${hasUkrainianEpisodeTitle(sql`excluded.title`)}
+            THEN ${schema.episodes.title}
+            ELSE COALESCE(excluded.title, ${schema.episodes.title})
+          END`,
+          overview: sql`CASE
+            WHEN ${hasUkrainianText(sql`${schema.episodes.overview}`)}
+              AND NOT ${hasUkrainianText(sql`excluded.overview`)}
+            THEN ${schema.episodes.overview}
+            ELSE COALESCE(excluded.overview, ${schema.episodes.overview})
+          END`,
           airDate: sql`COALESCE(excluded.air_date, ${schema.episodes.airDate})`,
           runtime: sql`COALESCE(excluded.runtime, ${schema.episodes.runtime})`,
           stillPath: sql`COALESCE(excluded.still_path, ${schema.episodes.stillPath})`,

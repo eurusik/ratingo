@@ -16,6 +16,7 @@ const mockToDomain = jest.fn();
 jest.mock('./mappers/tmdb.mapper', () => ({
   TmdbMapper: {
     toDomain: (data: any, type: any) => mockToDomain(data, type),
+    toSeasonEpisodes: jest.requireActual('./mappers/tmdb.mapper').TmdbMapper.toSeasonEpisodes,
   },
 }));
 
@@ -798,7 +799,7 @@ describe('TmdbAdapter', () => {
 
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockSeasonData),
+        json: () => Promise.resolve({ id: 310537, 'season/1': mockSeasonData }),
       });
 
       const result = await adapter.getSeasonEpisodes(310537, 1);
@@ -825,8 +826,11 @@ describe('TmdbAdapter', () => {
         rating: null,
       });
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tv/310537/season/1'),
+        expect.stringContaining('/tv/310537?'),
         expect.anything(),
+      );
+      expect(new URL(mockFetch.mock.calls[0][0]).searchParams.get('append_to_response')).toBe(
+        'season/1',
       );
     });
 
@@ -857,12 +861,98 @@ describe('TmdbAdapter', () => {
     it('should return empty array when episodes array is missing', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ id: 100, season_number: 1 }),
+        json: () => Promise.resolve({ id: 310537, 'season/1': { id: 100, season_number: 1 } }),
       });
 
       const result = await adapter.getSeasonEpisodes(310537, 1);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('getSeasonsEpisodes', () => {
+    const seasonPayload = (season: number) => ({
+      id: season * 100,
+      season_number: season,
+      episodes: [
+        {
+          id: season * 1000,
+          episode_number: 1,
+          name: `Серія ${season}`,
+          overview: '',
+          air_date: null,
+          runtime: null,
+          still_path: null,
+          vote_average: 0,
+        },
+      ],
+    });
+    const okJson = (body: unknown) => ({ ok: true, json: () => Promise.resolve(body) });
+
+    it('appends up to 20 seasons per request and maps each season', async () => {
+      const seasons = Array.from({ length: 21 }, (_, index) => index + 1);
+      const firstBatch = Object.fromEntries(
+        seasons.slice(0, 20).map((season) => [`season/${season}`, seasonPayload(season)]),
+      );
+      mockFetch
+        .mockResolvedValueOnce(okJson({ id: 1, ...firstBatch }))
+        .mockResolvedValueOnce(okJson({ id: 1, 'season/21': seasonPayload(21) }));
+
+      const result = await adapter.getSeasonsEpisodes(1399, seasons);
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const firstUrl = new URL(mockFetch.mock.calls[0][0]);
+      expect(firstUrl.pathname).toMatch(/\/tv\/1399$/);
+      expect(firstUrl.searchParams.get('language')).toBe('uk-UA');
+      expect(firstUrl.searchParams.get('append_to_response')).toBe(
+        seasons
+          .slice(0, 20)
+          .map((season) => `season/${season}`)
+          .join(','),
+      );
+      expect(new URL(mockFetch.mock.calls[1][0]).searchParams.get('append_to_response')).toBe(
+        'season/21',
+      );
+      expect(result.failedSeasons).toEqual([]);
+      expect(result.episodesBySeason.size).toBe(21);
+      expect(result.episodesBySeason.get(21)).toEqual([
+        {
+          tmdbId: 21000,
+          number: 1,
+          title: 'Серія 21',
+          overview: null,
+          airDate: null,
+          runtime: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+    });
+
+    it('leaves out seasons TMDB does not return', async () => {
+      mockFetch.mockResolvedValue(okJson({ id: 1, 'season/1': seasonPayload(1) }));
+
+      const result = await adapter.getSeasonsEpisodes(1399, [1, 2]);
+
+      expect([...result.episodesBySeason.keys()]).toEqual([1]);
+      expect(result.failedSeasons).toEqual([]);
+    });
+
+    it('reports the seasons of a failed batch instead of throwing', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 500, statusText: 'Server Error' });
+
+      const result = await adapter.getSeasonsEpisodes(1399, [1, 2]);
+
+      expect(result.episodesBySeason.size).toBe(0);
+      expect(result.failedSeasons).toEqual([1, 2]);
+    });
+
+    it('treats a missing show as no data, not a failure', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 404, statusText: 'Not Found' });
+
+      const result = await adapter.getSeasonsEpisodes(1399, [1]);
+
+      expect(result).toEqual({ episodesBySeason: new Map(), failedSeasons: [] });
     });
   });
 

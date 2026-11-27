@@ -16,6 +16,7 @@ import {
 } from '@/modules/user-media/public';
 
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
+import { BackfillEpisodeTextsPipeline } from '../pipelines/backfill-episode-texts.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 
 /**
@@ -38,6 +39,7 @@ export class BackfillWorker extends WorkerHost {
 
   constructor(
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
+    private readonly backfillEpisodeTextsPipeline: BackfillEpisodeTextsPipeline,
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly resolveImportDispatcherPipeline: ResolveImportDispatcherPipeline,
     private readonly resolveImportItemPipeline: ResolveImportItemPipeline,
@@ -57,6 +59,7 @@ export class BackfillWorker extends WorkerHost {
       originalTitle?: string | null;
       batchId?: string;
       pendingItemId?: string;
+      showId?: string;
     }>,
   ): Promise<void> {
     this.logger.debug(`[job:${job.id}] Processing ${job.name}`);
@@ -69,6 +72,13 @@ export class BackfillWorker extends WorkerHost {
             type: job.data.type!,
             title: job.data.title!,
             originalTitle: job.data.originalTitle ?? null,
+          });
+          break;
+
+        case IngestionJob.BACKFILL_EPISODE_TEXTS_ITEM:
+          await this.backfillEpisodeTextsPipeline.processItem({
+            showId: job.data.showId!,
+            tmdbId: job.data.tmdbId!,
           });
           break;
 
