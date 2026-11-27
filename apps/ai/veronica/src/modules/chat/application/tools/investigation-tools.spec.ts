@@ -4,11 +4,12 @@ import { InvestigationTool } from '../../domain/constants/investigation.constant
 
 import type { InvestigationExecutors } from './investigation-executors';
 import { buildInvestigationTools } from './investigation-tools';
+import { NO_DELEGATION } from './no-delegation.testing';
 
 const NO_PARAMETERS = 'Takes no parameters, not even window.';
 
 const metricsQueryDescription = (): string => {
-  const tools = buildInvestigationTools({} as InvestigationExecutors);
+  const tools = buildInvestigationTools({} as InvestigationExecutors, NO_DELEGATION);
   const tool = tools.find((candidate) => candidate.name === InvestigationTool.METRICS_QUERY);
   return tool?.definition.description ?? '';
 };
@@ -39,7 +40,7 @@ describe('metrics_query description', () => {
 
 describe('logs_search tool', () => {
   const tool = () =>
-    buildInvestigationTools({} as InvestigationExecutors).find(
+    buildInvestigationTools({} as InvestigationExecutors, NO_DELEGATION).find(
       (candidate) => candidate.name === InvestigationTool.LOGS_SEARCH,
     );
 
@@ -87,30 +88,85 @@ describe('logs_search tool', () => {
   });
 
   it('wraps what the executor returns as untrusted', async () => {
-    const wrapped = buildInvestigationTools({
-      logsSearch: async () => ({ groups: [] }),
-    } as unknown as InvestigationExecutors).find(
-      (candidate) => candidate.name === InvestigationTool.LOGS_SEARCH,
-    );
+    const wrapped = buildInvestigationTools(
+      {
+        logsSearch: async () => ({ groups: [] }),
+      } as unknown as InvestigationExecutors,
+      NO_DELEGATION,
+    ).find((candidate) => candidate.name === InvestigationTool.LOGS_SEARCH);
     await expect(wrapped?.run({ service: 'ratingo-api' }, { runId: 'r' })).resolves.toBe(
       '<untrusted label="production logs">\n{"groups":[]}\n</untrusted>',
     );
   });
 
   it('mentions the logs tool from the job_failures description', () => {
-    const failures = buildInvestigationTools({} as InvestigationExecutors).find(
+    const failures = buildInvestigationTools({} as InvestigationExecutors, NO_DELEGATION).find(
       (candidate) => candidate.name === InvestigationTool.JOB_FAILURES,
     );
     expect(failures?.definition.description).toContain('logs_search');
   });
 
   it('says that errors a job catches and logs are never in the job_failures list', () => {
-    const failures = buildInvestigationTools({} as InvestigationExecutors).find(
+    const failures = buildInvestigationTools({} as InvestigationExecutors, NO_DELEGATION).find(
       (candidate) => candidate.name === InvestigationTool.JOB_FAILURES,
     );
     const description = failures?.definition.description ?? '';
     expect(description).toContain('only the attempts that BullMQ marked failed');
     expect(description).toContain('are never in this list, whatever it contains');
     expect(description).toContain('not that nothing went wrong');
+  });
+
+  describe('ask_dume', () => {
+    const toolWith = (delegate: (input: { question: string }) => Promise<unknown>) =>
+      buildInvestigationTools({} as InvestigationExecutors, delegate).find(
+        (candidate) => candidate.name === InvestigationTool.ASK_DUME,
+      );
+
+    it('carries the rule for when to use it in its own description, not in the prompt', () => {
+      const description = toolWith(async () => ({}))?.definition.description ?? '';
+
+      expect(description).toContain('Use it only for a "why"');
+      expect(description).toContain('Do not use it for the current state');
+      expect(description).toContain('at most once per message');
+      expect(description).toContain('ownerNotice');
+    });
+
+    it('is the only tool that starts paid work, and says so', () => {
+      const flagged = buildInvestigationTools({} as InvestigationExecutors, NO_DELEGATION)
+        .filter((tool) => tool.startsPaidWork)
+        .map((tool) => tool.name);
+
+      expect(flagged).toEqual([InvestigationTool.ASK_DUME]);
+    });
+
+    it('tells the model to start the investigation itself and not to ask first', () => {
+      const description = toolWith(async () => ({}))?.definition.description ?? '';
+
+      expect(description).toContain('start it yourself');
+      expect(description).toContain('do not ask the owner whether to start it');
+    });
+
+    it('hands the question to the delegation and returns what it answered', async () => {
+      const delegate = jest.fn().mockResolvedValue({ status: 'started', ownerNotice: 'ok' });
+
+      const output = await toolWith(delegate)?.run(
+        { question: 'Why does sync-show time out?' },
+        { runId: 'r' },
+      );
+
+      expect(delegate).toHaveBeenCalledWith({ question: 'Why does sync-show time out?' });
+      expect(output).toContain('"status":"started"');
+    });
+
+    it.each([
+      ['an empty question', { question: '' }],
+      ['a question over 1000 characters', { question: 'x'.repeat(1001) }],
+      ['no question', {}],
+    ])('refuses %s without calling the delegation', async (_name, input) => {
+      const delegate = jest.fn();
+
+      await expect(toolWith(delegate)?.run(input, { runId: 'r' })).rejects.toThrow('Invalid input');
+      expect(delegate).not.toHaveBeenCalled();
+    });
   });
 });

@@ -76,6 +76,7 @@ describe('chat eval cases', () => {
       EVAL_CASES.flatMap((testCase) => testCase.reference.calls.map((call) => call.tool)),
     );
     expect([...tools].sort()).toEqual([
+      'ask_dume',
       'ask_happy',
       'digest_snapshot',
       'google-analytics__run_funnel_report',

@@ -37,6 +37,11 @@ const unsetWhenEmpty = z
   .optional()
   .transform((value) => (value === undefined || value.trim() === '' ? undefined : value));
 
+const dumeEnvSchema = z.object({
+  DUME_INTERNAL_URL: unsetWhenEmpty,
+  DUME_SERVICE_TOKEN: unsetWhenEmpty,
+});
+
 const lokiEnvSchema = z.object({
   GRAFANA_LOKI_URL: unsetWhenEmpty.pipe(z.url().optional()),
   GRAFANA_LOKI_USER: unsetWhenEmpty,
@@ -76,6 +81,7 @@ export const serviceEnvSchema = z.object({
   ...chatEnvSchema.shape,
   ...changesEnvSchema.shape,
   ...happyEnvSchema.shape,
+  ...dumeEnvSchema.shape,
   ...analyticsEnvSchema.shape,
   ...lokiEnvSchema.shape,
 });

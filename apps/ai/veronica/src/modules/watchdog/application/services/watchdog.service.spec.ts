@@ -2,6 +2,7 @@ import { FixedClock } from '@ratingo/ai-core';
 
 import { AlertKey, RECOVERY_TEXT } from '../../domain/constants/watchdog-rules.constants';
 import { HappyProbe } from '../../domain/entities/happy-probe';
+import type { AgentRunStats } from '../../domain/entities/agent-run-stats';
 import type { WatchdogStatePort } from '../../domain/ports/watchdog.ports';
 
 import { WatchdogService } from './watchdog.service';
@@ -34,6 +35,11 @@ class Harness {
   digestSent = true;
   spent = { agent: 0, chat: 0 };
   failedRuns = 0;
+  agentStats: AgentRunStats = new Map([
+    ['happy', { spentUsd: 0, failedRuns: 0, dayBudgetUsd: 0.5 }],
+    ['dume', { spentUsd: 0, failedRuns: 0, dayBudgetUsd: 1.5 }],
+  ]);
+  agentStatsFailure: Error | null = null;
   digestFailure: Error | null = null;
   notifyFailure: Error | null = null;
 
@@ -46,6 +52,12 @@ class Harness {
       },
     },
     { countFailedSince: async () => this.failedRuns },
+    {
+      read: async () => {
+        if (this.agentStatsFailure !== null) throw this.agentStatsFailure;
+        return this.agentStats;
+      },
+    },
     this.state,
     { beat: (nowMs: number) => void this.beats.push(nowMs) },
     {
@@ -152,5 +164,79 @@ describe('WatchdogService', () => {
     h.notifyFailure = null;
     await h.service.tick();
     expect(h.sent).toHaveLength(1);
+  });
+
+  describe('Happy and DUM-E from Prometheus', () => {
+    const stats = (
+      dume: Partial<{ spentUsd: number; failedRuns: number; dayBudgetUsd: number | null }>,
+    ) =>
+      new Map([
+        ['happy', { spentUsd: 0, failedRuns: 0, dayBudgetUsd: 0.5 }],
+        ['dume', { spentUsd: 0, failedRuns: 0, dayBudgetUsd: 1.5, ...dume }],
+      ]);
+
+    it('stays silent while both agents are healthy', async () => {
+      const h = new Harness();
+      await h.service.tick();
+      expect(h.sent).toEqual([]);
+      expect(h.state.active).toEqual([]);
+    });
+
+    it('alerts once when DUM-E spends 80% of its own budget and reports recovery', async () => {
+      const h = new Harness();
+      h.agentStats = stats({ spentUsd: 1.2 });
+      await h.service.tick();
+      await h.service.tick();
+      expect(h.sent).toEqual(['🟠 Бюджет DUM-E за добу: 80% ($1.20 із $1.50)']);
+      expect(h.state.active).toEqual([AlertKey.BUDGET_DUME]);
+
+      h.agentStats = stats({ spentUsd: 0.3 });
+      await h.service.tick();
+      expect(h.sent.at(-1)).toBe(RECOVERY_TEXT[AlertKey.BUDGET_DUME]);
+      expect(h.state.active).toEqual([]);
+    });
+
+    it('alerts separately for Happy and DUM-E failed runs', async () => {
+      const h = new Harness();
+      h.agentStats = new Map([
+        ['happy', { spentUsd: 0, failedRuns: 3, dayBudgetUsd: 0.5 }],
+        ['dume', { spentUsd: 0, failedRuns: 4, dayBudgetUsd: 1.5 }],
+      ]);
+      await h.service.tick();
+      expect(h.sent).toHaveLength(2);
+      expect(h.state.active).toEqual(
+        expect.arrayContaining([AlertKey.FAILED_RUNS_HAPPY, AlertKey.FAILED_RUNS_DUME]),
+      );
+    });
+
+    it('keeps a standing agent alert when Prometheus cannot be read, and still beats', async () => {
+      const h = new Harness();
+      h.agentStats = stats({ failedRuns: 5 });
+      await h.service.tick();
+      h.agentStatsFailure = new Error('Grafana недоступна');
+      await h.service.tick();
+      expect(h.sent).toHaveLength(1);
+      expect(h.state.active).toContain(AlertKey.FAILED_RUNS_DUME);
+      expect(h.beats).toHaveLength(2);
+    });
+
+    it('does not judge spend when an agent spent money and publishes no budget, but still checks its failed runs', async () => {
+      const h = new Harness();
+      h.agentStats = stats({ spentUsd: 5, dayBudgetUsd: null, failedRuns: 3 });
+      await h.service.tick();
+      expect(h.sent).toHaveLength(1);
+      expect(h.sent[0]).toContain('DUM-E: невдалих запусків');
+      expect(h.state.active).toEqual([AlertKey.FAILED_RUNS_DUME]);
+    });
+
+    it('leaves the Postgres checks of Veronica herself as they were', async () => {
+      const h = new Harness();
+      h.spent = { agent: 0.4, chat: 0 };
+      h.failedRuns = 3;
+      await h.service.tick();
+      expect(h.state.active).toEqual(
+        expect.arrayContaining([AlertKey.BUDGET_AGENT, AlertKey.FAILED_RUNS]),
+      );
+    });
   });
 });

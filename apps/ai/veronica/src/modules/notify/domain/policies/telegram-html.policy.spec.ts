@@ -68,7 +68,9 @@ describe('sanitizeTelegramHtml', () => {
   });
 
   it('never cuts an entity in half', () => {
-    const result = sanitizeTelegramHtml('a'.repeat(4090) + '&amp;&amp;&amp;&amp;', 4096);
+    const result = sanitizeTelegramHtml('a'.repeat(4090) + '&amp;&amp;&amp;&amp;', {
+      limit: 4096,
+    });
     expect(result).not.toMatch(/&[#a-zA-Z0-9]*…$/);
   });
 
@@ -95,5 +97,49 @@ describe('sanitizeTelegramHtml', () => {
         expect(sanitizeTelegramHtml(once)).toBe(once);
       }),
     );
+  });
+
+  describe('links to code', () => {
+    const SHA = 'a'.repeat(40);
+    const REPOSITORY = 'eurusik/ratingo';
+    const link = `https://github.com/${REPOSITORY}/blob/${SHA}/apps/api/src/a.ts#L10-L14`;
+    const options = { codeRepository: REPOSITORY };
+
+    it('keeps a link to the exact lines of a commit of the configured repository', () => {
+      const html = `<a href="${link}">apps/api/src/a.ts:10-14</a>`;
+
+      expect(sanitizeTelegramHtml(html, options)).toBe(html);
+    });
+
+    it('keeps a link whose path is percent-encoded', () => {
+      const html = `<a href="https://github.com/${REPOSITORY}/blob/${SHA}/app/%5Bid%5D/page%20x.ts#L3">x</a>`;
+
+      expect(sanitizeTelegramHtml(html, options)).toBe(html);
+    });
+
+    it('removes every link when no repository is configured', () => {
+      expect(sanitizeTelegramHtml(`<a href="${link}">text</a>`)).toBe('text');
+    });
+
+    it.each([
+      ['another host', `https://evil.example/${REPOSITORY}/blob/${SHA}/a.ts#L1`],
+      ['another repository', `https://github.com/someone/else/blob/${SHA}/a.ts#L1`],
+      [
+        'a repository that only starts the same',
+        `https://github.com/${REPOSITORY}x/blob/${SHA}/a.ts#L1`,
+      ],
+      ['a branch instead of a commit', `https://github.com/${REPOSITORY}/blob/main/a.ts#L1`],
+      ['a link without lines', `https://github.com/${REPOSITORY}/blob/${SHA}/a.ts`],
+      ['a query string', `https://github.com/${REPOSITORY}/blob/${SHA}/a.ts?x=1#L1`],
+      ['http', `http://github.com/${REPOSITORY}/blob/${SHA}/a.ts#L1`],
+    ])('still removes a link with %s but keeps its text', (_name, href) => {
+      expect(sanitizeTelegramHtml(`<a href="${href}">text</a>`, options)).toBe('text');
+    });
+
+    it('removes any other attribute on a link', () => {
+      expect(sanitizeTelegramHtml(`<a href="${link}" onclick="x()">text</a>`, options)).toBe(
+        'text',
+      );
+    });
   });
 });

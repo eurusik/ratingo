@@ -1,6 +1,6 @@
 import type { HappyTarget, Intent } from '../entities/intent';
 import { IntentKind } from '../entities/intent';
-import { AgentName } from '../constants/chat.constants';
+import { AgentName, ChatCommand } from '../constants/chat.constants';
 import { HappyReviewMode } from '../entities/happy';
 
 import { parseCommand } from './command-parser.policy';
@@ -25,6 +25,9 @@ export const routeMessage = (text: string): Intent => {
   if (mention?.agent === AgentName.HAPPY) {
     const request = parseReviewMode(mention.text);
     return happyIntent(parseHappyTarget(request.text), request.mode);
+  }
+  if (mention?.agent === AgentName.DUME) {
+    return { kind: IntentKind.COMMAND, command: ChatCommand.WHY, args: mention.text };
   }
   if (mention !== null) {
     return { kind: IntentKind.MENTION, agent: mention.agent, text: mention.text };

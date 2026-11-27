@@ -3,6 +3,7 @@ export const ANTHROPIC_CONFIG = Symbol('ANTHROPIC_CONFIG');
 export const REDIS_CONFIG = Symbol('REDIS_CONFIG');
 export const SNAPSHOT_CONFIG = Symbol('SNAPSHOT_CONFIG');
 export const OPS_CONFIG = Symbol('OPS_CONFIG');
+export const SERVICE_CONFIG = Symbol('SERVICE_CONFIG');
 
 export interface AnthropicConfig {
   apiKey?: string;
@@ -21,3 +22,9 @@ export interface OpsConfig {
 export type SnapshotConfig =
   | { kind: 'github'; repository: string; apiUrl: string; token?: string }
   | { kind: 'local'; root: string };
+
+export interface ServiceConfig {
+  port: number;
+  serviceToken?: string;
+  maxInvestigationsPerDay: number;
+}

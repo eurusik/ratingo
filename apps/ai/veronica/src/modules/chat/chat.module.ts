@@ -21,12 +21,14 @@ import { DATABASE } from '../../database/database.constants';
 import type { Database } from '../../database/database.module';
 import {
   CHANGES_CONFIG,
+  DUME_CONFIG,
   HAPPY_CONFIG,
   INFRA_CONFIG,
   LOKI_CONFIG,
   PRODUCT_STATS_CONFIG,
   TELEGRAM_CONFIG,
   type ChangesConfig,
+  type DumeConfig,
   type HappyConfig,
   type InfraConfig,
   type LokiConfig,
@@ -40,6 +42,9 @@ import { ChatCommandHandlers } from './application/commands/chat-command.handler
 import { ChatExchangeRecorder } from './application/services/chat-exchange-recorder.service';
 import { ChatExchangeRetention } from './application/services/chat-exchange-retention.service';
 import { ChatExchangeRetentionScheduler } from './application/services/chat-exchange-retention.scheduler';
+import { DumeChatService } from './application/services/dume-chat.service';
+import { DumeDelegationService } from './application/services/dume-delegation.service';
+import { DumeFollowUpService } from './application/services/dume-follow-up.service';
 import { HappyChatService } from './application/services/happy-chat.service';
 import { HappyFollowUpService } from './application/services/happy-follow-up.service';
 import { ChatService } from './application/services/chat.service';
@@ -66,6 +71,8 @@ import { CHAT_EXCHANGE_LOG } from './domain/ports/chat-exchange-log.port';
 import { CHAT_JOB_QUEUE } from './domain/ports/chat-job-queue.port';
 import { CHAT_METRICS_PORT } from './domain/ports/chat-metrics.port';
 import { CONVERSATION_STORE } from './domain/ports/conversation-store.port';
+import { DELEGATION_STORE } from './domain/ports/delegation-store.port';
+import { DUME_CLIENT } from './domain/ports/dume-client.port';
 import { HAPPY_CLIENT } from './domain/ports/happy-client.port';
 import { JOB_FAILURES_PORT } from './domain/ports/job-failures.port';
 import { LOGS_PORT } from './domain/ports/logs.port';
@@ -73,13 +80,16 @@ import { RECENT_CHANGES_PORT } from './domain/ports/recent-changes.port';
 import { WEBHOOK_SECRET_PORT } from './domain/ports/webhook-secret.port';
 import { PostgresChatExchangeRepository } from './infrastructure/repositories/postgres.chat-exchange-repository';
 import { GithubRecentChangesAdapter } from './infrastructure/adapters/github.recent-changes-adapter';
+import { HttpDumeClient } from './infrastructure/adapters/http.dume-client';
 import { HttpHappyClient } from './infrastructure/adapters/http.happy-client';
 import { PostgresJobFailuresAdapter } from './infrastructure/adapters/postgres.job-failures-adapter';
 import { BullmqChatJobQueue } from './infrastructure/queues/bullmq-chat-job-queue';
 import { HmacWebhookSecret } from './infrastructure/security/hmac-webhook-secret';
 import { RedisConversationStore } from './infrastructure/stores/redis.conversation-store';
+import { RedisDelegationStore } from './infrastructure/stores/redis.delegation-store';
 import { OtelChatMetrics } from './infrastructure/telemetry/otel-chat-metrics';
 import { TelegramWebhookController } from './presentation/telegram-webhook.controller';
+import { withRedisErrorLog } from '../../redis/redis-error-log';
 
 @Module({
   imports: [DigestModule, NotifyModule],
@@ -89,13 +99,16 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
       provide: REDIS_CONNECTION,
       inject: [INFRA_CONFIG],
       useFactory: (config: InfraConfig) =>
-        new IORedis(config.redisUrl, { maxRetriesPerRequest: null }),
+        withRedisErrorLog(new IORedis(config.redisUrl, { maxRetriesPerRequest: null }), 'chat'),
     },
     {
       provide: CHAT_QUEUE_TOKEN,
       inject: [REDIS_CONNECTION],
       useFactory: (connection: IORedis) =>
-        new Queue(CHAT_QUEUE, { connection: connection.duplicate(), prefix: CHAT_QUEUE_PREFIX }),
+        new Queue(CHAT_QUEUE, {
+          connection: withRedisErrorLog(connection.duplicate(), 'chat-queue'),
+          prefix: CHAT_QUEUE_PREFIX,
+        }),
     },
     {
       provide: CHAT_JOB_QUEUE,
@@ -122,6 +135,16 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
       provide: HAPPY_CLIENT,
       inject: [HAPPY_CONFIG],
       useFactory: (config: HappyConfig) => new HttpHappyClient(config),
+    },
+    {
+      provide: DUME_CLIENT,
+      inject: [DUME_CONFIG],
+      useFactory: (config: DumeConfig) => new HttpDumeClient(config),
+    },
+    {
+      provide: DELEGATION_STORE,
+      inject: [REDIS_CONNECTION],
+      useFactory: (connection: IORedis) => new RedisDelegationStore(connection),
     },
     {
       provide: JOB_FAILURES_PORT,
@@ -209,6 +232,9 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
     InvestigationRunner,
     HappyChatService,
     HappyFollowUpService,
+    DumeDelegationService,
+    DumeFollowUpService,
+    DumeChatService,
     ChatCommandHandlers,
     ChatService,
     ChatWebhookService,

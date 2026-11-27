@@ -22,7 +22,11 @@ interface TelegramWebhookInfo {
 export class TelegramChatAdapter implements ChatTransportPort, WebhookAdminPort {
   private readonly api: TelegramApiClient;
 
-  constructor(config: Pick<TelegramConfig, 'botToken'>, fetchImpl: typeof fetch = fetch) {
+  constructor(
+    config: Pick<TelegramConfig, 'botToken'>,
+    private readonly codeRepository?: string,
+    fetchImpl: typeof fetch = fetch,
+  ) {
     this.api = new TelegramApiClient(config.botToken, fetchImpl);
   }
 
@@ -44,7 +48,7 @@ export class TelegramChatAdapter implements ChatTransportPort, WebhookAdminPort 
       {
         chat_id: chatId,
         message_id: messageId,
-        text: sanitizeTelegramHtml(html),
+        text: this.sanitize(html),
         parse_mode: 'HTML',
         link_preview_options: { is_disabled: true },
       },
@@ -60,12 +64,16 @@ export class TelegramChatAdapter implements ChatTransportPort, WebhookAdminPort 
     );
   }
 
+  private sanitize(html: string): string {
+    return sanitizeTelegramHtml(html, { codeRepository: this.codeRepository });
+  }
+
   private deliver(chatId: string, html: string): Promise<TelegramSentMessage | undefined> {
     return this.api.callOrThrow<TelegramSentMessage>(
       'sendMessage',
       {
         chat_id: chatId,
-        text: sanitizeTelegramHtml(html),
+        text: this.sanitize(html),
         parse_mode: 'HTML',
         link_preview_options: { is_disabled: true },
       },

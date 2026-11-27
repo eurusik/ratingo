@@ -35,6 +35,7 @@ export interface InvestigationRequest {
   trigger: RunTrigger;
   budgetUsd?: number;
   ignoreDailyBudget?: boolean;
+  onSnapshotReady?: () => Promise<void>;
 }
 
 const emptyOutcome = (ref: string): InvestigationOutcome => ({
@@ -101,6 +102,7 @@ export class InvestigationService {
       }
       throw error;
     }
+    await this.announceSnapshotReady(request);
     const ledger = new EvidenceLedger();
     const runtime = new RuntimeEvidenceLedger();
     const evidence = createRuntimeEvidenceRecorder(runtime);
@@ -155,5 +157,16 @@ export class InvestigationService {
       costUsd: outcome.costUsd,
     });
     return outcome;
+  }
+
+  private async announceSnapshotReady(request: InvestigationRequest): Promise<void> {
+    try {
+      await request.onSnapshotReady?.();
+    } catch (error) {
+      this.logger.warn({
+        message: 'investigation.snapshot_ready_callback_failed',
+        reason: error instanceof Error ? error.name : 'error',
+      });
+    }
   }
 }

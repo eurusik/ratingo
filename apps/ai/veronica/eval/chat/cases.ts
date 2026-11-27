@@ -2,6 +2,7 @@ import { SYSTEM_CARD } from '../../src/modules/chat/domain/constants/system-card
 import { describeCadence } from '@ratingo/ai-ops-tools';
 
 import { jobFailures } from './job-failure-fixtures';
+import { ASK_DUME, DUME_EVAL_CASES } from './dume.cases';
 import { EvalKind, type EvalCase } from './eval-case';
 import { clockTimeOf, kyivDayFromEvalNow, kyivTimeFromEvalNow } from './eval-clock';
 import { GA_EVAL_CASES } from './google-analytics.cases';
@@ -904,45 +905,6 @@ const SERVICE_CASES: readonly EvalCase[] = [
     },
   },
   {
-    id: 'code-question-honest',
-    kind: EvalKind.KNOWN,
-    question: 'Глянь по коду, де може бути проблема з трендами',
-    fixtures: [
-      {
-        tool: 'metrics_query',
-        match: { template: 'scheduler_last_runs' },
-        response: metrics(
-          'scheduler_last_runs',
-          {
-            jobs: [
-              schedulerJob('sync-trending', {
-                lastSuccessHoursAgo: 2,
-                lastSuccessAtKyiv: kyivTimeFromEvalNow(-2),
-              }),
-            ],
-          },
-          { window: null },
-        ),
-      },
-    ],
-    requiredTools: [],
-    forbiddenTools: ['ask_happy'],
-    expectations: {
-      conveys: [
-        'Says she does not read the code herself and will not guess where the problem is.',
-        'Tells the owner to write “Хеппі, глянь” and a PR number to get a specific pull request reviewed.',
-      ],
-      mustNotClaim: [
-        'Names a specific place in the code or a specific code cause of the trend problem.',
-      ],
-    },
-    reference: {
-      calls: [],
-      answer:
-        'Код я сама поки не читаю, тож вгадувати не буду. Можу запустити огляд конкретного PR: напиши “Хеппі, глянь” і номер. Пошук по всьому коду з’явиться пізніше.',
-    },
-  },
-  {
     id: 'happy-release-checklist',
     kind: EvalKind.KNOWN,
     question: 'Що Хеппі каже про 474?',
@@ -1063,8 +1025,12 @@ const SERVICE_CASES: readonly EvalCase[] = [
   },
 ];
 
+const withoutDelegation = (testCase: EvalCase): EvalCase =>
+  testCase.requiredTools.includes(ASK_DUME)
+    ? testCase
+    : { ...testCase, forbiddenTools: [...(testCase.forbiddenTools ?? []), ASK_DUME] };
+
 export const EVAL_CASES: readonly EvalCase[] = [
-  ...SERVICE_CASES,
-  ...GA_EVAL_CASES,
-  ...LOKI_EVAL_CASES,
+  ...[...SERVICE_CASES, ...GA_EVAL_CASES, ...LOKI_EVAL_CASES].map(withoutDelegation),
+  ...DUME_EVAL_CASES,
 ];

@@ -3,6 +3,7 @@ export const AI_METRIC_NAMES = {
   RUN_COST: 'app.ai.run.cost',
   RUN_TOKENS: 'app.ai.run.tokens',
   RUN_DURATION: 'app.ai.run.duration',
+  AGENT_BUDGET_DAY: 'app.ai.agent.budget.day',
   TOOL_CALLS: 'app.ai.tool.calls',
   CHAT_EVENTS: 'app.ai.chat.events',
   WATCHDOG_LAST_TICK: 'app.ai.watchdog.last_tick_timestamp_seconds',

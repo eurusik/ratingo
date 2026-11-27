@@ -7,14 +7,37 @@ import { ChatWorker } from './chat.worker';
 
 const MESSAGE = { updateId: 1, userId: '10', chatId: '10', chatType: 'private', text: '/help' };
 
+const dumeJob = (attemptsMade: number, name = 'dume-follow-up') =>
+  ({
+    id: 'job-1',
+    name,
+    attemptsMade,
+    opts: { attempts: 3 },
+    data: { chatId: '10', requestId: 'tg00001000', createdAtMs: 1, attempt: 1 },
+  }) as never;
+
+const abandoningWorker = () => {
+  const abandon = jest.fn().mockResolvedValue(undefined);
+  const worker = new ChatWorker(
+    { handle: jest.fn() } as never,
+    { handle: jest.fn() } as never,
+    { handle: jest.fn(), abandon } as never,
+    { purge: jest.fn() } as never,
+    {} as never,
+  );
+  return { abandon, worker };
+};
+
 const workerWith = (
   handle: jest.Mock,
   followUp: jest.Mock = jest.fn(),
   purge: jest.Mock = jest.fn(),
+  dumeFollowUp: jest.Mock = jest.fn(),
 ) =>
   new ChatWorker(
     { handle } as unknown as ChatService,
     { handle: followUp } as never,
+    { handle: dumeFollowUp } as never,
     { purge } as never,
     {} as never,
   );
@@ -80,5 +103,66 @@ describe('ChatWorker', () => {
     await expect(
       workerWith(jest.fn(), followUp).process({ name: 'happy-follow-up', data: { chatId: 1 } }),
     ).resolves.toBe('ignored');
+  });
+
+  it('hands a DUM-E follow-up job to its service and ignores a malformed one', async () => {
+    const dumeFollowUp = jest.fn().mockResolvedValue('delivered');
+    const worker = workerWith(jest.fn(), jest.fn(), jest.fn(), dumeFollowUp);
+    const data = { chatId: '10', requestId: 'tg1000001', createdAtMs: 1, attempt: 1 };
+
+    await expect(worker.process({ name: 'dume-follow-up', data })).resolves.toBe('delivered');
+    await expect(worker.process({ name: 'dume-follow-up', data: { chatId: '10' } })).resolves.toBe(
+      'ignored',
+    );
+    expect(dumeFollowUp).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the count of unknown deliveries on a DUM-E follow-up and refuses a wrong one', async () => {
+    const dumeFollowUp = jest.fn().mockResolvedValue('waiting');
+    const worker = workerWith(jest.fn(), jest.fn(), jest.fn(), dumeFollowUp);
+    const data = { chatId: '10', requestId: 'tg1000001', createdAtMs: 1, attempt: 2 };
+
+    await worker.process({ name: 'dume-follow-up', data: { ...data, deliveryAttempts: 1 } });
+    await expect(
+      worker.process({ name: 'dume-follow-up', data: { ...data, deliveryAttempts: 'many' } }),
+    ).resolves.toBe('ignored');
+
+    expect(dumeFollowUp).toHaveBeenCalledWith({ ...data, deliveryAttempts: 1 });
+    expect(dumeFollowUp).toHaveBeenCalledTimes(1);
+  });
+
+  describe('when a DUM-E follow-up fails', () => {
+    it('tells the owner and frees the chat once it will not be retried again', () => {
+      const { abandon, worker } = abandoningWorker();
+
+      worker.onFailed(dumeJob(3), new Error('telegram down'));
+
+      expect(abandon).toHaveBeenCalledWith(expect.objectContaining({ requestId: 'tg00001000' }));
+    });
+
+    it('does the same at once for an error that is never retried', () => {
+      const { abandon, worker } = abandoningWorker();
+
+      worker.onFailed(dumeJob(1), new UnrecoverableError('bad html'));
+
+      expect(abandon).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves the chat locked while retries remain', () => {
+      const { abandon, worker } = abandoningWorker();
+
+      worker.onFailed(dumeJob(1), new Error('telegram 502'));
+
+      expect(abandon).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for other jobs', () => {
+      const { abandon, worker } = abandoningWorker();
+
+      worker.onFailed(dumeJob(3, 'chat-message'), new Error('x'));
+      worker.onFailed(undefined, new Error('x'));
+
+      expect(abandon).not.toHaveBeenCalled();
+    });
   });
 });

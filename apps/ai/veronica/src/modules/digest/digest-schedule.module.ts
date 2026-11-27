@@ -20,6 +20,7 @@ import {
 } from './digest.constants';
 import { DIGEST_DELIVERY_REPOSITORY } from './domain/ports/digest-delivery.repository';
 import { PostgresDigestDeliveryRepository } from './infrastructure/repositories/postgres.digest-delivery-repository';
+import { withRedisErrorLog } from '../../redis/redis-error-log';
 
 @Module({
   imports: [DigestModule, NotifyModule],
@@ -28,14 +29,14 @@ import { PostgresDigestDeliveryRepository } from './infrastructure/repositories/
       provide: REDIS_CONNECTION,
       inject: [INFRA_CONFIG],
       useFactory: (config: InfraConfig) =>
-        new IORedis(config.redisUrl, { maxRetriesPerRequest: null }),
+        withRedisErrorLog(new IORedis(config.redisUrl, { maxRetriesPerRequest: null }), 'digest'),
     },
     {
       provide: DIGEST_QUEUE_TOKEN,
       inject: [REDIS_CONNECTION],
       useFactory: (connection: IORedis) =>
         new Queue(DIGEST_QUEUE, {
-          connection: connection.duplicate(),
+          connection: withRedisErrorLog(connection.duplicate(), 'digest-queue'),
           prefix: DIGEST_QUEUE_PREFIX,
         }),
     },

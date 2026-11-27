@@ -11,6 +11,7 @@ import {
   assertAliasProvidersRegistered,
   createModelProviders,
   loadAgentFolder,
+  registerAgentBudgetGauge,
   type AgentFolder,
   type ClockPort,
   type ModelAliases,
@@ -82,8 +83,17 @@ const spendLogger = new NestSpendLogger();
     },
     {
       provide: AGENT_FOLDER,
-      useFactory: (): Promise<AgentFolder> =>
-        loadAgentFolder(AGENT_FOLDER_PATH, { knownModelAliases: MODEL_ALIAS_NAMES }),
+      inject: [AI_METER],
+      useFactory: async (meter: Meter): Promise<AgentFolder> => {
+        const folder = await loadAgentFolder(AGENT_FOLDER_PATH, {
+          knownModelAliases: MODEL_ALIAS_NAMES,
+        });
+        registerAgentBudgetGauge(meter, {
+          agent: folder.manifest.name,
+          perDayUsd: folder.manifest.budgets.perDayUsd,
+        });
+        return folder;
+      },
     },
     {
       provide: MODEL_PROVIDERS,
@@ -98,7 +108,7 @@ const spendLogger = new NestSpendLogger();
       },
     },
   ],
-  exports: [CLOCK_PORT, AGENT_FOLDER, AI_METER, OPS_EXECUTORS, AgentRunner],
+  exports: [CLOCK_PORT, AGENT_FOLDER, AI_METER, OPS_EXECUTORS, RUN_REPOSITORY, AgentRunner],
 })
 export class AiCoreModule implements OnModuleDestroy {
   constructor(

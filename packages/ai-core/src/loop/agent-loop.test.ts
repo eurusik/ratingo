@@ -752,4 +752,36 @@ describe('AgentLoop', () => {
       expect(model.requests[0]?.responseSchema?.jsonSchema).toMatchObject({ type: 'object' });
     });
   });
+
+  describe('tool names the model invents', () => {
+    const invented = (count: number): StubScript => ({
+      respond: (request, callIndex) => ({
+        model: formatModelRef({ provider: 'stub', model: request.model }),
+        content:
+          callIndex === 0
+            ? [
+                ...Array.from({ length: count }, (_, index) => ({
+                  type: ContentPartType.TOOL_CALL,
+                  call: { id: `call-${index}`, name: `invented-tool-${index}`, input: {} },
+                })),
+                {
+                  type: ContentPartType.TOOL_CALL,
+                  call: { id: 'call-real', name: 'lookup', input: { query: 'x' } },
+                },
+              ]
+            : [{ type: ContentPartType.TEXT, text: 'done' }],
+        stopReason: callIndex === 0 ? StopReason.TOOL_USE : StopReason.END,
+        usage: DEFAULT_STUB_USAGE,
+      }),
+    });
+
+    it('are counted under one name, so a run cannot create a label value per invented name', async () => {
+      const { loop, run } = await harness(scripted(invented(100)));
+
+      const result = await loop.run(run, baseRequest());
+
+      expect(result.run.toolCalls).toEqual({ lookup: 1, unknown_tool: 100 });
+      expect(Object.keys(result.run.toolCalls)).toHaveLength(2);
+    });
+  });
 });

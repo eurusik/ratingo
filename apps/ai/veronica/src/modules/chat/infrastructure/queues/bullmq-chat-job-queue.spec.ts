@@ -85,4 +85,23 @@ describe('BullmqChatJobQueue', () => {
     await new BullmqChatJobQueue(queue as never).scheduleHappyFollowUp(followUp, 30_000);
     expect(queue.removed).toEqual([]);
   });
+
+  it('gives each DUM-E follow-up attempt its own deterministic id', async () => {
+    const queue = new DedupingQueue();
+    const adapter = new BullmqChatJobQueue(queue as never);
+    const followUp = { chatId: '10', requestId: 'tg1000001', createdAtMs: 1_000, attempt: 1 };
+
+    await adapter.scheduleDumeFollowUp(followUp, 30_000);
+    await adapter.scheduleDumeFollowUp(followUp, 30_000);
+    await adapter.scheduleDumeFollowUp({ ...followUp, attempt: 2 }, 30_000);
+
+    expect([...queue.jobs.keys()]).toEqual([
+      'dume-follow-up_10_tg1000001_1',
+      'dume-follow-up_10_tg1000001_2',
+    ]);
+    expect(queue.jobs.get('dume-follow-up_10_tg1000001_1')).toMatchObject({
+      name: 'dume-follow-up',
+      opts: { delay: 30_000 },
+    });
+  });
 });
