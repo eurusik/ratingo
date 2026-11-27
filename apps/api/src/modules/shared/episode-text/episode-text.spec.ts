@@ -43,13 +43,21 @@ describe('pickUkrainianText', () => {
     ['   '],
     ['Jon Snow heads to the Wall.'],
     ['The crew meets Ведмідь, a Ukrainian pilot, on the night flight.'],
-    ['Закрытая школа'],
-    ['Как уходили кумиры'],
-    ['Её выбор'],
-    ['Подъезд'],
     [null],
     [undefined],
   ])('rejects empty or English text %p', (text) => {
     expect(pickUkrainianText(text)).toBeNull();
+  });
+
+  it.each([
+    ['Закрытая школа'],
+    ['Как уходили кумиры'],
+    ['Её выбор'],
+    ['Подъезд'],
+    ['Привіт, ёжику'],
+    ['Мама мила раму, а Эля читала'],
+  ])('rejects Russian text, even with mostly shared letters %p', (text) => {
+    expect(pickUkrainianText(text)).toBeNull();
+    expect(pickUkrainianEpisodeTitle(text)).toBeNull();
   });
 });

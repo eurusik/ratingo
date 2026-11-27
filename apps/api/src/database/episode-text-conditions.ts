@@ -14,7 +14,9 @@ export function hasUkrainianText(text: SQL): SQL {
   const value = sql`coalesce(${text}, '')`;
   const ukrainian = sql`length(regexp_replace(${value}, ${NON_UKRAINIAN_LETTER}, '', 'g'))`;
   const letters = sql`length(regexp_replace(${value}, ${NON_LETTER}, '', 'g'))`;
-  return sql`(${value} !~ ${RUSSIAN_ONLY_LETTER} AND ${ukrainian} > 0 AND ${ukrainian} * 2 >= ${letters})`;
+  const notRussian = sql`${value} !~ ${RUSSIAN_ONLY_LETTER}`;
+  const mostlyUkrainian = sql`${ukrainian} > 0 AND ${ukrainian} * 2 >= ${letters}`;
+  return sql`(${notRussian} AND ${mostlyUkrainian})`;
 }
 
 export function hasUkrainianEpisodeTitle(title: SQL): SQL {
