@@ -1,3 +1,4 @@
+import type { RequestState } from '../constants/request.constants';
 import type { InvestigationRecord } from '../entities/investigation-record';
 
 export const CreateOutcome = { CREATED: 'created', EXISTS: 'exists' } as const;
@@ -9,7 +10,7 @@ export type FinishOutcome = (typeof FinishOutcome)[keyof typeof FinishOutcome];
 export interface RequestStorePort {
   create(record: InvestigationRecord): Promise<CreateOutcome>;
   find(requestId: string): Promise<InvestigationRecord | null>;
-  save(record: InvestigationRecord): Promise<void>;
+  transition(record: InvestigationRecord, from: readonly RequestState[]): Promise<boolean>;
   finish(record: InvestigationRecord): Promise<FinishOutcome>;
 }
 

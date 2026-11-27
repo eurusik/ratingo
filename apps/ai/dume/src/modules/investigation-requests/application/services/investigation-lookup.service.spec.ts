@@ -25,7 +25,7 @@ describe('InvestigationLookupService', () => {
 
   it('shows a run that is far past its timeout as interrupted without writing that into the store', async () => {
     const store = new InMemoryRequestStore();
-    await store.save(queuedRecord({ state: RequestState.RUNNING, startedAtMs: NOW_MS }));
+    await store.seed(queuedRecord({ state: RequestState.RUNNING, startedAtMs: NOW_MS }));
     const service = new InvestigationLookupService(
       store,
       folder,
@@ -41,7 +41,7 @@ describe('InvestigationLookupService', () => {
   it('returns a healthy record as it is', async () => {
     const store = new InMemoryRequestStore();
     const record = queuedRecord();
-    await store.save(record);
+    await store.seed(record);
     const service = new InvestigationLookupService(store, folder, new FixedClock(NOW_MS));
 
     expect(await service.find('tg1000001')).toBe(record);

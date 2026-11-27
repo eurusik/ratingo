@@ -25,8 +25,8 @@ import {
 import { MODEL_ALIASES } from '../config/config.constants';
 import { MODEL_PRICES } from '../config/models.config';
 import { AGENT_FOLDER, MODEL_PROVIDERS } from './ai-core.constants';
+import { utcDayStartMs } from './utc-day';
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const DEFAULT_ROLE = 'default';
 
 const INVESTIGATION_TASK = 'investigate';
@@ -98,7 +98,7 @@ export class AgentRunner {
   private async priorSpend(): Promise<PriorSpend> {
     const agent = this.folder.manifest.name;
     const nowMs = this.clock.nowMs();
-    const sinceMs = nowMs - (nowMs % MS_PER_DAY);
+    const sinceMs = utcDayStartMs(nowMs);
     return {
       taskUsd: await this.runs.spentUsd({ agent, task: INVESTIGATION_TASK, sinceMs }),
       agentDayUsd: await this.runs.spentUsd({ agent, sinceMs }),

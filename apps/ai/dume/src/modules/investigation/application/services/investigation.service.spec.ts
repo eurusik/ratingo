@@ -483,4 +483,67 @@ describe('InvestigationService', () => {
     expect(JSON.stringify(request.messages)).toContain(TEST_SHA);
     expect(request.system).toContain('<untrusted>');
   });
+
+  describe('telling the caller that the code is ready', () => {
+    it('calls back after the code is fetched and before the model is asked', async () => {
+      const events: string[] = [];
+      const snapshot = inMemorySnapshot(FILES);
+      const { service, model } = await build(
+        [{ answer: { answer: 'x', claims: [], assumptions: [], unknowns: ['y'] } }],
+        {
+          resolve: async () => {
+            events.push('code');
+            return snapshot;
+          },
+        },
+      );
+      const generate = model.generate.bind(model);
+      model.generate = async (request) => {
+        events.push('model');
+        return generate(request);
+      };
+
+      await service.investigate({
+        question: 'Why?',
+        ref: 'main',
+        trigger: RunTrigger.MANUAL,
+        ignoreDailyBudget: true,
+        onSnapshotReady: async () => void events.push('ready'),
+      });
+
+      expect(events.slice(0, 3)).toEqual(['code', 'ready', 'model']);
+    });
+
+    it('does not call back when the code cannot be fetched', async () => {
+      const onSnapshotReady = jest.fn();
+      const { service } = await build([], {
+        resolve: () => Promise.reject(new SnapshotUnavailableError(SnapshotFailure.REF_NOT_FOUND)),
+      });
+
+      await service.investigate({
+        question: 'Why?',
+        ref: 'main',
+        trigger: RunTrigger.MANUAL,
+        onSnapshotReady,
+      });
+
+      expect(onSnapshotReady).not.toHaveBeenCalled();
+    });
+
+    it('goes on with the investigation when the callback fails', async () => {
+      const { service } = await build([
+        { answer: { answer: 'x', claims: [], assumptions: [], unknowns: ['y'] } },
+      ]);
+
+      const outcome = await service.investigate({
+        question: 'Why?',
+        ref: 'main',
+        trigger: RunTrigger.MANUAL,
+        ignoreDailyBudget: true,
+        onSnapshotReady: () => Promise.reject(new Error('redis timeout')),
+      });
+
+      expect(outcome.status).toBe(InvestigationStatus.ANSWERED);
+    });
+  });
 });

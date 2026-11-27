@@ -29,6 +29,7 @@ const shutdownAfterSignal = (app: NestFastifyApplication): void => {
     shutdownLogger.log({ message: 'shutdown.started', signal });
     void runShutdown(
       [
+        { name: 'http', run: () => app.getHttpAdapter().getInstance().close() },
         { name: 'worker', run: () => app.get(InvestigationWorker).close() },
         {
           name: 'queue',
@@ -41,13 +42,13 @@ const shutdownAfterSignal = (app: NestFastifyApplication): void => {
       shutdownLogger,
     ).then(() => process.exit(0));
   };
-  for (const signal of SIGNALS) process.once(signal, () => stop(signal));
+  for (const signal of SIGNALS) process.on(signal, () => stop(signal));
 };
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ bodyLimit: MAX_BODY_BYTES }),
+    new FastifyAdapter({ bodyLimit: MAX_BODY_BYTES, forceCloseConnections: 'idle' }),
     { logger: appLogger },
   );
   const { port } = app.get<ServiceConfig>(SERVICE_CONFIG);

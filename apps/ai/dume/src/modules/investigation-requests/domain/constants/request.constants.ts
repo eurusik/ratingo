@@ -27,7 +27,8 @@ export type RejectionReason = (typeof RejectionReason)[keyof typeof RejectionRea
 
 export const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
 export const MAX_WAITING_REQUESTS = 2;
-export const STALE_RUNNING_MARGIN_MS = 5 * 60_000;
+export const STALE_RUNNING_MARGIN_MS = 60_000;
+export const SNAPSHOT_PHASE_ALLOWANCE_MS = 5 * 60_000;
 export const RECORD_VERSION = 1;
 export const TERMINAL_STATES: readonly RequestState[] = [
   RequestState.ANSWERED,

@@ -60,7 +60,10 @@ export class RunInvestigationService {
       return RunResult.FAILED;
     }
     const running = { ...record, state: RequestState.RUNNING, startedAtMs: this.clock.nowMs() };
-    await this.store.save(running);
+    if (!(await this.store.transition(running, [RequestState.QUEUED]))) {
+      this.logger.warn({ message: 'investigation_request.not_queued', requestId });
+      return RunResult.SKIPPED;
+    }
     return this.investigate(running);
   }
 
@@ -82,6 +85,7 @@ export class RunInvestigationService {
         question: running.question,
         ref: running.ref,
         trigger: RunTrigger.CHAT,
+        onSnapshotReady: () => this.markRunStarted(running),
       });
       const finished = finishRecord(running, outcome, this.repositoryLabel(), this.clock.nowMs());
       await this.saveFinal(finished, outcome.costUsd);
@@ -105,6 +109,20 @@ export class RunInvestigationService {
         failRecord(running, FailureReason.INTERNAL_ERROR, this.clock.nowMs()),
       );
       return RunResult.FAILED;
+    }
+  }
+
+  private async markRunStarted(running: InvestigationRecord): Promise<void> {
+    try {
+      await this.store.transition({ ...running, runStartedAtMs: this.clock.nowMs() }, [
+        RequestState.RUNNING,
+      ]);
+    } catch (error) {
+      this.logger.warn({
+        message: 'investigation_request.run_clock_not_started',
+        requestId: running.requestId,
+        reason: errorName(error),
+      });
     }
   }
 

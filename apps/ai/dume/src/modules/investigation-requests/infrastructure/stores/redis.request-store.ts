@@ -35,8 +35,61 @@ redis.call('set', KEYS[1], ARGV[1], 'EX', ARGV[2])
 return 1
 `;
 
+export const TRANSITION_SCRIPT = `
+local current = redis.call('get', KEYS[1])
+if not current then
+  return 0
+end
+local ok, decoded = pcall(cjson.decode, current)
+if not ok or type(decoded) ~= 'table' then
+  return 0
+end
+for index = 3, #ARGV do
+  if decoded.state == ARGV[index] then
+    redis.call('set', KEYS[1], ARGV[1], 'EX', ARGV[2])
+    return 1
+  end
+end
+return 0
+`;
+
 const enumOf = <T extends Record<string, string>>(values: T) =>
   z.enum(Object.values(values) as [T[keyof T], ...T[keyof T][]]);
+
+const citationSchema = z.looseObject({
+  path: z.string(),
+  startLine: z.number(),
+  endLine: z.number(),
+});
+
+const resultSchema = z.looseObject({
+  repository: z.string(),
+  ref: z.string(),
+  commit: z.string(),
+  turns: z.number(),
+  costUsd: z.number(),
+  answer: z.looseObject({
+    answer: z.string(),
+    facts: z.array(
+      z.looseObject({
+        text: z.string(),
+        citations: z.array(citationSchema),
+        evidence: z.array(
+          z.looseObject({ ref: z.string(), tool: z.string(), summary: z.string() }),
+        ),
+      }),
+    ),
+    assumptions: z.array(
+      z.looseObject({
+        text: z.string(),
+        origin: z.string(),
+        problems: z.array(z.looseObject({ failure: z.string() })),
+      }),
+    ),
+    unknowns: z.array(z.string()),
+    support: z.string(),
+  }),
+});
 
 const recordSchema = z.looseObject({
   version: z.literal(RECORD_VERSION),
@@ -48,7 +101,9 @@ const recordSchema = z.looseObject({
   runId: z.string().optional(),
   createdAtMs: z.number(),
   startedAtMs: z.number().optional(),
+  runStartedAtMs: z.number().optional(),
   finishedAtMs: z.number().optional(),
+  result: resultSchema.optional(),
 });
 
 export class RedisRequestStore implements RequestStorePort {
@@ -73,13 +128,16 @@ export class RedisRequestStore implements RequestStorePort {
     return parsed.data as unknown as InvestigationRecord;
   }
 
-  async save(record: InvestigationRecord): Promise<void> {
-    await this.redis.set(
+  async transition(record: InvestigationRecord, from: readonly RequestState[]): Promise<boolean> {
+    const written = await this.redis.eval(
+      TRANSITION_SCRIPT,
+      1,
       this.keyFor(record.requestId),
       JSON.stringify(record),
-      'EX',
-      RECORD_TTL_SECONDS,
+      String(RECORD_TTL_SECONDS),
+      ...from,
     );
+    return written === 1;
   }
 
   async finish(record: InvestigationRecord): Promise<FinishOutcome> {

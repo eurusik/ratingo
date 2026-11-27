@@ -3,7 +3,7 @@ import type Redis from 'ioredis';
 import type { AgentFolder, ClockPort, RunRepository } from '@ratingo/ai-core';
 
 import { COUNT_KEY_PREFIX, COUNT_TTL_SECONDS } from '../../investigation-requests.constants';
-import { utcDayKey, utcDayStartMs } from '../../domain/policies/utc-day.policy';
+import { utcDayKey, utcDayStartMs } from '../../../../core/utc-day';
 import type { DayLimitsPort } from '../../domain/ports/day-limits.port';
 
 type RedisCounter = Pick<Redis, 'get' | 'incr' | 'expire'>;

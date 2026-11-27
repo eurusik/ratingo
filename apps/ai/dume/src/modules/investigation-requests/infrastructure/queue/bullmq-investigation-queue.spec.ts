@@ -6,14 +6,25 @@ import {
 
 import { BullmqInvestigationQueue, QueueTimeoutError } from './bullmq-investigation-queue';
 
+const queueWith = (existingState?: string) => {
+  const remove = jest.fn();
+  const add = jest.fn();
+  const queue = new BullmqInvestigationQueue({
+    add,
+    close: jest.fn(),
+    getWaitingCount: jest.fn().mockResolvedValue(2),
+    getJob: jest
+      .fn()
+      .mockResolvedValue(
+        existingState === undefined ? undefined : { getState: async () => existingState, remove },
+      ),
+  });
+  return { queue, add, remove };
+};
+
 describe('BullmqInvestigationQueue', () => {
   it('uses the request id as the job id, so one request is one job, and never retries', async () => {
-    const add = jest.fn();
-    const queue = new BullmqInvestigationQueue({
-      add,
-      close: jest.fn(),
-      getWaitingCount: jest.fn(),
-    });
+    const { queue, add } = queueWith();
 
     await queue.enqueue({ requestId: 'tg1000001' });
 
@@ -25,14 +36,31 @@ describe('BullmqInvestigationQueue', () => {
     expect(INVESTIGATION_JOB_OPTIONS.attempts).toBe(1);
   });
 
-  it('reports the number of waiting jobs, not the running one', async () => {
-    const queue = new BullmqInvestigationQueue({
-      add: jest.fn(),
-      close: jest.fn(),
-      getWaitingCount: jest.fn().mockResolvedValue(2),
-    });
+  it.each(['completed', 'failed'])(
+    'removes an old %s job with the same id first, so a revived request is not swallowed',
+    async (state) => {
+      const { queue, add, remove } = queueWith(state);
 
-    expect(await queue.waitingCount()).toBe(2);
+      await queue.enqueue({ requestId: 'tg1000001' });
+
+      expect(remove).toHaveBeenCalledTimes(1);
+      expect(add).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(['waiting', 'active', 'delayed'])(
+    'leaves a %s job alone, because that request is already on its way',
+    async (state) => {
+      const { queue, remove } = queueWith(state);
+
+      await queue.enqueue({ requestId: 'tg1000001' });
+
+      expect(remove).not.toHaveBeenCalled();
+    },
+  );
+
+  it('reports the number of waiting jobs, not the running one', async () => {
+    expect(await queueWith().queue.waitingCount()).toBe(2);
   });
 
   it('gives up on a queue that does not answer', async () => {
@@ -41,6 +69,7 @@ describe('BullmqInvestigationQueue', () => {
       add: () => new Promise(() => undefined),
       close: jest.fn(),
       getWaitingCount: () => new Promise(() => undefined),
+      getJob: () => new Promise(() => undefined),
     });
 
     const adding = queue.enqueue({ requestId: 'tg1000001' }).catch((error: unknown) => error);

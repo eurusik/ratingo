@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 
-import { utcDayIndex, utcDayKey, utcDayStartMs } from './utc-day.policy';
+import { utcDayIndex, utcDayKey, utcDayStartMs } from './utc-day';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 

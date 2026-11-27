@@ -31,8 +31,15 @@ export class InMemoryRequestStore implements RequestStorePort {
     return this.records.get(requestId) ?? null;
   }
 
-  async save(record: InvestigationRecord): Promise<void> {
+  async seed(record: InvestigationRecord): Promise<void> {
     this.records.set(record.requestId, record);
+  }
+
+  async transition(record: InvestigationRecord, from: readonly RequestState[]): Promise<boolean> {
+    const current = this.records.get(record.requestId);
+    if (current === undefined || !from.includes(current.state)) return false;
+    this.records.set(record.requestId, record);
+    return true;
   }
 
   async finish(record: InvestigationRecord): Promise<FinishOutcome> {

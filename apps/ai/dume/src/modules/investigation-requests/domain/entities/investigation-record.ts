@@ -20,6 +20,7 @@ export interface InvestigationRecord {
   runId?: string;
   createdAtMs: number;
   startedAtMs?: number;
+  runStartedAtMs?: number;
   finishedAtMs?: number;
   result?: InvestigationResult;
 }

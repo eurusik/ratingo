@@ -107,7 +107,7 @@ export class SubmitInvestigationService {
       reason: undefined,
       finishedAtMs: undefined,
     };
-    await this.store.save(fresh);
+    if (!(await this.store.transition(fresh, [RequestState.FAILED]))) return record;
     this.logger.warn({ message: 'investigation_request.revived', requestId: record.requestId });
     return this.enqueued(fresh);
   }

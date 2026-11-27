@@ -184,6 +184,26 @@ describe('SubmitInvestigationService', () => {
       expect(queue.jobs).toHaveLength(1);
     });
 
+    it('does not revive a request that changed state while it was being read', async () => {
+      const { service, store, queue } = setup();
+      await service.submit(submission);
+      const stored = store.records.get('tg1000001') as NonNullable<
+        ReturnType<typeof store.records.get>
+      >;
+      store.records.set('tg1000001', {
+        ...stored,
+        state: RequestState.FAILED,
+        reason: FailureReason.INTERNAL_ERROR,
+      });
+      store.transition = async () => false;
+      queue.jobs.length = 0;
+
+      const replay = await service.submit(submission);
+
+      expect(replay).toMatchObject({ created: false });
+      expect(queue.jobs).toEqual([]);
+    });
+
     it.each([
       ['an answered request', { state: RequestState.ANSWERED }],
       [

@@ -28,16 +28,24 @@ const withTimeout = <T>(operation: string, call: Promise<T>): Promise<T> => {
 };
 
 export class BullmqInvestigationQueue implements InvestigationQueuePort, OnApplicationShutdown {
-  constructor(private readonly queue: Pick<Queue, 'add' | 'close' | 'getWaitingCount'>) {}
+  constructor(
+    private readonly queue: Pick<Queue, 'add' | 'close' | 'getWaitingCount' | 'getJob'>,
+  ) {}
 
   async enqueue(job: QueuedInvestigation): Promise<void> {
-    await withTimeout(
-      'add',
-      this.queue.add(INVESTIGATION_JOB_NAME, job, {
-        ...INVESTIGATION_JOB_OPTIONS,
-        jobId: job.requestId,
-      }),
-    );
+    await withTimeout('add', this.replaceFinishedJob(job));
+  }
+
+  private async replaceFinishedJob(job: QueuedInvestigation): Promise<void> {
+    const existing = await this.queue.getJob(job.requestId);
+    if (existing !== undefined) {
+      const state = await existing.getState();
+      if (state === 'completed' || state === 'failed') await existing.remove();
+    }
+    await this.queue.add(INVESTIGATION_JOB_NAME, job, {
+      ...INVESTIGATION_JOB_OPTIONS,
+      jobId: job.requestId,
+    });
   }
 
   waitingCount(): Promise<number> {
