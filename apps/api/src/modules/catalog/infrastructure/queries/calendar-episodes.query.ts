@@ -35,6 +35,7 @@ const {
 const isTracked = sql<boolean>`coalesce(${userMediaState.state} = ${USER_MEDIA_STATE.WATCHING}, false)`;
 const isSaved = sql<boolean>`${userSavedItems.id} is not null`;
 const isWatched = sql<boolean>`${userEpisodeProgress.episodeId} is not null`;
+const isAirDateDayOnly = sql<boolean>`coalesce(${episodes.airDateDayOnly}, false)`;
 const byPopularityDescNullsLast = sql`${mediaItems.popularity} desc nulls last`;
 
 function ownedByViewer(column: PgColumn, viewerId: string | undefined): SQL {
@@ -86,6 +87,7 @@ function toCalendarEpisode(row: CalendarEpisodeRow): CalendarEpisode {
     isTracked: Boolean(row.isTracked),
     isSaved: Boolean(row.isSaved),
     isWatched: Boolean(row.isWatched),
+    airDateDayOnly: Boolean(row.airDateDayOnly),
   };
 }
 
@@ -139,6 +141,7 @@ export class CalendarEpisodesQuery {
           title: episodes.title,
           overview: episodes.overview,
           airDate: episodes.airDate,
+          airDateDayOnly: isAirDateDayOnly,
           runtime: episodes.runtime,
           stillPath: episodes.stillPath,
           isTracked,

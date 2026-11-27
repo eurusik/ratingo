@@ -11,6 +11,7 @@ export function calendarEpisode(overrides: Partial<CalendarEpisode> = {}): Calen
     episodeNumber: 2,
     title: 'Title',
     airDate: '2026-11-12T19:00:00.000Z',
+    airDateDayOnly: false,
     runtime: 45,
     stillPath: null,
     seasonEpisodeCount: 8,

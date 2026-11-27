@@ -11,6 +11,7 @@ import {
   type EpisodeSchedulePort,
   type ScheduledEpisode,
 } from '@/modules/ingestion/domain/ports/episode-schedule.port';
+import { seasonEpisodeCount } from '@/modules/ingestion/domain/season-episode-count';
 import { uniqueScheduledEpisodes } from '@/modules/ingestion/domain/unique-scheduled-episodes';
 
 /** Maximum year difference allowed when matching shows by name search. */
@@ -179,6 +180,8 @@ export class TvMazeEnrichmentService {
       [SEASON_SKIP_REASON.YEAR_MISMATCH]: [],
     };
 
+    const latestSeasonNumber = Math.max(...seasonMap.keys());
+
     // Merge TVMaze with TMDB metadata
     for (const [seasonNum, episodes] of seasonMap.entries()) {
       const skipReason = this.seasonSkipReason(seasonNum, episodes, tmdbSeasonMap, showStatus);
@@ -202,7 +205,12 @@ export class TvMazeEnrichmentService {
         overview: tmdbSeason?.overview,
         posterPath: tmdbSeason?.posterPath,
         airDate: tmdbSeason?.airDate,
-        episodeCount: cleanEpisodes.length,
+        episodeCount: seasonEpisodeCount({
+          listedEpisodes: cleanEpisodes.length,
+          announcedEpisodes: tmdbSeason?.episodeCount,
+          showStatus,
+          isLatestSeason: seasonNum === latestSeasonNumber,
+        }),
         episodes: cleanEpisodes,
       });
     }

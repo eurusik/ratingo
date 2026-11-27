@@ -664,6 +664,77 @@ describe('TvMazeEnrichmentService', () => {
       expect(result.details?.seasons?.[0].episodeCount).toBe(12);
     });
 
+    it('keeps the TMDB season size when TVMaze lists only part of an airing season', async () => {
+      const airingShow = {
+        ...mockShow,
+        details: {
+          ...mockShow.details,
+          totalEpisodes: 10,
+          seasons: [{ number: 1, name: 'Season 1', tmdbId: 101, episodeCount: 10, episodes: [] }],
+        },
+      };
+
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue(
+        Array.from({ length: 4 }, (_, i) => ({
+          seasonNumber: 1,
+          number: i + 1,
+          title: `Episode ${i + 1}`,
+          airDate: new Date('2024-01-01'),
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        })),
+      );
+
+      const result = await service.enrich(airingShow);
+
+      expect(result.details?.seasons?.[0].episodeCount).toBe(10);
+      expect(result.details?.seasons?.[0].episodes).toHaveLength(4);
+      expect(result.details?.totalEpisodes).toBe(10);
+    });
+
+    it('trusts the TVMaze list for an earlier season of an airing show', async () => {
+      const airingShow = {
+        ...mockShow,
+        details: {
+          ...mockShow.details,
+          seasons: [
+            { number: 1, name: 'Season 1', tmdbId: 101, episodeCount: 10, episodes: [] },
+            { number: 2, name: 'Season 2', tmdbId: 102, episodeCount: 6, episodes: [] },
+          ],
+        },
+      };
+
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
+        ...Array.from({ length: 8 }, (_, i) => ({
+          seasonNumber: 1,
+          number: i + 1,
+          title: `Episode ${i + 1}`,
+          airDate: new Date('2024-01-01'),
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        })),
+        ...Array.from({ length: 2 }, (_, i) => ({
+          seasonNumber: 2,
+          number: i + 1,
+          title: `Episode ${i + 1}`,
+          airDate: new Date('2025-01-01'),
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        })),
+      ]);
+
+      const result = await service.enrich(airingShow);
+
+      expect(result.details?.seasons?.map((season) => season.episodeCount)).toEqual([8, 6]);
+      expect(result.details?.totalEpisodes).toBe(14);
+    });
+
     it('should exclude Season 0 from totalEpisodes calculation', async () => {
       const showWithSpecialsAndSeason = {
         ...mockShow,
@@ -852,10 +923,11 @@ describe('TvMazeEnrichmentService', () => {
         expect(result.details?.totalEpisodes).toBe(2);
       });
 
-      it('should lower totalEpisodes when TVMaze has fewer episodes than stored', async () => {
+      it('should lower totalEpisodes when TVMaze lists fewer episodes of a finished show', async () => {
         const overcounted: NormalizedMedia = {
           ...mockShow,
           details: {
+            status: ShowStatus.ENDED,
             totalEpisodes: 5,
             seasons: [{ number: 1, name: 'Season 1', tmdbId: 101, episodeCount: 5, episodes: [] }],
           },

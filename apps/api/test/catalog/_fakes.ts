@@ -319,6 +319,7 @@ export class FakeShowRepository implements IShowRepository {
         title: 'Pilot',
         overview: null,
         airDate: start,
+        airDateDayOnly: false,
         runtime: 45,
         stillPath: null,
         seasonEpisodeCount: 8,

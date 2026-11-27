@@ -307,6 +307,20 @@ describe('TmdbMapper', () => {
       expect(result?.watchProvidersRaw?.[DEFAULT_REGION].buy?.[0].providerId).toBe(3);
     });
 
+    it('leaves a season size unknown when TMDB reports none', () => {
+      const showWithSeasons = {
+        ...mockShow,
+        seasons: [
+          { id: 11, season_number: 1, name: 'Season 1', episode_count: 7 },
+          { id: 12, season_number: 2, name: 'Season 2', episode_count: 0 },
+        ],
+      } as unknown as typeof mockShow;
+
+      const seasons = TmdbMapper.toDomain(showWithSeasons, MediaType.SHOW)?.details?.seasons;
+
+      expect(seasons?.map((season) => season.episodeCount)).toEqual([7, undefined]);
+    });
+
     it('should return null only when title is missing', () => {
       // Missing title should return null
       const brokenMovie = { ...mockMovie, title: '' };

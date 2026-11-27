@@ -15463,6 +15463,11 @@
             "format": "date-time",
             "type": "string"
           },
+          "airDateDayOnly": {
+            "type": "boolean",
+            "example": false,
+            "description": "The source gave only the air day, so airDate is midday UTC of that day and its clock time is not real."
+          },
           "runtime": {
             "type": "number",
             "example": 45,
@@ -15510,6 +15515,7 @@
           "episodeNumber",
           "title",
           "airDate",
+          "airDateDayOnly",
           "seasonEpisodeCount",
           "showPopularity",
           "isTracked",
