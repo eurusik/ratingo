@@ -138,16 +138,48 @@ describe('DrizzleShowRepository', () => {
       );
 
       expect(Object.keys(rendered).sort()).toEqual(
-        ['airDate', 'overview', 'runtime', 'stillPath', 'title', 'tmdbId', 'voteAverage'].sort(),
+        [
+          'airDate',
+          'airDateDayOnly',
+          'overview',
+          'runtime',
+          'stillPath',
+          'title',
+          'tmdbId',
+          'voteAverage',
+        ].sort(),
       );
       expect(rendered.tmdbId).toBe('COALESCE(excluded.tmdb_id, "episodes"."tmdb_id")');
       expect(rendered.stillPath).toBe('COALESCE(excluded.still_path, "episodes"."still_path")');
-      const { title, overview, ...plainColumns } = rendered;
+      const { title, overview, airDate, airDateDayOnly, ...plainColumns } = rendered;
       for (const sqlText of Object.values(plainColumns)) {
         expect(sqlText).toMatch(/^COALESCE\(excluded\./);
       }
       expect(title).toContain('ELSE COALESCE(excluded.title, "episodes"."title")');
       expect(overview).toContain('ELSE COALESCE(excluded.overview, "episodes"."overview")');
+      expect(airDate).toContain('ELSE COALESCE(excluded.air_date, "episodes"."air_date")');
+      expect(airDateDayOnly).toContain('ELSE excluded.air_date_day_only');
+    });
+
+    it('keeps a stored exact air instant over a day-only date for the same airing', async () => {
+      const module: TestingModule = await setup();
+      repository = module.get(DrizzleShowRepository);
+      const tx = createPruneTx();
+
+      await repository.upsertDetails(tx, 'media-1', {
+        seasons: [{ number: 1, episodes: [{ number: 1, title: 'Pilot' }] }],
+      });
+
+      const calls = insertChain.onConflictDoUpdate.mock.calls;
+      const { set } = calls[calls.length - 1][0];
+      const airDate = new PgDialect().sqlToQuery(set.airDate).sql.replace(/\s+/g, ' ');
+
+      expect(airDate).toContain('WHEN ( excluded.air_date_day_only');
+      expect(airDate).toContain('AND "episodes"."air_date_day_only" = false');
+      expect(airDate).toContain(
+        'AND excluded.air_date BETWEEN "episodes"."air_date" - interval \'2 days\' AND "episodes"."air_date" + interval \'2 days\'',
+      );
+      expect(airDate).toContain('THEN "episodes"."air_date"');
     });
 
     it('keeps a stored Ukrainian episode title and overview over untranslated incoming text', async () => {

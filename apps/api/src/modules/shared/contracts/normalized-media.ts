@@ -74,6 +74,7 @@ export interface NormalizedEpisode {
   title: string;
   overview?: string | null;
   airDate?: Date | null;
+  airDateDayOnly?: boolean;
   runtime?: number | null;
   stillPath?: string | null;
   rating?: number | null;

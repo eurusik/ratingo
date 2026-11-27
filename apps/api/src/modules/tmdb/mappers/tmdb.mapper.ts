@@ -4,6 +4,7 @@ import { DEFAULT_REGION } from '@/common/constants';
 import { AVAILABILITY_REGIONS, FALLBACK_REGION } from '@/common/constants/region.constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '@/common/enums/video.enum';
+import { middayUtcOfCalendarDate } from '@/common/utils/date.util';
 import { generateSlug } from '@/common/utils/slug.util';
 import {
   type NormalizedEpisode,
@@ -60,7 +61,8 @@ export class TmdbMapper {
       number: ep.episode_number,
       title: ep.name,
       overview: ep.overview || null,
-      airDate: ep.air_date ? new Date(ep.air_date) : null,
+      airDate: ep.air_date ? middayUtcOfCalendarDate(ep.air_date) : null,
+      airDateDayOnly: true,
       runtime: ep.runtime ?? null,
       stillPath: ep.still_path || null,
       rating: ep.vote_average > 0 ? ep.vote_average : null,

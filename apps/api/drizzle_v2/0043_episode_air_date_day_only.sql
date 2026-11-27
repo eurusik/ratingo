@@ -1,0 +1,1 @@
+ALTER TABLE "episodes" ADD COLUMN IF NOT EXISTS "air_date_day_only" boolean;

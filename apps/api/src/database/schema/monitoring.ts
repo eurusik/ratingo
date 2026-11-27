@@ -4,7 +4,9 @@ export const keyHealthChecks = pgTable(
   'key_health_checks',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    provider: text('provider', { enum: ['tmdb', 'trakt', 'mdblist', 'omdb', 's3'] }).notNull(),
+    provider: text('provider', {
+      enum: ['tmdb', 'trakt', 'mdblist', 'omdb', 'tvmaze', 's3'],
+    }).notNull(),
     status: text('status', { enum: ['valid', 'degraded', 'invalid', 'unknown'] }).notNull(),
     statusCode: integer('status_code'),
     latencyMs: integer('latency_ms'),

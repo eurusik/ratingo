@@ -42,6 +42,7 @@ import { SyncMediaService } from './application/services/sync-media.service';
 import { TmdbEpisodeSourcesService } from './application/services/tmdb-episode-sources.service';
 import { TrackedSyncService } from './application/services/tracked-sync.service';
 import { TvMazeEnrichmentService } from './application/services/tvmaze-enrichment.service';
+import { TvMazeScheduleService } from './application/services/tvmaze-schedule.service';
 import { BackfillWorker } from './application/workers/backfill.worker';
 import { RatingsBackfillWorker } from './application/workers/ratings-backfill.worker';
 import { SyncWorker } from './application/workers/sync.worker';
@@ -176,6 +177,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
       useClass: TvMazeAdapter,
     },
     TvMazeEnrichmentService,
+    TvMazeScheduleService,
     EpisodeMergeService,
     TmdbEpisodeSourcesService,
     BulkJobService,

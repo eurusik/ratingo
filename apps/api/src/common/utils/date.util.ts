@@ -42,3 +42,12 @@ export function startOfUtcDay(date: Date): Date {
 export function addUtcDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * MS_PER_DAY);
 }
+
+const ISO_CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const CALENDAR_DATE_MIDDAY_UTC = 'T12:00:00.000Z';
+
+export function middayUtcOfCalendarDate(calendarDate: string): Date {
+  return ISO_CALENDAR_DATE.test(calendarDate)
+    ? new Date(`${calendarDate}${CALENDAR_DATE_MIDDAY_UTC}`)
+    : new Date(calendarDate);
+}
