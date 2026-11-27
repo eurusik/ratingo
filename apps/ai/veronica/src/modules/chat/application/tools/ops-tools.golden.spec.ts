@@ -16,7 +16,8 @@ import {
   type RawLogLine,
 } from '@ratingo/ai-ops-tools';
 
-import { SYSTEM_CARD } from '../../domain/constants/system-card.constants';
+import { SYSTEM_CARD, SYSTEM_CARD_MAX_CHARS } from '../../domain/constants/system-card.constants';
+import type { SystemCard } from '../../domain/entities/system-card';
 import { renderSystemCard } from '../../domain/policies/system-card.policy';
 
 import type { InvestigationExecutors } from './investigation-executors';
@@ -120,10 +121,91 @@ const failuresFor = (rows: JobFailureSummary[] | Error) =>
     new FixedClock(NOW_MS),
   );
 
-const scheduleLabel = (schedule: (typeof SYSTEM_CARD.scheduledJobs)[number]['schedule']): string =>
-  'cron' in schedule ? schedule.cron : `every ${schedule.everyMs / 1000}s`;
+const FIXTURE_CARD: SystemCard = {
+  scheduledJobs: [
+    {
+      job: 'job-every-two-minutes',
+      queue: 'ingestion',
+      schedule: { everyMs: 120_000 },
+      description: 'runs often',
+    },
+    {
+      job: 'job-every-twenty-minutes',
+      queue: 'ingestion',
+      schedule: { cron: '*/20 * * * *' },
+      description: 'runs every twenty minutes',
+    },
+    {
+      job: 'job-every-four-hours',
+      queue: 'ingestion',
+      schedule: { cron: '0 */4 * * *' },
+      description: 'runs every four hours',
+    },
+    {
+      job: 'job-twice-a-day',
+      queue: 'stats-queue',
+      schedule: { cron: '0 8,20 * * *' },
+      description: 'runs twice a day',
+    },
+    {
+      job: 'job-daily',
+      queue: 'stats-queue',
+      schedule: { cron: '0 3 * * *' },
+      description: 'runs once a day',
+    },
+    {
+      job: 'job-daily-except-monday',
+      queue: 'stats-queue',
+      schedule: { cron: '0 7 * * 0,2-6' },
+      description: 'skips Monday',
+    },
+    {
+      job: 'job-weekly',
+      queue: 'ingestion',
+      schedule: { cron: '0 7 * * 1' },
+      description: 'runs weekly',
+    },
+    {
+      job: 'job-weekly-on-sunday',
+      queue: 'ingestion',
+      schedule: { cron: '0 4 * * 0' },
+      description: 'runs on Sunday',
+    },
+    {
+      job: 'job-three-days-a-week',
+      queue: 'ingestion',
+      schedule: { cron: '0 9 * * 1,3,5' },
+      description: 'runs on three days',
+    },
+    {
+      job: 'job-twice-on-saturday',
+      queue: 'stats-queue',
+      schedule: { cron: '0 9,21 * * 6' },
+      description: 'runs twice on Saturday',
+    },
+    {
+      job: 'job-monthly',
+      queue: 'stats-queue',
+      schedule: { cron: '0 9 1 * *' },
+      description: 'runs monthly',
+    },
+  ],
+  queues: [
+    { name: 'ingestion', description: 'syncs titles' },
+    { name: 'stats-queue', description: 'computes statistics' },
+  ],
+  providers: [
+    { host: 'api.themoviedb.org', description: 'titles and images' },
+    { host: 'api.trakt.tv', description: 'trending and ratings' },
+    { host: 'api.tvmaze.com', description: 'episode data' },
+  ],
+};
 
-const queueNames = SYSTEM_CARD.queues.map((queue) => queue.name);
+const scheduleLabel = (
+  schedule: (typeof FIXTURE_CARD.scheduledJobs)[number]['schedule'],
+): string => ('cron' in schedule ? schedule.cron : `every ${schedule.everyMs / 1000}s`);
+
+const queueNames = FIXTURE_CARD.queues.map((queue) => queue.name);
 const perQueue = (value: number): MetricSample[] =>
   queueNames.map((queue) => ({ labels: { queue }, value }));
 
@@ -134,7 +216,7 @@ const METRIC_SAMPLES: Readonly<Record<string, MetricSample[]>> = {
   now: perQueue(98_765),
   peak: perQueue(98_765),
   total: [{ labels: {}, value: 1_234_567 }],
-  errors: SYSTEM_CARD.providers.flatMap((provider) =>
+  errors: FIXTURE_CARD.providers.flatMap((provider) =>
     ['401', '403', '429'].map((status) => ({
       labels: { server_address: provider.host, http_response_status_code: status },
       value: 4321,
@@ -144,11 +226,11 @@ const METRIC_SAMPLES: Readonly<Record<string, MetricSample[]>> = {
   serverErrors: [{ labels: {}, value: 1234 }],
   p95: [{ labels: {}, value: 1.234 }],
   rss: [{ labels: {}, value: 512 * MEGABYTE }],
-  runs: SYSTEM_CARD.scheduledJobs.flatMap((job) => [
+  runs: FIXTURE_CARD.scheduledJobs.flatMap((job) => [
     { labels: { job_name: job.job, result: 'success' }, value: NOW_SECONDS - 77.22 * HOUR_SECONDS },
     { labels: { job_name: job.job, result: 'failure' }, value: NOW_SECONDS - 12.34 * HOUR_SECONDS },
   ]),
-  next: SYSTEM_CARD.scheduledJobs.map((job) => ({
+  next: FIXTURE_CARD.scheduledJobs.map((job) => ({
     labels: { job_name: job.job, schedule: scheduleLabel(job.schedule), tz: 'UTC' },
     value: NOW_SECONDS + 90.78 * HOUR_SECONDS,
   })),
@@ -454,7 +536,11 @@ describe('Veronica ops tools, golden outputs', () => {
     });
   });
 
-  it('keeps the system card text, with every schedule described the same way', () => {
-    expect(renderSystemCard(SYSTEM_CARD)).toMatchSnapshot();
+  it('keeps the system card text, with every shape of schedule described the same way', () => {
+    expect(renderSystemCard(FIXTURE_CARD)).toMatchSnapshot();
+  });
+
+  it('renders the live system card within its share of the prompt', () => {
+    expect(renderSystemCard(SYSTEM_CARD).length).toBeLessThanOrEqual(SYSTEM_CARD_MAX_CHARS);
   });
 });

@@ -76,40 +76,30 @@ exports[`Veronica ops tools, golden outputs job_failures says what an empty list
 ]
 `;
 
-exports[`Veronica ops tools, golden outputs keeps the system card text, with every schedule described the same way 1`] = `
+exports[`Veronica ops tools, golden outputs keeps the system card text, with every shape of schedule described the same way 1`] = `
 "What Ratingo runs (generated from its code)
 
 Scheduled jobs (name: how often; what it does). Between its runs a weekly job normally shows no success for days:
-- link-pending-imports: every two minutes; Links imported watch history items to catalog titles once those titles are ingested.
-- movie-release-notifications: daily; Notifies users that a movie they want to watch has been released.
-- scheduled-anticipated-shows: daily; Pulls the most anticipated new shows.
-- scheduled-key-health: every twenty minutes; Checks that every external provider API key still works.
-- scheduled-mdblist-ratings: daily; Queues titles missing Rotten Tomatoes ratings; the ratings-backfill queue then drains them slowly through the day because of the daily quota.
-- scheduled-new-releases: daily; Adds movies released in the region over the last weeks.
-- scheduled-now-playing: daily; Fetches the movies now playing in cinemas in the region.
-- scheduled-now-playing-flags: daily; Marks which catalog movies are in cinemas now; runs right after the now-playing sync.
-- scheduled-snapshots: daily; Records the daily watcher and rating snapshot of catalog titles that trend charts are built from.
-- scheduled-tracked-shows: twice a day; Refreshes the shows users track, so new episodes and seasons show up.
-- scheduled-trending: every four hours; Pulls trending movies and shows with their stats and rebuilds the trending lists.
-- scheduled-upcoming-movies: daily; Adds upcoming movie premieres to the catalog.
-- scheduled-upcoming-movies-refresh-all: weekly on Monday; Refreshes release dates of all upcoming movies; on the other days only the ones premiering soon are refreshed.
-- scheduled-upcoming-movies-refresh-soon: daily except Monday; Refreshes release dates of upcoming movies premiering soon; skips Monday, when the full refresh runs.
+- job-every-two-minutes: every two minutes; runs often
+- job-every-twenty-minutes: every twenty minutes; runs every twenty minutes
+- job-every-four-hours: every four hours; runs every four hours
+- job-twice-a-day: twice a day; runs twice a day
+- job-daily: daily; runs once a day
+- job-daily-except-monday: daily except Monday; skips Monday
+- job-weekly: weekly on Monday; runs weekly
+- job-weekly-on-sunday: weekly on Sunday; runs on Sunday
+- job-three-days-a-week: on Monday, Wednesday and Friday; runs on three days
+- job-twice-on-saturday: twice a day on Saturday; runs twice on Saturday
+- job-monthly: on a custom schedule; runs monthly
 
 Queues:
-- ingestion: Imports and refreshes titles from rate-limited providers; scheduled syncs land here, so backlog spikes after them are normal.
-- backfill: Fast TMDB-only fill-ins (missing IDs, alternative titles) and watch history imports.
-- ratings-backfill: External ratings under a small daily quota; drains slowly all day by design, so a long backlog is normal.
-- catalog-policy-queue: Decides which titles are eligible for the public catalog.
-- stats-queue: Recomputes title stats and the homepage blocks.
-- monitoring-queue: Health probes such as the API key check.
-- user-notifications: Notifications sent to users.
+- ingestion: syncs titles
+- stats-queue: computes statistics
 
 External APIs:
-- api.themoviedb.org: Main catalog source: titles, images, release dates, cinemas.
-- api.trakt.tv: Trending, anticipated and watcher stats; strict rate limit.
-- www.omdbapi.com: IMDb ratings; daily request limit.
-- api.tvmaze.com: Episode air dates for shows.
-- api.mdblist.com: Rotten Tomatoes ratings; small daily quota."
+- api.themoviedb.org: titles and images
+- api.trakt.tv: trending and ratings
+- api.tvmaze.com: episode data"
 `;
 
 exports[`Veronica ops tools, golden outputs logs_search an exact job id 1`] = `
@@ -266,14 +256,14 @@ exports[`Veronica ops tools, golden outputs metrics_query answers a queue and a 
 
 exports[`Veronica ops tools, golden outputs metrics_query answers a shifted day 1`] = `
 {
-  "content": "{"template":"queue_backlog_peak","window":"24h","offsetDays":7,"evaluatedAtKyiv":"2026-11-19 14:00","data":{"queues":[{"queue":"backfill","waitingNow":98765,"peakInWindow":98765},{"queue":"catalog-policy-queue","waitingNow":98765,"peakInWindow":98765},{"queue":"ingestion","waitingNow":98765,"peakInWindow":98765},{"queue":"monitoring-queue","waitingNow":98765,"peakInWindow":98765},{"queue":"ratings-backfill","waitingNow":98765,"peakInWindow":98765},{"queue":"stats-queue","waitingNow":98765,"peakInWindow":98765},{"queue":"user-notifications","waitingNow":98765,"peakInWindow":98765}]}}",
+  "content": "{"template":"queue_backlog_peak","window":"24h","offsetDays":7,"evaluatedAtKyiv":"2026-11-19 14:00","data":{"queues":[{"queue":"ingestion","waitingNow":98765,"peakInWindow":98765},{"queue":"stats-queue","waitingNow":98765,"peakInWindow":98765}]}}",
   "isError": false,
 }
 `;
 
 exports[`Veronica ops tools, golden outputs metrics_query answers one job 1`] = `
 {
-  "content": "{"template":"scheduler_last_runs","window":null,"offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"jobs":[{"job":"scheduled-upcoming-movies-refresh-all","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"weekly on Monday","nextRunAtKyiv":"2026-11-30 08:46"}]}}",
+  "content": "{"template":"scheduler_last_runs","window":null,"offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","unavailable":"жодна задача не має «refresh-all» у назві"}",
   "isError": false,
 }
 `;
@@ -287,7 +277,7 @@ exports[`Veronica ops tools, golden outputs metrics_query backup_status with its
 
 exports[`Veronica ops tools, golden outputs metrics_query http_client_errors with its default parameters 1`] = `
 {
-  "content": "{"template":"http_client_errors","window":"24h","offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"totalOutgoingRequests":1234567,"errors":[{"provider":"api.themoviedb.org","status":"401","count":4321},{"provider":"api.themoviedb.org","status":"403","count":4321},{"provider":"api.themoviedb.org","status":"429","count":4321},{"provider":"api.trakt.tv","status":"401","count":4321},{"provider":"api.trakt.tv","status":"403","count":4321},{"provider":"api.trakt.tv","status":"429","count":4321},{"provider":"www.omdbapi.com","status":"401","count":4321},{"provider":"www.omdbapi.com","status":"403","count":4321},{"provider":"www.omdbapi.com","status":"429","count":4321},{"provider":"api.tvmaze.com","status":"401","count":4321},{"provider":"api.tvmaze.com","status":"403","count":4321},{"provider":"api.tvmaze.com","status":"429","count":4321},{"provider":"api.mdblist.com","status":"401","count":4321},{"provider":"api.mdblist.com","status":"403","count":4321},{"provider":"api.mdblist.com","status":"429","count":4321}]}}",
+  "content": "{"template":"http_client_errors","window":"24h","offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"totalOutgoingRequests":1234567,"errors":[{"provider":"api.themoviedb.org","status":"401","count":4321},{"provider":"api.themoviedb.org","status":"403","count":4321},{"provider":"api.themoviedb.org","status":"429","count":4321},{"provider":"api.trakt.tv","status":"401","count":4321},{"provider":"api.trakt.tv","status":"403","count":4321},{"provider":"api.trakt.tv","status":"429","count":4321},{"provider":"api.tvmaze.com","status":"401","count":4321},{"provider":"api.tvmaze.com","status":"403","count":4321},{"provider":"api.tvmaze.com","status":"429","count":4321}]}}",
   "isError": false,
 }
 `;
@@ -322,14 +312,14 @@ exports[`Veronica ops tools, golden outputs metrics_query names the status when 
 
 exports[`Veronica ops tools, golden outputs metrics_query queue_backlog_peak with its default parameters 1`] = `
 {
-  "content": "{"template":"queue_backlog_peak","window":"24h","offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"queues":[{"queue":"backfill","waitingNow":98765,"peakInWindow":98765},{"queue":"catalog-policy-queue","waitingNow":98765,"peakInWindow":98765},{"queue":"ingestion","waitingNow":98765,"peakInWindow":98765},{"queue":"monitoring-queue","waitingNow":98765,"peakInWindow":98765},{"queue":"ratings-backfill","waitingNow":98765,"peakInWindow":98765},{"queue":"stats-queue","waitingNow":98765,"peakInWindow":98765},{"queue":"user-notifications","waitingNow":98765,"peakInWindow":98765}]}}",
+  "content": "{"template":"queue_backlog_peak","window":"24h","offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"queues":[{"queue":"ingestion","waitingNow":98765,"peakInWindow":98765},{"queue":"stats-queue","waitingNow":98765,"peakInWindow":98765}]}}",
   "isError": false,
 }
 `;
 
 exports[`Veronica ops tools, golden outputs metrics_query queue_throughput with its default parameters 1`] = `
 {
-  "content": "{"template":"queue_throughput","window":"24h","offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"queues":[{"queue":"backfill","completed":123456,"failed":1234,"retried":123},{"queue":"catalog-policy-queue","completed":123456,"failed":1234,"retried":123},{"queue":"ingestion","completed":123456,"failed":1234,"retried":123},{"queue":"monitoring-queue","completed":123456,"failed":1234,"retried":123},{"queue":"ratings-backfill","completed":123456,"failed":1234,"retried":123},{"queue":"stats-queue","completed":123456,"failed":1234,"retried":123},{"queue":"user-notifications","completed":123456,"failed":1234,"retried":123}]}}",
+  "content": "{"template":"queue_throughput","window":"24h","offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"queues":[{"queue":"ingestion","completed":123456,"failed":1234,"retried":123},{"queue":"stats-queue","completed":123456,"failed":1234,"retried":123}]}}",
   "isError": false,
 }
 `;
@@ -420,7 +410,7 @@ exports[`Veronica ops tools, golden outputs metrics_query says when Prometheus h
 
 exports[`Veronica ops tools, golden outputs metrics_query scheduler_last_runs with its default parameters 1`] = `
 {
-  "content": "{"template":"scheduler_last_runs","window":null,"offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"jobs":[{"job":"link-pending-imports","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"every two minutes","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"movie-release-notifications","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-anticipated-shows","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-key-health","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"every twenty minutes","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-mdblist-ratings","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-new-releases","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-now-playing","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-now-playing-flags","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-snapshots","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-tracked-shows","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"twice a day","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-trending","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"every four hours","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-upcoming-movies","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-upcoming-movies-refresh-all","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"weekly on Monday","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"scheduled-upcoming-movies-refresh-soon","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily except Monday","nextRunAtKyiv":"2026-11-30 08:46"}]}}",
+  "content": "{"template":"scheduler_last_runs","window":null,"offsetDays":0,"evaluatedAtKyiv":"2026-11-26 14:00","data":{"jobs":[{"job":"job-daily","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-daily-except-monday","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"daily except Monday","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-every-four-hours","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"every four hours","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-every-twenty-minutes","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"every twenty minutes","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-every-two-minutes","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"every two minutes","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-monthly","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"on a custom schedule","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-three-days-a-week","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"on Monday, Wednesday and Friday","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-twice-a-day","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"twice a day","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-twice-on-saturday","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"twice a day on Saturday","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-weekly","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"weekly on Monday","nextRunAtKyiv":"2026-11-30 08:46"},{"job":"job-weekly-on-sunday","lastSuccessAtKyiv":"2026-11-23 08:46","lastSuccessHoursAgo":77.22,"lastFailureAtKyiv":"2026-11-26 01:39","lastFailureHoursAgo":12.34,"cadence":"weekly on Sunday","nextRunAtKyiv":"2026-11-30 08:46"}]}}",
   "isError": false,
 }
 `;
