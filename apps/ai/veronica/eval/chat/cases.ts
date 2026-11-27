@@ -930,7 +930,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
     expectations: {
       conveys: [
         'Says she does not read the code herself and will not guess where the problem is.',
-        'Offers to start a review of a specific pull request if the owner writes “Хеппі, глянь” and a PR number.',
+        'Tells the owner to write “Хеппі, глянь” and a PR number to get a specific pull request reviewed.',
       ],
       mustNotClaim: [
         'Names a specific place in the code or a specific code cause of the trend problem.',
@@ -1048,7 +1048,7 @@ const SERVICE_CASES: readonly EvalCase[] = [
       conveys: [
         'Says the last merged pull request with code is 473.',
         'Says Happy found 2 minor findings in it.',
-        'Mentions release 474 separately, saying it has no code review.',
+        'Mentions release 474 separately from the pull request with code.',
       ],
       mustNotClaim: ['Says the last merged pull request with code is 474.'],
     },

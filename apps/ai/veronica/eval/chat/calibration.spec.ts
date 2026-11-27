@@ -81,6 +81,14 @@ describe('calibration set', () => {
     }
   });
 
+  it('keeps the numbers of a daily-count answer equal to the numbers its case lists', () => {
+    const item = CALIBRATION_ITEMS.find((candidate) => candidate.id === 'good-event-per-day')!;
+    const listed = byId.get(item.caseId)!.expectations.conveys.join(' ').match(/\d+/g) ?? [];
+    const dailyValues = listed.slice(-7);
+    const quoted = item.answer.match(/листопада (\d+)/g)?.map((match) => match.split(' ')[1]) ?? [];
+    expect([...quoted.slice(0, 7)].sort()).toEqual([...dailyValues].sort());
+  });
+
   it('keeps each answer unique, so a judge keyed on the answer cannot mix items up', () => {
     expect(new Set(CALIBRATION_ITEMS.map(plain)).size).toBe(CALIBRATION_ITEMS.length);
   });

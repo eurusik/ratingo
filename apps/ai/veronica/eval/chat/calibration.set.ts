@@ -85,11 +85,11 @@ export const CALIBRATION_ITEMS: readonly CalibrationItem[] = [
   {
     id: 'good-event-per-day',
     caseId: 'ga-custom-event',
-    source: 'past-run',
+    source: 'written',
     meaningGood: true,
-    note: 'listed the daily counts and did not add them up, as the prompt demands',
+    note: 'a past answer that listed the daily counts and did not add them up, as the prompt demands; its numbers were moved to the current simulator data, which had changed since that run',
     answer:
-      'За останні 7 днів (з 15 по 21 листопада) GA4 зафіксувала таке: 15 листопада 31, 16 листопада 40, 17 листопада 36, 18 листопада 44, 19 листопада 39, 20 листопада 42, 21 листопада 36 додавань. Сьогоднішнього дня 22 листопада в звіті ще немає, тож він не врахований. Сумарної цифри за тиждень інструмент не віддає, тому її я не рахувала.\n\nЦе кількість подій add_to_watchlist, тобто саме натискань на «Хочу подивитись», а не унікальних фільмів.',
+      'За останні 7 днів (з 15 по 21 листопада) GA4 зафіксувала таке: 15 листопада 37, 16 листопада 40, 17 листопада 35, 18 листопада 43, 19 листопада 37, 20 листопада 40, 21 листопада 35 додавань. Сьогоднішнього дня 22 листопада в звіті ще немає, тож він не врахований. Сумарної цифри за тиждень інструмент не віддає, тому її я не рахувала.\n\nЦе кількість подій add_to_watchlist, тобто саме натискань на «Хочу подивитись», а не унікальних фільмів.',
   },
   {
     id: 'good-queues-extra-caveat',
