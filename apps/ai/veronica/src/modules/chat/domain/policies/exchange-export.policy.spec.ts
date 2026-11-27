@@ -59,10 +59,10 @@ describe('toEvalCaseDraft', () => {
     expect(draft).toMatchObject({
       id: 'draft-abcdef12',
       question: 'Що з чергами?',
-      expectedTools: ['metrics_query'],
+      requiredTools: ['metrics_query'],
       reference: { answer: 'Усе гаразд.' },
       fixtures: [],
-      mustContain: [],
+      expectations: { conveys: [], mustNotClaim: [] },
       observed: {
         outcome: 'redacted',
         flaggedNumbers: ['42'],

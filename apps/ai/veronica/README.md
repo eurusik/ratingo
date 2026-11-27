@@ -76,17 +76,19 @@ Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the questi
 
 ### Chat eval
 
-`eval/chat` replays fixed questions with fixture tool results. Google Analytics cases go through the real gateway and policy, with an in-process fake server that returns GA's real response shape. They need no GA key and no Python.
+`eval/chat` replays fixed questions with fixture tool results and scores the answers. Google Analytics cases go through the real gateway and policy, with an in-process fake server that returns GA's real response shape. They need no GA key and no Python. How the score is built, how to read the report and the merge rule are in `apps/ai/ARCHITECTURE.md` (Eval); the short version:
 
+- **Repeated runs.** Each case runs 3 times (`--runs`) and passes at 2 (`--pass-at`). A case whose runs disagree is marked `FLAKY` and reported apart.
+- **Meaning, not wording.** A case lists short English statements: what a correct answer conveys and what it must not claim. A judge model (Sonnet 5.5) scores each answer against them. Invented numbers and dates (the numbers guard), links, secrets, gendered or formal address and injected text are checked in code, and tools are checked as required and forbidden lists.
+- **Baseline.** `eval/chat/baseline.json` holds the last accepted result per case. Every run is compared with it; `--save-baseline` replaces it.
 - **GA simulator.** The fake GA server is a small deterministic simulator (`eval/chat/google-analytics.dataset.ts` and `google-analytics.simulator.ts`). Synthetic facts (two weeks of traffic by country, device, channel, source, campaign and new vs returning, plus pages, events and a realtime slice) are aggregated by whatever valid dimensions, metrics, date ranges, filters, order and limit a call asks for, in GA's real response shape, including `dateRange` for two ranges. Metrics from different parts of the data are joined on shared dimensions (for example `date` with `activeUsers`, `screenPageViews` and `eventCount`), pages carry views, users, sessions and `engagementRate`, and only a combination the data cannot join (for example `country` with `eventCount`) gets GA's «incompatible» error. Unknown names get GA's error shape too. One campaign name is an injection string. Expected numbers in the GA cases are computed from the same simulator, and a period question accepts either the total or the full per-day series.
-- **Wording checks.** They use shared stem patterns from `eval/chat/answer-stems.ts` (honest «no data», «no code review», «minor findings») instead of lists of exact phrases.
 
 ```bash
 npm run eval:chat --workspace=@ratingo/ai-veronica
 AI_MODEL_FAST=anthropic:claude-haiku-5-5 ANTHROPIC_API_KEY=… npm run eval:chat --workspace=@ratingo/ai-veronica
 ```
 
-The first command uses the stub model and checks the harness. The second uses the real model; from Railway, run it with `railway run` so the Anthropic key comes from the service. `EVAL_DUMP=path.json` writes every answer for comparison.
+The first command uses the stub model and a fake judge and checks the wiring (cases, fixtures, scoring); it needs no key and runs in CI through `eval.spec.ts`. The second uses the real model; from Railway, run it with `railway run` so the Anthropic key comes from the service. Options go after `--`: `--runs=3 --pass-at=2 --concurrency=4 --max-cost-usd=4 --only=id1,id2 --baseline=path --save-baseline --calibrate --calibrate-only --judge-model=anthropic:claude-sonnet-5-5 --dump=path.json` (`--dump` writes every answer and verdict).
 
 ### Weekly flags review
 
@@ -116,7 +118,7 @@ DATABASE_URL=<prod url> npm run chat:export --workspace=@ratingo/ai-veronica -- 
 - `--since` is required: `7d` or `12h`.
 - `--outcome` is optional: a comma list of `answered`, `flagged`, `redacted` (older rows), `fallback`, `failed`.
 
-Each draft has `id`, `question`, `expectedTools`, `reference.answer`, empty `fixtures` and `mustContain`, and an `observed` block with the outcome, flagged numbers, tool calls, cost, time (`createdAtMs`) and run id. Fill in the fixtures and the `mustContain` groups by hand, then add the case to `eval/chat/cases.ts`.
+Each draft has `id`, `question`, `requiredTools`, `reference.answer`, empty `fixtures` and empty `expectations` (`conveys`, `mustNotClaim`), and an `observed` block with the outcome, flagged numbers, tool calls, cost, time (`createdAtMs`) and run id. Fill in the fixtures and the expectations (one short sentence each) by hand, then add the case to `eval/chat/cases.ts`.
 
 ## Watchdog
 

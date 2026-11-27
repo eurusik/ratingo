@@ -24,10 +24,10 @@ export class ExportArgumentError extends Error {
 export interface EvalCaseDraft {
   id: string;
   question: string;
-  expectedTools: readonly string[];
+  requiredTools: readonly string[];
   reference: { answer: string };
   fixtures: readonly never[];
-  mustContain: readonly never[];
+  expectations: { conveys: readonly never[]; mustNotClaim: readonly never[] };
   observed: {
     outcome: ExchangeOutcome;
     route: string;
@@ -71,10 +71,10 @@ export const parseExportArgs = (args: readonly string[], nowMs: number): ExportR
 export const toEvalCaseDraft = (exchange: ChatExchange): EvalCaseDraft => ({
   id: `${EXPORT_DRAFT_ID_PREFIX}${exchange.id.slice(0, EXPORT_DRAFT_ID_LENGTH)}`,
   question: exchange.question,
-  expectedTools: exchange.toolNames,
+  requiredTools: exchange.toolNames,
   reference: { answer: exchange.answer },
   fixtures: [],
-  mustContain: [],
+  expectations: { conveys: [], mustNotClaim: [] },
   observed: {
     outcome: exchange.outcome,
     route: exchange.route,

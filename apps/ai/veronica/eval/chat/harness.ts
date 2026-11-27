@@ -121,6 +121,7 @@ export interface EvalRunResult {
 export interface EvalSetup {
   modelRef: string;
   anthropicApiKey?: string;
+  anthropicMaxRetries?: number;
 }
 
 export const isStubModel = (modelRef: string): boolean => modelRef.startsWith('stub:');
@@ -138,6 +139,7 @@ export const runCase = async (
   const providers = createModelProviders({
     stub: new StubModelAdapter(reference),
     anthropicApiKey: setup.anthropicApiKey,
+    anthropicMaxRetries: setup.anthropicMaxRetries,
   });
   const clock = new FixedClock(EVAL_NOW_MS);
   const runs = new InMemoryRunRepository();

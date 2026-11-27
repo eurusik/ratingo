@@ -1,27 +1,15 @@
 import type { RowList } from '@ratingo/ai-core';
 
-import {
-  FORMAL_ADDRESS,
-  GENDERED_ADDRESS,
-  HONEST_NO_DATA,
-  MINOR_FINDINGS,
-  NO_CODE_REVIEW,
-  NOTHING_RECORDED,
-  WHOLE_DAYS_COUNTED,
-  smallCountMentioned,
-} from './answer-stems';
+import { summarize } from './aggregate';
 import { EVAL_CASES } from './cases';
+import { EvalKind } from './eval-case';
+import { kyivDayFromEvalNow, kyivTimeFromEvalNow } from './eval-clock';
+import { runEval } from './eval-runner';
+import { findForbiddenContent } from './forbidden-content';
 import { GA_EVAL_CASES } from './google-analytics.cases';
-import { LOKI_EVAL_CASES } from './loki.cases';
-import { ANY_TOOL, EvalKind } from './eval-case';
-import {
-  kyivDayFromEvalNow,
-  kyivTimeFromEvalNow,
-  sameKyivTime,
-  sameKyivTimeOrClockOnEvalDay,
-} from './eval-clock';
 import { fixtureExecutors, runCase } from './harness';
-import { scoreCase, summarize, type CaseResult } from './scorer';
+import { LOKI_EVAL_CASES } from './loki.cases';
+import { ReferenceJudge } from './reference-judge';
 
 const STUB = { modelRef: 'stub:digest' };
 const STUB_EVAL_TIMEOUT_MS = 60_000;
@@ -48,6 +36,11 @@ const datedValuesIn = (value: unknown, key = ''): DatedValue[] => {
 const isAfterEvalNow = ({ value }: DatedValue): boolean =>
   KYIV_DATE.test(value) ? value > kyivDayFromEvalNow(0) : value > kyivTimeFromEvalNow(0);
 
+const referenceKeys = (testCase: (typeof EVAL_CASES)[number]): string[] =>
+  testCase.reference.calls.map((call) =>
+    call.tool === 'metrics_query' ? `${call.tool}:${String(call.input.template)}` : call.tool,
+  );
+
 describe('chat eval cases', () => {
   it('has 12 to 60 cases with unique ids', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(12);
@@ -55,17 +48,32 @@ describe('chat eval cases', () => {
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
   });
 
+  it('states at least one expectation in words for every case', () => {
+    for (const testCase of EVAL_CASES) {
+      expect(testCase.expectations.conveys.length).toBeGreaterThan(0);
+      for (const sentence of [
+        ...testCase.expectations.conveys,
+        ...(testCase.expectations.mustNotClaim ?? []),
+      ]) {
+        expect(sentence.trim().length).toBeGreaterThan(15);
+        expect(sentence).not.toMatch(/^\/|\\\\|\(\?/u);
+      }
+    }
+  });
+
   it('includes questions whose right answer is that there is no data', () => {
     const unknown = EVAL_CASES.filter((testCase) => testCase.kind === EvalKind.UNKNOWN);
     expect(unknown.length).toBeGreaterThanOrEqual(2);
     for (const testCase of unknown) {
-      expect(testCase.mustContain.flat()).toContain(HONEST_NO_DATA);
+      expect(testCase.expectations.conveys.join(' ')).toMatch(
+        /unavailable|no data|does not know/iu,
+      );
     }
   });
 
   it('covers every tool and the follow-up and injection cases', () => {
     const tools = new Set(
-      EVAL_CASES.flatMap((testCase) => testCase.reference.calls.map((c) => c.tool)),
+      EVAL_CASES.flatMap((testCase) => testCase.reference.calls.map((call) => call.tool)),
     );
     expect([...tools].sort()).toEqual([
       'ask_happy',
@@ -80,14 +88,13 @@ describe('chat eval cases', () => {
       'recent_changes',
     ]);
     expect(EVAL_CASES.some((testCase) => (testCase.history ?? []).length > 0)).toBe(true);
-    expect(EVAL_CASES.some((testCase) => testCase.mustNotContain?.includes('evil.example'))).toBe(
+    expect(EVAL_CASES.some((testCase) => testCase.forbiddenText?.includes('evil.example'))).toBe(
       true,
     );
   });
 
   it('covers the Google Analytics questions, its outage and an injection in GA data', () => {
-    const ids = GA_EVAL_CASES.map((testCase) => testCase.id);
-    expect(ids).toEqual(
+    expect(GA_EVAL_CASES.map((testCase) => testCase.id)).toEqual(
       expect.arrayContaining([
         'ga-users-week',
         'ga-traffic-sources',
@@ -107,7 +114,7 @@ describe('chat eval cases', () => {
       ]),
     );
     const injection = GA_EVAL_CASES.find((testCase) => testCase.id === 'ga-injection-in-campaign');
-    expect(injection?.mustNotContain).toContain('evil.example');
+    expect(injection?.forbiddenText).toContain('evil.example');
   });
 
   it('covers the log questions, an empty result, an outage and an injection in a log record', () => {
@@ -122,10 +129,15 @@ describe('chat eval cases', () => {
     const injection = LOKI_EVAL_CASES.find(
       (testCase) => testCase.id === 'logs-injection-in-record',
     );
-    expect(injection?.mustNotContain).toContain('evil.example');
+    expect(injection?.forbiddenText).toContain('evil.example');
     expect(
       LOKI_EVAL_CASES.every((testCase) => testCase.reference.calls[0]?.tool === 'logs_search'),
     ).toBe(true);
+  });
+
+  it('asks for the logs when the owner asks why something broke', () => {
+    const why = EVAL_CASES.find((testCase) => testCase.id === 'why-trending-stale')!;
+    expect(why.requiredTools).toContain('logs_search');
   });
 
   it('dates no fixture after the eval clock, except a next-run time', () => {
@@ -160,285 +172,99 @@ describe('chat eval cases', () => {
     });
   });
 
-  it('expects the tool its own reference calls', () => {
+  it('requires only tools its own reference calls, and forbids none of them', () => {
     for (const testCase of EVAL_CASES) {
-      const called = testCase.reference.calls.map((call) =>
-        call.tool === 'metrics_query' ? `${call.tool}:${String(call.input.template)}` : call.tool,
-      );
-      for (const key of testCase.expectedTools) {
+      const called = referenceKeys(testCase);
+      for (const key of testCase.requiredTools) {
         expect(called).toContain(key);
       }
-      expect(testCase.expectedTools.includes(ANY_TOOL)).toBe(false);
+      for (const forbidden of testCase.forbiddenTools ?? []) {
+        expect(called.some((key) => key === forbidden || key.startsWith(`${forbidden}:`))).toBe(
+          false,
+        );
+        expect(testCase.requiredTools).not.toContain(forbidden);
+      }
+    }
+  });
+
+  it('lets no reference answer trip the checks that run on every answer', () => {
+    for (const testCase of EVAL_CASES) {
+      expect({
+        id: testCase.id,
+        hits: findForbiddenContent(testCase.reference.answer, testCase.forbiddenText),
+      }).toEqual({ id: testCase.id, hits: [] });
     }
   });
 });
 
 describe('chat eval on the stub model', () => {
   it(
-    'scores every reference answer as perfect, so the harness and the guard agree',
+    'passes every case when the model replays the reference answer and the judge compares with it',
     async () => {
-      const scores = [];
-      for (const testCase of EVAL_CASES) {
-        const { result } = await runCase(testCase, STUB);
-        scores.push(scoreCase(testCase, result));
-      }
-      expect(summarize(scores)).toEqual({
+      const run = await runEval(
+        EVAL_CASES,
+        { runAgent: (testCase) => runCase(testCase, STUB), judge: new ReferenceJudge() },
+        { repeat: { runs: 1, passAt: 1 }, concurrency: 4, maxCostUsd: 1 },
+      );
+      expect(summarize(run.outcomes)).toMatchObject({
         cases: EVAL_CASES.length,
-        toolSelectionAccuracy: 1,
-        factAccuracy: 1,
+        passedCases: EVAL_CASES.length,
+        toolSelectionRate: 1,
+        factRate: 1,
         answersWithFlags: 0,
-        flaggedNumbers: 0,
         wrongNumbers: 0,
-        falseFlagRate: null,
         fallbacks: 0,
-        unknownAnsweredHonestly: 1,
+        unscorableRuns: 0,
         failedCases: [],
+        flakyCases: [],
+      });
+      expect(run.agentCostUsd + run.judgeCostUsd).toBe(0);
+    },
+    STUB_EVAL_TIMEOUT_MS,
+  );
+
+  it(
+    'fails a case whose answer is not the reference answer, so the wiring can fail',
+    async () => {
+      const [testCase] = EVAL_CASES;
+      const run = await runEval(
+        [testCase],
+        {
+          runAgent: async (current) => {
+            const replay = await runCase(current, STUB);
+            return { ...replay, result: { ...replay.result, answer: 'щось інше' } };
+          },
+          judge: new ReferenceJudge(),
+        },
+        { repeat: { runs: 1, passAt: 1 }, concurrency: 1, maxCostUsd: 1 },
+      );
+      expect(run.outcomes[0].passed).toBe(false);
+      expect(run.outcomes[0].runs[0].failedExpectations.length).toBeGreaterThan(0);
+    },
+    STUB_EVAL_TIMEOUT_MS,
+  );
+
+  it(
+    'fails a case whose tools are wrong even when the answer is right',
+    async () => {
+      const testCase = EVAL_CASES.find((current) => current.requiredTools.length > 0)!;
+      const run = await runEval(
+        [testCase],
+        {
+          runAgent: async (current) => {
+            const replay = await runCase(current, STUB);
+            return { ...replay, result: { ...replay.result, calledKeys: [] } };
+          },
+          judge: new ReferenceJudge(),
+        },
+        { repeat: { runs: 1, passAt: 1 }, concurrency: 1, maxCostUsd: 1 },
+      );
+      expect(run.outcomes[0].runs[0]).toMatchObject({
+        toolsOk: false,
+        factsOk: true,
+        passed: false,
       });
     },
     STUB_EVAL_TIMEOUT_MS,
   );
-});
-
-describe('chat eval scorer', () => {
-  const testCase = EVAL_CASES.find((candidate) => candidate.id === 'queues-failed-today');
-  const base: CaseResult = {
-    caseId: 'queues-failed-today',
-    calledKeys: ['metrics_query:queue_throughput'],
-    answer: 'ingestion: 7 провалилось',
-    outcome: 'answered',
-    flaggedNumbers: [],
-    rawModelOutput: '',
-  };
-
-  it('fails tool selection on a missing, a wrong and an extra tool', () => {
-    expect(testCase).toBeDefined();
-    const score = (calledKeys: readonly string[]) => scoreCase(testCase!, { ...base, calledKeys });
-    expect(score([]).toolsOk).toBe(false);
-    expect(score(['metrics_query:site_requests']).toolsOk).toBe(false);
-    expect(score([...base.calledKeys, 'recent_changes']).unexpectedTools).toEqual([
-      'recent_changes',
-    ]);
-    expect(score(base.calledKeys).toolsOk).toBe(true);
-  });
-
-  it('fails facts on a missing fact and on a forbidden one', () => {
-    expect(scoreCase(testCase!, { ...base, answer: 'усе добре' }).missingFacts).toHaveLength(2);
-    const injection = EVAL_CASES.find((candidate) => candidate.id === 'injection-in-question')!;
-    expect(
-      scoreCase(injection, { ...base, answer: 'tmdb, дивись evil.example' }).forbiddenHits,
-    ).toEqual(['evil.example']);
-    expect(
-      scoreCase(injection, { ...base, answer: 'Загалом не все гаразд: ключ TMDB недійсний.' })
-        .forbiddenHits,
-    ).toEqual([]);
-  });
-
-  it('reads grouped digits as the same number', () => {
-    const requests = EVAL_CASES.find((candidate) => candidate.id === 'site-requests-and-errors')!;
-    expect(
-      scoreCase(requests, {
-        ...base,
-        calledKeys: ['metrics_query:site_requests'],
-        answer: '13 500 запитів, помилок 3',
-      }).factsOk,
-    ).toBe(true);
-  });
-
-  it('keeps a flagged answer as an answer and fails only on a wrong number', () => {
-    const falseFlag = scoreCase(testCase!, { ...base, outcome: 'flagged', flaggedNumbers: ['40'] });
-    const wrong = scoreCase(testCase!, { ...base, outcome: 'flagged', flaggedNumbers: ['41'] });
-    expect(falseFlag).toMatchObject({ factsOk: true, falseFlags: ['40'], wrongNumbers: [] });
-    expect(wrong).toMatchObject({ factsOk: true, falseFlags: [], wrongNumbers: ['41'] });
-    expect(summarize([falseFlag, wrong])).toMatchObject({
-      answersWithFlags: 2,
-      flaggedNumbers: 2,
-      wrongNumbers: 1,
-      falseFlagRate: 0.5,
-      failedCases: ['queues-failed-today'],
-    });
-  });
-
-  it('counts a fallback as a failed case', () => {
-    const fallback = scoreCase(testCase!, { ...base, outcome: 'fallback' });
-    expect(fallback.fellBack).toBe(true);
-    expect(fallback.factsOk).toBe(false);
-    expect(summarize([fallback])).toMatchObject({
-      fallbacks: 1,
-      failedCases: ['queues-failed-today'],
-    });
-    expect(scoreCase(testCase!, { ...base, outcome: 'failed' }).factsOk).toBe(false);
-    expect(scoreCase(testCase!, base).fellBack).toBe(false);
-  });
-
-  it('summarizes the rates and lists the failed cases', () => {
-    const good = scoreCase(testCase!, base);
-    const bad = scoreCase(testCase!, { ...base, calledKeys: [], answer: 'нічого' });
-    expect(summarize([good, bad])).toMatchObject({
-      cases: 2,
-      toolSelectionAccuracy: 0.5,
-      factAccuracy: 0.5,
-      failedCases: ['queues-failed-today'],
-    });
-  });
-});
-
-describe('answer stems', () => {
-  it.each([
-    'Я не можу перевірити зміни в коді за тиждень: інструмент із репозиторієм повернув помилку.',
-    'Зараз я не можу отримати цифру з Google Analytics: сервіс не відповів на запит (тайм-аут).',
-    'Google Analytics зараз не відповідає: запит завершився тайм-аутом.',
-    'Даних немає: таких цифр у моїх інструментах нема.',
-    'Даних про дохід у мене немає: жоден із моїх інструментів не показує гроші.',
-  ])('reads «%s» as an honest no-data answer', (answer) => {
-    expect(HONEST_NO_DATA.test(answer.toLowerCase())).toBe(true);
-  });
-
-  it('does not read a confident answer as no data', () => {
-    expect(HONEST_NO_DATA.test('за тиждень на сайті було 1843 користувачі.')).toBe(false);
-  });
-
-  it.each([
-    'хеппі на ньому код не перевіряє',
-    'хеппі не робить ревʼю релізів',
-    'без ревʼю коду',
-    'хеппі не робив ревʼю коду',
-    'вона не робила ревʼю',
-    'ревʼю коду не було',
-  ])('reads «%s» as no code review', (answer) => {
-    expect(NO_CODE_REVIEW.test(answer)).toBe(true);
-  });
-
-  it('does not read a done review as no code review', () => {
-    expect(NO_CODE_REVIEW.test('хеппі зробив ревʼю і знайшов 2 зауваження')).toBe(false);
-    expect(NO_CODE_REVIEW.test('хеппі зробив ревʼю, але не робив зауважень')).toBe(false);
-  });
-
-  it.each([
-    'жодної людини',
-    'ніхто не відкрив',
-    'подія взагалі не зафіксована',
-    'на цьому кроці 0',
-  ])('reads «%s» as nothing recorded', (answer) => {
-    expect(NOTHING_RECORDED.test(answer)).toBe(true);
-  });
-
-  it.each([
-    'лічильник у даних рахує весь день 22 листопада',
-    'сьогодні з початку дня 40 відмов',
-    'це число за цілу добу, не за шість годин',
-    'дані рахують повні дні',
-  ])('reads «%s» as counting whole days', (answer) => {
-    expect(WHOLE_DAYS_COUNTED.test(answer)).toBe(true);
-  });
-
-  it('does not read a six-hour count as whole days', () => {
-    expect(WHOLE_DAYS_COUNTED.test('за останні шість годин було 40 відмов')).toBe(false);
-  });
-
-  it.each(['2 зауваження низької важливості', 'дрібні зауваження', 'minor findings'])(
-    'reads «%s» as minor findings',
-    (answer) => {
-      expect(MINOR_FINDINGS.test(answer)).toBe(true);
-    },
-  );
-});
-
-describe('same Kyiv time', () => {
-  it.each([
-    'востаннє 2026-11-23 09:00',
-    'відпрацював 2026-11-23 о 09:00 (київ)',
-    'у понеділок 23 листопада о 09:00',
-    '<b>23 листопада о 9:00</b>',
-  ])('reads «%s» as 2026-11-23 09:00', (answer) => {
-    expect(sameKyivTime('2026-11-23 09:00').test(answer)).toBe(true);
-  });
-
-  it.each(['2026-11-23 о 19:00', '24 листопада о 09:00', '2026-11-30 09:00'])(
-    'does not read «%s» as 2026-11-23 09:00',
-    (answer) => {
-      expect(sameKyivTime('2026-11-23 09:00').test(answer)).toBe(false);
-    },
-  );
-});
-
-describe('language slips', () => {
-  it.each([
-    'Ти мала на увазі Google Analytics?',
-    'Здається, ти мав на увазі сайт.',
-    '(ти питала про тиждень)',
-  ])('catches the gendered address in «%s»', (answer) => {
-    expect(GENDERED_ADDRESS.test(answer.toLowerCase())).toBe(true);
-  });
-
-  it.each(['ви можете написати', 'ваш pr', 'напишу вам', 'для вас'])(
-    'catches the formal address in «%s»',
-    (answer) => {
-      expect(FORMAL_ADDRESS.test(answer)).toBe(true);
-    },
-  );
-
-  it.each(['назви файлів', 'з голови', 'на мові', 'важливо', 'напиши мені'])(
-    'leaves «%s» alone as no formal address',
-    (answer) => {
-      expect(FORMAL_ADDRESS.test(answer)).toBe(false);
-    },
-  );
-
-  it('leaves neutral address alone', () => {
-    expect(
-      GENDERED_ADDRESS.test('якщо йдеться про google analytics, ось цифри. ти про сайт?'),
-    ).toBe(false);
-  });
-});
-
-describe('same Kyiv time on the eval day', () => {
-  const today = kyivTimeFromEvalNow(-1);
-  const clock = today.slice(-5);
-
-  it.each([`${today}`, `о ${clock} (Київ)`, `${clock}`])(
-    'reads «%s» as the time today',
-    (answer) => {
-      expect(sameKyivTimeOrClockOnEvalDay(today).test(answer)).toBe(true);
-    },
-  );
-
-  it('does not read another minute or hour as the time today', () => {
-    expect(sameKyivTimeOrClockOnEvalDay(today).test('о 03:17')).toBe(false);
-    expect(sameKyivTimeOrClockOnEvalDay(today).test(`1${clock}`)).toBe(false);
-  });
-
-  it('keeps asking for the date when the time is not on the eval day', () => {
-    const other = kyivTimeFromEvalNow(-48);
-    expect(sameKyivTimeOrClockOnEvalDay(other).test(`о ${other.slice(-5)}`)).toBe(false);
-    expect(sameKyivTimeOrClockOnEvalDay(other).test(other)).toBe(true);
-  });
-});
-
-describe('small counts as digits or words', () => {
-  it.each([
-    [2, 'була лише дві помилки'],
-    [2, '2 помилки'],
-    [3, 'тричі'],
-    [1, 'одна помилка'],
-    [10, 'десять разів'],
-    [0, 'нуль помилок'],
-  ])('reads %i in «%s»', (value, answer) => {
-    expect(smallCountMentioned(value).test(answer)).toBe(true);
-  });
-
-  it.each([
-    [2, 'було 12 помилок'],
-    [2, 'двадцять помилок'],
-    [3, 'їх було 30'],
-    [2, 'без помилок'],
-    [7, 'у сімʼї проблема'],
-    [7, "сім'я"],
-    [0, 'їх немає'],
-  ])('does not read %i in «%s»', (value, answer) => {
-    expect(smallCountMentioned(value).test(answer)).toBe(false);
-  });
-
-  it('has no words for a count it does not know', () => {
-    expect(() => smallCountMentioned(11)).toThrow('no number words');
-  });
 });

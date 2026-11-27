@@ -1,81 +1,187 @@
 import 'reflect-metadata';
 import { writeFile } from 'node:fs/promises';
 
+import {
+  StubModelAdapter,
+  StubScenario,
+  SystemClock,
+  createModelProviders,
+  createStubScript,
+  parseModelRef,
+  priceFor,
+  type ModelPort,
+} from '@ratingo/ai-core';
+
+import { MODEL_PRICES } from '../../src/config/models.config';
+import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
+
+import { summarize, type CaseOutcome } from './aggregate';
+import { buildBaseline, diffBaseline, type BaselineDiff } from './baseline';
+import { readBaselineFile, writeBaselineFile } from './baseline-file';
+import { measureJudgeAgreement, type CalibrationReport } from './calibration';
+import { CALIBRATION_ITEMS } from './calibration.set';
 import { EVAL_CASES } from './cases';
+import { parseEvalOptions, type EvalOptions } from './eval-options';
+import { runEval, type EvalPorts, type EvalRun } from './eval-runner';
+import type { EvalCase } from './eval-case';
 import { isStubModel, runCase } from './harness';
-import { asPercent, scoreCase, summarize, type CaseScore } from './scorer';
+import type { JudgePort } from './judge';
+import { ModelJudge } from './model-judge';
+import { ReferenceJudge } from './reference-judge';
+import { renderCalibration, renderCase, renderDiff, renderSummary } from './report';
 
 const DEFAULT_MODEL = 'stub:digest';
-const COST_DECIMALS = 4;
-const ID_COLUMN_WIDTH = 28;
+const ANTHROPIC_PROVIDER = 'anthropic';
+const ANTHROPIC_MAX_RETRIES = 3;
+const JSON_INDENT = 2;
+const EXIT_REGRESSION = 1;
+const EXIT_INCOMPLETE = 2;
 
-const mark = (ok: boolean): string => (ok ? 'ok' : 'FAIL');
-
-const numbersMark = (score: CaseScore): string => {
-  if (score.flaggedNumbers.length === 0) return 'ok';
-  const wrong = score.wrongNumbers.length === 0 ? '' : ` wrong(${score.wrongNumbers.join(',')})`;
-  const falseFlags =
-    score.falseFlags.length === 0 ? '' : ` false-flag(${score.falseFlags.join(',')})`;
-  return `FLAGGED${wrong}${falseFlags}`;
+const write = (text: string): void => {
+  process.stdout.write(`${text}\n`);
 };
 
-async function main(): Promise<void> {
+const selectCases = (only: readonly string[] | null): readonly EvalCase[] => {
+  if (only === null) return EVAL_CASES;
+  const unknown = only.filter((id) => !EVAL_CASES.some((testCase) => testCase.id === id));
+  if (unknown.length > 0) throw new Error(`Unknown case id: ${unknown.join(', ')}`);
+  return EVAL_CASES.filter((testCase) => only.includes(testCase.id));
+};
+
+const buildJudge = (options: EvalOptions, apiKey: string | undefined): JudgePort => {
+  const ref = parseModelRef(options.judgeModel);
+  if (ref.provider !== ANTHROPIC_PROVIDER) {
+    throw new Error(`The judge must be an Anthropic model, got "${options.judgeModel}"`);
+  }
+  const providers = createModelProviders({
+    stub: new StubModelAdapter(createStubScript(StubScenario.NORMAL)),
+    anthropicApiKey: apiKey,
+    anthropicMaxRetries: ANTHROPIC_MAX_RETRIES,
+  });
+  const port: ModelPort | undefined = providers[ref.provider];
+  if (port === undefined) throw new Error('The judge model needs ANTHROPIC_API_KEY');
+  return new ModelJudge(port, ref.model, priceFor(MODEL_PRICES, options.judgeModel));
+};
+
+const printCase = (outcome: CaseOutcome): void => write(renderCase(outcome));
+
+const runCases = async (
+  cases: readonly EvalCase[],
+  options: EvalOptions,
+  ports: EvalPorts,
+): Promise<EvalRun> =>
+  runEval(cases, ports, {
+    repeat: { runs: options.runs, passAt: options.passAt },
+    concurrency: options.concurrency,
+    maxCostUsd: options.maxCostUsd,
+    onCaseFinished: printCase,
+  });
+
+const compareWithBaseline = async (
+  options: EvalOptions,
+  run: EvalRun,
+): Promise<BaselineDiff | null> => {
+  const baseline = await readBaselineFile(options.baselinePath);
+  if (baseline === null) {
+    write(`no baseline at ${options.baselinePath}: nothing to compare with`);
+    return null;
+  }
+  const diff = diffBaseline(baseline, run.outcomes);
+  write(`\ncompared with the baseline at ${options.baselinePath}:\n${renderDiff(diff)}`);
+  return diff;
+};
+
+const reportRun = async (
+  options: EvalOptions,
+  modelRef: string,
+  structureOnly: boolean,
+  run: EvalRun,
+): Promise<number> => {
+  const summary = summarize(run.outcomes);
+  write(
+    `\n${renderSummary(summary, {
+      model: modelRef,
+      judgeModel: structureOnly ? 'reference comparison (no model)' : options.judgeModel,
+      runs: options.runs,
+      passAt: options.passAt,
+      agentCostUsd: run.agentCostUsd,
+      judgeCostUsd: run.judgeCostUsd,
+      structureOnly,
+      stoppedForCost: run.stoppedForCost,
+    })}`,
+  );
+  if (options.dumpPath !== null) {
+    await writeFile(
+      options.dumpPath,
+      `${JSON.stringify({ summary, cases: run.outcomes }, null, JSON_INDENT)}\n`,
+    );
+  }
+  if (run.stoppedForCost) return EXIT_INCOMPLETE;
+  if (structureOnly) return summary.failedCases.length > 0 ? EXIT_REGRESSION : 0;
+  const diff = await compareWithBaseline(options, run);
+  if (options.saveBaseline) {
+    await writeBaselineFile(
+      options.baselinePath,
+      buildBaseline(run.outcomes, {
+        model: modelRef,
+        judgeModel: options.judgeModel,
+        runs: options.runs,
+        passAt: options.passAt,
+        savedAtMs: new SystemClock().nowMs(),
+      }),
+    );
+    write(`baseline saved to ${options.baselinePath}`);
+  }
+  return diff !== null && diff.regressions.length > 0 ? EXIT_REGRESSION : 0;
+};
+
+const calibrate = async (options: EvalOptions, judge: JudgePort): Promise<CalibrationReport> => {
+  const report = await measureJudgeAgreement(
+    CALIBRATION_ITEMS,
+    EVAL_CASES,
+    judge,
+    options.concurrency,
+  );
+  write(`\n${renderCalibration(report)}`);
+  return report;
+};
+
+async function main(): Promise<number> {
   const modelRef = process.env.AI_MODEL_FAST ?? DEFAULT_MODEL;
   const structureOnly = isStubModel(modelRef);
-  if (!structureOnly && (process.env.ANTHROPIC_API_KEY ?? '').trim() === '') {
+  const options = parseEvalOptions(process.argv.slice(2), structureOnly);
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!structureOnly && (apiKey ?? '').trim() === '') {
     throw new Error(
       `AI_MODEL_FAST=${modelRef} needs ANTHROPIC_API_KEY in this process environment`,
     );
   }
-  const scores: CaseScore[] = [];
-  const dump: unknown[] = [];
-  let costUsd = 0;
-  for (const testCase of EVAL_CASES) {
-    const run = await runCase(testCase, {
-      modelRef,
-      anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+  if (structureOnly && options.calibrate) {
+    throw new Error('Calibration needs a real judge: set AI_MODEL_FAST to an Anthropic model');
+  }
+  const judge: JudgePort = structureOnly ? new ReferenceJudge() : buildJudge(options, apiKey);
+  let exitCode = 0;
+  if (!options.calibrateOnly) {
+    const folder = await loadVeronicaAgentFolder();
+    const setup = { modelRef, anthropicApiKey: apiKey, anthropicMaxRetries: ANTHROPIC_MAX_RETRIES };
+    const run = await runCases(selectCases(options.only), options, {
+      runAgent: (testCase) => runCase(testCase, setup, folder),
+      judge,
     });
-    const score = scoreCase(testCase, run.result);
-    scores.push(score);
-    costUsd += run.costUsd;
-    dump.push({ case: testCase.id, ...run.result, score });
-    process.stdout.write(
-      `${testCase.id.padEnd(ID_COLUMN_WIDTH)} tools=${mark(score.toolsOk)} facts=${mark(score.factsOk)} numbers=${numbersMark(score)} outcome=${run.result.outcome}\n`,
-    );
+    exitCode = await reportRun(options, modelRef, structureOnly, run);
   }
-  const summary = summarize(scores);
-  if (process.env.EVAL_DUMP !== undefined && process.env.EVAL_DUMP !== '') {
-    await writeFile(
-      process.env.EVAL_DUMP,
-      `${JSON.stringify({ summary, cases: dump }, null, 2)}\n`,
-    );
+  if (options.calibrate) {
+    const report = await calibrate(options, judge);
+    if (!report.trustworthy) exitCode = Math.max(exitCode, EXIT_REGRESSION);
   }
-  process.stdout.write(
-    [
-      '',
-      `model: ${modelRef}`,
-      `cases: ${summary.cases}`,
-      `tool selection accuracy: ${asPercent(summary.toolSelectionAccuracy)}`,
-      `fact accuracy: ${asPercent(summary.factAccuracy)}`,
-      `answers with flagged numbers: ${summary.answersWithFlags} (${summary.flaggedNumbers} numbers)`,
-      `flagged numbers that are wrong: ${summary.wrongNumbers}`,
-      `false-flag rate (flagged but true): ${asPercent(summary.falseFlagRate)}`,
-      `cases that fell back to the raw snapshot (model down or over budget): ${summary.fallbacks}`,
-      `unknown questions answered honestly: ${asPercent(summary.unknownAnsweredHonestly)}`,
-      `failed cases: ${summary.failedCases.join(', ') || 'none'}`,
-      `cost: $${costUsd.toFixed(COST_DECIMALS)}`,
-      structureOnly
-        ? 'stub model replays the reference answers: this checks the harness, not the model'
-        : 'real model: compare with the previous run',
-      '',
-    ].join('\n'),
-  );
-  if (structureOnly && summary.failedCases.length > 0) {
-    process.exitCode = 1;
-  }
+  return exitCode;
 }
 
-main().catch((error: unknown) => {
-  process.stderr.write(`${error instanceof Error ? error.message : 'Eval failed'}\n`);
-  process.exit(1);
-});
+main()
+  .then((code) => {
+    process.exitCode = code;
+  })
+  .catch((error: unknown) => {
+    process.stderr.write(`${error instanceof Error ? error.message : 'Eval failed'}\n`);
+    process.exit(1);
+  });
