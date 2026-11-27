@@ -23,11 +23,12 @@ import { createEvalEnvironment, runCase, type EvalEnvironment } from './harness'
 import { ModelJudge, ReferenceJudge, type JudgePort } from './judge';
 import { parseEvalOptions, type EvalOptions } from './options';
 import {
-  EXPLORER_EVAL_DATABASE_VARIABLE,
   needsExplorerDatabase,
   startExplorerEvalDatabase,
   stopExplorerEvalDatabase,
 } from './explorer-eval-database';
+import { EXPLORER_EVAL_DATABASE_VARIABLE, planExplorerCases } from '@ratingo/ai-ops-tools/testing';
+
 import { renderCase, renderDiff, renderSummary } from './report';
 
 Logger.overrideLogger(['error']);
@@ -74,19 +75,17 @@ const execute = async (
   options: EvalOptions,
   judge: JudgePort,
 ): Promise<ExecutedCases> => {
-  const adminUrl = process.env[EXPLORER_EVAL_DATABASE_VARIABLE] ?? '';
-  const selected = selectCases(options.only);
-  const skippedCases =
-    adminUrl === '' ? selected.filter(needsExplorerDatabase).map((testCase) => testCase.id) : [];
-  if (skippedCases.length > 0) {
-    write(
-      `skipped ${skippedCases.length} cases that need the throwaway database (${EXPLORER_EVAL_DATABASE_VARIABLE} is not set): ${skippedCases.join(', ')}`,
-    );
-  }
-  if (adminUrl !== '') await startExplorerEvalDatabase(adminUrl);
+  const adminUrl = process.env[EXPLORER_EVAL_DATABASE_VARIABLE];
+  const {
+    runnable,
+    skipped: skippedCases,
+    notice,
+  } = planExplorerCases(selectCases(options.only), needsExplorerDatabase, adminUrl);
+  if (notice !== null) write(notice);
+  if (adminUrl !== undefined && adminUrl !== '') await startExplorerEvalDatabase(adminUrl);
   try {
     const run = await runEval(
-      selected.filter((testCase) => !skippedCases.includes(testCase.id)),
+      runnable,
       { runAgent: (testCase) => runCase(testCase, environment), judge },
       {
         repeat: { runs: options.runs, passAt: options.passAt },

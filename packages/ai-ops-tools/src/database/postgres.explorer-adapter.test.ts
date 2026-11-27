@@ -96,11 +96,13 @@ describeWithDatabase('PostgresExplorerAdapter against the migrated database as a
   });
 
   describe('query', () => {
-    it('counts rows as numbers and returns timestamps as text', async () => {
-      const counted = await query('SELECT count(*) AS total FROM users');
+    it('returns bigint counts as exact text, small integers as numbers and timestamps as text', async () => {
+      const counted = await query('SELECT count(*) AS total, count(*)::int AS small FROM users');
       const stamped = await query('SELECT created_at FROM users LIMIT 1');
 
-      expect(counted.rows).toEqual([{ total: EXPLORER_FIXTURE.totalUsers }]);
+      expect(counted.rows).toEqual([
+        { total: String(EXPLORER_FIXTURE.totalUsers), small: EXPLORER_FIXTURE.totalUsers },
+      ]);
       expect(typeof stamped.rows[0]?.created_at).toBe('string');
     });
 
@@ -114,8 +116,8 @@ describeWithDatabase('PostgresExplorerAdapter against the migrated database as a
       const text = await query("SELECT repeat('x', 5000) AS body");
       const json = await query("SELECT jsonb_build_object('items', repeat('y', 5000)) AS payload");
 
-      expect(String(text.rows[0]?.body)).toContain('[text cut, 5000 characters in total]');
-      expect(String(json.rows[0]?.payload)).toContain('[json cut, ');
+      expect(String(text.rows[0]?.body)).toContain('[cut, 5000 characters in total]');
+      expect(String(json.rows[0]?.payload)).toContain('[cut, ');
       expect(String(text.rows[0]?.body).length).toBeLessThan(1100);
     });
 
@@ -135,7 +137,7 @@ describeWithDatabase('PostgresExplorerAdapter against the migrated database as a
       ['a private column', 'SELECT email FROM users', QueryRefusal.PRIVATE],
       ['a whole row of a mixed table', 'SELECT * FROM users', QueryRefusal.PRIVATE],
       ['a closed column', 'SELECT notes FROM user_media_state', QueryRefusal.PRIVATE],
-      ['a private table', 'SELECT 1 FROM oauth_accounts', QueryRefusal.PRIVATE],
+      ['a private table', 'SELECT 1 AS one FROM oauth_accounts', QueryRefusal.PRIVATE],
       ['a missing table', 'SELECT 1 FROM no_such_table', QueryRefusal.NOT_FOUND],
       ['a missing column', 'SELECT no_such_column FROM users', QueryRefusal.NOT_FOUND],
       ['a bad statement', 'SELEC 1', QueryRefusal.INVALID_QUERY],
@@ -176,15 +178,16 @@ describeWithDatabase('PostgresExplorerAdapter against the migrated database as a
       expect(refusal).toBe(QueryRefusal.TIMEOUT);
     });
 
-    it('drops advisory locks that a call took', async () => {
-      await query('SELECT pg_advisory_lock(4242)');
-
-      const held = await query(
-        "SELECT count(*)::int AS locks FROM pg_locks WHERE locktype = 'advisory' AND pid = pg_backend_pid()",
-      );
-
-      expect(held.rows).toEqual([{ locks: 0 }]);
-    });
+    it.each([
+      ['ending a session', 'SELECT pg_terminate_backend(pg_backend_pid())'],
+      ['cancelling a query', 'SELECT pg_cancel_backend(pg_backend_pid())'],
+      ['taking an advisory lock', 'SELECT pg_advisory_lock(4242)'],
+    ])(
+      'is not allowed to run a function for %s, and says so instead of calling it private',
+      async (_label, sql) => {
+        expect(await refusalOf(() => query(sql))).toBe(QueryRefusal.NOT_ALLOWED);
+      },
+    );
   });
 
   describe('the schema listing', () => {

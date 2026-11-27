@@ -1,13 +1,16 @@
-import { DB_QUERY_CELL_MAX_CHARS } from './database.constants';
+import { DB_QUERY_CELL_HARD_MAX_CHARS } from './database.constants';
 
-const shortened = (text: string, what: string): string =>
-  text.length <= DB_QUERY_CELL_MAX_CHARS
-    ? text
-    : `${text.slice(0, DB_QUERY_CELL_MAX_CHARS)}... [${what} cut, ${text.length} characters in total]`;
+const HIGH_SURROGATE = /[\uD800-\uDBFF]$/;
+
+const shortened = (text: string, what: string): string => {
+  if (text.length <= DB_QUERY_CELL_HARD_MAX_CHARS) return text;
+  const head = text.slice(0, DB_QUERY_CELL_HARD_MAX_CHARS).replace(HIGH_SURROGATE, '');
+  return `${head}... [${what} cut, ${text.length} characters in total]`;
+};
 
 const structuredCell = (value: object): unknown => {
   const json = JSON.stringify(value);
-  return json.length > DB_QUERY_CELL_MAX_CHARS ? shortened(json, 'json') : value;
+  return json.length > DB_QUERY_CELL_HARD_MAX_CHARS ? shortened(json, 'json') : value;
 };
 
 export const cellOf = (value: unknown): unknown => {

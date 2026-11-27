@@ -22,9 +22,33 @@ const SUBSTRING_PATTERNS = [
   'birth',
   'apikey',
   'api_key',
+  'message',
+  'comment',
+  'note',
+  'body',
+  'nickname',
+  'contact',
+  'telegram',
+  'chat_id',
+  'remote_addr',
+  'nonce',
+  'signature',
 ] as const;
 
-const WORD_PATTERNS = ['ip', 'key', 'auth', 'push', 'device', 'salt', 'jwt', 'ssn'] as const;
+const WORD_PATTERNS = [
+  'ip',
+  'key',
+  'auth',
+  'push',
+  'device',
+  'salt',
+  'jwt',
+  'ssn',
+  'otp',
+  'dob',
+  'lat',
+  'lng',
+] as const;
 
 export const sensitivePatternIn = (name: string): string | null => {
   const lowered = name.toLowerCase();

@@ -8,8 +8,9 @@ import { RUNTIME_CASES } from './cases/runtime.cases';
 import { UNKNOWN_CASES } from './cases/unknown.cases';
 import { CaseKind, type EvalCase, type RuntimeSource } from './eval-case';
 import { runEval } from './eval-runner';
+import { EXPLORER_EVAL_DATABASE_VARIABLE } from '@ratingo/ai-ops-tools/testing';
+
 import {
-  EXPLORER_EVAL_DATABASE_VARIABLE,
   needsExplorerDatabase,
   startExplorerEvalDatabase,
   stopExplorerEvalDatabase,

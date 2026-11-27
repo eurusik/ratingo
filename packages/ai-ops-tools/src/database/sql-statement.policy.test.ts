@@ -42,6 +42,7 @@ describe('readOnlyStatement', () => {
     ['an escaped quote', "select 'it''s; ok'", "select 'it''s; ok'"],
     ['a backslash in an escape string', "select E'a\\'; b'", "select E'a\\'; b'"],
     ['a fetch clause', 'select 1 fetch first 3 rows only', 'select 1 fetch first 3 rows only'],
+    ['a non-ASCII letter before a write word', 'select 1 as éinsert', 'select 1 as éinsert'],
   ])('accepts %s', (_label, sql, expected) => {
     expect(readOnlyStatement(sql)).toBe(expected);
   });
@@ -97,6 +98,41 @@ describe('readOnlyStatement', () => {
       'a hidden keyword after a comment',
       'select 1 /* x */ ; /* y */ drop table users',
       'sql must be exactly one statement: remove the extra ";" and everything after it',
+    ],
+    [
+      'a quoted function name',
+      "select \"set_config\"('work_mem', '2GB', false)",
+      'set_config is not allowed: this tool only reads data',
+    ],
+    [
+      'a second statement behind a non-ASCII name and a dollar quote',
+      'select 1 as é$a$) q; commit; set statement_timeout=0; select * from (select pg_sleep(7) as é$a$',
+      'sql must be exactly one statement: remove the extra ";" and everything after it',
+    ],
+    [
+      'set_config',
+      "select set_config('work_mem', '2GB', false)",
+      'set_config is not allowed: this tool only reads data',
+    ],
+    [
+      'pg_terminate_backend',
+      'select pg_terminate_backend(1)',
+      'pg_terminate_backend is not allowed: this tool only reads data',
+    ],
+    [
+      'an advisory lock',
+      'select pg_advisory_lock(1)',
+      'pg_advisory_lock is not allowed: this tool only reads data',
+    ],
+    [
+      'a try-advisory lock',
+      'select pg_try_advisory_lock(1)',
+      'pg_try_advisory_lock is not allowed: this tool only reads data',
+    ],
+    [
+      'query_to_xml',
+      "select query_to_xml('select 1', true, true, '')",
+      'query_to_xml is not allowed: this tool only reads data',
     ],
   ])('refuses %s', (_label, sql, message) => {
     expect(messageOf(sql)).toBe(message);

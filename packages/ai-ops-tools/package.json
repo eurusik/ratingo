@@ -10,6 +10,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./src/testing/index.ts",
+      "import": "./src/testing/index.ts",
+      "default": "./dist/testing/index.js"
     }
   },
   "scripts": {
@@ -32,5 +37,12 @@
     "knip": "6.44.1",
     "ts-jest": "^29.1.0",
     "typescript": "^5"
+  },
+  "typesVersions": {
+    "*": {
+      "testing": [
+        "src/testing/index.ts"
+      ]
+    }
   }
 }

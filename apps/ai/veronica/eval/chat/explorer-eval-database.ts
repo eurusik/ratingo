@@ -1,40 +1,20 @@
 import { join } from 'node:path';
 
-import {
-  ExplorerEvalRuntime,
-  missingExplorerDatabaseExecutors,
-  unconfiguredExplorerExecutors,
-  type ExplorerExecutors,
-} from '@ratingo/ai-ops-tools';
+import { ExplorerEvalSession, type ExplorerExecutors } from '@ratingo/ai-ops-tools/testing';
 
 import type { EvalCase } from './eval-case';
 
-export const EXPLORER_EVAL_DATABASE_VARIABLE = 'EXPLORER_EVAL_DATABASE_URL';
-
 const MIGRATIONS_FOLDER = join(__dirname, '../../../../api/drizzle_v2');
 
-let running: ExplorerEvalRuntime | null = null;
+const session = new ExplorerEvalSession(MIGRATIONS_FOLDER);
 
-export const startExplorerEvalDatabase = async (adminUrl: string): Promise<void> => {
-  if (running !== null) return;
-  running = await ExplorerEvalRuntime.start({ adminUrl, migrationsFolder: MIGRATIONS_FOLDER });
-};
+export const startExplorerEvalDatabase = (adminUrl: string): Promise<void> =>
+  session.start(adminUrl);
 
-export const stopExplorerEvalDatabase = async (): Promise<void> => {
-  const current = running;
-  running = null;
-  await current?.close();
-};
+export const stopExplorerEvalDatabase = (): Promise<void> => session.stop();
 
 export const needsExplorerDatabase = (testCase: EvalCase): boolean =>
   testCase.database !== undefined;
 
-export const explorerExecutorsFor = (testCase: EvalCase): ExplorerExecutors => {
-  if (testCase.database === undefined) return unconfiguredExplorerExecutors();
-  if (running === null) {
-    return missingExplorerDatabaseExecutors(
-      `Case ${testCase.id} needs ${EXPLORER_EVAL_DATABASE_VARIABLE}`,
-    );
-  }
-  return running.executors(testCase.database);
-};
+export const explorerExecutorsFor = (testCase: EvalCase): ExplorerExecutors =>
+  session.executorsFor(testCase.database, testCase.id);

@@ -43,9 +43,12 @@ export class ExplorerFailureError extends Error {
   }
 }
 
+export const EXPLORER_URL_NOT_SET = 'AI_EXPLORER_DATABASE_URL is not set';
+export const EXPLORER_URL_INVALID = 'AI_EXPLORER_DATABASE_URL is not a valid connection string';
+
 export class ExplorerNotConfiguredError extends ExplorerFailureError {
-  constructor() {
-    super('AI_EXPLORER_DATABASE_URL is not set');
+  constructor(reason: string = EXPLORER_URL_NOT_SET) {
+    super(reason);
     this.name = 'ExplorerNotConfiguredError';
   }
 }

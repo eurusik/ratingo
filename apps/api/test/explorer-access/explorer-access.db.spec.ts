@@ -2,21 +2,21 @@ import { randomBytes } from 'node:crypto';
 
 import * as postgres from 'postgres';
 
-import {
-  describeViolations,
-  findViolations,
-  readExplorerGrants,
-  readSqlFixture,
-  ViolationKind,
-} from './explorer-access.guard';
+import { describeViolations, findViolations, ViolationKind } from './explorer-access.guard';
+import { readExplorerGrants, readSqlFixture } from './explorer-access.grants';
 import { CLOSED_COLUMNS, PRIVATE_TABLES } from './explorer-access.rules';
 
 const ADMIN_URL = process.env.EXPLORER_ACCESS_DATABASE_URL;
 const describeWithDatabase = ADMIN_URL ? describe : describe.skip;
 
+if (!ADMIN_URL && process.env.CI) {
+  it('has a database to check, because CI runs this guard', () => {
+    throw new Error('EXPLORER_ACCESS_DATABASE_URL is not set in CI');
+  });
+}
+
 const ROLE = 'ai_explorer';
 const PERMISSION_DENIED = '42501';
-const READ_ONLY_TRANSACTION = '25006';
 
 const loginUrl = (password: string): string => {
   const url = new URL(ADMIN_URL as string);
@@ -47,8 +47,8 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
 
   afterAll(async () => {
     await explorer?.end({ timeout: 2 });
-    await admin.unsafe(`ALTER ROLE ${ROLE} WITH NOLOGIN PASSWORD NULL`);
-    await admin.end({ timeout: 2 });
+    await admin?.unsafe(`ALTER ROLE ${ROLE} WITH NOLOGIN PASSWORD NULL`);
+    await admin?.end({ timeout: 2 });
   });
 
   describe('the grants the migrations leave behind', () => {
@@ -106,13 +106,53 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
       ]);
     });
 
-    it('is not reported when the new table is innocent', async () => {
-      await admin.unsafe(readSqlFixture('innocent-table.sql'));
+    it('is caught when a view runs with its owner rights, even with innocent column names', async () => {
+      await catches('leaky-view.sql', 'leaky-view.cleanup.sql', [
+        'public.leaky_view',
+        'public.leaky_bio_view',
+      ]);
+    });
+
+    it('is caught when a materialized view copies private columns', async () => {
+      await catches('leaky-matview.sql', 'leaky-matview.cleanup.sql', ['public.leaky_matview']);
+    });
+
+    it('is caught when a SECURITY DEFINER function can be run by the role', async () => {
+      await catches('leaky-function.sql', 'leaky-function.cleanup.sql', [
+        'public.leaky_function()',
+      ]);
+    });
+
+    it('is caught when a function that can end or lock sessions becomes executable', async () => {
+      await catches('dangerous-function.sql', 'dangerous-function.cleanup.sql', [
+        'pg_advisory_lock(bigint)',
+      ]);
+    });
+
+    it('is caught when a table linked to users has message and contact columns', async () => {
+      await catches('support-tickets.sql', 'support-tickets.cleanup.sql', [
+        'public.support_tickets.message',
+        'public.support_tickets.contact_name',
+      ]);
+    });
+
+    it('is caught when a table linked to users has free-form columns with innocent names', async () => {
+      await catches('opaque-tickets.sql', 'opaque-tickets.cleanup.sql', [
+        'public.opaque_tickets.topic',
+        'public.opaque_tickets.extra',
+      ]);
+    });
+
+    it.each([
+      ['an innocent table', 'innocent-table.sql', 'innocent-table.cleanup.sql'],
+      ['a security_invoker view', 'invoker-view.sql', 'invoker-view.cleanup.sql'],
+    ])('is not reported for %s', async (_label, fixture, cleanup) => {
+      await admin.unsafe(readSqlFixture(fixture));
       try {
         const violations = findViolations(await readExplorerGrants(admin));
         expect(describeViolations(violations)).toBe('');
       } finally {
-        await admin.unsafe(readSqlFixture('innocent-table.cleanup.sql'));
+        await admin.unsafe(readSqlFixture(cleanup));
       }
     });
 
@@ -144,16 +184,46 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
       expect(await sqlStateOf(() => explorer.unsafe(statement))).toBe(PERMISSION_DENIED);
     });
 
-    it.each([
-      ['an insert', "INSERT INTO genres (tmdb_id, name, slug) VALUES (1, 'x', 'x')"],
-      ['an update', "UPDATE genres SET name = 'x'"],
-      ['a delete', 'DELETE FROM genres'],
-      ['a truncate', 'TRUNCATE genres'],
-      ['a new table', 'CREATE TABLE explorer_probe (id int)'],
-      ['a temporary table', 'CREATE TEMP TABLE explorer_probe (id int)'],
-    ])('cannot do %s', async (_label, statement) => {
-      const code = await sqlStateOf(() => explorer.unsafe(statement));
-      expect([PERMISSION_DENIED, READ_ONLY_TRANSACTION]).toContain(code);
+    describe('with the read-only default switched off, so that only privileges can stop a write', () => {
+      beforeEach(async () => {
+        await explorer.unsafe('SET default_transaction_read_only = off');
+      });
+
+      afterEach(async () => {
+        await explorer.unsafe('RESET default_transaction_read_only');
+      });
+
+      it.each([
+        ['an insert', "INSERT INTO genres (tmdb_id, name, slug) VALUES (1, 'x', 'x')"],
+        ['an update', "UPDATE genres SET name = 'x'"],
+        ['a delete', 'DELETE FROM genres'],
+        ['a truncate', 'TRUNCATE genres'],
+        ['a new table', 'CREATE TABLE explorer_probe (id int)'],
+      ])('has no privilege for %s', async (_label, statement) => {
+        expect(await sqlStateOf(() => explorer.unsafe(statement))).toBe(PERMISSION_DENIED);
+      });
+
+      it('can still create a temporary table, which only the read-only transaction of the adapter prevents', async () => {
+        expect(
+          await sqlStateOf(() => explorer.unsafe('CREATE TEMP TABLE explorer_probe (id int)')),
+        ).toBeUndefined();
+      });
+    });
+
+    it('refuses writes by default, because the role starts read-only', async () => {
+      expect(await sqlStateOf(() => explorer.unsafe('DELETE FROM genres'))).toBe('25006');
+    });
+
+    it('cannot run the functions that end or lock sessions', async () => {
+      const results = await Promise.all(
+        [
+          'select pg_terminate_backend(1)',
+          'select pg_cancel_backend(1)',
+          'select pg_advisory_lock(1)',
+        ].map((statement) => sqlStateOf(() => explorer.unsafe(statement))),
+      );
+
+      expect(results).toEqual([PERMISSION_DENIED, PERMISSION_DENIED, PERMISSION_DENIED]);
     });
 
     it('has the load limits the migration sets', async () => {

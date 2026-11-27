@@ -2,10 +2,14 @@ SELECT
   n.nspname AS schema_name,
   c.relname AS table_name,
   c.relkind::text AS kind,
-  a.attname AS column_name
+  coalesce(c.reloptions::text, '') AS options,
+  a.attname AS column_name,
+  t.typname AS type_name,
+  t.typcategory::text AS type_category
 FROM pg_attribute a
 JOIN pg_class c ON c.oid = a.attrelid
 JOIN pg_namespace n ON n.oid = c.relnamespace
+JOIN pg_type t ON t.oid = a.atttypid
 WHERE a.attnum > 0
   AND NOT a.attisdropped
   AND c.relkind IN ('r', 'p', 'v', 'm', 'f')

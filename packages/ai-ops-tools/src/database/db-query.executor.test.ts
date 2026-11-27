@@ -133,6 +133,11 @@ describe('DbQueryExecutor', () => {
       'cancelled after 5 seconds',
     ],
     [QueryRefusal.BUSY, 'too many connections for role', 'The database is busy'],
+    [
+      QueryRefusal.NOT_ALLOWED,
+      'permission denied for function pg_terminate_backend',
+      'This is not allowed for the read-only database role',
+    ],
   ])(
     'answers a %s refusal as a result with its status and logs the reason',
     async (refusal, detail, start) => {
@@ -149,7 +154,17 @@ describe('DbQueryExecutor', () => {
 
       expect(result.status).toBe(refusal);
       expect(result.message).toContain(start);
-      expect(logger.warnings).toEqual([`db_query failed: ${refusal}`]);
+      const expected = [`db_query failed: ${refusal}`];
+      const quiet = (
+        [
+          QueryRefusal.PRIVATE,
+          QueryRefusal.NOT_FOUND,
+          QueryRefusal.INVALID_QUERY,
+          QueryRefusal.NOT_ALLOWED,
+        ] as string[]
+      ).includes(refusal);
+      expect(quiet ? logger.debugs : logger.warnings).toEqual(expected);
+      expect(quiet ? logger.warnings : logger.debugs).toEqual([]);
     },
   );
 

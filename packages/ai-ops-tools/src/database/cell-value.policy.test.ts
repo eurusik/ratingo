@@ -1,4 +1,4 @@
-import { DB_QUERY_CELL_MAX_CHARS } from './database.constants';
+import { DB_QUERY_CELL_HARD_MAX_CHARS } from './database.constants';
 import { cellOf, rowOf } from './cell-value.policy';
 
 describe('cellOf', () => {
@@ -16,15 +16,15 @@ describe('cellOf', () => {
   });
 
   it('cuts a long text and says how long it was', () => {
-    const cut = String(cellOf('x'.repeat(DB_QUERY_CELL_MAX_CHARS + 500)));
+    const cut = String(cellOf('x'.repeat(DB_QUERY_CELL_HARD_MAX_CHARS + 500)));
 
-    expect(cut.startsWith('x'.repeat(DB_QUERY_CELL_MAX_CHARS))).toBe(true);
-    expect(cut).toContain(`[text cut, ${DB_QUERY_CELL_MAX_CHARS + 500} characters in total]`);
+    expect(cut.startsWith('x'.repeat(DB_QUERY_CELL_HARD_MAX_CHARS))).toBe(true);
+    expect(cut).toContain(`[text cut, ${DB_QUERY_CELL_HARD_MAX_CHARS + 500} characters in total]`);
   });
 
   it('keeps a small json value as it is and cuts a large one', () => {
     const small = { a: 1 };
-    const large = { items: 'y'.repeat(DB_QUERY_CELL_MAX_CHARS * 2) };
+    const large = { items: 'y'.repeat(DB_QUERY_CELL_HARD_MAX_CHARS * 2) };
 
     expect(cellOf(small)).toBe(small);
     expect(String(cellOf(large))).toContain('[json cut, ');

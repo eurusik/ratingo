@@ -7,8 +7,9 @@ import { kyivDayFromEvalNow, kyivTimeFromEvalNow } from './eval-clock';
 import { runEval } from './eval-runner';
 import { findForbiddenContent } from './forbidden-content';
 import { GA_EVAL_CASES } from './google-analytics.cases';
+import { EXPLORER_EVAL_DATABASE_VARIABLE } from '@ratingo/ai-ops-tools/testing';
+
 import {
-  EXPLORER_EVAL_DATABASE_VARIABLE,
   needsExplorerDatabase,
   startExplorerEvalDatabase,
   stopExplorerEvalDatabase,
@@ -52,9 +53,9 @@ const referenceKeys = (testCase: (typeof EVAL_CASES)[number]): string[] =>
   );
 
 describe('chat eval cases', () => {
-  it('has 12 to 60 cases with unique ids', () => {
+  it('has 12 to 80 cases with unique ids', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(12);
-    expect(EVAL_CASES.length).toBeLessThanOrEqual(60);
+    expect(EVAL_CASES.length).toBeLessThanOrEqual(80);
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
   });
 

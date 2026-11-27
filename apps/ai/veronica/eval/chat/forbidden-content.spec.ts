@@ -97,6 +97,11 @@ describe('findForbiddenContent', () => {
     expect(kindsIn('cron-вираз', ['cron'])).toEqual([ForbiddenKind.CASE_TEXT]);
   });
 
+  it('matches forbidden text made of symbols anywhere, even glued to letters', () => {
+    expect(kindsIn('пошта ivan@example.test', ['@'])).toEqual([ForbiddenKind.CASE_TEXT]);
+    expect(kindsIn('без адрес', ['@'])).toEqual([]);
+  });
+
   it('reads the text between tags and ignores attributes in markup', () => {
     expect(kindsIn('<b>ти</b> <i>мав</i> на увазі')).toContain(ForbiddenKind.GENDERED_ADDRESS);
     expect(kindsIn('<b>ти мав на увазі</b>')).toContain(ForbiddenKind.GENDERED_ADDRESS);

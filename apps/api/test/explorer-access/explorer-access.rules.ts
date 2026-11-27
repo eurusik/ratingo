@@ -1,12 +1,29 @@
-export interface AllowedName {
-  table: string;
-  column: string;
+interface Reviewed {
   reason: string;
 }
 
-export const WHOLE_TABLE = '*';
+export interface AllowedColumn extends Reviewed {
+  table: string;
+  column: string;
+}
 
-export const ALLOWED_SENSITIVE_NAMES: readonly AllowedName[] = [
+export interface AllowedTable extends Reviewed {
+  table: string;
+}
+
+export interface AllowedFreeFormColumns extends Reviewed {
+  table: string;
+  columns: readonly string[];
+}
+
+export const ALLOWED_SENSITIVE_TABLE_NAMES: readonly AllowedTable[] = [
+  {
+    table: 'key_health_checks',
+    reason: 'health of provider keys: status and quota only, the key itself is never stored',
+  },
+];
+
+export const ALLOWED_SENSITIVE_COLUMNS: readonly AllowedColumn[] = [
   {
     table: 'user_media_actions',
     column: 'reason_key',
@@ -23,11 +40,89 @@ export const ALLOWED_SENSITIVE_NAMES: readonly AllowedName[] = [
     reason: 'episode label such as S2E5, not a credential',
   },
   {
-    table: 'key_health_checks',
-    column: WHOLE_TABLE,
-    reason: 'health of provider keys: status and quota only, the key itself is never stored',
+    table: 'journal_posts',
+    column: 'body',
+    reason: 'text written by the owner and published on the site',
+  },
+  {
+    table: 'journal_posts',
+    column: 'body_html',
+    reason: 'rendered text written by the owner and published on the site',
+  },
+  {
+    table: 'provider_mappings',
+    column: 'notes',
+    reason: 'editorial note about a streaming provider mapping, written by the owner',
   },
 ];
+
+export const ALLOWED_FREE_FORM_COLUMNS: readonly AllowedFreeFormColumns[] = [
+  {
+    table: 'user_media_state',
+    columns: ['progress'],
+    reason: 'watch progress json written by the application; unvalidated, follow-up',
+  },
+  {
+    table: 'user_media_actions',
+    columns: ['action', 'context', 'reason_key'],
+    reason: 'action names and client-supplied context keys; unvalidated client text, follow-up',
+  },
+  {
+    table: 'user_saved_items',
+    columns: ['reason_key'],
+    reason: 'verdict key chosen from a fixed list in the application',
+  },
+  {
+    table: 'user_subscriptions',
+    columns: ['channel', 'last_notified_episode_key'],
+    reason: 'notification channel and episode label set by the application',
+  },
+  {
+    table: 'user_notifications',
+    columns: ['payload'],
+    reason: 'event payload built by the application: season, episode, dates',
+  },
+  {
+    table: 'import_batches',
+    columns: ['source'],
+    reason: 'import source name chosen from a fixed list',
+  },
+  {
+    table: 'reviews',
+    columns: ['content'],
+    reason:
+      'public review text, at most 280 characters; soft-deleted rows stay readable, follow-up',
+  },
+  {
+    table: 'review_replies',
+    columns: ['content'],
+    reason: 'public reply text, at most 280 characters; soft-deleted rows stay readable, follow-up',
+  },
+  {
+    table: 'journal_posts',
+    columns: [
+      'slug',
+      'title',
+      'body',
+      'body_html',
+      'excerpt',
+      'featured_image_url',
+      'context_id',
+      'meta_title',
+      'meta_description',
+    ],
+    reason: 'posts written by the owner and published on the site',
+  },
+];
+
+export const ALLOWED_DEFINER_VIEWS: readonly AllowedTable[] = [
+  {
+    table: 'public_media_items',
+    reason: 'selects public catalog columns only and was created before the guard existed',
+  },
+];
+
+export const ALLOWED_MATERIALIZED_VIEWS: readonly AllowedTable[] = [];
 
 export const PRIVATE_TABLES: readonly string[] = [
   'refresh_tokens',

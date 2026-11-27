@@ -41,6 +41,23 @@ const migrationStatements = (migrationsFolder: string): string[] => {
   );
 };
 
+const literal = (value: string): string => `'${value.replace(/'/g, "''")}'`;
+
+const inheritRoleSettings = async (server: postgres.Sql, loginName: string): Promise<void> => {
+  const [role] = await server`
+    SELECT rolconnlimit, rolconfig FROM pg_roles WHERE rolname = ${EXPLORER_ROLE}`;
+  await server.unsafe(
+    `ALTER ROLE ${loginName} CONNECTION LIMIT ${Number(role?.rolconnlimit ?? -1)}`,
+  );
+  for (const entry of (role?.rolconfig ?? []) as string[]) {
+    const [name = '', ...rest] = entry.split('=');
+    const value = rest.join('=');
+    await server.unsafe(
+      `ALTER ROLE ${loginName} SET ${name} = ${name === 'search_path' ? value : literal(value)}`,
+    );
+  }
+};
+
 const randomName = (prefix: string): string => `${prefix}_${randomBytes(6).toString('hex')}`;
 
 interface DatabaseNames {
@@ -67,6 +84,7 @@ const setUp = async (
   await server.unsafe(
     `CREATE ROLE ${loginName} LOGIN PASSWORD '${loginPassword}' IN ROLE ${EXPLORER_ROLE}`,
   );
+  await inheritRoleSettings(server, loginName);
   const explorerUrl = withDatabase(adminUrl, databaseName);
   explorerUrl.username = loginName;
   explorerUrl.password = loginPassword;

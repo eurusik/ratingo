@@ -67,6 +67,7 @@ export {
   type ExplorerConnectionOptions,
 } from './database/postgres.explorer-adapter';
 export { UnconfiguredExplorerAdapter } from './database/unconfigured.explorer-adapter';
+export { connectExplorer, type ClosableExplorerPort } from './database/explorer-connection';
 export { dbQueryInput, type DbQueryInput } from './database/db-query.input';
 export { dbSchemaInput, type DbSchemaInput } from './database/db-schema.input';
 
@@ -118,20 +119,3 @@ export {
   type SimulatedJobFailureDay,
 } from './testing/job-failures.simulator';
 export { createPrometheusSimulator, type PrometheusSeries } from './testing/prometheus.simulator';
-export {
-  createExplorerTestDatabase,
-  type ExplorerTestDatabase,
-  type ExplorerTestDatabaseOptions,
-} from './testing/explorer-database';
-export {
-  EXPLORER_EVAL_QUERIES,
-  EXPLORER_FIXTURE,
-  seedExplorerFixture,
-} from './testing/explorer-fixture';
-export {
-  ExplorerEvalRuntime,
-  missingExplorerDatabaseExecutors,
-  unconfiguredExplorerExecutors,
-  type ExplorerExecutorOptions,
-  type ExplorerExecutors,
-} from './testing/explorer-eval-runtime';

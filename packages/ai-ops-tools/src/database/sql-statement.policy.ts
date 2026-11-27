@@ -34,16 +34,31 @@ const FORBIDDEN_WORDS = new Set([
   'explain',
 ]);
 
+const FORBIDDEN_FUNCTIONS = new Set([
+  'set_config',
+  'pg_terminate_backend',
+  'pg_cancel_backend',
+  'pg_reload_conf',
+  'pg_rotate_logfile',
+  'lo_import',
+  'lo_export',
+  'query_to_xml',
+  'query_to_xml_and_xmlschema',
+  'query_to_xmlschema',
+]);
+const FORBIDDEN_FUNCTION_PREFIXES = ['pg_advisory', 'pg_try_advisory'];
+
 const ROW_LOCK_WORDS = new Set(['update', 'share', 'no', 'key']);
 
 interface Scanned {
   code: string;
   words: string[];
+  quotedNames: string[];
   semicolons: number[];
 }
 
-const isWordStart = (char: string): boolean => /[A-Za-z_]/.test(char);
-const isWordPart = (char: string): boolean => /[A-Za-z0-9_$]/.test(char);
+const isWordStart = (char: string): boolean => /[A-Za-z_\u0080-\uffff]/.test(char);
+const isWordPart = (char: string): boolean => /[A-Za-z0-9_$\u0080-\uffff]/.test(char);
 
 const unterminated = (what: string): InvalidOpsInputError =>
   new InvalidOpsInputError(`sql has an unterminated ${what}`);
@@ -100,6 +115,7 @@ const afterEscapeStringPrefix = (sql: string, quoteAt: number): boolean => {
 
 const scan = (sql: string): Scanned => {
   const words: string[] = [];
+  const quotedNames: string[] = [];
   const semicolons: number[] = [];
   let code = '';
   let index = 0;
@@ -120,6 +136,7 @@ const scan = (sql: string): Scanned => {
     } else if (char === '"') {
       next = skipQuoted(sql, index, '"', false);
       kept = sql.slice(index, next);
+      quotedNames.push(kept.slice(1, -1).replace(/""/g, '"').toLowerCase());
     } else if (char === '$' && !isWordPart(sql.charAt(index - 1))) {
       const tag = dollarTagAt(sql, index);
       if (tag !== null) {
@@ -137,7 +154,7 @@ const scan = (sql: string): Scanned => {
     code += kept;
     index = next;
   }
-  return { code, words, semicolons };
+  return { code, words, quotedNames, semicolons };
 };
 
 const assertSingleStatement = ({ code, semicolons }: Scanned): string => {
@@ -152,7 +169,7 @@ const assertSingleStatement = ({ code, semicolons }: Scanned): string => {
   return code.slice(0, first).trim();
 };
 
-const assertReadOnlyShape = (words: readonly string[]): void => {
+const assertReadOnlyShape = (words: readonly string[], quotedNames: readonly string[]): void => {
   const [first] = words;
   if (first === undefined || !STATEMENT_STARTS.has(first)) {
     throw new InvalidOpsInputError('sql must be one SELECT or WITH statement');
@@ -165,11 +182,19 @@ const assertReadOnlyShape = (words: readonly string[]): void => {
       'FOR UPDATE and FOR SHARE are not allowed: this tool only reads data',
     );
   }
-  const forbidden = words.find((word) => FORBIDDEN_WORDS.has(word));
-  if (forbidden !== undefined) {
+  const word = words.find((candidate) => FORBIDDEN_WORDS.has(candidate));
+  if (word !== undefined) {
     throw new InvalidOpsInputError(
-      `${forbidden.toUpperCase()} is not allowed: this tool only reads data (use explain=true for a plan)`,
+      `${word.toUpperCase()} is not allowed: this tool only reads data (use explain=true for a plan)`,
     );
+  }
+  const fn = [...words, ...quotedNames].find(
+    (candidate) =>
+      FORBIDDEN_FUNCTIONS.has(candidate) ||
+      FORBIDDEN_FUNCTION_PREFIXES.some((prefix) => candidate.startsWith(prefix)),
+  );
+  if (fn !== undefined) {
+    throw new InvalidOpsInputError(`${fn} is not allowed: this tool only reads data`);
   }
 };
 
@@ -180,6 +205,6 @@ export const readOnlyStatement = (sql: string): string => {
   const scanned = scan(sql);
   const statement = assertSingleStatement(scanned);
   if (statement === '') throw new InvalidOpsInputError('sql must not be empty');
-  assertReadOnlyShape(scanned.words);
+  assertReadOnlyShape(scanned.words, scanned.quotedNames);
   return statement;
 };

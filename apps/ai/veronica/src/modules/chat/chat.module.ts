@@ -5,14 +5,13 @@ import IORedis from 'ioredis';
 
 import { CLOCK_PORT, type ClockPort } from '@ratingo/ai-core';
 import {
+  connectExplorer,
   DbQueryExecutor,
   DbSchemaExecutor,
   GrafanaLokiLogsAdapter,
   JobFailuresExecutor,
   LogsSearchExecutor,
   MetricsQueryExecutor,
-  PostgresExplorerAdapter,
-  UnconfiguredExplorerAdapter,
   UnconfiguredJobFailuresAdapter,
   UnconfiguredLogsAdapter,
   type ExplorerPort,
@@ -166,9 +165,7 @@ import { withRedisErrorLog } from '../../redis/redis-error-log';
       provide: EXPLORER_PORT,
       inject: [EXPLORER_CONFIG],
       useFactory: (config: ExplorerConfig) =>
-        config.databaseUrl === undefined
-          ? new UnconfiguredExplorerAdapter()
-          : PostgresExplorerAdapter.connect(config.databaseUrl),
+        connectExplorer(config.databaseUrl, new Logger('ExplorerPort')),
     },
     {
       provide: LOGS_PORT,

@@ -34,8 +34,17 @@ const refusalMessage = (refusal: QueryRefusal, detail: string, timeoutMs: number
       return `The query was cancelled after ${timeoutMs / MS_PER_SECOND} seconds and returned no rows, not even partial ones. Nothing was changed. Do not state any number from it. Make it cheaper: filter by date or id, select fewer columns, aggregate instead of listing, or call with explain=true to see the plan.`;
     case QueryRefusal.BUSY:
       return `The database is busy (${detail}). Nothing was run. Try again later.`;
+    case QueryRefusal.NOT_ALLOWED:
+      return `This is not allowed for the read-only database role (${detail}). Do not retry it or look for another way.`;
   }
 };
+
+const EXPECTED_REFUSALS: ReadonlySet<QueryRefusal> = new Set([
+  QueryRefusal.PRIVATE,
+  QueryRefusal.NOT_FOUND,
+  QueryRefusal.INVALID_QUERY,
+  QueryRefusal.NOT_ALLOWED,
+]);
 
 const answerOf = (error: ExplorerQueryRefusedError, timeoutMs: number) => ({
   status: error.refusal,
@@ -87,19 +96,29 @@ export class DbQueryExecutor {
       const result = await this.explorer.query({ sql, explain, rowLimit: this.rowLimit });
       return explain ? this.planOf(result) : this.rowsOf(result);
     } catch (error) {
-      if (!(error instanceof ExplorerNotConfiguredError)) {
-        this.logger.warn(`db_query failed: ${logReason(error)}`);
-      }
+      this.logFailure(error);
       if (error instanceof ExplorerQueryRefusedError)
         return answerOf(error, this.statementTimeoutMs);
       throw asUnavailable(error);
     }
   }
 
+  private logFailure(error: unknown): void {
+    if (error instanceof ExplorerNotConfiguredError) return;
+    const message = `db_query failed: ${logReason(error)}`;
+    if (error instanceof ExplorerQueryRefusedError && EXPECTED_REFUSALS.has(error.refusal)) {
+      this.logger.debug?.(message);
+    } else {
+      this.logger.warn(message);
+    }
+  }
+
   private planOf(result: QueryRows) {
     return {
       plan: result.rows.map((row) => String(Object.values(row)[0] ?? '')),
-      note: 'This is only the planner estimate: the query was not run and no data was read.',
+      note: result.hasMoreRows
+        ? `This is only the planner estimate, cut after ${this.rowLimit} lines: the query was not run and no data was read.`
+        : 'This is only the planner estimate: the query was not run and no data was read.',
     };
   }
 

@@ -25,11 +25,12 @@ import { EVAL_CASES } from './cases';
 import type { EvalCase } from './eval-case';
 import { parseEvalOptions, type EvalOptions } from './eval-options';
 import {
-  EXPLORER_EVAL_DATABASE_VARIABLE,
   needsExplorerDatabase,
   startExplorerEvalDatabase,
   stopExplorerEvalDatabase,
 } from './explorer-eval-database';
+import { EXPLORER_EVAL_DATABASE_VARIABLE, planExplorerCases } from '@ratingo/ai-ops-tools/testing';
+
 import { runEval, type EvalRun } from './eval-runner';
 import { isStubModel, runCase } from './harness';
 import type { JudgePort } from './judge';
@@ -90,23 +91,6 @@ const buildModelJudge = (options: EvalOptions, apiKey: string | undefined): Judg
 
 const printCase = (outcome: CaseOutcome): void => write(renderCase(outcome));
 
-const withoutUnavailableDatabase = (
-  cases: readonly EvalCase[],
-  databaseAvailable: boolean,
-): { runnable: readonly EvalCase[]; skippedCases: readonly string[] } => {
-  if (databaseAvailable) return { runnable: cases, skippedCases: [] };
-  const skipped = cases.filter(needsExplorerDatabase).map((testCase) => testCase.id);
-  if (skipped.length > 0) {
-    write(
-      `skipped ${skipped.length} cases that need the throwaway database (${EXPLORER_EVAL_DATABASE_VARIABLE} is not set): ${skipped.join(', ')}`,
-    );
-  }
-  return {
-    runnable: cases.filter((testCase) => !needsExplorerDatabase(testCase)),
-    skippedCases: skipped,
-  };
-};
-
 const executeCases = async (
   identity: RunIdentity,
   options: EvalOptions,
@@ -120,10 +104,12 @@ const executeCases = async (
   };
   const adminUrl = process.env[EXPLORER_EVAL_DATABASE_VARIABLE];
   if (adminUrl !== undefined && adminUrl !== '') await startExplorerEvalDatabase(adminUrl);
-  const { runnable, skippedCases } = withoutUnavailableDatabase(
-    selectCases(options.only),
-    adminUrl !== undefined && adminUrl !== '',
-  );
+  const {
+    runnable,
+    skipped: skippedCases,
+    notice,
+  } = planExplorerCases(selectCases(options.only), needsExplorerDatabase, adminUrl);
+  if (notice !== null) write(notice);
   try {
     const run = await runEval(
       runnable,

@@ -24,6 +24,7 @@ const abandoningWorker = () => {
     { handle: jest.fn(), abandon } as never,
     { purge: jest.fn() } as never,
     {} as never,
+    {} as never,
   );
   return { abandon, worker };
 };
@@ -39,6 +40,7 @@ const workerWith = (
     { handle: followUp } as never,
     { handle: dumeFollowUp } as never,
     { purge } as never,
+    {} as never,
     {} as never,
   );
 
@@ -164,5 +166,35 @@ describe('ChatWorker', () => {
 
       expect(abandon).not.toHaveBeenCalled();
     });
+  });
+
+  it('closes the explorer connection only after the worker has finished its jobs', async () => {
+    const order: string[] = [];
+    const worker = new ChatWorker(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { disconnect: () => order.push('redis') } as never,
+      { close: async () => void order.push('explorer') } as never,
+    );
+    Object.assign(worker, { worker: { close: async () => void order.push('worker') } });
+
+    await worker.onApplicationShutdown();
+
+    expect(order).toEqual(['worker', 'explorer', 'redis']);
+  });
+
+  it('shuts down even when the explorer connection fails to close', async () => {
+    const worker = new ChatWorker(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { disconnect: jest.fn() } as never,
+      { close: async () => Promise.reject(new Error('broken')) } as never,
+    );
+
+    await expect(worker.onApplicationShutdown()).resolves.toBeUndefined();
   });
 });

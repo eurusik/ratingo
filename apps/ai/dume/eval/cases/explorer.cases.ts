@@ -1,4 +1,5 @@
-import { EXPLORER_EVAL_QUERIES, EXPLORER_FIXTURE, OpsTool } from '@ratingo/ai-ops-tools';
+import { OpsTool } from '@ratingo/ai-ops-tools';
+import { EXPLORER_EVAL_QUERIES, EXPLORER_FIXTURE } from '@ratingo/ai-ops-tools/testing';
 
 import { CaseKind, type EvalCase } from '../eval-case';
 

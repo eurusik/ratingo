@@ -9,6 +9,8 @@ import {
 import { UnrecoverableError, Worker, type Job } from 'bullmq';
 import type IORedis from 'ioredis';
 
+import type { ClosableExplorerPort } from '@ratingo/ai-ops-tools';
+
 import { NotificationError } from '../../../notify/public';
 import {
   CHAT_JOB_TYPES,
@@ -20,6 +22,7 @@ import {
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
 import type { DumeFollowUp } from '../../domain/entities/dume';
 import { HappyReviewMode, type HappyFollowUp } from '../../domain/entities/happy';
+import { EXPLORER_PORT } from '../../domain/ports/explorer.port';
 import { ChatExchangeRetention } from '../services/chat-exchange-retention.service';
 import { ChatService } from '../services/chat.service';
 import { DumeFollowUpService } from '../services/dume-follow-up.service';
@@ -70,6 +73,7 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
     private readonly dumeFollowUps: DumeFollowUpService,
     private readonly retention: ChatExchangeRetention,
     @Inject(REDIS_CONNECTION) private readonly connection: IORedis,
+    @Inject(EXPLORER_PORT) private readonly explorer: ClosableExplorerPort,
   ) {}
 
   onModuleInit(): void {
@@ -95,6 +99,7 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
 
   async onApplicationShutdown(): Promise<void> {
     await this.worker?.close();
+    await this.explorer.close?.().catch(() => undefined);
     this.connection.disconnect();
   }
 
