@@ -13,7 +13,8 @@ import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { AnticipatedShowsPipeline } from '../pipelines/anticipated-shows.pipeline';
 import { UpcomingMoviesPipeline } from '../pipelines/upcoming-movies.pipeline';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
-import { BackfillEpisodeTextsPipeline } from '../pipelines/backfill-episode-texts.pipeline';
+import { BackfillEpisodeDetailsPipeline } from '../pipelines/backfill-episode-details.pipeline';
+import { RepairEpisodeTitlesPipeline } from '../pipelines/repair-episode-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 import { destroyTraktRateLimiter } from '@/modules/trakt/infrastructure/adapters/base-trakt-http';
@@ -34,7 +35,8 @@ describe('SyncWorker', () => {
   let anticipatedShowsPipeline: { sync: jest.Mock };
   let backfillImdbPipeline: any;
   let backfillAltTitlesPipeline: any;
-  let backfillEpisodeTextsPipeline: any;
+  let backfillEpisodeDetailsPipeline: any;
+  let repairEpisodeTitlesPipeline: any;
   let backfillMdblistRatingsPipeline: any;
   let mediaPageCache: any;
 
@@ -93,8 +95,13 @@ describe('SyncWorker', () => {
       processItem: jest.fn().mockResolvedValue(undefined),
     };
 
-    backfillEpisodeTextsPipeline = {
+    backfillEpisodeDetailsPipeline = {
       dispatch: jest.fn().mockResolvedValue(undefined),
+    };
+
+    repairEpisodeTitlesPipeline = {
+      dispatch: jest.fn().mockResolvedValue(undefined),
+      processItem: jest.fn().mockResolvedValue(undefined),
     };
 
     backfillMdblistRatingsPipeline = {
@@ -115,7 +122,8 @@ describe('SyncWorker', () => {
         { provide: AnticipatedShowsPipeline, useValue: anticipatedShowsPipeline },
         { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
-        { provide: BackfillEpisodeTextsPipeline, useValue: backfillEpisodeTextsPipeline },
+        { provide: BackfillEpisodeDetailsPipeline, useValue: backfillEpisodeDetailsPipeline },
+        { provide: RepairEpisodeTitlesPipeline, useValue: repairEpisodeTitlesPipeline },
         { provide: BackfillMdblistRatingsPipeline, useValue: backfillMdblistRatingsPipeline },
         { provide: MediaPageCacheService, useValue: mediaPageCache },
       ],
@@ -199,15 +207,37 @@ describe('SyncWorker', () => {
     });
   });
 
-  describe('process - episode texts backfill', () => {
-    it('should delegate BACKFILL_EPISODE_TEXTS_DISPATCHER to the episode texts pipeline', async () => {
+  describe('process - episode details backfill', () => {
+    it('should delegate BACKFILL_EPISODE_DETAILS_DISPATCHER to the episode details pipeline', async () => {
       const job = {
-        name: IngestionJob.BACKFILL_EPISODE_TEXTS_DISPATCHER,
+        name: IngestionJob.BACKFILL_EPISODE_DETAILS_DISPATCHER,
         data: {},
-        id: 'episode-texts',
+        id: 'episode-details',
       } as Job;
       await worker.process(job);
-      expect(backfillEpisodeTextsPipeline.dispatch).toHaveBeenCalled();
+      expect(backfillEpisodeDetailsPipeline.dispatch).toHaveBeenCalled();
+    });
+  });
+
+  describe('process - episode titles repair', () => {
+    it('should delegate the repair dispatcher and items to the repair pipeline', async () => {
+      await worker.process({
+        name: IngestionJob.REPAIR_EPISODE_TITLES_DISPATCHER,
+        data: {},
+        id: 'repair',
+      } as Job);
+      await worker.process({
+        name: IngestionJob.REPAIR_EPISODE_TITLES_ITEM,
+        data: { showId: 'show-a', tmdbId: 387, imdbId: 'tt0206512' },
+        id: 'repair-item',
+      } as Job);
+
+      expect(repairEpisodeTitlesPipeline.dispatch).toHaveBeenCalled();
+      expect(repairEpisodeTitlesPipeline.processItem).toHaveBeenCalledWith({
+        showId: 'show-a',
+        tmdbId: 387,
+        imdbId: 'tt0206512',
+      });
     });
   });
 

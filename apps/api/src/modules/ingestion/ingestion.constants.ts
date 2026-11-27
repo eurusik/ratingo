@@ -94,7 +94,9 @@ export const JOB_DEDUPE_CHECK_CONCURRENCY = 50;
  */
 export const BACKFILL_ALT_TITLES_BATCH_SIZE = 100;
 
-export const BACKFILL_EPISODE_TEXTS_BATCH_SIZE = 100;
+export const BACKFILL_EPISODE_DETAILS_BATCH_SIZE = 100;
+
+export const REPAIR_EPISODE_TITLES_JOB_PRIORITY = 100;
 
 /**
  * Batch size for MDBList ratings backfill dispatcher pagination.

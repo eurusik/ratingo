@@ -33,7 +33,7 @@ import { isAwaitingPremiere, premiereFactsOf } from '@/modules/shared/show-premi
 import { TmdbAdapter } from '@/modules/tmdb/public';
 import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '@/modules/trakt/public';
 
-import { EpisodeLocalizationService } from './episode-localization.service';
+import { EpisodeMergeService } from './episode-merge.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 
 // Score display multiplier (0-1 to 0-100)
@@ -73,7 +73,7 @@ export interface MediaStubResult {
  * calculates Ratingo scores, and persists to database.
  *
  * Pipeline: fetchBaseMedia → enrichWithTvMaze → enrichWithTmdbEpisodes (fallback) →
- * episodeLocalization → attachExternalRatings → applyTrending → calculateScores → classifyMedia → persist → evaluateCatalog
+ * episodeMerge → attachExternalRatings → applyTrending → calculateScores → classifyMedia → persist → evaluateCatalog
  */
 @Injectable()
 export class SyncMediaService {
@@ -86,7 +86,7 @@ export class SyncMediaService {
     @Inject(AGGREGATED_RATINGS_PORT)
     private readonly aggregatedRatings: AggregatedRatingsPort,
     private readonly tvMazeEnrichment: TvMazeEnrichmentService,
-    private readonly episodeLocalization: EpisodeLocalizationService,
+    private readonly episodeMerge: EpisodeMergeService,
     private readonly scoreCalculator: ScoreCalculatorService,
     private readonly normalizationService: NormalizationService,
     private readonly eventEmitter: EventEmitter2,
@@ -174,7 +174,7 @@ export class SyncMediaService {
       // Step 2b: TMDB episode fallback (when TVMaze has no data)
       enrichedMedia = await this.enrichWithTmdbEpisodes(enrichedMedia, type, logPrefix);
 
-      enrichedMedia = await this.episodeLocalization.localize(enrichedMedia, type);
+      enrichedMedia = await this.episodeMerge.merge(enrichedMedia, type);
 
       // Step 3: Attach external ratings
       const withRatings = await this.attachExternalRatings(enrichedMedia, tmdbId, type);

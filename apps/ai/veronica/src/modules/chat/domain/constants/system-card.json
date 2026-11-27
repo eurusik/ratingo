@@ -25,12 +25,12 @@
       "description": "Pulls the most anticipated new shows."
     },
     {
-      "job": "scheduled-episode-texts",
+      "job": "scheduled-episode-details",
       "queue": "ingestion",
       "schedule": {
         "cron": "0 1 * * 0"
       },
-      "description": "Picks up Ukrainian episode titles and overviews that TMDB gained since the last run, for shows the regular syncs no longer touch."
+      "description": "Fills episode texts, stills, runtimes, ratings and air dates from TMDB for shows the regular syncs no longer touch."
     },
     {
       "job": "scheduled-key-health",

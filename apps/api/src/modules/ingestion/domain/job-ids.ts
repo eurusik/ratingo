@@ -59,6 +59,10 @@ export function buildAltTitlesBackfillJobId(mediaItemId: string, day: string): s
   return `backfill-alt_${mediaItemId}_${day}`;
 }
 
-export function buildEpisodeTextsBackfillJobId(showId: string, day: string): string {
-  return `backfill-episode-texts_${showId}_${day}`;
+export function buildEpisodeDetailsBackfillJobId(showId: string, day: string): string {
+  return `backfill-episode-details_${showId}_${day}`;
+}
+
+export function buildEpisodeTitlesRepairJobId(showId: string, day: string): string {
+  return `repair-episode-titles_${showId}_${day}`;
 }

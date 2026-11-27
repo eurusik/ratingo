@@ -145,12 +145,12 @@ export const INGESTION_SCHEDULED_JOBS: readonly Omit<ScheduledJobConfig, 'enable
     data: {},
   },
   {
-    name: 'episodeTexts',
-    jobType: 'backfill-episode-texts-dispatcher',
+    name: 'episodeDetails',
+    jobType: 'backfill-episode-details-dispatcher',
     pattern: '0 1 * * 0',
-    jobId: 'scheduled-episode-texts',
+    jobId: 'scheduled-episode-details',
     description:
-      'Picks up Ukrainian episode titles and overviews that TMDB gained since the last run, for shows the regular syncs no longer touch.',
+      'Fills episode texts, stills, runtimes, ratings and air dates from TMDB for shows the regular syncs no longer touch.',
     data: {},
   },
 ];

@@ -16,7 +16,8 @@ export {
 
 export {
   IngestionJob,
-  type BackfillEpisodeTextsJobData,
+  type BackfillEpisodeDetailsJobData,
+  type RepairEpisodeTitlesJobData,
   type SyncMediaJobData,
   UpcomingMoviesRefreshScope,
   type UpcomingMoviesRefreshScopeType,
