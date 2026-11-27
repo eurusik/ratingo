@@ -15,6 +15,7 @@ describe('parseEvalOptions', () => {
       judgeModel: DEFAULT_JUDGE_MODEL,
       baselinePath: DEFAULT_BASELINE_PATH,
       saveBaseline: false,
+      forceBaseline: false,
       calibrate: false,
       calibrateOnly: false,
       only: null,
@@ -59,6 +60,13 @@ describe('parseEvalOptions', () => {
     });
   });
 
+  it('reads --force-baseline together with --save-baseline', () => {
+    expect(parseEvalOptions(['--save-baseline', '--force-baseline'], false)).toMatchObject({
+      saveBaseline: true,
+      forceBaseline: true,
+    });
+  });
+
   it('lets calibrate-only imply calibrate and selects cases with --only', () => {
     expect(parseEvalOptions(['--calibrate-only'], false)).toMatchObject({
       calibrate: true,
@@ -78,6 +86,7 @@ describe('parseEvalOptions', () => {
     ['--runs'],
     ['plain'],
     ['--only=a', '--save-baseline'],
+    ['--force-baseline'],
   ])('rejects %j', (...argv) => {
     expect(() => parseEvalOptions(argv, false)).toThrow(InvalidEvalOptionError);
   });

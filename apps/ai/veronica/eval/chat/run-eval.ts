@@ -18,6 +18,11 @@ import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
 import { summarize, type CaseOutcome, type EvalSummary } from './aggregate';
 import { buildBaseline, diffBaseline, type Baseline } from './baseline-diff';
 import { readBaselineFile, writeBaselineFile } from './baseline-file';
+import {
+  BaselineSaveDecision,
+  REGRESSIONS_NOT_SAVED_MESSAGE,
+  decideBaselineSave,
+} from './baseline-save.policy';
 import type { CalibrationReport } from './calibration';
 import { measureJudgeAgreement } from './calibration-runner';
 import { CALIBRATION_ITEMS } from './calibration.set';
@@ -156,19 +161,27 @@ const saveBaseline = async ({ identity, options }: RunContext, run: EvalRun): Pr
   write(`baseline saved to ${options.baselinePath}`);
 };
 
-const exitCodeAgainstBaseline = (
+interface BaselineComparison {
+  exitCode: number;
+  regressions: number;
+}
+
+const compareWithBaseline = (
   { options, baseline, skippedCases }: RunContext,
   run: EvalRun,
-): number => {
+): BaselineComparison => {
   if (baseline === null) {
     write(`no baseline at ${options.baselinePath}: nothing to compare with`);
-    return 0;
+    return { exitCode: 0, regressions: 0 };
   }
   const diff = diffBaseline(baseline, run.outcomes, {
     fullRun: options.only === null && skippedCases.length === 0,
   });
   write(`\ncompared with the baseline at ${options.baselinePath}:\n${renderDiff(diff)}`);
-  return diff.regressions.length > 0 ? EXIT_REGRESSION : 0;
+  return {
+    exitCode: diff.regressions.length > 0 ? EXIT_REGRESSION : 0,
+    regressions: diff.regressions.length,
+  };
 };
 
 const reportRun = async (context: RunContext, run: EvalRun): Promise<number> => {
@@ -181,12 +194,22 @@ const reportRun = async (context: RunContext, run: EvalRun): Promise<number> => 
     write('the results are incomplete: not compared with the baseline and not saved');
     return EXIT_INCOMPLETE;
   }
-  const exitCode = exitCodeAgainstBaseline(context, run);
-  if (options.saveBaseline && context.skippedCases.length > 0) {
+  const { exitCode, regressions } = compareWithBaseline(context, run);
+  const decision = decideBaselineSave({
+    saveBaseline: options.saveBaseline,
+    forceBaseline: options.forceBaseline,
+    skippedCases: context.skippedCases.length,
+    regressions,
+  });
+  if (decision === BaselineSaveDecision.SKIPPED_CASES) {
     write(`baseline not saved: ${context.skippedCases.length} cases were skipped`);
     return Math.max(exitCode, EXIT_INCOMPLETE);
   }
-  if (options.saveBaseline) await saveBaseline(context, run);
+  if (decision === BaselineSaveDecision.REGRESSIONS) {
+    write(REGRESSIONS_NOT_SAVED_MESSAGE);
+    return exitCode;
+  }
+  if (decision === BaselineSaveDecision.SAVE) await saveBaseline(context, run);
   return exitCode;
 };
 
