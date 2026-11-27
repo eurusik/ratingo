@@ -234,6 +234,7 @@ export class FakeMovieRepository implements IMovieRepository {
           slug: movie.slug,
           title: movie.title,
           poster: null,
+          backdrop: null,
           releaseDate: range.from,
           releaseDateKind: 'digital',
           releaseCountry: null,

@@ -41,6 +41,7 @@ export function calendarMovie(overrides: Partial<CalendarMovie> = {}): CalendarM
     slug: 'movie-a',
     title: 'Movie A',
     poster: null,
+    backdrop: null,
     releaseDate: '2026-11-12T00:00:00.000Z',
     releaseDateKind: 'theatrical',
     releaseCountry: 'US',

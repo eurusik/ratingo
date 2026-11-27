@@ -32,6 +32,7 @@ export { PageTransition } from './page-transition/page-transition';
 export { Rail, RailItem } from './rail/rail';
 export { RailPager } from './rail/rail-pager';
 export { ReturningImage } from './returning-image/returning-image';
+export { StillFrame, stillShape, type StillSize } from './still-frame/still-frame';
 export { ResponsiveDialog } from './responsive-dialog/responsive-dialog';
 export { SectionHeader } from './section-header/section-header';
 export { SectionError } from './section-error/section-error';

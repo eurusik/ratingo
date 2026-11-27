@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import { Skeleton } from '@heroui/react';
 import { cn } from '@ratingo/web-core/lib';
 import type { CalendarMediaType } from '@/shared/api';
+import { stillShape } from '@/shared/ui';
 import { WEEK_LENGTH } from '../model/calendar-dates';
 import {
   CALENDAR_ROOT,
@@ -26,7 +27,7 @@ const SKELETON_ROWS = 3;
 function EpisodeSkeleton() {
   return (
     <li className={RELEASE_ROW}>
-      <Skeleton className="h-[63px] w-28 shrink-0 rounded-[10px]" />
+      <Skeleton className={stillShape('row')} />
       <span className="flex min-w-0 flex-1 flex-col gap-2">
         <Skeleton className="h-4 w-3/5 rounded-full" />
         <Skeleton className="h-3 w-4/5 rounded-full" />
@@ -38,7 +39,7 @@ function EpisodeSkeleton() {
 function MovieSkeleton() {
   return (
     <li className={RELEASE_ROW}>
-      <Skeleton className="h-15 w-10 shrink-0 rounded-lg" />
+      <Skeleton className={stillShape('row')} />
       <span className="flex min-w-0 flex-1 flex-col gap-2">
         <Skeleton className="h-4 w-3/5 rounded-full" />
         <Skeleton className="h-3 w-2/5 rounded-full" />

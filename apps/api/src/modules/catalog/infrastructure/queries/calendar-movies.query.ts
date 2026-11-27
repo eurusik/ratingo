@@ -43,6 +43,7 @@ interface CalendarMovieRow {
   slug: string;
   title: string;
   posterPath: string | null;
+  backdropPath: string | null;
   popularity: number | null;
   releaseDate: Date | null;
   theatricalReleaseDate: Date | null;
@@ -87,6 +88,7 @@ export class CalendarMoviesQuery {
         slug: ranked.slug,
         title: ranked.title,
         posterPath: ranked.posterPath,
+        backdropPath: ranked.backdropPath,
         popularity: ranked.popularity,
         releaseDate: ranked.releaseDate,
         theatricalReleaseDate: ranked.theatricalReleaseDate,
@@ -112,6 +114,7 @@ export class CalendarMoviesQuery {
         slug: mediaItems.slug,
         title: mediaItems.title,
         posterPath: mediaItems.posterPath,
+        backdropPath: mediaItems.backdropPath,
         popularity: mediaItems.popularity,
         releaseDate: mediaItems.releaseDate,
         theatricalReleaseDate: movies.theatricalReleaseDate,
@@ -191,6 +194,7 @@ function toCalendarMovie(row: CalendarMovieRow): CalendarMovie | null {
     slug: row.slug,
     title: row.title,
     poster: ImageMapper.toPoster(row.posterPath),
+    backdrop: ImageMapper.toBackdrop(row.backdropPath),
     releaseDate: release.date,
     releaseDateKind: release.kind,
     releaseCountry: release.country,
