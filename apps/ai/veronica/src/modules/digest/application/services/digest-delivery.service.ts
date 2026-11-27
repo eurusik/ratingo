@@ -4,7 +4,7 @@ import { CLOCK_PORT, type ClockPort, type RunTrigger } from '@ratingo/ai-core';
 
 import { NOTIFIER_PORT, NotificationError, type NotifierPort } from '../../../notify/public';
 import { CLAIM_STALE_MS } from '../../digest.constants';
-import { kyivDateOf } from '../../domain/kyiv-day';
+import { kyivDateOf } from '@ratingo/ai-ops-tools';
 import {
   DIGEST_DELIVERY_REPOSITORY,
   type DigestDeliveryRepository,

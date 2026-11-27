@@ -16,6 +16,7 @@ import {
   type StubScript,
 } from '@ratingo/ai-core';
 import { Logger } from '@nestjs/common';
+import { LogsSearchExecutor, type OpsExecutors } from '@ratingo/ai-ops-tools';
 
 import { createInvestigator } from '../../../../core/investigator.factory';
 import { AGENT_FOLDER_PATH } from '../../../../core/ai-core.module';
@@ -35,6 +36,7 @@ import {
   TEST_SHA,
 } from '../../infrastructure/testing/in-memory-snapshot.testing';
 import type { CodeSnapshotPort } from '../../domain/ports/code-snapshot.port';
+import { unavailableOps } from '../../infrastructure/testing/unavailable-ops.testing';
 import { MAX_QUESTION_CHARS } from '../../investigation.constants';
 
 const USAGE = {
@@ -76,7 +78,7 @@ const FILES = {
   'apps/api/worker.ts': "line one\nworker.on('failed', handler);\nline three\nline four\n",
 };
 
-const build = async (steps: readonly Step[], snapshots?: CodeSnapshotPort) => {
+const build = async (steps: readonly Step[], snapshots?: CodeSnapshotPort, ops?: OpsExecutors) => {
   const folder = await loadAgentFolder(AGENT_FOLDER_PATH, { knownModelAliases: ['review'] });
   const model = new StubModelAdapter(scripted(steps));
   const runs = new InMemoryRunRepository();
@@ -87,6 +89,7 @@ const build = async (steps: readonly Step[], snapshots?: CodeSnapshotPort) => {
     providers: { stub: model },
     aliases: { review: ['stub:review'] },
     clock: new FixedClock(1_000),
+    ops: ops ?? unavailableOps(new FixedClock(1_000)),
     runs,
   });
   return { service, model, runs };
@@ -272,6 +275,7 @@ describe('InvestigationService', () => {
       providers: { stub: model },
       aliases: { review: ['stub:review'] },
       clock: new FixedClock(1_000),
+      ops: unavailableOps(new FixedClock(1_000)),
     });
 
     const outcome = await ask(service);
@@ -311,6 +315,7 @@ describe('InvestigationService', () => {
       },
       aliases: { review: ['stub:review'] },
       clock: new FixedClock(1_000),
+      ops: unavailableOps(new FixedClock(1_000)),
     });
 
     const outcome = await ask(failing);
@@ -319,6 +324,119 @@ describe('InvestigationService', () => {
       status: InvestigationStatus.UNANSWERED,
       stopReason: RunStopReason.MODEL_ERROR,
       stopDetail: 'client, HTTP 400, invalid_request_error',
+    });
+  });
+
+  describe('with runtime tools', () => {
+    const NOW_MS = 1_000_000;
+    const logsOps = (lines: string[]): OpsExecutors => {
+      const logs = new LogsSearchExecutor(
+        {
+          search: async () => ({
+            lines: lines.map((line) => ({ atMs: NOW_MS - 60_000, line })),
+            limitReached: false,
+          }),
+        },
+        new FixedClock(NOW_MS),
+        { warn: () => undefined },
+      );
+      return {
+        ...unavailableOps(new FixedClock(NOW_MS)),
+        logsSearch: (input) => logs.run(input),
+      };
+    };
+    const timeoutLine = JSON.stringify({
+      level: 'error',
+      context: 'Sync',
+      message: 'TMDB API: Request timeout',
+    });
+    const askAboutLogs = [
+      { tool: 'logs_search', input: { service: 'ratingo-worker' } },
+      { tool: 'code_read', input: { path: 'apps/api/worker.ts', startLine: 1, endLine: 3 } },
+    ] as const;
+
+    it('turns a claim that cites a log row and a code line into a fact carrying the row', async () => {
+      const { service } = await build(
+        [
+          ...askAboutLogs,
+          {
+            answer: {
+              answer: 'Таймаут у воркері.',
+              claims: [
+                {
+                  text: 'the worker logged a timeout and reacts to failed',
+                  citations: [{ path: 'apps/api/worker.ts', startLine: 2, endLine: 2 }],
+                  evidence: ['logs_search#1.1'],
+                },
+              ],
+              assumptions: [],
+              unknowns: [],
+            },
+          },
+        ],
+        undefined,
+        logsOps([timeoutLine]),
+      );
+
+      const outcome = await ask(service);
+
+      expect(outcome.answer?.support).toBe(AnswerSupport.SUPPORTED);
+      expect(outcome.answer?.facts[0]?.evidence).toEqual([
+        expect.objectContaining({
+          ref: 'logs_search#1.1',
+          tool: 'logs_search',
+          summary: expect.stringContaining('TMDB API: Request timeout'),
+        }),
+      ]);
+    });
+
+    it('demotes a claim that cites a row the tools never showed', async () => {
+      const { service } = await build(
+        [
+          ...askAboutLogs,
+          {
+            answer: {
+              answer: 'Вигадка.',
+              claims: [{ text: 'invented', citations: [], evidence: ['logs_search#7.3'] }],
+              assumptions: [],
+              unknowns: [],
+            },
+          },
+        ],
+        undefined,
+        logsOps([timeoutLine]),
+      );
+
+      const outcome = await ask(service);
+
+      expect(outcome.answer?.facts).toEqual([]);
+      expect(outcome.answer?.assumptions[0]?.problems).toEqual([
+        {
+          citation: null,
+          evidenceRef: 'logs_search#7.3',
+          failure: CitationFailure.EVIDENCE_NOT_SHOWN,
+        },
+      ]);
+    });
+
+    it('answers a call to an unconfigured tool with the reason, and the run goes on', async () => {
+      const { service, model } = await build([
+        { tool: 'logs_search', input: { service: 'ratingo-worker' } },
+        {
+          answer: {
+            answer: 'Логи недоступні.',
+            claims: [],
+            assumptions: [],
+            unknowns: ['логи недоступні'],
+          },
+        },
+      ]);
+
+      const outcome = await ask(service);
+
+      expect(outcome.status).toBe(InvestigationStatus.ANSWERED);
+      const toolResult = JSON.stringify(model.requests.at(-1)?.messages);
+      expect(toolResult).toContain('logs_search is unavailable: not_configured');
     });
   });
 
@@ -346,7 +464,7 @@ describe('InvestigationService', () => {
     expect(model.requests).toHaveLength(0);
   });
 
-  it('offers exactly the three read-only tools and tells the model the commit', async () => {
+  it('offers exactly the code tools and the runtime tools, all read-only, and tells the model the commit', async () => {
     const { service, model } = await build([
       { answer: { answer: 'x', claims: [], assumptions: [], unknowns: [] } },
     ]);
@@ -358,6 +476,9 @@ describe('InvestigationService', () => {
       'code_search',
       'code_read',
       'code_list',
+      'metrics_query',
+      'job_failures',
+      'logs_search',
     ]);
     expect(JSON.stringify(request.messages)).toContain(TEST_SHA);
     expect(request.system).toContain('<untrusted>');

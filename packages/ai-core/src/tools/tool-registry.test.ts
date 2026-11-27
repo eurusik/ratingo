@@ -8,6 +8,7 @@ import {
   ToolRegistry,
   UnknownToolError,
   WriteToolNotAllowedError,
+  sanitizeToolOutput,
 } from './tool-registry';
 import type { Tool } from './define-tool';
 
@@ -166,5 +167,17 @@ describe('ToolRegistry', () => {
     const result = await registry.execute(call('verbose', {}), context);
 
     expect(result.content).toBe(`${'x'.repeat(20)}${TRUNCATION_MARKER}`);
+  });
+});
+
+describe('sanitizeToolOutput', () => {
+  it('redacts secrets and cuts what is over the tool cap with the marker', () => {
+    const tool = { maxOutputChars: 40 };
+
+    expect(sanitizeToolOutput(tool, 'short')).toBe('short');
+    expect(sanitizeToolOutput(tool, 'x'.repeat(100))).toBe(`${'x'.repeat(40)}${TRUNCATION_MARKER}`);
+    expect(
+      sanitizeToolOutput(tool, 'Authorization: Bearer abcdef1234567890abcdef1234567890'),
+    ).not.toContain('abcdef1234567890');
   });
 });

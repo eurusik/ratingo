@@ -1,4 +1,4 @@
-export type JobSchedule = { cron: string } | { everyMs: number };
+import type { JobSchedule } from '@ratingo/ai-ops-tools';
 
 interface SystemCardJob {
   job: string;

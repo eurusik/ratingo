@@ -1,5 +1,4 @@
-import { formatKyivDateTime } from '../../src/modules/chat/domain/policies/kyiv-time.policy';
-import { kyivDateOf } from '../../src/modules/digest/public';
+import { formatKyivDateTime, kyivDateOf } from '@ratingo/ai-ops-tools';
 
 export const EVAL_NOW_MS = Date.UTC(2026, 10, 22, 12, 0, 0);
 

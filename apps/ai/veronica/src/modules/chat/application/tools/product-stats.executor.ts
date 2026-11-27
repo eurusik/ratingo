@@ -1,14 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { CLOCK_PORT, type ClockPort } from '@ratingo/ai-core';
+import { kyivDateOf, parseWindow } from '@ratingo/ai-ops-tools';
 
-import {
-  PRODUCT_SERIES_PORT,
-  SourceState,
-  kyivDateOf,
-  type ProductSeriesPort,
-} from '../../../digest/public';
-import { parseWindow } from '../../domain/policies/metric-params.policy';
+import { PRODUCT_SERIES_PORT, SourceState, type ProductSeriesPort } from '../../../digest/public';
 
 import type { ProductStatsInput } from './investigation-executors';
 

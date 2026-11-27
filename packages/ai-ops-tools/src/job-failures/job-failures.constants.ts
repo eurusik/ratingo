@@ -1,0 +1,3 @@
+export const JOB_FAILURES_OUTPUT_CAP = 4500;
+export const JOB_FAILURES_ROW_LIMIT = 100;
+export const JOB_FAILURES_DEFAULT_WINDOW = '24h';

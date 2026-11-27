@@ -3,7 +3,7 @@ import * as fc from 'fast-check';
 import { SYSTEM_CARD, SYSTEM_CARD_MAX_CHARS } from '../constants/system-card.constants';
 import type { SystemCard } from '../entities/system-card';
 
-import { CUSTOM_CADENCE } from './schedule-cadence.policy';
+import { CUSTOM_CADENCE } from '@ratingo/ai-ops-tools';
 import { renderSystemCard } from './system-card.policy';
 
 describe('renderSystemCard', () => {

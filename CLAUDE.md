@@ -18,8 +18,9 @@ Review the changed code before moving on and fix what the reviews find, using th
 - `apps/web-client/` — Next.js 16 + React 19 + TanStack Query v5 (admin and legacy site)
 - `apps/storefront/` — the public site: Next.js 16, FSD v2.1; rules in `.claude/rules/storefront.md`
 - `apps/pg-backup/` — daily `pg_dump` of prod to the Railway bucket
-- `apps/ai/veronica/`, `apps/ai/happy/`, `apps/ai/dume/` — AI agents (daily ops digest, PR reviewer, code investigator); they import only `@ratingo/ai-core` and `@ratingo/node-telemetry`, never each other; see `apps/ai/ARCHITECTURE.md`
+- `apps/ai/veronica/`, `apps/ai/happy/`, `apps/ai/dume/` — AI agents (daily ops digest, PR reviewer, code investigator); they import only `@ratingo/ai-core`, `@ratingo/ai-ops-tools` and `@ratingo/node-telemetry`, never each other; see `apps/ai/ARCHITECTURE.md`
 - `packages/ai-core/` — agent platform: model ports, tools, agent loop, budgets, runs
+- `packages/ai-ops-tools/` — the read-only `logs_search`, `job_failures` and `metrics_query` tools, shared by Veronica and DUM-E; Veronica's tool definitions and outputs are pinned by `ops-tools.golden.spec.ts`
 - `packages/node-telemetry/` — OpenTelemetry conventions shared by the API and the storefront; renaming a metric or label breaks the Grafana dashboards and alerts
 - `packages/web-core/`, `packages/ui/` — framework-agnostic code shared by the web apps
 - `packages/api-contract/` — OpenAPI types (auto-generated)

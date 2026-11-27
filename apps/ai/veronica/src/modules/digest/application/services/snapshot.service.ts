@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { kyivDateOf } from '../../domain/kyiv-day';
+import { kyivDateOf } from '@ratingo/ai-ops-tools';
 import type { Snapshot } from '../../domain/entities/snapshot';
 import { ApiKeysCollector } from '../collectors/api-keys.collector';
 import { BackupCollector } from '../collectors/backup.collector';

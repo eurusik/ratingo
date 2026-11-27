@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build:packages": "npm run build --workspace=@ratingo/ai-core --workspace=@ratingo/node-telemetry",
+    "build:packages": "npm run build --workspace=@ratingo/ai-core --workspace=@ratingo/ai-ops-tools --workspace=@ratingo/node-telemetry",
     "prebuild": "npm run build:packages",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
@@ -23,6 +23,7 @@
     "@opentelemetry/sdk-metrics": "2.12.0",
     "@opentelemetry/sdk-node": "0.223.0",
     "@ratingo/ai-core": "*",
+    "@ratingo/ai-ops-tools": "*",
     "@ratingo/node-telemetry": "*",
     "ioredis": "^5.8.2",
     "reflect-metadata": "^0.2.2",

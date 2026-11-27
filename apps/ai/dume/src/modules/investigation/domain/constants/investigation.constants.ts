@@ -29,8 +29,14 @@ export const CitationLimits = {
   MAX_LINES_PER_CITATION: 80,
   MAX_CLAIMS: 12,
   MAX_CITATIONS_PER_CLAIM: 4,
+  MAX_EVIDENCE_PER_CLAIM: 4,
+  MAX_EVIDENCE_REF_CHARS: 60,
   MAX_ASSUMPTIONS: 10,
   MAX_UNKNOWNS: 10,
 } as const;
 
 export const UNTRUSTED_CODE_LABEL = 'repository content';
+
+export const EvidenceLimits = {
+  SUMMARY_MAX_CHARS: 400,
+} as const;

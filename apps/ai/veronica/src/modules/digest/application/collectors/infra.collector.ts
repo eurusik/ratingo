@@ -5,12 +5,7 @@ import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
 
-import {
-  DATABASE_UP,
-  REDIS_MEMORY_MAX,
-  REDIS_MEMORY_USED,
-  REDIS_UP,
-} from '../../domain/queries/prom-queries';
+import { DATABASE_UP, REDIS_MEMORY_MAX, REDIS_MEMORY_USED, REDIS_UP } from '@ratingo/ai-ops-tools';
 
 import { guarded } from './collector-helpers';
 

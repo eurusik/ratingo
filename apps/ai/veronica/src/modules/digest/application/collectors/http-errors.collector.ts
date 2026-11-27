@@ -9,7 +9,7 @@ import { available, unavailable } from '../../domain/entities/source-reading';
 import { UNKNOWN_LABEL } from '../../domain/constants/digest-text.constants';
 import { METRICS_PORT, type MetricsPort, type MetricSample } from '../../domain/ports/metrics.port';
 
-import { clientErrors, clientRequests } from '../../domain/queries/prom-queries';
+import { clientErrors, clientRequests } from '@ratingo/ai-ops-tools';
 
 import { baselineAt, guarded } from './collector-helpers';
 

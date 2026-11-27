@@ -6,7 +6,7 @@ import { available, unavailable } from '../../domain/entities/source-reading';
 import { UNKNOWN_LABEL } from '../../domain/constants/digest-text.constants';
 import { METRICS_PORT, type MetricSample, type MetricsPort } from '../../domain/ports/metrics.port';
 
-import { SCHEDULER_LAST_RUNS, SCHEDULER_NEXT_RUNS } from '../../domain/queries/prom-queries';
+import { SCHEDULER_LAST_RUNS, SCHEDULER_NEXT_RUNS } from '@ratingo/ai-ops-tools';
 
 import { guarded, hoursSince } from './collector-helpers';
 import { plannedRuns } from './planned-runs';

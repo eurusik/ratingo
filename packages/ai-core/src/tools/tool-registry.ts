@@ -49,7 +49,7 @@ async function collectProvidedTools(sources: readonly ToolSource[]): Promise<Map
 
 const REDACTION_INPUT_CAP_FACTOR = 4;
 
-function sanitizeOutput(tool: Tool, text: string): string {
+export function sanitizeToolOutput(tool: Pick<Tool, 'maxOutputChars'>, text: string): string {
   const bounded = text.slice(0, tool.maxOutputChars * REDACTION_INPUT_CAP_FACTOR);
   const redacted = redactSecrets(bounded);
   return redacted.length > tool.maxOutputChars
@@ -144,12 +144,12 @@ export class ToolRegistry {
   ): Promise<{ result: ToolResult; deterministicFailure: boolean }> {
     try {
       const output = await tool.run(call.input, context);
-      const result = { callId: call.id, content: sanitizeOutput(tool, output), isError: false };
+      const result = { callId: call.id, content: sanitizeToolOutput(tool, output), isError: false };
       return { result, deterministicFailure: false };
     } catch (error) {
       const result = {
         callId: call.id,
-        content: sanitizeOutput(tool, describeError(error)),
+        content: sanitizeToolOutput(tool, describeError(error)),
         isError: true,
       };
       return { result, deterministicFailure: error instanceof ToolInputError };
