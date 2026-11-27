@@ -3,6 +3,17 @@ export interface EpisodeDetailsBackfillCandidate {
   tmdbId: number;
 }
 
+export interface EpisodeTitleRepairCandidate extends EpisodeDetailsBackfillCandidate {
+  imdbId: string;
+}
+
+export interface EpisodeDetailsCandidatePage {
+  cursor?: string;
+  limit: number;
+  asOf: Date;
+  checkedBefore: Date;
+}
+
 export interface EpisodeDetails {
   title: string | null;
   overview: string | null;

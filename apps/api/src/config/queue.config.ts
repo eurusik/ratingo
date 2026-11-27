@@ -56,10 +56,15 @@ export const WORKER_CONFIG = {
   /**
    * Backfill queue worker config.
    * Jobs: backfill-alt-titles-item, backfill-imdb-item, backfill-episode-details-item (TMDB-only — no Trakt/OMDb/TVMaze).
-   * Duration: 200-2000ms (single TMDB API call + DB update)
+   * Duration: 200-2000ms (TMDB calls + DB update)
    *
-   * Higher throughput than ingestion: TMDB allows ~40 req/s.
-   * 15 concurrent jobs × ~300ms avg = ~50 req/s → capped by limiter at 600/min.
+   * TMDB calls per job: one for alt-titles and imdb. Episode details makes one uk-UA call per
+   * 20 seasons with gaps, plus one en-US call per 20 seasons TMDB counts differently (common
+   * for airing seasons): 1-2 calls for almost every show, 4 for a show past 20 seasons.
+   *
+   * Higher throughput than ingestion: TMDB allows ~40-50 req/s.
+   * The limiter caps jobs at 600/min (10/sec): 10-20 req/s in practice, 40 req/s only if every
+   * job were a 20+ season show with renumbered seasons.
    */
   backfill: {
     lockDuration: 30_000, // 30 seconds (short jobs)

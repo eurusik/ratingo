@@ -835,6 +835,54 @@ describe('SyncMediaService', () => {
       });
     });
 
+    it('takes a TMDB date only once it has safely passed and moves lastAirDate with it', async () => {
+      const now = new Date('2026-11-27T12:00:00Z');
+      (
+        service as unknown as { episodeMerge: { clock: { now: jest.Mock } } }
+      ).episodeMerge.clock.now.mockReturnValue(now);
+      const tvMazeAired = new Date('2026-11-01T01:00:00Z');
+      const show = {
+        ...tvMazeShow([
+          {
+            number: 1,
+            episodeCount: 3,
+            episodes: [
+              { number: 1, title: 'Pilot', airDate: tvMazeAired },
+              { number: 2, title: 'Second', airDate: null },
+              { number: 3, title: 'Finale', airDate: null },
+            ],
+          },
+        ]),
+      };
+      show.details = { ...show.details, lastAirDate: tvMazeAired, nextAirDate: null } as never;
+      tmdbAdapter.getShow.mockResolvedValue(show);
+      tvMazeEnrichment.enrich.mockResolvedValue(show);
+      tmdbAdapter.getSeasonsEpisodes.mockResolvedValue({
+        episodesBySeason: new Map([
+          [
+            1,
+            [
+              { number: 1, title: 'Серія 1', airDate: new Date('2026-10-31T00:00:00Z') },
+              { number: 2, title: 'Серія 2', airDate: new Date('2026-11-08T00:00:00Z') },
+              { number: 3, title: 'Серія 3', airDate: new Date('2026-11-28T00:00:00Z') },
+            ],
+          ],
+        ]),
+        failedSeasons: [],
+      });
+
+      await service.syncShow(1399);
+
+      const { details } = mediaRepository.upsert.mock.calls[0][0] as any;
+      expect(details.seasons[0].episodes.map((episode: any) => episode.airDate)).toEqual([
+        tvMazeAired,
+        new Date('2026-11-08T00:00:00Z'),
+        null,
+      ]);
+      expect(details.lastAirDate).toEqual(new Date('2026-11-08T00:00:00Z'));
+      expect(details.nextAirDate).toBeNull();
+    });
+
     it('skips specials and seasons already filled from TMDB', async () => {
       const show = tvMazeShow([
         { number: 0, episodeCount: 1, episodes: [{ number: 1, title: 'Special' }] },

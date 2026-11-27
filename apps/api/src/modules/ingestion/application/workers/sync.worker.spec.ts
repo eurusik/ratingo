@@ -14,6 +14,7 @@ import { AnticipatedShowsPipeline } from '../pipelines/anticipated-shows.pipelin
 import { UpcomingMoviesPipeline } from '../pipelines/upcoming-movies.pipeline';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillEpisodeDetailsPipeline } from '../pipelines/backfill-episode-details.pipeline';
+import { RepairEpisodeTitlesPipeline } from '../pipelines/repair-episode-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 import { destroyTraktRateLimiter } from '@/modules/trakt/infrastructure/adapters/base-trakt-http';
@@ -35,6 +36,7 @@ describe('SyncWorker', () => {
   let backfillImdbPipeline: any;
   let backfillAltTitlesPipeline: any;
   let backfillEpisodeDetailsPipeline: any;
+  let repairEpisodeTitlesPipeline: any;
   let backfillMdblistRatingsPipeline: any;
   let mediaPageCache: any;
 
@@ -97,6 +99,11 @@ describe('SyncWorker', () => {
       dispatch: jest.fn().mockResolvedValue(undefined),
     };
 
+    repairEpisodeTitlesPipeline = {
+      dispatch: jest.fn().mockResolvedValue(undefined),
+      processItem: jest.fn().mockResolvedValue(undefined),
+    };
+
     backfillMdblistRatingsPipeline = {
       dispatch: jest.fn().mockResolvedValue(undefined),
       processItem: jest.fn().mockResolvedValue(undefined),
@@ -116,6 +123,7 @@ describe('SyncWorker', () => {
         { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
         { provide: BackfillEpisodeDetailsPipeline, useValue: backfillEpisodeDetailsPipeline },
+        { provide: RepairEpisodeTitlesPipeline, useValue: repairEpisodeTitlesPipeline },
         { provide: BackfillMdblistRatingsPipeline, useValue: backfillMdblistRatingsPipeline },
         { provide: MediaPageCacheService, useValue: mediaPageCache },
       ],
@@ -208,6 +216,28 @@ describe('SyncWorker', () => {
       } as Job;
       await worker.process(job);
       expect(backfillEpisodeDetailsPipeline.dispatch).toHaveBeenCalled();
+    });
+  });
+
+  describe('process - episode titles repair', () => {
+    it('should delegate the repair dispatcher and items to the repair pipeline', async () => {
+      await worker.process({
+        name: IngestionJob.REPAIR_EPISODE_TITLES_DISPATCHER,
+        data: {},
+        id: 'repair',
+      } as Job);
+      await worker.process({
+        name: IngestionJob.REPAIR_EPISODE_TITLES_ITEM,
+        data: { showId: 'show-a', tmdbId: 387, imdbId: 'tt0206512' },
+        id: 'repair-item',
+      } as Job);
+
+      expect(repairEpisodeTitlesPipeline.dispatch).toHaveBeenCalled();
+      expect(repairEpisodeTitlesPipeline.processItem).toHaveBeenCalledWith({
+        showId: 'show-a',
+        tmdbId: 387,
+        imdbId: 'tt0206512',
+      });
     });
   });
 

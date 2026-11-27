@@ -1229,6 +1229,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ingestion/backfill/episode-titles-repair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Repair Ukrainian episode titles in renumbered seasons
+         * @description One-off repair for seasons where TVMaze and TMDB count episodes differently, so titles once copied by episode number may belong to another episode. Re-pairs each stored episode with TMDB by its English TVMaze title and overwrites title and overview, including Ukrainian ones the pairing does not confirm. Runs on the ingestion queue (TVMaze calls). Rerunning changes nothing.
+         */
+        post: operations["IngestionController_repairEpisodeTitles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ingestion/backfill/mdblist-ratings": {
         parameters: {
             query?: never;
@@ -10521,7 +10541,70 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Backfill job queued */
-            200: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_repairEpisodeTitles: {
+        parameters: {
+            query?: {
+                /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repair job queued */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };

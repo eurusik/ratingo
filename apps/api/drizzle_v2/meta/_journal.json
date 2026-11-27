@@ -295,6 +295,13 @@
       "when": 1795703090023,
       "tag": "0041_job_failure_days",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1795782174512,
+      "tag": "0042_episode_details_checked_at",
+      "breakpoints": true
     }
   ]
 }

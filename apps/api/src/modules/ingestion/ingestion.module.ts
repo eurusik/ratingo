@@ -27,6 +27,7 @@ import { BackfillImdbPipeline } from './application/pipelines/backfill-imdb.pipe
 import { BackfillMdblistRatingsPipeline } from './application/pipelines/backfill-mdblist-ratings.pipeline';
 import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
 import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline';
+import { RepairEpisodeTitlesPipeline } from './application/pipelines/repair-episode-titles.pipeline';
 import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
 import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipeline';
 import { TrendingPipeline } from './application/pipelines/trending.pipeline';
@@ -200,6 +201,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     BackfillImdbPipeline,
     BackfillAltTitlesPipeline,
     BackfillEpisodeDetailsPipeline,
+    RepairEpisodeTitlesPipeline,
     BackfillMdblistRatingsPipeline,
   ],
   exports: [SyncMediaService, SnapshotsService],

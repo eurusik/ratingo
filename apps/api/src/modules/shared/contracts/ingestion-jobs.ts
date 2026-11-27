@@ -43,6 +43,8 @@ export enum IngestionJob {
 
   BACKFILL_EPISODE_DETAILS_DISPATCHER = 'backfill-episode-details-dispatcher',
   BACKFILL_EPISODE_DETAILS_ITEM = 'backfill-episode-details-item',
+  REPAIR_EPISODE_TITLES_DISPATCHER = 'repair-episode-titles-dispatcher',
+  REPAIR_EPISODE_TITLES_ITEM = 'repair-episode-titles-item',
 
   /** Dispatcher job: loads pending import items for a batch and queues per-item jobs. @queue backfill */
   RESOLVE_IMPORT_DISPATCHER = 'resolve-import-dispatcher',
@@ -72,4 +74,8 @@ export interface SyncMediaJobData {
 export interface BackfillEpisodeDetailsJobData {
   showId: string;
   tmdbId: number;
+}
+
+export interface RepairEpisodeTitlesJobData extends BackfillEpisodeDetailsJobData {
+  imdbId: string;
 }

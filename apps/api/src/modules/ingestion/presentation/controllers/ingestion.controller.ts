@@ -16,6 +16,7 @@ import {
   ApiBearerAuth,
   ApiTags,
   ApiOperation,
+  ApiAcceptedResponse,
   ApiOkResponse,
   ApiQuery,
   ApiUnauthorizedResponse,
@@ -518,7 +519,7 @@ export class IngestionController {
     type: String,
     description: 'Bypass daily deduplication (allows re-running within the same UTC day)',
   })
-  @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
+  @ApiAcceptedResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
   @HttpCode(HttpStatus.ACCEPTED)
   async backfillEpisodeDetails(@Query('force') force?: string) {
     const isForce = force === 'true';
@@ -533,6 +534,40 @@ export class IngestionController {
       status: 'queued',
       jobId: job.id,
       jobType: IngestionJob.BACKFILL_EPISODE_DETAILS_DISPATCHER,
+      force: isForce,
+    };
+  }
+  @Post('backfill/episode-titles-repair')
+  @ApiOperation({
+    summary: 'Repair Ukrainian episode titles in renumbered seasons',
+    description:
+      'One-off repair for seasons where TVMaze and TMDB count episodes differently, so titles ' +
+      'once copied by episode number may belong to another episode. Re-pairs each stored ' +
+      'episode with TMDB by its English TVMaze title and overwrites title and overview, ' +
+      'including Ukrainian ones the pairing does not confirm. Runs on the ingestion queue ' +
+      '(TVMaze calls). Rerunning changes nothing.',
+  })
+  @ApiQuery({
+    name: 'force',
+    required: false,
+    type: String,
+    description: 'Bypass daily deduplication (allows re-running within the same UTC day)',
+  })
+  @ApiAcceptedResponse({ type: IngestionJobResponseDto, description: 'Repair job queued' })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async repairEpisodeTitles(@Query('force') force?: string) {
+    const isForce = force === 'true';
+    const window = isForce ? Date.now().toString() : formatUtcDayId();
+    const job = await this.ingestionQueue.add(
+      IngestionJob.REPAIR_EPISODE_TITLES_DISPATCHER,
+      {},
+      { jobId: `repair_episode_titles_${window}` },
+    );
+
+    return {
+      status: 'queued',
+      jobId: job.id,
+      jobType: IngestionJob.REPAIR_EPISODE_TITLES_DISPATCHER,
       force: isForce,
     };
   }

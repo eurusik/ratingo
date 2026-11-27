@@ -2,6 +2,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { Test, type TestingModule } from '@nestjs/testing';
 
 import { formatUtcDayId } from '@/common/utils/date.util';
+import { CLOCK_PORT } from '@/modules/shared/clock';
 import { type StoredEpisode } from '@/modules/ingestion/domain/models/episode-details.model';
 import { EPISODE_DETAILS_BACKFILL_REPOSITORY } from '@/modules/ingestion/domain/repositories/episode-details-backfill.repository.interface';
 import { BACKFILL_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
@@ -17,8 +18,10 @@ describe('BackfillEpisodeDetailsPipeline', () => {
     findCandidates: jest.Mock;
     findEpisodes: jest.Mock;
     updateEpisodeDetails: jest.Mock;
+    markChecked: jest.Mock;
     fillSeasonAirDatesFromEpisodes: jest.Mock;
   };
+  const now = new Date('2026-11-29T01:00:00.000Z');
   let tmdbAdapter: { getSeasonsEpisodes: jest.Mock };
   let addBulk: jest.Mock;
 
@@ -26,7 +29,8 @@ describe('BackfillEpisodeDetailsPipeline', () => {
     repository = {
       findCandidates: jest.fn().mockResolvedValue([]),
       findEpisodes: jest.fn().mockResolvedValue([]),
-      updateEpisodeDetails: jest.fn().mockResolvedValue(undefined),
+      updateEpisodeDetails: jest.fn().mockResolvedValue(1),
+      markChecked: jest.fn().mockResolvedValue(undefined),
       fillSeasonAirDatesFromEpisodes: jest.fn().mockResolvedValue(0),
     };
     tmdbAdapter = {
@@ -43,6 +47,7 @@ describe('BackfillEpisodeDetailsPipeline', () => {
         { provide: EPISODE_DETAILS_BACKFILL_REPOSITORY, useValue: repository },
         { provide: getQueueToken(BACKFILL_QUEUE), useValue: { addBulk } },
         { provide: TmdbAdapter, useValue: tmdbAdapter },
+        { provide: CLOCK_PORT, useValue: { now: () => now } },
       ],
     }).compile();
 
@@ -60,7 +65,7 @@ describe('BackfillEpisodeDetailsPipeline', () => {
 
       await pipeline.dispatch();
 
-      const day = formatUtcDayId();
+      const day = formatUtcDayId(now);
       expect(addBulk).toHaveBeenCalledWith([
         {
           name: IngestionJob.BACKFILL_EPISODE_DETAILS_ITEM,
@@ -76,6 +81,28 @@ describe('BackfillEpisodeDetailsPipeline', () => {
       expect(repository.findCandidates).toHaveBeenLastCalledWith(
         expect.objectContaining({ cursor: 'show-b' }),
       );
+    });
+
+    it('skips shows checked within the last 28 days', async () => {
+      await pipeline.dispatch();
+
+      expect(repository.findCandidates).toHaveBeenCalledWith(
+        expect.objectContaining({
+          asOf: now,
+          checkedBefore: new Date('2026-11-01T01:00:00.000Z'),
+        }),
+      );
+    });
+
+    it('still queues shows when dating seasons fails', async () => {
+      repository.fillSeasonAirDatesFromEpisodes.mockRejectedValue(new Error('db down'));
+      repository.findCandidates
+        .mockResolvedValueOnce([{ showId: 'show-a', tmdbId: 1 }])
+        .mockResolvedValueOnce([]);
+
+      await pipeline.dispatch();
+
+      expect(addBulk).toHaveBeenCalledTimes(1);
     });
 
     it('queues nothing when every show is complete', async () => {
@@ -138,6 +165,7 @@ describe('BackfillEpisodeDetailsPipeline', () => {
 
       await pipeline.processItem({ showId: 'show-1', tmdbId: 1399 });
 
+      expect(repository.markChecked).toHaveBeenCalledWith('show-1', now);
       expect(tmdbAdapter.getSeasonsEpisodes).toHaveBeenCalledWith(1399, [2]);
       expect(repository.updateEpisodeDetails).toHaveBeenCalledWith([
         {
@@ -171,6 +199,7 @@ describe('BackfillEpisodeDetailsPipeline', () => {
       await expect(pipeline.processItem({ showId: 'show-1', tmdbId: 1399 })).rejects.toThrow(
         'TMDB seasons request failed',
       );
+      expect(repository.markChecked).not.toHaveBeenCalled();
       expect(repository.updateEpisodeDetails).toHaveBeenCalledWith([
         expect.objectContaining({ id: 's1e1', next: { ...complete, stillPath: '/s1e1.jpg' } }),
       ]);
@@ -183,6 +212,7 @@ describe('BackfillEpisodeDetailsPipeline', () => {
 
       expect(tmdbAdapter.getSeasonsEpisodes).not.toHaveBeenCalled();
       expect(repository.updateEpisodeDetails).not.toHaveBeenCalled();
+      expect(repository.markChecked).toHaveBeenCalledWith('show-1', now);
     });
   });
 });

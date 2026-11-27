@@ -102,7 +102,11 @@ export class BackfillWorker extends WorkerHost {
           break;
 
         default:
-          this.logger.warn(`Unknown backfill job type: ${job.name}`);
+          this.logger.warn({
+            message: 'Unknown backfill job type',
+            jobId: job.id,
+            jobName: job.name,
+          });
       }
     } catch (error) {
       const err = toError(error);

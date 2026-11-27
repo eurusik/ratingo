@@ -127,7 +127,7 @@ module/
 
 - Metadata import from TMDB
 - Enrichment: TVMaze (episodes), Trakt/OMDb (ratings)
-- Episode merge (`domain/episode-merge.ts`): TVMaze leads for episodes it knows, TMDB fills per field (Ukrainian title and overview win; still, runtime, rating and air date fill only gaps). Episodes pair by number when both sources count the season the same, otherwise only when their air dates are within 2 days. An undated season takes the date of its first episode. `BackfillEpisodeDetailsPipeline` applies the same rule to stored episodes every Sunday
+- Episode merge (`domain/episode-pairing.ts`, `episode-sync-merge.ts`, `episode-backfill-plan.ts`): TVMaze leads for episodes it knows, TMDB fills per field (Ukrainian title and overview win; still, runtime, rating fill only gaps; a date-only TMDB air date fills an undated episode only two days after it passed). Episodes pair by number when both sources count the season the same and their air dates are within 2 days, otherwise only by unique English title. An undated season takes the date of its first episode. `BackfillEpisodeDetailsPipeline` applies the same rule to stored episodes every Sunday and skips shows checked in the last 28 days (`shows.episode_details_checked_at`); `RepairEpisodeTitlesPipeline` is a one-off that re-pairs renumbered seasons through TVMaze titles
 - Ratingo Score calculation
 - **Pipelines**: TrendingPipeline, SnapshotsPipeline, TrackedShowsPipeline, NowPlayingPipeline, NewReleasesPipeline, UpcomingMoviesPipeline, AnticipatedShowsPipeline
 - BullMQ worker for background jobs

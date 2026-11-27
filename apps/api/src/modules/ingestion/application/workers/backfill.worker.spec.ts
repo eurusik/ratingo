@@ -147,7 +147,11 @@ describe('BackfillWorker', () => {
 
       await worker.process(job);
 
-      expect(loggerSpy).toHaveBeenCalledWith('Unknown backfill job type: UNKNOWN_BACKFILL_JOB');
+      expect(loggerSpy).toHaveBeenCalledWith({
+        message: 'Unknown backfill job type',
+        jobId: 'unknown-1',
+        jobName: 'UNKNOWN_BACKFILL_JOB',
+      });
     });
   });
 

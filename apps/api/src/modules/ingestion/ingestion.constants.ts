@@ -96,6 +96,8 @@ export const BACKFILL_ALT_TITLES_BATCH_SIZE = 100;
 
 export const BACKFILL_EPISODE_DETAILS_BATCH_SIZE = 100;
 
+export const REPAIR_EPISODE_TITLES_JOB_PRIORITY = 100;
+
 /**
  * Batch size for MDBList ratings backfill dispatcher pagination.
  * Kept small because the MDBList free-tier budget is 1000 req/day —

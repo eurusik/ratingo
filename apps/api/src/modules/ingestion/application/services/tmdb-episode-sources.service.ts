@@ -1,16 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
 import { ENGLISH_LANGUAGE } from '@/common/constants';
-import {
-  renumberedSeasons,
-  type TmdbSeasonEpisodes,
-} from '@/modules/ingestion/domain/episode-merge';
+import { renumberedSeasons } from '@/modules/ingestion/domain/episode-pairing';
+import { type TmdbEpisodeSources } from '@/modules/ingestion/domain/models/episode-sources.model';
 import { TmdbAdapter } from '@/modules/tmdb/public';
-
-export interface TmdbEpisodeSources {
-  episodes: TmdbSeasonEpisodes;
-  failedSeasons: number[];
-}
 
 @Injectable()
 export class TmdbEpisodeSourcesService {

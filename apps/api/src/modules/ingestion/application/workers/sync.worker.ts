@@ -9,6 +9,7 @@ import { toError } from '@/common/utils/error.utils';
 import { WORKER_CONFIG } from '@/config/queue.config';
 import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import {
+  type RepairEpisodeTitlesJobData,
   type SyncMediaJobData,
   type UpcomingMoviesRefreshScopeType,
 } from '@/modules/shared/contracts';
@@ -20,6 +21,7 @@ import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
+import { RepairEpisodeTitlesPipeline } from '../pipelines/repair-episode-titles.pipeline';
 import { SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
 import { TrackedShowsPipeline } from '../pipelines/tracked-shows.pipeline';
 import { TrendingPipeline } from '../pipelines/trending.pipeline';
@@ -59,6 +61,7 @@ export class SyncWorker extends WorkerHost {
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
     private readonly backfillEpisodeDetailsPipeline: BackfillEpisodeDetailsPipeline,
+    private readonly repairEpisodeTitlesPipeline: RepairEpisodeTitlesPipeline,
     private readonly backfillMdblistRatingsPipeline: BackfillMdblistRatingsPipeline,
     private readonly mediaPageCache: MediaPageCacheService,
   ) {
@@ -88,25 +91,26 @@ export class SyncWorker extends WorkerHost {
   @WithJobLogContext(INGESTION_QUEUE)
   async process(
     job: Job<
-      Partial<SyncMediaJobData> & {
-        tmdbIds?: number[];
-        trending?: { score: number; rank: number };
-        region?: string;
-        daysBack?: number;
-        page?: number;
-        pages?: number;
-        syncStats?: boolean;
-        force?: boolean;
-        type?: MediaType;
-        since?: string;
-        limit?: number;
-        window?: string;
-        mediaItemId?: string;
-        title?: string;
-        originalTitle?: string | null;
-        dayId?: string;
-        scope?: UpcomingMoviesRefreshScopeType;
-      },
+      Partial<SyncMediaJobData> &
+        Partial<RepairEpisodeTitlesJobData> & {
+          tmdbIds?: number[];
+          trending?: { score: number; rank: number };
+          region?: string;
+          daysBack?: number;
+          page?: number;
+          pages?: number;
+          syncStats?: boolean;
+          force?: boolean;
+          type?: MediaType;
+          since?: string;
+          limit?: number;
+          window?: string;
+          mediaItemId?: string;
+          title?: string;
+          originalTitle?: string | null;
+          dayId?: string;
+          scope?: UpcomingMoviesRefreshScopeType;
+        },
       unknown,
       string
     >,
@@ -191,6 +195,18 @@ export class SyncWorker extends WorkerHost {
 
         case IngestionJob.BACKFILL_EPISODE_DETAILS_DISPATCHER:
           await this.backfillEpisodeDetailsPipeline.dispatch();
+          break;
+
+        case IngestionJob.REPAIR_EPISODE_TITLES_DISPATCHER:
+          await this.repairEpisodeTitlesPipeline.dispatch();
+          break;
+
+        case IngestionJob.REPAIR_EPISODE_TITLES_ITEM:
+          await this.repairEpisodeTitlesPipeline.processItem({
+            showId: job.data.showId!,
+            tmdbId: job.data.tmdbId!,
+            imdbId: job.data.imdbId!,
+          });
           break;
 
         // MDBList RT ratings backfill dispatcher (item jobs run on RatingsBackfillWorker)

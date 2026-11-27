@@ -1,20 +1,25 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, asc, eq, exists, gt, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, exists, gt, isNotNull, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
-import { hasUkrainianEpisodeTitle, hasUkrainianText } from '@/database/episode-text-conditions';
+import { hasUkrainianEpisodeTitle } from '@/database/episode-text-conditions';
 import * as schema from '@/database/schema';
+import { SPECIALS_SEASON_NUMBER } from '@/modules/ingestion/domain/constants/episode-details.constants';
 import {
   type EpisodeDetails,
   type EpisodeDetailsBackfillCandidate,
+  type EpisodeDetailsCandidatePage,
   type EpisodeDetailsUpdate,
+  type EpisodeTitleRepairCandidate,
   type StoredEpisode,
 } from '@/modules/ingestion/domain/models/episode-details.model';
 import { type BackfillPage } from '@/modules/ingestion/domain/repositories/backfill-page.interface';
 import { type IEpisodeDetailsBackfillRepository } from '@/modules/ingestion/domain/repositories/episode-details-backfill.repository.interface';
+
+import { episodeNeedsTmdbDetails } from '../queries/episode-details-conditions';
 
 const UPDATE_CHUNK_SIZE = 500;
 
@@ -27,27 +32,20 @@ export class EpisodeDetailsBackfillRepository implements IEpisodeDetailsBackfill
     private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
-  findCandidates({ cursor, limit }: BackfillPage): Promise<EpisodeDetailsBackfillCandidate[]> {
-    const episodeMissingDetails = this.db
-      .select({ id: schema.episodes.id })
-      .from(schema.episodes)
-      .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
-      .where(
-        and(
-          eq(schema.episodes.showId, schema.shows.id),
-          gt(schema.seasons.number, 0),
-          or(
-            sql`NOT ${hasUkrainianEpisodeTitle(sql`${schema.episodes.title}`)}`,
-            sql`NOT ${hasUkrainianText(sql`${schema.episodes.overview}`)}`,
-            isNull(schema.episodes.airDate),
-            isNull(schema.episodes.runtime),
-            isNull(schema.episodes.stillPath),
-            isNull(schema.episodes.voteAverage),
-          ),
-        ),
-      );
-
-    const conditions = [isNull(schema.mediaItems.deletedAt), exists(episodeMissingDetails)];
+  findCandidates({
+    cursor,
+    limit,
+    asOf,
+    checkedBefore,
+  }: EpisodeDetailsCandidatePage): Promise<EpisodeDetailsBackfillCandidate[]> {
+    const conditions = [
+      isNull(schema.mediaItems.deletedAt),
+      or(
+        isNull(schema.shows.episodeDetailsCheckedAt),
+        lt(schema.shows.episodeDetailsCheckedAt, checkedBefore),
+      ),
+      exists(this.regularEpisodes(episodeNeedsTmdbDetails(asOf))),
+    ];
     if (cursor) conditions.push(gt(schema.shows.id, cursor));
 
     return withDbError('find episode details backfill candidates', this.logger, () =>
@@ -59,6 +57,47 @@ export class EpisodeDetailsBackfillRepository implements IEpisodeDetailsBackfill
         .orderBy(asc(schema.shows.id))
         .limit(limit),
     );
+  }
+
+  async findTitleRepairCandidates({
+    cursor,
+    limit,
+  }: BackfillPage): Promise<EpisodeTitleRepairCandidate[]> {
+    const conditions = [
+      isNull(schema.mediaItems.deletedAt),
+      isNotNull(schema.mediaItems.imdbId),
+      exists(this.regularEpisodes(hasUkrainianEpisodeTitle(sql`${schema.episodes.title}`))),
+    ];
+    if (cursor) conditions.push(gt(schema.shows.id, cursor));
+
+    const rows = await withDbError('find episode title repair candidates', this.logger, () =>
+      this.db
+        .select({
+          showId: schema.shows.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          imdbId: schema.mediaItems.imdbId,
+        })
+        .from(schema.shows)
+        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.shows.mediaItemId))
+        .where(and(...conditions))
+        .orderBy(asc(schema.shows.id))
+        .limit(limit),
+    );
+    return rows.flatMap(({ imdbId, ...row }) => (imdbId ? [{ ...row, imdbId }] : []));
+  }
+
+  private regularEpisodes(condition: SQL) {
+    return this.db
+      .select({ id: schema.episodes.id })
+      .from(schema.episodes)
+      .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
+      .where(
+        and(
+          eq(schema.episodes.showId, schema.shows.id),
+          gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
+          condition,
+        ),
+      );
   }
 
   findEpisodes(showId: string): Promise<StoredEpisode[]> {
@@ -77,15 +116,21 @@ export class EpisodeDetailsBackfillRepository implements IEpisodeDetailsBackfill
         })
         .from(schema.episodes)
         .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
-        .where(and(eq(schema.episodes.showId, showId), gt(schema.seasons.number, 0)))
+        .where(
+          and(
+            eq(schema.episodes.showId, showId),
+            gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
+          ),
+        )
         .orderBy(asc(schema.seasons.number), asc(schema.episodes.number)),
     );
   }
 
-  async updateEpisodeDetails(updates: readonly EpisodeDetailsUpdate[]): Promise<void> {
+  async updateEpisodeDetails(updates: readonly EpisodeDetailsUpdate[]): Promise<number> {
+    let applied = 0;
     for (let start = 0; start < updates.length; start += UPDATE_CHUNK_SIZE) {
       const chunk = updates.slice(start, start + UPDATE_CHUNK_SIZE);
-      await withDbError('update backfilled episode details', this.logger, () =>
+      const rows = await withDbError('update backfilled episode details', this.logger, () =>
         this.db.execute(sql`
           UPDATE ${schema.episodes} AS e
           SET title = v.title,
@@ -105,9 +150,21 @@ export class EpisodeDetailsBackfillRepository implements IEpisodeDetailsBackfill
             AND e.runtime IS NOT DISTINCT FROM v.previous_runtime
             AND e.still_path IS NOT DISTINCT FROM v.previous_still_path
             AND e.vote_average IS NOT DISTINCT FROM v.previous_vote_average
+          RETURNING e.id
         `),
       );
+      applied += rows.length;
     }
+    return applied;
+  }
+
+  async markChecked(showId: string, checkedAt: Date): Promise<void> {
+    await withDbError('mark episode details checked', this.logger, () =>
+      this.db
+        .update(schema.shows)
+        .set({ episodeDetailsCheckedAt: checkedAt })
+        .where(eq(schema.shows.id, showId)),
+    );
   }
 
   async fillSeasonAirDatesFromEpisodes(): Promise<number> {
